@@ -12,4 +12,8 @@ class Router():
 		self.routes[route] = handler
 
 	def get(self, uri):
-		return self.routes.get(uri.decode('utf-8'), self.default)
+		handler = self.routes.get(uri.decode('utf-8'), self.default)
+		if handler:
+			return handler
+		else:
+			return self.default

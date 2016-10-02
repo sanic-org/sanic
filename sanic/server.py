@@ -16,6 +16,7 @@ from socket import *
 
 from .log import log
 from .config import LOGO
+from .response import HTTPResponse
 
 PRINT = 0
 
@@ -28,41 +29,6 @@ class Request:
         self.headers = headers
         self.version = version
         self.method = method
-
-STATUS_CODES = {
-    200: 'OK',
-    404: 'Not Found'
-}
-class Response:
-    __slots__ = ('body', 'status', 'content_type')
-
-    def __init__(self, body='', status=200, content_type='text/plain'):
-        self.content_type = 'text/plain'
-        self.body = body
-        self.status = status
-
-    @property
-    def body_bytes(self):
-        body_type = type(self.body)
-        if body_type is str:
-            body = self.body.encode('utf-8')
-        elif body_type is bytes:
-            body = self.body
-        else:
-            body = b'Unable to interpret body'
-
-        return body
-
-    def output(self, version):
-        body = self.body_bytes
-        return b''.join([
-            'HTTP/{} {} {}\r\n'.format(version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'),
-            'Content-Type: {}\r\n'.format(self.content_type).encode('latin-1'),
-            'Content-Length: {}\r\n'.format(len(body)).encode('latin-1'),
-            b'\r\n',
-            body
-        ])
-
 
 class HttpProtocol(asyncio.Protocol):
 
@@ -85,6 +51,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.transport = transport
+        #TODO: handle keep-alive/connection timeout
+
         # TCP Nodelay
         # I have no evidence to support this makes anything faster
         # So I'll leave it commented out for now
@@ -108,7 +76,12 @@ class HttpProtocol(asyncio.Protocol):
             self.headers = []
             self.parser = httptools.HttpRequestParser(self)
 
-        self.parser.feed_data(data)
+        try:
+            #print(data)
+            self.parser.feed_data(data)
+        except httptools.parser.errors.HttpParserError:
+            #log.error("Invalid request data, connection closed")
+            self.transport.close()
 
     def on_url(self, url):
         self.url = url
@@ -124,6 +97,10 @@ class HttpProtocol(asyncio.Protocol):
             version=self.parser.get_http_version(),
             method=self.parser.get_method()
         )
+        global n
+        n += 1
+        self.n = n
+        #print("res {} - {}".format(n, self.request))
         self.loop.call_soon(self.handle, self.request)
 
     # -------------------------------------------- #
@@ -138,13 +115,20 @@ class HttpProtocol(asyncio.Protocol):
             future.add_done_callback(self.handle_result)
         else:
             response = handler(request)
-            self.write_response(response)
+            self.write_response(request, response)
 
-    def write_response(self, response):
-        self.transport.write(response.output(request.version))
-
-        if not self.parser.should_keep_alive():
+    def write_response(self, request, response):
+        #print("response - {} - {}".format(self.n, self.request))
+        try:
+            keep_alive = self.parser.should_keep_alive()
+            self.transport.write(response.output(request.version, keep_alive))
+            #print("KA - {}".format(self.parser.should_keep_alive()))
+            if not keep_alive:
+                self.transport.close()
+        except:
+            log.error("Writing request failed, connection closed")
             self.transport.close()
+
         self.parser = None
         self.request = None
 
@@ -153,12 +137,12 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     async def handle_response(self, future, handler, request):
-        result = await handler(request)
-        future.set_result(result)
+        response = await handler(request)
+        future.set_result((request, response))
 
     def handle_result(self, future):
-        response = future.result()
-        self.write_response(response)
+        request, response = future.result()
+        self.write_response(request, response)
 
 
 def abort(msg):

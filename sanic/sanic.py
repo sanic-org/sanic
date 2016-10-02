@@ -1,15 +1,16 @@
 import inspect
 from .router import Router
-from .server import Response, serve
+from .response import HTTPResponse, error_404
+from .server import serve
 from .log import log
 
 class Sanic:
     name = None
     routes = []
 
-    def __init__(self, name):
+    def __init__(self, name, router=None):
         self.name = name
-        self.router = Router(default=self.handler_default)
+        self.router = router or Router(default=error_404)
 
     def route(self, *args, **kwargs):
         def response(handler):
@@ -21,6 +22,3 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False):
         return serve(router=self.router, host=host, port=port, debug=debug)
-
-    def handler_default(self, request, *args):
-        return Response("404!", status=404)

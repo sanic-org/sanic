@@ -1,0 +1,3 @@
+uvloop
+httptools
+ujson

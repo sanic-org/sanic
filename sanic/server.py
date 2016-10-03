@@ -89,8 +89,8 @@ class HttpProtocol(asyncio.Protocol):
             protocol=self, 
             url=self.url.decode('utf-8'), 
             headers=dict(self.headers),
-            version=self.parser.get_http_version(),
-            method=self.parser.get_method()
+            version=self.parser.get_http_version().decode('utf-8'),
+            method=self.parser.get_method().decode('utf-8')
         )
         #print("res {} - {}".format(n, self.request))
 

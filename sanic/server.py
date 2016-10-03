@@ -97,9 +97,6 @@ class HttpProtocol(asyncio.Protocol):
             version=self.parser.get_http_version(),
             method=self.parser.get_method()
         )
-        global n
-        n += 1
-        self.n = n
         #print("res {} - {}".format(n, self.request))
         self.loop.call_soon(self.handle, self.request)
 

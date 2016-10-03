@@ -5,6 +5,7 @@ import signal
 import functools
 import httptools
 import logging
+from inspect import iscoroutine
 from ujson import loads as json_loads
 from urllib.parse import parse_qs
 
@@ -18,6 +19,7 @@ from socket import *
 
 from .log import log
 from .config import LOGO
+from .exceptions import ServerError
 from .response import HTTPResponse
 
 PRINT = 0
@@ -65,16 +67,16 @@ class HttpProtocol(asyncio.Protocol):
 
     __slots__ = ('loop',
                  'transport', 'request', 'parser',
-                 'url', 'headers', 'router')
+                 'url', 'headers', 'sanic')
 
-    def __init__(self, *, router, loop):
+    def __init__(self, *, sanic, loop):
         self.loop = loop
         self.transport = None
         self.request = None
         self.parser = None
         self.url = None
         self.headers = None
-        self.router = router
+        self.sanic = sanic
 
     # -------------------------------------------- #
     # Connection
@@ -140,14 +142,22 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     async def get_response(self, request):
-        handler = self.router.get(request.url)
         try:
-            if handler.is_async:
-                response = await handler(request)
-            else:
-                response = handler(request)
+            handler = self.sanic.router.get(request)
+            if handler is None:
+                raise ServerError("'None' was returned while requesting a handler from the router")
+
+            response = handler(request)
+
+            # Check if the handler is asynchronous
+            if iscoroutine(response):
+                response = await response
+
         except Exception as e:
-            response = HTTPResponse("Error: {}".format(e))
+            try:
+                response = self.sanic.error_handler.response(request, e)
+            except Exception as e:
+                response = HTTPResponse("Error while handling error: {}".format(e))
         
         self.write_response(request, response)
 
@@ -184,7 +194,7 @@ def abort(msg):
     sys.exit(1)
 
 
-def serve(router, host, port, debug=False):
+def serve(sanic, host, port, debug=False):
     # Create Event Loop
     loop = async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -205,7 +215,7 @@ def serve(router, host, port, debug=False):
     # Serve
     log.info('Goin\' Fast @ {}:{}'.format(host, port))
 
-    server_coroutine = loop.create_server(lambda: HttpProtocol(loop=loop, router=router), host, port)
+    server_coroutine = loop.create_server(lambda: HttpProtocol(loop=loop, sanic=sanic), host, port)
     server_loop = loop.run_until_complete(server_coroutine)
     try:
         loop.run_forever()

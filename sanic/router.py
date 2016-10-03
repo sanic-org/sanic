@@ -1,19 +1,19 @@
 from .log import log
+from .exceptions import NotFound
 
 class Router():
 	routes = None
-	default = None
 
-	def __init__(self, default=None):
+	def __init__(self):
 		self.routes = {}
-		self.default=default
 
-	def add(self, route, handler):
-		self.routes[route] = handler
+	def add(self, uri, handler):
+		self.routes[uri] = handler
 
-	def get(self, uri):
-		handler = self.routes.get(uri.decode('utf-8'), self.default)
+	def get(self, request):
+		uri_string = request.url.decode('utf-8')
+		handler = self.routes.get(uri_string)
 		if handler:
 			return handler
 		else:
-			return self.default
+			raise NotFound("Requested URL {} not found".format(uri_string))

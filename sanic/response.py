@@ -2,7 +2,17 @@ import ujson
 
 STATUS_CODES = {
     200: 'OK',
-    404: 'Not Found'
+    400: 'Bad Request',
+    401: 'Unauthorized',
+    402: 'Payment Required',
+    403: 'Forbidden',
+    404: 'Not Found',
+    400: 'Method Not Allowed',
+    500: 'Internal Server Error',
+    501: 'Not Implemented',
+    502: 'Bad Gateway',
+    503: 'Service Unavailable',
+    504: 'Gateway Timeout',
 }
 class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type')
@@ -36,12 +46,9 @@ class HTTPResponse:
             #b'\r\n'
         ])
 
-
-def error_404(request, *args):
-    return HTTPResponse("404!", status=404)
-error_404.is_async = False
-
-def json(input):
-    return HTTPResponse(ujson.dumps(input), content_type="application/json")
-def text(input):
-    return HTTPResponse(input, content_type="text/plain")
+def json(body, status=200):
+    return HTTPResponse(ujson.dumps(body), status=status, content_type="application/json")
+def text(body, status=200):
+    return HTTPResponse(body, status=status, content_type="text/plain")
+def html(body, status=200):
+    return HTTPResponse(body, status=status, content_type="text/html")

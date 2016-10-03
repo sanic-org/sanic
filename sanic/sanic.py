@@ -1,24 +1,29 @@
-import inspect
 from .router import Router
-from .response import HTTPResponse, error_404
+from .exceptions import Handler
+from .response import HTTPResponse
 from .server import serve
 from .log import log
 
 class Sanic:
     name = None
+    router = None
+    error_handler = None
     routes = []
 
-    def __init__(self, name, router=None):
+    def __init__(self, name, router=None, error_handler=None):
         self.name = name
-        self.router = router or Router(default=error_404)
+        self.router = router or Router()
+        self.error_handler = error_handler or Handler()
 
     def route(self, *args, **kwargs):
         def response(handler):
-            handler.is_async = inspect.iscoroutinefunction(handler)
-            self.router.add(*args, **kwargs, handler=handler)
+            self.add_route(handler, *args, **kwargs)
             return handler
 
         return response
 
+    def add_route(self, handler, *args, **kwargs):
+        self.router.add(*args, **kwargs, handler=handler)
+
     def run(self, host="127.0.0.1", port=8000, debug=False):
-        return serve(router=self.router, host=host, port=port, debug=debug)
+        return serve(sanic=self, host=host, port=port, debug=debug)

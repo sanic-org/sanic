@@ -1,5 +1,6 @@
 from sanic import Sanic
 from sanic.response import json, text
+from sanic.exceptions import ServerError
 
 app = Sanic("test")
 
@@ -10,6 +11,14 @@ async def test(request):
 @app.route("/text")
 def test(request):
     return text('hi')
+
+@app.route("/exception")
+def test(request):
+    raise ServerError("yep")
+
+@app.route("/exception/async")
+async def test(request):
+    raise ServerError("asunk")
 
 @app.route("/post_json")
 def test(request):

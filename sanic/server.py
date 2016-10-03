@@ -5,6 +5,8 @@ import signal
 import functools
 import httptools
 import logging
+from ujson import loads as json_loads
+from urllib.parse import parse_qs
 
 import httptools
 try:
@@ -21,7 +23,7 @@ from .response import HTTPResponse
 PRINT = 0
 
 class Request:
-    __slots__ = ('protocol', 'url', 'headers', 'version', 'method')
+    __slots__ = ('protocol', 'url', 'headers', 'version', 'method', 'query_string', 'body', 'parsed_json', 'parsed_args')
 
     def __init__(self, protocol, url, headers, version, method):
         self.protocol = protocol
@@ -29,6 +31,35 @@ class Request:
         self.headers = headers
         self.version = version
         self.method = method
+
+        # Capture query string
+        query_string_position = self.url.find(b"?")
+        if query_string_position != -1:
+            self.query_string = self.url[query_string_position+1:]
+            self.url = self.url[:query_string_position]
+        else:
+            self.query_string = None
+
+        # Init but do not inhale
+        self.body = None
+        self.parsed_json = None
+        self.parsed_args = None
+
+    @property
+    def json(self):
+        if not self.parsed_json:
+            if not self.body:
+                raise ValueError("No body to parse")
+            self.parsed_json = json_loads(self.body)
+
+        return self.parsed_json 
+
+    @property
+    def args(self):
+        if not self.parsed_args and self.query_string:
+            self.parsed_args = {k:v if len(v)>1 else v[0] for k,v in parse_qs(self.query_string).items()}
+
+        return self.parsed_args 
 
 class HttpProtocol(asyncio.Protocol):
 
@@ -79,8 +110,8 @@ class HttpProtocol(asyncio.Protocol):
         try:
             #print(data)
             self.parser.feed_data(data)
-        except httptools.parser.errors.HttpParserError:
-            #log.error("Invalid request data, connection closed")
+        except httptools.parser.errors.HttpParserError as e:
+            log.error("Invalid request data, connection closed ({})".format(e))
             self.transport.close()
 
     def on_url(self, url):
@@ -98,21 +129,27 @@ class HttpProtocol(asyncio.Protocol):
             method=self.parser.get_method()
         )
         #print("res {} - {}".format(n, self.request))
-        self.loop.call_soon(self.handle, self.request)
+
+    def on_body(self, body):
+        self.request.body = body
+    def on_message_complete(self):
+        self.loop.create_task(self.get_response(self.request))
 
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
 
-    def handle(self, request):
+    async def get_response(self, request):
         handler = self.router.get(request.url)
-        if handler.is_async:
-            future = asyncio.Future()
-            self.loop.create_task(self.handle_response(future, handler, request))
-            future.add_done_callback(self.handle_result)
-        else:
-            response = handler(request)
-            self.write_response(request, response)
+        try:
+            if handler.is_async:
+                response = await handler(request)
+            else:
+                response = handler(request)
+        except Exception as e:
+            response = HTTPResponse("Error: {}".format(e))
+        
+        self.write_response(request, response)
 
     def write_response(self, request, response):
         #print("response - {} - {}".format(self.n, self.request))
@@ -122,8 +159,8 @@ class HttpProtocol(asyncio.Protocol):
             #print("KA - {}".format(self.parser.should_keep_alive()))
             if not keep_alive:
                 self.transport.close()
-        except:
-            log.error("Writing request failed, connection closed")
+        except Exception as e:
+            log.error("Writing request failed, connection closed {}".format(e))
             self.transport.close()
 
         self.parser = None

@@ -8,6 +8,7 @@ import logging
 from inspect import iscoroutine
 from ujson import loads as json_loads
 from urllib.parse import parse_qs
+from traceback import format_exc
 
 import httptools
 try:
@@ -157,7 +158,10 @@ class HttpProtocol(asyncio.Protocol):
             try:
                 response = self.sanic.error_handler.response(request, e)
             except Exception as e:
-                response = HTTPResponse("Error while handling error: {}".format(e))
+                if self.sanic.debug:
+                    response = HTTPResponse("Error while handling error: {}\nStack: {}".format(e, format_exc()))
+                else:
+                    response = HTTPResponse("An error occured while handling an error")
         
         self.write_response(request, response)
 

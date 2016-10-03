@@ -6,6 +6,7 @@ from .log import log
 
 class Sanic:
     name = None
+    debug = None
     router = None
     error_handler = None
     routes = []
@@ -15,15 +16,21 @@ class Sanic:
         self.router = router or Router()
         self.error_handler = error_handler or Handler()
 
-    def route(self, *args, **kwargs):
+    def route(self, uri):
         def response(handler):
-            self.add_route(handler, *args, **kwargs)
+            self.router.add(uri=uri, handler=handler)
             return handler
 
         return response
 
-    def add_route(self, handler, *args, **kwargs):
-        self.router.add(*args, **kwargs, handler=handler)
+    def handler(self, *args, **kwargs):
+        def response(handler):
+            self.error_handler.add(*args, **kwargs)
+            return handler
+
+        return response
 
     def run(self, host="127.0.0.1", port=8000, debug=False):
+        self.error_handler.debug=True
+        self.debug = debug
         return serve(sanic=self, host=host, port=port, debug=debug)

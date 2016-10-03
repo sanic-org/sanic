@@ -5,7 +5,7 @@ import signal
 import functools
 import httptools
 import logging
-from inspect import iscoroutine
+from inspect import isawaitable
 from ujson import loads as json_loads
 from urllib.parse import parse_qs
 from traceback import format_exc
@@ -151,7 +151,7 @@ class HttpProtocol(asyncio.Protocol):
             response = handler(request)
 
             # Check if the handler is asynchronous
-            if iscoroutine(response):
+            if isawaitable(response):
                 response = await response
 
         except Exception as e:

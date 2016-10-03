@@ -1,4 +1,7 @@
 import ujson
+import httptools
+from ujson import loads as json_loads
+from urllib.parse import parse_qs
 
 STATUS_CODES = {
     200: 'OK',
@@ -18,7 +21,7 @@ class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type')
 
     def __init__(self, body='', status=200, content_type='text/plain'):
-        self.content_type = 'text/plain'
+        self.content_type = content_type
         self.body = body
         self.status = status
 

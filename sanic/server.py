@@ -7,7 +7,6 @@ import httptools
 import logging
 from inspect import isawaitable
 from ujson import loads as json_loads
-from urllib.parse import parse_qs
 from traceback import format_exc
 
 import httptools
@@ -158,7 +157,6 @@ class HttpProtocol(asyncio.Protocol):
 def abort(msg):
     log.info(msg, file=sys.stderr)
     sys.exit(1)
-
 
 def serve(sanic, host, port, debug=False):
     # Create Event Loop

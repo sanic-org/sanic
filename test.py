@@ -8,10 +8,6 @@ app = Sanic("test")
 async def test(request):
     return json({ "test": True })
 
-@app.route("/text")
-def test(request):
-    return text('hi')
-
 @app.route("/exception")
 def test(request):
     raise ServerError("yep")

@@ -11,9 +11,8 @@ class Router():
 		self.routes[uri] = handler
 
 	def get(self, request):
-		uri_string = request.url.decode('utf-8')
-		handler = self.routes.get(uri_string)
+		handler = self.routes.get(request.url)
 		if handler:
 			return handler
 		else:
-			raise NotFound("Requested URL {} not found".format(uri_string))
+			raise NotFound("Requested URL {} not found".format(request.url))

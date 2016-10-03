@@ -59,8 +59,11 @@ class Request:
 
     @property
     def args(self):
-        if not self.parsed_args and self.query_string:
-            self.parsed_args = {k:v if len(v)>1 else v[0] for k,v in parse_qs(self.query_string).items()}
+        if self.parsed_args is None:
+            if self.query_string:
+                self.parsed_args = {k:v if len(v)>1 else v[0] for k,v in parse_qs(self.query_string).items()}
+            else:
+                self.parsed_args = {}
 
         return self.parsed_args 
 

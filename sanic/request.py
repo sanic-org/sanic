@@ -37,7 +37,8 @@ class Request:
         if self.parsed_args is None:
             if self.query_string:
                 parsed_query_string = parse_qs(self.query_string).items()
-                self.parsed_args = {k:[_v.decode('utf-8') for _v in v] if len(v)>1 else v[0].decode('utf-8') for k,v in parsed_query_string}
+                self.parsed_args = {k:[_v for _v in v] if len(v)>1 else v[0] for k,v in parsed_query_string}
+                print(self.parsed_args)
             else:
                 self.parsed_args = {}
 

@@ -30,7 +30,7 @@ class Sanic:
 
         return response
 
-    def run(self, host="127.0.0.1", port=8000, debug=False):
+    def run(self, host="127.0.0.1", port=8000, debug=False, on_start=None, on_stop=None):
         self.error_handler.debug=True
         self.debug = debug
-        return serve(sanic=self, host=host, port=port, debug=debug)
+        return serve(sanic=self, host=host, port=port, debug=debug, on_start=on_start, on_stop=on_stop)

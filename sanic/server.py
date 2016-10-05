@@ -23,8 +23,6 @@ from .exceptions import ServerError
 from .response import HTTPResponse
 from .request import Request
 
-PRINT = 0
-
 class HttpProtocol(asyncio.Protocol):
 
     __slots__ = ('loop',
@@ -158,7 +156,7 @@ def abort(msg):
     log.info(msg, file=sys.stderr)
     sys.exit(1)
 
-def serve(sanic, host, port, debug=False):
+def serve(sanic, host, port, debug=False, on_start=None, on_stop=None):
     # Create Event Loop
     loop = async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -179,10 +177,21 @@ def serve(sanic, host, port, debug=False):
     # Serve
     log.info('Goin\' Fast @ {}:{}'.format(host, port))
 
+    if on_start:
+        print("start1")
+        result = on_start(sanic, loop)
+        if isawaitable(result):
+            print("start2")
+            loop.run_until_complete(result)
+
     server_coroutine = loop.create_server(lambda: HttpProtocol(loop=loop, sanic=sanic), host, port)
     server_loop = loop.run_until_complete(server_coroutine)
     try:
         loop.run_forever()
     finally:
+        if on_stop:
+            result = on_stop(sanic, loop)
+            if isawaitable(result):
+                loop.run_until_complete(result)
         server_loop.close()
         loop.close()

@@ -1,4 +1,5 @@
 from urllib.parse import parse_qs
+from ujson import loads as json_loads
 
 class Request:
     __slots__ = ('protocol', 'url', 'headers', 'version', 'method', 'query_string', 'body', 'parsed_json', 'parsed_args')

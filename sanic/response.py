@@ -17,36 +17,30 @@ STATUS_CODES = {
     503: 'Service Unavailable',
     504: 'Gateway Timeout',
 }
+
 class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type')
 
-    def __init__(self, body='', status=200, content_type='text/plain'):
+    def __init__(self, body=None, status=200, content_type='text/plain', body_bytes=b''):
         self.content_type = content_type
-        self.body = body
+
+        if not body is None:
+            self.body = body.encode('utf-8')
+        else:
+            self.body = body_bytes
+
         self.status = status
 
-    @property
-    def body_bytes(self):
-        body_type = type(self.body)
-        if body_type is str:
-            body = self.body.encode('utf-8')
-        elif body_type is bytes:
-            body = self.body
-        else:
-            body = b'Unable to interpret body'
-
-        return body
-
     def output(self, version="1.1", keep_alive=False):
-        body = self.body_bytes
+        # This is all returned in a kind-of funky way
+        # We tried to make this as fast as possible in pure python
         return b''.join([
-            'HTTP/{} {} {}\r\n'.format(version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'),
-            'Content-Type: {}\r\n'.format(self.content_type).encode('latin-1'),
-            'Content-Length: {}\r\n'.format(len(body)).encode('latin-1'),
-            'Connection: {}\r\n'.format('keep-alive' if keep_alive else 'close').encode('latin-1'),
+            'HTTP/{} {} {}\r\n'.format(version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode(),
+            b'Content-Type: ', self.content_type.encode(), b'\r\n',
+            b'Content-Length: ', str(len(self.body)).encode(), b'\r\n',
+            b'Connection: ', ('keep-alive' if keep_alive else 'close').encode(), b'\r\n',
             b'\r\n',
-            body,
-            #b'\r\n'
+            self.body,
         ])
 
 def json(body, status=200):

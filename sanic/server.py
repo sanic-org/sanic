@@ -95,19 +95,19 @@ class HttpProtocol(asyncio.Protocol):
     def on_body(self, body):
         self.request.body = body
     def on_message_complete(self):
-        self.loop.create_task(self.get_response(self.request))
+        self.loop.create_task(self.get_response())
 
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
 
-    async def get_response(self, request):
+    async def get_response(self):
         try:
-            handler = self.sanic.router.get(request)
+            handler = self.sanic.router.get(self.request)
             if handler is None:
                 raise ServerError("'None' was returned while requesting a handler from the router")
 
-            response = handler(request)
+            response = handler(self.request)
 
             # Check if the handler is asynchronous
             if isawaitable(response):
@@ -115,20 +115,20 @@ class HttpProtocol(asyncio.Protocol):
 
         except Exception as e:
             try:
-                response = self.sanic.error_handler.response(request, e)
+                response = self.sanic.error_handler.response(self.request, e)
             except Exception as e:
                 if self.sanic.debug:
                     response = HTTPResponse("Error while handling error: {}\nStack: {}".format(e, format_exc()))
                 else:
                     response = HTTPResponse("An error occured while handling an error")
         
-        self.write_response(request, response)
+        self.write_response(response)
 
-    def write_response(self, request, response):
+    def write_response(self, response):
         #print("response - {} - {}".format(self.n, self.request))
         try:
             keep_alive = self.parser.should_keep_alive()
-            self.transport.write(response.output(request.version, keep_alive))
+            self.transport.write(response.output(self.request.version, keep_alive))
             #print("KA - {}".format(self.parser.should_keep_alive()))
             if not keep_alive:
                 self.transport.close()

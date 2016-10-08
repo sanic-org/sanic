@@ -23,11 +23,13 @@ from .exceptions import ServerError
 from .response import HTTPResponse
 from .request import Request
 
+
 class HttpProtocol(asyncio.Protocol):
 
     __slots__ = ('loop',
                  'transport', 'request', 'parser',
-                 'url', 'headers', 'sanic')
+                 'url', 'headers', 'sanic',
+                 '_total_body_size')
 
     def __init__(self, *, sanic, loop):
         self.loop = loop
@@ -44,7 +46,7 @@ class HttpProtocol(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.transport = transport
-        #TODO: handle keep-alive/connection timeout
+        #TODO: handle connection timeout
 
         # TCP Nodelay
         # I have no evidence to support this makes anything faster
@@ -64,6 +66,8 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def data_received(self, data):
+        #TODO: handle body too large
+
         if self.parser is None:
             assert self.request is None
             self.headers = []
@@ -84,11 +88,10 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_headers_complete(self):
         self.request = Request(
-            protocol=self, 
-            url=self.url.decode('utf-8'), 
+            url_bytes=self.url, 
             headers=dict(self.headers),
             version=self.parser.get_http_version(),
-            method=self.parser.get_method().decode('utf-8')
+            method=self.parser.get_method().decode()
         )
         #print("res {} - {}".format(n, self.request))
 

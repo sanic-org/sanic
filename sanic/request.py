@@ -1,23 +1,17 @@
+from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
 
 class Request:
-    __slots__ = ('protocol', 'url', 'headers', 'version', 'method', 'query_string', 'body', 'parsed_json', 'parsed_args')
+    __slots__ = ('url', 'headers', 'version', 'method', 'query_string', 'body', 'parsed_json', 'parsed_args')
 
-    def __init__(self, protocol, url, headers, version, method):
-        self.protocol = protocol
-        self.url = url
+    def __init__(self, url_bytes, headers, version, method):
+        url_parsed = parse_url(url_bytes)
+        self.url = url_parsed.path.decode('utf-8')
         self.headers = headers
         self.version = version
         self.method = method
-
-        # Capture query string
-        query_string_position = self.url.find("?")
-        if query_string_position != -1:
-            self.query_string = self.url[query_string_position+1:]
-            self.url = self.url[:query_string_position]
-        else:
-            self.query_string = None
+        self.query_string = url_parsed.query.decode('utf-8') if url_parsed.query else None
 
         # Init but do not inhale
         self.body = None

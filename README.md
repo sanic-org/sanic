@@ -15,7 +15,20 @@ All tests were run on a AWS medium instance running ubuntu, using 1 process.  Ea
 | Flask  (gunicorn + meinheld) |        4,988 |     20.08ms |
 | Aiohttp (Python 3.5)         |        2,187 |     56.60ms |
 
-## Usage
+## Hello World
+
+```
+from sanic import Sanic
+from sanic.response import json
+
+app = Sanic(__name__)
+
+@app.route("/")
+async def test(request):
+    return json({ "hello": "world" })
+
+app.run(host="0.0.0.0", port=8000)
+```
 
 ## Installation
  * `python -m pip install git+https://github.com/channelcat/sanic/`

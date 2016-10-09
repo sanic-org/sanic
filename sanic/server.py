@@ -1,14 +1,5 @@
-import argparse
-import sys
 import asyncio
-import signal
-import functools
-import httptools
-import logging
 from inspect import isawaitable
-from ujson import loads as json_loads
-from traceback import format_exc
-from time import time
 
 import httptools
 try:
@@ -16,40 +7,45 @@ try:
 except:
     async_loop = asyncio
 
-from socket import *
-
 from .log import log
-from .exceptions import ServerError
-from .response import HTTPResponse
 from .request import Request
+
+class Signal:
+    stopped = False
 
 class HttpProtocol(asyncio.Protocol):
 
-    __slots__ = ('loop', 'transport', # event loop, connection
+    __slots__ = ('loop', 'transport', 'connections', 'signal', # event loop, connection
                  'parser', 'request', 'url', 'headers', # request params
-                 'sanic', # router and config object
-                 '_total_body_size',  '_timeout_handler') # connection management
+                 'request_handler', 'request_timeout', 'request_max_size', # request config
+                 '_total_request_size',  '_timeout_handler') # connection management
 
-    def __init__(self, *, sanic, loop):
+    def __init__(self, *, loop, request_handler, signal=Signal(), connections={}, request_timeout=60, request_max_size=None):
         self.loop = loop
         self.transport = None
         self.request = None
         self.parser = None
         self.url = None
         self.headers = None
-        self.sanic = sanic
+        self.signal = signal
+        self.connections = connections
+        self.request_handler = request_handler
+        self.request_timeout = request_timeout
+        self.request_max_size = request_max_size
         self._total_request_size = 0
+        self._timeout_handler = None
 
-    # -------------------------------------------- #
+        # -------------------------------------------- #
     # Connection
     # -------------------------------------------- #
 
     def connection_made(self, transport):
-        self._timeout_handler = self.loop.call_later(self.sanic.config.KEEP_ALIVE_TIMEOUT, self.connection_timeout)
+        self.connections[self] = True
+        self._timeout_handler = self.loop.call_later(self.request_timeout, self.connection_timeout)
         self.transport = transport
-        #TODO: handle connection timeout
 
     def connection_lost(self, exc):
+        del self.connections[self]
         self._timeout_handler.cancel()
         self.cleanup()
 
@@ -63,7 +59,7 @@ class HttpProtocol(asyncio.Protocol):
     def data_received(self, data):
         # Check for the request itself getting too large and exceeding memory limits
         self._total_request_size += len(data)
-        if self._total_request_size > self.sanic.config.REQUEST_MAX_SIZE:
+        if self._total_request_size > self.request_max_size:
             return self.bail_out("Request too large ({}), connection closed".format(self._total_request_size))
 
         # Create parser if this is the first time we're receiving data
@@ -82,7 +78,7 @@ class HttpProtocol(asyncio.Protocol):
         self.url = url
 
     def on_header(self, name, value):
-        if name == 'Content-Length' and int(value) > self.sanic.config.REQUEST_MAX_SIZE:
+        if name == 'Content-Length' and int(value) > self.request_max_size:
             return self.bail_out("Request body too large ({}), connection closed".format(value))
 
         self.headers.append((name, value.decode('utf-8')))
@@ -98,41 +94,16 @@ class HttpProtocol(asyncio.Protocol):
     def on_body(self, body):
         self.request.body = body
     def on_message_complete(self):
-        self.loop.create_task(self.get_response())
+        self.loop.create_task(self.request_handler(self.request, self.write_response))
 
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
 
-    async def get_response(self):
-        try:
-            handler = self.sanic.router.get(self.request)
-            if handler is None:
-                raise ServerError("'None' was returned while requesting a handler from the router")
-
-            response = handler(self.request)
-
-            # Check if the handler is asynchronous
-            if isawaitable(response):
-                response = await response
-
-        except Exception as e:
-            try:
-                response = self.sanic.error_handler.response(self.request, e)
-            except Exception as e:
-                if self.sanic.debug:
-                    response = HTTPResponse("Error while handling error: {}\nStack: {}".format(e, format_exc()))
-                else:
-                    response = HTTPResponse("An error occured while handling an error")
-        
-        self.write_response(response)
-
     def write_response(self, response):
-        #print("response - {} - {}".format(self.n, self.request))
         try:
-            keep_alive = self.parser.should_keep_alive()
-            self.transport.write(response.output(self.request.version, keep_alive, self.sanic.config.KEEP_ALIVE_TIMEOUT))
-            #print("KA - {}".format(self.parser.should_keep_alive()))
+            keep_alive = self.parser.should_keep_alive() and not self.signal.stopped
+            self.transport.write(response.output(self.request.version, keep_alive, self.request_timeout))
             if not keep_alive:
                 self.transport.close()
             else:
@@ -140,8 +111,8 @@ class HttpProtocol(asyncio.Protocol):
         except Exception as e:
             self.bail_out("Writing request failed, connection closed {}".format(e))
 
-    def bail_out(self, error):
-        log.error(error)
+    def bail_out(self, message):
+        log.error(message)
         self.transport.close()
 
     def cleanup(self):
@@ -149,39 +120,53 @@ class HttpProtocol(asyncio.Protocol):
         self.request = None
         self.url = None
         self.headers = None
-        self._total_body_size = 0
+        self._total_request_size = 0
 
-def serve(sanic, host, port, debug=False, on_start=None, on_stop=None):
+def serve(host, port, request_handler, on_start=None, on_stop=None, debug=False, request_timeout=60, request_max_size=None):
     # Create Event Loop
     loop = async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.set_debug(debug)
 
-    if debug:
-        log.setLevel(logging.DEBUG)
-    log.debug(sanic.config.LOGO)
-
-    # Serve
-    log.info('Goin\' Fast @ {}:{}'.format(host, port))
-
     # Run the on_start function if provided
     if on_start:
-        result = on_start(sanic, loop)
+        result = on_start(loop)
         if isawaitable(result):
             loop.run_until_complete(result)
 
-    server_coroutine = loop.create_server(lambda: HttpProtocol(loop=loop, sanic=sanic), host, port)
-    #connection_timeout_coroutine = 
-    server_loop = loop.run_until_complete(server_coroutine)
+    connections = {}
+    signal = Signal()
+    server_coroutine = loop.create_server(lambda: HttpProtocol(
+        loop=loop,
+        connections = connections,
+        signal = signal,
+        request_handler=request_handler,
+        request_timeout=request_timeout,
+        request_max_size=request_max_size,
+    ), host, port)
+    http_server = loop.run_until_complete(server_coroutine)
+
     try:
         loop.run_forever()
+    except Exception:
+        pass
     finally:
+        log.info("Stop requested, draining connections...")
+
         # Run the on_stop function if provided
         if on_stop:
-            result = on_stop(sanic, loop)
+            result = on_stop(loop)
             if isawaitable(result):
                 loop.run_until_complete(result)
 
         # Wait for event loop to finish and all connections to drain
-        server_loop.close()
+        http_server.close()
+        loop.run_until_complete(http_server.wait_closed())
+
+        # Complete all tasks on the loop
+        signal.stopped = True
+        while connections:
+            loop.run_until_complete(asyncio.sleep(0.1))
+
         loop.close()
+        log.info("Server Stopped")

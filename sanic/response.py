@@ -31,14 +31,19 @@ class HTTPResponse:
 
         self.status = status
 
-    def output(self, version="1.1", keep_alive=False):
+    def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
         # We tried to make this as fast as possible in pure python
+        additional_headers = []
+        if keep_alive and not keep_alive_timeout is None:
+            additional_headers = [b'Keep-Alive: timeout=', str(keep_alive_timeout).encode(), b's\r\n']
+
         return b''.join([
             'HTTP/{} {} {}\r\n'.format(version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode(),
             b'Content-Type: ', self.content_type.encode(), b'\r\n',
             b'Content-Length: ', str(len(self.body)).encode(), b'\r\n',
             b'Connection: ', ('keep-alive' if keep_alive else 'close').encode(), b'\r\n',
+            ] + additional_headers + [
             b'\r\n',
             self.body,
         ])

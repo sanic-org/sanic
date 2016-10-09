@@ -1,4 +1,5 @@
-LOGO = """
+class Config:
+    LOGO = """
                  ▄▄▄▄▄
         ▀▀▀██████▄▄▄       _______________
       ▄▄▄▄▄  █████████▄  /                 \\
@@ -19,3 +20,5 @@ LOGO = """
 ▌     ▐                ▀▀▄▄▄▀
  ▀▀▄▄▀
 """
+    REQUEST_MAX_SIZE = 100000000 # 100 megababies
+    KEEP_ALIVE_TIMEOUT = 60 # 60 seconds

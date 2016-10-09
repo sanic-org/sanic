@@ -6,6 +6,7 @@ class Request:
     __slots__ = ('url', 'headers', 'version', 'method', 'query_string', 'body', 'parsed_json', 'parsed_args')
 
     def __init__(self, url_bytes, headers, version, method):
+        # TODO: Content-Encoding detection
         url_parsed = parse_url(url_bytes)
         self.url = url_parsed.path.decode('utf-8')
         self.headers = headers
@@ -37,4 +38,6 @@ class Request:
             else:
                 self.parsed_args = {}
 
-        return self.parsed_args 
+        return self.parsed_args
+
+    # TODO: Files

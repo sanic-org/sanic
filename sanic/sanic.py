@@ -1,8 +1,9 @@
-from .router import Router
+from .config import Config
 from .exceptions import Handler
-from .response import HTTPResponse
-from .server import serve
 from .log import log
+from .response import HTTPResponse
+from .router import Router
+from .server import serve
 
 class Sanic:
     name = None
@@ -15,6 +16,7 @@ class Sanic:
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or Handler()
+        self.config = Config()
 
     def route(self, uri):
         def response(handler):

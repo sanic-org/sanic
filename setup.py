@@ -14,7 +14,7 @@ setup(
     packages=['sanic'],
     platforms='any',
     install_requires=[
-        #'uvloop>=0.5.3',
+        'uvloop>=0.5.3',
         'httptools>=0.0.9',
         'ujson>=1.35',
     ],

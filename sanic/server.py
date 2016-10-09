@@ -78,10 +78,10 @@ class HttpProtocol(asyncio.Protocol):
         self.url = url
 
     def on_header(self, name, value):
-        if name == 'Content-Length' and int(value) > self.request_max_size:
+        if name == b'Content-Length' and int(value) > self.request_max_size:
             return self.bail_out("Request body too large ({}), connection closed".format(value))
 
-        self.headers.append((name, value.decode('utf-8')))
+        self.headers.append((name.decode(), value.decode('utf-8')))
 
     def on_headers_complete(self):
         self.request = Request(
@@ -122,15 +122,25 @@ class HttpProtocol(asyncio.Protocol):
         self.headers = None
         self._total_request_size = 0
 
-def serve(host, port, request_handler, on_start=None, on_stop=None, debug=False, request_timeout=60, request_max_size=None):
+    def close_if_idle(self):
+        """
+        Close the connection if a request is not being sent or received
+        :return: boolean - True if closed, false if staying open
+        """
+        if not self.parser:
+            self.transport.close()
+            return True
+        return False
+
+def serve(host, port, request_handler, before_start=None, before_stop=None, debug=False, request_timeout=60, request_max_size=None):
     # Create Event Loop
     loop = async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.set_debug(debug)
 
     # Run the on_start function if provided
-    if on_start:
-        result = on_start(loop)
+    if before_start:
+        result = before_start(loop)
         if isawaitable(result):
             loop.run_until_complete(result)
 
@@ -154,8 +164,8 @@ def serve(host, port, request_handler, on_start=None, on_stop=None, debug=False,
         log.info("Stop requested, draining connections...")
 
         # Run the on_stop function if provided
-        if on_stop:
-            result = on_stop(loop)
+        if before_stop:
+            result = before_stop(loop)
             if isawaitable(result):
                 loop.run_until_complete(result)
 
@@ -165,6 +175,9 @@ def serve(host, port, request_handler, on_start=None, on_stop=None, debug=False,
 
         # Complete all tasks on the loop
         signal.stopped = True
+        for connection in connections.keys():
+            connection.close_if_idle()
+
         while connections:
             loop.run_until_complete(asyncio.sleep(0.1))
 

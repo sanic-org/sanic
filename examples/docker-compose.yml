@@ -1,0 +1,6 @@
+version: '2'
+services:
+  sanic:
+    build: .
+    ports:
+      - "8000:8000"

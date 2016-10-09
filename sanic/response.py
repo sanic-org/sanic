@@ -10,7 +10,7 @@ STATUS_CODES = {
     402: 'Payment Required',
     403: 'Forbidden',
     404: 'Not Found',
-    400: 'Method Not Allowed',
+    405: 'Method Not Allowed',
     500: 'Internal Server Error',
     501: 'Not Implemented',
     502: 'Bad Gateway',
@@ -19,9 +19,9 @@ STATUS_CODES = {
 }
 
 class HTTPResponse:
-    __slots__ = ('body', 'status', 'content_type')
+    __slots__ = ('body', 'status', 'content_type', 'headers')
 
-    def __init__(self, body=None, status=200, content_type='text/plain', body_bytes=b''):
+    def __init__(self, body=None, status=200, headers=[], content_type='text/plain', body_bytes=b''):
         self.content_type = content_type
 
         if not body is None:
@@ -30,6 +30,7 @@ class HTTPResponse:
             self.body = body_bytes
 
         self.status = status
+        self.headers = headers
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
@@ -37,6 +38,9 @@ class HTTPResponse:
         additional_headers = []
         if keep_alive and not keep_alive_timeout is None:
             additional_headers = [b'Keep-Alive: timeout=', str(keep_alive_timeout).encode(), b's\r\n']
+        if self.headers:
+            for name, value in self.headers.items():
+                additional_headers.append('{}: {}\r\n'.format(name, value).encode('utf-8'))
 
         return b''.join([
             'HTTP/{} {} {}\r\n'.format(version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode(),
@@ -48,9 +52,9 @@ class HTTPResponse:
             self.body,
         ])
 
-def json(body, status=200):
-    return HTTPResponse(ujson.dumps(body), status=status, content_type="application/json")
-def text(body, status=200):
-    return HTTPResponse(body, status=status, content_type="text/plain")
-def html(body, status=200):
-    return HTTPResponse(body, status=status, content_type="text/html")
+def json(body, status=200, headers=None):
+    return HTTPResponse(ujson.dumps(body), headers=headers, status=status, content_type="application/json")
+def text(body, status=200, headers=None):
+    return HTTPResponse(body, status=status, headers=headers, content_type="text/plain")
+def html(body, status=200, headers=None):
+    return HTTPResponse(body, status=status, headers=headers, content_type="text/html")

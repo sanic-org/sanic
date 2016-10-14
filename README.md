@@ -51,7 +51,6 @@ app.run(host="0.0.0.0", port=8000)
 
 ## Limitations:
  * No wheels for uvloop and httptools on Windows :(
- * Can only run on 1 cpu per worker
 
 ## Final Thoughts:
 

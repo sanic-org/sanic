@@ -97,21 +97,21 @@ class Sanic:
         """
         try:
             # Middleware process_request
-            response = None
+            response = False
             # The if improves speed.  I don't know why
             if self.request_middleware:
                 for middleware in self.request_middleware:
                     response = middleware(request)
                     if isawaitable(response):
                         response = await response
-                    if response is not None:
+                    if response:
                         break
 
             # No middleware results
-            if response is None:
+            if not response:
                 # Fetch handler from router
                 handler, args, kwargs = self.router.get(request)
-                if handler is None:
+                if not handler:
                     raise ServerError("'None' was returned while requesting a handler from the router")
 
                 # Run response handler
@@ -125,7 +125,7 @@ class Sanic:
                         _response = middleware(request, response)
                         if isawaitable(_response):
                             _response = await _response
-                        if _response is not None:
+                        if _response:
                             response = _response
                             break
 

@@ -35,9 +35,9 @@ app.run(host="0.0.0.0", port=8000)
 
 ## Documentation
  * [Getting started](docs/getting_started.md)
+ * [Request Data](docs/request_data.md)
  * [Routing](docs/routing.md)
  * [Middleware](docs/routing.md)
- * [Request Data](docs/request_data.md)
  * [Exceptions](docs/exceptions.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)

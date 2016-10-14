@@ -1,5 +1,6 @@
 import asyncio
 from inspect import isawaitable
+from signal import SIGINT, SIGTERM
 
 import httptools
 try:
@@ -132,17 +133,13 @@ class HttpProtocol(asyncio.Protocol):
             return True
         return False
 
-def serve(host, port, request_handler, before_start=None, before_stop=None, debug=False, request_timeout=60, request_max_size=None):
+def serve(host, port, request_handler, after_start=None, before_stop=None, debug=False, request_timeout=60, request_max_size=None):
     # Create Event Loop
     loop = async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.set_debug(debug)
-
-    # Run the on_start function if provided
-    if before_start:
-        result = before_start(loop)
-        if isawaitable(result):
-            loop.run_until_complete(result)
+    # I don't think we take advantage of this
+    # And it slows everything waaayyy down
+    #loop.set_debug(debug)
 
     connections = {}
     signal = Signal()
@@ -156,10 +153,18 @@ def serve(host, port, request_handler, before_start=None, before_stop=None, debu
     ), host, port)
     http_server = loop.run_until_complete(server_coroutine)
 
+    # Run the on_start function if provided
+    if after_start:
+        result = after_start(loop)
+        if isawaitable(result):
+            loop.run_until_complete(result)
+
+    # Register signals for graceful termination
+    for _signal in (SIGINT, SIGTERM):
+        loop.add_signal_handler(_signal, loop.stop)
+
     try:
         loop.run_forever()
-    except Exception:
-        pass
     finally:
         log.info("Stop requested, draining connections...")
 

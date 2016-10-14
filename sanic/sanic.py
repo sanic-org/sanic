@@ -1,30 +1,32 @@
+import asyncio
+from inspect import isawaitable
+from traceback import format_exc
+from types import FunctionType
+
 from .config import Config
 from .exceptions import Handler
 from .log import log, logging
+from .middleware import Middleware
 from .response import HTTPResponse
 from .router import Router
 from .server import serve
 from .exceptions import ServerError
-from inspect import isawaitable
-from traceback import format_exc
 
 class Sanic:
-    name = None
-    debug = None
-    router = None
-    error_handler = None
-    routes = []
-
     def __init__(self, name, router=None, error_handler=None):
         self.name = name
         self.router = router or Router()
+        self.router = router or Router()
         self.error_handler = error_handler or Handler(self)
         self.config = Config()
+        self.request_middleware = []
+        self.response_middleware = []
 
     # -------------------------------------------------------------------- #
-    # Decorators
+    # Registration
     # -------------------------------------------------------------------- #
 
+    # Decorator
     def route(self, uri, methods=None):
         """
         Decorates a function to be registered as a route
@@ -38,6 +40,7 @@ class Sanic:
 
         return response
 
+    # Decorator
     def exception(self, *exceptions):
         """
         Decorates a function to be registered as a route
@@ -52,6 +55,34 @@ class Sanic:
 
         return response
 
+    # Decorator
+    def middleware(self, *args, **kwargs):
+        """
+        Decorates and registers middleware to be called before a request
+        can either be called as @app.middleware or @app.middleware('request')
+        """
+        middleware = None
+        attach_to = 'request'
+        def register_middleware(middleware):
+            if attach_to == 'request':
+                self.request_middleware.append(middleware)
+            if attach_to == 'response':
+                self.response_middleware.append(middleware)
+            return middleware
+
+        # Detect which way this was called, @middleware or @middleware('AT')
+        if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
+            return register_middleware(args[0])
+        else:
+            attach_to = args[0]
+            log.info(attach_to)
+            return register_middleware
+
+        if isinstance(middleware, FunctionType):
+            middleware = Middleware(process_request=middleware)
+
+        return middleware
+
     # -------------------------------------------------------------------- #
     # Request Handling
     # -------------------------------------------------------------------- #
@@ -65,13 +96,35 @@ class Sanic:
         :return: Nothing
         """
         try:
-            handler, args, kwargs = self.router.get(request)
-            if handler is None:
-                raise ServerError("'None' was returned while requesting a handler from the router")
+            # Middleware process_request
+            response = None
+            for middleware in self.request_middleware:
+                response = middleware(request)
+                if isawaitable(response):
+                    response = await response
+                if response is not None:
+                    break
 
-            response = handler(request, *args, **kwargs)
-            if isawaitable(response):
-                response = await response
+            # No middleware results
+            if response is None:
+                # Fetch handler from router
+                handler, args, kwargs = self.router.get(request)
+                if handler is None:
+                    raise ServerError("'None' was returned while requesting a handler from the router")
+
+                # Run response handler
+                response = handler(request, *args, **kwargs)
+                if isawaitable(response):
+                    response = await response
+
+                # Middleware process_response
+                for middleware in self.response_middleware:
+                    _response = middleware(request, response)
+                    if isawaitable(_response):
+                        _response = await _response
+                    if _response is not None:
+                        response = _response
+                        break
 
         except Exception as e:
             try:
@@ -90,14 +143,14 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None, before_stop=None):
+    def run(self, host="127.0.0.1", port=8000, debug=False, after_start=None, before_stop=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term signal.
         On termination, drains connections before closing.
         :param host: Address to host on
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
-        :param before_start: Function to be executed after the event loop is created and before the server starts
+        :param after_start: Function to be executed after the server starts listening
         :param before_stop: Function to be executed when a stop signal is received before it is respected
         :return: Nothing
         """
@@ -116,7 +169,7 @@ class Sanic:
                 host=host,
                 port=port,
                 debug=debug,
-                before_start=before_start,
+                after_start=after_start,
                 before_stop=before_stop,
                 request_handler=self.handle_request,
                 request_timeout=self.config.REQUEST_TIMEOUT,
@@ -124,3 +177,9 @@ class Sanic:
             )
         except:
             pass
+
+    def stop(self):
+        """
+        This kills the Sanic
+        """
+        asyncio.get_event_loop().stop()

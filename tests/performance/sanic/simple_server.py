@@ -14,4 +14,8 @@ app = Sanic("test")
 async def test(request):
     return json({ "test": True })
 
-app.run(host="0.0.0.0", port=sys.argv[1])
+@app.route("/file")
+async def test(request):
+    return json({ "test": True, "files": request.files, "fields": request.form })
+
+app.run(host="0.0.0.0", port=sys.argv[1], debug=True)

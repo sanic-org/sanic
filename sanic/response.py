@@ -53,8 +53,8 @@ class HTTPResponse:
         ])
 
 def json(body, status=200, headers=None):
-    return HTTPResponse(ujson.dumps(body), headers=headers, status=status, content_type="application/json")
+    return HTTPResponse(ujson.dumps(body), headers=headers, status=status, content_type="application/json; charset=utf-8")
 def text(body, status=200, headers=None):
-    return HTTPResponse(body, status=status, headers=headers, content_type="text/plain")
+    return HTTPResponse(body, status=status, headers=headers, content_type="text/plain; charset=utf-8")
 def html(body, status=200, headers=None):
-    return HTTPResponse(body, status=status, headers=headers, content_type="text/html")
+    return HTTPResponse(body, status=status, headers=headers, content_type="text/html; charset=utf-8")

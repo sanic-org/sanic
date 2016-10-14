@@ -75,7 +75,6 @@ class Sanic:
             return register_middleware(args[0])
         else:
             attach_to = args[0]
-            log.info(attach_to)
             return register_middleware
 
         if isinstance(middleware, FunctionType):

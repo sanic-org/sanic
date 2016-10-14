@@ -98,12 +98,14 @@ class Sanic:
         try:
             # Middleware process_request
             response = None
-            for middleware in self.request_middleware:
-                response = middleware(request)
-                if isawaitable(response):
-                    response = await response
-                if response is not None:
-                    break
+            # The if improves speed.  I don't know why
+            if self.request_middleware:
+                for middleware in self.request_middleware:
+                    response = middleware(request)
+                    if isawaitable(response):
+                        response = await response
+                    if response is not None:
+                        break
 
             # No middleware results
             if response is None:
@@ -118,13 +120,14 @@ class Sanic:
                     response = await response
 
                 # Middleware process_response
-                for middleware in self.response_middleware:
-                    _response = middleware(request, response)
-                    if isawaitable(_response):
-                        _response = await _response
-                    if _response is not None:
-                        response = _response
-                        break
+                if self.response_middleware:
+                    for middleware in self.response_middleware:
+                        _response = middleware(request, response)
+                        if isawaitable(_response):
+                            _response = await _response
+                        if _response is not None:
+                            response = _response
+                            break
 
         except Exception as e:
             try:

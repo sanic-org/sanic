@@ -21,5 +21,5 @@ app.run(host="0.0.0.0", port=8000, debug=True)
  * Run `python3 main.py`
 
 You now have a working sanic server!  To continue on, check out:
- * [Request Data](docs/request_data.md)
- * [Routing](docs/routing.md)
+ * [Request Data](request_data.md)
+ * [Routing](routing.md)

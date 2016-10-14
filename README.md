@@ -39,6 +39,7 @@ app.run(host="0.0.0.0", port=8000)
  * [Middleware](docs/routing.md)
  * [Request Data](docs/request_data.md)
  * [Exceptions](docs/exceptions.md)
+ * [Contributing](docs/contributing.md)
  * [License](LICENSE)
 
 ## TODO:

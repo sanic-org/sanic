@@ -29,7 +29,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True, *reques
 			exceptions.append(e)
 		app.stop()
 
-	app.run(host='0.0.0.0', port=42101, debug=True, after_start=_collect_response)
+	app.run(host=HOST, port=42101, after_start=_collect_response)
 
 	if exceptions:
 		raise ValueError("Exception during request: {}".format(exceptions))
@@ -39,7 +39,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True, *reques
 			request, response = results
 			return request, response
 		except:
-			raise ValueError("request and response object expected, got ({})".format(results[0].text))
+			raise ValueError("request and response object expected, got ({})".format(results))
 	else:
 		try:
 			return results[0]

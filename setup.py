@@ -10,7 +10,7 @@ setup(
     license='BSD',
     author='Channel Cat',
     author_email='channelcat@gmail.com',
-    description='A microframework based on uvloop and httptools',
+    description='A microframework based on uvloop, httptools, and learnings of flask',
     packages=['sanic'],
     platforms='any',
     install_requires=[

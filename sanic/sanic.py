@@ -111,7 +111,7 @@ class Sanic:
             if not response:
                 # Fetch handler from router
                 handler, args, kwargs = self.router.get(request)
-                if not handler:
+                if handler is None:
                     raise ServerError("'None' was returned while requesting a handler from the router")
 
                 # Run response handler

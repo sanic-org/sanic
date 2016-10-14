@@ -25,7 +25,7 @@ class HttpProtocol(asyncio.Protocol):
         self.loop = loop
         self.transport = None
         self.request = None
-        self.parser = False
+        self.parser = None
         self.url = None
         self.headers = None
         self.signal = signal
@@ -64,7 +64,8 @@ class HttpProtocol(asyncio.Protocol):
             return self.bail_out("Request too large ({}), connection closed".format(self._total_request_size))
 
         # Create parser if this is the first time we're receiving data
-        if not self.parser:
+        if self.parser is None:
+            assert self.request is None
             self.headers = []
             self.parser = httptools.HttpRequestParser(self)
 

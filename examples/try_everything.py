@@ -49,11 +49,11 @@ def query_string(request):
 # Run Server
 # ----------------------------------------------- #
 
-def before_start(loop):
+def after_start(loop):
     log.info("OH OH OH OH OHHHHHHHH")
 def before_stop(loop):
     log.info("TRIED EVERYTHING")
 
-app.run(host="0.0.0.0", port=8000, debug=True, before_start=before_start, before_stop=before_stop)
+app.run(host="0.0.0.0", port=8000, debug=True, after_start=after_start, before_stop=before_stop)
 
 

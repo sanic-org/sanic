@@ -17,7 +17,7 @@ All tests were run on a AWS medium instance running ubuntu, using 1 process.  Ea
 
 ## Hello World
 
-```
+```python
 from sanic import Sanic
 from sanic.response import json
 
@@ -48,6 +48,10 @@ app.run(host="0.0.0.0", port=8000)
  * Examples of integrations with 3rd-party modules
  * RESTful router
  * Blueprints?
+
+## Limitations:
+ * No wheels for uvloop and httptools on Windows :(
+ * Can only run on 1 cpu per worker
 
 ## Final Thoughts:
 

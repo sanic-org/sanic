@@ -39,7 +39,7 @@ def post_json(request):
 
 @app.route("/form")
 def post_json(request):
-    return json({ "received": True, "form_data": request.form, "penos": request.form.get('penos') })
+    return json({ "received": True, "form_data": request.form, "test": request.form.get('test') })
 
 @app.route("/query_string")
 def query_string(request):

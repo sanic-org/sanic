@@ -1,0 +1,32 @@
+# Routing
+
+Sanic comes with a basic router that supports request parameters.  To specify a parameter, surround it with carrots like so: <PARAM>.  Request parameters will be passed to the request handler functions as keyword arguments.  To specify a type, add a :type after the parameter name, in the carrots.  If the parameter does not match the type supplied, Sanic will throw a NotFound exception, resulting in a 404 page not found error.
+
+
+## Examples
+
+```python
+from sanic import Sanic
+from sanic.response import json
+
+@app.route('/tag/<tag>')
+async def person_handler(request, tag):
+	return text('Tag - {}'.format(tag))
+
+@app.route('/number/<integer_arg:int>')
+async def person_handler(request, integer_arg):
+	return text('Integer - {}'.format(integer_arg))
+
+@app.route('/number/<number_arg:number>')
+async def person_handler(request, number_arg):
+	return text('Number - {}'.format(number))
+
+@app.route('/person/<name:[A-Za-z]>')
+async def person_handler(request, person_id):
+	return text('Person - {}'.format(folder_id))
+
+@app.route('/folder/<folder_id:[A-Za-z0-9]{0,4}>')
+async def folder_handler(request, folder_id):
+	return text('Folder - {}'.format(folder_id))
+
+```

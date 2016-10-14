@@ -151,7 +151,14 @@ def serve(host, port, request_handler, after_start=None, before_stop=None, debug
         request_timeout=request_timeout,
         request_max_size=request_max_size,
     ), host, port)
-    http_server = loop.run_until_complete(server_coroutine)
+    try:
+        http_server = loop.run_until_complete(server_coroutine)
+    except OSError as e:
+        log.error("Unable to start server: {}".format(e))
+        return
+    except:
+        log.exception("Unable to start server")
+        return
 
     # Run the on_start function if provided
     if after_start:

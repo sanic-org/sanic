@@ -11,6 +11,10 @@ app = Sanic('__name__')
 
 @app.middleware
 async def halt_request(request):
+	print("I am a spy")
+
+@app.middleware('request')
+async def halt_request(request):
 	return text('I halted the request')
 
 @app.middleware('response')

@@ -7,7 +7,7 @@ Sanic comes with a basic router that supports request parameters.  To specify a 
 
 ```python
 from sanic import Sanic
-from sanic.response import json
+from sanic.response import text
 
 @app.route('/tag/<tag>')
 async def person_handler(request, tag):

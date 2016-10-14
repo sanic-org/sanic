@@ -1,6 +1,6 @@
 # Exceptions
 
-Check sanic.exceptions for a list of exceptions
+Exceptions can be thrown from within request handlers and will automatically be handled by Sanic.  Exceptions take a message as their first argument, and can also take a status_code to be passed back in the HTTP response.  Check sanic.exceptions for the full list of exceptions to throw.
 
 ## Throwing an exception
 

@@ -5,8 +5,8 @@ Make sure you have pip and python 3.5 before starting
 ## Benchmarks
  * Install Sanic
  * `python3 -m pip install git+https://github.com/channelcat/sanic/`
- * Edit main.py
- * ```python3
+ * Edit main.py to include:
+```python
 from sanic import Sanic
 from sanic.response import json
 

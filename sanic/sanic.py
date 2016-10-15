@@ -164,7 +164,7 @@ class Sanic:
         log.debug(self.config.LOGO)
 
         # Serve
-        log.info('Goin\' Fast @ {}:{}'.format(host, port))
+        log.info('Goin\' Fast @ http://{}:{}'.format(host, port))
 
         try:
             serve(

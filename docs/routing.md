@@ -1,6 +1,6 @@
 # Routing
 
-Sanic comes with a basic router that supports request parameters.  To specify a parameter, surround it with carrots like so: <PARAM>.  Request parameters will be passed to the request handler functions as keyword arguments.  To specify a type, add a :type after the parameter name, in the carrots.  If the parameter does not match the type supplied, Sanic will throw a NotFound exception, resulting in a 404 page not found error.
+Sanic comes with a basic router that supports request parameters.  To specify a parameter, surround it with carrots like so: `<PARAM>`.  Request parameters will be passed to the request handler functions as keyword arguments.  To specify a type, add a :type after the parameter name, in the carrots.  If the parameter does not match the type supplied, Sanic will throw a NotFound exception, resulting in a 404 page not found error.
 
 
 ## Examples

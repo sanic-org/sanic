@@ -18,7 +18,9 @@ STATUS_CODES = {
     504: 'Gateway Timeout',
 }
 
-
+"""
+Method for generating response from parameters/headers
+"""
 class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type', 'headers')
 
@@ -54,15 +56,24 @@ class HTTPResponse:
                             self.body,
                         ])
 
+"""
+Class used by router to send a response object back to the route middleware
+"""
+class Response:
+    def __init__(self, status=200, headers={}):
+        self.status = status
+        self.headers = headers
 
-def json(body, status=200, headers=None):
-    return HTTPResponse(ujson.dumps(body), headers=headers, status=status,
-                        content_type="application/json; charset=utf-8")
+    def add_headers(self, headers):
+        for name, value in headers.items():
+            self.headers[name] = value
 
+    def json(self, body):
+        return HTTPResponse(ujson.dumps(body), headers=self.headers, status=self.status,
+          content_type="application/json; charset=utf-8")
 
-def text(body, status=200, headers=None):
-    return HTTPResponse(body, status=status, headers=headers, content_type="text/plain; charset=utf-8")
+    def text(self, body):
+        return HTTPResponse(body, status=self.status, headers=self.headers, content_type="text/plain; charset=utf-8")
 
-
-def html(body, status=200, headers=None):
-    return HTTPResponse(body, status=status, headers=headers, content_type="text/html; charset=utf-8")
+    def html(self, body):
+        return HTTPResponse(body, status=self.status, headers=self.headers, content_type="text/html; charset=utf-8")

@@ -1,4 +1,4 @@
-from .response import text
+from .response import Response
 from traceback import format_exc
 
 
@@ -44,8 +44,8 @@ class Handler:
 
     def default(self, request, exception):
         if issubclass(type(exception), SanicException):
-            return text("Error: {}".format(exception), status=getattr(exception, 'status_code', 500))
+            return Response(status=getattr(exception, 'status_code', 500)).text("Error: {}".format(exception))
         elif self.sanic.debug:
-            return text("Error: {}\nException: {}".format(exception, format_exc()), status=500)
+            return Response(status=500).text("Error: {}\nException: {}".format(exception, format_exc()))
         else:
-            return text("An error occurred while generating the request", status=500)
+            return Response(status=500).text("An error occurred while generating the request")

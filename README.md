@@ -20,15 +20,16 @@ All tests were run on a AWS medium instance running ubuntu, using 1 process.  Ea
 
 ```python
 from sanic import Sanic
-from sanic.response import json
 
 app = Sanic(__name__)
 
 @app.route("/")
-async def test(request):
-    return json({ "hello": "world" })
+async def test(req, res):
+    res.add_headers({"hello":"world"})
+    return res.json({ "hello": "world" })
 
 app.run(host="0.0.0.0", port=8000)
+
 ```
 
 ## Installation
@@ -58,7 +59,7 @@ app.run(host="0.0.0.0", port=8000)
                      ▄▄▄▄▄
             ▀▀▀██████▄▄▄       _______________
           ▄▄▄▄▄  █████████▄  /                 \
-         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  | 
+         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
        ▀▀█████▄▄ ▀██████▄██ | _________________/
        ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
             ▀▀▀▄  ▀▀███ ▀       ▄▄

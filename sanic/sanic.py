@@ -7,7 +7,7 @@ from .config import Config
 from .exceptions import Handler
 from .log import log, logging
 from .middleware import Middleware
-from .response import HTTPResponse
+from .response import HTTPResponse, Response
 from .router import Router
 from .server import serve
 from .exceptions import ServerError
@@ -118,7 +118,7 @@ class Sanic:
                     raise ServerError("'None' was returned while requesting a handler from the router")
 
                 # Run response handler
-                response = handler(request, *args, **kwargs)
+                response = handler(request, Response(), *args, **kwargs)
                 if isawaitable(response):
                     response = await response
 

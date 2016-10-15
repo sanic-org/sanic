@@ -3,6 +3,7 @@ from inspect import isawaitable
 from signal import SIGINT, SIGTERM
 
 import httptools
+
 try:
     import uvloop as async_loop
 except:
@@ -11,17 +12,19 @@ except:
 from .log import log
 from .request import Request
 
+
 class Signal:
     stopped = False
 
+
 class HttpProtocol(asyncio.Protocol):
+    __slots__ = ('loop', 'transport', 'connections', 'signal',  # event loop, connection
+                 'parser', 'request', 'url', 'headers',  # request params
+                 'request_handler', 'request_timeout', 'request_max_size',  # request config
+                 '_total_request_size', '_timeout_handler')  # connection management
 
-    __slots__ = ('loop', 'transport', 'connections', 'signal', # event loop, connection
-                 'parser', 'request', 'url', 'headers', # request params
-                 'request_handler', 'request_timeout', 'request_max_size', # request config
-                 '_total_request_size',  '_timeout_handler') # connection management
-
-    def __init__(self, *, loop, request_handler, signal=Signal(), connections={}, request_timeout=60, request_max_size=None):
+    def __init__(self, *, loop, request_handler, signal=Signal(), connections={}, request_timeout=60,
+                 request_max_size=None):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -37,6 +40,7 @@ class HttpProtocol(asyncio.Protocol):
         self._timeout_handler = None
 
         # -------------------------------------------- #
+
     # Connection
     # -------------------------------------------- #
 
@@ -51,9 +55,10 @@ class HttpProtocol(asyncio.Protocol):
         self.cleanup()
 
     def connection_timeout(self):
-        self.bail_out("Request timed out, connection closed")  
+        self.bail_out("Request timed out, connection closed")
 
-    # -------------------------------------------- #
+        # -------------------------------------------- #
+
     # Parsing
     # -------------------------------------------- #
 
@@ -86,7 +91,7 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_headers_complete(self):
         self.request = Request(
-            url_bytes=self.url, 
+            url_bytes=self.url,
             headers=dict(self.headers),
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode()
@@ -94,6 +99,7 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_body(self, body):
         self.request.body = body
+
     def on_message_complete(self):
         self.loop.create_task(self.request_handler(self.request, self.write_response))
 
@@ -133,20 +139,22 @@ class HttpProtocol(asyncio.Protocol):
             return True
         return False
 
-def serve(host, port, request_handler, after_start=None, before_stop=None, debug=False, request_timeout=60, request_max_size=None):
+
+def serve(host, port, request_handler, after_start=None, before_stop=None, debug=False, request_timeout=60,
+          request_max_size=None):
     # Create Event Loop
     loop = async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
     # I don't think we take advantage of this
     # And it slows everything waaayyy down
-    #loop.set_debug(debug)
+    # loop.set_debug(debug)
 
     connections = {}
     signal = Signal()
     server_coroutine = loop.create_server(lambda: HttpProtocol(
         loop=loop,
-        connections = connections,
-        signal = signal,
+        connections=connections,
+        signal=signal,
         request_handler=request_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,

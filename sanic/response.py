@@ -18,6 +18,7 @@ STATUS_CODES = {
     504: 'Gateway Timeout',
 }
 
+
 class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type', 'headers')
 
@@ -43,18 +44,25 @@ class HTTPResponse:
                 additional_headers.append('{}: {}\r\n'.format(name, value).encode('utf-8'))
 
         return b''.join([
-            'HTTP/{} {} {}\r\n'.format(version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode(),
-            b'Content-Type: ', self.content_type.encode(), b'\r\n',
-            b'Content-Length: ', str(len(self.body)).encode(), b'\r\n',
-            b'Connection: ', ('keep-alive' if keep_alive else 'close').encode(), b'\r\n',
-            ] + additional_headers + [
-            b'\r\n',
-            self.body,
-        ])
+                            'HTTP/{} {} {}\r\n'.format(version, self.status,
+                                                       STATUS_CODES.get(self.status, 'FAIL')).encode(),
+                            b'Content-Type: ', self.content_type.encode(), b'\r\n',
+                            b'Content-Length: ', str(len(self.body)).encode(), b'\r\n',
+                            b'Connection: ', ('keep-alive' if keep_alive else 'close').encode(), b'\r\n',
+                        ] + additional_headers + [
+                            b'\r\n',
+                            self.body,
+                        ])
+
 
 def json(body, status=200, headers=None):
-    return HTTPResponse(ujson.dumps(body), headers=headers, status=status, content_type="application/json; charset=utf-8")
+    return HTTPResponse(ujson.dumps(body), headers=headers, status=status,
+                        content_type="application/json; charset=utf-8")
+
+
 def text(body, status=200, headers=None):
     return HTTPResponse(body, status=status, headers=headers, content_type="text/plain; charset=utf-8")
+
+
 def html(body, status=200, headers=None):
     return HTTPResponse(body, status=status, headers=headers, content_type="text/html; charset=utf-8")

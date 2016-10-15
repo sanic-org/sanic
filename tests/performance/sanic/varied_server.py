@@ -3,7 +3,7 @@ import os
 import inspect
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-sys.path.insert(0,currentdir + '/../../../') 
+sys.path.insert(0, currentdir + '/../../../')
 
 from sanic import Sanic
 from sanic.response import json, text
@@ -11,36 +11,44 @@ from sanic.exceptions import ServerError
 
 app = Sanic("test")
 
+
 @app.route("/")
 async def test(request):
-    return json({ "test": True })
-    
+    return json({"test": True})
+
+
 @app.route("/sync", methods=['GET', 'POST'])
 def test(request):
-    return json({ "test": True })
+    return json({"test": True})
 
 
 @app.route("/text/<name>/<butt:int>")
 def rtext(request, name, butt):
     return text("yeehaww {} {}".format(name, butt))
 
+
 @app.route("/exception")
 def exception(request):
     raise ServerError("yep")
+
 
 @app.route("/exception/async")
 async def test(request):
     raise ServerError("asunk")
 
+
 @app.route("/post_json")
 def post_json(request):
-    return json({ "received": True, "message": request.json })
+    return json({"received": True, "message": request.json})
+
 
 @app.route("/query_string")
 def query_string(request):
-    return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
+    return json({"parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string})
+
 
 import sys
+
 app.run(host="0.0.0.0", port=sys.argv[1])
 
 
@@ -55,7 +63,7 @@ app.run(host="0.0.0.0", port=sys.argv[1])
 #     for n in range(30):
 #         connection = await asyncio_redis.Connection.create(host='192.168.99.100', port=6379)
 #         sanic.redis.append(connection)
-        
+
 
 # c=0
 # @app.route("/postgres")

@@ -5,6 +5,7 @@ from .exceptions import NotFound, InvalidUsage
 Route = namedtuple("Route", ['handler', 'methods', 'pattern', 'parameters'])
 Parameter = namedtuple("Parameter", ['name', 'cast'])
 
+
 class Router:
     """
     Router supports basic routing with parameters and method checks
@@ -42,9 +43,10 @@ class Router:
         """
 
         # Dict for faster lookups of if method allowed
-        methods_dict = { method: True for method in methods } if methods else None
+        methods_dict = {method: True for method in methods} if methods else None
 
         parameters = []
+
         def add_parameter(match):
             # We could receive NAME or NAME:PATTERN
             parts = match.group(1).split(':')
@@ -93,10 +95,12 @@ class Router:
 
         if route:
             if route.methods and not request.method in route.methods:
-                raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url), status_code=405)
+                raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url),
+                                   status_code=405)
             return route.handler, args, kwargs
         else:
             raise NotFound("Requested URL {} not found".format(request.url))
+
 
 class SimpleRouter:
     """
@@ -110,14 +114,15 @@ class SimpleRouter:
 
     def add(self, uri, methods, handler):
         # Dict for faster lookups of method allowed
-        methods_dict = { method: True for method in methods } if methods else None
+        methods_dict = {method: True for method in methods} if methods else None
         self.routes[uri] = Route(handler=handler, methods=methods_dict, pattern=uri, parameters=None)
 
     def get(self, request):
         route = self.routes.get(request.url)
         if route:
             if route.methods and not request.method in route.methods:
-                raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url), status_code=405)
+                raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url),
+                                   status_code=405)
             return route.handler, [], {}
         else:
             raise NotFound("Requested URL {} not found".format(request.url))

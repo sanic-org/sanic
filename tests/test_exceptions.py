@@ -49,5 +49,3 @@ def test_invalid_usage_exception():
 def test_not_found_exception():
     request, response = sanic_endpoint_test(exception_app, uri='/404')
     assert response.status == 404
-
-

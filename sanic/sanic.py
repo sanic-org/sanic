@@ -12,6 +12,7 @@ from .router import Router
 from .server import serve
 from .exceptions import ServerError
 
+
 class Sanic:
     def __init__(self, name, router=None, error_handler=None):
         self.name = name
@@ -34,6 +35,7 @@ class Sanic:
         :param methods: list or tuple of methods allowed
         :return: decorated function
         """
+
         def response(handler):
             self.router.add(uri=uri, methods=methods, handler=handler)
             return handler
@@ -48,6 +50,7 @@ class Sanic:
         :param methods: list or tuple of methods allowed
         :return: decorated function
         """
+
         def response(handler):
             for exception in exceptions:
                 self.error_handler.add(exception, handler)
@@ -63,6 +66,7 @@ class Sanic:
         """
         middleware = None
         attach_to = 'request'
+
         def register_middleware(middleware):
             if attach_to == 'request':
                 self.request_middleware.append(middleware)
@@ -156,7 +160,7 @@ class Sanic:
         :param before_stop: Function to be executed when a stop signal is received before it is respected
         :return: Nothing
         """
-        self.error_handler.debug=True
+        self.error_handler.debug = True
         self.debug = debug
 
         if debug:

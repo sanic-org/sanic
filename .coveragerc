@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = sanic, tests
+omit = site-packages
+
+[html]
+directory = coverage

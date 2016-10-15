@@ -1,0 +1,7 @@
+httptools
+ujson
+uvloop
+aiohttp
+pytest
+coverage
+tox

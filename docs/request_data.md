@@ -4,10 +4,10 @@
 
 The following request variables are accessible as properties:
 
-request.files (dictionary of File objects) - List of files that have a name, body, and type
-request.json (any) - JSON body
-request.args (dict) - Query String variables.  Use getlist to get multiple of the same name
-request.form (dict) - Posted form variables.  Use getlist to get multiple of the same name
+`request.files` (dictionary of File objects) - List of files that have a name, body, and type  
+`request.json` (any) - JSON body  
+`request.args` (dict) - Query String variables.  Use getlist to get multiple of the same name  
+`request.form` (dict) - Posted form variables.  Use getlist to get multiple of the same name  
 
 See request.py for more information
 

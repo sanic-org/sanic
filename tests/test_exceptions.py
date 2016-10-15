@@ -1,72 +1,53 @@
-from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import text
 from sanic.exceptions import InvalidUsage, ServerError, NotFound
-from helpers import sanic_endpoint_test
+from sanic.utils import sanic_endpoint_test
 
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
 
-def test_exception_response():
-	app = Sanic('test_text')
+exception_app = Sanic('test_exceptions')
 
-	@app.route('/')
-	def handler(request):
-		return text('OK')
 
-	@app.route('/error')
-	def handler_error(request):
-		raise ServerError("OK")
+@exception_app.route('/')
+def handler(request):
+    return text('OK')
 
-	@app.route('/404')
-	def handler_404(request):
-		raise NotFound("OK")
 
-	@app.route('/invalid')
-	def handler_invalid(request):
-		raise InvalidUsage("OK")
+@exception_app.route('/error')
+def handler_error(request):
+    raise ServerError("OK")
 
-	request, response = sanic_endpoint_test(app)
-	assert response.status == 200
-	assert response.text == 'OK'
 
-	request, response = sanic_endpoint_test(app, uri='/error')
-	assert response.status == 500
+@exception_app.route('/404')
+def handler_404(request):
+    raise NotFound("OK")
 
-	request, response = sanic_endpoint_test(app, uri='/invalid')
-	assert response.status == 400
 
-	request, response = sanic_endpoint_test(app, uri='/404')
-	assert response.status == 404
+@exception_app.route('/invalid')
+def handler_invalid(request):
+    raise InvalidUsage("OK")
 
-def test_exception_handler():
-	app = Sanic('test_text')
 
-	@app.route('/1')
-	def handler_1(request):
-		raise InvalidUsage("OK")
-	@app.route('/2')
-	def handler_2(request):
-		raise ServerError("OK")
-	@app.route('/3')
-	def handler_3(request):
-		raise NotFound("OK")
+def test_no_exception():
+    request, response = sanic_endpoint_test(exception_app)
+    assert response.status == 200
+    assert response.text == 'OK'
 
-	@app.exception(NotFound, ServerError)
-	def handler_exception(request, exception):
-		return text("OK")
 
-	request, response = sanic_endpoint_test(app, uri='/1')
-	assert response.status == 400
+def test_server_error_exception():
+    request, response = sanic_endpoint_test(exception_app, uri='/error')
+    assert response.status == 500
 
-	request, response = sanic_endpoint_test(app, uri='/2')
-	assert response.status == 200
-	assert response.text == 'OK'
 
-	request, response = sanic_endpoint_test(app, uri='/3')
-	assert response.status == 200
+def test_invalid_usage_exception():
+    request, response = sanic_endpoint_test(exception_app, uri='/invalid')
+    assert response.status == 400
 
-	request, response = sanic_endpoint_test(app, uri='/random')
-	assert response.status == 200
-	assert response.text == 'OK'
+
+def test_not_found_exception():
+    request, response = sanic_endpoint_test(exception_app, uri='/404')
+    assert response.status == 404
+
+

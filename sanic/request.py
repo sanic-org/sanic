@@ -6,19 +6,24 @@ from ujson import loads as json_loads
 
 from .log import log
 
+
 class RequestParameters(dict):
     """
     Hosts a dict with lists as values where get returns the first
     value of the list and getlist returns the whole shebang
     """
+
     def __init__(self, *args, **kwargs):
         self.super = super()
         self.super.__init__(*args, **kwargs)
+
     def get(self, name, default=None):
         values = self.super.get(name)
         return values[0] if values else default
+
     def getlist(self, name, default=None):
         return self.super.get(name, default)
+
 
 class Request:
     __slots__ = (
@@ -75,7 +80,7 @@ class Request:
     @property
     def files(self):
         if self.parsed_files is None:
-            _ = self.form # compute form to get files
+            _ = self.form  # compute form to get files
 
         return self.parsed_files
 
@@ -89,7 +94,10 @@ class Request:
 
         return self.parsed_args
 
+
 File = namedtuple('File', ['type', 'body', 'name'])
+
+
 def parse_multipart_form(body, boundary):
     """
     Parses a request body and returns fields and files
@@ -117,7 +125,7 @@ def parse_multipart_form(body, boundary):
 
             colon_index = form_line.index(':')
             form_header_field = form_line[0:colon_index]
-            form_header_value, form_parameters = parse_header(form_line[colon_index+2:])
+            form_header_value, form_parameters = parse_header(form_line[colon_index + 2:])
 
             if form_header_field == 'Content-Disposition':
                 if 'filename' in form_parameters:
@@ -125,7 +133,6 @@ def parse_multipart_form(body, boundary):
                 field_name = form_parameters.get('name')
             elif form_header_field == 'Content-Type':
                 file_type = form_header_value
-
 
         post_data = form_part[line_index:-4]
         if file_name or file_type:

@@ -22,6 +22,8 @@ class Sanic:
         self.config = Config()
         self.request_middleware = []
         self.response_middleware = []
+        self.blueprints = {}
+        self._blueprint_order = []
 
     # -------------------------------------------------------------------- #
     # Registration
@@ -85,6 +87,24 @@ class Sanic:
             middleware = Middleware(process_request=middleware)
 
         return middleware
+
+    def register_blueprint(self, blueprint, **options):
+        """
+        Registers a blueprint on the application.
+        :param blueprint: Blueprint object
+        :param options: option dictionary with blueprint defaults
+        :return: Nothing
+        """
+        if blueprint.name in self.blueprints:
+            assert self.blueprints[blueprint.name] is blueprint, \
+                'A blueprint\'s name collision occurred between %r and ' \
+                '%r.  Both share the same name "%s". ' % \
+                (blueprint, self.blueprints[blueprint.name], blueprint.name)
+        else:
+            self.blueprints[blueprint.name] = blueprint
+            self._blueprint_order.append(blueprint)
+        blueprint.register(self, options)
+
 
     # -------------------------------------------------------------------- #
     # Request Handling

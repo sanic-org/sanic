@@ -17,7 +17,6 @@ class Sanic:
     def __init__(self, name, router=None, error_handler=None):
         self.name = name
         self.router = router or Router()
-        self.router = router or Router()
         self.error_handler = error_handler or Handler(self)
         self.config = Config()
         self.request_middleware = []

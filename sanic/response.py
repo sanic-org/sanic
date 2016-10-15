@@ -1,7 +1,4 @@
 import ujson
-import httptools
-from ujson import loads as json_loads
-from urllib.parse import parse_qs
 
 STATUS_CODES = {
     200: 'OK',

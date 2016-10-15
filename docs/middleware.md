@@ -7,7 +7,7 @@ Middleware is registered via the middleware decorator, and can either be added a
 ## Examples
 
 ```python
-app = Sanic('__name__')
+app = Sanic(__name__)
 
 @app.middleware
 async def halt_request(request):

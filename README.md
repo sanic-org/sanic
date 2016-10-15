@@ -13,6 +13,7 @@ All tests were run on a AWS medium instance running ubuntu, using 1 process.  Ea
 | Sanic   | Python 3.5 + uvloop |       29,128 |      3.40ms |
 | Falcon  | gunicorn + meinheld |       18,972 |      5.27ms |
 | Flask   | gunicorn + meinheld |        4,988 |     20.08ms |
+| Aiohttp | Python 3.5 + uvloop |        2,974 |     33.49ms |
 
 ## Hello World
 

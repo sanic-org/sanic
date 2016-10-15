@@ -21,11 +21,11 @@ async def person_handler(request, integer_arg):
 async def person_handler(request, number_arg):
 	return text('Number - {}'.format(number))
 
-@app.route('/person/<name:[A-Za-z]>')
-async def person_handler(request, person_id):
-	return text('Person - {}'.format(folder_id))
+@app.route('/person/<name:[A-z]>')
+async def person_handler(request, name):
+	return text('Person - {}'.format(name))
 
-@app.route('/folder/<folder_id:[A-Za-z0-9]{0,4}>')
+@app.route('/folder/<folder_id:[A-z0-9]{0,4}>')
 async def folder_handler(request, folder_id):
 	return text('Folder - {}'.format(folder_id))
 

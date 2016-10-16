@@ -7,3 +7,4 @@ coverage
 tox
 gunicorn
 bottle
+kyoukai

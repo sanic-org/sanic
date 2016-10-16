@@ -1,3 +1,5 @@
+# Run with: gunicorn --workers=1 --worker-class=meinheld.gmeinheld.MeinheldWorker -b :8000 simple_server:app
+import bottle
 from bottle import route, run
 import ujson
 
@@ -6,5 +8,4 @@ import ujson
 def index():
     return ujson.dumps({'test': True})
 
-
-run(server='gunicorn', host='0.0.0.0', port=8080)
+app = bottle.default_app()

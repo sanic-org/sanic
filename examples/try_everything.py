@@ -25,6 +25,12 @@ def test_params(request, name, id):
 def exception(request):
     raise ServerError("It's dead jim")
 
+@app.route("/await")
+async def test_await(request):
+    import asyncio
+    await asyncio.sleep(5)
+    return text("I'm feeling sleepy")
+
 
 # ----------------------------------------------- #
 # Exceptions

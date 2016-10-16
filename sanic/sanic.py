@@ -19,6 +19,8 @@ class Sanic:
         self.config = Config()
         self.request_middleware = []
         self.response_middleware = []
+        self.blueprints = {}
+        self._blueprint_order = []
 
     # -------------------------------------------------------------------- #
     # Registration
@@ -77,6 +79,23 @@ class Sanic:
         else:
             attach_to = args[0]
             return register_middleware
+
+    def register_blueprint(self, blueprint, **options):
+        """
+        Registers a blueprint on the application.
+        :param blueprint: Blueprint object
+        :param options: option dictionary with blueprint defaults
+        :return: Nothing
+        """
+        if blueprint.name in self.blueprints:
+            assert self.blueprints[blueprint.name] is blueprint, \
+                'A blueprint with the name "%s" is already registered.  ' \
+                'Blueprint names must be unique.' % \
+                (blueprint.name,)
+        else:
+            self.blueprints[blueprint.name] = blueprint
+            self._blueprint_order.append(blueprint)
+        blueprint.register(self, options)
 
     # -------------------------------------------------------------------- #
     # Request Handling

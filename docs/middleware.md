@@ -1,6 +1,6 @@
 # Middleware
 
-Middleware can be executed before or after requests.  It is executed in the order it was registered.  If middleware return a reponse object, the request will stop processing and a response will be returned.
+Middleware can be executed before or after requests.  It is executed in the order it was registered.  If middleware return a response object, the request will stop processing and a response will be returned.
 
 Middleware is registered via the middleware decorator, and can either be added as 'request' or 'response' middleware, based on the argument provided in the decorator.  Response middleware receives both the request and the response as arguments.
 

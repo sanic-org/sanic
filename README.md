@@ -40,6 +40,7 @@ app.run(host="0.0.0.0", port=8000)
  * [Routing](docs/routing.md)
  * [Middleware](docs/middleware.md)
  * [Exceptions](docs/exceptions.md)
+ * [Blueprints](docs/blueprints.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)
 
@@ -48,7 +49,6 @@ app.run(host="0.0.0.0", port=8000)
  * File output
  * Examples of integrations with 3rd-party modules
  * RESTful router
- * Blueprints?
 
 ## Limitations:
  * No wheels for uvloop and httptools on Windows :(

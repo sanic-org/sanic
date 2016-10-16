@@ -5,7 +5,7 @@ from sanic.response import json, text
 
 app = Sanic(__name__)
 blueprint = Blueprint('name', url_prefix='/my_blueprint')
-blueprint2 = Blueprint('name2', url_prefix='/my_blueprint2')
+blueprint2 = Blueprint('name', url_prefix='/my_blueprint2')
 
 
 @blueprint.route('/foo')

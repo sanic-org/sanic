@@ -21,6 +21,8 @@ class Sanic:
         self.config = Config()
         self.request_middleware = []
         self.response_middleware = []
+        self.blueprints = {}
+        self._blueprint_order = []
 
     # -------------------------------------------------------------------- #
     # Registration
@@ -94,9 +96,9 @@ class Sanic:
         """
         if blueprint.name in self.blueprints:
             assert self.blueprints[blueprint.name] is blueprint, \
-                'A blueprint\'s name collision occurred between %r and ' \
-                '%r. Both share the same name "%s". ' % \
-                (blueprint, self.blueprints[blueprint.name], blueprint.name)
+                'A blueprint with the name "%s" is already registered.  ' \
+                'Blueprint names must be unique.' % \
+                (blueprint.name,)
         else:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)

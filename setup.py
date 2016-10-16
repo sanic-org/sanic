@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='Sanic',
-    version="0.1.2",
+    version="0.1.3",
     url='http://github.com/channelcat/sanic/',
     license='MIT',
     author='Channel Cat',
@@ -19,7 +19,7 @@ setup(
         'ujson>=1.35',
     ],
     classifiers=[
-        'Development Status :: 1 - Alpha',
+        'Development Status :: 2 - Pre-Alpha',
         'Environment :: Web Environment',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',

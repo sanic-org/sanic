@@ -3,7 +3,7 @@
 Blueprints are objects that can be used for sub-routing within an application.
 Instead of adding routes to the application object, blueprints define similar
 methods for adding routes, which are then registered with the application in a
-flexible and plugable manner.
+flexible and pluggable manner.
 
 ## Why?
 

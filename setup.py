@@ -7,7 +7,7 @@ setup(
     name='Sanic',
     version="0.1.0",
     url='http://github.com/channelcat/sanic/',
-    license='BSD',
+    license='MIT',
     author='Channel Cat',
     author_email='channelcat@gmail.com',
     description='A microframework based on uvloop, httptools, and learnings of flask',
@@ -21,5 +21,8 @@ setup(
     classifiers=[
         'Development Status :: 1 - Alpha',
         'Environment :: Web Environment',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 )

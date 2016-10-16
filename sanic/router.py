@@ -26,7 +26,7 @@ class Router:
     """
     routes = None
     regex_types = {
-        "string": (None, "\w+"),
+        "string": (None, "[^/]+"),
         "int": (int, "\d+"),
         "number": (float, "[0-9\\.]+"),
         "alpha": (None, "[A-Za-z]+"),

@@ -26,6 +26,9 @@ class RequestParameters(dict):
 
 
 class Request:
+    """
+    Properties of an HTTP request such as URL, headers, etc.
+    """
     __slots__ = (
         'url', 'headers', 'version', 'method',
         'query_string', 'body',

@@ -1,14 +1,18 @@
 language: python
 python:
-  - "3.5"
-# command to install dependencies
+- '3.5'
 install:
-  - "pip install -r requirements.txt"
-  - "pip install -r requirements-dev.txt"
-  - "python setup.py install"
-  - "pip install flake8"
-  - "pip install pytest"
-# flake8 check
-before_script: "flake8 sanic"
-# command to run tests
-script: "py.test -v tests"
+- pip install -r requirements.txt
+- pip install -r requirements-dev.txt
+- python setup.py install
+- pip install flake8
+- pip install pytest
+before_script: flake8 sanic
+script: py.test -v tests
+deploy:
+  provider: pypi
+  user: channelcat
+  password:
+    secure: jH4+Di2/qcBwWVhI5/3NYd/JuDDgf5/cF85h+oQnAjgwP6me3th9RS0PHL2gjKJrmyRgwrW7a3eSAityo5sQSlBloQCNrtCE30rkDiwtgoIxDW72NR/nE8nUkS9Utgy87eS+3B4NrO7ag4GTqO5ET8SQ4/MCiQwyUQATLXj2s2eTpQvqJeZG6YgoeFAOYvlR580yznXoOwldWlkiymJiWSdR/01lthtWCi40sYC/QoU7psODJ/tPcsqgQtQKyUVsci7mKvp3Y8ImkoO/POM01jYNsS9qLh5pKTNCEYxtyzC77whenCNHn7WReVidd56g1ADosbNo4yY/1D3VAvwjUnkQ0SzdBQfT7IIzccEuC0j1NXKPN97OX0a6XzyUMYJ1XiU3juTJOPxdYBPbsDM3imQiwrOh1faIf0HCgNTN+Lxe5l8obCH7kffNcVUhs2zI0+2t4MS5tjb/OVuYD/TFn+bM33DqzLctTOK/pGn6xefzZcdzb191LPo99Lof+4fo6jNUpb0UmcBu5ZJzxh0lGe8FPIK3UAG/hrYDDgjx8s8RtUJjcEUQz0659XffYx7DLlgHO7cWyfjrHD3yrLzDbYr5mAS4FR+4D917V7UL+on4SsKHN00UuMGPguqSYo/xYyPLnJU5XK0du4MIpsNMB8TtrJOIewOOfD32+AisPQ8=
+  on:
+    tags: true

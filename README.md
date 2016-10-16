@@ -10,11 +10,13 @@ All tests were run on a AWS medium instance running ubuntu, using 1 process.  Ea
 
 | Server  | Implementation      | Requests/sec | Avg Latency |
 | ------- | ------------------- | ------------:| -----------:|
-| Sanic   | Python 3.5 + uvloop |       29,128 |      3.40ms |
+| Sanic   | Python 3.5 + uvloop |       30,601 |      3.23ms |
 | Wheezy  | gunicorn + meinheld |       20,244 |      4.94ms |
 | Falcon  | gunicorn + meinheld |       18,972 |      5.27ms |
+| Bottle  | gunicorn + meinheld |       13,596 |      7.36ms |
 | Flask   | gunicorn + meinheld |        4,988 |     20.08ms |
-| Aiohttp | Python 3.5 + uvloop |        2,974 |     33.49ms |
+| Kyoukai | Python 3.5 + uvloop |        3,889 |     27.44ms |
+| Aiohttp | Python 3.5 + uvloop |        2,979 |     33.42ms |
 
 ## Hello World
 

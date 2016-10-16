@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='Sanic',
-    version="0.1.0",
+    version="0.1.2",
     url='http://github.com/channelcat/sanic/',
     license='MIT',
     author='Channel Cat',

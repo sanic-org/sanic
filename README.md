@@ -1,3 +1,5 @@
+![build verification](https://travis-ci.org/channelcat/sanic.svg?branch=master)
+
 # Sanic
 
 Sanic is a Flask-like Python 3.5+ web server that's written to go fast.  It's based off the work done by the amazing folks at magicstack, and was inspired by this article: https://magic.io/blog/uvloop-blazing-fast-python-networking/.

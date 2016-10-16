@@ -5,3 +5,5 @@ aiohttp
 pytest
 coverage
 tox
+gunicorn
+bottle

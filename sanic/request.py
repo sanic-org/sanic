@@ -80,7 +80,7 @@ class Request:
     @property
     def files(self):
         if self.parsed_files is None:
-            _ = self.form  # compute form to get files
+            self.form  # compute form to get files
 
         return self.parsed_files
 

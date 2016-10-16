@@ -63,7 +63,6 @@ class Sanic:
         Decorates and registers middleware to be called before a request
         can either be called as @app.middleware or @app.middleware('request')
         """
-        middleware = None
         attach_to = 'request'
 
         def register_middleware(middleware):
@@ -79,11 +78,6 @@ class Sanic:
         else:
             attach_to = args[0]
             return register_middleware
-
-        if isinstance(middleware, FunctionType):
-            middleware = Middleware(process_request=middleware)
-
-        return middleware
 
     def register_blueprint(self, blueprint, **options):
         """

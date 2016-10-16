@@ -4,7 +4,7 @@ Make sure you have pip and python 3.5 before starting
 
 ## Benchmarks
  * Install Sanic
- * `python3 -m pip install git+https://github.com/channelcat/sanic/`
+ * `python3 -m pip install sanic`
  * Edit main.py to include:
 ```python
 from sanic import Sanic
@@ -20,6 +20,6 @@ app.run(host="0.0.0.0", port=8000, debug=True)
 ```
  * Run `python3 main.py`
 
-You now have a working sanic server!  To continue on, check out:
+You now have a working Sanic server!  To continue on, check out:
  * [Request Data](request_data.md)
  * [Routing](routing.md)

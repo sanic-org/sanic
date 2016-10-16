@@ -36,7 +36,7 @@ app.run(host="0.0.0.0", port=8000)
 ```
 
 ## Installation
- * `python -m pip install git+https://github.com/channelcat/sanic/`
+ * `python -m pip install sanic`
 
 ## Documentation
  * [Getting started](docs/getting_started.md)

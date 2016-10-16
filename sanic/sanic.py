@@ -1,12 +1,10 @@
 import asyncio
 from inspect import isawaitable
 from traceback import format_exc
-from types import FunctionType
 
 from .config import Config
 from .exceptions import Handler
 from .log import log, logging
-from .middleware import Middleware
 from .response import HTTPResponse
 from .router import Router
 from .server import serve
@@ -79,11 +77,6 @@ class Sanic:
         else:
             attach_to = args[0]
             return register_middleware
-
-        if isinstance(middleware, FunctionType):
-            middleware = Middleware(process_request=middleware)
-
-        return middleware
 
     # -------------------------------------------------------------------- #
     # Request Handling

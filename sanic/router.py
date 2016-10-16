@@ -14,13 +14,15 @@ class Router:
         def my_route(request, my_parameter):
             do stuff...
 
-    Parameters will be passed as keyword arguments to the request handling function provided
-    Parameters can also have a type by appending :type to the <parameter>.  If no type is provided,
-        a string is expected.  A regular expression can also be passed in as the type
+    Parameters will be passed as keyword arguments to the request handling
+    function provided Parameters can also have a type by appending :type to
+    the <parameter>.  If no type is provided, a string is expected.  A regular
+    expression can also be passed in as the type
 
     TODO:
         This probably needs optimization for larger sets of routes,
-        since it checks every route until it finds a match which is bad and I should feel bad
+        since it checks every route until it finds a match which is bad and
+        I should feel bad
     """
     routes = None
     regex_types = {
@@ -37,13 +39,17 @@ class Router:
         """
         Adds a handler to the route list
         :param uri: Path to match
-        :param methods: Array of accepted method names.  If none are provided, any method is allowed
-        :param handler: Request handler function.  When executed, it should provide a response object.
+        :param methods: Array of accepted method names.
+        If none are provided, any method is allowed
+        :param handler: Request handler function.
+        When executed, it should provide a response object.
         :return: Nothing
         """
 
         # Dict for faster lookups of if method allowed
-        methods_dict = {method: True for method in methods} if methods else None
+        methods_dict = None
+        if methods:
+            methods_dict = {method: True for method in methods}
 
         parameters = []
 
@@ -71,12 +77,15 @@ class Router:
         pattern_string = re.sub("<(.+?)>", add_parameter, uri)
         pattern = re.compile("^{}$".format(pattern_string))
 
-        route = Route(handler=handler, methods=methods_dict, pattern=pattern, parameters=parameters)
+        route = Route(
+            handler=handler, methods=methods_dict, pattern=pattern,
+            parameters=parameters)
         self.routes.append(route)
 
     def get(self, request):
         """
-        Gets a request handler based on the URL of the request, or raises an error
+        Gets a request handler based on the URL of the request, or raises an
+        error
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
@@ -89,14 +98,18 @@ class Router:
             if match:
                 for index, parameter in enumerate(_route.parameters, start=1):
                     value = match.group(index)
-                    kwargs[parameter.name] = parameter.cast(value) if parameter.cast is not None else value
+                    if parameter.cast:
+                        kwargs[parameter.name] = parameter.cast(value)
+                    else:
+                        kwargs[parameter.name] = value
                 route = _route
                 break
 
         if route:
             if route.methods and request.method not in route.methods:
-                raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url),
-                                   status_code=405)
+                raise InvalidUsage(
+                    "Method {} not allowed for URL {}".format(
+                        request.method, request.url), status_code=405)
             return route.handler, args, kwargs
         else:
             raise NotFound("Requested URL {} not found".format(request.url))
@@ -114,15 +127,20 @@ class SimpleRouter:
 
     def add(self, uri, methods, handler):
         # Dict for faster lookups of method allowed
-        methods_dict = {method: True for method in methods} if methods else None
-        self.routes[uri] = Route(handler=handler, methods=methods_dict, pattern=uri, parameters=None)
+        methods_dict = None
+        if methods:
+            methods_dict = {method: True for method in methods}
+        self.routes[uri] = Route(
+            handler=handler, methods=methods_dict, pattern=uri,
+            parameters=None)
 
     def get(self, request):
         route = self.routes.get(request.url)
         if route:
             if route.methods and request.method not in route.methods:
-                raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url),
-                                   status_code=405)
+                raise InvalidUsage(
+                    "Method {} not allowed for URL {}".format(
+                        request.method, request.url), status_code=405)
             return route.handler, [], {}
         else:
             raise NotFound("Requested URL {} not found".format(request.url))

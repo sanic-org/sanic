@@ -77,7 +77,8 @@ class Blueprint:
         """
         """
         def register_middleware(middleware):
-            self.record(lambda s: s.add_middleware(middleware, *args, **kwargs))
+            self.record(
+                lambda s: s.add_middleware(middleware, *args, **kwargs))
             return middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')

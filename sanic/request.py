@@ -39,7 +39,9 @@ class Request:
         self.headers = headers
         self.version = version
         self.method = method
-        self.query_string = url_parsed.query.decode('utf-8') if url_parsed.query else None
+        self.query_string = None
+        if url_parsed.query:
+            self.query_string = url_parsed.query.decode('utf-8')
 
         # Init but do not inhale
         self.body = None
@@ -53,7 +55,7 @@ class Request:
         if not self.parsed_json:
             try:
                 self.parsed_json = json_loads(self.body)
-            except:
+            except Exception:
                 pass
 
         return self.parsed_json
@@ -63,14 +65,19 @@ class Request:
         if self.parsed_form is None:
             self.parsed_form = {}
             self.parsed_files = {}
-            content_type, parameters = parse_header(self.headers.get('Content-Type'))
+            content_type, parameters = parse_header(
+                self.headers.get('Content-Type'))
             try:
-                if content_type is None or content_type == 'application/x-www-form-urlencoded':
-                    self.parsed_form = RequestParameters(parse_qs(self.body.decode('utf-8')))
+                is_url_encoded = (
+                    content_type == 'application/x-www-form-urlencoded')
+                if content_type is None or is_url_encoded:
+                    self.parsed_form = RequestParameters(
+                        parse_qs(self.body.decode('utf-8')))
                 elif content_type == 'multipart/form-data':
                     # TODO: Stream this instead of reading to/from memory
                     boundary = parameters['boundary'].encode('utf-8')
-                    self.parsed_form, self.parsed_files = parse_multipart_form(self.body, boundary)
+                    self.parsed_form, self.parsed_files = (
+                        parse_multipart_form(self.body, boundary))
             except Exception as e:
                 log.exception(e)
                 pass
@@ -88,7 +95,8 @@ class Request:
     def args(self):
         if self.parsed_args is None:
             if self.query_string:
-                self.parsed_args = RequestParameters(parse_qs(self.query_string))
+                self.parsed_args = RequestParameters(
+                    parse_qs(self.query_string))
             else:
                 self.parsed_args = {}
 
@@ -125,7 +133,8 @@ def parse_multipart_form(body, boundary):
 
             colon_index = form_line.index(':')
             form_header_field = form_line[0:colon_index]
-            form_header_value, form_parameters = parse_header(form_line[colon_index + 2:])
+            form_header_value, form_parameters = parse_header(
+                form_line[colon_index + 2:])
 
             if form_header_field == 'Content-Disposition':
                 if 'filename' in form_parameters:
@@ -136,7 +145,8 @@ def parse_multipart_form(body, boundary):
 
         post_data = form_part[line_index:-4]
         if file_name or file_type:
-            files[field_name] = File(type=file_type, name=file_name, body=post_data)
+            files[field_name] = File(
+                type=file_type, name=file_name, body=post_data)
         else:
             fields[field_name] = post_data.decode('utf-8')
 

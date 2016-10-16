@@ -1,9 +1,8 @@
-from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
-from sanic import Blueprint
+from sanic.blueprints import Blueprint
 from sanic.response import json, text
 from sanic.utils import sanic_endpoint_test
-from sanic.exceptions import SanicException
+from sanic.exceptions import NotFound, ServerError, InvalidUsage
 
 
 # ------------------------------------------------------------ #
@@ -58,3 +57,55 @@ def test_several_bp_with_url_prefix():
     request, response = sanic_endpoint_test(app, uri='/test2/')
     assert response.text == 'Hello2'
 
+
+def test_bp_middleware():
+    app = Sanic('test_middleware')
+    blueprint = Blueprint('test_middleware')
+
+    @blueprint.middleware('response')
+    async def process_response(request, response):
+        return text('OK')
+
+    @app.route('/')
+    async def handler(request):
+        return text('FAIL')
+
+    app.register_blueprint(blueprint)
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.status == 200
+    assert response.text == 'OK'
+
+def test_bp_exception_handler():
+    app = Sanic('test_middleware')
+    blueprint = Blueprint('test_middleware')
+
+    @blueprint.route('/1')
+    def handler_1(request):
+        raise InvalidUsage("OK")
+
+    @blueprint.route('/2')
+    def handler_2(request):
+        raise ServerError("OK")
+
+    @blueprint.route('/3')
+    def handler_3(request):
+        raise NotFound("OK")
+
+    @blueprint.exception(NotFound, ServerError)
+    def handler_exception(request, exception):
+        return text("OK")
+
+    app.register_blueprint(blueprint)
+
+    request, response = sanic_endpoint_test(app, uri='/1')
+    assert response.status == 400
+
+
+    request, response = sanic_endpoint_test(app, uri='/2')
+    assert response.status == 200
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/3')
+    assert response.status == 200

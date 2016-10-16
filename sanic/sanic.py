@@ -1,12 +1,10 @@
 import asyncio
 from inspect import isawaitable
 from traceback import format_exc
-from types import FunctionType
 
 from .config import Config
 from .exceptions import Handler
 from .log import log, logging
-from .middleware import Middleware
 from .response import HTTPResponse
 from .router import Router
 from .server import serve

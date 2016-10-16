@@ -54,3 +54,29 @@ In this example, the registered routes in the `app.router` will look like:
 ```python
 [Route(handler=<function bp_root at 0x7f908382f9d8>, methods=None, pattern=re.compile('^/$'), parameters=[])]
 ```
+
+## Middleware
+Blueprints must be registered with the application.
+
+```python
+@bp.middleware
+async def halt_request(request):
+	print("I am a spy")
+
+@bp.middleware('request')
+async def halt_request(request):
+	return text('I halted the request')
+
+@bp.middleware('response')
+async def halt_response(request, response):
+	return text('I halted the response')
+```
+
+## Exceptions
+Blueprints must be registered with the application.
+
+```python
+@bp.exception(NotFound)
+def ignore_404s(request, exception):
+	return text("Yep, I totally found the page: {}".format(request.url))
+```

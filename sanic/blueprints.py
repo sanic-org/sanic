@@ -53,7 +53,6 @@ class Blueprint:
         """
         self.deferred_functions.append(func)
 
-
     def make_setup_state(self, app, options):
         """
         """
@@ -96,4 +95,3 @@ class Blueprint:
             self.record(lambda s: s.add_exception(handler, *args, **kwargs))
             return handler
         return decorator
-

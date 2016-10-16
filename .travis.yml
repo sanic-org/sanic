@@ -7,7 +7,7 @@ install:
 - python setup.py install
 - pip install flake8
 - pip install pytest
-before_script: flake8 sanic
+before_script: flake8 --max-line-length=120 sanic
 script: py.test -v tests
 deploy:
   provider: pypi

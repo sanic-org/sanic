@@ -94,7 +94,7 @@ class Router:
                 break
 
         if route:
-            if route.methods and not request.method in route.methods:
+            if route.methods and request.method not in route.methods:
                 raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url),
                                    status_code=405)
             return route.handler, args, kwargs
@@ -120,7 +120,7 @@ class SimpleRouter:
     def get(self, request):
         route = self.routes.get(request.url)
         if route:
-            if route.methods and not request.method in route.methods:
+            if route.methods and request.method not in route.methods:
                 raise InvalidUsage("Method {} not allowed for URL {}".format(request.method, request.url),
                                    status_code=405)
             return route.handler, [], {}

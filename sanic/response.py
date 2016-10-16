@@ -19,16 +19,16 @@ STATUS_CODES = {
 class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type', 'headers')
 
-    def __init__(self, body=None, status=200, headers=[], content_type='text/plain', body_bytes=b''):
+    def __init__(self, body=None, status=200, headers=None, content_type='text/plain', body_bytes=b''):
         self.content_type = content_type
 
-        if not body is None:
+        if body is not None:
             self.body = body.encode('utf-8')
         else:
             self.body = body_bytes
 
         self.status = status
-        self.headers = headers
+        self.headers = headers or {}
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
@@ -39,7 +39,10 @@ class HTTPResponse:
 
         headers = b''
         if self.headers:
-            headers = b''.join(b'%b: %b\r\n' % (name.encode(), value.encode('utf-8')) for name, value in self.headers.items())
+            headers = b''.join(
+                b'%b: %b\r\n' % (name.encode(), value.encode('utf-8'))
+                for name, value in self.headers.items()
+            )
         return b'HTTP/%b %d %b\r\nContent-Type: %b\r\nContent-Length: %d\r\nConnection: %b\r\n%b%b\r\n%b' % (
             version.encode(),
             self.status,
@@ -51,6 +54,7 @@ class HTTPResponse:
             headers,
             self.body
         )
+
 
 def json(body, status=200, headers=None):
     return HTTPResponse(ujson.dumps(body), headers=headers, status=status,

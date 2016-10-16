@@ -76,7 +76,6 @@ class Blueprint:
     def middleware(self, *args, **kwargs):
         """
         """
-
         def register_middleware(middleware):
             self.record(lambda s: s.add_middleware(middleware, *args, **kwargs))
             return middleware

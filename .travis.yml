@@ -3,8 +3,8 @@ python:
   - "3.5"
 # command to install dependencies
 install:
-  - "pip install requirements.txt"
-  - "pip install requirements-dev.txt"
+  - "pip install -r requirements.txt"
+  - "pip install -r requirements-dev.txt"
   - "python setup.py install"
   - "pip install flake8"
   - "pip install pytest"

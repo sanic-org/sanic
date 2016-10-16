@@ -56,7 +56,9 @@ In this example, the registered routes in the `app.router` will look like:
 ```
 
 ## Middleware
-Blueprints must be registered with the application.
+Using blueprints allows you to also register middleware exclusively for that
+blueprint, without interfering with other blueprints or routes registered
+directly on the application object.
 
 ```python
 @bp.middleware
@@ -73,7 +75,8 @@ async def halt_response(request, response):
 ```
 
 ## Exceptions
-Blueprints must be registered with the application.
+Exceptions can also be applied exclusively to blueprints without interfering
+with other blueprints or routes registered on the application object.
 
 ```python
 @bp.exception(NotFound)

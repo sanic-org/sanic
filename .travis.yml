@@ -1,0 +1,14 @@
+language: python
+python:
+  - "3.5"
+# command to install dependencies
+install:
+  - "pip install -r requirements.txt"
+  - "pip install -r requirements-dev.txt"
+  - "python setup.py install"
+  - "pip install flake8"
+  - "pip install pytest"
+# flake8 check
+before_script: "flake8 sanic"
+# command to run tests
+script: "py.test -v tests"

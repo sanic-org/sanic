@@ -122,13 +122,20 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def write_response(self, response):
+        """Attempts to write the resposne to the transport
+
+        This will attempt to smartly handle any type of python object with
+        dicts being treated like json and everything else being casted to str
+        if it is not an HTTPResponse object
+        """
         try:
             keep_alive = all(
                 [self.parser.should_keep_alive(), self.signal.stopped])
+            # Handling for returning dicts and everything not an HTTPResponse
             if isinstance(response, dict):
                 response = json(response)
             elif not isinstance(response, HTTPResponse):
-                response = text(response)
+                response = text(str(response))
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))

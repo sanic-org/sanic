@@ -102,10 +102,12 @@ class Sanic:
 
     async def handle_request(self, request, response_callback):
         """
-        Takes a request from the HTTP Server and returns a response object to be sent back
-        The HTTP Server only expects a response object, so exception handling must be done here
+        Takes a request from the HTTP Server and returns a response object to
+        be sent back The HTTP Server only expects a response object, so
+        exception handling must be done here
         :param request: HTTP Request object
-        :param response_callback: Response function to be called with the response as the only argument
+        :param response_callback: Response function to be called with the
+        response as the only argument
         :return: Nothing
         """
         try:
@@ -125,7 +127,9 @@ class Sanic:
                 # Fetch handler from router
                 handler, args, kwargs = self.router.get(request)
                 if handler is None:
-                    raise ServerError("'None' was returned while requesting a handler from the router")
+                    raise ServerError(
+                        ("'None' was returned while requesting a "
+                         "handler from the router"))
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)
@@ -149,9 +153,12 @@ class Sanic:
                     response = await response
             except Exception as e:
                 if self.debug:
-                    response = HTTPResponse("Error while handling error: {}\nStack: {}".format(e, format_exc()))
+                    response = HTTPResponse(
+                        "Error while handling error: {}\nStack: {}".format(
+                            e, format_exc()))
                 else:
-                    response = HTTPResponse("An error occured while handling an error")
+                    response = HTTPResponse(
+                        "An error occured while handling an error")
 
         response_callback(response)
 
@@ -159,15 +166,18 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, after_start=None, before_stop=None):
+    def run(self, host="127.0.0.1", port=8000, debug=False, after_start=None,
+            before_stop=None):
         """
-        Runs the HTTP Server and listens until keyboard interrupt or term signal.
-        On termination, drains connections before closing.
+        Runs the HTTP Server and listens until keyboard interrupt or term
+        signal. On termination, drains connections before closing.
         :param host: Address to host on
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
-        :param after_start: Function to be executed after the server starts listening
-        :param before_stop: Function to be executed when a stop signal is received before it is respected
+        :param after_start: Function to be executed after the server starts
+        listening
+        :param before_stop: Function to be executed when a stop signal is
+        received before it is respected
         :return: Nothing
         """
         self.error_handler.debug = True
@@ -191,7 +201,9 @@ class Sanic:
                 request_timeout=self.config.REQUEST_TIMEOUT,
                 request_max_size=self.config.REQUEST_MAX_SIZE,
             )
-        except:
+        except Exception as e:
+            log.exception(
+                'Experienced exception while trying to serve: {}'.format(e))
             pass
 
     def stop(self):

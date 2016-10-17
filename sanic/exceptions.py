@@ -44,8 +44,13 @@ class Handler:
 
     def default(self, request, exception):
         if issubclass(type(exception), SanicException):
-            return text("Error: {}".format(exception), status=getattr(exception, 'status_code', 500))
+            return text(
+                "Error: {}".format(exception),
+                status=getattr(exception, 'status_code', 500))
         elif self.sanic.debug:
-            return text("Error: {}\nException: {}".format(exception, format_exc()), status=500)
+            return text(
+                "Error: {}\nException: {}".format(
+                    exception, format_exc()), status=500)
         else:
-            return text("An error occurred while generating the request", status=500)
+            return text(
+                "An error occurred while generating the request", status=500)

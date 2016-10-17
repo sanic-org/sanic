@@ -6,7 +6,7 @@ import httptools
 
 try:
     import uvloop as async_loop
-except:
+except ImportError:
     async_loop = asyncio
 
 from .log import log
@@ -18,12 +18,18 @@ class Signal:
 
 
 class HttpProtocol(asyncio.Protocol):
-    __slots__ = ('loop', 'transport', 'connections', 'signal',  # event loop, connection
-                 'parser', 'request', 'url', 'headers',  # request params
-                 'request_handler', 'request_timeout', 'request_max_size',  # request config
-                 '_total_request_size', '_timeout_handler')  # connection management
+    __slots__ = (
+        # event loop, connection
+        'loop', 'transport', 'connections', 'signal',
+        # request params
+        'parser', 'request', 'url', 'headers',
+        # request config
+        'request_handler', 'request_timeout', 'request_max_size',
+        # connection management
+        '_total_request_size', '_timeout_handler')
 
-    def __init__(self, *, loop, request_handler, signal=Signal(), connections={}, request_timeout=60,
+    def __init__(self, *, loop, request_handler, signal=Signal(),
+                 connections={}, request_timeout=60,
                  request_max_size=None):
         self.loop = loop
         self.transport = None
@@ -46,7 +52,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.connections[self] = True
-        self._timeout_handler = self.loop.call_later(self.request_timeout, self.connection_timeout)
+        self._timeout_handler = self.loop.call_later(
+            self.request_timeout, self.connection_timeout)
         self.transport = transport
 
     def connection_lost(self, exc):
@@ -63,10 +70,13 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def data_received(self, data):
-        # Check for the request itself getting too large and exceeding memory limits
+        # Check for the request itself getting too large and exceeding
+        # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
-            return self.bail_out("Request too large ({}), connection closed".format(self._total_request_size))
+            return self.bail_out(
+                "Request too large ({}), connection closed".format(
+                    self._total_request_size))
 
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
@@ -78,14 +88,16 @@ class HttpProtocol(asyncio.Protocol):
         try:
             self.parser.feed_data(data)
         except httptools.parser.errors.HttpParserError as e:
-            self.bail_out("Invalid request data, connection closed ({})".format(e))
+            self.bail_out(
+                "Invalid request data, connection closed ({})".format(e))
 
     def on_url(self, url):
         self.url = url
 
     def on_header(self, name, value):
         if name == b'Content-Length' and int(value) > self.request_max_size:
-            return self.bail_out("Request body too large ({}), connection closed".format(value))
+            return self.bail_out(
+                "Request body too large ({}), connection closed".format(value))
 
         self.headers.append((name.decode(), value.decode('utf-8')))
 
@@ -101,7 +113,8 @@ class HttpProtocol(asyncio.Protocol):
         self.request.body = body
 
     def on_message_complete(self):
-        self.loop.create_task(self.request_handler(self.request, self.write_response))
+        self.loop.create_task(
+            self.request_handler(self.request, self.write_response))
 
     # -------------------------------------------- #
     # Responding
@@ -109,14 +122,18 @@ class HttpProtocol(asyncio.Protocol):
 
     def write_response(self, response):
         try:
-            keep_alive = self.parser.should_keep_alive() and not self.signal.stopped
-            self.transport.write(response.output(self.request.version, keep_alive, self.request_timeout))
+            keep_alive = all(
+                [self.parser.should_keep_alive(), self.signal.stopped])
+            self.transport.write(
+                response.output(
+                    self.request.version, keep_alive, self.request_timeout))
             if not keep_alive:
                 self.transport.close()
             else:
                 self.cleanup()
         except Exception as e:
-            self.bail_out("Writing request failed, connection closed {}".format(e))
+            self.bail_out(
+                "Writing request failed, connection closed {}".format(e))
 
     def bail_out(self, message):
         log.error(message)
@@ -140,7 +157,8 @@ class HttpProtocol(asyncio.Protocol):
         return False
 
 
-def serve(host, port, request_handler, after_start=None, before_stop=None, debug=False, request_timeout=60,
+def serve(host, port, request_handler, after_start=None, before_stop=None,
+          debug=False, request_timeout=60,
           request_max_size=None):
     # Create Event Loop
     loop = async_loop.new_event_loop()
@@ -161,11 +179,8 @@ def serve(host, port, request_handler, after_start=None, before_stop=None, debug
     ), host, port)
     try:
         http_server = loop.run_until_complete(server_coroutine)
-    except OSError as e:
+    except Exception as e:
         log.error("Unable to start server: {}".format(e))
-        return
-    except:
-        log.exception("Unable to start server")
         return
 
     # Run the on_start function if provided

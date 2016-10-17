@@ -39,6 +39,11 @@ def test_dynamic_route_string():
     assert response.text == 'OK'
     assert results[0] == 'test123'
 
+    request, response = sanic_endpoint_test(app, uri='/folder/favicon.ico')
+
+    assert response.text == 'OK'
+    assert results[1] == 'favicon.ico'
+
 
 def test_dynamic_route_int():
     app = Sanic('test_dynamic_route_int')

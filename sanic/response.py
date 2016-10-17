@@ -19,7 +19,8 @@ STATUS_CODES = {
 class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type', 'headers')
 
-    def __init__(self, body=None, status=200, headers=None, content_type='text/plain', body_bytes=b''):
+    def __init__(self, body=None, status=200, headers=None,
+                 content_type='text/plain', body_bytes=b''):
         self.content_type = content_type
 
         if body is not None:
@@ -43,7 +44,12 @@ class HTTPResponse:
                 b'%b: %b\r\n' % (name.encode(), value.encode('utf-8'))
                 for name, value in self.headers.items()
             )
-        return b'HTTP/%b %d %b\r\nContent-Type: %b\r\nContent-Length: %d\r\nConnection: %b\r\n%b%b\r\n%b' % (
+        return (b'HTTP/%b %d %b\r\n'
+                b'Content-Type: %b\r\n'
+                b'Content-Length: %d\r\n'
+                b'Connection: %b\r\n'
+                b'%b%b\r\n'
+                b'%b') % (
             version.encode(),
             self.status,
             STATUS_CODES.get(self.status, b'FAIL'),
@@ -62,8 +68,10 @@ def json(body, status=200, headers=None):
 
 
 def text(body, status=200, headers=None):
-    return HTTPResponse(body, status=status, headers=headers, content_type="text/plain; charset=utf-8")
+    return HTTPResponse(body, status=status, headers=headers,
+                        content_type="text/plain; charset=utf-8")
 
 
 def html(body, status=200, headers=None):
-    return HTTPResponse(body, status=status, headers=headers, content_type="text/html; charset=utf-8")
+    return HTTPResponse(body, status=status, headers=headers,
+                        content_type="text/html; charset=utf-8")

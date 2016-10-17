@@ -10,7 +10,7 @@ On top of being Flask-like, Sanic supports async request handlers.  This means y
 
 ## Benchmarks
 
-All tests were run on an AWS medium instance running ubuntu, using 1 process.  Each script delivered a small JSON response and was tested with wrk using 100 connections.  Pypy was tested for falcon and flask but did not speed up requests.
+All tests were run on an AWS medium instance running ubuntu, using 1 process.  Each script delivered a small JSON response and was tested with wrk using 100 connections.  Pypy was tested for Falcon and Flask but did not speed up requests.
 
 
 

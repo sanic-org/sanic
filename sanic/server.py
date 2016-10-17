@@ -11,6 +11,7 @@ except ImportError:
 
 from .log import log
 from .request import Request
+from .response import HTTPResponse, json, text
 
 
 class Signal:
@@ -124,6 +125,10 @@ class HttpProtocol(asyncio.Protocol):
         try:
             keep_alive = all(
                 [self.parser.should_keep_alive(), self.signal.stopped])
+            if isinstance(response, dict):
+                response = json(response)
+            elif not isinstance(response, HTTPResponse):
+                response = text(response)
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))

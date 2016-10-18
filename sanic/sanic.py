@@ -1,5 +1,8 @@
-import asyncio
+from asyncio import get_event_loop
 from inspect import isawaitable
+from multiprocessing import Process, Event
+from signal import signal, SIGTERM, SIGINT
+from time import sleep
 from traceback import format_exc
 
 from .config import Config
@@ -167,7 +170,7 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def run(self, host="127.0.0.1", port=8000, debug=False, after_start=None,
-            before_stop=None):
+            before_stop=None, sock=None, workers=1):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -178,10 +181,23 @@ class Sanic:
         listening
         :param before_stop: Function to be executed when a stop signal is
         received before it is respected
+        :param sock: Socket for the server to accept connections from
+        :param workers: Number of processes
+        received before it is respected
         :return: Nothing
         """
         self.error_handler.debug = True
         self.debug = debug
+
+        server_settings = {
+            'host': host,
+            'port': port,
+            'sock': sock,
+            'debug': debug,
+            'request_handler': self.handle_request,
+            'request_timeout': self.config.REQUEST_TIMEOUT,
+            'request_max_size': self.config.REQUEST_MAX_SIZE,
+        }
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -191,23 +207,61 @@ class Sanic:
         log.info('Goin\' Fast @ http://{}:{}'.format(host, port))
 
         try:
-            serve(
-                host=host,
-                port=port,
-                debug=debug,
-                after_start=after_start,
-                before_stop=before_stop,
-                request_handler=self.handle_request,
-                request_timeout=self.config.REQUEST_TIMEOUT,
-                request_max_size=self.config.REQUEST_MAX_SIZE,
-            )
+            if workers == 1:
+                server_settings['after_start'] = after_start
+                server_settings['before_stop'] = before_stop
+                serve(**server_settings)
+            else:
+                log.info('Spinning up {} workers...'.format(workers))
+
+                self.serve_multiple(server_settings, workers)
+
         except Exception as e:
             log.exception(
                 'Experienced exception while trying to serve: {}'.format(e))
             pass
 
+        log.info("Server Stopped")
+
     def stop(self):
         """
         This kills the Sanic
         """
-        asyncio.get_event_loop().stop()
+        get_event_loop().stop()
+
+    @staticmethod
+    def serve_multiple(server_settings, workers, stop_event=None):
+        """
+        Starts multiple server processes simultaneously.  Stops on interrupt
+        and terminate signals, and drains connections when complete.
+        :param server_settings: kw arguments to be passed to the serve function
+        :param workers: number of workers to launch
+        :param stop_event: if provided, is used as a stop signal
+        :return:
+        """
+        server_settings['reuse_port'] = True
+
+        # Create a stop event to be triggered by a signal
+        if not stop_event:
+            stop_event = Event()
+        signal(SIGINT, lambda s, f: stop_event.set())
+        signal(SIGTERM, lambda s, f: stop_event.set())
+
+        processes = []
+        for w in range(workers):
+            process = Process(target=serve, kwargs=server_settings)
+            process.start()
+            processes.append(process)
+
+        # Infinitely wait for the stop event
+        try:
+            while not stop_event.is_set():
+                sleep(0.3)
+        except:
+            pass
+
+        log.info('Spinning down workers...')
+        for process in processes:
+            process.terminate()
+        for process in processes:
+            process.join()

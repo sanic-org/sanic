@@ -49,6 +49,7 @@ app.run(host="0.0.0.0", port=8000)
  * [Middleware](docs/middleware.md)
  * [Exceptions](docs/exceptions.md)
  * [Blueprints](docs/blueprints.md)
+ * [Deploying](docs/deploying.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)
 

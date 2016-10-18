@@ -1,4 +1,3 @@
-from argparse import ArgumentParser
 from asyncio import get_event_loop
 from inspect import isawaitable
 from multiprocessing import Process, Event

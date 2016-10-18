@@ -159,13 +159,29 @@ class HttpProtocol(asyncio.Protocol):
 
 def serve(host, port, request_handler, after_start=None, before_stop=None,
           debug=False, request_timeout=60, sock=None,
-          request_max_size=None, reuse_port=False):
-    # Create Event Loop
-    loop = async_loop.new_event_loop()
+          request_max_size=None, reuse_port=False, loop=None):
+    """
+    Starts asynchronous HTTP Server on an individual process.
+    :param host: Address to host on
+    :param port: Port to host on
+    :param request_handler: Sanic request handler with middleware
+    :param after_start: Function to be executed after the server starts
+    listening. Takes single argument `loop`
+    :param before_stop: Function to be executed when a stop signal is
+    received before it is respected. Takes single argumenet `loop`
+    :param debug: Enables debug output (slows server)
+    :param request_timeout: time in seconds
+    :param sock: Socket for the server to accept connections from
+    :param request_max_size: size in bytes, `None` for no limit
+    :param reuse_port: `True` for multiple workers
+    :param loop: asyncio compatible event loop
+    :return: Nothing
+    """
+    loop = loop or async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
-    # I don't think we take advantage of this
-    # And it slows everything waaayyy down
-    # loop.set_debug(debug)
+
+    if debug:
+        loop.set_debug(debug)
 
     connections = {}
     signal = Signal()

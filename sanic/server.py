@@ -122,7 +122,7 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def write_response(self, response):
-        """Attempts to write the resposne to the transport
+        """Attempts to write the response to the transport
 
         This will attempt to smartly handle any type of python object with
         dicts being treated like json and everything else being casted to str

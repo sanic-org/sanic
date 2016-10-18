@@ -19,7 +19,7 @@ async def person_handler(request, integer_arg):
 
 @app.route('/number/<number_arg:number>')
 async def person_handler(request, number_arg):
-	return text('Number - {}'.format(number))
+	return text('Number - {}'.format(number_arg))
 
 @app.route('/person/<name:[A-z]>')
 async def person_handler(request, name):

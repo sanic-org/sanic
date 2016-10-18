@@ -1,10 +1,10 @@
+import logging
 import asyncio
 from inspect import isawaitable
 from traceback import format_exc
 
 from .config import Config
 from .exceptions import Handler
-from .log import log, logging
 from .response import HTTPResponse
 from .router import Router
 from .server import serve
@@ -184,11 +184,11 @@ class Sanic:
         self.debug = debug
 
         if debug:
-            log.setLevel(logging.DEBUG)
-        log.debug(self.config.LOGO)
+            logging.setLevel(logging.DEBUG)
+        logging.debug(self.config.LOGO)
 
         # Serve
-        log.info('Goin\' Fast @ http://{}:{}'.format(host, port))
+        logging.info('Goin\' Fast @ http://{}:{}'.format(host, port))
 
         try:
             serve(
@@ -202,7 +202,7 @@ class Sanic:
                 request_max_size=self.config.REQUEST_MAX_SIZE,
             )
         except Exception as e:
-            log.exception(
+            logging.exception(
                 'Experienced exception while trying to serve: {}'.format(e))
             pass
 

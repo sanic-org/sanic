@@ -1,10 +1,9 @@
+import logging
 from cgi import parse_header
 from collections import namedtuple
 from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
-
-from .log import log
 
 
 class RequestParameters(dict):
@@ -82,7 +81,7 @@ class Request:
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
             except Exception as e:
-                log.exception(e)
+                logging.exception(e)
                 pass
 
         return self.parsed_form

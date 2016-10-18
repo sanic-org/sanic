@@ -1,5 +1,5 @@
+import logging
 import aiohttp
-from sanic.log import log
 
 HOST = '127.0.0.1'
 PORT = 42101
@@ -7,7 +7,7 @@ PORT = 42101
 
 async def local_request(method, uri, *args, **kwargs):
     url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
-    log.info(url)
+    logging.info(url)
     async with aiohttp.ClientSession() as session:
         async with getattr(session, method)(url, *args, **kwargs) as response:
             response.text = await response.text()

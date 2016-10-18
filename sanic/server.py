@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
 
@@ -9,7 +10,6 @@ try:
 except ImportError:
     async_loop = asyncio
 
-from .log import log
 from .request import Request
 
 
@@ -136,7 +136,7 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing request failed, connection closed {}".format(e))
 
     def bail_out(self, message):
-        log.error(message)
+        logging.error(message)
         self.transport.close()
 
     def cleanup(self):
@@ -180,7 +180,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except Exception as e:
-        log.error("Unable to start server: {}".format(e))
+        logging.error("Unable to start server: {}".format(e))
         return
 
     # Run the on_start function if provided
@@ -196,7 +196,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     try:
         loop.run_forever()
     finally:
-        log.info("Stop requested, draining connections...")
+        logging.info("Stop requested, draining connections...")
 
         # Run the on_stop function if provided
         if before_stop:
@@ -217,4 +217,4 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
             loop.run_until_complete(asyncio.sleep(0.1))
 
         loop.close()
-        log.info("Server Stopped")
+        logging.info("Server Stopped")

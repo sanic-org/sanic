@@ -1,5 +1,5 @@
+import logging
 from sanic import Sanic
-from sanic.log import log
 from sanic.response import json, text
 from sanic.exceptions import ServerError
 
@@ -65,11 +65,11 @@ def query_string(request):
 # ----------------------------------------------- #
 
 def after_start(loop):
-    log.info("OH OH OH OH OHHHHHHHH")
+    logging.info("OH OH OH OH OHHHHHHHH")
 
 
 def before_stop(loop):
-    log.info("TRIED EVERYTHING")
+    logging.info("TRIED EVERYTHING")
 
 
 app.run(host="0.0.0.0", port=8000, debug=True, after_start=after_start, before_stop=before_stop)

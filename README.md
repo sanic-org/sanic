@@ -4,13 +4,15 @@
 [![PyPI](https://img.shields.io/pypi/v/sanic.svg)](https://pypi.python.org/pypi/sanic/)
 [![PyPI](https://img.shields.io/pypi/pyversions/sanic.svg)](https://pypi.python.org/pypi/sanic/)
 
-Sanic is a Flask-like Python 3.5+ web server that's written to go fast.  It's based off the work done by the amazing folks at magicstack, and was inspired by this article: https://magic.io/blog/uvloop-blazing-fast-python-networking/.
+Sanic is a Flask-like Python 3.5+ web server that's written to go fast.  It's based on the work done by the amazing folks at magicstack, and was inspired by this article: https://magic.io/blog/uvloop-blazing-fast-python-networking/.
 
-On top of being flask-like, sanic supports async request handlers.  This means you can use the new shiny async/await syntax from Python 3.5, making your code non-blocking and speedy.
+On top of being Flask-like, Sanic supports async request handlers.  This means you can use the new shiny async/await syntax from Python 3.5, making your code non-blocking and speedy.
 
 ## Benchmarks
 
-All tests were run on a AWS medium instance running ubuntu, using 1 process.  Each script delivered a small JSON response and was tested with wrk using 100 connections.  Pypy was tested for falcon and flask, but did not speed up requests.
+All tests were run on an AWS medium instance running ubuntu, using 1 process.  Each script delivered a small JSON response and was tested with wrk using 100 connections.  Pypy was tested for Falcon and Flask but did not speed up requests.
+
+
 
 | Server  | Implementation      | Requests/sec | Avg Latency |
 | ------- | ------------------- | ------------:| -----------:|
@@ -47,6 +49,7 @@ app.run(host="0.0.0.0", port=8000)
  * [Middleware](docs/middleware.md)
  * [Exceptions](docs/exceptions.md)
  * [Blueprints](docs/blueprints.md)
+ * [Deploying](docs/deploying.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)
 

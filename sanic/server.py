@@ -131,10 +131,11 @@ class HttpProtocol(asyncio.Protocol):
         try:
             keep_alive = all(
                 [self.parser.should_keep_alive(), self.signal.stopped])
-            # Handling for returning dicts and everything not an HTTPResponse
-            if isinstance(response, dict):
+            if isinstance(response, HTTPResponse):  # Easy pass first
+                pass
+            elif isinstance(response, (dict, list)):
                 response = json(response)
-            elif not isinstance(response, HTTPResponse):
+            else:
                 response = text(str(response))
             self.transport.write(
                 response.output(

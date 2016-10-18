@@ -122,8 +122,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def write_response(self, response):
         try:
-            keep_alive = all(
-                [self.parser.should_keep_alive(), self.signal.stopped])
+            keep_alive = self.parser.should_keep_alive() \
+                            and not self.signal.stopped
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))

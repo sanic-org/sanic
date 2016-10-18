@@ -180,7 +180,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except Exception as e:
-        log.error("Unable to start server: {}".format(e))
+        log.exception("Unable to start server")
         return
 
     # Run the on_start function if provided

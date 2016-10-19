@@ -231,7 +231,8 @@ class Sanic:
         get_event_loop().stop()
 
     @staticmethod
-    def serve_multiple(server_settings, workers, *, name='sanic-server', stop_event=None):
+    def serve_multiple(server_settings, workers, *,
+                       name='sanic-server', stop_event=None):
         """
         Starts multiple server processes simultaneously.  Stops on interrupt
         and terminate signals, and drains connections when complete.
@@ -251,8 +252,8 @@ class Sanic:
 
         processes = []
         for w in range(workers):
-            process_name = '{}-{}'.format(name, w)
-            process = Process(name=process_name, target=serve, kwargs=server_settings)
+            p_name = '{}-{}'.format(name, w)
+            process = Process(name=p_name, target=serve, kwargs=server_settings)
             processes.append(process)
             process.start()
 
@@ -265,7 +266,8 @@ class Sanic:
             pass
 
         except Exception as e:
-            log.exception('An exception occurred stopping servers: {}'.format(e))
+            log.exception(
+                'An exception occurred stopping servers: {}'.format(e))
 
         log.info('Spinning down workers...')
         for process in processes:

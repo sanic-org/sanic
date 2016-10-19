@@ -2,7 +2,6 @@ import os
 from asyncio import get_event_loop
 from inspect import isawaitable
 from multiprocessing import Process, Event
-from signal import signal, SIGTERM, SIGINT, SIGQUIT
 from traceback import format_exc
 
 from .config import Config
@@ -252,8 +251,8 @@ class Sanic:
 
         processes = []
         for w in range(workers):
-            p_name = '{}-{}'.format(name, w)
-            process = Process(name=p_name, target=serve, kwargs=server_settings)
+            n = '{}-{}'.format(name, w)
+            process = Process(name=n, target=serve, kwargs=server_settings)
             processes.append(process)
             process.start()
 

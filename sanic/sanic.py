@@ -47,9 +47,8 @@ class Sanic:
     # Decorator
     def exception(self, *exceptions):
         """
-        Decorates a function to be registered as a route
-        :param uri: path of the URL
-        :param methods: list or tuple of methods allowed
+        Decorates a function to be registered as a handler for exceptions
+        :param *exceptions: exceptions
         :return: decorated function
         """
 

@@ -81,7 +81,7 @@ class Request:
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
             except Exception as e:
-                logging.exception(e)
+                logging.exception("An error occurred while parsing the request's form body")
                 pass
 
         return self.parsed_form

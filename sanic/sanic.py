@@ -169,7 +169,7 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def run(self, host="127.0.0.1", port=8000, debug=False, after_start=None,
-            before_stop=None, sock=None, workers=1):
+            before_stop=None, sock=None, workers=1, loop=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -183,6 +183,7 @@ class Sanic:
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
         received before it is respected
+        :param loop: asyncio compatible event loop
         :return: Nothing
         """
         self.error_handler.debug = True
@@ -196,6 +197,7 @@ class Sanic:
             'request_handler': self.handle_request,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
+            'loop': loop
         }
 
         if debug:

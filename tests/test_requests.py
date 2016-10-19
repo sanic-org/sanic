@@ -80,3 +80,38 @@ def test_post_json():
 
     assert request.json.get('test') == 'OK'
     assert response.text == 'OK'
+
+
+def test_post_form_urlencoded():
+    app = Sanic('test_post_form_urlencoded')
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    payload = 'test=OK'
+    headers = {'content-type': 'application/x-www-form-urlencoded'}
+
+    request, response = sanic_endpoint_test(app, data=payload, headers=headers)
+
+    assert request.form.get('test') == 'OK'
+
+
+def test_post_form_multipart_form_data():
+    app = Sanic('test_post_form_multipart_form_data')
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    payload = '------sanic\r\n' \
+              'Content-Disposition: form-data; name="test"\r\n' \
+              '\r\n' \
+              'OK\r\n' \
+              '------sanic--\r\n'
+
+    headers = {'content-type': 'multipart/form-data; boundary=----sanic'}
+
+    request, response = sanic_endpoint_test(app, data=payload, headers=headers)
+
+    assert request.form.get('test') == 'OK'

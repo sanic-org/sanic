@@ -1,4 +1,3 @@
-import os
 from asyncio import get_event_loop
 from inspect import isawaitable
 from multiprocessing import Process, Event
@@ -242,7 +241,6 @@ class Sanic:
         :return:
         """
 
-        os.setsid()
         server_settings['reuse_port'] = True
 
         # Create a stop event to be triggered by a signal

@@ -23,6 +23,7 @@ All tests were run on an AWS medium instance running ubuntu, using 1 process.  E
 | Flask   | gunicorn + meinheld |        4,988 |     20.08ms |
 | Kyoukai | Python 3.5 + uvloop |        3,889 |     27.44ms |
 | Aiohttp | Python 3.5 + uvloop |        2,979 |     33.42ms |
+| Tornado | Python 3.5          |        2,138 |     46.66ms |
 
 ## Hello World
 

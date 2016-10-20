@@ -1,5 +1,5 @@
 import re
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from functools import lru_cache
 from .config import Config
 from .exceptions import NotFound, InvalidUsage
@@ -13,6 +13,10 @@ REGEX_TYPES = {
     'number': (float, r'[0-9\\.]+'),
     'alpha': (str, r'[A-Za-z]+'),
 }
+
+
+def url_hash(url):
+    return '/'.join(':' for s in url.split('/'))
 
 
 class Router:
@@ -36,7 +40,7 @@ class Router:
     routes = None
 
     def __init__(self):
-        self.routes = []
+        self.routes = defaultdict(list)
 
     def add(self, uri, methods, handler):
         """
@@ -74,7 +78,10 @@ class Router:
         route = Route(
             handler=handler, methods=methods, pattern=pattern,
             parameters=parameters)
-        self.routes.append(route)
+
+        if parameters:
+            uri = url_hash(uri)
+        self.routes[uri].append(route)
 
     @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
     def get(self, request):
@@ -85,17 +92,22 @@ class Router:
         :return: handler, arguments, keyword arguments
         """
         route = None
-        for route in self.routes:
-            match = route.pattern.match(request.url)
-            if match:
-                break
+        url = request.url
+        if url in self.routes:
+            route = self.routes[url][0]
+            match = route.pattern.match(url)
         else:
-            raise NotFound('Requested URL {} not found'.format(request.url))
+            for route in self.routes[url_hash(url)]:
+                match = route.pattern.match(url)
+                if match:
+                    break
+            else:
+                raise NotFound('Requested URL {} not found'.format(url))
 
         if route.methods and request.method not in route.methods:
             raise InvalidUsage(
                 'Method {} not allowed for URL {}'.format(
-                    request.method, request.url), status_code=405)
+                    request.method, url), status_code=405)
 
         kwargs = {p.name: p.cast(value) for value, p in zip(match.groups(1), route.parameters)}
         return route.handler, [], kwargs

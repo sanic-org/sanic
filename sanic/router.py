@@ -61,16 +61,16 @@ class Router:
 
         def add_parameter(match):
             # We could receive NAME or NAME:PATTERN
-            parameter_name = match.group(1)
-            parameter_pattern = 'string'
-            if ':' in parameter_name:
-                parameter_name, parameter_pattern = parameter_name.split(':', 1)
+            name = match.group(1)
+            pattern = 'string'
+            if ':' in name:
+                name, pattern = name.split(':', 1)
 
-            default = (str, parameter_pattern)
+            default = (str, pattern)
             # Pull from pre-configured types
-            parameter_type, parameter_pattern = REGEX_TYPES.get(parameter_pattern, default)
-            parameters.append(Parameter(name=parameter_name, cast=parameter_type))
-            return '({})'.format(parameter_pattern)
+            _type, pattern = REGEX_TYPES.get(pattern, default)
+            parameters.append(Parameter(name=name, cast=_type))
+            return '({})'.format(pattern)
 
         pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
         pattern = re.compile(r'^{}$'.format(pattern_string))
@@ -109,5 +109,7 @@ class Router:
                 'Method {} not allowed for URL {}'.format(
                     request.method, url), status_code=405)
 
-        kwargs = {p.name: p.cast(value) for value, p in zip(match.groups(1), route.parameters)}
+        kwargs = {p.name: p.cast(value)
+                  for value, p
+                  in zip(match.groups(1), route.parameters)}
         return route.handler, [], kwargs

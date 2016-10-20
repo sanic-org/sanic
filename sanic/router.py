@@ -50,9 +50,8 @@ class Router:
         """
 
         # Dict for faster lookups of if method allowed
-        methods_dict = None
         if methods:
-            methods_dict = {method: True for method in methods}
+            methods = frozenset(methods)
 
         parameters = []
 
@@ -73,7 +72,7 @@ class Router:
         pattern = re.compile(r'^{}$'.format(pattern_string))
 
         route = Route(
-            handler=handler, methods=methods_dict, pattern=pattern,
+            handler=handler, methods=methods, pattern=pattern,
             parameters=parameters)
         self.routes.append(route)
 

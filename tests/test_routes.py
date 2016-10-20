@@ -1,12 +1,32 @@
-from json import loads as json_loads, dumps as json_dumps
+import pytest
+
 from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import text
+from sanic.router import RouteExists
 from sanic.utils import sanic_endpoint_test
 
 
 # ------------------------------------------------------------ #
 #  UTF-8
 # ------------------------------------------------------------ #
+
+def test_static_routes():
+    app = Sanic('test_dynamic_route')
+
+    @app.route('/test')
+    async def handler1(request):
+        return text('OK1')
+
+    @app.route('/pizazz')
+    async def handler2(request):
+        return text('OK2')
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.text == 'OK1'
+
+    request, response = sanic_endpoint_test(app, uri='/pizazz')
+    assert response.text == 'OK2'
+
 
 def test_dynamic_route():
     app = Sanic('test_dynamic_route')
@@ -102,3 +122,45 @@ def test_dynamic_route_regex():
 
     request, response = sanic_endpoint_test(app, uri='/folder/')
     assert response.status == 200
+
+
+def test_dynamic_route_unhashable():
+    app = Sanic('test_dynamic_route_unhashable')
+
+    @app.route('/folder/<unhashable:[A-Za-z0-9/]+>/end/')
+    async def handler(request, unhashable):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test/asdf/end/')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test///////end/')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test/end/')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test/nope/')
+    assert response.status == 404
+
+
+def test_route_duplicate():
+    app = Sanic('test_dynamic_route')
+
+    with pytest.raises(RouteExists):
+        @app.route('/test')
+        async def handler1(request):
+            pass
+
+        @app.route('/test')
+        async def handler2(request):
+            pass
+
+    with pytest.raises(RouteExists):
+        @app.route('/test/<dynamic>/')
+        async def handler1(request, dynamic):
+            pass
+
+        @app.route('/test/<dynamic>/')
+        async def handler2(request, dynamic):
+            pass

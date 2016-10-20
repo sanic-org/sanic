@@ -1,9 +1,26 @@
 import re
-from collections import namedtuple
+from collections import defaultdict, namedtuple
+from functools import lru_cache
+from .config import Config
 from .exceptions import NotFound, InvalidUsage
 
-Route = namedtuple("Route", ['handler', 'methods', 'pattern', 'parameters'])
-Parameter = namedtuple("Parameter", ['name', 'cast'])
+Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
+Parameter = namedtuple('Parameter', ['name', 'cast'])
+
+REGEX_TYPES = {
+    'string': (str, r'[^/]+'),
+    'int': (int, r'\d+'),
+    'number': (float, r'[0-9\\.]+'),
+    'alpha': (str, r'[A-Za-z]+'),
+}
+
+
+def url_hash(url):
+    return url.count('/')
+
+
+class RouteExists(Exception):
+    pass
 
 
 class Router:
@@ -18,22 +35,16 @@ class Router:
     function provided Parameters can also have a type by appending :type to
     the <parameter>.  If no type is provided, a string is expected.  A regular
     expression can also be passed in as the type
-
-    TODO:
-        This probably needs optimization for larger sets of routes,
-        since it checks every route until it finds a match which is bad and
-        I should feel bad
     """
-    routes = None
-    regex_types = {
-        "string": (None, "[^/]+"),
-        "int": (int, "\d+"),
-        "number": (float, "[0-9\\.]+"),
-        "alpha": (None, "[A-Za-z]+"),
-    }
+    routes_static = None
+    routes_dynamic = None
+    routes_always_check = None
 
     def __init__(self):
-        self.routes = []
+        self.routes_all = {}
+        self.routes_static = {}
+        self.routes_dynamic = defaultdict(list)
+        self.routes_always_check = []
 
     def add(self, uri, methods, handler):
         """
@@ -45,42 +56,49 @@ class Router:
         When executed, it should provide a response object.
         :return: Nothing
         """
+        if uri in self.routes_all:
+            raise RouteExists("Route already registered: {}".format(uri))
 
         # Dict for faster lookups of if method allowed
-        methods_dict = None
         if methods:
-            methods_dict = {method: True for method in methods}
+            methods = frozenset(methods)
 
         parameters = []
+        properties = {"unhashable": None}
 
         def add_parameter(match):
             # We could receive NAME or NAME:PATTERN
-            parts = match.group(1).split(':')
-            if len(parts) == 2:
-                parameter_name, parameter_pattern = parts
-            else:
-                parameter_name = parts[0]
-                parameter_pattern = 'string'
+            name = match.group(1)
+            pattern = 'string'
+            if ':' in name:
+                name, pattern = name.split(':', 1)
 
+            default = (str, pattern)
             # Pull from pre-configured types
-            parameter_regex = self.regex_types.get(parameter_pattern)
-            if parameter_regex:
-                parameter_type, parameter_pattern = parameter_regex
-            else:
-                parameter_type = None
-
-            parameter = Parameter(name=parameter_name, cast=parameter_type)
+            _type, pattern = REGEX_TYPES.get(pattern, default)
+            parameter = Parameter(name=name, cast=_type)
             parameters.append(parameter)
 
-            return "({})".format(parameter_pattern)
+            # Mark the whole route as unhashable if it has the hash key in it
+            if re.search('(^|[^^]){1}/', pattern):
+                properties['unhashable'] = True
 
-        pattern_string = re.sub("<(.+?)>", add_parameter, uri)
-        pattern = re.compile("^{}$".format(pattern_string))
+            return '({})'.format(pattern)
+
+        pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
+        pattern = re.compile(r'^{}$'.format(pattern_string))
 
         route = Route(
-            handler=handler, methods=methods_dict, pattern=pattern,
+            handler=handler, methods=methods, pattern=pattern,
             parameters=parameters)
-        self.routes.append(route)
+
+        self.routes_all[uri] = route
+        if properties['unhashable']:
+            self.routes_always_check.append(route)
+        elif parameters:
+            self.routes_dynamic[url_hash(uri)].append(route)
+        else:
+            self.routes_static[uri] = route
 
     def get(self, request):
         """
@@ -89,58 +107,42 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
+        return self._get(request.url, request.method)
 
-        route = None
-        args = []
-        kwargs = {}
-        for _route in self.routes:
-            match = _route.pattern.match(request.url)
-            if match:
-                for index, parameter in enumerate(_route.parameters, start=1):
-                    value = match.group(index)
-                    if parameter.cast:
-                        kwargs[parameter.name] = parameter.cast(value)
-                    else:
-                        kwargs[parameter.name] = value
-                route = _route
-                break
-
+    @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
+    def _get(self, url, method):
+        """
+        Gets a request handler based on the URL of the request, or raises an
+        error.  Internal method for caching.
+        :param url: Request URL
+        :param method: Request method
+        :return: handler, arguments, keyword arguments
+        """
+        # Check against known static routes
+        route = self.routes_static.get(url)
         if route:
-            if route.methods and request.method not in route.methods:
-                raise InvalidUsage(
-                    "Method {} not allowed for URL {}".format(
-                        request.method, request.url), status_code=405)
-            return route.handler, args, kwargs
+            match = route.pattern.match(url)
         else:
-            raise NotFound("Requested URL {} not found".format(request.url))
+            # Move on to testing all regex routes
+            for route in self.routes_dynamic[url_hash(url)]:
+                match = route.pattern.match(url)
+                if match:
+                    break
+            else:
+                # Lastly, check against all regex routes that cannot be hashed
+                for route in self.routes_always_check:
+                    match = route.pattern.match(url)
+                    if match:
+                        break
+                else:
+                    raise NotFound('Requested URL {} not found'.format(url))
 
+        if route.methods and method not in route.methods:
+            raise InvalidUsage(
+                'Method {} not allowed for URL {}'.format(
+                    method, url), status_code=405)
 
-class SimpleRouter:
-    """
-    Simple router records and reads all routes from a dictionary
-    It does not support parameters in routes, but is very fast
-    """
-    routes = None
-
-    def __init__(self):
-        self.routes = {}
-
-    def add(self, uri, methods, handler):
-        # Dict for faster lookups of method allowed
-        methods_dict = None
-        if methods:
-            methods_dict = {method: True for method in methods}
-        self.routes[uri] = Route(
-            handler=handler, methods=methods_dict, pattern=uri,
-            parameters=None)
-
-    def get(self, request):
-        route = self.routes.get(request.url)
-        if route:
-            if route.methods and request.method not in route.methods:
-                raise InvalidUsage(
-                    "Method {} not allowed for URL {}".format(
-                        request.method, request.url), status_code=405)
-            return route.handler, [], {}
-        else:
-            raise NotFound("Requested URL {} not found".format(request.url))
+        kwargs = {p.name: p.cast(value)
+                  for value, p
+                  in zip(match.groups(1), route.parameters)}
+        return route.handler, [], kwargs

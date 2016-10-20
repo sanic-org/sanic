@@ -56,24 +56,16 @@ class Router:
 
         def add_parameter(match):
             # We could receive NAME or NAME:PATTERN
-            parts = match.group(1).split(':')
-            if len(parts) == 2:
-                parameter_name, parameter_pattern = parts
-            else:
-                parameter_name = parts[0]
-                parameter_pattern = 'string'
+            parameter_name = match.group(1)
+            parameter_pattern = 'string'
+            if ':' in parameter_name:
+                parameter_name, parameter_pattern = parameter_name.split(':', 1)
 
+            default = (None, parameter_pattern)
             # Pull from pre-configured types
-            parameter_regex = REGEX_TYPES.get(parameter_pattern)
-            if parameter_regex:
-                parameter_type, parameter_pattern = parameter_regex
-            else:
-                parameter_type = None
-
-            parameter = Parameter(name=parameter_name, cast=parameter_type)
-            parameters.append(parameter)
-
-            return "({})".format(parameter_pattern)
+            parameter_type, parameter_pattern = REGEX_TYPES.get(parameter_pattern, default)
+            parameters.append(Parameter(name=parameter_name, cast=parameter_type))
+            return '({})'.format(parameter_pattern)
 
         pattern_string = re.sub("<(.+?)>", add_parameter, uri)
         pattern = re.compile("^{}$".format(pattern_string))

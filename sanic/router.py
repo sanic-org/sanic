@@ -1,5 +1,7 @@
 import re
 from collections import namedtuple
+from functools import lru_cache
+from .config import Config
 from .exceptions import NotFound, InvalidUsage
 
 Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
@@ -75,6 +77,7 @@ class Router:
             parameters=parameters)
         self.routes.append(route)
 
+    @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
     def get(self, request):
         """
         Gets a request handler based on the URL of the request, or raises an

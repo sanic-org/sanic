@@ -197,6 +197,8 @@ class Sanic:
             'request_handler': self.handle_request,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
+            'after_start': after_start,
+            'before_stop': before_stop,
             'loop': loop
         }
 
@@ -209,8 +211,6 @@ class Sanic:
 
         try:
             if workers == 1:
-                server_settings['after_start'] = after_start
-                server_settings['before_stop'] = before_stop
                 serve(**server_settings)
             else:
                 log.info('Spinning up {} workers...'.format(workers))

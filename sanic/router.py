@@ -2,14 +2,14 @@ import re
 from collections import namedtuple
 from .exceptions import NotFound, InvalidUsage
 
-Route = namedtuple("Route", ['handler', 'methods', 'pattern', 'parameters'])
-Parameter = namedtuple("Parameter", ['name', 'cast'])
+Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
+Parameter = namedtuple('Parameter', ['name', 'cast'])
 
 REGEX_TYPES = {
-    "string": (None, "[^/]+"),
-    "int": (int, "\d+"),
-    "number": (float, "[0-9\\.]+"),
-    "alpha": (None, "[A-Za-z]+"),
+    'string': (None, r'[^/]+'),
+    'int': (int, r'\d+'),
+    'number': (float, r'[0-9\\.]+'),
+    'alpha': (None, r'[A-Za-z]+'),
 }
 
 
@@ -67,8 +67,8 @@ class Router:
             parameters.append(Parameter(name=parameter_name, cast=parameter_type))
             return '({})'.format(parameter_pattern)
 
-        pattern_string = re.sub("<(.+?)>", add_parameter, uri)
-        pattern = re.compile("^{}$".format(pattern_string))
+        pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
+        pattern = re.compile(r'^{}$'.format(pattern_string))
 
         route = Route(
             handler=handler, methods=methods_dict, pattern=pattern,
@@ -101,8 +101,8 @@ class Router:
         if route:
             if route.methods and request.method not in route.methods:
                 raise InvalidUsage(
-                    "Method {} not allowed for URL {}".format(
+                    'Method {} not allowed for URL {}'.format(
                         request.method, request.url), status_code=405)
             return route.handler, args, kwargs
         else:
-            raise NotFound("Requested URL {} not found".format(request.url))
+            raise NotFound('Requested URL {} not found'.format(request.url))

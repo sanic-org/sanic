@@ -122,7 +122,7 @@ class HTTPResponse:
 
 def json(body, status=200, headers=None):
     return HTTPResponse(ujson.dumps(body), headers=headers, status=status,
-                        content_type="application/json; charset=utf-8")
+                        content_type="application/json")
 
 
 def text(body, status=200, headers=None):

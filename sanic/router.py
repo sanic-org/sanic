@@ -113,34 +113,3 @@ class Router:
             return route.handler, args, kwargs
         else:
             raise NotFound("Requested URL {} not found".format(request.url))
-
-
-class SimpleRouter:
-    """
-    Simple router records and reads all routes from a dictionary
-    It does not support parameters in routes, but is very fast
-    """
-    routes = None
-
-    def __init__(self):
-        self.routes = {}
-
-    def add(self, uri, methods, handler):
-        # Dict for faster lookups of method allowed
-        methods_dict = None
-        if methods:
-            methods_dict = {method: True for method in methods}
-        self.routes[uri] = Route(
-            handler=handler, methods=methods_dict, pattern=uri,
-            parameters=None)
-
-    def get(self, request):
-        route = self.routes.get(request.url)
-        if route:
-            if route.methods and request.method not in route.methods:
-                raise InvalidUsage(
-                    "Method {} not allowed for URL {}".format(
-                        request.method, request.url), status_code=405)
-            return route.handler, [], {}
-        else:
-            raise NotFound("Requested URL {} not found".format(request.url))

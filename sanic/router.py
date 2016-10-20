@@ -6,10 +6,10 @@ Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
 
 REGEX_TYPES = {
-    'string': (None, r'[^/]+'),
+    'string': (str, r'[^/]+'),
     'int': (int, r'\d+'),
     'number': (float, r'[0-9\\.]+'),
-    'alpha': (None, r'[A-Za-z]+'),
+    'alpha': (str, r'[A-Za-z]+'),
 }
 
 
@@ -61,7 +61,7 @@ class Router:
             if ':' in parameter_name:
                 parameter_name, parameter_pattern = parameter_name.split(':', 1)
 
-            default = (None, parameter_pattern)
+            default = (str, parameter_pattern)
             # Pull from pre-configured types
             parameter_type, parameter_pattern = REGEX_TYPES.get(parameter_pattern, default)
             parameters.append(Parameter(name=parameter_name, cast=parameter_type))
@@ -82,27 +82,18 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
-
         route = None
-        args = []
-        kwargs = {}
-        for _route in self.routes:
-            match = _route.pattern.match(request.url)
+        for route in self.routes:
+            match = route.pattern.match(request.url)
             if match:
-                for index, parameter in enumerate(_route.parameters, start=1):
-                    value = match.group(index)
-                    if parameter.cast:
-                        kwargs[parameter.name] = parameter.cast(value)
-                    else:
-                        kwargs[parameter.name] = value
-                route = _route
                 break
-
-        if route:
-            if route.methods and request.method not in route.methods:
-                raise InvalidUsage(
-                    'Method {} not allowed for URL {}'.format(
-                        request.method, request.url), status_code=405)
-            return route.handler, args, kwargs
         else:
             raise NotFound('Requested URL {} not found'.format(request.url))
+
+        if route.methods and request.method not in route.methods:
+            raise InvalidUsage(
+                'Method {} not allowed for URL {}'.format(
+                    request.method, request.url), status_code=405)
+
+        kwargs = {p.name: p.cast(value) for value, p in zip(match.groups(1), route.parameters)}
+        return route.handler, [], kwargs

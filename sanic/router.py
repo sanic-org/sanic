@@ -16,7 +16,11 @@ REGEX_TYPES = {
 
 
 def url_hash(url):
-    return '/'.join(':' for s in url.split('/'))
+    return url.count('/')
+
+
+class RouteExists(Exception):
+    pass
 
 
 class Router:
@@ -31,16 +35,16 @@ class Router:
     function provided Parameters can also have a type by appending :type to
     the <parameter>.  If no type is provided, a string is expected.  A regular
     expression can also be passed in as the type
-
-    TODO:
-        This probably needs optimization for larger sets of routes,
-        since it checks every route until it finds a match which is bad and
-        I should feel bad
     """
-    routes = None
+    routes_static = None
+    routes_dynamic = None
+    routes_always_check = None
 
     def __init__(self):
-        self.routes = defaultdict(list)
+        self.routes_all = {}
+        self.routes_static = {}
+        self.routes_dynamic = defaultdict(list)
+        self.routes_always_check = []
 
     def add(self, uri, methods, handler):
         """
@@ -52,12 +56,15 @@ class Router:
         When executed, it should provide a response object.
         :return: Nothing
         """
+        if uri in self.routes_all:
+            raise RouteExists("Route already registered: {}".format(uri))
 
         # Dict for faster lookups of if method allowed
         if methods:
             methods = frozenset(methods)
 
         parameters = []
+        properties = {"unhashable": None}
 
         def add_parameter(match):
             # We could receive NAME or NAME:PATTERN
@@ -69,7 +76,13 @@ class Router:
             default = (str, pattern)
             # Pull from pre-configured types
             _type, pattern = REGEX_TYPES.get(pattern, default)
-            parameters.append(Parameter(name=name, cast=_type))
+            parameter = Parameter(name=name, cast=_type)
+            parameters.append(parameter)
+
+            # Mark the whole route as unhashable if it has the hash key in it
+            if re.search('(^|[^^]){1}/', pattern):
+                properties['unhashable'] = True
+
             return '({})'.format(pattern)
 
         pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
@@ -79,11 +92,14 @@ class Router:
             handler=handler, methods=methods, pattern=pattern,
             parameters=parameters)
 
-        if parameters:
-            uri = url_hash(uri)
-        self.routes[uri].append(route)
+        self.routes_all[uri] = route
+        if properties['unhashable']:
+            self.routes_always_check.append(route)
+        elif parameters:
+            self.routes_dynamic[url_hash(uri)].append(route)
+        else:
+            self.routes_static[uri] = route
 
-    @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
     def get(self, request):
         """
         Gets a request handler based on the URL of the request, or raises an
@@ -91,23 +107,40 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
-        route = None
-        url = request.url
-        if url in self.routes:
-            route = self.routes[url][0]
+        return self._get(request.url, request.method)
+
+    @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
+    def _get(self, url, method):
+        """
+        Gets a request handler based on the URL of the request, or raises an
+        error.  Internal method for caching.
+        :param url: Request URL
+        :param method: Request method
+        :return: handler, arguments, keyword arguments
+        """
+        # Check against known static routes
+        route = self.routes_static.get(url)
+        if route:
             match = route.pattern.match(url)
         else:
-            for route in self.routes[url_hash(url)]:
+            # Move on to testing all regex routes
+            for route in self.routes_dynamic[url_hash(url)]:
                 match = route.pattern.match(url)
                 if match:
                     break
             else:
-                raise NotFound('Requested URL {} not found'.format(url))
+                # Lastly, check against all regex routes that cannot be hashed
+                for route in self.routes_always_check:
+                    match = route.pattern.match(url)
+                    if match:
+                        break
+                else:
+                    raise NotFound('Requested URL {} not found'.format(url))
 
-        if route.methods and request.method not in route.methods:
+        if route.methods and method not in route.methods:
             raise InvalidUsage(
                 'Method {} not allowed for URL {}'.format(
-                    request.method, url), status_code=405)
+                    method, url), status_code=405)
 
         kwargs = {p.name: p.cast(value)
                   for value, p

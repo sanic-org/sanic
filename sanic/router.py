@@ -5,6 +5,13 @@ from .exceptions import NotFound, InvalidUsage
 Route = namedtuple("Route", ['handler', 'methods', 'pattern', 'parameters'])
 Parameter = namedtuple("Parameter", ['name', 'cast'])
 
+REGEX_TYPES = {
+    "string": (None, "[^/]+"),
+    "int": (int, "\d+"),
+    "number": (float, "[0-9\\.]+"),
+    "alpha": (None, "[A-Za-z]+"),
+}
+
 
 class Router:
     """
@@ -25,12 +32,6 @@ class Router:
         I should feel bad
     """
     routes = None
-    regex_types = {
-        "string": (None, "[^/]+"),
-        "int": (int, "\d+"),
-        "number": (float, "[0-9\\.]+"),
-        "alpha": (None, "[A-Za-z]+"),
-    }
 
     def __init__(self):
         self.routes = []
@@ -63,7 +64,7 @@ class Router:
                 parameter_pattern = 'string'
 
             # Pull from pre-configured types
-            parameter_regex = self.regex_types.get(parameter_pattern)
+            parameter_regex = REGEX_TYPES.get(parameter_pattern)
             if parameter_regex:
                 parameter_type, parameter_pattern = parameter_regex
             else:

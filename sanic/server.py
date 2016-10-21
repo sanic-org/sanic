@@ -39,7 +39,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request = None
         self.parser = None
         self.url = None
-        self.headers = None
+        self.headers = {}
         self.request_handler = request_handler
         self.request_timeout = request_timeout
         self.request_max_size = request_max_size
@@ -103,9 +103,6 @@ class HttpProtocol(asyncio.Protocol):
             self.transport.close()
             return
 
-        if self.headers is None:
-            self.headers = {}
-
         self.headers[name.decode()] = value.decode('utf-8')
 
     def on_headers_complete(self):
@@ -137,7 +134,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.parser = None
                 self.request = None
                 self.url = None
-                self.headers = None
+                self.headers = {}
                 self._total_request_size = 0
             else:
                 self.transport.close()

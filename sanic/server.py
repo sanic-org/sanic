@@ -60,11 +60,6 @@ class HttpProtocol(asyncio.Protocol):
     def connection_lost(self, exc):
         CONNECTIONS.discard(self)
         self._timeout_handler.cancel()
-        self.parser = None
-        self.request = None
-        self.url = None
-        self.headers = None
-        self._total_request_size = 0
 
     def connection_timeout(self):
         log.error('Request timed out, connection closed')

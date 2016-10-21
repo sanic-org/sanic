@@ -157,7 +157,22 @@ class HttpProtocol(asyncio.Protocol):
         return False
 
 
-def serve(host, port, request_handler, after_start=None, before_stop=None,
+def trigger_events(events, loop):
+    """
+    :param events: one or more sync or async functions to execute
+    :param loop: event loop
+    """
+    if events:
+        if type(events) is not list:
+            events = [events]
+        for event in events:
+            result = event(loop)
+            if isawaitable(result):
+                loop.run_until_complete(result)
+
+
+def serve(host, port, request_handler, before_start=None, after_start=None,
+          before_stop=None, after_stop=None,
           debug=False, request_timeout=60, sock=None,
           request_max_size=None, reuse_port=False, loop=None):
     """
@@ -183,6 +198,8 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     if debug:
         loop.set_debug(debug)
 
+    trigger_events(before_start, loop)
+
     connections = {}
     signal = Signal()
     server_coroutine = loop.create_server(lambda: HttpProtocol(
@@ -193,17 +210,14 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
     ), host, port, reuse_port=reuse_port, sock=sock)
+
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except Exception as e:
         log.exception("Unable to start server")
         return
 
-    # Run the on_start function if provided
-    if after_start:
-        result = after_start(loop)
-        if isawaitable(result):
-            loop.run_until_complete(result)
+    trigger_events(after_start, loop)
 
     # Register signals for graceful termination
     for _signal in (SIGINT, SIGTERM):
@@ -215,10 +229,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
         log.info("Stop requested, draining connections...")
 
         # Run the on_stop function if provided
-        if before_stop:
-            result = before_stop(loop)
-            if isawaitable(result):
-                loop.run_until_complete(result)
+        trigger_events(before_stop, loop)
 
         # Wait for event loop to finish and all connections to drain
         http_server.close()
@@ -231,5 +242,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
 
         while connections:
             loop.run_until_complete(asyncio.sleep(0.1))
+
+        trigger_events(after_stop, loop)
 
         loop.close()

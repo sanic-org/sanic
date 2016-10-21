@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 class BlueprintSetup:
     """
     """
@@ -22,7 +25,7 @@ class BlueprintSetup:
         if self.url_prefix:
             uri = self.url_prefix + uri
 
-        self.app.router.add(uri, methods, handler)
+        self.app.route(uri=uri, methods=methods)(handler)
 
     def add_exception(self, handler, *args, **kwargs):
         """
@@ -42,9 +45,15 @@ class BlueprintSetup:
 
 class Blueprint:
     def __init__(self, name, url_prefix=None):
+        """
+        Creates a new blueprint
+        :param name: Unique name of the blueprint
+        :param url_prefix: URL to be prefixed before all route URLs
+        """
         self.name = name
         self.url_prefix = url_prefix
         self.deferred_functions = []
+        self.listeners = defaultdict(list)
 
     def record(self, func):
         """
@@ -71,6 +80,14 @@ class Blueprint:
         def decorator(handler):
             self.record(lambda s: s.add_route(handler, uri, methods))
             return handler
+        return decorator
+
+    def listener(self, event):
+        """
+        """
+        def decorator(listener):
+            self.listeners[event].append(listener)
+            return listener
         return decorator
 
     def middleware(self, *args, **kwargs):

@@ -1,4 +1,5 @@
 from asyncio import get_event_loop
+from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process, Event
 from signal import signal, SIGTERM, SIGINT
@@ -24,6 +25,8 @@ class Sanic:
         self.response_middleware = []
         self.blueprints = {}
         self._blueprint_order = []
+        self.loop = None
+        self.debug = None
 
     # -------------------------------------------------------------------- #
     # Registration
@@ -71,7 +74,7 @@ class Sanic:
             if attach_to == 'request':
                 self.request_middleware.append(middleware)
             if attach_to == 'response':
-                self.response_middleware.append(middleware)
+                self.response_middleware.insert(0, middleware)
             return middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')
@@ -102,6 +105,9 @@ class Sanic:
     # Request Handling
     # -------------------------------------------------------------------- #
 
+    def converted_response_type(self, response):
+        pass
+
     async def handle_request(self, request, response_callback):
         """
         Takes a request from the HTTP Server and returns a response object to
@@ -113,7 +119,10 @@ class Sanic:
         :return: Nothing
         """
         try:
-            # Middleware process_request
+            # -------------------------------------------- #
+            # Request Middleware
+            # -------------------------------------------- #
+
             response = False
             # The if improves speed.  I don't know why
             if self.request_middleware:
@@ -126,6 +135,10 @@ class Sanic:
 
             # No middleware results
             if not response:
+                # -------------------------------------------- #
+                # Execute Handler
+                # -------------------------------------------- #
+
                 # Fetch handler from router
                 handler, args, kwargs = self.router.get(request)
                 if handler is None:
@@ -138,7 +151,10 @@ class Sanic:
                 if isawaitable(response):
                     response = await response
 
-                # Middleware process_response
+                # -------------------------------------------- #
+                # Response Middleware
+                # -------------------------------------------- #
+
                 if self.response_middleware:
                     for middleware in self.response_middleware:
                         _response = middleware(request, response)
@@ -149,6 +165,10 @@ class Sanic:
                             break
 
         except Exception as e:
+            # -------------------------------------------- #
+            # Response Generation Failed
+            # -------------------------------------------- #
+
             try:
                 response = self.error_handler.response(request, e)
                 if isawaitable(response):
@@ -168,18 +188,23 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, after_start=None,
-            before_stop=None, sock=None, workers=1, loop=None):
+    def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
+            after_start=None, before_stop=None, after_stop=None, sock=None,
+            workers=1, loop=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
         :param host: Address to host on
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
+        :param before_start: Function to be executed before the server starts
+        accepting connections
         :param after_start: Function to be executed after the server starts
-        listening
+        accepting connections
         :param before_stop: Function to be executed when a stop signal is
         received before it is respected
+        :param after_stop: Function to be executed when all requests are
+        complete
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
         received before it is respected
@@ -188,6 +213,7 @@ class Sanic:
         """
         self.error_handler.debug = True
         self.debug = debug
+        self.loop = loop
 
         server_settings = {
             'host': host,
@@ -197,10 +223,31 @@ class Sanic:
             'request_handler': self.handle_request,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'after_start': after_start,
-            'before_stop': before_stop,
             'loop': loop
         }
+
+        # -------------------------------------------- #
+        # Register start/stop events
+        # -------------------------------------------- #
+
+        for event_name, settings_name, args, reverse in (
+                ("before_server_start", "before_start", before_start, False),
+                ("after_server_start", "after_start", after_start, False),
+                ("before_server_stop", "before_stop", before_stop, True),
+                ("after_server_stop", "after_stop", after_stop, True),
+                ):
+            listeners = []
+            for blueprint in self.blueprints.values():
+                listeners += blueprint.listeners[event_name]
+            if args:
+                if type(args) is not list:
+                    args = [args]
+                listeners += args
+            if reverse:
+                listeners.reverse()
+            # Prepend sanic to the arguments when listeners are triggered
+            listeners = [partial(listener, self) for listener in listeners]
+            server_settings[settings_name] = listeners
 
         if debug:
             log.setLevel(logging.DEBUG)

@@ -1,4 +1,5 @@
 import asyncio
+from functools import partial
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
 
@@ -185,14 +186,22 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
 
     connections = {}
     signal = Signal()
-    server_coroutine = loop.create_server(lambda: HttpProtocol(
+    server = partial(
+        HttpProtocol,
         loop=loop,
         connections=connections,
         signal=signal,
         request_handler=request_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
-    ), host, port, reuse_port=reuse_port, sock=sock)
+    )
+    server_coroutine = loop.create_server(
+        server,
+        host,
+        port,
+        reuse_port=reuse_port,
+        sock=sock
+    )
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except Exception as e:

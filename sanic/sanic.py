@@ -195,8 +195,6 @@ class Sanic:
             'sock': sock,
             'debug': debug,
             'request_handler': self.handle_request,
-            'request_timeout': self.config.REQUEST_TIMEOUT,
-            'request_max_size': self.config.REQUEST_MAX_SIZE,
             'after_start': after_start,
             'before_stop': before_stop,
             'loop': loop

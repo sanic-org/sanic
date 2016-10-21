@@ -11,6 +11,7 @@ try:
 except ImportError:
     async_loop = asyncio
 
+from .config import Config
 from .log import log
 from .request import Request
 
@@ -28,12 +29,11 @@ class HttpProtocol(asyncio.Protocol):
         # request params
         'parser', 'request', 'url', 'headers',
         # request config
-        'request_handler', 'request_timeout', 'request_max_size',
+        'request_handler',
         # connection management
         '_total_request_size', '_timeout_handler')
 
-    def __init__(self, *, loop, request_handler,
-                 request_timeout=60, request_max_size=None):
+    def __init__(self, *, loop, request_handler):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -41,8 +41,6 @@ class HttpProtocol(asyncio.Protocol):
         self.url = None
         self.headers = {}
         self.request_handler = request_handler
-        self.request_timeout = request_timeout
-        self.request_max_size = request_max_size
         self._total_request_size = 0
         self._timeout_handler = None
 
@@ -54,7 +52,7 @@ class HttpProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         CONNECTIONS.add(self)
         self._timeout_handler = self.loop.call_later(
-            self.request_timeout, self.connection_timeout)
+            Config.REQUEST_TIMEOUT, self.connection_timeout)
         self.transport = transport
 
     def connection_lost(self, _):
@@ -74,7 +72,7 @@ class HttpProtocol(asyncio.Protocol):
         # Check for the request itself getting too large and exceeding
         # memory limits
         self._total_request_size += len(data)
-        if self._total_request_size > self.request_max_size:
+        if self._total_request_size > Config.REQUEST_MAX_SIZE:
             log.error(
                 'Request too large (%s), connection closed',
                 self._total_request_size
@@ -98,7 +96,7 @@ class HttpProtocol(asyncio.Protocol):
         self.url = url
 
     def on_header(self, name, value):
-        if name == b'Content-Length' and int(value) > self.request_max_size:
+        if name == b'Content-Length' and int(value) > Config.REQUEST_MAX_SIZE:
             log.error('Request body too large (%s), connection closed', value)
             self.transport.close()
             return
@@ -129,7 +127,7 @@ class HttpProtocol(asyncio.Protocol):
             keep_alive = STATUS.running and self.parser.should_keep_alive()
             self.transport.write(
                 response.output(
-                    self.request.version, keep_alive, self.request_timeout))
+                    self.request.version, keep_alive, Config.REQUEST_TIMEOUT))
             if keep_alive:
                 self.parser = None
                 self.request = None
@@ -152,8 +150,8 @@ class HttpProtocol(asyncio.Protocol):
 
 
 def serve(host, port, request_handler, after_start=None, before_stop=None,
-          debug=False, request_timeout=60, sock=None,
-          request_max_size=None, reuse_port=False, loop=None):
+          debug=False, sock=None,
+          reuse_port=False, loop=None):
     """
     Starts asynchronous HTTP Server on an individual process.
     :param host: Address to host on
@@ -164,9 +162,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     :param before_stop: Function to be executed when a stop signal is
     received before it is respected. Takes single argumenet `loop`
     :param debug: Enables debug output (slows server)
-    :param request_timeout: time in seconds
     :param sock: Socket for the server to accept connections from
-    :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
     :return: Nothing
@@ -180,9 +176,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     server = partial(
         HttpProtocol,
         loop=loop,
-        request_handler=request_handler,
-        request_timeout=request_timeout,
-        request_max_size=request_max_size,
+        request_handler=request_handler
     )
     server_coroutine = loop.create_server(
         server,

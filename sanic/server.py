@@ -16,14 +16,14 @@ from .request import Request
 CONNECTIONS = set()
 
 
-class Signal:
-    stopped = False
+class STATUS:
+    running = True  # sanic runs!
 
 
 class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
-        'loop', 'transport', 'signal',
+        'loop', 'transport',
         # request params
         'parser', 'request', 'url', 'headers',
         # request config
@@ -31,7 +31,7 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         '_total_request_size', '_timeout_handler')
 
-    def __init__(self, *, loop, request_handler, signal=Signal(),
+    def __init__(self, *, loop, request_handler,
                  request_timeout=60, request_max_size=None):
         self.loop = loop
         self.transport = None
@@ -39,7 +39,6 @@ class HttpProtocol(asyncio.Protocol):
         self.parser = None
         self.url = None
         self.headers = None
-        self.signal = signal
         self.request_handler = request_handler
         self.request_timeout = request_timeout
         self.request_max_size = request_max_size
@@ -124,7 +123,7 @@ class HttpProtocol(asyncio.Protocol):
     def write_response(self, response):
         try:
             keep_alive = self.parser.should_keep_alive() \
-                            and not self.signal.stopped
+                            and STATUS.running
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))
@@ -184,11 +183,9 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     if debug:
         loop.set_debug(debug)
 
-    signal = Signal()
     server = partial(
         HttpProtocol,
         loop=loop,
-        signal=signal,
         request_handler=request_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
@@ -232,7 +229,7 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
         loop.run_until_complete(http_server.wait_closed())
 
         # Complete all tasks on the loop
-        signal.stopped = True
+        STATUS.running = False
         for connection in CONNECTIONS:
             connection.close_if_idle()
 

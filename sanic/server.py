@@ -13,6 +13,8 @@ except ImportError:
 from .log import log
 from .request import Request
 
+CONNECTIONS = set()
+
 
 class Signal:
     stopped = False
@@ -21,7 +23,7 @@ class Signal:
 class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
-        'loop', 'transport', 'connections', 'signal',
+        'loop', 'transport', 'signal',
         # request params
         'parser', 'request', 'url', 'headers',
         # request config
@@ -30,8 +32,7 @@ class HttpProtocol(asyncio.Protocol):
         '_total_request_size', '_timeout_handler')
 
     def __init__(self, *, loop, request_handler, signal=Signal(),
-                 connections={}, request_timeout=60,
-                 request_max_size=None):
+                 request_timeout=60, request_max_size=None):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -39,7 +40,6 @@ class HttpProtocol(asyncio.Protocol):
         self.url = None
         self.headers = None
         self.signal = signal
-        self.connections = connections
         self.request_handler = request_handler
         self.request_timeout = request_timeout
         self.request_max_size = request_max_size
@@ -52,13 +52,13 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def connection_made(self, transport):
-        self.connections[self] = True
+        CONNECTIONS.add(self)
         self._timeout_handler = self.loop.call_later(
             self.request_timeout, self.connection_timeout)
         self.transport = transport
 
     def connection_lost(self, exc):
-        del self.connections[self]
+        CONNECTIONS.discard(self)
         self._timeout_handler.cancel()
         self.cleanup()
 
@@ -184,12 +184,10 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
     if debug:
         loop.set_debug(debug)
 
-    connections = {}
     signal = Signal()
     server = partial(
         HttpProtocol,
         loop=loop,
-        connections=connections,
         signal=signal,
         request_handler=request_handler,
         request_timeout=request_timeout,
@@ -235,10 +233,10 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
 
         # Complete all tasks on the loop
         signal.stopped = True
-        for connection in connections.keys():
+        for connection in CONNECTIONS:
             connection.close_if_idle()
 
-        while connections:
+        while CONNECTIONS:
             loop.run_until_complete(asyncio.sleep(0.1))
 
         loop.close()

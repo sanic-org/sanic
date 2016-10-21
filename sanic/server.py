@@ -60,7 +60,11 @@ class HttpProtocol(asyncio.Protocol):
     def connection_lost(self, exc):
         CONNECTIONS.discard(self)
         self._timeout_handler.cancel()
-        self.cleanup()
+        self.parser = None
+        self.request = None
+        self.url = None
+        self.headers = None
+        self._total_request_size = 0
 
     def connection_timeout(self):
         log.error('Request timed out, connection closed')
@@ -135,19 +139,16 @@ class HttpProtocol(asyncio.Protocol):
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))
             if keep_alive:
-                self.cleanup()
+                self.parser = None
+                self.request = None
+                self.url = None
+                self.headers = None
+                self._total_request_size = 0
             else:
                 self.transport.close()
         except Exception as e:
             log.error('Writing request failed, connection closed %s', e)
             self.transport.close()
-
-    def cleanup(self):
-        self.parser = None
-        self.request = None
-        self.url = None
-        self.headers = None
-        self._total_request_size = 0
 
     def close_if_idle(self):
         """

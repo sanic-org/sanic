@@ -30,7 +30,7 @@ class Request:
     Properties of an HTTP request such as URL, headers, etc.
     """
     __slots__ = (
-        'url', 'headers', 'version', 'method',
+        '_url', 'headers', '_version', '_method',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
     )
@@ -38,10 +38,10 @@ class Request:
     def __init__(self, url_bytes, headers, version, method):
         # TODO: Content-Encoding detection
         url_parsed = parse_url(url_bytes)
-        self.url = url_parsed.path.decode('utf-8')
         self.headers = headers
-        self.version = version
-        self.method = method
+        self._method = method
+        self._url = url_parsed.path
+        self._version = version
         self.query_string = None
         if url_parsed.query:
             self.query_string = url_parsed.query.decode('utf-8')
@@ -104,6 +104,18 @@ class Request:
                 self.parsed_args = {}
 
         return self.parsed_args
+
+    @property
+    def method(self):
+        return self._method().decode()
+
+    @property
+    def url(self):
+        return self._url.decode('utf-8')
+
+    @property
+    def version(self):
+        return self._version()
 
 
 File = namedtuple('File', ['type', 'body', 'name'])

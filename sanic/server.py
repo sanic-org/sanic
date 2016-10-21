@@ -63,7 +63,8 @@ class HttpProtocol(asyncio.Protocol):
         self.cleanup()
 
     def connection_timeout(self):
-        self.bail_out("Request timed out, connection closed")
+        log.error('Request timed out, connection closed')
+        self.transport.close()
 
         # -------------------------------------------- #
 
@@ -75,9 +76,12 @@ class HttpProtocol(asyncio.Protocol):
         # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
-            return self.bail_out(
-                "Request too large ({}), connection closed".format(
-                    self._total_request_size))
+            log.error(
+                'Request too large (%s), connection closed',
+                self._total_request_size
+            )
+            self.transport.close()
+            return
 
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
@@ -88,16 +92,17 @@ class HttpProtocol(asyncio.Protocol):
         try:
             self.parser.feed_data(data)
         except HttpParserError as e:
-            self.bail_out(
-                "Invalid request data, connection closed ({})".format(e))
+            log.error('Invalid request data, connection closed (%s)', e)
+            self.transport.close()
 
     def on_url(self, url):
         self.url = url
 
     def on_header(self, name, value):
         if name == b'Content-Length' and int(value) > self.request_max_size:
-            return self.bail_out(
-                "Request body too large ({}), connection closed".format(value))
+            log.error('Request body too large (%s), connection closed', value)
+            self.transport.close()
+            return
 
         if self.headers is None:
             self.headers = {}
@@ -134,12 +139,8 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 self.transport.close()
         except Exception as e:
-            self.bail_out(
-                "Writing request failed, connection closed {}".format(e))
-
-    def bail_out(self, message):
-        log.error(message)
-        self.transport.close()
+            log.error('Writing request failed, connection closed %s', e)
+            self.transport.close()
 
     def cleanup(self):
         self.parser = None

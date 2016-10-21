@@ -154,8 +154,6 @@ class HttpProtocol(asyncio.Protocol):
         """
         if not self.parser:
             self.transport.close()
-            return True
-        return False
 
 
 def serve(host, port, request_handler, after_start=None, before_stop=None,

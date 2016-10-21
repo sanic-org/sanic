@@ -81,7 +81,6 @@ class HttpProtocol(asyncio.Protocol):
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
             assert self.request is None
-            self.headers = []
             self.parser = httptools.HttpRequestParser(self)
 
         # Parse request chunk or close connection
@@ -99,12 +98,15 @@ class HttpProtocol(asyncio.Protocol):
             return self.bail_out(
                 "Request body too large ({}), connection closed".format(value))
 
-        self.headers.append((name.decode(), value.decode('utf-8')))
+        if self.headers is None:
+            self.headers = {}
+
+        self.headers[name.decode()] = value.decode('utf-8')
 
     def on_headers_complete(self):
         self.request = Request(
             url_bytes=self.url,
-            headers=dict(self.headers),
+            headers=self.headers,
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode()
         )

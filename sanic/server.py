@@ -126,10 +126,10 @@ class HttpProtocol(asyncio.Protocol):
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))
-            if not keep_alive:
-                self.transport.close()
-            else:
+            if keep_alive:
                 self.cleanup()
+            else:
+                self.transport.close()
         except Exception as e:
             self.bail_out(
                 "Writing request failed, connection closed {}".format(e))

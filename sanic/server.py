@@ -147,7 +147,7 @@ class HttpProtocol(asyncio.Protocol):
         Close the connection if a request is not being sent or received
         :return: boolean - True if closed, false if staying open
         """
-        if not self.parser:
+        if self.parser is None:
             self.transport.close()
 
 

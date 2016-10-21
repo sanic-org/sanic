@@ -84,7 +84,6 @@ def ignore_404s(request, exception):
 ## Start and Stop
 Blueprints and run functions during the start and stop process of the server.
 If running in multiprocessor mode (more than 1 worker), these are triggered
-after forking
 Available events are:
 
  * before_server_start - Executed before the server begins to accept connections

@@ -57,7 +57,7 @@ class HttpProtocol(asyncio.Protocol):
             self.request_timeout, self.connection_timeout)
         self.transport = transport
 
-    def connection_lost(self, exc):
+    def connection_lost(self, _):
         CONNECTIONS.discard(self)
         self._timeout_handler.cancel()
 

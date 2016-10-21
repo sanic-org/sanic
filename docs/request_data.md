@@ -8,6 +8,7 @@ The following request variables are accessible as properties:
 `request.json` (any) - JSON body  
 `request.args` (dict) - Query String variables.  Use getlist to get multiple of the same name  
 `request.form` (dict) - Posted form variables.  Use getlist to get multiple of the same name  
+`request.body` (bytes) - Posted raw body.  To get the raw data, regardless of content type  
 
 See request.py for more information
 
@@ -15,7 +16,7 @@ See request.py for more information
 
 ```python
 from sanic import Sanic
-from sanic.response import json
+from sanic.response import json, text
 
 @app.route("/json")
 def post_json(request):
@@ -40,4 +41,9 @@ def post_json(request):
 @app.route("/query_string")
 def query_string(request):
     return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
+
+
+@app.route("/users", methods=["POST",])
+def create_user(request):
+    return text("You are trying to create a user with the following POST: %s" % request.body)
 ```

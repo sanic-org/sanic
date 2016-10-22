@@ -50,13 +50,13 @@ objects.database.allow_sync = False # this will raise AssertionError on ANY sync
 app = Sanic('peewee_example')
 
 @app.route('/post')
-async def root(request):
+async def post(request):
     await objects.create(KeyValue, key='my_first_async_db', text="I was inserted asynchronously!")
     return json({'success': True})
 
 
 @app.route('/get')
-async def root(request):
+async def get(request):
     all_objects = await objects.execute(KeyValue.select())
     serialized_obj = []
     for obj in all_objects:

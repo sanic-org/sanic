@@ -51,8 +51,8 @@ app = Sanic('peewee_example')
 
 @app.route('/post')
 async def post(request):
-    await objects.create(KeyValue, key='my_first_async_db', text="I was inserted asynchronously!")
-    return json({'success': True})
+    obj = await objects.create(KeyValue, key='my_first_async_db', text="I was inserted asynchronously!")
+    return json({'object_id': obj.id})
 
 
 @app.route('/get')

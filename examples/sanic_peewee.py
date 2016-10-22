@@ -49,16 +49,20 @@ objects.database.allow_sync = False # this will raise AssertionError on ANY sync
 
 app = Sanic('peewee_example')
 
-@app.route('/post')
-async def post(request):
-    """ This actually requires a GET request, you probably want POST in real
-    life, with some data parameters"""
-    obj = await objects.create(KeyValue, key='my_first_async_db', text="I was inserted asynchronously!")
+@app.route('/post/<key>/<value>')
+async def post(request, key, value):
+    """
+    Save get parameters to database
+    """
+    obj = await objects.create(KeyValue, key=key, text=value)
     return json({'object_id': obj.id})
 
 
 @app.route('/get')
 async def get(request):
+    """
+    Load all objects from database
+    """
     all_objects = await objects.execute(KeyValue.select())
     serialized_obj = []
     for obj in all_objects:

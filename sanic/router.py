@@ -145,4 +145,4 @@ class Router:
         kwargs = {p.name: p.cast(value)
                   for value, p
                   in zip(match.groups(1), route.parameters)}
-        return route.handler, [], kwargs
+        return route.handler, kwargs

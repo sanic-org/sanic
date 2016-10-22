@@ -127,14 +127,14 @@ class Sanic:
             # No middleware results
             if not response:
                 # Fetch handler from router
-                handler, args, kwargs = self.router.get(request)
+                handler, kwargs = self.router.get(request)
                 if handler is None:
                     raise ServerError(
                         ("'None' was returned while requesting a "
                          "handler from the router"))
 
                 # Run response handler
-                response = handler(request, *args, **kwargs)
+                response = handler(request, **kwargs)
                 if isawaitable(response):
                     response = await response
 

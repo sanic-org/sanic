@@ -66,7 +66,11 @@ async def get(request):
     all_objects = await objects.execute(KeyValue.select())
     serialized_obj = []
     for obj in all_objects:
-        serialized_obj.append({obj.key: obj.text})
+        serialized_obj.append({
+            'id': obj.id,
+            'key': obj.key,
+            'value': obj.text}
+        )
 
     return json({'objects': serialized_obj})
 

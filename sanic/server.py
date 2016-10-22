@@ -25,7 +25,7 @@ class STATUS:
 class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
-        'loop', 'transport',
+        'loop', 'close', 'write',
         # request params
         'parser', 'request', 'url', 'headers',
         # request config
@@ -35,7 +35,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def __init__(self, *, loop, request_handler):
         self.loop = loop
-        self.transport = None
+        self.close = None
+        self.write = None
         self.request = None
         self.parser = None
         self.url = None
@@ -53,7 +54,8 @@ class HttpProtocol(asyncio.Protocol):
         CONNECTIONS.add(self)
         self._timeout_handler = self.loop.call_later(
             Config.REQUEST_TIMEOUT, self.connection_timeout)
-        self.transport = transport
+        self.close = transport.close
+        self.write = transport.write
 
     def connection_lost(self, _):
         CONNECTIONS.discard(self)
@@ -61,7 +63,7 @@ class HttpProtocol(asyncio.Protocol):
 
     def connection_timeout(self):
         log.error('Request timed out, connection closed')
-        self.transport.close()
+        self.close()
 
         # -------------------------------------------- #
 
@@ -77,7 +79,7 @@ class HttpProtocol(asyncio.Protocol):
                 'Request too large (%s), connection closed',
                 self._total_request_size
             )
-            self.transport.close()
+            self.close()
             return
 
         # Create parser if this is the first time we're receiving data
@@ -90,7 +92,7 @@ class HttpProtocol(asyncio.Protocol):
             self.parser.feed_data(data)
         except HttpParserError as e:
             log.error('Invalid request data, connection closed (%s)', e)
-            self.transport.close()
+            self.close()
 
     def on_url(self, url):
         self.url = url
@@ -98,7 +100,7 @@ class HttpProtocol(asyncio.Protocol):
     def on_header(self, name, value):
         if name == b'Content-Length' and int(value) > Config.REQUEST_MAX_SIZE:
             log.error('Request body too large (%s), connection closed', value)
-            self.transport.close()
+            self.close()
             return
 
         self.headers[name.decode()] = value.decode('utf-8')
@@ -125,7 +127,7 @@ class HttpProtocol(asyncio.Protocol):
     def write_response(self, response):
         try:
             keep_alive = STATUS.running and self.parser.should_keep_alive()
-            self.transport.write(
+            self.write(
                 response.output(
                     self.request.version, keep_alive, Config.REQUEST_TIMEOUT))
             if keep_alive:
@@ -135,18 +137,10 @@ class HttpProtocol(asyncio.Protocol):
                 self.headers = {}
                 self._total_request_size = 0
             else:
-                self.transport.close()
+                self.close()
         except Exception as e:
             log.error('Writing request failed, connection closed %s', e)
-            self.transport.close()
-
-    def close_if_idle(self):
-        """
-        Close the connection if a request is not being sent or received
-        :return: boolean - True if closed, false if staying open
-        """
-        if self.parser is None:
-            self.transport.close()
+            self.close()
 
 
 def serve(host, port, request_handler, after_start=None, before_stop=None,
@@ -219,7 +213,8 @@ def serve(host, port, request_handler, after_start=None, before_stop=None,
         # Complete all tasks on the loop
         STATUS.running = False
         for connection in CONNECTIONS:
-            connection.close_if_idle()
+            if connection.parser is None:
+                connection.close()
 
         while CONNECTIONS:
             loop.run_until_complete(asyncio.sleep(0.1))

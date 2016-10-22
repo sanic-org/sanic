@@ -51,8 +51,8 @@ app = Sanic('peewee_example')
 
 @app.route('/post')
 async def post(request):
-    """ This is actually a GET request, you probably want POST in real life,
-    with some data parameters"""
+    """ This actually requires a GET request, you probably want POST in real
+    life, with some data parameters"""
     obj = await objects.create(KeyValue, key='my_first_async_db', text="I was inserted asynchronously!")
     return json({'object_id': obj.id})
 

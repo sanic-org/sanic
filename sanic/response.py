@@ -1,3 +1,5 @@
+from datetime import datetime
+from http.cookies import SimpleCookie
 import ujson
 
 COMMON_STATUS_CODES = {
@@ -68,7 +70,7 @@ ALL_STATUS_CODES = {
 
 
 class HTTPResponse:
-    __slots__ = ('body', 'status', 'content_type', 'headers')
+    __slots__ = ('body', 'status', 'content_type', 'headers', '_cookies')
 
     def __init__(self, body=None, status=200, headers=None,
                  content_type='text/plain', body_bytes=b''):
@@ -81,6 +83,7 @@ class HTTPResponse:
 
         self.status = status
         self.headers = headers or {}
+        self._cookies = None
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
@@ -95,6 +98,12 @@ class HTTPResponse:
                 b'%b: %b\r\n' % (name.encode(), value.encode('utf-8'))
                 for name, value in self.headers.items()
             )
+        if self._cookies:
+            for cookie in self._cookies.values():
+                if type(cookie['expires']) is datetime:
+                    cookie['expires'] = \
+                        cookie['expires'].strftime("%a, %d-%b-%Y %T GMT")
+            headers += (str(self._cookies) + "\r\n").encode('utf-8')
 
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all
@@ -118,6 +127,12 @@ class HTTPResponse:
             headers,
             self.body
         )
+
+    @property
+    def cookies(self):
+        if self._cookies is None:
+            self._cookies = SimpleCookie()
+        return self._cookies
 
 
 def json(body, status=200, headers=None):

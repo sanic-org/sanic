@@ -2,8 +2,6 @@ from asyncio import get_event_loop
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process, Event
-from signal import signal, SIGTERM, SIGINT
-from time import sleep
 from traceback import format_exc
 
 from .config import Config
@@ -278,35 +276,42 @@ class Sanic:
         get_event_loop().stop()
 
     @staticmethod
-    def serve_multiple(server_settings, workers, stop_event=None):
+    def serve_multiple(server_settings, workers, *,
+                       name='sanic-server', stop_event=None):
         """
         Starts multiple server processes simultaneously.  Stops on interrupt
         and terminate signals, and drains connections when complete.
         :param server_settings: kw arguments to be passed to the serve function
         :param workers: number of workers to launch
+        :param name: process name prefix, combined with worker index
         :param stop_event: if provided, is used as a stop signal
         :return:
         """
+
         server_settings['reuse_port'] = True
 
         # Create a stop event to be triggered by a signal
         if not stop_event:
             stop_event = Event()
-        signal(SIGINT, lambda s, f: stop_event.set())
-        signal(SIGTERM, lambda s, f: stop_event.set())
 
         processes = []
         for w in range(workers):
-            process = Process(target=serve, kwargs=server_settings)
-            process.start()
+            n = '{}-{}'.format(name, w)
+            process = Process(name=n, target=serve, kwargs=server_settings)
             processes.append(process)
+            process.start()
 
-        # Infinitely wait for the stop event
+            log.info('Starting {}, pid: {}'.format(process.name, process.pid))
+
         try:
-            while not stop_event.is_set():
-                sleep(0.3)
-        except:
+            stop_event.wait()
+
+        except KeyboardInterrupt:
             pass
+
+        except Exception as e:
+            log.exception(
+                'An exception occurred stopping servers: {}'.format(e))
 
         log.info('Spinning down workers...')
         for process in processes:

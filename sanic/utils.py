@@ -24,7 +24,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
         def _collect_request(request):
             results.append(request)
 
-    async def _collect_response(loop):
+    async def _collect_response(sanic, loop):
         try:
             response = await local_request(method, uri, *request_args,
                                            **request_kwargs)

@@ -80,3 +80,26 @@ Exceptions can also be applied exclusively to blueprints globally.
 def ignore_404s(request, exception):
 	return text("Yep, I totally found the page: {}".format(request.url))
 ```
+
+## Start and Stop
+Blueprints and run functions during the start and stop process of the server.
+If running in multiprocessor mode (more than 1 worker), these are triggered after the workers fork
+Available events are:
+
+ * before_server_start - Executed before the server begins to accept connections
+ * after_server_start - Executed after the server begins to accept connections
+ * before_server_stop - Executed before the server stops accepting connections
+ * after_server_stop - Executed after the server is stopped and all requests are complete
+
+```python
+bp = Blueprint('my_blueprint')
+
+@bp.listen('before_server_start')
+async def setup_connection():
+    global database
+    database = mysql.connect(host='127.0.0.1'...)
+    
+@bp.listen('after_server_stop')
+async def close_connection():
+    await database.close()
+```

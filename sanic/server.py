@@ -163,7 +163,7 @@ def trigger_events(events, loop):
     :param loop: event loop
     """
     if events:
-        if type(events) is not list:
+        if not isinstance(events, list):
             events = [events]
         for event in events:
             result = event(loop)

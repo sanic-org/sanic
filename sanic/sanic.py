@@ -296,7 +296,7 @@ class Sanic:
         signal(SIGTERM, lambda s, f: stop_event.set())
 
         processes = []
-        for w in range(workers):
+        for _ in range(workers):
             process = Process(target=serve, kwargs=server_settings)
             process.start()
             processes.append(process)

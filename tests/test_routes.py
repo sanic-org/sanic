@@ -164,3 +164,17 @@ def test_route_duplicate():
         @app.route('/test/<dynamic>/')
         async def handler2(request, dynamic):
             pass
+
+
+def test_method_not_allowed():
+    app = Sanic('test_method_not_allowed')
+
+    @app.route('/test', methods=['GET'])
+    async def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, method='post', uri='/test')
+    assert response.status == 405

@@ -1,5 +1,7 @@
 Version 0.1
 -----------
+ - 0.1.6 (not released)
+  - Static files
  - 0.1.5 
   - Cookies
   - Blueprint listeners and ordering

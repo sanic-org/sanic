@@ -1,4 +1,5 @@
 from asyncio import get_event_loop
+from collections import deque
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process, Event
@@ -21,8 +22,8 @@ class Sanic:
         self.router = router or Router()
         self.error_handler = error_handler or Handler(self)
         self.config = Config()
-        self.request_middleware = []
-        self.response_middleware = []
+        self.request_middleware = deque()
+        self.response_middleware = deque()
         self.blueprints = {}
         self._blueprint_order = []
         self.loop = None
@@ -74,7 +75,7 @@ class Sanic:
             if attach_to == 'request':
                 self.request_middleware.append(middleware)
             if attach_to == 'response':
-                self.response_middleware.insert(0, middleware)
+                self.response_middleware.appendleft(middleware)
             return middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')

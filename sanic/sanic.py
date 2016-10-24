@@ -315,13 +315,14 @@ class Sanic:
         for process in processes:
             process.join()
 
-    def log(self,level,msg):
+    def log(self, level, msg):
         '''
         Logs the message at the specified level.
         Eg: app.log("INFO","this logs an info")
         '''
-        from logging import getLogger,basicConfig,INFO
-        basicConfig(level = INFO,format = "%(asctime)s: %(levelname)s: %(message)s")
+        from logging import getLogger, basicConfig, INFO
+        basicConfig(
+            level=INFO, format="%(asctime)s: %(levelname)s: %(message)s")
         log = getLogger(__name__)
         if level == "DEBUG":
             log.debug(msg)

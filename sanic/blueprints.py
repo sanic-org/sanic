@@ -33,14 +33,14 @@ class BlueprintSetup:
         """
         self.app.exception(*args, **kwargs)(handler)
 
-    def add_static(self, file_or_directory, uri, *args, **kwargs):
+    def add_static(self, uri, file_or_directory, *args, **kwargs):
         """
         Registers static files to sanic
         """
         if self.url_prefix:
             uri = self.url_prefix + uri
 
-        self.app.static(file_or_directory, uri, *args, **kwargs)
+        self.app.static(uri, file_or_directory, *args, **kwargs)
 
     def add_middleware(self, middleware, *args, **kwargs):
         """
@@ -122,8 +122,8 @@ class Blueprint:
             return handler
         return decorator
 
-    def static(self, file_or_directory, uri, *args, **kwargs):
+    def static(self, uri, file_or_directory, *args, **kwargs):
         """
         """
         self.record(
-            lambda s: s.add_static(file_or_directory, uri, *args, **kwargs))
+            lambda s: s.add_static(uri, file_or_directory, *args, **kwargs))

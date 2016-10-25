@@ -7,7 +7,7 @@ from .exceptions import FileNotFound, InvalidUsage
 from .response import file, HTTPResponse
 
 
-def register(app, file_or_directory, uri, pattern, use_modified_since):
+def register(app, uri, file_or_directory, pattern, use_modified_since):
     # TODO: Though sanic is not a file server, I feel like we should atleast
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching

@@ -156,7 +156,7 @@ def test_bp_static():
     app = Sanic('test_static')
     blueprint = Blueprint('test_static')
 
-    blueprint.static(current_file, '/testing.file')
+    blueprint.static('/testing.file', current_file)
 
     app.blueprint(blueprint)
 

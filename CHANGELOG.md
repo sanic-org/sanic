@@ -1,7 +1,10 @@
 Version 0.1
 -----------
- - 0.1.6 (not released)
+ - 0.1.7
+  - Reversed static url and directory arguments to meet spec
+ - 0.1.6
   - Static files
+  - Lazy Cookie Loading
  - 0.1.5 
   - Cookies
   - Blueprint listeners and ordering

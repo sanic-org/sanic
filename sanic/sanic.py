@@ -95,13 +95,13 @@ class Sanic:
             return register_middleware
 
     # Static Files
-    def static(self, file_or_directory, uri, pattern='.+',
+    def static(self, uri, file_or_directory, pattern='.+',
                use_modified_since=True):
         """
         Registers a root to serve files from.  The input can either be a file
         or a directory.  See
         """
-        static_register(self, file_or_directory, uri, pattern,
+        static_register(self, uri, file_or_directory, pattern,
                         use_modified_since)
 
     def blueprint(self, blueprint, **options):

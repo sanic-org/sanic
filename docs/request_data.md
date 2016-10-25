@@ -52,5 +52,5 @@ def create_user(request):
 def download_a_file(request, file_id):
      def find_path_by_id(file_id):
          return "/path/to/file.ext"
-    return file(find_path_by_id(file_id), force_download=True)
+    return await file(find_path_by_id(file_id), force_download=True)
 ```

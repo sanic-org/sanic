@@ -18,6 +18,7 @@ _Translator.update({
     ord('\\'): '\\\\',
 })
 
+
 def _quote(str):
     r"""Quote a string for use in a cookie header.
     If the string does not need to be double-quoted, then just return the
@@ -35,6 +36,7 @@ _is_legal_key = re.compile('[%s]+' % re.escape(_LegalChars)).fullmatch
 #  Custom SimpleCookie
 # ------------------------------------------------------------ #
 
+
 class CookieJar(dict):
     """
     CookieJar dynamically writes headers as cookies are added and removed
@@ -45,6 +47,7 @@ class CookieJar(dict):
         super().__init__()
         self.headers = headers
         self.cookie_headers = {}
+
     def __setitem__(self, key, value):
         # If this cookie doesn't exist, add it to the header keys
         cookie_header = self.cookie_headers.get(key)
@@ -61,19 +64,20 @@ class CookieJar(dict):
         del self.cookie_headers[key]
         return super().__delitem__(key)
 
+
 class Cookie(dict):
     """
     This is a stripped down version of Morsel from SimpleCookie #gottagofast
     """
     _keys = {
-        "expires"  : "expires",
-        "path"     : "Path",
-        "comment"  : "Comment",
-        "domain"   : "Domain",
-        "max-age"  : "Max-Age",
-        "secure"   : "Secure",
-        "httponly" : "HttpOnly",
-        "version"  : "Version",
+        "expires": "expires",
+        "path": "Path",
+        "comment": "Comment",
+        "domain": "Domain",
+        "max-age": "Max-Age",
+        "secure": "Secure",
+        "httponly": "HttpOnly",
+        "version": "Version",
     }
     _flags = {'secure', 'httponly'}
 
@@ -87,7 +91,7 @@ class Cookie(dict):
         super().__init__()
 
     def __setitem__(self, key, value):
-        if not key in self._keys:
+        if key not in self._keys:
             raise KeyError("Unknown cookie property")
         return super().__setitem__(key, value)
 
@@ -112,6 +116,7 @@ class Cookie(dict):
 #  Header Trickery
 # ------------------------------------------------------------ #
 
+
 class MultiHeader:
     """
     Allows us to set a header within response that has a unique key,
@@ -119,5 +124,6 @@ class MultiHeader:
     """
     def __init__(self, name):
         self.name = name
+
     def encode(self):
         return self.name.encode()

@@ -4,7 +4,7 @@ from re import sub
 from time import strftime, gmtime
 
 from .exceptions import FileNotFound, InvalidUsage
-from .response import file, HTTPResponse
+from .response import send_file, HTTPResponse
 
 
 def register(app, uri, file_or_directory, pattern, use_modified_since):
@@ -50,7 +50,7 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
                     return HTTPResponse(status=304)
                 headers['Last-Modified'] = modified_since
 
-            return await file(file_path, headers=headers)
+            return await send_file(file_path, headers=headers)
         except:
             raise FileNotFound('File not found',
                                path=file_or_directory,

@@ -168,6 +168,7 @@ async def file(location, mime_type=None, headers=None, force_download=False):
         out_stream = await _file.read()
     # Do not attempt to render file in browser
     if force_download is True:
+        headers = headers if headers is not None else {}
         headers["Content-Disposition"] = "attachment; filename=%s" % filename
         mime_type = 'application/octet-stream'
     else:

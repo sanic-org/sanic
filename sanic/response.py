@@ -153,13 +153,25 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, mime_type=None, headers=None):
+async def file(location, mime_type=None, headers=None, force_download=False):
+    """
+    Produces a response that serves file content.
+    :param location: Absolute file path
+    :param mime_type: File MIME type
+    :param headers: List of HTTP headers
+    :param force_download: if `True` immediately prompt the user to save 
+    the file directly to the user's disk, without opening it in the browser
+    """
     filename = path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:
         out_stream = await _file.read()
-
-    mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
+    # Do not attempt to render file in browser
+    if force_download is True:
+        headers["Content-Disposition"] = "attachment; filename=%s" % filename
+        mime_type = 'application/octet-stream'
+    else:
+        mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
 
     return HTTPResponse(status=200,
                         headers=headers,

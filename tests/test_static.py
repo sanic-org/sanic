@@ -10,7 +10,7 @@ def test_static_file():
         current_file_contents = file.read()
 
     app = Sanic('test_static')
-    app.static(current_file, '/testing.file')
+    app.static('/testing.file', current_file)
 
     request, response = sanic_endpoint_test(app, uri='/testing.file')
     assert response.status == 200
@@ -23,7 +23,7 @@ def test_static_directory():
         current_file_contents = file.read()
 
     app = Sanic('test_static')
-    app.static(current_directory, '/dir')
+    app.static('/dir', current_directory)
 
     request, response = sanic_endpoint_test(app, uri='/dir/test_static.py')
     assert response.status == 200

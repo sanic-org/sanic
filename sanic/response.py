@@ -146,7 +146,7 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, mime_type=None, headers=None):
+async def send_file(location, mime_type=None, headers=None):
     filename = path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:

@@ -153,7 +153,7 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, mime_type=None, headers=None, force_download=False):
+def file(location, mime_type=None, headers=None, force_download=False):
     """
     Produces a response that serves file content.
     :param location: Absolute file path

@@ -31,12 +31,12 @@ class Request:
     Properties of an HTTP request such as URL, headers, etc.
     """
     __slots__ = (
-        'url', 'headers', 'version', 'method', '_cookies',
+        'url', 'headers', 'version', 'method', 'transport', '_cookies',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
     )
 
-    def __init__(self, url_bytes, headers, version, method):
+    def __init__(self, url_bytes, headers, version, method, transport):
         # TODO: Content-Encoding detection
         url_parsed = parse_url(url_bytes)
         self.url = url_parsed.path.decode('utf-8')
@@ -46,6 +46,7 @@ class Request:
         self.query_string = None
         if url_parsed.query:
             self.query_string = url_parsed.query.decode('utf-8')
+        self.transport = transport
 
         # Init but do not inhale
         self.body = None

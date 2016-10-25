@@ -115,3 +115,22 @@ def test_post_form_multipart_form_data():
     request, response = sanic_endpoint_test(app, data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
+
+
+# ------------------------------------------------------------ #
+#  Transport
+# ------------------------------------------------------------ #
+
+def test_transport():
+    import re
+
+    app = Sanic('test_transport')
+
+    @app.route('/')
+    def handler(request):
+        peername = request.transport.get_extra_info('peername')
+        return text(str(peername))
+
+    request, response = sanic_endpoint_test(app)
+
+    assert re.match(r"^\('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', \d+\)$", response.text)

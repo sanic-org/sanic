@@ -1,6 +1,5 @@
 from aiofiles import open as open_async
-from datetime import datetime
-from http.cookies import SimpleCookie
+from .cookies import CookieJar
 from mimetypes import guess_type
 from os import path
 from ujson import dumps as json_dumps
@@ -101,12 +100,6 @@ class HTTPResponse:
                 b'%b: %b\r\n' % (name.encode(), value.encode('utf-8'))
                 for name, value in self.headers.items()
             )
-        if self._cookies:
-            for cookie in self._cookies.values():
-                if type(cookie['expires']) is datetime:
-                    cookie['expires'] = \
-                        cookie['expires'].strftime("%a, %d-%b-%Y %T GMT")
-            headers += (str(self._cookies) + "\r\n").encode('utf-8')
 
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all
@@ -134,7 +127,7 @@ class HTTPResponse:
     @property
     def cookies(self):
         if self._cookies is None:
-            self._cookies = SimpleCookie()
+            self._cookies = CookieJar(self.headers)
         return self._cookies
 
 

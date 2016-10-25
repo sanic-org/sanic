@@ -17,6 +17,7 @@ setup(
         'uvloop>=0.5.3',
         'httptools>=0.0.9',
         'ujson>=1.35',
+        'aiofiles>=0.3.0',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

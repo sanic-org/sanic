@@ -1,6 +1,9 @@
+from aiofiles import open as open_async
 from datetime import datetime
 from http.cookies import SimpleCookie
-import ujson
+from mimetypes import guess_type
+from os import path
+from ujson import dumps as json_dumps
 
 COMMON_STATUS_CODES = {
     200: b'OK',
@@ -136,7 +139,7 @@ class HTTPResponse:
 
 
 def json(body, status=200, headers=None):
-    return HTTPResponse(ujson.dumps(body), headers=headers, status=status,
+    return HTTPResponse(json_dumps(body), headers=headers, status=status,
                         content_type="application/json")
 
 
@@ -148,3 +151,17 @@ def text(body, status=200, headers=None):
 def html(body, status=200, headers=None):
     return HTTPResponse(body, status=status, headers=headers,
                         content_type="text/html; charset=utf-8")
+
+
+async def file(location, mime_type=None, headers=None):
+    filename = path.split(location)[-1]
+
+    async with open_async(location, mode='rb') as _file:
+        out_stream = await _file.read()
+
+    mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
+
+    return HTTPResponse(status=200,
+                        headers=headers,
+                        content_type=mime_type,
+                        body_bytes=out_stream)

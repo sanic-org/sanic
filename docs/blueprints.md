@@ -42,7 +42,7 @@ from sanic import Sanic
 from my_blueprint import bp
 
 app = Sanic(__name__)
-app.register_blueprint(bp)
+app.blueprint(bp)
 
 app.run(host='0.0.0.0', port=8000, debug=True)
 ```
@@ -79,6 +79,12 @@ Exceptions can also be applied exclusively to blueprints globally.
 @bp.exception(NotFound)
 def ignore_404s(request, exception):
 	return text("Yep, I totally found the page: {}".format(request.url))
+
+## Static files
+Static files can also be served globally, under the blueprint prefix.
+
+```python
+bp.static('/folder/to/serve', '/web/path')
 ```
 
 ## Start and Stop

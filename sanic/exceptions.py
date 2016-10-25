@@ -21,6 +21,15 @@ class ServerError(SanicException):
     status_code = 500
 
 
+class FileNotFound(NotFound):
+    status_code = 404
+
+    def __init__(self, message, path, relative_url):
+        super().__init__(message)
+        self.path = path
+        self.relative_url = relative_url
+
+
 class Handler:
     handlers = None
 

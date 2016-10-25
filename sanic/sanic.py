@@ -13,6 +13,7 @@ from .log import log, logging
 from .response import HTTPResponse
 from .router import Router
 from .server import serve
+from .static import register as static_register
 from .exceptions import ServerError
 
 
@@ -29,6 +30,9 @@ class Sanic:
         self.loop = None
         self.debug = None
 
+        # Register alternative method names
+        self.go_fast = self.run
+
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
@@ -41,6 +45,11 @@ class Sanic:
         :param methods: list or tuple of methods allowed
         :return: decorated function
         """
+
+        # Fix case where the user did not prefix the URL with a /
+        # and will probably get confused as to why it's not working
+        if not uri.startswith('/'):
+            uri = '/' + uri
 
         def response(handler):
             self.router.add(uri=uri, methods=methods, handler=handler)
@@ -85,7 +94,17 @@ class Sanic:
             attach_to = args[0]
             return register_middleware
 
-    def register_blueprint(self, blueprint, **options):
+    # Static Files
+    def static(self, file_or_directory, uri, pattern='.+',
+               use_modified_since=True):
+        """
+        Registers a root to serve files from.  The input can either be a file
+        or a directory.  See
+        """
+        static_register(self, file_or_directory, uri, pattern,
+                        use_modified_since)
+
+    def blueprint(self, blueprint, **options):
         """
         Registers a blueprint on the application.
         :param blueprint: Blueprint object
@@ -101,6 +120,12 @@ class Sanic:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)
         blueprint.register(self, options)
+
+    def register_blueprint(self, *args, **kwargs):
+        # TODO: deprecate 1.0
+        log.warning("Use of register_blueprint will be deprecated in "
+                    "version 1.0.  Please use the blueprint method instead")
+        return self.blueprint(*args, **kwargs)
 
     # -------------------------------------------------------------------- #
     # Request Handling

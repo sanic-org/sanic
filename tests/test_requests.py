@@ -117,8 +117,8 @@ def test_post_form_multipart_form_data():
     assert request.form.get('test') == 'OK'
 
 
-def test_get_then_redirect():
-    app = Sanic('test_get_then_redirect')
+def test_get_then_redirect_01():
+    app = Sanic('test_get_then_redirect_01')
 
     @app.route('/path1')
     async def handler01(request):
@@ -128,10 +128,31 @@ def test_get_then_redirect():
     async def handler02(request):
         return text('OK')
 
+    # Sends request to /path1, expect a 302 Redirect
     _request, response = sanic_endpoint_test(app, method="get",
                                              uri="/path1",
                                              allow_redirects=False)
 
     assert response.status == 302
     assert response.headers["Location"] == "/path2"
+
+
+def test_get_then_redirect_02():
+    app = Sanic('test_get_then_redirect_02')
+
+    @app.route('/path')
+    async def handler01(request):
+        return redirect(request, "/path1")
+
+    @app.route('/path1')
+    async def handler02(request):
+        return text('OK')
+
+    # Sends request to /path1, expect a 200 OK
+    response = sanic_endpoint_test(app, method="get",
+                                   uri="/path", gather_request=False,
+                                   allow_redirects=True)
+
+    assert response.status == 200
+    assert response.text == 'OK'
 

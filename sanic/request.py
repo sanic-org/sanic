@@ -4,7 +4,7 @@ from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
-
+from .response import HTTPResponse
 from .log import log
 
 
@@ -61,7 +61,8 @@ class Request:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                pass
+                return HTTPResponse(ujson.dumps(body), headers=None, status=400,
+                                    content_type="application/json")
 
         return self.parsed_json
 

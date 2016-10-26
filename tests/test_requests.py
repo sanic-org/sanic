@@ -124,7 +124,13 @@ def test_get_then_redirect():
     async def handler01(request):
         return redirect(request, "/path2")
 
-    _request, response = sanic_endpoint_test(app, method="get", uri="/path1")
+    @app.route('/path2')
+    async def handler02(request):
+        return text('OK')
+
+    _request, response = sanic_endpoint_test(app, method="get",
+                                             uri="/path1",
+                                             allow_redirects=False)
 
     assert response.status == 302
     assert response.headers["Location"] == "/path2"

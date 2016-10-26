@@ -61,8 +61,7 @@ class Request:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                return HTTPResponse(ujson.dumps(body), headers=None, status=400,
-                                    content_type="application/json")
+                return HTTPResponse(json.dumps(self.body), headers=None, status=400, content_type="application/json")
 
         return self.parsed_json
 

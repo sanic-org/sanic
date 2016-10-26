@@ -82,6 +82,9 @@ class Router:
             # Mark the whole route as unhashable if it has the hash key in it
             if re.search('(^|[^^]){1}/', pattern):
                 properties['unhashable'] = True
+            # Mark the route as unhashable if it matches the hash key
+            elif re.search(pattern, '/'):
+                properties['unhashable'] = True
 
             return '({})'.format(pattern)
 

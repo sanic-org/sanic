@@ -163,7 +163,7 @@ async def file(location, mime_type=None, headers=None):
 def redirect(request, to_url, headers=None, status=None, content_type=None):
     """
     Aborts execution and causes a 303 or 302 redirect, depending on
-    the HTTP 1.1 method. 
+    the HTTP 1.1 method.
     """
     if not content_type:
         content_type = "text/html; charset=utf-8"

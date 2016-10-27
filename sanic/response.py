@@ -159,7 +159,7 @@ async def file(location, mime_type=None, headers=None, force_download=False):
     :param location: Absolute file path
     :param mime_type: File MIME type
     :param headers: List of HTTP headers
-    :param force_download: if `True` immediately prompt the user to save 
+    :param force_download: if `True` immediately prompt the user to save
     the file directly to the user's disk, without opening it in the browser
     """
     filename = path.split(location)[-1]

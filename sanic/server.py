@@ -45,8 +45,7 @@ class HttpProtocol(asyncio.Protocol):
         self._total_request_size = 0
         self._timeout_handler = None
 
-        # -------------------------------------------- #
-
+    # -------------------------------------------- #
     # Connection
     # -------------------------------------------- #
 
@@ -64,8 +63,7 @@ class HttpProtocol(asyncio.Protocol):
     def connection_timeout(self):
         self.bail_out("Request timed out, connection closed")
 
-        # -------------------------------------------- #
-
+    # -------------------------------------------- #
     # Parsing
     # -------------------------------------------- #
 

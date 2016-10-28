@@ -86,3 +86,43 @@ def test_middleware_override_response():
 
     assert response.status == 200
     assert response.text == 'OK'
+
+
+
+def test_middleware_order():
+    app = Sanic('test_middleware_order')
+
+    order = []
+
+    @app.middleware('request')
+    async def request1(request):
+        order.append(1)
+
+    @app.middleware('request')
+    async def request2(request):
+        order.append(2)
+
+    @app.middleware('request')
+    async def request3(request):
+        order.append(3)
+
+    @app.middleware('response')
+    async def response1(request, response):
+        order.append(6)
+
+    @app.middleware('response')
+    async def response2(request, response):
+        order.append(5)
+
+    @app.middleware('response')
+    async def response3(request, response):
+        order.append(4)
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.status == 200
+    assert order == [1,2,3,4,5,6]

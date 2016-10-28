@@ -1,3 +1,5 @@
+import inspect
+
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import json, text
@@ -17,7 +19,7 @@ def test_bp():
     def handler(request):
         return text('Hello')
 
-    app.register_blueprint(bp)
+    app.blueprint(bp)
     request, response = sanic_endpoint_test(app)
 
     assert response.text == 'Hello'
@@ -30,7 +32,7 @@ def test_bp_with_url_prefix():
     def handler(request):
         return text('Hello')
 
-    app.register_blueprint(bp)
+    app.blueprint(bp)
     request, response = sanic_endpoint_test(app, uri='/test1/')
 
     assert response.text == 'Hello'
@@ -49,8 +51,8 @@ def test_several_bp_with_url_prefix():
     def handler2(request):
         return text('Hello2')
 
-    app.register_blueprint(bp)
-    app.register_blueprint(bp2)
+    app.blueprint(bp)
+    app.blueprint(bp2)
     request, response = sanic_endpoint_test(app, uri='/test1/')
     assert response.text == 'Hello'
 
@@ -70,7 +72,7 @@ def test_bp_middleware():
     async def handler(request):
         return text('FAIL')
 
-    app.register_blueprint(blueprint)
+    app.blueprint(blueprint)
 
     request, response = sanic_endpoint_test(app)
 
@@ -97,7 +99,7 @@ def test_bp_exception_handler():
     def handler_exception(request, exception):
         return text("OK")
 
-    app.register_blueprint(blueprint)
+    app.blueprint(blueprint)
 
     request, response = sanic_endpoint_test(app, uri='/1')
     assert response.status == 400
@@ -109,3 +111,55 @@ def test_bp_exception_handler():
 
     request, response = sanic_endpoint_test(app, uri='/3')
     assert response.status == 200
+
+def test_bp_listeners():
+    app = Sanic('test_middleware')
+    blueprint = Blueprint('test_middleware')
+
+    order = []
+
+    @blueprint.listener('before_server_start')
+    def handler_1(sanic, loop):
+        order.append(1)
+
+    @blueprint.listener('after_server_start')
+    def handler_2(sanic, loop):
+        order.append(2)
+
+    @blueprint.listener('after_server_start')
+    def handler_3(sanic, loop):
+        order.append(3)
+
+    @blueprint.listener('before_server_stop')
+    def handler_4(sanic, loop):
+        order.append(5)
+
+    @blueprint.listener('before_server_stop')
+    def handler_5(sanic, loop):
+        order.append(4)
+
+    @blueprint.listener('after_server_stop')
+    def handler_6(sanic, loop):
+        order.append(6)
+
+    app.blueprint(blueprint)
+
+    request, response = sanic_endpoint_test(app, uri='/')
+
+    assert order == [1,2,3,4,5,6]
+
+def test_bp_static():
+    current_file = inspect.getfile(inspect.currentframe())
+    with open(current_file, 'rb') as file:
+        current_file_contents = file.read()
+
+    app = Sanic('test_static')
+    blueprint = Blueprint('test_static')
+
+    blueprint.static('/testing.file', current_file)
+
+    app.blueprint(blueprint)
+
+    request, response = sanic_endpoint_test(app, uri='/testing.file')
+    assert response.status == 200
+    assert response.body == current_file_contents

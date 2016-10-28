@@ -1,5 +1,6 @@
 from cgi import parse_header
 from collections import namedtuple
+from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
@@ -30,7 +31,7 @@ class Request:
     Properties of an HTTP request such as URL, headers, etc.
     """
     __slots__ = (
-        'url', 'headers', 'version', 'method',
+        'url', 'headers', 'version', 'method', '_cookies',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
     )
@@ -52,6 +53,7 @@ class Request:
         self.parsed_form = None
         self.parsed_files = None
         self.parsed_args = None
+        self._cookies = None
 
     @property
     def json(self):
@@ -104,6 +106,18 @@ class Request:
                 self.parsed_args = {}
 
         return self.parsed_args
+
+    @property
+    def cookies(self):
+        if self._cookies is None:
+            if 'Cookie' in self.headers:
+                cookies = SimpleCookie()
+                cookies.load(self.headers['Cookie'])
+                self._cookies = {name: cookie.value
+                                 for name, cookie in cookies.items()}
+            else:
+                self._cookies = {}
+        return self._cookies
 
 
 File = namedtuple('File', ['type', 'body', 'name'])

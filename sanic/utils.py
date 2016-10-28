@@ -5,12 +5,13 @@ HOST = '127.0.0.1'
 PORT = 42101
 
 
-async def local_request(method, uri, *args, **kwargs):
+async def local_request(method, uri, cookies=None, *args, **kwargs):
     url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
     log.info(url)
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(cookies=cookies) as session:
         async with getattr(session, method)(url, *args, **kwargs) as response:
             response.text = await response.text()
+            response.body = await response.read()
             return response
 
 
@@ -24,7 +25,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
         def _collect_request(request):
             results.append(request)
 
-    async def _collect_response(loop):
+    async def _collect_response(sanic, loop):
         try:
             response = await local_request(method, uri, *request_args,
                                            **request_kwargs)

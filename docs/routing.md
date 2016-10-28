@@ -10,16 +10,16 @@ from sanic import Sanic
 from sanic.response import text
 
 @app.route('/tag/<tag>')
-async def person_handler(request, tag):
+async def tag_handler(request, tag):
 	return text('Tag - {}'.format(tag))
 
 @app.route('/number/<integer_arg:int>')
-async def person_handler(request, integer_arg):
+async def integer_handler(request, integer_arg):
 	return text('Integer - {}'.format(integer_arg))
 
 @app.route('/number/<number_arg:number>')
-async def person_handler(request, number_arg):
-	return text('Number - {}'.format(number))
+async def number_handler(request, number_arg):
+	return text('Number - {}'.format(number_arg))
 
 @app.route('/person/<name:[A-z]>')
 async def person_handler(request, name):

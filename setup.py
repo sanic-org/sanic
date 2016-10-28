@@ -1,11 +1,23 @@
 """
 Sanic
 """
+import codecs
+import os
+import re
 from setuptools import setup
+
+
+with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
+        __file__)), 'sanic', '__init__.py'), 'r', 'latin1') as fp:
+    try:
+        version = re.findall(r"^__version__ = '([^']+)'\r?$",
+                             fp.read(), re.M)[0]
+    except IndexError:
+        raise RuntimeError('Unable to determine version.')
 
 setup(
     name='Sanic',
-    version="0.1.3",
+    version=version,
     url='http://github.com/channelcat/sanic/',
     license='MIT',
     author='Channel Cat',
@@ -17,6 +29,7 @@ setup(
         'uvloop>=0.5.3',
         'httptools>=0.0.9',
         'ujson>=1.35',
+        'aiofiles>=0.3.0',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

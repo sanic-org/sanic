@@ -1,0 +1,22 @@
+Version 0.1
+-----------
+ - 0.1.7
+  - Reversed static url and directory arguments to meet spec
+ - 0.1.6
+  - Static files
+  - Lazy Cookie Loading
+ - 0.1.5 
+  - Cookies
+  - Blueprint listeners and ordering
+  - Faster Router
+  - Fix: Incomplete file reads on medium+ sized post requests
+  - Breaking: after_start and before_stop now pass sanic as their first argument
+ - 0.1.4 
+  - Multiprocessing
+ - 0.1.3
+  - Blueprint support
+  - Faster Response processing
+ - 0.1.1 - 0.1.2 
+  - Struggling to update pypi via CI
+ - 0.1.0 
+  - Released to public

@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 class BlueprintSetup:
     """
     """
@@ -22,13 +25,22 @@ class BlueprintSetup:
         if self.url_prefix:
             uri = self.url_prefix + uri
 
-        self.app.router.add(uri, methods, handler)
+        self.app.route(uri=uri, methods=methods)(handler)
 
     def add_exception(self, handler, *args, **kwargs):
         """
         Registers exceptions to sanic
         """
         self.app.exception(*args, **kwargs)(handler)
+
+    def add_static(self, uri, file_or_directory, *args, **kwargs):
+        """
+        Registers static files to sanic
+        """
+        if self.url_prefix:
+            uri = self.url_prefix + uri
+
+        self.app.static(uri, file_or_directory, *args, **kwargs)
 
     def add_middleware(self, middleware, *args, **kwargs):
         """
@@ -42,9 +54,15 @@ class BlueprintSetup:
 
 class Blueprint:
     def __init__(self, name, url_prefix=None):
+        """
+        Creates a new blueprint
+        :param name: Unique name of the blueprint
+        :param url_prefix: URL to be prefixed before all route URLs
+        """
         self.name = name
         self.url_prefix = url_prefix
         self.deferred_functions = []
+        self.listeners = defaultdict(list)
 
     def record(self, func):
         """
@@ -73,6 +91,14 @@ class Blueprint:
             return handler
         return decorator
 
+    def listener(self, event):
+        """
+        """
+        def decorator(listener):
+            self.listeners[event].append(listener)
+            return listener
+        return decorator
+
     def middleware(self, *args, **kwargs):
         """
         """
@@ -95,3 +121,9 @@ class Blueprint:
             self.record(lambda s: s.add_exception(handler, *args, **kwargs))
             return handler
         return decorator
+
+    def static(self, uri, file_or_directory, *args, **kwargs):
+        """
+        """
+        self.record(
+            lambda s: s.add_static(uri, file_or_directory, *args, **kwargs))

@@ -18,6 +18,10 @@ from .request import Request
 class Signal:
     stopped = False
 
+
+current_time = None
+
+
 class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
@@ -171,8 +175,7 @@ class HttpProtocol(asyncio.Protocol):
             return True
         return False
 
-# Keep check on the current time
-current_time = None
+
 def update_current_time(loop):
     """
     Caches the current time, since it is needed
@@ -197,6 +200,7 @@ def trigger_events(events, loop):
             result = event(loop)
             if isawaitable(result):
                 loop.run_until_complete(result)
+
 
 def serve(host, port, request_handler, before_start=None, after_start=None,
           before_stop=None, after_stop=None,

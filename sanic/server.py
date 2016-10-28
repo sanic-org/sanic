@@ -2,6 +2,7 @@ import asyncio
 from functools import partial
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
+from time import time
 
 import httptools
 
@@ -180,8 +181,8 @@ def update_current_time(loop):
     :return:
     """
     global current_time
-    current_time = loop.time()
-    loop.call_later(0.5, partial(update_current_time, loop))
+    current_time = time()
+    loop.call_later(1, partial(update_current_time, loop))
 
 
 def trigger_events(events, loop):

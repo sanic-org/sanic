@@ -29,6 +29,7 @@ class Sanic:
         self._blueprint_order = []
         self.loop = None
         self.debug = None
+        self.shared = {}
 
         # Register alternative method names
         self.go_fast = self.run
@@ -171,6 +172,9 @@ class Sanic:
                     raise ServerError(
                         ("'None' was returned while requesting a "
                          "handler from the router"))
+
+                # Include shared
+                request.shared = self.shared
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)

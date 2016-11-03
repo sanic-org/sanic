@@ -71,7 +71,7 @@ class Request:
             self.parsed_form = {}
             self.parsed_files = {}
             content_type, parameters = parse_header(
-                self.headers.get('Content-Type'))
+                self.headers.get('Content-Type', ''))
             try:
                 is_url_encoded = (
                     content_type == 'application/x-www-form-urlencoded')

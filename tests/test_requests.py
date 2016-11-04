@@ -1,6 +1,6 @@
 from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import json, text, redirect
 from sanic.utils import sanic_endpoint_test
 
 
@@ -15,7 +15,7 @@ def test_sync():
     def handler(request):
         return text('Hello')
 
-    request, response = sanic_endpoint_test(app)
+    _request, response = sanic_endpoint_test(app)
 
     assert response.text == 'Hello'
 
@@ -27,7 +27,7 @@ def test_text():
     async def handler(request):
         return text('Hello')
 
-    request, response = sanic_endpoint_test(app)
+    _request, response = sanic_endpoint_test(app)
 
     assert response.text == 'Hello'
 
@@ -39,7 +39,7 @@ def test_json():
     async def handler(request):
         return json({"test": True})
 
-    request, response = sanic_endpoint_test(app)
+    _request, response = sanic_endpoint_test(app)
 
     try:
         results = json_loads(response.text)
@@ -56,7 +56,7 @@ def test_query_string():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, params=[("test1", 1), ("test2", "false"), ("test2", "true")])
+    request, _response = sanic_endpoint_test(app, params=[("test1", 1), ("test2", "false"), ("test2", "true")])
 
     assert request.args.get('test1') == '1'
     assert request.args.get('test2') == 'false'
@@ -92,7 +92,7 @@ def test_post_form_urlencoded():
     payload = 'test=OK'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-    request, response = sanic_endpoint_test(app, data=payload, headers=headers)
+    request, _response = sanic_endpoint_test(app, data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
 
@@ -112,6 +112,47 @@ def test_post_form_multipart_form_data():
 
     headers = {'content-type': 'multipart/form-data; boundary=----sanic'}
 
-    request, response = sanic_endpoint_test(app, data=payload, headers=headers)
+    request, _response = sanic_endpoint_test(app, data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
+
+
+def test_get_then_redirect_01():
+    app = Sanic('test_get_then_redirect_01')
+
+    @app.route('/path1')
+    async def handler01(request):
+        return redirect(request, "/path2")
+
+    @app.route('/path2')
+    async def handler02(request):
+        return text('OK')
+
+    # Sends request to /path1, expect a 302 Redirect
+    _request, response = sanic_endpoint_test(app, method="get",
+                                             uri="/path1",
+                                             allow_redirects=False)
+
+    assert response.status == 302
+    assert response.headers["Location"] == "/path2"
+
+
+def test_get_then_redirect_02():
+    app = Sanic('test_get_then_redirect_02')
+
+    @app.route('/path')
+    async def handler01(request):
+        return redirect(request, "/path1")
+
+    @app.route('/path1')
+    async def handler02(request):
+        return text('OK')
+
+    # Sends request to /path1, expect a 200 OK
+    response = sanic_endpoint_test(app, method="get",
+                                   uri="/path", gather_request=False,
+                                   allow_redirects=True)
+
+    assert response.status == 200
+    assert response.text == 'OK'
+

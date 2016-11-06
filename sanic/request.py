@@ -8,6 +8,12 @@ from ujson import loads as json_loads
 from .log import log
 
 
+DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+# HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
+# > If the media type remains unknown, the recipient SHOULD treat it
+# > as type "application/octet-stream"
+
+
 class RequestParameters(dict):
     """
     Hosts a dict with lists as values where get returns the first
@@ -68,26 +74,23 @@ class Request:
     @property
     def form(self):
         if self.parsed_form is None:
-            self.parsed_form = {}
-            self.parsed_files = {}
-            content_type = self.headers.get('Content-Type')
-            if content_type:
-                content_type, parameters = parse_header(content_type)
-                try:
-                    is_url_encoded = (
-                        content_type == 'application/x-www-form-urlencoded')
-                    if content_type is None or is_url_encoded:
-                        self.parsed_form = RequestParameters(
-                            parse_qs(self.body.decode('utf-8')))
-                    elif content_type == 'multipart/form-data':
-                        # TODO: Stream this instead of reading to/from memory
-                        boundary = parameters['boundary'].encode('utf-8')
-                        self.parsed_form, self.parsed_files = (
-                            parse_multipart_form(self.body, boundary))
-                except Exception as e:
-                    log.exception(e)
-                    pass
-
+            self.parsed_form = RequestParameters()
+            self.parsed_files = RequestParameters()
+            content_type = self.headers.get(
+                'Content-Type', DEFAULT_HTTP_CONTENT_TYPE)
+            content_type, parameters = parse_header(content_type)
+            try:
+                if content_type == 'application/x-www-form-urlencoded':
+                    self.parsed_form = RequestParameters(
+                        parse_qs(self.body.decode('utf-8')))
+                elif content_type == 'multipart/form-data':
+                    # TODO: Stream this instead of reading to/from memory
+                    boundary = parameters['boundary'].encode('utf-8')
+                    self.parsed_form, self.parsed_files = (
+                        parse_multipart_form(self.body, boundary))
+            except Exception as e:
+                log.exception(e)
+                pass
         return self.parsed_form
 
     @property

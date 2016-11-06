@@ -2,6 +2,7 @@ httptools
 ujson
 uvloop
 aiohttp
+aiocache
 pytest
 coverage
 tox

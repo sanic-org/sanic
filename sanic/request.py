@@ -70,22 +70,23 @@ class Request:
         if self.parsed_form is None:
             self.parsed_form = {}
             self.parsed_files = {}
-            content_type, parameters = parse_header(
-                self.headers.get('Content-Type', ''))
-            try:
-                is_url_encoded = (
-                    content_type == 'application/x-www-form-urlencoded')
-                if content_type is None or is_url_encoded:
-                    self.parsed_form = RequestParameters(
-                        parse_qs(self.body.decode('utf-8')))
-                elif content_type == 'multipart/form-data':
-                    # TODO: Stream this instead of reading to/from memory
-                    boundary = parameters['boundary'].encode('utf-8')
-                    self.parsed_form, self.parsed_files = (
-                        parse_multipart_form(self.body, boundary))
-            except Exception as e:
-                log.exception(e)
-                pass
+            content_type = self.headers.get('Content-Type')
+            if content_type:
+                content_type, parameters = parse_header(content_type)
+                try:
+                    is_url_encoded = (
+                        content_type == 'application/x-www-form-urlencoded')
+                    if content_type is None or is_url_encoded:
+                        self.parsed_form = RequestParameters(
+                            parse_qs(self.body.decode('utf-8')))
+                    elif content_type == 'multipart/form-data':
+                        # TODO: Stream this instead of reading to/from memory
+                        boundary = parameters['boundary'].encode('utf-8')
+                        self.parsed_form, self.parsed_files = (
+                            parse_multipart_form(self.body, boundary))
+                except Exception as e:
+                    log.exception(e)
+                    pass
 
         return self.parsed_form
 

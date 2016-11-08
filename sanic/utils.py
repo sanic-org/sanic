@@ -1,4 +1,5 @@
 import aiohttp
+
 from sanic.log import log
 
 HOST = '127.0.0.1'

@@ -1,6 +1,7 @@
-from json import loads as json_loads, dumps as json_dumps
+from json import dumps as json_dumps
+
 from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import text
 from sanic.utils import sanic_endpoint_test
 
 

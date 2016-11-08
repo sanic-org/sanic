@@ -2,9 +2,9 @@ import inspect
 
 from sanic import Sanic
 from sanic.blueprints import Blueprint
-from sanic.response import json, text
-from sanic.utils import sanic_endpoint_test
 from sanic.exceptions import NotFound, ServerError, InvalidUsage
+from sanic.response import text
+from sanic.utils import sanic_endpoint_test
 
 
 # ------------------------------------------------------------ #
@@ -23,6 +23,7 @@ def test_bp():
     request, response = sanic_endpoint_test(app)
 
     assert response.text == 'Hello'
+
 
 def test_bp_with_url_prefix():
     app = Sanic('test_text')
@@ -79,6 +80,7 @@ def test_bp_middleware():
     assert response.status == 200
     assert response.text == 'OK'
 
+
 def test_bp_exception_handler():
     app = Sanic('test_middleware')
     blueprint = Blueprint('test_middleware')
@@ -104,13 +106,13 @@ def test_bp_exception_handler():
     request, response = sanic_endpoint_test(app, uri='/1')
     assert response.status == 400
 
-
     request, response = sanic_endpoint_test(app, uri='/2')
     assert response.status == 200
     assert response.text == 'OK'
 
     request, response = sanic_endpoint_test(app, uri='/3')
     assert response.status == 200
+
 
 def test_bp_listeners():
     app = Sanic('test_middleware')
@@ -146,7 +148,8 @@ def test_bp_listeners():
 
     request, response = sanic_endpoint_test(app, uri='/')
 
-    assert order == [1,2,3,4,5,6]
+    assert order == [1, 2, 3, 4, 5, 6]
+
 
 def test_bp_static():
     current_file = inspect.getfile(inspect.currentframe())

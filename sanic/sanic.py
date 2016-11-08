@@ -9,12 +9,12 @@ from traceback import format_exc
 
 from .config import Config
 from .exceptions import Handler
+from .exceptions import ServerError
 from .log import log, logging
 from .response import HTTPResponse
 from .router import Router
 from .server import serve
 from .static import register as static_register
-from .exceptions import ServerError
 
 
 class Sanic:
@@ -261,7 +261,7 @@ class Sanic:
                 ("after_server_start", "after_start", after_start, False),
                 ("before_server_stop", "before_stop", before_stop, True),
                 ("after_server_stop", "after_stop", after_stop, True),
-                ):
+        ):
             listeners = []
             for blueprint in self.blueprints.values():
                 listeners += blueprint.listeners[event_name]
@@ -297,7 +297,8 @@ class Sanic:
 
         log.info("Server Stopped")
 
-    def stop(self):
+    @staticmethod
+    def stop():
         """
         This kills the Sanic
         """

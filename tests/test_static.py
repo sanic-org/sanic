@@ -4,6 +4,7 @@ import os
 from sanic import Sanic
 from sanic.utils import sanic_endpoint_test
 
+
 def test_static_file():
     current_file = inspect.getfile(inspect.currentframe())
     with open(current_file, 'rb') as file:
@@ -15,6 +16,7 @@ def test_static_file():
     request, response = sanic_endpoint_test(app, uri='/testing.file')
     assert response.status == 200
     assert response.body == current_file_contents
+
 
 def test_static_directory():
     current_file = inspect.getfile(inspect.currentframe())

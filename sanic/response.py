@@ -1,8 +1,10 @@
-from aiofiles import open as open_async
-from .cookies import CookieJar
 from mimetypes import guess_type
 from os import path
 from ujson import dumps as json_dumps
+
+from aiofiles import open as open_async
+
+from .cookies import CookieJar
 
 COMMON_STATUS_CODES = {
     200: b'OK',
@@ -113,16 +115,16 @@ class HTTPResponse:
                 b'Connection: %b\r\n'
                 b'%b%b\r\n'
                 b'%b') % (
-            version.encode(),
-            self.status,
-            status,
-            self.content_type.encode(),
-            len(self.body),
-            b'keep-alive' if keep_alive else b'close',
-            timeout_header,
-            headers,
-            self.body
-        )
+                   version.encode(),
+                   self.status,
+                   status,
+                   self.content_type.encode(),
+                   len(self.body),
+                   b'keep-alive' if keep_alive else b'close',
+                   timeout_header,
+                   headers,
+                   self.body
+               )
 
     @property
     def cookies(self):

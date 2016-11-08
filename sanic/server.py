@@ -138,7 +138,7 @@ class HttpProtocol(asyncio.Protocol):
     def write_response(self, response):
         try:
             keep_alive = self.parser.should_keep_alive() \
-                            and not self.signal.stopped
+                         and not self.signal.stopped
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))
@@ -150,7 +150,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.cleanup()
         except Exception as e:
             self.bail_out(
-                "Writing request failed, connection closed {}".format(e))
+                "Writing response failed, connection closed - {}".format(e))
 
     def bail_out(self, message):
         log.debug(message)
@@ -200,19 +200,19 @@ def trigger_events(events, loop):
                 loop.run_until_complete(result)
 
 
-def serve(host, port, request_handler, before_start=None, after_start=None,
-          before_stop=None, after_stop=None,
-          debug=False, request_timeout=60, sock=None,
-          request_max_size=None, reuse_port=False, loop=None):
+def serve(host, port, request_handler, before_start=None, after_start=None, before_stop=None, after_stop=None,
+          debug=False, request_timeout=60, sock=None, request_max_size=None, reuse_port=False, loop=None):
     """
     Starts asynchronous HTTP Server on an individual process.
     :param host: Address to host on
     :param port: Port to host on
     :param request_handler: Sanic request handler with middleware
-    :param after_start: Function to be executed after the server starts
-    listening. Takes single argument `loop`
+    :param before_start: Function to be executed before the server starts listening. Takes single argument `loop`
+    :param after_start: Function to be executed after the server starts listening. Takes single argument `loop`
     :param before_stop: Function to be executed when a stop signal is
     received before it is respected. Takes single argumenet `loop`
+    :param after_stop: Function to be executed when a stop signal is
+    received after it is respected. Takes single argumenet `loop`
     :param debug: Enables debug output (slows server)
     :param request_timeout: time in seconds
     :param sock: Socket for the server to accept connections from

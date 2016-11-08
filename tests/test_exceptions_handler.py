@@ -1,6 +1,6 @@
 from sanic import Sanic
-from sanic.response import text
 from sanic.exceptions import InvalidUsage, ServerError, NotFound
+from sanic.response import text
 from sanic.utils import sanic_endpoint_test
 
 exception_handler_app = Sanic('test_exception_handler')

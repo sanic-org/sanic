@@ -134,8 +134,8 @@ def parse_multipart_form(body, boundary):
     :param boundary: Bytes multipart boundary
     :return: fields (dict), files (dict)
     """
-    files = {}
-    fields = {}
+    files = RequestParameters()
+    fields = RequestParameters()
 
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
@@ -166,9 +166,16 @@ def parse_multipart_form(body, boundary):
 
         post_data = form_part[line_index:-4]
         if file_name or file_type:
-            files[field_name] = File(
-                type=file_type, name=file_name, body=post_data)
+            file = File(type=file_type, name=file_name, body=post_data)
+            if field_name in files:
+                files[field_name].append(file)
+            else:
+                files[field_name] = [file]
         else:
-            fields[field_name] = post_data.decode('utf-8')
+            value = post_data.decode('utf-8')
+            if field_name in fields:
+                fields[field_name].append(value)
+            else:
+                fields[field_name] = [value]
 
     return fields, files

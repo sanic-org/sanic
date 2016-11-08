@@ -160,7 +160,8 @@ async def file(location, mime_type=None, headers=None):
                         body_bytes=out_stream)
 
 
-def redirect(request, to_url, headers=None, status=None, content_type=None):
+def redirect(request, to_url, headers=None, status=None,
+             content_type=None):
     """
     Aborts execution and causes a 303 or 302 redirect, depending on
     the HTTP 1.1 method.
@@ -173,10 +174,6 @@ def redirect(request, to_url, headers=None, status=None, content_type=None):
             status = 303
         else:
             status = 302
-    if not to_url.startswith("/") and not to_url.startswith("http://"):
-        to_url = "/" + to_url
-    if headers is None:
-        headers = {}
     # According to RFC 7231, a relative URI is now permitted.
     headers['Location'] = to_url
     return HTTPResponse(status=status,

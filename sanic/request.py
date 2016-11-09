@@ -132,7 +132,7 @@ def parse_multipart_form(body, boundary):
     Parses a request body and returns fields and files
     :param body: Bytes request body
     :param boundary: Bytes multipart boundary
-    :return: fields (dict), files (dict)
+    :return: fields (RequestParameters), files (RequestParameters)
     """
     files = RequestParameters()
     fields = RequestParameters()

@@ -114,9 +114,9 @@ class HttpProtocol(asyncio.Protocol):
         self.headers.append((name.decode(), value.decode('utf-8')))
 
     def on_headers_complete(self):
-        ra = self.transport.get_extra_info('peername')
-        if ra:
-            self.headers.append(('Remote-Addr', '%s:%s' % ra))
+        remote_addr = self.transport.get_extra_info('peername')
+        if remote_addr:
+            self.headers.append(('Remote-Addr', '%s:%s' % remote_addr))
 
         self.request = Request(
             url_bytes=self.url,

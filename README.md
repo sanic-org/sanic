@@ -1,5 +1,7 @@
 # Sanic
 
+[![Join the chat at https://gitter.im/sanic-python/Lobby](https://badges.gitter.im/sanic-python/Lobby.svg)](https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/channelcat/sanic.svg?branch=master)](https://travis-ci.org/channelcat/sanic)
 [![PyPI](https://img.shields.io/pypi/v/sanic.svg)](https://pypi.python.org/pypi/sanic/)
 [![PyPI](https://img.shields.io/pypi/pyversions/sanic.svg)](https://pypi.python.org/pypi/sanic/)

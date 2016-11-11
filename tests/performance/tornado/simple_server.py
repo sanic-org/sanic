@@ -1,5 +1,6 @@
 # Run with: python simple_server.py
 import ujson
+
 from tornado import ioloop, web
 
 
@@ -10,7 +11,7 @@ class MainHandler(web.RequestHandler):
 
 app = web.Application([
     (r'/', MainHandler)
-],  debug=False,
+], debug=False,
     compress_response=False,
     static_hash_cache=True
 )

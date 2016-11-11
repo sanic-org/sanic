@@ -4,8 +4,8 @@ Sanic
 import codecs
 import os
 import re
-from setuptools import setup
 
+from setuptools import setup
 
 with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
         __file__)), 'sanic', '__init__.py'), 'r', 'latin1') as fp:

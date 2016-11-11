@@ -1,13 +1,14 @@
+import aiohttp
+import uvloop
+
 from sanic import Sanic
 from sanic.response import json
 
-import uvloop
-import aiohttp
-
-#Create an event loop manually so that we can use it for both sanic & aiohttp
+# Create an event loop manually so that we can use it for both sanic & aiohttp
 loop = uvloop.new_event_loop()
 
 app = Sanic(__name__)
+
 
 async def fetch(session, url):
     """
@@ -30,4 +31,3 @@ async def test(request):
 
 
 app.run(host="0.0.0.0", port=8000, loop=loop)
-

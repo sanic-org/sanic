@@ -10,13 +10,14 @@ https://github.com/argaen/aiocache
 """
 
 import asyncio
-import aiocache
 
-from sanic import Sanic
-from sanic.response import json
-from sanic.log import log
+import aiocache
 from aiocache import RedisCache, cached
 from aiocache.serializers import JsonSerializer
+
+from sanic import Sanic
+from sanic.log import log
+from sanic.response import json
 
 app = Sanic(__name__)
 aiocache.set_defaults(cache=RedisCache)

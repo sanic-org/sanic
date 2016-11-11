@@ -1,7 +1,6 @@
-from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
 from sanic.request import Request
-from sanic.response import json, text, HTTPResponse
+from sanic.response import text, HTTPResponse
 from sanic.utils import sanic_endpoint_test
 
 
@@ -88,7 +87,6 @@ def test_middleware_override_response():
     assert response.text == 'OK'
 
 
-
 def test_middleware_order():
     app = Sanic('test_middleware_order')
 
@@ -125,4 +123,4 @@ def test_middleware_order():
     request, response = sanic_endpoint_test(app)
 
     assert response.status == 200
-    assert order == [1,2,3,4,5,6]
+    assert order == [1, 2, 3, 4, 5, 6]

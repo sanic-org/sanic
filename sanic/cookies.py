@@ -1,6 +1,6 @@
-from datetime import datetime
 import re
 import string
+from datetime import datetime
 
 # ------------------------------------------------------------ #
 #  SimpleCookie
@@ -19,18 +19,20 @@ _Translator.update({
 })
 
 
-def _quote(str):
+def _quote(str_):
     r"""Quote a string for use in a cookie header.
     If the string does not need to be double-quoted, then just return the
-    string.  Otherwise, surround the string in doublequotes and quote
+    string.  Otherwise, surround the string in double quotes and quote
     (with a \) special characters.
     """
-    if str is None or _is_legal_key(str):
-        return str
+    if str_ is None or _is_legal_key(str_):
+        return str_
     else:
-        return '"' + str.translate(_Translator) + '"'
+        return '"' + str_.translate(_Translator) + '"'
+
 
 _is_legal_key = re.compile('[%s]+' % re.escape(_LegalChars)).fullmatch
+
 
 # ------------------------------------------------------------ #
 #  Custom SimpleCookie
@@ -43,6 +45,7 @@ class CookieJar(dict):
     It gets around the limitation of one header per name by using the
     MultiHeader class to provide a unique key that encodes to Set-Cookie
     """
+
     def __init__(self, headers):
         super().__init__()
         self.headers = headers
@@ -112,6 +115,7 @@ class Cookie(dict):
 
         return "; ".join(output).encode(encoding)
 
+
 # ------------------------------------------------------------ #
 #  Header Trickery
 # ------------------------------------------------------------ #
@@ -122,6 +126,7 @@ class MultiHeader:
     Allows us to set a header within response that has a unique key,
     but may contain duplicate header names
     """
+
     def __init__(self, name):
         self.name = name
 

@@ -5,15 +5,14 @@
 
 
 ## sanic imports
+import peewee
+import uvloop
+from peewee_async import Manager, PostgresqlDatabase
+
 from sanic import Sanic
 from sanic.response import json
 
-## peewee_async related imports
-import uvloop
-import peewee
-from peewee_async import Manager, PostgresqlDatabase
-
- # we instantiate a custom loop so we can pass it to our db manager
+# we instantiate a custom loop so we can pass it to our db manager
 loop = uvloop.new_event_loop()
 
 database = PostgresqlDatabase(database='test',
@@ -22,6 +21,7 @@ database = PostgresqlDatabase(database='test',
                               password='mysecretpassword')
 
 objects = Manager(database, loop=loop)
+
 
 ## from peewee_async docs:
 # Also there’s no need to connect and re-connect before executing async queries
@@ -37,6 +37,7 @@ class KeyValue(peewee.Model):
     class Meta:
         database = database
 
+
 # create table synchronously
 KeyValue.create_table(True)
 
@@ -44,10 +45,10 @@ KeyValue.create_table(True)
 database.close()
 
 # OPTIONAL: disable any future syncronous calls
-objects.database.allow_sync = False # this will raise AssertionError on ANY sync call
-
+objects.database.allow_sync = False  # this will raise AssertionError on ANY sync call
 
 app = Sanic('peewee_example')
+
 
 @app.route('/post/<key>/<value>')
 async def post(request, key, value):
@@ -77,4 +78,3 @@ async def get(request):
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, loop=loop)
-

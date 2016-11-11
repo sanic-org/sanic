@@ -1,5 +1,6 @@
-from .response import text
 from traceback import format_exc
+
+from .response import text
 
 
 class SanicException(Exception):

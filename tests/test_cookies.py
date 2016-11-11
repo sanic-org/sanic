@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
+
 from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import text
 from sanic.utils import sanic_endpoint_test
 
 
@@ -24,6 +25,7 @@ def test_cookies():
 
     assert response.text == 'Cookies are: working!'
     assert response_cookies['right_back'].value == 'at you'
+
 
 def test_cookie_options():
     app = Sanic('test_text')

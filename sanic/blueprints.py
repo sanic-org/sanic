@@ -86,22 +86,27 @@ class Blueprint:
     def route(self, uri, methods=None):
         """
         """
+
         def decorator(handler):
             self.record(lambda s: s.add_route(handler, uri, methods))
             return handler
+
         return decorator
 
     def listener(self, event):
         """
         """
+
         def decorator(listener):
             self.listeners[event].append(listener)
             return listener
+
         return decorator
 
     def middleware(self, *args, **kwargs):
         """
         """
+
         def register_middleware(middleware):
             self.record(
                 lambda s: s.add_middleware(middleware, *args, **kwargs))
@@ -118,9 +123,11 @@ class Blueprint:
     def exception(self, *args, **kwargs):
         """
         """
+
         def decorator(handler):
             self.record(lambda s: s.add_exception(handler, *args, **kwargs))
             return handler
+
         return decorator
 
     def static(self, uri, file_or_directory, *args, **kwargs):

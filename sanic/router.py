@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict, namedtuple
 from functools import lru_cache
+
 from .config import Config
 from .exceptions import NotFound, InvalidUsage
 

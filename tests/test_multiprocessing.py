@@ -18,11 +18,13 @@ def skip_test_multiprocessing():
     app = Sanic('test_json')
 
     response = Array('c', 50)
+
     @app.route('/')
     async def handler(request):
         return json({"test": True})
 
     stop_event = Event()
+
     async def after_start(*args, **kwargs):
         http_response = await local_request('get', '/')
         response.value = http_response.text.encode()

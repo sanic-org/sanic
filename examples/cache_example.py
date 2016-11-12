@@ -15,11 +15,14 @@ import aiocache
 from sanic import Sanic
 from sanic.response import json
 from sanic.log import log
-from aiocache import RedisCache, cached
+from aiocache import cached
 from aiocache.serializers import JsonSerializer
 
 app = Sanic(__name__)
-aiocache.set_defaults(cache=RedisCache)
+
+aiocache.settings.set_defaults(
+    cache="aiocache.RedisCache"
+)
 
 
 @cached(key="my_custom_key", serializer=JsonSerializer())

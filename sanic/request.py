@@ -8,6 +8,12 @@ from ujson import loads as json_loads
 from .log import log
 
 
+DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+# HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
+# > If the media type remains unknown, the recipient SHOULD treat it
+# > as type "application/octet-stream"
+
+
 class RequestParameters(dict):
     """
     Hosts a dict with lists as values where get returns the first
@@ -68,14 +74,13 @@ class Request:
     @property
     def form(self):
         if self.parsed_form is None:
-            self.parsed_form = {}
-            self.parsed_files = {}
-            content_type, parameters = parse_header(
-                self.headers.get('Content-Type', ''))
+            self.parsed_form = RequestParameters()
+            self.parsed_files = RequestParameters()
+            content_type = self.headers.get(
+                'Content-Type', DEFAULT_HTTP_CONTENT_TYPE)
+            content_type, parameters = parse_header(content_type)
             try:
-                is_url_encoded = (
-                    content_type == 'application/x-www-form-urlencoded')
-                if content_type is None or is_url_encoded:
+                if content_type == 'application/x-www-form-urlencoded':
                     self.parsed_form = RequestParameters(
                         parse_qs(self.body.decode('utf-8')))
                 elif content_type == 'multipart/form-data':
@@ -86,7 +91,6 @@ class Request:
             except Exception as e:
                 log.exception(e)
                 pass
-
         return self.parsed_form
 
     @property
@@ -128,10 +132,10 @@ def parse_multipart_form(body, boundary):
     Parses a request body and returns fields and files
     :param body: Bytes request body
     :param boundary: Bytes multipart boundary
-    :return: fields (dict), files (dict)
+    :return: fields (RequestParameters), files (RequestParameters)
     """
-    files = {}
-    fields = {}
+    files = RequestParameters()
+    fields = RequestParameters()
 
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
@@ -162,9 +166,16 @@ def parse_multipart_form(body, boundary):
 
         post_data = form_part[line_index:-4]
         if file_name or file_type:
-            files[field_name] = File(
-                type=file_type, name=file_name, body=post_data)
+            file = File(type=file_type, name=file_name, body=post_data)
+            if field_name in files:
+                files[field_name].append(file)
+            else:
+                files[field_name] = [file]
         else:
-            fields[field_name] = post_data.decode('utf-8')
+            value = post_data.decode('utf-8')
+            if field_name in fields:
+                fields[field_name].append(value)
+            else:
+                fields[field_name] = [value]
 
     return fields, files

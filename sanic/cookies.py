@@ -30,6 +30,7 @@ def _quote(str):
     else:
         return '"' + str.translate(_Translator) + '"'
 
+
 _is_legal_key = re.compile('[%s]+' % re.escape(_LegalChars)).fullmatch
 
 # ------------------------------------------------------------ #

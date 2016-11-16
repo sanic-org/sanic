@@ -28,9 +28,10 @@ class CustomHandler(Handler):
         if not issubclass(type(exception), SanicException):
             print(exception)
 
-        # Then, we must finish handling the exception by
-        # returning our response to the client
-        return text("An error occured", status=500)
+        # Then, we must finish handling the exception by returning
+        # our response to the client
+        # For this we can just call the super class' default handler
+        return super.default(self, request, exception)
 
 
 
@@ -56,4 +57,4 @@ async def test(request):
     return json({"test": True})
 
 
-app.run(host="0.0.0.0", port=8000)
+app.run(host="0.0.0.0", port=8000, debug=True)

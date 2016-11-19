@@ -67,7 +67,7 @@ class Request:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                pass
+                log.exception("failed when parsing body as json")
 
         return self.parsed_json
 
@@ -88,9 +88,9 @@ class Request:
                     boundary = parameters['boundary'].encode('utf-8')
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
-            except Exception as e:
-                log.exception(e)
-                pass
+            except Exception:
+                log.exception("failed when parsing form")
+
         return self.parsed_form
 
     @property

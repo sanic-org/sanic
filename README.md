@@ -33,7 +33,7 @@ All tests were run on an AWS medium instance running ubuntu, using 1 process.  E
 from sanic import Sanic
 from sanic.response import json
 
-app = Sanic(__name__)
+app = Sanic()
 
 @app.route("/")
 async def test(request):

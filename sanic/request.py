@@ -26,7 +26,7 @@ class RequestParameters(dict):
         return self.super.get(name, default)
 
 
-class Request:
+class Request(dict):
     """
     Properties of an HTTP request such as URL, headers, etc.
     """

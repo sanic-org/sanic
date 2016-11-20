@@ -1,7 +1,7 @@
 from asyncio import get_event_loop
 from collections import deque
 from functools import partial
-from inspect import isawaitable
+from inspect import isawaitable, stack, getmodulename
 from multiprocessing import Process, Event
 from signal import signal, SIGTERM, SIGINT
 from time import sleep
@@ -18,7 +18,10 @@ from .exceptions import ServerError
 
 
 class Sanic:
-    def __init__(self, name, router=None, error_handler=None):
+    def __init__(self, name=None, router=None, error_handler=None):
+        if name is None:
+            frame_records = stack()[1]
+            name = getmodulename(frame_records[1])
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or Handler(self)

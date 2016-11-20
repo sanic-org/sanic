@@ -109,8 +109,9 @@ class Blueprint:
 
         # Detect which way this was called, @middleware or @middleware('AT')
         if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
+            middleware = args[0]
             args = []
-            return register_middleware(args[0])
+            return register_middleware(middleware)
         else:
             return register_middleware
 

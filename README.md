@@ -1,5 +1,7 @@
 # Sanic
 
+[![Join the chat at https://gitter.im/sanic-python/Lobby](https://badges.gitter.im/sanic-python/Lobby.svg)](https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/channelcat/sanic.svg?branch=master)](https://travis-ci.org/channelcat/sanic)
 [![PyPI](https://img.shields.io/pypi/v/sanic.svg)](https://pypi.python.org/pypi/sanic/)
 [![PyPI](https://img.shields.io/pypi/pyversions/sanic.svg)](https://pypi.python.org/pypi/sanic/)
@@ -31,7 +33,7 @@ All tests were run on an AWS medium instance running ubuntu, using 1 process.  E
 from sanic import Sanic
 from sanic.response import json
 
-app = Sanic(__name__)
+app = Sanic()
 
 @app.route("/")
 async def test(request):

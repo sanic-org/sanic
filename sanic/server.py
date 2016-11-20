@@ -1,9 +1,9 @@
 import asyncio
 from functools import partial
 from inspect import isawaitable
+from multidict import CIMultiDict
 from signal import SIGINT, SIGTERM
 from time import time
-from aiohttp import CIMultiDict
 import httptools
 
 try:

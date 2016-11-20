@@ -56,7 +56,7 @@ def test_query_string():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, params=[("test1", 1), ("test2", "false"), ("test2", "true")])
+    request, response = sanic_endpoint_test(app, params={"test1":1, "test2":"false"})
 
     assert request.args.get('test1') == '1'
     assert request.args.get('test2') == 'false'

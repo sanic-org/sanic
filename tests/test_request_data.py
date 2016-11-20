@@ -9,16 +9,16 @@ def test_storage():
 
     @app.middleware('request')
     def store(request):
-        request['a'] = 'test'
-        request['b'] = 'zest'
-        del request['b']
+        request['user'] = 'sanic'
+        request['sidekick'] = 'tails'
+        del request['sidekick']
 
     @app.route('/')
     def handler(request):
-        return json({ 'a': request.get('a'), 'b': request.get('b') })
+        return json({ 'user': request.get('user'), 'sidekick': request.get('sidekick') })
 
     request, response = sanic_endpoint_test(app)
 
     response_json = loads(response.text)
-    assert response_json['a'] == 'test'
-    assert response_json.get('b') is None
+    assert response_json['user'] == 'sanic'
+    assert response_json.get('sidekick') is None

@@ -3,7 +3,7 @@ from functools import partial
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
 from time import time
-
+from aiohttp import CIMultiDict
 import httptools
 
 try:
@@ -120,7 +120,7 @@ class HttpProtocol(asyncio.Protocol):
 
         self.request = Request(
             url_bytes=self.url,
-            headers=dict(self.headers),
+            headers=CIMultiDict(self.headers),
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode()
         )

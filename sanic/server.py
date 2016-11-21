@@ -154,7 +154,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.cleanup()
         except Exception as e:
             self.bail_out(
-                "Writing request failed, connection closed {}".format(e))
+                "Writing response failed, connection closed {}".format(e))
 
     def bail_out(self, message):
         log.debug(message)

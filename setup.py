@@ -30,6 +30,7 @@ setup(
         'httptools>=0.0.9',
         'ujson>=1.35',
         'aiofiles>=0.3.0',
+        'multidict>=2.0',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

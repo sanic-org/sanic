@@ -16,7 +16,7 @@ async def local_request(method, uri, cookies=None, *args, **kwargs):
 
 
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
-                        *request_args, **request_kwargs):
+                        loop=None, *request_args, **request_kwargs):
     results = []
     exceptions = []
 
@@ -34,7 +34,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
             exceptions.append(e)
         app.stop()
 
-    app.run(host=HOST, port=42101, after_start=_collect_response)
+    app.run(host=HOST, port=42101, after_start=_collect_response, loop=loop)
 
     if exceptions:
         raise ValueError("Exception during request: {}".format(exceptions))

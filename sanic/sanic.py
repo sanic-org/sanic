@@ -295,8 +295,7 @@ class Sanic:
 
         except Exception as e:
             log.exception(
-                'Experienced exception while trying to serve: {}'.format(e))
-            pass
+                'Experienced exception while trying to serve')
 
         log.info("Server Stopped")
 

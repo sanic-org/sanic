@@ -62,7 +62,9 @@ class Sanic:
 
     def add_route(self, handler, uri, methods=None):
         """
-        A helper method to register class instance or functions as a handler to the application url routes.
+        A helper method to register class instance or
+        functions as a handler to the application url
+        routes.
         :param handler: function or class instance
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed

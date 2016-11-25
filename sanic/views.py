@@ -3,7 +3,8 @@ from .exceptions import InvalidUsage
 
 class MethodView:
     """ Simple class based implementation of view for the sanic.
-    You should implement methods(get, post, put, patch, delete) for the class to every HTTP method you want to support.
+    You should implement methods(get, post, put, patch, delete) for the class
+    to every HTTP method you want to support.
     For example:
         class DummyView(View):
 
@@ -30,4 +31,6 @@ class MethodView:
         handler = getattr(self, request.method.lower(), None)
         if handler:
             return handler(request, *args, **kwargs)
-        raise InvalidUsage('Method {} not allowed for URL {}'.format(request.method, request.url), status_code=405)
+        raise InvalidUsage(
+            'Method {} not allowed for URL {}'.format(
+                request.method, request.url), status_code=405)

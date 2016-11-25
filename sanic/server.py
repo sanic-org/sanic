@@ -4,7 +4,8 @@ from inspect import isawaitable
 from multidict import CIMultiDict
 from signal import SIGINT, SIGTERM
 from time import time
-import httptools
+from httptools import HttpRequestParser
+from httptools.parser.errors import HttpParserError
 
 try:
     import uvloop as async_loop
@@ -94,12 +95,12 @@ class HttpProtocol(asyncio.Protocol):
         if self.parser is None:
             assert self.request is None
             self.headers = []
-            self.parser = httptools.HttpRequestParser(self)
+            self.parser = HttpRequestParser(self)
 
         # Parse request chunk or close connection
         try:
             self.parser.feed_data(data)
-        except httptools.parser.errors.HttpParserError as e:
+        except HttpParserError as e:
             self.bail_out(
                 "Invalid request data, connection closed ({})".format(e))
 

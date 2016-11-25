@@ -34,7 +34,7 @@ class HttpProtocol(asyncio.Protocol):
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
     def __init__(self, *, loop, request_handler, signal=Signal(),
-                 connections={}, request_timeout=60,
+                 connections=set(), request_timeout=60,
                  request_max_size=None):
         self.loop = loop
         self.transport = None
@@ -56,14 +56,14 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def connection_made(self, transport):
-        self.connections[self] = True
+        self.connections.add(self)
         self._timeout_handler = self.loop.call_later(
             self.request_timeout, self.connection_timeout)
         self.transport = transport
         self._last_request_time = current_time
 
     def connection_lost(self, exc):
-        del self.connections[self]
+        self.connections.discard(self)
         self._timeout_handler.cancel()
         self.cleanup()
 
@@ -233,7 +233,7 @@ def serve(host, port, request_handler, before_start=None, after_start=None,
 
     trigger_events(before_start, loop)
 
-    connections = {}
+    connections = set()
     signal = Signal()
     server_coroutine = loop.create_server(lambda: HttpProtocol(
         loop=loop,
@@ -274,7 +274,7 @@ def serve(host, port, request_handler, before_start=None, after_start=None,
 
         # Complete all tasks on the loop
         signal.stopped = True
-        for connection in connections.keys():
+        for connection in connections:
             connection.close_if_idle()
 
         while connections:

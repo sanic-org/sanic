@@ -86,10 +86,7 @@ class HttpProtocol(asyncio.Protocol):
             except Exception as e:
                 response = HTTPResponse(
                     'Request Timeout', RequestTimeout.status_code)
-            self.transport.write(
-                response.output(
-                    self.request.version, False, self.request_timeout))
-            self.transport.close()
+            self.write_response(response)
 
     # -------------------------------------------- #
     # Parsing

@@ -13,7 +13,6 @@ except ImportError:
 
 from .log import log
 from .request import Request
-from .response import HTTPResponse
 from .exceptions import RequestTimeout
 
 
@@ -80,12 +79,8 @@ class HttpProtocol(asyncio.Protocol):
                 self.loop.call_later(time_left, self.connection_timeout)
         else:
             self._request_handler_task.cancel()
-            try:
-                response = self.error_handler.response(
-                    self.request, RequestTimeout('Request Timeout'))
-            except Exception as e:
-                response = HTTPResponse(
-                    'Request Timeout', RequestTimeout.status_code)
+            response = self.error_handler.response(
+                self.request, RequestTimeout('Request Timeout'))
             self.write_response(response)
 
     # -------------------------------------------- #

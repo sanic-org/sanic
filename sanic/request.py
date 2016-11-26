@@ -114,6 +114,8 @@ class Request(dict):
     @property
     def cookies(self):
         if self._cookies is None:
+            if 'cookie' in self.headers: #HTTP2 cookie header
+                self.headers['Cookie'] = self.headers.pop('cookie')
             if 'Cookie' in self.headers:
                 cookies = SimpleCookie()
                 cookies.load(self.headers['Cookie'])

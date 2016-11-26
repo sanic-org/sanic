@@ -16,6 +16,6 @@ async def test(request):
 
 @app.exception(RequestTimeout)
 def timeout(request, exception):
-    return text('RequestTimeout from error_handler.')
+    return text('RequestTimeout from error_handler.', 408)
 
 app.run(host='0.0.0.0', port=8000)

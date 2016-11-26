@@ -78,7 +78,8 @@ class HttpProtocol(asyncio.Protocol):
             self._timeout_handler = \
                 self.loop.call_later(time_left, self.connection_timeout)
         else:
-            self._request_handler_task.cancel()
+            if self._request_handler_task:
+                self._request_handler_task.cancel()
             response = self.error_handler.response(
                 self.request, RequestTimeout('Request Timeout'))
             self.write_response(response)

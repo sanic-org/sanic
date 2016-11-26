@@ -1,7 +1,7 @@
 from .exceptions import InvalidUsage
 
 
-class MethodView:
+class HTTPMethodView:
     """ Simple class based implementation of view for the sanic.
     You should implement methods(get, post, put, patch, delete) for the class
     to every HTTP method you want to support.

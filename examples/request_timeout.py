@@ -8,7 +8,7 @@ Config.REQUEST_TIMEOUT = 1
 app = Sanic(__name__)
 
 
-@app.route("/")
+@app.route('/')
 async def test(request):
     await asyncio.sleep(3)
     return text('Hello, world!')
@@ -18,4 +18,4 @@ async def test(request):
 def timeout(request, exception):
     return text('RequestTimeout from error_handler.')
 
-app.run(host="0.0.0.0", port=8000)
+app.run(host='0.0.0.0', port=8000)

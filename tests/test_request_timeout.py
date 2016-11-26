@@ -12,7 +12,7 @@ request_timeout_default_app = Sanic('test_request_timeout_default')
 
 @request_timeout_app.route('/1')
 async def handler_1(request):
-    await asyncio.sleep(2)
+    await asyncio.sleep(1)
     return text('OK')
 
 
@@ -29,7 +29,7 @@ def test_server_error_request_timeout():
 
 @request_timeout_default_app.route('/1')
 async def handler_2(request):
-    await asyncio.sleep(2)
+    await asyncio.sleep(1)
     return text('OK')
 
 

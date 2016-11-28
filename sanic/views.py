@@ -16,7 +16,8 @@ class HTTPMethodView:
                 return text('I am put method')
     etc.
 
-    If someone tries to use a non-implemented method, there will be a 405 response.
+    If someone tries to use a non-implemented method, there will be a
+    405 response.
 
     If you need any url params just mention them in method definition:
         class DummyView(View):

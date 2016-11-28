@@ -3,8 +3,9 @@ from .exceptions import InvalidUsage
 
 class HTTPMethodView:
     """ Simple class based implementation of view for the sanic.
-    You should implement methods(get, post, put, patch, delete) for the class
+    You should implement methods (get, post, put, patch, delete) for the class
     to every HTTP method you want to support.
+
     For example:
         class DummyView(View):
 
@@ -14,9 +15,10 @@ class HTTPMethodView:
             def put(self, request, *args, **kwargs):
                 return text('I am put method')
     etc.
-    If someone try use not implemented method, there will be 405 response
 
-    If you need any url params just mention them in method definition like:
+    If someone tries to use a non-implemented method, there will be a 405 response.
+
+    If you need any url params just mention them in method definition:
         class DummyView(View):
 
             def get(self, request, my_param_here, *args, **kwargs):

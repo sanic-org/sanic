@@ -67,7 +67,7 @@ class Request(dict):
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                log.exception("failed when parsing body as json")
+                log.exception("Failed when parsing body as json")
 
         return self.parsed_json
 
@@ -89,7 +89,7 @@ class Request(dict):
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
             except Exception:
-                log.exception("failed when parsing form")
+                log.exception("Failed when parsing form")
 
         return self.parsed_form
 

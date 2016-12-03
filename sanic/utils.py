@@ -47,11 +47,11 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
             return request, response
         except:
             raise ValueError(
-                "request and response object expected, got ({})".format(
+                "Request and response object expected, got ({})".format(
                     results))
     else:
         try:
             return results[0]
         except:
             raise ValueError(
-                "request object expected, got ({})".format(results))
+                "Request object expected, got ({})".format(results))

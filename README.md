@@ -52,6 +52,7 @@ app.run(host="0.0.0.0", port=8000)
  * [Middleware](docs/middleware.md)
  * [Exceptions](docs/exceptions.md)
  * [Blueprints](docs/blueprints.md)
+ * [Class Based Views](docs/class_based_views.md)
  * [Cookies](docs/cookies.md)
  * [Static Files](docs/static_files.md)
  * [Deploying](docs/deploying.md)
@@ -72,7 +73,7 @@ app.run(host="0.0.0.0", port=8000)
                      ▄▄▄▄▄
             ▀▀▀██████▄▄▄       _______________
           ▄▄▄▄▄  █████████▄  /                 \
-         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  | 
+         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
        ▀▀█████▄▄ ▀██████▄██ | _________________/
        ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
             ▀▀▀▄  ▀▀███ ▀       ▄▄

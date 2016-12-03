@@ -4,7 +4,8 @@ from inspect import isawaitable
 from multidict import CIMultiDict
 from signal import SIGINT, SIGTERM
 from time import time
-import httptools
+from httptools import HttpRequestParser
+from httptools.parser.errors import HttpParserError
 
 try:
     import uvloop as async_loop
@@ -13,6 +14,7 @@ except ImportError:
 
 from .log import log
 from .request import Request
+from .exceptions import RequestTimeout
 
 
 class Signal:
@@ -33,8 +35,8 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
-    def __init__(self, *, loop, request_handler, signal=Signal(),
-                 connections={}, request_timeout=60,
+    def __init__(self, *, loop, request_handler, error_handler,
+                 signal=Signal(), connections={}, request_timeout=60,
                  request_max_size=None):
         self.loop = loop
         self.transport = None
@@ -45,11 +47,13 @@ class HttpProtocol(asyncio.Protocol):
         self.signal = signal
         self.connections = connections
         self.request_handler = request_handler
+        self.error_handler = error_handler
         self.request_timeout = request_timeout
         self.request_max_size = request_max_size
         self._total_request_size = 0
         self._timeout_handler = None
         self._last_request_time = None
+        self._request_handler_task = None
 
     # -------------------------------------------- #
     # Connection
@@ -75,7 +79,11 @@ class HttpProtocol(asyncio.Protocol):
             self._timeout_handler = \
                 self.loop.call_later(time_left, self.connection_timeout)
         else:
-            self.bail_out("Request timed out, connection closed")
+            if self._request_handler_task:
+                self._request_handler_task.cancel()
+            response = self.error_handler.response(
+                self.request, RequestTimeout('Request Timeout'))
+            self.write_response(response)
 
     # -------------------------------------------- #
     # Parsing
@@ -94,12 +102,12 @@ class HttpProtocol(asyncio.Protocol):
         if self.parser is None:
             assert self.request is None
             self.headers = []
-            self.parser = httptools.HttpRequestParser(self)
+            self.parser = HttpRequestParser(self)
 
         # Parse request chunk or close connection
         try:
             self.parser.feed_data(data)
-        except httptools.parser.errors.HttpParserError as e:
+        except HttpParserError as e:
             self.bail_out(
                 "Invalid request data, connection closed ({})".format(e))
 
@@ -132,7 +140,7 @@ class HttpProtocol(asyncio.Protocol):
             self.request.body = body
 
     def on_message_complete(self):
-        self.loop.create_task(
+        self._request_handler_task = self.loop.create_task(
             self.request_handler(self.request, self.write_response))
 
     # -------------------------------------------- #
@@ -165,6 +173,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request = None
         self.url = None
         self.headers = None
+        self._request_handler_task = None
         self._total_request_size = 0
 
     def close_if_idle(self):
@@ -204,8 +213,8 @@ def trigger_events(events, loop):
                 loop.run_until_complete(result)
 
 
-def serve(host, port, request_handler, before_start=None, after_start=None,
-          before_stop=None, after_stop=None,
+def serve(host, port, request_handler, error_handler, before_start=None,
+          after_start=None, before_stop=None, after_stop=None,
           debug=False, request_timeout=60, sock=None,
           request_max_size=None, reuse_port=False, loop=None):
     """
@@ -240,6 +249,7 @@ def serve(host, port, request_handler, before_start=None, after_start=None,
         connections=connections,
         signal=signal,
         request_handler=request_handler,
+        error_handler=error_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
     ), host, port, reuse_port=reuse_port, sock=sock)

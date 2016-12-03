@@ -30,6 +30,10 @@ class FileNotFound(NotFound):
         self.relative_url = relative_url
 
 
+class RequestTimeout(SanicException):
+    status_code = 408
+
+
 class Handler:
     handlers = None
 

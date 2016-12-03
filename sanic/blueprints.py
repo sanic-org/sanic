@@ -91,6 +91,12 @@ class Blueprint:
             return handler
         return decorator
 
+    def add_route(self, handler, uri, methods=None):
+        """
+        """
+        self.record(lambda s: s.add_route(handler, uri, methods))
+        return handler
+
     def listener(self, event):
         """
         """

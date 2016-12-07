@@ -83,7 +83,9 @@ class HttpProtocol(asyncio.Protocol):
                 self._request_handler_task.cancel()
             response = self.error_handler.response(
                 self.request, RequestTimeout('Request Timeout'))
-            self.write_response(response)
+            version = self.request.version if self.request else '1.1'
+            self.transport.write(response.output(version))
+            self.transport.close()
 
     # -------------------------------------------- #
     # Parsing

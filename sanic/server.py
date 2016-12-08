@@ -14,7 +14,7 @@ except ImportError:
 
 from .log import log
 from .request import Request
-from .exceptions import RequestTimeout
+from .exceptions import RequestTimeout, PayloadTooLarge
 
 
 class Signal:
@@ -81,9 +81,8 @@ class HttpProtocol(asyncio.Protocol):
         else:
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            response = self.error_handler.response(
-                self.request, RequestTimeout('Request Timeout'))
-            self.write_response(response)
+            exception = RequestTimeout('Request Timeout')
+            self.write_error(exception)
 
     # -------------------------------------------- #
     # Parsing
@@ -94,9 +93,8 @@ class HttpProtocol(asyncio.Protocol):
         # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
-            return self.bail_out(
-                "Request too large ({}), connection closed".format(
-                    self._total_request_size))
+            exception = PayloadTooLarge('Payload Too Large')
+            self.write_error(exception)
 
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
@@ -116,8 +114,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_header(self, name, value):
         if name == b'Content-Length' and int(value) > self.request_max_size:
-            return self.bail_out(
-                "Request body too large ({}), connection closed".format(value))
+            exception = PayloadTooLarge('Payload Too Large')
+            self.write_error(exception)
 
         self.headers.append((name.decode(), value.decode('utf-8')))
 
@@ -163,6 +161,16 @@ class HttpProtocol(asyncio.Protocol):
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(e))
+
+    def write_error(self, exception):
+        try:
+            response = self.error_handler.response(self.request, exception)
+            version = self.request.version if self.request else '1.1'
+            self.transport.write(response.output(version))
+            self.transport.close()
+        except Exception as e:
+            self.bail_out(
+                "Writing error failed, connection closed {}".format(e))
 
     def bail_out(self, message):
         log.debug(message)

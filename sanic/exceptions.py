@@ -34,6 +34,10 @@ class RequestTimeout(SanicException):
     status_code = 408
 
 
+class PayloadTooLarge(SanicException):
+    status_code = 413
+
+
 class Handler:
     handlers = None
 

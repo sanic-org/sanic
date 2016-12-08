@@ -4,6 +4,7 @@ from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
+from sanic.exceptions import InvalidUsage
 
 from .log import log
 
@@ -67,7 +68,7 @@ class Request(dict):
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                log.exception("Failed when parsing body as json")
+                raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
 

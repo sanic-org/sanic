@@ -49,6 +49,19 @@ def test_json():
     assert results.get('test') == True
 
 
+def test_invalid_json():
+    app = Sanic('test_json')
+
+    @app.route('/')
+    async def handler(request):
+        return json(request.json())
+
+    data = "I am not json"
+    request, response = sanic_endpoint_test(app, data=data)
+
+    assert response.status == 400
+
+
 def test_query_string():
     app = Sanic('test_query_string')
 

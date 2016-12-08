@@ -3,3 +3,4 @@ ujson
 uvloop
 aiofiles
 multidict
+watchdog

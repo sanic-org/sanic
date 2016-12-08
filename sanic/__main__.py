@@ -24,7 +24,7 @@ if __name__ == "__main__":
             from watchdog.observers import Observer
             from watchdog.events import PatternMatchingEventHandler
 
-            class LiveLoadingHandler(PatternMatchingEventHandler):
+            class RestartHandler(PatternMatchingEventHandler):
 
                 def __init__(self, executable, args):
                     super().__init__(patterns=['*.py'])
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
             path = os.getcwd()
             observer = Observer()
-            handler = LiveLoadingHandler(sys.executable, sys.argv)
+            handler = RestartHandler(sys.executable, sys.argv)
             observer.schedule(handler, path, recursive=True)
             observer.start()
             while True:
@@ -66,7 +66,6 @@ if __name__ == "__main__":
             module_parts = args.module.split(".")
             module_name = ".".join(module_parts[:-1])
             app_name = module_parts[-1]
-
             module = import_module(module_name)
             app = getattr(module, app_name, None)
             if type(app) is not Sanic:

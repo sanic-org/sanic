@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
 ## Auto restart
 
-When the debug flag is enable and the source code is changed,  
-the server will automatically restart. 
+When the debug flag is enable and the code under the current working directory
+is changed, the server will automatically restart.
 
 `python -m sanic server.app --host=127.0.0.1 --port=1337 --workers=4 --debug`

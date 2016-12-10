@@ -2,6 +2,7 @@ from aiofiles.os import stat
 from os import path
 from re import sub
 from time import strftime, gmtime
+from urllib.parse import unquote
 
 from .exceptions import FileNotFound, InvalidUsage
 from .response import file, HTTPResponse
@@ -38,6 +39,8 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
         # from herping a derp and treating the uri as an absolute path
         file_path = path.join(file_or_directory, sub('^[/]*', '', file_uri)) \
             if file_uri else file_or_directory
+
+        file_path = unquote(file_path)
         try:
             headers = {}
             # Check if the client has been sent this file before

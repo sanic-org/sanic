@@ -3,9 +3,11 @@
 """
 import os
 import asyncio
+import datetime
 
 import uvloop
-import aiopg
+from aiopg.sa import create_engine
+import sqlalchemy as sa
 
 from sanic import Sanic
 from sanic.response import json
@@ -24,40 +26,46 @@ connection = 'postgres://{0}:{1}@{2}/{3}'.format(database_user,
 loop = asyncio.get_event_loop()
 
 
-async def get_pool():
-    return await aiopg.create_pool(connection)
+metadata = sa.MetaData()
+
+polls = sa.Table('sanic_polls', metadata,
+                 sa.Column('id', sa.Integer, primary_key=True),
+                 sa.Column('question', sa.String(50)),
+                 sa.Column("pub_date", sa.DateTime))
+
+
+async def get_engine():
+    return await create_engine(connection)
 
 app = Sanic(name=__name__)
-pool = loop.run_until_complete(get_pool())
+engine = loop.run_until_complete(get_engine())
 
 
 async def prepare_db():
-    """ Let's create some table and add some data
+    """ Let's add some data
 
     """
-    async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute('DROP TABLE IF EXISTS sanic_polls')
-            await cur.execute("""CREATE TABLE sanic_polls (
+    async with engine.acquire() as conn:
+        await conn.execute('DROP TABLE IF EXISTS sanic_polls')
+        await conn.execute("""CREATE TABLE sanic_polls (
                                     id serial primary key,
                                     question varchar(50),
                                     pub_date timestamp
                                 );""")
-            for i in range(0, 100):
-                await cur.execute("""INSERT INTO sanic_polls
-                                (id, question, pub_date) VALUES ({}, {}, now())
-                """.format(i, i))
+        for i in range(0, 100):
+            await conn.execute(
+                polls.insert().values(question=i,
+                                      pub_date=datetime.datetime.now())
+                )
 
 
 @app.route("/")
 async def handle(request):
-    async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
-            result = []
-            await cur.execute("SELECT question, pub_date FROM sanic_polls")
-            async for row in cur:
-                result.append({"question": row[0], "pub_date": row[1]})
-            return json({"polls": result})
+    async with engine.acquire() as conn:
+        result = []
+        async for row in conn.execute(polls.select()):
+            result.append({"question": row.question, "pub_date": row.pub_date})
+        return json({"polls": result})
 
 
 if __name__ == '__main__':

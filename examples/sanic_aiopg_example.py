@@ -14,7 +14,10 @@ database_host = os.environ['DATABASE_HOST']
 database_user = os.environ['DATABASE_USER']
 database_password = os.environ['DATABASE_PASSWORD']
 
-connection = 'postgres://{0}:{1}@{2}/{3}'.format(database_user, database_password, database_host, database_name)
+connection = 'postgres://{0}:{1}@{2}/{3}'.format(database_user,
+                                                 database_password,
+                                                 database_host,
+                                                 database_name)
 loop = asyncio.get_event_loop()
 
 
@@ -33,12 +36,13 @@ async def prepare_db():
         async with conn.cursor() as cur:
             await cur.execute('DROP TABLE IF EXISTS sanic_polls')
             await cur.execute("""CREATE TABLE sanic_polls (
-                                    id integer primary key,
+                                    id serial primary key,
                                     question varchar(50),
                                     pub_date timestamp
                                 );""")
             for i in range(0, 100):
-                await cur.execute("""INSERT INTO sanic_polls (id, question, pub_date) VALUES ({}, {}, now())
+                await cur.execute("""INSERT INTO sanic_polls
+                                (id, question, pub_date) VALUES ({}, {}, now())
                 """.format(i, i))
 
 

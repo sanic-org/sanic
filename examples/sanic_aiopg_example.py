@@ -1,6 +1,5 @@
 import os
 import asyncio
-import datetime
 
 import uvloop
 import aiopg
@@ -32,13 +31,14 @@ async def prepare_db():
     """
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
-            await cur.execute("""CREATE TABLE sanic_poll (
+            await cur.execute('DROP TABLE IF EXISTS sanic_polls')
+            await cur.execute("""CREATE TABLE sanic_polls (
                                     id integer primary key,
                                     question varchar(50),
                                     pub_date timestamp
                                 );""")
             for i in range(0, 100):
-                await cur.execute("""INSERT INTO sanic_poll (id, question, pub_date) VALUES ({}, {}, now())
+                await cur.execute("""INSERT INTO sanic_polls (id, question, pub_date) VALUES ({}, {}, now())
                 """.format(i, i))
 
 
@@ -47,7 +47,7 @@ async def handle(request):
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             result = []
-            await cur.execute("SELECT question, pub_date FROM sanic_poll")
+            await cur.execute("SELECT question, pub_date FROM sanic_polls")
             async for row in cur:
                 result.append({"question": row[0], "pub_date": row[1]})
             return json({"polls": result})

@@ -39,6 +39,6 @@ class NameView(HTTPMethodView):
   def get(self, request, name):
     return text('Hello {}'.format(name))
 
-app.add_route(NameView(), '/<name')
+app.add_route(NameView(), '/<name>')
 
 ```

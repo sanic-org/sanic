@@ -252,7 +252,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     connections = {}
     signal = Signal()
-    server_coroutine = loop.create_server(lambda: HttpProtocol(
+    server = partial(
+        HttpProtocol,
         loop=loop,
         connections=connections,
         signal=signal,
@@ -260,7 +261,15 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         error_handler=error_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
-    ), host, port, reuse_port=reuse_port, sock=sock)
+    )
+
+    server_coroutine = loop.create_server(
+        server,
+        host,
+        port,
+        reuse_port=reuse_port,
+        sock=sock
+    )
 
     # Instead of pulling time at the end of every request,
     # pull it once per minute

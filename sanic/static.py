@@ -40,6 +40,8 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
         file_path = path.join(file_or_directory, sub('^[/]*', '', file_uri)) \
             if file_uri else file_or_directory
 
+        # URL decode the path sent by the browser otherwise we won't be able to 
+        # match filenames which got encoded (filenames with spaces etc)
         file_path = unquote(file_path)
         try:
             headers = {}

@@ -18,10 +18,13 @@ from .exceptions import ServerError
 
 
 class Sanic:
-    def __init__(self, name=None, router=None, error_handler=None):
+    def __init__(self, name=None, router=None, error_handler=None, logger=None):
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
+        if logger is not None:
+            logging = logger
+            log = logging.getLogger(__name__)
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or Handler(self)
@@ -232,7 +235,7 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None):
+            workers=1, loop=None, logger=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -251,6 +254,7 @@ class Sanic:
         :param workers: Number of processes
         received before it is respected
         :param loop: asyncio compatible event loop
+        :param logger: python logging object used to override default logging
         :return: Nothing
         """
         self.error_handler.debug = True
@@ -268,6 +272,14 @@ class Sanic:
             'request_max_size': self.config.REQUEST_MAX_SIZE,
             'loop': loop
         }
+
+        # -------------------------------------------- #
+        # Custom logging
+        # -------------------------------------------- #
+
+        if logger is not None:
+            logging = logger
+            log = logging.getLogger(__name__)
 
         # -------------------------------------------- #
         # Register start/stop events

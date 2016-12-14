@@ -35,7 +35,6 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
-
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections={}, request_timeout=60,
                  request_max_size=None):

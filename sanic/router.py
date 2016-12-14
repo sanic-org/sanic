@@ -30,11 +30,17 @@ class Router:
         @sanic.route('/my/url/<my_parameter>', methods=['GET', 'POST', ...])
         def my_route(request, my_parameter):
             do stuff...
+    or
+        @sanic.route('/my/url/<my_paramter>:type', methods['GET', 'POST', ...])
+        def my_route_with_type(request, my_parameter):
+            do stuff...
 
     Parameters will be passed as keyword arguments to the request handling
-    function provided Parameters can also have a type by appending :type to
-    the <parameter>.  If no type is provided, a string is expected.  A regular
-    expression can also be passed in as the type
+    function. Provided parameters can also have a type by appending :type to
+    the <parameter>. Given parameter must be able to be type-casted to this.
+    If no type is provided, a string is expected.  A regular expression can
+    also be passed in as the type. The argument given to the function will
+    always be a string, independent of the type.
     """
     routes_static = None
     routes_dynamic = None

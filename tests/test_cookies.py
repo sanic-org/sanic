@@ -25,6 +25,19 @@ def test_cookies():
     assert response.text == 'Cookies are: working!'
     assert response_cookies['right_back'].value == 'at you'
 
+def test_http2_cookies():
+    app = Sanic('test_http2_cookies')
+
+    @app.route('/')
+    async def handler(request):
+        response = text('Cookies are: {}'.format(request.cookies['test']))
+        return response
+
+    headers = {'cookie': 'test=working!'}
+    request, response = sanic_endpoint_test(app, headers=headers)
+
+    assert response.text == 'Cookies are: working!'
+
 def test_cookie_options():
     app = Sanic('test_text')
 

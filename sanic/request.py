@@ -4,6 +4,7 @@ from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
+from sanic.exceptions import InvalidUsage
 
 from .log import log
 
@@ -67,7 +68,7 @@ class Request(dict):
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                log.exception("failed when parsing body as json")
+                raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
 
@@ -89,7 +90,7 @@ class Request(dict):
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
             except Exception:
-                log.exception("failed when parsing form")
+                log.exception("Failed when parsing form")
 
         return self.parsed_form
 
@@ -114,9 +115,10 @@ class Request(dict):
     @property
     def cookies(self):
         if self._cookies is None:
-            if 'Cookie' in self.headers:
+            cookie = self.headers.get('Cookie') or self.headers.get('cookie')
+            if cookie is not None:
                 cookies = SimpleCookie()
-                cookies.load(self.headers['Cookie'])
+                cookies.load(cookie)
                 self._cookies = {name: cookie.value
                                  for name, cookie in cookies.items()}
             else:

@@ -4,7 +4,8 @@ from inspect import isawaitable
 from multidict import CIMultiDict
 from signal import SIGINT, SIGTERM
 from time import time
-import httptools
+from httptools import HttpRequestParser
+from httptools.parser.errors import HttpParserError
 
 try:
     import uvloop as async_loop
@@ -13,6 +14,7 @@ except ImportError:
 
 from .log import log
 from .request import Request
+from .exceptions import RequestTimeout, PayloadTooLarge
 
 
 class Signal:
@@ -33,8 +35,9 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
-    def __init__(self, *, loop, request_handler, signal=Signal(),
-                 connections=set(), request_timeout=60,
+
+    def __init__(self, *, loop, request_handler, error_handler,
+                 signal=Signal(), connections={}, request_timeout=60,
                  request_max_size=None):
         self.loop = loop
         self.transport = None
@@ -45,11 +48,13 @@ class HttpProtocol(asyncio.Protocol):
         self.signal = signal
         self.connections = connections
         self.request_handler = request_handler
+        self.error_handler = error_handler
         self.request_timeout = request_timeout
         self.request_max_size = request_max_size
         self._total_request_size = 0
         self._timeout_handler = None
         self._last_request_time = None
+        self._request_handler_task = None
 
     # -------------------------------------------- #
     # Connection
@@ -75,7 +80,10 @@ class HttpProtocol(asyncio.Protocol):
             self._timeout_handler = \
                 self.loop.call_later(time_left, self.connection_timeout)
         else:
-            self.bail_out("Request timed out, connection closed")
+            if self._request_handler_task:
+                self._request_handler_task.cancel()
+            exception = RequestTimeout('Request Timeout')
+            self.write_error(exception)
 
     # -------------------------------------------- #
     # Parsing
@@ -86,20 +94,19 @@ class HttpProtocol(asyncio.Protocol):
         # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
-            return self.bail_out(
-                "Request too large ({}), connection closed".format(
-                    self._total_request_size))
+            exception = PayloadTooLarge('Payload Too Large')
+            self.write_error(exception)
 
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
             assert self.request is None
             self.headers = []
-            self.parser = httptools.HttpRequestParser(self)
+            self.parser = HttpRequestParser(self)
 
         # Parse request chunk or close connection
         try:
             self.parser.feed_data(data)
-        except httptools.parser.errors.HttpParserError as e:
+        except HttpParserError as e:
             self.bail_out(
                 "Invalid request data, connection closed ({})".format(e))
 
@@ -108,8 +115,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_header(self, name, value):
         if name == b'Content-Length' and int(value) > self.request_max_size:
-            return self.bail_out(
-                "Request body too large ({}), connection closed".format(value))
+            exception = PayloadTooLarge('Payload Too Large')
+            self.write_error(exception)
 
         self.headers.append((name.decode(), value.decode('utf-8')))
 
@@ -132,7 +139,7 @@ class HttpProtocol(asyncio.Protocol):
             self.request.body = body
 
     def on_message_complete(self):
-        self.loop.create_task(
+        self._request_handler_task = self.loop.create_task(
             self.request_handler(self.request, self.write_response))
 
     # -------------------------------------------- #
@@ -156,6 +163,16 @@ class HttpProtocol(asyncio.Protocol):
             self.bail_out(
                 "Writing response failed, connection closed {}".format(e))
 
+    def write_error(self, exception):
+        try:
+            response = self.error_handler.response(self.request, exception)
+            version = self.request.version if self.request else '1.1'
+            self.transport.write(response.output(version))
+            self.transport.close()
+        except Exception as e:
+            self.bail_out(
+                "Writing error failed, connection closed {}".format(e))
+
     def bail_out(self, message):
         log.debug(message)
         self.transport.close()
@@ -165,6 +182,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request = None
         self.url = None
         self.headers = None
+        self._request_handler_task = None
         self._total_request_size = 0
 
     def close_if_idle(self):
@@ -204,8 +222,8 @@ def trigger_events(events, loop):
                 loop.run_until_complete(result)
 
 
-def serve(host, port, request_handler, before_start=None, after_start=None,
-          before_stop=None, after_stop=None,
+def serve(host, port, request_handler, error_handler, before_start=None,
+          after_start=None, before_stop=None, after_stop=None,
           debug=False, request_timeout=60, sock=None,
           request_max_size=None, reuse_port=False, loop=None):
     """
@@ -235,14 +253,24 @@ def serve(host, port, request_handler, before_start=None, after_start=None,
 
     connections = set()
     signal = Signal()
-    server_coroutine = loop.create_server(lambda: HttpProtocol(
+    server = partial(
+        HttpProtocol,
         loop=loop,
         connections=connections,
         signal=signal,
         request_handler=request_handler,
+        error_handler=error_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
-    ), host, port, reuse_port=reuse_port, sock=sock)
+    )
+
+    server_coroutine = loop.create_server(
+        server,
+        host,
+        port,
+        reuse_port=reuse_port,
+        sock=sock
+    )
 
     # Instead of pulling time at the end of every request,
     # pull it once per minute

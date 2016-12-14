@@ -60,6 +60,19 @@ class Sanic:
 
         return response
 
+    def add_route(self, handler, uri, methods=None):
+        """
+        A helper method to register class instance or
+        functions as a handler to the application url
+        routes.
+        :param handler: function or class instance
+        :param uri: path of the URL
+        :param methods: list or tuple of methods allowed
+        :return: function or class instance
+        """
+        self.route(uri=uri, methods=methods)(handler)
+        return handler
+
     # Decorator
     def exception(self, *exceptions):
         """
@@ -250,6 +263,7 @@ class Sanic:
             'sock': sock,
             'debug': debug,
             'request_handler': self.handle_request,
+            'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
             'loop': loop

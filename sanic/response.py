@@ -1,5 +1,5 @@
 from aiofiles import open as open_async
-from .cookies import CookieJar
+from .cookies import CookieJar, Cookie
 from mimetypes import guess_type
 from os import path
 from ujson import dumps as json_dumps
@@ -97,6 +97,8 @@ class HTTPResponse:
         headers = b''
         if self.headers:
             headers = b''.join(
+                b'%b: %b\r\n' % (name.encode(), str(value).encode('utf-8'))
+                if type(value) != Cookie else
                 b'%b: %b\r\n' % (name.encode(), value.encode('utf-8'))
                 for name, value in self.headers.items()
             )

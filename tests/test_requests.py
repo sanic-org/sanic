@@ -32,6 +32,32 @@ def test_text():
     assert response.text == 'Hello'
 
 
+def test_headers():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    async def handler(request):
+        headers = {"spam": "great"}
+        return text('Hello', headers=headers)
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.headers.get('spam') == 'great'
+
+
+def test_invalid_headers():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    async def handler(request):
+        headers = {"answer": 42}
+        return text('Hello', headers=headers)
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.headers.get('answer') == '42'
+
+
 def test_json():
     app = Sanic('test_json')
 

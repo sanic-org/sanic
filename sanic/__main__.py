@@ -1,8 +1,40 @@
+import os
+import sys
+import time
 from argparse import ArgumentParser
 from importlib import import_module
+from subprocess import Popen
+from signal import SIGTERM
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
 
 from .log import log
 from .sanic import Sanic
+
+
+class RestartHandler(PatternMatchingEventHandler):
+
+    def __init__(self, executable, args):
+        super().__init__(patterns=['*.py'])
+        self._args = (
+            [executable, '-m', 'sanic'] + args[1:]
+            + ['--no_restart'])
+        self._start()
+        self._last_time = 0
+        self._skip_time = 0.75
+
+    def _start(self):
+        proc = Popen(self._args)
+        self.pid = proc.pid
+        self._last_time = time.time()
+
+    def on_any_event(self, event):
+        now = time.time()
+        if (now - self._last_time) < self._skip_time:
+            return
+        os.kill(self.pid, SIGTERM)
+        time.sleep(0.5)
+        self._start()
 
 if __name__ == "__main__":
     parser = ArgumentParser(prog='sanic')
@@ -16,38 +48,6 @@ if __name__ == "__main__":
 
     try:
         if args.debug and not args.no_restart:
-            import os
-            import sys
-            import time
-            from subprocess import Popen
-            from signal import SIGTERM
-            from watchdog.observers import Observer
-            from watchdog.events import PatternMatchingEventHandler
-
-            class RestartHandler(PatternMatchingEventHandler):
-
-                def __init__(self, executable, args):
-                    super().__init__(patterns=['*.py'])
-                    self._args = (
-                        [executable, '-m', 'sanic'] + args[1:]
-                        + ['--no_restart'])
-                    self._start()
-                    self._last_time = 0
-                    self._skip_time = 0.75
-
-                def _start(self):
-                    proc = Popen(self._args)
-                    self.pid = proc.pid
-                    self._last_time = time.time()
-
-                def on_any_event(self, event):
-                    now = time.time()
-                    if (now - self._last_time) < self._skip_time:
-                        return
-                    os.kill(self.pid, SIGTERM)
-                    time.sleep(0.5)
-                    self._start()
-
             path = os.getcwd()
             observer = Observer()
             handler = RestartHandler(sys.executable, sys.argv)

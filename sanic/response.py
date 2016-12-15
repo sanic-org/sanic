@@ -158,3 +158,79 @@ async def file(location, mime_type=None, headers=None):
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
+
+
+class Response(HTTPResponse):
+    __slots__ = ('request')
+
+    def __init__(self, request, body=None, status=200, headers=None, content_type='text/plain', body_bytes=b''):
+        self.request = request
+        super().__init__(body, status, headers, content_type, body_bytes)
+
+    def encode(self, data):
+        if isinstance(data, str):
+            return data.encode('utf-8')
+        elif isinstance(data, bytes):
+            return data
+        else:
+            raise TypeError('%s type cann`t encode' % type(data))
+
+    def make_json(self, body, status=200, headers=None):
+        self.body = self.encode(json_dumps(body))
+        headers = headers or {}
+        self.status = status
+        self.headers.update(headers)
+        self.content_type = "application/json"
+        return self
+
+    def make_text(self, body, status=200, headers=None):
+        self.body = self.encode(body)
+        headers = headers or {}
+        self.status = status
+        self.headers.update(headers)
+        self.content_type = "text/plain; charset=utf-8"
+        return self
+
+    def make_xml(self, body, status=200, headers=None):
+        self.body = self.encode(body)
+        headers = headers or {}
+        self.status = status
+        self.headers.update(headers)
+        self.content_type = "text/xml; charset=utf-8"
+        return self
+
+    def make_image(self, body, content_type='image/png', status=200, headers=None):
+        self.body = self.encode(body)
+        headers = headers or {}
+        self.status = status
+        self.headers.update(headers)
+        self.content_type = content_type
+        return self
+
+    def make_html(self, body, status=200, headers=None):
+        self.body = self.encode(body)
+        headers = headers or {}
+        self.status = status
+        self.headers.update(headers)
+        self.content_type = "text/html; charset=utf-8"
+        return self
+
+    def make_redirect(self, to_url, headers=None, status=None, content_type=None):
+
+        if not content_type:
+            self.content_type = "text/html; charset=utf-8"
+        else:
+            self.content_type = content_type
+        if not status:
+            if self.request.method == "POST":
+                self.status = 303
+            else:
+                self.status = 302
+        else:
+            self.status = status
+        if not headers:
+            self.headers['Location'] = to_url
+        else:
+            self.headers.update(headers)
+            self.headers['Location'] = to_url
+        return self

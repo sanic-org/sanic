@@ -36,6 +36,7 @@ class RestartHandler(PatternMatchingEventHandler):
         time.sleep(0.5)
         self._start()
 
+
 if __name__ == "__main__":
     parser = ArgumentParser(prog='sanic')
     parser.add_argument('--host', dest='host', type=str, default='127.0.0.1')

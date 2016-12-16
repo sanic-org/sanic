@@ -54,7 +54,7 @@ class Config(dict):
 
     def from_pyfile(self, filename):
         """Updates the values in the config from a Python file. Only the uppercase
-        varibales in that module are stored in the config.
+        variables in that module are stored in the config.
         :param filename: an absolute path to the config file
         """
         module = types.ModuleType('config')

@@ -4,7 +4,7 @@ import types
 
 class Config(dict):
     def __init__(self, defaults=None):
-        dict.__init__(self, defaults or {})
+        super().__init__(defaults or {})
         self.LOGO = """
                  ▄▄▄▄▄
         ▀▀▀██████▄▄▄       _______________
@@ -31,7 +31,10 @@ class Config(dict):
         self.ROUTER_CACHE_SIZE = 1024
 
     def __getattr__(self, attr):
-        return self[attr]
+        try:
+            return self[attr]
+        except KeyError as ke:
+            raise AttributeError("Config has no '{}'".format(ke.args[0]))
 
     def __setattr__(self, attr, value):
         self[attr] = value

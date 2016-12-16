@@ -1,7 +1,6 @@
 import re
 from collections import defaultdict, namedtuple
 from functools import lru_cache
-from .config import Config
 from .exceptions import NotFound, InvalidUsage
 
 Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
@@ -13,6 +12,8 @@ REGEX_TYPES = {
     'number': (float, r'[0-9\\.]+'),
     'alpha': (str, r'[A-Za-z]+'),
 }
+
+ROUTER_CACHE_SIZE = 1024
 
 
 def url_hash(url):
@@ -30,17 +31,11 @@ class Router:
         @sanic.route('/my/url/<my_parameter>', methods=['GET', 'POST', ...])
         def my_route(request, my_parameter):
             do stuff...
-    or
-        @sanic.route('/my/url/<my_paramter>:type', methods['GET', 'POST', ...])
-        def my_route_with_type(request, my_parameter):
-            do stuff...
 
     Parameters will be passed as keyword arguments to the request handling
-    function. Provided parameters can also have a type by appending :type to
-    the <parameter>. Given parameter must be able to be type-casted to this.
-    If no type is provided, a string is expected.  A regular expression can
-    also be passed in as the type. The argument given to the function will
-    always be a string, independent of the type.
+    function provided Parameters can also have a type by appending :type to
+    the <parameter>.  If no type is provided, a string is expected.  A regular
+    expression can also be passed in as the type
     """
     routes_static = None
     routes_dynamic = None
@@ -118,7 +113,7 @@ class Router:
         """
         return self._get(request.url, request.method)
 
-    @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method):
         """
         Gets a request handler based on the URL of the request, or raises an

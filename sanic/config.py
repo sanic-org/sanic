@@ -28,7 +28,6 @@ class Config(dict):
 """
         self.REQUEST_MAX_SIZE = 100000000  # 100 megababies
         self.REQUEST_TIMEOUT = 60  # 60 seconds
-        self.ROUTER_CACHE_SIZE = 1024
 
     def __getattr__(self, attr):
         try:
@@ -84,7 +83,7 @@ class Config(dict):
         with :meth:`from_pyfile` and ideally from a location not within the
         package because the package might be installed system wide.
 
-        :param obj: an object
+        :param obj: an object holding the configuration
         """
         for key in dir(obj):
             if key.isupper():

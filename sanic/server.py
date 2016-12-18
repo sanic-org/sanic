@@ -14,7 +14,7 @@ except ImportError:
 
 from .log import log
 from .request import Request
-from .exceptions import RequestTimeout, PayloadTooLarge
+from .exceptions import RequestTimeout, PayloadTooLarge, InvalidUsage
 
 
 class Signal:
@@ -105,9 +105,9 @@ class HttpProtocol(asyncio.Protocol):
         # Parse request chunk or close connection
         try:
             self.parser.feed_data(data)
-        except HttpParserError as e:
-            self.bail_out(
-                "Invalid request data, connection closed ({})".format(e))
+        except HttpParserError:
+            exception = InvalidUsage('Bad Request')
+            self.write_error(exception)
 
     def on_url(self, url):
         self.url = url

@@ -94,13 +94,15 @@ class HTTPResponse:
         if keep_alive and keep_alive_timeout:
             timeout_header = b'Keep-Alive: timeout=%d\r\n' % keep_alive_timeout
 
+        format_headers = lambda name, value: b'%b: %b\r\n' %\
+            (name.encode(), value.encode('utf-8'))
+
         headers = b''
         if self.headers:
             headers = b''.join(
-                b'%b: %b\r\n' % (name.encode(), value.encode('utf-8'))
+                format_headers(name, value)
                 if isinstance(value, str) or isinstance(value, Cookie)
-                else b'%b: %b\r\n' % (name.encode(),
-                                      str(value).encode('utf-8'))
+                else format_headers(name, str(value))
                 for name, value in self.headers.items()
             )
 

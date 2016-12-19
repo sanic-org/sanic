@@ -1,3 +1,7 @@
+import os
+import sys
+import subprocess
+
 from asyncio import get_event_loop
 from collections import deque
 from functools import partial
@@ -15,6 +19,7 @@ from .router import Router
 from .server import serve
 from .static import register as static_register
 from .exceptions import ServerError
+from .reloadhandler import start_reloader_thread
 
 
 class Sanic:
@@ -230,29 +235,10 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
-            after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None):
-        """
-        Runs the HTTP Server and listens until keyboard interrupt or term
-        signal. On termination, drains connections before closing.
-        :param host: Address to host on
-        :param port: Port to host on
-        :param debug: Enables debug output (slows server)
-        :param before_start: Function to be executed before the server starts
-        accepting connections
-        :param after_start: Function to be executed after the server starts
-        accepting connections
-        :param before_stop: Function to be executed when a stop signal is
-        received before it is respected
-        :param after_stop: Function to be executed when all requests are
-        complete
-        :param sock: Socket for the server to accept connections from
-        :param workers: Number of processes
-        received before it is respected
-        :param loop: asyncio compatible event loop
-        :return: Nothing
-        """
+    def _run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
+             after_start=None, before_stop=None, after_stop=None, sock=None,
+             workers=1, loop=None, livereload=False):
+
         self.error_handler.debug = True
         self.debug = debug
         self.loop = loop
@@ -312,6 +298,61 @@ class Sanic:
                 'Experienced exception while trying to serve')
 
         log.info("Server Stopped")
+
+    def run_with_reload(self, **dataset):
+        # Run reloader thread
+        event_loop = start_reloader_thread(self, interval=1)
+
+        dataset['loop'] = event_loop
+
+        self._run(**dataset)
+
+        args = [sys.executable] + sys.argv
+
+        env_copy = os.environ.copy()
+
+        subprocess.call(args, env=env_copy, close_fds=False)
+
+    def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
+            after_start=None, before_stop=None, after_stop=None, sock=None,
+            workers=1, loop=None, livereload=False):
+        """
+        Runs the HTTP Server and listens until keyboard interrupt or term
+        signal. On termination, drains connections before closing.
+        :param host: Address to host on
+        :param port: Port to host on
+        :param debug: Enables debug output (slows server)
+        :param before_start: Function to be executed before the server starts
+        accepting connections
+        :param after_start: Function to be executed after the server starts
+        accepting connections
+        :param before_stop: Function to be executed when a stop signal is
+        received before it is respected
+        :param after_stop: Function to be executed when all requests are
+        complete
+        :param sock: Socket for the server to accept connections from
+        :param workers: Number of processes
+        received before it is respected
+        :param loop: asyncio compatible event loop
+        :return: Nothing
+        """
+        dataset = {
+            'host': host,
+            'port': port,
+            'debug': debug,
+            'before_start': before_start,
+            'after_start': after_start,
+            'before_stop': before_stop,
+            'after_stop': after_stop,
+            'sock': sock,
+            'workers': workers,
+            'loop': loop,
+            'livereload': livereload
+        }
+        if livereload:
+            self.run_with_reload(**dataset)
+        else:
+            self._run(**dataset)
 
     def stop(self):
         """

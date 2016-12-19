@@ -237,7 +237,7 @@ class Sanic:
 
     def _run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
              after_start=None, before_stop=None, after_stop=None, sock=None,
-             workers=1, loop=None, livereload=False):
+             workers=1, loop=None):
 
         self.error_handler.debug = True
         self.debug = debug
@@ -315,7 +315,7 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None, livereload=False):
+            workers=1, loop=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -346,10 +346,9 @@ class Sanic:
             'after_stop': after_stop,
             'sock': sock,
             'workers': workers,
-            'loop': loop,
-            'livereload': livereload
+            'loop': loop
         }
-        if livereload:
+        if debug:
             self.run_with_reload(**dataset)
         else:
             self._run(**dataset)

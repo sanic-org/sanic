@@ -9,7 +9,8 @@ bp = Blueprint('my_bluprint')
 class MyHandle(BaseHandle):
     '''
     封装成类，请求单上下文，可以方便的存取
-    Package into a class, request a single context, you can easily access(Baidu Translate)
+    Package into a class, request a single context,
+     you can easily access(Baidu Translate)
     '''
 
     async def post(self, request, *args, **kwargs):

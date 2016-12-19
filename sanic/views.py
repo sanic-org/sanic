@@ -46,7 +46,8 @@ class HTTPMethodView:
 class BaseHandle():
     '''
       封装成类，请求单上下文，可以方便的存取
-      Package into a class, request a single context, you can easily access(Baidu Translate)
+      Package into a class, request a single context,
+       you can easily access(Baidu Translate)
       '''
     def __init__(self, request, *args, **kwargs):
         self.request = request
@@ -66,7 +67,8 @@ class BaseHandle():
                 raise e
             result = result or self.response
             return result
-        raise InvalidUsage('Method {} not allowed for URL {}'.format(request.method, request.url), status_code=405)
+        raise InvalidUsage('Method {} not allowed for URL {}'.format(
+            request.method, request.url), status_code=405)
 
     async def prepare(self, request, *args, **kwargs):
         pass

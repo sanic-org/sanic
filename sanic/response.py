@@ -163,7 +163,8 @@ async def file(location, mime_type=None, headers=None):
 class Response(HTTPResponse):
     __slots__ = ('request')
 
-    def __init__(self, request, body=None, status=200, headers=None, content_type='text/plain', body_bytes=b''):
+    def __init__(self, request, body=None, status=200, headers=None,
+                 content_type='text/plain', body_bytes=b''):
         self.request = request
         super().__init__(body, status, headers, content_type, body_bytes)
 
@@ -199,7 +200,8 @@ class Response(HTTPResponse):
         self.content_type = "text/xml; charset=utf-8"
         return self
 
-    def make_image(self, body, content_type='image/png', status=200, headers=None):
+    def make_image(self, body, content_type='image/png',
+                   status=200, headers=None):
         self.body = self.encode(body)
         headers = headers or {}
         self.status = status
@@ -215,7 +217,8 @@ class Response(HTTPResponse):
         self.content_type = "text/html; charset=utf-8"
         return self
 
-    def make_redirect(self, to_url, headers=None, status=None, content_type=None):
+    def make_redirect(self, to_url, headers=None, status=None,
+                      content_type=None):
 
         if not content_type:
             self.content_type = "text/html; charset=utf-8"

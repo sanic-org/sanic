@@ -221,12 +221,13 @@ def trigger_events(events, loop):
                 loop.run_until_complete(result)
 
 
-def serve(host, port, request_handler, error_handler, before_start=None,
-          after_start=None, before_stop=None, after_stop=None,
-          debug=False, request_timeout=60, sock=None,
+def serve(protocol, host, port, request_handler, error_handler,
+          before_start=None, after_start=None, before_stop=None,
+          after_stop=None, debug=False, request_timeout=60, sock=None,
           request_max_size=None, reuse_port=False, loop=None):
     """
     Starts asynchronous HTTP Server on an individual process.
+    :param protocol: subclass of asyncio.Protocol
     :param host: Address to host on
     :param port: Port to host on
     :param request_handler: Sanic request handler with middleware
@@ -253,7 +254,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     connections = set()
     signal = Signal()
     server = partial(
-        HttpProtocol,
+        protocol,
         loop=loop,
         connections=connections,
         signal=signal,

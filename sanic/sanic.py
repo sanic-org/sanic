@@ -12,7 +12,7 @@ from .exceptions import Handler
 from .log import log, logging
 from .response import HTTPResponse
 from .router import Router
-from .server import serve
+from .server import serve, HttpProtocol
 from .static import register as static_register
 from .exceptions import ServerError
 
@@ -230,14 +230,15 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
-            after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None):
+    def run(self, host="127.0.0.1", port=8000, protocol=HttpProtocol,
+            debug=False, before_start=None, after_start=None, before_stop=None,
+            after_stop=None, sock=None, workers=1, loop=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
         :param host: Address to host on
         :param port: Port to host on
+        :param protocol: Subclass of asyncio.Protocol
         :param debug: Enables debug output (slows server)
         :param before_start: Function to be executed before the server starts
         accepting connections
@@ -258,6 +259,7 @@ class Sanic:
         self.loop = loop
 
         server_settings = {
+            'protocol': protocol,
             'host': host,
             'port': port,
             'sock': sock,

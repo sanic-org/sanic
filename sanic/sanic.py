@@ -193,18 +193,18 @@ class Sanic:
                 if isawaitable(response):
                     response = await response
 
-                # -------------------------------------------- #
-                # Response Middleware
-                # -------------------------------------------- #
+            # -------------------------------------------- #
+            # Response Middleware
+            # -------------------------------------------- #
 
-                if self.response_middleware:
-                    for middleware in self.response_middleware:
-                        _response = middleware(request, response)
-                        if isawaitable(_response):
-                            _response = await _response
-                        if _response:
-                            response = _response
-                            break
+            if self.response_middleware:
+                for middleware in self.response_middleware:
+                    _response = middleware(request, response)
+                    if isawaitable(_response):
+                        _response = await _response
+                    if _response:
+                        response = _response
+                        break
 
         except Exception as e:
             # -------------------------------------------- #

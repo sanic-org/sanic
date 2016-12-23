@@ -6,10 +6,11 @@ from multiprocessing import Process, Event
 from signal import signal, SIGTERM, SIGINT
 from time import sleep
 from traceback import format_exc
+import logging
 
 from .config import Config
 from .exceptions import Handler
-from .log import log, logging
+from .log import log
 from .response import HTTPResponse
 from .router import Router
 from .server import serve
@@ -18,7 +19,13 @@ from .exceptions import ServerError
 
 
 class Sanic:
-    def __init__(self, name=None, router=None, error_handler=None):
+    def __init__(self, name=None, router=None,
+                 error_handler=None, logger=None):
+        if logger is None:
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(asctime)s: %(levelname)s: %(message)s"
+            )
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])

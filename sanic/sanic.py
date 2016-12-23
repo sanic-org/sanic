@@ -112,7 +112,7 @@ class Sanic:
 
     def add_middleware(self, *args, **kwargs):
         self.middleware(*args, **kwargs)
-    
+
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',
                use_modified_since=True):
@@ -164,13 +164,13 @@ class Sanic:
         :return: Nothing
         """
         try:
-            
+
             # Fetch handler from router
             handler, args, kwargs = self.router.get(request)
-            
+
             # Add view handler
             request.handler = handler
-            
+
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #

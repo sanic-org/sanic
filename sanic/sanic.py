@@ -294,7 +294,8 @@ class Sanic:
 
         if debug:
             log.setLevel(logging.DEBUG)
-        log.debug(self.config.LOGO)
+        if self.config.LOGO is not None:
+            log.debug(self.config.LOGO)
 
         # Serve
         log.info('Goin\' Fast @ http://{}:{}'.format(host, port))

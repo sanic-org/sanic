@@ -240,7 +240,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
-    :param backlog: maxinum number of concurrent clients
+    :param backlog: maximum number of concurrent clients
     :return: Nothing
     """
     loop = loop or async_loop.new_event_loop()

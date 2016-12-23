@@ -224,7 +224,7 @@ def trigger_events(events, loop):
 def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None,
           debug=False, request_timeout=60, sock=None,
-          request_max_size=None, reuse_port=False, loop=None):
+          request_max_size=None, reuse_port=False, loop=None, backlog=128):
     """
     Starts asynchronous HTTP Server on an individual process.
     :param host: Address to host on
@@ -240,6 +240,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
+    :param backlog: maxinum number of concurrent clients
     :return: Nothing
     """
     loop = loop or async_loop.new_event_loop()
@@ -268,7 +269,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         host,
         port,
         reuse_port=reuse_port,
-        sock=sock
+        sock=sock,
+        backlog=backlog
     )
 
     # Instead of pulling time at the end of every request,

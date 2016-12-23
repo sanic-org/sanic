@@ -30,7 +30,7 @@ app.run(host="0.0.0.0", port=8000)
 
 ## Middleware chain
 
-If you want to apply the middleware as a chain, applying more than one, is so easy. You only have to be aware that **no return** any response in your middleware:
+If you want to apply the middleware as a chain, applying more than one, is so easy. You only have to be aware that you do **not return** any response in your middleware:
 
 ```python
 app = Sanic(__name__)

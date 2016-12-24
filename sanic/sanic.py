@@ -110,8 +110,11 @@ class Sanic:
             attach_to = args[0]
             return register_middleware
 
-    def add_middleware(self, *args, **kwargs):
-        self.middleware(*args, **kwargs)
+    def add_middleware(self, middleware, attach_to="request"):
+        if attach_to == 'request':
+            self.request_middleware.append(middleware)
+        if attach_to == 'response':
+            self.response_middleware.append(middleware)
 
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',

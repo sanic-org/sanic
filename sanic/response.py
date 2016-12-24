@@ -80,7 +80,7 @@ class HTTPResponse:
 
         if body is not None:
             self.body = body
-            if type(body) is str:
+            if isinstance(body,  str):
                 self.body = body.encode('utf-8')
         else:
             self.body = body_bytes

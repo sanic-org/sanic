@@ -221,26 +221,31 @@ def trigger_events(events, loop):
                 loop.run_until_complete(result)
 
 
-def serve(protocol, host, port, request_handler, error_handler,
-          before_start=None, after_start=None, before_stop=None,
-          after_stop=None, debug=False, request_timeout=60, sock=None,
-          request_max_size=None, reuse_port=False, loop=None):
+def serve(host, port, request_handler, error_handler, before_start=None,
+          after_start=None, before_stop=None, after_stop=None, debug=False,
+          request_timeout=60, sock=None, request_max_size=None,
+          reuse_port=False, loop=None, protocol=HttpProtocol):
     """
     Starts asynchronous HTTP Server on an individual process.
-    :param protocol: subclass of asyncio.Protocol
     :param host: Address to host on
     :param port: Port to host on
     :param request_handler: Sanic request handler with middleware
+    :param error_handler: Sanic error handler with middleware
+    :param before_start: Function to be executed before the server starts
+    listening. Takes single argument `loop`
     :param after_start: Function to be executed after the server starts
     listening. Takes single argument `loop`
     :param before_stop: Function to be executed when a stop signal is
     received before it is respected. Takes single argumenet `loop`
+    :param after_stop: Function to be executed when a stop signal is
+    received after it is respected. Takes single argumenet `loop`
     :param debug: Enables debug output (slows server)
     :param request_timeout: time in seconds
     :param sock: Socket for the server to accept connections from
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
+    :param protocol: Subclass of asyncio.Protocol
     :return: Nothing
     """
     loop = loop or async_loop.new_event_loop()

@@ -140,7 +140,7 @@ class HTTPResponse:
 
 def json(body, status=200, headers=None):
     """
-    Returns serialized python object to json format.
+    Returns body in json format.
     :param body: Response data to be serialized.
     :param status: Response code.
     :param headers: Custom Headers.

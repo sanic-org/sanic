@@ -79,7 +79,9 @@ class HTTPResponse:
         self.content_type = content_type
 
         if body is not None:
-            self.body = body.encode('utf-8')
+            self.body = body
+            if type(body) is str:
+                self.body = body.encode('utf-8')
         else:
             self.body = body_bytes
 

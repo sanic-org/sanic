@@ -30,15 +30,16 @@ class HttpProtocol(asyncio.Protocol):
         # event loop, connection
         'loop', 'transport', 'connections', 'signal',
         # request params
-        'parser', 'request', 'url', 'headers',
+        'parser', 'request', 'url', 'headers', 'app',
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
-    def __init__(self, *, loop, request_handler, error_handler,
+    def __init__(self, *, loop, request_handler, error_handler, app,
                  signal=Signal(), connections={}, request_timeout=60,
                  request_max_size=None):
+        self.app = app
         self.loop = loop
         self.transport = None
         self.request = None
@@ -129,7 +130,8 @@ class HttpProtocol(asyncio.Protocol):
             url_bytes=self.url,
             headers=CIMultiDict(self.headers),
             version=self.parser.get_http_version(),
-            method=self.parser.get_method().decode()
+            method=self.parser.get_method().decode(),
+            app=self.app
         )
 
     def on_body(self, body):
@@ -226,7 +228,7 @@ def trigger_events(events, loop):
 def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None,
           debug=False, request_timeout=60, sock=None,
-          request_max_size=None, reuse_port=False, loop=None):
+          request_max_size=None, reuse_port=False, loop=None, app=None):
     """
     Starts asynchronous HTTP Server on an individual process.
     :param host: Address to host on
@@ -242,6 +244,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
+    :param app: Sanic instance.
     :return: Nothing
     """
     loop = loop or async_loop.new_event_loop()
@@ -263,6 +266,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         error_handler=error_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
+        app=app
     )
 
     server_coroutine = loop.create_server(

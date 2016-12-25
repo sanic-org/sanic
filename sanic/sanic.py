@@ -110,6 +110,12 @@ class Sanic:
             attach_to = args[0]
             return register_middleware
 
+    def add_middleware(self, middleware, attach_to="request"):
+        if attach_to == 'request':
+            self.request_middleware.append(middleware)
+        if attach_to == 'response':
+            self.response_middleware.append(middleware)
+
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',
                use_modified_since=True):
@@ -161,6 +167,13 @@ class Sanic:
         :return: Nothing
         """
         try:
+
+            # Fetch handler from router
+            handler, args, kwargs = self.router.get(request)
+
+            # Add view handler
+            request.handler = handler
+
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
@@ -181,8 +194,6 @@ class Sanic:
                 # Execute Handler
                 # -------------------------------------------- #
 
-                # Fetch handler from router
-                handler, args, kwargs = self.router.get(request)
                 if handler is None:
                     raise ServerError(
                         ("'None' was returned while requesting a "
@@ -266,7 +277,8 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'loop': loop
+            'loop': loop,
+            'app': self
         }
 
         # -------------------------------------------- #

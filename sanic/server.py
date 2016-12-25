@@ -164,12 +164,9 @@ class HttpProtocol(asyncio.Protocol):
                 # as fast as ever
                 attempt_write(response)
             except AttributeError:
-                try:
-                    # A performant way to check if we have a list or dict
-                    # Both list and dict contain a `clear` function
-                    response.clear
+                if isinstance(response, (list, dict)):
                     attempt_write(json(response))
-                except AttributeError:
+                else:
                     attempt_write(text(str(response)))
 
             if not keep_alive:

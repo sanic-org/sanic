@@ -21,6 +21,10 @@ class ServerError(SanicException):
     status_code = 500
 
 
+class InvalidResponseObject(SanicException):
+    status_code = 500
+
+
 class FileNotFound(NotFound):
     status_code = 404
 

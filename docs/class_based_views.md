@@ -6,6 +6,7 @@ Sanic has simple class based implementation. You should implement methods(get, p
 ```python
 from sanic import Sanic
 from sanic.views import HTTPMethodView
+from sanic.response import text
 
 app = Sanic('some_name')
 

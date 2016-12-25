@@ -60,6 +60,7 @@ if __name__ == "__main__":
  * [Cookies](docs/cookies.md)
  * [Static Files](docs/static_files.md)
  * [Configuration](docs/config.md)
+ * [Testing](docs/testing.md)
  * [Deploying](docs/deploying.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)

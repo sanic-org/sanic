@@ -6,6 +6,7 @@ from signal import SIGINT, SIGTERM
 from time import time
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
+from .exceptions import ServerError
 
 try:
     import uvloop as async_loop
@@ -14,7 +15,7 @@ except ImportError:
 
 from .log import log
 from .request import Request
-from .exceptions import RequestTimeout, PayloadTooLarge
+from .exceptions import RequestTimeout, PayloadTooLarge, InvalidUsage
 
 
 class Signal:
@@ -105,9 +106,9 @@ class HttpProtocol(asyncio.Protocol):
         # Parse request chunk or close connection
         try:
             self.parser.feed_data(data)
-        except HttpParserError as e:
-            self.bail_out(
-                "Invalid request data, connection closed ({})".format(e))
+        except HttpParserError:
+            exception = InvalidUsage('Bad Request')
+            self.write_error(exception)
 
     def on_url(self, url):
         self.url = url
@@ -173,8 +174,9 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing error failed, connection closed {}".format(e))
 
     def bail_out(self, message):
-        log.debug(message)
-        self.transport.close()
+        exception = ServerError(message)
+        self.write_error(exception)
+        log.error(message)
 
     def cleanup(self):
         self.parser = None

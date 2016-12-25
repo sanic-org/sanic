@@ -33,7 +33,6 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
         # served.  os.path.realpath seems to be very slow
         if file_uri and '../' in file_uri:
             raise InvalidUsage("Invalid URL")
-            
         # Merge served directory and requested file if provided
         # Strip all / that in the beginning of the URL to help prevent python
         # from herping a derp and treating the uri as an absolute path

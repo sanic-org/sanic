@@ -132,6 +132,7 @@ File = namedtuple('File', ['type', 'body', 'name'])
 def parse_multipart_form(body, boundary):
     """
     Parses a request body and returns fields and files
+
     :param body: Bytes request body
     :param boundary: Bytes multipart boundary
     :return: fields (RequestParameters), files (RequestParameters)

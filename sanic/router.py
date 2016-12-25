@@ -26,11 +26,19 @@ class RouteExists(Exception):
 class Router:
     """
     Router supports basic routing with parameters and method checks
+
     Usage:
+
+    .. code-block:: python
+
         @sanic.route('/my/url/<my_parameter>', methods=['GET', 'POST', ...])
         def my_route(request, my_parameter):
             do stuff...
+
     or
+
+    .. code-block:: python
+
         @sanic.route('/my/url/<my_paramter>:type', methods['GET', 'POST', ...])
         def my_route_with_type(request, my_parameter):
             do stuff...
@@ -55,11 +63,12 @@ class Router:
     def add(self, uri, methods, handler):
         """
         Adds a handler to the route list
+
         :param uri: Path to match
         :param methods: Array of accepted method names.
-        If none are provided, any method is allowed
+                        If none are provided, any method is allowed
         :param handler: Request handler function.
-        When executed, it should provide a response object.
+                        When executed, it should provide a response object.
         :return: Nothing
         """
         if uri in self.routes_all:
@@ -113,6 +122,7 @@ class Router:
         """
         Gets a request handler based on the URL of the request, or raises an
         error
+
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """

@@ -201,6 +201,7 @@ def update_current_time(loop):
     """
     Caches the current time, since it is needed
     at the end of every keep-alive request to update the request timeout time
+
     :param loop:
     :return:
     """
@@ -229,13 +230,15 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_max_size=None, reuse_port=False, loop=None):
     """
     Starts asynchronous HTTP Server on an individual process.
+
     :param host: Address to host on
     :param port: Port to host on
     :param request_handler: Sanic request handler with middleware
     :param after_start: Function to be executed after the server starts
-    listening. Takes single argument `loop`
+                        listening. Takes single argument `loop`
     :param before_stop: Function to be executed when a stop signal is
-    received before it is respected. Takes single argumenet `loop`
+                        received before it is respected. Takes single
+                        argumenet `loop`
     :param debug: Enables debug output (slows server)
     :param request_timeout: time in seconds
     :param sock: Socket for the server to accept connections from

@@ -87,6 +87,15 @@ class HTTPResponse:
         self.headers = headers or {}
         self._cookies = None
 
+    @staticmethod
+    def format_header(name, value):
+        try:
+            return b'%b: %b\r\n' %\
+                (name.encode(), value.encode('utf-8'))
+        except:
+            return b'%b: %b\r\n' %\
+                (name.encode(), str(value).encode('utf-8'))
+
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
         # We tried to make this as fast as possible in pure python
@@ -94,15 +103,10 @@ class HTTPResponse:
         if keep_alive and keep_alive_timeout:
             timeout_header = b'Keep-Alive: timeout=%d\r\n' % keep_alive_timeout
 
-        format_headers = lambda name, value: b'%b: %b\r\n' %\
-            (name.encode(), value.encode('utf-8'))
-
         headers = b''
         if self.headers:
             headers = b''.join(
-                format_headers(name, value)
-                if isinstance(value, str) or isinstance(value, Cookie)
-                else format_headers(name, str(value))
+                self.format_header(name, value)
                 for name, value in self.headers.items()
             )
 

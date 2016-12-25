@@ -1,8 +1,10 @@
 from aiofiles import open as open_async
-from .cookies import CookieJar
 from mimetypes import guess_type
 from os import path
+
 from ujson import dumps as json_dumps
+
+from .cookies import CookieJar
 
 COMMON_STATUS_CODES = {
     200: b'OK',
@@ -79,9 +81,12 @@ class HTTPResponse:
         self.content_type = content_type
 
         if body is not None:
-            self.body = body
-            if isinstance(body,  str):
+            try:
+                # Try to encode it regularly
                 self.body = body.encode('utf-8')
+            except AttributeError:
+                # Convert it to a str if you can't
+                self.body = str(body).encode('utf-8')
         else:
             self.body = body_bytes
 

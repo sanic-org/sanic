@@ -33,12 +33,14 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
         # served.  os.path.realpath seems to be very slow
         if file_uri and '../' in file_uri:
             raise InvalidUsage("Invalid URL")
-
+            
         # Merge served directory and requested file if provided
         # Strip all / that in the beginning of the URL to help prevent python
         # from herping a derp and treating the uri as an absolute path
-        file_path = path.join(file_or_directory, sub('^[/]*', '', file_uri)) \
-            if file_uri else file_or_directory
+        file_path = file_or_directory
+        if file_uri:
+            file_path = path.join(
+                file_or_directory, sub('^[/]*', '', file_uri))
 
         # URL decode the path sent by the browser otherwise we won't be able to
         # match filenames which got encoded (filenames with spaces etc)

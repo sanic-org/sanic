@@ -9,3 +9,6 @@ settings.py
 *.pyc
 .idea/*
 .cache/*
+docs/_build/
+docs/sanic.rst
+docs/modules.rst

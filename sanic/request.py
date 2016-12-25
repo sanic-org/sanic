@@ -8,8 +8,9 @@ from sanic.exceptions import InvalidUsage
 
 from .log import log
 
-
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+
+
 # HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
 # > If the media type remains unknown, the recipient SHOULD treat it
 # > as type "application/octet-stream"
@@ -71,6 +72,17 @@ class Request(dict):
                 raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
+
+    @property
+    def token(self):
+        """
+        Attempts to return the auth header token.
+        :return: token related to request
+        """
+        auth_header = self.headers.get('Authorization', None)
+        if auth_header is not None:
+            return auth_header.split()[1]
+        return auth_header
 
     @property
     def form(self):

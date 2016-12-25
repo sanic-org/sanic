@@ -140,7 +140,7 @@ class HTTPResponse:
 
 def json(body, status=200, headers=None):
     """
-    Returns body in json format.
+    Returns response object with body in json format.
     :param body: Response data to be serialized.
     :param status: Response code.
     :param headers: Custom Headers.
@@ -151,7 +151,7 @@ def json(body, status=200, headers=None):
 
 def text(body, status=200, headers=None):
     """
-    Returns body in text format.
+    Returns response object with body in text format.
     :param body: Response data to be encoded.
     :param status: Response code.
     :param headers: Custom Headers.
@@ -162,7 +162,7 @@ def text(body, status=200, headers=None):
 
 def html(body, status=200, headers=None):
     """
-    Returns body in html format.
+    Returns response object with body in html format.
     :param body: Response data to be encoded.
     :param status: Response code.
     :param headers: Custom Headers.
@@ -173,7 +173,7 @@ def html(body, status=200, headers=None):
 
 async def file(location, mime_type=None, headers=None):
     """
-    Returns file with mime_type.
+    Returns response object with file data.
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.

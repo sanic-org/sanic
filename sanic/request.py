@@ -73,6 +73,17 @@ class Request(dict):
         return self.parsed_json
 
     @property
+    def token(self):
+        """
+        Attempts to return the auth header token.
+        :return: token related to request
+        """
+        auth_header = self.headers.get('Authorization')
+        if auth_header is not None:
+            return auth_header.split()[1]
+        return auth_header
+
+    @property
     def form(self):
         if self.parsed_form is None:
             self.parsed_form = RequestParameters()

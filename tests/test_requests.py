@@ -92,6 +92,24 @@ def test_query_string():
     assert request.args.get('test2') == 'false'
 
 
+def test_token():
+    app = Sanic('test_post_token')
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    # uuid4 generated token.
+    token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Token {}'.format(token)
+    }
+
+    request, response = sanic_endpoint_test(app, headers=headers)
+
+    assert request.token == token
+
 # ------------------------------------------------------------ #
 #  POST
 # ------------------------------------------------------------ #

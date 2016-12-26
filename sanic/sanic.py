@@ -3,8 +3,8 @@ from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from multiprocessing import Process, Event
+from select import select
 from signal import signal, SIGTERM, SIGINT
-from time import sleep
 from traceback import format_exc
 import logging
 
@@ -352,8 +352,7 @@ class Sanic:
 
         # Infinitely wait for the stop event
         try:
-            while not stop_event.is_set():
-                sleep(0.3)
+            select(stop_event)
         except:
             pass
 

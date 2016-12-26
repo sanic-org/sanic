@@ -16,9 +16,13 @@ class CustomHttpProtocol(HttpProtocol):
         self.transport.close()
 
 
-@app.route("/")
-async def test(request):
-    return 'Hello, world!'
+@app.route('/')
+async def string(request):
+    return 'string'
 
 
-app.run(host="0.0.0.0", port=8000, protocol=CustomHttpProtocol)
+@app.route('/1')
+async def response(request):
+    return text('response')
+
+app.run(host='0.0.0.0', port=8000, protocol=CustomHttpProtocol)

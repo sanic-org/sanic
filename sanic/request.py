@@ -79,7 +79,7 @@ class Request(dict):
         Attempts to return the auth header token.
         :return: token related to request
         """
-        auth_header = self.headers.get('Authorization', None)
+        auth_header = self.headers.get('Authorization')
         if auth_header is not None:
             return auth_header.split()[1]
         return auth_header

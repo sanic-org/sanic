@@ -119,11 +119,9 @@ def test_post_token():
     async def handler(request):
         return text('OK')
 
-    payload = {'test': 'OK'}
-
     # uuid4 generated token.
     token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
-
+    payload = {'test': 'OK'}
     headers = {
         'content-type': 'application/json',
         'Authorization': 'Token {}'.format(token)
@@ -132,33 +130,6 @@ def test_post_token():
     request, response = sanic_endpoint_test(app, data=json_dumps(payload), headers=headers)
 
     assert request.token == token
-    assert response.text == 'OK'
-
-    # uuid4 generated token.
-    token = 'a1d895e0-553a-421a-8e22'
-
-    headers = {
-        'content-type': 'application/json',
-        'Authorization': 'Bearer {}'.format(token)
-    }
-
-    request, response = sanic_endpoint_test(app, data=json_dumps(payload), headers=headers)
-
-    assert request.token == token
-    assert response.text == 'OK'
-
-    # uuid4 generated token.
-    token = '421a-8e22-5ff8ecb48cbf'
-
-    headers = {
-        'content-type': 'application/json',
-        'Authorization': 'Basic {}'.format(token)
-    }
-
-    request, response = sanic_endpoint_test(app, data=json_dumps(payload), headers=headers)
-
-    assert request.token == token
-    assert response.text == 'OK'
 
 
 def test_post_form_urlencoded():

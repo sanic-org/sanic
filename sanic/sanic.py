@@ -294,8 +294,8 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'loop': loop
-            # 'app': self
+            'loop': loop,
+            'app': self
         }
 
         # -------------------------------------------- #

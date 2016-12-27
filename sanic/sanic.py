@@ -19,7 +19,7 @@ from .router import Router
 from .server import serve
 from .static import register as static_register
 from .exceptions import ServerError
-from .reloadhandler import start_reloader_thread
+from .reloadhandler import run_with_reload
 
 
 class Sanic:
@@ -264,7 +264,7 @@ class Sanic:
                 ("after_server_start", "after_start", after_start, False),
                 ("before_server_stop", "before_stop", before_stop, True),
                 ("after_server_stop", "after_stop", after_stop, True),
-                ):
+        ):
             listeners = []
             for blueprint in self.blueprints.values():
                 listeners += blueprint.listeners[event_name]
@@ -298,20 +298,6 @@ class Sanic:
                 'Experienced exception while trying to serve')
 
         log.info("Server Stopped")
-
-    def run_with_reload(self, **dataset):
-        # Run reloader thread
-        event_loop = start_reloader_thread(self, interval=1)
-
-        dataset['loop'] = event_loop
-
-        self._run(**dataset)
-
-        args = [sys.executable] + sys.argv
-
-        env_copy = os.environ.copy()
-
-        subprocess.call(args, env=env_copy, close_fds=False)
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, sock=None,
@@ -349,7 +335,7 @@ class Sanic:
             'loop': loop
         }
         if debug:
-            self.run_with_reload(**dataset)
+            run_with_reload(self, **dataset)
         else:
             self._run(**dataset)
 

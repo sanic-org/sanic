@@ -1,93 +1,63 @@
 import os
-
 import sys
+
+import threading
 import subprocess
 import signal
-
-import asyncio
-
-import time
-import threading
-
-from itertools import chain
-
-from .log import log
 
 try:
     import uvloop as async_loop
 except ImportError:
     async_loop = asyncio
 
-
-def _iter_module_files():
-    """This iterates over all relevant Python files.  It goes through all
-    loaded files from modules, all files in folders of already loaded modules
-    as well as all files reachable through a package.
-    """
-    # The list call is necessary on Python 3 in case the module
-    # dictionary modifies during iteration.
-    for module in list(sys.modules.values()):
-        if module is None:
-            continue
-        filename = getattr(module, '__file__', None)
-        if filename:
-            old = None
-            while not os.path.isfile(filename):
-                old = filename
-                filename = os.path.dirname(filename)
-                if filename == old:
-                    break
-            else:
-                if filename[-4:] in ('.pyc', '.pyo'):
-                    filename = filename[:-1]
-                yield filename
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 
-class StatReloaderLoop(object):
-    name = 'stat'
-
-    # monkeypatched by testsuite. wrapping with `staticmethod` is required in
-    # case time.sleep has been replaced by a non-c function (e.g. by
-    # `eventlet.monkey_patch`) before we get here
-    _sleep = staticmethod(time.sleep)
+class WatchdogReloaderLoop(object):
 
     def __init__(self, extra_files=None, interval=1, **kwargs):
         self.app = kwargs.pop('app')
         self.event_loop = kwargs.pop('event_loop')
+        super().__init__(extra_files=extra_files, interval=interval, **kwargs)
 
-        self.extra_files = set(os.path.abspath(x) for x in extra_files or ())
-        self.interval = interval
+        self.observable_paths = set()
 
-    def run(self):
-        mtimes = {}
-        while 1:
-            for filename in chain(_iter_module_files(), self.extra_files):
-                try:
-                    mtime = os.stat(filename).st_mtime
-                except OSError:
-                    continue
-
-                old_time = mtimes.get(filename)
-                if old_time is None:
-                    mtimes[filename] = mtime
-                    continue
-                elif mtime > old_time:
+        def _check_modification(filename):
+            if filename in self.extra_files:
+                self.trigger_reload(filename)
+            dirname = os.path.dirname(filename)
+            if dirname.startswith(tuple(self.observable_paths)):
+                if filename.endswith(('.pyc', '.pyo')):
+                    self.trigger_reload(filename[:-1])
+                elif filename.endswith('.py'):
                     self.trigger_reload(filename)
-            self._sleep(self.interval)
 
-    def restart_with_reloader(self):
-        """Spawn a new Python interpreter with the same arguments as this one,
-        but running the reloader thread.
-        """
-        while 1:
-            log.info(' * Restarting with {}'.format(self.name))
-            args = [sys.executable] + sys.argv
-            new_environ = os.environ.copy()
-            new_environ['SANIC_RUN_MAIN'] = 'true'
+        class _CustomHandler(FileSystemEventHandler):
 
-            exit_code = subprocess.call(args, env=new_environ, close_fds=False)
-            if exit_code != 3:
-                return exit_code
+            def on_created(self, event):
+                _check_modification(event.src_path)
+
+            def on_modified(self, event):
+                _check_modification(event.src_path)
+
+            def on_moved(self, event):
+                _check_modification(event.src_path)
+                _check_modification(event.dest_path)
+
+            def on_deleted(self, event):
+                _check_modification(event.src_path)
+
+        reloader_name = Observer.__name__.lower()
+        if reloader_name.endswith('observer'):
+            reloader_name = reloader_name[:-8]
+        reloader_name += ' reloader'
+
+        self.name = reloader_name
+
+        self.observer_class = Observer
+        self.event_handler = _CustomHandler()
+        self.should_reload = False
 
     def trigger_reload(self, filename):
         """Trigger reload."""
@@ -96,26 +66,55 @@ class StatReloaderLoop(object):
         self.log_reload(filename)
         sys.exit(3)
 
-    def log_reload(self, filename):
-        """Log reload."""
-        filename = os.path.abspath(filename)
-        log.info(' * Detected change in {}, reloading'.format(filename))
-
     def _stop_app(self):
         self.app.stop()
 
+    def run(self):
+        watches = {}
+        observer = self.observer_class()
+        observer.start()
 
-def start_reloader_thread(app, interval=1, extra_files=None):
-    """Start reloader thread."""
+        while not self.should_reload:
+            to_delete = set(watches)
+            paths = _find_observable_paths(self.extra_files)
+            for path in paths:
+                if path not in watches:
+                    try:
+                        watches[path] = observer.schedule(
+                            self.event_handler, path, recursive=True)
+                    except OSError:
+                        # Clear this path from list of watches We don't want
+                        # the same error message showing again in the next
+                        # iteration.
+                        watches[path] = None
+                to_delete.discard(path)
+            for path in to_delete:
+                watch = watches.pop(path, None)
+                if watch is not None:
+                    observer.unschedule(watch)
+            self.observable_paths = paths
+            self._sleep(self.interval)
+
+        sys.exit(3)
+
+
+def run_with_reload(app, **dataset):
     event_loop = async_loop.new_event_loop()
 
     signal.signal(signal.SIGTERM, lambda *args: sys.exit(0))
 
-    reloader = StatReloaderLoop(extra_files, interval, app=app,
-                                event_loop=event_loop)
+    reloader = WatchdogReloaderLoop(app=app, event_loop=event_loop)
 
     thread = threading.Thread(target=reloader.run, args=())
     thread.setDaemon(True)
     thread.start()
 
-    return event_loop
+    dataset['loop'] = event_loop
+
+    app._run(**dataset)
+
+    args = [sys.executable] + sys.argv
+
+    env_copy = os.environ.copy()
+
+    subprocess.call(args, env=env_copy, close_fds=False)

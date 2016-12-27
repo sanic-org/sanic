@@ -116,6 +116,23 @@ class Sanic:
         else:
             attach_to = args[0]
             return register_middleware
+    
+    def add_middleware(self, middleware, attach_to="request"):
+        """
+        register a middleware and configure to be called before a request of after
+        
+        :param middleware: a callable function (coroutine)
+        :type middleware: callable
+        
+        :param attach_to: where to attach the middleware: before a request of after
+        :type attach_to: str
+        """
+        assert attach_to in ("request", "response")
+        
+        if attach_to == 'request':
+            self.request_middleware.append(middleware)
+        if attach_to == 'response':
+            self.response_middleware.appendleft(middleware)
 
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',

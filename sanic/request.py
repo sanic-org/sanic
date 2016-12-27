@@ -38,7 +38,7 @@ class Request(dict):
     Properties of an HTTP request such as URL, headers, etc.
     """
     __slots__ = (
-        'url', 'headers', 'version', 'method', '_cookies',
+        'url', 'uri', 'headers', 'version', 'method', '_cookies',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
     )
@@ -55,6 +55,7 @@ class Request(dict):
             self.query_string = url_parsed.query.decode('utf-8')
 
         # Init but do not inhale
+        self.uri = None
         self.body = None
         self.parsed_json = None
         self.parsed_form = None

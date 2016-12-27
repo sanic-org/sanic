@@ -4,7 +4,8 @@ from functools import lru_cache
 from .config import Config
 from .exceptions import NotFound, InvalidUsage
 
-Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
+Route = namedtuple('Route', ['handler', 'methods', 'pattern',
+                             'parameters', 'uri'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
 
 REGEX_TYPES = {
@@ -99,7 +100,7 @@ class Router:
 
         route = Route(
             handler=handler, methods=methods, pattern=pattern,
-            parameters=parameters)
+            parameters=parameters, uri=uri)
 
         self.routes_all[uri] = route
         if properties['unhashable']:
@@ -116,7 +117,9 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
-        return self._get(request.url, request.method)
+        handler, uri, args, kwargs = self._get(request.url, request.method)
+        request.uri = uri
+        return handler, args, kwargs
 
     @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
     def _get(self, url, method):
@@ -154,4 +157,4 @@ class Router:
         kwargs = {p.name: p.cast(value)
                   for value, p
                   in zip(match.groups(1), route.parameters)}
-        return route.handler, [], kwargs
+        return route.handler, route.uri, [], kwargs

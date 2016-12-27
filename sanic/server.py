@@ -227,8 +227,8 @@ def trigger_events(events, loop):
                 loop.run_until_complete(result)
 
 
-def serve(host, port, request_handler, error_handler, app=None, before_start=None,
-          after_start=None, before_stop=None, after_stop=None,
+def serve(host, port, request_handler, error_handler, before_start=None,
+          after_start=None, before_stop=None, after_stop=None, app=None,
           debug=False, request_timeout=60, sock=None,
           request_max_size=None, reuse_port=False, loop=None):
     """

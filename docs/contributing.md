@@ -23,7 +23,11 @@ Get the source of sanic:
 
 Install sanic :
 
-`python setup.py install`
+`python setup.py install develop`
+
+OR
+
+`pip install -e .`
 
 Install the dev dependencies:
 
@@ -37,11 +41,11 @@ Now you can start working on sanic.
 
 ## Tests
 
-Install pytest and flake8:
+Install pytest and flake8 or tox:
 
 `pip install pytest`
 
-`pip install flake8`
+`pip install flake8` or `pip install tox`
 
 Run the tests:
 
@@ -56,4 +60,4 @@ Run the tests:
  Once all tests have passed send out a PR.
 
 ## Warning
-One of the main goals of Sanic is speed.  Code that lowers the performance of Sanic without significant gains in usability, security, or features may not be merged.
+One of the main goals of Sanic is speed.  Sanic uses `wrk` tool for benchmarking purposes. Code that lowers the performance of Sanic without significant gains in usability, security, or features may not be merged.

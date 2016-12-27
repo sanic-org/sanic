@@ -185,6 +185,10 @@ class Sanic:
         :return: Nothing
         """
         try:
+            
+            # Add view handler
+            request.handler = self.router.routes_static.get(request.url)
+            
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
@@ -291,6 +295,7 @@ class Sanic:
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
             'loop': loop
+            # 'app': self
         }
 
         # -------------------------------------------- #

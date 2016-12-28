@@ -246,13 +246,13 @@ class Sanic:
         :param host: Address to host on
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
-        :param before_start: Function to be executed before the server starts
+        :param before_start: Functions to be executed before the server starts
         accepting connections
-        :param after_start: Function to be executed after the server starts
+        :param after_start: Functions to be executed after the server starts
         accepting connections
-        :param before_stop: Function to be executed when a stop signal is
+        :param before_stop: Functions to be executed when a stop signal is
         received before it is respected
-        :param after_stop: Function to be executed when all requests are
+        :param after_stop: Functions to be executed when all requests are
         complete
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
@@ -290,7 +290,7 @@ class Sanic:
             for blueprint in self.blueprints.values():
                 listeners += blueprint.listeners[event_name]
             if args:
-                if type(args) is not list:
+                if callable(args):
                     args = [args]
                 listeners += args
             if reverse:

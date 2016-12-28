@@ -217,6 +217,14 @@ class Sanic:
             # -------------------------------------------- #
             # Response Generation Failed
             # -------------------------------------------- #
+            if self.debug:
+                error_body = response.body
+                if isinstance(error_body, bytes):
+                    try:
+                        error_body = error_body.decode()
+                    except:
+                        pass
+                log.debug(error_body)
 
             try:
                 response = self.error_handler.response(request, e)

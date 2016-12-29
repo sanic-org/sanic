@@ -27,6 +27,8 @@ When Sanic receives `SIGINT` or `SIGTERM`, `signal.stopped` becomes `True`.
 `request_max_size` is bytes of max request size.
 
 ## Example
+By default protocol, an error occurs, if the handler does not return an `HTTPResponse object`.  
+In this example, By rewriting `write_response()`, if the handler returns `str`, it will be converted to an `HTTPResponse object`.
 
 ```python
 from sanic import Sanic

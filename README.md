@@ -59,6 +59,7 @@ if __name__ == "__main__":
  * [Class Based Views](docs/class_based_views.md)
  * [Cookies](docs/cookies.md)
  * [Static Files](docs/static_files.md)
+ * [Custom Protocol](docs/custom_protocol.md)
  * [Deploying](docs/deploying.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)

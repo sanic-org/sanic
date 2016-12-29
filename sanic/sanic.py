@@ -251,7 +251,7 @@ class Sanic:
         :param workers: Number of processes
         received before it is respected
         :param loop: asyncio compatible event loop
-        :param protocol: Subclass of asyncio.Protocol
+        :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
         self.error_handler.debug = True

@@ -49,6 +49,25 @@ def test_invalid_response():
     assert response.text == "Internal Server Error."
 
 
+def test_error_in_write_error():
+    app = Sanic('error_in_write_error')
+
+    @app.exception(ServerError)
+    def handler_exception(request, exception):
+        return 'This should fail'
+
+    @app.route('/')
+    async def handler(request):
+        return 'This should fail'
+
+    try:
+        _ = sanic_endpoint_test(app, gather_request=False)
+    except ValueError as e:
+        assert e.args[0] == 'Exception during request: [ClientResponseError()]'
+    else:
+        raise Exception()
+
+
 def test_json():
     app = Sanic('test_json')
 

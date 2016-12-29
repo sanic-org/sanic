@@ -160,8 +160,9 @@ class HttpProtocol(asyncio.Protocol):
                 self._last_request_time = current_time
                 self.cleanup()
         except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(e))
+            exception = ServerError(
+                    'Writing response failed, connection closed {}'.format(e))
+            self.write_error(exception)
 
     def write_error(self, exception):
         try:
@@ -170,13 +171,9 @@ class HttpProtocol(asyncio.Protocol):
             self.transport.write(response.output(version))
             self.transport.close()
         except Exception as e:
-            self.bail_out(
-                "Writing error failed, connection closed {}".format(e))
-
-    def bail_out(self, message):
-        exception = ServerError(message)
-        self.write_error(exception)
-        log.error(message)
+            self.transport.close()
+            log.error(
+                'Writing error failed, connection closed {}'.format(e))
 
     def cleanup(self):
         self.parser = None

@@ -239,7 +239,7 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None):
+            workers=1, loop=None, register_sys_signals=True):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -273,7 +273,8 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'loop': loop
+            'loop': loop,
+            'register_sys_signals': register_sys_signals
         }
 
         # -------------------------------------------- #

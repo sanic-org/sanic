@@ -39,6 +39,6 @@ app.add_route(handler, '/folder/<name>')
 
 async def person_handler(request, name):
 	return text('Person - {}'.format(name))
-app.add_route(handler, '/person/<name:[A-z]>')
+app.add_route(person_handler, '/person/<name:[A-z]>')
 
 ```

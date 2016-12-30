@@ -80,6 +80,9 @@ class Sanic:
         self.route(uri=uri, methods=methods)(handler)
         return handler
 
+    def remove_route(self, uri, clean_cache=True):
+        self.router.remove(uri, clean_cache)
+
     # Decorator
     def exception(self, *exceptions):
         """

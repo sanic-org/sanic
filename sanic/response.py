@@ -1,8 +1,10 @@
 from aiofiles import open as open_async
-from .cookies import CookieJar, Cookie
 from mimetypes import guess_type
 from os import path
+
 from ujson import dumps as json_dumps
+
+from .cookies import CookieJar
 
 COMMON_STATUS_CODES = {
     200: b'OK',
@@ -79,22 +81,18 @@ class HTTPResponse:
         self.content_type = content_type
 
         if body is not None:
-            self.body = body.encode('utf-8')
+            try:
+                # Try to encode it regularly
+                self.body = body.encode('utf-8')
+            except AttributeError:
+                # Convert it to a str if you can't
+                self.body = str(body).encode('utf-8')
         else:
             self.body = body_bytes
 
         self.status = status
         self.headers = headers or {}
         self._cookies = None
-
-    @staticmethod
-    def format_header(name, value):
-        try:
-            return b'%b: %b\r\n' %\
-                (name.encode(), value.encode('utf-8'))
-        except:
-            return b'%b: %b\r\n' %\
-                (name.encode(), str(value).encode('utf-8'))
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
@@ -105,10 +103,14 @@ class HTTPResponse:
 
         headers = b''
         if self.headers:
-            headers = b''.join(
-                self.format_header(name, value)
-                for name, value in self.headers.items()
-            )
+            for name, value in self.headers.items():
+                try:
+                    headers += (
+                        b'%b: %b\r\n' % (name.encode(), value.encode('utf-8')))
+                except AttributeError:
+                    headers += (
+                        b'%b: %b\r\n' % (
+                            str(name).encode(), str(value).encode('utf-8')))
 
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all

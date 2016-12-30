@@ -1,5 +1,6 @@
 from asyncio import get_event_loop
 from collections import deque
+from contextlib import suppress
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from multiprocessing import Process, Event
@@ -219,11 +220,8 @@ class Sanic:
             # -------------------------------------------- #
             if self.debug:
                 error_body = response.body
-                if isinstance(error_body, bytes):
-                    try:
-                        error_body = error_body.decode()
-                    except:
-                        pass
+                with suppress(Exception):
+                    error_body = error_body.decode()
                 log.debug(error_body)
 
             try:

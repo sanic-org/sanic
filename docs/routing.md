@@ -33,12 +33,12 @@ async def handler1(request):
 	return text('OK')
 app.add_route(handler1, '/test')
 
-async def handler(request, name):
+async def handler2(request, name):
 	return text('Folder - {}'.format(name))
-app.add_route(handler, '/folder/<name>')
+app.add_route(handler2, '/folder/<name>')
 
-async def person_handler(request, name):
+async def person_handler2(request, name):
 	return text('Person - {}'.format(name))
-app.add_route(handler, '/person/<name:[A-z]>')
+app.add_route(person_handler2, '/person/<name:[A-z]>')
 
 ```

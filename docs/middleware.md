@@ -27,3 +27,23 @@ async def handler(request):
 
 app.run(host="0.0.0.0", port=8000)
 ```
+
+## Middleware chain
+
+If you want to apply the middleware as a chain, applying more than one, is so easy. You only have to be aware that you do **not return** any response in your middleware:
+
+```python
+app = Sanic(__name__)
+
+@app.middleware('response')
+async def custom_banner(request, response):
+	response.headers["Server"] = "Fake-Server"
+
+@app.middleware('response')
+async def prevent_xss(request, response):
+	response.headers["x-xss-protection"] = "1; mode=block"
+
+app.run(host="0.0.0.0", port=8000)
+```
+
+The above code will apply the two middlewares in order. First the middleware **custom_banner** will change the HTTP Response headers *Server* by *Fake-Server*, and the second middleware **prevent_xss** will add the HTTP Headers for prevent Cross-Site-Scripting (XSS) attacks.

@@ -6,6 +6,7 @@ from signal import SIGINT, SIGTERM
 from time import time
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
+from .exceptions import ServerError
 
 try:
     import uvloop as async_loop
@@ -173,8 +174,9 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing error failed, connection closed {}".format(e))
 
     def bail_out(self, message):
-        log.debug(message)
-        self.transport.close()
+        exception = ServerError(message)
+        self.write_error(exception)
+        log.error(message)
 
     def cleanup(self):
         self.parser = None

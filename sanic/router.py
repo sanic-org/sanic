@@ -23,6 +23,10 @@ class RouteExists(Exception):
     pass
 
 
+class RouteDoesNotExist(Exception):
+    pass
+
+
 class Router:
     """
     Router supports basic routing with parameters and method checks
@@ -108,6 +112,23 @@ class Router:
             self.routes_dynamic[url_hash(uri)].append(route)
         else:
             self.routes_static[uri] = route
+
+    def remove(self, uri, clean_cache=True):
+        try:
+            route = self.routes_all.pop(uri)
+        except KeyError:
+            raise RouteDoesNotExist("Route was not registered: {}".format(uri))
+
+        if route in self.routes_always_check:
+            self.routes_always_check.remove(route)
+        elif url_hash(uri) in self.routes_dynamic \
+                and route in self.routes_dynamic[url_hash(uri)]:
+            self.routes_dynamic[url_hash(uri)].remove(route)
+        else:
+            self.routes_static.pop(uri)
+
+        if clean_cache:
+            self._get.cache_clear()
 
     def get(self, request):
         """

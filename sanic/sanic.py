@@ -3,13 +3,14 @@ from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from multiprocessing import Process, Event
+from select import select
 from signal import signal, SIGTERM, SIGINT
-from time import sleep
 from traceback import format_exc
+import logging
 
 from .config import Config
 from .exceptions import Handler
-from .log import log, logging
+from .log import log
 from .response import HTTPResponse
 from .router import Router
 from .server import serve
@@ -18,7 +19,13 @@ from .exceptions import ServerError
 
 
 class Sanic:
-    def __init__(self, name=None, router=None, error_handler=None):
+    def __init__(self, name=None, router=None,
+                 error_handler=None, logger=None):
+        if logger is None:
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(asctime)s: %(levelname)s: %(message)s"
+            )
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
@@ -72,6 +79,9 @@ class Sanic:
         """
         self.route(uri=uri, methods=methods)(handler)
         return handler
+
+    def remove_route(self, uri, clean_cache=True):
+        self.router.remove(uri, clean_cache)
 
     # Decorator
     def exception(self, *exceptions):
@@ -193,18 +203,18 @@ class Sanic:
                 if isawaitable(response):
                     response = await response
 
-                # -------------------------------------------- #
-                # Response Middleware
-                # -------------------------------------------- #
+            # -------------------------------------------- #
+            # Response Middleware
+            # -------------------------------------------- #
 
-                if self.response_middleware:
-                    for middleware in self.response_middleware:
-                        _response = middleware(request, response)
-                        if isawaitable(_response):
-                            _response = await _response
-                        if _response:
-                            response = _response
-                            break
+            if self.response_middleware:
+                for middleware in self.response_middleware:
+                    _response = middleware(request, response)
+                    if isawaitable(_response):
+                        _response = await _response
+                    if _response:
+                        response = _response
+                        break
 
         except Exception as e:
             # -------------------------------------------- #
@@ -345,8 +355,7 @@ class Sanic:
 
         # Infinitely wait for the stop event
         try:
-            while not stop_event.is_set():
-                sleep(0.3)
+            select(stop_event)
         except:
             pass
 

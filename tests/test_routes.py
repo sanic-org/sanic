@@ -2,7 +2,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.response import text
-from sanic.router import RouteExists
+from sanic.router import RouteExists, RouteDoesNotExist
 from sanic.utils import sanic_endpoint_test
 
 
@@ -356,3 +356,110 @@ def test_add_route_method_not_allowed():
 
     request, response = sanic_endpoint_test(app, method='post', uri='/test')
     assert response.status == 405
+
+
+def test_remove_static_route():
+    app = Sanic('test_remove_static_route')
+
+    async def handler1(request):
+        return text('OK1')
+
+    async def handler2(request):
+        return text('OK2')
+
+    app.add_route(handler1, '/test')
+    app.add_route(handler2, '/test2')
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/test2')
+    assert response.status == 200
+
+    app.remove_route('/test')
+    app.remove_route('/test2')
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.status == 404
+
+    request, response = sanic_endpoint_test(app, uri='/test2')
+    assert response.status == 404
+
+
+def test_remove_dynamic_route():
+    app = Sanic('test_remove_dynamic_route')
+
+    async def handler(request, name):
+        return text('OK')
+
+    app.add_route(handler, '/folder/<name>')
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    assert response.status == 200
+
+    app.remove_route('/folder/<name>')
+    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    assert response.status == 404
+
+
+def test_remove_inexistent_route():
+    app = Sanic('test_remove_inexistent_route')
+
+    with pytest.raises(RouteDoesNotExist):
+        app.remove_route('/test')
+
+
+def test_remove_unhashable_route():
+    app = Sanic('test_remove_unhashable_route')
+
+    async def handler(request, unhashable):
+        return text('OK')
+
+    app.add_route(handler, '/folder/<unhashable:[A-Za-z0-9/]+>/end/')
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test/asdf/end/')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test///////end/')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test/end/')
+    assert response.status == 200
+
+    app.remove_route('/folder/<unhashable:[A-Za-z0-9/]+>/end/')
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test/asdf/end/')
+    assert response.status == 404
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test///////end/')
+    assert response.status == 404
+
+    request, response = sanic_endpoint_test(app, uri='/folder/test/end/')
+    assert response.status == 404
+
+
+def test_remove_route_without_clean_cache():
+    app = Sanic('test_remove_static_route')
+
+    async def handler(request):
+        return text('OK')
+
+    app.add_route(handler, '/test')
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.status == 200
+
+    app.remove_route('/test', clean_cache=True)
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.status == 404
+
+    app.add_route(handler, '/test')
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.status == 200
+
+    app.remove_route('/test', clean_cache=False)
+
+    request, response = sanic_endpoint_test(app, uri='/test')
+    assert response.status == 200

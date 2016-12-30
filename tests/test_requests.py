@@ -2,6 +2,7 @@ from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
 from sanic.response import json, text
 from sanic.utils import sanic_endpoint_test
+from sanic.exceptions import ServerError
 
 
 # ------------------------------------------------------------ #
@@ -45,7 +46,7 @@ def test_headers():
     assert response.headers.get('spam') == 'great'
 
 
-def test_invalid_headers():
+def test_non_str_headers():
     app = Sanic('test_text')
 
     @app.route('/')
@@ -56,8 +57,23 @@ def test_invalid_headers():
     request, response = sanic_endpoint_test(app)
 
     assert response.headers.get('answer') == '42'
+    
+def test_invalid_response():
+    app = Sanic('test_invalid_response')
 
+    @app.exception(ServerError)
+    def handler_exception(request, exception):
+        return text('Internal Server Error.', 500)
 
+    @app.route('/')
+    async def handler(request):
+        return 'This should fail'
+
+    request, response = sanic_endpoint_test(app)
+    assert response.status == 500
+    assert response.text == "Internal Server Error."
+    
+    
 def test_json():
     app = Sanic('test_json')
 

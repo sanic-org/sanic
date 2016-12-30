@@ -31,6 +31,7 @@ setup(
         'ujson>=1.35',
         'aiofiles>=0.3.0',
         'multidict>=2.0',
+        'watchdog>=0.8.3',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

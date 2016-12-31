@@ -29,6 +29,8 @@ class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
         'loop', 'transport', 'connections', 'signal',
+        # Environment info
+        'app',
         # request params
         'parser', 'request', 'url', 'headers',
         # request config
@@ -36,9 +38,10 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
-    def __init__(self, *, loop, request_handler, error_handler,
+    def __init__(self, *, loop, request_handler, error_handler, app=None,
                  signal=Signal(), connections={}, request_timeout=60,
                  request_max_size=None):
+        self.app = app
         self.loop = loop
         self.transport = None
         self.request = None
@@ -129,7 +132,8 @@ class HttpProtocol(asyncio.Protocol):
             url_bytes=self.url,
             headers=CIMultiDict(self.headers),
             version=self.parser.get_http_version(),
-            method=self.parser.get_method().decode()
+            method=self.parser.get_method().decode(),
+            app=self.app
         )
 
     def on_body(self, body):
@@ -224,7 +228,7 @@ def trigger_events(events, loop):
 
 
 def serve(host, port, request_handler, error_handler, before_start=None,
-          after_start=None, before_stop=None, after_stop=None,
+          after_start=None, before_stop=None, after_stop=None, app=None,
           debug=False, request_timeout=60, sock=None,
           request_max_size=None, reuse_port=False, loop=None):
     """
@@ -256,6 +260,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     signal = Signal()
     server = partial(
         HttpProtocol,
+        app=app,
         loop=loop,
         connections=connections,
         signal=signal,

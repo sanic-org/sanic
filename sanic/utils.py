@@ -35,7 +35,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
             exceptions.append(e)
         app.stop()
 
-    app.run(host=HOST, debug=debug, port=42101,
+    app.run(host=HOST, debug=debug, port=PORT,
             after_start=_collect_response, loop=loop)
 
     if exceptions:

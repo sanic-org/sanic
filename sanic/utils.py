@@ -22,9 +22,9 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
     exceptions = []
 
     if gather_request:
-        @app.middleware
         def _collect_request(request):
             results.append(request)
+        app.request_middleware.appendleft(_collect_request)
 
     async def _collect_response(sanic, loop):
         try:

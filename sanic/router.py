@@ -35,7 +35,7 @@ class Router:
         def my_route(request, my_parameter):
             do stuff...
     or
-        @sanic.route('/my/url/<my_paramter>:type', methods['GET', 'POST', ...])
+        @sanic.route('/my/url/<my_paramter>:type', methods=['GET', 'POST', ...])
         def my_route_with_type(request, my_parameter):
             do stuff...
 

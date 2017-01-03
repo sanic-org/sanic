@@ -309,7 +309,11 @@ class Sanic:
         log.debug(self.config.LOGO)
 
         # Serve
-        log.info('Goin\' Fast @ http://{}:{}'.format(host, port))
+        if ssl is None:
+            proto = "http"
+        else:
+            proto = "https"
+        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         try:
             if workers == 1:

@@ -49,6 +49,18 @@ if __name__ == "__main__":
 ## Installation
  * `python -m pip install sanic`
 
+## Use SSL
+ * Optionally pass in an SSLContext:
+```
+import ssl
+certificate = "/path/to/certificate"
+keyfile = "/path/to/keyfile"
+context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+context.load_cert_chain(certificate, keyfile=keyfile)
+
+app.run(host="0.0.0.0", port=8443, ssl=context)
+```
+
 ## Documentation
  * [Getting started](docs/getting_started.md)
  * [Request Data](docs/request_data.md)

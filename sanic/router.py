@@ -31,12 +31,12 @@ class Router:
     """
     Router supports basic routing with parameters and method checks
     Usage:
-        @sanic.route('/my/url/<my_parameter>', methods=['GET', 'POST', ...])
-        def my_route(request, my_parameter):
+        @app.route('/my_url/<my_param>', methods=['GET', 'POST', ...])
+        def my_route(request, my_param):
             do stuff...
     or
-        @sanic.route('/my/url/<my_paramter>:type', methods['GET', 'POST', ...])
-        def my_route_with_type(request, my_parameter):
+        @app.route('/my_url/<my_param:my_type>', methods=['GET', 'POST', ...])
+        def my_route_with_type(request, my_param: my_type):
             do stuff...
 
     Parameters will be passed as keyword arguments to the request handling

@@ -13,7 +13,7 @@ from .exceptions import Handler
 from .log import log
 from .response import HTTPResponse
 from .router import Router
-from .server import serve
+from .server import serve, HttpProtocol
 from .static import register as static_register
 from .exceptions import ServerError
 
@@ -242,7 +242,7 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, ssl=None,
-            sock=None, workers=1, loop=None):
+            sock=None, workers=1, loop=None, protocol=HttpProtocol):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -262,6 +262,7 @@ class Sanic:
         :param workers: Number of processes
         received before it is respected
         :param loop: asyncio compatible event loop
+        :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
         self.error_handler.debug = True
@@ -269,6 +270,7 @@ class Sanic:
         self.loop = loop
 
         server_settings = {
+            'protocol': protocol,
             'host': host,
             'port': port,
             'sock': sock,

@@ -1,11 +1,13 @@
 *~
 *.egg-info
 *.egg
+*.eggs
+*.pyc
 .coverage
 .coverage.*
 coverage
 .tox
 settings.py
-*.pyc
 .idea/*
 .cache/*
+.python-version

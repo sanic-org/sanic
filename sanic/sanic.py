@@ -20,7 +20,7 @@ from .exceptions import ServerError
 
 class Sanic:
     def __init__(self, name=None, router=None,
-                 error_handler=None, logger=None):
+                 error_handler=None, logger=None, backlog=100):
         if logger is None:
             logging.basicConfig(
                 level=logging.INFO,
@@ -29,6 +29,7 @@ class Sanic:
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
+        self.backlog = backlog
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or Handler(self)
@@ -278,7 +279,8 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'loop': loop
+            'loop': loop,
+            'backlog': self.backlog
         }
 
         # -------------------------------------------- #

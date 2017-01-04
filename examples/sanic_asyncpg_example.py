@@ -14,9 +14,11 @@ from sanic.response import json
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'tachien',
-    'database': 'tachien'
+    'host': '<host>',
+    'user': '<username>',
+    'password': '<password>',
+    'port': '<port>',
+    'database': '<database>'
 }
 
 def jsonify(records):

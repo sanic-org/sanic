@@ -6,7 +6,6 @@ import asyncio
 
 import uvloop
 from asyncpg import create_pool
-import sqlalchemy as sa
 
 from sanic import Sanic
 from sanic.response import json

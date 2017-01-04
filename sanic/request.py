@@ -41,6 +41,7 @@ class Request(dict):
         'url', 'headers', 'version', 'method', '_cookies',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
+        'shared',
     )
 
     def __init__(self, url_bytes, headers, version, method):
@@ -61,6 +62,7 @@ class Request(dict):
         self.parsed_files = None
         self.parsed_args = None
         self._cookies = None
+        self.shared = None
 
     @property
     def json(self):

@@ -64,11 +64,11 @@ def query_string(request):
 # Run Server
 # ----------------------------------------------- #
 
-def after_start(loop):
+def after_start(app, loop):
     log.info("OH OH OH OH OHHHHHHHH")
 
 
-def before_stop(loop):
+def before_stop(app, loop):
     log.info("TRIED EVERYTHING")
 
 

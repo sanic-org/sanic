@@ -56,7 +56,7 @@ class Request(dict):
 
         # Init but do not inhale
         self.body = None
-        self.parsed_json = ...
+        self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
         self.parsed_args = None
@@ -64,7 +64,7 @@ class Request(dict):
 
     @property
     def json(self):
-        if self.parsed_json is ...:
+        if self.parsed_json is None:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:

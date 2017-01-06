@@ -224,10 +224,9 @@ def trigger_events(events, loop):
 
 
 def serve(host, port, request_handler, error_handler, before_start=None,
-          after_start=None, before_stop=None, after_stop=None,
-          debug=False, request_timeout=60, ssl=None, sock=None,
-          request_max_size=None, reuse_port=False, loop=None,
-          protocol=HttpProtocol):
+          after_start=None, before_stop=None, after_stop=None, debug=False,
+          request_timeout=60, ssl=None, sock=None, request_max_size=None,
+          reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100):
     """
     Starts asynchronous HTTP Server on an individual process.
     :param host: Address to host on
@@ -279,7 +278,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         port,
         ssl=ssl,
         reuse_port=reuse_port,
-        sock=sock
+        sock=sock,
+        backlog=backlog
     )
 
     # Instead of pulling time at the end of every request,

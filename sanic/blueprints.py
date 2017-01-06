@@ -97,6 +97,21 @@ class Blueprint:
         self.record(lambda s: s.add_route(handler, uri, methods))
         return handler
 
+    def route_handle(self, uri, methods=None):
+        '''
+        :param uri:
+        :param methods:
+        :return:
+        '''
+        def add_handler(Handler):
+            def handle_request(request, *args, **kwargs):
+                handler = Handler(request, *args, **kwargs)
+                return handler(request, *args, **kwargs)
+
+            self.add_route(handle_request, uri=uri, methods=methods)
+
+        return add_handler
+
     def listener(self, event):
         """
         """

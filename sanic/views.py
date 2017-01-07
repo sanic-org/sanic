@@ -28,12 +28,35 @@ class HTTPMethodView:
     To add the view into the routing you could use
         1) app.add_route(DummyView(), '/')
         2) app.route('/')(DummyView())
+
+    TODO: add doc about devorators
     """
 
-    def __call__(self, request, *args, **kwargs):
+    decorators = ()
+
+    def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)
         if handler:
             return handler(request, *args, **kwargs)
         raise InvalidUsage(
             'Method {} not allowed for URL {}'.format(
                 request.method, request.url), status_code=405)
+
+    @classmethod
+    def as_view(cls, *class_args, **class_kwargs):
+        """ TODO: add docs
+
+        """
+        def view(*args, **kwargs):
+            self = view.view_class(*class_args, **class_kwargs)
+            return self.dispatch_request(*args, **kwargs)
+
+        if cls.decorators:
+            view.__module__ = cls.__module__
+            for decorator in cls.decorators:
+                view = decorator(view)
+
+        view.view_class = cls
+        view.__doc__ = cls.__doc__
+        view.__module__ = cls.__module__
+        return view

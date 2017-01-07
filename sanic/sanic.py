@@ -3,7 +3,6 @@ from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from multiprocessing import Process, Event
-from select import select
 from signal import signal, SIGTERM, SIGINT
 from traceback import format_exc
 import logging
@@ -41,6 +40,8 @@ class Sanic:
         self._blueprint_order = []
         self.loop = None
         self.debug = None
+        self.sock = None
+        self.processes = None
 
         # Register alternative method names
         self.go_fast = self.run
@@ -333,9 +334,12 @@ class Sanic:
         """
         This kills the Sanic
         """
+        if self.processes is not None:
+            for process in self.processes:
+                process.terminate()
+            self.sock.close()
         get_event_loop().stop()
 
-    @staticmethod
     def serve_multiple(self, server_settings, workers, stop_event=None):
         """
         Starts multiple server processes simultaneously.  Stops on interrupt
@@ -348,28 +352,25 @@ class Sanic:
         server_settings['reuse_port'] = True
 
         # Create a stop event to be triggered by a signal
-        if not stop_event:
+        if stop_event is None:
             stop_event = Event()
         signal(SIGINT, lambda s, f: stop_event.set())
         signal(SIGTERM, lambda s, f: stop_event.set())
 
-        sock = socket()
-        #sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        sock.bind((server_settings['host'], server_settings['port']))
-        set_inheritable(sock.fileno(), True)
-        server_settings['sock'] = sock
+        self.sock = socket()
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.sock.bind((server_settings['host'], server_settings['port']))
+        set_inheritable(self.sock.fileno(), True)
+        server_settings['sock'] = self.sock
         server_settings['host'] = None
         server_settings['port'] = None
 
-        processes = []
+        self.processes = []
         for _ in range(workers):
             process = Process(target=serve, kwargs=server_settings)
             process.daemon = True
             process.start()
-            processes.append(process)
+            self.processes.append(process)
 
-        for process in processes:
-            process.terminate()
-
-        for process in processes:
+        for process in self.processes:
             process.join()

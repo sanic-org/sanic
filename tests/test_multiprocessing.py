@@ -1,13 +1,9 @@
 from multiprocessing import Array, Event, Process
 from time import sleep, time
 from ujson import loads as json_loads
-from asyncio import get_event_loop
-from os import killpg, kill
-from signal import SIGUSR1, signal, SIGINT, SIGTERM, SIGKILL
 
 from sanic import Sanic
-from sanic.response import json, text
-from sanic.exceptions import Handler
+from sanic.response import json
 from sanic.utils import local_request, HOST, PORT
 
 
@@ -54,12 +50,11 @@ def skip_test_multiprocessing():
     except:
         raise ValueError("Expected JSON response but got '{}'".format(response))
 
-    stop_event.set()
     assert results.get('test') == True
 
 
 def test_drain_connections():
-    app = Sanic('test_stop')
+    app = Sanic('test_json')
 
     @app.route('/')
     async def handler(request):
@@ -80,31 +75,3 @@ def test_drain_connections():
     end = time()
 
     assert end - start < 0.05
-
-def skip_test_workers():
-    app = Sanic('test_workers')
-
-    @app.route('/')
-    async def handler(request):
-        return text('ok')
-
-    stop_event = Event()
-
-    d = []
-    async def after_start(*args, **kwargs):
-        http_response = await local_request('get', '/')
-        d.append(http_response.text)
-        stop_event.set()
-
-    p = Process(target=app.run, kwargs={'host':HOST,
-                                        'port':PORT,
-                                        'after_start': after_start,
-                                        'workers':2,
-                                        'stop_event':stop_event})
-    p.start()
-    loop = get_event_loop()
-    loop.run_until_complete(after_start())
-    #killpg(p.pid, SIGUSR1)
-    kill(p.pid, SIGUSR1)
-
-    assert d[0] == 1

@@ -191,6 +191,6 @@ def test_with_decorator():
             return text('I am get method')
 
     app.add_route(DummyView.as_view(), '/')
-    request, response = sanic_endpoint_test(app, method="get", debug=True)
+    request, response = sanic_endpoint_test(app, method="get")
     assert response.text == 'I am get method'
     assert results[0] == 1

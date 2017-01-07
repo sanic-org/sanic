@@ -16,6 +16,8 @@ from .router import Router
 from .server import serve, HttpProtocol
 from .static import register as static_register
 from .exceptions import ServerError
+from socket import socket
+from os import set_inheritable
 
 
 class Sanic:
@@ -350,19 +352,19 @@ class Sanic:
         signal(SIGINT, lambda s, f: stop_event.set())
         signal(SIGTERM, lambda s, f: stop_event.set())
 
+        sock = socket()
+        sock.bind((server_settings['host'], server_settings['port']))
+        set_inheritable(sock.fileno(), True)
+        server_settings['sock'] = sock
+        server_settings['host'] = None
+        server_settings['port'] = None
+
         processes = []
         for _ in range(workers):
             process = Process(target=serve, kwargs=server_settings)
             process.start()
             processes.append(process)
 
-        # Infinitely wait for the stop event
-        try:
-            select(stop_event)
-        except:
-            pass
-
-        log.info('Spinning down workers...')
         for process in processes:
             process.terminate()
         for process in processes:

@@ -7,7 +7,7 @@ class HTTPMethodView:
     to every HTTP method you want to support.
 
     For example:
-        class DummyView(View):
+        class DummyView(HTTPMethodView):
 
             def get(self, request, *args, **kwargs):
                 return text('I am get method')
@@ -20,16 +20,16 @@ class HTTPMethodView:
     405 response.
 
     If you need any url params just mention them in method definition:
-        class DummyView(View):
+        class DummyView(HTTPMethodView):
 
             def get(self, request, my_param_here, *args, **kwargs):
                 return text('I am get method with %s' % my_param_here)
 
     To add the view into the routing you could use
-        1) app.add_route(DummyView(), '/')
-        2) app.route('/')(DummyView())
+        1) app.add_route(DummyView.as_view(), '/')
+        2) app.route('/')(DummyView.as_view())
 
-    TODO: add doc about devorators
+    To add any decorator you could set it into decorators variable
     """
 
     decorators = ()
@@ -44,7 +44,8 @@ class HTTPMethodView:
 
     @classmethod
     def as_view(cls, *class_args, **class_kwargs):
-        """ TODO: add docs
+        """ Converts the class into an actual view function that can be used
+        with the routing system.
 
         """
         def view(*args, **kwargs):

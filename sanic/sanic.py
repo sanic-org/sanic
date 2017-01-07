@@ -16,7 +16,7 @@ from .router import Router
 from .server import serve, HttpProtocol
 from .static import register as static_register
 from .exceptions import ServerError
-from socket import socket
+from socket import socket, SOL_SOCKET, SO_REUSEADDR
 from os import set_inheritable
 
 
@@ -244,7 +244,8 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None, protocol=HttpProtocol, backlog=100):
+            workers=1, loop=None, protocol=HttpProtocol, backlog=100,
+            stop_event=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -320,7 +321,7 @@ class Sanic:
             else:
                 log.info('Spinning up {} workers...'.format(workers))
 
-                self.serve_multiple(server_settings, workers)
+                self.serve_multiple(server_settings, workers, stop_event)
 
         except Exception as e:
             log.exception(
@@ -335,7 +336,7 @@ class Sanic:
         get_event_loop().stop()
 
     @staticmethod
-    def serve_multiple(server_settings, workers, stop_event=None):
+    def serve_multiple(self, server_settings, workers, stop_event=None):
         """
         Starts multiple server processes simultaneously.  Stops on interrupt
         and terminate signals, and drains connections when complete.
@@ -353,6 +354,7 @@ class Sanic:
         signal(SIGTERM, lambda s, f: stop_event.set())
 
         sock = socket()
+        #sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         sock.bind((server_settings['host'], server_settings['port']))
         set_inheritable(sock.fileno(), True)
         server_settings['sock'] = sock
@@ -362,10 +364,12 @@ class Sanic:
         processes = []
         for _ in range(workers):
             process = Process(target=serve, kwargs=server_settings)
+            process.daemon = True
             process.start()
             processes.append(process)
 
         for process in processes:
             process.terminate()
+
         for process in processes:
             process.join()

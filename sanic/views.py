@@ -32,7 +32,7 @@ class HTTPMethodView:
     To add any decorator you could set it into decorators variable
     """
 
-    decorators = ()
+    decorators = []
 
     def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)

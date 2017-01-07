@@ -153,3 +153,44 @@ def test_with_middleware_response():
     assert type(results[0]) is Request
     assert type(results[1]) is Request
     assert issubclass(type(results[2]), HTTPResponse)
+
+
+def test_with_custom_class_methods():
+    app = Sanic('test_with_custom_class_methods')
+
+    class DummyView(HTTPMethodView):
+        global_var = 0
+
+        def _iternal_method(self):
+            self.global_var += 10
+
+        def get(self, request):
+            self._iternal_method()
+            return text('I am get method and global var is {}'.format(self.global_var))
+
+    app.add_route(DummyView.as_view(), '/')
+    request, response = sanic_endpoint_test(app, method="get")
+    assert response.text == 'I am get method and global var is 10'
+
+
+def test_with_decorator():
+    app = Sanic('test_with_decorator')
+
+    results = []
+
+    def stupid_decorator(view):
+        def decorator(*args, **kwargs):
+            results.append(1)
+            return view(*args, **kwargs)
+        return decorator
+
+    class DummyView(HTTPMethodView):
+        decorators = [stupid_decorator]
+
+        def get(self, request):
+            return text('I am get method')
+
+    app.add_route(DummyView.as_view(), '/')
+    request, response = sanic_endpoint_test(app, method="get", debug=True)
+    assert response.text == 'I am get method'
+    assert results[0] == 1

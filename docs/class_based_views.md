@@ -48,7 +48,7 @@ If you want to add decorator for class, you could set decorators variable
 
 ```
 class ViewWithDecorator(HTTPMethodView):
-  decorators = (some_decorator_here)
+  decorators = [some_decorator_here]
 
   def get(self, request, name):
     return text('Hello I have a decorator')

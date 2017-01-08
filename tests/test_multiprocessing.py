@@ -2,6 +2,8 @@ from multiprocessing import Array, Event, Process
 from time import sleep, time
 from ujson import loads as json_loads
 
+import pytest
+
 from sanic import Sanic
 from sanic.response import json
 from sanic.utils import local_request, HOST, PORT
@@ -13,8 +15,9 @@ from sanic.utils import local_request, HOST, PORT
 
 # TODO: Figure out why this freezes on pytest but not when
 # executed via interpreter
-
-def skip_test_multiprocessing():
+@pytest.mark.skip(
+    reason="Freezes with pytest not on interpreter")
+def test_multiprocessing():
     app = Sanic('test_json')
 
     response = Array('c', 50)
@@ -52,8 +55,9 @@ def skip_test_multiprocessing():
 
     assert results.get('test') == True
 
-
-def skip_test_drain_connections():
+@pytest.mark.skip(
+    reason="Freezes with pytest not on interpreter")
+def test_drain_connections():
     app = Sanic('test_json')
 
     @app.route('/')

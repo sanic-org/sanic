@@ -51,7 +51,7 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     # Decorator
-    def route(self, uri, methods=None):
+    def route(self, uri, methods=None, host=None):
         """
         Decorates a function to be registered as a route
         :param uri: path of the URL
@@ -65,12 +65,13 @@ class Sanic:
             uri = '/' + uri
 
         def response(handler):
-            self.router.add(uri=uri, methods=methods, handler=handler)
+            self.router.add(uri=uri, methods=methods, handler=handler,
+                            host=host)
             return handler
 
         return response
 
-    def add_route(self, handler, uri, methods=None):
+    def add_route(self, handler, uri, methods=None, host=None):
         """
         A helper method to register class instance or
         functions as a handler to the application url
@@ -80,11 +81,11 @@ class Sanic:
         :param methods: list or tuple of methods allowed
         :return: function or class instance
         """
-        self.route(uri=uri, methods=methods)(handler)
+        self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 
-    def remove_route(self, uri, clean_cache=True):
-        self.router.remove(uri, clean_cache)
+    def remove_route(self, uri, clean_cache=True, host=None):
+        self.router.remove(uri, clean_cache, host)
 
     # Decorator
     def exception(self, *exceptions):

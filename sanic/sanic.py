@@ -374,3 +374,6 @@ class Sanic:
 
         for process in self.processes:
             process.join()
+
+        # the above processes will block this until they're stopped
+        self.stop()

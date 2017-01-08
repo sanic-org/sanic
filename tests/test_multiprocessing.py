@@ -53,7 +53,7 @@ def skip_test_multiprocessing():
     assert results.get('test') == True
 
 
-def test_drain_connections():
+def skip_test_drain_connections():
     app = Sanic('test_json')
 
     @app.route('/')

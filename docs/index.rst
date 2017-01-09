@@ -25,7 +25,7 @@ Module Documentation
 
 .. toctree::
 
-   Module Reference <sanic>
+   Module Reference <_api/sanic>
 
 * :ref:`genindex`
 * :ref:`search`

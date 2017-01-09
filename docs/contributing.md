@@ -13,9 +13,8 @@ Sanic's documentation is built using [sphinx](http://www.sphinx-doc.org/en/1.5.1
 To generate the documentation from scratch:
 
 ```bash
-rm -f docs/sanic.rst
-rm -f docs/modules.rst
-sphinx-apidoc -o docs/ sanic
+rm -f docs/_api/*
+sphinx-apidoc -o docs/_api/ sanic
 sphinx-build -b html docs docs/_build
 ```
 

@@ -10,5 +10,4 @@ settings.py
 .idea/*
 .cache/*
 docs/_build/
-docs/sanic.rst
-docs/modules.rst
+docs/_api/

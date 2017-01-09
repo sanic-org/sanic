@@ -4,8 +4,15 @@ from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
+from sanic.exceptions import InvalidUsage
 
 from .log import log
+
+
+DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+# HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
+# > If the media type remains unknown, the recipient SHOULD treat it
+# > as type "application/octet-stream"
 
 
 class RequestParameters(dict):
@@ -26,7 +33,7 @@ class RequestParameters(dict):
         return self.super.get(name, default)
 
 
-class Request:
+class Request(dict):
     """
     Properties of an HTTP request such as URL, headers, etc.
     """
@@ -57,25 +64,35 @@ class Request:
 
     @property
     def json(self):
-        if not self.parsed_json:
+        if self.parsed_json is None:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                pass
+                raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
 
     @property
+    def token(self):
+        """
+        Attempts to return the auth header token.
+        :return: token related to request
+        """
+        auth_header = self.headers.get('Authorization')
+        if auth_header is not None:
+            return auth_header.split()[1]
+        return auth_header
+
+    @property
     def form(self):
         if self.parsed_form is None:
-            self.parsed_form = {}
-            self.parsed_files = {}
-            content_type, parameters = parse_header(
-                self.headers.get('Content-Type'))
+            self.parsed_form = RequestParameters()
+            self.parsed_files = RequestParameters()
+            content_type = self.headers.get(
+                'Content-Type', DEFAULT_HTTP_CONTENT_TYPE)
+            content_type, parameters = parse_header(content_type)
             try:
-                is_url_encoded = (
-                    content_type == 'application/x-www-form-urlencoded')
-                if content_type is None or is_url_encoded:
+                if content_type == 'application/x-www-form-urlencoded':
                     self.parsed_form = RequestParameters(
                         parse_qs(self.body.decode('utf-8')))
                 elif content_type == 'multipart/form-data':
@@ -83,9 +100,8 @@ class Request:
                     boundary = parameters['boundary'].encode('utf-8')
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
-            except Exception as e:
-                log.exception(e)
-                pass
+            except Exception:
+                log.exception("Failed when parsing form")
 
         return self.parsed_form
 
@@ -110,9 +126,10 @@ class Request:
     @property
     def cookies(self):
         if self._cookies is None:
-            if 'Cookie' in self.headers:
+            cookie = self.headers.get('Cookie') or self.headers.get('cookie')
+            if cookie is not None:
                 cookies = SimpleCookie()
-                cookies.load(self.headers['Cookie'])
+                cookies.load(cookie)
                 self._cookies = {name: cookie.value
                                  for name, cookie in cookies.items()}
             else:
@@ -128,10 +145,10 @@ def parse_multipart_form(body, boundary):
     Parses a request body and returns fields and files
     :param body: Bytes request body
     :param boundary: Bytes multipart boundary
-    :return: fields (dict), files (dict)
+    :return: fields (RequestParameters), files (RequestParameters)
     """
-    files = {}
-    fields = {}
+    files = RequestParameters()
+    fields = RequestParameters()
 
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
@@ -162,9 +179,16 @@ def parse_multipart_form(body, boundary):
 
         post_data = form_part[line_index:-4]
         if file_name or file_type:
-            files[field_name] = File(
-                type=file_type, name=file_name, body=post_data)
+            file = File(type=file_type, name=file_name, body=post_data)
+            if field_name in files:
+                files[field_name].append(file)
+            else:
+                files[field_name] = [file]
         else:
-            fields[field_name] = post_data.decode('utf-8')
+            value = post_data.decode('utf-8')
+            if field_name in fields:
+                fields[field_name].append(value)
+            else:
+                fields[field_name] = [value]
 
     return fields, files

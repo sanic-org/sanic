@@ -23,18 +23,28 @@ class RouteExists(Exception):
     pass
 
 
+class RouteDoesNotExist(Exception):
+    pass
+
+
 class Router:
     """
     Router supports basic routing with parameters and method checks
     Usage:
-        @sanic.route('/my/url/<my_parameter>', methods=['GET', 'POST', ...])
-        def my_route(request, my_parameter):
+        @app.route('/my_url/<my_param>', methods=['GET', 'POST', ...])
+        def my_route(request, my_param):
+            do stuff...
+    or
+        @app.route('/my_url/<my_param:my_type>', methods=['GET', 'POST', ...])
+        def my_route_with_type(request, my_param: my_type):
             do stuff...
 
     Parameters will be passed as keyword arguments to the request handling
-    function provided Parameters can also have a type by appending :type to
-    the <parameter>.  If no type is provided, a string is expected.  A regular
-    expression can also be passed in as the type
+    function. Provided parameters can also have a type by appending :type to
+    the <parameter>. Given parameter must be able to be type-casted to this.
+    If no type is provided, a string is expected.  A regular expression can
+    also be passed in as the type. The argument given to the function will
+    always be a string, independent of the type.
     """
     routes_static = None
     routes_dynamic = None
@@ -102,6 +112,23 @@ class Router:
             self.routes_dynamic[url_hash(uri)].append(route)
         else:
             self.routes_static[uri] = route
+
+    def remove(self, uri, clean_cache=True):
+        try:
+            route = self.routes_all.pop(uri)
+        except KeyError:
+            raise RouteDoesNotExist("Route was not registered: {}".format(uri))
+
+        if route in self.routes_always_check:
+            self.routes_always_check.remove(route)
+        elif url_hash(uri) in self.routes_dynamic \
+                and route in self.routes_dynamic[url_hash(uri)]:
+            self.routes_dynamic[url_hash(uri)].remove(route)
+        else:
+            self.routes_static.pop(uri)
+
+        if clean_cache:
+            self._get.cache_clear()
 
     def get(self, request):
         """

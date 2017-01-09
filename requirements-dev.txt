@@ -2,6 +2,7 @@ httptools
 ujson
 uvloop
 aiohttp
+aiocache
 pytest
 coverage
 tox
@@ -10,3 +11,4 @@ bottle
 kyoukai
 falcon
 tornado
+aiofiles

@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
         module = import_module(module_name)
         app = getattr(module, app_name, None)
-        if type(app) is not Sanic:
+        if not isinstance(app, Sanic):
             raise ValueError("Module is not a Sanic app, it is a {}.  "
                              "Perhaps you meant {}.app?"
                              .format(type(app).__name__, args.module))

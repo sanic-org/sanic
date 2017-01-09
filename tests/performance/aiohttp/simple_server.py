@@ -15,4 +15,4 @@ async def handle(request):
 app = web.Application(loop=loop)
 app.router.add_route('GET', '/', handle)
 
-web.run_app(app, port=sys.argv[1])
+web.run_app(app, port=sys.argv[1], access_log=None)

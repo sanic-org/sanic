@@ -29,4 +29,16 @@ async def person_handler(request, name):
 async def folder_handler(request, folder_id):
 	return text('Folder - {}'.format(folder_id))
 
+async def handler1(request):
+	return text('OK')
+app.add_route(handler1, '/test')
+
+async def handler2(request, name):
+	return text('Folder - {}'.format(name))
+app.add_route(handler2, '/folder/<name>')
+
+async def person_handler2(request, name):
+	return text('Person - {}'.format(name))
+app.add_route(person_handler2, '/person/<name:[A-z]>')
+
 ```

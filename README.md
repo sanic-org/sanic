@@ -1,5 +1,7 @@
 # Sanic
 
+[![Join the chat at https://gitter.im/sanic-python/Lobby](https://badges.gitter.im/sanic-python/Lobby.svg)](https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/channelcat/sanic.svg?branch=master)](https://travis-ci.org/channelcat/sanic)
 [![PyPI](https://img.shields.io/pypi/v/sanic.svg)](https://pypi.python.org/pypi/sanic/)
 [![PyPI](https://img.shields.io/pypi/pyversions/sanic.svg)](https://pypi.python.org/pypi/sanic/)
@@ -31,13 +33,17 @@ All tests were run on an AWS medium instance running ubuntu, using 1 process.  E
 from sanic import Sanic
 from sanic.response import json
 
-app = Sanic(__name__)
+
+app = Sanic()
+
 
 @app.route("/")
 async def test(request):
-    return json({ "hello": "world" })
+    return json({"hello": "world"})
 
-app.run(host="0.0.0.0", port=8000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
+
 ```
 
 ## Installation
@@ -50,8 +56,11 @@ app.run(host="0.0.0.0", port=8000)
  * [Middleware](docs/middleware.md)
  * [Exceptions](docs/exceptions.md)
  * [Blueprints](docs/blueprints.md)
+ * [Class Based Views](docs/class_based_views.md)
  * [Cookies](docs/cookies.md)
  * [Static Files](docs/static_files.md)
+ * [Custom Protocol](docs/custom_protocol.md)
+ * [Testing](docs/testing.md)
  * [Deploying](docs/deploying.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)
@@ -70,7 +79,7 @@ app.run(host="0.0.0.0", port=8000)
                      ▄▄▄▄▄
             ▀▀▀██████▄▄▄       _______________
           ▄▄▄▄▄  █████████▄  /                 \
-         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  | 
+         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
        ▀▀█████▄▄ ▀██████▄██ | _________________/
        ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
             ▀▀▀▄  ▀▀███ ▀       ▄▄

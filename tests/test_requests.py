@@ -2,6 +2,7 @@ from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
 from sanic.response import json, text
 from sanic.utils import sanic_endpoint_test
+from sanic.exceptions import ServerError
 
 
 # ------------------------------------------------------------ #
@@ -32,6 +33,47 @@ def test_text():
     assert response.text == 'Hello'
 
 
+def test_headers():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    async def handler(request):
+        headers = {"spam": "great"}
+        return text('Hello', headers=headers)
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.headers.get('spam') == 'great'
+
+
+def test_non_str_headers():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    async def handler(request):
+        headers = {"answer": 42}
+        return text('Hello', headers=headers)
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.headers.get('answer') == '42'
+    
+def test_invalid_response():
+    app = Sanic('test_invalid_response')
+
+    @app.exception(ServerError)
+    def handler_exception(request, exception):
+        return text('Internal Server Error.', 500)
+
+    @app.route('/')
+    async def handler(request):
+        return 'This should fail'
+
+    request, response = sanic_endpoint_test(app)
+    assert response.status == 500
+    assert response.text == "Internal Server Error."
+    
+    
 def test_json():
     app = Sanic('test_json')
 
@@ -49,6 +91,19 @@ def test_json():
     assert results.get('test') == True
 
 
+def test_invalid_json():
+    app = Sanic('test_json')
+
+    @app.route('/')
+    async def handler(request):
+        return json(request.json())
+
+    data = "I am not json"
+    request, response = sanic_endpoint_test(app, data=data)
+
+    assert response.status == 400
+
+
 def test_query_string():
     app = Sanic('test_query_string')
 
@@ -56,11 +111,29 @@ def test_query_string():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, params=[("test1", 1), ("test2", "false"), ("test2", "true")])
+    request, response = sanic_endpoint_test(app, params=[("test1", "1"), ("test2", "false"), ("test2", "true")])
 
     assert request.args.get('test1') == '1'
     assert request.args.get('test2') == 'false'
 
+
+def test_token():
+    app = Sanic('test_post_token')
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    # uuid4 generated token.
+    token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Token {}'.format(token)
+    }
+
+    request, response = sanic_endpoint_test(app, headers=headers)
+
+    assert request.token == token
 
 # ------------------------------------------------------------ #
 #  POST

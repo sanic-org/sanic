@@ -33,3 +33,16 @@ like so:
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337, workers=4)
 ```
+
+## Disable Sanic logo
+
+```python
+from sanic.config import Config
+
+
+class MyConfig(Config):
+    LOGO = ''
+
+
+app = Sanic(__name__, config=MyConfig())
+```

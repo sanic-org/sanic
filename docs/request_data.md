@@ -16,7 +16,7 @@ See request.py for more information
 
 ```python
 from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import json, text, file
 
 @app.route("/json")
 def post_json(request):
@@ -46,4 +46,11 @@ def query_string(request):
 @app.route("/users", methods=["POST",])
 def create_user(request):
     return text("You are trying to create a user with the following POST: %s" % request.body)
+
+
+@app.route("/file/<file_id>", methods=["GET",])
+def download_a_file(request, file_id):
+     def find_path_by_id(file_id):
+         return "/path/to/file.ext"
+    return await file(find_path_by_id(file_id), force_download=True)
 ```

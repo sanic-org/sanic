@@ -55,8 +55,9 @@ class Router:
         self.routes_static = {}
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
+        self.hosts = None
 
-    def add(self, uri, methods, handler):
+    def add(self, uri, methods, handler, host=None):
         """
         Adds a handler to the route list
         :param uri: Path to match
@@ -66,6 +67,17 @@ class Router:
         When executed, it should provide a response object.
         :return: Nothing
         """
+
+        if host is not None:
+            # we want to track if there are any
+            # vhosts on the Router instance so that we can
+            # default to the behavior without vhosts
+            if self.hosts is None:
+                self.hosts = set(host)
+            else:
+                self.hosts.add(host)
+            uri = host + uri
+
         if uri in self.routes_all:
             raise RouteExists("Route already registered: {}".format(uri))
 
@@ -113,7 +125,9 @@ class Router:
         else:
             self.routes_static[uri] = route
 
-    def remove(self, uri, clean_cache=True):
+    def remove(self, uri, clean_cache=True, host=None):
+        if host is not None:
+            uri = host + uri
         try:
             route = self.routes_all.pop(uri)
         except KeyError:
@@ -137,10 +151,14 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
-        return self._get(request.url, request.method)
+        if self.hosts is None:
+            return self._get(request.url, request.method, '')
+        else:
+            return self._get(request.url, request.method,
+                             request.headers.get("Host", ''))
 
     @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
-    def _get(self, url, method):
+    def _get(self, url, method, host=None):
         """
         Gets a request handler based on the URL of the request, or raises an
         error.  Internal method for caching.
@@ -148,6 +166,7 @@ class Router:
         :param method: Request method
         :return: handler, arguments, keyword arguments
         """
+        url = host + url
         # Check against known static routes
         route = self.routes_static.get(url)
         if route:

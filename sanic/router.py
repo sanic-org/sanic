@@ -158,7 +158,7 @@ class Router:
                              request.headers.get("Host", ''))
 
     @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
-    def _get(self, url, method, host=None):
+    def _get(self, url, method, host):
         """
         Gets a request handler based on the URL of the request, or raises an
         error.  Internal method for caching.

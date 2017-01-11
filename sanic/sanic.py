@@ -179,6 +179,13 @@ class Sanic:
         try:
             request_started.send(request)
 
+            # Fetch handler from router
+            handler, args, kwargs = self.router.get(request)
+            if handler is None:
+                raise ServerError(
+                    ("'None' was returned while requesting a "
+                     "handler from the router"))
+
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
@@ -196,17 +203,9 @@ class Sanic:
             # No middleware results
             if not response:
                 # -------------------------------------------- #
-                # Execute Handler
+                # Execute Response Handler
                 # -------------------------------------------- #
 
-                # Fetch handler from router
-                handler, args, kwargs = self.router.get(request)
-                if handler is None:
-                    raise ServerError(
-                        ("'None' was returned while requesting a "
-                         "handler from the router"))
-
-                # Run response handler
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response

@@ -59,6 +59,62 @@ def test_several_bp_with_url_prefix():
     request, response = sanic_endpoint_test(app, uri='/test2/')
     assert response.text == 'Hello2'
 
+def test_bp_with_host():
+    app = Sanic('test_bp_host')
+    bp = Blueprint('test_bp_host', url_prefix='/test1', host="example.com")
+
+    @bp.route('/')
+    def handler(request):
+        return text('Hello')
+
+    app.blueprint(bp)
+    headers = {"Host": "example.com"}
+    request, response = sanic_endpoint_test(app, uri='/test1/',
+                                            headers=headers)
+
+    assert response.text == 'Hello'
+
+
+def test_several_bp_with_host():
+    app = Sanic('test_text')
+    bp = Blueprint('test_text',
+                   url_prefix='/test',
+                   host="example.com")
+    bp2 = Blueprint('test_text2',
+                    url_prefix='/test',
+                    host="sub.example.com")
+
+    @bp.route('/')
+    def handler(request):
+        return text('Hello')
+
+    @bp2.route('/')
+    def handler2(request):
+        return text('Hello2')
+
+    @bp2.route('/other/')
+    def handler2(request):
+        return text('Hello3')
+
+
+    app.blueprint(bp)
+    app.blueprint(bp2)
+
+    assert bp.host == "example.com"
+    headers = {"Host": "example.com"}
+    request, response = sanic_endpoint_test(app, uri='/test/',
+                                            headers=headers)
+    assert response.text == 'Hello'
+
+    assert bp2.host == "sub.example.com"
+    headers = {"Host": "sub.example.com"}
+    request, response = sanic_endpoint_test(app, uri='/test/',
+                                            headers=headers)
+
+    assert response.text == 'Hello2'
+    request, response = sanic_endpoint_test(app, uri='/test/other/',
+                                            headers=headers)
+    assert response.text == 'Hello3'
 
 def test_bp_middleware():
     app = Sanic('test_middleware')

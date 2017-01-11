@@ -67,12 +67,21 @@ def test_bp_with_host():
     def handler(request):
         return text('Hello')
 
+    @bp.route('/', host="sub.example.com")
+    def handler(request):
+        return text('Hello subdomain!')
+
     app.blueprint(bp)
     headers = {"Host": "example.com"}
     request, response = sanic_endpoint_test(app, uri='/test1/',
                                             headers=headers)
-
     assert response.text == 'Hello'
+
+    headers = {"Host": "sub.example.com"}
+    request, response = sanic_endpoint_test(app, uri='/test1/',
+                                            headers=headers)
+
+    assert response.text == 'Hello subdomain!'
 
 
 def test_several_bp_with_host():

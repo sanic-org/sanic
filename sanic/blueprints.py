@@ -87,18 +87,18 @@ class Blueprint:
         for deferred in self.deferred_functions:
             deferred(state)
 
-    def route(self, uri, methods=None):
+    def route(self, uri, methods=None, host=None):
         """
         """
         def decorator(handler):
-            self.record(lambda s: s.add_route(handler, uri, methods))
+            self.record(lambda s: s.add_route(handler, uri, methods, host))
             return handler
         return decorator
 
-    def add_route(self, handler, uri, methods=None):
+    def add_route(self, handler, uri, methods=None, host=None):
         """
         """
-        self.record(lambda s: s.add_route(handler, uri, methods))
+        self.record(lambda s: s.add_route(handler, uri, methods, host))
         return handler
 
     def listener(self, event):

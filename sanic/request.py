@@ -25,6 +25,9 @@ class RequestParameters(dict):
         self.super = super()
         self.super.__init__(*args, **kwargs)
 
+    def __getitem__(self, name):
+        return self.get(name)
+
     def get(self, name, default=None):
         values = self.super.get(name)
         return values[0] if values else default

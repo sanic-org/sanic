@@ -2,3 +2,5 @@ httptools
 ujson
 uvloop
 aiofiles
+multidict
+blinker

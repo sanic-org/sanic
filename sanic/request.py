@@ -25,6 +25,9 @@ class RequestParameters(dict):
         self.super = super()
         self.super.__init__(*args, **kwargs)
 
+    def __getitem__(self, name):
+        return self.get(name)
+
     def get(self, name, default=None):
         values = self.super.get(name)
         return values[0] if values else default
@@ -64,13 +67,24 @@ class Request(dict):
 
     @property
     def json(self):
-        if not self.parsed_json:
+        if self.parsed_json is None:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
                 raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
+
+    @property
+    def token(self):
+        """
+        Attempts to return the auth header token.
+        :return: token related to request
+        """
+        auth_header = self.headers.get('Authorization')
+        if auth_header is not None:
+            return auth_header.split()[1]
+        return auth_header
 
     @property
     def form(self):

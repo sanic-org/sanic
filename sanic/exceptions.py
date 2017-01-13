@@ -1,4 +1,5 @@
 from .response import text
+from .log import log
 from traceback import format_exc
 
 
@@ -56,18 +57,31 @@ class Handler:
         :return: Response object
         """
         handler = self.handlers.get(type(exception), self.default)
-        response = handler(request=request, exception=exception)
+        try:
+            response = handler(request=request, exception=exception)
+        except:
+            if self.sanic.debug:
+                response_message = (
+                    'Exception raised in exception handler "{}" '
+                    'for uri: "{}"\n{}').format(
+                        handler.__name__, request.url, format_exc())
+                log.error(response_message)
+                return text(response_message, 500)
+            else:
+                return text('An error occurred while handling an error', 500)
         return response
 
     def default(self, request, exception):
         if issubclass(type(exception), SanicException):
             return text(
-                "Error: {}".format(exception),
+                'Error: {}'.format(exception),
                 status=getattr(exception, 'status_code', 500))
         elif self.sanic.debug:
-            return text(
-                "Error: {}\nException: {}".format(
-                    exception, format_exc()), status=500)
+            response_message = (
+                'Exception occurred while handling uri: "{}"\n{}'.format(
+                    request.url, format_exc()))
+            log.error(response_message)
+            return text(response_message, status=500)
         else:
             return text(
-                "An error occurred while generating the request", status=500)
+                'An error occurred while generating the response', status=500)

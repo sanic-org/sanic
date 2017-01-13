@@ -33,6 +33,31 @@ def test_text():
     assert response.text == 'Hello'
 
 
+def test_headers():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    async def handler(request):
+        headers = {"spam": "great"}
+        return text('Hello', headers=headers)
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.headers.get('spam') == 'great'
+
+
+def test_non_str_headers():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    async def handler(request):
+        headers = {"answer": 42}
+        return text('Hello', headers=headers)
+
+    request, response = sanic_endpoint_test(app)
+
+    assert response.headers.get('answer') == '42'
+    
 def test_invalid_response():
     app = Sanic('test_invalid_response')
 
@@ -47,8 +72,8 @@ def test_invalid_response():
     request, response = sanic_endpoint_test(app)
     assert response.status == 500
     assert response.text == "Internal Server Error."
-
-
+    
+    
 def test_json():
     app = Sanic('test_json')
 
@@ -91,6 +116,24 @@ def test_query_string():
     assert request.args.get('test1') == '1'
     assert request.args.get('test2') == 'false'
 
+
+def test_token():
+    app = Sanic('test_post_token')
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    # uuid4 generated token.
+    token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Token {}'.format(token)
+    }
+
+    request, response = sanic_endpoint_test(app, headers=headers)
+
+    assert request.token == token
 
 # ------------------------------------------------------------ #
 #  POST

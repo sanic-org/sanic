@@ -62,6 +62,7 @@ if __name__ == "__main__":
  * [Custom Protocol](docs/custom_protocol.md)
  * [Testing](docs/testing.md)
  * [Deploying](docs/deploying.md)
+ * [Extensions](docs/extensions.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)
 

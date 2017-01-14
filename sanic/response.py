@@ -172,7 +172,7 @@ async def file(location, mime_type=None, headers=None):
 
 
 def redirect(to, headers=None, status=302,
-             content_type=None):
+             content_type="text/html; charset=utf-8"):
     """
     Aborts execution and causes a 302 redirect (by default).
 
@@ -180,12 +180,9 @@ def redirect(to, headers=None, status=302,
     :param headers: optional dict of headers to include in the new request
     :param status: status code (int) of the new request, defaults to 302
     :param content_type:
-        the content type (string) of the response, defaults to None
+        the content type (string) of the response
     :returns: the redirecting Response
     """
-    if not content_type:
-        content_type = "text/html; charset=utf-8"
-
     headers = headers or {}
 
     # According to RFC 7231, a relative URI is now permitted.

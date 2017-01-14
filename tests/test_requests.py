@@ -193,7 +193,7 @@ def test_post_form_multipart_form_data():
 
 @pytest.fixture
 def redirect_app():
-    app = Sanic('test_get_then_redirect_01')
+    app = Sanic('test_redirection')
 
     @app.route('/redirect_init')
     async def redirect_init(request):

@@ -224,6 +224,17 @@ def test_redirect_default_302(redirect_app):
     assert response.headers["Content-Type"] == 'text/html; charset=utf-8'
 
 
+def test_redirect_headers_none(redirect_app):
+    request, response = sanic_endpoint_test(
+        redirect_app, method="get",
+        uri="/redirect_init",
+        headers=None,
+        allow_redirects=False)
+
+    assert response.status == 302
+    assert response.headers["Location"] == "/redirect_target"
+
+
 def test_redirect_with_301(redirect_app):
     """
     Test redirection with a different status code.

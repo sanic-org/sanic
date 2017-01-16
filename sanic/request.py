@@ -145,9 +145,7 @@ class Request(dict):
     def ip(self):
         if self._ip is None:
             self._ip = self.transport.get_extra_info('peername')
-            return self._ip
-        else:
-            return self._ip
+        return self._ip
 
 
 File = namedtuple('File', ['type', 'body', 'name'])

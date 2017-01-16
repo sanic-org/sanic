@@ -65,6 +65,7 @@ class Request(dict):
         self.parsed_files = None
         self.parsed_args = None
         self._cookies = None
+        self._ip = None
 
     @property
     def json(self):
@@ -142,7 +143,11 @@ class Request(dict):
 
     @property
     def ip(self):
-        return self.transport.get_extra_info('peername')
+        if self._ip is None:
+            self._ip = self.transport.get_extra_info('peername')
+            return self._ip
+        else:
+            return self._ip
 
 
 File = namedtuple('File', ['type', 'body', 'name'])

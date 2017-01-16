@@ -121,15 +121,12 @@ class HttpProtocol(asyncio.Protocol):
         self.headers.append((name.decode(), value.decode('utf-8')))
 
     def on_headers_complete(self):
-        remote_addr = self.transport.get_extra_info('peername')
-        if remote_addr:
-            self.headers.append(('Remote-Addr', '%s:%s' % remote_addr))
-
         self.request = Request(
             url_bytes=self.url,
             headers=CIMultiDict(self.headers),
             version=self.parser.get_http_version(),
-            method=self.parser.get_method().decode()
+            method=self.parser.get_method().decode(),
+            transport=self.transport
         )
 
     def on_body(self, body):

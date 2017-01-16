@@ -9,6 +9,7 @@ The following request variables are accessible as properties:
 `request.args` (dict) - Query String variables.  Use getlist to get multiple of the same name  
 `request.form` (dict) - Posted form variables.  Use getlist to get multiple of the same name  
 `request.body` (bytes) - Posted raw body.  To get the raw data, regardless of content type  
+`request.ip` (str) - IP address of the requester
 
 See request.py for more information
 

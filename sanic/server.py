@@ -136,7 +136,7 @@ class HttpProtocol(asyncio.Protocol):
             exception = PayloadTooLarge('Payload Too Large')
             self.write_error(exception)
 
-        self.headers.append((name.decode(), value.decode('utf-8')))
+        self.headers.append((name.decode().casefold(), value.decode()))
 
     def on_headers_complete(self):
         remote_addr = self.transport.get_extra_info('peername')

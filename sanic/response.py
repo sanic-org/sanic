@@ -83,10 +83,10 @@ class HTTPResponse:
         if body is not None:
             try:
                 # Try to encode it regularly
-                self.body = body.encode('utf-8')
+                self.body = body.encode()
             except AttributeError:
                 # Convert it to a str if you can't
-                self.body = str(body).encode('utf-8')
+                self.body = str(body).encode()
         else:
             self.body = body_bytes
 
@@ -106,11 +106,11 @@ class HTTPResponse:
             for name, value in self.headers.items():
                 try:
                     headers += (
-                        b'%b: %b\r\n' % (name.title().encode(), value.encode('utf-8')))
+                        b'%b: %b\r\n' % (name.encode(), value.encode()))
                 except AttributeError:
                     headers += (
                         b'%b: %b\r\n' % (
-                            str(name).title().encode(), str(value).encode('utf-8')))
+                            str(name).encode(), str(value).encode()))
 
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all

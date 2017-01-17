@@ -21,12 +21,7 @@ from os import set_inheritable
 
 class Sanic:
     def __init__(self, name=None, router=None,
-                 error_handler=None, logger=None):
-        if logger is None:
-            logging.basicConfig(
-                level=logging.INFO,
-                format="%(asctime)s: %(levelname)s: %(message)s"
-            )
+                 error_handler=None):
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
@@ -154,7 +149,8 @@ class Sanic:
     def register_blueprint(self, *args, **kwargs):
         # TODO: deprecate 1.0
         log.warning("Use of register_blueprint will be deprecated in "
-                    "version 1.0.  Please use the blueprint method instead")
+                    "version 1.0.  Please use the blueprint method instead",
+                    DeprecationWarning)
         return self.blueprint(*args, **kwargs)
 
     # -------------------------------------------------------------------- #
@@ -247,7 +243,7 @@ class Sanic:
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, sock=None,
             workers=1, loop=None, protocol=HttpProtocol, backlog=100,
-            stop_event=None):
+            stop_event=None, logger=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -269,6 +265,10 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s: %(levelname)s: %(message)s"
+        )
         self.error_handler.debug = True
         self.debug = debug
         self.loop = loop
@@ -350,6 +350,12 @@ class Sanic:
         :param stop_event: if provided, is used as a stop signal
         :return:
         """
+        # In case this is called directly, we configure logging here too.
+        # This won't interfere with the same call from run()
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s: %(levelname)s: %(message)s"
+        )
         server_settings['reuse_port'] = True
 
         # Create a stop event to be triggered by a signal

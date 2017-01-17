@@ -2,4 +2,3 @@ httptools
 ujson
 uvloop
 aiofiles
-multidict

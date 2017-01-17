@@ -173,6 +173,7 @@ class Handler:
         try:
             response = handler(request=request, exception=exception)
         except:
+            log.error(format_exc())
             if self.sanic.debug:
                 response_message = (
                     'Exception raised in exception handler "{}" '
@@ -185,6 +186,7 @@ class Handler:
         return response
 
     def default(self, request, exception):
+        log.error(format_exc())
         if issubclass(type(exception), SanicException):
             return text(
                 'Error: {}'.format(exception),

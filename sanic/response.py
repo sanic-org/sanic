@@ -106,11 +106,11 @@ class HTTPResponse:
             for name, value in self.headers.items():
                 try:
                     headers += (
-                        b'%b: %b\r\n' % (name.encode(), value.encode()))
+                        b'%b: %b\r\n' % (name.encode(), value.encode('utf-8')))
                 except AttributeError:
                     headers += (
                         b'%b: %b\r\n' % (
-                            str(name).encode(), str(value).encode()))
+                            str(name).encode(), str(value).encode('utf-8')))
 
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all

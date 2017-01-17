@@ -83,10 +83,10 @@ class HTTPResponse:
         if body is not None:
             try:
                 # Try to encode it regularly
-                self.body = body.encode('utf-8')
+                self.body = body.encode()
             except AttributeError:
                 # Convert it to a str if you can't
-                self.body = str(body).encode('utf-8')
+                self.body = str(body).encode()
         else:
             self.body = body_bytes
 

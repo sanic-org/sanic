@@ -142,7 +142,9 @@ class Request(dict):
 
     @property
     def ip(self):
-        return self.transport.get_extra_info('peername')
+        if not hasattr(self, '_ip'):
+            self._ip = self.transport.get_extra_info('peername')
+        return self._ip
 
 
 File = namedtuple('File', ['type', 'body', 'name'])

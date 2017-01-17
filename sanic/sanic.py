@@ -21,7 +21,7 @@ from os import set_inheritable
 
 class Sanic:
     def __init__(self, name=None, router=None,
-                 error_handler=None, logger=None):
+                 error_handler=None, logger=None, config=None):
         if logger is None:
             logging.basicConfig(
                 level=logging.INFO,
@@ -33,7 +33,7 @@ class Sanic:
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or Handler(self)
-        self.config = Config()
+        self.config = config or Config()
         self.request_middleware = deque()
         self.response_middleware = deque()
         self.blueprints = {}

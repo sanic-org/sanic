@@ -15,8 +15,10 @@ Guides
    class_based_views
    cookies
    static_files
+   custom_protocol
    testing
    deploying
+   extensions
    contributing
 
 

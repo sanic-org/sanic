@@ -83,10 +83,10 @@ class HTTPResponse:
         if body is not None:
             try:
                 # Try to encode it regularly
-                self.body = body.encode('utf-8')
+                self.body = body.encode()
             except AttributeError:
                 # Convert it to a str if you can't
-                self.body = str(body).encode('utf-8')
+                self.body = str(body).encode()
         else:
             self.body = body_bytes
 
@@ -169,3 +169,26 @@ async def file(location, mime_type=None, headers=None):
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
+
+
+def redirect(to, headers=None, status=302,
+             content_type="text/html; charset=utf-8"):
+    """
+    Aborts execution and causes a 302 redirect (by default).
+
+    :param to: path or fully qualified URL to redirect to
+    :param headers: optional dict of headers to include in the new request
+    :param status: status code (int) of the new request, defaults to 302
+    :param content_type:
+        the content type (string) of the response
+    :returns: the redirecting Response
+    """
+    headers = headers or {}
+
+    # According to RFC 7231, a relative URI is now permitted.
+    headers['Location'] = to
+
+    return HTTPResponse(
+        status=status,
+        headers=headers,
+        content_type=content_type)

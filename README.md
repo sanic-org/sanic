@@ -74,6 +74,7 @@ app.run(host="0.0.0.0", port=8443, ssl=context)
  * [Custom Protocol](docs/custom_protocol.md)
  * [Testing](docs/testing.md)
  * [Deploying](docs/deploying.md)
+ * [Extensions](docs/extensions.md)
  * [Contributing](docs/contributing.md)
  * [License](LICENSE)
 

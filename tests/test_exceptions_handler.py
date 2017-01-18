@@ -2,6 +2,7 @@ from sanic import Sanic
 from sanic.response import text
 from sanic.exceptions import InvalidUsage, ServerError, NotFound
 from sanic.utils import sanic_endpoint_test
+from bs4 import BeautifulSoup
 
 exception_handler_app = Sanic('test_exception_handler')
 
@@ -19,6 +20,12 @@ def handler_2(request):
 @exception_handler_app.route('/3')
 def handler_3(request):
     raise NotFound("OK")
+
+
+@exception_handler_app.route('/4')
+def handler_4(request):
+    foo = bar
+    return text(foo)
 
 
 @exception_handler_app.exception(NotFound, ServerError)
@@ -47,3 +54,20 @@ def test_text_exception__handler():
         exception_handler_app, uri='/random')
     assert response.status == 200
     assert response.text == 'OK'
+
+
+def test_html_traceback_output_in_debug_mode():
+    request, response = sanic_endpoint_test(
+        exception_handler_app, uri='/4', debug=True)
+    assert response.status == 500
+    soup = BeautifulSoup(response.body, 'html.parser')
+    html = str(soup)
+
+    assert 'response = handler(request, *args, **kwargs)' in html
+    assert 'handler_4' in html
+    assert 'foo = bar' in html
+
+    summary_text = " ".join(soup.select('.summary')[0].text.split())
+    assert (
+        "NameError: name 'bar' "
+        "is not defined while handling uri /4") == summary_text

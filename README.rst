@@ -74,3 +74,37 @@ Documentation can be found in the ``docs`` directory.
    :target: https://pypi.python.org/pypi/sanic/
 .. |PyPI version| image:: https://img.shields.io/pypi/pyversions/sanic.svg
    :target: https://pypi.python.org/pypi/sanic/
+
+TODO
+----
+* Streamed file processing
+* File output
+* Examples of integrations with 3rd-party modules
+* RESTful router
+
+Limitations
+-----------
+* No wheels for uvloop and httptools on Windows :(
+
+Final Thoughts
+--------------
+
+                     ▄▄▄▄▄
+            ▀▀▀██████▄▄▄       _______________
+          ▄▄▄▄▄  █████████▄  /                 \
+         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
+       ▀▀█████▄▄ ▀██████▄██ | _________________/
+       ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
+            ▀▀▀▄  ▀▀███ ▀       ▄▄
+         ▄███▀▀██▄████████▄ ▄▀▀▀▀▀▀█▌
+       ██▀▄▄▄██▀▄███▀ ▀▀████      ▄██
+    ▄▀▀▀▄██▄▀▀▌████▒▒▒▒▒▒███     ▌▄▄▀
+    ▌    ▐▀████▐███▒▒▒▒▒▐██▌
+    ▀▄▄▄▄▀   ▀▀████▒▒▒▒▄██▀
+              ▀▀█████████▀
+            ▄▄██▀██████▀█
+          ▄██▀     ▀▀▀  █
+         ▄█             ▐▌
+     ▄▄▄▄█▌              ▀█▄▄▄▄▀▀▄
+    ▌     ▐                ▀▀▄▄▄▀
+     ▀▀▄▄▀

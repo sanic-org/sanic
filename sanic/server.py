@@ -1,7 +1,7 @@
 import asyncio
+import traceback
 from functools import partial
 from inspect import isawaitable
-from multidict import CIMultiDict
 from signal import SIGINT, SIGTERM
 from time import time
 from httptools import HttpRequestParser
@@ -18,11 +18,30 @@ from .request import Request
 from .exceptions import RequestTimeout, PayloadTooLarge, InvalidUsage
 
 
+current_time = None
+
+
 class Signal:
     stopped = False
 
 
-current_time = None
+class CIDict(dict):
+    """
+    Case Insensitive dict where all keys are converted to lowercase
+    This does not maintain the inputted case when calling items() or keys()
+    in favor of speed, since headers are case insensitive
+    """
+    def get(self, key, default=None):
+        return super().get(key.casefold(), default)
+
+    def __getitem__(self, key):
+        return super().__getitem__(key.casefold())
+
+    def __setitem__(self, key, value):
+        return super().__setitem__(key.casefold(), value)
+
+    def __contains__(self, key):
+        return super().__contains__(key.casefold())
 
 
 class HttpProtocol(asyncio.Protocol):
@@ -118,18 +137,15 @@ class HttpProtocol(asyncio.Protocol):
             exception = PayloadTooLarge('Payload Too Large')
             self.write_error(exception)
 
-        self.headers.append((name.decode(), value.decode('utf-8')))
+        self.headers.append((name.decode().casefold(), value.decode()))
 
     def on_headers_complete(self):
-        remote_addr = self.transport.get_extra_info('peername')
-        if remote_addr:
-            self.headers.append(('Remote-Addr', '%s:%s' % remote_addr))
-
         self.request = Request(
             url_bytes=self.url,
-            headers=CIMultiDict(self.headers),
+            headers=CIDict(self.headers),
             version=self.parser.get_http_version(),
-            method=self.parser.get_method().decode()
+            method=self.parser.get_method().decode(),
+            transport=self.transport
         )
 
     def on_body(self, body):
@@ -174,9 +190,15 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing error failed, connection closed {}".format(e))
 
     def bail_out(self, message):
-        exception = ServerError(message)
-        self.write_error(exception)
-        log.error(message)
+        if self.transport.is_closing():
+            log.error(
+                "Connection closed before error was sent to user @ {}".format(
+                    self.transport.get_extra_info('peername')))
+            log.debug('Error experienced:\n{}'.format(traceback.format_exc()))
+        else:
+            exception = ServerError(message)
+            self.write_error(exception)
+            log.error(message)
 
     def cleanup(self):
         self.parser = None
@@ -225,26 +247,33 @@ def trigger_events(events, loop):
 
 
 def serve(host, port, request_handler, error_handler, before_start=None,
-          after_start=None, before_stop=None, after_stop=None,
-          debug=False, request_timeout=60, sock=None,
-          request_max_size=None, reuse_port=False, loop=None):
+          after_start=None, before_stop=None, after_stop=None, debug=False,
+          request_timeout=60, sock=None, request_max_size=None,
+          reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100):
     """
     Starts asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
     :param port: Port to host on
     :param request_handler: Sanic request handler with middleware
+    :param error_handler: Sanic error handler with middleware
+    :param before_start: Function to be executed before the server starts
+                         listening. Takes single argument `loop`
     :param after_start: Function to be executed after the server starts
                         listening. Takes single argument `loop`
     :param before_stop: Function to be executed when a stop signal is
                         received before it is respected. Takes single
-                        argumenet `loop`
+                        argument `loop`
+    :param after_stop: Function to be executed when a stop signal is
+                       received after it is respected. Takes single
+                       argument `loop`
     :param debug: Enables debug output (slows server)
     :param request_timeout: time in seconds
     :param sock: Socket for the server to accept connections from
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
+    :param protocol: Subclass of asyncio protocol class
     :return: Nothing
     """
     loop = loop or async_loop.new_event_loop()
@@ -258,7 +287,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     connections = set()
     signal = Signal()
     server = partial(
-        HttpProtocol,
+        protocol,
         loop=loop,
         connections=connections,
         signal=signal,
@@ -273,7 +302,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         host,
         port,
         reuse_port=reuse_port,
-        sock=sock
+        sock=sock,
+        backlog=backlog
     )
 
     # Instead of pulling time at the end of every request,

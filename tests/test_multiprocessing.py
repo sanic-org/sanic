@@ -1,6 +1,8 @@
 from multiprocessing import Array, Event, Process
-from time import sleep
+from time import sleep, time
 from ujson import loads as json_loads
+
+import pytest
 
 from sanic import Sanic
 from sanic.response import json
@@ -13,8 +15,9 @@ from sanic.utils import local_request, HOST, PORT
 
 # TODO: Figure out why this freezes on pytest but not when
 # executed via interpreter
-
-def skip_test_multiprocessing():
+@pytest.mark.skip(
+    reason="Freezes with pytest not on interpreter")
+def test_multiprocessing():
     app = Sanic('test_json')
 
     response = Array('c', 50)
@@ -51,3 +54,28 @@ def skip_test_multiprocessing():
         raise ValueError("Expected JSON response but got '{}'".format(response))
 
     assert results.get('test') == True
+
+@pytest.mark.skip(
+    reason="Freezes with pytest not on interpreter")
+def test_drain_connections():
+    app = Sanic('test_json')
+
+    @app.route('/')
+    async def handler(request):
+        return json({"test": True})
+
+    stop_event = Event()
+    async def after_start(*args, **kwargs):
+        http_response = await local_request('get', '/')
+        stop_event.set()
+
+    start = time()
+    app.serve_multiple({
+        'host': HOST,
+        'port': PORT,
+        'after_start': after_start,
+        'request_handler': app.handle_request,
+    }, workers=2, stop_event=stop_event)
+    end = time()
+
+    assert end - start < 0.05

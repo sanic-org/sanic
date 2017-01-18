@@ -14,3 +14,4 @@ tornado
 aiofiles
 sphinx
 recommonmark
+beautifulsoup4

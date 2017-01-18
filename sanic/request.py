@@ -25,6 +25,9 @@ class RequestParameters(dict):
         self.super = super()
         self.super.__init__(*args, **kwargs)
 
+    def __getitem__(self, name):
+        return self.get(name)
+
     def get(self, name, default=None):
         values = self.super.get(name)
         return values[0] if values else default
@@ -38,18 +41,20 @@ class Request(dict):
     Properties of an HTTP request such as URL, headers, etc.
     """
     __slots__ = (
-        'url', 'headers', 'version', 'method', '_cookies',
+        'url', 'headers', 'version', 'method', '_cookies', 'transport',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
+        '_ip',
     )
 
-    def __init__(self, url_bytes, headers, version, method):
+    def __init__(self, url_bytes, headers, version, method, transport):
         # TODO: Content-Encoding detection
         url_parsed = parse_url(url_bytes)
         self.url = url_parsed.path.decode('utf-8')
         self.headers = headers
         self.version = version
         self.method = method
+        self.transport = transport
         self.query_string = None
         if url_parsed.query:
             self.query_string = url_parsed.query.decode('utf-8')
@@ -64,13 +69,24 @@ class Request(dict):
 
     @property
     def json(self):
-        if not self.parsed_json:
+        if self.parsed_json is None:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
                 raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
+
+    @property
+    def token(self):
+        """
+        Attempts to return the auth header token.
+        :return: token related to request
+        """
+        auth_header = self.headers.get('Authorization')
+        if auth_header is not None:
+            return auth_header.split()[1]
+        return auth_header
 
     @property
     def form(self):
@@ -124,6 +140,12 @@ class Request(dict):
             else:
                 self._cookies = {}
         return self._cookies
+
+    @property
+    def ip(self):
+        if not hasattr(self, '_ip'):
+            self._ip = self.transport.get_extra_info('peername')
+        return self._ip
 
 
 File = namedtuple('File', ['type', 'body', 'name'])

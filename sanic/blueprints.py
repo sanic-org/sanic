@@ -18,14 +18,17 @@ class BlueprintSetup:
         #: blueprint.
         self.url_prefix = url_prefix
 
-    def add_route(self, handler, uri, methods):
+    def add_route(self, handler, uri, methods, host=None):
         """
         A helper method to register a handler to the application url routes.
         """
         if self.url_prefix:
             uri = self.url_prefix + uri
 
-        self.app.route(uri=uri, methods=methods)(handler)
+        if host is None:
+            host = self.blueprint.host
+
+        self.app.route(uri=uri, methods=methods, host=host)(handler)
 
     def add_exception(self, handler, *args, **kwargs):
         """
@@ -53,7 +56,7 @@ class BlueprintSetup:
 
 
 class Blueprint:
-    def __init__(self, name, url_prefix=None):
+    def __init__(self, name, url_prefix=None, host=None):
         """
         Creates a new blueprint
         :param name: Unique name of the blueprint
@@ -63,6 +66,7 @@ class Blueprint:
         self.url_prefix = url_prefix
         self.deferred_functions = []
         self.listeners = defaultdict(list)
+        self.host = host
 
     def record(self, func):
         """
@@ -83,18 +87,18 @@ class Blueprint:
         for deferred in self.deferred_functions:
             deferred(state)
 
-    def route(self, uri, methods=None):
+    def route(self, uri, methods=None, host=None):
         """
         """
         def decorator(handler):
-            self.record(lambda s: s.add_route(handler, uri, methods))
+            self.record(lambda s: s.add_route(handler, uri, methods, host))
             return handler
         return decorator
 
-    def add_route(self, handler, uri, methods=None):
+    def add_route(self, handler, uri, methods=None, host=None):
         """
         """
-        self.record(lambda s: s.add_route(handler, uri, methods))
+        self.record(lambda s: s.add_route(handler, uri, methods, host))
         return handler
 
     def listener(self, event):

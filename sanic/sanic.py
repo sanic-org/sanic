@@ -4,21 +4,24 @@ from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from multiprocessing import Process, Event
 from signal import signal, SIGTERM, SIGINT
-from time import sleep
 from traceback import format_exc
+import logging
 
 from .config import Config
 from .exceptions import Handler
-from .log import log, logging
+from .log import log
 from .response import HTTPResponse
 from .router import Router
-from .server import serve
+from .server import serve, HttpProtocol
 from .static import register as static_register
 from .exceptions import ServerError
+from socket import socket, SOL_SOCKET, SO_REUSEADDR
+from os import set_inheritable
 
 
 class Sanic:
-    def __init__(self, name=None, router=None, error_handler=None):
+    def __init__(self, name=None, router=None,
+                 error_handler=None):
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
@@ -32,6 +35,8 @@ class Sanic:
         self._blueprint_order = []
         self.loop = None
         self.debug = None
+        self.sock = None
+        self.processes = None
 
         # Register alternative method names
         self.go_fast = self.run
@@ -41,7 +46,7 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     # Decorator
-    def route(self, uri, methods=None):
+    def route(self, uri, methods=None, host=None):
         """
         Decorates a function to be registered as a route
 
@@ -56,12 +61,13 @@ class Sanic:
             uri = '/' + uri
 
         def response(handler):
-            self.router.add(uri=uri, methods=methods, handler=handler)
+            self.router.add(uri=uri, methods=methods, handler=handler,
+                            host=host)
             return handler
 
         return response
 
-    def add_route(self, handler, uri, methods=None):
+    def add_route(self, handler, uri, methods=None, host=None):
         """
         A helper method to register class instance or
         functions as a handler to the application url
@@ -72,8 +78,11 @@ class Sanic:
         :param methods: list or tuple of methods allowed
         :return: function or class instance
         """
-        self.route(uri=uri, methods=methods)(handler)
+        self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
+
+    def remove_route(self, uri, clean_cache=True, host=None):
+        self.router.remove(uri, clean_cache, host)
 
     # Decorator
     def exception(self, *exceptions):
@@ -144,7 +153,8 @@ class Sanic:
     def register_blueprint(self, *args, **kwargs):
         # TODO: deprecate 1.0
         log.warning("Use of register_blueprint will be deprecated in "
-                    "version 1.0.  Please use the blueprint method instead")
+                    "version 1.0.  Please use the blueprint method instead",
+                    DeprecationWarning)
         return self.blueprint(*args, **kwargs)
 
     # -------------------------------------------------------------------- #
@@ -237,7 +247,8 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None):
+            workers=1, loop=None, protocol=HttpProtocol, backlog=100,
+            stop_event=None, logger=None):
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -245,25 +256,32 @@ class Sanic:
         :param host: Address to host on
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
-        :param before_start: Function to be executed before the server starts
+        :param before_start: Functions to be executed before the server starts
                              accepting connections
-        :param after_start: Function to be executed after the server starts
+        :param after_start: Functions to be executed after the server starts
                             accepting connections
-        :param before_stop: Function to be executed when a stop signal is
+        :param before_stop: Functions to be executed when a stop signal is
                             received before it is respected
-        :param after_stop: Function to be executed when all requests are
+        :param after_stop: Functions to be executed when all requests are
                            complete
+
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
                         received before it is respected
         :param loop: asyncio compatible event loop
+        :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s: %(levelname)s: %(message)s"
+        )
         self.error_handler.debug = True
         self.debug = debug
         self.loop = loop
 
         server_settings = {
+            'protocol': protocol,
             'host': host,
             'port': port,
             'sock': sock,
@@ -272,7 +290,8 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'loop': loop
+            'loop': loop,
+            'backlog': backlog
         }
 
         # -------------------------------------------- #
@@ -289,7 +308,7 @@ class Sanic:
             for blueprint in self.blueprints.values():
                 listeners += blueprint.listeners[event_name]
             if args:
-                if type(args) is not list:
+                if callable(args):
                     args = [args]
                 listeners += args
             if reverse:
@@ -311,7 +330,7 @@ class Sanic:
             else:
                 log.info('Spinning up {} workers...'.format(workers))
 
-                self.serve_multiple(server_settings, workers)
+                self.serve_multiple(server_settings, workers, stop_event)
 
         except Exception as e:
             log.exception(
@@ -323,10 +342,13 @@ class Sanic:
         """
         This kills the Sanic
         """
+        if self.processes is not None:
+            for process in self.processes:
+                process.terminate()
+            self.sock.close()
         get_event_loop().stop()
 
-    @staticmethod
-    def serve_multiple(server_settings, workers, stop_event=None):
+    def serve_multiple(self, server_settings, workers, stop_event=None):
         """
         Starts multiple server processes simultaneously.  Stops on interrupt
         and terminate signals, and drains connections when complete.
@@ -336,29 +358,37 @@ class Sanic:
         :param stop_event: if provided, is used as a stop signal
         :return:
         """
+        # In case this is called directly, we configure logging here too.
+        # This won't interfere with the same call from run()
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s: %(levelname)s: %(message)s"
+        )
         server_settings['reuse_port'] = True
 
         # Create a stop event to be triggered by a signal
-        if not stop_event:
+        if stop_event is None:
             stop_event = Event()
         signal(SIGINT, lambda s, f: stop_event.set())
         signal(SIGTERM, lambda s, f: stop_event.set())
 
-        processes = []
+        self.sock = socket()
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.sock.bind((server_settings['host'], server_settings['port']))
+        set_inheritable(self.sock.fileno(), True)
+        server_settings['sock'] = self.sock
+        server_settings['host'] = None
+        server_settings['port'] = None
+
+        self.processes = []
         for _ in range(workers):
             process = Process(target=serve, kwargs=server_settings)
+            process.daemon = True
             process.start()
-            processes.append(process)
+            self.processes.append(process)
 
-        # Infinitely wait for the stop event
-        try:
-            while not stop_event.is_set():
-                sleep(0.3)
-        except:
-            pass
-
-        log.info('Spinning down workers...')
-        for process in processes:
-            process.terminate()
-        for process in processes:
+        for process in self.processes:
             process.join()
+
+        # the above processes will block this until they're stopped
+        self.stop()

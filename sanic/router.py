@@ -23,6 +23,10 @@ class RouteExists(Exception):
     pass
 
 
+class RouteDoesNotExist(Exception):
+    pass
+
+
 class Router:
     """
     Router supports basic routing with parameters and method checks
@@ -31,16 +35,16 @@ class Router:
 
     .. code-block:: python
 
-        @sanic.route('/my/url/<my_parameter>', methods=['GET', 'POST', ...])
-        def my_route(request, my_parameter):
+        @sanic.route('/my/url/<my_param>', methods=['GET', 'POST', ...])
+        def my_route(request, my_param):
             do stuff...
 
     or
 
     .. code-block:: python
 
-        @sanic.route('/my/url/<my_paramter>:type', methods['GET', 'POST', ...])
-        def my_route_with_type(request, my_parameter):
+        @sanic.route('/my/url/<my_param:my_type>', methods['GET', 'POST', ...])
+        def my_route_with_type(request, my_param: my_type):
             do stuff...
 
     Parameters will be passed as keyword arguments to the request handling
@@ -59,8 +63,9 @@ class Router:
         self.routes_static = {}
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
+        self.hosts = None
 
-    def add(self, uri, methods, handler):
+    def add(self, uri, methods, handler, host=None):
         """
         Adds a handler to the route list
 
@@ -71,6 +76,17 @@ class Router:
                         When executed, it should provide a response object.
         :return: Nothing
         """
+
+        if host is not None:
+            # we want to track if there are any
+            # vhosts on the Router instance so that we can
+            # default to the behavior without vhosts
+            if self.hosts is None:
+                self.hosts = set(host)
+            else:
+                self.hosts.add(host)
+            uri = host + uri
+
         if uri in self.routes_all:
             raise RouteExists("Route already registered: {}".format(uri))
 
@@ -118,6 +134,25 @@ class Router:
         else:
             self.routes_static[uri] = route
 
+    def remove(self, uri, clean_cache=True, host=None):
+        if host is not None:
+            uri = host + uri
+        try:
+            route = self.routes_all.pop(uri)
+        except KeyError:
+            raise RouteDoesNotExist("Route was not registered: {}".format(uri))
+
+        if route in self.routes_always_check:
+            self.routes_always_check.remove(route)
+        elif url_hash(uri) in self.routes_dynamic \
+                and route in self.routes_dynamic[url_hash(uri)]:
+            self.routes_dynamic[url_hash(uri)].remove(route)
+        else:
+            self.routes_static.pop(uri)
+
+        if clean_cache:
+            self._get.cache_clear()
+
     def get(self, request):
         """
         Gets a request handler based on the URL of the request, or raises an
@@ -126,10 +161,14 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
-        return self._get(request.url, request.method)
+        if self.hosts is None:
+            return self._get(request.url, request.method, '')
+        else:
+            return self._get(request.url, request.method,
+                             request.headers.get("Host", ''))
 
     @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
-    def _get(self, url, method):
+    def _get(self, url, method, host):
         """
         Gets a request handler based on the URL of the request, or raises an
         error.  Internal method for caching.
@@ -137,6 +176,7 @@ class Router:
         :param method: Request method
         :return: handler, arguments, keyword arguments
         """
+        url = host + url
         # Check against known static routes
         route = self.routes_static.get(url)
         if route:

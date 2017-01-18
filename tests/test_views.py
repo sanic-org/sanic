@@ -26,7 +26,7 @@ def test_methods():
         def delete(self, request):
             return text('I am delete method')
 
-    app.add_route(DummyView(), '/')
+    app.add_route(DummyView.as_view(), '/')
 
     request, response = sanic_endpoint_test(app, method="get")
     assert response.text == 'I am get method'
@@ -48,7 +48,7 @@ def test_unexisting_methods():
         def get(self, request):
             return text('I am get method')
 
-    app.add_route(DummyView(), '/')
+    app.add_route(DummyView.as_view(), '/')
     request, response = sanic_endpoint_test(app, method="get")
     assert response.text == 'I am get method'
     request, response = sanic_endpoint_test(app, method="post")
@@ -63,7 +63,7 @@ def test_argument_methods():
         def get(self, request, my_param_here):
             return text('I am get method with %s' % my_param_here)
 
-    app.add_route(DummyView(), '/<my_param_here>')
+    app.add_route(DummyView.as_view(), '/<my_param_here>')
 
     request, response = sanic_endpoint_test(app, uri='/test123')
 
@@ -79,7 +79,7 @@ def test_with_bp():
         def get(self, request):
             return text('I am get method')
 
-    bp.add_route(DummyView(), '/')
+    bp.add_route(DummyView.as_view(), '/')
 
     app.blueprint(bp)
     request, response = sanic_endpoint_test(app)
@@ -96,7 +96,7 @@ def test_with_bp_with_url_prefix():
         def get(self, request):
             return text('I am get method')
 
-    bp.add_route(DummyView(), '/')
+    bp.add_route(DummyView.as_view(), '/')
 
     app.blueprint(bp)
     request, response = sanic_endpoint_test(app, uri='/test1/')
@@ -112,7 +112,7 @@ def test_with_middleware():
         def get(self, request):
             return text('I am get method')
 
-    app.add_route(DummyView(), '/')
+    app.add_route(DummyView.as_view(), '/')
 
     results = []
 
@@ -145,7 +145,7 @@ def test_with_middleware_response():
         def get(self, request):
             return text('I am get method')
 
-    app.add_route(DummyView(), '/')
+    app.add_route(DummyView.as_view(), '/')
 
     request, response = sanic_endpoint_test(app)
 
@@ -153,3 +153,44 @@ def test_with_middleware_response():
     assert type(results[0]) is Request
     assert type(results[1]) is Request
     assert issubclass(type(results[2]), HTTPResponse)
+
+
+def test_with_custom_class_methods():
+    app = Sanic('test_with_custom_class_methods')
+
+    class DummyView(HTTPMethodView):
+        global_var = 0
+
+        def _iternal_method(self):
+            self.global_var += 10
+
+        def get(self, request):
+            self._iternal_method()
+            return text('I am get method and global var is {}'.format(self.global_var))
+
+    app.add_route(DummyView.as_view(), '/')
+    request, response = sanic_endpoint_test(app, method="get")
+    assert response.text == 'I am get method and global var is 10'
+
+
+def test_with_decorator():
+    app = Sanic('test_with_decorator')
+
+    results = []
+
+    def stupid_decorator(view):
+        def decorator(*args, **kwargs):
+            results.append(1)
+            return view(*args, **kwargs)
+        return decorator
+
+    class DummyView(HTTPMethodView):
+        decorators = [stupid_decorator]
+
+        def get(self, request):
+            return text('I am get method')
+
+    app.add_route(DummyView.as_view(), '/')
+    request, response = sanic_endpoint_test(app, method="get")
+    assert response.text == 'I am get method'
+    assert results[0] == 1

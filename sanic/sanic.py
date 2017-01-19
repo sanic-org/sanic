@@ -241,9 +241,10 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
-            after_start=None, before_stop=None, after_stop=None, sock=None,
-            workers=1, loop=None, protocol=HttpProtocol, backlog=100,
-            stop_event=None):
+            after_start=None, before_stop=None, after_stop=None, ssl=None,
+            sock=None, workers=1, loop=None, protocol=HttpProtocol,
+            backlog=100, stop_event=None):
+
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
@@ -258,6 +259,7 @@ class Sanic:
         received before it is respected
         :param after_stop: Functions to be executed when all requests are
         complete
+        :param ssl: SSLContext for SSL encryption of worker(s)
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
         received before it is respected
@@ -278,6 +280,7 @@ class Sanic:
             'host': host,
             'port': port,
             'sock': sock,
+            'ssl': ssl,
             'debug': debug,
             'request_handler': self.handle_request,
             'error_handler': self.error_handler,
@@ -315,7 +318,11 @@ class Sanic:
         log.debug(self.config.LOGO)
 
         # Serve
-        log.info('Goin\' Fast @ http://{}:{}'.format(host, port))
+        if ssl is None:
+            proto = "http"
+        else:
+            proto = "https"
+        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         try:
             if workers == 1:

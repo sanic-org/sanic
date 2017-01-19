@@ -87,7 +87,7 @@ class Blueprint:
         for deferred in self.deferred_functions:
             deferred(state)
 
-    def route(self, uri, methods=None, host=None):
+    def route(self, uri, methods=frozenset({'GET'}), host=None):
         """
         """
         def decorator(handler):

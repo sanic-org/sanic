@@ -46,7 +46,7 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     # Decorator
-    def route(self, uri, methods=None, host=None):
+    def route(self, uri, methods=frozenset({'GET'}), host=None):
         """
         Decorates a function to be registered as a route
         :param uri: path of the URL

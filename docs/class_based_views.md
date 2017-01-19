@@ -28,7 +28,7 @@ class SimpleView(HTTPMethodView):
   def delete(self, request):
       return text('I am delete method')
 
-app.add_route(SimpleView.as_view(), '/')
+app.add_route(SimpleView(), '/')
 
 ```
 
@@ -40,7 +40,7 @@ class NameView(HTTPMethodView):
   def get(self, request, name):
     return text('Hello {}'.format(name))
 
-app.add_route(NameView.as_view(), '/<name>')
+app.add_route(NameView(), '/<name>')
 
 ```
 
@@ -53,6 +53,6 @@ class ViewWithDecorator(HTTPMethodView):
   def get(self, request, name):
     return text('Hello I have a decorator')
 
-app.add_route(ViewWithDecorator.as_view(), '/url')
+app.add_route(ViewWithDecorator(), '/url')
 
 ```

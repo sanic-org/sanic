@@ -232,7 +232,7 @@ class Sanic:
                             e, format_exc()))
                 else:
                     response = HTTPResponse(
-                        "An error occured while handling an error")
+                        "An error occurred while handling an error")
 
         response_callback(response)
 

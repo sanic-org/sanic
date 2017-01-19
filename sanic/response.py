@@ -143,21 +143,45 @@ class HTTPResponse:
 
 
 def json(body, status=200, headers=None):
+    """
+    Returns response object with body in json format.
+    :param body: Response data to be serialized.
+    :param status: Response code.
+    :param headers: Custom Headers.
+    """
     return HTTPResponse(json_dumps(body), headers=headers, status=status,
                         content_type="application/json")
 
 
 def text(body, status=200, headers=None):
+    """
+    Returns response object with body in text format.
+    :param body: Response data to be encoded.
+    :param status: Response code.
+    :param headers: Custom Headers.
+    """
     return HTTPResponse(body, status=status, headers=headers,
                         content_type="text/plain; charset=utf-8")
 
 
 def html(body, status=200, headers=None):
+    """
+    Returns response object with body in html format.
+    :param body: Response data to be encoded.
+    :param status: Response code.
+    :param headers: Custom Headers.
+    """
     return HTTPResponse(body, status=status, headers=headers,
                         content_type="text/html; charset=utf-8")
 
 
 async def file(location, mime_type=None, headers=None):
+    """
+    Returns response object with file data.
+    :param location: Location of file on system.
+    :param mime_type: Specific mime_type.
+    :param headers: Custom Headers.
+    """
     filename = path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:

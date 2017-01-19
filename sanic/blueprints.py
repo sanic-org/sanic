@@ -3,6 +3,7 @@ from collections import defaultdict
 
 class BlueprintSetup:
     """
+    Creates a blueprint state like object.
     """
 
     def __init__(self, blueprint, app, options):
@@ -32,13 +33,13 @@ class BlueprintSetup:
 
     def add_exception(self, handler, *args, **kwargs):
         """
-        Registers exceptions to sanic
+        Registers exceptions to sanic.
         """
         self.app.exception(*args, **kwargs)(handler)
 
     def add_static(self, uri, file_or_directory, *args, **kwargs):
         """
-        Registers static files to sanic
+        Registers static files to sanic.
         """
         if self.url_prefix:
             uri = self.url_prefix + uri
@@ -47,7 +48,7 @@ class BlueprintSetup:
 
     def add_middleware(self, middleware, *args, **kwargs):
         """
-        Registers middleware to sanic
+        Registers middleware to sanic.
         """
         if args or kwargs:
             self.app.middleware(*args, **kwargs)(middleware)
@@ -77,11 +78,13 @@ class Blueprint:
 
     def make_setup_state(self, app, options):
         """
+        Returns a new BlueprintSetup object
         """
         return BlueprintSetup(self, app, options)
 
     def register(self, app, options):
         """
+        Registers the blueprint to the sanic app.
         """
         state = self.make_setup_state(app, options)
         for deferred in self.deferred_functions:
@@ -89,6 +92,9 @@ class Blueprint:
 
     def route(self, uri, methods=None, host=None):
         """
+        Creates a blueprint route from a decorated function.
+        :param uri: Endpoint at which the route will be accessible.
+        :param methods: List of acceptable HTTP methods.
         """
         def decorator(handler):
             self.record(lambda s: s.add_route(handler, uri, methods, host))
@@ -97,12 +103,18 @@ class Blueprint:
 
     def add_route(self, handler, uri, methods=None, host=None):
         """
+        Creates a blueprint route from a function.
+        :param handler: Function to handle uri request.
+        :param uri: Endpoint at which the route will be accessible.
+        :param methods: List of acceptable HTTP methods.
         """
         self.record(lambda s: s.add_route(handler, uri, methods, host))
         return handler
 
     def listener(self, event):
         """
+        Create a listener from a decorated function.
+        :param event: Event to listen to.
         """
         def decorator(listener):
             self.listeners[event].append(listener)
@@ -111,6 +123,7 @@ class Blueprint:
 
     def middleware(self, *args, **kwargs):
         """
+        Creates a blueprint middleware from a decorated function.
         """
         def register_middleware(middleware):
             self.record(
@@ -127,6 +140,7 @@ class Blueprint:
 
     def exception(self, *args, **kwargs):
         """
+        Creates a blueprint exception from a decorated function.
         """
         def decorator(handler):
             self.record(lambda s: s.add_exception(handler, *args, **kwargs))
@@ -135,6 +149,9 @@ class Blueprint:
 
     def static(self, uri, file_or_directory, *args, **kwargs):
         """
+        Creates a blueprint static route from a decorated function.
+        :param uri: Endpoint at which the route will be accessible.
+        :param file_or_directory: Static asset.
         """
         self.record(
             lambda s: s.add_static(uri, file_or_directory, *args, **kwargs))

@@ -168,12 +168,6 @@ class HttpProtocol(asyncio.Protocol):
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))
-            if not keep_alive:
-                self.transport.close()
-            else:
-                # Record that we received data
-                self._last_request_time = current_time
-                self.cleanup()
         except RuntimeError:
             log.error(
                 'Connection lost before response written @ {}'.format(
@@ -181,13 +175,19 @@ class HttpProtocol(asyncio.Protocol):
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(e))
+        finally:
+            if not keep_alive:
+                self.transport.close()
+            else:
+                # Record that we received data
+                self._last_request_time = current_time
+                self.cleanup()
 
     def write_error(self, exception):
         try:
             response = self.error_handler.response(self.request, exception)
             version = self.request.version if self.request else '1.1'
             self.transport.write(response.output(version))
-            self.transport.close()
         except RuntimeError:
             log.error(
                 'Connection lost before error written @ {}'.format(
@@ -196,6 +196,8 @@ class HttpProtocol(asyncio.Protocol):
             self.bail_out(
                 "Writing error failed, connection closed {}".format(e),
                 from_error=True)
+        finally:
+            self.transport.close()
 
     def bail_out(self, message, from_error=False):
         if from_error and self.transport.is_closing():

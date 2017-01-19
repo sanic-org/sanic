@@ -165,6 +165,7 @@ class Handler:
     def response(self, request, exception):
         """
         Fetches and executes an exception handler and returns a response object
+
         :param request: Request
         :param exception: Exception to handle
         :return: Response object

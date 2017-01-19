@@ -7,21 +7,25 @@ class HTTPMethodView:
     to every HTTP method you want to support.
 
     For example:
-        class DummyView(HTTPMethodView):
 
+    .. code-block:: python
+
+        class DummyView(HTTPMethodView):
             def get(self, request, *args, **kwargs):
                 return text('I am get method')
-
             def put(self, request, *args, **kwargs):
                 return text('I am put method')
+
     etc.
 
     If someone tries to use a non-implemented method, there will be a
     405 response.
 
     If you need any url params just mention them in method definition:
-        class DummyView(HTTPMethodView):
 
+    .. code-block:: python
+
+        class DummyView(HTTPMethodView):
             def get(self, request, my_param_here, *args, **kwargs):
                 return text('I am get method with %s' % my_param_here)
 

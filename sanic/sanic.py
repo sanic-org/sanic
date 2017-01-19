@@ -49,6 +49,7 @@ class Sanic:
     def route(self, uri, methods=None, host=None):
         """
         Decorates a function to be registered as a route
+
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
         :return: decorated function
@@ -71,6 +72,7 @@ class Sanic:
         A helper method to register class instance or
         functions as a handler to the application url
         routes.
+
         :param handler: function or class instance
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
@@ -86,7 +88,8 @@ class Sanic:
     def exception(self, *exceptions):
         """
         Decorates a function to be registered as a handler for exceptions
-        :param *exceptions: exceptions
+
+        :param \*exceptions: exceptions
         :return: decorated function
         """
 
@@ -132,6 +135,7 @@ class Sanic:
     def blueprint(self, blueprint, **options):
         """
         Registers a blueprint on the application.
+
         :param blueprint: Blueprint object
         :param options: option dictionary with blueprint defaults
         :return: Nothing
@@ -165,9 +169,10 @@ class Sanic:
         Takes a request from the HTTP Server and returns a response object to
         be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
+
         :param request: HTTP Request object
         :param response_callback: Response function to be called with the
-        response as the only argument
+                                  response as the only argument
         :return: Nothing
         """
         try:
@@ -248,21 +253,22 @@ class Sanic:
         """
         Runs the HTTP Server and listens until keyboard interrupt or term
         signal. On termination, drains connections before closing.
+
         :param host: Address to host on
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
         :param before_start: Functions to be executed before the server starts
-        accepting connections
+                             accepting connections
         :param after_start: Functions to be executed after the server starts
-        accepting connections
+                            accepting connections
         :param before_stop: Functions to be executed when a stop signal is
-        received before it is respected
+                            received before it is respected
         :param after_stop: Functions to be executed when all requests are
-        complete
+                           complete
         :param ssl: SSLContext for SSL encryption of worker(s)
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
-        received before it is respected
+                        received before it is respected
         :param loop: asyncio compatible event loop
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
@@ -352,6 +358,7 @@ class Sanic:
         """
         Starts multiple server processes simultaneously.  Stops on interrupt
         and terminate signals, and drains connections when complete.
+
         :param server_settings: kw arguments to be passed to the serve function
         :param workers: number of workers to launch
         :param stop_event: if provided, is used as a stop signal

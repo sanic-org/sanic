@@ -76,8 +76,15 @@ class Router:
             if self.hosts is None:
                 self.hosts = set(host)
             else:
+                if isinstance(host, list):
+                    host = set(host)
                 self.hosts.add(host)
-            uri = host + uri
+            if isinstance(host, str):
+                uri = host + uri
+            else:
+                for h in host:
+                    self.add(uri, methods, handler, h)
+                return
 
         # Dict for faster lookups of if method allowed
         if methods:

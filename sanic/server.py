@@ -89,15 +89,14 @@ class HttpProtocol(asyncio.Protocol):
     def connection_lost(self, exc):
         self.connections.discard(self)
         self._timeout_handler.cancel()
-        self.cleanup()
 
     def connection_timeout(self):
         # Check if
         time_elapsed = current_time - self._last_request_time
         if time_elapsed < self.request_timeout:
             time_left = self.request_timeout - time_elapsed
-            self._timeout_handler = \
-                self.loop.call_later(time_left, self.connection_timeout)
+            self._timeout_handler = (
+                self.loop.call_later(time_left, self.connection_timeout))
         else:
             if self._request_handler_task:
                 self._request_handler_task.cancel()
@@ -164,8 +163,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def write_response(self, response):
         try:
-            keep_alive = self.parser.should_keep_alive() \
-                            and not self.signal.stopped
+            keep_alive = (
+                self.parser.should_keep_alive() and not self.signal.stopped)
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))
@@ -175,6 +174,10 @@ class HttpProtocol(asyncio.Protocol):
                 # Record that we received data
                 self._last_request_time = current_time
                 self.cleanup()
+        except RuntimeError:
+            log.error(
+                'Connection lost before response written @ {}'.format(
+                    self.request.ip))
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(e))
@@ -185,16 +188,23 @@ class HttpProtocol(asyncio.Protocol):
             version = self.request.version if self.request else '1.1'
             self.transport.write(response.output(version))
             self.transport.close()
+        except RuntimeError:
+            log.error(
+                'Connection lost before error written @ {}'.format(
+                    self.request.ip))
         except Exception as e:
             self.bail_out(
-                "Writing error failed, connection closed {}".format(e))
+                "Writing error failed, connection closed {}".format(e),
+                from_error=True)
 
-    def bail_out(self, message):
-        if self.transport.is_closing():
+    def bail_out(self, message, from_error=False):
+        if from_error and self.transport.is_closing():
             log.error(
-                "Connection closed before error was sent to user @ {}".format(
+                ("Transport closed @ {} and exception "
+                 "experienced during error handling").format(
                     self.transport.get_extra_info('peername')))
-            log.debug('Error experienced:\n{}'.format(traceback.format_exc()))
+            log.debug(
+                'Exception:\n{}'.format(traceback.format_exc()))
         else:
             exception = ServerError(message)
             self.write_error(exception)

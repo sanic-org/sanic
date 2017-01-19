@@ -248,7 +248,7 @@ def trigger_events(events, loop):
 
 def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
-          request_timeout=60, sock=None, request_max_size=None,
+          request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100):
     """
     Starts asynchronous HTTP Server on an individual process.
@@ -269,6 +269,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                        argument `loop`
     :param debug: Enables debug output (slows server)
     :param request_timeout: time in seconds
+    :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
@@ -301,6 +302,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         server,
         host,
         port,
+        ssl=ssl,
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog

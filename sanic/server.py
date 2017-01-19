@@ -6,7 +6,7 @@ from signal import SIGINT, SIGTERM
 from time import time
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
-from .exceptions import ServerError
+from .exceptions import ServerError, InvalidResponseObject
 
 try:
     import uvloop as async_loop
@@ -166,9 +166,14 @@ class HttpProtocol(asyncio.Protocol):
         try:
             keep_alive = self.parser.should_keep_alive() \
                             and not self.signal.stopped
-            self.transport.write(
-                response.output(
-                    self.request.version, keep_alive, self.request_timeout))
+            try:
+                self.transport.write(
+                    response.output(
+                        self.request.version, keep_alive,
+                        self.request_timeout))
+            except AttributeError:
+                raise InvalidResponseObject(
+                    'Invalid response object, must be of type HTTPResponse')
             if not keep_alive:
                 self.transport.close()
             else:

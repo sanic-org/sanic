@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 from functools import partial
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
@@ -189,9 +190,15 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing error failed, connection closed {}".format(e))
 
     def bail_out(self, message):
-        exception = ServerError(message)
-        self.write_error(exception)
-        log.error(message)
+        if self.transport.is_closing():
+            log.error(
+                "Connection closed before error was sent to user @ {}".format(
+                    self.transport.get_extra_info('peername')))
+            log.debug('Error experienced:\n{}'.format(traceback.format_exc()))
+        else:
+            exception = ServerError(message)
+            self.write_error(exception)
+            log.error(message)
 
     def cleanup(self):
         self.parser = None

@@ -463,3 +463,67 @@ def test_remove_route_without_clean_cache():
 
     request, response = sanic_endpoint_test(app, uri='/test')
     assert response.status == 200
+
+
+def test_overload_routes():
+    app = Sanic('test_dynamic_route')
+
+    @app.route('/overload', methods=['GET'])
+    async def handler1(request):
+        return text('OK1')
+
+    @app.route('/overload', methods=['POST', 'PUT'])
+    async def handler2(request):
+        return text('OK2')
+
+    request, response = sanic_endpoint_test(app, 'get', uri='/overload')
+    assert response.text == 'OK1'
+
+    request, response = sanic_endpoint_test(app, 'post', uri='/overload')
+    assert response.text == 'OK2'
+
+    request, response = sanic_endpoint_test(app, 'put', uri='/overload')
+    assert response.text == 'OK2'
+
+    request, response = sanic_endpoint_test(app, 'delete', uri='/overload')
+    assert response.status == 405
+
+    with pytest.raises(RouteExists):
+        @app.route('/overload', methods=['PUT', 'DELETE'])
+        async def handler3(request):
+            return text('Duplicated')
+
+
+def test_unmergeable_overload_routes():
+    app = Sanic('test_dynamic_route')
+
+    @app.route('/overload_whole')
+    async def handler1(request):
+        return text('OK1')
+
+    with pytest.raises(RouteExists):
+        @app.route('/overload_whole', methods=['POST', 'PUT'])
+        async def handler2(request):
+            return text('Duplicated')
+
+    request, response = sanic_endpoint_test(app, 'get', uri='/overload_whole')
+    assert response.text == 'OK1'
+
+    request, response = sanic_endpoint_test(app, 'post', uri='/overload_whole')
+    assert response.text == 'OK1'
+
+
+    @app.route('/overload_part', methods=['GET'])
+    async def handler1(request):
+        return text('OK1')
+
+    with pytest.raises(RouteExists):
+        @app.route('/overload_part')
+        async def handler2(request):
+            return text('Duplicated')
+
+    request, response = sanic_endpoint_test(app, 'get', uri='/overload_part')
+    assert response.text == 'OK1'
+
+    request, response = sanic_endpoint_test(app, 'post', uri='/overload_part')
+    assert response.status == 405

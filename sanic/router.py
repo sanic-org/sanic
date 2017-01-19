@@ -3,6 +3,7 @@ from collections import defaultdict, namedtuple
 from functools import lru_cache
 from .config import Config
 from .exceptions import NotFound, InvalidUsage
+from .views import CompositionView
 
 Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
@@ -75,11 +76,15 @@ class Router:
             if self.hosts is None:
                 self.hosts = set(host)
             else:
+                if isinstance(host, list):
+                    host = set(host)
                 self.hosts.add(host)
-            uri = host + uri
-
-        if uri in self.routes_all:
-            raise RouteExists("Route already registered: {}".format(uri))
+            if isinstance(host, str):
+                uri = host + uri
+            else:
+                for h in host:
+                    self.add(uri, methods, handler, h)
+                return
 
         # Dict for faster lookups of if method allowed
         if methods:
@@ -113,9 +118,35 @@ class Router:
         pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
         pattern = re.compile(r'^{}$'.format(pattern_string))
 
-        route = Route(
-            handler=handler, methods=methods, pattern=pattern,
-            parameters=parameters)
+        def merge_route(route, methods, handler):
+            # merge to the existing route when possible.
+            if not route.methods or not methods:
+                # method-unspecified routes are not mergeable.
+                raise RouteExists(
+                    "Route already registered: {}".format(uri))
+            elif route.methods.intersection(methods):
+                # already existing method is not overloadable.
+                duplicated = methods.intersection(route.methods)
+                raise RouteExists(
+                    "Route already registered: {} [{}]".format(
+                        uri, ','.join(list(duplicated))))
+            if isinstance(route.handler, CompositionView):
+                view = route.handler
+            else:
+                view = CompositionView()
+                view.add(route.methods, route.handler)
+            view.add(methods, handler)
+            route = route._replace(
+                handler=view, methods=methods.union(route.methods))
+            return route
+
+        route = self.routes_all.get(uri)
+        if route:
+            route = merge_route(route, methods, handler)
+        else:
+            route = Route(
+                handler=handler, methods=methods, pattern=pattern,
+                parameters=parameters)
 
         self.routes_all[uri] = route
         if properties['unhashable']:

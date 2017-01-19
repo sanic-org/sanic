@@ -6,7 +6,9 @@ from signal import SIGINT, SIGTERM
 from time import time
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
+
 from .exceptions import ServerError
+from .response import json, text
 
 try:
     import uvloop as async_loop
@@ -163,12 +165,26 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def write_response(self, response):
-        try:
-            keep_alive = self.parser.should_keep_alive() \
-                            and not self.signal.stopped
+
+        def attempt_write(_response):
             self.transport.write(
-                response.output(
+                _response.output(
                     self.request.version, keep_alive, self.request_timeout))
+
+        try:
+            keep_alive = (self.parser.should_keep_alive()
+                          and not self.signal.stopped)
+
+            try:
+                # If we already have an HTTPResponse object this should be
+                # as fast as ever
+                attempt_write(response)
+            except AttributeError:
+                if isinstance(response, (list, dict)):
+                    attempt_write(json(response))
+                else:
+                    attempt_write(text(str(response)))
+
             if not keep_alive:
                 self.transport.close()
             else:

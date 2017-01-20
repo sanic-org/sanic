@@ -26,4 +26,4 @@ syntax, so earlier versions of python won't work.
 
 You now have a working Sanic server!
 
-**Next:** [Routing](routing.html)
+**Next:** [Routing](routing.md)

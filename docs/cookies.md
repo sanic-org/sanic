@@ -47,6 +47,6 @@ parameters available:
 - `httponly` (boolean): Specifies whether the cookie cannot be read by
                         Javascript.
 
-**Previous:** [Class-based views](class_based_views.html)
+**Previous:** [Class-based views](class_based_views.md)
 
-**Next:** [Custom protocols](custom_protocol.html)
+**Next:** [Custom protocols](custom_protocol.md)

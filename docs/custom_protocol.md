@@ -71,6 +71,6 @@ async def response(request):
 app.run(host='0.0.0.0', port=8000, protocol=CustomHttpProtocol)
 ```
 
-**Previous:** [Cookies](cookies.html)
+**Previous:** [Cookies](cookies.md)
 
-**Next:** [Testing](testing.html)
+**Next:** [Testing](testing.md)

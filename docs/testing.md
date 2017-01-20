@@ -50,6 +50,6 @@ def test_endpoint_challenge():
     assert response.text == request_data['challenge']
 ```
 
-**Previous:** [Custom protocols](custom_protocol.html)
+**Previous:** [Custom protocols](custom_protocol.md)
 
-**Next:** [Sanic extensions](extensions.html)
+**Next:** [Sanic extensions](extensions.md)

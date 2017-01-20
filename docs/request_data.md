@@ -90,6 +90,6 @@ args.get('titles') # => 'Post 1'
 args.getlist('titles') # => ['Post 1', 'Post 2']
 ```
 
-**Previous:** [Routing](routing.html)
+**Previous:** [Routing](routing.md)
 
-**Next:** [Deploying](deploying.html)
+**Next:** [Deploying](deploying.md)

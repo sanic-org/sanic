@@ -54,6 +54,6 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337, workers=4)
 ```
 
-**Previous:** [Request Data](request_data.html)
+**Previous:** [Request Data](request_data.md)
 
-**Next:** [Static Files](static_files.html)
+**Next:** [Static Files](static_files.md)

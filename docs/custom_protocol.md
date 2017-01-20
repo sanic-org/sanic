@@ -5,7 +5,7 @@
 You can change the behavior of Sanic's protocol by specifying a custom
 protocol, which should be a subclass
 of
-[asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
+[asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.md#protocol-classes).
 This protocol can then be passed as the keyword argument `protocol` to the `sanic.run` method.
 
 The constructor of the custom protocol class receives the following keyword
@@ -71,6 +71,6 @@ async def response(request):
 app.run(host='0.0.0.0', port=8000, protocol=CustomHttpProtocol)
 ```
 
-**Previous:** [Cookies](cookies.html)
+**Previous:** [Cookies](cookies.md)
 
-**Next:** [Testing](testing.html)
+**Next:** [Testing](testing.md)

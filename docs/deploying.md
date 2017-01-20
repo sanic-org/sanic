@@ -23,7 +23,7 @@ keyword arguments:
                              specified, Sanic creates its own event loop.
 - `protocol` *(default `HttpProtocol`)*: Subclass
   of
-  [asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
+  [asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.md#protocol-classes).
 
 ## Workers
 
@@ -54,6 +54,6 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337, workers=4)
 ```
 
-**Previous:** [Request Data](request_data.html)
+**Previous:** [Request Data](request_data.md)
 
-**Next:** [Static Files](static_files.html)
+**Next:** [Static Files](static_files.md)

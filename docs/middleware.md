@@ -65,6 +65,6 @@ async def halt_response(request, response):
 	return text('I halted the response')
 ```
 
-**Previous:** [Static Files](static_files.html)
+**Previous:** [Static Files](static_files.md)
 
-**Next:** [Exceptions](exceptions.html)
+**Next:** [Exceptions](exceptions.md)

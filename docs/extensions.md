@@ -6,6 +6,6 @@ A list of Sanic extensions created by the community.
   Allows using redis, memcache or an in memory store.
 - [CORS](https://github.com/ashleysommer/sanic-cors): A port of flask-cors.
 
-**Previous:** [Testing](testing.html)
+**Previous:** [Testing](testing.md)
 
-**Next:** [Contributing](contributing.html)
+**Next:** [Contributing](contributing.md)

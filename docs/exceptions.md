@@ -44,6 +44,6 @@ Some of the most useful exceptions are presented below:
 
 See the `sanic.exceptions` module for the full list of exceptions to throw.
 
-**Previous:** [Middleware](middleware.html)
+**Previous:** [Middleware](middleware.md)
 
-**Next:** [Blueprints](blueprints.html)
+**Next:** [Blueprints](blueprints.md)

@@ -10,6 +10,84 @@ from sanic.utils import sanic_endpoint_test
 #  UTF-8
 # ------------------------------------------------------------ #
 
+def test_shorthand_routes_get():
+    app = Sanic('test_shorhand_routes_get')
+
+    @app.get('/get')
+    def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/get', method='get')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/get', method='post')
+    assert response.status == 405
+
+def test_shorthand_routes_post():
+    app = Sanic('test_shorhand_routes_post')
+
+    @app.post('/post')
+    def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/post', method='post')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/post', method='get')
+    assert response.status == 405
+
+def test_shorthand_routes_put():
+    app = Sanic('test_shorhand_routes_put')
+
+    @app.put('/put')
+    def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/put', method='put')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/put', method='get')
+    assert response.status == 405
+
+def test_shorthand_routes_patch():
+    app = Sanic('test_shorhand_routes_patch')
+
+    @app.patch('/patch')
+    def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/patch', method='patch')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/patch', method='get')
+    assert response.status == 405
+
+def test_shorthand_routes_head():
+    app = Sanic('test_shorhand_routes_head')
+
+    @app.head('/head')
+    def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/head', method='head')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/head', method='get')
+    assert response.status == 405
+
+def test_shorthand_routes_options():
+    app = Sanic('test_shorhand_routes_options')
+
+    @app.options('/options')
+    def handler(request):
+        return text('OK')
+
+    request, response = sanic_endpoint_test(app, uri='/options', method='options')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/options', method='get')
+    assert response.status == 405
+
 def test_static_routes():
     app = Sanic('test_dynamic_route')
 

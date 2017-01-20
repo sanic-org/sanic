@@ -90,7 +90,7 @@ class Blueprint:
         for deferred in self.deferred_functions:
             deferred(state)
 
-    def route(self, uri, methods=None, host=None):
+    def route(self, uri, methods=frozenset({'GET'}), host=None):
         """
         Creates a blueprint route from a decorated function.
         :param uri: Endpoint at which the route will be accessible.

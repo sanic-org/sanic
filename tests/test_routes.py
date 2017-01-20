@@ -497,7 +497,7 @@ def test_overload_routes():
 def test_unmergeable_overload_routes():
     app = Sanic('test_dynamic_route')
 
-    @app.route('/overload_whole')
+    @app.route('/overload_whole', methods=None)
     async def handler1(request):
         return text('OK1')
 

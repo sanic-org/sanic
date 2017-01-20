@@ -1,34 +1,36 @@
-# Custom Protocol
+# Custom Protocols
 
-You can change the behavior of protocol by using custom protocol.  
-If you want to use custom protocol, you should put subclass of [protocol class](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes) in the protocol keyword argument of `sanic.run()`. The constructor of custom protocol class gets following keyword arguments from Sanic.
+*Note: this is advanced usage, and most readers will not need such functionality.*
 
-* loop  
-`loop` is an asyncio compatible event loop.
+You can change the behavior of Sanic's protocol by specifying a custom
+protocol, which should be a subclass
+of
+[asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
+This protocol can then be passed as the keyword argument `protocol` to the `sanic.run` method.
 
-* connections  
-`connections` is a `set object`  to  store protocol objects.
-When Sanic receives `SIGINT` or `SIGTERM`, Sanic executes `protocol.close_if_idle()` for a `protocol objects` stored in connections.
+The constructor of the custom protocol class receives the following keyword
+arguments from Sanic.
 
-* signal  
-`signal` is a `sanic.server.Signal object` with `stopped attribute`.
-When Sanic receives `SIGINT` or `SIGTERM`, `signal.stopped` becomes `True`.
-
-* request_handler  
-`request_handler` is a coroutine that takes a `sanic.request.Request` object and a `response callback` as arguments.
-
-* error_handler  
-`error_handler` is a `sanic.exceptions.Handler` object.
-
-* request_timeout  
-`request_timeout` is seconds for timeout.
-
-* request_max_size  
-`request_max_size` is bytes of max request size.
+- `loop`: an `asyncio`-compatible event loop.
+- `connections`: a `set` to store protocol objects. When Sanic receives
+  `SIGINT` or `SIGTERM`, it executes `protocol.close_if_idle` for all protocol
+  objects stored in this set.
+- `signal`: a `sanic.server.Signal` object with the `stopped` attribute. When
+  Sanic receives `SIGINT` or `SIGTERM`, `signal.stopped` is assigned `True`.
+- `request_handler`: a coroutine that takes a `sanic.request.Request` object
+  and a `response` callback as arguments.
+- `error_handler`: a `sanic.exceptions.Handler` which is called when exceptions
+  are raised.
+- `request_timeout`: the number of seconds before a request times out.
+- `request_max_size`: an integer specifying the maximum size of a request, in bytes.
 
 ## Example
-By default protocol, an error occurs, if the handler does not return an `HTTPResponse object`.  
-In this example, By rewriting `write_response()`, if the handler returns `str`, it will be converted to an `HTTPResponse object`.
+
+An error occurs in the default protocol if a handler function does not return
+an `HTTPResponse` object.
+
+By overriding the `write_response` protocol method, if a handler returns a
+string it will be converted to an `HTTPResponse object`.
 
 ```python
 from sanic import Sanic

@@ -21,19 +21,13 @@ class RequestParameters(dict):
     value of the list and getlist returns the whole shebang
     """
 
-    def __init__(self, *args, **kwargs):
-        self.super = super()
-        self.super.__init__(*args, **kwargs)
-
-    def __getitem__(self, name):
-        return self.get(name)
-
     def get(self, name, default=None):
-        values = self.super.get(name)
-        return values[0] if values else default
+        """Return the first value, either the default or actual"""
+        return super().get(name, [default])[0]
 
     def getlist(self, name, default=None):
-        return self.super.get(name, default)
+        """Return the entire list"""
+        return super().get(name, default)
 
 
 class Request(dict):

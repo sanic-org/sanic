@@ -1,24 +1,31 @@
 # Exceptions
 
-Exceptions can be thrown from within request handlers and will automatically be handled by Sanic.  Exceptions take a message as their first argument, and can also take a status_code to be passed back in the HTTP response.  Check sanic.exceptions for the full list of exceptions to throw.
+Exceptions can be thrown from within request handlers and will automatically be
+handled by Sanic. Exceptions take a message as their first argument, and can
+also take a status code to be passed back in the HTTP response.
 
 ## Throwing an exception
 
+To throw an exception, simply `raise` the relevant exception from the
+`sanic.exceptions` module.
+
 ```python
-from sanic import Sanic
 from sanic.exceptions import ServerError
 
 @app.route('/killme')
 def i_am_ready_to_die(request):
-	raise ServerError("Something bad happened")
+	raise ServerError("Something bad happened", status_code=500)
 ```
 
 ## Handling Exceptions
 
-Just use the @exception decorator.  The decorator expects a list of exceptions to handle as arguments.  You can pass SanicException to catch them all!  The exception handler must expect a request and exception object as arguments.
+To override Sanic's default handling of an exception, the `@app.exception`
+decorator is used. The decorator expects a list of exceptions to handle as
+arguments. You can pass `SanicException` to catch them all! The decorated
+exception handler function must take a `Request` and `Exception` object as
+arguments.
 
 ```python
-from sanic import Sanic
 from sanic.response import text
 from sanic.exceptions import NotFound
 
@@ -26,3 +33,13 @@ from sanic.exceptions import NotFound
 def ignore_404s(request, exception):
 	return text("Yep, I totally found the page: {}".format(request.url))
 ```
+
+## Useful Exceptions
+
+Some of the most useful exceptions are presented below:
+
+- `NotFound`: called when a suitable route for the request isn't found.
+- `ServerError`: called when something goes wrong inside the server. This
+  usually occurs if there is an exception raised in user code.
+
+See the `sanic.exceptions` module for the full list of exceptions to throw.

@@ -158,3 +158,7 @@ app.blueprint(blueprint_v2)
 
 app.run(host='0.0.0.0', port=8000, debug=True)
 ```
+
+**Previous:** [Exceptions](exceptions.html)
+
+**Next:** [Class-based views](class_based_views.html)

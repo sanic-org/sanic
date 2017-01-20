@@ -76,3 +76,7 @@ class ViewWithDecorator(HTTPMethodView):
 
 app.add_route(ViewWithDecorator.as_view(), '/url')
 ```
+
+**Previous:** [Blueprints](blueprints.html)
+
+**Next:** [Cookies](cookies.html)

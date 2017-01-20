@@ -7,17 +7,17 @@ Guides
    :maxdepth: 2
 
    getting_started
-   request_data
    routing
+   request_data
+   deploying
+   static_files
    middleware
    exceptions
    blueprints
    class_based_views
    cookies
-   static_files
    custom_protocol
    testing
-   deploying
    extensions
    contributing
 

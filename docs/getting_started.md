@@ -25,3 +25,5 @@ syntax, so earlier versions of python won't work.
    the message *Hello world!*.
 
 You now have a working Sanic server!
+
+**Next:** [Routing](routing.html)

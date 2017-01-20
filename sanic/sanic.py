@@ -22,6 +22,15 @@ from os import set_inheritable
 class Sanic:
     def __init__(self, name=None, router=None,
                  error_handler=None):
+        # Only set up a default log handler if the
+        # end-user application didn't set anything up.
+        if not logging.root.handlers and log.level == logging.NOTSET:
+            formatter = logging.Formatter(
+                "%(asctime)s: %(levelname)s: %(message)s")
+            handler = logging.StreamHandler()
+            handler.setFormatter(formatter)
+            log.addHandler(handler)
+            log.setLevel(logging.INFO)
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
@@ -273,10 +282,6 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s: %(levelname)s: %(message)s"
-        )
         self.error_handler.debug = True
         self.debug = debug
         self.loop = loop
@@ -364,12 +369,6 @@ class Sanic:
         :param stop_event: if provided, is used as a stop signal
         :return:
         """
-        # In case this is called directly, we configure logging here too.
-        # This won't interfere with the same call from run()
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s: %(levelname)s: %(message)s"
-        )
         server_settings['reuse_port'] = True
 
         # Create a stop event to be triggered by a signal

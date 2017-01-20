@@ -5,7 +5,7 @@
 You can change the behavior of Sanic's protocol by specifying a custom
 protocol, which should be a subclass
 of
-[asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.md#protocol-classes).
+[asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
 This protocol can then be passed as the keyword argument `protocol` to the `sanic.run` method.
 
 The constructor of the custom protocol class receives the following keyword

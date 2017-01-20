@@ -23,7 +23,7 @@ keyword arguments:
                              specified, Sanic creates its own event loop.
 - `protocol` *(default `HttpProtocol`)*: Subclass
   of
-  [asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.md#protocol-classes).
+  [asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
 
 ## Workers
 

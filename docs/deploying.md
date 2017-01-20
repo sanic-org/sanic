@@ -37,7 +37,7 @@ app.run(host='0.0.0.0', port=1337, workers=4)
 Sanic will automatically spin up multiple processes and route traffic between
 them. We recommend as many workers as you have available cores.
 
-## Running via Command
+## Running via command
 
 If you like using command line arguments, you can launch a Sanic server by
 executing the module. For example, if you initialized Sanic as `app` in a file

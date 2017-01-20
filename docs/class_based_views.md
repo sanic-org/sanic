@@ -1,4 +1,4 @@
-# Class-based views
+# Class-Based Views
 
 Class-based views are simply classes which implement response behaviour to
 requests. They provide a way to compartmentalise handling of different HTTP

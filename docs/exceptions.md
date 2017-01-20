@@ -17,7 +17,7 @@ def i_am_ready_to_die(request):
 	raise ServerError("Something bad happened", status_code=500)
 ```
 
-## Handling Exceptions
+## Handling exceptions
 
 To override Sanic's default handling of an exception, the `@app.exception`
 decorator is used. The decorator expects a list of exceptions to handle as
@@ -34,7 +34,7 @@ def ignore_404s(request, exception):
 	return text("Yep, I totally found the page: {}".format(request.url))
 ```
 
-## Useful Exceptions
+## Useful exceptions
 
 Some of the most useful exceptions are presented below:
 

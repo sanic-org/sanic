@@ -20,7 +20,7 @@ returns a JSON object.
 Sanic handler functions must be defined using the `async def` syntax, as they
 are asynchronous functions.
 
-## Request Parameters
+## Request parameters
 
 Sanic comes with a basic router that supports request parameters.
 

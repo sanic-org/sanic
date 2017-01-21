@@ -142,14 +142,15 @@ class HTTPResponse:
         return self._cookies
 
 
-def json(body, status=200, headers=None):
+def json(body, status=200, headers=None, **kwargs):
     """
     Returns response object with body in json format.
     :param body: Response data to be serialized.
     :param status: Response code.
     :param headers: Custom Headers.
+    :param \**kwargs: Remaining arguments that are passed to the json encoder.
     """
-    return HTTPResponse(json_dumps(body), headers=headers, status=status,
+    return HTTPResponse(json_dumps(body, **kwargs), headers=headers, status=status,
                         content_type="application/json")
 
 

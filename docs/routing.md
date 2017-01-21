@@ -1,17 +1,48 @@
 # Routing
 
-Sanic comes with a basic router that supports request parameters.  To specify a parameter, surround it with carrots like so: `<PARAM>`.  Request parameters will be passed to the request handler functions as keyword arguments.  To specify a type, add a :type after the parameter name, in the carrots.  If the parameter does not match the type supplied, Sanic will throw a NotFound exception, resulting in a 404 page not found error.
+Routing allows the user to specify handler functions for different URL endpoints.
 
-
-## Examples
+A basic route looks like the following, where `app` is an instance of the
+`Sanic` class:
 
 ```python
-from sanic import Sanic
+from sanic.response import json
+
+@app.route("/")
+async def test(request):
+    return json({ "hello": "world" })
+``` 
+
+When the url `http://server.url/` is accessed (the base url of the server), the
+final `/` is matched by the router to the handler function, `test`, which then
+returns a JSON object.
+
+Sanic handler functions must be defined using the `async def` syntax, as they
+are asynchronous functions.
+
+## Request parameters
+
+Sanic comes with a basic router that supports request parameters.
+
+To specify a parameter, surround it with angle quotes like so: `<PARAM>`.
+Request parameters will be passed to the route handler functions as keyword
+arguments.
+
+```python
 from sanic.response import text
 
 @app.route('/tag/<tag>')
 async def tag_handler(request, tag):
 	return text('Tag - {}'.format(tag))
+```
+
+To specify a type for the parameter, add a `:type` after the parameter name,
+inside the quotes. If the parameter does not match the specified type, Sanic
+will throw a `NotFound` exception, resulting in a `404: Page not found` error
+on the URL.
+
+```python
+from sanic.response import text
 
 @app.route('/number/<integer_arg:int>')
 async def integer_handler(request, integer_arg):
@@ -29,16 +60,52 @@ async def person_handler(request, name):
 async def folder_handler(request, folder_id):
 	return text('Folder - {}'.format(folder_id))
 
-async def handler1(request):
-	return text('OK')
-app.add_route(handler1, '/test')
+```
 
-async def handler(request, name):
-	return text('Folder - {}'.format(name))
-app.add_route(handler, '/folder/<name>')
+## HTTP request types
 
-async def person_handler(request, name):
-	return text('Person - {}'.format(name))
-app.add_route(handler, '/person/<name:[A-z]>')
+By default, a route defined on a URL will be used for all requests to that URL.
+However, the `@app.route` decorator accepts an optional parameter, `methods`,
+which restricts the handler function to the HTTP methods in the given list.
+
+```python
+from sanic.response import text
+
+@app.route('/post')
+async def post_handler(request, methods=['POST']):
+	return text('POST request - {}'.format(request.json))
+
+@app.route('/get')
+async def GET_handler(request, methods=['GET']):
+	return text('GET request - {}'.format(request.args))
 
 ```
+
+## The `add_route` method
+
+As we have seen, routes are often specified using the `@app.route` decorator.
+However, this decorator is really just a wrapper for the `app.add_route`
+method, which is used as follows:
+
+```python
+from sanic.response import text
+
+# Define the handler functions
+async def handler1(request):
+	return text('OK')
+
+async def handler2(request, name):
+	return text('Folder - {}'.format(name))
+
+async def person_handler2(request, name):
+	return text('Person - {}'.format(name))
+
+# Add each handler function as a route
+app.add_route(handler1, '/test')
+app.add_route(handler2, '/folder/<name>')
+app.add_route(person_handler2, '/person/<name:[A-z]>', methods=['GET'])
+```
+
+**Previous:** [Getting Started](getting_started.md)
+
+**Next:** [Request Data](request_data.md)

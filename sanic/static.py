@@ -15,12 +15,14 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
     """
     Registers a static directory handler with Sanic by adding a route to the
     router and registering a handler.
+
     :param app: Sanic
     :param file_or_directory: File or directory path to serve from
     :param uri: URL to serve from
     :param pattern: regular expression used to match files in the URL
     :param use_modified_since: If true, send file modified time, and return
-                     not modified if the browser's matches the server's
+                               not modified if the browser's matches the
+                               server's
     """
 
     # If we're not trying to match a file directly,

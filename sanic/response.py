@@ -150,8 +150,8 @@ def json(body, status=200, headers=None, **kwargs):
     :param headers: Custom Headers.
     :param \**kwargs: Remaining arguments that are passed to the json encoder.
     """
-    return HTTPResponse(json_dumps(body, **kwargs), headers=headers, status=status,
-                        content_type="application/json")
+    return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
+                        status=status, content_type="application/json")
 
 
 def text(body, status=200, headers=None):

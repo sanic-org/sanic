@@ -16,14 +16,15 @@ async def local_request(method, uri, cookies=None, *args, **kwargs):
 
 
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
-                        loop=None, *request_args, **request_kwargs):
+                        loop=None, debug=False, server_kwargs={},
+                        *request_args, **request_kwargs):
     results = []
     exceptions = []
 
     if gather_request:
-        @app.middleware
         def _collect_request(request):
             results.append(request)
+        app.request_middleware.appendleft(_collect_request)
 
     async def _collect_response(sanic, loop):
         try:
@@ -34,7 +35,8 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
             exceptions.append(e)
         app.stop()
 
-    app.run(host=HOST, port=42101, after_start=_collect_response, loop=loop)
+    app.run(host=HOST, debug=debug, port=PORT,
+            after_start=_collect_response, loop=loop, **server_kwargs)
 
     if exceptions:
         raise ValueError("Exception during request: {}".format(exceptions))
@@ -45,11 +47,11 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
             return request, response
         except:
             raise ValueError(
-                "request and response object expected, got ({})".format(
+                "Request and response object expected, got ({})".format(
                     results))
     else:
         try:
             return results[0]
         except:
             raise ValueError(
-                "request object expected, got ({})".format(results))
+                "Request object expected, got ({})".format(results))

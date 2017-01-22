@@ -1,14 +1,10 @@
+sudo: false
 language: python
 python:
   - '3.5'
-install:
-  - pip install -r requirements.txt
-  - pip install -r requirements-dev.txt
-  - python setup.py install
-  - pip install flake8
-  - pip install pytest
-before_script: flake8 sanic
-script: py.test -v tests
+  - '3.6'
+install: pip install tox-travis
+script: tox
 deploy:
   provider: pypi
   user: channelcat

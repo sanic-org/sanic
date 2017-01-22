@@ -4,6 +4,7 @@ from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
 from ujson import loads as json_loads
+from sanic.exceptions import InvalidUsage
 
 from .log import log
 
@@ -20,35 +21,34 @@ class RequestParameters(dict):
     value of the list and getlist returns the whole shebang
     """
 
-    def __init__(self, *args, **kwargs):
-        self.super = super()
-        self.super.__init__(*args, **kwargs)
-
     def get(self, name, default=None):
-        values = self.super.get(name)
-        return values[0] if values else default
+        """Return the first value, either the default or actual"""
+        return super().get(name, [default])[0]
 
     def getlist(self, name, default=None):
-        return self.super.get(name, default)
+        """Return the entire list"""
+        return super().get(name, default)
 
 
-class Request:
+class Request(dict):
     """
     Properties of an HTTP request such as URL, headers, etc.
     """
     __slots__ = (
-        'url', 'headers', 'version', 'method', '_cookies',
+        'url', 'headers', 'version', 'method', '_cookies', 'transport',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
+        '_ip',
     )
 
-    def __init__(self, url_bytes, headers, version, method):
+    def __init__(self, url_bytes, headers, version, method, transport):
         # TODO: Content-Encoding detection
         url_parsed = parse_url(url_bytes)
         self.url = url_parsed.path.decode('utf-8')
         self.headers = headers
         self.version = version
         self.method = method
+        self.transport = transport
         self.query_string = None
         if url_parsed.query:
             self.query_string = url_parsed.query.decode('utf-8')
@@ -63,13 +63,24 @@ class Request:
 
     @property
     def json(self):
-        if not self.parsed_json:
+        if self.parsed_json is None:
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
-                pass
+                raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
+
+    @property
+    def token(self):
+        """
+        Attempts to return the auth header token.
+        :return: token related to request
+        """
+        auth_header = self.headers.get('Authorization')
+        if auth_header is not None:
+            return auth_header.split()[1]
+        return auth_header
 
     @property
     def form(self):
@@ -88,9 +99,9 @@ class Request:
                     boundary = parameters['boundary'].encode('utf-8')
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
-            except Exception as e:
-                log.exception(e)
-                pass
+            except Exception:
+                log.exception("Failed when parsing form")
+
         return self.parsed_form
 
     @property
@@ -114,14 +125,21 @@ class Request:
     @property
     def cookies(self):
         if self._cookies is None:
-            if 'Cookie' in self.headers:
+            cookie = self.headers.get('Cookie') or self.headers.get('cookie')
+            if cookie is not None:
                 cookies = SimpleCookie()
-                cookies.load(self.headers['Cookie'])
+                cookies.load(cookie)
                 self._cookies = {name: cookie.value
                                  for name, cookie in cookies.items()}
             else:
                 self._cookies = {}
         return self._cookies
+
+    @property
+    def ip(self):
+        if not hasattr(self, '_ip'):
+            self._ip = self.transport.get_extra_info('peername')
+        return self._ip
 
 
 File = namedtuple('File', ['type', 'body', 'name'])
@@ -130,6 +148,7 @@ File = namedtuple('File', ['type', 'body', 'name'])
 def parse_multipart_form(body, boundary):
     """
     Parses a request body and returns fields and files
+
     :param body: Bytes request body
     :param boundary: Bytes multipart boundary
     :return: fields (RequestParameters), files (RequestParameters)

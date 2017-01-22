@@ -261,7 +261,8 @@ def trigger_events(events, loop):
 def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
-          reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100):
+          reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
+          register_sys_signals=True):
     """
     Starts asynchronous HTTP Server on an individual process.
 
@@ -333,8 +334,9 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     trigger_events(after_start, loop)
 
     # Register signals for graceful termination
-    for _signal in (SIGINT, SIGTERM):
-        loop.add_signal_handler(_signal, loop.stop)
+    if register_sys_signals:
+        for _signal in (SIGINT, SIGTERM):
+            loop.add_signal_handler(_signal, loop.stop)
 
     try:
         loop.run_forever()

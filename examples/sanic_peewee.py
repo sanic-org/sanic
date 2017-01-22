@@ -9,19 +9,18 @@ from sanic import Sanic
 from sanic.response import json
 
 ## peewee_async related imports
-import uvloop
 import peewee
 from peewee_async import Manager, PostgresqlDatabase
 
  # we instantiate a custom loop so we can pass it to our db manager
-loop = uvloop.new_event_loop()
 
-database = PostgresqlDatabase(database='test',
-                              host='127.0.0.1',
-                              user='postgres',
-                              password='mysecretpassword')
+def setup(app, loop):
+    database = PostgresqlDatabase(database='test',
+                                  host='127.0.0.1',
+                                  user='postgres',
+                                  password='mysecretpassword')
 
-objects = Manager(database, loop=loop)
+    objects = Manager(database, loop=loop)
 
 ## from peewee_async docs:
 # Also there’s no need to connect and re-connect before executing async queries
@@ -76,5 +75,4 @@ async def get(request):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000, loop=loop)
-
+    app.run(host='0.0.0.0', port=8000, before_start=setup)

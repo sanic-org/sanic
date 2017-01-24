@@ -262,7 +262,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
-          register_sys_signals=True):
+          register_sys_signals=True, run_async=False):
     """
     Starts asynchronous HTTP Server on an individual process.
 
@@ -320,10 +320,12 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         sock=sock,
         backlog=backlog
     )
-
     # Instead of pulling time at the end of every request,
     # pull it once per minute
     loop.call_soon(partial(update_current_time, loop))
+
+    if run_async:
+        return server_coroutine
 
     try:
         http_server = loop.run_until_complete(server_coroutine)

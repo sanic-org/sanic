@@ -348,9 +348,8 @@ class Sanic:
         log.debug(self.config.LOGO)
 
         # Serve
-        if ssl is None:
-            proto = "http"
-        else:
+        proto = "http"
+        if ssl is not None:
             proto = "https"
         log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
@@ -377,6 +376,63 @@ class Sanic:
                 process.terminate()
             self.sock.close()
         get_event_loop().stop()
+
+    async def create_server(self, host="127.0.0.1", port=8000, debug=False,
+                            before_start=None, after_start=None,
+                            before_stop=None, after_stop=None, ssl=None,
+                            sock=None, loop=None, protocol=HttpProtocol,
+                            backlog=100, stop_event=None):
+        '''
+        Asynchronous version of `run`.
+        '''
+        loop = get_event_loop()
+        server_settings = {
+            'protocol': protocol,
+            'host': host,
+            'port': port,
+            'sock': sock,
+            'ssl': ssl,
+            'debug': debug,
+            'request_handler': self.handle_request,
+            'error_handler': self.error_handler,
+            'request_timeout': self.config.REQUEST_TIMEOUT,
+            'request_max_size': self.config.REQUEST_MAX_SIZE,
+            'loop': loop,
+            'backlog': backlog
+        }
+
+        # -------------------------------------------- #
+        # Register start/stop events
+        # -------------------------------------------- #
+
+        for event_name, settings_name, args, reverse in (
+                ("before_server_start", "before_start", before_start, False),
+                ("after_server_start", "after_start", after_start, False),
+                ("before_server_stop", "before_stop", before_stop, True),
+                ("after_server_stop", "after_stop", after_stop, True),
+                ):
+            listeners = []
+            for blueprint in self.blueprints.values():
+                listeners += blueprint.listeners[event_name]
+            if args:
+                if callable(args):
+                    args = [args]
+                listeners += args
+            if reverse:
+                listeners.reverse()
+            # Prepend sanic to the arguments when listeners are triggered
+            listeners = [partial(listener, self) for listener in listeners]
+            server_settings[settings_name] = listeners
+
+        server_settings['run_async'] = True
+
+        # Serve
+        proto = "http"
+        if ssl is not None:
+            proto = "https"
+        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+
+        return await serve(**server_settings)
 
     def serve_multiple(self, server_settings, workers, stop_event=None):
         """

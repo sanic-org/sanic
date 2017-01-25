@@ -36,7 +36,7 @@ class Sanic:
             name = getmodulename(frame_records[1])
         self.name = name
         self.router = router or Router()
-        self.error_handler = error_handler or Handler(self)
+        self.error_handler = error_handler or Handler()
         self.config = Config()
         self.request_middleware = deque()
         self.response_middleware = deque()
@@ -300,7 +300,7 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
-        self.error_handler.debug = True
+        self.error_handler.debug = debug
         self.debug = debug
         self.loop = loop
 

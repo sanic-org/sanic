@@ -140,9 +140,9 @@ class PayloadTooLarge(SanicException):
 class Handler:
     handlers = None
 
-    def __init__(self, sanic):
+    def __init__(self):
         self.handlers = {}
-        self.sanic = sanic
+        self.debug = False
 
     def _render_traceback_html(self, exception, request):
         exc_type, exc_value, tb = sys.exc_info()
@@ -175,7 +175,7 @@ class Handler:
             response = handler(request=request, exception=exception)
         except:
             log.error(format_exc())
-            if self.sanic.debug:
+            if self.debug:
                 response_message = (
                     'Exception raised in exception handler "{}" '
                     'for uri: "{}"\n{}').format(
@@ -192,7 +192,7 @@ class Handler:
             return text(
                 'Error: {}'.format(exception),
                 status=getattr(exception, 'status_code', 500))
-        elif self.sanic.debug:
+        elif self.debug:
             html_output = self._render_traceback_html(exception, request)
 
             response_message = (

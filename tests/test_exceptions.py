@@ -84,10 +84,29 @@ def test_handled_unhandled_exception(exception_app):
         "The server encountered an internal error and "
         "cannot complete your request.")
 
-
 def test_exception_in_exception_handler(exception_app):
     """Test that an exception thrown in an error handler is handled"""
     request, response = sanic_endpoint_test(
         exception_app, uri='/error_in_error_handler_handler')
     assert response.status == 500
     assert response.body == b'An error occurred while handling an error'
+
+
+def test_exception_in_exception_handler_debug_off(exception_app):
+    """Test that an exception thrown in an error handler is handled"""
+    request, response = sanic_endpoint_test(
+        exception_app,
+        uri='/error_in_error_handler_handler',
+        debug=False)
+    assert response.status == 500
+    assert response.body == b'An error occurred while handling an error'
+
+
+def test_exception_in_exception_handler_debug_off(exception_app):
+    """Test that an exception thrown in an error handler is handled"""
+    request, response = sanic_endpoint_test(
+        exception_app,
+        uri='/error_in_error_handler_handler',
+        debug=True)
+    assert response.status == 500
+    assert response.body.startswith(b'Exception raised in exception ')

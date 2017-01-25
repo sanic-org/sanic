@@ -1,4 +1,5 @@
 import pytest
+from bs4 import BeautifulSoup
 
 from sanic import Sanic
 from sanic.response import text
@@ -75,8 +76,13 @@ def test_handled_unhandled_exception(exception_app):
     request, response = sanic_endpoint_test(
         exception_app, uri='/divide_by_zero')
     assert response.status == 500
-    assert response.body == b'An error occurred while generating the response'
+    soup = BeautifulSoup(response.body, 'html.parser')
+    assert soup.h1.text == 'Internal Server Error'
 
+    message = " ".join(soup.p.text.split())
+    assert message == (
+        "The server encountered an internal error and "
+        "cannot complete your request.")
 
 def test_exception_in_exception_handler(exception_app):
     """Test that an exception thrown in an error handler is handled"""
@@ -84,3 +90,23 @@ def test_exception_in_exception_handler(exception_app):
         exception_app, uri='/error_in_error_handler_handler')
     assert response.status == 500
     assert response.body == b'An error occurred while handling an error'
+
+
+def test_exception_in_exception_handler_debug_off(exception_app):
+    """Test that an exception thrown in an error handler is handled"""
+    request, response = sanic_endpoint_test(
+        exception_app,
+        uri='/error_in_error_handler_handler',
+        debug=False)
+    assert response.status == 500
+    assert response.body == b'An error occurred while handling an error'
+
+
+def test_exception_in_exception_handler_debug_off(exception_app):
+    """Test that an exception thrown in an error handler is handled"""
+    request, response = sanic_endpoint_test(
+        exception_app,
+        uri='/error_in_error_handler_handler',
+        debug=True)
+    assert response.status == 500
+    assert response.body.startswith(b'Exception raised in exception ')

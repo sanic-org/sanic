@@ -19,7 +19,7 @@ def test_log():
         stream=log_stream
     )
     log = logging.getLogger()
-    app = Sanic('test_logging', logger=True)
+    app = Sanic('test_logging')
     @app.route('/')
     def handler(request):
         log.info('hello world')

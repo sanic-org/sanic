@@ -2,6 +2,7 @@ import re
 from collections import defaultdict, namedtuple
 from functools import lru_cache
 from .exceptions import NotFound, InvalidUsage
+from .views import CompositionView
 
 Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
@@ -31,12 +32,20 @@ class RouteDoesNotExist(Exception):
 class Router:
     """
     Router supports basic routing with parameters and method checks
+
     Usage:
-        @app.route('/my_url/<my_param>', methods=['GET', 'POST', ...])
+
+    .. code-block:: python
+
+        @sanic.route('/my/url/<my_param>', methods=['GET', 'POST', ...])
         def my_route(request, my_param):
             do stuff...
+
     or
-        @app.route('/my_url/<my_param:my_type>', methods=['GET', 'POST', ...])
+
+    .. code-block:: python
+
+        @sanic.route('/my/url/<my_param:my_type>', methods['GET', 'POST', ...])
         def my_route_with_type(request, my_param: my_type):
             do stuff...
 
@@ -61,11 +70,12 @@ class Router:
     def add(self, uri, methods, handler, host=None):
         """
         Adds a handler to the route list
+
         :param uri: Path to match
         :param methods: Array of accepted method names.
-        If none are provided, any method is allowed
+                        If none are provided, any method is allowed
         :param handler: Request handler function.
-        When executed, it should provide a response object.
+                        When executed, it should provide a response object.
         :return: Nothing
         """
 
@@ -76,11 +86,15 @@ class Router:
             if self.hosts is None:
                 self.hosts = set(host)
             else:
+                if isinstance(host, list):
+                    host = set(host)
                 self.hosts.add(host)
-            uri = host + uri
-
-        if uri in self.routes_all:
-            raise RouteExists("Route already registered: {}".format(uri))
+            if isinstance(host, str):
+                uri = host + uri
+            else:
+                for h in host:
+                    self.add(uri, methods, handler, h)
+                return
 
         # Dict for faster lookups of if method allowed
         if methods:
@@ -114,9 +128,35 @@ class Router:
         pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
         pattern = re.compile(r'^{}$'.format(pattern_string))
 
-        route = Route(
-            handler=handler, methods=methods, pattern=pattern,
-            parameters=parameters)
+        def merge_route(route, methods, handler):
+            # merge to the existing route when possible.
+            if not route.methods or not methods:
+                # method-unspecified routes are not mergeable.
+                raise RouteExists(
+                    "Route already registered: {}".format(uri))
+            elif route.methods.intersection(methods):
+                # already existing method is not overloadable.
+                duplicated = methods.intersection(route.methods)
+                raise RouteExists(
+                    "Route already registered: {} [{}]".format(
+                        uri, ','.join(list(duplicated))))
+            if isinstance(route.handler, CompositionView):
+                view = route.handler
+            else:
+                view = CompositionView()
+                view.add(route.methods, route.handler)
+            view.add(methods, handler)
+            route = route._replace(
+                handler=view, methods=methods.union(route.methods))
+            return route
+
+        route = self.routes_all.get(uri)
+        if route:
+            route = merge_route(route, methods, handler)
+        else:
+            route = Route(
+                handler=handler, methods=methods, pattern=pattern,
+                parameters=parameters)
 
         self.routes_all[uri] = route
         if properties['unhashable']:
@@ -149,6 +189,7 @@ class Router:
         """
         Gets a request handler based on the URL of the request, or raises an
         error
+
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """

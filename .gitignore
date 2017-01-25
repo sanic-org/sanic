@@ -11,3 +11,5 @@ settings.py
 .idea/*
 .cache/*
 .python-version
+docs/_build/
+docs/_api/

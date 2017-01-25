@@ -1,7 +1,7 @@
 import asyncio
+import traceback
 from functools import partial
 from inspect import isawaitable
-from multidict import CIMultiDict
 from signal import SIGINT, SIGTERM
 from time import time
 from httptools import HttpRequestParser
@@ -18,11 +18,30 @@ from .request import Request
 from .exceptions import RequestTimeout, PayloadTooLarge, InvalidUsage
 
 
+current_time = None
+
+
 class Signal:
     stopped = False
 
 
-current_time = None
+class CIDict(dict):
+    """
+    Case Insensitive dict where all keys are converted to lowercase
+    This does not maintain the inputted case when calling items() or keys()
+    in favor of speed, since headers are case insensitive
+    """
+    def get(self, key, default=None):
+        return super().get(key.casefold(), default)
+
+    def __getitem__(self, key):
+        return super().__getitem__(key.casefold())
+
+    def __setitem__(self, key, value):
+        return super().__setitem__(key.casefold(), value)
+
+    def __contains__(self, key):
+        return super().__contains__(key.casefold())
 
 
 class HttpProtocol(asyncio.Protocol):
@@ -70,15 +89,14 @@ class HttpProtocol(asyncio.Protocol):
     def connection_lost(self, exc):
         self.connections.discard(self)
         self._timeout_handler.cancel()
-        self.cleanup()
 
     def connection_timeout(self):
         # Check if
         time_elapsed = current_time - self._last_request_time
         if time_elapsed < self.request_timeout:
             time_left = self.request_timeout - time_elapsed
-            self._timeout_handler = \
-                self.loop.call_later(time_left, self.connection_timeout)
+            self._timeout_handler = (
+                self.loop.call_later(time_left, self.connection_timeout))
         else:
             if self._request_handler_task:
                 self._request_handler_task.cancel()
@@ -118,18 +136,15 @@ class HttpProtocol(asyncio.Protocol):
             exception = PayloadTooLarge('Payload Too Large')
             self.write_error(exception)
 
-        self.headers.append((name.decode(), value.decode('utf-8')))
+        self.headers.append((name.decode().casefold(), value.decode()))
 
     def on_headers_complete(self):
-        remote_addr = self.transport.get_extra_info('peername')
-        if remote_addr:
-            self.headers.append(('Remote-Addr', '%s:%s' % remote_addr))
-
         self.request = Request(
             url_bytes=self.url,
-            headers=CIMultiDict(self.headers),
+            headers=CIDict(self.headers),
             version=self.parser.get_http_version(),
-            method=self.parser.get_method().decode()
+            method=self.parser.get_method().decode(),
+            transport=self.transport
         )
 
     def on_body(self, body):
@@ -148,35 +163,54 @@ class HttpProtocol(asyncio.Protocol):
 
     def write_response(self, response):
         try:
-            keep_alive = self.parser.should_keep_alive() \
-                            and not self.signal.stopped
+            keep_alive = (
+                self.parser.should_keep_alive() and not self.signal.stopped)
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive, self.request_timeout))
+        except RuntimeError:
+            log.error(
+                'Connection lost before response written @ {}'.format(
+                    self.request.ip))
+        except Exception as e:
+            self.bail_out(
+                "Writing response failed, connection closed {}".format(e))
+        finally:
             if not keep_alive:
                 self.transport.close()
             else:
                 # Record that we received data
                 self._last_request_time = current_time
                 self.cleanup()
-        except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(e))
 
     def write_error(self, exception):
         try:
             response = self.error_handler.response(self.request, exception)
             version = self.request.version if self.request else '1.1'
             self.transport.write(response.output(version))
-            self.transport.close()
+        except RuntimeError:
+            log.error(
+                'Connection lost before error written @ {}'.format(
+                    self.request.ip))
         except Exception as e:
             self.bail_out(
-                "Writing error failed, connection closed {}".format(e))
+                "Writing error failed, connection closed {}".format(e),
+                from_error=True)
+        finally:
+            self.transport.close()
 
-    def bail_out(self, message):
-        exception = ServerError(message)
-        self.write_error(exception)
-        log.error(message)
+    def bail_out(self, message, from_error=False):
+        if from_error and self.transport.is_closing():
+            log.error(
+                ("Transport closed @ {} and exception "
+                 "experienced during error handling").format(
+                    self.transport.get_extra_info('peername')))
+            log.debug(
+                'Exception:\n{}'.format(traceback.format_exc()))
+        else:
+            exception = ServerError(message)
+            self.write_error(exception)
+            log.error(message)
 
     def cleanup(self):
         self.parser = None
@@ -201,6 +235,7 @@ def update_current_time(loop):
     """
     Caches the current time, since it is needed
     at the end of every keep-alive request to update the request timeout time
+
     :param loop:
     :return:
     """
@@ -225,24 +260,29 @@ def trigger_events(events, loop):
 
 def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
-          request_timeout=60, sock=None, request_max_size=None,
-          reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100):
+          request_timeout=60, ssl=None, sock=None, request_max_size=None,
+          reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
+          register_sys_signals=True):
     """
     Starts asynchronous HTTP Server on an individual process.
+
     :param host: Address to host on
     :param port: Port to host on
     :param request_handler: Sanic request handler with middleware
     :param error_handler: Sanic error handler with middleware
     :param before_start: Function to be executed before the server starts
-    listening. Takes single argument `loop`
+                         listening. Takes single argument `loop`
     :param after_start: Function to be executed after the server starts
-    listening. Takes single argument `loop`
+                        listening. Takes single argument `loop`
     :param before_stop: Function to be executed when a stop signal is
-    received before it is respected. Takes single argumenet `loop`
+                        received before it is respected. Takes single
+                        argument `loop`
     :param after_stop: Function to be executed when a stop signal is
-    received after it is respected. Takes single argumenet `loop`
+                       received after it is respected. Takes single
+                       argument `loop`
     :param debug: Enables debug output (slows server)
     :param request_timeout: time in seconds
+    :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
@@ -275,6 +315,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         server,
         host,
         port,
+        ssl=ssl,
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog
@@ -293,8 +334,9 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     trigger_events(after_start, loop)
 
     # Register signals for graceful termination
-    for _signal in (SIGINT, SIGTERM):
-        loop.add_signal_handler(_signal, loop.stop)
+    if register_sys_signals:
+        for _signal in (SIGINT, SIGTERM):
+            loop.add_signal_handler(_signal, loop.stop)
 
     try:
         loop.run_forever()

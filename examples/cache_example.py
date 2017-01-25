@@ -21,7 +21,7 @@ from aiocache.serializers import JsonSerializer
 app = Sanic(__name__)
 
 aiocache.settings.set_defaults(
-    cache="aiocache.RedisCache"
+    class_="aiocache.RedisCache"
 )
 
 

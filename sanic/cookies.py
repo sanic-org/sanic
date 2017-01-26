@@ -115,7 +115,8 @@ class Cookie(dict):
                     value.strftime("%a, %d-%b-%Y %T GMT")
                 ))
             elif key in self._flags:
-                output.append(self._keys[key])
+                if self[key]:
+                    output.append(self._keys[key])
             else:
                 output.append('%s=%s' % (self._keys[key], value))
 

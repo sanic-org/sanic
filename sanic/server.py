@@ -271,15 +271,15 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param request_handler: Sanic request handler with middleware
     :param error_handler: Sanic error handler with middleware
     :param before_start: Function to be executed before the server starts
-                         listening. Takes single argument `loop`
+                         listening. Takes arguments `app` instance and `loop`
     :param after_start: Function to be executed after the server starts
-                        listening. Takes single argument `loop`
+                        listening. Takes  arguments `app` instance and `loop`
     :param before_stop: Function to be executed when a stop signal is
-                        received before it is respected. Takes single
-                        argument `loop`
+                        received before it is respected. Takes arguments
+                        `app` instance and `loop`
     :param after_stop: Function to be executed when a stop signal is
-                       received after it is respected. Takes single
-                       argument `loop`
+                       received after it is respected. Takes arguments
+                        `app` instance and `loop`
     :param debug: Enables debug output (slows server)
     :param request_timeout: time in seconds
     :param ssl: SSLContext

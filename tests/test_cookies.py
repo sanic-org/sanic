@@ -26,6 +26,26 @@ def test_cookies():
     assert response.text == 'Cookies are: working!'
     assert response_cookies['right_back'].value == 'at you'
 
+@pytest.mark.parametrize("httponly,expected", [
+        (False, False),
+        (True, True),
+])
+def test_false_cookies(httponly, expected):
+    app = Sanic('test_text')
+
+    @app.route('/')
+    def handler(request):
+        response = text('Cookies are: {}'.format(request.cookies['test']))
+        response.cookies['right_back'] = 'at you'
+        response.cookies['right_back']['httponly'] = httponly
+        return response
+
+    request, response = sanic_endpoint_test(app)
+    response_cookies = SimpleCookie()
+    response_cookies.load(response.headers.get('Set-Cookie', {}))
+
+    'HttpOnly' in response_cookies == expected
+
 def test_http2_cookies():
     app = Sanic('test_http2_cookies')
 

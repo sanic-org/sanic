@@ -107,13 +107,13 @@ Available events are:
 ```python
 bp = Blueprint('my_blueprint')
 
-@bp.listen('before_server_start')
-async def setup_connection():
+@bp.listener('before_server_start')
+async def setup_connection(app, loop):
     global database
     database = mysql.connect(host='127.0.0.1'...)
     
-@bp.listen('after_server_stop')
-async def close_connection():
+@bp.listener('after_server_stop')
+async def close_connection(app, loop):
     await database.close()
 ```
 

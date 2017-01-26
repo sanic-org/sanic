@@ -54,7 +54,7 @@ class Request(dict):
             self.query_string = url_parsed.query.decode('utf-8')
 
         # Init but do not inhale
-        self.body = None
+        self.body = []
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None

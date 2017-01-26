@@ -49,7 +49,7 @@ class HttpProtocol(asyncio.Protocol):
         # event loop, connection
         'loop', 'transport', 'connections', 'signal',
         # request params
-        'parser', 'request', 'url', 'headers', 'body',
+        'parser', 'request', 'url', 'headers',
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
         # connection management
@@ -64,7 +64,6 @@ class HttpProtocol(asyncio.Protocol):
         self.parser = None
         self.url = None
         self.headers = None
-        self.body = []
         self.signal = signal
         self.connections = connections
         self.request_handler = request_handler
@@ -149,11 +148,11 @@ class HttpProtocol(asyncio.Protocol):
         )
 
     def on_body(self, body):
-        self.body.append(body)
+        self.request.body.append(body)
 
     def on_message_complete(self):
-        if self.body:
-            self.request.body = b''.join(self.body)
+        if self.request.body:
+            self.request.body = b''.join(self.request.body)
         self._request_handler_task = self.loop.create_task(
             self.request_handler(self.request, self.write_response))
 
@@ -217,7 +216,6 @@ class HttpProtocol(asyncio.Protocol):
         self.request = None
         self.url = None
         self.headers = None
-        self.body = []
         self._request_handler_task = None
         self._total_request_size = 0
 

@@ -76,3 +76,22 @@ def test_cookie_options():
 
     assert response_cookies['test'].value == 'at you'
     assert response_cookies['test']['httponly'] == True
+
+def test_cookie_deletion():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    def handler(request):
+        response = text("OK")
+        del response.cookies['i_want_to_die']
+        response.cookies['i_never_existed'] = 'testing'
+        del response.cookies['i_never_existed']
+        return response
+
+    request, response = sanic_endpoint_test(app)
+    response_cookies = SimpleCookie()
+    response_cookies.load(response.headers.get('Set-Cookie', {}))
+
+    assert int(response_cookies['i_want_to_die']['max-age']) == 0
+    with pytest.raises(KeyError):
+        hold_my_beer = response.cookies['i_never_existed']

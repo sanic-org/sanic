@@ -42,8 +42,9 @@ class CookieJar(dict):
     """
     CookieJar dynamically writes headers as cookies are added and removed
     It gets around the limitation of one header per name by using the
-    MultiHeader class to provide a unique key that encodes to Set-Cookie
+    MultiHeader class to provide a unique key that encodes to Set-Cookie.
     """
+
     def __init__(self, headers):
         super().__init__()
         self.headers = headers
@@ -54,6 +55,7 @@ class CookieJar(dict):
         cookie_header = self.cookie_headers.get(key)
         if not cookie_header:
             cookie = Cookie(key, value)
+            cookie['path'] = '/'
             cookie_header = MultiHeader("Set-Cookie")
             self.cookie_headers[key] = cookie_header
             self.headers[cookie_header] = cookie
@@ -62,8 +64,14 @@ class CookieJar(dict):
             self[key].value = value
 
     def __delitem__(self, key):
-        del self.cookie_headers[key]
-        return super().__delitem__(key)
+        if key not in self.cookie_headers:
+            self[key] = ''
+            self[key]['max-age'] = 0
+        else:
+            cookie_header = self.cookie_headers[key]
+            del self.headers[cookie_header]
+            del self.cookie_headers[key]
+            return super().__delitem__(key)
 
 
 class Cookie(dict):

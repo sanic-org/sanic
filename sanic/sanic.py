@@ -302,6 +302,10 @@ class Sanic:
         """
         self.error_handler.debug = debug
         self.debug = debug
+        if loop is not None:
+            log.warning("Passing a loop will be deprecated in version 0.4.0"
+                        " https://github.com/channelcat/sanic/pull/335"
+                        " has more information.", DeprecationWarning)
         self.loop = loop
 
         server_settings = {
@@ -385,6 +389,10 @@ class Sanic:
         """
         Asynchronous version of `run`.
         """
+        if loop is not None:
+            log.warning("Passing a loop will be deprecated in version 0.4.0"
+                        " https://github.com/channelcat/sanic/pull/335"
+                        " has more information.", DeprecationWarning)
         loop = get_event_loop()
         server_settings = {
             'protocol': protocol,
@@ -444,6 +452,10 @@ class Sanic:
         :param stop_event: if provided, is used as a stop signal
         :return:
         """
+        if server_settings.get('loop', None) is not None:
+            log.warning("Passing a loop will be deprecated in version 0.4.0"
+                        " https://github.com/channelcat/sanic/pull/335"
+                        " has more information.", DeprecationWarning)
         server_settings['reuse_port'] = True
 
         # Create a stop event to be triggered by a signal

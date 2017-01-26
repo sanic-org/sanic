@@ -351,7 +351,7 @@ class Sanic:
         proto = "http"
         if ssl is not None:
             proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+        log.info('Goin\' Fast @ {}://{}:{}', proto, host, port)
 
         try:
             if workers == 1:
@@ -382,9 +382,9 @@ class Sanic:
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=HttpProtocol,
                             backlog=100, stop_event=None):
-        '''
+        """
         Asynchronous version of `run`.
-        '''
+        """
         loop = get_event_loop()
         server_settings = {
             'protocol': protocol,
@@ -430,7 +430,7 @@ class Sanic:
         proto = "http"
         if ssl is not None:
             proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+        log.info('Goin\' Fast @ {}://{}:{}', proto, host, port)
 
         return await serve(**server_settings)
 

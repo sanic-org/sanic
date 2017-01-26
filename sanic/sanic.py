@@ -351,7 +351,7 @@ class Sanic:
         proto = "http"
         if ssl is not None:
             proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}', proto, host, port)
+        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         try:
             if workers == 1:
@@ -430,7 +430,7 @@ class Sanic:
         proto = "http"
         if ssl is not None:
             proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}', proto, host, port)
+        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         return await serve(**server_settings)
 

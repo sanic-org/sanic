@@ -64,7 +64,7 @@ parameters available:
 
 - `expires` (datetime): The time for the cookie to expire on the
                         client's browser.
-- `path` (string): The subset of URLs to which this cookie applies.  Defaults to 0.
+- `path` (string): The subset of URLs to which this cookie applies.  Defaults to /.
 - `comment` (string): A comment (metadata).
 - `domain` (string): Specifies the domain for which the cookie is valid. An
            explicitly specified domain must always start with a dot.

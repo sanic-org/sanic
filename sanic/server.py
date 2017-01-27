@@ -1,11 +1,18 @@
 import asyncio
+import os
 import traceback
+import warnings
 from functools import partial
 from inspect import isawaitable
-from signal import SIGINT, SIGTERM
+from multiprocessing import Process
+from os import set_inheritable
+from signal import SIGTERM, SIGINT
+from socket import socket, SOL_SOCKET, SO_REUSEADDR
 from time import time
+
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
+
 from .exceptions import ServerError
 
 try:
@@ -16,7 +23,6 @@ except ImportError:
 from .log import log
 from .request import Request
 from .exceptions import RequestTimeout, PayloadTooLarge, InvalidUsage
-
 
 current_time = None
 
@@ -31,6 +37,7 @@ class CIDict(dict):
     This does not maintain the inputted case when calling items() or keys()
     in favor of speed, since headers are case insensitive
     """
+
     def get(self, key, default=None):
         return super().get(key.casefold(), default)
 
@@ -56,7 +63,7 @@ class HttpProtocol(asyncio.Protocol):
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
     def __init__(self, *, loop, request_handler, error_handler,
-                 signal=Signal(), connections={}, request_timeout=60,
+                 signal=Signal(), connections=set(), request_timeout=60,
                  request_max_size=None):
         self.loop = loop
         self.transport = None
@@ -328,7 +335,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
-    except Exception:
+    except:
         log.exception("Unable to start server")
         return
 
@@ -339,10 +346,12 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         for _signal in (SIGINT, SIGTERM):
             loop.add_signal_handler(_signal, loop.stop)
 
+    pid = os.getpid()
     try:
+        log.info('Starting worker [{}]'.format(pid))
         loop.run_forever()
     finally:
-        log.info("Stop requested, draining connections...")
+        log.info("Stopping worker [{}]".format(pid))
 
         # Run the on_stop function if provided
         trigger_events(before_stop, loop)
@@ -362,3 +371,49 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         trigger_events(after_stop, loop)
 
         loop.close()
+
+
+def serve_multiple(server_settings, workers, stop_event=None):
+    """
+    Starts multiple server processes simultaneously.  Stops on interrupt
+    and terminate signals, and drains connections when complete.
+
+    :param server_settings: kw arguments to be passed to the serve function
+    :param workers: number of workers to launch
+    :param stop_event: if provided, is used as a stop signal
+    :return:
+    """
+    if stop_event is not None:
+        warnings.warn((
+            'Passing a stop_event will be removed in the version 0.4.0 of '
+            'sanic, please remove all references to it'))
+    if server_settings.get('loop', None) is not None:
+        log.warning("Passing a loop will be deprecated in version 0.4.0"
+                    " https://github.com/channelcat/sanic/pull/335"
+                    " has more information.", DeprecationWarning)
+    server_settings['reuse_port'] = True
+
+    sock = socket()
+    sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    sock.bind((server_settings['host'], server_settings['port']))
+    set_inheritable(sock.fileno(), True)
+    server_settings['sock'] = sock
+    server_settings['host'] = None
+    server_settings['port'] = None
+
+    processes = []
+    for _ in range(workers):
+        process = Process(target=serve, kwargs=server_settings)
+        process.daemon = True
+        process.start()
+        processes.append(process)
+
+    for process in processes:
+        process.join()
+
+    # the above processes will block this until they're stopped
+    for process in processes:
+        process.terminate()
+    sock.close()
+
+    asyncio.get_event_loop().stop()

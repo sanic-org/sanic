@@ -78,22 +78,22 @@ class Sanic:
 
     # Shorthand method decorators
     def get(self, uri, host=None):
-        return self.route(uri, methods=["GET"], host=host)
+        return self.route(uri, methods=frozenset({"GET"}), host=host)
 
     def post(self, uri, host=None):
-        return self.route(uri, methods=["POST"], host=host)
+        return self.route(uri, methods=frozenset({"POST"}), host=host)
 
     def put(self, uri, host=None):
-        return self.route(uri, methods=["PUT"], host=host)
+        return self.route(uri, methods=frozenset({"PUT"}), host=host)
 
     def head(self, uri, host=None):
-        return self.route(uri, methods=["HEAD"], host=host)
+        return self.route(uri, methods=frozenset({"HEAD"}), host=host)
 
     def options(self, uri, host=None):
-        return self.route(uri, methods=["OPTIONS"], host=host)
+        return self.route(uri, methods=frozenset({"OPTIONS"}), host=host)
 
     def patch(self, uri, host=None):
-        return self.route(uri, methods=["PATCH"], host=host)
+        return self.route(uri, methods=frozenset({"PATCH"}), host=host)
 
     def add_route(self, handler, uri, methods=None, host=None):
         """
@@ -117,7 +117,7 @@ class Sanic:
         """
         Decorates a function to be registered as a handler for exceptions
 
-        :param \*exceptions: exceptions
+        :param exceptions: exceptions
         :return: decorated function
         """
 
@@ -152,13 +152,13 @@ class Sanic:
 
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',
-               use_modified_since=True):
+               use_modified_since=True, use_content_range=False):
         """
         Registers a root to serve files from.  The input can either be a file
         or a directory.  See
         """
         static_register(self, uri, file_or_directory, pattern,
-                        use_modified_since)
+                        use_modified_since, use_content_range)
 
     def blueprint(self, blueprint, **options):
         """

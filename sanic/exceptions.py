@@ -104,6 +104,7 @@ INTERNAL_SERVER_ERROR_HTML = '''
 class SanicException(Exception):
     def __init__(self, message, status_code=None):
         super().__init__(message)
+
         if status_code is not None:
             self.status_code = status_code
 
@@ -135,6 +136,17 @@ class RequestTimeout(SanicException):
 
 class PayloadTooLarge(SanicException):
     status_code = 413
+
+
+class ContentRangeError(SanicException):
+    status_code = 416
+
+    def __init__(self, message, content_range):
+        super().__init__(message)
+        self.headers = {
+            'Content-Type': 'text/plain',
+            "Content-Range": "bytes */%s" % (content_range.total,)
+        }
 
 
 class Handler:
@@ -191,7 +203,9 @@ class Handler:
         if issubclass(type(exception), SanicException):
             return text(
                 'Error: {}'.format(exception),
-                status=getattr(exception, 'status_code', 500))
+                status=getattr(exception, 'status_code', 500),
+                headers=getattr(exception, 'headers', dict())
+            )
         elif self.debug:
             html_output = self._render_traceback_html(exception, request)
 

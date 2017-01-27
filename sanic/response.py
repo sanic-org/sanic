@@ -97,21 +97,27 @@ class HTTPResponse:
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
         # We tried to make this as fast as possible in pure python
-        timeout_header = b''
         if keep_alive and keep_alive_timeout:
-            timeout_header = b'Keep-Alive: timeout=%d\r\n' % keep_alive_timeout
-
+            if 'Keep-Alive' not in self.headers:
+                self.headers['Keep-Alive'] = keep_alive_timeout
+        if 'Connection' not in self.headers:
+            if keep_alive:
+                self.headers['Connection'] = 'keep-alive'
+            else:
+                self.headers['Connection'] = 'close'
+        if 'Content-Length' not in self.headers:
+            self.headers['Content-Length'] = len(self.body)
+        if 'Content-Type' not in self.headers:
+            self.headers['Content-Type'] = self.content_type
         headers = b''
         if self.headers:
             for name, value in self.headers.items():
                 try:
-                    headers += (
-                        b'%b: %b\r\n' % (name.encode(), value.encode('utf-8')))
+                    headers += (b'%b: %b\r\n' % (
+                        name.encode(), value.encode('utf-8')))
                 except AttributeError:
-                    headers += (
-                        b'%b: %b\r\n' % (
-                            str(name).encode(), str(value).encode('utf-8')))
-
+                    headers += (b'%b: %b\r\n' % (
+                        str(name).encode(), str(value).encode('utf-8')))
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all
         status = COMMON_STATUS_CODES.get(self.status)
@@ -119,18 +125,11 @@ class HTTPResponse:
             status = ALL_STATUS_CODES.get(self.status)
 
         return (b'HTTP/%b %d %b\r\n'
-                b'Content-Type: %b\r\n'
-                b'Content-Length: %d\r\n'
-                b'Connection: %b\r\n'
-                b'%b%b\r\n'
+                b'%b\r\n'
                 b'%b') % (
             version.encode(),
             self.status,
             status,
-            self.content_type.encode(),
-            len(self.body),
-            b'keep-alive' if keep_alive else b'close',
-            timeout_header,
             headers,
             self.body
         )
@@ -142,13 +141,62 @@ class HTTPResponse:
         return self._cookies
 
 
+class ContentRangeHandler:
+    """
+    This class is for parsing the request header
+    """
+    __slots__ = ('start', 'end', 'size', 'total', 'headers')
+
+    def __init__(self, request, stats):
+        self.start = self.size = 0
+        self.end = None
+        self.headers = dict()
+        self.total = stats.st_size
+        range_header = request.headers.get('Range')
+        if range_header:
+            self.start, self.end = ContentRangeHandler.parse_range(range_header)
+            if self.start is not None and self.end is not None:
+                self.size = self.end - self.start
+            elif self.end is not None:
+                self.size = self.end
+            elif self.start is not None:
+                self.size = self.total - self.start
+            else:
+                self.size = self.total
+            self.headers['Content-Range'] = "bytes %s-%s/%s" % (
+                self.start, self.end, self.total)
+        else:
+            self.size = self.total
+
+    def __bool__(self):
+        return self.size > 0
+
+    @staticmethod
+    def parse_range(range_header):
+        unit, _, value = tuple(map(str.strip, range_header.partition('=')))
+        if unit != 'bytes':
+            return None
+        start_b, _, end_b = tuple(map(str.strip, value.partition('-')))
+        try:
+            start = int(start_b) if start_b.strip() else None
+            end = int(end_b) if end_b.strip() else None
+        except ValueError:
+            return None
+        if end is not None:
+            if start is None:
+                if end != 0:
+                    start = -end
+                    end = None
+        return start, end
+
+
 def json(body, status=200, headers=None, **kwargs):
     """
     Returns response object with body in json format.
     :param body: Response data to be serialized.
     :param status: Response code.
     :param headers: Custom Headers.
-    :param \**kwargs: Remaining arguments that are passed to the json encoder.
+    :param kwargs: Remaining arguments that are passed to the json encoder.
     """
     return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
                         status=status, content_type="application/json")
@@ -176,17 +224,24 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, mime_type=None, headers=None):
+async def file(location, mime_type=None, headers=None, _range=None):
     """
     Returns response object with file data.
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
+    :param _range:
     """
     filename = path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:
-        out_stream = await _file.read()
+        if _range:
+            await _file.seek(_range.start)
+            out_stream = await _file.read(_range.size)
+            headers['Content-Range'] = 'bytes %s-%s/%s' % (
+                _range.start, _range.end, _range.total)
+        else:
+            out_stream = await _file.read()
 
     mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
 

@@ -152,9 +152,9 @@ class ContentRangeHandler:
         self.end = None
         self.headers = dict()
         self.total = stats.st_size
-        range_header = request.headers.get('Range')
-        if range_header:
-            self.start, self.end = ContentRangeHandler.parse_range(range_header)
+        _range = request.headers.get('Range')
+        if _range:
+            self.start, self.end = ContentRangeHandler.parse_range(_range)
             if self.start is not None and self.end is not None:
                 self.size = self.end - self.start
             elif self.end is not None:

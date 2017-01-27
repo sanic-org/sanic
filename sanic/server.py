@@ -4,9 +4,10 @@ import traceback
 import warnings
 from functools import partial
 from inspect import isawaitable
-from multiprocessing import Process
+from multiprocessing import Process, Event
 from os import set_inheritable
 from signal import SIGTERM, SIGINT
+from signal import signal as signal_func
 from socket import socket, SOL_SOCKET, SO_REUSEADDR
 from time import time
 
@@ -383,10 +384,6 @@ def serve_multiple(server_settings, workers, stop_event=None):
     :param stop_event: if provided, is used as a stop signal
     :return:
     """
-    if stop_event is not None:
-        warnings.warn((
-            'Passing a stop_event will be removed in the version 0.4.0 of '
-            'sanic, please remove all references to it'))
     if server_settings.get('loop', None) is not None:
         log.warning("Passing a loop will be deprecated in version 0.4.0"
                     " https://github.com/channelcat/sanic/pull/335"
@@ -400,6 +397,12 @@ def serve_multiple(server_settings, workers, stop_event=None):
     server_settings['sock'] = sock
     server_settings['host'] = None
     server_settings['port'] = None
+
+    if stop_event is None:
+        stop_event = Event()
+
+    signal_func(SIGINT, lambda s, f: stop_event.set())
+    signal_func(SIGTERM, lambda s, f: stop_event.set())
 
     processes = []
     for _ in range(workers):

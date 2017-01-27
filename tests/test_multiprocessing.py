@@ -1,24 +1,26 @@
 import multiprocessing
-import os
+import random
 import signal
-
-import pytest
 
 from sanic import Sanic
 from sanic.utils import HOST, PORT
 
 
-@pytest.mark.parametrize(
-    'num_workers', list(range(2,  multiprocessing.cpu_count() * 2 + 1)))
-def test_multiprocessing(num_workers):
-    app = Sanic('test_json')
-    process_list = multiprocessing.Manager().list()
+def test_multiprocessing():
+    """Tests that the number of children we produce is correct"""
+    # Selects a number at random so we can spot check
+    num_workers = random.choice(range(2,  multiprocessing.cpu_count() * 2 + 1))
+    app = Sanic('test_multiprocessing')
+    process_list = set()
 
-    async def after_start(app, loop):
-        process_list.append(os.getpid())
-        os.kill(os.getpid(), signal.SIGTERM)
+    def stop_on_alarm(*args):
+        for process in multiprocessing.active_children():
+            process_list.add(process.pid)
+            process.terminate()
 
-    app.run(HOST, PORT, workers=num_workers, after_start=after_start)
+    signal.signal(signal.SIGALRM, stop_on_alarm)
+    signal.alarm(1)
+    app.run(HOST, PORT, workers=num_workers)
 
     assert len(process_list) == num_workers
 

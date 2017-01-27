@@ -77,6 +77,36 @@ class ViewWithDecorator(HTTPMethodView):
 app.add_route(ViewWithDecorator.as_view(), '/url')
 ```
 
+## Using CompositionView
+
+As an alternative to the `HTTPMethodView`, you can use `CompositionView` to
+move handler functions outside of the view class.
+
+Handler functions for each supported HTTP method are defined elsewhere in the
+source, and then added to the view using the `CompositionView.add` method. The
+first parameter is a list of HTTP methods to handle (e.g. `['GET', 'POST']`),
+and the second is the handler function. The following example shows
+`CompositionView` usage with both an external handler function and an inline
+lambda:
+
+```python
+from sanic import Sanic
+from sanic.views import CompositionView
+from sanic.response import text
+
+app = Sanic(__name__)
+
+def get_handler(request):
+    return text('I am a get method')
+
+view = CompositionView()
+view.add(['GET'], get_handler)
+view.add(['POST', 'PUT'], lambda request: text('I am a post/put method'))
+
+# Use the new view to handle requests to the base URL
+app.add_route(view, '/')
+```
+
 **Previous:** [Blueprints](blueprints.md)
 
 **Next:** [Cookies](cookies.md)

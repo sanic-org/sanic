@@ -5,6 +5,13 @@ HOST = '127.0.0.1'
 PORT = 42101
 
 
+try:
+    import uvloop as async_loop
+except ImportError:
+    import asyncio as async_loop
+endpoint_test_loop = async_loop.new_event_loop()
+
+
 async def local_request(method, uri, cookies=None, *args, **kwargs):
     url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
     log.info(url)
@@ -16,7 +23,7 @@ async def local_request(method, uri, cookies=None, *args, **kwargs):
 
 
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
-                        loop=None, debug=False, server_kwargs={},
+                        loop=endpoint_test_loop, debug=False, server_kwargs={},
                         *request_args, **request_kwargs):
     results = []
     exceptions = []

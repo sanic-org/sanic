@@ -458,6 +458,11 @@ class Sanic:
                         " has more information.", DeprecationWarning)
         server_settings['reuse_port'] = True
 
+        if server_settings['loop'] is not None:
+            log.warn("Passing the loop is not supported with multiple"
+                     " workers. The loop paramater has been set to None.")
+            server_settings['loop'] = None
+
         # Create a stop event to be triggered by a signal
         if stop_event is None:
             stop_event = Event()

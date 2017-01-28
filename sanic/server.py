@@ -1,7 +1,6 @@
 import asyncio
 import os
 import traceback
-import warnings
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process, Event

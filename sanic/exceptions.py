@@ -188,7 +188,7 @@ class Handler:
 
     def default(self, request, exception):
         log.error(format_exc())
-        if issubclass(type(exception), SanicException):
+        if isinstance(exception, SanicException):
             return text(
                 'Error: {}'.format(exception),
                 status=getattr(exception, 'status_code', 500))

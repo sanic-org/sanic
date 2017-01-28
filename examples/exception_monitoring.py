@@ -23,7 +23,7 @@ class CustomHandler(Handler):
         # and can do anything with it (log, send to external service, etc)
 
         # Some exceptions are trivial and built into Sanic (404s, etc)
-        if not issubclass(type(exception), SanicException):
+        if not isinstance(exception, SanicException):
             print(exception)
 
         # Then, we must finish handling the exception by returning

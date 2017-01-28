@@ -152,7 +152,7 @@ def test_with_middleware_response():
     assert response.text == 'I am get method'
     assert type(results[0]) is Request
     assert type(results[1]) is Request
-    assert issubclass(type(results[2]), HTTPResponse)
+    assert isinstance(results[2], HTTPResponse)
 
 
 def test_with_custom_class_methods():

@@ -51,7 +51,7 @@ def test_middleware_response():
     assert response.text == 'OK'
     assert type(results[0]) is Request
     assert type(results[1]) is Request
-    assert issubclass(type(results[2]), HTTPResponse)
+    assert isinstance(results[2], HTTPResponse)
 
 
 def test_middleware_override_request():

@@ -38,7 +38,6 @@ class Sanic:
         self.response_middleware = deque()
         self.blueprints = {}
         self._blueprint_order = []
-        self.loop = None
         self.debug = None
         self.sock = None
         self.processes = None
@@ -292,7 +291,6 @@ class Sanic:
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
                         received before it is respected
-        :param loop: asyncio compatible event loop
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
@@ -315,7 +313,6 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog
         }

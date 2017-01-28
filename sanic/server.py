@@ -289,7 +289,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param protocol: Subclass of asyncio protocol class
     :return: Nothing
     """
-    loop = loop or async_loop.new_event_loop()
+    loop = async_loop.new_event_loop()
     asyncio.set_event_loop(loop)
 
     if debug:

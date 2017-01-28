@@ -1,22 +1,18 @@
+import logging
 from asyncio import get_event_loop
 from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
-from multiprocessing import Process, Event
-from signal import signal, SIGTERM, SIGINT
 from traceback import format_exc
-import logging
 
 from .config import Config
 from .exceptions import Handler
+from .exceptions import ServerError
 from .log import log
 from .response import HTTPResponse
 from .router import Router
-from .server import serve, HttpProtocol
+from .server import serve, serve_multiple, HttpProtocol
 from .static import register as static_register
-from .exceptions import ServerError
-from socket import socket, SOL_SOCKET, SO_REUSEADDR
-from os import set_inheritable
 
 
 class Sanic:
@@ -358,9 +354,7 @@ class Sanic:
             if workers == 1:
                 serve(**server_settings)
             else:
-                log.info('Spinning up {} workers...'.format(workers))
-
-                self.serve_multiple(server_settings, workers, stop_event)
+                serve_multiple(server_settings, workers, stop_event)
 
         except Exception as e:
             log.exception(
@@ -369,13 +363,7 @@ class Sanic:
         log.info("Server Stopped")
 
     def stop(self):
-        """
-        This kills the Sanic
-        """
-        if self.processes is not None:
-            for process in self.processes:
-                process.terminate()
-            self.sock.close()
+        """This kills the Sanic"""
         get_event_loop().stop()
 
     async def create_server(self, host="127.0.0.1", port=8000, debug=False,
@@ -414,8 +402,7 @@ class Sanic:
                 ("before_server_start", "before_start", before_start, False),
                 ("after_server_start", "after_start", after_start, False),
                 ("before_server_stop", "before_stop", before_stop, True),
-                ("after_server_stop", "after_stop", after_stop, True),
-                ):
+                ("after_server_stop", "after_stop", after_stop, True)):
             listeners = []
             for blueprint in self.blueprints.values():
                 listeners += blueprint.listeners[event_name]
@@ -438,46 +425,3 @@ class Sanic:
         log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         return await serve(**server_settings)
-
-    def serve_multiple(self, server_settings, workers, stop_event=None):
-        """
-        Starts multiple server processes simultaneously.  Stops on interrupt
-        and terminate signals, and drains connections when complete.
-
-        :param server_settings: kw arguments to be passed to the serve function
-        :param workers: number of workers to launch
-        :param stop_event: if provided, is used as a stop signal
-        :return:
-        """
-        if server_settings.get('loop', None) is not None:
-            log.warning("Passing a loop will be deprecated in version 0.4.0"
-                        " https://github.com/channelcat/sanic/pull/335"
-                        " has more information.", DeprecationWarning)
-        server_settings['reuse_port'] = True
-
-        # Create a stop event to be triggered by a signal
-        if stop_event is None:
-            stop_event = Event()
-        signal(SIGINT, lambda s, f: stop_event.set())
-        signal(SIGTERM, lambda s, f: stop_event.set())
-
-        self.sock = socket()
-        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.sock.bind((server_settings['host'], server_settings['port']))
-        set_inheritable(self.sock.fileno(), True)
-        server_settings['sock'] = self.sock
-        server_settings['host'] = None
-        server_settings['port'] = None
-
-        self.processes = []
-        for _ in range(workers):
-            process = Process(target=serve, kwargs=server_settings)
-            process.daemon = True
-            process.start()
-            self.processes.append(process)
-
-        for process in self.processes:
-            process.join()
-
-        # the above processes will block this until they're stopped
-        self.stop()

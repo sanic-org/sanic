@@ -16,30 +16,30 @@ def test_methods(method):
     class DummyView(HTTPMethodView):
 
         def get(self, request):
-            return text('I am GET method')
+            return text('', headers={'method': 'GET'})
 
         def post(self, request):
-            return text('I am POST method')
+            return text('', headers={'method': 'POST'})
 
         def put(self, request):
-            return text('I am PUT method')
+            return text('', headers={'method': 'PUT'})
 
         def head(self, request):
-            return text('I am HEAD method')
+            return text('', headers={'method': 'HEAD'})
 
         def options(self, request):
-            return text('I am OPTIONS method')
+            return text('', headers={'method': 'OPTIONS'})
 
         def patch(self, request):
-            return text('I am PATCH method')
+            return text('', headers={'method': 'PATCH'})
 
         def delete(self, request):
-            return text('I am DELETE method')
+            return text('', headers={'method': 'DELETE'})
 
     app.add_route(DummyView.as_view(), '/')
 
     request, response = sanic_endpoint_test(app, method=method)
-    assert response.text == 'I am {} method'.format(method)
+    assert response.headers['method'] == method
 
 
 def test_unexisting_methods():

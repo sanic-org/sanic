@@ -74,7 +74,7 @@ def test_static_head_request(static_file_path, static_file_content):
     assert int(response.headers['Content-Length']) == len(static_file_content)
 
 
-def test_static_content_range(static_file_path, static_file_content):
+def test_static_content_range_correct(static_file_path, static_file_content):
     app = Sanic('test_static')
     app.static('/testing.file', static_file_path, use_content_range=True)
 

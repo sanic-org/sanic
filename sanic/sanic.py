@@ -90,7 +90,7 @@ class Sanic:
     def patch(self, uri, host=None):
         return self.route(uri, methods=["PATCH"], host=host)
 
-    def add_route(self, handler, uri, methods=None, host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """
         A helper method to register class instance or
         functions as a handler to the application url

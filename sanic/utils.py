@@ -1,5 +1,6 @@
 import aiohttp
 from sanic.log import log
+from sanic.signals import request_started
 
 HOST = '127.0.0.1'
 PORT = 42101
@@ -24,7 +25,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
     if gather_request:
         def _collect_request(request):
             results.append(request)
-        app.request_middleware.appendleft(_collect_request)
+        request_started.connect(_collect_request)
 
     async def _collect_response(sanic, loop):
         try:

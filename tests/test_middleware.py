@@ -71,6 +71,25 @@ def test_middleware_override_request():
     assert response.text == 'OK'
 
 
+def test_middleware_override_scope():
+    app = Sanic('test_middleware_override_scope')
+
+    @app.middleware
+    async def validate_request(request):
+        if not request.headers.get('X-REQUIRED-HEADER'):
+            return text('X-REQUIRED-HEADER is missing.', status=412)
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    response = sanic_endpoint_test(app, uri='/', gather_request=False)
+    assert response.status == 412
+
+    response = sanic_endpoint_test(app, uri='/nothing/', gather_request=False)
+    assert response.status == 404
+
+
 def test_middleware_override_response():
     app = Sanic('test_middleware_override_response')
 

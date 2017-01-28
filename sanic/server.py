@@ -9,6 +9,7 @@ from signal import SIGTERM, SIGINT
 from signal import signal as signal_func
 from socket import socket, SOL_SOCKET, SO_REUSEADDR
 from time import time
+import warnings
 
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
@@ -384,9 +385,11 @@ def serve_multiple(server_settings, workers, stop_event=None):
     :return:
     """
     if server_settings.get('loop', None) is not None:
-        log.warning("Passing a loop will be deprecated in version 0.4.0"
-                    " https://github.com/channelcat/sanic/pull/335"
-                    " has more information.", DeprecationWarning)
+        if server_settings.get('debug', False):
+            warnings.simplefilter('default')
+        warnings.warn("Passing a loop will be deprecated in version 0.4.0"
+                      " https://github.com/channelcat/sanic/pull/335"
+                      " has more information.", DeprecationWarning)
     server_settings['reuse_port'] = True
 
     sock = socket()

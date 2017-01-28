@@ -4,6 +4,7 @@ from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
+import warnings
 
 from .config import Config
 from .exceptions import Handler
@@ -175,9 +176,12 @@ class Sanic:
 
     def register_blueprint(self, *args, **kwargs):
         # TODO: deprecate 1.0
-        log.warning("Use of register_blueprint will be deprecated in "
-                    "version 1.0.  Please use the blueprint method instead",
-                    DeprecationWarning)
+        if self.debug:
+            warnings.simplefilter('default')
+        warnings.warn("Use of register_blueprint will be deprecated in "
+                      "version 1.0.  Please use the blueprint method"
+                      " instead",
+                      DeprecationWarning)
         return self.blueprint(*args, **kwargs)
 
     # -------------------------------------------------------------------- #
@@ -296,11 +300,15 @@ class Sanic:
         """
         self.error_handler.debug = debug
         self.debug = debug
-        if loop is not None:
-            log.warning("Passing a loop will be deprecated in version 0.4.0"
-                        " https://github.com/channelcat/sanic/pull/335"
-                        " has more information.", DeprecationWarning)
         self.loop = loop
+
+        if loop is not None:
+            if self.debug:
+                warnings.simplefilter('default')
+            warnings.warn("Passing a loop will be deprecated in version"
+                          " 0.4.0 https://github.com/channelcat/sanic/"
+                          "pull/335 has more information.",
+                          DeprecationWarning)
 
         server_settings = {
             'protocol': protocol,
@@ -375,9 +383,13 @@ class Sanic:
         Asynchronous version of `run`.
         """
         if loop is not None:
-            log.warning("Passing a loop will be deprecated in version 0.4.0"
-                        " https://github.com/channelcat/sanic/pull/335"
-                        " has more information.", DeprecationWarning)
+            if self.debug:
+                warnings.simplefilter('default')
+            warnings.warn("Passing a loop will be deprecated in version"
+                          " 0.4.0 https://github.com/channelcat/sanic/"
+                          "pull/335 has more information.",
+                          DeprecationWarning)
+
         loop = get_event_loop()
         server_settings = {
             'protocol': protocol,

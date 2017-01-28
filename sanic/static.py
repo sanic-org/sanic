@@ -74,7 +74,7 @@ def register(app, uri, file_or_directory, pattern,
                     if _range.start >= _range.total or _range.end == 0:
                         raise ContentRangeError('Content-Range malformed',
                                                 _range)
-                    if _range.start == 0 and _range.size == _range.total:
+                    if _range.start == 0 and _range.size == 0:
                         _range = None
                     else:
                         headers['Content-Length'] = str(_range.size)

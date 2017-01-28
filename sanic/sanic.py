@@ -6,6 +6,7 @@ from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
 
 from .config import Config
+from .constants import HTTP_METHODS
 from .exceptions import Handler
 from .exceptions import ServerError
 from .log import log
@@ -90,6 +91,9 @@ class Sanic:
     def patch(self, uri, host=None):
         return self.route(uri, methods=["PATCH"], host=host)
 
+    def delete(self, uri, host=None):
+        return self.route(uri, methods=["DELETE"], host=host)
+
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """
         A helper method to register class instance or
@@ -98,9 +102,13 @@ class Sanic:
 
         :param handler: function or class instance
         :param uri: path of the URL
-        :param methods: list or tuple of methods allowed
+        :param methods: list or tuple of methods allowed, these are overridden
+                        if using a HTTPMethodView
         :return: function or class instance
         """
+        # Handle HTTPMethodView differently
+        if hasattr(handler, 'view_class'):
+            methods = frozenset(HTTP_METHODS)
         self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 

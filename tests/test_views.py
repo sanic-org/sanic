@@ -1,43 +1,45 @@
+import pytest as pytest
+
 from sanic import Sanic
 from sanic.response import text, HTTPResponse
 from sanic.views import HTTPMethodView
 from sanic.blueprints import Blueprint
 from sanic.request import Request
 from sanic.utils import sanic_endpoint_test
+from sanic.constants import HTTP_METHODS
 
 
-def test_methods():
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_methods(method):
     app = Sanic('test_methods')
 
     class DummyView(HTTPMethodView):
 
         def get(self, request):
-            return text('I am get method')
+            return text('I am GET method')
 
         def post(self, request):
-            return text('I am post method')
+            return text('I am POST method')
 
         def put(self, request):
-            return text('I am put method')
+            return text('I am PUT method')
+
+        def head(self, request):
+            return text('I am HEAD method')
+
+        def options(self, request):
+            return text('I am OPTIONS method')
 
         def patch(self, request):
-            return text('I am patch method')
+            return text('I am PATCH method')
 
         def delete(self, request):
-            return text('I am delete method')
+            return text('I am DELETE method')
 
     app.add_route(DummyView.as_view(), '/')
 
-    request, response = sanic_endpoint_test(app, method="get")
-    assert response.text == 'I am get method'
-    request, response = sanic_endpoint_test(app, method="post")
-    assert response.text == 'I am post method'
-    request, response = sanic_endpoint_test(app, method="put")
-    assert response.text == 'I am put method'
-    request, response = sanic_endpoint_test(app, method="patch")
-    assert response.text == 'I am patch method'
-    request, response = sanic_endpoint_test(app, method="delete")
-    assert response.text == 'I am delete method'
+    request, response = sanic_endpoint_test(app, method=method)
+    assert response.text == 'I am {} method'.format(method)
 
 
 def test_unexisting_methods():

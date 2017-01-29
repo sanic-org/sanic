@@ -150,7 +150,22 @@ class Router:
                 handler=view, methods=methods.union(route.methods))
             return route
 
-        route = self.routes_all.get(uri)
+        if parameters:
+            # TODO: This is too complex, we need to reduce the complexity
+            if properties['unhashable']:
+                routes_to_check = self.routes_always_check
+                ndx, route = self.check_dynamic_route_exists(
+                    pattern, routes_to_check)
+            else:
+                routes_to_check = self.routes_dynamic[url_hash(uri)]
+                ndx, route = self.check_dynamic_route_exists(
+                    pattern, routes_to_check)
+            if ndx != -1:
+                # Pop the ndx of the route, no dups of the same route
+                routes_to_check.pop(ndx)
+        else:
+            route = self.routes_all.get(uri)
+
         if route:
             route = merge_route(route, methods, handler)
         else:
@@ -165,6 +180,14 @@ class Router:
             self.routes_dynamic[url_hash(uri)].append(route)
         else:
             self.routes_static[uri] = route
+
+    @staticmethod
+    def check_dynamic_route_exists(pattern, routes_to_check):
+        for ndx, route in enumerate(routes_to_check):
+            if route.pattern == pattern:
+                return ndx, route
+        else:
+            return -1, None
 
     def remove(self, uri, clean_cache=True, host=None):
         if host is not None:
@@ -211,29 +234,40 @@ class Router:
         url = host + url
         # Check against known static routes
         route = self.routes_static.get(url)
+        method_not_supported = InvalidUsage(
+            'Method {} not allowed for URL {}'.format(
+                method, url), status_code=405)
         if route:
+            if route.methods and method not in route.methods:
+                raise method_not_supported
             match = route.pattern.match(url)
         else:
+            route_found = False
             # Move on to testing all regex routes
             for route in self.routes_dynamic[url_hash(url)]:
                 match = route.pattern.match(url)
-                if match:
+                route_found |= match is not None
+                # Do early method checking
+                if match and method in route.methods:
                     break
             else:
                 # Lastly, check against all regex routes that cannot be hashed
                 for route in self.routes_always_check:
                     match = route.pattern.match(url)
-                    if match:
+                    route_found |= match is not None
+                    # Do early method checking
+                    if match and method in route.methods:
                         break
                 else:
+                    # Route was found but the methods didn't match
+                    if route_found:
+                        raise method_not_supported
                     raise NotFound('Requested URL {} not found'.format(url))
-
-        if route.methods and method not in route.methods:
-            raise InvalidUsage(
-                'Method {} not allowed for URL {}'.format(
-                    method, url), status_code=405)
 
         kwargs = {p.name: p.cast(value)
                   for value, p
                   in zip(match.groups(1), route.parameters)}
-        return route.handler, [], kwargs
+        route_handler = route.handler
+        if hasattr(route_handler, 'handlers'):
+            route_handler = route_handler.handlers[method]
+        return route_handler, [], kwargs

@@ -149,7 +149,22 @@ class Router:
                 handler=view, methods=methods.union(route.methods))
             return route
 
-        route = self.routes_all.get(uri)
+        if parameters:
+            # TODO: This is too complex, we need to reduce the complexity
+            if properties['unhashable']:
+                routes_to_check = self.routes_always_check
+                ndx, route = self.check_dynamic_route_exists(
+                    pattern, routes_to_check)
+            else:
+                routes_to_check = self.routes_dynamic[url_hash(uri)]
+                ndx, route = self.check_dynamic_route_exists(
+                    pattern, routes_to_check)
+            if ndx != -1:
+                # Pop the ndx of the route, no dups of the same route
+                routes_to_check.pop(ndx)
+        else:
+            route = self.routes_all.get(uri)
+
         if route:
             route = merge_route(route, methods, handler)
         else:
@@ -164,6 +179,14 @@ class Router:
             self.routes_dynamic[url_hash(uri)].append(route)
         else:
             self.routes_static[uri] = route
+
+    @staticmethod
+    def check_dynamic_route_exists(pattern, routes_to_check):
+        for ndx, route in enumerate(routes_to_check):
+            if route.pattern == pattern:
+                return ndx, route
+        else:
+            return -1, None
 
     def remove(self, uri, clean_cache=True, host=None):
         if host is not None:

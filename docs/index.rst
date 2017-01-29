@@ -15,6 +15,7 @@ Guides
    exceptions
    blueprints
    class_based_views
+   config
    cookies
    custom_protocol
    testing

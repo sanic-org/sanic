@@ -1,7 +1,6 @@
 import re
 from collections import defaultdict, namedtuple
 from functools import lru_cache
-from .config import Config
 from .exceptions import NotFound, InvalidUsage
 from .views import CompositionView
 
@@ -14,6 +13,8 @@ REGEX_TYPES = {
     'number': (float, r'[0-9\\.]+'),
     'alpha': (str, r'[A-Za-z]+'),
 }
+
+ROUTER_CACHE_SIZE = 1024
 
 
 def url_hash(url):
@@ -198,7 +199,7 @@ class Router:
             return self._get(request.url, request.method,
                              request.headers.get("Host", ''))
 
-    @lru_cache(maxsize=Config.ROUTER_CACHE_SIZE)
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method, host):
         """
         Gets a request handler based on the URL of the request, or raises an

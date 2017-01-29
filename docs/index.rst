@@ -13,6 +13,7 @@ Guides
    sanic/exceptions
    sanic/middleware
    sanic/blueprints
+   sanic/config
    sanic/cookies
    sanic/class_based_views
    sanic/custom_protocol
@@ -21,6 +22,7 @@ Guides
    sanic/deploying
    sanic/extensions
    sanic/contributing
+   getting_started
 
 
 Module Documentation

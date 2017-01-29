@@ -298,14 +298,12 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
-        server_settings = \
-            self._helper(host=host, port=port, debug=debug,
-                         before_start=before_start, after_start=after_start,
-                         before_stop=before_stop, after_stop=after_stop,
-                         ssl=ssl, sock=sock, workers=workers, loop=loop,
-                         protocol=protocol, backlog=backlog,
-                         stop_event=stop_event,
-                         register_sys_signals=register_sys_signals)
+        server_settings = self._helper(
+            host=host, port=port, debug=debug, before_start=before_start,
+            after_start=after_start, before_stop=before_stop,
+            after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
+            loop=loop, protocol=protocol, backlog=backlog,
+            stop_event=stop_event, register_sys_signals=register_sys_signals)
         try:
             if workers == 1:
                 serve(**server_settings)
@@ -330,15 +328,12 @@ class Sanic:
         """
         Asynchronous version of `run`.
         """
-        server_settings = \
-            self._helper(host=host, port=port, debug=debug,
-                         before_start=before_start, after_start=after_start,
-                         before_stop=before_stop, after_stop=after_stop,
-                         ssl=ssl, sock=sock, loop=loop,
-                         protocol=protocol, backlog=backlog,
-                         stop_event=stop_event)
-
-        server_settings['run_async'] = True
+        server_settings = self._helper(
+            host=host, port=port, debug=debug, before_start=before_start,
+            after_start=after_start, before_stop=before_stop,
+            after_stop=after_stop, ssl=ssl, sock=sock, loop=loop,
+            protocol=protocol, backlog=backlog, stop_event=stop_event,
+            async_run=True)
 
         # Serve
         proto = "http"
@@ -352,33 +347,14 @@ class Sanic:
                 before_start=None, after_start=None, before_stop=None,
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True):
+                register_sys_signals=True, run_async=False):
         """
-        Runs the HTTP Server and listens until keyboard interrupt or term
-        signal. On termination, drains connections before closing.
-
-        :param host: Address to host on
-        :param port: Port to host on
-        :param debug: Enables debug output (slows server)
-        :param before_start: Functions to be executed before the server starts
-                             accepting connections
-        :param after_start: Functions to be executed after the server starts
-                            accepting connections
-        :param before_stop: Functions to be executed when a stop signal is
-                            received before it is respected
-        :param after_stop: Functions to be executed when all requests are
-                           complete
-        :param ssl: SSLContext for SSL encryption of worker(s)
-        :param sock: Socket for the server to accept connections from
-        :param workers: Number of processes
-                        received before it is respected
-        :param protocol: Subclass of asyncio protocol class
-        :return: Nothing
+        Helper function used by `run` and `create_server`.
         """
 
         self.error_handler.debug = debug
         self.debug = debug
-        self.loop = loop
+        self.loop = loop = get_event_loop()
 
         if loop is not None:
             if self.debug:
@@ -399,6 +375,7 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
+            'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog
         }
@@ -430,9 +407,13 @@ class Sanic:
             log.setLevel(logging.DEBUG)
         log.debug(self.config.LOGO)
 
+        if run_async:
+            server_settings['run_async'] = True
+
         # Serve
         proto = "http"
         if ssl is not None:
             proto = "https"
         log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+
         return server_settings

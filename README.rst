@@ -45,9 +45,7 @@ Hello World Example
     from sanic import Sanic
     from sanic.response import json
 
-
     app = Sanic()
-
 
     @app.route("/")
     async def test(request):
@@ -55,21 +53,6 @@ Hello World Example
 
     if __name__ == "__main__":
         app.run(host="0.0.0.0", port=8000)
-
-SSL Example
------------
-
-Optionally pass in an SSLContext:
-
-.. code:: python
-
-  import ssl
-  certificate = "/path/to/certificate"
-  keyfile = "/path/to/keyfile"
-  context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-  context.load_cert_chain(certificate, keyfile=keyfile)
-
-  app.run(host="0.0.0.0", port=8443, ssl=context)
 
 Installation
 ------------
@@ -79,12 +62,14 @@ Installation
 Documentation
 -------------
 
-Documentation can be found in the ``docs`` directory.
+`Documentation on Readthedocs <http://sanic.readthedocs.io/>`_.
 
 .. |Join the chat at https://gitter.im/sanic-python/Lobby| image:: https://badges.gitter.im/sanic-python/Lobby.svg
    :target: https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 .. |Build Status| image:: https://travis-ci.org/channelcat/sanic.svg?branch=master
    :target: https://travis-ci.org/channelcat/sanic
+.. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest
+   :target: http://sanic.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/sanic.svg
    :target: https://pypi.python.org/pypi/sanic/
 .. |PyPI version| image:: https://img.shields.io/pypi/pyversions/sanic.svg

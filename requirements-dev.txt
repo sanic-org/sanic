@@ -13,5 +13,6 @@ falcon
 tornado
 aiofiles
 sphinx
+sphinx_rtd_theme
 recommonmark
 beautifulsoup4

@@ -49,7 +49,3 @@ def test_endpoint_challenge():
     # Assert that the server responds with the challenge string
     assert response.text == request_data['challenge']
 ```
-
-**Previous:** [Custom protocols](custom_protocol.md)
-
-**Next:** [Sanic extensions](extensions.md)

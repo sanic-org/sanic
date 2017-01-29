@@ -17,7 +17,3 @@ app.static('/the_best.png', '/home/ubuntu/test.png')
 
 app.run(host="0.0.0.0", port=8000)
 ```
-
-**Previous:** [Deploying](deploying.md)
-
-**Next:** [Middleware](middleware.md)

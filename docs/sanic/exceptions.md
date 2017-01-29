@@ -43,7 +43,3 @@ Some of the most useful exceptions are presented below:
   usually occurs if there is an exception raised in user code.
 
 See the `sanic.exceptions` module for the full list of exceptions to throw.
-
-**Previous:** [Middleware](middleware.md)
-
-**Next:** [Blueprints](blueprints.md)

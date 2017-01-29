@@ -106,7 +106,3 @@ view.add(['POST', 'PUT'], lambda request: text('I am a post/put method'))
 # Use the new view to handle requests to the base URL
 app.add_route(view, '/')
 ```
-
-**Previous:** [Blueprints](blueprints.md)
-
-**Next:** [Cookies](cookies.md)

@@ -31,5 +31,3 @@ One of the main goals of Sanic is speed. Code that lowers the performance of
 Sanic without significant gains in usability, security, or features may not be
 merged. Please don't let this intimidate you! If you have any concerns about an
 idea, open an issue for discussion and help.
-
-**Previous:** [Sanic extensions](extensions.md)

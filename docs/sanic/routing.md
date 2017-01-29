@@ -105,7 +105,3 @@ app.add_route(handler1, '/test')
 app.add_route(handler2, '/folder/<name>')
 app.add_route(person_handler2, '/person/<name:[A-z]>', methods=['GET'])
 ```
-
-**Previous:** [Getting Started](getting_started.md)
-
-**Next:** [Request Data](request_data.md)

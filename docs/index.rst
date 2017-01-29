@@ -6,29 +6,29 @@ Guides
 .. toctree::
    :maxdepth: 2
 
+   sanic/getting_started
+   sanic/routing
+   sanic/request_data
+   sanic/static_files
+   sanic/exceptions
+   sanic/middleware
+   sanic/blueprints
+   sanic/config
+   sanic/cookies
+   sanic/class_based_views
+   sanic/custom_protocol
+   sanic/ssl
+   sanic/testing
+   sanic/deploying
+   sanic/extensions
+   sanic/contributing
    getting_started
-   routing
-   request_data
-   deploying
-   static_files
-   middleware
-   exceptions
-   blueprints
-   class_based_views
-   config
-   cookies
-   custom_protocol
-   testing
-   extensions
-   contributing
 
 
 Module Documentation
 ====================
 
 .. toctree::
-
-   Module Reference <_api/sanic>
 
 * :ref:`genindex`
 * :ref:`search`

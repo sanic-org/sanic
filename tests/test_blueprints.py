@@ -233,24 +233,31 @@ def test_bp_shorthand():
     app = Sanic('test_shorhand_routes')
     blueprint = Blueprint('test_shorhand_routes')
 
+    @blueprint.get('/get')
     def handler(request):
         return text('OK')
 
+    @blueprint.put('/put')
     def handler(request):
         return text('OK')
 
+    @blueprint.post('/post')
     def handler(request):
         return text('OK')
 
+    @blueprint.head('/head')
     def handler(request):
         return text('OK')
 
+    @blueprint.options('/options')
     def handler(request):
         return text('OK')
 
+    @blueprint.patch('/patch')
     def handler(request):
         return text('OK')
 
+    @blueprint.delete('/delete')
     def handler(request):
         return text('OK')
 
@@ -275,6 +282,7 @@ def test_bp_shorthand():
     assert response.status == 405
 
     request, response = sanic_endpoint_test(app, uri='/head', method='head')
+    assert response.status == 200
 
     request, response = sanic_endpoint_test(app, uri='/head', method='get')
     assert response.status == 405

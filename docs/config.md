@@ -54,7 +54,7 @@ app.config.from_envvar('MYAPP_SETTINGS')
 Then you can run your application with the `MYAPP_SETTINGS` environment variable set:
 
 ```
-$ MYAPP_SETTINGS=/path/to/config_file; python3 myapp.py
+$ MYAPP_SETTINGS=/path/to/config_file python3 myapp.py
 INFO: Goin' Fast @ http://0.0.0.0:8000
 ```
 

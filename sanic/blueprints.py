@@ -130,3 +130,25 @@ class Blueprint:
         """
         static = FutureStatic(uri, file_or_directory, args, kwargs)
         self.statics.append(static)
+
+    # Shorthand method decorators
+    def get(self, uri, host=None):
+        return self.route(uri, methods=["GET"], host=host)
+
+    def post(self, uri, host=None):
+        return self.route(uri, methods=["POST"], host=host)
+
+    def put(self, uri, host=None):
+        return self.route(uri, methods=["PUT"], host=host)
+
+    def head(self, uri, host=None):
+        return self.route(uri, methods=["HEAD"], host=host)
+
+    def options(self, uri, host=None):
+        return self.route(uri, methods=["OPTIONS"], host=host)
+
+    def patch(self, uri, host=None):
+        return self.route(uri, methods=["PATCH"], host=host)
+
+    def delete(self, uri, host=None):
+        return self.route(uri, methods=["DELETE"], host=host)

@@ -1,10 +1,10 @@
 import logging
+import warnings
 from asyncio import get_event_loop
 from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
-import warnings
 
 from .config import Config
 from .constants import HTTP_METHODS

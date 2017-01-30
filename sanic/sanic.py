@@ -7,8 +7,8 @@ from traceback import format_exc
 import warnings
 
 from .config import Config
+from .handlers import ErrorHandler
 from .constants import HTTP_METHODS
-from .exceptions import Handler
 from .exceptions import ServerError
 from .log import log
 from .response import HTTPResponse
@@ -34,7 +34,7 @@ class Sanic:
             name = getmodulename(frame_records[1])
         self.name = name
         self.router = router or Router()
-        self.error_handler = error_handler or Handler()
+        self.error_handler = error_handler or ErrorHandler()
         self.config = Config()
         self.request_middleware = deque()
         self.response_middleware = deque()

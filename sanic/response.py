@@ -140,38 +140,6 @@ class HTTPResponse:
         return self._cookies
 
 
-class ContentRangeHandler:
-    """
-    This class is for parsing the request header
-    """
-    __slots__ = ('start', 'end', 'size', 'total', 'headers')
-
-    def __init__(self, request, stats):
-        self.size = self.start = 0
-        self.end = None
-        self.headers = dict()
-        self.total = stats.st_size
-        _range = request.headers.get('Range')
-        if _range is None:
-            return
-        unit, _, value = tuple(map(str.strip, _range.partition('=')))
-        if unit != 'bytes':
-            return
-        start_b, _, end_b = tuple(map(str.strip, value.partition('-')))
-        try:
-            self.start = int(start_b) if start_b else 0
-            self.end = int(end_b) if end_b else 0
-        except ValueError:
-            self.start = self.end = 0
-            return
-        self.size = self.end - self.start
-        self.headers['Content-Range'] = "bytes %s-%s/%s" % (
-            self.start, self.end, self.total)
-
-    def __bool__(self):
-        return self.size != 0
-
-
 def json(body, status=200, headers=None, **kwargs):
     """
     Returns response object with body in json format.

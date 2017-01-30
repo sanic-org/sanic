@@ -1,4 +1,4 @@
-.. include:: ../README.rst
+.. include:: sanic/index.rst
 
 Guides
 ======
@@ -22,7 +22,6 @@ Guides
    sanic/deploying
    sanic/extensions
    sanic/contributing
-   getting_started
 
 
 Module Documentation

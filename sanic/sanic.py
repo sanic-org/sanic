@@ -10,6 +10,7 @@ from .config import Config
 from .handlers import ErrorHandler
 from .constants import HTTP_METHODS
 from .exceptions import ServerError
+from .handlers import ErrorHandler
 from .log import log
 from .response import HTTPResponse
 from .router import Router

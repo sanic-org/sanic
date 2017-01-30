@@ -306,9 +306,63 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        server_settings = self._helper(
+            host=host, port=port, debug=debug, before_start=before_start,
+            after_start=after_start, before_stop=before_stop,
+            after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
+            loop=loop, protocol=protocol, backlog=backlog,
+            stop_event=stop_event, register_sys_signals=register_sys_signals)
+        try:
+            if workers == 1:
+                serve(**server_settings)
+            else:
+                serve_multiple(server_settings, workers, stop_event)
+
+        except Exception as e:
+            log.exception(
+                'Experienced exception while trying to serve')
+
+        log.info("Server Stopped")
+
+    def stop(self):
+        """This kills the Sanic"""
+        get_event_loop().stop()
+
+    async def create_server(self, host="127.0.0.1", port=8000, debug=False,
+                            before_start=None, after_start=None,
+                            before_stop=None, after_stop=None, ssl=None,
+                            sock=None, loop=None, protocol=HttpProtocol,
+                            backlog=100, stop_event=None):
+        """
+        Asynchronous version of `run`.
+        """
+        server_settings = self._helper(
+            host=host, port=port, debug=debug, before_start=before_start,
+            after_start=after_start, before_stop=before_stop,
+            after_stop=after_stop, ssl=ssl, sock=sock, loop=loop,
+            protocol=protocol, backlog=backlog, stop_event=stop_event,
+            async_run=True)
+
+        # Serve
+        proto = "http"
+        if ssl is not None:
+            proto = "https"
+        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+
+        return await serve(**server_settings)
+
+    def _helper(self, host="127.0.0.1", port=8000, debug=False,
+                before_start=None, after_start=None, before_stop=None,
+                after_stop=None, ssl=None, sock=None, workers=1, loop=None,
+                protocol=HttpProtocol, backlog=100, stop_event=None,
+                register_sys_signals=True, run_async=False):
+        """
+        Helper function used by `run` and `create_server`.
+        """
+
         self.error_handler.debug = debug
         self.debug = debug
-        self.loop = loop
+        self.loop = loop = get_event_loop()
 
         if loop is not None:
             if self.debug:
@@ -329,6 +383,7 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
+            'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog
         }
@@ -360,83 +415,8 @@ class Sanic:
             log.setLevel(logging.DEBUG)
         log.debug(self.config.LOGO)
 
-        # Serve
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
-
-        try:
-            if workers == 1:
-                serve(**server_settings)
-            else:
-                serve_multiple(server_settings, workers, stop_event)
-
-        except Exception as e:
-            log.exception(
-                'Experienced exception while trying to serve')
-
-        log.info("Server Stopped")
-
-    def stop(self):
-        """This kills the Sanic"""
-        get_event_loop().stop()
-
-    async def create_server(self, host="127.0.0.1", port=8000, debug=False,
-                            before_start=None, after_start=None,
-                            before_stop=None, after_stop=None, ssl=None,
-                            sock=None, loop=None, protocol=HttpProtocol,
-                            backlog=100, stop_event=None):
-        """
-        Asynchronous version of `run`.
-        """
-        if loop is not None:
-            if self.debug:
-                warnings.simplefilter('default')
-            warnings.warn("Passing a loop will be deprecated in version"
-                          " 0.4.0 https://github.com/channelcat/sanic/"
-                          "pull/335 has more information.",
-                          DeprecationWarning)
-
-        loop = get_event_loop()
-        server_settings = {
-            'protocol': protocol,
-            'host': host,
-            'port': port,
-            'sock': sock,
-            'ssl': ssl,
-            'debug': debug,
-            'request_handler': self.handle_request,
-            'error_handler': self.error_handler,
-            'request_timeout': self.config.REQUEST_TIMEOUT,
-            'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'loop': loop,
-            'backlog': backlog
-        }
-
-        # -------------------------------------------- #
-        # Register start/stop events
-        # -------------------------------------------- #
-
-        for event_name, settings_name, args, reverse in (
-                ("before_server_start", "before_start", before_start, False),
-                ("after_server_start", "after_start", after_start, False),
-                ("before_server_stop", "before_stop", before_stop, True),
-                ("after_server_stop", "after_stop", after_stop, True)):
-            listeners = []
-            for blueprint in self.blueprints.values():
-                listeners += blueprint.listeners[event_name]
-            if args:
-                if callable(args):
-                    args = [args]
-                listeners += args
-            if reverse:
-                listeners.reverse()
-            # Prepend sanic to the arguments when listeners are triggered
-            listeners = [partial(listener, self) for listener in listeners]
-            server_settings[settings_name] = listeners
-
-        server_settings['run_async'] = True
+        if run_async:
+            server_settings['run_async'] = True
 
         # Serve
         proto = "http"
@@ -444,4 +424,4 @@ class Sanic:
             proto = "https"
         log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
-        return await serve(**server_settings)
+        return server_settings

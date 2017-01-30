@@ -58,6 +58,7 @@ class Sanic:
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
+        :param host:
         :return: decorated function
         """
 
@@ -105,6 +106,7 @@ class Sanic:
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed, these are overridden
                         if using a HTTPMethodView
+        :param host:
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -303,6 +305,10 @@ class Sanic:
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
                         received before it is respected
+        :param loop:
+        :param backlog:
+        :param stop_event:
+        :param register_sys_signals:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
@@ -317,11 +323,9 @@ class Sanic:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers, stop_event)
-
         except Exception as e:
             log.exception(
                 'Experienced exception while trying to serve')
-
         log.info("Server Stopped")
 
     def stop(self):

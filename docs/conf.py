@@ -22,9 +22,7 @@ import sanic
 
 # -- General configuration ------------------------------------------------
 
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.viewcode',
-              'sphinx.ext.githubpages']
+extensions = []
 
 templates_path = ['_templates']
 

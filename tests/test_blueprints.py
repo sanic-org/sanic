@@ -228,3 +228,79 @@ def test_bp_static():
     request, response = sanic_endpoint_test(app, uri='/testing.file')
     assert response.status == 200
     assert response.body == current_file_contents
+
+def test_bp_shorthand():
+    app = Sanic('test_shorhand_routes')
+    blueprint = Blueprint('test_shorhand_routes')
+
+    @blueprint.get('/get')
+    def handler(request):
+        return text('OK')
+
+    @blueprint.put('/put')
+    def handler(request):
+        return text('OK')
+
+    @blueprint.post('/post')
+    def handler(request):
+        return text('OK')
+
+    @blueprint.head('/head')
+    def handler(request):
+        return text('OK')
+
+    @blueprint.options('/options')
+    def handler(request):
+        return text('OK')
+
+    @blueprint.patch('/patch')
+    def handler(request):
+        return text('OK')
+
+    @blueprint.delete('/delete')
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(blueprint)
+
+    request, response = sanic_endpoint_test(app, uri='/get', method='get')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/get', method='post')
+    assert response.status == 405
+
+    request, response = sanic_endpoint_test(app, uri='/put', method='put')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/put', method='get')
+    assert response.status == 405
+
+    request, response = sanic_endpoint_test(app, uri='/post', method='post')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/post', method='get')
+    assert response.status == 405
+
+    request, response = sanic_endpoint_test(app, uri='/head', method='head')
+    assert response.status == 200
+
+    request, response = sanic_endpoint_test(app, uri='/head', method='get')
+    assert response.status == 405
+
+    request, response = sanic_endpoint_test(app, uri='/options', method='options')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/options', method='get')
+    assert response.status == 405
+
+    request, response = sanic_endpoint_test(app, uri='/patch', method='patch')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/patch', method='get')
+    assert response.status == 405
+
+    request, response = sanic_endpoint_test(app, uri='/delete', method='delete')
+    assert response.text == 'OK'
+
+    request, response = sanic_endpoint_test(app, uri='/delete', method='get')
+    assert response.status == 405

@@ -341,7 +341,7 @@ class Sanic:
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, loop=loop,
             protocol=protocol, backlog=backlog, stop_event=stop_event,
-            async_run=True)
+            run_async=True)
 
         # Serve
         proto = "http"

@@ -94,7 +94,7 @@ class Sanic:
         return self.route(uri, methods=frozenset({"PATCH"}), host=host)
 
     def delete(self, uri, host=None):
-        return self.route(uri, methods=["DELETE"], host=host)
+        return self.route(uri, methods=frozenset({"DELETE"}), host=host)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """

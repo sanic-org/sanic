@@ -5,7 +5,8 @@ FutureRoute = namedtuple('Route', ['handler', 'uri', 'methods', 'host'])
 FutureListener = namedtuple('Listener', ['handler', 'uri', 'methods', 'host'])
 FutureMiddleware = namedtuple('Route', ['middleware', 'args', 'kwargs'])
 FutureException = namedtuple('Route', ['handler', 'args', 'kwargs'])
-FutureStatic = namedtuple('Route', ['uri', 'file_or_directory', 'args', 'kwargs'])
+FutureStatic = namedtuple('Route',
+                          ['uri', 'file_or_directory', 'args', 'kwargs'])
 
 
 class Blueprint:
@@ -45,7 +46,8 @@ class Blueprint:
         # Middleware
         for future in self.middlewares:
             if future.args or future.kwargs:
-                app.middleware(*future.args, **future.kwargs)(future.middleware)
+                app.middleware(*future.args,
+                               **future.kwargs)(future.middleware)
             else:
                 app.middleware(future.middleware)
 
@@ -57,7 +59,8 @@ class Blueprint:
         for future in self.statics:
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
-            app.static(uri, future.file_or_directory, *future.args, **future.kwargs)
+            app.static(uri, future.file_or_directory,
+                       *future.args, **future.kwargs)
 
     def route(self, uri, methods=frozenset({'GET'}), host=None):
         """

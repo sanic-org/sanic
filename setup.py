@@ -16,7 +16,7 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
         raise RuntimeError('Unable to determine version.')
 
 setup(
-    name='Sanic',
+    name='sanic',
     version=version,
     url='http://github.com/channelcat/sanic/',
     license='MIT',

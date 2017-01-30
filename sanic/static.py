@@ -1,12 +1,15 @@
-from aiofiles.os import stat
+from mimetypes import guess_type
 from os import path
 from re import sub
 from time import strftime, gmtime
-from mimetypes import guess_type
 from urllib.parse import unquote
 
+from aiofiles.os import stat
+
 from .exceptions import FileNotFound, InvalidUsage, ContentRangeError
-from .response import file, HTTPResponse, ContentRangeHandler
+from .exceptions import HeaderNotFound
+from .response import file, HTTPResponse
+from .handlers import ContentRangeHandler
 
 
 def register(app, uri, file_or_directory, pattern,
@@ -56,30 +59,27 @@ def register(app, uri, file_or_directory, pattern,
             stats = None
             if use_modified_since:
                 stats = await stat(file_path)
-                modified_since = strftime('%a, %d %b %Y %H:%M:%S GMT',
-                                          gmtime(stats.st_mtime))
+                modified_since = strftime(
+                    '%a, %d %b %Y %H:%M:%S GMT', gmtime(stats.st_mtime))
                 if request.headers.get('If-Modified-Since') == modified_since:
                     return HTTPResponse(status=304)
                 headers['Last-Modified'] = modified_since
             _range = None
             if use_content_range:
+                _range = None
                 if not stats:
                     stats = await stat(file_path)
                 headers['Accept-Ranges'] = 'bytes'
                 headers['Content-Length'] = str(stats.st_size)
                 if request.method != 'HEAD':
-                    _range = ContentRangeHandler(request, stats)
-                    # If the start byte is greater than the size
-                    # of the entire file or if the end is
-                    if _range.start >= _range.total or _range.end == 0:
-                        raise ContentRangeError('Content-Range malformed',
-                                                _range)
-                    if _range.start == 0 and _range.size == 0:
-                        _range = None
+                    try:
+                        _range = ContentRangeHandler(request, stats)
+                    except HeaderNotFound:
+                        pass
                     else:
-                        headers['Content-Length'] = str(_range.size)
-                        for k, v in _range.headers.items():
-                            headers[k] = v
+                        del headers['Content-Length']
+                        for key, value in _range.headers.items():
+                            headers[key] = value
             if request.method == 'HEAD':
                 return HTTPResponse(
                     headers=headers,

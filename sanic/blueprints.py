@@ -1,59 +1,12 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 
-class BlueprintSetup:
-    """
-    Creates a blueprint state like object.
-    """
-
-    def __init__(self, blueprint, app, options):
-        self.app = app
-        self.blueprint = blueprint
-        self.options = options
-
-        url_prefix = self.options.get('url_prefix')
-        if url_prefix is None:
-            url_prefix = self.blueprint.url_prefix
-
-        #: The prefix that should be used for all URLs defined on the
-        #: blueprint.
-        self.url_prefix = url_prefix
-
-    def add_route(self, handler, uri, methods, host=None):
-        """
-        A helper method to register a handler to the application url routes.
-        """
-        if self.url_prefix:
-            uri = self.url_prefix + uri
-
-        if host is None:
-            host = self.blueprint.host
-
-        self.app.route(uri=uri, methods=methods, host=host)(handler)
-
-    def add_exception(self, handler, *args, **kwargs):
-        """
-        Registers exceptions to sanic.
-        """
-        self.app.exception(*args, **kwargs)(handler)
-
-    def add_static(self, uri, file_or_directory, *args, **kwargs):
-        """
-        Registers static files to sanic.
-        """
-        if self.url_prefix:
-            uri = self.url_prefix + uri
-
-        self.app.static(uri, file_or_directory, *args, **kwargs)
-
-    def add_middleware(self, middleware, *args, **kwargs):
-        """
-        Registers middleware to sanic.
-        """
-        if args or kwargs:
-            self.app.middleware(*args, **kwargs)(middleware)
-        else:
-            self.app.middleware(middleware)
+FutureRoute = namedtuple('Route', ['handler', 'uri', 'methods', 'host'])
+FutureListener = namedtuple('Listener', ['handler', 'uri', 'methods', 'host'])
+FutureMiddleware = namedtuple('Route', ['middleware', 'args', 'kwargs'])
+FutureException = namedtuple('Route', ['handler', 'args', 'kwargs'])
+FutureStatic = namedtuple('Route',
+                          ['uri', 'file_or_directory', 'args', 'kwargs'])
 
 
 class Blueprint:
@@ -65,30 +18,49 @@ class Blueprint:
         """
         self.name = name
         self.url_prefix = url_prefix
-        self.deferred_functions = []
-        self.listeners = defaultdict(list)
         self.host = host
 
-    def record(self, func):
-        """
-        Registers a callback function that is invoked when the blueprint is
-        registered on the application.
-        """
-        self.deferred_functions.append(func)
-
-    def make_setup_state(self, app, options):
-        """
-        Returns a new BlueprintSetup object
-        """
-        return BlueprintSetup(self, app, options)
+        self.routes = []
+        self.exceptions = []
+        self.listeners = defaultdict(list)
+        self.middlewares = []
+        self.statics = []
 
     def register(self, app, options):
         """
         Registers the blueprint to the sanic app.
         """
-        state = self.make_setup_state(app, options)
-        for deferred in self.deferred_functions:
-            deferred(state)
+
+        url_prefix = options.get('url_prefix', self.url_prefix)
+
+        # Routes
+        for future in self.routes:
+            # Prepend the blueprint URI prefix if available
+            uri = url_prefix + future.uri if url_prefix else future.uri
+            app.route(
+                uri=uri,
+                methods=future.methods,
+                host=future.host or self.host
+                )(future.handler)
+
+        # Middleware
+        for future in self.middlewares:
+            if future.args or future.kwargs:
+                app.middleware(*future.args,
+                               **future.kwargs)(future.middleware)
+            else:
+                app.middleware(future.middleware)
+
+        # Exceptions
+        for future in self.exceptions:
+            app.exception(*future.args, **future.kwargs)(future.handler)
+
+        # Static Files
+        for future in self.statics:
+            # Prepend the blueprint URI prefix if available
+            uri = url_prefix + future.uri if url_prefix else future.uri
+            app.static(uri, future.file_or_directory,
+                       *future.args, **future.kwargs)
 
     def route(self, uri, methods=frozenset({'GET'}), host=None):
         """
@@ -97,7 +69,8 @@ class Blueprint:
         :param methods: List of acceptable HTTP methods.
         """
         def decorator(handler):
-            self.record(lambda s: s.add_route(handler, uri, methods, host))
+            route = FutureRoute(handler, uri, methods, host)
+            self.routes.append(route)
             return handler
         return decorator
 
@@ -108,7 +81,8 @@ class Blueprint:
         :param uri: Endpoint at which the route will be accessible.
         :param methods: List of acceptable HTTP methods.
         """
-        self.record(lambda s: s.add_route(handler, uri, methods, host))
+        route = FutureRoute(handler, uri, methods, host)
+        self.routes.append(route)
         return handler
 
     def listener(self, event):
@@ -125,10 +99,10 @@ class Blueprint:
         """
         Creates a blueprint middleware from a decorated function.
         """
-        def register_middleware(middleware):
-            self.record(
-                lambda s: s.add_middleware(middleware, *args, **kwargs))
-            return middleware
+        def register_middleware(_middleware):
+            future_middleware = FutureMiddleware(_middleware, args, kwargs)
+            self.middlewares.append(future_middleware)
+            return _middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')
         if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
@@ -143,7 +117,8 @@ class Blueprint:
         Creates a blueprint exception from a decorated function.
         """
         def decorator(handler):
-            self.record(lambda s: s.add_exception(handler, *args, **kwargs))
+            exception = FutureException(handler, args, kwargs)
+            self.exceptions.append(exception)
             return handler
         return decorator
 
@@ -153,5 +128,5 @@ class Blueprint:
         :param uri: Endpoint at which the route will be accessible.
         :param file_or_directory: Static asset.
         """
-        self.record(
-            lambda s: s.add_static(uri, file_or_directory, *args, **kwargs))
+        static = FutureStatic(uri, file_or_directory, args, kwargs)
+        self.statics.append(static)

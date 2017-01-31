@@ -1,15 +1,20 @@
-from aiofiles.os import stat
+from mimetypes import guess_type
 from os import path
 from re import sub
 from time import strftime, gmtime
 from urllib.parse import unquote
 
-from .exceptions import FileNotFound, InvalidUsage
+from aiofiles.os import stat
+
+from .exceptions import FileNotFound, InvalidUsage, ContentRangeError
+from .exceptions import HeaderNotFound
+from .handlers import ContentRangeHandler
 from .response import file, HTTPResponse
 
 
-def register(app, uri, file_or_directory, pattern, use_modified_since):
-    # TODO: Though sanic is not a file server, I feel like we should atleast
+def register(app, uri, file_or_directory, pattern,
+             use_modified_since, use_content_range):
+    # TODO: Though sanic is not a file server, I feel like we should at least
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching
     """
@@ -23,8 +28,9 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
     :param use_modified_since: If true, send file modified time, and return
                                not modified if the browser's matches the
                                server's
+    :param use_content_range: If true, process header for range requests
+                              and sends the file part that is requested
     """
-
     # If we're not trying to match a file directly,
     # serve from the folder
     if not path.isfile(file_or_directory):
@@ -50,18 +56,41 @@ def register(app, uri, file_or_directory, pattern, use_modified_since):
             headers = {}
             # Check if the client has been sent this file before
             # and it has not been modified since
+            stats = None
             if use_modified_since:
                 stats = await stat(file_path)
-                modified_since = strftime('%a, %d %b %Y %H:%M:%S GMT',
-                                          gmtime(stats.st_mtime))
+                modified_since = strftime(
+                    '%a, %d %b %Y %H:%M:%S GMT', gmtime(stats.st_mtime))
                 if request.headers.get('If-Modified-Since') == modified_since:
                     return HTTPResponse(status=304)
                 headers['Last-Modified'] = modified_since
-
-            return await file(file_path, headers=headers)
-        except:
+            _range = None
+            if use_content_range:
+                _range = None
+                if not stats:
+                    stats = await stat(file_path)
+                headers['Accept-Ranges'] = 'bytes'
+                headers['Content-Length'] = str(stats.st_size)
+                if request.method != 'HEAD':
+                    try:
+                        _range = ContentRangeHandler(request, stats)
+                    except HeaderNotFound:
+                        pass
+                    else:
+                        del headers['Content-Length']
+                        for key, value in _range.headers.items():
+                            headers[key] = value
+            if request.method == 'HEAD':
+                return HTTPResponse(
+                    headers=headers,
+                    content_type=guess_type(file_path)[0] or 'text/plain')
+            else:
+                return await file(file_path, headers=headers, _range=_range)
+        except ContentRangeError:
+            raise
+        except Exception:
             raise FileNotFound('File not found',
                                path=file_or_directory,
                                relative_url=file_uri)
 
-    app.route(uri, methods=['GET'])(_handler)
+    app.route(uri, methods=['GET', 'HEAD'])(_handler)

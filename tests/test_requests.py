@@ -1,10 +1,12 @@
 from json import loads as json_loads, dumps as json_dumps
-from sanic import Sanic
-from sanic.response import json, text, redirect
-from sanic.utils import sanic_endpoint_test
-from sanic.exceptions import ServerError
 
 import pytest
+
+from sanic import Sanic
+from sanic.exceptions import ServerError
+from sanic.response import json, text, redirect
+from sanic.utils import sanic_endpoint_test
+
 
 # ------------------------------------------------------------ #
 #  GET
@@ -112,7 +114,8 @@ def test_query_string():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, params=[("test1", "1"), ("test2", "false"), ("test2", "true")])
+    request, response = sanic_endpoint_test(
+        app, params=[("test1", "1"), ("test2", "false"), ("test2", "true")])
 
     assert request.args.get('test1') == '1'
     assert request.args.get('test2') == 'false'
@@ -150,7 +153,8 @@ def test_post_json():
     payload = {'test': 'OK'}
     headers = {'content-type': 'application/json'}
 
-    request, response = sanic_endpoint_test(app, data=json_dumps(payload), headers=headers)
+    request, response = sanic_endpoint_test(
+        app, data=json_dumps(payload), headers=headers)
 
     assert request.json.get('test') == 'OK'
     assert response.text == 'OK'

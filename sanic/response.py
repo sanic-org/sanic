@@ -1,8 +1,9 @@
-from aiofiles import open as open_async
+from collections import ChainMap
 from mimetypes import guess_type
 from os import path
-
 from ujson import dumps as json_dumps
+
+from aiofiles import open as open_async
 
 from .cookies import CookieJar
 
@@ -97,21 +98,25 @@ class HTTPResponse:
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
         # We tried to make this as fast as possible in pure python
-        timeout_header = b''
-        if keep_alive and keep_alive_timeout:
-            timeout_header = b'Keep-Alive: timeout=%d\r\n' % keep_alive_timeout
-
+        default_header = dict()
+        if keep_alive:
+            if keep_alive_timeout:
+                default_header['Keep-Alive'] = keep_alive_timeout
+            default_header['Connection'] = 'keep-alive'
+        else:
+            default_header['Connection'] = 'close'
+        default_header['Content-Length'] = len(self.body)
+        default_header['Content-Type'] = self.content_type
         headers = b''
-        if self.headers:
-            for name, value in self.headers.items():
-                try:
-                    headers += (
-                        b'%b: %b\r\n' % (name.encode(), value.encode('utf-8')))
-                except AttributeError:
-                    headers += (
-                        b'%b: %b\r\n' % (
-                            str(name).encode(), str(value).encode('utf-8')))
-
+        for name, value in ChainMap(self.headers, default_header).items():
+            try:
+                headers += (
+                    b'%b: %b\r\n' % (
+                        name.encode(), value.encode('utf-8')))
+            except AttributeError:
+                headers += (
+                    b'%b: %b\r\n' % (
+                        str(name).encode(), str(value).encode('utf-8')))
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all
         status = COMMON_STATUS_CODES.get(self.status)
@@ -119,18 +124,11 @@ class HTTPResponse:
             status = ALL_STATUS_CODES.get(self.status)
 
         return (b'HTTP/%b %d %b\r\n'
-                b'Content-Type: %b\r\n'
-                b'Content-Length: %d\r\n'
-                b'Connection: %b\r\n'
-                b'%b%b\r\n'
+                b'%b\r\n'
                 b'%b') % (
             version.encode(),
             self.status,
             status,
-            self.content_type.encode(),
-            len(self.body),
-            b'keep-alive' if keep_alive else b'close',
-            timeout_header,
             headers,
             self.body
         )
@@ -148,7 +146,7 @@ def json(body, status=200, headers=None, **kwargs):
     :param body: Response data to be serialized.
     :param status: Response code.
     :param headers: Custom Headers.
-    :param \**kwargs: Remaining arguments that are passed to the json encoder.
+    :param kwargs: Remaining arguments that are passed to the json encoder.
     """
     return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
                         status=status, content_type="application/json")
@@ -176,17 +174,24 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, mime_type=None, headers=None):
+async def file(location, mime_type=None, headers=None, _range=None):
     """
     Returns response object with file data.
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
+    :param _range:
     """
     filename = path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:
-        out_stream = await _file.read()
+        if _range:
+            await _file.seek(_range.start)
+            out_stream = await _file.read(_range.size)
+            headers['Content-Range'] = 'bytes %s-%s/%s' % (
+                _range.start, _range.end, _range.total)
+        else:
+            out_stream = await _file.read()
 
     mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
 

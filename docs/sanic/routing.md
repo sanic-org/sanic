@@ -64,23 +64,37 @@ async def folder_handler(request, folder_id):
 
 ## HTTP request types
 
-By default, a route defined on a URL will be used for all requests to that URL.
+By default, a route defined on a URL will be avaialble for only GET requests to that URL.
 However, the `@app.route` decorator accepts an optional parameter, `methods`,
-which restricts the handler function to the HTTP methods in the given list.
+whicl allows the handler function to work with any of the HTTP methods in the list.
 
 ```python
 from sanic.response import text
 
-@app.route('/post')
-async def post_handler(request, methods=['POST']):
+@app.route('/post', methods=['POST'])
+async def post_handler(request):
 	return text('POST request - {}'.format(request.json))
 
-@app.route('/get')
-async def GET_handler(request, methods=['GET']):
+@app.route('/get', methods=['GET'])
+async def get_handler(request):
 	return text('GET request - {}'.format(request.args))
 
 ```
 
+There are also shorthand method decorators:
+
+```python
+from sanic.response import text
+
+@app.post('/post')
+async def post_handler(request):
+	return text('POST request - {}'.format(request.json))
+
+@app.get('/get')
+async def get_handler(request):
+	return text('GET request - {}'.format(request.args))
+
+```
 ## The `add_route` method
 
 As we have seen, routes are often specified using the `@app.route` decorator.

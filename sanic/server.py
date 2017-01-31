@@ -14,16 +14,11 @@ import warnings
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
 
-from .exceptions import ServerError
-
-try:
-    import uvloop as async_loop
-except ImportError:
-    async_loop = asyncio
-
-from .log import log
-from .request import Request
-from .exceptions import RequestTimeout, PayloadTooLarge, InvalidUsage
+from sanic.policy import new_event_loop, set_event_loop
+from sanic.log import log
+from sanic.request import Request
+from sanic.exceptions import (
+    RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
 
 current_time = None
 
@@ -297,8 +292,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param protocol: Subclass of asyncio protocol class
     :return: Nothing
     """
-    loop = async_loop.new_event_loop()
-    asyncio.set_event_loop(loop)
+    loop = new_event_loop()
+    set_event_loop(loop)
 
     if debug:
         loop.set_debug(debug)
@@ -371,6 +366,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
         trigger_events(after_stop, loop)
 
+        loop.stop()
+
         loop.close()
 
 
@@ -396,6 +393,8 @@ def serve_multiple(server_settings, workers, stop_event=None):
     sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     sock.bind((server_settings['host'], server_settings['port']))
     set_inheritable(sock.fileno(), True)
+    host = server_settings['host']
+    port = server_settings['port']
     server_settings['sock'] = sock
     server_settings['host'] = None
     server_settings['port'] = None
@@ -420,5 +419,3 @@ def serve_multiple(server_settings, workers, stop_event=None):
     for process in processes:
         process.terminate()
     sock.close()
-
-    asyncio.get_event_loop().stop()

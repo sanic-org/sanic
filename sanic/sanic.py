@@ -1,15 +1,15 @@
 import logging
+import warnings
 from asyncio import get_event_loop
 from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
-import warnings
 
 from .config import Config
 from .constants import HTTP_METHODS
-from .exceptions import Handler
 from .exceptions import ServerError
+from .handlers import ErrorHandler
 from .log import log
 from .response import HTTPResponse
 from .router import Router
@@ -34,7 +34,7 @@ class Sanic:
             name = getmodulename(frame_records[1])
         self.name = name
         self.router = router or Router()
-        self.error_handler = error_handler or Handler()
+        self.error_handler = error_handler or ErrorHandler()
         self.config = Config()
         self.request_middleware = deque()
         self.response_middleware = deque()
@@ -58,6 +58,7 @@ class Sanic:
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
+        :param host:
         :return: decorated function
         """
 
@@ -75,25 +76,25 @@ class Sanic:
 
     # Shorthand method decorators
     def get(self, uri, host=None):
-        return self.route(uri, methods=["GET"], host=host)
+        return self.route(uri, methods=frozenset({"GET"}), host=host)
 
     def post(self, uri, host=None):
-        return self.route(uri, methods=["POST"], host=host)
+        return self.route(uri, methods=frozenset({"POST"}), host=host)
 
     def put(self, uri, host=None):
-        return self.route(uri, methods=["PUT"], host=host)
+        return self.route(uri, methods=frozenset({"PUT"}), host=host)
 
     def head(self, uri, host=None):
-        return self.route(uri, methods=["HEAD"], host=host)
+        return self.route(uri, methods=frozenset({"HEAD"}), host=host)
 
     def options(self, uri, host=None):
-        return self.route(uri, methods=["OPTIONS"], host=host)
+        return self.route(uri, methods=frozenset({"OPTIONS"}), host=host)
 
     def patch(self, uri, host=None):
-        return self.route(uri, methods=["PATCH"], host=host)
+        return self.route(uri, methods=frozenset({"PATCH"}), host=host)
 
     def delete(self, uri, host=None):
-        return self.route(uri, methods=["DELETE"], host=host)
+        return self.route(uri, methods=frozenset({"DELETE"}), host=host)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """
@@ -105,6 +106,7 @@ class Sanic:
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed, these are overridden
                         if using a HTTPMethodView
+        :param host:
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -121,7 +123,7 @@ class Sanic:
         """
         Decorates a function to be registered as a handler for exceptions
 
-        :param \*exceptions: exceptions
+        :param exceptions: exceptions
         :return: decorated function
         """
 
@@ -156,13 +158,13 @@ class Sanic:
 
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',
-               use_modified_since=True):
+               use_modified_since=True, use_content_range=False):
         """
         Registers a root to serve files from.  The input can either be a file
         or a directory.  See
         """
         static_register(self, uri, file_or_directory, pattern,
-                        use_modified_since)
+                        use_modified_since, use_content_range)
 
     def blueprint(self, blueprint, **options):
         """
@@ -303,6 +305,10 @@ class Sanic:
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
                         received before it is respected
+        :param loop:
+        :param backlog:
+        :param stop_event:
+        :param register_sys_signals:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
@@ -317,11 +323,9 @@ class Sanic:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers, stop_event)
-
         except Exception as e:
             log.exception(
                 'Experienced exception while trying to serve')
-
         log.info("Server Stopped")
 
     def stop(self):

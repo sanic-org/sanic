@@ -1,8 +1,3 @@
-from .response import text, html
-from .log import log
-from traceback import format_exc, extract_tb
-import sys
-
 TRACEBACK_STYLE = '''
     <style>
         body {
@@ -104,6 +99,7 @@ INTERNAL_SERVER_ERROR_HTML = '''
 class SanicException(Exception):
     def __init__(self, message, status_code=None):
         super().__init__(message)
+
         if status_code is not None:
             self.status_code = status_code
 
@@ -137,68 +133,20 @@ class PayloadTooLarge(SanicException):
     status_code = 413
 
 
-class Handler:
-    handlers = None
+class HeaderNotFound(SanicException):
+    status_code = 400
 
-    def __init__(self):
-        self.handlers = {}
-        self.debug = False
 
-    def _render_traceback_html(self, exception, request):
-        exc_type, exc_value, tb = sys.exc_info()
-        frames = extract_tb(tb)
+class ContentRangeError(SanicException):
+    status_code = 416
 
-        frame_html = []
-        for frame in frames:
-            frame_html.append(TRACEBACK_LINE_HTML.format(frame))
+    def __init__(self, message, content_range):
+        super().__init__(message)
+        self.headers = {
+            'Content-Type': 'text/plain',
+            "Content-Range": "bytes */%s" % (content_range.total,)
+        }
 
-        return TRACEBACK_WRAPPER_HTML.format(
-            style=TRACEBACK_STYLE,
-            exc_name=exc_type.__name__,
-            exc_value=exc_value,
-            frame_html=''.join(frame_html),
-            uri=request.url)
 
-    def add(self, exception, handler):
-        self.handlers[exception] = handler
-
-    def response(self, request, exception):
-        """
-        Fetches and executes an exception handler and returns a response object
-
-        :param request: Request
-        :param exception: Exception to handle
-        :return: Response object
-        """
-        handler = self.handlers.get(type(exception), self.default)
-        try:
-            response = handler(request=request, exception=exception)
-        except:
-            log.error(format_exc())
-            if self.debug:
-                response_message = (
-                    'Exception raised in exception handler "{}" '
-                    'for uri: "{}"\n{}').format(
-                        handler.__name__, request.url, format_exc())
-                log.error(response_message)
-                return text(response_message, 500)
-            else:
-                return text('An error occurred while handling an error', 500)
-        return response
-
-    def default(self, request, exception):
-        log.error(format_exc())
-        if isinstance(exception, SanicException):
-            return text(
-                'Error: {}'.format(exception),
-                status=getattr(exception, 'status_code', 500))
-        elif self.debug:
-            html_output = self._render_traceback_html(exception, request)
-
-            response_message = (
-                'Exception occurred while handling uri: "{}"\n{}'.format(
-                    request.url, format_exc()))
-            log.error(response_message)
-            return html(html_output, status=500)
-        else:
-            return html(INTERNAL_SERVER_ERROR_HTML, status=500)
+class InvalidRangeType(ContentRangeError):
+    pass

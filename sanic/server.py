@@ -393,8 +393,6 @@ def serve_multiple(server_settings, workers, stop_event=None):
     sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     sock.bind((server_settings['host'], server_settings['port']))
     set_inheritable(sock.fileno(), True)
-    host = server_settings['host']
-    port = server_settings['port']
     server_settings['sock'] = sock
     server_settings['host'] = None
     server_settings['port'] = None

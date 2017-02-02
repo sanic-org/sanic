@@ -16,47 +16,35 @@ def static_file_directory():
     return static_directory
 
 
-@pytest.fixture(scope='module')
-def static_file_path(static_file_directory):
-    """The path to the static file that we want to serve"""
-    return os.path.join(static_file_directory, 'test.file')
+def get_file_path(static_file_directory, file_name):
+    return os.path.join(static_file_directory, file_name)
 
 
-@pytest.fixture(scope='module')
-def static_file_content(static_file_path):
+def get_file_content(static_file_directory, file_name):
     """The content of the static file to check"""
-    with open(static_file_path, 'rb') as file:
+    with open(get_file_path(static_file_directory, file_name), 'rb') as file:
         return file.read()
 
 
-def test_static_file(static_file_path, static_file_content):
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+def test_static_file(static_file_directory, file_name):
     app = Sanic('test_static')
-    app.static('/testing.file', static_file_path)
+    app.static(
+        '/testing.file', get_file_path(static_file_directory, file_name))
 
     request, response = sanic_endpoint_test(app, uri='/testing.file')
     assert response.status == 200
-    assert response.body == static_file_content
+    assert response.body == get_file_content(static_file_directory, file_name)
 
 
-def test_static_directory(
-        static_file_directory, static_file_path, static_file_content):
-
-    app = Sanic('test_static')
-    app.static('/dir', static_file_directory)
-
-    request, response = sanic_endpoint_test(app, uri='/dir/test.file')
-    assert response.status == 200
-    assert response.body == static_file_content
-
-
-def test_static_url_decode_file(static_file_directory):
-    decode_me_path = os.path.join(static_file_directory, 'decode me.txt')
-    with open(decode_me_path, 'rb') as file:
-        decode_me_contents = file.read()
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+@pytest.mark.parametrize('base_uri', ['/static', '', '/dir'])
+def test_static_directory(file_name, base_uri, static_file_directory):
 
     app = Sanic('test_static')
-    app.static('/dir', static_file_directory)
+    app.static(base_uri, static_file_directory)
 
-    request, response = sanic_endpoint_test(app, uri='/dir/decode me.txt')
+    request, response = sanic_endpoint_test(
+        app, uri='{}/{}'.format(base_uri, file_name))
     assert response.status == 200
-    assert response.body == decode_me_contents
+    assert response.body == get_file_content(static_file_directory, file_name)

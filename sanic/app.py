@@ -394,6 +394,7 @@ class Sanic:
 
         if debug:
             log.setLevel(logging.DEBUG)
-        log.debug(self.config.LOGO)
+        if self.config.LOGO is not None:
+            log.debug(self.config.LOGO)
 
         return server_settings

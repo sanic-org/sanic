@@ -3,7 +3,7 @@ from urllib.parse import urlsplit, parse_qsl
 
 from sanic import Sanic
 from sanic.response import text
-from sanic.views import HTTPMethodView, CompositionView
+from sanic.views import HTTPMethodView
 from sanic.blueprints import Blueprint
 from sanic.utils import sanic_endpoint_test
 from sanic.exceptions import URLBuildError

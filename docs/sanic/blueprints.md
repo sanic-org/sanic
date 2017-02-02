@@ -158,3 +158,22 @@ app.blueprint(blueprint_v2)
 
 app.run(host='0.0.0.0', port=8000, debug=True)
 ```
+
+## URL Building with `url_for`
+
+If you wish to generate a URL for a route inside of a blueprint, remember that the endpoint name
+takes the format `<blueprint_name>.<handler_name>`. For example:
+
+```
+@blueprint_v1.route('/')
+async def root(request):
+    url = app.url_for('v1.post_handler', post_id=5)
+    return redirect(url)
+
+
+@blueprint_v1.route('/post/<post_id>')
+async def post_handler(request, post_id):
+    return text('Post {} in Blueprint V1'.format(post_id))
+```
+
+

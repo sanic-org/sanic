@@ -195,6 +195,26 @@ class Sanic:
         return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
+        """Builds a URL based on a view name and the values provided.
+
+        In order to build a URL, all request parameters must be supplied as
+        keyword arguments, and each parameter must pass the test for the
+        specified parameter type. If these conditions are not met, a
+        `URLBuildError` will be thrown.
+
+        Keyword arguments that are not request parameters will be included in
+        the output URL's query string.
+
+        :param view_name: A string referencing the view name
+        :param **kwargs: keys and values that are used to build request
+            parameters and query string arguments.
+
+        :return: the built URL
+
+        Raises:
+            URLBuildError
+        """
+        # find the route by the supplied view name
         uri, route = self.router.find_route_by_view_name(view_name)
 
         if not uri or not route:
@@ -203,15 +223,18 @@ class Sanic:
                         view_name))
 
         out = uri
+
+        # find all the parameters we will need to build in the URL
         matched_params = re.findall(
             self.router.parameter_pattern, uri)
 
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(
                 match)
+            # we only want to match against each individual parameter
             specific_pattern = '^{}$'.format(pattern)
-
             supplied_param = None
+
             if kwargs.get(name):
                 supplied_param = kwargs.get(name)
                 del kwargs[name]
@@ -221,6 +244,8 @@ class Sanic:
                         name))
 
             supplied_param = str(supplied_param)
+            # determine if the parameter supplied by the caller passes the test
+            # in the URL
             passes_pattern = re.match(specific_pattern, supplied_param)
 
             if not passes_pattern:
@@ -236,6 +261,7 @@ class Sanic:
                             supplied_param, name, pattern))
                 raise URLBuildError(msg)
 
+            # replace the parameter in the URL with the supplied value
             replacement_regex = '(<{}.*?>)'.format(name)
 
             out = re.sub(

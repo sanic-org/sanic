@@ -17,6 +17,7 @@ from .response import HTTPResponse
 from .router import Router
 from .server import serve, serve_multiple, HttpProtocol
 from .static import register as static_register
+from .views import CompositionView
 
 
 class Sanic:
@@ -120,7 +121,16 @@ class Sanic:
         """
         # Handle HTTPMethodView differently
         if hasattr(handler, 'view_class'):
-            methods = frozenset(HTTP_METHODS)
+            methods = set()
+
+            for method in HTTP_METHODS:
+                if getattr(handler.view_class, method.lower(), None):
+                    methods.add(method)
+
+        # handle composition view differently
+        if isinstance(handler, CompositionView):
+            methods = handler.handlers.keys()
+
         self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 

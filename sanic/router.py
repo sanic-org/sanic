@@ -4,8 +4,7 @@ from functools import lru_cache
 from .exceptions import NotFound, InvalidUsage
 from .views import CompositionView
 
-Route = namedtuple(
-    'Route',
+Route = namedtuple('Route',
     ['handler', 'methods', 'pattern', 'parameters', 'name'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
 
@@ -70,6 +69,28 @@ class Router:
         self.routes_always_check = []
         self.hosts = None
 
+    def __str__(self):
+        """
+        The typical user inspecting the router will likely want to see
+        the routes available. Provide a simple representation.
+        """
+        def _route_to_str(uri, route):
+            out = 'name={0.name}, methods={0.methods}, URI={1}>\n'.format(
+                route, uri)
+
+            if route.handler.__doc__:
+                out += '{}\n'.format(route.handler.__doc__)
+
+            out += '\n'
+
+            return out
+
+        out = ''
+        for uri, route in self.routes_all.items():
+            out += _route_to_str(uri, route)
+
+        return out
+
     def parse_parameter_string(self, parameter_string):
         """
         Parse a parameter string into its constituent name, type, and pattern
@@ -130,11 +151,16 @@ class Router:
         properties = {"unhashable": None}
 
         def add_parameter(match):
+            # We could receive NAME or NAME:PATTERN
             name = match.group(1)
-            name, _type, pattern = self.parse_parameter_string(name)
+            pattern = 'string'
+            if ':' in name:
+                name, pattern = name.split(':', 1)
 
-            parameter = Parameter(
-                name=name, cast=_type)
+            default = (str, pattern)
+            # Pull from pre-configured types
+            _type, pattern = REGEX_TYPES.get(pattern, default)
+            parameter = Parameter(name=name, cast=_type)
             parameters.append(parameter)
 
             # Mark the whole route as unhashable if it has the hash key in it
@@ -146,7 +172,7 @@ class Router:
 
             return '({})'.format(pattern)
 
-        pattern_string = re.sub(self.parameter_pattern, add_parameter, uri)
+        pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
         pattern = re.compile(r'^{}$'.format(pattern_string))
 
         def merge_route(route, methods, handler):

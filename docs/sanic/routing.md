@@ -120,11 +120,11 @@ app.add_route(handler2, '/folder/<name>')
 app.add_route(person_handler2, '/person/<name:[A-z]>', methods=['GET'])
 ```
 
-## URL building with `url_for`.
+## URL building with `url_for`
 
 Sanic provides a `url_for` method, to generate URLs based on the handler method name. This is useful if you want to avoid hardcoding url paths into your app; instead, you can just reference the handler name. For example:
 
-```
+```python
 @app.route('/')
 async def index(request):
     # generate a URL for the endpoint `post_handler`
@@ -141,7 +141,7 @@ async def post_handler(request, post_id):
 Other things to keep in mind when using `url_for`:
 
 - Keyword arguments passed to `url_for` that are not request parameters will be included in the URL's query string. For example:
-```
+```python
 url = app.url_for('post_handler', post_id=5, arg_one='one', arg_two='two')
 # /posts/5?arg_one=one&arg_two=two
 ```

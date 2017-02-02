@@ -4,8 +4,8 @@ from functools import lru_cache
 from .exceptions import NotFound, InvalidUsage
 from .views import CompositionView
 
-Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters'])
-Parameter = namedtuple('Parameter', ['name', 'cast'])
+Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters', 'name'])
+Parameter = namedtuple('Parameter', ['name', 'cast', 'pattern'])
 
 REGEX_TYPES = {
     'string': (str, r'[^/]+'),
@@ -59,6 +59,7 @@ class Router:
     routes_static = None
     routes_dynamic = None
     routes_always_check = None
+    parameter_pattern = re.compile(r'<(.+?)>')
 
     def __init__(self):
         self.routes_all = {}
@@ -66,6 +67,19 @@ class Router:
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
         self.hosts = None
+
+    def parse_parameter_string(self, parameter_string):
+        # We could receive NAME or NAME:PATTERN
+        name = parameter_string
+        pattern = 'string'
+        if ':' in parameter_string:
+            name, pattern = parameter_string.split(':', 1)
+
+        default = (str, pattern)
+        # Pull from pre-configured types
+        _type, pattern = REGEX_TYPES.get(pattern, default)
+
+        return name, _type, pattern
 
     def add(self, uri, methods, handler, host=None):
         """
@@ -106,14 +120,13 @@ class Router:
         def add_parameter(match):
             # We could receive NAME or NAME:PATTERN
             name = match.group(1)
-            pattern = 'string'
-            if ':' in name:
-                name, pattern = name.split(':', 1)
+            name, _type, pattern = self.parse_parameter_string(name)
 
-            default = (str, pattern)
-            # Pull from pre-configured types
-            _type, pattern = REGEX_TYPES.get(pattern, default)
-            parameter = Parameter(name=name, cast=_type)
+            # store a regex for matching on a specific parameter
+            # this will be useful for URL building
+            specific_parameter_pattern = '^{}$'.format(pattern)
+            parameter = Parameter(
+                name=name, cast=_type, pattern=specific_parameter_pattern)
             parameters.append(parameter)
 
             # Mark the whole route as unhashable if it has the hash key in it
@@ -125,7 +138,7 @@ class Router:
 
             return '({})'.format(pattern)
 
-        pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
+        pattern_string = re.sub(self.parameter_pattern, add_parameter, uri)
         pattern = re.compile(r'^{}$'.format(pattern_string))
 
         def merge_route(route, methods, handler):
@@ -169,9 +182,17 @@ class Router:
         if route:
             route = merge_route(route, methods, handler)
         else:
+            # prefix the handler name with the blueprint name
+            # if available
+            if hasattr(handler, '__blueprintname__'):
+                handler_name = '{}.{}'.format(
+                    handler.__blueprintname__, handler.__name__)
+            else:
+                handler_name = handler.__name__
+
             route = Route(
                 handler=handler, methods=methods, pattern=pattern,
-                parameters=parameters)
+                parameters=parameters, name=handler_name)
 
         self.routes_all[uri] = route
         if properties['unhashable']:
@@ -207,6 +228,14 @@ class Router:
 
         if clean_cache:
             self._get.cache_clear()
+
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
+    def find_route_by_view_name(self, view_name):
+        for uri, route in self.routes_all.items():
+            if route.name == view_name:
+                return uri, route
+
+        return (None, None)
 
     def get(self, request):
         """

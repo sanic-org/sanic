@@ -413,7 +413,8 @@ class Sanic:
 
         if debug:
             log.setLevel(logging.DEBUG)
-        log.debug(self.config.LOGO)
+        if self.config.LOGO is not None:
+            log.debug(self.config.LOGO)
 
         if run_async:
             server_settings['run_async'] = True

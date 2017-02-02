@@ -4,8 +4,10 @@ from functools import lru_cache
 from .exceptions import NotFound, InvalidUsage
 from .views import CompositionView
 
-Route = namedtuple('Route', ['handler', 'methods', 'pattern', 'parameters', 'name'])
-Parameter = namedtuple('Parameter', ['name', 'cast', 'pattern'])
+Route = namedtuple(
+    'Route',
+    ['handler', 'methods', 'pattern', 'parameters', 'name'])
+Parameter = namedtuple('Parameter', ['name', 'cast'])
 
 REGEX_TYPES = {
     'string': (str, r'[^/]+'),
@@ -69,6 +71,16 @@ class Router:
         self.hosts = None
 
     def parse_parameter_string(self, parameter_string):
+        """
+        Parse a parameter string into its constituent name, type, and pattern
+        For example:
+        `parse_parameter_string('<param_one:[A-z]')` ->
+            ('param_one', str, '[A-z]')
+
+        :param parameter_string: String to parse
+        :return: tuple containing
+            (parameter_name, parameter_type, parameter_pattern)
+        """
         # We could receive NAME or NAME:PATTERN
         name = parameter_string
         pattern = 'string'
@@ -118,15 +130,11 @@ class Router:
         properties = {"unhashable": None}
 
         def add_parameter(match):
-            # We could receive NAME or NAME:PATTERN
             name = match.group(1)
             name, _type, pattern = self.parse_parameter_string(name)
 
-            # store a regex for matching on a specific parameter
-            # this will be useful for URL building
-            specific_parameter_pattern = '^{}$'.format(pattern)
             parameter = Parameter(
-                name=name, cast=_type, pattern=specific_parameter_pattern)
+                name=name, cast=_type)
             parameters.append(parameter)
 
             # Mark the whole route as unhashable if it has the hash key in it
@@ -231,6 +239,12 @@ class Router:
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name):
+        """
+        Find a route in the router based on the specified view name.
+
+        :param view_name: string of view name to search by
+        :return: tuple containing (uri, Route)
+        """
         for uri, route in self.routes_all.items():
             if route.name == view_name:
                 return uri, route

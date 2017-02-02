@@ -1,23 +1,25 @@
 import logging
-from asyncio import get_event_loop
+import multiprocessing
 from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
 import warnings
 
-from .config import Config
-from .constants import HTTP_METHODS
-from .exceptions import Handler
-from .exceptions import ServerError
-from .log import log
-from .response import HTTPResponse
-from .router import Router
-from .server import serve, serve_multiple, HttpProtocol
-from .static import register as static_register
+from sanic.policy import get_event_loop
+from sanic.config import Config
+from sanic.constants import HTTP_METHODS
+from sanic.exceptions import Handler
+from sanic.exceptions import ServerError
+from sanic.log import log
+from sanic.response import HTTPResponse
+from sanic.router import Router
+from sanic.server import serve, serve_multiple, HttpProtocol
+from sanic.static import register as static_register
 
 
 class Sanic:
+
     def __init__(self, name=None, router=None,
                  error_handler=None):
         # Only set up a default log handler if the
@@ -306,63 +308,43 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
-        server_settings = self._helper(
+        server_settings = self._get_server_settings(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
             stop_event=stop_event, register_sys_signals=register_sys_signals)
+        log.info(
+            'Goin\' Fast @ {}://{}:{}'.format(
+                'https' if ssl else 'http', host, port))
         try:
             if workers == 1:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers, stop_event)
-
         except Exception as e:
             log.exception(
                 'Experienced exception while trying to serve')
-
         log.info("Server Stopped")
 
     def stop(self):
         """This kills the Sanic"""
+        for process in multiprocessing.active_children():
+            process.terminate()
         get_event_loop().stop()
 
-    async def create_server(self, host="127.0.0.1", port=8000, debug=False,
-                            before_start=None, after_start=None,
-                            before_stop=None, after_stop=None, ssl=None,
-                            sock=None, loop=None, protocol=HttpProtocol,
-                            backlog=100, stop_event=None):
-        """
-        Asynchronous version of `run`.
-        """
-        server_settings = self._helper(
-            host=host, port=port, debug=debug, before_start=before_start,
-            after_start=after_start, before_stop=before_stop,
-            after_stop=after_stop, ssl=ssl, sock=sock, loop=loop,
-            protocol=protocol, backlog=backlog, stop_event=stop_event,
-            run_async=True)
-
-        # Serve
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
-
-        return await serve(**server_settings)
-
-    def _helper(self, host="127.0.0.1", port=8000, debug=False,
-                before_start=None, after_start=None, before_stop=None,
-                after_stop=None, ssl=None, sock=None, workers=1, loop=None,
-                protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False):
+    def _get_server_settings(
+            self, host="127.0.0.1", port=8000, debug=False,
+            before_start=None, after_start=None, before_stop=None,
+            after_stop=None, ssl=None, sock=None, workers=1, loop=None,
+            protocol=HttpProtocol, backlog=100, stop_event=None,
+            register_sys_signals=True, run_async=False):
         """
         Helper function used by `run` and `create_server`.
         """
 
         self.error_handler.debug = debug
         self.debug = debug
-        self.loop = loop = get_event_loop()
 
         if loop is not None:
             if self.debug:
@@ -396,8 +378,7 @@ class Sanic:
                 ("before_server_start", "before_start", before_start, False),
                 ("after_server_start", "after_start", after_start, False),
                 ("before_server_stop", "before_stop", before_stop, True),
-                ("after_server_stop", "after_stop", after_stop, True),
-                ):
+                ("after_server_stop", "after_stop", after_stop, True)):
             listeners = []
             for blueprint in self.blueprints.values():
                 listeners += blueprint.listeners[event_name]
@@ -415,14 +396,5 @@ class Sanic:
             log.setLevel(logging.DEBUG)
         if self.config.LOGO is not None:
             log.debug(self.config.LOGO)
-
-        if run_async:
-            server_settings['run_async'] = True
-
-        # Serve
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         return server_settings

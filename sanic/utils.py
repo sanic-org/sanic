@@ -29,10 +29,11 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
 
     async def _collect_response(sanic, loop):
         try:
-            response = await local_request(method, uri, *request_args,
-                                           **request_kwargs)
+            response = await local_request(
+                method, uri, *request_args, **request_kwargs)
             results.append(response)
         except Exception as e:
+            log.exception('Exception occured when collecting response')
             exceptions.append(e)
         app.stop()
 

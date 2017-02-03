@@ -196,7 +196,7 @@ class Router:
                 handler_name = '{}.{}'.format(
                     handler.__blueprintname__, handler.__name__)
             else:
-                handler_name = handler.__name__
+                handler_name = getattr(handler, '__name__', None)
 
             route = Route(
                 handler=handler, methods=methods, pattern=pattern,
@@ -245,6 +245,9 @@ class Router:
         :param view_name: string of view name to search by
         :return: tuple containing (uri, Route)
         """
+        if not view_name:
+            return (None, None)
+
         for uri, route in self.routes_all.items():
             if route.name == view_name:
                 return uri, route

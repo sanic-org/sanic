@@ -445,17 +445,17 @@ class Sanic:
         Helper function used by `run` and `create_server`.
         """
 
-        self.error_handler.debug = debug
-        self.debug = debug
-        self.loop = loop = get_event_loop()
-
         if loop is not None:
-            if self.debug:
+            if debug:
                 warnings.simplefilter('default')
             warnings.warn("Passing a loop will be deprecated in version"
                           " 0.4.0 https://github.com/channelcat/sanic/"
                           "pull/335 has more information.",
                           DeprecationWarning)
+
+        self.error_handler.debug = debug
+        self.debug = debug
+        self.loop = loop = get_event_loop()
 
         server_settings = {
             'protocol': protocol,

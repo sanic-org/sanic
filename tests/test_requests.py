@@ -58,7 +58,7 @@ def test_non_str_headers():
     request, response = sanic_endpoint_test(app)
 
     assert response.headers.get('answer') == '42'
-    
+
 def test_invalid_response():
     app = Sanic('test_invalid_response')
 
@@ -73,8 +73,8 @@ def test_invalid_response():
     request, response = sanic_endpoint_test(app)
     assert response.status == 500
     assert response.text == "Internal Server Error."
-    
-    
+
+
 def test_json():
     app = Sanic('test_json')
 
@@ -189,73 +189,3 @@ def test_post_form_multipart_form_data():
     request, response = sanic_endpoint_test(app, data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
-
-
-@pytest.fixture
-def redirect_app():
-    app = Sanic('test_redirection')
-
-    @app.route('/redirect_init')
-    async def redirect_init(request):
-        return redirect("/redirect_target")
-
-    @app.route('/redirect_init_with_301')
-    async def redirect_init_with_301(request):
-        return redirect("/redirect_target", status=301)
-
-    @app.route('/redirect_target')
-    async def redirect_target(request):
-        return text('OK')
-
-    return app
-
-
-def test_redirect_default_302(redirect_app):
-    """
-    We expect a 302 default status code and the headers to be set.
-    """
-    request, response = sanic_endpoint_test(
-        redirect_app, method="get",
-        uri="/redirect_init",
-        allow_redirects=False)
-
-    assert response.status == 302
-    assert response.headers["Location"] == "/redirect_target"
-    assert response.headers["Content-Type"] == 'text/html; charset=utf-8'
-
-
-def test_redirect_headers_none(redirect_app):
-    request, response = sanic_endpoint_test(
-        redirect_app, method="get",
-        uri="/redirect_init",
-        headers=None,
-        allow_redirects=False)
-
-    assert response.status == 302
-    assert response.headers["Location"] == "/redirect_target"
-
-
-def test_redirect_with_301(redirect_app):
-    """
-    Test redirection with a different status code.
-    """
-    request, response = sanic_endpoint_test(
-        redirect_app, method="get",
-        uri="/redirect_init_with_301",
-        allow_redirects=False)
-
-    assert response.status == 301
-    assert response.headers["Location"] == "/redirect_target"
-
-
-def test_get_then_redirect_follow_redirect(redirect_app):
-    """
-    With `allow_redirects` we expect a 200.
-    """
-    response = sanic_endpoint_test(
-        redirect_app, method="get",
-        uri="/redirect_init", gather_request=False,
-        allow_redirects=True)
-
-    assert response.status == 200
-    assert response.text == 'OK'

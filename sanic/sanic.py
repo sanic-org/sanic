@@ -230,6 +230,16 @@ class Sanic:
         matched_params = re.findall(
             self.router.parameter_pattern, uri)
 
+        # _method is only a placeholder now, don't know how to support it
+        kwargs.pop('_method', None)
+        anchor = kwargs.pop('_anchor', '')
+        # _external need SERVER_NAME in config or pass _server arg
+        external = kwargs.pop('_external', False)
+        scheme = kwargs.pop('_scheme', '')
+        if scheme and not external:
+            raise ValueError('When specifying _scheme, _external must be True')
+
+        netloc = kwargs.pop('_server', self.config.get('SERVER_NAME', ''))
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(
                 match)
@@ -271,11 +281,9 @@ class Sanic:
 
         # parse the remainder of the keyword arguments into a querystring
         if kwargs:
-            query_string = urlencode(kwargs)
-            out = urlunparse((
-                '', '', out,
-                '', query_string, ''
-            ))
+            query_string = urlencode(kwargs, doseq=True)
+            # scheme://netloc/path;parameters?query#fragment
+            out = urlunparse((scheme, netloc, out, '', query_string, anchor))
 
         return out
 

@@ -64,6 +64,7 @@ class HTTPMethodView:
         view.view_class = cls
         view.__doc__ = cls.__doc__
         view.__module__ = cls.__module__
+        view.__name__ = cls.__name__
         return view
 
 

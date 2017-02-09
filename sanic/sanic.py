@@ -1,15 +1,16 @@
 import logging
+import re
 import warnings
 from asyncio import get_event_loop
 from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
+from urllib.parse import urlencode, urlunparse
 
 from .config import Config
 from .constants import HTTP_METHODS
-from .exceptions import ServerError
-from .handlers import ErrorHandler
+from .exceptions import Handler, ServerError, URLBuildError
 from .log import log
 from .response import HTTPResponse
 from .router import Router
@@ -194,6 +195,89 @@ class Sanic:
                       DeprecationWarning)
         return self.blueprint(*args, **kwargs)
 
+    def url_for(self, view_name: str, **kwargs):
+        """Builds a URL based on a view name and the values provided.
+
+        In order to build a URL, all request parameters must be supplied as
+        keyword arguments, and each parameter must pass the test for the
+        specified parameter type. If these conditions are not met, a
+        `URLBuildError` will be thrown.
+
+        Keyword arguments that are not request parameters will be included in
+        the output URL's query string.
+
+        :param view_name: A string referencing the view name
+        :param **kwargs: keys and values that are used to build request
+            parameters and query string arguments.
+
+        :return: the built URL
+
+        Raises:
+            URLBuildError
+        """
+        # find the route by the supplied view name
+        uri, route = self.router.find_route_by_view_name(view_name)
+
+        if not uri or not route:
+            raise URLBuildError(
+                    'Endpoint with name `{}` was not found'.format(
+                        view_name))
+
+        out = uri
+
+        # find all the parameters we will need to build in the URL
+        matched_params = re.findall(
+            self.router.parameter_pattern, uri)
+
+        for match in matched_params:
+            name, _type, pattern = self.router.parse_parameter_string(
+                match)
+            # we only want to match against each individual parameter
+            specific_pattern = '^{}$'.format(pattern)
+            supplied_param = None
+
+            if kwargs.get(name):
+                supplied_param = kwargs.get(name)
+                del kwargs[name]
+            else:
+                raise URLBuildError(
+                    'Required parameter `{}` was not passed to url_for'.format(
+                        name))
+
+            supplied_param = str(supplied_param)
+            # determine if the parameter supplied by the caller passes the test
+            # in the URL
+            passes_pattern = re.match(specific_pattern, supplied_param)
+
+            if not passes_pattern:
+                if _type != str:
+                    msg = (
+                        'Value "{}" for parameter `{}` does not '
+                        'match pattern for type `{}`: {}'.format(
+                            supplied_param, name, _type.__name__, pattern))
+                else:
+                    msg = (
+                        'Value "{}" for parameter `{}` '
+                        'does not satisfy pattern {}'.format(
+                            supplied_param, name, pattern))
+                raise URLBuildError(msg)
+
+            # replace the parameter in the URL with the supplied value
+            replacement_regex = '(<{}.*?>)'.format(name)
+
+            out = re.sub(
+                replacement_regex, supplied_param, out)
+
+        # parse the remainder of the keyword arguments into a querystring
+        if kwargs:
+            query_string = urlencode(kwargs)
+            out = urlunparse((
+                '', '', out,
+                '', query_string, ''
+            ))
+
+        return out
+
     # -------------------------------------------------------------------- #
     # Request Handling
     # -------------------------------------------------------------------- #
@@ -364,17 +448,17 @@ class Sanic:
         Helper function used by `run` and `create_server`.
         """
 
-        self.error_handler.debug = debug
-        self.debug = debug
-        self.loop = loop = get_event_loop()
-
         if loop is not None:
-            if self.debug:
+            if debug:
                 warnings.simplefilter('default')
             warnings.warn("Passing a loop will be deprecated in version"
                           " 0.4.0 https://github.com/channelcat/sanic/"
                           "pull/335 has more information.",
                           DeprecationWarning)
+
+        self.error_handler.debug = debug
+        self.debug = debug
+        self.loop = loop = get_event_loop()
 
         server_settings = {
             'protocol': protocol,
@@ -417,7 +501,8 @@ class Sanic:
 
         if debug:
             log.setLevel(logging.DEBUG)
-        log.debug(self.config.LOGO)
+        if self.config.LOGO is not None:
+            log.debug(self.config.LOGO)
 
         if run_async:
             server_settings['run_async'] = True

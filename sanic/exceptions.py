@@ -116,6 +116,10 @@ class ServerError(SanicException):
     status_code = 500
 
 
+class URLBuildError(SanicException):
+    status_code = 500
+
+
 class FileNotFound(NotFound):
     status_code = 404
 
@@ -132,7 +136,7 @@ class RequestTimeout(SanicException):
 class PayloadTooLarge(SanicException):
     status_code = 413
 
-
+    
 class HeaderNotFound(SanicException):
     status_code = 400
 
@@ -150,3 +154,87 @@ class ContentRangeError(SanicException):
 
 class InvalidRangeType(ContentRangeError):
     pass
+  
+  
+class Handler:
+    handlers = None
+    cached_handlers = None
+    _missing = object()
+
+    def __init__(self):
+        self.handlers = []
+        self.cached_handlers = {}
+        self.debug = False
+
+    def _render_traceback_html(self, exception, request):
+        exc_type, exc_value, tb = sys.exc_info()
+        frames = extract_tb(tb)
+
+        frame_html = []
+        for frame in frames:
+            frame_html.append(TRACEBACK_LINE_HTML.format(frame))
+
+        return TRACEBACK_WRAPPER_HTML.format(
+            style=TRACEBACK_STYLE,
+            exc_name=exc_type.__name__,
+            exc_value=exc_value,
+            frame_html=''.join(frame_html),
+            uri=request.url)
+
+    def add(self, exception, handler):
+        self.handlers.append((exception, handler))
+
+    def lookup(self, exception):
+        handler = self.cached_handlers.get(exception, self._missing)
+        if handler is self._missing:
+            for exception_class, handler in self.handlers:
+                if isinstance(exception, exception_class):
+                    self.cached_handlers[type(exception)] = handler
+                    return handler
+            self.cached_handlers[type(exception)] = None
+            handler = None
+        return handler
+
+    def response(self, request, exception):
+        """
+        Fetches and executes an exception handler and returns a response object
+
+        :param request: Request
+        :param exception: Exception to handle
+        :return: Response object
+        """
+        handler = self.lookup(exception)
+        try:
+            response = handler and handler(
+                request=request, exception=exception)
+            if response is None:
+                response = self.default(request=request, exception=exception)
+        except:
+            log.error(format_exc())
+            if self.debug:
+                response_message = (
+                    'Exception raised in exception handler "{}" '
+                    'for uri: "{}"\n{}').format(
+                        handler.__name__, request.url, format_exc())
+                log.error(response_message)
+                return text(response_message, 500)
+            else:
+                return text('An error occurred while handling an error', 500)
+        return response
+
+    def default(self, request, exception):
+        log.error(format_exc())
+        if isinstance(exception, SanicException):
+            return text(
+                'Error: {}'.format(exception),
+                status=getattr(exception, 'status_code', 500))
+        elif self.debug:
+            html_output = self._render_traceback_html(exception, request)
+
+            response_message = (
+                'Exception occurred while handling uri: "{}"\n{}'.format(
+                    request.url, format_exc()))
+            log.error(response_message)
+            return html(html_output, status=500)
+        else:
+            return html(INTERNAL_SERVER_ERROR_HTML, status=500)

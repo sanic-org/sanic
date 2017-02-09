@@ -35,6 +35,9 @@ class Blueprint:
 
         # Routes
         for future in self.routes:
+            # attach the blueprint name to the handler so that it can be
+            # prefixed properly in the router
+            future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
             app.route(

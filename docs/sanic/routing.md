@@ -64,23 +64,37 @@ async def folder_handler(request, folder_id):
 
 ## HTTP request types
 
-By default, a route defined on a URL will be used for all requests to that URL.
+By default, a route defined on a URL will be avaialble for only GET requests to that URL.
 However, the `@app.route` decorator accepts an optional parameter, `methods`,
-which restricts the handler function to the HTTP methods in the given list.
+whicl allows the handler function to work with any of the HTTP methods in the list.
 
 ```python
 from sanic.response import text
 
-@app.route('/post')
-async def post_handler(request, methods=['POST']):
+@app.route('/post', methods=['POST'])
+async def post_handler(request):
 	return text('POST request - {}'.format(request.json))
 
-@app.route('/get')
-async def GET_handler(request, methods=['GET']):
+@app.route('/get', methods=['GET'])
+async def get_handler(request):
 	return text('GET request - {}'.format(request.args))
 
 ```
 
+There are also shorthand method decorators:
+
+```python
+from sanic.response import text
+
+@app.post('/post')
+async def post_handler(request):
+	return text('POST request - {}'.format(request.json))
+
+@app.get('/get')
+async def get_handler(request):
+	return text('GET request - {}'.format(request.args))
+
+```
 ## The `add_route` method
 
 As we have seen, routes are often specified using the `@app.route` decorator.
@@ -105,3 +119,35 @@ app.add_route(handler1, '/test')
 app.add_route(handler2, '/folder/<name>')
 app.add_route(person_handler2, '/person/<name:[A-z]>', methods=['GET'])
 ```
+
+## URL building with `url_for`
+
+Sanic provides a `url_for` method, to generate URLs based on the handler method name. This is useful if you want to avoid hardcoding url paths into your app; instead, you can just reference the handler name. For example:
+
+```python
+@app.route('/')
+async def index(request):
+    # generate a URL for the endpoint `post_handler`
+    url = app.url_for('post_handler', post_id=5)
+    # the URL is `/posts/5`, redirect to it
+    return redirect(url)
+
+
+@app.route('/posts/<post_id>')
+async def post_handler(request, post_id):
+    return text('Post - {}'.format(post_id))
+```
+
+Other things to keep in mind when using `url_for`:
+
+- Keyword arguments passed to `url_for` that are not request parameters will be included in the URL's query string. For example:
+```python
+url = app.url_for('post_handler', post_id=5, arg_one='one', arg_two='two')
+# /posts/5?arg_one=one&arg_two=two
+```
+- All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be thrown.
+
+
+
+
+

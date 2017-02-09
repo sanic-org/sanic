@@ -31,7 +31,7 @@ def handler_4(request):
 @exception_handler_app.route('/5')
 def handler_5(request):
     class CustomServerError(ServerError):
-        pass
+        status_code=200
     raise CustomServerError('Custom server error')
 
 

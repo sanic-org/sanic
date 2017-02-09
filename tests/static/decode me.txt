@@ -1,1 +1,1 @@
-I need to be decoded as a uri
+I am just a regular static file that needs to have its uri decoded

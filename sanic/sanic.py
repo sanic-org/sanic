@@ -239,7 +239,10 @@ class Sanic:
         if scheme and not external:
             raise ValueError('When specifying _scheme, _external must be True')
 
-        netloc = kwargs.pop('_server', self.config.get('SERVER_NAME', ''))
+        netloc = kwargs.pop('_server', None)
+        if netloc is None and external:
+            netloc = self.config.get('SERVER_NAME', '')
+
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(
                 match)

@@ -1,8 +1,3 @@
-from .response import text, html
-from .log import log
-from traceback import format_exc, extract_tb
-import sys
-
 TRACEBACK_STYLE = '''
     <style>
         body {
@@ -104,6 +99,7 @@ INTERNAL_SERVER_ERROR_HTML = '''
 class SanicException(Exception):
     def __init__(self, message, status_code=None):
         super().__init__(message)
+
         if status_code is not None:
             self.status_code = status_code
 
@@ -140,7 +136,26 @@ class RequestTimeout(SanicException):
 class PayloadTooLarge(SanicException):
     status_code = 413
 
+    
+class HeaderNotFound(SanicException):
+    status_code = 400
 
+
+class ContentRangeError(SanicException):
+    status_code = 416
+
+    def __init__(self, message, content_range):
+        super().__init__(message)
+        self.headers = {
+            'Content-Type': 'text/plain',
+            "Content-Range": "bytes */%s" % (content_range.total,)
+        }
+
+
+class InvalidRangeType(ContentRangeError):
+    pass
+  
+  
 class Handler:
     handlers = None
     cached_handlers = None

@@ -10,7 +10,8 @@ from urllib.parse import urlencode, urlunparse
 
 from .config import Config
 from .constants import HTTP_METHODS
-from .exceptions import Handler, ServerError, URLBuildError
+from .handlers import ErrorHandler
+from .exceptions import ServerError, URLBuildError
 from .log import log
 from .response import HTTPResponse
 from .router import Router

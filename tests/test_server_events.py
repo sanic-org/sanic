@@ -6,6 +6,7 @@ import signal
 import pytest
 
 from sanic import Sanic
+from sanic.utils import HOST, PORT
 
 AVAILABLE_LISTENERS = [
     'before_start',
@@ -30,7 +31,7 @@ def start_stop_app(random_name_app, **run_kwargs):
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(1)
     try:
-        random_name_app.run(**run_kwargs)
+        random_name_app.run(HOST, PORT, **run_kwargs)
     except KeyboardInterrupt:
         pass
 

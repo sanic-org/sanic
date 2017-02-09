@@ -67,7 +67,7 @@ app.add_route(NameView.as_view(), '/<name>')
 If you want to add any decorators to the class, you can set the `decorators`
 class variable. These will be applied to the class when `as_view` is called.
 
-```
+```python
 class ViewWithDecorator(HTTPMethodView):
   decorators = [some_decorator_here]
 
@@ -76,6 +76,27 @@ class ViewWithDecorator(HTTPMethodView):
 
 app.add_route(ViewWithDecorator.as_view(), '/url')
 ```
+
+#### URL Building
+
+If you wish to build a URL for an HTTPMethodView, remember that the class name will be the endpoint
+that you will pass into `url_for`. For example:
+
+```python
+@app.route('/')
+def index(request):
+    url = app.url_for('SpecialClassView')
+    return redirect(url)
+
+
+class SpecialClassView(HTTPMethodView):
+    def get(self, request):
+        return text('Hello from the Special Class View!')
+
+
+app.add_route(SpecialClassView.as_view(), '/special_class_view')
+```
+
 
 ## Using CompositionView
 
@@ -106,3 +127,5 @@ view.add(['POST', 'PUT'], lambda request: text('I am a post/put method'))
 # Use the new view to handle requests to the base URL
 app.add_route(view, '/')
 ```
+
+Note: currently you cannot build a URL for a CompositionView using `url_for`. 

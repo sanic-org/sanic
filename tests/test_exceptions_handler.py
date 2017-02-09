@@ -28,6 +28,13 @@ def handler_4(request):
     return text(foo)
 
 
+@exception_handler_app.route('/5')
+def handler_5(request):
+    class CustomServerError(ServerError):
+        pass
+    raise CustomServerError('Custom server error')
+
+
 @exception_handler_app.exception(NotFound, ServerError)
 def handler_exception(request, exception):
     return text("OK")
@@ -71,3 +78,8 @@ def test_html_traceback_output_in_debug_mode():
     assert (
         "NameError: name 'bar' "
         "is not defined while handling uri /4") == summary_text
+
+
+def test_inherited_exception_handler():
+    request, response = sanic_endpoint_test(exception_handler_app, uri='/5')
+    assert response.status == 200

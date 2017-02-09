@@ -143,9 +143,12 @@ class PayloadTooLarge(SanicException):
 
 class Handler:
     handlers = None
+    cached_handlers = None
+    _missing = object()
 
     def __init__(self):
-        self.handlers = {}
+        self.handlers = []
+        self.cached_handlers = {}
         self.debug = False
 
     def _render_traceback_html(self, exception, request):
@@ -164,7 +167,18 @@ class Handler:
             uri=request.url)
 
     def add(self, exception, handler):
-        self.handlers[exception] = handler
+        self.handlers.append((exception, handler))
+
+    def lookup(self, exception):
+        handler = self.cached_handlers.get(exception, self._missing)
+        if handler is self._missing:
+            for exception_class, handler in self.handlers:
+                if isinstance(exception, exception_class):
+                    self.cached_handlers[type(exception)] = handler
+                    return handler
+            self.cached_handlers[type(exception)] = None
+            handler = None
+        return handler
 
     def response(self, request, exception):
         """
@@ -174,9 +188,12 @@ class Handler:
         :param exception: Exception to handle
         :return: Response object
         """
-        handler = self.handlers.get(type(exception), self.default)
+        handler = self.lookup(exception)
         try:
-            response = handler(request=request, exception=exception)
+            response = handler and handler(
+                request=request, exception=exception)
+            if response is None:
+                response = self.default(request=request, exception=exception)
         except:
             log.error(format_exc())
             if self.debug:

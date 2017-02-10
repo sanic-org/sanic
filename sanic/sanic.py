@@ -17,6 +17,7 @@ from .response import HTTPResponse
 from .router import Router
 from .server import serve, serve_multiple, HttpProtocol
 from .static import register as static_register
+import websockets
 
 
 class Sanic:
@@ -44,7 +45,7 @@ class Sanic:
         self._blueprint_order = []
         self.debug = None
         self.sock = None
-        self.processes = None
+        self.before_start = None
 
         # Register alternative method names
         self.go_fast = self.run
@@ -52,6 +53,14 @@ class Sanic:
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
+
+    # Register a websocket server
+    def websocket(self, handler, host='0.0.0.0', port=3000):
+        server = websockets.serve(handler, host, port)
+
+        def before_start(app, loop):
+            get_event_loop().run_until_complete(server)
+        self.before_start = before_start
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None):
@@ -397,6 +406,14 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if self.before_start is not None:
+            _before_start = before_start
+
+            def _before(app, loop):
+                if _before_start is not None:
+                    _before_start(app, loop)
+                self.before_start(app, loop)
+            before_start = _before
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,

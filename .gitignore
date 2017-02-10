@@ -13,3 +13,4 @@ settings.py
 .python-version
 docs/_build/
 docs/_api/
+build/*

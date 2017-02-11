@@ -27,10 +27,11 @@ def test_register_system_signals():
     async def hello_route(request):
         return HTTPResponse()
 
-    app.run(HOST, PORT,
-            before_start=set_loop,
-            after_start=stop,
-            after_stop=after)
+    app.after_start(stop)
+    app.before_start(set_loop)
+    app.after_stop(after)
+
+    app.run(HOST, PORT)
     assert calledq.get() == True
 
 
@@ -42,9 +43,9 @@ def test_dont_register_system_signals():
     async def hello_route(request):
         return HTTPResponse()
 
-    app.run(HOST, PORT,
-            before_start=set_loop,
-            after_start=stop,
-            after_stop=after,
-            register_sys_signals=False)
+    app.after_start(stop)
+    app.before_start(set_loop)
+    app.after_stop(after)
+
+    app.run(HOST, PORT, register_sys_signals=False)
     assert calledq.get() == False

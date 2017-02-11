@@ -9,10 +9,10 @@ from sanic import Sanic
 from sanic.utils import HOST, PORT
 
 AVAILABLE_LISTENERS = [
-    'before_start',
-    'after_start',
-    'before_stop',
-    'after_stop'
+    'before_server_start',
+    'after_server_start',
+    'before_server_stop',
+    'after_server_stop'
 ]
 
 

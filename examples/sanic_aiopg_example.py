@@ -26,6 +26,7 @@ async def get_pool():
 
 app = Sanic(name=__name__)
 
+@app.listener('before_server_start')
 async def prepare_db(app, loop):
     """
     Let's create some table and add some data
@@ -61,5 +62,4 @@ async def handle(request):
 if __name__ == '__main__':
     app.run(host='0.0.0.0',
             port=8000,
-            debug=True,
-            before_start=prepare_db)
+            debug=True)

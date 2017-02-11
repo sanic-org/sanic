@@ -137,14 +137,12 @@ class Sanic:
         return response
 
     # Decorator
-    def middleware(self, *args, **kwargs):
+    def middleware(self, middleware_or_request):
         """
         Decorates and registers middleware to be called before a request
         can either be called as @app.middleware or @app.middleware('request')
         """
-        attach_to = 'request'
-
-        def register_middleware(middleware):
+        def register_middleware(middleware, attach_to='request'):
             if attach_to == 'request':
                 self.request_middleware.append(middleware)
             if attach_to == 'response':
@@ -152,11 +150,11 @@ class Sanic:
             return middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')
-        if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
-            return register_middleware(args[0])
+        if callable(middleware_or_request):
+            return register_middleware(middleware_or_request)
+
         else:
-            attach_to = args[0]
-            return register_middleware
+            return partial(register_middleware, attach_to=middleware_or_request)
 
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',

@@ -10,8 +10,8 @@ from urllib.parse import urlencode, urlunparse
 
 from .config import Config
 from .constants import HTTP_METHODS
-from .handlers import ErrorHandler
 from .exceptions import ServerError, URLBuildError
+from .handlers import ErrorHandler
 from .log import log
 from .response import HTTPResponse
 from .router import Router
@@ -60,24 +60,30 @@ class Sanic:
 
     # Decorator
     def before_start(self, func):
-        """Decorates a function to be executed before the server starts accepting connections"""
+        """Decorates a function to be executed before the server starts
+        accepting connections
+        """
         self._before_start_callbacks.append(func)
 
     # Decorator
     def after_start(self, func):
-        """Decorates a function to be executed after the server starts accepting connections"""
+        """Decorates a function to be executed after the server starts
+        accepting connections
+        """
         self._after_start_callbacks.append(func)
 
     # Decorator
     def after_stop(self, func):
-        """Decorates a function to be executed when all requests are complete"""
+        """Decorates a function to be executed when all requests are complete
+        """
         self._after_stop_callbacks.append(func)
 
     # Decorator
     def before_stop(self, func):
-        """Decorates a function to be executed when a stop signal is received before it is respected"""
+        """Decorates a function to be executed when a stop signal is received
+        before it is respected
+        """
         self._before_stop_callbacks.append(func)
-
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None):
@@ -414,9 +420,12 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
-        server_settings = self._helper(host=host, port=port, debug=debug, ssl=ssl, sock=sock, workers=workers,
-                                       loop=loop, protocol=protocol, backlog=backlog, stop_event=stop_event,
-                                       register_sys_signals=register_sys_signals)
+        server_settings = self._helper(
+            host=host, port=port, debug=debug, ssl=ssl, sock=sock,
+            workers=workers, loop=loop, protocol=protocol, backlog=backlog,
+            stop_event=stop_event, register_sys_signals=register_sys_signals
+        )
+
         try:
             if workers == 1:
                 serve(**server_settings)
@@ -431,13 +440,17 @@ class Sanic:
         """This kills the Sanic"""
         get_event_loop().stop()
 
-    async def create_server(self, host="127.0.0.1", port=8000, debug=False, ssl=None, sock=None, loop=None,
-                            protocol=HttpProtocol, backlog=100, stop_event=None):
+    async def create_server(self, host="127.0.0.1", port=8000, debug=False,
+                            ssl=None, sock=None, loop=None,
+                            protocol=HttpProtocol, backlog=100,
+                            stop_event=None):
         """
         Asynchronous version of `run`.
         """
-        server_settings = self._helper(host=host, port=port, debug=debug, ssl=ssl, sock=sock, loop=loop,
-                                       protocol=protocol, backlog=backlog, stop_event=stop_event, run_async=True)
+        server_settings = self._helper(host=host, port=port, debug=debug,
+                                       ssl=ssl, sock=sock, loop=loop,
+                                       protocol=protocol, backlog=backlog,
+                                       stop_event=stop_event, run_async=True)
 
         # Serve
         proto = "http"
@@ -447,8 +460,10 @@ class Sanic:
 
         return await serve(**server_settings)
 
-    def _helper(self, host="127.0.0.1", port=8000, debug=False, ssl=None, sock=None, workers=1, loop=None,
-                protocol=HttpProtocol, backlog=100, stop_event=None, register_sys_signals=True, run_async=False):
+    def _helper(self, host="127.0.0.1", port=8000, debug=False, ssl=None,
+                sock=None, workers=1, loop=None, protocol=HttpProtocol,
+                backlog=100, stop_event=None, register_sys_signals=True,
+                run_async=False):
         """
         Helper function used by `run` and `create_server`.
         """
@@ -486,10 +501,14 @@ class Sanic:
         # -------------------------------------------- #
 
         for event_name, settings_name, args, reverse in (
-                ("before_server_start", "before_start", self._before_start_callbacks, False),
-                ("after_server_start", "after_start", self._after_start_callbacks, False),
-                ("before_server_stop", "before_stop", self._before_stop_callbacks, True),
-                ("after_server_stop", "after_stop", self._after_stop_callbacks, True),
+                ("before_server_start", "before_start",
+                    self._before_start_callbacks, False),
+                ("after_server_start", "after_start",
+                    self._after_start_callbacks, False),
+                ("before_server_stop", "before_stop",
+                    self._before_stop_callbacks, True),
+                ("after_server_stop", "after_stop",
+                    self._after_stop_callbacks, True),
         ):
             listeners = []
             for blueprint in self.blueprints.values():

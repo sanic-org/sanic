@@ -154,7 +154,8 @@ class Sanic:
             return register_middleware(middleware_or_request)
 
         else:
-            return partial(register_middleware, attach_to=middleware_or_request)
+            return partial(register_middleware,
+                           attach_to=middleware_or_request)
 
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',

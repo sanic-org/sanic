@@ -1,7 +1,7 @@
 import logging
 import re
 import warnings
-from asyncio import get_event_loop
+from asyncio import get_event_loop, ensure_future
 from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
@@ -44,7 +44,7 @@ class Sanic:
         self._blueprint_order = []
         self.debug = None
         self.sock = None
-        self.processes = None
+        self.before_start = []
 
         # Register alternative method names
         self.go_fast = self.run
@@ -52,6 +52,23 @@ class Sanic:
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
+
+    def ensure_future(self, task):
+        """
+        Schedule a task to run later, after the loop has started.
+        Different from asyncio.ensure_future in that it does not
+        also return a future, and the actual ensure_future call
+        is delayed until before server start.
+
+        :param task: A future, couroutine or awaitable.
+        """
+        def run(app, loop):
+            if callable(task):
+                ensure_future(task())
+            else:
+                ensure_future(task)
+
+        self.before_start.append(run)
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None):
@@ -397,6 +414,13 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if before_start is not None:
+            if not isinstance(before_start, list):
+                before_start = [before_start]
+            before_start.extend(self.before_start)
+        else:
+            before_start = self.before_start
+
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,

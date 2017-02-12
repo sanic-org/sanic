@@ -381,7 +381,8 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, ssl=None,
+    def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
+            after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=HttpProtocol,
             backlog=100, stop_event=None, register_sys_signals=True):
         """
@@ -391,6 +392,14 @@ class Sanic:
         :param host: Address to host on
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
+        :param before_start: Functions to be executed before the server starts
+                             accepting connections
+        :param after_start: Functions to be executed after the server starts
+                            accepting connections
+        :param before_stop: Functions to be executed when a stop signal is
+                            received before it is respected
+        :param after_stop: Functions to be executed when all requests are
+                           complete
         :param ssl: SSLContext for SSL encryption of worker(s)
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
@@ -403,10 +412,11 @@ class Sanic:
         :return: Nothing
         """
         server_settings = self._helper(
-            host=host, port=port, debug=debug, ssl=ssl, sock=sock,
-            workers=workers, loop=loop, protocol=protocol, backlog=backlog,
-            stop_event=stop_event, register_sys_signals=register_sys_signals
-        )
+            host=host, port=port, debug=debug, before_start=before_start,
+            after_start=after_start, before_stop=before_stop,
+            after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
+            loop=loop, protocol=protocol, backlog=backlog,
+            stop_event=stop_event, register_sys_signals=register_sys_signals)
 
         try:
             if workers == 1:
@@ -423,16 +433,19 @@ class Sanic:
         get_event_loop().stop()
 
     async def create_server(self, host="127.0.0.1", port=8000, debug=False,
-                            ssl=None, sock=None, loop=None,
-                            protocol=HttpProtocol, backlog=100,
-                            stop_event=None):
+                            before_start=None, after_start=None,
+                            before_stop=None, after_stop=None, ssl=None,
+                            sock=None, loop=None, protocol=HttpProtocol,
+                            backlog=100, stop_event=None):
         """
         Asynchronous version of `run`.
         """
-        server_settings = self._helper(host=host, port=port, debug=debug,
-                                       ssl=ssl, sock=sock, loop=loop,
-                                       protocol=protocol, backlog=backlog,
-                                       stop_event=stop_event, run_async=True)
+        server_settings = self._helper(
+            host=host, port=port, debug=debug, before_start=before_start,
+            after_start=after_start, before_stop=before_stop,
+            after_stop=after_stop, ssl=ssl, sock=sock, loop=loop,
+            protocol=protocol, backlog=backlog, stop_event=stop_event,
+            run_async=True)
 
         # Serve
         proto = "http"
@@ -442,10 +455,11 @@ class Sanic:
 
         return await serve(**server_settings)
 
-    def _helper(self, host="127.0.0.1", port=8000, debug=False, ssl=None,
-                sock=None, workers=1, loop=None, protocol=HttpProtocol,
-                backlog=100, stop_event=None, register_sys_signals=True,
-                run_async=False):
+    def _helper(self, host="127.0.0.1", port=8000, debug=False,
+                before_start=None, after_start=None, before_stop=None,
+                after_stop=None, ssl=None, sock=None, workers=1, loop=None,
+                protocol=HttpProtocol, backlog=100, stop_event=None,
+                register_sys_signals=True, run_async=False):
         """
         Helper function used by `run` and `create_server`.
         """
@@ -456,6 +470,16 @@ class Sanic:
             warnings.warn("Passing a loop will be deprecated in version"
                           " 0.4.0 https://github.com/channelcat/sanic/"
                           "pull/335 has more information.",
+                          DeprecationWarning)
+
+        # Deprecate this
+        if any(arg is not None for arg in (after_stop, after_start,
+                                           before_start, before_stop)):
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("Passing a before_start, before_stop, after_start or"
+                          "after_stop callback will be deprecated in version"
+                          " 0.4.0",
                           DeprecationWarning)
 
         self.error_handler.debug = debug
@@ -482,13 +506,15 @@ class Sanic:
         # Register start/stop events
         # -------------------------------------------- #
 
-        for event_name, settings_name, reverse in (
-                ("before_server_start", "before_start", False),
-                ("after_server_start", "after_start", False),
-                ("before_server_stop", "before_stop", True),
-                ("after_server_stop", "after_stop", True),
+        for event_name, settings_name, reverse, args in (
+                ("before_server_start", "before_start", False, before_start),
+                ("after_server_start", "after_start", False, after_start),
+                ("before_server_stop", "before_stop", True, before_stop),
+                ("after_server_stop", "after_stop", True, after_stop),
         ):
             listeners = self.listeners[event_name].copy()
+            if args:
+                listeners.extend(args)
             if reverse:
                 listeners.reverse()
             # Prepend sanic to the arguments when listeners are triggered

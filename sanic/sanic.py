@@ -49,6 +49,13 @@ class Sanic:
         # Register alternative method names
         self.go_fast = self.run
 
+    @property
+    def loop(self):
+        """
+        Synonymous with asyncio.get_event_loop()
+        """
+        return get_event_loop()
+
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
@@ -459,7 +466,7 @@ class Sanic:
 
         self.error_handler.debug = debug
         self.debug = debug
-        self.loop = loop = get_event_loop()
+        loop = self.loop
 
         server_settings = {
             'protocol': protocol,

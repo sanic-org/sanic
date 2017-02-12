@@ -98,17 +98,15 @@ class HTTPResponse:
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
         # We tried to make this as fast as possible in pure python
-        default_header = dict()
-        if keep_alive:
-            if keep_alive_timeout:
-                default_header['Keep-Alive'] = keep_alive_timeout
-            default_header['Connection'] = 'keep-alive'
-        else:
-            default_header['Connection'] = 'close'
-        default_header['Content-Length'] = len(self.body)
-        default_header['Content-Type'] = self.content_type
+        timeout_header = b''
+        if keep_alive and keep_alive_timeout is not None:
+            timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
+        self.headers['Content-Length'] = self.headers.get(
+            'Content-Length', len(self.body))
+        self.headers['Content-Type'] = self.headers.get(
+            'Content-Type', self.content_type)
         headers = b''
-        for name, value in ChainMap(self.headers, default_header).items():
+        for name, value in self.headers.items():
             try:
                 headers += (
                     b'%b: %b\r\n' % (
@@ -117,6 +115,7 @@ class HTTPResponse:
                 headers += (
                     b'%b: %b\r\n' % (
                         str(name).encode(), str(value).encode('utf-8')))
+
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all
         status = COMMON_STATUS_CODES.get(self.status)
@@ -124,11 +123,15 @@ class HTTPResponse:
             status = ALL_STATUS_CODES.get(self.status)
 
         return (b'HTTP/%b %d %b\r\n'
+                b'Connection: %b\r\n'
+                b'%b'
                 b'%b\r\n'
                 b'%b') % (
             version.encode(),
             self.status,
             status,
+            b'keep-alive' if keep_alive else b'close',
+            timeout_header,
             headers,
             self.body
         )

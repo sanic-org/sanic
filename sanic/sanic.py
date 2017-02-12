@@ -1,7 +1,7 @@
 import logging
 import re
 import warnings
-from asyncio import get_event_loop, ensure_future
+from asyncio import get_event_loop
 from collections import deque
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
@@ -53,7 +53,7 @@ class Sanic:
     # Registration
     # -------------------------------------------------------------------- #
 
-    def ensure_future(self, task):
+    def add_task(self, task):
         """
         Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
@@ -64,9 +64,9 @@ class Sanic:
         """
         def run(app, loop):
             if callable(task):
-                ensure_future(task())
+                loop.create_task(task())
             else:
-                ensure_future(task)
+                loop.create_task(task)
 
         self.before_start.append(run)
 

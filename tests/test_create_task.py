@@ -11,7 +11,7 @@ def test_ensure_future():
         e.set()
 
     app = sanic.Sanic()
-    app.ensure_future(coro)
+    app.add_task(coro)
 
     @app.route('/early')
     def not_set(request):

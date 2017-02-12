@@ -1,4 +1,3 @@
-from collections import ChainMap
 from mimetypes import guess_type
 from os import path
 from ujson import dumps as json_dumps

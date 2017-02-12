@@ -478,8 +478,8 @@ class Sanic:
             if debug:
                 warnings.simplefilter('default')
             warnings.warn("Passing a before_start, before_stop, after_start or"
-                          "after_stop callback will be deprecated in version"
-                          " 0.4.0",
+                          "after_stop callback will be deprecated in next "
+                          "major version after 0.4.0",
                           DeprecationWarning)
 
         self.error_handler.debug = debug
@@ -514,7 +514,10 @@ class Sanic:
         ):
             listeners = self.listeners[event_name].copy()
             if args:
-                listeners.extend(args)
+                if callable(args):
+                    listeners.append(args)
+                else:
+                    listeners.extend(args)
             if reverse:
                 listeners.reverse()
             # Prepend sanic to the arguments when listeners are triggered

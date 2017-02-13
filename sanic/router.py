@@ -4,7 +4,8 @@ from functools import lru_cache
 from .exceptions import NotFound, InvalidUsage
 from .views import CompositionView
 
-Route = namedtuple('Route',
+Route = namedtuple(
+    'Route',
     ['handler', 'methods', 'pattern', 'parameters', 'name'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
 
@@ -145,7 +146,7 @@ class Router:
 
             return '({})'.format(pattern)
 
-        pattern_string = re.sub(r'<(.+?)>', add_parameter, uri)
+        pattern_string = re.sub(self.parameter_pattern, add_parameter, uri)
         pattern = re.compile(r'^{}$'.format(pattern_string))
 
         def merge_route(route, methods, handler):

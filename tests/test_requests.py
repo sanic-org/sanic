@@ -160,6 +160,26 @@ def test_post_json():
     assert response.text == 'OK'
 
 
+def test_post_token():
+    app = Sanic('test_post_token')
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    # uuid4 generated token.
+    token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
+    payload = {'test': 'OK'}
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Token {}'.format(token)
+    }
+
+    request, response = sanic_endpoint_test(app, data=json_dumps(payload), headers=headers)
+
+    assert request.token == token
+
+
 def test_post_form_urlencoded():
     app = Sanic('test_post_form_urlencoded')
 

@@ -8,8 +8,9 @@ from sanic.exceptions import InvalidUsage
 
 from .log import log
 
-
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+
+
 # HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
 # > If the media type remains unknown, the recipient SHOULD treat it
 # > as type "application/octet-stream"

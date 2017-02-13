@@ -240,6 +240,7 @@ def test_composition_view_runs_methods_as_expected():
         request, response = sanic_endpoint_test(app, uri='/', method=method)
         assert response.text == 'second method'
 
+
 def test_composition_view_rejects_invalid_methods():
     app = Sanic('test_composition_view')
 

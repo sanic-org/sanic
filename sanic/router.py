@@ -151,16 +151,11 @@ class Router:
         properties = {"unhashable": None}
 
         def add_parameter(match):
-            # We could receive NAME or NAME:PATTERN
             name = match.group(1)
-            pattern = 'string'
-            if ':' in name:
-                name, pattern = name.split(':', 1)
+            name, _type, pattern = self.parse_parameter_string(name)
 
-            default = (str, pattern)
-            # Pull from pre-configured types
-            _type, pattern = REGEX_TYPES.get(pattern, default)
-            parameter = Parameter(name=name, cast=_type)
+            parameter = Parameter(
+                name=name, cast=_type)
             parameters.append(parameter)
 
             # Mark the whole route as unhashable if it has the hash key in it

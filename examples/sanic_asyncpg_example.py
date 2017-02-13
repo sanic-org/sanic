@@ -27,6 +27,7 @@ def jsonify(records):
 
 app = Sanic(__name__)
 
+@app.listener('before_server_start')
 async def create_db(app, loop):
     """
     Create some table and add some data
@@ -55,4 +56,4 @@ async def handler(request):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, before_start=create_db)
+    app.run(host='0.0.0.0', port=8000)

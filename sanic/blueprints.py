@@ -65,6 +65,11 @@ class Blueprint:
             app.static(uri, future.file_or_directory,
                        *future.args, **future.kwargs)
 
+        # Event listeners
+        for event, listeners in self.listeners.items():
+            for listener in listeners:
+                app.listener(event)(listener)
+
     def route(self, uri, methods=frozenset({'GET'}), host=None):
         """
         Creates a blueprint route from a decorated function.

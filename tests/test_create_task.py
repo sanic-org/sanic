@@ -4,7 +4,7 @@ from sanic.response import text
 from threading import Event
 import asyncio
 
-def test_ensure_future():
+def test_create_task():
     e = Event()
     async def coro():
         await asyncio.sleep(0.05)

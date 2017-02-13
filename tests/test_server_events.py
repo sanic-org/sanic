@@ -9,10 +9,10 @@ from sanic import Sanic
 from sanic.utils import HOST, PORT
 
 AVAILABLE_LISTENERS = [
-    'before_start',
-    'after_start',
-    'before_stop',
-    'after_stop'
+    'before_server_start',
+    'after_server_start',
+    'before_server_stop',
+    'after_server_stop'
 ]
 
 
@@ -42,9 +42,10 @@ def test_single_listener(listener_name):
     random_name_app = Sanic(''.join(
         [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))
     output = list()
-    start_stop_app(
-        random_name_app,
-        **{listener_name: create_listener(listener_name, output)})
+    # Register listener
+    random_name_app.listener(listener_name)(
+        create_listener(listener_name, output))
+    start_stop_app(random_name_app)
     assert random_name_app.name + listener_name == output.pop()
 
 
@@ -52,9 +53,9 @@ def test_all_listeners():
     random_name_app = Sanic(''.join(
         [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))
     output = list()
-    start_stop_app(
-        random_name_app,
-        **{listener_name: create_listener(listener_name, output)
-           for listener_name in AVAILABLE_LISTENERS})
+    for listener_name in AVAILABLE_LISTENERS:
+        listener = create_listener(listener_name, output)
+        random_name_app.listener(listener_name)(listener)
+    start_stop_app(random_name_app)
     for listener_name in AVAILABLE_LISTENERS:
         assert random_name_app.name + listener_name == output.pop()

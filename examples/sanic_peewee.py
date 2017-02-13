@@ -14,14 +14,6 @@ from peewee_async import Manager, PostgresqlDatabase
 
  # we instantiate a custom loop so we can pass it to our db manager
 
-def setup(app, loop):
-    database = PostgresqlDatabase(database='test',
-                                  host='127.0.0.1',
-                                  user='postgres',
-                                  password='mysecretpassword')
-
-    objects = Manager(database, loop=loop)
-
 ## from peewee_async docs:
 # Also there’s no need to connect and re-connect before executing async queries
 # with manager! It’s all automatic. But you can run Manager.connect() or
@@ -47,6 +39,15 @@ objects.database.allow_sync = False # this will raise AssertionError on ANY sync
 
 
 app = Sanic('peewee_example')
+
+@app.listener('before_server_start')
+def setup(app, loop):
+    database = PostgresqlDatabase(database='test',
+                                  host='127.0.0.1',
+                                  user='postgres',
+                                  password='mysecretpassword')
+
+    objects = Manager(database, loop=loop)
 
 @app.route('/post/<key>/<value>')
 async def post(request, key, value):
@@ -75,4 +76,4 @@ async def get(request):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000, before_start=setup)
+    app.run(host='0.0.0.0', port=8000)

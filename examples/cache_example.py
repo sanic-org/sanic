@@ -21,6 +21,7 @@ from aiocache.serializers import JsonSerializer
 app = Sanic(__name__)
 
 
+@app.listener('before_server_start')
 def init_cache(sanic, loop):
     aiocache.settings.set_defaults(
         class_="aiocache.RedisCache",
@@ -42,4 +43,4 @@ async def test(request):
     return json(await expensive_call())
 
 
-app.run(host="0.0.0.0", port=8000, before_start=init_cache)
+app.run(host="0.0.0.0", port=8000)

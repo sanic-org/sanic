@@ -46,7 +46,6 @@ class Sanic:
         self._blueprint_order = []
         self.debug = None
         self.sock = None
-        self.processes = None
         self.listeners = defaultdict(list)
 
         # Register alternative method names
@@ -62,6 +61,22 @@ class Sanic:
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
+
+    def add_task(self, task):
+        """
+        Schedule a task to run later, after the loop has started.
+        Different from asyncio.ensure_future in that it does not
+        also return a future, and the actual ensure_future call
+        is delayed until before server start.
+
+        :param task: A future, couroutine or awaitable.
+        """
+        @self.listener('before_server_start')
+        def run(app, loop):
+            if callable(task):
+                loop.create_task(task())
+            else:
+                loop.create_task(task)
 
     # Decorator
     def listener(self, event):

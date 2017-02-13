@@ -32,7 +32,7 @@ polls = sa.Table('sanic_polls', metadata,
 
 app = Sanic(name=__name__)
 
-
+@app.listener('before_server_start')
 async def prepare_db(app, loop):
     """ Let's add some data
 
@@ -58,9 +58,10 @@ async def handle(request):
         async with engine.acquire() as conn:
             result = []
             async for row in conn.execute(polls.select()):
-                result.append({"question": row.question, "pub_date": row.pub_date})
+                result.append({"question": row.question,
+                               "pub_date": row.pub_date})
             return json({"polls": result})
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, before_start=prepare_db)
+    app.run(host='0.0.0.0', port=8000)

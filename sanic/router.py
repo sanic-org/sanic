@@ -69,28 +69,6 @@ class Router:
         self.routes_always_check = []
         self.hosts = None
 
-    def __str__(self):
-        """
-        The typical user inspecting the router will likely want to see
-        the routes available. Provide a simple representation.
-        """
-        def _route_to_str(uri, route):
-            out = 'name={0.name}, methods={0.methods}, URI={1}>\n'.format(
-                route, uri)
-
-            if route.handler.__doc__:
-                out += '{}\n'.format(route.handler.__doc__)
-
-            out += '\n'
-
-            return out
-
-        out = ''
-        for uri, route in self.routes_all.items():
-            out += _route_to_str(uri, route)
-
-        return out
-
     def parse_parameter_string(self, parameter_string):
         """
         Parse a parameter string into its constituent name, type, and pattern

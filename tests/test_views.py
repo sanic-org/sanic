@@ -223,7 +223,8 @@ def test_composition_view_rejects_duplicate_methods():
     assert str(e.value) == 'Method GET is already registered.'
 
 
-def test_composition_view_runs_methods_as_expected():
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_composition_view_runs_methods_as_expected(method):
     app = Sanic('test_composition_view')
 
     view = CompositionView()
@@ -232,22 +233,29 @@ def test_composition_view_runs_methods_as_expected():
 
     app.add_route(view, '/')
 
-    for method in ['GET', 'POST', 'PUT']:
+    if method in ['GET', 'POST', 'PUT']:
         request, response = sanic_endpoint_test(app, uri='/', method=method)
         assert response.text == 'first method'
 
-    for method in ['DELETE', 'PATCH']:
+    if method in ['DELETE', 'PATCH']:
         request, response = sanic_endpoint_test(app, uri='/', method=method)
         assert response.text == 'second method'
 
 
-def test_composition_view_rejects_invalid_methods():
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_composition_view_rejects_invalid_methods(method):
     app = Sanic('test_composition_view')
 
     view = CompositionView()
     view.add(['GET', 'POST', 'PUT'], lambda x: text('first method'))
 
     app.add_route(view, '/')
-    for method in ['DELETE', 'PATCH']:
+
+    if method in ['GET', 'POST', 'PUT']:
+        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        assert response.status == 200
+        assert response.text == 'first method'
+
+    if method in ['DELETE', 'PATCH']:
         request, response = sanic_endpoint_test(app, uri='/', method=method)
         assert response.status == 405

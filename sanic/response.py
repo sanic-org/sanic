@@ -154,15 +154,32 @@ def json(body, status=200, headers=None, **kwargs):
                         status=status, content_type="application/json")
 
 
-def text(body, status=200, headers=None):
+def text(body, status=200, headers=None,
+         content_type="text/plain; charset=utf-8"):
     """
     Returns response object with body in text format.
     :param body: Response data to be encoded.
     :param status: Response code.
     :param headers: Custom Headers.
+    :param content_type:
+        the content type (string) of the response
     """
     return HTTPResponse(body, status=status, headers=headers,
-                        content_type="text/plain; charset=utf-8")
+                        content_type=content_type)
+
+
+def raw(body, status=200, headers=None,
+        content_type="application/octet-stream"):
+    """
+    Returns response object without encoding the body.
+    :param body: Response data.
+    :param status: Response code.
+    :param headers: Custom Headers.
+    :param content_type:
+        the content type (string) of the response
+    """
+    return HTTPResponse(body_bytes=body, status=status, headers=headers,
+                        content_type=content_type)
 
 
 def html(body, status=200, headers=None):
@@ -177,8 +194,8 @@ def html(body, status=200, headers=None):
 
 
 async def file(location, mime_type=None, headers=None, _range=None):
-    """
-    Returns response object with file data.
+    """Return a response object with file data.
+
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
@@ -205,14 +222,12 @@ async def file(location, mime_type=None, headers=None, _range=None):
 
 def redirect(to, headers=None, status=302,
              content_type="text/html; charset=utf-8"):
-    """
-    Aborts execution and causes a 302 redirect (by default).
+    """Abort execution and cause a 302 redirect (by default).
 
     :param to: path or fully qualified URL to redirect to
     :param headers: optional dict of headers to include in the new request
     :param status: status code (int) of the new request, defaults to 302
-    :param content_type:
-        the content type (string) of the response
+    :param content_type: the content type (string) of the response
     :returns: the redirecting Response
     """
     headers = headers or {}

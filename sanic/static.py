@@ -18,7 +18,7 @@ def register(app, uri, file_or_directory, pattern,
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching
     """
-    Registers a static directory handler with Sanic by adding a route to the
+    Register a static directory handler with Sanic by adding a route to the
     router and registering a handler.
 
     :param app: Sanic

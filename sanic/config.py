@@ -39,8 +39,9 @@ class Config(dict):
         self[attr] = value
 
     def from_envvar(self, variable_name):
-        """Loads a configuration from an environment variable pointing to
+        """Load a configuration from an environment variable pointing to
         a configuration file.
+
         :param variable_name: name of the environment variable
         :return: bool. ``True`` if able to load config, ``False`` otherwise.
         """
@@ -52,8 +53,9 @@ class Config(dict):
         return self.from_pyfile(config_file)
 
     def from_pyfile(self, filename):
-        """Updates the values in the config from a Python file. Only the uppercase
-        variables in that module are stored in the config.
+        """Update the values in the config from a Python file.
+        Only the uppercase variables in that module are stored in the config.
+
         :param filename: an absolute path to the config file
         """
         module = types.ModuleType('config')
@@ -69,7 +71,7 @@ class Config(dict):
         return True
 
     def from_object(self, obj):
-        """Updates the values from the given object.
+        """Update the values from the given object.
         Objects are usually either modules or classes.
 
         Just the uppercase variables in that object are stored in the config.

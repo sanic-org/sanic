@@ -6,7 +6,11 @@ PORT = 42101
 
 
 async def local_request(method, uri, cookies=None, *args, **kwargs):
-    url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
+    if uri.startswith(('http:', 'https:', 'ftp:', 'ftps://' '//')):
+        url = uri
+    else:
+        url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
+
     log.info(url)
     async with aiohttp.ClientSession(cookies=cookies) as session:
         async with getattr(
@@ -17,8 +21,8 @@ async def local_request(method, uri, cookies=None, *args, **kwargs):
 
 
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
-                        debug=False, server_kwargs={},
-                        *request_args, **request_kwargs):
+                        debug=False, server_kwargs={}, *request_args,
+                        **request_kwargs):
     results = [None, None]
     exceptions = []
 

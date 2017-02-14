@@ -5,10 +5,18 @@ from sanic import Sanic
 from sanic.response import text
 from sanic.views import HTTPMethodView
 from sanic.blueprints import Blueprint
-from sanic.utils import sanic_endpoint_test
+from sanic.utils import sanic_endpoint_test, PORT as test_port
 from sanic.exceptions import URLBuildError
 
 import string
+
+URL_FOR_ARGS1 = dict(arg1=['v1', 'v2'])
+URL_FOR_VALUE1 = '/myurl?arg1=v1&arg1=v2'
+URL_FOR_ARGS2 = dict(arg1=['v1', 'v2'], _anchor='anchor')
+URL_FOR_VALUE2 = '/myurl?arg1=v1&arg1=v2#anchor'
+URL_FOR_ARGS3 = dict(arg1='v1', _anchor='anchor', _scheme='http',
+                     _server='localhost:{}'.format(test_port), _external=True)
+URL_FOR_VALUE3 = 'http://localhost:{}/myurl?arg1=v1#anchor'.format(test_port)
 
 
 def _generate_handlers_from_names(app, l):
@@ -37,6 +45,23 @@ def test_simple_url_for_getting(simple_app):
             simple_app, uri=url)
         assert response.status == 200
         assert response.text == letter
+
+
+@pytest.mark.parametrize('args,url',
+                         [(URL_FOR_ARGS1, URL_FOR_VALUE1),
+                          (URL_FOR_ARGS2, URL_FOR_VALUE2),
+                          (URL_FOR_ARGS3, URL_FOR_VALUE3)])
+def test_simple_url_for_getting_with_more_params(args, url):
+    app = Sanic('more_url_build')
+
+    @app.route('/myurl')
+    def passes(request):
+        return text('this should pass')
+
+    assert url == app.url_for('passes', **args)
+    request, response = sanic_endpoint_test(app, uri=url)
+    assert response.status == 200
+    assert response.text == 'this should pass'
 
 
 def test_fails_if_endpoint_not_found():
@@ -73,6 +98,19 @@ def test_fails_url_build_if_param_not_passed():
         app.url_for('fail', **fail_kwargs)
 
     assert 'Required parameter `Z` was not passed to url_for' in str(e.value)
+
+
+def test_fails_url_build_if_params_not_passed():
+    app = Sanic('fail_url_build')
+
+    @app.route('/fail')
+    def fail():
+        return text('this should fail')
+
+    with pytest.raises(ValueError) as e:
+        app.url_for('fail', _scheme='http')
+
+    assert str(e.value) == 'When specifying _scheme, _external must be True'
 
 
 COMPLEX_PARAM_URL = (
@@ -179,11 +217,11 @@ def blueprint_app():
         return text(
             'foo from first : {}'.format(param))
 
-    @second_print.route('/foo') # noqa
+    @second_print.route('/foo')  # noqa
     def foo():
         return text('foo from second')
 
-    @second_print.route('/foo/<param>') # noqa
+    @second_print.route('/foo/<param>')  # noqa
     def foo_with_param(request, param):
         return text(
             'foo from second : {}'.format(param))

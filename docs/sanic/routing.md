@@ -11,7 +11,7 @@ from sanic.response import json
 @app.route("/")
 async def test(request):
     return json({ "hello": "world" })
-``` 
+```
 
 When the url `http://server.url/` is accessed (the base url of the server), the
 final `/` is matched by the router to the handler function, `test`, which then
@@ -144,6 +144,28 @@ Other things to keep in mind when using `url_for`:
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one='one', arg_two='two')
 # /posts/5?arg_one=one&arg_two=two
+```
+- Multivalue argument can be passed to `url_for`. For example:
+```python
+url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'])
+# /posts/5?arg_one=one&arg_one=two
+```
+- Also some special arguments (`_anchor`, `_external`, `_scheme`, `_method`, `_server`) passed to `url_for` will have special url building (`_method` is not support now and will be ignored). For example:
+```python
+url = app.url_for('post_handler', post_id=5, arg_one='one', _anchor='anchor')
+# /posts/5?arg_one=one#anchor
+
+url = app.url_for('post_handler', post_id=5, arg_one='one', _external=True)
+# //server/posts/5?arg_one=one
+# _external requires passed argument _server or SERVER_NAME in app.config or url will be same as no _external
+
+url = app.url_for('post_handler', post_id=5, arg_one='one', _scheme='http', _external=True)
+# http://server/posts/5?arg_one=one
+# when specifying _scheme, _external must be True
+
+# you can pass all special arguments one time
+url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'], arg_two=2, _anchor='anchor', _scheme='http', _external=True, _server='another_server:8888')
+# http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor
 ```
 - All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be thrown.
 

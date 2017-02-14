@@ -78,10 +78,7 @@ Documentation
 TODO
 ----
 * Streamed file processing
-* File output
-* Examples of integrations with 3rd-party modules
-* RESTful router
-
+* http2
 Limitations
 -----------
 * No wheels for uvloop and httptools on Windows :(

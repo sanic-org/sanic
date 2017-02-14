@@ -82,7 +82,7 @@ class Blueprint:
             return handler
         return decorator
 
-    def add_route(self, handler, uri, methods=None, host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """
         Creates a blueprint route from a function.
         :param handler: Function to handle uri request.

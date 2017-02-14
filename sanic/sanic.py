@@ -2,7 +2,7 @@ import logging
 import re
 import warnings
 from asyncio import get_event_loop
-from collections import deque
+from collections import deque, defaultdict
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
@@ -10,16 +10,18 @@ from urllib.parse import urlencode, urlunparse
 
 from .config import Config
 from .constants import HTTP_METHODS
-from .handlers import ErrorHandler
 from .exceptions import ServerError, URLBuildError
+from .handlers import ErrorHandler
 from .log import log
 from .response import HTTPResponse
 from .router import Router
 from .server import serve, serve_multiple, HttpProtocol
 from .static import register as static_register
+from .views import CompositionView
 
 
 class Sanic:
+
     def __init__(self, name=None, router=None,
                  error_handler=None):
         # Only set up a default log handler if the
@@ -44,7 +46,7 @@ class Sanic:
         self._blueprint_order = []
         self.debug = None
         self.sock = None
-        self.processes = None
+        self.listeners = defaultdict(list)
 
         # Register alternative method names
         self.go_fast = self.run
@@ -59,6 +61,34 @@ class Sanic:
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
+
+    def add_task(self, task):
+        """
+        Schedule a task to run later, after the loop has started.
+        Different from asyncio.ensure_future in that it does not
+        also return a future, and the actual ensure_future call
+        is delayed until before server start.
+
+        :param task: A future, couroutine or awaitable.
+        """
+        @self.listener('before_server_start')
+        def run(app, loop):
+            if callable(task):
+                loop.create_task(task())
+            else:
+                loop.create_task(task)
+
+    # Decorator
+    def listener(self, event):
+        """
+        Create a listener from a decorated function.
+
+        :param event: Event to listen to.
+        """
+        def decorator(listener):
+            self.listeners[event].append(listener)
+            return listener
+        return decorator
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None):
@@ -120,7 +150,16 @@ class Sanic:
         """
         # Handle HTTPMethodView differently
         if hasattr(handler, 'view_class'):
-            methods = frozenset(HTTP_METHODS)
+            methods = set()
+
+            for method in HTTP_METHODS:
+                if getattr(handler.view_class, method.lower(), None):
+                    methods.add(method)
+
+        # handle composition view differently
+        if isinstance(handler, CompositionView):
+            methods = handler.handlers.keys()
+
         self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 
@@ -409,6 +448,7 @@ class Sanic:
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
             stop_event=stop_event, register_sys_signals=register_sys_signals)
+
         try:
             if workers == 1:
                 serve(**server_settings)
@@ -463,6 +503,16 @@ class Sanic:
                           "pull/335 has more information.",
                           DeprecationWarning)
 
+        # Deprecate this
+        if any(arg is not None for arg in (after_stop, after_start,
+                                           before_start, before_stop)):
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("Passing a before_start, before_stop, after_start or"
+                          "after_stop callback will be deprecated in next "
+                          "major version after 0.4.0",
+                          DeprecationWarning)
+
         self.error_handler.debug = debug
         self.debug = debug
         loop = self.loop
@@ -487,19 +537,18 @@ class Sanic:
         # Register start/stop events
         # -------------------------------------------- #
 
-        for event_name, settings_name, args, reverse in (
-                ("before_server_start", "before_start", before_start, False),
-                ("after_server_start", "after_start", after_start, False),
-                ("before_server_stop", "before_stop", before_stop, True),
-                ("after_server_stop", "after_stop", after_stop, True),
+        for event_name, settings_name, reverse, args in (
+                ("before_server_start", "before_start", False, before_start),
+                ("after_server_start", "after_start", False, after_start),
+                ("before_server_stop", "before_stop", True, before_stop),
+                ("after_server_stop", "after_stop", True, after_stop),
         ):
-            listeners = []
-            for blueprint in self.blueprints.values():
-                listeners += blueprint.listeners[event_name]
+            listeners = self.listeners[event_name].copy()
             if args:
                 if callable(args):
-                    args = [args]
-                listeners += args
+                    listeners.append(args)
+                else:
+                    listeners.extend(args)
             if reverse:
                 listeners.reverse()
             # Prepend sanic to the arguments when listeners are triggered

@@ -346,7 +346,11 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     # Register signals for graceful termination
     if register_sys_signals:
         for _signal in (SIGINT, SIGTERM):
-            loop.add_signal_handler(_signal, loop.stop)
+            try:
+                loop.add_signal_handler(_signal, loop.stop)
+            except NotImplementedError:
+                log.warn(('Sanic tried to use loop.add_signal_handler')
+                         ('but it is not implemented on this platform.'))
 
     pid = os.getpid()
     try:

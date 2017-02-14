@@ -1,6 +1,6 @@
 """
 Example of caching using aiocache package. To run it you will need a Redis
-instance running in localhost:6379.
+instance running in localhost:6379. You can also try with SimpleMemoryCache.
 
 Running this example you will see that the first call lasts 3 seconds and
 the rest are instant because the value is retrieved from the Redis.
@@ -20,9 +20,14 @@ from aiocache.serializers import JsonSerializer
 
 app = Sanic(__name__)
 
-aiocache.settings.set_defaults(
-    class_="aiocache.RedisCache"
-)
+
+@app.listener('before_server_start')
+def init_cache(sanic, loop):
+    aiocache.settings.set_defaults(
+        class_="aiocache.RedisCache",
+        # class_="aiocache.SimpleMemoryCache",
+        loop=loop
+    )
 
 
 @cached(key="my_custom_key", serializer=JsonSerializer())
@@ -38,4 +43,4 @@ async def test(request):
     return json(await expensive_call())
 
 
-app.run(host="0.0.0.0", port=8000, loop=asyncio.get_event_loop())
+app.run(host="0.0.0.0", port=8000)

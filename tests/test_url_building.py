@@ -10,6 +10,14 @@ from sanic.exceptions import URLBuildError
 
 import string
 
+URL_FOR_ARGS1 = dict(arg1=['v1', 'v2'])
+URL_FOR_VALUE1 = '/myurl?arg1=v1&arg1=v2'
+URL_FOR_ARGS2 = dict(arg1=['v1', 'v2'], _anchor='anchor')
+URL_FOR_VALUE2 = '/myurl?arg1=v1&arg1=v2#anchor'
+URL_FOR_ARGS3 = dict(arg1='v1', _anchor='anchor', _scheme='http',
+                     _server='localhost:{}'.format(test_port), _external=True)
+URL_FOR_VALUE3 = 'http://localhost:{}/myurl?arg1=v1#anchor'.format(test_port)
+
 
 def _generate_handlers_from_names(app, l):
     for name in l:
@@ -39,28 +47,21 @@ def test_simple_url_for_getting(simple_app):
         assert response.text == letter
 
 
-def test_simple_url_for_getting_with_duplicate_params(simple_app):
-    kw = dict(arg1=['value1', 'value2'], _anchor='anchor')
-    for letter in string.ascii_letters:
-        url = simple_app.url_for(letter, **kw)
+@pytest.mark.parametrize('args,url',
+                         [(URL_FOR_ARGS1, URL_FOR_VALUE1),
+                          (URL_FOR_ARGS2, URL_FOR_VALUE2),
+                          (URL_FOR_ARGS3, URL_FOR_VALUE3)])
+def test_simple_url_for_getting_with_more_params(args, url):
+    app = Sanic('more_url_build')
 
-        assert url == '/{}?arg1=value1&arg1=value2#anchor'.format(letter)
-        request, response = sanic_endpoint_test(simple_app, uri=url)
-        assert response.status == 200
-        assert response.text == letter
+    @app.route('/myurl')
+    def passes(request):
+        return text('this should pass')
 
-
-def test_simple_url_for_getting_with_special_params(simple_app):
-    kw = dict(arg1='value1', _anchor='anchor', _scheme='http',
-              _server='localhost:{}'.format(test_port), _external=True)
-    url_fmt = 'http://localhost:{}/{}?arg1=value1#anchor'
-    for letter in string.ascii_letters:
-        url = simple_app.url_for(letter, **kw)
-
-        assert url == url_fmt.format(test_port, letter)
-        request, response = sanic_endpoint_test(simple_app, uri=url)
-        assert response.status == 200
-        assert response.text == letter
+    assert url == app.url_for('passes', **args)
+    request, response = sanic_endpoint_test(app, uri=url)
+    assert response.status == 200
+    assert response.text == 'this should pass'
 
 
 def test_fails_if_endpoint_not_found():

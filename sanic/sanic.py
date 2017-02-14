@@ -283,10 +283,9 @@ class Sanic:
                 replacement_regex, supplied_param, out)
 
         # parse the remainder of the keyword arguments into a querystring
-        if kwargs:
-            query_string = urlencode(kwargs, doseq=True)
-            # scheme://netloc/path;parameters?query#fragment
-            out = urlunparse((scheme, netloc, out, '', query_string, anchor))
+        query_string = urlencode(kwargs, doseq=True) if kwargs else ''
+        # scheme://netloc/path;parameters?query#fragment
+        out = urlunparse((scheme, netloc, out, '', query_string, anchor))
 
         return out
 

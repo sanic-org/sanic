@@ -78,6 +78,7 @@ Documentation
 TODO
 ----
 * Streamed file processing
+* http2
 Limitations
 -----------
 * No wheels for uvloop and httptools on Windows :(

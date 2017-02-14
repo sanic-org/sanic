@@ -1,5 +1,7 @@
 from collections import defaultdict, namedtuple
 
+from sanic.constants import HTTP_METHODS
+from sanic.views import CompositionView
 
 FutureRoute = namedtuple('Route', ['handler', 'uri', 'methods', 'host'])
 FutureListener = namedtuple('Listener', ['handler', 'uri', 'methods', 'host'])
@@ -11,7 +13,7 @@ FutureStatic = namedtuple('Route',
 
 class Blueprint:
     def __init__(self, name, url_prefix=None, host=None):
-        """Creates a new blueprint
+        """Create a new blueprint
 
         :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
@@ -27,7 +29,7 @@ class Blueprint:
         self.statics = []
 
     def register(self, app, options):
-        """Registers the blueprint to the sanic app."""
+        """Register the blueprint to the sanic app."""
 
         url_prefix = options.get('url_prefix', self.url_prefix)
 
@@ -69,7 +71,7 @@ class Blueprint:
                 app.listener(event)(listener)
 
     def route(self, uri, methods=frozenset({'GET'}), host=None):
-        """Creates a blueprint route from a decorated function.
+        """Create a blueprint route from a decorated function.
 
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
@@ -80,15 +82,28 @@ class Blueprint:
             return handler
         return decorator
 
-    def add_route(self, handler, uri, methods=None, host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """Create a blueprint route from a function.
 
-        :param handler: function to handle uri request.
+        :param handler: function for handling uri requests. Accepts function,
+                        or class instance with a view_class method.
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
+        :return: function or class instance
         """
-        route = FutureRoute(handler, uri, methods, host)
-        self.routes.append(route)
+        # Handle HTTPMethodView differently
+        if hasattr(handler, 'view_class'):
+            methods = set()
+
+            for method in HTTP_METHODS:
+                if getattr(handler.view_class, method.lower(), None):
+                    methods.add(method)
+
+        # handle composition view differently
+        if isinstance(handler, CompositionView):
+            methods = handler.handlers.keys()
+
+        self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 
     def listener(self, event):

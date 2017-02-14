@@ -6,7 +6,11 @@ PORT = 42101
 
 
 async def local_request(method, uri, cookies=None, *args, **kwargs):
-    url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
+    if uri.startswith(('http:', 'https:', 'ftp:', 'ftps://' '//')):
+        url = uri
+    else:
+        url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
+
     log.info(url)
     async with aiohttp.ClientSession(cookies=cookies) as session:
         async with getattr(

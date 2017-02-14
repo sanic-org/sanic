@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict, namedtuple
+from collections.abc import Collection
 from functools import lru_cache
 from .exceptions import NotFound, InvalidUsage
 from .views import CompositionView
@@ -68,13 +69,13 @@ class Router:
         self.routes_static = {}
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
-        self.hosts = None
+        self.hosts = set()
 
     def parse_parameter_string(self, parameter_string):
         """
         Parse a parameter string into its constituent name, type, and pattern
         For example:
-        `parse_parameter_string('<param_one:[A-z]')` ->
+        `parse_parameter_string('<param_one:[A-z]>')` ->
             ('param_one', str, '[A-z]')
 
         :param parameter_string: String to parse
@@ -106,20 +107,17 @@ class Router:
         """
 
         if host is not None:
-            # we want to track if there are any
-            # vhosts on the Router instance so that we can
-            # default to the behavior without vhosts
-            if self.hosts is None:
-                self.hosts = set(host)
-            else:
-                if isinstance(host, list):
-                    host = set(host)
-                self.hosts.add(host)
             if isinstance(host, str):
                 uri = host + uri
+                self.hosts.add(host)
+
             else:
-                for h in host:
-                    self.add(uri, methods, handler, h)
+                if not isinstance(host, Collection):
+                    raise ValueError("Expected either string of Collection of "
+                                     "host strings, not {!r}".format(host))
+
+                for host_ in host:
+                    self.add(uri, methods, handler, host_)
                 return
 
         # Dict for faster lookups of if method allowed
@@ -262,7 +260,12 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
-        if self.hosts is None:
+        # Note - this means that if _any_ routes specify host, non-host routes
+        # will typically fail as they are looked up by host
+        # fix - check if host is in host-based routing table (perhaps) or
+        # better, get candidate of routes and then dispatch by host.
+        # This may have perf issues.
+        if not self.hosts:
             return self._get(request.url, request.method, '')
         else:
             return self._get(request.url, request.method,

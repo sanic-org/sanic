@@ -87,7 +87,8 @@ class Blueprint:
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """
         Creates a blueprint route from a function.
-        :param handler: Function for handling uri requests. Accepts function, or class instance with a view_class method.
+        :param handler: Function for handling uri requests. Accepts function,
+                        or class instance with a view_class method.
         :param uri: Endpoint at which the route will be accessible.
         :param methods: List of acceptable HTTP methods.
         :return: function or class instance

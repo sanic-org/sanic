@@ -188,7 +188,6 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 # Record that we received data
                 self._last_request_time = current_time
-                self.cleanup()
 
     def write_error(self, exception):
         try:
@@ -218,14 +217,6 @@ class HttpProtocol(asyncio.Protocol):
             exception = ServerError(message)
             self.write_error(exception)
             log.error(message)
-
-    def cleanup(self):
-        self.parser = None
-        self.request = None
-        self.url = None
-        self.headers = None
-        self._request_handler_task = None
-        self._total_request_size = 0
 
     def close_if_idle(self):
         """

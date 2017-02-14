@@ -17,8 +17,8 @@ async def local_request(method, uri, cookies=None, *args, **kwargs):
 
 
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
-                        debug=False, server_kwargs={},
-                        *request_args, **request_kwargs):
+                        debug=False, server_kwargs={}, *request_args,
+                        **request_kwargs):
     results = [None, None]
     exceptions = []
 

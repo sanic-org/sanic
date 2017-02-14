@@ -32,8 +32,7 @@ class RouteDoesNotExist(Exception):
 
 
 class Router:
-    """
-    Router supports basic routing with parameters and method checks
+    """Router supports basic routing with parameters and method checks
 
     Usage:
 
@@ -71,8 +70,9 @@ class Router:
         self.hosts = None
 
     def parse_parameter_string(self, parameter_string):
-        """
-        Parse a parameter string into its constituent name, type, and pattern
+        """Parse a parameter string into its constituent name, type, and
+        pattern
+
         For example:
         `parse_parameter_string('<param_one:[A-z]')` ->
             ('param_one', str, '[A-z]')
@@ -94,14 +94,13 @@ class Router:
         return name, _type, pattern
 
     def add(self, uri, methods, handler, host=None):
-        """
-        Adds a handler to the route list
+        """Add a handler to the route list
 
-        :param uri: Path to match
-        :param methods: Array of accepted method names.
-                        If none are provided, any method is allowed
-        :param handler: Request handler function.
-                        When executed, it should provide a response object.
+        :param uri: path to match
+        :param methods: sequence of accepted method names. If none are
+            provided, any method is allowed
+        :param handler: request handler function.
+            When executed, it should provide a response object.
         :return: Nothing
         """
 
@@ -239,8 +238,7 @@ class Router:
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name):
-        """
-        Find a route in the router based on the specified view name.
+        """Find a route in the router based on the specified view name.
 
         :param view_name: string of view name to search by
         :return: tuple containing (uri, Route)
@@ -255,8 +253,7 @@ class Router:
         return (None, None)
 
     def get(self, request):
-        """
-        Gets a request handler based on the URL of the request, or raises an
+        """Get a request handler based on the URL of the request, or raises an
         error
 
         :param request: Request object
@@ -270,11 +267,11 @@ class Router:
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method, host):
-        """
-        Gets a request handler based on the URL of the request, or raises an
+        """Get a request handler based on the URL of the request, or raises an
         error.  Internal method for caching.
-        :param url: Request URL
-        :param method: Request method
+
+        :param url: request URL
+        :param method: request method
         :return: handler, arguments, keyword arguments
         """
         url = host + url

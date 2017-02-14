@@ -22,8 +22,7 @@ from .views import CompositionView
 
 class Sanic:
 
-    def __init__(self, name=None, router=None,
-                 error_handler=None):
+    def __init__(self, name=None, router=None, error_handler=None):
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
         if not logging.root.handlers and log.level == logging.NOTSET:
@@ -33,9 +32,12 @@ class Sanic:
             handler.setFormatter(formatter)
             log.addHandler(handler)
             log.setLevel(logging.INFO)
+
+        # Get name from previous stack frame
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
+
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or ErrorHandler()
@@ -53,9 +55,7 @@ class Sanic:
 
     @property
     def loop(self):
-        """
-        Synonymous with asyncio.get_event_loop()
-        """
+        """Synonymous with asyncio.get_event_loop()."""
         return get_event_loop()
 
     # -------------------------------------------------------------------- #
@@ -63,13 +63,12 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def add_task(self, task):
-        """
-        Schedule a task to run later, after the loop has started.
+        """Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
         also return a future, and the actual ensure_future call
         is delayed until before server start.
 
-        :param task: A future, couroutine or awaitable.
+        :param task: future, couroutine or awaitable
         """
         @self.listener('before_server_start')
         def run(app, loop):
@@ -80,10 +79,9 @@ class Sanic:
 
     # Decorator
     def listener(self, event):
-        """
-        Create a listener from a decorated function.
+        """Create a listener from a decorated function.
 
-        :param event: Event to listen to.
+        :param event: event to listen to
         """
         def decorator(listener):
             self.listeners[event].append(listener)
@@ -92,8 +90,7 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None):
-        """
-        Decorates a function to be registered as a route
+        """Decorate a function to be registered as a route
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
@@ -136,8 +133,7 @@ class Sanic:
         return self.route(uri, methods=frozenset({"DELETE"}), host=host)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
-        """
-        A helper method to register class instance or
+        """A helper method to register class instance or
         functions as a handler to the application url
         routes.
 
@@ -168,8 +164,7 @@ class Sanic:
 
     # Decorator
     def exception(self, *exceptions):
-        """
-        Decorates a function to be registered as a handler for exceptions
+        """Decorate a function to be registered as a handler for exceptions
 
         :param exceptions: exceptions
         :return: decorated function
@@ -184,9 +179,8 @@ class Sanic:
 
     # Decorator
     def middleware(self, middleware_or_request):
-        """
-        Decorates and registers middleware to be called before a request
-        can either be called as @app.middleware or @app.middleware('request')
+        """Decorate and register middleware to be called before a request.
+        Can either be called as @app.middleware or @app.middleware('request')
         """
         def register_middleware(middleware, attach_to='request'):
             if attach_to == 'request':
@@ -206,16 +200,14 @@ class Sanic:
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',
                use_modified_since=True, use_content_range=False):
-        """
-        Registers a root to serve files from.  The input can either be a file
-        or a directory.  See
+        """Register a root to serve files from. The input can either be a
+        file or a directory. See
         """
         static_register(self, uri, file_or_directory, pattern,
                         use_modified_since, use_content_range)
 
     def blueprint(self, blueprint, **options):
-        """
-        Registers a blueprint on the application.
+        """Register a blueprint on the application.
 
         :param blueprint: Blueprint object
         :param options: option dictionary with blueprint defaults
@@ -242,7 +234,7 @@ class Sanic:
         return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
-        """Builds a URL based on a view name and the values provided.
+        """Build a URL based on a view name and the values provided.
 
         In order to build a URL, all request parameters must be supplied as
         keyword arguments, and each parameter must pass the test for the
@@ -252,7 +244,7 @@ class Sanic:
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
-        :param view_name: A string referencing the view name
+        :param view_name: string referencing the view name
         :param **kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
@@ -342,9 +334,8 @@ class Sanic:
         pass
 
     async def handle_request(self, request, response_callback):
-        """
-        Takes a request from the HTTP Server and returns a response object to
-        be sent back The HTTP Server only expects a response object, so
+        """Take a request from the HTTP Server and return a response object
+        to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
 
         :param request: HTTP Request object
@@ -426,9 +417,8 @@ class Sanic:
             after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=HttpProtocol,
             backlog=100, stop_event=None, register_sys_signals=True):
-        """
-        Runs the HTTP Server and listens until keyboard interrupt or term
-        signal. On termination, drains connections before closing.
+        """Run the HTTP Server and listen until keyboard interrupt or term
+        signal. On termination, drain connections before closing.
 
         :param host: Address to host on
         :param port: Port to host on
@@ -478,9 +468,7 @@ class Sanic:
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=HttpProtocol,
                             backlog=100, stop_event=None):
-        """
-        Asynchronous version of `run`.
-        """
+        """Asynchronous version of `run`."""
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
@@ -501,9 +489,7 @@ class Sanic:
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
                 register_sys_signals=True, run_async=False):
-        """
-        Helper function used by `run` and `create_server`.
-        """
+        """Helper function used by `run` and `create_server`."""
 
         if loop is not None:
             if debug:

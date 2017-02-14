@@ -3,7 +3,7 @@ from .constants import HTTP_METHODS
 
 
 class HTTPMethodView:
-    """ Simple class based implementation of view for the sanic.
+    """Simple class based implementation of view for the sanic.
     You should implement methods (get, post, put, patch, delete) for the class
     to every HTTP method you want to support.
 
@@ -45,9 +45,8 @@ class HTTPMethodView:
 
     @classmethod
     def as_view(cls, *class_args, **class_kwargs):
-        """ Converts the class into an actual view function that can be used
-        with the routing system.
-
+        """Return view function for use with the routing system, that
+        dispatches request to appropriate handler method.
         """
         def view(*args, **kwargs):
             self = view.view_class(*class_args, **class_kwargs)
@@ -66,7 +65,7 @@ class HTTPMethodView:
 
 
 class CompositionView:
-    """ Simple method-function mapped view for the sanic.
+    """Simple method-function mapped view for the sanic.
     You can add handler functions to methods (get, post, put, patch, delete)
     for every HTTP method you want to support.
 

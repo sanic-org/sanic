@@ -13,9 +13,9 @@ FutureStatic = namedtuple('Route',
 
 class Blueprint:
     def __init__(self, name, url_prefix=None, host=None):
-        """
-        Creates a new blueprint
-        :param name: Unique name of the blueprint
+        """Create a new blueprint
+
+        :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
         """
         self.name = name
@@ -29,9 +29,7 @@ class Blueprint:
         self.statics = []
 
     def register(self, app, options):
-        """
-        Registers the blueprint to the sanic app.
-        """
+        """Register the blueprint to the sanic app."""
 
         url_prefix = options.get('url_prefix', self.url_prefix)
 
@@ -73,10 +71,10 @@ class Blueprint:
                 app.listener(event)(listener)
 
     def route(self, uri, methods=frozenset({'GET'}), host=None):
-        """
-        Creates a blueprint route from a decorated function.
-        :param uri: Endpoint at which the route will be accessible.
-        :param methods: List of acceptable HTTP methods.
+        """Create a blueprint route from a decorated function.
+
+        :param uri: endpoint at which the route will be accessible.
+        :param methods: list of acceptable HTTP methods.
         """
         def decorator(handler):
             route = FutureRoute(handler, uri, methods, host)
@@ -85,12 +83,12 @@ class Blueprint:
         return decorator
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
-        """
-        Creates a blueprint route from a function.
-        :param handler: Function for handling uri requests. Accepts function,
+        """Create a blueprint route from a function.
+
+        :param handler: function for handling uri requests. Accepts function,
                         or class instance with a view_class method.
-        :param uri: Endpoint at which the route will be accessible.
-        :param methods: List of acceptable HTTP methods.
+        :param uri: endpoint at which the route will be accessible.
+        :param methods: list of acceptable HTTP methods.
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -109,8 +107,8 @@ class Blueprint:
         return handler
 
     def listener(self, event):
-        """
-        Create a listener from a decorated function.
+        """Create a listener from a decorated function.
+
         :param event: Event to listen to.
         """
         def decorator(listener):
@@ -119,9 +117,7 @@ class Blueprint:
         return decorator
 
     def middleware(self, *args, **kwargs):
-        """
-        Creates a blueprint middleware from a decorated function.
-        """
+        """Create a blueprint middleware from a decorated function."""
         def register_middleware(_middleware):
             future_middleware = FutureMiddleware(_middleware, args, kwargs)
             self.middlewares.append(future_middleware)
@@ -136,9 +132,7 @@ class Blueprint:
             return register_middleware
 
     def exception(self, *args, **kwargs):
-        """
-        Creates a blueprint exception from a decorated function.
-        """
+        """Create a blueprint exception from a decorated function."""
         def decorator(handler):
             exception = FutureException(handler, args, kwargs)
             self.exceptions.append(exception)
@@ -146,9 +140,9 @@ class Blueprint:
         return decorator
 
     def static(self, uri, file_or_directory, *args, **kwargs):
-        """
-        Creates a blueprint static route from a decorated function.
-        :param uri: Endpoint at which the route will be accessible.
+        """Create a blueprint static route from a decorated function.
+
+        :param uri: endpoint at which the route will be accessible.
         :param file_or_directory: Static asset.
         """
         static = FutureStatic(uri, file_or_directory, args, kwargs)

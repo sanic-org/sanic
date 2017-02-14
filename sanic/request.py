@@ -16,8 +16,7 @@ DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 
 
 class RequestParameters(dict):
-    """
-    Hosts a dict with lists as values where get returns the first
+    """Hosts a dict with lists as values where get returns the first
     value of the list and getlist returns the whole shebang
     """
 
@@ -31,9 +30,7 @@ class RequestParameters(dict):
 
 
 class Request(dict):
-    """
-    Properties of an HTTP request such as URL, headers, etc.
-    """
+    """Properties of an HTTP request such as URL, headers, etc."""
     __slots__ = (
         'url', 'headers', 'version', 'method', '_cookies', 'transport',
         'query_string', 'body',
@@ -73,8 +70,8 @@ class Request(dict):
 
     @property
     def token(self):
-        """
-        Attempts to return the auth header token.
+        """Attempt to return the auth header token.
+
         :return: token related to request
         """
         auth_header = self.headers.get('Authorization')
@@ -146,11 +143,10 @@ File = namedtuple('File', ['type', 'body', 'name'])
 
 
 def parse_multipart_form(body, boundary):
-    """
-    Parses a request body and returns fields and files
+    """Parse a request body and returns fields and files
 
-    :param body: Bytes request body
-    :param boundary: Bytes multipart boundary
+    :param body: bytes request body
+    :param boundary: bytes multipart boundary
     :return: fields (RequestParameters), files (RequestParameters)
     """
     files = RequestParameters()

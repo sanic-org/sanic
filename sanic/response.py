@@ -171,8 +171,8 @@ def text(body, status=200, headers=None,
 def raw(body, status=200, headers=None,
         content_type="application/octet-stream"):
     """
-    Returns response object with body in text format.
-    :param body: Response data to be encoded.
+    Returns response object without encoding the body.
+    :param body: Response data.
     :param status: Response code.
     :param headers: Custom Headers.
     :param content_type:

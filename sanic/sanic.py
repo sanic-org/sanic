@@ -81,7 +81,7 @@ class Sanic:
     def listener(self, event):
         """Create a listener from a decorated function.
 
-        :param event: Event to listen to
+        :param event: event to listen to
         """
         def decorator(listener):
             self.listeners[event].append(listener)
@@ -90,7 +90,7 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None):
-        """Decorates a function to be registered as a route
+        """Decorate a function to be registered as a route
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
@@ -164,7 +164,7 @@ class Sanic:
 
     # Decorator
     def exception(self, *exceptions):
-        """Decorates a function to be registered as a handler for exceptions
+        """Decorate a function to be registered as a handler for exceptions
 
         :param exceptions: exceptions
         :return: decorated function
@@ -179,8 +179,8 @@ class Sanic:
 
     # Decorator
     def middleware(self, middleware_or_request):
-        """Decorates and registers middleware to be called before a request
-        can either be called as @app.middleware or @app.middleware('request')
+        """Decorate and register middleware to be called before a request.
+        Can either be called as @app.middleware or @app.middleware('request')
         """
         def register_middleware(middleware, attach_to='request'):
             if attach_to == 'request':
@@ -200,14 +200,14 @@ class Sanic:
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',
                use_modified_since=True, use_content_range=False):
-        """Registers a root to serve files from.  The input can either be a
+        """Register a root to serve files from. The input can either be a
         file or a directory. See
         """
         static_register(self, uri, file_or_directory, pattern,
                         use_modified_since, use_content_range)
 
     def blueprint(self, blueprint, **options):
-        """Registers a blueprint on the application.
+        """Register a blueprint on the application.
 
         :param blueprint: Blueprint object
         :param options: option dictionary with blueprint defaults
@@ -234,7 +234,7 @@ class Sanic:
         return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
-        """Builds a URL based on a view name and the values provided.
+        """Build a URL based on a view name and the values provided.
 
         In order to build a URL, all request parameters must be supplied as
         keyword arguments, and each parameter must pass the test for the
@@ -324,7 +324,7 @@ class Sanic:
         pass
 
     async def handle_request(self, request, response_callback):
-        """Takes a request from the HTTP Server and returns a response object
+        """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
 
@@ -407,8 +407,8 @@ class Sanic:
             after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=HttpProtocol,
             backlog=100, stop_event=None, register_sys_signals=True):
-        """Runs the HTTP Server and listens until keyboard interrupt or term
-        signal. On termination, drains connections before closing.
+        """Run the HTTP Server and listen until keyboard interrupt or term
+        signal. On termination, drain connections before closing.
 
         :param host: Address to host on
         :param port: Port to host on

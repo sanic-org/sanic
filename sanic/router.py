@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict, namedtuple
-from collections.abc import Collection
+from collections.abc import Iterable
 from functools import lru_cache
 from .exceptions import NotFound, InvalidUsage
 from .views import CompositionView
@@ -112,8 +112,8 @@ class Router:
                 self.hosts.add(host)
 
             else:
-                if not isinstance(host, Collection):
-                    raise ValueError("Expected either string of Collection of "
+                if not isinstance(host, Iterable):
+                    raise ValueError("Expected either string or Iterable of "
                                      "host strings, not {!r}".format(host))
 
                 for host_ in host:

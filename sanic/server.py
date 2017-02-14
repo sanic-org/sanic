@@ -256,13 +256,10 @@ def trigger_events(events, loop):
     :param events: one or more sync or async functions to execute
     :param loop: event loop
     """
-    if events:
-        if not isinstance(events, list):
-            events = [events]
-        for event in events:
-            result = event(loop)
-            if isawaitable(result):
-                loop.run_until_complete(result)
+    for event in events:
+        result = event(loop)
+        if isawaitable(result):
+            loop.run_until_complete(result)
 
 
 def serve(host, port, request_handler, error_handler, before_start=None,

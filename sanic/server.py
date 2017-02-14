@@ -344,8 +344,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:
-                log.warn(('Sanic tried to use loop.add_signal_handler')
-                         ('but it is not implemented on this platform.'))
+                log.warn('Sanic tried to use loop.add_signal_handler but it is'
+                         ' not implemented on this platform.')
 
     pid = os.getpid()
     try:

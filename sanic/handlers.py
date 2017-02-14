@@ -46,7 +46,7 @@ class ErrorHandler:
         try:
             response = handler(request=request, exception=exception)
         except Exception:
-            log.error(format_exc())
+            self.log(format_exc())
             if self.debug:
                 response_message = (
                     'Exception raised in exception handler "{}" '
@@ -58,8 +58,15 @@ class ErrorHandler:
                 return text('An error occurred while handling an error', 500)
         return response
 
+    def log(self, message, level='error'):
+        """
+        Override this method in an ErrorHandler subclass to prevent
+        logging exceptions.
+        """
+        getattr(log, level)(message)
+
     def default(self, request, exception):
-        log.error(format_exc())
+        self.log(format_exc())
         if issubclass(type(exception), SanicException):
             return text(
                 'Error: {}'.format(exception),

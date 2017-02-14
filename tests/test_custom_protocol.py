@@ -1,7 +1,6 @@
 from sanic import Sanic
 from sanic.server import HttpProtocol
 from sanic.response import text
-from sanic.utils import sanic_endpoint_test
 
 app = Sanic('test_custom_porotocol')
 
@@ -26,7 +25,7 @@ def test_use_custom_protocol():
     server_kwargs = {
         'protocol': CustomHttpProtocol
     }
-    request, response = sanic_endpoint_test(app, uri='/1',
-                                            server_kwargs=server_kwargs)
+    request, response = app.test_client.get(
+        '/1', server_kwargs=server_kwargs)
     assert response.status == 200
     assert response.text == 'OK'

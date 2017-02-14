@@ -1,6 +1,5 @@
 from sanic import Sanic
 from sanic.response import json, text
-from sanic.utils import sanic_endpoint_test
 
 
 def test_vhosts():
@@ -15,11 +14,11 @@ def test_vhosts():
         return text("You're at subdomain.example.com!")
 
     headers = {"Host": "example.com"}
-    request, response = sanic_endpoint_test(app, headers=headers)
+    request, response = app.test_client.get('/', headers=headers)
     assert response.text == "You're at example.com!"
 
     headers = {"Host": "subdomain.example.com"}
-    request, response = sanic_endpoint_test(app, headers=headers)
+    request, response = app.test_client.get('/', headers=headers)
     assert response.text == "You're at subdomain.example.com!"
 
 
@@ -31,9 +30,9 @@ def test_vhosts_with_list():
         return text("Hello, world!")
 
     headers = {"Host": "hello.com"}
-    request, response = sanic_endpoint_test(app, headers=headers)
+    request, response = app.test_client.get('/', headers=headers)
     assert response.text == "Hello, world!"
 
     headers = {"Host": "world.com"}
-    request, response = sanic_endpoint_test(app, headers=headers)
+    request, response = app.test_client.get('/', headers=headers)
     assert response.text == "Hello, world!"

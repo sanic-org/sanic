@@ -6,7 +6,6 @@ from sanic.response import text, HTTPResponse
 from sanic.views import HTTPMethodView, CompositionView
 from sanic.blueprints import Blueprint
 from sanic.request import Request
-from sanic.utils import sanic_endpoint_test
 from sanic.constants import HTTP_METHODS
 
 
@@ -39,7 +38,7 @@ def test_methods(method):
 
     app.add_route(DummyView.as_view(), '/')
 
-    request, response = sanic_endpoint_test(app, method=method)
+    request, response = getattr(app.test_client, method.lower())('/')
     assert response.headers['method'] == method
 
 
@@ -52,9 +51,9 @@ def test_unexisting_methods():
             return text('I am get method')
 
     app.add_route(DummyView.as_view(), '/')
-    request, response = sanic_endpoint_test(app, method="get")
+    request, response = app.test_client.get('/')
     assert response.text == 'I am get method'
-    request, response = sanic_endpoint_test(app, method="post")
+    request, response = app.test_client.post('/')
     assert response.text == 'Error: Method POST not allowed for URL /'
 
 
@@ -68,7 +67,7 @@ def test_argument_methods():
 
     app.add_route(DummyView.as_view(), '/<my_param_here>')
 
-    request, response = sanic_endpoint_test(app, uri='/test123')
+    request, response = app.test_client.get('/test123')
 
     assert response.text == 'I am get method with test123'
 
@@ -85,7 +84,7 @@ def test_with_bp():
     bp.add_route(DummyView.as_view(), '/')
 
     app.blueprint(bp)
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'I am get method'
 
@@ -102,7 +101,7 @@ def test_with_bp_with_url_prefix():
     bp.add_route(DummyView.as_view(), '/')
 
     app.blueprint(bp)
-    request, response = sanic_endpoint_test(app, uri='/test1/')
+    request, response = app.test_client.get('/test1/')
 
     assert response.text == 'I am get method'
 
@@ -123,7 +122,7 @@ def test_with_middleware():
     async def handler(request):
         results.append(request)
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'I am get method'
     assert type(results[0]) is Request
@@ -150,7 +149,7 @@ def test_with_middleware_response():
 
     app.add_route(DummyView.as_view(), '/')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'I am get method'
     assert type(results[0]) is Request
@@ -172,7 +171,7 @@ def test_with_custom_class_methods():
             return text('I am get method and global var is {}'.format(self.global_var))
 
     app.add_route(DummyView.as_view(), '/')
-    request, response = sanic_endpoint_test(app, method="get")
+    request, response = app.test_client.get('/')
     assert response.text == 'I am get method and global var is 10'
 
 
@@ -194,7 +193,7 @@ def test_with_decorator():
             return text('I am get method')
 
     app.add_route(DummyView.as_view(), '/')
-    request, response = sanic_endpoint_test(app, method="get")
+    request, response = app.test_client.get('/')
     assert response.text == 'I am get method'
     assert results[0] == 1
 
@@ -234,11 +233,11 @@ def test_composition_view_runs_methods_as_expected(method):
     app.add_route(view, '/')
 
     if method in ['GET', 'POST', 'PUT']:
-        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        request, response = getattr(app.test_client, method.lower())('/')
         assert response.text == 'first method'
 
     if method in ['DELETE', 'PATCH']:
-        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        request, response = getattr(app.test_client, method.lower())('/')
         assert response.text == 'second method'
 
 
@@ -252,10 +251,10 @@ def test_composition_view_rejects_invalid_methods(method):
     app.add_route(view, '/')
 
     if method in ['GET', 'POST', 'PUT']:
-        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        request, response = getattr(app.test_client, method.lower())('/')
         assert response.status == 200
         assert response.text == 'first method'
 
     if method in ['DELETE', 'PATCH']:
-        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        request, response = getattr(app.test_client, method.lower())('/')
         assert response.status == 405

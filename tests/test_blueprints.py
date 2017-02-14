@@ -3,7 +3,6 @@ import inspect
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import json, text
-from sanic.utils import sanic_endpoint_test
 from sanic.exceptions import NotFound, ServerError, InvalidUsage
 
 
@@ -20,7 +19,7 @@ def test_bp():
         return text('Hello')
 
     app.blueprint(bp)
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'Hello'
 
@@ -33,7 +32,7 @@ def test_bp_with_url_prefix():
         return text('Hello')
 
     app.blueprint(bp)
-    request, response = sanic_endpoint_test(app, uri='/test1/')
+    request, response = app.test_client.get('/test1/')
 
     assert response.text == 'Hello'
 
@@ -53,10 +52,10 @@ def test_several_bp_with_url_prefix():
 
     app.blueprint(bp)
     app.blueprint(bp2)
-    request, response = sanic_endpoint_test(app, uri='/test1/')
+    request, response = app.test_client.get('/test1/')
     assert response.text == 'Hello'
 
-    request, response = sanic_endpoint_test(app, uri='/test2/')
+    request, response = app.test_client.get('/test2/')
     assert response.text == 'Hello2'
 
 def test_bp_with_host():
@@ -73,13 +72,15 @@ def test_bp_with_host():
 
     app.blueprint(bp)
     headers = {"Host": "example.com"}
-    request, response = sanic_endpoint_test(app, uri='/test1/',
-                                            headers=headers)
+    request, response = app.test_client.get(
+        '/test1/',
+        headers=headers)
     assert response.text == 'Hello'
 
     headers = {"Host": "sub.example.com"}
-    request, response = sanic_endpoint_test(app, uri='/test1/',
-                                            headers=headers)
+    request, response = app.test_client.get(
+        '/test1/',
+        headers=headers)
 
     assert response.text == 'Hello subdomain!'
 
@@ -111,18 +112,21 @@ def test_several_bp_with_host():
 
     assert bp.host == "example.com"
     headers = {"Host": "example.com"}
-    request, response = sanic_endpoint_test(app, uri='/test/',
-                                            headers=headers)
+    request, response = app.test_client.get(
+        '/test/',
+        headers=headers)
     assert response.text == 'Hello'
 
     assert bp2.host == "sub.example.com"
     headers = {"Host": "sub.example.com"}
-    request, response = sanic_endpoint_test(app, uri='/test/',
-                                            headers=headers)
+    request, response = app.test_client.get(
+        '/test/',
+        headers=headers)
 
     assert response.text == 'Hello2'
-    request, response = sanic_endpoint_test(app, uri='/test/other/',
-                                            headers=headers)
+    request, response = app.test_client.get(
+        '/test/other/',
+        headers=headers)
     assert response.text == 'Hello3'
 
 def test_bp_middleware():
@@ -139,7 +143,7 @@ def test_bp_middleware():
 
     app.blueprint(blueprint)
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.status == 200
     assert response.text == 'OK'
@@ -166,15 +170,15 @@ def test_bp_exception_handler():
 
     app.blueprint(blueprint)
 
-    request, response = sanic_endpoint_test(app, uri='/1')
+    request, response = app.test_client.get('/1')
     assert response.status == 400
 
 
-    request, response = sanic_endpoint_test(app, uri='/2')
+    request, response = app.test_client.get('/2')
     assert response.status == 200
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/3')
+    request, response = app.test_client.get('/3')
     assert response.status == 200
 
 def test_bp_listeners():
@@ -209,7 +213,7 @@ def test_bp_listeners():
 
     app.blueprint(blueprint)
 
-    request, response = sanic_endpoint_test(app, uri='/')
+    request, response = app.test_client.get('/')
 
     assert order == [1,2,3,4,5,6]
 
@@ -225,7 +229,7 @@ def test_bp_static():
 
     app.blueprint(blueprint)
 
-    request, response = sanic_endpoint_test(app, uri='/testing.file')
+    request, response = app.test_client.get('/testing.file')
     assert response.status == 200
     assert response.body == current_file_contents
 
@@ -263,44 +267,44 @@ def test_bp_shorthand():
 
     app.blueprint(blueprint)
 
-    request, response = sanic_endpoint_test(app, uri='/get', method='get')
+    request, response = app.test_client.get('/get')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/get', method='post')
+    request, response = app.test_client.post('/get')
     assert response.status == 405
 
-    request, response = sanic_endpoint_test(app, uri='/put', method='put')
+    request, response = app.test_client.put('/put')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/put', method='get')
+    request, response = app.test_client.get('/post')
     assert response.status == 405
 
-    request, response = sanic_endpoint_test(app, uri='/post', method='post')
+    request, response = app.test_client.post('/post')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/post', method='get')
+    request, response = app.test_client.get('/post')
     assert response.status == 405
 
-    request, response = sanic_endpoint_test(app, uri='/head', method='head')
+    request, response = app.test_client.head('/head')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/head', method='get')
+    request, response = app.test_client.get('/head')
     assert response.status == 405
 
-    request, response = sanic_endpoint_test(app, uri='/options', method='options')
+    request, response = app.test_client.options('/options')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/options', method='get')
+    request, response = app.test_client.get('/options')
     assert response.status == 405
 
-    request, response = sanic_endpoint_test(app, uri='/patch', method='patch')
+    request, response = app.test_client.patch('/patch')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/patch', method='get')
+    request, response = app.test_client.get('/patch')
     assert response.status == 405
 
-    request, response = sanic_endpoint_test(app, uri='/delete', method='delete')
+    request, response = app.test_client.delete('/delete')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/delete', method='get')
+    request, response = app.test_client.get('/delete')
     assert response.status == 405

@@ -3,7 +3,6 @@ import pytest
 from sanic import Sanic
 from sanic.response import text
 from sanic.router import RouteExists, RouteDoesNotExist
-from sanic.utils import sanic_endpoint_test
 
 
 # ------------------------------------------------------------ #
@@ -17,10 +16,10 @@ def test_shorthand_routes_get():
     def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/get', method='get')
+    request, response = app.test_client.get('/get')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/get', method='post')
+    request, response = app.test_client.post('/get')
     assert response.status == 405
 
 def test_shorthand_routes_post():
@@ -30,10 +29,10 @@ def test_shorthand_routes_post():
     def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/post', method='post')
+    request, response = app.test_client.post('/post')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/post', method='get')
+    request, response = app.test_client.get('/post')
     assert response.status == 405
 
 def test_shorthand_routes_put():
@@ -43,10 +42,10 @@ def test_shorthand_routes_put():
     def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/put', method='put')
+    request, response = app.test_client.put('/put')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/put', method='get')
+    request, response = app.test_client.get('/put')
     assert response.status == 405
 
 def test_shorthand_routes_patch():
@@ -56,10 +55,10 @@ def test_shorthand_routes_patch():
     def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/patch', method='patch')
+    request, response = app.test_client.patch('/patch')
     assert response.text == 'OK'
 
-    request, response = sanic_endpoint_test(app, uri='/patch', method='get')
+    request, response = app.test_client.get('/patch')
     assert response.status == 405
 
 def test_shorthand_routes_head():
@@ -69,10 +68,10 @@ def test_shorthand_routes_head():
     def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/head', method='head')
+    request, response = app.test_client.head('/head')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/head', method='get')
+    request, response = app.test_client.get('/head')
     assert response.status == 405
 
 def test_shorthand_routes_options():
@@ -82,10 +81,10 @@ def test_shorthand_routes_options():
     def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/options', method='options')
+    request, response = app.test_client.options('/options')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/options', method='get')
+    request, response = app.test_client.get('/options')
     assert response.status == 405
 
 def test_static_routes():
@@ -99,10 +98,10 @@ def test_static_routes():
     async def handler2(request):
         return text('OK2')
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.text == 'OK1'
 
-    request, response = sanic_endpoint_test(app, uri='/pizazz')
+    request, response = app.test_client.get('/pizazz')
     assert response.text == 'OK2'
 
 
@@ -116,7 +115,7 @@ def test_dynamic_route():
         results.append(name)
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    request, response = app.test_client.get('/folder/test123')
 
     assert response.text == 'OK'
     assert results[0] == 'test123'
@@ -132,12 +131,12 @@ def test_dynamic_route_string():
         results.append(name)
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    request, response = app.test_client.get('/folder/test123')
 
     assert response.text == 'OK'
     assert results[0] == 'test123'
 
-    request, response = sanic_endpoint_test(app, uri='/folder/favicon.ico')
+    request, response = app.test_client.get('/folder/favicon.ico')
 
     assert response.text == 'OK'
     assert results[1] == 'favicon.ico'
@@ -153,11 +152,11 @@ def test_dynamic_route_int():
         results.append(folder_id)
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/12345')
+    request, response = app.test_client.get('/folder/12345')
     assert response.text == 'OK'
     assert type(results[0]) is int
 
-    request, response = sanic_endpoint_test(app, uri='/folder/asdf')
+    request, response = app.test_client.get('/folder/asdf')
     assert response.status == 404
 
 
@@ -171,14 +170,14 @@ def test_dynamic_route_number():
         results.append(weight)
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/weight/12345')
+    request, response = app.test_client.get('/weight/12345')
     assert response.text == 'OK'
     assert type(results[0]) is float
 
-    request, response = sanic_endpoint_test(app, uri='/weight/1234.56')
+    request, response = app.test_client.get('/weight/1234.56')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/weight/1234-56')
+    request, response = app.test_client.get('/weight/1234-56')
     assert response.status == 404
 
 
@@ -189,16 +188,16 @@ def test_dynamic_route_regex():
     async def handler(request, folder_id):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test')
+    request, response = app.test_client.get('/folder/test')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test1')
+    request, response = app.test_client.get('/folder/test1')
     assert response.status == 404
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test-123')
+    request, response = app.test_client.get('/folder/test-123')
     assert response.status == 404
 
-    request, response = sanic_endpoint_test(app, uri='/folder/')
+    request, response = app.test_client.get('/folder/')
     assert response.status == 200
 
 
@@ -209,16 +208,16 @@ def test_dynamic_route_unhashable():
     async def handler(request, unhashable):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/asdf/end/')
+    request, response = app.test_client.get('/folder/test/asdf/end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test///////end/')
+    request, response = app.test_client.get('/folder/test///////end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/end/')
+    request, response = app.test_client.get('/folder/test/end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/nope/')
+    request, response = app.test_client.get('/folder/test/nope/')
     assert response.status == 404
 
 
@@ -251,10 +250,10 @@ def test_method_not_allowed():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, method='post', uri='/test')
+    request, response = app.test_client.post('/test')
     assert response.status == 405
 
 
@@ -270,10 +269,10 @@ def test_static_add_route():
     app.add_route(handler1, '/test')
     app.add_route(handler2, '/test2')
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.text == 'OK1'
 
-    request, response = sanic_endpoint_test(app, uri='/test2')
+    request, response = app.test_client.get('/test2')
     assert response.text == 'OK2'
 
 
@@ -287,7 +286,7 @@ def test_dynamic_add_route():
         return text('OK')
 
     app.add_route(handler, '/folder/<name>')
-    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    request, response = app.test_client.get('/folder/test123')
 
     assert response.text == 'OK'
     assert results[0] == 'test123'
@@ -303,12 +302,12 @@ def test_dynamic_add_route_string():
         return text('OK')
 
     app.add_route(handler, '/folder/<name:string>')
-    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    request, response = app.test_client.get('/folder/test123')
 
     assert response.text == 'OK'
     assert results[0] == 'test123'
 
-    request, response = sanic_endpoint_test(app, uri='/folder/favicon.ico')
+    request, response = app.test_client.get('/folder/favicon.ico')
 
     assert response.text == 'OK'
     assert results[1] == 'favicon.ico'
@@ -325,11 +324,11 @@ def test_dynamic_add_route_int():
 
     app.add_route(handler, '/folder/<folder_id:int>')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/12345')
+    request, response = app.test_client.get('/folder/12345')
     assert response.text == 'OK'
     assert type(results[0]) is int
 
-    request, response = sanic_endpoint_test(app, uri='/folder/asdf')
+    request, response = app.test_client.get('/folder/asdf')
     assert response.status == 404
 
 
@@ -344,14 +343,14 @@ def test_dynamic_add_route_number():
 
     app.add_route(handler, '/weight/<weight:number>')
 
-    request, response = sanic_endpoint_test(app, uri='/weight/12345')
+    request, response = app.test_client.get('/weight/12345')
     assert response.text == 'OK'
     assert type(results[0]) is float
 
-    request, response = sanic_endpoint_test(app, uri='/weight/1234.56')
+    request, response = app.test_client.get('/weight/1234.56')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/weight/1234-56')
+    request, response = app.test_client.get('/weight/1234-56')
     assert response.status == 404
 
 
@@ -363,16 +362,16 @@ def test_dynamic_add_route_regex():
 
     app.add_route(handler, '/folder/<folder_id:[A-Za-z0-9]{0,4}>')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test')
+    request, response = app.test_client.get('/folder/test')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test1')
+    request, response = app.test_client.get('/folder/test1')
     assert response.status == 404
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test-123')
+    request, response = app.test_client.get('/folder/test-123')
     assert response.status == 404
 
-    request, response = sanic_endpoint_test(app, uri='/folder/')
+    request, response = app.test_client.get('/folder/')
     assert response.status == 200
 
 
@@ -384,16 +383,16 @@ def test_dynamic_add_route_unhashable():
 
     app.add_route(handler, '/folder/<unhashable:[A-Za-z0-9/]+>/end/')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/asdf/end/')
+    request, response = app.test_client.get('/folder/test/asdf/end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test///////end/')
+    request, response = app.test_client.get('/folder/test///////end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/end/')
+    request, response = app.test_client.get('/folder/test/end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/nope/')
+    request, response = app.test_client.get('/folder/test/nope/')
     assert response.status == 404
 
 
@@ -429,10 +428,10 @@ def test_add_route_method_not_allowed():
 
     app.add_route(handler, '/test', methods=['GET'])
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, method='post', uri='/test')
+    request, response = app.test_client.post('/test')
     assert response.status == 405
 
 
@@ -448,19 +447,19 @@ def test_remove_static_route():
     app.add_route(handler1, '/test')
     app.add_route(handler2, '/test2')
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/test2')
+    request, response = app.test_client.get('/test2')
     assert response.status == 200
 
     app.remove_route('/test')
     app.remove_route('/test2')
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 404
 
-    request, response = sanic_endpoint_test(app, uri='/test2')
+    request, response = app.test_client.get('/test2')
     assert response.status == 404
 
 
@@ -472,11 +471,11 @@ def test_remove_dynamic_route():
 
     app.add_route(handler, '/folder/<name>')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    request, response = app.test_client.get('/folder/test123')
     assert response.status == 200
 
     app.remove_route('/folder/<name>')
-    request, response = sanic_endpoint_test(app, uri='/folder/test123')
+    request, response = app.test_client.get('/folder/test123')
     assert response.status == 404
 
 
@@ -495,24 +494,24 @@ def test_remove_unhashable_route():
 
     app.add_route(handler, '/folder/<unhashable:[A-Za-z0-9/]+>/end/')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/asdf/end/')
+    request, response = app.test_client.get('/folder/test/asdf/end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test///////end/')
+    request, response = app.test_client.get('/folder/test///////end/')
     assert response.status == 200
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/end/')
+    request, response = app.test_client.get('/folder/test/end/')
     assert response.status == 200
 
     app.remove_route('/folder/<unhashable:[A-Za-z0-9/]+>/end/')
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/asdf/end/')
+    request, response = app.test_client.get('/folder/test/asdf/end/')
     assert response.status == 404
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test///////end/')
+    request, response = app.test_client.get('/folder/test///////end/')
     assert response.status == 404
 
-    request, response = sanic_endpoint_test(app, uri='/folder/test/end/')
+    request, response = app.test_client.get('/folder/test/end/')
     assert response.status == 404
 
 
@@ -524,22 +523,22 @@ def test_remove_route_without_clean_cache():
 
     app.add_route(handler, '/test')
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 200
 
     app.remove_route('/test', clean_cache=True)
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 404
 
     app.add_route(handler, '/test')
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 200
 
     app.remove_route('/test', clean_cache=False)
 
-    request, response = sanic_endpoint_test(app, uri='/test')
+    request, response = app.test_client.get('/test')
     assert response.status == 200
 
 
@@ -554,16 +553,16 @@ def test_overload_routes():
     async def handler2(request):
         return text('OK2')
 
-    request, response = sanic_endpoint_test(app, 'get', uri='/overload')
+    request, response = app.test_client.get('/overload')
     assert response.text == 'OK1'
 
-    request, response = sanic_endpoint_test(app, 'post', uri='/overload')
+    request, response = app.test_client.post('/overload')
     assert response.text == 'OK2'
 
-    request, response = sanic_endpoint_test(app, 'put', uri='/overload')
+    request, response = app.test_client.put('/overload')
     assert response.text == 'OK2'
 
-    request, response = sanic_endpoint_test(app, 'delete', uri='/overload')
+    request, response = app.test_client.delete('/overload')
     assert response.status == 405
 
     with pytest.raises(RouteExists):
@@ -584,10 +583,10 @@ def test_unmergeable_overload_routes():
         async def handler2(request):
             return text('Duplicated')
 
-    request, response = sanic_endpoint_test(app, 'get', uri='/overload_whole')
+    request, response = app.test_client.get('/overload_whole')
     assert response.text == 'OK1'
 
-    request, response = sanic_endpoint_test(app, 'post', uri='/overload_whole')
+    request, response = app.test_client.post('/overload_whole')
     assert response.text == 'OK1'
 
 
@@ -600,8 +599,8 @@ def test_unmergeable_overload_routes():
         async def handler2(request):
             return text('Duplicated')
 
-    request, response = sanic_endpoint_test(app, 'get', uri='/overload_part')
+    request, response = app.test_client.get('/overload_part')
     assert response.text == 'OK1'
 
-    request, response = sanic_endpoint_test(app, 'post', uri='/overload_part')
+    request, response = app.test_client.post('/overload_part')
     assert response.status == 405

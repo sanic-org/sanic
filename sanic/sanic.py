@@ -17,6 +17,7 @@ from .response import HTTPResponse
 from .router import Router
 from .server import serve, serve_multiple, HttpProtocol
 from .static import register as static_register
+from .testing import TestClient
 from .views import CompositionView
 
 
@@ -408,6 +409,14 @@ class Sanic:
                         "An error occurred while handling an error")
 
         response_callback(response)
+
+    # -------------------------------------------------------------------- #
+    # Testing
+    # -------------------------------------------------------------------- #
+
+    @property
+    def test_client(self):
+        return TestClient(self)
 
     # -------------------------------------------------------------------- #
     # Execution

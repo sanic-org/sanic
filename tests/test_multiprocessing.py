@@ -3,7 +3,7 @@ import random
 import signal
 
 from sanic import Sanic
-from sanic.utils import HOST, PORT
+from sanic.testing import HOST, PORT
 
 
 def test_multiprocessing():

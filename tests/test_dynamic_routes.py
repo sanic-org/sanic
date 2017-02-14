@@ -1,6 +1,5 @@
 from sanic import Sanic
 from sanic.response import text
-from sanic.utils import sanic_endpoint_test
 from sanic.router import RouteExists
 import pytest
 
@@ -22,8 +21,7 @@ def test_overload_dynamic_routes(method, attr, expected):
     async def handler2(request, param):
         return text('OK2 ' + param)
 
-    request, response = sanic_endpoint_test(
-        app, method, uri='/overload/test')
+    request, response = getattr(app.test_client, method)('/overload/test')
     assert getattr(response, attr) == expected
 
 

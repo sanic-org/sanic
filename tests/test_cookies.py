@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
 from sanic import Sanic
 from sanic.response import json, text
-from sanic.utils import sanic_endpoint_test
 import pytest
 
 
@@ -19,7 +18,7 @@ def test_cookies():
         response.cookies['right_back'] = 'at you'
         return response
 
-    request, response = sanic_endpoint_test(app, cookies={"test": "working!"})
+    request, response = app.test_client.get('/', cookies={"test": "working!"})
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get('Set-Cookie', {}))
 
@@ -40,7 +39,7 @@ def test_false_cookies(httponly, expected):
         response.cookies['right_back']['httponly'] = httponly
         return response
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get('Set-Cookie', {}))
 
@@ -55,7 +54,7 @@ def test_http2_cookies():
         return response
 
     headers = {'cookie': 'test=working!'}
-    request, response = sanic_endpoint_test(app, headers=headers)
+    request, response = app.test_client.get('/', headers=headers)
 
     assert response.text == 'Cookies are: working!'
 
@@ -70,7 +69,7 @@ def test_cookie_options():
         response.cookies['test']['expires'] = datetime.now() + timedelta(seconds=10)
         return response
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get('Set-Cookie', {}))
 
@@ -88,7 +87,7 @@ def test_cookie_deletion():
         del response.cookies['i_never_existed']
         return response
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get('Set-Cookie', {}))
 

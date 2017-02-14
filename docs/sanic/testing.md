@@ -62,7 +62,7 @@ the available arguments to aiohttp can be found
 
 ### Deprecated: `sanic_endpoint_test`
 
-Prior to version 0.3.2, testing was provided through the `sanic_endpoint_test` method. This method will be deprecated in version 1.0; please use the `test_client` instead.
+Prior to version 0.3.2, testing was provided through the `sanic_endpoint_test` method. This method will be deprecated in the next major version after 0.4.0; please use the `test_client` instead.
 
 ```
 from sanic.utils import sanic_endpoint_test

@@ -1,5 +1,7 @@
 from collections import defaultdict, namedtuple
 
+from sanic.constants import HTTP_METHODS
+from sanic.views import CompositionView
 
 FutureRoute = namedtuple('Route', ['handler', 'uri', 'methods', 'host'])
 FutureListener = namedtuple('Listener', ['handler', 'uri', 'methods', 'host'])
@@ -82,15 +84,28 @@ class Blueprint:
             return handler
         return decorator
 
-    def add_route(self, handler, uri, methods=None, host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """
         Creates a blueprint route from a function.
-        :param handler: Function to handle uri request.
+        :param handler: Function for handling uri requests. Accepts function,
+                        or class instance with a view_class method.
         :param uri: Endpoint at which the route will be accessible.
         :param methods: List of acceptable HTTP methods.
+        :return: function or class instance
         """
-        route = FutureRoute(handler, uri, methods, host)
-        self.routes.append(route)
+        # Handle HTTPMethodView differently
+        if hasattr(handler, 'view_class'):
+            methods = set()
+
+            for method in HTTP_METHODS:
+                if getattr(handler.view_class, method.lower(), None):
+                    methods.add(method)
+
+        # handle composition view differently
+        if isinstance(handler, CompositionView):
+            methods = handler.handlers.keys()
+
+        self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 
     def listener(self, event):

@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 
+from sanic.constants import HTTP_METHODS
 
 FutureRoute = namedtuple('Route', ['handler', 'uri', 'methods', 'host'])
 FutureListener = namedtuple('Listener', ['handler', 'uri', 'methods', 'host'])
@@ -82,15 +83,18 @@ class Blueprint:
             return handler
         return decorator
 
-    def add_route(self, handler, uri, methods=None, host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
         """
         Creates a blueprint route from a function.
-        :param handler: Function to handle uri request.
+        :param handler: function or class instance to handle uri request.
         :param uri: Endpoint at which the route will be accessible.
         :param methods: List of acceptable HTTP methods.
+        :return: function or class instance
         """
-        route = FutureRoute(handler, uri, methods, host)
-        self.routes.append(route)
+        # Handle HTTPMethodView differently
+        if hasattr(handler, 'view_class'):
+            methods = frozenset(HTTP_METHODS)
+        self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 
     def listener(self, event):

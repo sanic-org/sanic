@@ -266,7 +266,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False):
-    """Starts asynchronous HTTP Server on an individual process.
+    """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
     :param port: Port to host on
@@ -375,8 +375,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
 
 def serve_multiple(server_settings, workers, stop_event=None):
-    """Starts multiple server processes simultaneously.  Stops on interrupt
-    and terminate signals, and drains connections when complete.
+    """Start multiple server processes simultaneously.  Stop on interrupt
+    and terminate signals, and drain connections when complete.
 
     :param server_settings: kw arguments to be passed to the serve function
     :param workers: number of workers to launch

@@ -1,7 +1,7 @@
 [run]
 branch = True
-source = sanic, tests
-omit = site-packages
+source = sanic
+omit = site-packages, sanic/utils.py
 
 [html]
 directory = coverage

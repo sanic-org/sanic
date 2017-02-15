@@ -8,3 +8,4 @@ A list of Sanic extensions created by the community.
 - [Jinja2](https://github.com/lixxu/sanic-jinja2): Support for Jinja2 template.
 - [OpenAPI/Swagger](https://github.com/channelcat/sanic-openapi): OpenAPI support, plus a Swagger UI.
 - [Websockets](https://github.com/r0fls/sanic-websockets): Minimal wrapper to work with [Websockets](https://github.com/aaugustin/websockets)
+- [Pagination](https://github.com/lixxu/python-paginate): Simple pagination support.

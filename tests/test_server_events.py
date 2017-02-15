@@ -6,7 +6,7 @@ import signal
 import pytest
 
 from sanic import Sanic
-from sanic.utils import HOST, PORT
+from sanic.testing import HOST, PORT
 
 AVAILABLE_LISTENERS = [
     'before_server_start',

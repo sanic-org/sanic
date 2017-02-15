@@ -1,6 +1,6 @@
 from sanic import Sanic
 from sanic.response import HTTPResponse
-from sanic.utils import HOST, PORT
+from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
 import pytest
 import asyncio

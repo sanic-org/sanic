@@ -2,7 +2,6 @@ from sanic import Sanic
 import asyncio
 from sanic.response import text
 from sanic.exceptions import RequestTimeout
-from sanic.utils import sanic_endpoint_test
 from sanic.config import Config
 
 Config.REQUEST_TIMEOUT = 1
@@ -22,7 +21,7 @@ def handler_exception(request, exception):
 
 
 def test_server_error_request_timeout():
-    request, response = sanic_endpoint_test(request_timeout_app, uri='/1')
+    request, response = request_timeout_app.test_client.get('/1')
     assert response.status == 408
     assert response.text == 'Request Timeout from error_handler.'
 
@@ -34,7 +33,6 @@ async def handler_2(request):
 
 
 def test_default_server_error_request_timeout():
-    request, response = sanic_endpoint_test(
-        request_timeout_default_app, uri='/1')
+    request, response = request_timeout_default_app.test_client.get('/1')
     assert response.status == 408
     assert response.text == 'Error: Request Timeout'

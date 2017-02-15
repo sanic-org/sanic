@@ -2,7 +2,6 @@ import pytest
 
 from sanic import Sanic
 from sanic.response import text, redirect
-from sanic.utils import sanic_endpoint_test
 
 
 @pytest.fixture
@@ -40,9 +39,8 @@ def test_redirect_default_302(redirect_app):
     """
     We expect a 302 default status code and the headers to be set.
     """
-    request, response = sanic_endpoint_test(
-        redirect_app, method="get",
-        uri="/redirect_init",
+    request, response = redirect_app.test_client.get(
+        '/redirect_init',
         allow_redirects=False)
 
     assert response.status == 302
@@ -51,8 +49,7 @@ def test_redirect_default_302(redirect_app):
 
 
 def test_redirect_headers_none(redirect_app):
-    request, response = sanic_endpoint_test(
-        redirect_app, method="get",
+    request, response = redirect_app.test_client.get(
         uri="/redirect_init",
         headers=None,
         allow_redirects=False)
@@ -65,9 +62,8 @@ def test_redirect_with_301(redirect_app):
     """
     Test redirection with a different status code.
     """
-    request, response = sanic_endpoint_test(
-        redirect_app, method="get",
-        uri="/redirect_init_with_301",
+    request, response = redirect_app.test_client.get(
+        "/redirect_init_with_301",
         allow_redirects=False)
 
     assert response.status == 301
@@ -78,9 +74,8 @@ def test_get_then_redirect_follow_redirect(redirect_app):
     """
     With `allow_redirects` we expect a 200.
     """
-    response = sanic_endpoint_test(
-        redirect_app, method="get",
-        uri="/redirect_init", gather_request=False,
+    request, response = redirect_app.test_client.get(
+        "/redirect_init",
         allow_redirects=True)
 
     assert response.status == 200
@@ -88,8 +83,8 @@ def test_get_then_redirect_follow_redirect(redirect_app):
 
 
 def test_chained_redirect(redirect_app):
-    """Test sanic_endpoint_test is working for redirection"""
-    request, response = sanic_endpoint_test(redirect_app, uri='/1')
+    """Test test_client is working for redirection"""
+    request, response = redirect_app.test_client.get('/1')
     assert request.url.endswith('/1')
     assert response.status == 200
     assert response.text == 'OK'

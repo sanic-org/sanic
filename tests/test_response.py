@@ -2,7 +2,6 @@ from random import choice
 
 from sanic import Sanic
 from sanic.response import HTTPResponse
-from sanic.utils import sanic_endpoint_test
 
 
 def test_response_body_not_a_string():
@@ -14,5 +13,5 @@ def test_response_body_not_a_string():
     async def hello_route(request):
         return HTTPResponse(body=random_num)
 
-    request, response = sanic_endpoint_test(app, uri='/hello')
+    request, response = app.test_client.get('/hello')
     assert response.text == str(random_num)

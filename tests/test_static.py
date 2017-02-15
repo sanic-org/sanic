@@ -4,7 +4,6 @@ import os
 import pytest
 
 from sanic import Sanic
-from sanic.utils import sanic_endpoint_test
 
 
 @pytest.fixture(scope='module')
@@ -32,7 +31,7 @@ def test_static_file(static_file_directory, file_name):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name))
 
-    request, response = sanic_endpoint_test(app, uri='/testing.file')
+    request, response = app.test_client.get('/testing.file')
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
 
@@ -44,8 +43,8 @@ def test_static_directory(file_name, base_uri, static_file_directory):
     app = Sanic('test_static')
     app.static(base_uri, static_file_directory)
 
-    request, response = sanic_endpoint_test(
-        app, uri='{}/{}'.format(base_uri, file_name))
+    request, response = app.test_client.get(
+        uri='{}/{}'.format(base_uri, file_name))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
 
@@ -57,8 +56,7 @@ def test_static_head_request(file_name, static_file_directory):
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
 
-    request, response = sanic_endpoint_test(
-        app, uri='/testing.file', method='head')
+    request, response = app.test_client.head('/testing.file')
     assert response.status == 200
     assert 'Accept-Ranges' in response.headers
     assert 'Content-Length' in response.headers
@@ -77,8 +75,7 @@ def test_static_content_range_correct(file_name, static_file_directory):
     headers = {
         'Range': 'bytes=12-19'
     }
-    request, response = sanic_endpoint_test(
-        app, uri='/testing.file', headers=headers)
+    request, response = app.test_client.get('/testing.file', headers=headers)
     assert response.status == 200
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
@@ -99,8 +96,7 @@ def test_static_content_range_front(file_name, static_file_directory):
     headers = {
         'Range': 'bytes=12-'
     }
-    request, response = sanic_endpoint_test(
-        app, uri='/testing.file', headers=headers)
+    request, response = app.test_client.get('/testing.file', headers=headers)
     assert response.status == 200
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
@@ -121,8 +117,7 @@ def test_static_content_range_back(file_name, static_file_directory):
     headers = {
         'Range': 'bytes=-12'
     }
-    request, response = sanic_endpoint_test(
-        app, uri='/testing.file', headers=headers)
+    request, response = app.test_client.get('/testing.file', headers=headers)
     assert response.status == 200
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
@@ -140,7 +135,7 @@ def test_static_content_range_empty(file_name, static_file_directory):
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
 
-    request, response = sanic_endpoint_test(app, uri='/testing.file')
+    request, response = app.test_client.get('/testing.file')
     assert response.status == 200
     assert 'Content-Length' in response.headers
     assert 'Content-Range' not in response.headers
@@ -160,8 +155,7 @@ def test_static_content_range_error(file_name, static_file_directory):
     headers = {
         'Range': 'bytes=1-0'
     }
-    request, response = sanic_endpoint_test(
-        app, uri='/testing.file', headers=headers)
+    request, response = app.test_client.get('/testing.file', headers=headers)
     assert response.status == 416
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers

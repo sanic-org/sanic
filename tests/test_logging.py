@@ -3,7 +3,6 @@ import uuid
 from sanic.response import text
 from sanic import Sanic
 from io import StringIO
-from sanic.utils import sanic_endpoint_test
 import logging
 
 logging_format = '''module: %(module)s; \
@@ -29,7 +28,7 @@ def test_log():
         log.info(rand_string)
         return text('hello')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
     log_text = log_stream.getvalue()
     assert rand_string in log_text
 

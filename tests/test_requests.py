@@ -5,7 +5,6 @@ import pytest
 from sanic import Sanic
 from sanic.exceptions import ServerError
 from sanic.response import json, text, redirect
-from sanic.utils import sanic_endpoint_test
 
 
 # ------------------------------------------------------------ #
@@ -19,7 +18,7 @@ def test_sync():
     def handler(request):
         return text('Hello')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'Hello'
 
@@ -31,7 +30,7 @@ def test_text():
     async def handler(request):
         return text('Hello')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'Hello'
 
@@ -44,7 +43,7 @@ def test_headers():
         headers = {"spam": "great"}
         return text('Hello', headers=headers)
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.headers.get('spam') == 'great'
 
@@ -57,7 +56,7 @@ def test_non_str_headers():
         headers = {"answer": 42}
         return text('Hello', headers=headers)
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.headers.get('answer') == '42'
 
@@ -72,7 +71,7 @@ def test_invalid_response():
     async def handler(request):
         return 'This should fail'
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
     assert response.status == 500
     assert response.text == "Internal Server Error."
 
@@ -84,7 +83,7 @@ def test_json():
     async def handler(request):
         return json({"test": True})
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     try:
         results = json_loads(response.text)
@@ -102,7 +101,7 @@ def test_invalid_json():
         return json(request.json())
 
     data = "I am not json"
-    request, response = sanic_endpoint_test(app, data=data)
+    request, response = app.test_client.get('/', data=data)
 
     assert response.status == 400
 
@@ -114,8 +113,8 @@ def test_query_string():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(
-        app, params=[("test1", "1"), ("test2", "false"), ("test2", "true")])
+    request, response = app.test_client.get(
+        '/', params=[("test1", "1"), ("test2", "false"), ("test2", "true")])
 
     assert request.args.get('test1') == '1'
     assert request.args.get('test2') == 'false'
@@ -135,7 +134,7 @@ def test_token():
         'Authorization': 'Token {}'.format(token)
     }
 
-    request, response = sanic_endpoint_test(app, headers=headers)
+    request, response = app.test_client.get('/', headers=headers)
 
     assert request.token == token
 
@@ -153,8 +152,8 @@ def test_post_json():
     payload = {'test': 'OK'}
     headers = {'content-type': 'application/json'}
 
-    request, response = sanic_endpoint_test(
-        app, data=json_dumps(payload), headers=headers)
+    request, response = app.test_client.get(
+        '/', data=json_dumps(payload), headers=headers)
 
     assert request.json.get('test') == 'OK'
     assert response.text == 'OK'
@@ -170,7 +169,7 @@ def test_post_form_urlencoded():
     payload = 'test=OK'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-    request, response = sanic_endpoint_test(app, data=payload, headers=headers)
+    request, response = app.test_client.get('/', data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
 
@@ -190,6 +189,6 @@ def test_post_form_multipart_form_data():
 
     headers = {'content-type': 'multipart/form-data; boundary=----sanic'}
 
-    request, response = sanic_endpoint_test(app, data=payload, headers=headers)
+    request, response = app.test_client.get(data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'

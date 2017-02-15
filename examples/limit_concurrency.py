@@ -8,6 +8,7 @@ app = Sanic(__name__)
 
 sem = None
 
+@app.listener('before_server_start')
 def init(sanic, loop):
     global sem
     CONCURRENCY_PER_WORKER = 4
@@ -33,4 +34,4 @@ async def test(request):
         return json(response)
 
 
-app.run(host="0.0.0.0", port=8000, workers=2, before_start=init)
+app.run(host="0.0.0.0", port=8000, workers=2)

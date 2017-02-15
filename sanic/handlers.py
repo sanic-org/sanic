@@ -35,8 +35,8 @@ class ErrorHandler:
         self.handlers[exception] = handler
 
     def response(self, request, exception):
-        """
-        Fetches and executes an exception handler and returns a response object
+        """Fetches and executes an exception handler and returns a response
+        object
 
         :param request: Request
         :param exception: Exception to handle
@@ -86,9 +86,7 @@ class ErrorHandler:
 
 
 class ContentRangeHandler:
-    """
-    This class is for parsing the request header
-    """
+    """Class responsible for parsing request header"""
     __slots__ = ('start', 'end', 'size', 'total', 'headers')
 
     def __init__(self, request, stats):

@@ -2,7 +2,7 @@ import logging
 import re
 import warnings
 from asyncio import get_event_loop
-from collections import deque
+from collections import deque, defaultdict
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
@@ -10,18 +10,19 @@ from urllib.parse import urlencode, urlunparse
 
 from .config import Config
 from .constants import HTTP_METHODS
-from .handlers import ErrorHandler
 from .exceptions import ServerError, URLBuildError
+from .handlers import ErrorHandler
 from .log import log
 from .response import HTTPResponse
 from .router import Router
 from .server import serve, serve_multiple, HttpProtocol
 from .static import register as static_register
+from .views import CompositionView
 
 
 class Sanic:
-    def __init__(self, name=None, router=None,
-                 error_handler=None):
+
+    def __init__(self, name=None, router=None, error_handler=None):
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
         if not logging.root.handlers and log.level == logging.NOTSET:
@@ -31,9 +32,12 @@ class Sanic:
             handler.setFormatter(formatter)
             log.addHandler(handler)
             log.setLevel(logging.INFO)
+
+        # Get name from previous stack frame
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
+
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or ErrorHandler()
@@ -44,19 +48,49 @@ class Sanic:
         self._blueprint_order = []
         self.debug = None
         self.sock = None
-        self.processes = None
+        self.listeners = defaultdict(list)
 
         # Register alternative method names
         self.go_fast = self.run
+
+    @property
+    def loop(self):
+        """Synonymous with asyncio.get_event_loop()."""
+        return get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
 
+    def add_task(self, task):
+        """Schedule a task to run later, after the loop has started.
+        Different from asyncio.ensure_future in that it does not
+        also return a future, and the actual ensure_future call
+        is delayed until before server start.
+
+        :param task: future, couroutine or awaitable
+        """
+        @self.listener('before_server_start')
+        def run(app, loop):
+            if callable(task):
+                loop.create_task(task())
+            else:
+                loop.create_task(task)
+
+    # Decorator
+    def listener(self, event):
+        """Create a listener from a decorated function.
+
+        :param event: event to listen to
+        """
+        def decorator(listener):
+            self.listeners[event].append(listener)
+            return listener
+        return decorator
+
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None):
-        """
-        Decorates a function to be registered as a route
+        """Decorate a function to be registered as a route
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
@@ -99,8 +133,7 @@ class Sanic:
         return self.route(uri, methods=frozenset({"DELETE"}), host=host)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
-        """
-        A helper method to register class instance or
+        """A helper method to register class instance or
         functions as a handler to the application url
         routes.
 
@@ -113,7 +146,16 @@ class Sanic:
         """
         # Handle HTTPMethodView differently
         if hasattr(handler, 'view_class'):
-            methods = frozenset(HTTP_METHODS)
+            methods = set()
+
+            for method in HTTP_METHODS:
+                if getattr(handler.view_class, method.lower(), None):
+                    methods.add(method)
+
+        # handle composition view differently
+        if isinstance(handler, CompositionView):
+            methods = handler.handlers.keys()
+
         self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
 
@@ -122,8 +164,7 @@ class Sanic:
 
     # Decorator
     def exception(self, *exceptions):
-        """
-        Decorates a function to be registered as a handler for exceptions
+        """Decorate a function to be registered as a handler for exceptions
 
         :param exceptions: exceptions
         :return: decorated function
@@ -137,14 +178,11 @@ class Sanic:
         return response
 
     # Decorator
-    def middleware(self, *args, **kwargs):
+    def middleware(self, middleware_or_request):
+        """Decorate and register middleware to be called before a request.
+        Can either be called as @app.middleware or @app.middleware('request')
         """
-        Decorates and registers middleware to be called before a request
-        can either be called as @app.middleware or @app.middleware('request')
-        """
-        attach_to = 'request'
-
-        def register_middleware(middleware):
+        def register_middleware(middleware, attach_to='request'):
             if attach_to == 'request':
                 self.request_middleware.append(middleware)
             if attach_to == 'response':
@@ -152,25 +190,24 @@ class Sanic:
             return middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')
-        if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
-            return register_middleware(args[0])
+        if callable(middleware_or_request):
+            return register_middleware(middleware_or_request)
+
         else:
-            attach_to = args[0]
-            return register_middleware
+            return partial(register_middleware,
+                           attach_to=middleware_or_request)
 
     # Static Files
     def static(self, uri, file_or_directory, pattern='.+',
                use_modified_since=True, use_content_range=False):
-        """
-        Registers a root to serve files from.  The input can either be a file
-        or a directory.  See
+        """Register a root to serve files from. The input can either be a
+        file or a directory. See
         """
         static_register(self, uri, file_or_directory, pattern,
                         use_modified_since, use_content_range)
 
     def blueprint(self, blueprint, **options):
-        """
-        Registers a blueprint on the application.
+        """Register a blueprint on the application.
 
         :param blueprint: Blueprint object
         :param options: option dictionary with blueprint defaults
@@ -197,7 +234,7 @@ class Sanic:
         return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
-        """Builds a URL based on a view name and the values provided.
+        """Build a URL based on a view name and the values provided.
 
         In order to build a URL, all request parameters must be supplied as
         keyword arguments, and each parameter must pass the test for the
@@ -207,7 +244,7 @@ class Sanic:
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
-        :param view_name: A string referencing the view name
+        :param view_name: string referencing the view name
         :param **kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
@@ -229,6 +266,19 @@ class Sanic:
         # find all the parameters we will need to build in the URL
         matched_params = re.findall(
             self.router.parameter_pattern, uri)
+
+        # _method is only a placeholder now, don't know how to support it
+        kwargs.pop('_method', None)
+        anchor = kwargs.pop('_anchor', '')
+        # _external need SERVER_NAME in config or pass _server arg
+        external = kwargs.pop('_external', False)
+        scheme = kwargs.pop('_scheme', '')
+        if scheme and not external:
+            raise ValueError('When specifying _scheme, _external must be True')
+
+        netloc = kwargs.pop('_server', None)
+        if netloc is None and external:
+            netloc = self.config.get('SERVER_NAME', '')
 
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(
@@ -270,12 +320,9 @@ class Sanic:
                 replacement_regex, supplied_param, out)
 
         # parse the remainder of the keyword arguments into a querystring
-        if kwargs:
-            query_string = urlencode(kwargs)
-            out = urlunparse((
-                '', '', out,
-                '', query_string, ''
-            ))
+        query_string = urlencode(kwargs, doseq=True) if kwargs else ''
+        # scheme://netloc/path;parameters?query#fragment
+        out = urlunparse((scheme, netloc, out, '', query_string, anchor))
 
         return out
 
@@ -287,9 +334,8 @@ class Sanic:
         pass
 
     async def handle_request(self, request, response_callback):
-        """
-        Takes a request from the HTTP Server and returns a response object to
-        be sent back The HTTP Server only expects a response object, so
+        """Take a request from the HTTP Server and return a response object
+        to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
 
         :param request: HTTP Request object
@@ -371,9 +417,8 @@ class Sanic:
             after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=HttpProtocol,
             backlog=100, stop_event=None, register_sys_signals=True):
-        """
-        Runs the HTTP Server and listens until keyboard interrupt or term
-        signal. On termination, drains connections before closing.
+        """Run the HTTP Server and listen until keyboard interrupt or term
+        signal. On termination, drain connections before closing.
 
         :param host: Address to host on
         :param port: Port to host on
@@ -403,6 +448,7 @@ class Sanic:
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
             stop_event=stop_event, register_sys_signals=register_sys_signals)
+
         try:
             if workers == 1:
                 serve(**server_settings)
@@ -422,9 +468,7 @@ class Sanic:
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=HttpProtocol,
                             backlog=100, stop_event=None):
-        """
-        Asynchronous version of `run`.
-        """
+        """Asynchronous version of `run`."""
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
@@ -445,9 +489,7 @@ class Sanic:
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
                 register_sys_signals=True, run_async=False):
-        """
-        Helper function used by `run` and `create_server`.
-        """
+        """Helper function used by `run` and `create_server`."""
 
         if loop is not None:
             if debug:
@@ -457,9 +499,19 @@ class Sanic:
                           "pull/335 has more information.",
                           DeprecationWarning)
 
+        # Deprecate this
+        if any(arg is not None for arg in (after_stop, after_start,
+                                           before_start, before_stop)):
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("Passing a before_start, before_stop, after_start or"
+                          "after_stop callback will be deprecated in next "
+                          "major version after 0.4.0",
+                          DeprecationWarning)
+
         self.error_handler.debug = debug
         self.debug = debug
-        self.loop = loop = get_event_loop()
+        loop = self.loop
 
         server_settings = {
             'protocol': protocol,
@@ -481,19 +533,18 @@ class Sanic:
         # Register start/stop events
         # -------------------------------------------- #
 
-        for event_name, settings_name, args, reverse in (
-                ("before_server_start", "before_start", before_start, False),
-                ("after_server_start", "after_start", after_start, False),
-                ("before_server_stop", "before_stop", before_stop, True),
-                ("after_server_stop", "after_stop", after_stop, True),
+        for event_name, settings_name, reverse, args in (
+                ("before_server_start", "before_start", False, before_start),
+                ("after_server_start", "after_start", False, after_start),
+                ("before_server_stop", "before_stop", True, before_stop),
+                ("after_server_stop", "after_stop", True, after_stop),
         ):
-            listeners = []
-            for blueprint in self.blueprints.values():
-                listeners += blueprint.listeners[event_name]
+            listeners = self.listeners[event_name].copy()
             if args:
                 if callable(args):
-                    args = [args]
-                listeners += args
+                    listeners.append(args)
+                else:
+                    listeners.extend(args)
             if reverse:
                 listeners.reverse()
             # Prepend sanic to the arguments when listeners are triggered

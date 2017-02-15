@@ -1,8 +1,9 @@
 import pytest as pytest
 
 from sanic import Sanic
+from sanic.exceptions import InvalidUsage
 from sanic.response import text, HTTPResponse
-from sanic.views import HTTPMethodView
+from sanic.views import HTTPMethodView, CompositionView
 from sanic.blueprints import Blueprint
 from sanic.request import Request
 from sanic.utils import sanic_endpoint_test
@@ -196,3 +197,65 @@ def test_with_decorator():
     request, response = sanic_endpoint_test(app, method="get")
     assert response.text == 'I am get method'
     assert results[0] == 1
+
+
+def test_composition_view_rejects_incorrect_methods():
+    def foo(request):
+        return text('Foo')
+
+    view = CompositionView()
+
+    with pytest.raises(InvalidUsage) as e:
+        view.add(['GET', 'FOO'], foo)
+
+    assert str(e.value) == 'FOO is not a valid HTTP method.'
+
+
+def test_composition_view_rejects_duplicate_methods():
+    def foo(request):
+        return text('Foo')
+
+    view = CompositionView()
+
+    with pytest.raises(InvalidUsage) as e:
+        view.add(['GET', 'POST', 'GET'], foo)
+
+    assert str(e.value) == 'Method GET is already registered.'
+
+
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_composition_view_runs_methods_as_expected(method):
+    app = Sanic('test_composition_view')
+
+    view = CompositionView()
+    view.add(['GET', 'POST', 'PUT'], lambda x: text('first method'))
+    view.add(['DELETE', 'PATCH'], lambda x: text('second method'))
+
+    app.add_route(view, '/')
+
+    if method in ['GET', 'POST', 'PUT']:
+        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        assert response.text == 'first method'
+
+    if method in ['DELETE', 'PATCH']:
+        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        assert response.text == 'second method'
+
+
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_composition_view_rejects_invalid_methods(method):
+    app = Sanic('test_composition_view')
+
+    view = CompositionView()
+    view.add(['GET', 'POST', 'PUT'], lambda x: text('first method'))
+
+    app.add_route(view, '/')
+
+    if method in ['GET', 'POST', 'PUT']:
+        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        assert response.status == 200
+        assert response.text == 'first method'
+
+    if method in ['DELETE', 'PATCH']:
+        request, response = sanic_endpoint_test(app, uri='/', method=method)
+        assert response.status == 405

@@ -39,8 +39,7 @@ _is_legal_key = re.compile('[%s]+' % re.escape(_LegalChars)).fullmatch
 
 
 class CookieJar(dict):
-    """
-    CookieJar dynamically writes headers as cookies are added and removed
+    """CookieJar dynamically writes headers as cookies are added and removed
     It gets around the limitation of one header per name by using the
     MultiHeader class to provide a unique key that encodes to Set-Cookie.
     """
@@ -75,9 +74,7 @@ class CookieJar(dict):
 
 
 class Cookie(dict):
-    """
-    This is a stripped down version of Morsel from SimpleCookie #gottagofast
-    """
+    """A stripped down version of Morsel from SimpleCookie #gottagofast"""
     _keys = {
         "expires": "expires",
         "path": "Path",
@@ -128,9 +125,8 @@ class Cookie(dict):
 
 
 class MultiHeader:
-    """
-    Allows us to set a header within response that has a unique key,
-    but may contain duplicate header names
+    """String-holding object which allow us to set a header within response
+    that has a unique key, but may contain duplicate header names
     """
     def __init__(self, name):
         self.name = name

@@ -6,7 +6,11 @@ PORT = 42101
 
 
 async def local_request(method, uri, cookies=None, *args, **kwargs):
-    url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
+    if uri.startswith(('http:', 'https:', 'ftp:', 'ftps://' '//')):
+        url = uri
+    else:
+        url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=uri)
+
     log.info(url)
     async with aiohttp.ClientSession(cookies=cookies) as session:
         async with getattr(
@@ -17,8 +21,8 @@ async def local_request(method, uri, cookies=None, *args, **kwargs):
 
 
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
-                        debug=False, server_kwargs={},
-                        *request_args, **request_kwargs):
+                        debug=False, server_kwargs={}, *request_args,
+                        **request_kwargs):
     results = [None, None]
     exceptions = []
 
@@ -28,6 +32,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
                 results[0] = request
         app.request_middleware.appendleft(_collect_request)
 
+    @app.listener('after_server_start')
     async def _collect_response(sanic, loop):
         try:
             response = await local_request(method, uri, *request_args,
@@ -37,8 +42,8 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
             exceptions.append(e)
         app.stop()
 
-    app.run(host=HOST, debug=debug, port=PORT,
-            after_start=_collect_response, **server_kwargs)
+    app.run(host=HOST, debug=debug, port=PORT, **server_kwargs)
+    app.listeners['after_server_start'].pop()
 
     if exceptions:
         raise ValueError("Exception during request: {}".format(exceptions))

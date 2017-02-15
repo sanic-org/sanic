@@ -33,8 +33,7 @@ class Signal:
 
 
 class CIDict(dict):
-    """
-    Case Insensitive dict where all keys are converted to lowercase
+    """Case Insensitive dict where all keys are converted to lowercase
     This does not maintain the inputted case when calling items() or keys()
     in favor of speed, since headers are case insensitive
     """
@@ -228,8 +227,8 @@ class HttpProtocol(asyncio.Protocol):
         self._total_request_size = 0
 
     def close_if_idle(self):
-        """
-        Close the connection if a request is not being sent or received
+        """Close the connection if a request is not being sent or received
+
         :return: boolean - True if closed, false if staying open
         """
         if not self.parser:
@@ -239,9 +238,8 @@ class HttpProtocol(asyncio.Protocol):
 
 
 def update_current_time(loop):
-    """
-    Caches the current time, since it is needed
-    at the end of every keep-alive request to update the request timeout time
+    """Cache the current time, since it is needed at the end of every
+    keep-alive request to update the request timeout time
 
     :param loop:
     :return:
@@ -252,17 +250,15 @@ def update_current_time(loop):
 
 
 def trigger_events(events, loop):
-    """
+    """Trigger event callbacks (functions or async)
+
     :param events: one or more sync or async functions to execute
     :param loop: event loop
     """
-    if events:
-        if not isinstance(events, list):
-            events = [events]
-        for event in events:
-            result = event(loop)
-            if isawaitable(result):
-                loop.run_until_complete(result)
+    for event in events:
+        result = event(loop)
+        if isawaitable(result):
+            loop.run_until_complete(result)
 
 
 def serve(host, port, request_handler, error_handler, before_start=None,
@@ -270,31 +266,30 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False):
-    """
-    Starts asynchronous HTTP Server on an individual process.
+    """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
     :param port: Port to host on
     :param request_handler: Sanic request handler with middleware
     :param error_handler: Sanic error handler with middleware
-    :param before_start: Function to be executed before the server starts
+    :param before_start: function to be executed before the server starts
                          listening. Takes arguments `app` instance and `loop`
-    :param after_start: Function to be executed after the server starts
+    :param after_start: function to be executed after the server starts
                         listening. Takes  arguments `app` instance and `loop`
-    :param before_stop: Function to be executed when a stop signal is
+    :param before_stop: function to be executed when a stop signal is
                         received before it is respected. Takes arguments
                         `app` instance and `loop`
-    :param after_stop: Function to be executed when a stop signal is
+    :param after_stop: function to be executed when a stop signal is
                        received after it is respected. Takes arguments
                         `app` instance and `loop`
-    :param debug: Enables debug output (slows server)
+    :param debug: enables debug output (slows server)
     :param request_timeout: time in seconds
     :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
-    :param protocol: Subclass of asyncio protocol class
+    :param protocol: subclass of asyncio protocol class
     :return: Nothing
     """
     if not run_async:
@@ -349,9 +344,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:
-                log.warn(('Sanic tried to use loop.add_signal_handler')
-                         ('but it is not implemented on this platform.'))
-
+                log.warn('Sanic tried to use loop.add_signal_handler but it is'
+                         ' not implemented on this platform.')
     pid = os.getpid()
     try:
         log.info('Starting worker [{}]'.format(pid))
@@ -380,9 +374,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
 
 def serve_multiple(server_settings, workers, stop_event=None):
-    """
-    Starts multiple server processes simultaneously.  Stops on interrupt
-    and terminate signals, and drains connections when complete.
+    """Start multiple server processes simultaneously.  Stop on interrupt
+    and terminate signals, and drain connections when complete.
 
     :param server_settings: kw arguments to be passed to the serve function
     :param workers: number of workers to launch

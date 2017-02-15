@@ -1,8 +1,9 @@
 from .exceptions import InvalidUsage
+from .constants import HTTP_METHODS
 
 
 class HTTPMethodView:
-    """ Simple class based implementation of view for the sanic.
+    """Simple class based implementation of view for the sanic.
     You should implement methods (get, post, put, patch, delete) for the class
     to every HTTP method you want to support.
 
@@ -40,17 +41,12 @@ class HTTPMethodView:
 
     def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)
-        if handler:
-            return handler(request, *args, **kwargs)
-        raise InvalidUsage(
-            'Method {} not allowed for URL {}'.format(
-                request.method, request.url), status_code=405)
+        return handler(request, *args, **kwargs)
 
     @classmethod
     def as_view(cls, *class_args, **class_kwargs):
-        """ Converts the class into an actual view function that can be used
-        with the routing system.
-
+        """Return view function for use with the routing system, that
+        dispatches request to appropriate handler method.
         """
         def view(*args, **kwargs):
             self = view.view_class(*class_args, **class_kwargs)
@@ -69,7 +65,7 @@ class HTTPMethodView:
 
 
 class CompositionView:
-    """ Simple method-function mapped view for the sanic.
+    """Simple method-function mapped view for the sanic.
     You can add handler functions to methods (get, post, put, patch, delete)
     for every HTTP method you want to support.
 
@@ -89,15 +85,15 @@ class CompositionView:
 
     def add(self, methods, handler):
         for method in methods:
+            if method not in HTTP_METHODS:
+                raise InvalidUsage(
+                    '{} is not a valid HTTP method.'.format(method))
+
             if method in self.handlers:
-                raise KeyError(
-                    'Method {} already is registered.'.format(method))
+                raise InvalidUsage(
+                    'Method {} is already registered.'.format(method))
             self.handlers[method] = handler
 
     def __call__(self, request, *args, **kwargs):
-        handler = self.handlers.get(request.method.upper(), None)
-        if handler is None:
-            raise InvalidUsage(
-                'Method {} not allowed for URL {}'.format(
-                    request.method, request.url), status_code=405)
+        handler = self.handlers[request.method.upper()]
         return handler(request, *args, **kwargs)

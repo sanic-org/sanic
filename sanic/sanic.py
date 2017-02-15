@@ -398,6 +398,8 @@ class Sanic:
                 response = self.error_handler.response(request, e)
                 if isawaitable(response):
                     response = await response
+
+                log.exception(e)
             except Exception as e:
                 if self.debug:
                     response = HTTPResponse(

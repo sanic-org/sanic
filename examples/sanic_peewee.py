@@ -10,8 +10,9 @@ from sanic.response import json
 
 ## peewee_async related imports
 import peewee
-from peewee_async import Manager, PostgresqlDatabase
-
+from peewee import Model, BaseModel
+from peewee_async import Manager, PostgresqlDatabase, execute
+from functools import partial
  # we instantiate a custom loop so we can pass it to our db manager
 
 ## from peewee_async docs:
@@ -19,42 +20,77 @@ from peewee_async import Manager, PostgresqlDatabase
 # with manager! It’s all automatic. But you can run Manager.connect() or
 # Manager.close() when you need it.
 
+class AsyncManager(Manager):
+    """Inherit the peewee_async manager with our own object
+       configuration
 
-# let's create a simple key value store:
-class KeyValue(peewee.Model):
-    key = peewee.CharField(max_length=40, unique=True)
-    text = peewee.TextField(default='')
+       database.allow_sync = False
+    """
 
-    class Meta:
-        database = database
+    def __init__(self, _model_class, *args, **kwargs):
+        super(AsyncManager, self).__init__(*args, **kwargs)
+        self._model_class = _model_class
+        self.database.allow_sync = False
 
-# create table synchronously
-KeyValue.create_table(True)
+    def _do_fill(self, method, *args, **kwargs):
+        _class_method = getattr(super(AsyncManager, self), method)
+        pf = partial(_class_method, self._model_class)
+        return pf(*args, **kwargs)
 
-# OPTIONAL: close synchronous connection
-database.close()
+    def new(self, *args, **kwargs):
+        return self._do_fill('create', *args, **kwargs)
 
-# OPTIONAL: disable any future syncronous calls
-objects.database.allow_sync = False # this will raise AssertionError on ANY sync call
+    def get(self, *args, **kwargs):
+        return self._do_fill('get', *args, **kwargs)
+
+    def execute(self, query):
+        return execute(query)
 
 
-app = Sanic('peewee_example')
+def _get_meta_db_class(db):
+    """creating a declartive class model for db"""
+    class _BlockedMeta(BaseModel):
+        def __new__(cls, name, bases, attrs):
+            _instance = super(_BlockedMeta, cls).__new__(cls, name, bases, attrs)
+            _instance.objects = AsyncManager(_instance, db)
+            return _instance
 
-@app.listener('before_server_start')
-def setup(app, loop):
-    database = PostgresqlDatabase(database='test',
+    class _Base(Model, metaclass=_BlockedMeta):
+
+        def to_dict(self):
+            return self._data
+
+        class Meta:
+            database=db
+    return _Base
+
+
+def declarative_base(*args, **kwargs):
+    """Returns a new Modeled Class after inheriting meta and Model classes"""
+    db = PostgresqlDatabase(*args, **kwargs)
+    return _get_meta_db_class(db)
+
+
+AsyncBaseModel = declarative_base(database='test',
                                   host='127.0.0.1',
                                   user='postgres',
                                   password='mysecretpassword')
 
-    objects = Manager(database, loop=loop)
+# let's create a simple key value store:
+class KeyValue(AsyncBaseModel):
+    key = peewee.CharField(max_length=40, unique=True)
+    text = peewee.TextField(default='')
+
+
+app = Sanic('peewee_example')
+
 
 @app.route('/post/<key>/<value>')
 async def post(request, key, value):
     """
     Save get parameters to database
     """
-    obj = await objects.create(KeyValue, key=key, text=value)
+    obj = await KeyValue.objects.create(key=key, text=value)
     return json({'object_id': obj.id})
 
 
@@ -63,7 +99,7 @@ async def get(request):
     """
     Load all objects from database
     """
-    all_objects = await objects.execute(KeyValue.select())
+    all_objects = await KeyValue.objects.execute(KeyValue.select())
     serialized_obj = []
     for obj in all_objects:
         serialized_obj.append({

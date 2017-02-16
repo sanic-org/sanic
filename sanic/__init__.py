@@ -1,4 +1,4 @@
-from .sanic import Sanic
+from .app import Sanic
 from .blueprints import Blueprint
 
 __version__ = '0.3.1'

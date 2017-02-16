@@ -4,7 +4,7 @@ from ujson import dumps as json_dumps
 
 from aiofiles import open as open_async
 
-from .cookies import CookieJar
+from sanic.cookies import CookieJar
 
 COMMON_STATUS_CODES = {
     200: b'OK',

@@ -1,5 +1,5 @@
-from .exceptions import InvalidUsage
-from .constants import HTTP_METHODS
+from sanic.exceptions import InvalidUsage
+from sanic.constants import HTTP_METHODS
 
 
 class HTTPMethodView:

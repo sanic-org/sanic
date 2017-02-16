@@ -1,8 +1,9 @@
 import re
 from collections import defaultdict, namedtuple
 from functools import lru_cache
-from .exceptions import NotFound, InvalidUsage
-from .views import CompositionView
+
+from sanic.exceptions import NotFound, InvalidUsage
+from sanic.views import CompositionView
 
 Route = namedtuple(
     'Route',

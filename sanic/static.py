@@ -6,10 +6,14 @@ from urllib.parse import unquote
 
 from aiofiles.os import stat
 
-from .exceptions import FileNotFound, InvalidUsage, ContentRangeError
-from .exceptions import HeaderNotFound
-from .handlers import ContentRangeHandler
-from .response import file, HTTPResponse
+from sanic.exceptions import (
+    ContentRangeError,
+    FileNotFound,
+    HeaderNotFound,
+    InvalidUsage,
+)
+from sanic.handlers import ContentRangeHandler
+from sanic.response import file, HTTPResponse
 
 
 def register(app, uri, file_or_directory, pattern,

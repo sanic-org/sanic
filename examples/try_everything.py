@@ -1,6 +1,8 @@
+import os
+
 from sanic import Sanic
 from sanic.log import log
-from sanic.response import json, text
+from sanic.response import json, text, file
 from sanic.exceptions import ServerError
 
 app = Sanic(__name__)
@@ -30,6 +32,10 @@ async def test_await(request):
     import asyncio
     await asyncio.sleep(5)
     return text("I'm feeling sleepy")
+
+@app.route("/file")
+async def test_file(request):
+    return await file(os.path.abspath("setup.py"))
 
 
 # ----------------------------------------------- #

@@ -1,4 +1,3 @@
-from datetime import datetime
 import re
 import string
 
@@ -104,13 +103,19 @@ class Cookie(dict):
     def encode(self, encoding):
         output = ['%s=%s' % (self.key, _quote(self.value))]
         for key, value in self.items():
-            if key == 'max-age' and isinstance(value, int):
-                output.append('%s=%d' % (self._keys[key], value))
-            elif key == 'expires' and isinstance(value, datetime):
-                output.append('%s=%s' % (
-                    self._keys[key],
-                    value.strftime("%a, %d-%b-%Y %T GMT")
-                ))
+            if key == 'max-age':
+                try:
+                    output.append('%s=%d' % (self._keys[key], value))
+                except TypeError:
+                    output.append('%s=%s' % (self._keys[key], value))
+            elif key == 'expires':
+                try:
+                    output.append('%s=%s' % (
+                        self._keys[key],
+                        value.strftime("%a, %d-%b-%Y %T GMT")
+                    ))
+                except AttributeError:
+                    output.append('%s=%s' % (self._keys[key], value))
             elif key in self._flags:
                 if self[key]:
                     output.append(self._keys[key])

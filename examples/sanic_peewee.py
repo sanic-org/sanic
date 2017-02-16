@@ -1,3 +1,4 @@
+
 ## You need the following additional packages for this example
 # aiopg
 # peewee_async
@@ -90,7 +91,7 @@ async def post(request, key, value):
     """
     Save get parameters to database
     """
-    obj = await KeyValue.objects.create(key=key, text=value)
+    obj = await KeyValue.objects.new(key=key, text=value)
     return json({'object_id': obj.id})
 
 

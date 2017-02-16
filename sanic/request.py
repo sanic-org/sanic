@@ -3,11 +3,13 @@ from collections import namedtuple
 from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
-
-from ujson import loads as json_loads
-
 from sanic.exceptions import InvalidUsage
-from sanic.log import log
+try:
+    from ujson import loads as json_loads
+except ImportError:
+    from json import loads as json_loads
+
+from .log import log
 
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"

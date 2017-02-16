@@ -4,7 +4,10 @@ from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs
 
-from ujson import loads as json_loads
+try:
+    from ujson import loads as json_loads
+except ImportError:
+    from json import loads as json_loads
 
 from sanic.exceptions import InvalidUsage
 from sanic.log import log

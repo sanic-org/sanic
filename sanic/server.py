@@ -346,7 +346,6 @@ def serve(host, port, request_handler, error_handler, before_start=None,
             except NotImplementedError:
                 log.warn('Sanic tried to use loop.add_signal_handler but it is'
                          ' not implemented on this platform.')
-
     pid = os.getpid()
     try:
         log.info('Starting worker [{}]'.format(pid))

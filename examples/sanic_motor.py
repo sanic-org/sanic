@@ -4,13 +4,10 @@ pymongo==3.4.0
 motor==1.1
 sanic==0.2.0
 """
-import asyncio
-import uvloop
 from sanic import Sanic
 from sanic.response import json
 
 
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 app = Sanic('motor_mongodb')
 
 

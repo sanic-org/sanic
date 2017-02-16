@@ -119,8 +119,7 @@ class Request(dict):
                 self.parsed_args = RequestParameters(
                     parse_qs(self.query_string))
             else:
-                self.parsed_args = {}
-
+                self.parsed_args = RequestParameters()
         return self.parsed_args
 
     @property

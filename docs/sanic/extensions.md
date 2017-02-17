@@ -11,3 +11,4 @@ A list of Sanic extensions created by the community.
 - [Pagination](https://github.com/lixxu/python-paginate): Simple pagination support.
 - [Motor](https://github.com/lixxu/sanic-motor): Simple motor wrapper.
 - [Sanic CRUD](https://github.com/Typhon66/sanic_crud): CRUD REST API generation with peewee models.
+- [UserAgent](https://github.com/lixxu/sanic-useragent): Add `user_agent` to request

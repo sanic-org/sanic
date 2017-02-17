@@ -527,7 +527,6 @@ class Sanic:
 
         self.error_handler.debug = debug
         self.debug = debug
-        loop = self.loop
 
         server_settings = {
             'protocol': protocol,

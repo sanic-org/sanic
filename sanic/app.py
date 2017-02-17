@@ -485,12 +485,6 @@ class Sanic:
             protocol=protocol, backlog=backlog, stop_event=stop_event,
             run_async=True)
 
-        # Serve
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
-
         return await serve(**server_settings)
 
     def _helper(self, host="127.0.0.1", port=8000, debug=False,

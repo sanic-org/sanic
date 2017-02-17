@@ -185,7 +185,8 @@ class HttpProtocol(asyncio.Protocol):
                     self.request.ip))
         except Exception as e:
             self.bail_out(
-                "Writing response failed, connection closed {}".format(e))
+                "Writing response failed, connection closed {}".format(
+                    repr(e)))
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -202,10 +203,10 @@ class HttpProtocol(asyncio.Protocol):
         except RuntimeError:
             log.error(
                 'Connection lost before error written @ {}'.format(
-                    self.request.ip))
+                    self.request.ip if self.request else 'Unknown'))
         except Exception as e:
             self.bail_out(
-                "Writing error failed, connection closed {}".format(e),
+                "Writing error failed, connection closed {}".format(repr(e)),
                 from_error=True)
         finally:
             self.transport.close()

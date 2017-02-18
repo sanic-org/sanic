@@ -10,7 +10,7 @@ from urllib.parse import urlencode, urlunparse
 
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import ServerError, URLBuildError
+from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.log import log
 from sanic.response import HTTPResponse
@@ -50,13 +50,21 @@ class Sanic:
         self.debug = None
         self.sock = None
         self.listeners = defaultdict(list)
+        self.is_running = False
 
         # Register alternative method names
         self.go_fast = self.run
 
     @property
     def loop(self):
-        """Synonymous with asyncio.get_event_loop()."""
+        """Synonymous with asyncio.get_event_loop().
+
+        Only supported when using the `app.run` method.
+        """
+        if not self.is_running:
+            raise SanicException(
+                'Loop can only be retrieved after the app has started '
+                'running. Not supported with `create_server` function')
         return get_event_loop()
 
     # -------------------------------------------------------------------- #
@@ -459,13 +467,16 @@ class Sanic:
             stop_event=stop_event, register_sys_signals=register_sys_signals)
 
         try:
+            self.is_running = True
             if workers == 1:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers, stop_event)
-        except Exception as e:
+        except:
             log.exception(
                 'Experienced exception while trying to serve')
+        finally:
+            self.is_running = False
         log.info("Server Stopped")
 
     def stop(self):
@@ -477,12 +488,17 @@ class Sanic:
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=HttpProtocol,
                             backlog=100, stop_event=None):
-        """Asynchronous version of `run`."""
+        """Asynchronous version of `run`.
+
+        NOTE: This does not support multiprocessing and is not the preferred
+              way to run a Sanic application.
+        """
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
-            after_stop=after_stop, ssl=ssl, sock=sock, loop=loop,
-            protocol=protocol, backlog=backlog, stop_event=stop_event,
+            after_stop=after_stop, ssl=ssl, sock=sock,
+            loop=loop or get_event_loop(), protocol=protocol,
+            backlog=backlog, stop_event=stop_event,
             run_async=True)
 
         return await serve(**server_settings)
@@ -514,7 +530,6 @@ class Sanic:
 
         self.error_handler.debug = debug
         self.debug = debug
-        loop = self.loop
 
         server_settings = {
             'protocol': protocol,

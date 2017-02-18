@@ -57,11 +57,14 @@ class Sanic:
 
     @property
     def loop(self):
-        """Synonymous with asyncio.get_event_loop()."""
+        """Synonymous with asyncio.get_event_loop().
+
+        Only supported when using the `app.run` method.
+        """
         if not self.is_running:
             raise SanicException(
                 'Loop can only be retrieved after the app has started '
-                'running or when not run asynchronously')
+                'running. Not supported with `create_server` function')
         return get_event_loop()
 
     # -------------------------------------------------------------------- #

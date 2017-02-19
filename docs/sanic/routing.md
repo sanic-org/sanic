@@ -64,9 +64,9 @@ async def folder_handler(request, folder_id):
 
 ## HTTP request types
 
-By default, a route defined on a URL will be avaialble for only GET requests to that URL.
+By default, a route defined on a URL will be available for only GET requests to that URL.
 However, the `@app.route` decorator accepts an optional parameter, `methods`,
-whicl allows the handler function to work with any of the HTTP methods in the list.
+which allows the handler function to work with any of the HTTP methods in the list.
 
 ```python
 from sanic.response import text

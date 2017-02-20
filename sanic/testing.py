@@ -1,7 +1,18 @@
 from sanic.log import log
+from functools import partial
 
 HOST = '127.0.0.1'
 PORT = 42101
+
+SUPPORTED_METHODS = [
+    'get',
+    'post',
+    'put',
+    'delete',
+    'patch',
+    'options',
+    'head',
+]
 
 
 class TestClient:
@@ -69,23 +80,8 @@ class TestClient:
                 raise ValueError(
                     "Request object expected, got ({})".format(results))
 
-    def get(self, *args, **kwargs):
-        return self._sanic_endpoint_test('get', *args, **kwargs)
-
-    def post(self, *args, **kwargs):
-        return self._sanic_endpoint_test('post', *args, **kwargs)
-
-    def put(self, *args, **kwargs):
-        return self._sanic_endpoint_test('put', *args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        return self._sanic_endpoint_test('delete', *args, **kwargs)
-
-    def patch(self, *args, **kwargs):
-        return self._sanic_endpoint_test('patch', *args, **kwargs)
-
-    def options(self, *args, **kwargs):
-        return self._sanic_endpoint_test('options', *args, **kwargs)
-
-    def head(self, *args, **kwargs):
-        return self._sanic_endpoint_test('head', *args, **kwargs)
+    def __getattr__(self, attr, *args, **kwargs):
+        if attr in SUPPORTED_METHODS:
+            return partial(self._sanic_endpoint_test, attr, *args, **kwargs)
+        else:
+            raise AttributeError

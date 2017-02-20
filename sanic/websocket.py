@@ -1,18 +1,19 @@
+from sanic.exceptions import InvalidUsage
 from sanic.server import HttpProtocol
 from httptools import HttpParserUpgrade
-from websockets import handshake, WebSocketCommonProtocol
+from websockets import handshake, WebSocketCommonProtocol, InvalidHandshake
 from websockets import ConnectionClosed  # noqa
 
 
 class WebSocketProtocol(HttpProtocol):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ws = None
+        self.websocket = None
 
     def data_received(self, data):
-        if self.ws is not None:
+        if self.websocket is not None:
             # pass the data to the websocket protocol
-            self.ws.data_received(data)
+            self.websocket.data_received(data)
         else:
             try:
                 super().data_received(data)
@@ -21,7 +22,7 @@ class WebSocketProtocol(HttpProtocol):
                 pass
 
     def write_response(self, response):
-        if self.ws is not None:
+        if self.websocket is not None:
             # websocket requests do not write a response
             self.transport.close()
         else:
@@ -37,8 +38,11 @@ class WebSocketProtocol(HttpProtocol):
         def set_header(k, v):
             headers.append((k, v))
 
-        key = handshake.check_request(get_header)
-        handshake.build_response(set_header, key)
+        try:
+            key = handshake.check_request(get_header)
+            handshake.build_response(set_header, key)
+        except InvalidHandshake:
+            raise InvalidUsage('Invalid websocket request')
 
         # write the 101 response back to the client
         rv = b'HTTP/1.1 101 Switching Protocols\r\n'
@@ -48,6 +52,6 @@ class WebSocketProtocol(HttpProtocol):
         request.transport.write(rv)
 
         # hook up the websocket protocol
-        self.ws = WebSocketCommonProtocol()
-        self.ws.connection_made(request.transport)
-        return self.ws
+        self.websocket = WebSocketCommonProtocol()
+        self.websocket.connection_made(request.transport)
+        return self.websocket

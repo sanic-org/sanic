@@ -9,7 +9,7 @@ async def index(request):
     return await file('websocket.html')
 
 
-@app.ws('/feed')
+@app.websocket('/feed')
 async def feed(request, ws):
     while True:
         data = 'hello!'

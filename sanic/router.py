@@ -96,6 +96,20 @@ class Router:
         return name, _type, pattern
 
     def add(self, uri, methods, handler, host=None):
+        # add regular version
+        self._add(uri, methods, handler, host)
+        slash_is_missing = (not uri[-1].endswith('/')
+                            and not self.routes_all.get(uri + '/', False))
+        without_slash_is_missing = (not self.routes_all.get(uri[:-1], False)
+                                    and uri is not '/')
+        # add version with trailing slash
+        if slash_is_missing:
+            self._add(uri + '/', methods, handler, host)
+        # add version without trailing slash
+        elif without_slash_is_missing:
+            self._add(uri[:-1], methods, handler, host)
+
+    def _add(self, uri, methods, handler, host=None):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -105,7 +119,6 @@ class Router:
             When executed, it should provide a response object.
         :return: Nothing
         """
-
         if host is not None:
             if isinstance(host, str):
                 uri = host + uri

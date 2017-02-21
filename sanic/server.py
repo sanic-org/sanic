@@ -21,6 +21,7 @@ except ImportError:
 
 from sanic.log import log
 from sanic.request import Request
+from sanic.response import StreamingHTTPResponse
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
 
@@ -159,20 +160,29 @@ class HttpProtocol(asyncio.Protocol):
     def on_message_complete(self):
         if self.request.body:
             self.request.body = b''.join(self.request.body)
+
         self._request_handler_task = self.loop.create_task(
             self.request_handler(self.request, self.write_response))
 
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
-
-    def write_response(self, response):
-        keep_alive = (
-            self.parser.should_keep_alive() and not self.signal.stopped)
+    async def write_response(self, response):
         try:
-            self.transport.write(
-                response.output(
-                    self.request.version, keep_alive, self.request_timeout))
+            keep_alive = (
+                self.parser.should_keep_alive() and not self.signal.stopped)
+
+            if isinstance(response, StreamingHTTPResponse):
+                # streaming responses should have direct write access to the
+                # transport
+                response.transport = self.transport
+                await response.stream(
+                    self.request.version, keep_alive, self.request_timeout)
+            else:
+                self.transport.write(
+                    response.output(
+                        self.request.version, keep_alive,
+                        self.request_timeout))
         except AttributeError:
             log.error(
                 ('Invalid response object for url {}, '
@@ -191,7 +201,6 @@ class HttpProtocol(asyncio.Protocol):
             if not keep_alive:
                 self.transport.close()
             else:
-                # Record that we received data
                 self._last_request_time = current_time
                 self.cleanup()
 

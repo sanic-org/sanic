@@ -416,7 +416,7 @@ class Sanic:
                     response = HTTPResponse(
                         "An error occurred while handling an error")
 
-        response_callback(response)
+        await response_callback(response)
 
     # -------------------------------------------------------------------- #
     # Testing

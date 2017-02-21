@@ -1,5 +1,7 @@
+import asyncio
 from mimetypes import guess_type
 from os import path
+from inspect import isawaitable
 from ujson import dumps as json_dumps
 
 from aiofiles import open as open_async
@@ -73,37 +75,16 @@ ALL_STATUS_CODES = {
 }
 
 
-class HTTPResponse:
-    __slots__ = ('body', 'status', 'content_type', 'headers', '_cookies')
+class BaseHTTPResponse:
+    def _encode_body(self, data):
+        try:
+            # Try to encode it regularly
+            return data.encode()
+        except AttributeError:
+            # Convert it to a str if you can't
+            return str(data).encode()
 
-    def __init__(self, body=None, status=200, headers=None,
-                 content_type='text/plain', body_bytes=b''):
-        self.content_type = content_type
-
-        if body is not None:
-            try:
-                # Try to encode it regularly
-                self.body = body.encode()
-            except AttributeError:
-                # Convert it to a str if you can't
-                self.body = str(body).encode()
-        else:
-            self.body = body_bytes
-
-        self.status = status
-        self.headers = headers or {}
-        self._cookies = None
-
-    def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        # This is all returned in a kind-of funky way
-        # We tried to make this as fast as possible in pure python
-        timeout_header = b''
-        if keep_alive and keep_alive_timeout is not None:
-            timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
-        self.headers['Content-Length'] = self.headers.get(
-            'Content-Length', len(self.body))
-        self.headers['Content-Type'] = self.headers.get(
-            'Content-Type', self.content_type)
+    def _parse_headers(self):
         headers = b''
         for name, value in self.headers.items():
             try:
@@ -114,6 +95,112 @@ class HTTPResponse:
                 headers += (
                     b'%b: %b\r\n' % (
                         str(name).encode(), str(value).encode('utf-8')))
+
+        return headers
+
+    @property
+    def cookies(self):
+        if self._cookies is None:
+            self._cookies = CookieJar(self.headers)
+        return self._cookies
+
+
+class StreamingHTTPResponse(BaseHTTPResponse):
+    __slots__ = (
+        'transport', 'streaming_fn',
+        'status', 'content_type', 'headers', '_cookies')
+
+    def __init__(self, streaming_fn, status=200, headers=None,
+                 content_type='text/plain', body_bytes=b''):
+        self.content_type = content_type
+        self.streaming_fn = streaming_fn
+        self.status = status
+        self.headers = headers or {}
+        self._cookies = None
+
+    async def write(self, data):
+        """Writes a chunk of data to the streaming response.
+
+        :param data: bytes-ish data to be written.
+        """
+        data = self._encode_body(data)
+        self.transport.write(
+            b"%b\r\n%b\r\n" % (str(len(data)).encode(), data))
+
+    async def stream(
+            self, version="1.1", keep_alive=False, keep_alive_timeout=None):
+        """Streams headers, runs the `streaming_fn` callback that writes content
+        to the response body, then finalizes the response body.
+        """
+        headers = self.get_headers(
+            version, keep_alive=keep_alive,
+            keep_alive_timeout=keep_alive_timeout)
+        self.transport.write(headers)
+
+        await self.streaming_fn(self)
+        self.transport.write(b'0\r\n\r\n')
+
+    def get_headers(
+            self, version="1.1", keep_alive=False, keep_alive_timeout=None):
+        # This is all returned in a kind-of funky way
+        # We tried to make this as fast as possible in pure python
+        timeout_header = b''
+        if keep_alive and keep_alive_timeout is not None:
+            timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
+
+        self.headers['Transfer-Encoding'] = 'chunked'
+        self.headers.pop('Content-Length', None)
+        self.headers['Content-Type'] = self.headers.get(
+            'Content-Type', self.content_type)
+
+        headers = self._parse_headers()
+
+        # Try to pull from the common codes first
+        # Speeds up response rate 6% over pulling from all
+        status = COMMON_STATUS_CODES.get(self.status)
+        if not status:
+            status = ALL_STATUS_CODES.get(self.status)
+
+        return (b'HTTP/%b %d %b\r\n'
+                b'%b'
+                b'%b\r\n') % (
+            version.encode(),
+            self.status,
+            status,
+            timeout_header,
+            headers
+        )
+
+
+class HTTPResponse(BaseHTTPResponse):
+    __slots__ = ('body', 'status', 'content_type', 'headers', '_cookies')
+
+    def __init__(self, body=None, status=200, headers=None,
+                 content_type='text/plain', body_bytes=b''):
+        self.content_type = content_type
+
+        if body is not None:
+            self.body = self._encode_body(body)
+        else:
+            self.body = body_bytes
+
+        self.status = status
+        self.headers = headers or {}
+        self._cookies = None
+
+    def output(
+            self, version="1.1", keep_alive=False, keep_alive_timeout=None):
+        # This is all returned in a kind-of funky way
+        # We tried to make this as fast as possible in pure python
+        timeout_header = b''
+        if keep_alive and keep_alive_timeout is not None:
+            timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
+        self.headers['Content-Length'] = self.headers.get(
+            'Content-Length', len(self.body))
+        self.headers['Content-Type'] = self.headers.get(
+            'Content-Type', self.content_type)
+
+        headers = self._parse_headers()
 
         # Try to pull from the common codes first
         # Speeds up response rate 6% over pulling from all
@@ -164,8 +251,9 @@ def text(body, status=200, headers=None,
     :param content_type:
         the content type (string) of the response
     """
-    return HTTPResponse(body, status=status, headers=headers,
-                        content_type=content_type)
+    return HTTPResponse(
+        body, status=status, headers=headers,
+        content_type=content_type)
 
 
 def raw(body, status=200, headers=None,
@@ -218,6 +306,32 @@ async def file(location, mime_type=None, headers=None, _range=None):
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
+
+
+def stream(
+        streaming_fn, status=200, headers=None,
+        content_type="text/plain; charset=utf-8"):
+    """Accepts an coroutine `streaming_fn` which can be used to
+    write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
+    Example usage:
+
+    ```
+    @app.route("/")
+    async def index(request):
+        async def streaming_fn(response):
+            await response.write('foo')
+            await response.write('bar')
+
+        return stream(streaming_fn, content_type='text/plain')
+    ```
+
+    :param streaming_fn: A coroutine accepts a response and
+        writes content to that response.
+    :param mime_type: Specific mime_type.
+    :param headers: Custom Headers.
+    """
+    return StreamingHTTPResponse(
+        streaming_fn, headers=headers, content_type=content_type, status=200)
 
 
 def redirect(to, headers=None, status=302,

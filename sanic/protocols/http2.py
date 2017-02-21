@@ -1,6 +1,5 @@
 import asyncio
 import io
-import json
 import collections
 from functools import partial
 from typing import List, Tuple
@@ -16,6 +15,7 @@ from sanic.request import Request
 from sanic.log import log
 
 RequestData = collections.namedtuple('RequestData', ['headers', 'data'])
+
 
 def HTTP2Protocol(ssl, parent_class):
     ssl.set_ciphers("ECDHE+AESGCM")
@@ -42,7 +42,7 @@ class HTTP2Checker:
 class H2Protocol(asyncio.Protocol):
 
     def connection_made(self, transport):
-        #TODO: Request timeouts
+        # TODO: Request timeouts
         self.h2_connection = H2Connection(client_side=False)
         self.stream_data = {}
         self.h2_connection.initiate_connection()
@@ -99,12 +99,14 @@ class H2Protocol(asyncio.Protocol):
             return
 
         # Build request object from h2 data
-        headers = {header: value for header, value in request_data.headers.items() if not header.startswith(':')}
-        request = Request(request_data.headers[':path'].encode(), headers, '2', request_data.headers[':method'], None)
+        headers = {header: value for header, value in
+                   request_data.headers.items() if not header.startswith(':')}
+        request = Request(request_data.headers[':path'].encode(), headers,
+                          '2', request_data.headers[':method'], None)
         request.body = request_data.data.getvalue().decode('utf-8')
 
-        self.loop.create_task(
-            self.request_handler(request, partial(self.write_response, stream_id, request)))
+        body = partial(self.write_response, stream_id, request)
+        self.loop.create_task(self.request_handler(request, body))
 
     def write_response(self, stream_id, request, response):
         try:
@@ -114,7 +116,8 @@ class H2Protocol(asyncio.Protocol):
             headers['content-length'] = str(len(response.body))
 
             self.h2_connection.send_headers(stream_id, headers)
-            self.h2_connection.send_data(stream_id, response.body, end_stream=True)
+            self.h2_connection.send_data(stream_id, response.body,
+                                         end_stream=True)
         except AttributeError:
             log.error(
                 ('Invalid response object for url {}, '
@@ -125,7 +128,7 @@ class H2Protocol(asyncio.Protocol):
                 'Connection lost before response written @ {}'.format(
                     request.ip))
         except Exception as e:
-            #TODO: not sure how to handle
+            # TODO: not sure how to handle
             pass
         finally:
             self.transport.write(self.h2_connection.data_to_send())

@@ -7,7 +7,7 @@ app = Sanic('test_custom_porotocol')
 
 class CustomHttpProtocol(HttpProtocol):
 
-    def write_response(self, response):
+    def write_response(self, request, response):
         if isinstance(response, str):
             response = text(response)
         self.transport.write(

@@ -205,7 +205,8 @@ class HttpProtocol(asyncio.Protocol):
         if self.request.body:
             self.request.body = b''.join(self.request.body)
         self._request_handler_task = self.loop.create_task(
-            self.request_handler(self.request, partial(self.write_response, self.request)))
+            self.request_handler(self.request,
+                                 partial(self.write_response, self.request)))
 
     # -------------------------------------------- #
     # Responding
@@ -214,15 +215,15 @@ class HttpProtocol(asyncio.Protocol):
     def write_response(self, request, response):
         keep_alive = (request.keep_alive and not self.signal.stopped)
         try:
-            self.send_response(request,
-                response.output(
-                    request.version, keep_alive, self.request_timeout))
+            body = response.output(request.version, keep_alive,
+                                   self.request_timeout)
+            self.send_response(request, body)
         except AttributeError:
             log.error(
                 ('Invalid response object for url {}, '
                  'Expected Type: HTTPResponse, Actual Type: {}').format(
                     request.url, type(response)))
-            self.write_error(ServerError('Invalid response type'), request=request)
+            self.write_error(ServerError('Invalid response type'), request)
         except RuntimeError:
             log.error(
                 'Connection lost before response written @ {}'.format(

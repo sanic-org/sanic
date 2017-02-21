@@ -74,6 +74,7 @@ class Pipeline:
             for index, request in enumerate(self.streams[1:]):
                 response = self.responses.get(request.id)
                 if response:
+                    del self.responses[request.id]
                     self.transport.write(response)
                 else:
                     index -= 1

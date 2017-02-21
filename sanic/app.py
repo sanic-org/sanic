@@ -13,7 +13,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.log import log
-from sanic.response import HTTPResponse
+from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol
 from sanic.static import register as static_register
@@ -342,14 +342,17 @@ class Sanic:
     def converted_response_type(self, response):
         pass
 
-    async def handle_request(self, request, response_callback):
+    async def handle_request(self, request, write_callback, stream_callback):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
 
         :param request: HTTP Request object
-        :param response_callback: Response function to be called with the
-                                  response as the only argument
+        :param write_callback: Synchronous response function to be
+            called with the response as the only argument
+        :param stream_callback: Coroutine that handles streaming a
+            StreamingHTTPResponse if produced by the handler.
+
         :return: Nothing
         """
         try:
@@ -416,7 +419,11 @@ class Sanic:
                     response = HTTPResponse(
                         "An error occurred while handling an error")
 
-        await response_callback(response)
+        # pass the response to the correct callback
+        if isinstance(response, StreamingHTTPResponse):
+            await stream_callback(response)
+        else:
+            write_callback(response)
 
     # -------------------------------------------------------------------- #
     # Testing

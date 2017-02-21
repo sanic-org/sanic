@@ -2,6 +2,7 @@ import asyncio
 import os
 import traceback
 import warnings
+from collections import namedtuple
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process, Event
@@ -23,12 +24,16 @@ from sanic.log import log
 from sanic.request import Request
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
+from sanic.protocols.http2 import HTTP2Protocol
 
 current_time = None
 
 
 class Signal:
     stopped = False
+
+
+Stream = namedtuple('Stream', ('request', 'response'))
 
 
 class CIDict(dict):
@@ -50,12 +55,42 @@ class CIDict(dict):
         return super().__contains__(key.casefold())
 
 
+class Pipeline:
+    def __init__(self, transport):
+        self.responses = {}
+        self.streams = []
+        self.transport = transport
+        self.counter = 0
+
+    def request(self, request):
+        self.counter += 1
+        request.id = self.counter
+        self.streams.append(request)
+
+    def response(self, request, response):
+        if request == self.streams[0]:
+            self.transport.write(response)
+            index = None
+            for index, request in enumerate(self.streams[1:]):
+                response = self.responses.get(request.id)
+                if response:
+                    self.transport.write(response)
+                else:
+                    index -= 1
+                    break
+            self.streams = self.streams[index:]
+        else:
+            self.responses[request.id] = response
+
+
 class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
         'loop', 'transport', 'connections', 'signal',
         # request params
         'parser', 'request', 'url', 'headers',
+        # pipelining
+        'pipelining', 'streams',
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
         # connection management
@@ -80,6 +115,7 @@ class HttpProtocol(asyncio.Protocol):
         self._timeout_handler = None
         self._last_request_time = None
         self._request_handler_task = None
+        self.pipeline = None
 
     # -------------------------------------------- #
     # Connection
@@ -145,13 +181,22 @@ class HttpProtocol(asyncio.Protocol):
         self.headers.append((name.decode().casefold(), value.decode()))
 
     def on_headers_complete(self):
-        self.request = Request(
+        request = Request(
             url_bytes=self.url,
             headers=CIDict(self.headers),
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode(),
+            keep_alive=self.parser.should_keep_alive(),
             transport=self.transport
         )
+
+        if self.request is not None and not self.pipeline:
+            self.pipeline = Pipeline(self.transport)
+            self.pipeline.request(self.request)
+            self.pipeline.request(request)
+            self.send_response = self.pipeline_response
+
+        self.request = request
 
     def on_body(self, body):
         self.request.body.append(body)
@@ -160,29 +205,28 @@ class HttpProtocol(asyncio.Protocol):
         if self.request.body:
             self.request.body = b''.join(self.request.body)
         self._request_handler_task = self.loop.create_task(
-            self.request_handler(self.request, self.write_response))
+            self.request_handler(self.request, partial(self.write_response, self.request)))
 
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
 
-    def write_response(self, response):
-        keep_alive = (
-            self.parser.should_keep_alive() and not self.signal.stopped)
+    def write_response(self, request, response):
+        keep_alive = (request.keep_alive and not self.signal.stopped)
         try:
-            self.transport.write(
+            self.send_response(request,
                 response.output(
-                    self.request.version, keep_alive, self.request_timeout))
+                    request.version, keep_alive, self.request_timeout))
         except AttributeError:
             log.error(
                 ('Invalid response object for url {}, '
                  'Expected Type: HTTPResponse, Actual Type: {}').format(
-                    self.url, type(response)))
-            self.write_error(ServerError('Invalid response type'))
+                    request.url, type(response)))
+            self.write_error(ServerError('Invalid response type'), request=request)
         except RuntimeError:
             log.error(
                 'Connection lost before response written @ {}'.format(
-                    self.request.ip))
+                    request.ip))
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(
@@ -195,11 +239,17 @@ class HttpProtocol(asyncio.Protocol):
                 self._last_request_time = current_time
                 self.cleanup()
 
-    def write_error(self, exception):
+    def send_response(self, request, body):
+        self.transport.write(body)
+
+    def pipeline_response(self, request, body):
+        self.pipeline.response(request, body)
+
+    def write_error(self, exception, request=None):
         try:
             response = self.error_handler.response(self.request, exception)
             version = self.request.version if self.request else '1.1'
-            self.transport.write(response.output(version))
+            self.send_response(request, response.output(version))
         except RuntimeError:
             log.error(
                 'Connection lost before error written @ {}'.format(
@@ -271,6 +321,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
+          http2=False,
           register_sys_signals=True, run_async=False):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -298,6 +349,13 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param protocol: subclass of asyncio protocol class
     :return: Nothing
     """
+
+    if http2:
+        if not ssl:
+            raise Exception("HTTP/2 Requires SSL")
+
+        protocol = HTTP2Protocol(ssl, protocol)
+
     if not run_async:
         loop = async_loop.new_event_loop()
         asyncio.set_event_loop(loop)

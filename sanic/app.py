@@ -433,6 +433,7 @@ class Sanic:
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=HttpProtocol,
+            http2=False,
             backlog=100, stop_event=None, register_sys_signals=True):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -454,16 +455,21 @@ class Sanic:
                         received before it is respected
         :param loop:
         :param backlog:
+        :param http2: HTTP/2 support flag
         :param stop_event:
         :param register_sys_signals:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if http2 and not ssl:
+            raise Exception("HTTP/2 support requires SSL")
+
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
+            http2=http2,
             stop_event=stop_event, register_sys_signals=register_sys_signals)
 
         try:
@@ -487,6 +493,7 @@ class Sanic:
                             before_start=None, after_start=None,
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=HttpProtocol,
+                            http2=False,
                             backlog=100, stop_event=None):
         """Asynchronous version of `run`.
 
@@ -499,6 +506,7 @@ class Sanic:
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
             backlog=backlog, stop_event=stop_event,
+            http2=http2,
             run_async=True)
 
         return await serve(**server_settings)
@@ -507,6 +515,7 @@ class Sanic:
                 before_start=None, after_start=None, before_stop=None,
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
+                http2=False,
                 register_sys_signals=True, run_async=False):
         """Helper function used by `run` and `create_server`."""
 
@@ -544,6 +553,7 @@ class Sanic:
             'request_max_size': self.config.REQUEST_MAX_SIZE,
             'loop': loop,
             'register_sys_signals': register_sys_signals,
+            'http2': http2,
             'backlog': backlog
         }
 

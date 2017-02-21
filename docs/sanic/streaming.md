@@ -3,6 +3,9 @@
 Sanic allows you to stream content to the client with the `stream` method. This method accepts a coroutine callback which is passed a `StreamingHTTPResponse` object that is written to. A simple example is like follows:
 
 ```python
+from sanic import Sanic
+from sanic.response import stream
+
 app = Sanic(__name__)
 
 @app.route("/")

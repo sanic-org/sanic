@@ -1,5 +1,5 @@
 aiofiles
+h2
 httptools
 ujson
 uvloop
-h2

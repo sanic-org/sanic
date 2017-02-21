@@ -6,6 +6,7 @@ bottle
 coverage
 falcon
 gunicorn
+h2
 httptools
 kyoukai
 pytest

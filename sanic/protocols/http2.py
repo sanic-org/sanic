@@ -22,7 +22,7 @@ def HTTP2Protocol(ssl, parent_class):
     ssl.set_alpn_protocols(["h2", "http/1.1"])
 
     _HTTP2Protocol = type("HTTP2Protocol", (HTTP2Checker, parent_class), {})
-    _HTTP2Protocol.poo = type("H2Protocol", (H2Protocol, parent_class), {})
+    _HTTP2Protocol.protocol_class = type("H2Protocol", (H2Protocol, parent_class), {})
 
     return _HTTP2Protocol
 
@@ -33,7 +33,7 @@ class HTTP2Checker:
         protocol = ssl_object.selected_alpn_protocol()
 
         if protocol == 'h2':
-            self.__class__ = self.poo
+            self.__class__ = self.protocol_class
             self.connection_made(transport)
         else:
             super().connection_made(transport)

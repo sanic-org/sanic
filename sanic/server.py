@@ -24,7 +24,7 @@ from sanic.log import log
 from sanic.request import Request
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
-from protocols.http2 import HTTP2Protocol
+from .protocols.http2 import HTTP2Protocol
 
 current_time = None
 

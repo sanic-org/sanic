@@ -2,3 +2,4 @@ aiofiles
 httptools
 ujson
 uvloop
+h2

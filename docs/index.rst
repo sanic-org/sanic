@@ -20,6 +20,7 @@ Guides
    sanic/ssl
    sanic/testing
    sanic/deploying
+   sanic/http2
    sanic/extensions
    sanic/contributing
 

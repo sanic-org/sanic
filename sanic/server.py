@@ -24,7 +24,7 @@ from sanic.log import log
 from sanic.request import Request
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
-from .protocols.http2 import HTTP2Protocol
+from sanic.protocols.http2 import generate_http2_protocol
 
 current_time = None
 
@@ -90,11 +90,12 @@ class HttpProtocol(asyncio.Protocol):
         # request params
         'parser', 'request', 'url', 'headers',
         # pipelining
-        'pipelining', 'streams',
+        'pipeline',
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
         # connection management
-        '_total_request_size', '_timeout_handler', '_last_communication_time')
+        '_total_request_size', '_timeout_handler', '_last_request_time',
+        '_request_handler_task',)
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
@@ -355,7 +356,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         if not ssl:
             raise Exception("HTTP/2 Requires SSL")
 
-        protocol = HTTP2Protocol(ssl, protocol)
+        protocol = generate_http2_protocol(ssl, protocol)
 
     if not run_async:
         loop = async_loop.new_event_loop()

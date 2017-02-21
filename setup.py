@@ -23,13 +23,14 @@ setup(
     author='Channel Cat',
     author_email='channelcat@gmail.com',
     description='A microframework based on uvloop, httptools, and learnings of flask',
-    packages=['sanic'],
+    packages=['sanic', 'sanic.protocols'],
     platforms='any',
     install_requires=[
         'uvloop>=0.5.3;platform_system!="Windows"',
         'httptools>=0.0.9',
         'ujson>=1.35',
         'aiofiles>=0.3.0',
+        'h2>=2.5.1',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

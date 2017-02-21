@@ -17,12 +17,12 @@ from sanic.log import log
 RequestData = collections.namedtuple('RequestData', ['headers', 'data'])
 
 
-def HTTP2Protocol(ssl, parent_class):
+def generate_http2_protocol(ssl, parent_class):
     ssl.set_ciphers("ECDHE+AESGCM")
     ssl.set_alpn_protocols(["h2", "http/1.1"])
 
     _HTTP2Protocol = type("HTTP2Protocol", (HTTP2Checker, parent_class), {})
-    _HTTP2Protocol.protocol_class = type("H2Protocol", (H2Protocol, parent_class), {})
+    _HTTP2Protocol.protocol_class = type("H2Protocol", (Http2Protocol, parent_class), {})
 
     return _HTTP2Protocol
 
@@ -39,7 +39,7 @@ class HTTP2Checker:
             super().connection_made(transport)
 
 
-class H2Protocol(asyncio.Protocol):
+class Http2Protocol(asyncio.Protocol):
 
     def connection_made(self, transport):
         # TODO: Request timeouts
@@ -95,7 +95,6 @@ class H2Protocol(asyncio.Protocol):
         try:
             request_data = self.stream_data[stream_id]
         except KeyError:
-            # Just return, we probably 405'd this already
             return
 
         # Build request object from h2 data

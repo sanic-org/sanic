@@ -21,7 +21,6 @@ except ImportError:
 
 from sanic.log import log
 from sanic.request import Request
-from sanic.response import StreamingHTTPResponse
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
 

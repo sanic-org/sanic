@@ -1,7 +1,5 @@
-import asyncio
 from mimetypes import guess_type
 from os import path
-from inspect import isawaitable
 from ujson import dumps as json_dumps
 
 from aiofiles import open as open_async

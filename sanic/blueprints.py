@@ -18,6 +18,7 @@ class Blueprint:
         :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
         """
+        self.app = None
         self.name = name
         self.url_prefix = url_prefix
         self.host = host
@@ -31,6 +32,7 @@ class Blueprint:
     def register(self, app, options):
         """Register the blueprint to the sanic app."""
 
+        self.app = app
         url_prefix = options.get('url_prefix', self.url_prefix)
 
         # Routes

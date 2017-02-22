@@ -308,3 +308,18 @@ def test_bp_shorthand():
 
     request, response = app.test_client.get('/delete')
     assert response.status == 405
+
+
+def test_bp_access_app_config():
+    app = Sanic('test_access_app_config')
+    app.config.TEXT = 'Hello'
+    bp = Blueprint('test_access_app_config')
+
+    @bp.route('/')
+    def handler(request):
+        return text(bp.app.config.TEXT)
+
+    app.blueprint(bp)
+    request, response = app.test_client.get('/')
+
+    assert response.text == 'Hello'

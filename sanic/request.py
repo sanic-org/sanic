@@ -36,7 +36,7 @@ class RequestParameters(dict):
 class Request(dict):
     """Properties of an HTTP request such as URL, headers, etc."""
     __slots__ = (
-        'url', 'headers', 'version', 'method', '_cookies', 'transport',
+        'app', 'url', 'headers', 'version', 'method', '_cookies', 'transport',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
         '_ip',
@@ -45,6 +45,7 @@ class Request(dict):
     def __init__(self, url_bytes, headers, version, method, transport):
         # TODO: Content-Encoding detection
         url_parsed = parse_url(url_bytes)
+        self.app = None
         self.url = url_parsed.path.decode('utf-8')
         self.headers = headers
         self.version = version

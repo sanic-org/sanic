@@ -36,3 +36,21 @@ def test_vhosts_with_list():
     headers = {"Host": "world.com"}
     request, response = app.test_client.get('/', headers=headers)
     assert response.text == "Hello, world!"
+
+def test_vhosts_with_defaults():
+    app = Sanic('test_vhosts')
+
+    @app.route('/', host="hello.com")
+    async def handler(request):
+        return text("Hello, world!")
+
+    @app.route('/')
+    async def handler(request):
+        return text("default")
+
+    headers = {"Host": "hello.com"}
+    request, response = app.test_client.get('/', headers=headers)
+    assert response.text == "Hello, world!"
+
+    request, response = app.test_client.get('/')
+    assert response.text == "default"

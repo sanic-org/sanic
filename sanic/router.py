@@ -132,6 +132,9 @@ class Router:
                 for host_ in host:
                     self.add(uri, methods, handler, host_)
                 return
+        else:
+            # default host
+            self.hosts.add('*')
 
         # Dict for faster lookups of if method allowed
         if methods:
@@ -271,16 +274,16 @@ class Router:
         :param request: Request object
         :return: handler, arguments, keyword arguments
         """
-        # Note - this means that if _any_ routes specify host, non-host routes
-        # will typically fail as they are looked up by host
-        # fix - check if host is in host-based routing table (perhaps) or
-        # better, get candidate of routes and then dispatch by host.
-        # This may have perf issues.
+        # No virtual hosts specified; default behavior
         if not self.hosts:
             return self._get(request.url, request.method, '')
-        else:
+        # virtual hosts specified; try to match route to the host header
+        try:
             return self._get(request.url, request.method,
                              request.headers.get("Host", ''))
+        # try default hosts
+        except NotFound:
+            return self._get(request.url, request.method, '')
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method, host):

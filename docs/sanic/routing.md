@@ -81,6 +81,19 @@ async def get_handler(request):
 
 ```
 
+There is also an optional `host` argument (which can be a list or a string). This restricts a route to the host or hosts provided. If there is a also a route with no host, it will be the default.
+
+```python
+@app.route('/get', methods=['GET'], host='example.com')
+async def get_handler(request):
+	return text('GET request - {}'.format(request.args))
+
+# if the host header doesn't match example.com, this route will be used
+@app.route('/get', methods=['GET'])
+async def get_handler(request):
+	return text('GET request in default - {}'.format(request.args))
+```
+
 There are also shorthand method decorators:
 
 ```python
@@ -168,8 +181,3 @@ url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'], arg_two=2, 
 # http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor
 ```
 - All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be thrown.
-
-
-
-
-

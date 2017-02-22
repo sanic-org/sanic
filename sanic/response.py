@@ -109,19 +109,21 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         'status', 'content_type', 'headers', '_cookies')
 
     def __init__(self, streaming_fn, status=200, headers=None,
-                 content_type='text/plain', body_bytes=b''):
+                 content_type='text/plain'):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
         self.headers = headers or {}
         self._cookies = None
 
-    async def write(self, data):
+    def write(self, data):
         """Writes a chunk of data to the streaming response.
 
         :param data: bytes-ish data to be written.
         """
-        data = self._encode_body(data)
+        if type(data) != bytes:
+            data = self._encode_body(data)
+
         self.transport.write(
             b"%b\r\n%b\r\n" % (str(len(data)).encode(), data))
 

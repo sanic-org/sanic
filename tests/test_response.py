@@ -22,9 +22,9 @@ def test_response_body_not_a_string():
 
 
 async def sample_streaming_fn(response):
-    await response.write('foo,')
+    response.write('foo,')
     await asyncio.sleep(.001)
-    await response.write('bar')
+    response.write('bar')
 
 
 @pytest.fixture

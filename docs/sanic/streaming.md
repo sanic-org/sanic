@@ -11,8 +11,8 @@ app = Sanic(__name__)
 @app.route("/")
 async def test(request):
     async def sample_streaming_fn(response):
-        await response.write('foo,')
-        await response.write('bar')
+        response.write('foo,')
+        response.write('bar')
 
     return stream(sample_streaming_fn, content_type='text/csv')
 ```
@@ -26,7 +26,7 @@ async def index(request):
         conn = await asyncpg.connect(database='test')
         async with conn.transaction():
             async for record in conn.cursor('SELECT generate_series(0, 10)'):
-                await response.write(record[0])
+                response.write(record[0])
 
     return stream(stream_from_db)
 ```

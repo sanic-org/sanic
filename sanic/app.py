@@ -270,6 +270,9 @@ class Sanic:
                     'Endpoint with name `{}` was not found'.format(
                         view_name))
 
+        if uri.endswith('/'):
+            uri = uri[:-1]
+
         out = uri
 
         # find all the parameters we will need to build in the URL

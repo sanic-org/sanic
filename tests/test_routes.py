@@ -22,6 +22,19 @@ def test_shorthand_routes_get():
     request, response = app.test_client.post('/get')
     assert response.status == 405
 
+def test_route_optional_slash():
+    app = Sanic('test_route_optional_slash')
+
+    @app.get('/get')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/get')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
 def test_shorthand_routes_post():
     app = Sanic('test_shorhand_routes_post')
 

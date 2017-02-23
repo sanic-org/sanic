@@ -71,20 +71,20 @@ The following variables are accessible as properties on `Request` objects:
 
 - `app` - a reference to the Sanic application object that is handling this request. This is useful when inside blueprints or other handlers in modules that do not have access to the global `app` object.
 
-```python
-from sanic.response import json
-from sanic import Blueprint
+  ```python
+  from sanic.response import json
+  from sanic import Blueprint
 
-bp = Blueprint('my_blueprint')
+  bp = Blueprint('my_blueprint')
 
-@bp.route('/')
-async def bp_root(request):
-    if request.app.config['DEBUG']:
-        return json({'status': 'debug'})
-    else:
-        return json({'status': 'production'})
+  @bp.route('/')
+  async def bp_root(request):
+      if request.app.config['DEBUG']:
+          return json({'status': 'debug'})
+      else:
+          return json({'status': 'production'})
 
-```
+  ```
 
 ## Accessing values using `get` and `getlist`
 

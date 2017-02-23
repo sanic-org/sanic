@@ -45,7 +45,7 @@ class TestClient:
                     **request_kwargs)
                 results[-1] = response
             except Exception as e:
-                exceptions.self.append(e)
+                exceptions.append(e)
             self.app.stop()
 
         self.app.run(host=HOST, debug=debug, port=PORT, **server_kwargs)

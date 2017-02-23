@@ -360,6 +360,8 @@ class Sanic:
             # Request Middleware
             # -------------------------------------------- #
 
+            request.app = self
+
             response = False
             # The if improves speed.  I don't know why
             if self.request_middleware:

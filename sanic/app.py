@@ -270,7 +270,7 @@ class Sanic:
                     'Endpoint with name `{}` was not found'.format(
                         view_name))
 
-        if uri.endswith('/'):
+        if uri != '/' and uri.endswith('/'):
             uri = uri[:-1]
 
         out = uri

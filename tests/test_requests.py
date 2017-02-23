@@ -145,14 +145,14 @@ def test_token():
 def test_post_json():
     app = Sanic('test_post_json')
 
-    @app.route('/')
+    @app.route('/', methods=['POST'])
     async def handler(request):
         return text('OK')
 
     payload = {'test': 'OK'}
     headers = {'content-type': 'application/json'}
 
-    request, response = app.test_client.get(
+    request, response = app.test_client.post(
         '/', data=json_dumps(payload), headers=headers)
 
     assert request.json.get('test') == 'OK'
@@ -162,14 +162,14 @@ def test_post_json():
 def test_post_form_urlencoded():
     app = Sanic('test_post_form_urlencoded')
 
-    @app.route('/')
+    @app.route('/', methods=['POST'])
     async def handler(request):
         return text('OK')
 
     payload = 'test=OK'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-    request, response = app.test_client.get('/', data=payload, headers=headers)
+    request, response = app.test_client.post('/', data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
 
@@ -177,7 +177,7 @@ def test_post_form_urlencoded():
 def test_post_form_multipart_form_data():
     app = Sanic('test_post_form_multipart_form_data')
 
-    @app.route('/')
+    @app.route('/', methods=['POST'])
     async def handler(request):
         return text('OK')
 
@@ -189,6 +189,6 @@ def test_post_form_multipart_form_data():
 
     headers = {'content-type': 'multipart/form-data; boundary=----sanic'}
 
-    request, response = app.test_client.get(data=payload, headers=headers)
+    request, response = app.test_client.post(data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'

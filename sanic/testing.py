@@ -1,5 +1,7 @@
-from sanic.log import log
+import logging
 
+
+log = logging.getLogger(__name__)
 HOST = '127.0.0.1'
 PORT = 42101
 

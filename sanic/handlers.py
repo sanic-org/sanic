@@ -1,4 +1,5 @@
 import sys
+import logging
 from traceback import format_exc, extract_tb
 
 from sanic.exceptions import (
@@ -10,8 +11,9 @@ from sanic.exceptions import (
     TRACEBACK_LINE_HTML,
     TRACEBACK_STYLE,
     TRACEBACK_WRAPPER_HTML)
-from sanic.log import log
 from sanic.response import text, html
+
+log = logging.getLogger(__name__)
 
 
 class ErrorHandler:

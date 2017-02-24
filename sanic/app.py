@@ -12,13 +12,15 @@ from sanic.config import Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
-from sanic.log import log
 from sanic.response import HTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol
 from sanic.static import register as static_register
 from sanic.testing import TestClient
 from sanic.views import CompositionView
+
+
+log = logging.getLogger(__name__)
 
 
 class Sanic:

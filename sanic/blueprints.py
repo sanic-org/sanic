@@ -41,7 +41,7 @@ class Blueprint:
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
             app.route(
-                uri=uri,
+                uri=uri[1:] if uri.startswith('//') else uri,
                 methods=future.methods,
                 host=future.host or self.host
                 )(future.handler)

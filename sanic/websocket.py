@@ -10,6 +10,16 @@ class WebSocketProtocol(HttpProtocol):
         super().__init__(*args, **kwargs)
         self.websocket = None
 
+    def connection_timeout(self):
+        # timeouts make no sense for websocket routes
+        if self.websocket is None:
+            super().connection_timeout()
+
+    def connection_lost(self, exc):
+        if self.websocket is not None:
+            self.websocket.connection_lost(exc)
+        super().connection_lost(exc)
+
     def data_received(self, data):
         if self.websocket is not None:
             # pass the data to the websocket protocol

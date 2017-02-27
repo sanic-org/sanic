@@ -464,19 +464,24 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
-            stop_event=stop_event, register_sys_signals=register_sys_signals)
+            register_sys_signals=register_sys_signals)
 
         try:
             self.is_running = True
             if workers == 1:
                 serve(**server_settings)
             else:
-                serve_multiple(server_settings, workers, stop_event)
+                serve_multiple(server_settings, workers)
         except:
             log.exception(
                 'Experienced exception while trying to serve')
@@ -498,13 +503,17 @@ class Sanic:
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
-            backlog=backlog, stop_event=stop_event,
-            run_async=True)
+            backlog=backlog, run_async=True)
 
         return await serve(**server_settings)
 
@@ -514,7 +523,11 @@ class Sanic:
                 protocol=HttpProtocol, backlog=100, stop_event=None,
                 register_sys_signals=True, run_async=False):
         """Helper function used by `run` and `create_server`."""
-
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         if loop is not None:
             if debug:
                 warnings.simplefilter('default')

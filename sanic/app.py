@@ -186,6 +186,7 @@ class Sanic:
 
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
+                request.app = self
                 protocol = request.transport.get_protocol()
                 ws = await protocol.websocket_handshake(request)
                 try:

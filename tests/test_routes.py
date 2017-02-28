@@ -498,6 +498,19 @@ def test_remove_inexistent_route():
     with pytest.raises(RouteDoesNotExist):
         app.remove_route('/test')
 
+def test_removing_slash():
+    app = Sanic(__name__)
+
+    @app.get('/rest/<resource>')
+    def get(_):
+        pass
+
+    @app.post('/rest/<resource>')
+    def post(_):
+        pass
+
+    assert len(app.router.routes_all.keys()) == 2
+
 
 def test_remove_unhashable_route():
     app = Sanic('test_remove_unhashable_route')

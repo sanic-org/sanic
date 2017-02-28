@@ -98,10 +98,15 @@ class Router:
     def add(self, uri, methods, handler, host=None):
         # add regular version
         self._add(uri, methods, handler, host)
-        slash_is_missing = (not uri[-1].endswith('/')
-                            and not self.routes_all.get(uri + '/', False))
-        without_slash_is_missing = (not self.routes_all.get(uri[:-1], False)
-                                    and uri is not '/')
+        slash_is_missing = (
+            not uri[-1] == '/'
+            and not self.routes_all.get(uri + '/', False)
+        )
+        without_slash_is_missing = (
+            uri[-1] == '/'
+            and not self.routes_all.get(uri[:-1], False)
+            and not uri == '/'
+        )
         # add version with trailing slash
         if slash_is_missing:
             self._add(uri + '/', methods, handler, host)

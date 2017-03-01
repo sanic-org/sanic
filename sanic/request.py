@@ -39,7 +39,7 @@ class Request(dict):
         'app', 'url', 'headers', 'version', 'method', '_cookies', 'transport',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip','_token'
+        '_ip','_token',
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):

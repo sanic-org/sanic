@@ -97,7 +97,8 @@ class ContentRangeHandler:
 
     def __init__(self, request, stats):
         self.total = stats.st_size
-        _range = request.headers.get('Range')
+        _range = {k.lower(): v for k, v in request.headers.items()}.get(
+            'range')
         if _range is None:
             raise HeaderNotFound('Range Header Not Found')
         unit, _, value = tuple(map(str.strip, _range.partition('=')))

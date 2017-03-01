@@ -492,7 +492,7 @@ class Sanic:
                             before_start=None, after_start=None,
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=HttpProtocol,
-                            backlog=100, stop_event=None, reuse_port=True):
+                            backlog=100, stop_event=None):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
@@ -512,7 +512,7 @@ class Sanic:
                 before_start=None, after_start=None, before_stop=None,
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, reuse_port=True):
+                register_sys_signals=True, run_async=False):
         """Helper function used by `run` and `create_server`."""
 
         if loop is not None:

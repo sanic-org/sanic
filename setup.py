@@ -41,9 +41,9 @@ setup(
     platforms='any',
     install_requires=install_requires,
     extras_require={
-        "all": install_requires + ujson + uvloop,
-        "ujson": install_requires + ujson,
-        "uvloop": install_requires + uvloop,
+        "all": ujson + uvloop,
+        "ujson": ujson,
+        "uvloop": uvloop,
     },
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

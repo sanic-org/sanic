@@ -10,8 +10,10 @@ except ImportError:
     from json import loads as _json_loads
 
     def json_loads(i):
-        i = i.decode() if isinstance(i, bytes) else i
-        return _json_loads(i)
+        try:
+            return _json_loads(i.decode())
+        except AttributeError:
+            return _json_loads(i)
 
 from sanic.exceptions import InvalidUsage
 from sanic.log import log

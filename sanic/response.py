@@ -1,6 +1,10 @@
 from mimetypes import guess_type
 from os import path
-from ujson import dumps as json_dumps
+
+try:
+    from ujson import dumps as json_dumps
+except ImportError:
+    from json import dumps as json_dumps
 
 from aiofiles import open as open_async
 

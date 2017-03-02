@@ -17,12 +17,16 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
 
 install_requires = [
     'httptools>=0.0.9',
-    'ujson>=1.35',
     'aiofiles>=0.3.0',
 ]
 
-if os.name != 'nt':
-    install_requires.append('uvloop>=0.5.3')
+ujson = [
+    'ujson>=1.35',
+]
+
+uvloop = [
+    'uvloop>=0.5.3',
+]
 
 setup(
     name='sanic',
@@ -36,6 +40,11 @@ setup(
     packages=['sanic'],
     platforms='any',
     install_requires=install_requires,
+    extras_require={
+        "all": install_requires + ujson + uvloop,
+        "ujson": install_requires + ujson,
+        "uvloop": install_requires + uvloop,
+    },
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Web Environment',

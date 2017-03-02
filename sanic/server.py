@@ -396,13 +396,15 @@ def serve_multiple(server_settings, workers, stop_event=None):
                       " has more information.", DeprecationWarning)
     server_settings['reuse_port'] = True
 
-    sock = socket()
-    sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    sock.bind((server_settings['host'], server_settings['port']))
-    set_inheritable(sock.fileno(), True)
-    server_settings['sock'] = sock
-    server_settings['host'] = None
-    server_settings['port'] = None
+    # Handling when custom socket is not provided.
+    if server_settings.get('sock') == None:
+        sock = socket()
+        sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        sock.bind((server_settings['host'], server_settings['port']))
+        set_inheritable(sock.fileno(), True)
+        server_settings['sock'] = sock
+        server_settings['host'] = None
+        server_settings['port'] = None
 
     if stop_event is None:
         stop_event = Event()
@@ -423,6 +425,6 @@ def serve_multiple(server_settings, workers, stop_event=None):
     # the above processes will block this until they're stopped
     for process in processes:
         process.terminate()
-    sock.close()
+    server_settings.get('sock').close()
 
     asyncio.get_event_loop().stop()

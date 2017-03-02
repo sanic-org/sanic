@@ -8,6 +8,7 @@ try:
     from ujson import loads as json_loads
 except ImportError:
     from json import loads as _json_loads
+
     def json_loads(i):
         i = i.decode() if isinstance(i, bytes) else i
         return _json_loads(i)

@@ -397,7 +397,7 @@ def serve_multiple(server_settings, workers, stop_event=None):
     server_settings['reuse_port'] = True
 
     # Handling when custom socket is not provided.
-    if server_settings.get('sock') == None:
+    if server_settings.get('sock') is None:
         sock = socket()
         sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         sock.bind((server_settings['host'], server_settings['port']))

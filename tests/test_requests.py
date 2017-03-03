@@ -221,7 +221,7 @@ def test_url_attributes_no_ssl(path, query, expected_url):
     assert parsed.scheme == request.scheme
     assert parsed.path == request.path
     assert parsed.query == request.query_string
-    assert parsed.scheme == request.scheme
+    assert parsed.netloc == request.host
 
 
 @pytest.mark.parametrize(
@@ -254,3 +254,4 @@ def test_url_attributes_with_ssl(path, query, expected_url):
     assert parsed.scheme == request.scheme
     assert parsed.path == request.path
     assert parsed.query == request.query_string
+    assert parsed.netloc == request.host

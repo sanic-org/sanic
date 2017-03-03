@@ -281,14 +281,14 @@ class Router:
         """
         # No virtual hosts specified; default behavior
         if not self.hosts:
-            return self._get(request.url, request.method, '')
+            return self._get(request.path, request.method, '')
         # virtual hosts specified; try to match route to the host header
         try:
-            return self._get(request.url, request.method,
+            return self._get(request.path, request.method,
                              request.headers.get("Host", ''))
         # try default hosts
         except NotFound:
-            return self._get(request.url, request.method, '')
+            return self._get(request.path, request.method, '')
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method, host):

@@ -17,7 +17,8 @@ class TestClient:
                 host=HOST, port=PORT, uri=uri)
 
         log.info(url)
-        async with aiohttp.ClientSession(cookies=cookies) as session:
+        conn = aiohttp.TCPConnector(verify_ssl=False)
+        async with aiohttp.ClientSession(cookies=cookies, connector=conn) as session:
             async with getattr(
                     session, method.lower())(url, *args, **kwargs) as response:
                 response.text = await response.text()

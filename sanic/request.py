@@ -149,7 +149,7 @@ class Request(dict):
     def host(self):
         # it appears that httptools doesn't return the host
         # so pull it from the headers
-        return self.headers['Host']
+        return self.headers.get('Host', '')
 
     @property
     def path(self):

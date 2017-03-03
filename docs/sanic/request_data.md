@@ -85,6 +85,12 @@ The following variables are accessible as properties on `Request` objects:
           return json({'status': 'production'})
 
   ```
+- `url`: The full URL of the request, ie: `http://localhost:8000/posts/1/?foo=bar`
+- `scheme`: The URL scheme associated with the request: `http` or `https`
+- `host`: The host associated with the request: `localhost:8080`
+- `path`: The path of the request: `/posts/1`/
+- `query_string`: The query string of the request: `foo=bar` or a blank string `''`
+
 
 ## Accessing values using `get` and `getlist`
 

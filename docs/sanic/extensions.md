@@ -13,3 +13,4 @@ A list of Sanic extensions created by the community.
 - [Sanic CRUD](https://github.com/Typhon66/sanic_crud): CRUD REST API generation with peewee models.
 - [UserAgent](https://github.com/lixxu/sanic-useragent): Add `user_agent` to request
 - [Limiter](https://github.com/bohea/sanic-limiter): Rate limiting for sanic.
+- [Sanic EnvConfig](https://github.com/jamesstidard/sanic-envconfig): Pull environment variables into your sanic config.

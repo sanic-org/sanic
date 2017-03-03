@@ -70,7 +70,7 @@ TRACEBACK_WRAPPER_HTML = '''
                 {frame_html}
                 <p class="summary">
                 <b>{exc_name}: {exc_value}</b>
-                    while handling uri <code>{uri}</code>
+                    while handling path <code>{path}</code>
                 </p>
             </div>
         </body>

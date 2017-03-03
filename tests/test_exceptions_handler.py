@@ -75,7 +75,7 @@ def test_html_traceback_output_in_debug_mode():
     summary_text = " ".join(soup.select('.summary')[0].text.split())
     assert (
         "NameError: name 'bar' "
-        "is not defined while handling uri /4") == summary_text
+        "is not defined while handling path /4") == summary_text
 
 
 def test_inherited_exception_handler():

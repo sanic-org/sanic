@@ -77,16 +77,6 @@ TRACEBACK_WRAPPER_HTML = '''
     </html>
 '''
 
-TRACEBACK_LINE_HTML = '''
-    <div class="frame-line">
-        <p class="frame-descriptor">
-            File {0.filename}, line <i>{0.lineno}</i>,
-            in <code><b>{0.name}</b></code>
-        </p>
-        <p class="frame-code"><code>{0.line}</code></p>
-    </div>
-'''
-
 INTERNAL_SERVER_ERROR_HTML = '''
     <h1>Internal Server Error</h1>
     <p>

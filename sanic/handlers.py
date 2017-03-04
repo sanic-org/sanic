@@ -1,5 +1,7 @@
 import sys
 from traceback import format_exc, extract_tb
+import cgitb
+from io import StringIO
 
 from sanic.exceptions import (
     ContentRangeError,
@@ -7,11 +9,17 @@ from sanic.exceptions import (
     INTERNAL_SERVER_ERROR_HTML,
     InvalidRangeType,
     SanicException,
-    TRACEBACK_LINE_HTML,
     TRACEBACK_STYLE,
     TRACEBACK_WRAPPER_HTML)
 from sanic.log import log
 from sanic.response import text, html
+
+
+def format_cgitb(format, info=None):
+    s = StringIO()
+    cgitb.Hook(file=s, format=format).handle()
+    tb = s.getvalue()
+    return tb
 
 
 class ErrorHandler:
@@ -23,17 +31,12 @@ class ErrorHandler:
 
     def _render_traceback_html(self, exception, request):
         exc_type, exc_value, tb = sys.exc_info()
-        frames = extract_tb(tb)
-
-        frame_html = []
-        for frame in frames:
-            frame_html.append(TRACEBACK_LINE_HTML.format(frame))
-
+        frame_html = format_cgitb('html')
         return TRACEBACK_WRAPPER_HTML.format(
             style=TRACEBACK_STYLE,
             exc_name=exc_type.__name__,
             exc_value=exc_value,
-            frame_html=''.join(frame_html),
+            frame_html=frame_html,
             uri=request.url)
 
     def add(self, exception, handler):

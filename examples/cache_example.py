@@ -9,16 +9,17 @@ If you want more info about the package check
 https://github.com/argaen/aiocache
 """
 
+import logging
 import asyncio
 import aiocache
 
 from sanic import Sanic
 from sanic.response import json
-from sanic.log import log
 from aiocache import cached
 from aiocache.serializers import JsonSerializer
 
 app = Sanic(__name__)
+log = logging.getLogger(__name__)
 
 
 @app.listener('before_server_start')

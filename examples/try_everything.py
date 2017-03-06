@@ -1,11 +1,12 @@
 import os
+import logging
 
 from sanic import Sanic
-from sanic.log import log
 from sanic.response import json, text, file
 from sanic.exceptions import ServerError
 
 app = Sanic(__name__)
+log = logging.getLogger(__name__)
 
 
 @app.route("/")

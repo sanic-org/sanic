@@ -1,8 +1,12 @@
+import logging
 from argparse import ArgumentParser
 from importlib import import_module
 
-from sanic.log import log
 from sanic.app import Sanic
+
+
+log = logging.getLogger('sanic')
+
 
 if __name__ == "__main__":
     parser = ArgumentParser(prog='sanic')

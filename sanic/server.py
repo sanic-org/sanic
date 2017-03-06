@@ -1,5 +1,6 @@
 import asyncio
 import os
+import logging
 import traceback
 import warnings
 from functools import partial
@@ -19,11 +20,11 @@ try:
 except ImportError:
     async_loop = asyncio
 
-from sanic.log import log
 from sanic.request import Request
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
 
+log = logging.getLogger(__name__)
 current_time = None
 
 

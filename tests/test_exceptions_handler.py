@@ -1,6 +1,7 @@
 from sanic import Sanic
 from sanic.response import text
 from sanic.exceptions import InvalidUsage, ServerError, NotFound
+from sanic.handlers import ErrorHandler
 from bs4 import BeautifulSoup
 
 exception_handler_app = Sanic('test_exception_handler')
@@ -30,7 +31,7 @@ def handler_4(request):
 @exception_handler_app.route('/5')
 def handler_5(request):
     class CustomServerError(ServerError):
-        status_code=200
+        pass
     raise CustomServerError('Custom server error')
 
 
@@ -81,3 +82,44 @@ def test_html_traceback_output_in_debug_mode():
 def test_inherited_exception_handler():
     request, response = exception_handler_app.test_client.get('/5')
     assert response.status == 200
+
+
+def test_exception_handler_lookup():
+    class CustomError(Exception):
+        pass
+
+    class CustomServerError(ServerError):
+        pass
+
+    def custom_error_handler():
+        pass
+
+    def server_error_handler():
+        pass
+
+    def import_error_handler():
+        pass
+
+    try:
+        ModuleNotFoundError
+    except:
+        class ModuleNotFoundError(ImportError):
+            pass
+
+    handler = ErrorHandler()
+    handler.add(ImportError, import_error_handler)
+    handler.add(CustomError, custom_error_handler)
+    handler.add(ServerError, server_error_handler)
+
+    assert handler.lookup(ImportError()) == import_error_handler
+    assert handler.lookup(ModuleNotFoundError()) == import_error_handler
+    assert handler.lookup(CustomError()) == custom_error_handler
+    assert handler.lookup(ServerError('Error')) == server_error_handler
+    assert handler.lookup(CustomServerError('Error')) == server_error_handler
+
+    # once again to ensure there is no caching bug
+    assert handler.lookup(ImportError()) == import_error_handler
+    assert handler.lookup(ModuleNotFoundError()) == import_error_handler
+    assert handler.lookup(CustomError()) == custom_error_handler
+    assert handler.lookup(ServerError('Error')) == server_error_handler
+    assert handler.lookup(CustomServerError('Error')) == server_error_handler

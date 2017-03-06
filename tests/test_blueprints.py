@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 
 from sanic import Sanic
@@ -236,6 +237,7 @@ def test_bp_static():
 def test_bp_shorthand():
     app = Sanic('test_shorhand_routes')
     blueprint = Blueprint('test_shorhand_routes')
+    ev = asyncio.Event()
 
     @blueprint.get('/get')
     def handler(request):
@@ -264,6 +266,10 @@ def test_bp_shorthand():
     @blueprint.delete('/delete')
     def handler(request):
         return text('OK')
+
+    @blueprint.websocket('/ws')
+    async def handler(request, ws):
+        ev.set()
 
     app.blueprint(blueprint)
 
@@ -308,3 +314,11 @@ def test_bp_shorthand():
 
     request, response = app.test_client.get('/delete')
     assert response.status == 405
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13'})
+    assert response.status == 101
+    assert ev.is_set()

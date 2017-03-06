@@ -19,6 +19,7 @@ from sanic.server import serve, serve_multiple, HttpProtocol
 from sanic.static import register as static_register
 from sanic.testing import TestClient
 from sanic.views import CompositionView
+from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 
 class Sanic:
@@ -51,6 +52,7 @@ class Sanic:
         self.sock = None
         self.listeners = defaultdict(list)
         self.is_running = False
+        self.websocket_enabled = False
 
         # Register alternative method names
         self.go_fast = self.run
@@ -167,6 +169,50 @@ class Sanic:
 
         self.route(uri=uri, methods=methods, host=host)(handler)
         return handler
+
+    # Decorator
+    def websocket(self, uri, host=None):
+        """Decorate a function to be registered as a websocket route
+        :param uri: path of the URL
+        :param host:
+        :return: decorated function
+        """
+        self.websocket_enabled = True
+
+        # Fix case where the user did not prefix the URL with a /
+        # and will probably get confused as to why it's not working
+        if not uri.startswith('/'):
+            uri = '/' + uri
+
+        def response(handler):
+            async def websocket_handler(request, *args, **kwargs):
+                request.app = self
+                protocol = request.transport.get_protocol()
+                ws = await protocol.websocket_handshake(request)
+                try:
+                    # invoke the application handler
+                    await handler(request, ws, *args, **kwargs)
+                except ConnectionClosed:
+                    pass
+                await ws.close()
+
+            self.router.add(uri=uri, handler=websocket_handler,
+                            methods=frozenset({'GET'}), host=host)
+            return handler
+
+        return response
+
+    def add_websocket_route(self, handler, uri, host=None):
+        """A helper method to register a function as a websocket route."""
+        return self.websocket(uri, host=host)(handler)
+
+    def enable_websocket(self, enable=True):
+        """Enable or disable the support for websocket.
+
+        Websocket is enabled automatically if websocket routes are
+        added to the application.
+        """
+        self.websocket_enabled = enable
 
     def remove_route(self, uri, clean_cache=True, host=None):
         self.router.remove(uri, clean_cache, host)
@@ -437,7 +483,7 @@ class Sanic:
 
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, ssl=None,
-            sock=None, workers=1, loop=None, protocol=HttpProtocol,
+            sock=None, workers=1, loop=None, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -464,6 +510,9 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if protocol is None:
+            protocol = (WebSocketProtocol if self.websocket_enabled
+                        else HttpProtocol)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
@@ -491,13 +540,16 @@ class Sanic:
     async def create_server(self, host="127.0.0.1", port=8000, debug=False,
                             before_start=None, after_start=None,
                             before_stop=None, after_stop=None, ssl=None,
-                            sock=None, loop=None, protocol=HttpProtocol,
+                            sock=None, loop=None, protocol=None,
                             backlog=100, stop_event=None):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
+        if protocol is None:
+            protocol = (WebSocketProtocol if self.websocket_enabled
+                        else HttpProtocol)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,

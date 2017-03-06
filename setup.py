@@ -19,6 +19,7 @@ install_requires = [
     'httptools>=0.0.9',
     'ujson>=1.35',
     'aiofiles>=0.3.0',
+    'websockets>=3.2',
 ]
 
 if os.name != 'nt':

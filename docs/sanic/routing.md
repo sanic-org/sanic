@@ -181,3 +181,37 @@ url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'], arg_two=2, 
 # http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor
 ```
 - All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be thrown.
+
+## WebSocket routes
+
+Routes for the WebSocket protocol can be defined with the `@app.websocket`
+decorator:
+
+```python
+@app.websocket('/feed')
+async def feed(request, ws):
+    while True:
+        data = 'hello!'
+        print('Sending: ' + data)
+        await ws.send(data)
+        data = await ws.recv()
+        print('Received: ' + data)
+```
+
+Alternatively, the `app.add_websocket_route` method can be used instead of the
+decorator:
+
+```python
+async def feed(request, ws):
+    pass
+
+app.add_websocket_route(my_websocket_handler, '/feed')
+```
+
+Handlers for a WebSocket route are passed the request as first argument, and a
+WebSocket protocol object as second argument. The protocol object has `send`
+and `recv` methods to send and receive data respectively.
+
+WebSocket support requires the [websockets](https://github.com/aaugustin/websockets)
+package by Aymeric Augustin.
+

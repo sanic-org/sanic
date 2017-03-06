@@ -55,6 +55,11 @@ will look like:
 
 Blueprints have much the same functionality as an application instance.
 
+### WebSocket routes
+
+WebSocket handlers can be registered on a blueprint using the `@bp.route`
+decorator or `bp.add_websocket_route` method.
+
 ### Middleware
 
 Using blueprints allows you to also register middleware globally.

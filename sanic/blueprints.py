@@ -23,6 +23,7 @@ class Blueprint:
         self.host = host
 
         self.routes = []
+        self.websocket_routes = []
         self.exceptions = []
         self.listeners = defaultdict(list)
         self.middlewares = []
@@ -43,6 +44,17 @@ class Blueprint:
             app.route(
                 uri=uri[1:] if uri.startswith('//') else uri,
                 methods=future.methods,
+                host=future.host or self.host
+                )(future.handler)
+
+        for future in self.websocket_routes:
+            # attach the blueprint name to the handler so that it can be
+            # prefixed properly in the router
+            future.handler.__blueprintname__ = self.name
+            # Prepend the blueprint URI prefix if available
+            uri = url_prefix + future.uri if url_prefix else future.uri
+            app.websocket(
+                uri=uri,
                 host=future.host or self.host
                 )(future.handler)
 
@@ -104,6 +116,28 @@ class Blueprint:
             methods = handler.handlers.keys()
 
         self.route(uri=uri, methods=methods, host=host)(handler)
+        return handler
+
+    def websocket(self, uri, host=None):
+        """Create a blueprint websocket route from a decorated function.
+
+        :param uri: endpoint at which the route will be accessible.
+        """
+        def decorator(handler):
+            route = FutureRoute(handler, uri, [], host)
+            self.websocket_routes.append(route)
+            return handler
+        return decorator
+
+    def add_websocket_route(self, handler, uri, host=None):
+        """Create a blueprint websocket route from a function.
+
+        :param handler: function for handling uri requests. Accepts function,
+                        or class instance with a view_class method.
+        :param uri: endpoint at which the route will be accessible.
+        :return: function or class instance
+        """
+        self.websocket(uri=uri, host=host)(handler)
         return handler
 
     def listener(self, event):

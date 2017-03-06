@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 
 from sanic import Sanic
@@ -232,6 +233,23 @@ def test_dynamic_route_unhashable():
 
     request, response = app.test_client.get('/folder/test/nope/')
     assert response.status == 404
+
+
+def test_websocket_route():
+    app = Sanic('test_websocket_route')
+    ev = asyncio.Event()
+
+    @app.websocket('/ws')
+    async def handler(request, ws):
+        ev.set()
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13'})
+    assert response.status == 101
+    assert ev.is_set()
 
 
 def test_route_duplicate():

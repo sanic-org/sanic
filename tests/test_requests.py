@@ -85,20 +85,28 @@ def test_json():
 
     request, response = app.test_client.get('/')
 
-    try:
-        results = json_loads(response.text)
-    except:
-        raise ValueError("Expected JSON response but got '{}'".format(response))
+    results = json_loads(response.text)
 
     assert results.get('test') == True
 
+def test_empty_json():
+    app = Sanic('test_json')
+
+    @app.route('/')
+    async def handler(request):
+        assert request.json == None
+        return json(request.json)
+
+    request, response = app.test_client.get('/')
+    assert response.status == 200
+    assert response.text == 'null'
 
 def test_invalid_json():
     app = Sanic('test_json')
 
     @app.route('/')
     async def handler(request):
-        return json(request.json())
+        return json(request.json)
 
     data = "I am not json"
     request, response = app.test_client.get('/', data=data)

@@ -69,6 +69,8 @@ class Request(dict):
             try:
                 self.parsed_json = json_loads(self.body)
             except Exception:
+                if not self.body:
+                    return None
                 raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json

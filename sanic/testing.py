@@ -4,7 +4,7 @@ HOST = '127.0.0.1'
 PORT = 42101
 
 
-class TestClient:
+class SanicTestClient:
     def __init__(self, app):
         self.app = app
 

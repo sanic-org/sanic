@@ -1,6 +1,6 @@
 import warnings
 
-from sanic.testing import TestClient
+from sanic.testing import SanicTestClient
 
 
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
@@ -11,7 +11,7 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
         "the next major version after 0.4.0.  Please use the `test_client` "
         "available on the app object.", DeprecationWarning)
 
-    test_client = TestClient(app)
+    test_client = SanicTestClient(app)
     return test_client._sanic_endpoint_test(
         method, uri, gather_request, debug, server_kwargs,
         *request_args, **request_kwargs)

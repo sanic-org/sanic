@@ -227,7 +227,11 @@ class Sanic:
 
         def response(handler):
             for exception in exceptions:
-                self.error_handler.add(exception, handler)
+                if isinstance(exception, (tuple, list)):
+                    for e in exception:
+                        self.error_handler.add(e, handler)
+                else:
+                    self.error_handler.add(exception, handler)
             return handler
 
         return response

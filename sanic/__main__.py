@@ -8,6 +8,10 @@ if __name__ == "__main__":
     parser = ArgumentParser(prog='sanic')
     parser.add_argument('--host', dest='host', type=str, default='127.0.0.1')
     parser.add_argument('--port', dest='port', type=int, default=8000)
+    parser.add_argument('--cert', dest='cert', type=str,
+                        help='location of certificate for SSL')
+    parser.add_argument('--key', dest='key', type=str,
+                        help='location of keyfile for SSL.')
     parser.add_argument('--workers', dest='workers', type=int, default=1, )
     parser.add_argument('--debug', dest='debug', action="store_true")
     parser.add_argument('module')
@@ -26,7 +30,8 @@ if __name__ == "__main__":
                              .format(type(app).__name__, args.module))
 
         app.run(host=args.host, port=args.port,
-                workers=args.workers, debug=args.debug)
+                workers=args.workers, debug=args.debug,
+                cert=args.cert, key=args.key)
     except ImportError:
         log.error("No module named {} found.\n"
                   "  Example File: project/sanic_server.py -> app\n"

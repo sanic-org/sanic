@@ -7,6 +7,7 @@ from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
+from ssl import create_default_context
 
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
@@ -499,17 +500,18 @@ class Sanic:
         :param port: Port to host on
         :param debug: Enables debug output (slows server)
         :param before_start: Functions to be executed before the server starts
-                             accepting connections
+                            accepting connections
         :param after_start: Functions to be executed after the server starts
                             accepting connections
         :param before_stop: Functions to be executed when a stop signal is
                             received before it is respected
         :param after_stop: Functions to be executed when all requests are
-                           complete
-        :param ssl: SSLContext for SSL encryption of worker(s)
+                            complete
+        :param ssl: SSLContext, or location of certificate and key
+                            for SSL encryption of worker(s)
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
-                        received before it is respected
+                            received before it is respected
         :param loop:
         :param backlog:
         :param stop_event:
@@ -573,6 +575,16 @@ class Sanic:
                 protocol=HttpProtocol, backlog=100, stop_event=None,
                 register_sys_signals=True, run_async=False):
         """Helper function used by `run` and `create_server`."""
+
+        if isinstance(ssl, dict):
+            # try common aliaseses
+            cert = ssl.get('cert') or ssl.get('certificate')
+            key = ssl.get('key') or ssl.get('keyfile')
+            if not cert and key:
+                raise ValueError("SSLContext or certificate and key required.")
+            context = create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            context.load_cert_chain(cert, keyfile=key)
+            ssl = context
 
         if loop is not None:
             if debug:

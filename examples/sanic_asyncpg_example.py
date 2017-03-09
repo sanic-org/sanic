@@ -41,12 +41,14 @@ async def create_db(app, loop):
     for i in range(0, 100):
         await conn.execute(f"""INSERT INTO sanic_post
                            (id, content, post_date) VALUES ({i}, {i}, now())""")
+    await conn.close()
 
 
 @app.route("/")
 async def handler(request):
     conn = await connect(**DB_CONFIG)
     results = await conn.fetch('SELECT * FROM sanic_post')
+    await conn.close()
     return json({'posts': jsonify(results)})
 
 

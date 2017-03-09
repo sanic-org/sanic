@@ -254,7 +254,7 @@ class HttpProtocol(asyncio.Protocol):
             self.transport.close()
 
     def bail_out(self, message, from_error=False):
-        if from_error and self.transport.is_closing():
+        if from_error or self.transport.is_closing():
             log.error(
                 ("Transport closed @ {} and exception "
                  "experienced during error handling").format(

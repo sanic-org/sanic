@@ -14,3 +14,5 @@ A list of Sanic extensions created by the community.
 - [UserAgent](https://github.com/lixxu/sanic-useragent): Add `user_agent` to request
 - [Limiter](https://github.com/bohea/sanic-limiter): Rate limiting for sanic.
 - [Sanic EnvConfig](https://github.com/jamesstidard/sanic-envconfig): Pull environment variables into your sanic config.
+- [Babel](https://github.com/lixxu/sanic-babel): Adds i18n/l10n support to Sanic applications with the help of the
+`Babel` library

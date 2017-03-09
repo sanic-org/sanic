@@ -17,7 +17,7 @@ from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol
 from sanic.static import register as static_register
-from sanic.testing import TestClient
+from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
@@ -482,7 +482,7 @@ class Sanic:
 
     @property
     def test_client(self):
-        return TestClient(self)
+        return SanicTestClient(self)
 
     # -------------------------------------------------------------------- #
     # Execution

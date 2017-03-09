@@ -18,7 +18,7 @@ async def foo2(request):
     return json({'msg': 'hi from blueprint2'})
 
 
-app.register_blueprint(blueprint)
-app.register_blueprint(blueprint2)
+app.blueprint(blueprint)
+app.blueprint(blueprint2)
 
 app.run(host="0.0.0.0", port=8000, debug=True)

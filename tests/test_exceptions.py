@@ -44,6 +44,21 @@ def exception_app():
 
     return app
 
+def test_catch_exception_list():
+    app = Sanic('exception_list')
+    @app.exception([SanicExceptionTestException, NotFound])
+    def exception_list(request, exception):
+        return text("ok")
+
+    @app.route('/')
+    def exception(request):
+        raise SanicExceptionTestException("You won't see me")
+
+    request, response = app.test_client.get('/random')
+    assert response.text == 'ok'
+
+    request, response = app.test_client.get('/')
+    assert response.text == 'ok'
 
 def test_no_exception(exception_app):
     """Test that a route works without an exception"""

@@ -39,7 +39,7 @@ class Request(dict):
         'app', 'url', 'headers', 'version', 'method', '_cookies', 'transport',
         'query_string', 'body',
         'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip',
+        '_ip','_token',
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -81,10 +81,9 @@ class Request(dict):
 
         :return: token related to request
         """
-        auth_header = self.headers.get('Authorization')
-        if auth_header is not None:
-            return auth_header.split()[1]
-        return auth_header
+        if not hasattr(self, '_token'):
+            self._token = self.headers.get('Authorization')
+        return self._token
 
     @property
     def form(self):

@@ -1,10 +1,15 @@
 from json import loads as json_loads, dumps as json_dumps
+from urllib.parse import urlparse
+import os
+import ssl
 
 import pytest
 
 from sanic import Sanic
 from sanic.exceptions import ServerError
-from sanic.response import json, text, redirect
+from sanic.response import json, text
+
+from sanic.testing import HOST, PORT
 
 
 # ------------------------------------------------------------ #
@@ -200,3 +205,61 @@ def test_post_form_multipart_form_data():
     request, response = app.test_client.post(data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
+
+
+@pytest.mark.parametrize(
+    'path,query,expected_url', [
+        ('/foo', '', 'http://{}:{}/foo'),
+        ('/bar/baz', '', 'http://{}:{}/bar/baz'),
+        ('/moo/boo', 'arg1=val1', 'http://{}:{}/moo/boo?arg1=val1')
+    ])
+def test_url_attributes_no_ssl(path, query, expected_url):
+    app = Sanic('test_url_attrs_no_ssl')
+
+    async def handler(request):
+        return text('OK')
+
+    app.add_route(handler, path)
+
+    request, response = app.test_client.get(path + '?{}'.format(query))
+    assert request.url == expected_url.format(HOST, PORT)
+
+    parsed = urlparse(request.url)
+
+    assert parsed.scheme == request.scheme
+    assert parsed.path == request.path
+    assert parsed.query == request.query_string
+    assert parsed.netloc == request.host
+
+
+@pytest.mark.parametrize(
+    'path,query,expected_url', [
+        ('/foo', '', 'https://{}:{}/foo'),
+        ('/bar/baz', '', 'https://{}:{}/bar/baz'),
+        ('/moo/boo', 'arg1=val1', 'https://{}:{}/moo/boo?arg1=val1')
+    ])
+def test_url_attributes_with_ssl(path, query, expected_url):
+    app = Sanic('test_url_attrs_with_ssl')
+
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+    context.load_cert_chain(
+        os.path.join(current_dir, 'certs/selfsigned.cert'),
+        keyfile=os.path.join(current_dir, 'certs/selfsigned.key'))
+
+    async def handler(request):
+        return text('OK')
+
+    app.add_route(handler, path)
+
+    request, response = app.test_client.get(
+        'https://{}:{}'.format(HOST, PORT) + path + '?{}'.format(query),
+        server_kwargs={'ssl': context})
+    assert request.url == expected_url.format(HOST, PORT)
+
+    parsed = urlparse(request.url)
+
+    assert parsed.scheme == request.scheme
+    assert parsed.path == request.path
+    assert parsed.query == request.query_string
+    assert parsed.netloc == request.host

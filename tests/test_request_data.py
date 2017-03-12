@@ -2,7 +2,7 @@ import random
 
 from sanic import Sanic
 from sanic.response import json
-from ujson import loads
+from json import loads
 
 
 def test_storage():

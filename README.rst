@@ -57,7 +57,22 @@ Hello World Example
 Installation
 ------------
 
--  ``python -m pip install sanic``
+The base install of sanic does not come with uvloop and ujson as they are not needed to get running,
+they do however provide sutible speedups so to install sanic with all the extensions use 
+
+-  ``python -m pip install sanic["all"]``
+
+To install sanic without uvloop or ujson then use
+
+- ``python -m pip install sanic``
+
+Otherwise specify specific support by naming the extension you want included
+
+- ``python -m pip install sanic["ujson"]``
+
+or 
+
+- ``python -m pip install sanic["uvloop"]``
 
 Documentation
 -------------
@@ -79,6 +94,7 @@ TODO
 ----
 * Streamed file processing
 * http2
+
 Limitations
 -----------
 * No wheels for uvloop and httptools on Windows :(

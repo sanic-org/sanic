@@ -9,6 +9,7 @@ Guides
    sanic/getting_started
    sanic/routing
    sanic/request_data
+   sanic/response
    sanic/static_files
    sanic/exceptions
    sanic/middleware

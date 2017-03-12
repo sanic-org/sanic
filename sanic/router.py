@@ -137,9 +137,6 @@ class Router:
                 for host_ in host:
                     self.add(uri, methods, handler, host_)
                 return
-        else:
-            # default host
-            self.hosts.add('*')
 
         # Dict for faster lookups of if method allowed
         if methods:

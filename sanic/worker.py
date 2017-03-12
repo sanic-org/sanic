@@ -36,10 +36,12 @@ class GunicornWorker(base.Worker):
         super().init_process()
 
     def run(self):
-        self._runner = asyncio.async(self._run(), loop=self.loop)
+        self._runner = asyncio.ensure_future(self._run(), loop=self.loop)
 
         try:
             self.loop.run_until_complete(self._runner)
+            trigger_events(self._server_settings.get('after_start', []), self.loop)
+            self.loop.run_until_complete(self._check_alive())
         finally:
             trigger_events(self._server_settings.get('before_stop', []), self.loop)
             self.loop.close()
@@ -83,7 +85,7 @@ class GunicornWorker(base.Worker):
                 **self._server_settings
             ))
 
-        trigger_events(self._server_settings.get('after_start', []), self.loop)
+    async def _check_alive(self):
         # If our parent changed then we shut down.
         pid = os.getpid()
         try:

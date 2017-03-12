@@ -313,7 +313,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
-          register_sys_signals=True, run_async=False):
+          register_sys_signals=True, run_async=False, connections=None):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -349,7 +349,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     trigger_events(before_start, loop)
 
-    connections = set()
+    connections = connections or set()
     signal = Signal()
     server = partial(
         protocol,

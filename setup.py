@@ -15,33 +15,45 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
-install_requires = [
-    'httptools>=0.0.9',
-    'ujson>=1.35',
-    'aiofiles>=0.3.0',
-    'websockets>=3.2',
-]
-
-if os.name != 'nt':
-    install_requires.append('uvloop>=0.5.3')
-
-setup(
-    name='sanic',
-    version=version,
-    url='http://github.com/channelcat/sanic/',
-    license='MIT',
-    author='Channel Cat',
-    author_email='channelcat@gmail.com',
-    description=(
+setup_kwargs =  {
+    'name': 'sanic',
+    'version': version,
+    'url': 'http://github.com/channelcat/sanic/',
+    'license': 'MIT',
+    'author': 'Channel Cat',
+    'author_email': 'channelcat@gmail.com',
+    'description': (
         'A microframework based on uvloop, httptools, and learnings of flask'),
-    packages=['sanic'],
-    platforms='any',
-    install_requires=install_requires,
-    classifiers=[
+    'packages': ['sanic'],
+    'platforms': 'any',
+    'classifiers': [
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Web Environment',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-)
+}
+
+try:
+    normal_requirements = [
+        'httptools>=0.0.9',
+        'uvloop>=0.5.3',
+        'ujson>=1.35',
+        'aiofiles>=0.3.0',
+        'websockets>=3.2',
+    ]
+    setup_kwargs['install_requires'] = normal_requirements
+    setup(**setup_kwargs)
+except DistutilsPlatformError as exception:
+    windows_requirements = [
+        'httptools>=0.0.9',
+        'aiofiles>=0.3.0',
+        'websockets>=3.2',
+    ]
+    setup_kwargs['install_requires'] = windows_requirements
+    setup(**setup_kwargs)
+
+# Installation was successful
+print(u"\n\n\U0001F680    "
+      "Sanic version {} installation suceeded.\n".format(version))

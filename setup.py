@@ -53,9 +53,7 @@ except DistutilsPlatformError as exception:
     ]
     setup_kwargs['install_requires'] = windows_requirements
     setup(**setup_kwargs)
-    # No exceptions occcured
-    print(u"\n\n\U0001F680    "
-          "Sanic version {} installation suceeded.\n".format(version))
-else:
-    print(u"\n\n\U0001F680    "
-          "Sanic version {} installation suceeded.\n".format(version))
+
+# Installation was successful
+print(u"\n\n\U0001F680    "
+      "Sanic version {} installation suceeded.\n".format(version))

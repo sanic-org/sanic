@@ -578,6 +578,10 @@ class Sanic:
         """This kills the Sanic"""
         get_event_loop().stop()
 
+    def __call__(self):
+        """gunicorn compatibility"""
+        return self
+
     async def create_server(self, host="127.0.0.1", port=8000, debug=False,
                             before_start=None, after_start=None,
                             before_stop=None, after_stop=None, ssl=None,
@@ -686,9 +690,10 @@ class Sanic:
             server_settings['run_async'] = True
 
         # Serve
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+        if host and port:
+            proto = "http"
+            if ssl is not None:
+                proto = "https"
+            log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         return server_settings

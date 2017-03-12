@@ -16,23 +16,23 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
         raise RuntimeError('Unable to determine version.')
 
 setup_kwargs =  {
-        'name': 'sanic',
-        'version': version,
-        'url': 'http://github.com/channelcat/sanic/',
-        'license': 'MIT',
-        'author': 'Channel Cat',
-        'author_email': 'channelcat@gmail.com',
-        'description': (
-            'A microframework based on uvloop, httptools, and learnings of flask'),
-        'packages': ['sanic'],
-        'platforms': 'any',
-        'classifiers': [
-            'Development Status :: 2 - Pre-Alpha',
-            'Environment :: Web Environment',
-            'License :: OSI Approved :: MIT License',
-            'Programming Language :: Python :: 3.5',
-            'Programming Language :: Python :: 3.6',
-        ],
+    'name': 'sanic',
+    'version': version,
+    'url': 'http://github.com/channelcat/sanic/',
+    'license': 'MIT',
+    'author': 'Channel Cat',
+    'author_email': 'channelcat@gmail.com',
+    'description': (
+        'A microframework based on uvloop, httptools, and learnings of flask'),
+    'packages': ['sanic'],
+    'platforms': 'any',
+    'classifiers': [
+        'Development Status :: 2 - Pre-Alpha',
+        'Environment :: Web Environment',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+    ],
 }
 
 try:

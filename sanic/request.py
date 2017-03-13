@@ -144,12 +144,14 @@ class Request(dict):
     def scheme(self):
         if self.app.websocket_enabled \
                 and self.headers.get('upgrade') == 'websocket':
-            return 'ws'
+            scheme = 'ws'
+        else:
+            scheme = 'http'
 
         if self.transport.get_extra_info('sslcontext'):
-            return 'https'
+            scheme += 's'
 
-        return 'http'
+        return scheme
 
     @property
     def host(self):

@@ -40,12 +40,15 @@ class GunicornWorker(base.Worker):
 
         try:
             self.loop.run_until_complete(self._runner)
-            trigger_events(self._server_settings.get('after_start', []), self.loop)
+            trigger_events(self._server_settings.get('after_start', []),
+                           self.loop)
             self.loop.run_until_complete(self._check_alive())
         finally:
-            trigger_events(self._server_settings.get('before_stop', []), self.loop)
+            trigger_events(self._server_settings.get('before_stop', []),
+                           self.loop)
             self.loop.close()
-            trigger_events(self._server_settings.get('after_stop', []), self.loop)
+            trigger_events(self._server_settings.get('after_stop', []),
+                           self.loop)
 
     async def close(self):
         if self.servers:

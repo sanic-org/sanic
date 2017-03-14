@@ -16,3 +16,4 @@ A list of Sanic extensions created by the community.
 - [Sanic EnvConfig](https://github.com/jamesstidard/sanic-envconfig): Pull environment variables into your sanic config.
 - [Babel](https://github.com/lixxu/sanic-babel): Adds i18n/l10n support to Sanic applications with the help of the
 `Babel` library
+- [Dispatch](https://github.com/ashleysommer/sanic-dispatcher): A dispatcher inspired by `DispatcherMiddleware` in werkzeug. Can act as a Sanic-to-WSGI adapter.

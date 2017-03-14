@@ -44,13 +44,13 @@ class GunicornWorker(base.Worker):
                            self.loop)
             self.loop.run_until_complete(self._check_alive())
         finally:
-            trigger_events(self._server_settings.get('before_stop', []),
-                           self.loop)
-            self.loop.close()
             trigger_events(self._server_settings.get('after_stop', []),
                            self.loop)
+            self.loop.close()
 
     async def close(self):
+        trigger_events(self._server_settings.get('before_stop', []),
+                       self.loop)
         if self.servers:
             # stop accepting connections
             self.log.info("Stopping server: %s, connections: %s",

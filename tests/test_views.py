@@ -15,13 +15,13 @@ def test_methods(method):
 
     class DummyView(HTTPMethodView):
 
-        def get(self, request):
+        async def get(self, request):
             return text('', headers={'method': 'GET'})
 
         def post(self, request):
             return text('', headers={'method': 'POST'})
 
-        def put(self, request):
+        async def put(self, request):
             return text('', headers={'method': 'PUT'})
 
         def head(self, request):
@@ -30,7 +30,7 @@ def test_methods(method):
         def options(self, request):
             return text('', headers={'method': 'OPTIONS'})
 
-        def patch(self, request):
+        async def patch(self, request):
             return text('', headers={'method': 'PATCH'})
 
         def delete(self, request):

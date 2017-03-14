@@ -40,6 +40,7 @@ class GunicornWorker(base.Worker):
 
         try:
             self.loop.run_until_complete(self._runner)
+            self.app.callable.is_running = True
             trigger_events(self._server_settings.get('after_start', []),
                            self.loop)
             self.loop.run_until_complete(self._check_alive())

@@ -2,10 +2,10 @@
 """
 You need the aiomysql
 """
-import asyncio
 import os
 
 import aiomysql
+
 from sanic import Sanic
 from sanic.response import json
 

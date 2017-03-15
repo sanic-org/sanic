@@ -1,4 +1,6 @@
 import os
+import sys
+import signal
 import asyncio
 import logging
 try:
@@ -24,6 +26,7 @@ class GunicornWorker(base.Worker):
             self.ssl_context = None
         self.servers = []
         self.connections = set()
+        self.exit_code = 0
 
     def init_process(self):
         # create new event_loop after fork
@@ -48,6 +51,8 @@ class GunicornWorker(base.Worker):
             trigger_events(self._server_settings.get('after_stop', []),
                            self.loop)
             self.loop.close()
+
+        sys.exit(self.exit_code)
 
     async def close(self):
         trigger_events(self._server_settings.get('before_stop', []),
@@ -119,3 +124,38 @@ class GunicornWorker(base.Worker):
         if cfg.ciphers:
             ctx.set_ciphers(cfg.ciphers)
         return ctx
+
+    def init_signals(self):
+        # Set up signals through the event loop API.
+
+        self.loop.add_signal_handler(signal.SIGQUIT, self.handle_quit,
+                                     signal.SIGQUIT, None)
+
+        self.loop.add_signal_handler(signal.SIGTERM, self.handle_exit,
+                                     signal.SIGTERM, None)
+
+        self.loop.add_signal_handler(signal.SIGINT, self.handle_quit,
+                                     signal.SIGINT, None)
+
+        self.loop.add_signal_handler(signal.SIGWINCH, self.handle_winch,
+                                     signal.SIGWINCH, None)
+
+        self.loop.add_signal_handler(signal.SIGUSR1, self.handle_usr1,
+                                     signal.SIGUSR1, None)
+
+        self.loop.add_signal_handler(signal.SIGABRT, self.handle_abort,
+                                     signal.SIGABRT, None)
+
+        # Don't let SIGTERM and SIGUSR1 disturb active requests
+        # by interrupting system calls
+        signal.siginterrupt(signal.SIGTERM, False)
+        signal.siginterrupt(signal.SIGUSR1, False)
+
+    def handle_quit(self, sig, frame):
+        self.alive = False
+        self.cfg.worker_int(self)
+
+    def handle_abort(self, sig, frame):
+        self.alive = False
+        self.exit_code = 1
+        self.cfg.worker_abort(self)

@@ -15,23 +15,23 @@ database_host = os.environ['DATABASE_HOST']
 database_user = os.environ['DATABASE_USER']
 database_password = os.environ['DATABASE_PASSWORD']
 app = Sanic()
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
-async def get_pool(*args, **kwargs):
+@app.listener("before_server_start")
+async def get_pool(app, loop):
     """
-    the first param in *args is the global instance ,
+    the first param  is the global instance ,
     so we can store our connection pool in it .
     and it can be used by different request
     :param args:
     :param kwargs:
     :return:
     """
-    args[0].pool = {
+    app.pool = {
         "aiomysql": await aiomysql.create_pool(host=database_host, user=database_user, password=database_password,
                                                db=database_name,
                                                maxsize=5)}
-    async with args[0].pool['aiomysql'].acquire() as conn:
+    async with app.pool['aiomysql'].acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute('DROP TABLE IF EXISTS sanic_polls')
             await cur.execute("""CREATE TABLE sanic_polls (
@@ -60,4 +60,4 @@ async def test():
 
 
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", workers=4, port=12000, before_start=get_pool)
+    app.run(host="127.0.0.1", workers=4, port=12000)

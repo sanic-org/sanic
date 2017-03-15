@@ -349,7 +349,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     trigger_events(before_start, loop)
 
-    connections = connections or set()
+    connections = connections if connections is not None else set()
     signal = Signal()
     server = partial(
         protocol,

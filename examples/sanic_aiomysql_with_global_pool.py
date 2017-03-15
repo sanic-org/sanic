@@ -6,7 +6,6 @@ import asyncio
 import os
 
 import aiomysql
-import uvloop
 from sanic import Sanic
 from sanic.response import json
 

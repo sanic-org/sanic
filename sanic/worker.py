@@ -40,8 +40,24 @@ class GunicornWorker(base.Worker):
         super().init_process()
 
     def run(self):
-        self._runner = asyncio.ensure_future(self._run(), loop=self.loop)
+        is_debug = self.log.loglevel == logging.DEBUG
+        protocol = (WebSocketProtocol if self.app.callable.websocket_enabled
+                    else HttpProtocol)
+        self._server_settings = self.app.callable._helper(
+            host=None,
+            port=None,
+            loop=self.loop,
+            debug=is_debug,
+            protocol=protocol,
+            ssl=self.ssl_context,
+            run_async=True
+        )
+        self._server_settings.pop('sock')
+        trigger_events(self._server_settings.get('before_start', []),
+                       self.loop)
+        self._server_settings['before_start'] = ()
 
+        self._runner = asyncio.ensure_future(self._run(), loop=self.loop)
         try:
             self.loop.run_until_complete(self._runner)
             self.app.callable.is_running = True
@@ -76,19 +92,6 @@ class GunicornWorker(base.Worker):
                 await asyncio.sleep(0.1)
 
     async def _run(self):
-        is_debug = self.log.loglevel == logging.DEBUG
-        protocol = (WebSocketProtocol if self.app.callable.websocket_enabled
-                    else HttpProtocol)
-        self._server_settings = self.app.callable._helper(
-            host=None,
-            port=None,
-            loop=self.loop,
-            debug=is_debug,
-            protocol=protocol,
-            ssl=self.ssl_context,
-            run_async=True
-        )
-        self._server_settings.pop('sock')
         for sock in self.sockets:
             self.servers.append(await serve(
                 sock=sock,

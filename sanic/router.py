@@ -75,9 +75,10 @@ class Router:
         """Parse a parameter string into its constituent name, type, and
         pattern
 
-        For example:
-        `parse_parameter_string('<param_one:[A-z]>')` ->
-            ('param_one', str, '[A-z]')
+        For example::
+
+            parse_parameter_string('<param_one:[A-z]>')` ->
+                ('param_one', str, '[A-z]')
 
         :param parameter_string: String to parse
         :return: tuple containing

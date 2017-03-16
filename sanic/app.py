@@ -320,7 +320,7 @@ class Sanic:
         the output URL's query string.
 
         :param view_name: string referencing the view name
-        :param **kwargs: keys and values that are used to build request
+        :param \*\*kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL

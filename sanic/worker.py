@@ -11,7 +11,7 @@ except ImportError:
 import uvloop
 import gunicorn.workers.base as base
 
-from sanic.server import trigger_events, serve, HttpProtocol
+from sanic.server import trigger_events, serve, HttpProtocol, Signal
 from sanic.websocket import WebSocketProtocol
 
 
@@ -27,6 +27,7 @@ class GunicornWorker(base.Worker):
         self.servers = []
         self.connections = set()
         self.exit_code = 0
+        self.signal = Signal()
 
     def init_process(self):
         # create new event_loop after fork
@@ -67,6 +68,7 @@ class GunicornWorker(base.Worker):
             self.servers.clear()
 
             # prepare connections for closing
+            self.signal.stopped = True
             for conn in self.connections:
                 conn.close_if_idle()
 
@@ -91,6 +93,7 @@ class GunicornWorker(base.Worker):
             self.servers.append(await serve(
                 sock=sock,
                 connections=self.connections,
+                signal=self.signal,
                 **self._server_settings
             ))
 

@@ -101,7 +101,8 @@ class Sanic:
         return decorator
 
     # Decorator
-    def route(self, uri, methods=frozenset({'GET'}), host=None):
+    def route(self, uri, methods=frozenset({'GET'}), host=None,
+              strict_slashes=False):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
@@ -117,34 +118,42 @@ class Sanic:
 
         def response(handler):
             self.router.add(uri=uri, methods=methods, handler=handler,
-                            host=host)
+                            host=host, strict_slashes=strict_slashes)
             return handler
 
         return response
 
     # Shorthand method decorators
-    def get(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"GET"}), host=host)
+    def get(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"GET"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def post(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"POST"}), host=host)
+    def post(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"POST"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def put(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"PUT"}), host=host)
+    def put(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"PUT"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def head(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"HEAD"}), host=host)
+    def head(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"HEAD"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def options(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"OPTIONS"}), host=host)
+    def options(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"OPTIONS"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def patch(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"PATCH"}), host=host)
+    def patch(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"PATCH"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def delete(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"DELETE"}), host=host)
+    def delete(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"DELETE"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
+                  strict_slashes=False):
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -168,11 +177,12 @@ class Sanic:
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
 
-        self.route(uri=uri, methods=methods, host=host)(handler)
+        self.route(uri=uri, methods=methods, host=host,
+                   strict_slashes=strict_slashes)(handler)
         return handler
 
     # Decorator
-    def websocket(self, uri, host=None):
+    def websocket(self, uri, host=None, strict_slashes=False):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
         :param host:
@@ -198,14 +208,17 @@ class Sanic:
                 await ws.close()
 
             self.router.add(uri=uri, handler=websocket_handler,
-                            methods=frozenset({'GET'}), host=host)
+                            methods=frozenset({'GET'}), host=host,
+                            strict_slashes=strict_slashes)
             return handler
 
         return response
 
-    def add_websocket_route(self, handler, uri, host=None):
+    def add_websocket_route(self, handler, uri, host=None,
+                            strict_slashes=False):
         """A helper method to register a function as a websocket route."""
-        return self.websocket(uri, host=host)(handler)
+        return self.websocket(uri, host=host,
+                              strict_slashes=strict_slashes)(handler)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.

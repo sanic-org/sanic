@@ -329,7 +329,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                         `app` instance and `loop`
     :param after_stop: function to be executed when a stop signal is
                        received after it is respected. Takes arguments
-                        `app` instance and `loop`
+                       `app` instance and `loop`
     :param debug: enables debug output (slows server)
     :param request_timeout: time in seconds
     :param ssl: SSLContext

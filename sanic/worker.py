@@ -64,6 +64,9 @@ class GunicornWorker(base.Worker):
             trigger_events(self._server_settings.get('after_start', []),
                            self.loop)
             self.loop.run_until_complete(self._check_alive())
+            trigger_events(self._server_settings.get('before_stop', []),
+                           self.loop)
+            self.loop.run_until_complete(self.close())
         finally:
             trigger_events(self._server_settings.get('after_stop', []),
                            self.loop)
@@ -72,8 +75,6 @@ class GunicornWorker(base.Worker):
         sys.exit(self.exit_code)
 
     async def close(self):
-        trigger_events(self._server_settings.get('before_stop', []),
-                       self.loop)
         if self.servers:
             # stop accepting connections
             self.log.info("Stopping server: %s, connections: %s",
@@ -114,8 +115,6 @@ class GunicornWorker(base.Worker):
                     await asyncio.sleep(1.0, loop=self.loop)
         except (Exception, BaseException, GeneratorExit, KeyboardInterrupt):
             pass
-
-        await self.close()
 
     @staticmethod
     def _create_ssl_context(cfg):

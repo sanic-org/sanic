@@ -19,7 +19,7 @@ _Translator.update({
 
 
 def _quote(str):
-    r"""Quote a string for use in a cookie header.
+    """Quote a string for use in a cookie header.
     If the string does not need to be double-quoted, then just return the
     string.  Otherwise, surround the string in doublequotes and quote
     (with a \) special characters.

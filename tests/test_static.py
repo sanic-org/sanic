@@ -25,7 +25,7 @@ def get_file_content(static_file_directory, file_name):
         return file.read()
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
 def test_static_file(static_file_directory, file_name):
     app = Sanic('test_static')
     app.static(

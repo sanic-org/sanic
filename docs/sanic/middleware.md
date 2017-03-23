@@ -1,8 +1,12 @@
-# Middleware
+# Middleware And Listeners
 
 Middleware are functions which are executed before or after requests to the
 server. They can be used to modify the *request to* or *response from*
 user-defined handler functions.
+
+Additionally, Sanic providers listeners which allow you to run code at various points of your application's lifecycle.
+
+## Middleware
 
 There are two types of middleware: request and response. Both are declared
 using the `@app.middleware` decorator, with the decorator's parameter being a
@@ -63,4 +67,46 @@ async def halt_request(request):
 @app.middleware('response')
 async def halt_response(request, response):
 	return text('I halted the response')
+```
+
+## Listeners
+
+If you want to execute startup/teardown code as your server starts or closes, you can use the following listeners:
+
+- `before_server_start`
+- `after_server_start`
+- `before_server_stop`
+- `after_server_stop`
+
+These listeners are implemented as decorators on functions which accept the app object as well as the asyncio loop. 
+
+For example:
+
+```python
+@app.listener('before_server_start')
+async def setup_db(app, loop):
+    app.db = await db_setup()
+
+@app.listener('after_server_start')
+async def notify_server_started(app, loop):
+    print('Server successfully started!')
+
+@app.listener('before_server_stop')
+async def notify_server_stopping(app, loop):
+    print('Server shutting down!')
+
+@app.listener('after_server_stop')
+async def close_db(app, loop):
+    await app.db.close()
+```
+
+If you want to schedule a background task to run after the loop has started,
+Sanic provides the `add_task` method to easily do so.
+
+```python
+async def notify_server_started_after_five_seconds():
+    await asyncio.sleep(5)
+    print('Server successfully started!')
+
+app.add_task(notify_server_started_after_five_seconds())
 ```

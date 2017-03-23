@@ -20,10 +20,12 @@ class SanicTestClient:
         conn = aiohttp.TCPConnector(verify_ssl=False)
         async with aiohttp.ClientSession(
                 cookies=cookies, connector=conn) as session:
+            load_body = 'load_body' not in kwargs or kwargs.pop('load_body')
             async with getattr(
                     session, method.lower())(url, *args, **kwargs) as response:
-                response.text = await response.text()
-                response.body = await response.read()
+                if load_body:
+                    response.text = await response.text()
+                    response.body = await response.read()
                 return response
 
     def _sanic_endpoint_test(

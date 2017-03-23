@@ -71,8 +71,7 @@ DB_USER = 'appuser'
 
 Out of the box there are just a few predefined values which can be overwritten when creating the application.
 
-| Variable          | Default   | Description                       |
-| ----------------- | --------- | --------------------------------- |
-| REQUEST_MAX_SIZE  | 100000000 | How big a request may be (bytes)  |
-| REQUEST_TIMEOUT   | 60        | How long a request can take (sec) |
-
+    | Variable          | Default   | Description                       |
+    | ----------------- | --------- | --------------------------------- |
+    | REQUEST_MAX_SIZE  | 100000000 | How big a request may be (bytes)  |
+    | REQUEST_TIMEOUT   | 60        | How long a request can take (sec) |

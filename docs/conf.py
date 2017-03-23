@@ -22,7 +22,7 @@ import sanic
 
 # -- General configuration ------------------------------------------------
 
-extensions = []
+extensions = ['sphinx.ext.autodoc']
 
 templates_path = ['_templates']
 
@@ -68,7 +68,6 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -80,12 +79,10 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Sanicdoc'
-
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -110,21 +107,14 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'Sanic.tex', 'Sanic Documentation',
-     'Sanic contributors', 'manual'),
-]
-
+latex_documents = [(master_doc, 'Sanic.tex', 'Sanic Documentation',
+                    'Sanic contributors', 'manual'), ]
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'sanic', 'Sanic Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'sanic', 'Sanic Documentation', [author], 1)]
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -132,12 +122,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Sanic', 'Sanic Documentation',
-     author, 'Sanic', 'One line description of project.',
-     'Miscellaneous'),
+    (master_doc, 'Sanic', 'Sanic Documentation', author, 'Sanic',
+     'One line description of project.', 'Miscellaneous'),
 ]
-
-
 
 # -- Options for Epub output ----------------------------------------------
 
@@ -149,8 +136,6 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
-
 
 # -- Custom Settings -------------------------------------------------------
 

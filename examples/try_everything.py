@@ -70,6 +70,11 @@ def query_string(request):
 # Run Server
 # ----------------------------------------------- #
 
+@app.listener('before_server_start')
+def before_start(app, loop):
+    log.info("SERVER STARTING")
+
+
 @app.listener('after_server_start')
 def after_start(app, loop):
     log.info("OH OH OH OH OHHHHHHHH")
@@ -77,7 +82,13 @@ def after_start(app, loop):
 
 @app.listener('before_server_stop')
 def before_stop(app, loop):
+    log.info("SERVER STOPPING")
+
+
+@app.listener('after_server_stop')
+def after_stop(app, loop):
     log.info("TRIED EVERYTHING")
 
 
-app.run(host="0.0.0.0", port=8000, debug=True)
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=8000, debug=True)

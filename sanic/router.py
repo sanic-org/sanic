@@ -75,9 +75,10 @@ class Router:
         """Parse a parameter string into its constituent name, type, and
         pattern
 
-        For example:
-        `parse_parameter_string('<param_one:[A-z]>')` ->
-            ('param_one', str, '[A-z]')
+        For example::
+
+            parse_parameter_string('<param_one:[A-z]>')` ->
+                ('param_one', str, '[A-z]')
 
         :param parameter_string: String to parse
         :return: tuple containing
@@ -95,9 +96,15 @@ class Router:
 
         return name, _type, pattern
 
-    def add(self, uri, methods, handler, host=None):
+    def add(self, uri, methods, handler, host=None, strict_slashes=False):
+
         # add regular version
         self._add(uri, methods, handler, host)
+
+        if strict_slashes:
+            return
+
+        # Add versions with and without trailing /
         slash_is_missing = (
             not uri[-1] == '/'
             and not self.routes_all.get(uri + '/', False)

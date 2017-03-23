@@ -16,6 +16,7 @@ Guides
    sanic/blueprints
    sanic/config
    sanic/cookies
+   sanic/streaming
    sanic/class_based_views
    sanic/custom_protocol
    sanic/ssl

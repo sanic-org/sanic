@@ -44,3 +44,15 @@ directly run by the interpreter.
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337, workers=4)
 ```
+
+## Running via Gunicorn
+
+[Gunicorn](http://gunicorn.org/) ‘Green Unicorn’ is a WSGI HTTP Server for UNIX.
+It’s a pre-fork worker model ported from Ruby’s Unicorn project.
+
+In order to run Sanic application with Gunicorn, you need to use the special `sanic.worker.GunicornWorker`
+for Gunicorn `worker-class` argument:
+
+```
+gunicorn --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker
+```

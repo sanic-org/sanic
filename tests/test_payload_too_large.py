@@ -38,7 +38,7 @@ def test_payload_too_large_at_data_received_default():
     assert response.text == 'Error: Payload Too Large'
 
 
-@on_header_default_app.route('/1')
+@on_header_default_app.post('/1')
 async def handler3(request):
     return text('OK')
 

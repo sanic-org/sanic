@@ -22,8 +22,8 @@ class SanicTestClient:
                 cookies=cookies, connector=conn) as session:
             async with getattr(
                     session, method.lower())(url, *args, **kwargs) as response:
-                response.text = await response.text()
-                response.body = await response.read()
+                # response.text = await response.text()
+                # response.body = await response.read()
                 return response
 
     def _sanic_endpoint_test(

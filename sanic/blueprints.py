@@ -3,7 +3,9 @@ from collections import defaultdict, namedtuple
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
 
-FutureRoute = namedtuple('Route', ['handler', 'uri', 'methods', 'host'])
+FutureRoute = namedtuple('Route',
+                         ['handler', 'uri', 'methods',
+                          'host', 'strict_slashes'])
 FutureListener = namedtuple('Listener', ['handler', 'uri', 'methods', 'host'])
 FutureMiddleware = namedtuple('Route', ['middleware', 'args', 'kwargs'])
 FutureException = namedtuple('Route', ['handler', 'args', 'kwargs'])
@@ -44,7 +46,8 @@ class Blueprint:
             app.route(
                 uri=uri[1:] if uri.startswith('//') else uri,
                 methods=future.methods,
-                host=future.host or self.host
+                host=future.host or self.host,
+                strict_slashes=future.strict_slashes
                 )(future.handler)
 
         for future in self.websocket_routes:
@@ -55,7 +58,8 @@ class Blueprint:
             uri = url_prefix + future.uri if url_prefix else future.uri
             app.websocket(
                 uri=uri,
-                host=future.host or self.host
+                host=future.host or self.host,
+                strict_slashes=future.strict_slashes
                 )(future.handler)
 
         # Middleware
@@ -82,19 +86,21 @@ class Blueprint:
             for listener in listeners:
                 app.listener(event)(listener)
 
-    def route(self, uri, methods=frozenset({'GET'}), host=None):
+    def route(self, uri, methods=frozenset({'GET'}), host=None,
+              strict_slashes=False):
         """Create a blueprint route from a decorated function.
 
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
         """
         def decorator(handler):
-            route = FutureRoute(handler, uri, methods, host)
+            route = FutureRoute(handler, uri, methods, host, strict_slashes)
             self.routes.append(route)
             return handler
         return decorator
 
-    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
+                  strict_slashes=False):
         """Create a blueprint route from a function.
 
         :param handler: function for handling uri requests. Accepts function,
@@ -115,16 +121,17 @@ class Blueprint:
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
 
-        self.route(uri=uri, methods=methods, host=host)(handler)
+        self.route(uri=uri, methods=methods, host=host,
+                   strict_slashes=strict_slashes)(handler)
         return handler
 
-    def websocket(self, uri, host=None):
+    def websocket(self, uri, host=None, strict_slashes=False):
         """Create a blueprint websocket route from a decorated function.
 
         :param uri: endpoint at which the route will be accessible.
         """
         def decorator(handler):
-            route = FutureRoute(handler, uri, [], host)
+            route = FutureRoute(handler, uri, [], host, strict_slashes)
             self.websocket_routes.append(route)
             return handler
         return decorator
@@ -183,23 +190,30 @@ class Blueprint:
         self.statics.append(static)
 
     # Shorthand method decorators
-    def get(self, uri, host=None):
-        return self.route(uri, methods=["GET"], host=host)
+    def get(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=["GET"], host=host,
+                          strict_slashes=strict_slashes)
 
-    def post(self, uri, host=None):
-        return self.route(uri, methods=["POST"], host=host)
+    def post(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=["POST"], host=host,
+                          strict_slashes=strict_slashes)
 
-    def put(self, uri, host=None):
-        return self.route(uri, methods=["PUT"], host=host)
+    def put(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=["PUT"], host=host,
+                          strict_slashes=strict_slashes)
 
-    def head(self, uri, host=None):
-        return self.route(uri, methods=["HEAD"], host=host)
+    def head(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=["HEAD"], host=host,
+                          strict_slashes=strict_slashes)
 
-    def options(self, uri, host=None):
-        return self.route(uri, methods=["OPTIONS"], host=host)
+    def options(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=["OPTIONS"], host=host,
+                          strict_slashes=strict_slashes)
 
-    def patch(self, uri, host=None):
-        return self.route(uri, methods=["PATCH"], host=host)
+    def patch(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=["PATCH"], host=host,
+                          strict_slashes=strict_slashes)
 
-    def delete(self, uri, host=None):
-        return self.route(uri, methods=["DELETE"], host=host)
+    def delete(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=["DELETE"], host=host,
+                          strict_slashes=strict_slashes)

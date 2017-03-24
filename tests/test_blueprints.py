@@ -24,6 +24,33 @@ def test_bp():
 
     assert response.text == 'Hello'
 
+def test_bp_strict_slash():
+    app = Sanic('test_route_strict_slash')
+    bp = Blueprint('test_text')
+
+    @bp.get('/get', strict_slashes=True)
+    def handler(request):
+        return text('OK')
+
+    @bp.post('/post/', strict_slashes=True)
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(bp)
+
+    request, response = app.test_client.get('/get')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.get('/get/')
+    assert response.status == 404
+
+    request, response = app.test_client.post('/post/')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.post('/post')
+    assert response.status == 404
+
+
 def test_bp_with_url_prefix():
     app = Sanic('test_text')
     bp = Blueprint('test_text', url_prefix='/test1')

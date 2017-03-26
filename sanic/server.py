@@ -451,8 +451,8 @@ def serve_multiple(server_settings, workers, stop_event=None):
     if stop_event is None:
         stop_event = Event()
 
-    signal_func(SIGINT, lambda s, f: stop_event.set())
-    signal_func(SIGTERM, lambda s, f: stop_event.set())
+    signal_func(SIGINT, lambda s, f: loop.close())
+    signal_func(SIGTERM, lambda s, f: loop.close())
 
     processes = []
     for _ in range(workers):

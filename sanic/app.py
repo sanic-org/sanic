@@ -597,23 +597,14 @@ class Sanic:
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
-<<<<<<< HEAD
-<<<<<<< df9884de3c7ca6ad248162c8f404afd0ed774359
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
-=======
-=======
->>>>>>> 2dca53a696064d5f3447484febb2294648b37d1f
         if stop_event is not None:
             if debug:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
-<<<<<<< HEAD
->>>>>>> remove stop_event
-=======
->>>>>>> 2dca53a696064d5f3447484febb2294648b37d1f
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
@@ -629,8 +620,6 @@ class Sanic:
                 protocol=HttpProtocol, backlog=100, stop_event=None,
                 register_sys_signals=True, run_async=False):
         """Helper function used by `run` and `create_server`."""
-<<<<<<< HEAD
-<<<<<<< df9884de3c7ca6ad248162c8f404afd0ed774359
 
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -641,19 +630,11 @@ class Sanic:
             context = create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
             ssl = context
-
-=======
-=======
->>>>>>> 2dca53a696064d5f3447484febb2294648b37d1f
         if stop_event is not None:
             if debug:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
-<<<<<<< HEAD
->>>>>>> remove stop_event
-=======
->>>>>>> 2dca53a696064d5f3447484febb2294648b37d1f
         if loop is not None:
             if debug:
                 warnings.simplefilter('default')

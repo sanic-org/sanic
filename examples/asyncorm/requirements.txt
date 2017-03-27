@@ -1,0 +1,2 @@
+asyncorm==0.0.7
+sanic==0.4.1

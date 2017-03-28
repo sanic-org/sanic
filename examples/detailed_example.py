@@ -1,6 +1,9 @@
+# This demo requires aioredis and environmental variables established in ENV_VARS
 import json
 import logging
 import os
+
+from datetime import datetime
 
 import aioredis
 
@@ -23,20 +26,28 @@ async def log_uri(request):
     logger.info("URI called: {0}".format(request.url))
 
 
+@app.listener('before_server_start')
+async def before_server_start(app, loop):
+    logger.info("Starting redis pool")
+    app.redis_pool = await aioredis.create_pool(
+        (app.config.REDIS_HOST, int(app.config.REDIS_PORT)),
+        minsize=int(app.config.REDIS_MINPOOL),
+        maxsize=int(app.config.REDIS_MAXPOOL),
+        password=app.config.REDIS_PASS)
+
+
+@app.listener('after_server_stop')
+async def after_server_stop(app, loop):
+    logger.info("Closing redis pool")
+    app.redis_pool.close()
+    await app.redis_pool.wait_closed()
+
+
 @app.middleware("request")
 async def attach_db_connectors(request):
-    # We will check to see if our redis pool has been created
-    # If you have access to the app object, you can set app.config directly
-    # If you don't have access to the app object, you can use request.app
-    if not hasattr(request.app.config, "REDIS"):
-        logger.info("Setting up connection to Redis Cache")
-        request.app.config.REDIS = await aioredis.create_pool((app.config.REDIS_HOST, int(app.config.REDIS_PORT)),
-                                                              minsize=int(app.config.REDIS_MINPOOL),
-                                                              maxsize=int(app.config.REDIS_MAXPOOL),
-                                                              password=app.config.REDIS_PASS)
     # Just put the db objects in the request for easier access
-    logger.info("Passing pool to request object")
-    request["redis"] = request.app.config.REDIS
+    logger.info("Passing redis pool to request object")
+    request["redis"] = request.app.redis_pool
 
 
 @app.route("/state/<user_id>", methods=["GET"])
@@ -46,13 +57,23 @@ async def access_state(request, user_id):
         with await request["redis"] as redis_conn:
             state = await redis_conn.get(user_id, encoding="utf-8")
             if state:
-                return sanic.response.json(json.loads(state))
+                return sanic.response.json({"msg": "Success",
+                                            "status": 200,
+                                            "success": True,
+                                            "data": json.loads(state),
+                                            "finished_at": datetime.now().isoformat()})
         # Then state object is not in redis
         logger.critical("Unable to find user_data in cache.")
-        return sanic.response.HTTPResponse({"msg": "User state not found"}, status=404)
+        return sanic.response.HTTPResponse({"msg": "User state not found",
+                                            "success": False,
+                                            "status": 404,
+                                            "finished_at": datetime.now().isoformat()}, status=404)
     except aioredis.ProtocolError:
         logger.critical("Unable to connect to state cache")
-        return sanic.response.HTTPResponse({"msg": "Internal Server Error"}, status=500)
+        return sanic.response.HTTPResponse({"msg": "Internal Server Error",
+                                            "status": 500,
+                                            "success": False,
+                                            "finished_at": datetime.now().isoformat()}, status=500)
 
 
 @app.route("/state/<user_id>/push", methods=["POST"])
@@ -62,11 +83,17 @@ async def set_state(request, user_id):
         with await request["redis"] as redis_conn:
             # Set the value in cache to your new value
             await redis_conn.set(user_id, json.dumps(request.json), expire=1800)
-            logger.info("Successfully retrieved from cache")
-            return sanic.response.HTTPResponse({"msg": "Successfully pushed state to cache"})
+            logger.info("Successfully pushed state to cache")
+            return sanic.response.HTTPResponse({"msg": "Successfully pushed state to cache",
+                                                "success": True,
+                                                "status": 200,
+                                                "finished_at": datetime.now().isoformat()})
     except aioredis.ProtocolError:
         logger.critical("Unable to connect to state cache")
-        return sanic.response.HTTPResponse({"msg": "Interal Server Error"}, status=500)
+        return sanic.response.HTTPResponse({"msg": "Internal Server Error",
+                                            "status": 500,
+                                            "success": False,
+                                            "finished_at": datetime.now().isoformat()}, status=500)
 
 
 def configure():

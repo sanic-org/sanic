@@ -4,8 +4,10 @@ Sanic
 import codecs
 import os
 import re
-from setuptools import setup
+from distutils.errors import DistutilsPlatformError
+from distutils.util import strtobool
 
+from setuptools import setup
 
 with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
         __file__)), 'sanic', '__init__.py'), 'r', 'latin1') as fp:
@@ -15,7 +17,7 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
-setup_kwargs =  {
+setup_kwargs = {
     'name': 'sanic',
     'version': version,
     'url': 'http://github.com/channelcat/sanic/',
@@ -35,23 +37,32 @@ setup_kwargs =  {
     ],
 }
 
+ujson = 'ujson>=1.35'
+uvloop = 'uvloop>=0.5.3'
+
+requirements = [
+    'httptools>=0.0.9',
+    uvloop,
+    ujson,
+    'aiofiles>=0.3.0',
+    'websockets>=3.2',
+]
+if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
+    print("Installing without uJSON")
+    requirements.remove(ujson)
+
+if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+    print("Installing without uvLoop")
+    requirements.remove(uvloop)
+
 try:
-    normal_requirements = [
-        'httptools>=0.0.9',
-        'uvloop>=0.5.3',
-        'ujson>=1.35',
-        'aiofiles>=0.3.0',
-        'websockets>=3.2',
-    ]
-    setup_kwargs['install_requires'] = normal_requirements
+    setup_kwargs['install_requires'] = requirements
     setup(**setup_kwargs)
 except DistutilsPlatformError as exception:
-    windows_requirements = [
-        'httptools>=0.0.9',
-        'aiofiles>=0.3.0',
-        'websockets>=3.2',
-    ]
-    setup_kwargs['install_requires'] = windows_requirements
+    requirements.remove(ujson)
+    requirements.remove(uvloop)
+    print("Installing without uJSON or uvLoop")
+    setup_kwargs['install_requires'] = requirements
     setup(**setup_kwargs)
 
 # Installation was successful

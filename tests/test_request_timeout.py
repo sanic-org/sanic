@@ -1,7 +1,5 @@
 import asyncio
 
-import pytest
-
 from sanic import Sanic
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout
@@ -23,7 +21,6 @@ def handler_exception(request, exception):
     return text('Request Timeout from error_handler.', 408)
 
 
-@pytest.mark.skip  # see: https://github.com/channelcat/sanic/issues/598
 def test_server_error_request_timeout():
     request, response = request_timeout_app.test_client.get('/1')
     assert response.status == 408
@@ -36,7 +33,6 @@ async def handler_2(request):
     return text('OK')
 
 
-@pytest.mark.skip  # see: https://github.com/channelcat/sanic/issues/598
 def test_default_server_error_request_timeout():
     request, response = request_timeout_default_app.test_client.get('/1')
     assert response.status == 408

@@ -1,5 +1,3 @@
-import pytest
-
 from sanic import Sanic
 from sanic.exceptions import PayloadTooLarge
 from sanic.response import text
@@ -45,7 +43,6 @@ async def handler3(request):
     return text('OK')
 
 
-@pytest.mark.skip  # see: https://github.com/channelcat/sanic/issues/598
 def test_payload_too_large_at_on_header_default():
     data = 'a' * 1000
     response = on_header_default_app.test_client.post(

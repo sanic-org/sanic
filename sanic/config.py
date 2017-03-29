@@ -1,9 +1,10 @@
 import os
 import types
 
+SANIC_PREFIX = 'SANIC_'
 
 class Config(dict):
-    def __init__(self, defaults=None):
+    def __init__(self, defaults=None, load_env=True):
         super().__init__(defaults or {})
         self.LOGO = """
                  ▄▄▄▄▄
@@ -28,6 +29,9 @@ class Config(dict):
 """
         self.REQUEST_MAX_SIZE = 100000000  # 100 megababies
         self.REQUEST_TIMEOUT = 60  # 60 seconds
+
+        if load_env:
+            self.load_environment_vars()
 
     def __getattr__(self, attr):
         try:
@@ -90,3 +94,13 @@ class Config(dict):
         for key in dir(obj):
             if key.isupper():
                 self[key] = getattr(obj, key)
+
+    def load_environment_vars(self):
+        for k, v in os.environ.items():
+            """
+            Looks for any SANIC_ prefixed environment variables and applies
+            them to the configuration if present.
+            """
+            if k.startswith(SANIC_PREFIX):
+                _, config_key = k.split(SANIC_PREFIX, 1)
+                self[config_key] = v

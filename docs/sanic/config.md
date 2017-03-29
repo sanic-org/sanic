@@ -29,6 +29,14 @@ In general the convention is to only have UPPERCASE configuration parameters. Th
 
 There are several ways how to load configuration.
 
+### From environment variables.
+
+Any variables defined with the `SANIC_` prefix will be applied to the sanic config. For example, setting `SANIC_REQUEST_TIMEOUT` will be loaded by the application automatically. You can pass the `load_vars` boolean to the Sanic constructor to override that:
+
+```python
+app = Sanic(load_vars=False)
+```
+
 ### From an Object
 
 If there are a lot of configuration values and they have sensible defaults it might be helpful to put them into a module:

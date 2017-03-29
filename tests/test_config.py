@@ -16,6 +16,17 @@ def test_load_from_object():
     assert app.config.CONFIG_VALUE == 'should be used'
     assert 'not_for_config' not in app.config
 
+def test_auto_load_env():
+    environ["SANIC_TEST_ANSWER"] = "42"
+    app = Sanic()
+    assert app.config.TEST_ANSWER == "42"
+    del environ["SANIC_TEST_ANSWER"]
+
+def test_auto_load_env():
+    environ["SANIC_TEST_ANSWER"] = "42"
+    app = Sanic(load_env=False)
+    assert getattr(app.config, 'TEST_ANSWER', None) == None
+    del environ["SANIC_TEST_ANSWER"]
 
 def test_load_from_file():
     app = Sanic('test_load_from_file')

@@ -25,7 +25,8 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 class Sanic:
 
-    def __init__(self, name=None, router=None, error_handler=None):
+    def __init__(self, name=None, router=None, error_handler=None,
+                 load_env=True):
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
         if not logging.root.handlers and log.level == logging.NOTSET:
@@ -44,7 +45,7 @@ class Sanic:
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or ErrorHandler()
-        self.config = Config()
+        self.config = Config(load_env=load_env)
         self.request_middleware = deque()
         self.response_middleware = deque()
         self.blueprints = {}
@@ -554,19 +555,24 @@ class Sanic:
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
-            stop_event=stop_event, register_sys_signals=register_sys_signals)
+            register_sys_signals=register_sys_signals)
 
         try:
             self.is_running = True
             if workers == 1:
                 serve(**server_settings)
             else:
-                serve_multiple(server_settings, workers, stop_event)
+                serve_multiple(server_settings, workers)
         except:
             log.exception(
                 'Experienced exception while trying to serve')
@@ -595,13 +601,17 @@ class Sanic:
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
-            backlog=backlog, stop_event=stop_event,
-            run_async=True)
+            backlog=backlog, run_async=True)
 
         return await serve(**server_settings)
 
@@ -621,7 +631,11 @@ class Sanic:
             context = create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
             ssl = context
-
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         if loop is not None:
             if debug:
                 warnings.simplefilter('default')

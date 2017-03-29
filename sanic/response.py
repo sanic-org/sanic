@@ -132,8 +132,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
     async def stream(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        """Streams headers, runs the `streaming_fn` callback that writes content
-        to the response body, then finalizes the response body.
+        """Streams headers, runs the `streaming_fn` callback that writes
+        content to the response body, then finalizes the response body.
         """
         headers = self.get_headers(
             version, keep_alive=keep_alive,

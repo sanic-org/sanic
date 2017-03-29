@@ -88,4 +88,4 @@ def test_chained_redirect(redirect_app):
     assert request.url.endswith('/1')
     assert response.status == 200
     assert response.text == 'OK'
-    assert response.url.path.endswith('/3')
+    assert response.url.endswith('/3')

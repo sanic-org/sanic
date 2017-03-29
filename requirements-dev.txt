@@ -1,5 +1,5 @@
 aiofiles
-aiohttp
+aiohttp==1.3.5
 beautifulsoup4
 coverage
 httptools

@@ -331,7 +331,11 @@ def stream(
     :param headers: Custom Headers.
     """
     return StreamingHTTPResponse(
-        streaming_fn, headers=headers, content_type=content_type, status=status)
+        streaming_fn,
+        headers=headers,
+        content_type=content_type,
+        status=status
+    )
 
 
 def redirect(to, headers=None, status=302,

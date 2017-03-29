@@ -1,7 +1,9 @@
 import os
+
 import types
 
 SANIC_PREFIX = 'SANIC_'
+
 
 class Config(dict):
     def __init__(self, defaults=None, load_env=True):

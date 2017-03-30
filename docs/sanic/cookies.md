@@ -5,7 +5,7 @@ both read and write cookies, which are stored as key-value pairs.
 
 ## Reading cookies
 
-A user's cookies can be accessed `Request` object's `cookie` dictionary.
+A user's cookies can be accessed via the `Request` object's `cookies` dictionary.
 
 ```python
 from sanic.response import text
@@ -42,20 +42,20 @@ from sanic.response import text
 @app.route("/cookie")
 async def test(request):
     response = text("Time to eat some cookies muahaha")
-    
+
     # This cookie will be set to expire in 0 seconds
     del response.cookies['kill_me']
-    
+
     # This cookie will self destruct in 5 seconds
     response.cookies['short_life'] = 'Glad to be here'
     response.cookies['short_life']['max-age'] = 5
     del response.cookies['favorite_color']
-    
+
     # This cookie will remain unchanged
     response.cookies['favorite_color'] = 'blue'
     response.cookies['favorite_color'] = 'pink'
     del response.cookies['favorite_color']
-    
+
     return response
 ```
 

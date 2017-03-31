@@ -1,9 +1,8 @@
-import asyncio
-
 from sanic import Sanic
-from sanic.config import Config
-from sanic.exceptions import RequestTimeout
+import asyncio
 from sanic.response import text
+from sanic.exceptions import RequestTimeout
+from sanic.config import Config
 
 Config.REQUEST_TIMEOUT = 1
 request_timeout_app = Sanic('test_request_timeout')

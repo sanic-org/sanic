@@ -1,6 +1,6 @@
 from sanic import Sanic
-from sanic.response import text
 from sanic.exceptions import PayloadTooLarge
+from sanic.response import text
 
 
 def test_payload_too_large_from_error_handler():

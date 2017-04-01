@@ -1,5 +1,6 @@
 from mimetypes import guess_type
 from os import path
+
 try:
     from ujson import dumps as json_dumps
 except:
@@ -167,12 +168,12 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         return (b'HTTP/%b %d %b\r\n'
                 b'%b'
                 b'%b\r\n') % (
-            version.encode(),
-            self.status,
-            status,
-            timeout_header,
-            headers
-        )
+                   version.encode(),
+                   self.status,
+                   status,
+                   timeout_header,
+                   headers
+               )
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -216,14 +217,14 @@ class HTTPResponse(BaseHTTPResponse):
                 b'%b'
                 b'%b\r\n'
                 b'%b') % (
-            version.encode(),
-            self.status,
-            status,
-            b'keep-alive' if keep_alive else b'close',
-            timeout_header,
-            headers,
-            self.body
-        )
+                   version.encode(),
+                   self.status,
+                   status,
+                   b'keep-alive' if keep_alive else b'close',
+                   timeout_header,
+                   headers,
+                   self.body
+               )
 
     @property
     def cookies(self):

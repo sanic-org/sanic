@@ -122,6 +122,10 @@ class Request(dict):
         return self.parsed_args
 
     @property
+    def raw_args(self):
+        return {k: v[0] for k, v in self.args.items()}
+
+    @property
     def cookies(self):
         if self._cookies is None:
             cookie = self.headers.get('Cookie') or self.headers.get('cookie')

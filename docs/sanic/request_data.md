@@ -9,30 +9,34 @@ The following variables are accessible as properties on `Request` objects:
 
   ```python
   from sanic.response import json
-  
+
   @app.route("/json")
   def post_json(request):
       return json({ "received": True, "message": request.json })
   ```
-  
+
 - `args` (dict) - Query string variables. A query string is the section of a
   URL that resembles `?key1=value1&key2=value2`. If that URL were to be parsed,
-  the `args` dictionary would look like `{'key1': 'value1', 'key2': 'value2'}`.
+  the `args` dictionary would look like `{'key1': ['value1'], 'key2': ['value2']}`.
   The request's `query_string` variable holds the unparsed string value.
 
   ```python
   from sanic.response import json
-  
+
   @app.route("/query_string")
   def query_string(request):
       return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
   ```
 
+- `raw_args` (dict) - On many cases you would need to access the url arguments in
+  a less packed dictionary. For same previous URL `?key1=value1&key2=value2`, the
+  `raw_args` dictionary would look like `{'key1': 'value1', 'key2': 'value2'}`.
+
 - `files` (dictionary of `File` objects) - List of files that have a name, body, and type
 
   ```python
   from sanic.response import json
-  
+
   @app.route("/files")
   def post_json(request):
       test_file = request.files.get('test')
@@ -50,7 +54,7 @@ The following variables are accessible as properties on `Request` objects:
 
   ```python
   from sanic.response import json
-  
+
   @app.route("/form")
   def post_json(request):
       return json({ "received": True, "form_data": request.form, "test": request.form.get('test') })
@@ -58,15 +62,15 @@ The following variables are accessible as properties on `Request` objects:
 
 - `body` (bytes) - Posted raw body. This property allows retrieval of the
   request's raw data, regardless of content type.
-  
+
   ```python
   from sanic.response import text
-  
+
   @app.route("/users", methods=["POST",])
   def create_user(request):
       return text("You are trying to create a user with the following POST: %s" % request.body)
   ```
-  
+
 - `ip` (str) - IP address of the requester.
 
 - `app` - a reference to the Sanic application object that is handling this request. This is useful when inside blueprints or other handlers in modules that do not have access to the global `app` object.

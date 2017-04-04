@@ -5,13 +5,16 @@ import warnings
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
-from os import set_inheritable
 from signal import (
     SIGTERM, SIGINT,
     signal as signal_func,
     Signals
 )
-from socket import socket, SOL_SOCKET, SO_REUSEADDR
+from socket import (
+    socket,
+    SOL_SOCKET,
+    SO_REUSEADDR,
+)
 from time import time
 
 from httptools import HttpRequestParser
@@ -446,7 +449,7 @@ def serve_multiple(server_settings, workers):
         sock = socket()
         sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         sock.bind((server_settings['host'], server_settings['port']))
-        set_inheritable(sock.fileno(), True)
+        sock.set_inheritable(True)
         server_settings['sock'] = sock
         server_settings['host'] = None
         server_settings['port'] = None

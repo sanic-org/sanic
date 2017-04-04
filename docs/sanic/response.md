@@ -2,7 +2,7 @@
 
 Use functions in `sanic.response` module to create responses.
 
-- `text` - Plain text response
+## Plain Text
 
 ```python
 from sanic import response
@@ -13,7 +13,7 @@ def handle_request(request):
     return response.text('Hello world!')
 ```
 
-- `html` - HTML response
+## HTML
 
 ```python
 from sanic import response
@@ -24,7 +24,7 @@ def handle_request(request):
     return response.html('<p>Hello world!</p>')
 ```
 
-- `json` - JSON response
+## JSON
 
 
 ```python
@@ -36,7 +36,7 @@ def handle_request(request):
     return response.json({'message': 'Hello world!'})
 ```
 
-- `file` - File response
+## File
 
 ```python
 from sanic import response
@@ -47,7 +47,7 @@ async def handle_request(request):
     return await response.file('/srv/www/whatever.png')
 ```
 
-- `stream` - Streaming response
+## Streaming
 
 ```python
 from sanic import response
@@ -55,12 +55,12 @@ from sanic import response
 @app.route("/streaming")
 async def index(request):
     async def streaming_fn(response):
-        await response.write('foo')
-        await response.write('bar')
+        response.write('foo')
+        response.write('bar')
     return response.stream(streaming_fn, content_type='text/plain')
 ```
 
-- `redirect` - Redirect response
+## Redirect
 
 ```python
 from sanic import response
@@ -71,7 +71,9 @@ def handle_request(request):
     return response.redirect('/json')
 ```
 
-- `raw` - Raw response, response without encoding the body
+## Raw
+
+Response without encoding the body
 
 ```python
 from sanic import response
@@ -82,6 +84,7 @@ def handle_request(request):
     return response.raw('raw data')
 ```
 
+## Modify headers or status
 
 To modify headers or status code, pass the `headers` or `status` argument to those functions:
 

@@ -22,7 +22,10 @@ class SanicTestClient:
                 cookies=cookies, connector=conn) as session:
             async with getattr(
                     session, method.lower())(url, *args, **kwargs) as response:
-                response.text = await response.text()
+                try:
+                    response.text = await response.text()
+                except UnicodeDecodeError as e:
+                    response.text = None
                 response.body = await response.read()
                 return response
 

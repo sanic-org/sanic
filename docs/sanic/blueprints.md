@@ -57,7 +57,7 @@ Blueprints have much the same functionality as an application instance.
 
 ### WebSocket routes
 
-WebSocket handlers can be registered on a blueprint using the `@bp.route`
+WebSocket handlers can be registered on a blueprint using the `@bp.websocket`
 decorator or `bp.add_websocket_route` method.
 
 ### Middleware
@@ -66,7 +66,7 @@ Using blueprints allows you to also register middleware globally.
 
 ```python
 @bp.middleware
-async def halt_request(request):
+async def print_on_request(request):
 	print("I am a spy")
 
 @bp.middleware('request')
@@ -116,7 +116,7 @@ bp = Blueprint('my_blueprint')
 async def setup_connection(app, loop):
     global database
     database = mysql.connect(host='127.0.0.1'...)
-    
+
 @bp.listener('after_server_stop')
 async def close_connection(app, loop):
     await database.close()
@@ -142,7 +142,7 @@ blueprint_v2 = Blueprint('v2', url_prefix='/v2')
 @blueprint_v1.route('/')
 async def api_v1_root(request):
     return text('Welcome to version 1 of our documentation')
-    
+
 @blueprint_v2.route('/')
 async def api_v2_root(request):
     return text('Welcome to version 2 of our documentation')

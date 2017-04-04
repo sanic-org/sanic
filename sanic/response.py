@@ -1,5 +1,6 @@
 from mimetypes import guess_type
 from os import path
+
 try:
     from ujson import dumps as json_dumps
 except:
@@ -132,8 +133,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
     async def stream(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        """Streams headers, runs the `streaming_fn` callback that writes content
-        to the response body, then finalizes the response body.
+        """Streams headers, runs the `streaming_fn` callback that writes
+        content to the response body, then finalizes the response body.
         """
         headers = self.get_headers(
             version, keep_alive=keep_alive,
@@ -167,12 +168,12 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         return (b'HTTP/%b %d %b\r\n'
                 b'%b'
                 b'%b\r\n') % (
-            version.encode(),
-            self.status,
-            status,
-            timeout_header,
-            headers
-        )
+                   version.encode(),
+                   self.status,
+                   status,
+                   timeout_header,
+                   headers
+               )
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -216,14 +217,14 @@ class HTTPResponse(BaseHTTPResponse):
                 b'%b'
                 b'%b\r\n'
                 b'%b') % (
-            version.encode(),
-            self.status,
-            status,
-            b'keep-alive' if keep_alive else b'close',
-            timeout_header,
-            headers,
-            self.body
-        )
+                   version.encode(),
+                   self.status,
+                   status,
+                   b'keep-alive' if keep_alive else b'close',
+                   timeout_header,
+                   headers,
+                   self.body
+               )
 
     @property
     def cookies(self):
@@ -251,8 +252,7 @@ def text(body, status=200, headers=None,
     :param body: Response data to be encoded.
     :param status: Response code.
     :param headers: Custom Headers.
-    :param content_type:
-        the content type (string) of the response
+    :param content_type: the content type (string) of the response
     """
     return HTTPResponse(
         body, status=status, headers=headers,
@@ -266,8 +266,7 @@ def raw(body, status=200, headers=None,
     :param body: Response data.
     :param status: Response code.
     :param headers: Custom Headers.
-    :param content_type:
-        the content type (string) of the response
+    :param content_type: the content type (string) of the response.
     """
     return HTTPResponse(body_bytes=body, status=status, headers=headers,
                         content_type=content_type)
@@ -316,17 +315,16 @@ def stream(
         content_type="text/plain; charset=utf-8"):
     """Accepts an coroutine `streaming_fn` which can be used to
     write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
-    Example usage:
 
-    ```
-    @app.route("/")
-    async def index(request):
-        async def streaming_fn(response):
-            await response.write('foo')
-            await response.write('bar')
+    Example usage::
 
-        return stream(streaming_fn, content_type='text/plain')
-    ```
+        @app.route("/")
+        async def index(request):
+            async def streaming_fn(response):
+                await response.write('foo')
+                await response.write('bar')
+
+            return stream(streaming_fn, content_type='text/plain')
 
     :param streaming_fn: A coroutine accepts a response and
         writes content to that response.
@@ -334,7 +332,11 @@ def stream(
     :param headers: Custom Headers.
     """
     return StreamingHTTPResponse(
-        streaming_fn, headers=headers, content_type=content_type, status=200)
+        streaming_fn,
+        headers=headers,
+        content_type=content_type,
+        status=status
+    )
 
 
 def redirect(to, headers=None, status=302,

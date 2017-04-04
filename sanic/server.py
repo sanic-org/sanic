@@ -4,10 +4,13 @@ import traceback
 import warnings
 from functools import partial
 from inspect import isawaitable
-from multiprocessing import Process, Event
+from multiprocessing import Process
 from os import set_inheritable
-from signal import SIGTERM, SIGINT
-from signal import signal as signal_func
+from signal import (
+    SIGTERM, SIGINT,
+    signal as signal_func,
+    Signals
+)
 from socket import socket, SOL_SOCKET, SO_REUSEADDR
 from time import time
 
@@ -313,7 +316,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
-          register_sys_signals=True, run_async=False):
+          register_sys_signals=True, run_async=False, connections=None,
+          signal=Signal()):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -329,7 +333,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                         `app` instance and `loop`
     :param after_stop: function to be executed when a stop signal is
                        received after it is respected. Takes arguments
-                        `app` instance and `loop`
+                       `app` instance and `loop`
     :param debug: enables debug output (slows server)
     :param request_timeout: time in seconds
     :param ssl: SSLContext
@@ -349,8 +353,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     trigger_events(before_start, loop)
 
-    connections = set()
-    signal = Signal()
+    connections = connections if connections is not None else set()
     server = partial(
         protocol,
         loop=loop,
@@ -421,7 +424,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         loop.close()
 
 
-def serve_multiple(server_settings, workers, stop_event=None):
+def serve_multiple(server_settings, workers):
     """Start multiple server processes simultaneously.  Stop on interrupt
     and terminate signals, and drain connections when complete.
 
@@ -448,11 +451,12 @@ def serve_multiple(server_settings, workers, stop_event=None):
         server_settings['host'] = None
         server_settings['port'] = None
 
-    if stop_event is None:
-        stop_event = Event()
+    def sig_handler(signal, frame):
+        log.info("Received signal {}. Shutting down.".format(
+            Signals(signal).name))
 
-    signal_func(SIGINT, lambda s, f: stop_event.set())
-    signal_func(SIGTERM, lambda s, f: stop_event.set())
+    signal_func(SIGINT, lambda s, f: sig_handler(s, f))
+    signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
 
     processes = []
     for _ in range(workers):

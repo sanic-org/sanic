@@ -1,7 +1,7 @@
 import logging
 import re
 import warnings
-from asyncio import get_event_loop
+from asyncio import get_event_loop, ensure_future, CancelledError
 from collections import deque, defaultdict
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
@@ -25,7 +25,8 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 class Sanic:
 
-    def __init__(self, name=None, router=None, error_handler=None):
+    def __init__(self, name=None, router=None, error_handler=None,
+                 load_env=True):
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
         if not logging.root.handlers and log.level == logging.NOTSET:
@@ -44,7 +45,7 @@ class Sanic:
         self.name = name
         self.router = router or Router()
         self.error_handler = error_handler or ErrorHandler()
-        self.config = Config()
+        self.config = Config(load_env=load_env)
         self.request_middleware = deque()
         self.response_middleware = deque()
         self.blueprints = {}
@@ -54,6 +55,7 @@ class Sanic:
         self.listeners = defaultdict(list)
         self.is_running = False
         self.websocket_enabled = False
+        self.websocket_tasks = []
 
         # Register alternative method names
         self.go_fast = self.run
@@ -101,7 +103,8 @@ class Sanic:
         return decorator
 
     # Decorator
-    def route(self, uri, methods=frozenset({'GET'}), host=None):
+    def route(self, uri, methods=frozenset({'GET'}), host=None,
+              strict_slashes=False):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
@@ -117,34 +120,42 @@ class Sanic:
 
         def response(handler):
             self.router.add(uri=uri, methods=methods, handler=handler,
-                            host=host)
+                            host=host, strict_slashes=strict_slashes)
             return handler
 
         return response
 
     # Shorthand method decorators
-    def get(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"GET"}), host=host)
+    def get(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"GET"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def post(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"POST"}), host=host)
+    def post(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"POST"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def put(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"PUT"}), host=host)
+    def put(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"PUT"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def head(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"HEAD"}), host=host)
+    def head(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"HEAD"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def options(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"OPTIONS"}), host=host)
+    def options(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"OPTIONS"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def patch(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"PATCH"}), host=host)
+    def patch(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"PATCH"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def delete(self, uri, host=None):
-        return self.route(uri, methods=frozenset({"DELETE"}), host=host)
+    def delete(self, uri, host=None, strict_slashes=False):
+        return self.route(uri, methods=frozenset({"DELETE"}), host=host,
+                          strict_slashes=strict_slashes)
 
-    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None):
+    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
+                  strict_slashes=False):
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -168,17 +179,18 @@ class Sanic:
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
 
-        self.route(uri=uri, methods=methods, host=host)(handler)
+        self.route(uri=uri, methods=methods, host=host,
+                   strict_slashes=strict_slashes)(handler)
         return handler
 
     # Decorator
-    def websocket(self, uri, host=None):
+    def websocket(self, uri, host=None, strict_slashes=False):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
         :param host:
         :return: decorated function
         """
-        self.websocket_enabled = True
+        self.enable_websocket()
 
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
@@ -190,22 +202,31 @@ class Sanic:
                 request.app = self
                 protocol = request.transport.get_protocol()
                 ws = await protocol.websocket_handshake(request)
+
+                # schedule the application handler
+                # its future is kept in self.websocket_tasks in case it
+                # needs to be cancelled due to the server being stopped
+                fut = ensure_future(handler(request, ws, *args, **kwargs))
+                self.websocket_tasks.append(fut)
                 try:
-                    # invoke the application handler
-                    await handler(request, ws, *args, **kwargs)
-                except ConnectionClosed:
+                    await fut
+                except (CancelledError, ConnectionClosed):
                     pass
+                self.websocket_tasks.remove(fut)
                 await ws.close()
 
             self.router.add(uri=uri, handler=websocket_handler,
-                            methods=frozenset({'GET'}), host=host)
+                            methods=frozenset({'GET'}), host=host,
+                            strict_slashes=strict_slashes)
             return handler
 
         return response
 
-    def add_websocket_route(self, handler, uri, host=None):
+    def add_websocket_route(self, handler, uri, host=None,
+                            strict_slashes=False):
         """A helper method to register a function as a websocket route."""
-        return self.websocket(uri, host=host)(handler)
+        return self.websocket(uri, host=host,
+                              strict_slashes=strict_slashes)(handler)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -213,6 +234,14 @@ class Sanic:
         Websocket is enabled automatically if websocket routes are
         added to the application.
         """
+        if not self.websocket_enabled:
+            # if the server is stopped, we want to cancel any ongoing
+            # websocket tasks, to allow the server to exit promptly
+            @self.listener('before_server_stop')
+            def cancel_websocket_tasks(app, loop):
+                for task in self.websocket_tasks:
+                    task.cancel()
+
         self.websocket_enabled = enable
 
     def remove_route(self, uri, clean_cache=True, host=None):
@@ -305,7 +334,7 @@ class Sanic:
         the output URL's query string.
 
         :param view_name: string referencing the view name
-        :param **kwargs: keys and values that are used to build request
+        :param \*\*kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL
@@ -526,19 +555,24 @@ class Sanic:
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
-            stop_event=stop_event, register_sys_signals=register_sys_signals)
+            register_sys_signals=register_sys_signals)
 
         try:
             self.is_running = True
             if workers == 1:
                 serve(**server_settings)
             else:
-                serve_multiple(server_settings, workers, stop_event)
+                serve_multiple(server_settings, workers)
         except:
             log.exception(
                 'Experienced exception while trying to serve')
@@ -549,6 +583,10 @@ class Sanic:
     def stop(self):
         """This kills the Sanic"""
         get_event_loop().stop()
+
+    def __call__(self):
+        """gunicorn compatibility"""
+        return self
 
     async def create_server(self, host="127.0.0.1", port=8000, debug=False,
                             before_start=None, after_start=None,
@@ -563,13 +601,17 @@ class Sanic:
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
-            backlog=backlog, stop_event=stop_event,
-            run_async=True)
+            backlog=backlog, run_async=True)
 
         return await serve(**server_settings)
 
@@ -589,7 +631,11 @@ class Sanic:
             context = create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
             ssl = context
-
+        if stop_event is not None:
+            if debug:
+                warnings.simplefilter('default')
+            warnings.warn("stop_event will be removed from future versions.",
+                          DeprecationWarning)
         if loop is not None:
             if debug:
                 warnings.simplefilter('default')
@@ -658,9 +704,10 @@ class Sanic:
             server_settings['run_async'] = True
 
         # Serve
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+        if host and port:
+            proto = "http"
+            if ssl is not None:
+                proto = "https"
+            log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         return server_settings

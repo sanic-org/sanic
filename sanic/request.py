@@ -122,6 +122,10 @@ class Request(dict):
         return self.parsed_args
 
     @property
+    def raw_args(self):
+        return {k: v[0] for k, v in self.args.items()}
+
+    @property
     def cookies(self):
         if self._cookies is None:
             cookie = self.headers.get('Cookie') or self.headers.get('cookie')
@@ -142,10 +146,16 @@ class Request(dict):
 
     @property
     def scheme(self):
-        if self.transport.get_extra_info('sslcontext'):
-            return 'https'
+        if self.app.websocket_enabled \
+                and self.headers.get('upgrade') == 'websocket':
+            scheme = 'ws'
+        else:
+            scheme = 'http'
 
-        return 'http'
+        if self.transport.get_extra_info('sslcontext'):
+            scheme += 's'
+
+        return scheme
 
     @property
     def host(self):

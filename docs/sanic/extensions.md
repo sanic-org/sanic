@@ -21,3 +21,4 @@ A list of Sanic extensions created by the community.
 - [Sanic-nginx-docker-example](https://github.com/itielshwartz/sanic-nginx-docker-example): Simple and easy to use example of Sanic behined nginx using docker-compose.
 - [sanic-graphql](https://github.com/graphql-python/sanic-graphql): GraphQL integration with Sanic
 - [sanic-prometheus](https://github.com/dkruchinin/sanic-prometheus): Prometheus metrics for Sanic
+- [Sanic-RestPlus](https://github.com/ashleysommer/sanic-restplus): A port of Flask-RestPlus for Sanic. Full-featured REST API with SwaggerUI generation.

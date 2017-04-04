@@ -484,12 +484,12 @@ class Sanic:
             # Response Middleware
             # -------------------------------------------- #
             try:
-                response = await self._run_response_middleware(request, response)
+                response = await self._run_response_middleware(request,
+                                                               response)
             except:
                 log.exception(
                     'Exception occured in one of response middleware handlers'
                 )
-
 
         # pass the response to the correct callback
         if isinstance(response, StreamingHTTPResponse):

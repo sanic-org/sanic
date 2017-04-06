@@ -10,7 +10,7 @@ async def fetch(session, url):
     Use session object to perform 'get' request on url
     """
     async with session.get(url) as result:
-        return await result.text()
+        return await result.json()
 
 
 @app.route('/')

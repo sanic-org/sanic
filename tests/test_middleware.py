@@ -2,6 +2,7 @@ from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
 from sanic.request import Request
 from sanic.response import json, text, HTTPResponse
+from sanic.exceptions import NotFound
 
 
 # ------------------------------------------------------------ #
@@ -52,6 +53,27 @@ def test_middleware_response():
     assert type(results[1]) is Request
     assert isinstance(results[2], HTTPResponse)
 
+
+def test_middleware_response_exception():
+    app = Sanic('test_middleware_response_exception')
+    result = {'status_code': None}
+
+    @app.middleware('response')
+    async def process_response(reqest, response):
+        result['status_code'] = response.status
+        return response
+
+    @app.exception(NotFound)
+    async def error_handler(request, exception):
+        return text('OK', exception.status_code)
+
+    @app.route('/')
+    async def handler(request):
+        return text('FAIL')
+
+    request, response = app.test_client.get('/page_not_found')
+    assert response.text == 'OK'
+    assert result['status_code'] == 404
 
 def test_middleware_override_request():
     app = Sanic('test_middleware_override_request')

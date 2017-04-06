@@ -3,7 +3,7 @@ from sanic import response
 
 import aiohttp
 
-app = Sanic()
+app = Sanic(__name__)
 
 async def fetch(session, url):
     """

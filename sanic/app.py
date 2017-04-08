@@ -7,7 +7,7 @@ from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
-from ssl import create_default_context
+from ssl import create_default_context, Purpose
 
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
@@ -635,9 +635,9 @@ class Sanic:
             # try common aliaseses
             cert = ssl.get('cert') or ssl.get('certificate')
             key = ssl.get('key') or ssl.get('keyfile')
-            if not cert and key:
+            if cert is None or key is None:
                 raise ValueError("SSLContext or certificate and key required.")
-            context = create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            context = create_default_context(purpose=Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
             ssl = context
         if stop_event is not None:

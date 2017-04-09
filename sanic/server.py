@@ -63,7 +63,8 @@ class HttpProtocol(asyncio.Protocol):
         # request params
         'parser', 'request', 'url', 'headers',
         # request config
-        'request_handler', 'request_timeout', 'request_max_size', 'request_class',
+        'request_handler', 'request_timeout', 'request_max_size',
+        'request_class',
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 

@@ -129,7 +129,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             data = self._encode_body(data)
 
         self.transport.write(
-            b"%b\r\n%b\r\n" % (str(len(data)).encode(), data))
+            b"%x\r\n%b\r\n" % (len(data), data))
 
     async def stream(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):

@@ -65,7 +65,8 @@ class HttpProtocol(asyncio.Protocol):
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
         # connection management
-        '_total_request_size', '_timeout_handler', '_last_communication_time')
+        '_total_request_size', '_timeout_handler', '_last_communication_time',
+        '_keep_alive')
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
@@ -86,6 +87,7 @@ class HttpProtocol(asyncio.Protocol):
         self._timeout_handler = None
         self._last_request_time = None
         self._request_handler_task = None
+        self._keep_alive = False
 
     # -------------------------------------------- #
     # Connection
@@ -148,6 +150,9 @@ class HttpProtocol(asyncio.Protocol):
             exception = PayloadTooLarge('Payload Too Large')
             self.write_error(exception)
 
+        if name == b'Connection':
+            self._keep_alive = value == b'keep-alive'
+
         self.headers.append((name.decode().casefold(), value.decode()))
 
     def on_headers_complete(self):
@@ -181,7 +186,7 @@ class HttpProtocol(asyncio.Protocol):
         """
         try:
             keep_alive = (
-                self.parser.should_keep_alive() and not self.signal.stopped)
+                self._keep_alive and not self.signal.stopped)
 
             self.transport.write(
                 response.output(

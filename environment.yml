@@ -16,4 +16,5 @@ dependencies:
   - ujson>=1.35
   - aiofiles>=0.3.0
   - websockets>=3.2
+  - pyyaml>=3.12
   - https://github.com/channelcat/docutils-fork/zipball/master

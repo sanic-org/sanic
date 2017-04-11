@@ -1,3 +1,5 @@
+import traceback
+
 from sanic.log import log
 
 HOST = '127.0.0.1'
@@ -50,6 +52,8 @@ class SanicTestClient:
                     **request_kwargs)
                 results[-1] = response
             except Exception as e:
+                log.error(
+                    'Exception:\n{}'.format(traceback.format_exc()))
                 exceptions.append(e)
             self.app.stop()
 

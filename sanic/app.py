@@ -7,7 +7,7 @@ from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
-from ssl import create_default_context
+from ssl import create_default_context, Purpose
 
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
@@ -26,7 +26,7 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
-                 load_env=True):
+                 load_env=True, request_class=None):
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
         if not logging.root.handlers and log.level == logging.NOTSET:
@@ -44,6 +44,7 @@ class Sanic:
 
         self.name = name
         self.router = router or Router()
+        self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
         self.request_middleware = deque()
@@ -444,17 +445,7 @@ class Sanic:
             # -------------------------------------------- #
 
             request.app = self
-
-            response = False
-            # The if improves speed.  I don't know why
-            if self.request_middleware:
-                for middleware in self.request_middleware:
-                    response = middleware(request)
-                    if isawaitable(response):
-                        response = await response
-                    if response:
-                        break
-
+            response = await self._run_request_middleware(request)
             # No middleware results
             if not response:
                 # -------------------------------------------- #
@@ -472,20 +463,6 @@ class Sanic:
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response
-
-            # -------------------------------------------- #
-            # Response Middleware
-            # -------------------------------------------- #
-
-            if self.response_middleware:
-                for middleware in self.response_middleware:
-                    _response = middleware(request, response)
-                    if isawaitable(_response):
-                        _response = await _response
-                    if _response:
-                        response = _response
-                        break
-
         except Exception as e:
             # -------------------------------------------- #
             # Response Generation Failed
@@ -503,6 +480,17 @@ class Sanic:
                 else:
                     response = HTTPResponse(
                         "An error occurred while handling an error")
+        finally:
+            # -------------------------------------------- #
+            # Response Middleware
+            # -------------------------------------------- #
+            try:
+                response = await self._run_response_middleware(request,
+                                                               response)
+            except:
+                log.exception(
+                    'Exception occured in one of response middleware handlers'
+                )
 
         # pass the response to the correct callback
         if isinstance(response, StreamingHTTPResponse):
@@ -615,6 +603,28 @@ class Sanic:
 
         return await serve(**server_settings)
 
+    async def _run_request_middleware(self, request):
+        # The if improves speed.  I don't know why
+        if self.request_middleware:
+            for middleware in self.request_middleware:
+                response = middleware(request)
+                if isawaitable(response):
+                    response = await response
+                if response:
+                    return response
+        return None
+
+    async def _run_response_middleware(self, request, response):
+        if self.response_middleware:
+            for middleware in self.response_middleware:
+                _response = middleware(request, response)
+                if isawaitable(_response):
+                    _response = await _response
+                if _response:
+                    response = _response
+                    break
+        return response
+
     def _helper(self, host="127.0.0.1", port=8000, debug=False,
                 before_start=None, after_start=None, before_stop=None,
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
@@ -626,9 +636,9 @@ class Sanic:
             # try common aliaseses
             cert = ssl.get('cert') or ssl.get('certificate')
             key = ssl.get('key') or ssl.get('keyfile')
-            if not cert and key:
+            if cert is None or key is None:
                 raise ValueError("SSLContext or certificate and key required.")
-            context = create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            context = create_default_context(purpose=Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
             ssl = context
         if stop_event is not None:
@@ -659,6 +669,7 @@ class Sanic:
 
         server_settings = {
             'protocol': protocol,
+            'request_class': self.request_class,
             'host': host,
             'port': port,
             'sock': sock,

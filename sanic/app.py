@@ -1,6 +1,9 @@
 import logging
+import logging.config
 import re
 import warnings
+import os
+import yaml
 from asyncio import get_event_loop, ensure_future, CancelledError
 from collections import deque, defaultdict
 from functools import partial
@@ -9,11 +12,12 @@ from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 from ssl import create_default_context
 
+from sanic import __path__ as lib_path
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
-from sanic.log import log
+from sanic.log import log, netlog
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol
@@ -26,10 +30,17 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
-                 load_env=True):
+                 load_env=True,
+                 log_config_path=os.path.join(lib_path[0], "default.conf")):
+        conf = None
+        if log_config_path and os.path.exists(log_config_path):
+            with open(log_config_path) as f:
+                conf = yaml.load(f)
+                conf.setdefault('version', 1)
+                logging.config.dictConfig(conf)
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
-        if not logging.root.handlers and log.level == logging.NOTSET:
+        if not conf and log.level == logging.NOTSET:
             formatter = logging.Formatter(
                 "%(asctime)s: %(levelname)s: %(message)s")
             handler = logging.StreamHandler()
@@ -46,6 +57,7 @@ class Sanic:
         self.router = router or Router()
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
+        self.log_config_path = log_config_path
         self.request_middleware = deque()
         self.response_middleware = deque()
         self.blueprints = {}
@@ -442,7 +454,6 @@ class Sanic:
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
-
             request.app = self
             response = await self._run_request_middleware(request)
             # No middleware results
@@ -490,6 +501,13 @@ class Sanic:
                 log.exception(
                     'Exception occured in one of response middleware handlers'
                 )
+        if self.log_config_path:
+            netlog.info('', extra={
+                "host": "%s:%d" % request.ip,
+                "request": "%s %s" % (request.method, request.query_string),
+                "status": response.status,
+                "byte": len(response.body)
+            })
 
         # pass the response to the correct callback
         if isinstance(response, StreamingHTTPResponse):
@@ -512,7 +530,8 @@ class Sanic:
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=None,
-            backlog=100, stop_event=None, register_sys_signals=True):
+            backlog=100, stop_event=None, register_sys_signals=True,
+            log_config_path=os.path.join(lib_path[0], "default.yml")):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -539,6 +558,11 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if log_config_path and os.path.exists(log_config_path):
+            with open(log_config_path) as f:
+                conf = yaml.load(f)
+                conf.setdefault('version', 1)
+                logging.config.dictConfig(conf)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
@@ -579,12 +603,19 @@ class Sanic:
                             before_start=None, after_start=None,
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=None,
-                            backlog=100, stop_event=None):
+                            backlog=100, stop_event=None,
+                            log_config_path=os.path.join(lib_path[0],
+                                                         "default.yml")):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
+        if log_config_path and os.path.exists(log_config_path):
+            with open(log_config_path) as f:
+                conf = yaml.load(f)
+                conf.setdefault('version', 1)
+                logging.config.dictConfig(conf)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)

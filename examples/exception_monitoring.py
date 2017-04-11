@@ -1,9 +1,7 @@
 """
 Example intercepting uncaught exceptions using Sanic's error handler framework.
-
 This may be useful for developers wishing to use Sentry, Airbrake, etc.
 or a custom system to log and monitor unexpected errors in production.
-
 First we create our own class inheriting from Handler in sanic.exceptions,
 and pass in an instance of it when we create our Sanic instance. Inside this
 class' default handler, we can do anything including sending exceptions to
@@ -39,7 +37,7 @@ server's error_handler to an instance of our CustomHandler
 """
 
 from sanic import Sanic
-from sanic.response import json
+from sanic import response
 
 app = Sanic(__name__)
 
@@ -52,7 +50,7 @@ async def test(request):
     # Here, something occurs which causes an unexpected exception
     # This exception will flow to our custom handler.
     1 / 0
-    return json({"test": True})
+    return response.json({"test": True})
 
 
 app.run(host="0.0.0.0", port=8000, debug=True)

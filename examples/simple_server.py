@@ -1,12 +1,12 @@
 from sanic import Sanic
-from sanic.response import json
+from sanic import response
 
 app = Sanic(__name__)
 
 
 @app.route("/")
 async def test(request):
-    return json({"test": True})
+    return response.json({"test": True})
 
 
 if __name__ == '__main__':

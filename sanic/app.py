@@ -17,7 +17,7 @@ from sanic.config import Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
-from sanic.log import log, netlog
+from sanic.log import log
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol
@@ -571,7 +571,7 @@ class Sanic:
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
             register_sys_signals=register_sys_signals,
-            has_log_file=log_config_path != None)
+            has_log_file=log_config_path is not None)
 
         try:
             self.is_running = True
@@ -625,7 +625,7 @@ class Sanic:
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
             backlog=backlog, run_async=True,
-            has_log_file=log_config_path != None)
+            has_log_file=log_config_path is not None)
 
         return await serve(**server_settings)
 

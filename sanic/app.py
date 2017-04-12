@@ -31,9 +31,9 @@ class Sanic:
                  log_config=DEFAULT_LOG_CONF):
         if log_config:
             logging.config.dictConfig(log_config)
-        else:
-            # Only set up a default log handler if the
-            # end-user application didn't set anything up.
+        # Only set up a default log handler if the
+        # end-user application didn't set anything up.
+        if not logging.root.handlers and log.level == logging.NOTSET:
             formatter = logging.Formatter(
                 "%(asctime)s: %(levelname)s: %(message)s")
             handler = logging.StreamHandler()
@@ -448,6 +448,7 @@ class Sanic:
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
+
             request.app = self
             response = await self._run_request_middleware(request)
             # No middleware results

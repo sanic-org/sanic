@@ -67,13 +67,13 @@ class HttpProtocol(asyncio.Protocol):
         'request_handler', 'request_timeout', 'request_max_size',
         'request_class',
         # enable or disable access log / error log purpose
-        'has_log_file',
+        'has_log',
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
-                 request_max_size=None, request_class=None, has_log_file=True):
+                 request_max_size=None, request_class=None, has_log=True):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -81,7 +81,7 @@ class HttpProtocol(asyncio.Protocol):
         self.url = None
         self.headers = None
         self.signal = signal
-        self.has_log_file = has_log_file
+        self.has_log = has_log
         self.connections = connections
         self.request_handler = request_handler
         self.error_handler = error_handler
@@ -193,7 +193,7 @@ class HttpProtocol(asyncio.Protocol):
                 response.output(
                     self.request.version, keep_alive,
                     self.request_timeout))
-            if self.has_log_file:
+            if self.has_log:
                 netlog.info('', extra={
                     'status': response.status,
                     'byte': len(response.body),
@@ -236,7 +236,7 @@ class HttpProtocol(asyncio.Protocol):
             response.transport = self.transport
             await response.stream(
                 self.request.version, keep_alive, self.request_timeout)
-            if self.has_log_file:
+            if self.has_log:
                 netlog.info('', extra={
                     'status': response.status,
                     'byte': -1,
@@ -279,7 +279,7 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing error failed, connection closed {}".format(repr(e)),
                 from_error=True)
         finally:
-            if self.has_log_file:
+            if self.has_log:
                 extra = {
                     'status': response.status,
                     'host': '',
@@ -357,7 +357,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
-          signal=Signal(), request_class=None, has_log_file=True):
+          signal=Signal(), request_class=None, has_log=True):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -383,7 +383,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param loop: asyncio compatible event loop
     :param protocol: subclass of asyncio protocol class
     :param request_class: Request class to use
-    :param has_log_file: disable/enable access log and error log
+    :param has_log: disable/enable access log and error log
     :return: Nothing
     """
     if not run_async:
@@ -406,7 +406,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
         request_class=request_class,
-        has_log_file=has_log_file
+        has_log=has_log
     )
 
     server_coroutine = loop.create_server(

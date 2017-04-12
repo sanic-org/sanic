@@ -3,4 +3,3 @@ httptools
 ujson
 uvloop
 websockets
-pyyaml

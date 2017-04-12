@@ -9,4 +9,3 @@ pytest
 tox
 ujson
 uvloop
-pyyaml

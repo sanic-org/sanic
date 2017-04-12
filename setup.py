@@ -27,7 +27,6 @@ setup_kwargs = {
     'description': (
         'A microframework based on uvloop, httptools, and learnings of flask'),
     'packages': ['sanic'],
-    'package_data': {'':['default.yml']},
     'platforms': 'any',
     'classifiers': [
         'Development Status :: 2 - Pre-Alpha',
@@ -47,7 +46,6 @@ requirements = [
     ujson,
     'aiofiles>=0.3.0',
     'websockets>=3.2',
-    'pyyaml>=3.12'
 ]
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")

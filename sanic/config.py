@@ -1,8 +1,73 @@
+from sanic.defaultFilter import DefaultFilter
 import os
-
 import types
 
 SANIC_PREFIX = 'SANIC_'
+
+
+DEFAULT_LOG_CONF = {
+    'version': 1,
+    'filters': {
+        'access_filter': {
+            '()': DefaultFilter,
+            'param': [0, 10, 20]
+        },
+        'error_filter': {
+            '()': DefaultFilter,
+            'param': [30, 40, 50]
+        }
+    },
+    'formatters': {
+        'simple': {
+            'format': '%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        'access': {
+            'format': '%(asctime)s - [%(levelname)s][%(host)s]: ' +
+                      '%(request)s %(message)s %(status)d %(byte)d',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        }
+    },
+    'handlers': {
+        'internal': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filters': ['access_filter'],
+            'formatter': 'simple',
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'filename': 'access.log'
+        },
+        'access': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filters': ['access_filter'],
+            'formatter': 'access',
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'filename': 'access.log'
+        },
+        'error': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filters': ['error_filter'],
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'filename': 'error.log',
+            'formatter': 'simple'
+        }
+    },
+    'loggers': {
+        'sanic': {
+            'level': 'DEBUG',
+            'handlers': ['internal', 'error']
+        },
+        'network': {
+            'level': 'DEBUG',
+            'handlers': ['access', 'error']
+        }
+    }
+}
 
 
 class Config(dict):

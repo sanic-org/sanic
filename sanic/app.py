@@ -501,13 +501,6 @@ class Sanic:
                 log.exception(
                     'Exception occured in one of response middleware handlers'
                 )
-        if self.log_config_path:
-            netlog.info('', extra={
-                "host": "%s:%d" % request.ip,
-                "request": "%s %s" % (request.method, request.query_string),
-                "status": response.status,
-                "byte": len(response.body)
-            })
 
         # pass the response to the correct callback
         if isinstance(response, StreamingHTTPResponse):
@@ -576,7 +569,8 @@ class Sanic:
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
-            register_sys_signals=register_sys_signals)
+            register_sys_signals=register_sys_signals,
+            has_log_file=log_config_path != None)
 
         try:
             self.is_running = True
@@ -629,7 +623,8 @@ class Sanic:
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
-            backlog=backlog, run_async=True)
+            backlog=backlog, run_async=True,
+            has_log_file=log_config_path != None)
 
         return await serve(**server_settings)
 
@@ -659,7 +654,7 @@ class Sanic:
                 before_start=None, after_start=None, before_stop=None,
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False):
+                register_sys_signals=True, run_async=False, has_log_file=True):
         """Helper function used by `run` and `create_server`."""
 
         if isinstance(ssl, dict):
@@ -710,7 +705,8 @@ class Sanic:
             'request_max_size': self.config.REQUEST_MAX_SIZE,
             'loop': loop,
             'register_sys_signals': register_sys_signals,
-            'backlog': backlog
+            'backlog': backlog,
+            'has_log_file': has_log_file
         }
 
         # -------------------------------------------- #

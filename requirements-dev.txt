@@ -1,5 +1,6 @@
 aiofiles
 aiohttp==1.3.5
+chardet<=2.3.0
 beautifulsoup4
 coverage
 httptools

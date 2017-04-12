@@ -30,7 +30,7 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
-                 load_env=True,
+                 load_env=True, request_class=None,
                  log_config_path=os.path.join(lib_path[0], "default.conf")):
         conf = None
         if log_config_path and os.path.exists(log_config_path):
@@ -55,6 +55,7 @@ class Sanic:
 
         self.name = name
         self.router = router or Router()
+        self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
         self.log_config_path = log_config_path
@@ -694,6 +695,7 @@ class Sanic:
 
         server_settings = {
             'protocol': protocol,
+            'request_class': self.request_class,
             'host': host,
             'port': port,
             'sock': sock,

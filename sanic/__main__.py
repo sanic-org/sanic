@@ -1,9 +1,6 @@
-import os
-
 from argparse import ArgumentParser
 from importlib import import_module
 
-from sanic import __path__ as lib_path
 from sanic.log import log
 from sanic.app import Sanic
 
@@ -17,8 +14,6 @@ if __name__ == "__main__":
                         help='location of keyfile for SSL.')
     parser.add_argument('--workers', dest='workers', type=int, default=1, )
     parser.add_argument('--debug', dest='debug', action="store_true")
-    parser.add_argument('--log', dest='log_config_path', type=str,
-                        default=os.path.join(lib_path[0], 'default.conf'))
     parser.add_argument('module')
     args = parser.parse_args()
 
@@ -39,8 +34,7 @@ if __name__ == "__main__":
             ssl = None
 
         app.run(host=args.host, port=args.port,
-                workers=args.workers, debug=args.debug, ssl=ssl,
-                log_config_path=args.log_config_path)
+                workers=args.workers, debug=args.debug, ssl=ssl)
     except ImportError:
         log.error("No module named {} found.\n"
                   "  Example File: project/sanic_server.py -> app\n"

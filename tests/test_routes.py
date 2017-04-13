@@ -238,6 +238,30 @@ def test_dynamic_route_regex():
     assert response.status == 200
 
 
+def test_dynamic_route_path():
+    app = Sanic('test_dynamic_route_path')
+
+    @app.route('/<path:path>/info')
+    async def handler(request, path):
+        return text('OK')
+
+    request, response = app.test_client.get('/path/1/info')
+    assert response.status == 200
+
+    request, response = app.test_client.get('/info')
+    assert response.status == 404
+
+    @app.route('/<path:path>')
+    async def handler1(request, path):
+        return text('OK')
+
+    request, response = app.test_client.get('/info')
+    assert response.status == 200
+
+    request, response = app.test_client.get('/whatever/you/set')
+    assert response.status == 200
+
+
 def test_dynamic_route_unhashable():
     app = Sanic('test_dynamic_route_unhashable')
 

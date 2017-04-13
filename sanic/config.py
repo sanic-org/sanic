@@ -1,18 +1,27 @@
 from sanic.defaultFilter import DefaultFilter
 import os
+import sys
+import syslog
+import platform
 import types
 
 SANIC_PREFIX = 'SANIC_'
 
+_address_dict = {
+    'Windows': ('localhost', 514),
+    'Darwin': '/var/run/syslog',
+    'Linux': '/dev/log',
+    'FreeBSD': '/dev/log'
+}
 
 LOGGING = {
     'version': 1,
     'filters': {
-        'access_filter': {
+        'accessFilter': {
             '()': DefaultFilter,
             'param': [0, 10, 20]
         },
-        'error_filter': {
+        'errorFilter': {
             '()': DefaultFilter,
             'param': [30, 40, 50]
         }
@@ -23,33 +32,62 @@ LOGGING = {
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'access': {
-            'format': '%(asctime)s - [%(levelname)s][%(host)s]: ' +
+            'format': '%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: ' +
                       '%(request)s %(message)s %(status)d %(byte)d',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         }
     },
     'handlers': {
         'internal': {
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filters': ['access_filter'],
+            'class': 'logging.StreamHandler',
+            'filters': ['accessFilter'],
             'formatter': 'simple',
-            'when': 'D',
-            'interval': 1,
-            'backupCount': 7,
-            'filename': 'access.log'
+            'stream': sys.stderr
         },
-        'access': {
+        'accessStream': {
+            'class': 'logging.StreamHandler',
+            'filters': ['accessFilter'],
+            'formatter': 'access',
+            'stream': sys.stderr
+        },
+        'errorStream': {
+            'class': 'logging.StreamHandler',
+            'filters': ['errorFilter'],
+            'formatter': 'simple',
+            'stream': sys.stderr
+        },
+        # before you use accessSysLog, be sure that log levels
+        # 0, 10, 20 have been enabled in you syslog configuration
+        # otherwise you won't be able to see the output in syslog
+        # logging file.
+        'accessSysLog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'address': _address_dict.get(platform.system(),
+                                         ('localhost', 514)),
+            'facility': syslog.LOG_DAEMON,
+            'filters': ['accessFilter'],
+            'formatter': 'access'
+        },
+        'errorSysLog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'address': _address_dict.get(platform.system(),
+                                         ('localhost', 514)),
+            'facility': syslog.LOG_DAEMON,
+            'filters': ['errorFilter'],
+            'formatter': 'simple'
+        },
+        'accessTimedRotatingFile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filters': ['access_filter'],
+            'filters': ['accessFilter'],
             'formatter': 'access',
             'when': 'D',
             'interval': 1,
             'backupCount': 7,
             'filename': 'access.log'
         },
-        'error': {
+        'errorTimedRotatingFile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filters': ['error_filter'],
+            'filters': ['errorFilter'],
             'when': 'D',
             'interval': 1,
             'backupCount': 7,
@@ -60,11 +98,11 @@ LOGGING = {
     'loggers': {
         'sanic': {
             'level': 'DEBUG',
-            'handlers': ['internal', 'error']
+            'handlers': ['internal', 'errorStream']
         },
         'network': {
             'level': 'DEBUG',
-            'handlers': ['access', 'error']
+            'handlers': ['accessStream', 'errorStream']
         }
     }
 }

@@ -10,7 +10,7 @@ from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 from ssl import create_default_context, Purpose
 
-from sanic.config import Config, DEFAULT_LOG_CONF
+from sanic.config import Config, LOGGING
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
@@ -28,7 +28,7 @@ class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
-                 log_config=DEFAULT_LOG_CONF):
+                 log_config=LOGGING):
         if log_config:
             logging.config.dictConfig(log_config)
         # Only set up a default log handler if the
@@ -519,7 +519,7 @@ class Sanic:
             after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            log_config=DEFAULT_LOG_CONF):
+            log_config=LOGGING):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -590,7 +590,7 @@ class Sanic:
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=None,
                             backlog=100, stop_event=None,
-                            log_config=DEFAULT_LOG_CONF):
+                            log_config=LOGGING):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred

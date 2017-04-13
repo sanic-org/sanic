@@ -5,7 +5,7 @@ import types
 SANIC_PREFIX = 'SANIC_'
 
 
-DEFAULT_LOG_CONF = {
+LOGGING = {
     'version': 1,
     'filters': {
         'access_filter': {

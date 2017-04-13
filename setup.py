@@ -64,7 +64,3 @@ except DistutilsPlatformError as exception:
     print("Installing without uJSON or uvLoop")
     setup_kwargs['install_requires'] = requirements
     setup(**setup_kwargs)
-
-# Installation was successful
-print(u"\n\n\U0001F680    "
-      "Sanic version {} installation suceeded.\n".format(version))

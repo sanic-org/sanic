@@ -48,7 +48,7 @@ def register(app, uri, file_or_directory, pattern,
         # Merge served directory and requested file if provided
         # Strip all / that in the beginning of the URL to help prevent python
         # from herping a derp and treating the uri as an absolute path
-        root_path = file_or_directory
+        root_path = file_path = file_or_directory
         if file_uri:
             file_path = path.join(
                 file_or_directory, sub('^[/]*', '', file_uri))

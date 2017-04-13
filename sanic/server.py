@@ -93,6 +93,10 @@ class HttpProtocol(asyncio.Protocol):
         self._last_request_time = None
         self._request_handler_task = None
 
+    @property
+    def keep_alive(self):
+        return self.parser.should_keep_alive() and not self.signal.stopped
+
     # -------------------------------------------- #
     # Connection
     # -------------------------------------------- #
@@ -186,9 +190,7 @@ class HttpProtocol(asyncio.Protocol):
         Writes response content synchronously to the transport.
         """
         try:
-            keep_alive = (
-                self.parser.should_keep_alive() and not self.signal.stopped)
-
+            keep_alive = self.keep_alive
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive,
@@ -230,9 +232,7 @@ class HttpProtocol(asyncio.Protocol):
         """
 
         try:
-            keep_alive = (
-                self.parser.should_keep_alive() and not self.signal.stopped)
-
+            keep_alive = self.keep_alive
             response.transport = self.transport
             await response.stream(
                 self.request.version, keep_alive, self.request_timeout)

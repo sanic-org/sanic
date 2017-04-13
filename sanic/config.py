@@ -110,7 +110,7 @@ LOGGING = {
 # this happens when using container or systems without syslog
 # keep things in config would cause file not exists error
 _addr = LOGGING['handlers']['accessSysLog']['address']
-if type(_add) is str and not os.path.exists(_addr):
+if type(_addr) is str and not os.path.exists(_addr):
     LOGGING['handlers'].pop('accessSysLog')
     LOGGING['handlers'].pop('errorSysLog')
 

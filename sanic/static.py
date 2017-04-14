@@ -48,14 +48,18 @@ def register(app, uri, file_or_directory, pattern,
         # Merge served directory and requested file if provided
         # Strip all / that in the beginning of the URL to help prevent python
         # from herping a derp and treating the uri as an absolute path
-        file_path = file_or_directory
+        root_path = file_path = file_or_directory
         if file_uri:
             file_path = path.join(
                 file_or_directory, sub('^[/]*', '', file_uri))
 
         # URL decode the path sent by the browser otherwise we won't be able to
         # match filenames which got encoded (filenames with spaces etc)
-        file_path = unquote(file_path)
+        file_path = path.abspath(unquote(file_path))
+        if not file_path.startswith(root_path):
+            raise FileNotFound('File not found',
+                               path=file_or_directory,
+                               relative_url=file_uri)
         try:
             headers = {}
             # Check if the client has been sent this file before

@@ -1,0 +1,5 @@
+pandas==0.19.2
+plotly==2.0.7
+sanic==0.5.0
+sanic-jinja2==0.5.1
+sanic-session==0.1.3

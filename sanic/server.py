@@ -64,12 +64,13 @@ class HttpProtocol(asyncio.Protocol):
         'parser', 'request', 'url', 'headers',
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
+        'request_class',
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time')
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
-                 request_max_size=None):
+                 request_max_size=None, request_class=None):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -82,10 +83,15 @@ class HttpProtocol(asyncio.Protocol):
         self.error_handler = error_handler
         self.request_timeout = request_timeout
         self.request_max_size = request_max_size
+        self.request_class = request_class or Request
         self._total_request_size = 0
         self._timeout_handler = None
         self._last_request_time = None
         self._request_handler_task = None
+
+    @property
+    def keep_alive(self):
+        return self.parser.should_keep_alive() and not self.signal.stopped
 
     # -------------------------------------------- #
     # Connection
@@ -151,7 +157,7 @@ class HttpProtocol(asyncio.Protocol):
         self.headers.append((name.decode().casefold(), value.decode()))
 
     def on_headers_complete(self):
-        self.request = Request(
+        self.request = self.request_class(
             url_bytes=self.url,
             headers=CIDict(self.headers),
             version=self.parser.get_http_version(),
@@ -180,9 +186,7 @@ class HttpProtocol(asyncio.Protocol):
         Writes response content synchronously to the transport.
         """
         try:
-            keep_alive = (
-                self.parser.should_keep_alive() and not self.signal.stopped)
-
+            keep_alive = self.keep_alive
             self.transport.write(
                 response.output(
                     self.request.version, keep_alive,
@@ -216,9 +220,7 @@ class HttpProtocol(asyncio.Protocol):
         """
 
         try:
-            keep_alive = (
-                self.parser.should_keep_alive() and not self.signal.stopped)
-
+            keep_alive = self.keep_alive
             response.transport = self.transport
             await response.stream(
                 self.request.version, keep_alive, self.request_timeout)
@@ -320,7 +322,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
-          signal=Signal()):
+          signal=Signal(), request_class=None):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -345,6 +347,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
     :param protocol: subclass of asyncio protocol class
+    :param request_class: Request class to use
     :return: Nothing
     """
     if not run_async:
@@ -366,6 +369,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         error_handler=error_handler,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
+        request_class=request_class,
     )
 
     server_coroutine = loop.create_server(

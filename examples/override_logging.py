@@ -1,6 +1,5 @@
 from sanic import Sanic
-from sanic.response import text
-import json
+from sanic import response
 import logging
 
 logging_format = "[%(asctime)s] %(process)d-%(levelname)s "
@@ -18,6 +17,6 @@ sanic = Sanic()
 @sanic.route("/")
 def test(request):
     log.info("received request; responding with 'hey'")
-    return text("hey")
+    return response.text("hey")
 
 sanic.run(host="0.0.0.0", port=8000)

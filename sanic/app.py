@@ -26,7 +26,7 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
-                 load_env=True):
+                 load_env=True, request_class=None):
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
         if not logging.root.handlers and log.level == logging.NOTSET:
@@ -44,6 +44,7 @@ class Sanic:
 
         self.name = name
         self.router = router or Router()
+        self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
         self.request_middleware = deque()
@@ -668,6 +669,7 @@ class Sanic:
 
         server_settings = {
             'protocol': protocol,
+            'request_class': self.request_class,
             'host': host,
             'port': port,
             'sock': sock,

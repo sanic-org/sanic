@@ -6,7 +6,7 @@ SANIC_PREFIX = 'SANIC_'
 
 
 class Config(dict):
-    def __init__(self, defaults=None, load_env=True, no_keep_alive=False):
+    def __init__(self, defaults=None, load_env=True, keep_alive=True):
         super().__init__(defaults or {})
         self.LOGO = """
                  ▄▄▄▄▄
@@ -31,7 +31,7 @@ class Config(dict):
 """
         self.REQUEST_MAX_SIZE = 100000000  # 100 megababies
         self.REQUEST_TIMEOUT = 60  # 60 seconds
-        self.NO_KEEP_ALIVE = no_keep_alive
+        self.KEEP_ALIVE = keep_alive
 
         if load_env:
             self.load_environment_vars()

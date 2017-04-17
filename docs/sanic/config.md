@@ -83,3 +83,4 @@ Out of the box there are just a few predefined values which can be overwritten w
     | ----------------- | --------- | --------------------------------- |
     | REQUEST_MAX_SIZE  | 100000000 | How big a request may be (bytes)  |
     | REQUEST_TIMEOUT   | 60        | How long a request can take (sec) |
+    | NO_KEEP_ALIVE     | False     | Disable keep-alive                |

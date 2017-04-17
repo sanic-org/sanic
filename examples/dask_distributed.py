@@ -36,5 +36,6 @@ async def test(request, value):
 
 if __name__ == '__main__':
     # Distributed cluster should run somewhere else
-    with LocalCluster(scheduler_port=8786, processes=False) as cluster:
+    with LocalCluster(scheduler_port=8786, nanny=False, n_workers=2,
+                      threads_per_worker=1) as cluster:
         app.run(host="0.0.0.0", port=8000)

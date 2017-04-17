@@ -210,7 +210,7 @@ class HTTPResponse(BaseHTTPResponse):
         # Speeds up response rate 6% over pulling from all
         status = COMMON_STATUS_CODES.get(self.status)
         if not status:
-            status = ALL_STATUS_CODES.get(self.status)
+            status = ALL_STATUS_CODES.get(self.status, b'UNKNOWN RESPONSE')
 
         return (b'HTTP/%b %d %b\r\n'
                 b'Connection: %b\r\n'

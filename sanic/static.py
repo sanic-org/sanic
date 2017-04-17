@@ -56,7 +56,7 @@ def register(app, uri, file_or_directory, pattern,
         # URL decode the path sent by the browser otherwise we won't be able to
         # match filenames which got encoded (filenames with spaces etc)
         file_path = path.abspath(unquote(file_path))
-        if not file_path.startswith(root_path):
+        if not file_path.startswith(path.abspath(unquote(root_path))):
             raise FileNotFound('File not found',
                                path=file_or_directory,
                                relative_url=file_uri)

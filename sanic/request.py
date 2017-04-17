@@ -77,7 +77,7 @@ class Request(dict):
 
         :return: token related to request
         """
-        self._token = getattr(self, '_token', 
+        self._token = getattr(self, '_token',
                                     self.headers.get('Authorization'))
         return self._token
 

@@ -16,7 +16,7 @@ from sanic.handlers import ErrorHandler
 from sanic.log import log
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import serve, serve_multiple, HttpProtocol
+from sanic.server import serve, serve_multiple, HttpProtocol, Signal
 from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
@@ -674,6 +674,7 @@ class Sanic:
             'port': port,
             'sock': sock,
             'ssl': ssl,
+            'signal': Signal(),
             'debug': debug,
             'request_handler': self.handle_request,
             'error_handler': self.error_handler,

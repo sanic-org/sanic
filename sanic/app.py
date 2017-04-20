@@ -548,13 +548,12 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
-        signal = Signal()
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
-            register_sys_signals=register_sys_signals, signal=signal)
+            register_sys_signals=register_sys_signals)
 
         try:
             self.is_running = True
@@ -595,13 +594,12 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
-        signal = Signal()
         server_settings = self._helper(
             host=host, port=port, debug=debug, before_start=before_start,
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
-            backlog=backlog, run_async=True, signal=signal)
+            backlog=backlog, run_async=True)
 
         return await serve(**server_settings)
 
@@ -631,7 +629,7 @@ class Sanic:
                 before_start=None, after_start=None, before_stop=None,
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, signal=None):
+                register_sys_signals=True, run_async=False):
         """Helper function used by `run` and `create_server`."""
 
         if isinstance(ssl, dict):
@@ -676,7 +674,7 @@ class Sanic:
             'port': port,
             'sock': sock,
             'ssl': ssl,
-            'signal': signal,
+            'signal': Signal(),
             'debug': debug,
             'request_handler': self.handle_request,
             'error_handler': self.error_handler,

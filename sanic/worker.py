@@ -3,6 +3,7 @@ import sys
 import signal
 import asyncio
 import logging
+
 try:
     import ssl
 except ImportError:
@@ -50,8 +51,8 @@ class GunicornWorker(base.Worker):
             debug=is_debug,
             protocol=protocol,
             ssl=self.ssl_context,
-            run_async=True
-        )
+            run_async=True)
+        self._server_settings['signal'] = self.signal
         self._server_settings.pop('sock')
         trigger_events(self._server_settings.get('before_start', []),
                        self.loop)
@@ -97,7 +98,6 @@ class GunicornWorker(base.Worker):
             self.servers.append(await serve(
                 sock=sock,
                 connections=self.connections,
-                signal=self.signal,
                 **self._server_settings
             ))
 

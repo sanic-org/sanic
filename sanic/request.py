@@ -78,9 +78,10 @@ class Request(dict):
         :return: token related to request
         """
         auth_header = self.headers.get('Authorization')
-        if auth_header is not None:
-            return auth_header.split()[1]
-        return auth_header
+        if 'Token ' in auth_header:
+            return auth_header.partition('Token ')[-1]
+        else:
+            return auth_header
 
     @property
     def form(self):

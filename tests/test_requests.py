@@ -141,10 +141,10 @@ def test_token():
         return text('OK')
 
     # uuid4 generated token.
-    token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
+    token = 'Token a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
     headers = {
         'content-type': 'application/json',
-        'Authorization': 'Token {}'.format(token)
+        'Authorization': '{}'.format(token)
     }
 
     request, response = app.test_client.get('/', headers=headers)

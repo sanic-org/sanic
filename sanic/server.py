@@ -73,7 +73,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
-                 request_max_size=None, request_class=None, has_log=True):
+                 request_max_size=None, request_class=None, has_log=True,
+                 keep_alive=True):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -92,10 +93,13 @@ class HttpProtocol(asyncio.Protocol):
         self._timeout_handler = None
         self._last_request_time = None
         self._request_handler_task = None
+        self._keep_alive = keep_alive
 
     @property
     def keep_alive(self):
-        return self.parser.should_keep_alive() and not self.signal.stopped
+        return (self._keep_alive
+                and not self.signal.stopped
+                and self.parser.should_keep_alive())
 
     # -------------------------------------------- #
     # Connection
@@ -357,7 +361,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
-          signal=Signal(), request_class=None, has_log=True):
+          signal=Signal(), request_class=None, has_log=True, keep_alive=True):
+          signal=Signal(), request_class=None, keep_alive=True):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -406,7 +411,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
         request_class=request_class,
-        has_log=has_log
+        has_log=has_log,
+        keep_alive=keep_alive,
     )
 
     server_coroutine = loop.create_server(

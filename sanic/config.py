@@ -116,7 +116,7 @@ if type(_addr) is str and not os.path.exists(_addr):
 
 
 class Config(dict):
-    def __init__(self, defaults=None, load_env=True):
+    def __init__(self, defaults=None, load_env=True, keep_alive=True):
         super().__init__(defaults or {})
         self.LOGO = """
                  ▄▄▄▄▄
@@ -141,6 +141,7 @@ class Config(dict):
 """
         self.REQUEST_MAX_SIZE = 100000000  # 100 megababies
         self.REQUEST_TIMEOUT = 60  # 60 seconds
+        self.KEEP_ALIVE = keep_alive
 
         if load_env:
             self.load_environment_vars()
@@ -208,11 +209,11 @@ class Config(dict):
                 self[key] = getattr(obj, key)
 
     def load_environment_vars(self):
+        """
+        Looks for any SANIC_ prefixed environment variables and applies
+        them to the configuration if present.
+        """
         for k, v in os.environ.items():
-            """
-            Looks for any SANIC_ prefixed environment variables and applies
-            them to the configuration if present.
-            """
             if k.startswith(SANIC_PREFIX):
                 _, config_key = k.split(SANIC_PREFIX, 1)
                 self[config_key] = v

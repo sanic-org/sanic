@@ -30,12 +30,12 @@ See it's that simple!
 
 So the pull request approval rules are pretty simple:
 1. All pull requests must pass unit tests
-* All pull requests must be reviewed and approved by at least 
+2. All pull requests must be reviewed and approved by at least 
 one current collaborator on the project
-* All pull requests must pass flake8 checks
-* If you decide to remove/change anything from any common interface
+3. All pull requests must pass flake8 checks
+4. If you decide to remove/change anything from any common interface
 a deprecation message should accompany it.
-* If you implement a new feature you should have at least one unit
+5. If you implement a new feature you should have at least one unit
 test to accompany it.
 
 ## Documentation

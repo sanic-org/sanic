@@ -17,7 +17,7 @@ from sanic.handlers import ErrorHandler
 from sanic.log import log
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import serve, serve_multiple, HttpProtocol
+from sanic.server import serve, serve_multiple, HttpProtocol, Signal
 from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
@@ -293,7 +293,7 @@ class Sanic:
                            attach_to=middleware_or_request)
 
     # Static Files
-    def static(self, uri, file_or_directory, pattern='.+',
+    def static(self, uri, file_or_directory, pattern=r'/?.+',
                use_modified_since=True, use_content_range=False):
         """Register a root to serve files from. The input can either be a
         file or a directory. See
@@ -687,11 +687,13 @@ class Sanic:
             'port': port,
             'sock': sock,
             'ssl': ssl,
+            'signal': Signal(),
             'debug': debug,
             'request_handler': self.handle_request,
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
+            'keep_alive': self.config.KEEP_ALIVE,
             'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog,

@@ -680,6 +680,7 @@ class Sanic:
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
+            'keep_alive': self.config.KEEP_ALIVE,
             'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog

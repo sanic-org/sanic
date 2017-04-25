@@ -362,7 +362,6 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
           signal=Signal(), request_class=None, has_log=True, keep_alive=True):
-          signal=Signal(), request_class=None, keep_alive=True):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on

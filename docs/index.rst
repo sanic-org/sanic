@@ -20,6 +20,7 @@ Guides
    sanic/class_based_views
    sanic/custom_protocol
    sanic/ssl
+   sanic/logging
    sanic/testing
    sanic/deploying
    sanic/extensions

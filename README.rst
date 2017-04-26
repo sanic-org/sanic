@@ -9,6 +9,8 @@ On top of being Flask-like, Sanic supports async request handlers.  This means y
 
 Sanic is developed `on GitHub <https://github.com/channelcat/sanic/>`_. Contributions are welcome!
 
+If you have a project that utilizes Sanic make sure to comment on the `issue <https://github.com/channelcat/sanic/issues/396>`_ that we use to track those projects!
+
 Benchmarks
 ----------
 

@@ -1,3 +1,5 @@
+import os
+import inspect
 import warnings
 
 from sanic.testing import SanicTestClient
@@ -15,3 +17,13 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
     return test_client._sanic_endpoint_test(
         method, uri, gather_request, debug, server_kwargs,
         *request_args, **request_kwargs)
+
+
+def get_original_caller_directory():
+    """Gets the directory of the original caller for any function
+
+    To be primarily used to identify where to watch for live reload situations
+
+    :returns: The absolute path to the directory of the original caller
+    """
+    return os.path.split(os.path.abspath(inspect.stack()[-1]))[0]

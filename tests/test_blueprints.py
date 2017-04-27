@@ -1,10 +1,12 @@
 import asyncio
 import inspect
 
-from sanic import Sanic
+import pytest
+
+from sanic import Sanic, response
 from sanic.blueprints import Blueprint
-from sanic.response import json, text
-from sanic.exceptions import NotFound, ServerError, InvalidUsage
+from sanic.exceptions import NotFound, ServerError, InvalidUsage, SanicTypeException
+from sanic.response import text
 
 
 # ------------------------------------------------------------ #
@@ -134,7 +136,6 @@ def test_several_bp_with_host():
     def handler2(request):
         return text('Hello3')
 
-
     app.blueprint(bp)
     app.blueprint(bp2)
 
@@ -200,7 +201,6 @@ def test_bp_exception_handler():
 
     request, response = app.test_client.get('/1')
     assert response.status == 400
-
 
     request, response = app.test_client.get('/2')
     assert response.status == 200
@@ -349,3 +349,25 @@ def test_bp_shorthand():
         'Sec-WebSocket-Version': '13'})
     assert response.status == 101
     assert ev.is_set()
+
+
+def test_blueprint_handler_type_error():
+    class Manage(object):
+        def __init__(self):
+            self.blueprint = Blueprint(str(type(self).__name__))
+            self.blueprint.add_route(self.info, '/info')
+
+        async def info(self, request):
+            return response.json({'id': id(self)})
+
+        def register(self, app: Sanic):
+            app.blueprint(self.blueprint)
+
+    def myfunc():
+        app = Sanic()
+        manager = Manage()
+        manager.register(app)
+
+    with pytest.raises(SanicTypeException) as execinfo:
+        myfunc()
+    execinfo.match(r'.*?instance method.*?')

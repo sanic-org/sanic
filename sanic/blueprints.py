@@ -1,6 +1,8 @@
 from collections import defaultdict, namedtuple
+from types import MethodType
 
 from sanic.constants import HTTP_METHODS
+from sanic.exceptions import SanicTypeException
 from sanic.views import CompositionView
 
 FutureRoute = namedtuple('Route',
@@ -48,7 +50,7 @@ class Blueprint:
                 methods=future.methods,
                 host=future.host or self.host,
                 strict_slashes=future.strict_slashes
-                )(future.handler)
+            )(future.handler)
 
         for future in self.websocket_routes:
             # attach the blueprint name to the handler so that it can be
@@ -60,7 +62,7 @@ class Blueprint:
                 uri=uri,
                 host=future.host or self.host,
                 strict_slashes=future.strict_slashes
-                )(future.handler)
+            )(future.handler)
 
         # Middleware
         for future in self.middlewares:
@@ -93,10 +95,14 @@ class Blueprint:
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
         """
+
         def decorator(handler):
+            if isinstance(handler, MethodType):
+                raise SanicTypeException("You can`t add a instance method as a blueprint router hander")
             route = FutureRoute(handler, uri, methods, host, strict_slashes)
             self.routes.append(route)
             return handler
+
         return decorator
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
@@ -120,6 +126,8 @@ class Blueprint:
         # handle composition view differently
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
+        if isinstance(handler, MethodType):
+            raise SanicTypeException("You can`t add a instance method as a blueprint router hander")
 
         self.route(uri=uri, methods=methods, host=host,
                    strict_slashes=strict_slashes)(handler)
@@ -130,10 +138,12 @@ class Blueprint:
 
         :param uri: endpoint at which the route will be accessible.
         """
+
         def decorator(handler):
             route = FutureRoute(handler, uri, [], host, strict_slashes)
             self.websocket_routes.append(route)
             return handler
+
         return decorator
 
     def add_websocket_route(self, handler, uri, host=None):
@@ -152,13 +162,16 @@ class Blueprint:
 
         :param event: Event to listen to.
         """
+
         def decorator(listener):
             self.listeners[event].append(listener)
             return listener
+
         return decorator
 
     def middleware(self, *args, **kwargs):
         """Create a blueprint middleware from a decorated function."""
+
         def register_middleware(_middleware):
             future_middleware = FutureMiddleware(_middleware, args, kwargs)
             self.middlewares.append(future_middleware)
@@ -174,10 +187,12 @@ class Blueprint:
 
     def exception(self, *args, **kwargs):
         """Create a blueprint exception from a decorated function."""
+
         def decorator(handler):
             exception = FutureException(handler, args, kwargs)
             self.exceptions.append(exception)
             return handler
+
         return decorator
 
     def static(self, uri, file_or_directory, *args, **kwargs):

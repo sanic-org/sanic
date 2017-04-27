@@ -1,4 +1,5 @@
 import logging
+import logging.config
 import re
 import warnings
 from asyncio import get_event_loop, ensure_future, CancelledError
@@ -9,7 +10,7 @@ from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 from ssl import create_default_context, Purpose
 
-from sanic.config import Config
+from sanic.config import Config, LOGGING
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
@@ -26,7 +27,10 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
-                 load_env=True, request_class=None):
+                 load_env=True, request_class=None,
+                 log_config=LOGGING):
+        if log_config:
+            logging.config.dictConfig(log_config)
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
         if not logging.root.handlers and log.level == logging.NOTSET:
@@ -47,6 +51,7 @@ class Sanic:
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
+        self.log_config = log_config
         self.request_middleware = deque()
         self.response_middleware = deque()
         self.blueprints = {}
@@ -513,7 +518,8 @@ class Sanic:
     def run(self, host="127.0.0.1", port=8000, debug=False, before_start=None,
             after_start=None, before_stop=None, after_stop=None, ssl=None,
             sock=None, workers=1, loop=None, protocol=None,
-            backlog=100, stop_event=None, register_sys_signals=True):
+            backlog=100, stop_event=None, register_sys_signals=True,
+            log_config=LOGGING):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -540,6 +546,8 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if log_config:
+            logging.config.dictConfig(log_config)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
@@ -553,7 +561,8 @@ class Sanic:
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock, workers=workers,
             loop=loop, protocol=protocol, backlog=backlog,
-            register_sys_signals=register_sys_signals)
+            register_sys_signals=register_sys_signals,
+            has_log=log_config is not None)
 
         try:
             self.is_running = True
@@ -580,12 +589,15 @@ class Sanic:
                             before_start=None, after_start=None,
                             before_stop=None, after_stop=None, ssl=None,
                             sock=None, loop=None, protocol=None,
-                            backlog=100, stop_event=None):
+                            backlog=100, stop_event=None,
+                            log_config=LOGGING):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
+        if log_config:
+            logging.config.dictConfig(log_config)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
@@ -599,7 +611,8 @@ class Sanic:
             after_start=after_start, before_stop=before_stop,
             after_stop=after_stop, ssl=ssl, sock=sock,
             loop=loop or get_event_loop(), protocol=protocol,
-            backlog=backlog, run_async=True)
+            backlog=backlog, run_async=True,
+            has_log=log_config is not None)
 
         return await serve(**server_settings)
 
@@ -629,7 +642,7 @@ class Sanic:
                 before_start=None, after_start=None, before_stop=None,
                 after_stop=None, ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False):
+                register_sys_signals=True, run_async=False, has_log=True):
         """Helper function used by `run` and `create_server`."""
 
         if isinstance(ssl, dict):
@@ -683,7 +696,8 @@ class Sanic:
             'keep_alive': self.config.KEEP_ALIVE,
             'loop': loop,
             'register_sys_signals': register_sys_signals,
-            'backlog': backlog
+            'backlog': backlog,
+            'has_log': has_log
         }
 
         # -------------------------------------------- #

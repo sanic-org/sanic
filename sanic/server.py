@@ -173,8 +173,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request.body.append(body)
 
     def on_message_complete(self):
-        if self.request.body:
-            self.request.body = b''.join(self.request.body)
+        self.request.body = b''.join(self.request.body)
 
         self._request_handler_task = self.loop.create_task(
             self.request_handler(

@@ -35,10 +35,10 @@ if __name__ == "__main__":
 
         app.run(host=args.host, port=args.port,
                 workers=args.workers, debug=args.debug, ssl=ssl)
-    except ImportError:
-        log.error("No module named {} found.\n"
+    except ImportError as e:
+        log.error("{} found.\n"
                   "  Example File: project/sanic_server.py -> app\n"
                   "  Example Module: project.sanic_server.app"
-                  .format(module_name))
+                  .format(e))
     except ValueError as e:
         log.error("{}".format(e))

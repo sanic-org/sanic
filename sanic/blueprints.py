@@ -99,7 +99,8 @@ class Blueprint:
         def decorator(handler):
             if isinstance(handler, MethodType):
                 raise SanicTypeException("You can`t add a instance "
-                                         "method as a blueprint router handler")
+                                         "method as a blueprint "
+                                         "router handler")
             route = FutureRoute(handler, uri, methods, host, strict_slashes)
             self.routes.append(route)
             return handler
@@ -129,7 +130,8 @@ class Blueprint:
             methods = handler.handlers.keys()
         if isinstance(handler, MethodType):
             raise SanicTypeException("You can`t add a "
-                                     "instance method as a blueprint router handler")
+                                     "instance method as a blueprint "
+                                     "router handler")
 
         self.route(uri=uri, methods=methods, host=host,
                    strict_slashes=strict_slashes)(handler)

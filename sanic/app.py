@@ -458,7 +458,8 @@ class Sanic:
                 # -------------------------------------------- #
 
                 # Fetch handler from router
-                handler, args, kwargs = self.router.get(request)
+                handler, args, kwargs, uri = self.router.get(request)
+                request.uri_template = uri
                 if handler is None:
                     raise ServerError(
                         ("'None' was returned while requesting a "

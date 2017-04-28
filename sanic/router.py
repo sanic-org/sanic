@@ -8,7 +8,7 @@ from sanic.views import CompositionView
 
 Route = namedtuple(
     'Route',
-    ['handler', 'methods', 'pattern', 'parameters', 'name'])
+    ['handler', 'methods', 'pattern', 'parameters', 'name', 'uri'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
 
 REGEX_TYPES = {
@@ -225,7 +225,7 @@ class Router:
 
             route = Route(
                 handler=handler, methods=methods, pattern=pattern,
-                parameters=parameters, name=handler_name)
+                parameters=parameters, name=handler_name, uri=uri)
 
         self.routes_all[uri] = route
         if properties['unhashable']:
@@ -344,4 +344,4 @@ class Router:
         route_handler = route.handler
         if hasattr(route_handler, 'handlers'):
             route_handler = route_handler.handlers[method]
-        return route_handler, [], kwargs
+        return route_handler, [], kwargs, route.uri

@@ -38,7 +38,7 @@ class Request(dict):
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url',
+        '_ip', '_parsed_url', 'uri_template'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -57,6 +57,7 @@ class Request(dict):
         self.parsed_form = None
         self.parsed_files = None
         self.parsed_args = None
+        self.uri_template = None
         self._cookies = None
 
     @property

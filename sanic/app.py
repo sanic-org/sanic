@@ -570,9 +570,10 @@ class Sanic:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
-        except:
+        except Exception:
             log.exception(
                 'Experienced exception while trying to serve')
+            raise
         finally:
             self.is_running = False
         log.info("Server Stopped")

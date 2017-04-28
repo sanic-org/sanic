@@ -502,6 +502,8 @@ def serve_multiple(server_settings, workers):
     def sig_handler(signal, frame):
         log.info("Received signal {}. Shutting down.".format(
             Signals(signal).name))
+        for process in processes:
+            os.kill(process.pid, SIGINT)
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))

@@ -522,5 +522,3 @@ def serve_multiple(server_settings, workers):
     for process in processes:
         process.terminate()
     server_settings.get('sock').close()
-
-    asyncio.get_event_loop().stop()

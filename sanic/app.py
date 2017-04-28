@@ -570,7 +570,7 @@ class Sanic:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
-        except Exception:
+        except:
             log.exception(
                 'Experienced exception while trying to serve')
             raise

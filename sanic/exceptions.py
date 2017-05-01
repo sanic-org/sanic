@@ -106,8 +106,6 @@ class SanicException(Exception):
 
 class SanicTypeException(Exception):
     pass
-
-
 class NotFound(SanicException):
     status_code = 404
 

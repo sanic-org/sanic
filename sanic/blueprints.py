@@ -95,7 +95,6 @@ class Blueprint:
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
         """
-
         def decorator(handler):
             if isinstance(handler, MethodType):
                 raise SanicTypeException("You can`t add a instance "
@@ -104,7 +103,6 @@ class Blueprint:
             route = FutureRoute(handler, uri, methods, host, strict_slashes)
             self.routes.append(route)
             return handler
-
         return decorator
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
@@ -142,12 +140,10 @@ class Blueprint:
 
         :param uri: endpoint at which the route will be accessible.
         """
-
         def decorator(handler):
             route = FutureRoute(handler, uri, [], host, strict_slashes)
             self.websocket_routes.append(route)
             return handler
-
         return decorator
 
     def add_websocket_route(self, handler, uri, host=None):
@@ -166,21 +162,17 @@ class Blueprint:
 
         :param event: Event to listen to.
         """
-
         def decorator(listener):
             self.listeners[event].append(listener)
             return listener
-
         return decorator
 
     def middleware(self, *args, **kwargs):
         """Create a blueprint middleware from a decorated function."""
-
         def register_middleware(_middleware):
             future_middleware = FutureMiddleware(_middleware, args, kwargs)
             self.middlewares.append(future_middleware)
             return _middleware
-
         # Detect which way this was called, @middleware or @middleware('AT')
         if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
             middleware = args[0]
@@ -191,12 +183,10 @@ class Blueprint:
 
     def exception(self, *args, **kwargs):
         """Create a blueprint exception from a decorated function."""
-
         def decorator(handler):
             exception = FutureException(handler, args, kwargs)
             self.exceptions.append(exception)
             return handler
-
         return decorator
 
     def static(self, uri, file_or_directory, *args, **kwargs):

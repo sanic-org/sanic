@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+from types import MethodType
 
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
@@ -121,9 +122,14 @@ class Blueprint:
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
 
+        _handler = handler
+        if isinstance(handler, MethodType):
+            def _handler(*args, **kwargs):
+                return handler(*args, **kwargs)
+
         self.route(uri=uri, methods=methods, host=host,
-                   strict_slashes=strict_slashes)(handler)
-        return handler
+                   strict_slashes=strict_slashes)(_handler)
+        return _handler
 
     def websocket(self, uri, host=None, strict_slashes=False):
         """Create a blueprint websocket route from a decorated function.

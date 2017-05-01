@@ -50,7 +50,7 @@ class Blueprint:
                 methods=future.methods,
                 host=future.host or self.host,
                 strict_slashes=future.strict_slashes
-            )(future.handler)
+                )(future.handler)
 
         for future in self.websocket_routes:
             # attach the blueprint name to the handler so that it can be
@@ -62,7 +62,7 @@ class Blueprint:
                 uri=uri,
                 host=future.host or self.host,
                 strict_slashes=future.strict_slashes
-            )(future.handler)
+                )(future.handler)
 
         # Middleware
         for future in self.middlewares:

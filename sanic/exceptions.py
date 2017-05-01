@@ -47,6 +47,10 @@ TRACEBACK_STYLE = '''
             padding: 5px 10px;
         }
 
+        .tb-border {
+            padding-top: 20px;
+        }
+
         .frame-descriptor {
             background-color: #e2eafb;
         }
@@ -63,18 +67,33 @@ TRACEBACK_WRAPPER_HTML = '''
             {style}
         </head>
         <body>
-            <h1>{exc_name}</h1>
-            <h3><code>{exc_value}</code></h3>
-            <div class="tb-wrapper">
-                <p class="tb-header">Traceback (most recent call last):</p>
-                {frame_html}
-                <p class="summary">
+            {inner_html}
+            <div class="summary">
+                <p>
                 <b>{exc_name}: {exc_value}</b>
                     while handling path <code>{path}</code>
                 </p>
             </div>
         </body>
     </html>
+'''
+
+TRACEBACK_WRAPPER_INNER_HTML = '''
+    <h1>{exc_name}</h1>
+    <h3><code>{exc_value}</code></h3>
+    <div class="tb-wrapper">
+        <p class="tb-header">Traceback (most recent call last):</p>
+        {frame_html}
+    </div>
+'''
+
+TRACEBACK_BORDER = '''
+    <div class="tb-border">
+        <b><i>
+            The above exception was the direct cause of the
+            following exception:
+        </i></b>
+    </div>
 '''
 
 TRACEBACK_LINE_HTML = '''

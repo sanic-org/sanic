@@ -35,6 +35,15 @@ def handler_5(request):
     raise CustomServerError('Custom server error')
 
 
+@exception_handler_app.route('/6/<arg:int>')
+def handler_6(request, arg):
+    try:
+        foo = 1 / arg
+    except Exception as e:
+        raise e from ValueError("{}".format(arg))
+    return text(foo)
+
+
 @exception_handler_app.exception(NotFound, ServerError)
 def handler_exception(request, exception):
     return text("OK")
@@ -82,6 +91,26 @@ def test_html_traceback_output_in_debug_mode():
 def test_inherited_exception_handler():
     request, response = exception_handler_app.test_client.get('/5')
     assert response.status == 200
+
+
+def test_chained_exception_handler():
+    request, response = exception_handler_app.test_client.get(
+        '/6/0', debug=True)
+    assert response.status == 500
+
+    soup = BeautifulSoup(response.body, 'html.parser')
+    html = str(soup)
+
+    assert 'response = handler(request, *args, **kwargs)' in html
+    assert 'handler_6' in html
+    assert 'foo = 1 / arg' in html
+    assert 'ValueError' in html
+    assert 'The above exception was the direct cause' in html
+
+    summary_text = " ".join(soup.select('.summary')[0].text.split())
+    assert (
+        "ZeroDivisionError: division by zero "
+        "while handling path /6/0") == summary_text
 
 
 def test_exception_handler_lookup():

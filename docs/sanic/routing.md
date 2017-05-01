@@ -52,7 +52,7 @@ async def integer_handler(request, integer_arg):
 async def number_handler(request, number_arg):
 	return text('Number - {}'.format(number_arg))
 
-@app.route('/person/<name:[A-z]>')
+@app.route('/person/<name:[A-z]+>')
 async def person_handler(request, name):
 	return text('Person - {}'.format(name))
 

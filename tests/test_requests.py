@@ -133,6 +133,17 @@ def test_query_string():
     assert request.args.get('test2') == 'false'
 
 
+def test_uri_template():
+    app = Sanic('test_uri_template')
+
+    @app.route('/foo/<id:int>/bar/<name:[A-z]+>')
+    async def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/foo/123/bar/baz')
+    assert request.uri_template == '/foo/<id:int>/bar/<name:[A-z]+>'
+
+
 def test_token():
     app = Sanic('test_post_token')
 

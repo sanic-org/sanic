@@ -574,6 +574,7 @@ class Sanic:
         except:
             log.exception(
                 'Experienced exception while trying to serve')
+            raise
         finally:
             self.is_running = False
         log.info("Server Stopped")

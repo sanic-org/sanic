@@ -9,13 +9,26 @@ from distutils.util import strtobool
 
 from setuptools import setup
 
-with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
-        __file__)), 'sanic', '__init__.py'), 'r', 'latin1') as fp:
+
+def open_local(paths, mode='r', encoding='latin1'):
+    path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)),
+        *paths
+    )
+
+    return codecs.open(path, mode, encoding)
+
+
+with open_local(['sanic', '__init__.py']) as fp:
     try:
         version = re.findall(r"^__version__ = '([^']+)'\r?$",
                              fp.read(), re.M)[0]
     except IndexError:
         raise RuntimeError('Unable to determine version.')
+
+
+with open_local(['README.rst']) as rm:
+    long_description = rm.read()
 
 setup_kwargs = {
     'name': 'sanic',
@@ -26,6 +39,7 @@ setup_kwargs = {
     'author_email': 'channelcat@gmail.com',
     'description': (
         'A microframework based on uvloop, httptools, and learnings of flask'),
+    'long_description': long_description,
     'packages': ['sanic'],
     'platforms': 'any',
     'classifiers': [

@@ -10,7 +10,7 @@ from distutils.util import strtobool
 from setuptools import setup
 
 
-def open_local(paths, mode='r', encoding='latin1'):
+def open_local(paths, mode='r', encoding='utf8'):
     path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
         *paths
@@ -19,7 +19,7 @@ def open_local(paths, mode='r', encoding='latin1'):
     return codecs.open(path, mode, encoding)
 
 
-with open_local(['sanic', '__init__.py']) as fp:
+with open_local(['sanic', '__init__.py'], encoding='latin1') as fp:
     try:
         version = re.findall(r"^__version__ = '([^']+)'\r?$",
                              fp.read(), re.M)[0]

@@ -1,6 +1,6 @@
 # Configuration
 
-Any reasonably complex application will need configuration that is not baked into the acutal code. Settings might be different for different environments or installations.
+Any reasonably complex application will need configuration that is not baked into the actual code. Settings might be different for different environments or installations.
 
 ## Basics
 

@@ -1,5 +1,5 @@
 Sanic
-=================================
+=====
 
 |Join the chat at https://gitter.im/sanic-python/Lobby| |Build Status| |PyPI| |PyPI version|
 
@@ -86,8 +86,9 @@ Documentation
 
 TODO
 ----
-* Streamed file processing
-* http2
+ * Streamed file processing
+ * http2
+
 Limitations
 -----------
 * No wheels for uvloop and httptools on Windows :(

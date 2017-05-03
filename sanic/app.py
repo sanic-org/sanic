@@ -517,7 +517,7 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def run(self, host="127.0.0.1", port=8000, debug=False, ssl=None,
-            sock=None, workers=1, loop=None, protocol=None,
+            sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
             log_config=LOGGING):
         """Run the HTTP Server and listen until keyboard interrupt or term
@@ -531,7 +531,6 @@ class Sanic:
         :param sock: Socket for the server to accept connections from
         :param workers: Number of processes
                             received before it is respected
-        :param loop:
         :param backlog:
         :param stop_event:
         :param register_sys_signals:
@@ -550,7 +549,7 @@ class Sanic:
                           DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
-            workers=workers, loop=loop, protocol=protocol, backlog=backlog,
+            workers=workers, protocol=protocol, backlog=backlog,
             register_sys_signals=register_sys_signals,
             has_log=log_config is not None)
 
@@ -577,7 +576,7 @@ class Sanic:
         return self
 
     async def create_server(self, host="127.0.0.1", port=8000, debug=False,
-                            ssl=None, sock=None, loop=None, protocol=None,
+                            ssl=None, sock=None, protocol=None,
                             backlog=100, stop_event=None,
                             log_config=LOGGING):
         """Asynchronous version of `run`.
@@ -597,7 +596,7 @@ class Sanic:
                           DeprecationWarning)
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
-            loop=loop or get_event_loop(), protocol=protocol,
+            loop=get_event_loop(), protocol=protocol,
             backlog=backlog, run_async=True,
             has_log=log_config is not None)
 
@@ -644,13 +643,6 @@ class Sanic:
             if debug:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
-                          DeprecationWarning)
-        if loop is not None:
-            if debug:
-                warnings.simplefilter('default')
-            warnings.warn("Passing a loop will be deprecated in version"
-                          " 0.4.0 https://github.com/channelcat/sanic/"
-                          "pull/335 has more information.",
                           DeprecationWarning)
 
         self.error_handler.debug = debug

@@ -56,3 +56,17 @@ for Gunicorn `worker-class` argument:
 ```
 gunicorn --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker
 ```
+
+## Asynchronous support
+This is suitable if you *need* to share the sanic process with other applications, in particular the `loop`.
+However be advised that this method does not support using multiple processes, and is not the preferred way
+to run the app in general.
+
+Here is an incomplete example (please see `run_async.py` in examples for something more practical):
+
+```python
+server = app.create_server(host="0.0.0.0", port=8000)
+loop = asyncio.get_event_loop()
+task = asyncio.ensure_future(server)
+loop.run_forever()
+```

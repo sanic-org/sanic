@@ -1,7 +1,6 @@
 import asyncio
 import os
 import traceback
-import warnings
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
@@ -481,12 +480,6 @@ def serve_multiple(server_settings, workers):
     :param stop_event: if provided, is used as a stop signal
     :return:
     """
-    if server_settings.get('loop', None) is not None:
-        if server_settings.get('debug', False):
-            warnings.simplefilter('default')
-        warnings.warn("Passing a loop will be deprecated in version 0.4.0"
-                      " https://github.com/channelcat/sanic/pull/335"
-                      " has more information.", DeprecationWarning)
     server_settings['reuse_port'] = True
 
     # Handling when custom socket is not provided.

@@ -24,6 +24,7 @@ Guides
    sanic/testing
    sanic/deploying
    sanic/extensions
+   sanic/troubleshooting
    sanic/contributing
 
 

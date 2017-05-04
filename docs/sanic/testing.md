@@ -57,17 +57,3 @@ def test_post_json_request_includes_data():
 More information about
 the available arguments to aiohttp can be found
 [in the documentation for ClientSession](https://aiohttp.readthedocs.io/en/stable/client_reference.html#client-session).
-
-
-### Deprecated: `sanic_endpoint_test`
-
-Prior to version 0.3.2, testing was provided through the `sanic_endpoint_test` method. This method will be deprecated in the next major version after 0.4.0; please use the `test_client` instead.
-
-```
-from sanic.utils import sanic_endpoint_test
-
-def test_index_returns_200():
-    request, response = sanic_endpoint_test(app)
-    assert response.status == 200
-```
-

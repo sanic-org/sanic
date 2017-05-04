@@ -1,17 +1,16 @@
-from sanic import Sanic
+import sanic
+from sanic.utils import sanic_endpoint_test
 from sanic.response import text
 from threading import Event
 import asyncio
 
-
 def test_create_task():
     e = Event()
-
     async def coro():
         await asyncio.sleep(0.05)
         e.set()
 
-    app = Sanic('test_create_task')
+    app = sanic.Sanic()
     app.add_task(coro)
 
     @app.route('/early')
@@ -23,8 +22,9 @@ def test_create_task():
         await asyncio.sleep(0.1)
         return text(e.is_set())
 
-    request, response = app.test_client.get('/early')
+
+    request, response = sanic_endpoint_test(app, uri='/early')
     assert response.body == b'False'
 
-    request, response = app.test_client.get('/late')
+    request, response = sanic_endpoint_test(app, uri='/late')
     assert response.body == b'True'

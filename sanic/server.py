@@ -64,7 +64,7 @@ class HttpProtocol(asyncio.Protocol):
         'parser', 'request', 'url', 'headers',
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
-        'request_class',
+        'request_class', 'is_request_stream',
         # enable or disable access log / error log purpose
         'has_log',
         # connection management
@@ -73,7 +73,7 @@ class HttpProtocol(asyncio.Protocol):
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
                  request_max_size=None, request_class=None, has_log=True,
-                 keep_alive=True):
+                 keep_alive=True, is_request_stream=False):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -88,10 +88,12 @@ class HttpProtocol(asyncio.Protocol):
         self.request_timeout = request_timeout
         self.request_max_size = request_max_size
         self.request_class = request_class or Request
+        self.is_request_stream = is_request_stream
         self._total_request_size = 0
         self._timeout_handler = None
         self._last_request_time = None
         self._request_handler_task = None
+        self._request_stream_task = None
         self._keep_alive = keep_alive
 
     @property
@@ -123,6 +125,8 @@ class HttpProtocol(asyncio.Protocol):
             self._timeout_handler = (
                 self.loop.call_later(time_left, self.connection_timeout))
         else:
+            if self._request_stream_task:
+                self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
             exception = RequestTimeout('Request Timeout')
@@ -171,13 +175,26 @@ class HttpProtocol(asyncio.Protocol):
             method=self.parser.get_method().decode(),
             transport=self.transport
         )
+        if self.is_request_stream:
+            self.request.stream = asyncio.Queue()
+            self.execute_request_handler()
 
     def on_body(self, body):
-        self.request.body.append(body)
+        if self.is_request_stream:
+            self._request_stream_task = self.loop.create_task(
+                self.request.stream.put(body))
+        else:
+            self.request.body.append(body)
 
     def on_message_complete(self):
-        self.request.body = b''.join(self.request.body)
+        if self.is_request_stream:
+            self._request_stream_task = self.loop.create_task(
+                self.request.stream.put(None))
+        else:
+            self.request.body = b''.join(self.request.body)
+            self.execute_request_handler()
 
+    def execute_request_handler(self):
         self._request_handler_task = self.loop.create_task(
             self.request_handler(
                 self.request,
@@ -317,6 +334,7 @@ class HttpProtocol(asyncio.Protocol):
         self.url = None
         self.headers = None
         self._request_handler_task = None
+        self._request_stream_task = None
         self._total_request_size = 0
 
     def close_if_idle(self):
@@ -359,7 +377,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
-          signal=Signal(), request_class=None, has_log=True, keep_alive=True):
+          signal=Signal(), request_class=None, has_log=True, keep_alive=True,
+          is_request_stream=False):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -386,6 +405,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param protocol: subclass of asyncio protocol class
     :param request_class: Request class to use
     :param has_log: disable/enable access log and error log
+    :param is_request_stream: disable/enable Request.stream
     :return: Nothing
     """
     if not run_async:
@@ -410,6 +430,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         request_class=request_class,
         has_log=has_log,
         keep_alive=keep_alive,
+        is_request_stream=is_request_stream,
     )
 
     server_coroutine = loop.create_server(

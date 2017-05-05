@@ -27,7 +27,7 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
-                 load_env=True, request_class=None,
+                 load_env=True, request_class=None, is_request_stream=False,
                  log_config=LOGGING):
         if log_config:
             logging.config.dictConfig(log_config)
@@ -60,6 +60,7 @@ class Sanic:
         self.sock = None
         self.listeners = defaultdict(list)
         self.is_running = False
+        self.is_request_stream = is_request_stream
         self.websocket_enabled = False
         self.websocket_tasks = []
 
@@ -651,6 +652,7 @@ class Sanic:
         server_settings = {
             'protocol': protocol,
             'request_class': self.request_class,
+            'is_request_stream': self.is_request_stream,
             'host': host,
             'port': port,
             'sock': sock,

@@ -1,10 +1,9 @@
 from sanic import Sanic
 from sanic.response import json
 
-from aiopeewee import AioModel, AioMySQLDatabase
+from aiopeewee import AioModel, AioMySQLDatabase, model_to_dict
 from peewee import CharField, TextField, DateTimeField
 from peewee import ForeignKeyField, PrimaryKeyField
-from playhouse.shortcuts import model_to_dict
 
 
 db = AioMySQLDatabase('test', user='root', password='',
@@ -49,7 +48,7 @@ async def stop(app, loop):
 @app.post('/users')
 async def add_user(request):
     user = await User.create(**request.json)
-    return json(model_to_dict(user))
+    return json(await model_to_dict(user))
 
 
 @app.get('/users/count')

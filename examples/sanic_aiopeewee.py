@@ -44,7 +44,6 @@ async def setup(app, loop):
 async def stop(app, loop):
     # close connection pool
     await db.close()
-    await to_asyncio_future(app.client._shutdown())
 
 
 @app.post('/users')

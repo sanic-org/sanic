@@ -60,6 +60,7 @@ class Sanic:
         self.sock = None
         self.listeners = defaultdict(list)
         self.is_running = False
+        self.is_request_stream = False
         self.websocket_enabled = False
         self.websocket_tasks = []
 
@@ -110,12 +111,14 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
-              strict_slashes=False):
+              strict_slashes=False, stream=False):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
         :param host:
+        :param strict_slashes:
+        :param stream:
         :return: decorated function
         """
 
@@ -124,7 +127,11 @@ class Sanic:
         if not uri.startswith('/'):
             uri = '/' + uri
 
+        if stream:
+            self.is_request_stream = True
+
         def response(handler):
+            handler.is_stream = stream
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes)
             return handler
@@ -159,6 +166,13 @@ class Sanic:
     def delete(self, uri, host=None, strict_slashes=False):
         return self.route(uri, methods=frozenset({"DELETE"}), host=host,
                           strict_slashes=strict_slashes)
+
+    def stream(
+            self, uri, methods=frozenset({"POST"}), host=None,
+            strict_slashes=False):
+        return self.route(uri, methods=methods, host=host,
+                          strict_slashes=strict_slashes,
+                          stream=True)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
                   strict_slashes=False):
@@ -651,6 +665,8 @@ class Sanic:
         server_settings = {
             'protocol': protocol,
             'request_class': self.request_class,
+            'is_request_stream': self.is_request_stream,
+            'router': self.router,
             'host': host,
             'port': port,
             'sock': sock,

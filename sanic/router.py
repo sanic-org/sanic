@@ -345,3 +345,11 @@ class Router:
         if hasattr(route_handler, 'handlers'):
             route_handler = route_handler.handlers[method]
         return route_handler, [], kwargs, route.uri
+
+    def is_stream_handler(self, request):
+        """ Handler for request is stream or not.
+        :param request: Request object
+        :return: bool
+        """
+        handler = self.get(request)[0]
+        return handler.is_stream

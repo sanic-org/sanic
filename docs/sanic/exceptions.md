@@ -43,3 +43,11 @@ Some of the most useful exceptions are presented below:
   usually occurs if there is an exception raised in user code.
 
 See the `sanic.exceptions` module for the full list of exceptions to throw.
+
+You can also use `exceptions_base`, it can catch the exception just like
+normal catching. It can be used for catching all unexpected error and eliminate
+the risk that server information being stolen by attackers/
+
+@app.exception_base(Exception)
+def catch_everything(request, exception):
+	return text( "Server Error!",500)

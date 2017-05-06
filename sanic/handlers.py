@@ -18,6 +18,7 @@ from sanic.response import text, html
 
 class ErrorHandler:
     handlers = None
+    handlers_base = None
     cached_handlers = None
     _missing = object()
 

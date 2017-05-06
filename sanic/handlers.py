@@ -23,6 +23,7 @@ class ErrorHandler:
 
     def __init__(self):
         self.handlers = []
+        self.handlers_base = []
         self.cached_handlers = {}
         self.debug = False
 
@@ -55,6 +56,9 @@ class ErrorHandler:
 
     def add(self, exception, handler):
         self.handlers.append((exception, handler))
+		
+    def add_base(self, exception, handler):
+        self.handlers_base.append((exception, handler))
 
     def lookup(self, exception):
         handler = self.cached_handlers.get(exception, self._missing)
@@ -63,6 +67,15 @@ class ErrorHandler:
                 if isinstance(exception, exception_class):
                     self.cached_handlers[type(exception)] = handler
                     return handler
+
+            for exception_class, handler in self.handlers_base:
+                try:
+                    raise 
+                except exception_class:
+                    return handler
+                except Exception:
+                    pass
+			
             self.cached_handlers[type(exception)] = None
             handler = None
         return handler

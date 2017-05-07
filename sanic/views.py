@@ -64,6 +64,11 @@ class HTTPMethodView:
         return view
 
 
+def stream(func):
+    func.is_stream = True
+    return func
+
+
 class CompositionView:
     """Simple method-function mapped view for the sanic.
     You can add handler functions to methods (get, post, put, patch, delete)

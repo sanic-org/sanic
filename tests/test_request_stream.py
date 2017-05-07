@@ -2,6 +2,7 @@ from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.views import CompositionView
 from sanic.views import HTTPMethodView
+from sanic.views import stream as stream_decorator
 from sanic.response import stream, text
 
 bp = Blueprint('test_blueprint_request_stream')
@@ -12,6 +13,16 @@ class SimpleView(HTTPMethodView):
 
     def get(self, request):
         return text('OK')
+
+    @stream_decorator
+    async def post(self, request):
+        result = ''
+        while True:
+            body = await request.stream.get()
+            if body is None:
+                break
+            result += body.decode('utf-8')
+        return text(result)
 
 
 @app.stream('/stream')
@@ -31,7 +42,7 @@ async def get(request):
 
 
 @bp.stream('/bp_stream')
-async def bp_handler(request):
+async def bp_stream(request):
     result = ''
     while True:
         body = await request.stream.get()
@@ -39,6 +50,11 @@ async def bp_handler(request):
             break
         result += body.decode('utf-8')
     return text(result)
+
+
+@bp.get('/bp_get')
+async def bp_get(request):
+    return text('OK')
 
 
 def get_handler(request):
@@ -73,6 +89,10 @@ def test_request_stream():
     assert response.status == 200
     assert response.text == 'OK'
 
+    request, response = app.test_client.post('/method_view', data=data)
+    assert response.status == 200
+    assert response.text == data
+
     request, response = app.test_client.get('/composition_view')
     assert response.status == 200
     assert response.text == 'OK'
@@ -88,6 +108,10 @@ def test_request_stream():
     request, response = app.test_client.post('/stream', data=data)
     assert response.status == 200
     assert response.text == data
+
+    request, response = app.test_client.get('/bp_get')
+    assert response.status == 200
+    assert response.text == 'OK'
 
     request, response = app.test_client.post('/bp_stream', data=data)
     assert response.status == 200

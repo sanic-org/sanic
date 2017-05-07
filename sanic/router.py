@@ -352,4 +352,7 @@ class Router:
         :return: bool
         """
         handler = self.get(request)[0]
+        if (hasattr(handler, 'view_class') and
+                hasattr(handler.view_class, request.method.lower())):
+            handler = getattr(handler.view_class, request.method.lower())
         return hasattr(handler, 'is_stream') and handler.is_stream

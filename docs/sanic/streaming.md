@@ -44,7 +44,7 @@ from sanic.blueprints import Blueprint
 from sanic.response import stream, text
 
 bp = Blueprint('blueprint_request_stream')
-app = Sanic('request_stream', is_request_stream=True)
+app = Sanic('request_stream')
 
 
 class SimpleView(HTTPMethodView):
@@ -70,11 +70,6 @@ async def handler(request):
             body = body.decode('utf-8').replace('1', 'A')
             response.write(body)
     return stream(streaming)
-
-
-@app.get('/get')
-async def get(request):
-    return text('OK')
 
 
 @bp.stream('/bp_stream')

@@ -34,11 +34,6 @@ async def handler(request):
     return stream(streaming)
 
 
-@app.get('/get')
-async def get(request):
-    return text('OK')
-
-
 @bp.stream('/bp_stream')
 async def bp_handler(request):
     result = ''

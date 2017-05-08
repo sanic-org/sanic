@@ -89,7 +89,8 @@ class CompositionView:
         self.handlers = {}
 
     def add(self, methods, handler, stream=False):
-        handler.is_stream = stream
+        if stream:
+            handler.is_stream = stream
         for method in methods:
             if method not in HTTP_METHODS:
                 raise InvalidUsage(

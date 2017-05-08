@@ -17,10 +17,12 @@ def test_bp():
 
     @bp.route('/')
     def handler(request):
+        assert request.stream is None
         return text('Hello')
 
     app.blueprint(bp)
     request, response = app.test_client.get('/')
+    assert app.is_request_stream is False
 
     assert response.text == 'Hello'
 

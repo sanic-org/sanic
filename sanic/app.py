@@ -131,7 +131,8 @@ class Sanic:
             self.is_request_stream = True
 
         def response(handler):
-            handler.is_stream = stream
+            if stream:
+                handler.is_stream = stream
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes)
             return handler
@@ -187,20 +188,28 @@ class Sanic:
         :param host:
         :return: function or class instance
         """
+        stream = False
         # Handle HTTPMethodView differently
         if hasattr(handler, 'view_class'):
             methods = set()
 
             for method in HTTP_METHODS:
-                if getattr(handler.view_class, method.lower(), None):
+                _handler = getattr(handler.view_class, method.lower(), None)
+                if _handler:
                     methods.add(method)
+                    if hasattr(_handler, 'is_stream'):
+                        stream = True
 
         # handle composition view differently
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
+            for _handler in handler.handlers.values():
+                if hasattr(_handler, 'is_stream'):
+                    stream = True
+                    break
 
         self.route(uri=uri, methods=methods, host=host,
-                   strict_slashes=strict_slashes)(handler)
+                   strict_slashes=strict_slashes, stream=stream)(handler)
         return handler
 
     # Decorator

@@ -28,11 +28,14 @@ def test_route_strict_slash():
 
     @app.get('/get', strict_slashes=True)
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @app.post('/post/', strict_slashes=True)
     def handler(request):
         return text('OK')
+
+    assert app.is_request_stream is False
 
     request, response = app.test_client.get('/get')
     assert response.text == 'OK'

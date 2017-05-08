@@ -290,7 +290,7 @@ class Sanic:
             return handler
 
         return response
-		
+
     # Decorator
     def middleware(self, middleware_or_request):
         """Decorate and register middleware to be called before a request.

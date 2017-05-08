@@ -57,7 +57,7 @@ class ErrorHandler:
 
     def add(self, exception, handler):
         self.handlers.append((exception, handler))
-		
+
     def add_base(self, exception, handler):
         self.handlers_base.append((exception, handler))
 
@@ -71,12 +71,12 @@ class ErrorHandler:
 
             for exception_class, handler in self.handlers_base:
                 try:
-                    raise 
+                    raise
                 except exception_class:
                     return handler
                 except Exception:
                     pass
-			
+
             self.cached_handlers[type(exception)] = None
             handler = None
         return handler

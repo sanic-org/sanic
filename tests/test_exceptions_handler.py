@@ -43,12 +43,25 @@ def handler_6(request, arg):
         raise e from ValueError("{}".format(arg))
     return text(foo)
 
+@exception_handler_app.route('/7')
+def handler_7(request):
+    # raise an IndexError
+    a = [1,2,3]
+    return text( a[3] )
 
 @exception_handler_app.exception(NotFound, ServerError)
 def handler_exception(request, exception):
     return text("OK")
+    
+@exception_handler_app.exception(NotFound, ServerError)
+def handler_exception(request, exception):
+    return text("OK")
 
-
+@exception_handler_app.exception_base( LookupError )
+def handler_exception(request, exception):
+    # LookupError can catch IndexError
+    return text("Caught by LookupError")
+    
 def test_invalid_usage_exception_handler():
     request, response = exception_handler_app.test_client.get('/1')
     assert response.status == 400
@@ -112,6 +125,11 @@ def test_chained_exception_handler():
         "ZeroDivisionError: division by zero "
         "while handling path /6/0") == summary_text
 
+def test_chained_exception_base_handler():
+    request, response = exception_handler_app.test_client.get(
+        '/7', debug=True)
+    assert response.status == 200
+    assert response.body == b'Caught by LookupError'
 
 def test_exception_handler_lookup():
     class CustomError(Exception):

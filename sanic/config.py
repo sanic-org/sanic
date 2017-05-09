@@ -1,9 +1,10 @@
-from sanic.defaultFilter import DefaultFilter
 import os
 import sys
 import syslog
 import platform
 import types
+
+from sanic.default_filter import DefaultFilter
 
 SANIC_PREFIX = 'SANIC_'
 

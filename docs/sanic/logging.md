@@ -85,11 +85,11 @@ By default, log_config parameter is set to use sanic.config.LOGGING dictionary f
 
 And `filters`:
 
-- accessFilter (using sanic.default_filter.DefaultFilter)<br>
+- accessFilter (using sanic.logging.DefaultFilter)<br>
   The filter that allows only levels in `DEBUG`, `INFO`, and `NONE(0)`
 
 
-- errorFilter (using sanic.default_filter.DefaultFilter)<br>
+- errorFilter (using sanic.logging.DefaultFilter)<br>
   The filter that allows only levels in `WARNING`, `ERROR`, and `CRITICAL`
 
 There are two `loggers` used in sanic, and **must be defined if you want to create your own logging configuration**:

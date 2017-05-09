@@ -4,7 +4,7 @@ import syslog
 import platform
 import types
 
-from sanic.default_filter import DefaultFilter
+from sanic.logging import DefaultFilter
 
 SANIC_PREFIX = 'SANIC_'
 

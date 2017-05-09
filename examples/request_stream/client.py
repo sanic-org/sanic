@@ -6,5 +6,5 @@ data = ""
 for i in range(1, 250000):
     data += str(i)
 
-r = requests.post('http://127.0.0.1:8000/method_view', data=data)
+r = requests.post('http://127.0.0.1:8000/stream', data=data)
 print(r.text)

@@ -22,7 +22,7 @@ class SimpleView(HTTPMethodView):
         return text(result)
 
 
-@app.stream('/stream')
+@app.post('/stream', stream=True)
 async def handler(request):
     async def streaming(response):
         while True:
@@ -34,7 +34,7 @@ async def handler(request):
     return stream(streaming)
 
 
-@bp.stream('/bp_stream')
+@bp.put('/bp_stream', stream=True)
 async def bp_handler(request):
     result = ''
     while True:

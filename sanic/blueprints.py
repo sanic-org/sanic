@@ -196,13 +196,13 @@ class Blueprint:
         return self.route(uri, methods=["GET"], host=host,
                           strict_slashes=strict_slashes)
 
-    def post(self, uri, host=None, strict_slashes=False):
+    def post(self, uri, host=None, strict_slashes=False, stream=False):
         return self.route(uri, methods=["POST"], host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, stream=stream)
 
-    def put(self, uri, host=None, strict_slashes=False):
+    def put(self, uri, host=None, strict_slashes=False, stream=False):
         return self.route(uri, methods=["PUT"], host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, stream=stream)
 
     def head(self, uri, host=None, strict_slashes=False):
         return self.route(uri, methods=["HEAD"], host=host,
@@ -212,14 +212,10 @@ class Blueprint:
         return self.route(uri, methods=["OPTIONS"], host=host,
                           strict_slashes=strict_slashes)
 
-    def patch(self, uri, host=None, strict_slashes=False):
+    def patch(self, uri, host=None, strict_slashes=False, stream=False):
         return self.route(uri, methods=["PATCH"], host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, stream=stream)
 
     def delete(self, uri, host=None, strict_slashes=False):
         return self.route(uri, methods=["DELETE"], host=host,
                           strict_slashes=strict_slashes)
-
-    def stream(self, uri, methods=["POST"], host=None, strict_slashes=False):
-        return self.route(uri, methods=methods, host=host,
-                          strict_slashes=strict_slashes, stream=True)

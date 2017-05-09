@@ -45,12 +45,37 @@ def test_request_stream_method_view():
 
 
 def test_request_stream_app():
-    '''for self.is_request_stream = True'''
+    '''for self.is_request_stream = True and decorators'''
 
     app = Sanic('test_request_stream_app')
 
-    @app.stream('/stream')
-    async def handler(request):
+    @app.get('/get')
+    async def get(request):
+        assert request.stream is None
+        return text('GET')
+
+    @app.head('/head')
+    async def head(request):
+        assert request.stream is None
+        return text('HEAD')
+
+    @app.delete('/delete')
+    async def delete(request):
+        assert request.stream is None
+        return text('DELETE')
+
+    @app.options('/options')
+    async def options(request):
+        assert request.stream is None
+        return text('OPTIONS')
+
+    @app.post('/_post/<id>')
+    async def _post(request, id):
+        assert request.stream is None
+        return text('_POST')
+
+    @app.post('/post/<id>', stream=True)
+    async def post(request, id):
         assert isinstance(request.stream, asyncio.Queue)
 
         async def streaming(response):
@@ -61,18 +86,79 @@ def test_request_stream_app():
                 response.write(body.decode('utf-8'))
         return stream(streaming)
 
-    @app.get('/get')
-    async def get(request):
+    @app.put('/_put')
+    async def _put(request):
         assert request.stream is None
-        return text('OK')
+        return text('_PUT')
+
+    @app.put('/put', stream=True)
+    async def put(request):
+        assert isinstance(request.stream, asyncio.Queue)
+
+        async def streaming(response):
+            while True:
+                body = await request.stream.get()
+                if body is None:
+                    break
+                response.write(body.decode('utf-8'))
+        return stream(streaming)
+
+    @app.patch('/_patch')
+    async def _patch(request):
+        assert request.stream is None
+        return text('_PATCH')
+
+    @app.patch('/patch', stream=True)
+    async def patch(request):
+        assert isinstance(request.stream, asyncio.Queue)
+
+        async def streaming(response):
+            while True:
+                body = await request.stream.get()
+                if body is None:
+                    break
+                response.write(body.decode('utf-8'))
+        return stream(streaming)
 
     assert app.is_request_stream is True
 
     request, response = app.test_client.get('/get')
     assert response.status == 200
-    assert response.text == 'OK'
+    assert response.text == 'GET'
 
-    request, response = app.test_client.post('/stream', data=data)
+    request, response = app.test_client.head('/head')
+    assert response.status == 200
+    assert response.text == ''
+
+    request, response = app.test_client.delete('/delete')
+    assert response.status == 200
+    assert response.text == 'DELETE'
+
+    request, response = app.test_client.options('/options')
+    assert response.status == 200
+    assert response.text == 'OPTIONS'
+
+    request, response = app.test_client.post('/_post/1', data=data)
+    assert response.status == 200
+    assert response.text == '_POST'
+
+    request, response = app.test_client.post('/post/1', data=data)
+    assert response.status == 200
+    assert response.text == data
+
+    request, response = app.test_client.put('/_put', data=data)
+    assert response.status == 200
+    assert response.text == '_PUT'
+
+    request, response = app.test_client.put('/put', data=data)
+    assert response.status == 200
+    assert response.text == data
+
+    request, response = app.test_client.patch('/_patch', data=data)
+    assert response.status == 200
+    assert response.text == '_PATCH'
+
+    request, response = app.test_client.patch('/patch', data=data)
     assert response.status == 200
     assert response.text == data
 
@@ -83,31 +169,118 @@ def test_request_stream_blueprint():
     app = Sanic('test_request_stream_blueprint')
     bp = Blueprint('test_blueprint_request_stream_blueprint')
 
-    @bp.stream('/bp_stream')
-    async def bp_stream(request):
-        assert isinstance(request.stream, asyncio.Queue)
-        result = ''
-        while True:
-            body = await request.stream.get()
-            if body is None:
-                break
-            result += body.decode('utf-8')
-        return text(result)
-
-    @bp.get('/bp_get')
-    async def bp_get(request):
+    @app.get('/get')
+    async def get(request):
         assert request.stream is None
-        return text('OK')
+        return text('GET')
+
+    @bp.head('/head')
+    async def head(request):
+        assert request.stream is None
+        return text('HEAD')
+
+    @bp.delete('/delete')
+    async def delete(request):
+        assert request.stream is None
+        return text('DELETE')
+
+    @bp.options('/options')
+    async def options(request):
+        assert request.stream is None
+        return text('OPTIONS')
+
+    @bp.post('/_post/<id>')
+    async def _post(request, id):
+        assert request.stream is None
+        return text('_POST')
+
+    @bp.post('/post/<id>', stream=True)
+    async def post(request, id):
+        assert isinstance(request.stream, asyncio.Queue)
+
+        async def streaming(response):
+            while True:
+                body = await request.stream.get()
+                if body is None:
+                    break
+                response.write(body.decode('utf-8'))
+        return stream(streaming)
+
+    @bp.put('/_put')
+    async def _put(request):
+        assert request.stream is None
+        return text('_PUT')
+
+    @bp.put('/put', stream=True)
+    async def put(request):
+        assert isinstance(request.stream, asyncio.Queue)
+
+        async def streaming(response):
+            while True:
+                body = await request.stream.get()
+                if body is None:
+                    break
+                response.write(body.decode('utf-8'))
+        return stream(streaming)
+
+    @bp.patch('/_patch')
+    async def _patch(request):
+        assert request.stream is None
+        return text('_PATCH')
+
+    @bp.patch('/patch', stream=True)
+    async def patch(request):
+        assert isinstance(request.stream, asyncio.Queue)
+
+        async def streaming(response):
+            while True:
+                body = await request.stream.get()
+                if body is None:
+                    break
+                response.write(body.decode('utf-8'))
+        return stream(streaming)
 
     app.blueprint(bp)
 
     assert app.is_request_stream is True
 
-    request, response = app.test_client.get('/bp_get')
+    request, response = app.test_client.get('/get')
     assert response.status == 200
-    assert response.text == 'OK'
+    assert response.text == 'GET'
 
-    request, response = app.test_client.post('/bp_stream', data=data)
+    request, response = app.test_client.head('/head')
+    assert response.status == 200
+    assert response.text == ''
+
+    request, response = app.test_client.delete('/delete')
+    assert response.status == 200
+    assert response.text == 'DELETE'
+
+    request, response = app.test_client.options('/options')
+    assert response.status == 200
+    assert response.text == 'OPTIONS'
+
+    request, response = app.test_client.post('/_post/1', data=data)
+    assert response.status == 200
+    assert response.text == '_POST'
+
+    request, response = app.test_client.post('/post/1', data=data)
+    assert response.status == 200
+    assert response.text == data
+
+    request, response = app.test_client.put('/_put', data=data)
+    assert response.status == 200
+    assert response.text == '_PUT'
+
+    request, response = app.test_client.put('/put', data=data)
+    assert response.status == 200
+    assert response.text == data
+
+    request, response = app.test_client.patch('/_patch', data=data)
+    assert response.status == 200
+    assert response.text == '_PATCH'
+
+    request, response = app.test_client.patch('/patch', data=data)
     assert response.status == 200
     assert response.text == data
 
@@ -170,7 +343,7 @@ def test_request_stream():
                 result += body.decode('utf-8')
             return text(result)
 
-    @app.stream('/stream')
+    @app.post('/stream', stream=True)
     async def handler(request):
         assert isinstance(request.stream, asyncio.Queue)
 
@@ -187,7 +360,7 @@ def test_request_stream():
         assert request.stream is None
         return text('OK')
 
-    @bp.stream('/bp_stream')
+    @bp.post('/bp_stream', stream=True)
     async def bp_stream(request):
         assert isinstance(request.stream, asyncio.Queue)
         result = ''

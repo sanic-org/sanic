@@ -66,7 +66,7 @@ $ MYAPP_SETTINGS=/path/to/config_file python3 myapp.py
 INFO: Goin' Fast @ http://0.0.0.0:8000
 ```
 
-The config files are regular Python files which are executed in order to load them. This allows you to use arbitrary logic for constructing the right configuration. Only uppercase varibales are added to the configuration. Most commonly the configuration consists of simple key value pairs:
+The config files are regular Python files which are executed in order to load them. This allows you to use arbitrary logic for constructing the right configuration. Only uppercase variables are added to the configuration. Most commonly the configuration consists of simple key value pairs:
 
 ```
 # config_file

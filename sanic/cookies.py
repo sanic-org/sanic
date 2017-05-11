@@ -116,9 +116,8 @@ class Cookie(dict):
                     ))
                 except AttributeError:
                     output.append('%s=%s' % (self._keys[key], value))
-            elif key in self._flags:
-                if self[key]:
-                    output.append(self._keys[key])
+            elif key in self._flags and self[key]:
+                output.append(self._keys[key])
             else:
                 output.append('%s=%s' % (self._keys[key], value))
 

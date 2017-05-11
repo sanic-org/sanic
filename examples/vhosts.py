@@ -17,10 +17,6 @@ bp = Blueprint("bp", host="bp.example.com")
 async def hello(request):
     return response.text("Some defaults")
 
-@app.route('/', host="example.com")
-async def hello(request):
-    return response.text("Answer")
-
 @app.route('/', host="sub.example.com")
 async def hello(request):
     return response.text("42")
@@ -33,7 +29,7 @@ async def hello(request):
 async def hello(request):
     return response.text("42")
 
-app.register_blueprint(bp)
+app.blueprint(bp)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)

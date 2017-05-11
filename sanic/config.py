@@ -183,7 +183,7 @@ class Config(dict):
                 exec(compile(config_file.read(), filename, 'exec'),
                      module.__dict__)
         except IOError as e:
-            e.strerror = 'Unable to load configuration file ({0!s})'.format(e.strerror)
+            e.strerror = 'Unable to load configuration file (%s)' % e.strerror
             raise
         self.from_object(module)
         return True

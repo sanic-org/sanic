@@ -159,5 +159,5 @@ def test_static_content_range_error(file_name, static_file_directory):
     assert response.status == 416
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
-    assert response.headers['Content-Range'] == "bytes */{0!s}".format(
-        len(get_file_content(static_file_directory, file_name)))
+    assert response.headers['Content-Range'] == "bytes */%s" % (
+        len(get_file_content(static_file_directory, file_name)),)

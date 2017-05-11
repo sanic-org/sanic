@@ -77,24 +77,6 @@ LOGGING = {
             'filters': ['errorFilter'],
             'formatter': 'simple'
         },
-        'accessTimedRotatingFile': {
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filters': ['accessFilter'],
-            'formatter': 'access',
-            'when': 'D',
-            'interval': 1,
-            'backupCount': 7,
-            'filename': 'access.log'
-        },
-        'errorTimedRotatingFile': {
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filters': ['errorFilter'],
-            'when': 'D',
-            'interval': 1,
-            'backupCount': 7,
-            'filename': 'error.log',
-            'formatter': 'simple'
-        }
     },
     'loggers': {
         'sanic': {

@@ -135,18 +135,18 @@ class ContentRangeHandler:
         unit, _, value = tuple(map(str.strip, _range.partition('=')))
         if unit != 'bytes':
             raise InvalidRangeType(
-                '%s is not a valid Range Type' % (unit,), self)
+                '{0!s} is not a valid Range Type'.format(unit), self)
         start_b, _, end_b = tuple(map(str.strip, value.partition('-')))
         try:
             self.start = int(start_b) if start_b else None
         except ValueError:
             raise ContentRangeError(
-                '\'%s\' is invalid for Content Range' % (start_b,), self)
+                '\'{0!s}\' is invalid for Content Range'.format(start_b), self)
         try:
             self.end = int(end_b) if end_b else None
         except ValueError:
             raise ContentRangeError(
-                '\'%s\' is invalid for Content Range' % (end_b,), self)
+                '\'{0!s}\' is invalid for Content Range'.format(end_b), self)
         if self.end is None:
             if self.start is None:
                 raise ContentRangeError(
@@ -164,7 +164,7 @@ class ContentRangeHandler:
                 'Invalid for Content Range parameters', self)
         self.size = self.end - self.start
         self.headers = {
-            'Content-Range': "bytes %s-%s/%s" % (
+            'Content-Range': "bytes {0!s}-{1!s}/{2!s}".format(
                 self.start, self.end, self.total)}
 
     def __bool__(self):

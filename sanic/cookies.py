@@ -10,7 +10,7 @@ import string
 _LegalChars = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
 _UnescapedChars = _LegalChars + ' ()/<=>?@[]{}'
 
-_Translator = {n: '\\%03o' % n
+_Translator = {n: '\\{0:03o}'.format(n)
                for n in set(range(256)) - set(map(ord, _UnescapedChars))}
 _Translator.update({
     ord('"'): '\\"',
@@ -30,7 +30,7 @@ def _quote(str):
         return '"' + str.translate(_Translator) + '"'
 
 
-_is_legal_key = re.compile('[%s]+' % re.escape(_LegalChars)).fullmatch
+_is_legal_key = re.compile('[{0!s}]+'.format(re.escape(_LegalChars))).fullmatch
 
 # ------------------------------------------------------------ #
 #  Custom SimpleCookie
@@ -101,26 +101,26 @@ class Cookie(dict):
         return super().__setitem__(key, value)
 
     def encode(self, encoding):
-        output = ['%s=%s' % (self.key, _quote(self.value))]
+        output = ['{0!s}={1!s}'.format(self.key, _quote(self.value))]
         for key, value in self.items():
             if key == 'max-age':
                 try:
-                    output.append('%s=%d' % (self._keys[key], value))
+                    output.append('{0!s}={1:d}'.format(self._keys[key], value))
                 except TypeError:
-                    output.append('%s=%s' % (self._keys[key], value))
+                    output.append('{0!s}={1!s}'.format(self._keys[key], value))
             elif key == 'expires':
                 try:
-                    output.append('%s=%s' % (
+                    output.append('{0!s}={1!s}'.format(
                         self._keys[key],
                         value.strftime("%a, %d-%b-%Y %T GMT")
                     ))
                 except AttributeError:
-                    output.append('%s=%s' % (self._keys[key], value))
+                    output.append('{0!s}={1!s}'.format(self._keys[key], value))
             elif key in self._flags:
                 if self[key]:
                     output.append(self._keys[key])
             else:
-                output.append('%s=%s' % (self._keys[key], value))
+                output.append('{0!s}={1!s}'.format(self._keys[key], value))
 
         return "; ".join(output).encode(encoding)
 

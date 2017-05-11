@@ -168,7 +168,7 @@ class ContentRangeError(SanicException):
         super().__init__(message)
         self.headers = {
             'Content-Type': 'text/plain',
-            "Content-Range": "bytes */%s" % (content_range.total,)
+            "Content-Range": "bytes */{0!s}".format(content_range.total)
         }
 
 

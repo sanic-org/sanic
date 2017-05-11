@@ -1,5 +1,5 @@
 from sanic import Sanic
-from sanic.exceptions import NotFound
+from sanic.exceptions import NotFound, URLBuildError
 from sanic.response import json
 from sanic.views import HTTPMethodView
 
@@ -46,21 +46,21 @@ def ignore_404s(request, exception):
 
 # now the propper sanic workflow
 class BooksView(HTTPMethodView):
-    def arg_parser(self, request):
-        parsed_args = {}
-        for k, v in request.args.items():
-            parsed_args[k] = v[0]
-        return parsed_args
 
     async def get(self, request):
-        filtered_by = self.arg_parser(request)
+        filtered_by = request.raw_args
 
         if filtered_by:
-            q_books = await Book.objects.filter(**filtered_by)
+            try:
+                q_books = Book.objects.filter(**filtered_by)
+            except AttributeError as e:
+                raise URLBuildError(e.args[0])
         else:
-            q_books = await Book.objects.all()
+            q_books = Book.objects.all()
 
-        books = [BookSerializer.serialize(book) for book in q_books]
+        books = []
+        async for book in q_books:
+            books.append(BookSerializer.serialize(book))
 
         return json({'method': request.method,
                      'status': 200,
@@ -79,7 +79,6 @@ class BooksView(HTTPMethodView):
                      'status': 201,
                      'results': BookSerializer.serialize(book),
                      })
-
 
 class BookView(HTTPMethodView):
     async def get_object(self, request, book_id):

@@ -1,84 +1,24 @@
 from sanic import Sanic
-
-from sanic_session import InMemorySessionInterface
-from sanic_jinja2 import SanicJinja2
-
-import json
+from sanic.response import html
 import plotly
-
-import pandas as pd
-import numpy as np
+import plotly.graph_objs as go
 
 app = Sanic(__name__)
-
-jinja = SanicJinja2(app)
-session = InMemorySessionInterface(cookie_name=app.name, prefix=app.name)
-
-@app.middleware('request')
-async def print_on_request(request):
-	print(request.headers)
-	await session.open(request)
-
-@app.middleware('response')
-async def print_on_response(request, response):
-	await session.save(request, response)
-
 
 
 @app.route('/')
 async def index(request):
-    rng = pd.date_range('1/1/2011', periods=7500, freq='H')
-    ts = pd.Series(np.random.randn(len(rng)), index=rng)
+    trace1 = go.Scatter(
+        x=[0, 1, 2, 3, 4, 5],
+        y=[1.5, 1, 1.3, 0.7, 0.8, 0.9]
+    )
+    trace2 = go.Bar(
+        x=[0, 1, 2, 3, 4, 5],
+        y=[1, 0.5, 0.7, -1.2, 0.3, 0.4]
+    )
 
-    graphs = [
-        dict(
-            data=[
-                dict(
-                    x=[1, 2, 3],
-                    y=[10, 20, 30],
-                    type='scatter'
-                ),
-            ],
-            layout=dict(
-                title='first graph'
-            )
-        ),
-
-        dict(
-            data=[
-                dict(
-                    x=[1, 3, 5],
-                    y=[10, 50, 30],
-                    type='bar'
-                ),
-            ],
-            layout=dict(
-                title='second graph'
-            )
-        ),
-
-        dict(
-            data=[
-                dict(
-                    x=ts.index,  # Can use the pandas data structures directly
-                    y=ts
-                )
-            ]
-        )
-    ]
-
-    # Add "ids" to each of the graphs to pass up to the client
-    # for templating
-    ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
-
-    # Convert the figures to JSON
-    # PlotlyJSONEncoder appropriately converts pandas, datetime, etc
-    # objects to their JSON equivalents
-    graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
-
-    return jinja.render('index.html', request,
-                           ids=ids,
-                           graphJSON=graphJSON)
+    data = [trace1, trace2]
+    return html(plotly.offline.plot(data, auto_open=False, output_type='div'))
 
 
 if __name__ == '__main__':

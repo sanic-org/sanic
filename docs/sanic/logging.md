@@ -76,13 +76,6 @@ By default, log_config parameter is set to use sanic.config.LOGGING dictionary f
   (Notice that in Docker you have to enable everything by yourself)
 
 
-- accessTimedRotatingFile (using [logging.handlers.TimedRotatingFileHandler](https://docs.python.org/3/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler))<br>
-  For requests information logging to file with daily rotation support.
-
-
-- errorTimedRotatingFile (using [logging.handlers.TimedRotatingFileHandler](https://docs.python.org/3/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler))<br>
-  For error message and traceback logging to file with daily rotation support.
-
 And `filters`:
 
 - accessFilter (using sanic.log.DefaultFilter)<br>

@@ -128,7 +128,7 @@ class Sanic:
             # attach middleware to specific handler
             if middleware:
                 for r in ('request', 'response'):
-                    mid = middleware[r]
+                    mid = middleware.setdefault(r, None)
                     if mid:
                         if callable(mid):
                             vars(handler)["_"+r+"_middleware"] = mid,
@@ -139,6 +139,8 @@ class Sanic:
                                 "Middleware mounted on a handler should " 
                                 "be a function or a sequence of functions"
                             )
+                    else:
+                        vars(handler)["_"+r+"_middleware"] = ()
 
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes)

@@ -175,5 +175,6 @@ class ContentRangeError(SanicException):
 class InvalidRangeType(ContentRangeError):
     pass
 
+
 class MiddlewareTypeError(Exception):
     pass

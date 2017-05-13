@@ -201,7 +201,7 @@ class HttpProtocol(asyncio.Protocol):
                 netlog.info('', extra={
                     'status': response.status,
                     'byte': len(response.body),
-                    'host': '%s:%d' % self.request.ip,
+                    'host': '%s:%d' % (self.request.ip[0], self.request.ip[1]),
                     'request': '%s %s' % (self.request.method,
                                           self.request.url)
                 })

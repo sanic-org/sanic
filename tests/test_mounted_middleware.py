@@ -181,3 +181,4 @@ def test_exception():
             return text("BAD")
     except MiddlewareTypeError as ex:
         assert str(ex) == "Middleware mounted on a handler should be a function or a sequence of functions"
+

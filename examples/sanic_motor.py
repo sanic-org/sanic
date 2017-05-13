@@ -5,7 +5,7 @@ motor==1.1
 sanic==0.2.0
 """
 from sanic import Sanic
-from sanic import response
+from sanic.response import json
 
 
 app = Sanic('motor_mongodb')
@@ -25,7 +25,7 @@ async def get(request):
     for doc in docs:
         doc['id'] = str(doc['_id'])
         del doc['_id']
-    return response.json(docs)
+    return json(docs)
 
 
 @app.route('/post', methods=['POST'])
@@ -34,8 +34,8 @@ async def new(request):
     print(doc)
     db = get_db()
     object_id = await db.test_col.save(doc)
-    return response.json({'object_id': str(object_id)})
+    return json({'object_id': str(object_id)})
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='127.0.0.1', port=8000)

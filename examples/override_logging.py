@@ -1,5 +1,5 @@
 from sanic import Sanic
-from sanic import response
+from sanic.response import text
 import logging
 
 logging_format = "[%(asctime)s] %(process)d-%(levelname)s "
@@ -14,9 +14,12 @@ log = logging.getLogger()
 
 # Set logger to override default basicConfig
 sanic = Sanic()
+
+
 @sanic.route("/")
 def test(request):
     log.info("received request; responding with 'hey'")
-    return response.text("hey")
+    return text("hey")
 
-sanic.run(host="0.0.0.0", port=8000)
+
+sanic.run(host="127.0.0.1", port=8000)

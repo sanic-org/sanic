@@ -1,6 +1,6 @@
 import asyncio
 from sanic import Sanic
-from sanic import response
+from sanic.response import text
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout
 
@@ -11,11 +11,12 @@ app = Sanic(__name__)
 @app.route('/')
 async def test(request):
     await asyncio.sleep(3)
-    return response.text('Hello, world!')
+    return text('Hello, world!')
 
 
 @app.exception(RequestTimeout)
 def timeout(request, exception):
-    return response.text('RequestTimeout from error_handler.', 408)
+    return text('RequestTimeout from error_handler.', 408)
 
-app.run(host='0.0.0.0', port=8000)
+
+app.run(host='127.0.0.1', port=8000)

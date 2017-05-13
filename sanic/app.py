@@ -483,10 +483,10 @@ class Sanic:
                     mounted_request_middleware = handler._request_middleware
                     if mounted_request_middleware:
                         response = \
-                        await self._handle_mounted_request_middleware(
-                            mounted_request_middleware, request,
-                            *args, **kwargs
-                        )
+                            await self._handle_mounted_request_middleware(
+                                mounted_request_middleware, request,
+                                *args, **kwargs
+                            )
                 # No mounted request middleware result
                 if not response:
                     # -------------------------------------------- #
@@ -502,10 +502,10 @@ class Sanic:
                     mounted_response_middleware = handler._response_middleware
                     if mounted_response_middleware:
                         response = \
-                        await self._handle_mounted_response_middleware(
-                            mounted_response_middleware, request, response,
-                            *args, **kwargs
-                        )
+                            await self._handle_mounted_response_middleware(
+                                mounted_response_middleware, request, response,
+                                *args, **kwargs
+                            )
 
         except Exception as e:
             # -------------------------------------------- #

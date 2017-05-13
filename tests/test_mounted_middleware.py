@@ -42,7 +42,7 @@ def test_early_response_from_mounted_request_middleware():
 
     request, response = app.test_client.get('/')
 
-    assert response.text == "reponse from early_request_middleware"
+    assert response.text == "response from early_request_middleware"
     assert results[0] == 1
     assert len(results) == 1
 
@@ -95,7 +95,7 @@ def test_mounted_request_middleware_parameter():
 
     request, response = app.test_client.get('/42')
 
-    assert results[0] == 42 
+    assert results[0] == str(42)
     assert response.text == "OK"
     
 
@@ -106,7 +106,7 @@ def test_mounted_response_middleware():
     results = []
 
     async def response_middleware(request, response):
-        response["response_middleware_added"] = "TEST"
+        response.response_middleware_added = "TEST"
 
     @app.route('/', middleware={"response": response_middleware})
     async def handler(request):
@@ -114,7 +114,7 @@ def test_mounted_response_middleware():
 
     request, response = app.test_client.get('/')
 
-    assert response["response_middleware_added"] == "TEST"
+    assert response.response_middleware_added == "TEST"
 
 
 def test_early_response_from_mounted_response_middleware():
@@ -149,8 +149,7 @@ def test_early_response_from_mounted_response_middleware():
     for i,v in enumerate(added):
         if i != 3:
             assert results[i] == added[i]
-        else:
-            assert results[i] != added[i]
+    assert len(results) == 3
 
 def test_mounted_response_middleware_parameter():
     app = Sanic("test_mounted_response_middleware_parameter")
@@ -166,7 +165,7 @@ def test_mounted_response_middleware_parameter():
 
     request, response = app.test_client.get('/42')
 
-    assert results[0] == 42
+    assert results[0] == str(42)
     assert response.text == "OK"
     
 

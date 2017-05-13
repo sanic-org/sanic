@@ -139,8 +139,6 @@ class Sanic:
                                 "Middleware mounted on a handler should " 
                                 "be a function or a sequence of functions"
                             )
-                    else:
-                        vars(handler)["_"+r+"_middleware"] = ()
 
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes)
@@ -480,11 +478,12 @@ class Sanic:
                          "handler from the router"))
 
                 # request middleware mounted on handler
-                mounted_request_middleware = handler._request_middleware
-                if mounted_request_middleware:
-                    response = await self._handle_mounted_request_middleware(
-                        mounted_request_middleware, request, *args, **kwargs
-                    )
+                if hasattr(handler, "_request_middleware"):
+                    mounted_request_middleware = handler._request_middleware
+                    if mounted_request_middleware:
+                        response = await self._handle_mounted_request_middleware(
+                            mounted_request_middleware, request, *args, **kwargs
+                        )
                 # No mounted request middleware result
                 if not response:
                     # -------------------------------------------- #
@@ -496,11 +495,12 @@ class Sanic:
                         response = await response
 
                 # response middleware mounted on handler
-                mounted_response_middleware = handler._response_middleware
-                if mounted_response_middleware:
-                    response = await self._handle_mounted_response_middleware(
-                        mounted_response_middleware, request, response, *args, **kwargs
-                    )
+                if hasattr(handler, "_response_middleware"):
+                    mounted_response_middleware = handler._response_middleware
+                    if mounted_response_middleware:
+                        response = await self._handle_mounted_response_middleware(
+                            mounted_response_middleware, request, response, *args, **kwargs
+                        )
 
 
         except Exception as e:

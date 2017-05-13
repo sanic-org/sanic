@@ -129,6 +129,7 @@ def test_early_response_from_mounted_response_middleware():
     async def early_response_middleware(request, response):
         results.append(added[2])
         response.headers.update({"Added": "Response Middleware"})
+        return response
     
     def not_called_response_middleware(requst, response):
         results.append(added[3])

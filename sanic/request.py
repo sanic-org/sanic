@@ -143,7 +143,7 @@ class Request(dict):
     @property
     def ip(self):
         if not hasattr(self, '_ip'):
-            self._ip = self.transport.get_extra_info('peername')
+            self._ip = self.transport.get_extra_info('peername') or (None, None)
         return self._ip
 
     @property

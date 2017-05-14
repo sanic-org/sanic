@@ -9,7 +9,11 @@ try:
 except ImportError:
     ssl = None
 
-import uvloop
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    pass
 import gunicorn.workers.base as base
 
 from sanic.server import trigger_events, serve, HttpProtocol, Signal
@@ -34,7 +38,6 @@ class GunicornWorker(base.Worker):
         # create new event_loop after fork
         asyncio.get_event_loop().close()
 
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 

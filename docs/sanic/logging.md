@@ -14,7 +14,7 @@ from sanic.config import LOGGING
 # The default logging handlers are ['accessStream', 'errorStream']
 # but we change it to use other handlers here for demo purpose
 LOGGING['loggers']['network']['handlers'] = [
-    'accessTimedRotatingFile', 'errorTimedRotationgFile']
+    'accessTimedRotatingFile', 'errorTimedRotatingFile']
 
 app = Sanic('test')
 

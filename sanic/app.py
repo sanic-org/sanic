@@ -206,7 +206,12 @@ class Sanic:
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
-                protocol = request.transport.get_protocol()
+                try:
+                    protocol = request.transport.get_protocol()
+                except AttributeError:
+                    # On Python3.5 the Transport classes in asyncio do not
+                    # have a get_protocol() method as in uvloop
+                    protocol = request.transport._protocol
                 ws = await protocol.websocket_handshake(request)
 
                 # schedule the application handler

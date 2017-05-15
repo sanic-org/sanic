@@ -1,3 +1,5 @@
+import sys
+import json
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
@@ -7,7 +9,12 @@ from urllib.parse import parse_qs, urlunparse
 try:
     from ujson import loads as json_loads
 except ImportError:
-    from json import loads as json_loads
+    if sys.version_info[:2] == (3, 5):
+        def json_loads(data):
+            # on Python 3.5 json.loads only supports str not bytes
+            return json.loads(data.decode())
+    else:
+        json_loads = json.loads
 
 from sanic.exceptions import InvalidUsage
 from sanic.log import log

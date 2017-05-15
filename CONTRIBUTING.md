@@ -33,10 +33,15 @@ So the pull request approval rules are pretty simple:
 2. All pull requests must be reviewed and approved by at least 
 one current collaborator on the project
 3. All pull requests must pass flake8 checks
-4. If you decide to remove/change anything from any common interface
+4. All pull requests must be consistent with the existing codes.
+5. If you decide to remove/change anything from any common interface
 a deprecation message should accompany it.
-5. If you implement a new feature you should have at least one unit
+6. If you implement a new feature you should have at least one unit
 test to accompany it.
+7. An example must be one of the following.  
+   Example of how to use Sanic  
+   Example of how to use Sanic extensions  
+   Example of how to use Sanic and asynchronous library  
 
 ## Documentation
 

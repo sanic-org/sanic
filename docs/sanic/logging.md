@@ -10,6 +10,7 @@ A simple example using default setting would be like this:
 ```python
 from sanic import Sanic
 from sanic.config import LOGGING
+from sanic.response import text
 
 # The default logging handlers are ['accessStream', 'errorStream']
 # but we change it to use other handlers here for demo purpose
@@ -20,7 +21,7 @@ app = Sanic('test')
 
 @app.route('/')
 async def test(request):
-    return response.text('Hello World!')
+    return text('Hello World!')
 
 if __name__ == "__main__":
   app.run(log_config=LOGGING)

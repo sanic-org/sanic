@@ -1,10 +1,24 @@
 sudo: false
 language: python
-python:
-- '3.5'
-- '3.6'
-install: pip install tox-travis
-script: tox
+cache:
+  directories:
+    - $HOME/.cache/pip
+matrix:
+  include:
+    - env: TOX_ENV=py35
+      python: 3.5
+    - env: TOX_ENV=py35-no-ext
+      python: 3.5
+    - env: TOX_ENV=py36
+      python: 3.6
+    - env: TOX_ENV=py36-no-ext
+      python: 3.6
+    - env: TOX_ENV=flake8
+      python: 3.6
+    - env: TOX_ENV=check
+      python: 3.6
+install: pip install -U tox
+script: tox -e $TOX_ENV
 deploy:
   provider: pypi
   user: channelcat

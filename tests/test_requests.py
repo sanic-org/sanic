@@ -182,6 +182,14 @@ def test_token():
 
     assert request.token == token
 
+    # no Authorization headers
+    headers = {
+        'content-type': 'application/json'
+    }
+
+    request, response = app.test_client.get('/', headers=headers)
+
+    assert request.token is None
 
 
 # ------------------------------------------------------------ #

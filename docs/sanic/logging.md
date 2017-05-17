@@ -14,7 +14,7 @@ from sanic.config import LOGGING
 # The default logging handlers are ['accessStream', 'errorStream']
 # but we change it to use other handlers here for demo purpose
 LOGGING['loggers']['network']['handlers'] = [
-    'accessTimedRotatingFile', 'errorTimedRotationgFile']
+    'accessSysLog', 'errorSysLog']
 
 app = Sanic('test')
 
@@ -25,8 +25,6 @@ async def test(request):
 if __name__ == "__main__":
   app.run(log_config=LOGGING)
 ```
-
-After the program starts, it will log down all the information/requests in access.log and error.log in your working directory.
 
 And to close logging, simply assign log_config=None:
 

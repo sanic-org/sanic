@@ -1,6 +1,8 @@
 from collections import defaultdict, namedtuple
+from types import MethodType
 
 from sanic.constants import HTTP_METHODS
+from sanic.exceptions import SanicTypeException
 from sanic.views import CompositionView
 
 FutureRoute = namedtuple('Route',
@@ -94,6 +96,10 @@ class Blueprint:
         :param methods: list of acceptable HTTP methods.
         """
         def decorator(handler):
+            if isinstance(handler, MethodType):
+                raise SanicTypeException("You can`t add a instance "
+                                         "method as a blueprint "
+                                         "router handler")
             route = FutureRoute(handler, uri, methods, host, strict_slashes)
             self.routes.append(route)
             return handler
@@ -120,6 +126,10 @@ class Blueprint:
         # handle composition view differently
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
+        if isinstance(handler, MethodType):
+            raise SanicTypeException("You can`t add a "
+                                     "instance method as a blueprint "
+                                     "router handler")
 
         self.route(uri=uri, methods=methods, host=host,
                    strict_slashes=strict_slashes)(handler)
@@ -163,7 +173,6 @@ class Blueprint:
             future_middleware = FutureMiddleware(_middleware, args, kwargs)
             self.middlewares.append(future_middleware)
             return _middleware
-
         # Detect which way this was called, @middleware or @middleware('AT')
         if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
             middleware = args[0]

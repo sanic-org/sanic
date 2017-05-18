@@ -290,7 +290,7 @@ class Sanic:
             return self.register_middleware(middleware_or_request)
 
         else:
-            return partial(Sanic.register_middleware, self,
+            return partial(self.register_middleware,
                            attach_to=middleware_or_request)
 
     # Static Files

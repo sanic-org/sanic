@@ -107,7 +107,8 @@ def register(app, uri, file_or_directory, pattern,
                     if not stats:
                         stats = await stat(file_path)
                     if stats.st_size >= threshold:
-                        return await file_stream(file_path, headers=headers, _range=_range)
+                        return await file_stream(file_path, headers=headers,
+                                                 _range=_range)
                 return await file(file_path, headers=headers, _range=_range)
         except ContentRangeError:
             raise

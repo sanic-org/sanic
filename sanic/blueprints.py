@@ -65,10 +65,11 @@ class Blueprint:
         # Middleware
         for future in self.middlewares:
             if future.args or future.kwargs:
-                app.middleware(*future.args,
-                               **future.kwargs)(future.middleware)
+                app.register_middleware(future.middleware,
+                                        *future.args,
+                                        **future.kwargs)
             else:
-                app.middleware(future.middleware)
+                app.register_middleware(future.middleware)
 
         # Exceptions
         for future in self.exceptions:

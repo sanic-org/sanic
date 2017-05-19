@@ -310,6 +310,53 @@ async def file(location, mime_type=None, headers=None, _range=None):
                         body_bytes=out_stream)
 
 
+async def file_stream(location, chunk_size=4096, mime_type=None, headers=None,
+                      _range=None):
+    """Return a streaming response object with file data.
+
+    :param location: Location of file on system.
+    :param chunk_size: The size of each chunk in the stream (in bytes)
+    :param mime_type: Specific mime_type.
+    :param headers: Custom Headers.
+    :param _range:
+    """
+    filename = path.split(location)[-1]
+
+    _file = await open_async(location, mode='rb')
+
+    async def _streaming_fn(response):
+        nonlocal _file, chunk_size
+        try:
+            if _range:
+                chunk_size = min((_range.size, chunk_size))
+                await _file.seek(_range.start)
+                to_send = _range.size
+                while to_send > 0:
+                    content = await _file.read(chunk_size)
+                    if len(content) < 1:
+                        break
+                    to_send -= len(content)
+                    response.write(content)
+            else:
+                while True:
+                    content = await _file.read(chunk_size)
+                    if len(content) < 1:
+                        break
+                    response.write(content)
+        finally:
+            await _file.close()
+        return  # Returning from this fn closes the stream
+
+    mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
+    if _range:
+        headers['Content-Range'] = 'bytes %s-%s/%s' % (
+            _range.start, _range.end, _range.total)
+    return StreamingHTTPResponse(streaming_fn=_streaming_fn,
+                                 status=200,
+                                 headers=headers,
+                                 content_type=mime_type)
+
+
 def stream(
         streaming_fn, status=200, headers=None,
         content_type="text/plain; charset=utf-8"):

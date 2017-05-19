@@ -60,6 +60,16 @@ async def index(request):
     return response.stream(streaming_fn, content_type='text/plain')
 ```
 
+## File Streaming
+For large files, a combination of File and Streaming above
+```python
+from sanic import response
+
+@app.route('/big_file.png')
+async def handle_request(request):
+    return await response.file_stream('/srv/www/whatever.png')
+```
+
 ## Redirect
 
 ```python

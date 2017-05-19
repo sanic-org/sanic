@@ -1,3 +1,5 @@
+from sanic.response import ALL_STATUS_CODES
+
 TRACEBACK_STYLE = '''
     <style>
         body {
@@ -117,11 +119,13 @@ INTERNAL_SERVER_ERROR_HTML = '''
 
 class SanicException(Exception):
 
-    def __init__(self, message, status_code=None):
-        super().__init__(message)
-
+    def __init__(self, message=None, status_code=None):
         if status_code is not None:
             self.status_code = status_code
+            if message is None:
+                message = ALL_STATUS_CODES.get(status_code)
+
+        super().__init__(message)
 
 
 class NotFound(SanicException):

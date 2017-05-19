@@ -54,7 +54,7 @@ In order to run Sanic application with Gunicorn, you need to use the special `sa
 for Gunicorn `worker-class` argument:
 
 ```
-gunicorn --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker
+gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker
 ```
 
 ## Asynchronous support

@@ -343,8 +343,6 @@ async def file_stream(location, chunk_size=4096, mime_type=None, headers=None,
                     if len(content) < 1:
                         break
                     response.write(content)
-        except Exception as e:
-            print(e)
         finally:
             await _file.close()
         return  # Returning from this fn closes the stream

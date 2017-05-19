@@ -17,6 +17,19 @@ def i_am_ready_to_die(request):
 	raise ServerError("Something bad happened", status_code=500)
 ```
 
+You can also use the `abort` function with the correct status code:
+
+```python
+from sanic.exceptions import abort
+from sanic.response import text
+
+@app.route('/youshallnotpass')
+def no_no(request):
+        abort(401)
+        # this won't happen
+        text("OK")
+```
+
 ## Handling exceptions
 
 To override Sanic's default handling of an exception, the `@app.exception`

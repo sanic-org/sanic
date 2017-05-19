@@ -1,4 +1,4 @@
-from sanic.response import ALL_STATUS_CODES
+from sanic.response import ALL_STATUS_CODES, COMMON_STATUS_CODES
 
 TRACEBACK_STYLE = '''
     <style>
@@ -119,13 +119,11 @@ INTERNAL_SERVER_ERROR_HTML = '''
 
 class SanicException(Exception):
 
-    def __init__(self, message=None, status_code=None):
+    def __init__(self, message, status_code=None):
+        super().__init__(message)
+
         if status_code is not None:
             self.status_code = status_code
-            if message is None:
-                message = ALL_STATUS_CODES.get(status_code)
-
-        super().__init__(message)
 
 
 class NotFound(SanicException):
@@ -178,3 +176,30 @@ class ContentRangeError(SanicException):
 
 class InvalidRangeType(ContentRangeError):
     pass
+
+
+# Would be nice to define this at the top but the class is not defined yet
+# which is throwing an error.
+SANIC_EXCEPTIONS = {
+    400: InvalidUsage,
+    404: NotFound,
+    408: RequestTimeout,
+    413: PayloadTooLarge,
+    416: ContentRangeError,
+    500: ServerError,
+}
+
+
+def abort(status_code, message=None):
+    """
+    Raise an exception based on SanicException. Returns the HTTP response
+    message appropriate for the given status code, unless provided.
+    :param status_code: The HTTP status code to return.
+    :param message: The HTTP response body. Defaults to the messages
+    in response.py for the given status code.
+    """
+    if message is None:
+        message = COMMON_STATUS_CODES.get(status_code,
+                                          ALL_STATUS_CODES.get(status_code))
+    sanic_exception = SANIC_EXCEPTIONS.get(status_code, SanicException)
+    raise sanic_exception(message=message, status_code=status_code)

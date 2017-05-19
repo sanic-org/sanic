@@ -5,8 +5,8 @@ from sanic.response import json, text
 
 app = Sanic(__name__)
 blueprint = Blueprint('name', url_prefix='/my_blueprint')
-blueprint2 = Blueprint('name', url_prefix='/my_blueprint2')
-blueprint3 = Blueprint('name', url_prefix='/my_blueprint3')
+blueprint2 = Blueprint('name2', url_prefix='/my_blueprint2')
+blueprint3 = Blueprint('name3', url_prefix='/my_blueprint3')
 
 
 @blueprint.route('/foo')
@@ -17,6 +17,7 @@ async def foo(request):
 @blueprint2.route('/foo')
 async def foo2(request):
     return json({'msg': 'hi from blueprint2'})
+
 
 @blueprint3.websocket('/foo')
 async def foo3(request, ws):

@@ -3,7 +3,7 @@ import logging.config
 import re
 import warnings
 from asyncio import get_event_loop, ensure_future, CancelledError
-from collections import deque, defaultdict
+from collections import deque, defaultdict, Iterable
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
@@ -12,7 +12,8 @@ from ssl import create_default_context, Purpose
 
 from sanic.config import Config, LOGGING
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import ServerError, URLBuildError, SanicException
+from sanic.exceptions import ServerError, URLBuildError, SanicException,\
+     MiddlewareTypeError
 from sanic.handlers import ErrorHandler
 from sanic.log import log
 from sanic.response import HTTPResponse, StreamingHTTPResponse
@@ -110,7 +111,7 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
-              strict_slashes=False):
+              strict_slashes=False, middleware=None):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
@@ -125,6 +126,21 @@ class Sanic:
             uri = '/' + uri
 
         def response(handler):
+            # attach middleware to specific handler
+            if middleware:
+                for r in ('request', 'response'):
+                    mid = middleware.setdefault(r, None)
+                    if mid:
+                        if callable(mid):
+                            vars(handler)["_"+r+"_middleware"] = mid,
+                        elif isinstance(mid, Iterable):
+                            vars(handler)['_'+r+'_middleware'] = tuple(mid)
+                        else:
+                            raise MiddlewareTypeError(
+                                "Middleware mounted on a handler should "
+                                "be a function or a sequence of functions"
+                            )
+
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes)
             return handler
@@ -456,12 +472,9 @@ class Sanic:
 
             request.app = self
             response = await self._run_request_middleware(request)
+
             # No middleware results
             if not response:
-                # -------------------------------------------- #
-                # Execute Handler
-                # -------------------------------------------- #
-
                 # Fetch handler from router
                 handler, args, kwargs, uri = self.router.get(request)
                 request.uri_template = uri
@@ -470,10 +483,35 @@ class Sanic:
                         ("'None' was returned while requesting a "
                          "handler from the router"))
 
-                # Run response handler
-                response = handler(request, *args, **kwargs)
-                if isawaitable(response):
-                    response = await response
+                # request middleware mounted on handler
+                if hasattr(handler, "_request_middleware"):
+                    mounted_request_middleware = handler._request_middleware
+                    if mounted_request_middleware:
+                        response = \
+                            await self._handle_mounted_request_middleware(
+                                mounted_request_middleware, request,
+                                *args, **kwargs
+                            )
+                # No mounted request middleware result
+                if not response:
+                    # -------------------------------------------- #
+                    # Execute Handler
+                    # -------------------------------------------- #
+                    # Run response handler
+                    response = handler(request, *args, **kwargs)
+                    if isawaitable(response):
+                        response = await response
+
+                # response middleware mounted on handler
+                if hasattr(handler, "_response_middleware"):
+                    mounted_response_middleware = handler._response_middleware
+                    if mounted_response_middleware:
+                        response = \
+                            await self._handle_mounted_response_middleware(
+                                mounted_response_middleware, request, response,
+                                *args, **kwargs
+                            )
+
         except Exception as e:
             # -------------------------------------------- #
             # Response Generation Failed
@@ -627,6 +665,27 @@ class Sanic:
                 if _response:
                     response = _response
                     break
+        return response
+
+    async def _handle_mounted_request_middleware(self, middleware, request,
+                                                 *args, **kwargs):
+        for mid in middleware:
+            response = mid(request, *args, **kwargs)
+            if isawaitable(response):
+                response = await response
+            if response:
+                break
+        return response
+
+    async def _handle_mounted_response_middleware(self, middleware, request,
+                                                  response, *args, **kwargs):
+        for mid in middleware:
+            _response = mid(request, response, *args, **kwargs)
+            if isawaitable(_response):
+                _response = await _response
+            if _response:
+                response = _response
+                break
         return response
 
     def _helper(self, host="127.0.0.1", port=8000, debug=False,

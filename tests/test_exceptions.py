@@ -30,6 +30,11 @@ def exception_app():
     def handler_invalid(request):
         raise InvalidUsage("OK")
 
+    @app.route('/abort')
+    def handler_invalid(request):
+        abort(500)
+        raise InvalidUsage("OK")
+
     @app.route('/divide_by_zero')
     def handle_unhandled_exception(request):
         1 / 0
@@ -73,10 +78,10 @@ def test_server_error_exception(exception_app):
     assert response.status == 500
 
 
-def test_invalid_usage_exception(exception_app):
+def test_abort(exception_app):
     """Test the built-in InvalidUsage exception works"""
-    request, response = exception_app.test_client.get('/invalid')
-    assert response.status == 400
+    request, response = exception_app.test_client.get('/abort')
+    assert response.status == 500
 
 
 def test_not_found_exception(exception_app):

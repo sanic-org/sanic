@@ -117,7 +117,7 @@ INTERNAL_SERVER_ERROR_HTML = '''
 '''
 
 
-_sanic_exceptions= {}
+_sanic_exceptions = {}
 
 
 def add_status_code(code):

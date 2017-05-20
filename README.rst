@@ -86,7 +86,6 @@ Documentation
 
 TODO
 ----
- * Streamed file processing
  * http2
 
 Limitations

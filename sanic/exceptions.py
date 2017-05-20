@@ -117,16 +117,16 @@ INTERNAL_SERVER_ERROR_HTML = '''
 '''
 
 
-SANIC_EXCEPTIONS = {}
+_sanic_exceptions= {}
 
 
 def add_status_code(code):
     """
-    Decorator used for adding exceptions to SANIC_EXCEPTIONS.
+    Decorator used for adding exceptions to _sanic_exceptions.
     """
     def class_decorator(cls):
         cls.status_code = code
-        SANIC_EXCEPTIONS[code] = cls
+        _sanic_exceptions[code] = cls
         return cls
     return class_decorator
 
@@ -209,5 +209,5 @@ def abort(status_code, message=None):
     if message is None:
         message = COMMON_STATUS_CODES.get(status_code,
                                           ALL_STATUS_CODES.get(status_code))
-    sanic_exception = SANIC_EXCEPTIONS.get(status_code, SanicException)
+    sanic_exception = _sanic_exceptions.get(status_code, SanicException)
     raise sanic_exception(message=message, status_code=status_code)

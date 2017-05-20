@@ -117,6 +117,20 @@ INTERNAL_SERVER_ERROR_HTML = '''
 '''
 
 
+SANIC_EXCEPTIONS = {}
+
+
+def add_status_code(code):
+    """
+    Decorator used for adding exceptions to SANIC_EXCEPTIONS.
+    """
+    def class_decorator(cls):
+        cls.status_code = code
+        SANIC_EXCEPTIONS[code] = cls
+        return cls
+    return class_decorator
+
+
 class SanicException(Exception):
 
     def __init__(self, message, status_code=None):
@@ -126,14 +140,17 @@ class SanicException(Exception):
             self.status_code = status_code
 
 
+@add_status_code(404)
 class NotFound(SanicException):
     status_code = 404
 
 
+@add_status_code(400)
 class InvalidUsage(SanicException):
     status_code = 400
 
 
+@add_status_code(500)
 class ServerError(SanicException):
     status_code = 500
 
@@ -151,10 +168,12 @@ class FileNotFound(NotFound):
         self.relative_url = relative_url
 
 
+@add_status_code(408)
 class RequestTimeout(SanicException):
     status_code = 408
 
 
+@add_status_code(413)
 class PayloadTooLarge(SanicException):
     status_code = 413
 
@@ -163,6 +182,7 @@ class HeaderNotFound(SanicException):
     status_code = 400
 
 
+@add_status_code(416)
 class ContentRangeError(SanicException):
     status_code = 416
 
@@ -176,18 +196,6 @@ class ContentRangeError(SanicException):
 
 class InvalidRangeType(ContentRangeError):
     pass
-
-
-# Would be nice to define this at the top but the class is not defined yet
-# which is throwing an error.
-SANIC_EXCEPTIONS = {
-    400: InvalidUsage,
-    404: NotFound,
-    408: RequestTimeout,
-    413: PayloadTooLarge,
-    416: ContentRangeError,
-    500: ServerError,
-}
 
 
 def abort(status_code, message=None):

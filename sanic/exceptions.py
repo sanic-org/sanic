@@ -1,3 +1,5 @@
+from sanic.response import ALL_STATUS_CODES, COMMON_STATUS_CODES
+
 TRACEBACK_STYLE = '''
     <style>
         body {
@@ -115,6 +117,20 @@ INTERNAL_SERVER_ERROR_HTML = '''
 '''
 
 
+_sanic_exceptions = {}
+
+
+def add_status_code(code):
+    """
+    Decorator used for adding exceptions to _sanic_exceptions.
+    """
+    def class_decorator(cls):
+        cls.status_code = code
+        _sanic_exceptions[code] = cls
+        return cls
+    return class_decorator
+
+
 class SanicException(Exception):
 
     def __init__(self, message, status_code=None):
@@ -124,24 +140,27 @@ class SanicException(Exception):
             self.status_code = status_code
 
 
+@add_status_code(404)
 class NotFound(SanicException):
-    status_code = 404
+    pass
 
 
+@add_status_code(400)
 class InvalidUsage(SanicException):
-    status_code = 400
+    pass
 
 
+@add_status_code(500)
 class ServerError(SanicException):
-    status_code = 500
+    pass
 
 
-class URLBuildError(SanicException):
-    status_code = 500
+class URLBuildError(ServerError):
+    pass
 
 
 class FileNotFound(NotFound):
-    status_code = 404
+    pass
 
     def __init__(self, message, path, relative_url):
         super().__init__(message)
@@ -149,20 +168,23 @@ class FileNotFound(NotFound):
         self.relative_url = relative_url
 
 
+@add_status_code(408)
 class RequestTimeout(SanicException):
-    status_code = 408
+    pass
 
 
+@add_status_code(413)
 class PayloadTooLarge(SanicException):
-    status_code = 413
+    pass
 
 
-class HeaderNotFound(SanicException):
-    status_code = 400
+class HeaderNotFound(InvalidUsage):
+    pass
 
 
+@add_status_code(416)
 class ContentRangeError(SanicException):
-    status_code = 416
+    pass
 
     def __init__(self, message, content_range):
         super().__init__(message)
@@ -174,3 +196,20 @@ class ContentRangeError(SanicException):
 
 class InvalidRangeType(ContentRangeError):
     pass
+
+
+def abort(status_code, message=None):
+    """
+    Raise an exception based on SanicException. Returns the HTTP response
+    message appropriate for the given status code, unless provided.
+    :param status_code: The HTTP status code to return.
+    :param message: The HTTP response body. Defaults to the messages
+    in response.py for the given status code.
+    """
+    if message is None:
+        message = COMMON_STATUS_CODES.get(status_code,
+                                          ALL_STATUS_CODES.get(status_code))
+        # These are stored as bytes in the STATUS_CODES dict
+        message = message.decode('utf8')
+    sanic_exception = _sanic_exceptions.get(status_code, SanicException)
+    raise sanic_exception(message=message, status_code=status_code)

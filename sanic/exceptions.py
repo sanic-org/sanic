@@ -142,25 +142,25 @@ class SanicException(Exception):
 
 @add_status_code(404)
 class NotFound(SanicException):
-    status_code = 404
+    pass
 
 
 @add_status_code(400)
 class InvalidUsage(SanicException):
-    status_code = 400
+    pass
 
 
 @add_status_code(500)
 class ServerError(SanicException):
-    status_code = 500
+    pass
 
 
-class URLBuildError(SanicException):
-    status_code = 500
+class URLBuildError(ServerError):
+    pass
 
 
 class FileNotFound(NotFound):
-    status_code = 404
+    pass
 
     def __init__(self, message, path, relative_url):
         super().__init__(message)
@@ -170,21 +170,21 @@ class FileNotFound(NotFound):
 
 @add_status_code(408)
 class RequestTimeout(SanicException):
-    status_code = 408
+    pass
 
 
 @add_status_code(413)
 class PayloadTooLarge(SanicException):
-    status_code = 413
+    pass
 
 
-class HeaderNotFound(SanicException):
-    status_code = 400
+class HeaderNotFound(InvalidUsage):
+    pass
 
 
 @add_status_code(416)
 class ContentRangeError(SanicException):
-    status_code = 416
+    pass
 
     def __init__(self, message, content_range):
         super().__init__(message)
@@ -209,5 +209,7 @@ def abort(status_code, message=None):
     if message is None:
         message = COMMON_STATUS_CODES.get(status_code,
                                           ALL_STATUS_CODES.get(status_code))
+        # These are stored as bytes in the STATUS_CODES dict
+        message = message.decode('utf8')
     sanic_exception = _sanic_exceptions.get(status_code, SanicException)
     raise sanic_exception(message=message, status_code=status_code)

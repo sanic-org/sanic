@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 from sanic import Sanic
 from sanic.response import text
-from sanic.exceptions import InvalidUsage, ServerError, NotFound
+from sanic.exceptions import InvalidUsage, ServerError, NotFound, abort
 
 
 class SanicExceptionTestException(Exception):
@@ -33,7 +33,7 @@ def exception_app():
     @app.route('/abort')
     def handler_invalid(request):
         abort(500)
-        raise InvalidUsage("OK")
+        return text("OK")
 
     @app.route('/divide_by_zero')
     def handle_unhandled_exception(request):
@@ -65,6 +65,7 @@ def test_catch_exception_list():
     request, response = app.test_client.get('/')
     assert response.text == 'ok'
 
+
 def test_no_exception(exception_app):
     """Test that a route works without an exception"""
     request, response = exception_app.test_client.get('/')
@@ -78,10 +79,10 @@ def test_server_error_exception(exception_app):
     assert response.status == 500
 
 
-def test_abort(exception_app):
+def test_invalid_usage_exception(exception_app):
     """Test the built-in InvalidUsage exception works"""
-    request, response = exception_app.test_client.get('/abort')
-    assert response.status == 500
+    request, response = exception_app.test_client.get('/invalid')
+    assert response.status == 400
 
 
 def test_not_found_exception(exception_app):
@@ -101,6 +102,7 @@ def test_handled_unhandled_exception(exception_app):
     assert message == (
         "The server encountered an internal error and "
         "cannot complete your request.")
+
 
 def test_exception_in_exception_handler(exception_app):
     """Test that an exception thrown in an error handler is handled"""
@@ -126,3 +128,9 @@ def test_exception_in_exception_handler_debug_off(exception_app):
         debug=True)
     assert response.status == 500
     assert response.body.startswith(b'Exception raised in exception ')
+
+
+def test_abort(exception_app):
+    """Test the abort function"""
+    request, response = exception_app.test_client.get('/abort')
+    assert response.status == 500

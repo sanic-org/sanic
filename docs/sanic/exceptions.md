@@ -17,7 +17,7 @@ def i_am_ready_to_die(request):
 	raise ServerError("Something bad happened", status_code=500)
 ```
 
-You can also use the `abort` function with the correct status code:
+You can also use the `abort` function with the appropriate status code:
 
 ```python
 from sanic.exceptions import abort

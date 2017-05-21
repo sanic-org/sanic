@@ -277,24 +277,25 @@ class Sanic:
 
         return response
 
+    def register_middleware(self, middleware, attach_to='request'):
+        if attach_to == 'request':
+            self.request_middleware.append(middleware)
+        if attach_to == 'response':
+            self.response_middleware.appendleft(middleware)
+        return middleware
+
     # Decorator
     def middleware(self, middleware_or_request):
         """Decorate and register middleware to be called before a request.
         Can either be called as @app.middleware or @app.middleware('request')
         """
-        def register_middleware(middleware, attach_to='request'):
-            if attach_to == 'request':
-                self.request_middleware.append(middleware)
-            if attach_to == 'response':
-                self.response_middleware.appendleft(middleware)
-            return middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')
         if callable(middleware_or_request):
-            return register_middleware(middleware_or_request)
+            return self.register_middleware(middleware_or_request)
 
         else:
-            return partial(register_middleware,
+            return partial(self.register_middleware,
                            attach_to=middleware_or_request)
 
     # Static Files

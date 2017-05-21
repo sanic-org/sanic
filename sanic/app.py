@@ -521,7 +521,7 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, ssl=None,
+    def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
             log_config=LOGGING):
@@ -580,7 +580,7 @@ class Sanic:
         """gunicorn compatibility"""
         return self
 
-    async def create_server(self, host="127.0.0.1", port=8000, debug=False,
+    async def create_server(self, host=None, port=None, debug=False,
                             ssl=None, sock=None, protocol=None,
                             backlog=100, stop_event=None,
                             log_config=LOGGING):
@@ -629,11 +629,13 @@ class Sanic:
                     break
         return response
 
-    def _helper(self, host="127.0.0.1", port=8000, debug=False,
+    def _helper(self, host=None, port=None, debug=False,
                 ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
                 register_sys_signals=True, run_async=False, has_log=True):
         """Helper function used by `run` and `create_server`."""
+        if sock is None:
+            host, port = host or "127.0.0.1", port or 8000
 
         if isinstance(ssl, dict):
             # try common aliaseses

@@ -9,3 +9,4 @@ pytest
 tox
 ujson
 uvloop
+gunicorn

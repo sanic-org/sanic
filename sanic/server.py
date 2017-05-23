@@ -201,9 +201,10 @@ class HttpProtocol(asyncio.Protocol):
                 netlog.info('', extra={
                     'status': response.status,
                     'byte': len(response.body),
-                    'host': '%s:%d' % (self.request.ip[0], self.request.ip[1]),
-                    'request': '%s %s' % (self.request.method,
-                                          self.request.url)
+                    'host': '{0}:{1}'.format(self.request.ip[0],
+                                             self.request.ip[1]),
+                    'request': '{0} {1}'.format(self.request.method,
+                                                self.request.url)
                 })
         except AttributeError:
             log.error(
@@ -242,9 +243,10 @@ class HttpProtocol(asyncio.Protocol):
                 netlog.info('', extra={
                     'status': response.status,
                     'byte': -1,
-                    'host': '%s:%d' % self.request.ip,
-                    'request': '%s %s' % (self.request.method,
-                                          self.request.url)
+                    'host': '{0}:{1}'.format(self.request.ip[0],
+                                             self.request.ip[1]),
+                    'request': '{0} {1}'.format(self.request.method,
+                                                self.request.url)
                 })
         except AttributeError:
             log.error(

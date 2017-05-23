@@ -543,6 +543,9 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        if sock is None:
+            host, port = host or "127.0.0.1", port or 8000
+
         if log_config:
             logging.config.dictConfig(log_config)
         if protocol is None:
@@ -590,6 +593,9 @@ class Sanic:
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
+        if sock is None:
+            host, port = host or "127.0.0.1", port or 8000
+
         if log_config:
             logging.config.dictConfig(log_config)
         if protocol is None:
@@ -635,9 +641,6 @@ class Sanic:
                 protocol=HttpProtocol, backlog=100, stop_event=None,
                 register_sys_signals=True, run_async=False, has_log=True):
         """Helper function used by `run` and `create_server`."""
-        if sock is None:
-            host, port = host or "127.0.0.1", port or 8000
-
         if isinstance(ssl, dict):
             # try common aliaseses
             cert = ssl.get('cert') or ssl.get('certificate')

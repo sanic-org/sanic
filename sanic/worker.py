@@ -48,8 +48,6 @@ class GunicornWorker(base.Worker):
         protocol = (WebSocketProtocol if self.app.callable.websocket_enabled
                     else HttpProtocol)
         self._server_settings = self.app.callable._helper(
-            host=None,
-            port=None,
             loop=self.loop,
             debug=is_debug,
             protocol=protocol,

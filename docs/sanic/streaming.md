@@ -30,3 +30,30 @@ async def index(request):
 
     return stream(stream_from_db)
 ```
+
+## Request Streaming
+
+Sanic allows you to get request data by stream, as below. It is necessary to set `is_request_stream` to True. When the request ends, `request.stream.get()` returns `None`. It is not able to use common request and request stream in same application.
+
+```
+from sanic import Sanic
+from sanic.response import stream
+
+app = Sanic(__name__, is_request_stream=True)
+
+
+@app.post('/stream')
+async def handler(request):
+    async def sample_streaming_fn(response):
+        while True:
+            body = await request.stream.get()
+            if body is None:
+                break
+            body = body.decode('utf-8').replace('1', 'A')
+            response.write(body)
+    return stream(sample_streaming_fn)
+
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8000)
+```

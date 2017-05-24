@@ -13,11 +13,12 @@ from sanic.exceptions import (
     InvalidUsage,
 )
 from sanic.handlers import ContentRangeHandler
-from sanic.response import file, HTTPResponse
+from sanic.response import file, file_stream, HTTPResponse
 
 
 def register(app, uri, file_or_directory, pattern,
-             use_modified_since, use_content_range):
+             use_modified_since, use_content_range,
+             stream_large_files):
     # TODO: Though sanic is not a file server, I feel like we should at least
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching
@@ -34,6 +35,10 @@ def register(app, uri, file_or_directory, pattern,
                                server's
     :param use_content_range: If true, process header for range requests
                               and sends the file part that is requested
+    :param stream_large_files: If true, use the file_stream() handler rather
+                              than the file() handler to send the file
+                              If this is an integer, this represents the
+                              threshold size to switch to file_stream()
     """
     # If we're not trying to match a file directly,
     # serve from the folder
@@ -93,6 +98,17 @@ def register(app, uri, file_or_directory, pattern,
                     headers=headers,
                     content_type=guess_type(file_path)[0] or 'text/plain')
             else:
+                if stream_large_files:
+                    if isinstance(stream_large_files, int):
+                        threshold = stream_large_files
+                    else:
+                        threshold = 1024*1000
+
+                    if not stats:
+                        stats = await stat(file_path)
+                    if stats.st_size >= threshold:
+                        return await file_stream(file_path, headers=headers,
+                                                 _range=_range)
                 return await file(file_path, headers=headers, _range=_range)
         except ContentRangeError:
             raise

@@ -60,6 +60,7 @@ class Sanic:
         self.sock = None
         self.listeners = defaultdict(list)
         self.is_running = False
+        self.is_request_stream = False
         self.websocket_enabled = False
         self.websocket_tasks = []
 
@@ -110,12 +111,14 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
-              strict_slashes=False):
+              strict_slashes=False, stream=False):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
         :param host:
+        :param strict_slashes:
+        :param stream:
         :return: decorated function
         """
 
@@ -124,7 +127,12 @@ class Sanic:
         if not uri.startswith('/'):
             uri = '/' + uri
 
+        if stream:
+            self.is_request_stream = True
+
         def response(handler):
+            if stream:
+                handler.is_stream = stream
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes)
             return handler
@@ -136,13 +144,13 @@ class Sanic:
         return self.route(uri, methods=frozenset({"GET"}), host=host,
                           strict_slashes=strict_slashes)
 
-    def post(self, uri, host=None, strict_slashes=False):
+    def post(self, uri, host=None, strict_slashes=False, stream=False):
         return self.route(uri, methods=frozenset({"POST"}), host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, stream=stream)
 
-    def put(self, uri, host=None, strict_slashes=False):
+    def put(self, uri, host=None, strict_slashes=False, stream=False):
         return self.route(uri, methods=frozenset({"PUT"}), host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, stream=stream)
 
     def head(self, uri, host=None, strict_slashes=False):
         return self.route(uri, methods=frozenset({"HEAD"}), host=host,
@@ -152,9 +160,9 @@ class Sanic:
         return self.route(uri, methods=frozenset({"OPTIONS"}), host=host,
                           strict_slashes=strict_slashes)
 
-    def patch(self, uri, host=None, strict_slashes=False):
+    def patch(self, uri, host=None, strict_slashes=False, stream=False):
         return self.route(uri, methods=frozenset({"PATCH"}), host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, stream=stream)
 
     def delete(self, uri, host=None, strict_slashes=False):
         return self.route(uri, methods=frozenset({"DELETE"}), host=host,
@@ -173,20 +181,28 @@ class Sanic:
         :param host:
         :return: function or class instance
         """
+        stream = False
         # Handle HTTPMethodView differently
         if hasattr(handler, 'view_class'):
             methods = set()
 
             for method in HTTP_METHODS:
-                if getattr(handler.view_class, method.lower(), None):
+                _handler = getattr(handler.view_class, method.lower(), None)
+                if _handler:
                     methods.add(method)
+                    if hasattr(_handler, 'is_stream'):
+                        stream = True
 
         # handle composition view differently
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
+            for _handler in handler.handlers.values():
+                if hasattr(_handler, 'is_stream'):
+                    stream = True
+                    break
 
         self.route(uri=uri, methods=methods, host=host,
-                   strict_slashes=strict_slashes)(handler)
+                   strict_slashes=strict_slashes, stream=stream)(handler)
         return handler
 
     # Decorator
@@ -664,6 +680,8 @@ class Sanic:
         server_settings = {
             'protocol': protocol,
             'request_class': self.request_class,
+            'is_request_stream': self.is_request_stream,
+            'router': self.router,
             'host': host,
             'port': port,
             'sock': sock,

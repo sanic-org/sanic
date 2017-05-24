@@ -28,11 +28,15 @@ def test_route_strict_slash():
 
     @app.get('/get', strict_slashes=True)
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @app.post('/post/', strict_slashes=True)
     def handler(request):
+        assert request.stream is None
         return text('OK')
+
+    assert app.is_request_stream is False
 
     request, response = app.test_client.get('/get')
     assert response.text == 'OK'
@@ -77,7 +81,10 @@ def test_shorthand_routes_put():
 
     @app.put('/put')
     def handler(request):
+        assert request.stream is None
         return text('OK')
+
+    assert app.is_request_stream is False
 
     request, response = app.test_client.put('/put')
     assert response.text == 'OK'
@@ -85,12 +92,31 @@ def test_shorthand_routes_put():
     request, response = app.test_client.get('/put')
     assert response.status == 405
 
+def test_shorthand_routes_delete():
+    app = Sanic('test_shorhand_routes_delete')
+
+    @app.delete('/delete')
+    def handler(request):
+        assert request.stream is None
+        return text('OK')
+
+    assert app.is_request_stream is False
+
+    request, response = app.test_client.delete('/delete')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.get('/delete')
+    assert response.status == 405
+
 def test_shorthand_routes_patch():
     app = Sanic('test_shorhand_routes_patch')
 
     @app.patch('/patch')
     def handler(request):
+        assert request.stream is None
         return text('OK')
+
+    assert app.is_request_stream is False
 
     request, response = app.test_client.patch('/patch')
     assert response.text == 'OK'
@@ -103,7 +129,10 @@ def test_shorthand_routes_head():
 
     @app.head('/head')
     def handler(request):
+        assert request.stream is None
         return text('OK')
+
+    assert app.is_request_stream is False
 
     request, response = app.test_client.head('/head')
     assert response.status == 200
@@ -116,7 +145,10 @@ def test_shorthand_routes_options():
 
     @app.options('/options')
     def handler(request):
+        assert request.stream is None
         return text('OK')
+
+    assert app.is_request_stream is False
 
     request, response = app.test_client.options('/options')
     assert response.status == 200

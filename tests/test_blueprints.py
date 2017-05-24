@@ -21,6 +21,7 @@ def test_bp():
 
     app.blueprint(bp)
     request, response = app.test_client.get('/')
+    assert app.is_request_stream is False
 
     assert response.text == 'Hello'
 
@@ -268,37 +269,47 @@ def test_bp_shorthand():
 
     @blueprint.get('/get')
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @blueprint.put('/put')
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @blueprint.post('/post')
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @blueprint.head('/head')
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @blueprint.options('/options')
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @blueprint.patch('/patch')
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @blueprint.delete('/delete')
     def handler(request):
+        assert request.stream is None
         return text('OK')
 
     @blueprint.websocket('/ws')
     async def handler(request, ws):
+        assert request.stream is None
         ev.set()
 
     app.blueprint(blueprint)
+
+    assert app.is_request_stream is False
 
     request, response = app.test_client.get('/get')
     assert response.text == 'OK'

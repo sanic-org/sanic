@@ -16,6 +16,7 @@ def test_methods(method):
     class DummyView(HTTPMethodView):
 
         async def get(self, request):
+            assert request.stream is None
             return text('', headers={'method': 'GET'})
 
         def post(self, request):
@@ -37,6 +38,7 @@ def test_methods(method):
             return text('', headers={'method': 'DELETE'})
 
     app.add_route(DummyView.as_view(), '/')
+    assert app.is_request_stream is False
 
     request, response = getattr(app.test_client, method.lower())('/')
     assert response.headers['method'] == method
@@ -79,6 +81,7 @@ def test_with_bp():
     class DummyView(HTTPMethodView):
 
         def get(self, request):
+            assert request.stream is None
             return text('I am get method')
 
     bp.add_route(DummyView.as_view(), '/')
@@ -86,6 +89,7 @@ def test_with_bp():
     app.blueprint(bp)
     request, response = app.test_client.get('/')
 
+    assert app.is_request_stream is False
     assert response.text == 'I am get method'
 
 
@@ -227,10 +231,15 @@ def test_composition_view_runs_methods_as_expected(method):
     app = Sanic('test_composition_view')
 
     view = CompositionView()
-    view.add(['GET', 'POST', 'PUT'], lambda x: text('first method'))
+
+    def first(request):
+        assert request.stream is None
+        return text('first method')
+    view.add(['GET', 'POST', 'PUT'], first)
     view.add(['DELETE', 'PATCH'], lambda x: text('second method'))
 
     app.add_route(view, '/')
+    assert app.is_request_stream is False
 
     if method in ['GET', 'POST', 'PUT']:
         request, response = getattr(app.test_client, method.lower())('/')

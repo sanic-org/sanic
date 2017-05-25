@@ -52,7 +52,7 @@ You could use a class or any other object as well.
 
 ### From a File
 
-Usually you will want to load configuration from a file that is not part of the distributed application. You can load configuration from a file using `from_file(/path/to/config_file)`. However, that requires the program to know the path to the config file. So instead you can specify the location of the config file in an environment variable and tell Sanic to use that to find the config file:
+Usually you will want to load configuration from a file that is not part of the distributed application. You can load configuration from a file using `from_pyfile(/path/to/config_file)`. However, that requires the program to know the path to the config file. So instead you can specify the location of the config file in an environment variable and tell Sanic to use that to find the config file:
 
 ```
 app = Sanic('myapp')

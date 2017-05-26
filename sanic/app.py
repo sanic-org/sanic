@@ -696,7 +696,9 @@ class Sanic:
             'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog,
-            'has_log': has_log
+            'has_log': has_log,
+            'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
+            'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE
         }
 
         # -------------------------------------------- #

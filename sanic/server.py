@@ -74,7 +74,8 @@ class HttpProtocol(asyncio.Protocol):
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
                  request_max_size=None, request_class=None, has_log=True,
-                 keep_alive=True, is_request_stream=False, router=None):
+                 keep_alive=True, is_request_stream=False, router=None,
+                 **kwargs):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -387,7 +388,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
           signal=Signal(), request_class=None, has_log=True, keep_alive=True,
-          is_request_stream=False, router=None):
+          is_request_stream=False, router=None, websocket_max_size=None,
+          websocket_max_queue=None):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -442,6 +444,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         keep_alive=keep_alive,
         is_request_stream=is_request_stream,
         router=router,
+        websocket_max_size=websocket_max_size,
+        websocket_max_queue=websocket_max_queue
     )
 
     server_coroutine = loop.create_server(

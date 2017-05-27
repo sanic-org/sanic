@@ -164,6 +164,8 @@ class HttpProtocol(asyncio.Protocol):
         self.url = url
 
     def on_header(self, name, value):
+        print(f'header "{name}": "{value}"')
+
         if name == b'Content-Length' and int(value) > self.request_max_size:
             exception = PayloadTooLarge('Payload Too Large')
             self.write_error(exception)

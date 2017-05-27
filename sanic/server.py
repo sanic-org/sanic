@@ -165,7 +165,7 @@ class HttpProtocol(asyncio.Protocol):
         self.url = url
 
     def on_header(self, name, value):
-        log.debug('on_header', name, value)
+        log.debug('on_header: %s %s', name, value)
 
         self._header_fragment += name
 
@@ -176,7 +176,7 @@ class HttpProtocol(asyncio.Protocol):
 
             self.headers.append((self._header_fragment.decode().casefold(), value.decode()))
 
-            log.debug('added header', self._header_fragment, value)
+            log.debug('added header: %s %s', self._header_fragment, value)
 
             self._header_fragment = b''
 

@@ -98,6 +98,7 @@ class HttpProtocol(asyncio.Protocol):
         self._request_handler_task = None
         self._request_stream_task = None
         self._keep_alive = keep_alive
+        self._header_fragment = b''
 
     @property
     def keep_alive(self):
@@ -164,14 +165,20 @@ class HttpProtocol(asyncio.Protocol):
         self.url = url
 
     def on_header(self, name, value):
-        print(f'header "{name}": "{value}"')
+        log.debug('on_header', name, value)
 
-        if name and value:
-            if name == b'Content-Length' and int(value) > self.request_max_size:
+        self._header_fragment += name
+
+        if value is not None:
+            if self._header_fragment == b'Content-Length' and int(value) > self.request_max_size:
                 exception = PayloadTooLarge('Payload Too Large')
                 self.write_error(exception)
 
-            self.headers.append((name.decode().casefold(), value.decode()))
+            self.headers.append((self._header_fragment.decode().casefold(), value.decode()))
+
+            log.debug('added header', self._header_fragment, value)
+
+            self._header_fragment = b''
 
     def on_headers_complete(self):
         self.request = self.request_class(

@@ -168,11 +168,14 @@ class HttpProtocol(asyncio.Protocol):
         self._header_fragment += name
 
         if value is not None:
-            if self._header_fragment == b'Content-Length' and int(value) > self.request_max_size:
+            if self._header_fragment == b'Content-Length' \
+                    and int(value) > self.request_max_size:
                 exception = PayloadTooLarge('Payload Too Large')
                 self.write_error(exception)
 
-            self.headers.append((self._header_fragment.decode().casefold(), value.decode()))
+            self.headers.append(
+                    (self._header_fragment.decode().casefold(),
+                     value.decode()))
 
             self._header_fragment = b''
 

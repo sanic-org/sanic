@@ -16,8 +16,8 @@ app = Sanic(name=__name__)
 def orm_configure(sanic, loop):
     db_config = {'database': 'sanic_example',
                  'host': 'localhost',
-                 'user': 'sanicdbuser',
-                 'password': 'sanicDbPass',
+                 'user': 'ormdbuser',
+                 'password': 'ormDbPass',
                  }
 
     # configure_orm needs a dictionary with:
@@ -37,6 +37,15 @@ def orm_configure(sanic, loop):
 # for all the 404 lets handle the exceptions
 @app.exception(NotFound)
 def ignore_404s(request, exception):
+    return json({'method': request.method,
+                 'status': exception.status_code,
+                 'error': exception.args[0],
+                 'results': None,
+                 })
+
+
+@app.exception(URLBuildError)
+def ignore_urlbuilderrors(request, exception):
     return json({'method': request.method,
                  'status': exception.status_code,
                  'error': exception.args[0],
@@ -79,6 +88,7 @@ class BooksView(HTTPMethodView):
                      'status': 201,
                      'results': BookSerializer.serialize(book),
                      })
+
 
 class BookView(HTTPMethodView):
     async def get_object(self, request, book_id):
@@ -136,4 +146,4 @@ app.add_route(BooksView.as_view(), '/books/')
 app.add_route(BookView.as_view(), '/books/<book_id:int>/')
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=9000, debug=True)

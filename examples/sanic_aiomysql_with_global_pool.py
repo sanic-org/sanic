@@ -46,15 +46,13 @@ async def get_pool(app, loop):
 
 @app.route("/")
 async def test():
-    result = []
     data = {}
     async with app.pool['aiomysql'].acquire() as conn:
-        async with conn.cursor() as cur:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("SELECT question, pub_date FROM sanic_polls")
-            async for row in cur:
-                result.append({"question": row[0], "pub_date": row[1]})
+            result = await cur.fetchall()
     if result or len(result) > 0:
-        data['data'] = res
+        data['data'] = result
     return json(data)
 
 

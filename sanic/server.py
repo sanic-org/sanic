@@ -162,7 +162,10 @@ class HttpProtocol(asyncio.Protocol):
             self.write_error(exception)
 
     def on_url(self, url):
-        self.url = url
+        if not self.url:
+            self.url = url
+        else:
+            self.url += url
 
     def on_header(self, name, value):
         self._header_fragment += name

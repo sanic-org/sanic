@@ -1,4 +1,4 @@
-from asyncorm.model import ModelSerializer, SerializerMethod
+from asyncorm.serializers import ModelSerializer, SerializerMethod
 from library.models import Book
 
 

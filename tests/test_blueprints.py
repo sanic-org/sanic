@@ -360,3 +360,21 @@ def test_bp_shorthand():
         'Sec-WebSocket-Version': '13'})
     assert response.status == 101
     assert ev.is_set()
+
+
+def test_blueprint_handler_is_instance_method():
+
+    blueprint = Blueprint('test_blueprint_handler_is_instance_method')
+
+    class Foo():
+
+        def handler(self, request):
+            return text('OK')
+
+    foo = Foo()
+    app = Sanic('test_blueprint_handler_is_instance_method')
+    blueprint.add_route(foo.handler, '/get')
+    app.blueprint(blueprint)
+
+    request, response = app.test_client.get('/get')
+    assert response.text == 'OK'

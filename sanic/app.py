@@ -594,6 +594,13 @@ class Sanic:
             self.is_running = False
         log.info("Server Stopped")
 
+    # -------------------------------------------------------------------- #
+    # Goin' fast
+    # -------------------------------------------------------------------- #
+
+    def go_fast(self, *args, **kwargs):
+        self.run(*args, **kwargs)
+
     def stop(self):
         """This kills the Sanic"""
         get_event_loop().stop()

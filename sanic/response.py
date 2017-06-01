@@ -233,7 +233,8 @@ class HTTPResponse(BaseHTTPResponse):
         return self._cookies
 
 
-def json(body, status=200, headers=None, **kwargs):
+def json(body, status=200, headers=None,
+         content_type="application/json", **kwargs):
     """
     Returns response object with body in json format.
     :param body: Response data to be serialized.
@@ -242,7 +243,7 @@ def json(body, status=200, headers=None, **kwargs):
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
     return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
-                        status=status, content_type="application/json")
+                        status=status, content_type=content_type)
 
 
 def text(body, status=200, headers=None,

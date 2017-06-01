@@ -233,7 +233,7 @@ class HTTPResponse(BaseHTTPResponse):
         return self._cookies
 
 
-def json(body, status=200, headers=None, 
+def json(body, status=200, headers=None,
          content_type="application/json", **kwargs):
     """
     Returns response object with body in json format.

@@ -420,7 +420,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param router: Router object
     :return: Nothing
     """
-    if not run_async:
+    if not loop:
         loop = async_loop.new_event_loop()
         asyncio.set_event_loop(loop)
 

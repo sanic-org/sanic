@@ -26,6 +26,7 @@ class SanicTestClient:
                     session, method.lower())(url, *args, **kwargs) as response:
                 try:
                     response.text = await response.text()
+                    response.json = await response.json()
                 except UnicodeDecodeError as e:
                     response.text = None
                 response.body = await response.read()

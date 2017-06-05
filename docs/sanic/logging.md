@@ -1,11 +1,11 @@
 # Logging
 
 
-Sanic allows you to do different types of logging (access log, error log) on the requests based on the [python3 logging API](https://docs.python.org/3/howto/logging.html). You should have some basic knowledge on python3 logging if you want do create a new configuration.
+Sanic allows you to do different types of logging (access log, error log) on the requests based on the [python3 logging API](https://docs.python.org/3/howto/logging.html). You should have some basic knowledge on python3 logging if you want to create a new configuration.
 
-### Quck Start
+### Quick Start
 
-A simple example using default setting would be like this:
+A simple example using default settings would be like this:
 
 ```python
 from sanic import Sanic

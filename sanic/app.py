@@ -301,6 +301,25 @@ class Sanic:
         return middleware
 
     # Decorator
+    def exception_base(self, *exceptions):
+        """Decorate a function to be registered as a handler for exceptions
+
+        :param exceptions: exceptions
+        :return: decorated function
+        """
+
+        def response(handler):
+            for exception in exceptions:
+                if isinstance(exception, (tuple, list)):
+                    for e in exception:
+                        self.error_handler.add_base(e, handler)
+                else:
+                    self.error_handler.add_base(exception, handler)
+            return handler
+
+        return response
+
+    # Decorator
     def middleware(self, middleware_or_request):
         """Decorate and register middleware to be called before a request.
         Can either be called as @app.middleware or @app.middleware('request')

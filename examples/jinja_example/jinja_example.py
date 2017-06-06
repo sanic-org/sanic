@@ -2,7 +2,7 @@
 # the project
 
 from sanic import Sanic
-from sanic import response
+from sanic.response import html
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 import sys
@@ -28,7 +28,7 @@ template = template_env.get_template("example_template.html")
 async def test(request):
     rendered_template = await template.render_async(
         knights='that say nih; asynchronously')
-    return response.html(rendered_template)
+    return html(rendered_template)
 
 
-app.run(host="0.0.0.0", port=8080, debug=True)
+app.run(host="127.0.0.1", port=8080)

@@ -2,7 +2,7 @@ import os
 
 from sanic import Sanic
 from sanic.log import log
-from sanic import response
+from sanic.response import json, text, file
 from sanic.exceptions import ServerError
 
 app = Sanic(__name__)
@@ -10,32 +10,34 @@ app = Sanic(__name__)
 
 @app.route("/")
 async def test_async(request):
-    return response.json({"test": True})
+    return json({"test": True})
 
 
 @app.route("/sync", methods=['GET', 'POST'])
 def test_sync(request):
-    return response.json({"test": True})
+    return json({"test": True})
 
 
 @app.route("/dynamic/<name>/<id:int>")
 def test_params(request, name, id):
-    return response.text("yeehaww {} {}".format(name, id))
+    return text("yeehaww {} {}".format(name, id))
 
 
 @app.route("/exception")
 def exception(request):
     raise ServerError("It's dead jim")
 
+
 @app.route("/await")
 async def test_await(request):
     import asyncio
     await asyncio.sleep(5)
-    return response.text("I'm feeling sleepy")
+    return text("I'm feeling sleepy")
+
 
 @app.route("/file")
 async def test_file(request):
-    return await response.file(os.path.abspath("setup.py"))
+    return await file(os.path.abspath("setup.py"))
 
 @app.route("/file_stream")
 async def test_file_stream(request):
@@ -48,7 +50,7 @@ async def test_file_stream(request):
 
 @app.exception(ServerError)
 async def test(request, exception):
-    return response.json({"exception": "{}".format(exception), "status": exception.status_code}, status=exception.status_code)
+    return json({"exception": "{}".format(exception), "status": exception.status_code}, status=exception.status_code)
 
 
 # ----------------------------------------------- #
@@ -57,17 +59,17 @@ async def test(request, exception):
 
 @app.route("/json")
 def post_json(request):
-    return response.json({"received": True, "message": request.json})
+    return json({"received": True, "message": request.json})
 
 
 @app.route("/form")
-def post_json(request):
-    return response.json({"received": True, "form_data": request.form, "test": request.form.get('test')})
+def form(request):
+    return json({"received": True, "form_data": request.form, "test": request.form.get('test')})
 
 
 @app.route("/query_string")
 def query_string(request):
-    return response.json({"parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string})
+    return json({"parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string})
 
 
 # ----------------------------------------------- #

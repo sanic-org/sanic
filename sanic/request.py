@@ -45,7 +45,7 @@ class Request(dict):
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url', 'uri_template', 'stream'
+        '_ip', '_parsed_url', 'uri_template', 'stream', 'streamable'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -67,6 +67,7 @@ class Request(dict):
         self.uri_template = None
         self._cookies = None
         self.stream = None
+        self.streamable = True
 
     @property
     def json(self):
@@ -194,6 +195,9 @@ class Request(dict):
             None,
             self.query_string,
             None))
+
+    def cancel_stream(self):
+        self.streamable = False
 
 
 File = namedtuple('File', ['type', 'body', 'name'])

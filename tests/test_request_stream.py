@@ -6,7 +6,7 @@ from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
 from sanic.response import stream, text
 
-data = "abc" * 100000
+data = 'abc' * 100000
 
 
 def test_request_stream_method_view():
@@ -48,6 +48,21 @@ def test_request_stream_app():
     '''for self.is_request_stream = True and decorators'''
 
     app = Sanic('test_request_stream_app')
+
+    contents = []
+
+    @app.post('/cancel_stream', stream=True)
+    async def cancel_stream(request):
+        assert isinstance(request.stream, asyncio.Queue)
+        request.cancel_stream()
+        result = ''
+        while True:
+            body = await request.stream.get()
+            contents.append(body)
+            if body is None:
+                break
+            result += body.decode('utf-8')
+        return text(result)
 
     @app.get('/get')
     async def get(request):
@@ -121,6 +136,8 @@ def test_request_stream_app():
         return stream(streaming)
 
     assert app.is_request_stream is True
+
+    assert len(contents) == 0
 
     request, response = app.test_client.get('/get')
     assert response.status == 200

@@ -9,6 +9,18 @@ bp = Blueprint('blueprint_request_stream')
 app = Sanic('request_stream')
 
 
+@app.post('/cancel_stream', stream=True)
+async def cancel_stream(request):
+    request.cancel_stream()
+    result = ''
+    while True:
+        body = await request.stream.get()
+        if body is None:
+            break
+        result += body.decode('utf-8')
+    return text(result)
+
+
 class SimpleView(HTTPMethodView):
 
     @stream_decorator

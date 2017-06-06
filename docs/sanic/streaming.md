@@ -41,6 +41,18 @@ async def handler(request):
     return stream(streaming)
 
 
+@app.post('/cancel_stream', stream=True)
+async def cancel_stream(request):
+    request.cancel_stream()
+    result = ''
+    while True:
+        body = await request.stream.get()
+        if body is None:
+            break
+        result += body.decode('utf-8')
+    return text(result)
+
+
 @bp.put('/bp_stream', stream=True)
 async def bp_handler(request):
     result = ''

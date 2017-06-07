@@ -1,4 +1,5 @@
 import traceback
+from json import JSONDecodeError
 
 from sanic.log import log
 
@@ -28,6 +29,12 @@ class SanicTestClient:
                     response.text = await response.text()
                 except UnicodeDecodeError as e:
                     response.text = None
+
+                try:
+                    response.json = await response.json()
+                except (JSONDecodeError, UnicodeDecodeError):
+                    response.json = None
+
                 response.body = await response.read()
                 return response
 

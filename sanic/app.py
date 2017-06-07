@@ -2,6 +2,7 @@ import logging
 import logging.config
 import re
 import warnings
+from collections import MutableMapping
 from asyncio import get_event_loop, ensure_future, CancelledError
 from collections import deque, defaultdict
 from functools import partial
@@ -24,7 +25,7 @@ from sanic.views import CompositionView
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 
-class Sanic:
+class Sanic(MutableMapping):
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
@@ -56,6 +57,7 @@ class Sanic:
         self.response_middleware = deque()
         self.blueprints = {}
         self._blueprint_order = []
+        self._extensions = {}
         self.debug = None
         self.sock = None
         self.listeners = defaultdict(list)
@@ -78,6 +80,28 @@ class Sanic:
                 'Loop can only be retrieved after the app has started '
                 'running. Not supported with `create_server` function')
         return get_event_loop()
+
+    # -------------------------------------------------------------------- #
+    # MutableMapping
+    # -------------------------------------------------------------------- #
+
+    def __eq__(self, other_app):
+        return self is other_app
+
+    def __getitem__(self, key):
+        return self._extensions[key]
+
+    def __setitem__(self, key, value):
+        self._extensions[key] = value
+
+    def __delitem__(self, key):
+        del self._extensions[key]
+
+    def __len__(self):
+        return len(self._extensions)
+
+    def __iter__(self):
+        return iter(self._extensions)
 
     # -------------------------------------------------------------------- #
     # Registration

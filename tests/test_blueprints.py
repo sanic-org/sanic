@@ -41,6 +41,7 @@ def test_bp_strict_slash():
 
     request, response = app.test_client.get('/get')
     assert response.text == 'OK'
+    assert response.json == None
 
     request, response = app.test_client.get('/get/')
     assert response.status == 404

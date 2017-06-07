@@ -69,7 +69,7 @@ class HttpProtocol(asyncio.Protocol):
         'has_log',
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time',
-        '_is_stream_handler')
+        '_is_stream_handler', '_is_cancel_stream')
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
@@ -93,6 +93,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
         self._is_stream_handler = False
+        self._is_cancel_stream = False
         self._total_request_size = 0
         self._timeout_handler = None
         self._last_request_time = None
@@ -185,11 +186,20 @@ class HttpProtocol(asyncio.Protocol):
             if self._is_stream_handler:
                 self.request.stream = asyncio.Queue()
                 self.execute_request_handler()
+            if not self.request.streamable:
+                self._is_cancel_stream = True
+                self.transport.close()
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:
-            self._request_stream_task = self.loop.create_task(
-                self.request.stream.put(body))
+            if self.request.streamable:
+                self._request_stream_task = self.loop.create_task(
+                    self.request.stream.put(body))
+            elif self._is_cancel_stream is True:
+                return
+            else:
+                self._is_cancel_stream = True
+                self.transport.close()
             return
         self.request.body.append(body)
 
@@ -346,6 +356,7 @@ class HttpProtocol(asyncio.Protocol):
         self._request_stream_task = None
         self._total_request_size = 0
         self._is_stream_handler = False
+        self._is_cancel_stream = False
 
     def close_if_idle(self):
         """Close the connection if a request is not being sent or received

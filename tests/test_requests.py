@@ -8,7 +8,7 @@ import pytest
 from sanic import Sanic
 from sanic.exceptions import ServerError
 from sanic.response import json, text
-
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.testing import HOST, PORT
 
 
@@ -190,6 +190,23 @@ def test_token():
     request, response = app.test_client.get('/', headers=headers)
 
     assert request.token is None
+
+
+def test_content_type():
+    app = Sanic('test_content_type')
+
+    @app.route('/')
+    async def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/')
+    assert request.content_type == DEFAULT_HTTP_CONTENT_TYPE
+
+    headers = {
+        'content-type': 'application/json',
+    }
+    request, response = app.test_client.get('/', headers=headers)
+    assert request.content_type == 'application/json'
 
 
 # ------------------------------------------------------------ #

@@ -22,3 +22,4 @@ A list of Sanic extensions created by the community.
 - [sanic-graphql](https://github.com/graphql-python/sanic-graphql): GraphQL integration with Sanic
 - [sanic-prometheus](https://github.com/dkruchinin/sanic-prometheus): Prometheus metrics for Sanic
 - [Sanic-RestPlus](https://github.com/ashleysommer/sanic-restplus): A port of Flask-RestPlus for Sanic. Full-featured REST API with SwaggerUI generation.
+- [sanic-transmute](https://github.com/yunstanford/sanic-transmute): A Sanic extension that generates APIs from python function and classes, and also generates Swagger UI/documentation automatically.

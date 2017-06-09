@@ -159,6 +159,7 @@ class GunicornWorker(base.Worker):
 
     def handle_quit(self, sig, frame):
         self.alive = False
+        self.app.callable.is_running = False
         self.cfg.worker_int(self)
 
     def handle_abort(self, sig, frame):

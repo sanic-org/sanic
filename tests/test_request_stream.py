@@ -163,6 +163,30 @@ def test_request_stream_app():
     assert response.text == data
 
 
+def test_request_stream_handle_exception():
+    '''for handling exceptions properly'''
+
+    app = Sanic('test_request_stream_exception')
+
+    @app.post('/post/<id>', stream=True)
+    async def post(request, id):
+        assert isinstance(request.stream, asyncio.Queue)
+
+        async def streaming(response):
+            while True:
+                body = await request.stream.get()
+                if body is None:
+                    break
+                response.write(body.decode('utf-8'))
+        return stream(streaming)
+
+
+    # 404
+    request, response = app.test_client.post('/in_valid_post', data=data)
+    assert response.status == 404
+    assert response.text == 'Error: Requested URL /in_valid_post not found'
+
+
 def test_request_stream_blueprint():
     '''for self.is_request_stream = True'''
 

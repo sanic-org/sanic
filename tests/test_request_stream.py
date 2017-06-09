@@ -180,7 +180,6 @@ def test_request_stream_handle_exception():
                 response.write(body.decode('utf-8'))
         return stream(streaming)
 
-
     # 404
     request, response = app.test_client.post('/in_valid_post', data=data)
     assert response.status == 404

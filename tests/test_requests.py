@@ -197,16 +197,18 @@ def test_content_type():
 
     @app.route('/')
     async def handler(request):
-        return text('OK')
+        return text(request.content_type)
 
     request, response = app.test_client.get('/')
     assert request.content_type == DEFAULT_HTTP_CONTENT_TYPE
+    assert response.text == DEFAULT_HTTP_CONTENT_TYPE
 
     headers = {
         'content-type': 'application/json',
     }
     request, response = app.test_client.get('/', headers=headers)
     assert request.content_type == 'application/json'
+    assert response.text == 'application/json'
 
 
 # ------------------------------------------------------------ #

@@ -11,7 +11,7 @@ import pytest
 def gunicorn_worker():
     command = 'gunicorn --bind 127.0.0.1:1337 --worker-class sanic.worker.GunicornWorker examples.simple_server:app'
     worker = subprocess.Popen(shlex.split(command))
-    time.sleep(1)
+    time.sleep(3)
     yield
     worker.kill()
 

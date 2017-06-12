@@ -33,7 +33,9 @@ class Sanic:
             logging.config.dictConfig(log_config)
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
-        if not logging.root.handlers and log.level == logging.NOTSET:
+        if not (logging.root.handlers and
+                log.level == logging.NOTSET and
+                log_config):
             formatter = logging.Formatter(
                 "%(asctime)s: %(levelname)s: %(message)s")
             handler = logging.StreamHandler()

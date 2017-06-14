@@ -120,6 +120,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.headers = headers or {}
         self._cookies = None
 
+    async def drain():
+        await self.stream_writer.drain()
+
     def write(self, data):
         """Writes a chunk of data to the streaming response.
 

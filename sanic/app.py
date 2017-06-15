@@ -567,6 +567,7 @@ class Sanic:
             host, port = host or "127.0.0.1", port or 8000
 
         if log_config:
+            self.log_config = log_config
             logging.config.dictConfig(log_config)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
@@ -580,7 +581,7 @@ class Sanic:
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             workers=workers, protocol=protocol, backlog=backlog,
             register_sys_signals=register_sys_signals,
-            has_log=log_config is not None)
+            has_log=self.log_config is not None)
 
         try:
             self.is_running = True

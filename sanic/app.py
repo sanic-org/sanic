@@ -545,7 +545,7 @@ class Sanic:
     def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            log_config=LOGGING):
+            log_config=None):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 

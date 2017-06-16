@@ -29,7 +29,7 @@ class GunicornWorker(base.Worker):
             self.ssl_context = self._create_ssl_context(cfg)
         else:
             self.ssl_context = None
-        self.servers = []
+        self.servers = {}
         self.connections = set()
         self.exit_code = 0
         self.signal = Signal()
@@ -96,11 +96,16 @@ class GunicornWorker(base.Worker):
 
     async def _run(self):
         for sock in self.sockets:
-            self.servers.append(await serve(
+            state = dict(requests_count=0)
+            self._server_settings["host"] = None
+            self._server_settings["port"] = None
+            server = await serve(
                 sock=sock,
                 connections=self.connections,
+                state=state,
                 **self._server_settings
-            ))
+            )
+            self.servers[server] = state
 
     async def _check_alive(self):
         # If our parent changed then we shut down.
@@ -109,7 +114,12 @@ class GunicornWorker(base.Worker):
             while self.alive:
                 self.notify()
 
-                if pid == os.getpid() and self.ppid != os.getppid():
+                req_count = sum(self.servers[srv]["requests_count"] for srv in self.servers)
+
+                if self.cfg.max_requests and req_count > self.cfg.max_requests:
+                    self.alive = False
+                    self.log.info("Max requests, shutting down: %s", self)
+                elif pid == os.getpid() and self.ppid != os.getppid():
                     self.alive = False
                     self.log.info("Parent changed, shutting down: %s", self)
                 else:

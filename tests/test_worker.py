@@ -3,7 +3,11 @@ import json
 import shlex
 import subprocess
 import urllib.request
-
+from unittest import mock
+from sanic.worker import GunicornWorker
+from sanic.app import Sanic
+import asyncio
+import logging
 import pytest
 
 
@@ -22,15 +26,6 @@ def test_gunicorn_worker(gunicorn_worker):
     assert res['test']
 
 
-#########################################################
-from unittest import mock
-from sanic.worker import GunicornWorker
-from sanic.app import Sanic
-import asyncio
-import logging
-from aiohttp.test_utils import make_mocked_coro
-
-
 class GunicornTestWorker(GunicornWorker):
 
     def __init__(self):
@@ -39,6 +34,7 @@ class GunicornTestWorker(GunicornWorker):
         self.servers = {}
         self.exit_code = 0
         self.cfg = mock.Mock()
+        self.notify = mock.Mock()
 
 
 @pytest.fixture
@@ -82,3 +78,29 @@ def test_handle_quit(worker):
     assert not worker.alive
     assert worker.exit_code == 0
 
+
+def test_run_max_requests_exceeded(worker, loop):
+    worker.ppid = 1
+    worker.alive = True
+    sock = mock.Mock()
+    sock.cfg_addr = ('localhost', 8080)
+    worker.sockets = [sock]
+    worker.wsgi = mock.Mock()
+    worker.connections = set()
+    worker.log = mock.Mock()
+    worker.loop = loop
+    worker.servers = {
+        "server1": {"requests_count": 14},
+        "server2": {"requests_count": 15},
+    }
+    worker.cfg.max_requests = 10
+    worker._run = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
+
+    # exceeding request count
+    _runner = asyncio.ensure_future(worker._check_alive(), loop=loop)
+    loop.run_until_complete(_runner)
+
+    assert worker.alive == False
+    worker.notify.assert_called_with()
+    worker.log.info.assert_called_with("Max requests, shutting down: %s",
+                                       worker)

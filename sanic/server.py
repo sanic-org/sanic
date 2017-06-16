@@ -432,8 +432,6 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     if debug:
         loop.set_debug(debug)
 
-    trigger_events(before_start, loop)
-
     connections = connections if connections is not None else set()
     server = partial(
         protocol,
@@ -463,12 +461,15 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         sock=sock,
         backlog=backlog
     )
+
     # Instead of pulling time at the end of every request,
     # pull it once per minute
     loop.call_soon(partial(update_current_time, loop))
 
     if run_async:
         return server_coroutine
+
+    trigger_events(before_start, loop)
 
     try:
         http_server = loop.run_until_complete(server_coroutine)

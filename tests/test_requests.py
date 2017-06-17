@@ -211,6 +211,19 @@ def test_content_type():
     assert response.text == 'application/json'
 
 
+def test_match_info():
+    app = Sanic('test_match_info')
+
+    @app.route('/api/v1/user/<user_id>/')
+    async def handler(request, user_id):
+        return json(request.match_info)
+
+    request, response = app.test_client.get('/api/v1/user/sanic_user/')
+
+    assert request.match_info == {"user_id": "sanic_user"}
+    assert json_loads(response.text) == {"user_id": "sanic_user"}
+
+
 # ------------------------------------------------------------ #
 #  POST
 # ------------------------------------------------------------ #

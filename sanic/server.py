@@ -74,8 +74,8 @@ class HttpProtocol(asyncio.Protocol):
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
                  request_max_size=None, request_class=None, has_log=True,
-                 keep_alive=True, is_request_stream=False, router=None, state=None,
-                 **kwargs):
+                 keep_alive=True, is_request_stream=False, router=None,
+                 state=None, **kwargs):
         self.loop = loop
         self.transport = None
         self.request = None

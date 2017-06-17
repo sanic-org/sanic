@@ -114,7 +114,9 @@ class GunicornWorker(base.Worker):
             while self.alive:
                 self.notify()
 
-                req_count = sum(self.servers[srv]["requests_count"] for srv in self.servers)
+                req_count = sum(
+                    self.servers[srv]["requests_count"] for srv in self.servers
+                )
                 if self.cfg.max_requests and req_count > self.cfg.max_requests:
                     self.alive = False
                     self.log.info("Max requests, shutting down: %s", self)

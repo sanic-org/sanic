@@ -42,11 +42,6 @@ def worker():
     return GunicornTestWorker()
 
 
-@pytest.fixture
-def loop():
-    return asyncio.get_event_loop()
-
-
 def test_worker_init_process(worker):
     with mock.patch('sanic.worker.asyncio') as mock_asyncio:
         try:
@@ -79,7 +74,8 @@ def test_handle_quit(worker):
     assert worker.exit_code == 0
 
 
-def test_run_max_requests_exceeded(worker, loop):
+def test_run_max_requests_exceeded(worker):
+    loop = asyncio.new_event_loop()
     worker.ppid = 1
     worker.alive = True
     sock = mock.Mock()

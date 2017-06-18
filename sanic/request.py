@@ -179,6 +179,11 @@ class Request(dict):
         return self.headers.get('Content-Type', DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
+    def match_info(self):
+        """return matched info after resolving route"""
+        return self.app.router.get(self)[2]
+
+    @property
     def path(self):
         return self._parsed_url.path.decode('utf-8')
 

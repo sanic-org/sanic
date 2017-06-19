@@ -1,5 +1,6 @@
 import traceback
 from json import JSONDecodeError
+from aiohttp import ClientResponseError
 
 from sanic.log import log
 
@@ -32,7 +33,7 @@ class SanicTestClient:
 
                 try:
                     response.json = await response.json()
-                except (JSONDecodeError, UnicodeDecodeError):
+                except (ClientResponseError, JSONDecodeError, UnicodeDecodeError):
                     response.json = None
 
                 response.body = await response.read()

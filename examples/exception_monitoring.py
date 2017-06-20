@@ -37,7 +37,6 @@ server's error_handler to an instance of our CustomHandler
 """
 
 from sanic import Sanic
-from sanic import response
 
 app = Sanic(__name__)
 
@@ -49,8 +48,7 @@ app.error_handler = handler
 async def test(request):
     # Here, something occurs which causes an unexpected exception
     # This exception will flow to our custom handler.
-    1 / 0
-    return response.json({"test": True})
+    raise SanicException('You Broke It!')
 
-
-app.run(host="0.0.0.0", port=8000, debug=True)
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=8000, debug=True)

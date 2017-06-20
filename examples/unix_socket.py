@@ -1,10 +1,10 @@
 from sanic import Sanic
 from sanic import response
 import socket
-import sys
 import os
 
 app = Sanic(__name__)
+
 
 @app.route("/test")
 async def test(request):

@@ -7,7 +7,8 @@ app = Sanic(__name__)
 @app.route('/')
 def handle_request(request):
     return response.redirect('/redirect')
-    
+
+
 @app.route('/redirect')
 async def test(request):
     return response.json({"Redirected": True})

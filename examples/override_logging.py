@@ -14,6 +14,8 @@ log = logging.getLogger()
 
 # Set logger to override default basicConfig
 sanic = Sanic()
+
+
 @sanic.route("/")
 def test(request):
     log.info("received request; responding with 'hey'")

@@ -1,11 +1,11 @@
 from sanic import Sanic
 from sanic import response
-from multiprocessing import Event
 from signal import signal, SIGINT
 import asyncio
 import uvloop
 
 app = Sanic(__name__)
+
 
 @app.route("/")
 async def test(request):

@@ -89,7 +89,7 @@ def test_run_max_requests_exceeded(worker):
         "server1": {"requests_count": 14},
         "server2": {"requests_count": 15},
     }
-    worker.cfg.max_requests = 10
+    worker.max_requests = 10
     worker._run = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
 
     # exceeding request count
@@ -98,5 +98,5 @@ def test_run_max_requests_exceeded(worker):
 
     assert worker.alive == False
     worker.notify.assert_called_with()
-    worker.log.info.assert_called_with("Max requests, shutting down: %s",
+    worker.log.info.assert_called_with("Max requests exceeded, shutting down: %s",
                                        worker)

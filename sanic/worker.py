@@ -117,9 +117,9 @@ class GunicornWorker(base.Worker):
                 req_count = sum(
                     self.servers[srv]["requests_count"] for srv in self.servers
                 )
-                if self.cfg.max_requests and req_count > self.cfg.max_requests:
+                if self.max_requests and req_count > self.max_requests:
                     self.alive = False
-                    self.log.info("Max requests, shutting down: %s", self)
+                    self.log.info("Max requests exceeded, shutting down: %s", self)
                 elif pid == os.getpid() and self.ppid != os.getppid():
                     self.alive = False
                     self.log.info("Parent changed, shutting down: %s", self)

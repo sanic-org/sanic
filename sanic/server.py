@@ -157,6 +157,7 @@ class HttpProtocol(asyncio.Protocol):
             self.headers = []
             self.parser = HttpRequestParser(self)
 
+        # requests count
         self.state['requests_count'] = self.state['requests_count'] + 1
 
         # Parse request chunk or close connection

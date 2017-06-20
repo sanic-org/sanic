@@ -32,7 +32,7 @@ class SanicTestClient:
 
                 try:
                     response.json = await response.json()
-                except (JSONDecodeError, UnicodeDecodeError):
+                except (JSONDecodeError, UnicodeDecodeError, aiohttp.ClientResponseError):
                     response.json = None
 
                 response.body = await response.read()

@@ -194,6 +194,11 @@ class ContentRangeError(SanicException):
         }
 
 
+@add_status_code(403)
+class Forbidden(SanicException):
+    pass
+
+
 class InvalidRangeType(ContentRangeError):
     pass
 

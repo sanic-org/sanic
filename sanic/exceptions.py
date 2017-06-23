@@ -205,19 +205,19 @@ class Unauthorized(SanicException):
 
     :param scheme: Name of the authentication scheme to be used.
     :param realm: Description of the protected area. (optional)
-    :param others: A dict containing values to add to the WWW-Authenticate
+    :param challenge: A dict containing values to add to the WWW-Authenticate
     header that is generated. This is especially useful when dealing with the
     Digest scheme. (optional)
     """
     pass
 
-    def __init__(self, message, scheme, realm="", others=None):
+    def __init__(self, message, scheme, realm="", challenge=None):
         super().__init__(message)
 
         adds = ""
 
-        if others is not None:
-            values = ["{!s}={!r}".format(k, v) for k, v in others.items()]
+        if challenge is not None:
+            values = ["{!s}={!r}".format(k, v) for k, v in challenge.items()]
             adds = ', '.join(values)
             adds = ', {}'.format(adds)
 

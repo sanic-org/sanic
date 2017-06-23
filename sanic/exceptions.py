@@ -198,6 +198,34 @@ class InvalidRangeType(ContentRangeError):
     pass
 
 
+@add_status_code(401)
+class Unauthorized(SanicException):
+    """
+    Unauthorized exception (401 HTTP status code).
+
+    :param scheme: Name of the authentication scheme to be used.
+    :param realm: Description of the protected area. (optional)
+    :param challenge: A dict containing values to add to the WWW-Authenticate
+    header that is generated. This is especially useful when dealing with the
+    Digest scheme. (optional)
+    """
+    pass
+
+    def __init__(self, message, scheme, realm="", challenge=None):
+        super().__init__(message)
+
+        adds = ""
+
+        if challenge is not None:
+            values = ["{!s}={!r}".format(k, v) for k, v in challenge.items()]
+            adds = ', '.join(values)
+            adds = ', {}'.format(adds)
+
+        self.headers = {
+            "WWW-Authenticate": "{} realm='{}'{}".format(scheme, realm, adds)
+        }
+
+
 def abort(status_code, message=None):
     """
     Raise an exception based on SanicException. Returns the HTTP response

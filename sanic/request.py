@@ -86,11 +86,15 @@ class Request(dict):
 
         :return: token related to request
         """
+        prefixes = ('Token ', 'Bearer ')
         auth_header = self.headers.get('Authorization')
-        if auth_header is not None and 'Token ' in auth_header:
-            return auth_header.partition('Token ')[-1]
-        else:
-            return auth_header
+
+        if auth_header is not None:
+            for prefix in prefixes:
+                if prefix in auth_header:
+                    return auth_header.partition(prefix)[-1]
+
+        return auth_header
 
     @property
     def form(self):

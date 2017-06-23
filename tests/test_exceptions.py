@@ -119,11 +119,12 @@ def test_unauthorized_exception(exception_app):
     assert response.status == 401
     
     auth_header = response.headers.get('WWW-Authenticate')
-    expected = ("Digest realm='Sanic', qop='auth, auth-int', algorithm='MD5', "
-                "nonce='abcdef', opaque='zyxwvu'")
-    
     assert auth_header is not None
-    assert auth_header == expected
+    assert auth_header.startswith('Digest')
+    assert "qop='auth, auth-int'" in auth_header
+    assert "algorithm='MD5'" in auth_header
+    assert "nonce='abcdef'" in auth_header
+    assert "opaque='zyxwvu'" in auth_header
 
 
 def test_handled_unhandled_exception(exception_app):

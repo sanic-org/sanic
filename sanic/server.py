@@ -403,7 +403,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           register_sys_signals=True, run_async=False, connections=None,
           signal=Signal(), request_class=None, has_log=True, keep_alive=True,
           is_request_stream=False, router=None, websocket_max_size=None,
-          websocket_max_queue=None, state=None, graceful_shutdown_timeout=15.0):
+          websocket_max_queue=None, state=None,
+          graceful_shutdown_timeout=15.0):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on

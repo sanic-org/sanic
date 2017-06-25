@@ -94,7 +94,8 @@ class GunicornWorker(base.Worker):
             # gracefully shutdown timeout
             start_shutdown = 0
             graceful_shutdown_timeout = self.cfg.graceful_timeout
-            while self.connections and (start_shutdown < graceful_shutdown_timeout):
+            while self.connections and \
+                    (start_shutdown < graceful_shutdown_timeout):
                 await asyncio.sleep(0.1)
                 start_shutdown = start_shutdown + 0.1
 
@@ -108,7 +109,6 @@ class GunicornWorker(base.Worker):
                     conn.close()
             _shutdown = asyncio.gather(*coros, loop=self.loop)
             await _shutdown
-
 
     async def _run(self):
         for sock in self.sockets:

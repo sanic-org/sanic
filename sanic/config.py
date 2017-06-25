@@ -127,7 +127,7 @@ class Config(dict):
         self.KEEP_ALIVE = keep_alive
         self.WEBSOCKET_MAX_SIZE = 2 ** 20  # 1 megabytes
         self.WEBSOCKET_MAX_QUEUE = 32
-        self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0 # 15 sec
+        self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
 
         if load_env:
             self.load_environment_vars()

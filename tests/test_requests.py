@@ -181,6 +181,16 @@ def test_token():
     request, response = app.test_client.get('/', headers=headers)
 
     assert request.token == token
+    
+    token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Bearer {}'.format(token)
+    }
+
+    request, response = app.test_client.get('/', headers=headers)
+
+    assert request.token == token
 
     # no Authorization headers
     headers = {
@@ -209,6 +219,19 @@ def test_content_type():
     request, response = app.test_client.get('/', headers=headers)
     assert request.content_type == 'application/json'
     assert response.text == 'application/json'
+
+
+def test_match_info():
+    app = Sanic('test_match_info')
+
+    @app.route('/api/v1/user/<user_id>/')
+    async def handler(request, user_id):
+        return json(request.match_info)
+
+    request, response = app.test_client.get('/api/v1/user/sanic_user/')
+
+    assert request.match_info == {"user_id": "sanic_user"}
+    assert json_loads(response.text) == {"user_id": "sanic_user"}
 
 
 # ------------------------------------------------------------ #

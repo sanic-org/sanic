@@ -1,6 +1,6 @@
 from sanic import Sanic
 from sanic import Blueprint
-from sanic.response import json, text
+from sanic.response import json
 
 
 app = Sanic(__name__)

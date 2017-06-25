@@ -102,7 +102,8 @@ def test_run_max_requests_exceeded(worker):
                                        worker)
 
 def test_worker_close(worker):
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.sleep = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
     worker.ppid = 1
     worker.pid = 2
     worker.cfg.graceful_timeout = 1.0

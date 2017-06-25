@@ -363,6 +363,14 @@ class HttpProtocol(asyncio.Protocol):
             return True
         return False
 
+    def close(self):
+        """
+        Force close the connection.
+        """
+        if self.transport is not None:
+            self.transport.close()
+            self.transport = None
+
 
 def update_current_time(loop):
     """Cache the current time, since it is needed at the end of every

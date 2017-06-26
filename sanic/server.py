@@ -75,7 +75,7 @@ class HttpProtocol(asyncio.Protocol):
                  signal=Signal(), connections=set(), request_timeout=60,
                  request_max_size=None, request_class=None, has_log=True,
                  keep_alive=True, is_request_stream=False, router=None,
-                 state=None, **kwargs):
+                 state=None, debug=False, **kwargs):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -102,12 +102,14 @@ class HttpProtocol(asyncio.Protocol):
         self.state = state if state else {}
         if 'requests_count' not in self.state:
             self.state['requests_count'] = 0
+        self._debug = debug
 
     @property
     def keep_alive(self):
-        return (self._keep_alive
-                and not self.signal.stopped
-                and self.parser.should_keep_alive())
+        return (
+            self._keep_alive and
+            not self.signal.stopped and
+            self.parser.should_keep_alive())
 
     # -------------------------------------------- #
     # Connection
@@ -164,7 +166,10 @@ class HttpProtocol(asyncio.Protocol):
         try:
             self.parser.feed_data(data)
         except HttpParserError:
-            exception = InvalidUsage('Bad Request')
+            message = 'Bad Request'
+            if self._debug:
+                message += '\n' + traceback.format_exc()
+            exception = InvalidUsage(message)
             self.write_error(exception)
 
     def on_url(self, url):
@@ -450,7 +455,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         router=router,
         websocket_max_size=websocket_max_size,
         websocket_max_queue=websocket_max_queue,
-        state=state
+        state=state,
+        debug=debug,
     )
 
     server_coroutine = loop.create_server(

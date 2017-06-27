@@ -201,7 +201,11 @@ class Config(dict):
         for k, v in os.environ.items():
             if k.startswith(SANIC_PREFIX):
                 _, config_key = k.split(SANIC_PREFIX, 1)
-                if v.isdigit():
-                    self[config_key] = int(v)
+                # This is a float or an int
+                if v.replace('.', '').isdigit():
+                    if '.' in v:
+                        self[config_key] = float(v)
+                    else:
+                        self[config_key] = int(v)
                 else:
                     self[config_key] = v

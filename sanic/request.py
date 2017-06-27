@@ -86,7 +86,7 @@ class Request(dict):
 
         :return: token related to request
         """
-        prefixes = ('Token ', 'Bearer ')
+        prefixes = ('Bearer', 'Token ')
         auth_header = self.headers.get('Authorization')
 
         if auth_header is not None:

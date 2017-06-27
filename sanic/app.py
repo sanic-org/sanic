@@ -33,7 +33,9 @@ class Sanic:
             logging.config.dictConfig(log_config)
         # Only set up a default log handler if the
         # end-user application didn't set anything up.
-        if not logging.root.handlers and log.level == logging.NOTSET:
+        if not (logging.root.handlers and
+                log.level == logging.NOTSET and
+                log_config):
             formatter = logging.Formatter(
                 "%(asctime)s: %(levelname)s: %(message)s")
             handler = logging.StreamHandler()
@@ -543,7 +545,7 @@ class Sanic:
     def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            log_config=LOGGING):
+            log_config=None):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -565,6 +567,7 @@ class Sanic:
             host, port = host or "127.0.0.1", port or 8000
 
         if log_config:
+            self.log_config = log_config
             logging.config.dictConfig(log_config)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
@@ -578,7 +581,7 @@ class Sanic:
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             workers=workers, protocol=protocol, backlog=backlog,
             register_sys_signals=register_sys_signals,
-            has_log=log_config is not None)
+            has_log=self.log_config is not None)
 
         try:
             self.is_running = True
@@ -696,7 +699,9 @@ class Sanic:
             'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog,
-            'has_log': has_log
+            'has_log': has_log,
+            'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
+            'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE
         }
 
         # -------------------------------------------- #

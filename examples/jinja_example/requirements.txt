@@ -1,8 +1,0 @@
-aiofiles==0.3.1
-httptools==0.0.9
-Jinja2==2.9.6
-MarkupSafe==1.0
-sanic==0.5.2
-ujson==1.35
-uvloop==0.8.0
-websockets==3.3

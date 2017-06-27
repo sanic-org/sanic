@@ -9,9 +9,11 @@ import pytest
 from random import choice
 
 from sanic import Sanic
-from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream
+from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
+
+JSON_DATA = {'ok': True}
 
 
 
@@ -33,6 +35,24 @@ async def sample_streaming_fn(response):
     await asyncio.sleep(.001)
     response.write('bar')
 
+
+@pytest.fixture
+def json_app():
+    app = Sanic('json')
+
+    @app.route("/")
+    async def test(request):
+        return json(JSON_DATA)
+
+    return app
+
+
+def test_json_response(json_app):
+    from sanic.response import json_dumps
+    request, response = json_app.test_client.get('/')
+    assert response.status == 200
+    assert response.text == json_dumps(JSON_DATA)
+    assert response.json == JSON_DATA
 
 @pytest.fixture
 def streaming_app():

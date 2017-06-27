@@ -57,6 +57,12 @@ for Gunicorn `worker-class` argument:
 gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker
 ```
 
+If your application suffers from memory leaks, you can configure Gunicorn to gracefully restart a worker
+after it has processed a given number of requests. This can be a convenient way to help limit the effects
+of the memory leak.
+
+See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
+
 ## Asynchronous support
 This is suitable if you *need* to share the sanic process with other applications, in particular the `loop`.
 However be advised that this method does not support using multiple processes, and is not the preferred way

@@ -7,6 +7,7 @@ from sanic import response
 
 app = Sanic(__name__)
 
+
 @app.route('/')
 def handle_request(request):
     return response.json(
@@ -14,7 +15,8 @@ def handle_request(request):
         headers={'X-Served-By': 'sanic'},
         status=200
     )
-    
+
+
 @app.route('/unauthorized')
 def handle_request(request):
     return response.json(

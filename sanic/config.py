@@ -122,9 +122,11 @@ class Config(dict):
 ▌     ▐                ▀▀▄▄▄▀
  ▀▀▄▄▀
 """
-        self.REQUEST_MAX_SIZE = 100000000  # 100 megababies
+        self.REQUEST_MAX_SIZE = 100000000  # 100 megabytes
         self.REQUEST_TIMEOUT = 60  # 60 seconds
         self.KEEP_ALIVE = keep_alive
+        self.WEBSOCKET_MAX_SIZE = 2 ** 20  # 1 megabytes
+        self.WEBSOCKET_MAX_QUEUE = 32
 
         if load_env:
             self.load_environment_vars()
@@ -199,4 +201,10 @@ class Config(dict):
         for k, v in os.environ.items():
             if k.startswith(SANIC_PREFIX):
                 _, config_key = k.split(SANIC_PREFIX, 1)
-                self[config_key] = v
+                try:
+                    self[config_key] = int(v)
+                except ValueError:
+                    try:
+                        self[config_key] = float(v)
+                    except ValueError:
+                        self[config_key] = v

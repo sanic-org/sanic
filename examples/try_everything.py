@@ -19,13 +19,14 @@ def test_sync(request):
 
 
 @app.route("/dynamic/<name>/<id:int>")
-def test_params(request, name, id):
-    return response.text("yeehaww {} {}".format(name, id))
+def test_params(request, name, i):
+    return response.text("yeehaww {} {}".format(name, i))
 
 
 @app.route("/exception")
 def exception(request):
     raise ServerError("It's dead jim")
+
 
 @app.route("/await")
 async def test_await(request):
@@ -33,9 +34,11 @@ async def test_await(request):
     await asyncio.sleep(5)
     return response.text("I'm feeling sleepy")
 
+
 @app.route("/file")
 async def test_file(request):
     return await response.file(os.path.abspath("setup.py"))
+
 
 @app.route("/file_stream")
 async def test_file_stream(request):
@@ -46,9 +49,11 @@ async def test_file_stream(request):
 # Exceptions
 # ----------------------------------------------- #
 
+
 @app.exception(ServerError)
 async def test(request, exception):
-    return response.json({"exception": "{}".format(exception), "status": exception.status_code}, status=exception.status_code)
+    return response.json({"exception": "{}".format(exception), "status": exception.status_code},
+                         status=exception.status_code)
 
 
 # ----------------------------------------------- #
@@ -67,7 +72,8 @@ def post_json(request):
 
 @app.route("/query_string")
 def query_string(request):
-    return response.json({"parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string})
+    return response.json({"parsed": True, "args": request.args, "url": request.url,
+                          "query_string": request.query_string})
 
 
 # ----------------------------------------------- #

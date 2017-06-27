@@ -14,7 +14,7 @@ FutureStatic = namedtuple('Route',
 
 
 class Blueprint:
-    def __init__(self, name, url_prefix=None, host=None):
+    def __init__(self, name, url_prefix=None, host=None, version='1.0.0'):
         """Create a new blueprint
 
         :param name: unique name of the blueprint
@@ -23,6 +23,7 @@ class Blueprint:
         self.name = name
         self.url_prefix = url_prefix
         self.host = host
+        self.version = version
 
         self.routes = []
         self.websocket_routes = []

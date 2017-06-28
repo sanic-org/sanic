@@ -3,8 +3,8 @@ from bs4 import BeautifulSoup
 
 from sanic import Sanic
 from sanic.response import text
-from sanic.exceptions import InvalidUsage, ServerError, NotFound, Forbidden
-from sanic.exceptions import abort
+from sanic.exceptions import InvalidUsage, ServerError, NotFound, Unauthorized
+from sanic.exceptions import Forbidden, abort
 
 
 class SanicExceptionTestException(Exception):
@@ -31,6 +31,20 @@ def exception_app():
     def handler_403(request):
         raise Forbidden("Forbidden")
 
+    @app.route('/401/basic')
+    def handler_401_basic(request):
+        raise Unauthorized("Unauthorized", "Basic", "Sanic")
+
+    @app.route('/401/digest')
+    def handler_401_digest(request):
+        challenge = {
+            "qop": "auth, auth-int",
+            "algorithm": "MD5",
+            "nonce": "abcdef",
+            "opaque": "zyxwvu",
+        }
+        raise Unauthorized("Unauthorized", "Digest", "Sanic", challenge)
+
     @app.route('/invalid')
     def handler_invalid(request):
         raise InvalidUsage("OK")
@@ -54,8 +68,10 @@ def exception_app():
 
     return app
 
+
 def test_catch_exception_list():
     app = Sanic('exception_list')
+
     @app.exception([SanicExceptionTestException, NotFound])
     def exception_list(request, exception):
         return text("ok")
@@ -100,6 +116,25 @@ def test_forbidden_exception(exception_app):
     """Test the built-in Forbidden exception"""
     request, response = exception_app.test_client.get('/403')
     assert response.status == 403
+
+    
+def test_unauthorized_exception(exception_app):
+    """Test the built-in Unauthorized exception"""
+    request, response = exception_app.test_client.get('/401/basic')
+    assert response.status == 401
+    assert response.headers.get('WWW-Authenticate') is not None
+    assert response.headers.get('WWW-Authenticate') == "Basic realm='Sanic'"
+
+    request, response = exception_app.test_client.get('/401/digest')
+    assert response.status == 401
+    
+    auth_header = response.headers.get('WWW-Authenticate')
+    assert auth_header is not None
+    assert auth_header.startswith('Digest')
+    assert "qop='auth, auth-int'" in auth_header
+    assert "algorithm='MD5'" in auth_header
+    assert "nonce='abcdef'" in auth_header
+    assert "opaque='zyxwvu'" in auth_header
 
 
 def test_handled_unhandled_exception(exception_app):

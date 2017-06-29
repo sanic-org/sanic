@@ -57,3 +57,24 @@ def test_post_json_request_includes_data():
 More information about
 the available arguments to aiohttp can be found
 [in the documentation for ClientSession](https://aiohttp.readthedocs.io/en/stable/client_reference.html#client-session).
+
+
+# pytest-sanic
+
+[pytest-sanic](https://github.com/yunstanford/pytest-sanic) is a pytest plugin, it helps you to test your code asynchronously.
+Just write tests like,
+
+```python
+    async def test_sanic_db_find_by_id(app):
+        """
+        Let's assume that, in db we have,
+            {
+                "id": "123",
+                "name": "Kobe Bryant",
+                "team": "Lakers",
+            }
+        """
+        doc = await app.db["players"].find_by_id("123")
+        assert doc.name == "Kobe Bryant"
+        assert doc.team == "Lakers"
+```

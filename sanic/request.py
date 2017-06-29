@@ -86,13 +86,13 @@ class Request(dict):
 
         :return: token related to request
         """
-        prefixes = ('Bearer', 'Token ')
+        prefixes = ('Bearer', 'Token')
         auth_header = self.headers.get('Authorization')
 
         if auth_header is not None:
             for prefix in prefixes:
                 if prefix in auth_header:
-                    return auth_header.partition(prefix)[-1]
+                    return auth_header.partition(prefix)[-1].strip()
 
         return auth_header
 

@@ -29,17 +29,22 @@ def exception_app():
 
     @app.route('/401/basic')
     def handler_401_basic(request):
-        raise Unauthorized("Unauthorized", "Basic", "Sanic")
+        raise Unauthorized("Unauthorized", "Basic", {"realm": "Sanic"})
 
     @app.route('/401/digest')
     def handler_401_digest(request):
         challenge = {
+            "realm": "Sanic",
             "qop": "auth, auth-int",
             "algorithm": "MD5",
             "nonce": "abcdef",
             "opaque": "zyxwvu",
         }
-        raise Unauthorized("Unauthorized", "Digest", "Sanic", challenge)
+        raise Unauthorized("Unauthorized", "Digest", challenge)
+
+    @app.route('/401/bearer')
+    def handler_401_bearer(request):
+        raise Unauthorized("Unauthorized", "Bearer")
 
     @app.route('/invalid')
     def handler_invalid(request):
@@ -125,6 +130,10 @@ def test_unauthorized_exception(exception_app):
     assert "algorithm='MD5'" in auth_header
     assert "nonce='abcdef'" in auth_header
     assert "opaque='zyxwvu'" in auth_header
+
+    request, response = exception_app.test_client.get('/401/bearer')
+    assert response.status == 401
+    assert response.headers.get('WWW-Authenticate') == "Bearer"
 
 
 def test_handled_unhandled_exception(exception_app):

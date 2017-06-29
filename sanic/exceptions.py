@@ -204,25 +204,44 @@ class Unauthorized(SanicException):
     Unauthorized exception (401 HTTP status code).
 
     :param scheme: Name of the authentication scheme to be used.
-    :param realm: Description of the protected area. (optional)
     :param challenge: A dict containing values to add to the WWW-Authenticate
     header that is generated. This is especially useful when dealing with the
     Digest scheme. (optional)
+
+    Examples::
+
+        # With a Basic auth-scheme, realm MUST be present:
+        challenge = {"realm": "Restricted Area"}
+        raise Unauthorized("Auth required.", "Basic", challenge)
+
+        # With a Digest auth-scheme, things are a bit more complicated:
+        challenge = {
+            "realm": "Restricted Area",
+            "qop": "auth, auth-int",
+            "algorithm": "MD5",
+            "nonce": "abcdef",
+            "opaque": "zyxwvu"
+        }
+        raise Unauthorized("Auth required.", "Digest", challenge)
+
+        # With a Bearer auth-scheme, realm is optional:
+        challenge = {"realm": "Restricted Area"}
+        raise Unauthorized("Auth required.", "Bearer", challenge)
+
     """
     pass
 
-    def __init__(self, message, scheme, realm="", challenge=None):
+    def __init__(self, message, scheme, challenge=None):
         super().__init__(message)
 
-        adds = ""
+        chal = ""
 
         if challenge is not None:
             values = ["{!s}={!r}".format(k, v) for k, v in challenge.items()]
-            adds = ', '.join(values)
-            adds = ', {}'.format(adds)
+            chal = ', '.join(values)
 
         self.headers = {
-            "WWW-Authenticate": "{} realm='{}'{}".format(scheme, realm, adds)
+            "WWW-Authenticate": "{} {}".format(scheme, chal).rstrip()
         }
 
 

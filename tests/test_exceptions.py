@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sanic import Sanic
 from sanic.response import text
 from sanic.exceptions import InvalidUsage, ServerError, NotFound, Unauthorized
-from sanic.exceptions import abort
+from sanic.exceptions import Forbidden, abort
 
 
 class SanicExceptionTestException(Exception):
@@ -26,6 +26,10 @@ def exception_app():
     @app.route('/404')
     def handler_404(request):
         raise NotFound("OK")
+
+    @app.route('/403')
+    def handler_403(request):
+        raise Forbidden("Forbidden")
 
     @app.route('/401/basic')
     def handler_401_basic(request):
@@ -108,6 +112,12 @@ def test_not_found_exception(exception_app):
     assert response.status == 404
 
 
+def test_forbidden_exception(exception_app):
+    """Test the built-in Forbidden exception"""
+    request, response = exception_app.test_client.get('/403')
+    assert response.status == 403
+
+    
 def test_unauthorized_exception(exception_app):
     """Test the built-in Unauthorized exception"""
     request, response = exception_app.test_client.get('/401/basic')

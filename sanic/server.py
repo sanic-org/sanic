@@ -56,6 +56,40 @@ class CIDict(dict):
         return super().__contains__(key.casefold())
 
 
+class RequestBuffer:
+    def __init__(self):
+        self.saved = b''
+        self.passed_header = False
+        self.received = b''
+
+    def put(self, data):
+        if not self.passed_header:
+            self.saved += data
+            if b'\r\n\r\n' in self.saved:
+                data = self.saved
+                self.saved = None
+                self.passed_header = True
+            else:
+                try:
+                    i = self.saved.rindex(b'\r\n')
+                except ValueError:
+                    data = None
+                else:
+                    data = self.saved[:i]
+                    self.saved = self.saved[i:]
+        if data:
+            self.received += data
+
+    def pop(self):
+        received = self.received
+        self.received = b''
+        return received
+
+    def finalize(self):
+        if self.saved:
+            self.received += self.saved
+
+
 class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
@@ -99,6 +133,7 @@ class HttpProtocol(asyncio.Protocol):
         self._request_handler_task = None
         self._request_stream_task = None
         self._keep_alive = keep_alive
+        self._buffer = None
         self.state = state if state else {}
         if 'requests_count' not in self.state:
             self.state['requests_count'] = 0
@@ -146,18 +181,24 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
 
     def data_received(self, data):
+        # Create parser if this is the first time we're receiving data
+        if self.parser is None:
+            assert self.request is None
+            self.headers = []
+            self.parser = HttpRequestParser(self)
+            self._buffer = RequestBuffer()
+
+        self._buffer.put(data)
+        data = self._buffer.pop()
+        if not data:
+            return
+
         # Check for the request itself getting too large and exceeding
         # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
             exception = PayloadTooLarge('Payload Too Large')
             self.write_error(exception)
-
-        # Create parser if this is the first time we're receiving data
-        if self.parser is None:
-            assert self.request is None
-            self.headers = []
-            self.parser = HttpRequestParser(self)
 
         # requests count
         self.state['requests_count'] = self.state['requests_count'] + 1
@@ -357,6 +398,7 @@ class HttpProtocol(asyncio.Protocol):
         self._request_stream_task = None
         self._total_request_size = 0
         self._is_stream_handler = False
+        self._buffer = None
 
     def close_if_idle(self):
         """Close the connection if a request is not being sent or received

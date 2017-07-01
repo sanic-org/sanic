@@ -9,6 +9,7 @@ from sanic import Sanic
 from sanic.exceptions import ServerError
 from sanic.response import json, text
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
+from sanic.server import RequestBuffer
 from sanic.testing import HOST, PORT
 
 
@@ -336,3 +337,12 @@ def test_url_attributes_with_ssl(path, query, expected_url):
     assert parsed.path == request.path
     assert parsed.query == request.query_string
     assert parsed.netloc == request.host
+
+
+def test_request_buffer():
+    request = b'''GET /ping/ HTTP/1.1\r\nHost: github.com\r\nConnection: keep-alive\r\nCache-Control: max-age=0\r\nUpgrade-Insecure-Requests: 1\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4\r\n\r\n'''
+    buffer = RequestBuffer()
+    for i, byte in enumerate(request):
+        buffer.put(request[i:i+1])
+    buffer.finalize()
+    assert request == buffer.pop()

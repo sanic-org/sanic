@@ -206,8 +206,8 @@ class Unauthorized(SanicException):
     :param scheme: Name of the authentication scheme to be used.
     :param realm: Description of the protected area. (optional)
     :param challenge: A dict containing values to add to the WWW-Authenticate
-                      header that is generated. This is especially useful when dealing with the
-                      Digest scheme. (optional)
+                      header that is generated. This is especially useful when
+                      dealing with the Digest scheme. (optional)
     """
     pass
 

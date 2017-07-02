@@ -99,7 +99,16 @@ class Router:
         return name, _type, pattern
 
     def add(self, uri, methods, handler, host=None, strict_slashes=False):
+        """Add a handler to the route list
 
+        :param uri: path to match
+        :param methods: sequence of accepted method names. If none are
+            provided, any method is allowed
+        :param handler: request handler function.
+            When executed, it should provide a response object.
+        :param strict_slashes: strict to trailing slash
+        :return: Nothing
+        """
         # add regular version
         self._add(uri, methods, handler, host)
 

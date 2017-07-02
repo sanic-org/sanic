@@ -110,3 +110,11 @@ def handle_request(request):
         status=200
     )
 ```
+
+
+## Full API Reference
+
+```eval_rst
+.. automodule:: sanic.response
+    :members: json, text, raw, html, file, file_stream, stream, redirect
+```

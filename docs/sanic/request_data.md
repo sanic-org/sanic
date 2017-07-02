@@ -117,11 +117,3 @@ args.get('titles') # => 'Post 1'
 
 args.getlist('titles') # => ['Post 1', 'Post 2']
 ```
-
-
-## Full API Reference
-
-```eval_rst
-.. autoclass:: sanic.request.Request
-    :members: json, token, form, files, args, raw_args, cookies, ip, scheme, host, content_type, path, query_string, url
-```

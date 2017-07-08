@@ -91,8 +91,24 @@ class GunicornWorker(base.Worker):
             for conn in self.connections:
                 conn.close_if_idle()
 
-            while self.connections:
+            # gracefully shutdown timeout
+            start_shutdown = 0
+            graceful_shutdown_timeout = self.cfg.graceful_timeout
+            while self.connections and \
+                    (start_shutdown < graceful_shutdown_timeout):
                 await asyncio.sleep(0.1)
+                start_shutdown = start_shutdown + 0.1
+
+            # Force close non-idle connection after waiting for
+            # graceful_shutdown_timeout
+            coros = []
+            for conn in self.connections:
+                if hasattr(conn, "websocket") and conn.websocket:
+                    coros.append(conn.websocket.close_connection(force=True))
+                else:
+                    conn.close()
+            _shutdown = asyncio.gather(*coros, loop=self.loop)
+            await _shutdown
 
     async def _run(self):
         for sock in self.sockets:

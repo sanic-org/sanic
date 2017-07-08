@@ -701,7 +701,8 @@ class Sanic:
             'backlog': backlog,
             'has_log': has_log,
             'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
-            'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE
+            'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
+            'graceful_shutdown_timeout': self.config.GRACEFUL_SHUTDOWN_TIMEOUT
         }
 
         # -------------------------------------------- #

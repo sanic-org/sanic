@@ -100,3 +100,36 @@ def test_run_max_requests_exceeded(worker):
     worker.notify.assert_called_with()
     worker.log.info.assert_called_with("Max requests exceeded, shutting down: %s",
                                        worker)
+
+def test_worker_close(worker):
+    loop = asyncio.new_event_loop()
+    asyncio.sleep = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
+    worker.ppid = 1
+    worker.pid = 2
+    worker.cfg.graceful_timeout = 1.0
+    worker.signal = mock.Mock()
+    worker.signal.stopped = False
+    worker.wsgi = mock.Mock()
+    conn = mock.Mock()
+    conn.websocket = mock.Mock()
+    conn.websocket.close_connection = mock.Mock(
+            wraps=asyncio.coroutine(lambda *a, **kw: None)
+        )
+    worker.connections = set([conn])
+    worker.log = mock.Mock()
+    worker.loop = loop
+    server = mock.Mock()
+    server.close = mock.Mock(wraps=lambda *a, **kw: None)
+    server.wait_closed = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
+    worker.servers = {
+        server: {"requests_count": 14},
+    }
+    worker.max_requests = 10
+
+    # close worker
+    _close = asyncio.ensure_future(worker.close(), loop=loop)
+    loop.run_until_complete(_close)
+
+    assert worker.signal.stopped == True
+    conn.websocket.close_connection.assert_called_with(force=True)
+    assert len(worker.servers) == 0

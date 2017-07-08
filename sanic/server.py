@@ -380,6 +380,14 @@ class HttpProtocol(asyncio.Protocol):
             return True
         return False
 
+    def close(self):
+        """
+        Force close the connection.
+        """
+        if self.transport is not None:
+            self.transport.close()
+            self.transport = None
+
 
 def update_current_time(loop):
     """Cache the current time, since it is needed at the end of every
@@ -412,7 +420,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           register_sys_signals=True, run_async=False, connections=None,
           signal=Signal(), request_class=None, has_log=True, keep_alive=True,
           is_request_stream=False, router=None, websocket_max_size=None,
-          websocket_max_queue=None, state=None):
+          websocket_max_queue=None, state=None,
+          graceful_shutdown_timeout=15.0):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -525,8 +534,26 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         for connection in connections:
             connection.close_if_idle()
 
-        while connections:
+        # Gracefully shutdown timeout.
+        # We should provide graceful_shutdown_timeout,
+        # instead of letting connection hangs forever.
+        # Let's roughly calcucate time.
+        start_shutdown = 0
+        while connections and (start_shutdown < graceful_shutdown_timeout):
             loop.run_until_complete(asyncio.sleep(0.1))
+            start_shutdown = start_shutdown + 0.1
+
+        # Force close non-idle connection after waiting for
+        # graceful_shutdown_timeout
+        coros = []
+        for conn in connections:
+            if hasattr(conn, "websocket") and conn.websocket:
+                coros.append(conn.websocket.close_connection(force=True))
+            else:
+                conn.close()
+
+        _shutdown = asyncio.gather(*coros, loop=loop)
+        loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)
 

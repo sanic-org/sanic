@@ -75,7 +75,7 @@ class HttpProtocol(asyncio.Protocol):
                  signal=Signal(), connections=set(), request_timeout=60,
                  request_max_size=None, request_class=None, has_log=True,
                  keep_alive=True, is_request_stream=False, router=None,
-                 state=None, **kwargs):
+                 state=None, debug=False, **kwargs):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -99,15 +99,18 @@ class HttpProtocol(asyncio.Protocol):
         self._request_handler_task = None
         self._request_stream_task = None
         self._keep_alive = keep_alive
+        self._header_fragment = b''
         self.state = state if state else {}
         if 'requests_count' not in self.state:
             self.state['requests_count'] = 0
+        self._debug = debug
 
     @property
     def keep_alive(self):
-        return (self._keep_alive
-                and not self.signal.stopped
-                and self.parser.should_keep_alive())
+        return (
+            self._keep_alive and
+            not self.signal.stopped and
+            self.parser.should_keep_alive())
 
     # -------------------------------------------- #
     # Connection
@@ -164,18 +167,32 @@ class HttpProtocol(asyncio.Protocol):
         try:
             self.parser.feed_data(data)
         except HttpParserError:
-            exception = InvalidUsage('Bad Request')
+            message = 'Bad Request'
+            if self._debug:
+                message += '\n' + traceback.format_exc()
+            exception = InvalidUsage(message)
             self.write_error(exception)
 
     def on_url(self, url):
-        self.url = url
+        if not self.url:
+            self.url = url
+        else:
+            self.url += url
 
     def on_header(self, name, value):
-        if name == b'Content-Length' and int(value) > self.request_max_size:
-            exception = PayloadTooLarge('Payload Too Large')
-            self.write_error(exception)
+        self._header_fragment += name
 
-        self.headers.append((name.decode().casefold(), value.decode()))
+        if value is not None:
+            if self._header_fragment == b'Content-Length' \
+                    and int(value) > self.request_max_size:
+                exception = PayloadTooLarge('Payload Too Large')
+                self.write_error(exception)
+
+            self.headers.append(
+                    (self._header_fragment.decode().casefold(),
+                     value.decode()))
+
+            self._header_fragment = b''
 
     def on_headers_complete(self):
         self.request = self.request_class(
@@ -459,7 +476,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         router=router,
         websocket_max_size=websocket_max_size,
         websocket_max_queue=websocket_max_queue,
-        state=state
+        state=state,
+        debug=debug,
     )
 
     server_coroutine = loop.create_server(

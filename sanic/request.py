@@ -238,15 +238,15 @@ def parse_multipart_form(body, boundary):
                 break
 
             colon_index = form_line.index(':')
-            form_header_field = form_line[0:colon_index]
+            form_header_field = form_line[0:colon_index].lower()
             form_header_value, form_parameters = parse_header(
                 form_line[colon_index + 2:])
 
-            if form_header_field.lower() == 'content-disposition':
+            if form_header_field == 'content-disposition':
                 if 'filename' in form_parameters:
                     file_name = form_parameters['filename']
                 field_name = form_parameters.get('name')
-            elif form_header_field.lower() == 'content-type':
+            elif form_header_field == 'content-type':
                 file_type = form_header_value
 
         post_data = form_part[line_index:-4]

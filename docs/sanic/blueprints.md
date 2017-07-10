@@ -169,7 +169,7 @@ app.run(host='0.0.0.0', port=8000, debug=True)
 If you wish to generate a URL for a route inside of a blueprint, remember that the endpoint name
 takes the format `<blueprint_name>.<handler_name>`. For example:
 
-```
+```python
 @blueprint_v1.route('/')
 async def root(request):
     url = app.url_for('v1.post_handler', post_id=5) # --> '/v1/post/5'

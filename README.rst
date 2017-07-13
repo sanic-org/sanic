@@ -11,32 +11,6 @@ Sanic is developed `on GitHub <https://github.com/channelcat/sanic/>`_. Contribu
 
 If you have a project that utilizes Sanic make sure to comment on the `issue <https://github.com/channelcat/sanic/issues/396>`_ that we use to track those projects!
 
-Benchmarks
-----------
-
-All tests were run on an AWS medium instance running ubuntu, using 1
-process. Each script delivered a small JSON response and was tested with
-wrk using 100 connections. Pypy was tested for Falcon and Flask but did
-not speed up requests.
-
-+-----------+-----------------------+----------------+---------------+
-| Server    | Implementation        | Requests/sec   | Avg Latency   |
-+===========+=======================+================+===============+
-| Sanic     | Python 3.5 + uvloop   | 33,342         | 2.96ms        |
-+-----------+-----------------------+----------------+---------------+
-| Wheezy    | gunicorn + meinheld   | 20,244         | 4.94ms        |
-+-----------+-----------------------+----------------+---------------+
-| Falcon    | gunicorn + meinheld   | 18,972         | 5.27ms        |
-+-----------+-----------------------+----------------+---------------+
-| Bottle    | gunicorn + meinheld   | 13,596         | 7.36ms        |
-+-----------+-----------------------+----------------+---------------+
-| Flask     | gunicorn + meinheld   | 4,988          | 20.08ms       |
-+-----------+-----------------------+----------------+---------------+
-| Kyoukai   | Python 3.5 + uvloop   | 3,889          | 27.44ms       |
-+-----------+-----------------------+----------------+---------------+
-| Tornado   | Python 3.5            | 2,138          | 46.66ms       |
-+-----------+-----------------------+----------------+---------------+
-
 Hello World Example
 -------------------
 

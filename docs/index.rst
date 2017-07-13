@@ -25,6 +25,7 @@ Guides
    sanic/deploying
    sanic/extensions
    sanic/contributing
+   sanic/releases_notes
 
 
 Module Documentation
@@ -33,4 +34,5 @@ Module Documentation
 .. toctree::
 
 * :ref:`genindex`
+* :ref:`modindex`
 * :ref:`search`

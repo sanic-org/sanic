@@ -196,7 +196,7 @@ class Config(dict):
 
     def load_environment_vars(self):
         """
-        Looks for any SANIC_ prefixed environment variables and applies
+        Looks for any ``SANIC_`` prefixed environment variables and applies
         them to the configuration if present.
         """
         for k, v in os.environ.items():

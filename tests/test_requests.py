@@ -259,19 +259,25 @@ def test_post_form_urlencoded():
 
     assert request.form.get('test') == 'OK'
 
-
-def test_post_form_multipart_form_data():
+@pytest.mark.parametrize(
+    'payload', [
+        '------sanic\r\n' \
+        'Content-Disposition: form-data; name="test"\r\n' \
+        '\r\n' \
+        'OK\r\n' \
+        '------sanic--\r\n',
+        '------sanic\r\n' \
+        'content-disposition: form-data; name="test"\r\n' \
+        '\r\n' \
+        'OK\r\n' \
+        '------sanic--\r\n',
+    ])
+def test_post_form_multipart_form_data(payload):
     app = Sanic('test_post_form_multipart_form_data')
 
     @app.route('/', methods=['POST'])
     async def handler(request):
         return text('OK')
-
-    payload = '------sanic\r\n' \
-              'Content-Disposition: form-data; name="test"\r\n' \
-              '\r\n' \
-              'OK\r\n' \
-              '------sanic--\r\n'
 
     headers = {'content-type': 'multipart/form-data; boundary=----sanic'}
 

@@ -1,15 +1,41 @@
 import asyncio
 import inspect
+import pytest
 
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import json, text
 from sanic.exceptions import NotFound, ServerError, InvalidUsage
+from sanic.constants import HTTP_METHODS
 
 
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
+
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_versioned_routes_get(method):
+    app = Sanic('test_shorhand_routes_get')
+    bp = Blueprint('test_text')
+
+    method = method.lower()
+
+    func = getattr(bp, method)
+    if callable(func):
+        @func('/{}'.format(method), version=1)
+        def handler(request):
+            return text('OK')
+    else:
+        print(func)
+        raise
+
+    app.blueprint(bp)
+
+    client_method = getattr(app.test_client, method)
+
+    request, response = client_method('/v1/{}'.format(method))
+    assert response.status == 200
+
 
 def test_bp():
     app = Sanic('test_text')

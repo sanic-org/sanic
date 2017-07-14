@@ -17,6 +17,7 @@ _address_dict = {
 
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'filters': {
         'accessFilter': {
             '()': DefaultFilter,
@@ -196,7 +197,7 @@ class Config(dict):
 
     def load_environment_vars(self):
         """
-        Looks for any SANIC_ prefixed environment variables and applies
+        Looks for any ``SANIC_`` prefixed environment variables and applies
         them to the configuration if present.
         """
         for k, v in os.environ.items():

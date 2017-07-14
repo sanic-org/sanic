@@ -237,6 +237,7 @@ def json(body, status=200, headers=None,
          content_type="application/json", **kwargs):
     """
     Returns response object with body in json format.
+
     :param body: Response data to be serialized.
     :param status: Response code.
     :param headers: Custom Headers.
@@ -250,6 +251,7 @@ def text(body, status=200, headers=None,
          content_type="text/plain; charset=utf-8"):
     """
     Returns response object with body in text format.
+
     :param body: Response data to be encoded.
     :param status: Response code.
     :param headers: Custom Headers.
@@ -264,6 +266,7 @@ def raw(body, status=200, headers=None,
         content_type="application/octet-stream"):
     """
     Returns response object without encoding the body.
+
     :param body: Response data.
     :param status: Response code.
     :param headers: Custom Headers.
@@ -276,6 +279,7 @@ def raw(body, status=200, headers=None,
 def html(body, status=200, headers=None):
     """
     Returns response object with body in html format.
+
     :param body: Response data to be encoded.
     :param status: Response code.
     :param headers: Custom Headers.

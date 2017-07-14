@@ -214,4 +214,3 @@ and `recv` methods to send and receive data respectively.
 
 WebSocket support requires the [websockets](https://github.com/aaugustin/websockets)
 package by Aymeric Augustin.
-

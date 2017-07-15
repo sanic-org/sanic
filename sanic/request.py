@@ -168,7 +168,9 @@ class Request(dict):
         if not hasattr(self, '_remote_addr'):
             forwarded_for = self.headers.get('X-Forwarded-For', '').split(',')
             remote_addrs = [
-                addr for addr in [addr.strip() for addr in forwarded_for] if addr
+                addr for addr in [
+                    addr.strip() for addr in forwarded_for
+                ] if addr
             ]
             if len(remote_addrs) > 0:
                 self._remote_addr = remote_addrs[0]

@@ -3,6 +3,7 @@ import sys
 import signal
 import asyncio
 import logging
+import traceback
 
 try:
     import ssl
@@ -29,7 +30,7 @@ class GunicornWorker(base.Worker):
             self.ssl_context = self._create_ssl_context(cfg)
         else:
             self.ssl_context = None
-        self.servers = []
+        self.servers = {}
         self.connections = set()
         self.exit_code = 0
         self.signal = Signal()
@@ -69,10 +70,16 @@ class GunicornWorker(base.Worker):
             trigger_events(self._server_settings.get('before_stop', []),
                            self.loop)
             self.loop.run_until_complete(self.close())
+        except:
+            traceback.print_exc()
         finally:
-            trigger_events(self._server_settings.get('after_stop', []),
-                           self.loop)
-            self.loop.close()
+            try:
+                trigger_events(self._server_settings.get('after_stop', []),
+                               self.loop)
+            except:
+                traceback.print_exc()
+            finally:
+                self.loop.close()
 
         sys.exit(self.exit_code)
 
@@ -91,16 +98,37 @@ class GunicornWorker(base.Worker):
             for conn in self.connections:
                 conn.close_if_idle()
 
-            while self.connections:
+            # gracefully shutdown timeout
+            start_shutdown = 0
+            graceful_shutdown_timeout = self.cfg.graceful_timeout
+            while self.connections and \
+                    (start_shutdown < graceful_shutdown_timeout):
                 await asyncio.sleep(0.1)
+                start_shutdown = start_shutdown + 0.1
+
+            # Force close non-idle connection after waiting for
+            # graceful_shutdown_timeout
+            coros = []
+            for conn in self.connections:
+                if hasattr(conn, "websocket") and conn.websocket:
+                    coros.append(conn.websocket.close_connection(force=True))
+                else:
+                    conn.close()
+            _shutdown = asyncio.gather(*coros, loop=self.loop)
+            await _shutdown
 
     async def _run(self):
         for sock in self.sockets:
-            self.servers.append(await serve(
+            state = dict(requests_count=0)
+            self._server_settings["host"] = None
+            self._server_settings["port"] = None
+            server = await serve(
                 sock=sock,
                 connections=self.connections,
+                state=state,
                 **self._server_settings
-            ))
+            )
+            self.servers[server] = state
 
     async def _check_alive(self):
         # If our parent changed then we shut down.
@@ -109,7 +137,15 @@ class GunicornWorker(base.Worker):
             while self.alive:
                 self.notify()
 
-                if pid == os.getpid() and self.ppid != os.getppid():
+                req_count = sum(
+                    self.servers[srv]["requests_count"] for srv in self.servers
+                )
+                if self.max_requests and req_count > self.max_requests:
+                    self.alive = False
+                    self.log.info(
+                            "Max requests exceeded, shutting down: %s", self
+                        )
+                elif pid == os.getpid() and self.ppid != os.getppid():
                     self.alive = False
                     self.log.info("Parent changed, shutting down: %s", self)
                 else:
@@ -166,3 +202,4 @@ class GunicornWorker(base.Worker):
         self.alive = False
         self.exit_code = 1
         self.cfg.worker_abort(self)
+        sys.exit(1)

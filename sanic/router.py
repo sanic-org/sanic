@@ -98,8 +98,25 @@ class Router:
 
         return name, _type, pattern
 
-    def add(self, uri, methods, handler, host=None, strict_slashes=False):
+    def add(self, uri, methods, handler, host=None, strict_slashes=False,
+            version=None):
+        """Add a handler to the route list
 
+        :param uri: path to match
+        :param methods: sequence of accepted method names. If none are
+            provided, any method is allowed
+        :param handler: request handler function.
+            When executed, it should provide a response object.
+        :param strict_slashes: strict to trailing slash
+        :param version: current version of the route or blueprint. See
+            docs for further details.
+        :return: Nothing
+        """
+        if version is not None:
+            if uri.startswith('/'):
+                uri = "/".join(["/v{}".format(str(version)), uri[1:]])
+            else:
+                uri = "/".join(["/v{}".format(str(version)), uri])
         # add regular version
         self._add(uri, methods, handler, host)
 

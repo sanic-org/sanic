@@ -12,11 +12,12 @@ _address_dict = {
     'Windows': ('localhost', 514),
     'Darwin': '/var/run/syslog',
     'Linux': '/dev/log',
-    'FreeBSD': '/dev/log'
+    'FreeBSD': '/var/run/log'
 }
 
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'filters': {
         'accessFilter': {
             '()': DefaultFilter,
@@ -127,6 +128,7 @@ class Config(dict):
         self.KEEP_ALIVE = keep_alive
         self.WEBSOCKET_MAX_SIZE = 2 ** 20  # 1 megabytes
         self.WEBSOCKET_MAX_QUEUE = 32
+        self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
 
         if load_env:
             self.load_environment_vars()
@@ -195,10 +197,16 @@ class Config(dict):
 
     def load_environment_vars(self):
         """
-        Looks for any SANIC_ prefixed environment variables and applies
+        Looks for any ``SANIC_`` prefixed environment variables and applies
         them to the configuration if present.
         """
         for k, v in os.environ.items():
             if k.startswith(SANIC_PREFIX):
                 _, config_key = k.split(SANIC_PREFIX, 1)
-                self[config_key] = v
+                try:
+                    self[config_key] = int(v)
+                except ValueError:
+                    try:
+                        self[config_key] = float(v)
+                    except ValueError:
+                        self[config_key] = v

@@ -31,10 +31,10 @@ There are several ways how to load configuration.
 
 ### From environment variables.
 
-Any variables defined with the `SANIC_` prefix will be applied to the sanic config. For example, setting `SANIC_REQUEST_TIMEOUT` will be loaded by the application automatically. You can pass the `load_vars` boolean to the Sanic constructor to override that:
+Any variables defined with the `SANIC_` prefix will be applied to the sanic config. For example, setting `SANIC_REQUEST_TIMEOUT` will be loaded by the application automatically. You can pass the `load_env` boolean to the Sanic constructor to override that:
 
 ```python
-app = Sanic(load_vars=False)
+app = Sanic(load_env=False)
 ```
 
 ### From an Object

@@ -4,11 +4,32 @@ import pytest
 from sanic import Sanic
 from sanic.response import text
 from sanic.router import RouteExists, RouteDoesNotExist
+from sanic.constants import HTTP_METHODS
 
 
 # ------------------------------------------------------------ #
 #  UTF-8
 # ------------------------------------------------------------ #
+
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_versioned_routes_get(method):
+    app = Sanic('test_shorhand_routes_get')
+
+    method = method.lower()
+
+    func = getattr(app, method)
+    if callable(func):
+        @func('/{}'.format(method), version=1)
+        def handler(request):
+            return text('OK')
+    else:
+        print(func)
+        raise
+
+    client_method = getattr(app.test_client, method)
+
+    request, response = client_method('/v1/{}'.format(method))
+    assert response.status== 200
 
 def test_shorthand_routes_get():
     app = Sanic('test_shorhand_routes_get')

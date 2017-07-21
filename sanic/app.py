@@ -113,7 +113,7 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
-              strict_slashes=False, stream=False):
+              strict_slashes=False, stream=False, version=None):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
@@ -136,42 +136,49 @@ class Sanic:
             if stream:
                 handler.is_stream = stream
             self.router.add(uri=uri, methods=methods, handler=handler,
-                            host=host, strict_slashes=strict_slashes)
+                            host=host, strict_slashes=strict_slashes,
+                            version=version)
             return handler
 
         return response
 
     # Shorthand method decorators
-    def get(self, uri, host=None, strict_slashes=False):
+    def get(self, uri, host=None, strict_slashes=False, version=None):
         return self.route(uri, methods=frozenset({"GET"}), host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, version=version)
 
-    def post(self, uri, host=None, strict_slashes=False, stream=False):
+    def post(self, uri, host=None, strict_slashes=False, stream=False,
+             version=None):
         return self.route(uri, methods=frozenset({"POST"}), host=host,
-                          strict_slashes=strict_slashes, stream=stream)
+                          strict_slashes=strict_slashes, stream=stream,
+                          version=version)
 
-    def put(self, uri, host=None, strict_slashes=False, stream=False):
+    def put(self, uri, host=None, strict_slashes=False, stream=False,
+            version=None):
         return self.route(uri, methods=frozenset({"PUT"}), host=host,
-                          strict_slashes=strict_slashes, stream=stream)
+                          strict_slashes=strict_slashes, stream=stream,
+                          version=version)
 
-    def head(self, uri, host=None, strict_slashes=False):
+    def head(self, uri, host=None, strict_slashes=False, version=None):
         return self.route(uri, methods=frozenset({"HEAD"}), host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, version=version)
 
-    def options(self, uri, host=None, strict_slashes=False):
+    def options(self, uri, host=None, strict_slashes=False, version=None):
         return self.route(uri, methods=frozenset({"OPTIONS"}), host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, version=version)
 
-    def patch(self, uri, host=None, strict_slashes=False, stream=False):
+    def patch(self, uri, host=None, strict_slashes=False, stream=False,
+              version=None):
         return self.route(uri, methods=frozenset({"PATCH"}), host=host,
-                          strict_slashes=strict_slashes, stream=stream)
+                          strict_slashes=strict_slashes, stream=stream,
+                          version=version)
 
-    def delete(self, uri, host=None, strict_slashes=False):
+    def delete(self, uri, host=None, strict_slashes=False, version=None):
         return self.route(uri, methods=frozenset({"DELETE"}), host=host,
-                          strict_slashes=strict_slashes)
+                          strict_slashes=strict_slashes, version=version)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
-                  strict_slashes=False):
+                  strict_slashes=False, version=None):
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -204,7 +211,8 @@ class Sanic:
                     break
 
         self.route(uri=uri, methods=methods, host=host,
-                   strict_slashes=strict_slashes, stream=stream)(handler)
+                   strict_slashes=strict_slashes, stream=stream,
+                   version=version)(handler)
         return handler
 
     # Decorator
@@ -701,7 +709,8 @@ class Sanic:
             'backlog': backlog,
             'has_log': has_log,
             'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
-            'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE
+            'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
+            'graceful_shutdown_timeout': self.config.GRACEFUL_SHUTDOWN_TIMEOUT
         }
 
         # -------------------------------------------- #

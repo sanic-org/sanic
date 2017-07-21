@@ -45,7 +45,7 @@ class Request(dict):
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url', 'uri_template', 'stream'
+        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -86,11 +86,15 @@ class Request(dict):
 
         :return: token related to request
         """
+        prefixes = ('Bearer', 'Token')
         auth_header = self.headers.get('Authorization')
-        if auth_header is not None and 'Token ' in auth_header:
-            return auth_header.partition('Token ')[-1]
-        else:
-            return auth_header
+
+        if auth_header is not None:
+            for prefix in prefixes:
+                if prefix in auth_header:
+                    return auth_header.partition(prefix)[-1].strip()
+
+        return auth_header
 
     @property
     def form(self):
@@ -138,7 +142,7 @@ class Request(dict):
     @property
     def cookies(self):
         if self._cookies is None:
-            cookie = self.headers.get('Cookie') or self.headers.get('cookie')
+            cookie = self.headers.get('Cookie')
             if cookie is not None:
                 cookies = SimpleCookie()
                 cookies.load(cookie)
@@ -154,6 +158,25 @@ class Request(dict):
             self._ip = (self.transport.get_extra_info('peername') or
                         (None, None))
         return self._ip
+
+    @property
+    def remote_addr(self):
+        """Attempt to return the original client ip based on X-Forwarded-For.
+
+        :return: original client ip.
+        """
+        if not hasattr(self, '_remote_addr'):
+            forwarded_for = self.headers.get('X-Forwarded-For', '').split(',')
+            remote_addrs = [
+                addr for addr in [
+                    addr.strip() for addr in forwarded_for
+                ] if addr
+            ]
+            if len(remote_addrs) > 0:
+                self._remote_addr = remote_addrs[0]
+            else:
+                self._remote_addr = ''
+        return self._remote_addr
 
     @property
     def scheme(self):
@@ -234,15 +257,15 @@ def parse_multipart_form(body, boundary):
                 break
 
             colon_index = form_line.index(':')
-            form_header_field = form_line[0:colon_index]
+            form_header_field = form_line[0:colon_index].lower()
             form_header_value, form_parameters = parse_header(
                 form_line[colon_index + 2:])
 
-            if form_header_field == 'Content-Disposition':
+            if form_header_field == 'content-disposition':
                 if 'filename' in form_parameters:
                     file_name = form_parameters['filename']
                 field_name = form_parameters.get('name')
-            elif form_header_field == 'Content-Type':
+            elif form_header_field == 'content-type':
                 file_type = form_header_value
 
         post_data = form_part[line_index:-4]

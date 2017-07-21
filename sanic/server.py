@@ -75,7 +75,7 @@ class HttpProtocol(asyncio.Protocol):
                  signal=Signal(), connections=set(), request_timeout=60,
                  request_max_size=None, request_class=None, has_log=True,
                  keep_alive=True, is_request_stream=False, router=None,
-                 **kwargs):
+                 state=None, debug=False, **kwargs):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -99,12 +99,18 @@ class HttpProtocol(asyncio.Protocol):
         self._request_handler_task = None
         self._request_stream_task = None
         self._keep_alive = keep_alive
+        self._header_fragment = b''
+        self.state = state if state else {}
+        if 'requests_count' not in self.state:
+            self.state['requests_count'] = 0
+        self._debug = debug
 
     @property
     def keep_alive(self):
-        return (self._keep_alive
-                and not self.signal.stopped
-                and self.parser.should_keep_alive())
+        return (
+            self._keep_alive and
+            not self.signal.stopped and
+            self.parser.should_keep_alive())
 
     # -------------------------------------------- #
     # Connection
@@ -154,22 +160,39 @@ class HttpProtocol(asyncio.Protocol):
             self.headers = []
             self.parser = HttpRequestParser(self)
 
+        # requests count
+        self.state['requests_count'] = self.state['requests_count'] + 1
+
         # Parse request chunk or close connection
         try:
             self.parser.feed_data(data)
         except HttpParserError:
-            exception = InvalidUsage('Bad Request')
+            message = 'Bad Request'
+            if self._debug:
+                message += '\n' + traceback.format_exc()
+            exception = InvalidUsage(message)
             self.write_error(exception)
 
     def on_url(self, url):
-        self.url = url
+        if not self.url:
+            self.url = url
+        else:
+            self.url += url
 
     def on_header(self, name, value):
-        if name == b'Content-Length' and int(value) > self.request_max_size:
-            exception = PayloadTooLarge('Payload Too Large')
-            self.write_error(exception)
+        self._header_fragment += name
 
-        self.headers.append((name.decode().casefold(), value.decode()))
+        if value is not None:
+            if self._header_fragment == b'Content-Length' \
+                    and int(value) > self.request_max_size:
+                exception = PayloadTooLarge('Payload Too Large')
+                self.write_error(exception)
+
+            self.headers.append(
+                    (self._header_fragment.decode().casefold(),
+                     value.decode()))
+
+            self._header_fragment = b''
 
     def on_headers_complete(self):
         self.request = self.request_class(
@@ -357,6 +380,14 @@ class HttpProtocol(asyncio.Protocol):
             return True
         return False
 
+    def close(self):
+        """
+        Force close the connection.
+        """
+        if self.transport is not None:
+            self.transport.close()
+            self.transport = None
+
 
 def update_current_time(loop):
     """Cache the current time, since it is needed at the end of every
@@ -389,7 +420,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           register_sys_signals=True, run_async=False, connections=None,
           signal=Signal(), request_class=None, has_log=True, keep_alive=True,
           is_request_stream=False, router=None, websocket_max_size=None,
-          websocket_max_queue=None):
+          websocket_max_queue=None, state=None,
+          graceful_shutdown_timeout=15.0):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -427,8 +459,6 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     if debug:
         loop.set_debug(debug)
 
-    trigger_events(before_start, loop)
-
     connections = connections if connections is not None else set()
     server = partial(
         protocol,
@@ -445,7 +475,9 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         is_request_stream=is_request_stream,
         router=router,
         websocket_max_size=websocket_max_size,
-        websocket_max_queue=websocket_max_queue
+        websocket_max_queue=websocket_max_queue,
+        state=state,
+        debug=debug,
     )
 
     server_coroutine = loop.create_server(
@@ -457,12 +489,15 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         sock=sock,
         backlog=backlog
     )
+
     # Instead of pulling time at the end of every request,
     # pull it once per minute
     loop.call_soon(partial(update_current_time, loop))
 
     if run_async:
         return server_coroutine
+
+    trigger_events(before_start, loop)
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -499,8 +534,26 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         for connection in connections:
             connection.close_if_idle()
 
-        while connections:
+        # Gracefully shutdown timeout.
+        # We should provide graceful_shutdown_timeout,
+        # instead of letting connection hangs forever.
+        # Let's roughly calcucate time.
+        start_shutdown = 0
+        while connections and (start_shutdown < graceful_shutdown_timeout):
             loop.run_until_complete(asyncio.sleep(0.1))
+            start_shutdown = start_shutdown + 0.1
+
+        # Force close non-idle connection after waiting for
+        # graceful_shutdown_timeout
+        coros = []
+        for conn in connections:
+            if hasattr(conn, "websocket") and conn.websocket:
+                coros.append(conn.websocket.close_connection(force=True))
+            else:
+                conn.close()
+
+        _shutdown = asyncio.gather(*coros, loop=loop)
+        loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)
 

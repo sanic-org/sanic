@@ -175,7 +175,7 @@ def test_token():
     token = 'a1d895e0-553a-421a-8e22-5ff8ecb48cbf'
     headers = {
         'content-type': 'application/json',
-        'Authorization': 'Bearer Token {}'.format(token)
+        'Authorization': 'Bearer {}'.format(token)
     }
 
     request, response = app.test_client.get('/', headers=headers)
@@ -209,6 +209,32 @@ def test_content_type():
     request, response = app.test_client.get('/', headers=headers)
     assert request.content_type == 'application/json'
     assert response.text == 'application/json'
+
+
+def test_remote_addr():
+    app = Sanic('test_content_type')
+
+    @app.route('/')
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {
+        'X-Forwarded-For': '127.0.0.1, 127.0.1.2'
+    }
+    request, response = app.test_client.get('/', headers=headers)
+    assert request.remote_addr == '127.0.0.1'
+    assert response.text == '127.0.0.1'
+
+    request, response = app.test_client.get('/')
+    assert request.remote_addr == ''
+    assert response.text == ''
+
+    headers = {
+        'X-Forwarded-For': '127.0.0.1, ,   ,,127.0.1.2'
+    }
+    request, response = app.test_client.get('/', headers=headers)
+    assert request.remote_addr == '127.0.0.1'
+    assert response.text == '127.0.0.1'
 
 
 def test_match_info():
@@ -260,18 +286,25 @@ def test_post_form_urlencoded():
     assert request.form.get('test') == 'OK'
 
 
-def test_post_form_multipart_form_data():
+@pytest.mark.parametrize(
+    'payload', [
+        '------sanic\r\n' \
+        'Content-Disposition: form-data; name="test"\r\n' \
+        '\r\n' \
+        'OK\r\n' \
+        '------sanic--\r\n',
+        '------sanic\r\n' \
+        'content-disposition: form-data; name="test"\r\n' \
+        '\r\n' \
+        'OK\r\n' \
+        '------sanic--\r\n',
+    ])
+def test_post_form_multipart_form_data(payload):
     app = Sanic('test_post_form_multipart_form_data')
 
     @app.route('/', methods=['POST'])
     async def handler(request):
         return text('OK')
-
-    payload = '------sanic\r\n' \
-              'Content-Disposition: form-data; name="test"\r\n' \
-              '\r\n' \
-              'OK\r\n' \
-              '------sanic--\r\n'
 
     headers = {'content-type': 'multipart/form-data; boundary=----sanic'}
 

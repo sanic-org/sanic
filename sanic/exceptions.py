@@ -194,6 +194,11 @@ class ContentRangeError(SanicException):
         }
 
 
+@add_status_code(403)
+class Forbidden(SanicException):
+    pass
+
+
 class InvalidRangeType(ContentRangeError):
     pass
 
@@ -205,8 +210,8 @@ class Unauthorized(SanicException):
 
     :param scheme: Name of the authentication scheme to be used.
     :param challenge: A dict containing values to add to the WWW-Authenticate
-    header that is generated. This is especially useful when dealing with the
-    Digest scheme. (optional)
+        header that is generated. This is especially useful when dealing with
+        the Digest scheme. (optional)
 
     Examples::
 
@@ -227,7 +232,6 @@ class Unauthorized(SanicException):
         # With a Bearer auth-scheme, realm is optional:
         challenge = {"realm": "Restricted Area"}
         raise Unauthorized("Auth required.", "Bearer", challenge)
-
     """
     pass
 
@@ -249,9 +253,10 @@ def abort(status_code, message=None):
     """
     Raise an exception based on SanicException. Returns the HTTP response
     message appropriate for the given status code, unless provided.
+
     :param status_code: The HTTP status code to return.
     :param message: The HTTP response body. Defaults to the messages
-    in response.py for the given status code.
+                    in response.py for the given status code.
     """
     if message is None:
         message = COMMON_STATUS_CODES.get(status_code,

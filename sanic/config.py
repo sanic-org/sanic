@@ -12,7 +12,7 @@ _address_dict = {
     'Windows': ('localhost', 514),
     'Darwin': '/var/run/syslog',
     'Linux': '/dev/log',
-    'FreeBSD': '/dev/log'
+    'FreeBSD': '/var/run/log'
 }
 
 LOGGING = {

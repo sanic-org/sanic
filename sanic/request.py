@@ -265,7 +265,7 @@ def parse_multipart_form(body, boundary):
                 if 'filename' in form_parameters:
                     file_name = form_parameters['filename']
                 field_name = form_parameters.get('name')
-            elif form_header_field == 'content-type':
+            elif form_header_field == 'content-type' and file_name:
                 file_type = form_header_value
 
         post_data = form_part[line_index:-4]

@@ -10,11 +10,11 @@ You can pass a version number to the routes directly.
 from sanic import response
 
 
-@app.route('/text', verion=1)
+@app.route('/text', version=1)
 def handle_request(request):
     return response.text('Hello world! Version 1')
 
-@app.route('/text', verion=2)
+@app.route('/text', version=2)
 def handle_request(request):
     return response.text('Hello world! Version 2')
 

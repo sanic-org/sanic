@@ -109,8 +109,9 @@ class BaseHTTPResponse:
 
 class StreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
-        'transport', 'streaming_fn',
-        'status', 'content_type', 'headers', '_cookies')
+        'transport', 'streaming_fn', 'status',
+        'content_type', 'headers', '_cookies'
+    )
 
     def __init__(self, streaming_fn, status=200, headers=None,
                  content_type='text/plain'):

@@ -208,44 +208,39 @@ class Unauthorized(SanicException):
     """
     Unauthorized exception (401 HTTP status code).
 
+    :param message: Message describing the exception.
     :param scheme: Name of the authentication scheme to be used.
-    :param challenge: A dict containing values to add to the WWW-Authenticate
-        header that is generated. This is especially useful when dealing with
-        the Digest scheme. (optional)
+
+    When present, kwargs is used to complete the WWW-Authentication header. 
 
     Examples::
 
         # With a Basic auth-scheme, realm MUST be present:
-        challenge = {"realm": "Restricted Area"}
-        raise Unauthorized("Auth required.", "Basic", challenge)
+        raise Unauthorized("Auth required.", "Basic", realm="Restricted Area")
 
         # With a Digest auth-scheme, things are a bit more complicated:
-        challenge = {
-            "realm": "Restricted Area",
-            "qop": "auth, auth-int",
-            "algorithm": "MD5",
-            "nonce": "abcdef",
-            "opaque": "zyxwvu"
-        }
-        raise Unauthorized("Auth required.", "Digest", challenge)
+        raise Unauthorized("Auth required.",
+                           "Digest",
+                           realm="Restricted Area",
+                           qop="auth, auth-int",
+                           algorithm="MD5",
+                           nonce="abcdef",
+                           opaque="zyxwvu")
 
-        # With a Bearer auth-scheme, realm is optional:
-        challenge = {"realm": "Restricted Area"}
-        raise Unauthorized("Auth required.", "Bearer", challenge)
+        # With a Bearer auth-scheme, realm is optional so you can write:
+        raise Unauthorized("Auth required.", "Bearer")
+
+        # or, if you want to specify the realm:
+        raise Unauthorized("Auth required.", "Bearer", realm="Restricted Area")
     """
-    pass
-
-    def __init__(self, message, scheme, challenge=None):
+    def __init__(self, message, scheme, **kwargs):
         super().__init__(message)
 
-        chal = ""
-
-        if challenge is not None:
-            values = ["{!s}={!r}".format(k, v) for k, v in challenge.items()]
-            chal = ', '.join(values)
+        values = ["{!s}={!r}".format(k, v) for k, v in kwargs.items()]
+        challenge = ', '.join(values)
 
         self.headers = {
-            "WWW-Authenticate": "{} {}".format(scheme, chal).rstrip()
+            "WWW-Authenticate": "{} {}".format(scheme, challenge).rstrip()
         }
 
 

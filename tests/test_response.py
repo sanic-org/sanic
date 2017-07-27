@@ -181,6 +181,7 @@ def test_file_head_response(file_name, static_file_directory):
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
 def test_file_stream_response(file_name, static_file_directory):
     app = Sanic('test_file_helper')
+    app.config.REQUEST_TIMEOUT = 120
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)

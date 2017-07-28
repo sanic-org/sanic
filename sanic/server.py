@@ -139,8 +139,10 @@ class HttpProtocol(asyncio.Protocol):
                 self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            exception = RequestTimeout('Request Timeout')
-            self.write_error(exception)
+            try:
+                raise RequestTimeout('Request Timeout')
+            except RequestTimeout as exception:
+                self.write_error(exception)
 
     # -------------------------------------------- #
     # Parsing
@@ -317,6 +319,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.cleanup()
 
     def write_error(self, exception):
+        response = None
         try:
             response = self.error_handler.response(self.request, exception)
             version = self.request.version if self.request else '1.1'
@@ -331,20 +334,23 @@ class HttpProtocol(asyncio.Protocol):
                 from_error=True)
         finally:
             if self.has_log:
-                extra = {
-                    'status': response.status,
-                    'host': '',
-                    'request': str(self.request) + str(self.url)
-                }
-                if response and isinstance(response, HTTPResponse):
+                extra = dict()
+                if isinstance(response, HTTPResponse):
+                    extra['status'] = response.status
                     extra['byte'] = len(response.body)
                 else:
+                    extra['status'] = 0
                     extra['byte'] = -1
                 if self.request:
                     extra['host'] = '%s:%d' % self.request.ip,
                     extra['request'] = '%s %s' % (self.request.method,
                                                   self.url)
-                netlog.info('', extra=extra)
+                else:
+                    extra['host'] = 'UNKNOWN'
+                    extra['request'] = 'nil'
+                if self.parser and not (self.keep_alive
+                                        and extra['status'] == 408):
+                    netlog.info('', extra=extra)
             self.transport.close()
 
     def bail_out(self, message, from_error=False):

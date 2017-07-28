@@ -211,7 +211,7 @@ class Unauthorized(SanicException):
     :param message: Message describing the exception.
     :param scheme: Name of the authentication scheme to be used.
 
-    When present, kwargs is used to complete the WWW-Authentication header. 
+    When present, kwargs is used to complete the WWW-Authentication header.
 
     Examples::
 

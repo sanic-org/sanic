@@ -55,6 +55,16 @@ Documentation
    :target: https://pypi.python.org/pypi/sanic/
 .. |PyPI version| image:: https://img.shields.io/pypi/pyversions/sanic.svg
    :target: https://pypi.python.org/pypi/sanic/
+   
+
+Examples
+--------
+`Non-Core examples <https://github.com/channelcat/sanic/wiki/Examples/>`_. Examples of plugins and Sanic that are outside the scope of Sanic core.
+
+`Extensions <https://github.com/channelcat/sanic/wiki/Extensions/>`_. Sanic extensions created by the community.
+
+`Projects <https://github.com/channelcat/sanic/wiki/Projects/>`_. Sanic in production use.
+
 
 TODO
 ----

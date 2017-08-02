@@ -33,18 +33,17 @@ def exception_app():
 
     @app.route('/401/basic')
     def handler_401_basic(request):
-        raise Unauthorized("Unauthorized", "Basic", {"realm": "Sanic"})
+        raise Unauthorized("Unauthorized", "Basic", realm="Sanic")
 
     @app.route('/401/digest')
     def handler_401_digest(request):
-        challenge = {
-            "realm": "Sanic",
-            "qop": "auth, auth-int",
-            "algorithm": "MD5",
-            "nonce": "abcdef",
-            "opaque": "zyxwvu",
-        }
-        raise Unauthorized("Unauthorized", "Digest", challenge)
+        raise Unauthorized("Unauthorized",
+                           "Digest",
+                           realm="Sanic",
+                           qop="auth, auth-int",
+                           algorithm="MD5",
+                           nonce="abcdef",
+                           opaque="zyxwvu")
 
     @app.route('/401/bearer')
     def handler_401_bearer(request):
@@ -122,7 +121,7 @@ def test_forbidden_exception(exception_app):
     request, response = exception_app.test_client.get('/403')
     assert response.status == 403
 
-    
+
 def test_unauthorized_exception(exception_app):
     """Test the built-in Unauthorized exception"""
     request, response = exception_app.test_client.get('/401/basic')
@@ -132,7 +131,7 @@ def test_unauthorized_exception(exception_app):
 
     request, response = exception_app.test_client.get('/401/digest')
     assert response.status == 401
-    
+
     auth_header = response.headers.get('WWW-Authenticate')
     assert auth_header is not None
     assert auth_header.startswith('Digest')

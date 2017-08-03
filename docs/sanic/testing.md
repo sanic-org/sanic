@@ -59,7 +59,7 @@ the available arguments to aiohttp can be found
 [in the documentation for ClientSession](https://aiohttp.readthedocs.io/en/stable/client_reference.html#client-session).
 
 
-# pytest-sanic
+## pytest-sanic
 
 [pytest-sanic](https://github.com/yunstanford/pytest-sanic) is a pytest plugin, it helps you to test your code asynchronously.
 Just write tests like,

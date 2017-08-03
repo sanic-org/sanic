@@ -24,7 +24,7 @@ def handler_3(request):
 
 @exception_handler_app.route('/4')
 def handler_4(request):
-    foo = bar
+    foo = bar    # noqa -- F821 undefined name 'bar' is done to throw exception
     return text(foo)
 
 

@@ -341,6 +341,7 @@ def test_websocket_route():
 
     @app.websocket('/ws')
     async def handler(request, ws):
+        assert ws.subprotocol is None
         ev.set()
 
     request, response = app.test_client.get('/ws', headers={
@@ -350,6 +351,48 @@ def test_websocket_route():
         'Sec-WebSocket-Version': '13'})
     assert response.status == 101
     assert ev.is_set()
+
+
+def test_websocket_route_with_subprotocols():
+    app = Sanic('test_websocket_route')
+    results = []
+
+    @app.websocket('/ws', subprotocols=['foo', 'bar'])
+    async def handler(request, ws):
+        results.append(ws.subprotocol)
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Protocol': 'bar'})
+    assert response.status == 101
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Protocol': 'bar, foo'})
+    assert response.status == 101
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Protocol': 'baz'})
+    assert response.status == 101
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13'})
+    assert response.status == 101
+    
+    assert results == ['bar', 'bar', None, None]
 
 
 def test_route_duplicate():

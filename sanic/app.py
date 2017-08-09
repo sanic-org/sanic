@@ -636,13 +636,30 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
+
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             loop=get_event_loop(), protocol=protocol,
             backlog=backlog, run_async=True,
             has_log=log_config is not None)
 
+        # Trigger before_start events
+        await self.trigger_events(
+            server_settings.get('before_start', []),
+            server_settings.get('loop')
+        )
+
         return await serve(**server_settings)
+
+    async def trigger_events(self, events, loop):
+        """Trigger events (functions or async)
+        :param events: one or more sync or async functions to execute
+        :param loop: event loop
+        """
+        for event in events:
+            result = event(loop)
+            if isawaitable(result):
+                await result
 
     async def _run_request_middleware(self, request):
         # The if improves speed.  I don't know why

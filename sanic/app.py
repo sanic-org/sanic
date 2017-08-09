@@ -641,7 +641,10 @@ class Sanic:
             has_log=log_config is not None)
 
         # Trigger before_start events
-        await self.trigger_events(server_settings.get('before_start', []), server_settings.get('loop'))
+        await self.trigger_events(
+            server_settings.get('before_start', []),
+            server_settings.get('loop')
+        )
 
         return await serve(**server_settings)
 

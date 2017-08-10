@@ -214,9 +214,12 @@ class Sanic:
         return handler
 
     # Decorator
-    def websocket(self, uri, host=None, strict_slashes=False):
+    def websocket(self, uri, host=None, strict_slashes=False,
+                  subprotocols=None):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
+        :param subprotocols: optional list of strings with the supported
+                             subprotocols
         :param host:
         :return: decorated function
         """
@@ -236,7 +239,7 @@ class Sanic:
                     # On Python3.5 the Transport classes in asyncio do not
                     # have a get_protocol() method as in uvloop
                     protocol = request.transport._protocol
-                ws = await protocol.websocket_handshake(request)
+                ws = await protocol.websocket_handshake(request, subprotocols)
 
                 # schedule the application handler
                 # its future is kept in self.websocket_tasks in case it

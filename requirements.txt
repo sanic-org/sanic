@@ -3,3 +3,4 @@ httptools
 ujson
 uvloop
 websockets
+itsdangerous

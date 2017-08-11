@@ -3,9 +3,11 @@
 import hashlib
 
 from itsdangerous import URLSafeTimedSerializer
+from datetime import datetime
 
 import ujson as json
 from sanic.exceptions import BadSignature
+
 
 def total_seconds(td):
     """Returns the total seconds from a timedelta object.
@@ -14,6 +16,7 @@ def total_seconds(td):
     :rtype: int
     """
     return td.days * 60 * 60 * 24 + td.seconds
+
 
 class SessionMixin(object):
     """Expands a basic dictionary with an accessors that are expected
@@ -146,27 +149,12 @@ class SessionInterface(object):
             # Chrome doesn't allow names without a '.'
             # this should only come up with localhost
             # hack around this by not setting the name, and show a warning
-            warnings.warn(
-                '"{rv}" is not a valid cookie domain, it must contain a ".".'
-                ' Add an entry to your hosts file, for example'
-                ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
-            )
             app.config['SESSION_COOKIE_DOMAIN'] = False
             return None
 
-        # ip = is_ip(rv)
-
-        # if ip:
-        #     warnings.warn(
-        #         'The session cookie domain is an IP address. This may not work'
-        #         ' as intended in some browsers. Add an entry to your hosts'
-        #         ' file, for example "localhost.localdomain", and use that'
-        #         ' instead.'
-        #     )
-
         # if this is not an ip and app is mounted at the root, allow subdomain
         # matching by adding a '.' prefix
-        if self.get_cookie_path(app) == '/' and not ip:
+        if self.get_cookie_path(app) == '/':
             rv = '.' + rv
 
         app.config['SESSION_COOKIE_DOMAIN'] = rv
@@ -214,7 +202,8 @@ class SessionInterface(object):
         """
 
         return session.modified or (
-            session.permanent and app.config.get('SESSION_REFRESH_EACH_REQUEST', False)
+            session.permanent and app.config.get(
+                'SESSION_REFRESH_EACH_REQUEST', False)
         )
 
     def open_session(self, app, request):
@@ -303,10 +292,12 @@ class SecureCookieSessionInterface(SessionInterface):
         secure = self.get_cookie_secure(app)
         expires = self.get_expiration_time(app, session)
         val = self.get_signing_serializer(app).dumps(dict(session))
-
-        response.cookies[app.config.SESSION_COOKIE_NAME] = val
-        # response.cookies[app.config.SESSION_COOKIE_NAME]["expires"] = expires
-        # response.cookies[app.config.SESSION_COOKIE_NAME]["httponly"] = httponly
-        # response.cookies[app.config.SESSION_COOKIE_NAME]["domain"] = domain
-        # response.cookies[app.config.SESSION_COOKIE_NAME]["path"] = path
-        # response.cookies[app.config.SESSION_COOKIE_NAME]["secure"] = secure
+        session_cookie_name = app.config.SESSION_COOKIE_NAME
+        response.cookies[session_cookie_name] = val
+        if expires:
+            response.cookies[session_cookie_name]["expires"] = expires
+        response.cookies[session_cookie_name]["httponly"] = httponly
+        if domain:
+            response.cookies[session_cookie_name]["domain"] = domain
+        response.cookies[session_cookie_name]["path"] = path
+        response.cookies[session_cookie_name]["secure"] = secure

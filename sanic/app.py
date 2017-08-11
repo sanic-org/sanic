@@ -26,6 +26,7 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 session_interface = SecureCookieSessionInterface()
 
+
 class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,

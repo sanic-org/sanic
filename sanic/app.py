@@ -18,10 +18,13 @@ from sanic.log import log
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol, Signal
+from sanic.sessions import SecureCookieSessionInterface
 from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
+
+session_interface = SecureCookieSessionInterface()
 
 
 class Sanic:
@@ -388,8 +391,8 @@ class Sanic:
 
         if not uri or not route:
             raise URLBuildError(
-                    'Endpoint with name `{}` was not found'.format(
-                        view_name))
+                'Endpoint with name `{}` was not found'.format(
+                    view_name))
 
         if uri != '/' and uri.endswith('/'):
             uri = uri[:-1]
@@ -525,6 +528,7 @@ class Sanic:
             # -------------------------------------------- #
             # Response Middleware
             # -------------------------------------------- #
+            session_interface.save_session(self, request.session, response)
             try:
                 response = await self._run_response_middleware(request,
                                                                response)

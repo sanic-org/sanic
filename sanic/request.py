@@ -18,7 +18,9 @@ except ImportError:
 
 from sanic.exceptions import InvalidUsage
 from sanic.log import log
+from sanic.sessions import SecureCookieSessionInterface
 
+session_interface = SecureCookieSessionInterface()
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 # HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
@@ -45,13 +47,15 @@ class Request(dict):
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr'
+        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr',
+        '_session'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
         self.app = None
+        self._session = None
 
         self.headers = headers
         self.version = version
@@ -67,6 +71,15 @@ class Request(dict):
         self.uri_template = None
         self._cookies = None
         self.stream = None
+
+    @property
+    def session(self):
+        if self._session is None:
+            if self.app is None:
+                # TODO: 找到更合适的错误
+                raise RuntimeError("fetch session before app is set")
+            self._session = session_interface.open_session(self.app, self)
+        return self._session
 
     @property
     def json(self):

@@ -3,6 +3,7 @@ import sys
 import syslog
 import platform
 import types
+from datetime import timedelta
 
 from sanic.log import DefaultFilter
 
@@ -129,6 +130,9 @@ class Config(dict):
         self.WEBSOCKET_MAX_SIZE = 2 ** 20  # 1 megabytes
         self.WEBSOCKET_MAX_QUEUE = 32
         self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
+        self.SECRET_KEY = "secret_key"
+        self.SESSION_COOKIE_NAME = "session"
+        self.PERMANENT_SESSION_LIFETIME = timedelta(days=31)
 
         if load_env:
             self.load_environment_vars()

@@ -60,6 +60,7 @@ requirements = [
     ujson,
     'aiofiles>=0.3.0',
     'websockets>=3.2',
+    'itsdangerous>=0.24'
 ]
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")

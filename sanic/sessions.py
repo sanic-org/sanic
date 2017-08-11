@@ -289,7 +289,7 @@ class SecureCookieSessionInterface(SessionInterface):
         if not self.should_set_cookie(app, session):
             return
         httponly = self.get_cookie_httponly(app)
-        secure = self.get_cookie_secure(app)
+        # secure = self.get_cookie_secure(app)
         expires = self.get_expiration_time(app, session)
         val = self.get_signing_serializer(app).dumps(dict(session))
         session_cookie_name = app.config.SESSION_COOKIE_NAME
@@ -300,4 +300,4 @@ class SecureCookieSessionInterface(SessionInterface):
         if domain:
             response.cookies[session_cookie_name]["domain"] = domain
         response.cookies[session_cookie_name]["path"] = path
-        response.cookies[session_cookie_name]["secure"] = secure
+        # response.cookies[session_cookie_name]["secure"] = secure

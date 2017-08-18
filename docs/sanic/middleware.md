@@ -4,7 +4,7 @@ Middleware are functions which are executed before or after requests to the
 server. They can be used to modify the *request to* or *response from*
 user-defined handler functions.
 
-Additionally, Sanic providers listeners which allow you to run code at various points of your application's lifecycle.
+Additionally, Sanic provides listeners which allow you to run code at various points of your application's lifecycle.
 
 ## Middleware
 

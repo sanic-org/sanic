@@ -28,7 +28,7 @@ class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
-                 log_config=LOGGING):
+                 log_config=LOGGING, merge_routes=True):
         if log_config:
             logging.config.dictConfig(log_config)
         # Only set up a default log handler if the
@@ -63,6 +63,7 @@ class Sanic:
         self.is_request_stream = False
         self.websocket_enabled = False
         self.websocket_tasks = []
+        self.merge_routes = merge_routes
 
         # Register alternative method names
         self.go_fast = self.run
@@ -135,7 +136,7 @@ class Sanic:
                 handler.is_stream = stream
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes,
-                            version=version)
+                            version=version, merge_routes=self.merge_routes)
             return handler
 
         return response

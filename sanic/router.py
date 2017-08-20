@@ -234,6 +234,12 @@ class Router:
 
         if route and merge_routes:
             route = merge_route(route, methods, handler)
+        elif route and route.methods.intersection(methods):
+            # already existing method is not overloadable.
+            duplicated = methods.intersection(route.methods)
+            raise RouteExists(
+                "Route already registered: {} [{}]".format(
+                    uri, ','.join(list(duplicated))))
         else:
             # prefix the handler name with the blueprint name
             # if available

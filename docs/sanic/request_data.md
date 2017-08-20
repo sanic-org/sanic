@@ -71,6 +71,8 @@ The following variables are accessible as properties on `Request` objects:
       return text("You are trying to create a user with the following POST: %s" % request.body)
   ```
 
+- `headers` (dict) - A case-insensitive dictionary that contains the request headers.
+
 - `ip` (str) - IP address of the requester.
 
 - `app` - a reference to the Sanic application object that is handling this request. This is useful when inside blueprints or other handlers in modules that do not have access to the global `app` object.

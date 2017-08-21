@@ -28,7 +28,7 @@ class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
-                 log_config=LOGGING):
+                 log_config=LOGGING, strict_slashes=False):
         if log_config:
             logging.config.dictConfig(log_config)
         # Only set up a default log handler if the
@@ -58,6 +58,7 @@ class Sanic:
         self._blueprint_order = []
         self.debug = None
         self.sock = None
+        self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
         self.is_running = False
         self.is_request_stream = False
@@ -111,7 +112,7 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
-              strict_slashes=False, stream=False, version=None):
+              strict_slashes=None, stream=False, version=None):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
@@ -130,6 +131,9 @@ class Sanic:
         if stream:
             self.is_request_stream = True
 
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
+
         def response(handler):
             if stream:
                 handler.is_stream = stream
@@ -141,42 +145,42 @@ class Sanic:
         return response
 
     # Shorthand method decorators
-    def get(self, uri, host=None, strict_slashes=False, version=None):
+    def get(self, uri, host=None, strict_slashes=None, version=None):
         return self.route(uri, methods=frozenset({"GET"}), host=host,
                           strict_slashes=strict_slashes, version=version)
 
-    def post(self, uri, host=None, strict_slashes=False, stream=False,
+    def post(self, uri, host=None, strict_slashes=None, stream=False,
              version=None):
         return self.route(uri, methods=frozenset({"POST"}), host=host,
                           strict_slashes=strict_slashes, stream=stream,
                           version=version)
 
-    def put(self, uri, host=None, strict_slashes=False, stream=False,
+    def put(self, uri, host=None, strict_slashes=None, stream=False,
             version=None):
         return self.route(uri, methods=frozenset({"PUT"}), host=host,
                           strict_slashes=strict_slashes, stream=stream,
                           version=version)
 
-    def head(self, uri, host=None, strict_slashes=False, version=None):
+    def head(self, uri, host=None, strict_slashes=None, version=None):
         return self.route(uri, methods=frozenset({"HEAD"}), host=host,
                           strict_slashes=strict_slashes, version=version)
 
-    def options(self, uri, host=None, strict_slashes=False, version=None):
+    def options(self, uri, host=None, strict_slashes=None, version=None):
         return self.route(uri, methods=frozenset({"OPTIONS"}), host=host,
                           strict_slashes=strict_slashes, version=version)
 
-    def patch(self, uri, host=None, strict_slashes=False, stream=False,
+    def patch(self, uri, host=None, strict_slashes=None, stream=False,
               version=None):
         return self.route(uri, methods=frozenset({"PATCH"}), host=host,
                           strict_slashes=strict_slashes, stream=stream,
                           version=version)
 
-    def delete(self, uri, host=None, strict_slashes=False, version=None):
+    def delete(self, uri, host=None, strict_slashes=None, version=None):
         return self.route(uri, methods=frozenset({"DELETE"}), host=host,
                           strict_slashes=strict_slashes, version=version)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
-                  strict_slashes=False, version=None):
+                  strict_slashes=None, version=None):
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -208,13 +212,16 @@ class Sanic:
                     stream = True
                     break
 
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
+
         self.route(uri=uri, methods=methods, host=host,
                    strict_slashes=strict_slashes, stream=stream,
                    version=version)(handler)
         return handler
 
     # Decorator
-    def websocket(self, uri, host=None, strict_slashes=False,
+    def websocket(self, uri, host=None, strict_slashes=None,
                   subprotocols=None):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
@@ -229,6 +236,9 @@ class Sanic:
         # and will probably get confused as to why it's not working
         if not uri.startswith('/'):
             uri = '/' + uri
+
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
 
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
@@ -261,8 +271,11 @@ class Sanic:
         return response
 
     def add_websocket_route(self, handler, uri, host=None,
-                            strict_slashes=False):
+                            strict_slashes=None):
         """A helper method to register a function as a websocket route."""
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
+
         return self.websocket(uri, host=host,
                               strict_slashes=strict_slashes)(handler)
 

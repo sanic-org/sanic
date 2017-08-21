@@ -31,13 +31,13 @@ Hello World Example
 Installation
 ------------
 
--  ``python -m pip install sanic``
+-  ``pip install sanic``
 
 To install sanic without uvloop or json using bash, you can provide either or both of these environmental variables
 using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the NO_X to true will stop that features
 installation.
 
-- ``SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true python -m pip install sanic``
+- ``SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true pip install sanic``
 
 
 Documentation

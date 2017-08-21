@@ -23,6 +23,7 @@ class Blueprint:
 
         :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
+        :param strict_slashes: strict to trailing slash
         """
         self.name = name
         self.url_prefix = url_prefix

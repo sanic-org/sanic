@@ -239,3 +239,31 @@ def handler(request):
 
 app.blueprint(bp)
 ```
+
+## User defined route name
+
+You can pass `name` to change the route name to avoid using the default name  (`handler.__name__`).
+
+```python
+
+app = Sanic('test_named_route')
+
+@app.get('/get', name='get_handler')
+def handler(request):
+    return text('OK')
+
+# then you need use `app.url_for('get_handler')`
+# instead of # `app.url_for('handler')`
+
+# It also works for blueprints
+bp = Blueprint('test_named_bp')
+
+@bp.get('/bp/get', name='get_handler')
+def handler(request):
+    return text('OK')
+
+app.blueprint(bp)
+
+# then you need use `app.url_for('test_named_bp.get_handler')`
+# instead of `app.url_for('test_named_bp.handler')`
+```

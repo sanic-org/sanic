@@ -99,7 +99,7 @@ class Router:
         return name, _type, pattern
 
     def add(self, uri, methods, handler, host=None, strict_slashes=False,
-            version=None):
+            version=None, name=None):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -118,7 +118,7 @@ class Router:
             else:
                 uri = "/".join(["/v{}".format(str(version)), uri])
         # add regular version
-        self._add(uri, methods, handler, host)
+        self._add(uri, methods, handler, host, name)
 
         if strict_slashes:
             return
@@ -135,12 +135,12 @@ class Router:
         )
         # add version with trailing slash
         if slash_is_missing:
-            self._add(uri + '/', methods, handler, host)
+            self._add(uri + '/', methods, handler, host, name)
         # add version without trailing slash
         elif without_slash_is_missing:
-            self._add(uri[:-1], methods, handler, host)
+            self._add(uri[:-1], methods, handler, host, name)
 
-    def _add(self, uri, methods, handler, host=None):
+    def _add(self, uri, methods, handler, host=None, name=None):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -161,7 +161,7 @@ class Router:
                                      "host strings, not {!r}".format(host))
 
                 for host_ in host:
-                    self.add(uri, methods, handler, host_)
+                    self.add(uri, methods, handler, host_, name)
                 return
 
         # Dict for faster lookups of if method allowed
@@ -236,9 +236,9 @@ class Router:
             # if available
             if hasattr(handler, '__blueprintname__'):
                 handler_name = '{}.{}'.format(
-                    handler.__blueprintname__, handler.__name__)
+                    handler.__blueprintname__, name or handler.__name__)
             else:
-                handler_name = getattr(handler, '__name__', None)
+                handler_name = name or getattr(handler, '__name__', None)
 
             route = Route(
                 handler=handler, methods=methods, pattern=pattern,

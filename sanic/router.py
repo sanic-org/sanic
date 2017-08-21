@@ -99,7 +99,7 @@ class Router:
         return name, _type, pattern
 
     def add(self, uri, methods, handler, host=None, strict_slashes=False,
-            version=None):
+            version=None, merge_routes=True):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -118,7 +118,7 @@ class Router:
             else:
                 uri = "/".join(["/v{}".format(str(version)), uri])
         # add regular version
-        self._add(uri, methods, handler, host)
+        self._add(uri, methods, handler, host, merge_routes=merge_routes)
 
         if strict_slashes:
             return
@@ -135,12 +135,15 @@ class Router:
         )
         # add version with trailing slash
         if slash_is_missing:
-            self._add(uri + '/', methods, handler, host)
+            self._add(uri + '/', methods, handler, host,
+                      merge_routes=merge_routes)
         # add version without trailing slash
         elif without_slash_is_missing:
-            self._add(uri[:-1], methods, handler, host)
+            self._add(uri[:-1], methods, handler, host,
+                      merge_routes=merge_routes)
 
-    def _add(self, uri, methods, handler, host=None):
+    def _add(self, uri, methods, handler, host=None,
+             merge_routes=True):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -229,8 +232,14 @@ class Router:
         else:
             route = self.routes_all.get(uri)
 
-        if route:
+        if route and merge_routes:
             route = merge_route(route, methods, handler)
+        elif route and route.methods.intersection(methods):
+            # already existing method is not overloadable.
+            duplicated = methods.intersection(route.methods)
+            raise RouteExists(
+                "Route already registered: {} [{}]".format(
+                    uri, ','.join(list(duplicated))))
         else:
             # prefix the handler name with the blueprint name
             # if available

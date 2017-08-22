@@ -7,7 +7,6 @@ import pytest
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import text
-from sanic.router import RouteExists, RouteDoesNotExist
 from sanic.exceptions import URLBuildError
 from sanic.constants import HTTP_METHODS
 
@@ -360,11 +359,7 @@ def test_overload_routes():
         return text('OK1')
 
     @app.route('/overload', methods=['POST', 'PUT'], name='route_second')
-    async def handler2(request):
-        return text('OK2')
-
-    @app.route('/overload2', methods=['POST', 'PUT'], name='route_third')
-    async def handler3(request):
+    async def handler1(request):
         return text('OK2')
 
     request, response = app.test_client.get(app.url_for('route_first'))
@@ -376,16 +371,18 @@ def test_overload_routes():
     request, response = app.test_client.put(app.url_for('route_first'))
     assert response.text == 'OK2'
 
+    request, response = app.test_client.get(app.url_for('route_second'))
+    assert response.text == 'OK1'
+
+    request, response = app.test_client.post(app.url_for('route_second'))
+    assert response.text == 'OK2'
+
+    request, response = app.test_client.put(app.url_for('route_second'))
+    assert response.text == 'OK2'
+
     assert app.router.routes_all['/overload'].name == 'route_first'
     with pytest.raises(URLBuildError):
         app.url_for('handler1')
 
-    with pytest.raises(URLBuildError):
-        app.url_for('handler2')
-
-    with pytest.raises(URLBuildError):
-        app.url_for('route_second')
-
-    assert app.url_for('route_third') == '/overload2'
-    with pytest.raises(URLBuildError):
-        app.url_for('handler3')
+    assert app.url_for('route_first') == '/overload'
+    assert app.url_for('route_second') == app.url_for('route_first')

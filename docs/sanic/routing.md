@@ -266,4 +266,38 @@ app.blueprint(bp)
 
 # then you need use `app.url_for('test_named_bp.get_handler')`
 # instead of `app.url_for('test_named_bp.handler')`
+
+# different names can be used for same url with different methods
+
+@app.get('/test', name='route_test')
+def handler(request):
+    return text('OK')
+
+@app.post('/test', name='route_post')
+def handler2(request):
+    return text('OK POST')
+
+@app.put('/test', name='route_put')
+def handler3(request):
+    return text('OK PUT')
+
+# below url are the same, you can use any of them
+# '/test'
+app.url_for('route_test')
+# app.url_for('route_post')
+# app.url_for('route_put')
+
+# for same handler name with different methods
+# you need specify the name (it's url_for issue)
+@app.get('/get')
+def handler(request):
+    return text('OK')
+
+@app.post('/post', name='post_handler')
+def handler(request):
+    return text('OK')
+
+# then
+# app.url_for('handler') == '/get'
+# app.url_for('post_handler') == '/post'
 ```

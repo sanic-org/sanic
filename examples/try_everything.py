@@ -18,7 +18,7 @@ def test_sync(request):
     return response.json({"test": True})
 
 
-@app.route("/dynamic/<name>/<id:int>")
+@app.route("/dynamic/<name>/<i:int>")
 def test_params(request, name, i):
     return response.text("yeehaww {} {}".format(name, i))
 

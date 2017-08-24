@@ -31,14 +31,18 @@ def exception_app():
     def handler_403(request):
         raise Forbidden("Forbidden")
 
+    @app.route('/401')
+    def handler_401(request):
+        raise Unauthorized("Unauthorized")
+
     @app.route('/401/basic')
     def handler_401_basic(request):
-        raise Unauthorized("Unauthorized", "Basic", realm="Sanic")
+        raise Unauthorized("Unauthorized", scheme="Basic", realm="Sanic")
 
     @app.route('/401/digest')
     def handler_401_digest(request):
         raise Unauthorized("Unauthorized",
-                           "Digest",
+                           scheme="Digest",
                            realm="Sanic",
                            qop="auth, auth-int",
                            algorithm="MD5",
@@ -47,11 +51,15 @@ def exception_app():
 
     @app.route('/401/bearer')
     def handler_401_bearer(request):
-        raise Unauthorized("Unauthorized", "Bearer")
+        raise Unauthorized("Unauthorized", scheme="Bearer")
 
     @app.route('/invalid')
     def handler_invalid(request):
         raise InvalidUsage("OK")
+
+    @app.route('/abort/401')
+    def handler_invalid(request):
+        abort(401)
 
     @app.route('/abort')
     def handler_invalid(request):
@@ -124,6 +132,9 @@ def test_forbidden_exception(exception_app):
 
 def test_unauthorized_exception(exception_app):
     """Test the built-in Unauthorized exception"""
+    request, response = exception_app.test_client.get('/401')
+    assert response.status == 401
+
     request, response = exception_app.test_client.get('/401/basic')
     assert response.status == 401
     assert response.headers.get('WWW-Authenticate') is not None
@@ -186,5 +197,8 @@ def test_exception_in_exception_handler_debug_off(exception_app):
 
 def test_abort(exception_app):
     """Test the abort function"""
+    request, response = exception_app.test_client.get('/abort/401')
+    assert response.status == 401
+
     request, response = exception_app.test_client.get('/abort')
     assert response.status == 500

@@ -209,6 +209,7 @@ class Unauthorized(SanicException):
     Unauthorized exception (401 HTTP status code).
 
     :param message: Message describing the exception.
+    :param status_code: HTTP Status code.
     :param scheme: Name of the authentication scheme to be used.
 
     When present, kwargs is used to complete the WWW-Authentication header.
@@ -216,11 +217,13 @@ class Unauthorized(SanicException):
     Examples::
 
         # With a Basic auth-scheme, realm MUST be present:
-        raise Unauthorized("Auth required.", "Basic", realm="Restricted Area")
+        raise Unauthorized("Auth required.",
+                           scheme="Basic",
+                           realm="Restricted Area")
 
         # With a Digest auth-scheme, things are a bit more complicated:
         raise Unauthorized("Auth required.",
-                           "Digest",
+                           scheme="Digest",
                            realm="Restricted Area",
                            qop="auth, auth-int",
                            algorithm="MD5",
@@ -228,20 +231,24 @@ class Unauthorized(SanicException):
                            opaque="zyxwvu")
 
         # With a Bearer auth-scheme, realm is optional so you can write:
-        raise Unauthorized("Auth required.", "Bearer")
+        raise Unauthorized("Auth required.", scheme="Bearer")
 
         # or, if you want to specify the realm:
-        raise Unauthorized("Auth required.", "Bearer", realm="Restricted Area")
+        raise Unauthorized("Auth required.",
+                           scheme="Bearer",
+                           realm="Restricted Area")
     """
-    def __init__(self, message, scheme, **kwargs):
-        super().__init__(message)
+    def __init__(self, message, status_code=None, scheme=None, **kwargs):
+        super().__init__(message, status_code)
 
-        values = ["{!s}={!r}".format(k, v) for k, v in kwargs.items()]
-        challenge = ', '.join(values)
+        # if auth-scheme is specified, set "WWW-Authenticate" header
+        if scheme is not None:
+            values = ["{!s}={!r}".format(k, v) for k, v in kwargs.items()]
+            challenge = ', '.join(values)
 
-        self.headers = {
-            "WWW-Authenticate": "{} {}".format(scheme, challenge).rstrip()
-        }
+            self.headers = {
+                "WWW-Authenticate": "{} {}".format(scheme, challenge).rstrip()
+            }
 
 
 def abort(status_code, message=None):

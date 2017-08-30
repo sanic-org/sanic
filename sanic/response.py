@@ -2,10 +2,11 @@ from mimetypes import guess_type
 from os import path
 
 try:
-    from ujson import dumps as json_dumps
+    from ujson import dumps as ujson_dumps
 except:
-    from json import dumps as json_dumps
-
+    from json import dumps as jjson_dumps
+finally:
+    from json import dumps as jjson_dumps
 from aiofiles import open as open_async
 
 from sanic.cookies import CookieJar
@@ -244,8 +245,12 @@ def json(body, status=200, headers=None,
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
-    return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
-                        status=status, content_type=content_type)
+    try:
+        return HTTPResponse(ujson_dumps(body, **kwargs), headers=headers,
+                            status=status, content_type=content_type)
+    except Exception as e:
+        return HTTPResponse(jjson_dumps(body, **kwargs), headers=headers,
+                            status=status, content_type=content_type)
 
 
 def text(body, status=200, headers=None,

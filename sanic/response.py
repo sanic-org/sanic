@@ -2,7 +2,7 @@ from mimetypes import guess_type
 from os import path
 
 try:
-    from ujson import dumps as ujson_dumps
+    from ujson import dumps as json_dumps
 except:
     from json import dumps as jjson_dumps
 finally:
@@ -246,7 +246,7 @@ def json(body, status=200, headers=None,
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
     try:
-        return HTTPResponse(ujson_dumps(body, **kwargs), headers=headers,
+        return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
                             status=status, content_type=content_type)
     except Exception as e:
         return HTTPResponse(jjson_dumps(body, **kwargs), headers=headers,

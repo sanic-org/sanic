@@ -4,7 +4,7 @@ from os import path
 try:
     from ujson import dumps as json_dumps
 except:
-    from json import dumps as jjson_dumps
+    from json import dumps as json_dumps
 finally:
     from json import dumps as jjson_dumps
 from aiofiles import open as open_async

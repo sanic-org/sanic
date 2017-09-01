@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
 from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import text
 import pytest
 
 
@@ -29,21 +29,41 @@ def test_cookies():
         (False, False),
         (True, True),
 ])
-def test_false_cookies(httponly, expected):
+def test_http_only_cookies(httponly, expected):
     app = Sanic('test_text')
 
     @app.route('/')
     def handler(request):
-        response = text('Cookies are: {}'.format(request.cookies['test']))
+        response = text('Giving you cookies')
         response.cookies['right_back'] = 'at you'
         response.cookies['right_back']['httponly'] = httponly
         return response
 
     request, response = app.test_client.get('/')
-    response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
+    set_cookie_text = response.headers.get('Set-Cookie', '')
 
-    'HttpOnly' in response_cookies == expected
+    assert ('HttpOnly' in set_cookie_text) == expected
+    assert 'HttpOnly=' not in set_cookie_text
+
+@pytest.mark.parametrize("secure,expected", [
+        (False, False),
+        (True, True),
+])
+def test_secure_cookies(secure, expected):
+    app = Sanic('test_text')
+
+    @app.route('/')
+    def handler(request):
+        response = text('Giving you cookies')
+        response.cookies['right_back'] = 'at you'
+        response.cookies['right_back']['secure'] = secure
+        return response
+
+    request, response = app.test_client.get('/')
+    set_cookie_text = response.headers.get('Set-Cookie', '')
+
+    assert ('Secure' in set_cookie_text) == expected
+    assert 'Secure=' not in set_cookie_text
 
 def test_http2_cookies():
     app = Sanic('test_http2_cookies')
@@ -93,4 +113,4 @@ def test_cookie_deletion():
 
     assert int(response_cookies['i_want_to_die']['max-age']) == 0
     with pytest.raises(KeyError):
-        hold_my_beer = response.cookies['i_never_existed']
+        response.cookies['i_never_existed']

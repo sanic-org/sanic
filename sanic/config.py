@@ -132,7 +132,7 @@ class Config(dict):
 
         if load_env:
             prefix = SANIC_PREFIX if load_env == True else load_env
-            self.load_environment_vars(prefix=load_env)
+            self.load_environment_vars(prefix=prefix)
 
     def __getattr__(self, attr):
         try:

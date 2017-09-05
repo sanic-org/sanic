@@ -131,7 +131,8 @@ class Config(dict):
         self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
 
         if load_env:
-            self.load_environment_vars()
+            prefix = SANIC_PREFIX if load_env == True else load_env
+            self.load_environment_vars(prefix=load_env)
 
     def __getattr__(self, attr):
         try:

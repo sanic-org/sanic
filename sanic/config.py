@@ -131,7 +131,8 @@ class Config(dict):
         self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
 
         if load_env:
-            self.load_environment_vars()
+            prefix = SANIC_PREFIX if load_env is True else load_env
+            self.load_environment_vars(prefix=prefix)
 
     def __getattr__(self, attr):
         try:
@@ -195,14 +196,14 @@ class Config(dict):
             if key.isupper():
                 self[key] = getattr(obj, key)
 
-    def load_environment_vars(self):
+    def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
-        Looks for any ``SANIC_`` prefixed environment variables and applies
+        Looks for prefixed environment variables and applies
         them to the configuration if present.
         """
         for k, v in os.environ.items():
-            if k.startswith(SANIC_PREFIX):
-                _, config_key = k.split(SANIC_PREFIX, 1)
+            if k.startswith(prefix):
+                _, config_key = k.split(prefix, 1)
                 try:
                     self[config_key] = int(v)
                 except ValueError:

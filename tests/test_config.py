@@ -19,14 +19,20 @@ def test_load_from_object():
 def test_auto_load_env():
     environ["SANIC_TEST_ANSWER"] = "42"
     app = Sanic()
-    assert app.config.TEST_ANSWER == "42"
+    assert app.config.TEST_ANSWER == 42
     del environ["SANIC_TEST_ANSWER"]
 
-def test_auto_load_env():
+def test_dont_load_env():
     environ["SANIC_TEST_ANSWER"] = "42"
     app = Sanic(load_env=False)
     assert getattr(app.config, 'TEST_ANSWER', None) == None
     del environ["SANIC_TEST_ANSWER"]
+
+def test_load_env_prefix():
+    environ["MYAPP_TEST_ANSWER"] = "42"
+    app = Sanic(load_env='MYAPP_')
+    assert app.config.TEST_ANSWER == 42
+    del environ["MYAPP_TEST_ANSWER"]
 
 def test_load_from_file():
     app = Sanic('test_load_from_file')

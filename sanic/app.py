@@ -354,13 +354,13 @@ class Sanic:
     # Static Files
     def static(self, uri, file_or_directory, pattern=r'/?.+',
                use_modified_since=True, use_content_range=False,
-               stream_large_files=False):
+               stream_large_files=False, name='static'):
         """Register a root to serve files from. The input can either be a
         file or a directory. See
         """
         static_register(self, uri, file_or_directory, pattern,
                         use_modified_since, use_content_range,
-                        stream_large_files)
+                        stream_large_files, name)
 
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.
@@ -410,11 +410,31 @@ class Sanic:
             URLBuildError
         """
         # find the route by the supplied view name
-        uri, route = self.router.find_route_by_view_name(view_name)
+        kw = {}
+        # special static files url_for
+        if view_name == 'static':
+            kw.update(name=kwargs.pop('name', 'static'))
+        elif view_name.endswith('.static'):  # blueprint.static
+            kwargs.pop('name', None)
+            kw.update(name=view_name)
 
-        if not uri or not route:
+        uri, route = self.router.find_route_by_view_name(view_name, **kw)
+        if not (uri and route):
             raise URLBuildError('Endpoint with name `{}` was not found'.format(
                                 view_name))
+
+        if view_name == 'static' or view_name.endswith('.static'):
+            filename = kwargs.pop('filename', None)
+            # it's static folder
+            if '<file_uri:' in uri:
+                folder_ = uri.split('<file_uri:', 1)[0]
+                if folder_.endswith('/'):
+                    folder_ = folder_[:-1]
+
+                if filename.startswith('/'):
+                    filename = filename[1:]
+
+                uri = '{}/{}'.format(folder_, filename)
 
         if uri != '/' and uri.endswith('/'):
             uri = uri[:-1]
@@ -437,6 +457,13 @@ class Sanic:
         netloc = kwargs.pop('_server', None)
         if netloc is None and external:
             netloc = self.config.get('SERVER_NAME', '')
+
+        if external:
+            if not scheme:
+                scheme = netloc[:8].split(':', 1)[0]
+
+            if '://' in netloc[:8]:
+                netloc = netloc.split('://', 1)[-1]
 
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(

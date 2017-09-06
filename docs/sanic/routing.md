@@ -323,7 +323,7 @@ app.blueprint(bp)
 # then build the url
 app.url_for('static', filename='file.txt') == '/static/file.txt'
 app.url_for('static', name='static', filename='file.txt') == '/static/file.txt'
-app.url_for('static', name='uploads', filename='file.txt') == 'uploads/file.txt'
+app.url_for('static', name='uploads', filename='file.txt') == '/uploads/file.txt'
 app.url_for('static', name='best_png') == '/the_best.png'
 
 # blueprint url building

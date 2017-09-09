@@ -81,11 +81,11 @@ LOGGING = {
     },
     'loggers': {
         'sanic': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'handlers': ['internal', 'errorStream']
         },
         'network': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'handlers': ['accessStream', 'errorStream']
         }
     }

@@ -78,6 +78,65 @@ def test_bp_strict_slash():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
+def test_bp_strict_slash_default_value():
+    app = Sanic('test_route_strict_slash')
+    bp = Blueprint('test_text', strict_slashes=True)
+
+    @bp.get('/get')
+    def handler(request):
+        return text('OK')
+
+    @bp.post('/post/')
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(bp)
+
+    request, response = app.test_client.get('/get/')
+    assert response.status == 404
+
+    request, response = app.test_client.post('/post')
+    assert response.status == 404
+
+def test_bp_strict_slash_without_passing_default_value():
+    app = Sanic('test_route_strict_slash')
+    bp = Blueprint('test_text')
+
+    @bp.get('/get')
+    def handler(request):
+        return text('OK')
+
+    @bp.post('/post/')
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(bp)
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.post('/post')
+    assert response.text == 'OK'
+
+def test_bp_strict_slash_default_value_can_be_overwritten():
+    app = Sanic('test_route_strict_slash')
+    bp = Blueprint('test_text', strict_slashes=True)
+
+    @bp.get('/get', strict_slashes=False)
+    def handler(request):
+        return text('OK')
+
+    @bp.post('/post/', strict_slashes=False)
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(bp)
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.post('/post')
+    assert response.text == 'OK'
 
 def test_bp_with_url_prefix():
     app = Sanic('test_text')

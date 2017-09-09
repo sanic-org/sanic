@@ -28,7 +28,7 @@ class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
-                 log_config=LOGGING):
+                 log_config=LOGGING, strict_slashes=False):
         if log_config:
             logging.config.dictConfig(log_config)
         # Only set up a default log handler if the
@@ -58,6 +58,7 @@ class Sanic:
         self._blueprint_order = []
         self.debug = None
         self.sock = None
+        self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
         self.is_running = False
         self.is_request_stream = False
@@ -111,7 +112,7 @@ class Sanic:
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
-              strict_slashes=False, stream=False, version=None):
+              strict_slashes=None, stream=False, version=None, name=None):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
@@ -119,6 +120,8 @@ class Sanic:
         :param host:
         :param strict_slashes:
         :param stream:
+        :param version:
+        :param name: user defined route name for url_for
         :return: decorated function
         """
 
@@ -130,53 +133,64 @@ class Sanic:
         if stream:
             self.is_request_stream = True
 
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
+
         def response(handler):
             if stream:
                 handler.is_stream = stream
             self.router.add(uri=uri, methods=methods, handler=handler,
                             host=host, strict_slashes=strict_slashes,
-                            version=version)
+                            version=version, name=name)
             return handler
 
         return response
 
     # Shorthand method decorators
-    def get(self, uri, host=None, strict_slashes=False, version=None):
+    def get(self, uri, host=None, strict_slashes=None, version=None,
+            name=None):
         return self.route(uri, methods=frozenset({"GET"}), host=host,
-                          strict_slashes=strict_slashes, version=version)
+                          strict_slashes=strict_slashes, version=version,
+                          name=name)
 
-    def post(self, uri, host=None, strict_slashes=False, stream=False,
-             version=None):
+    def post(self, uri, host=None, strict_slashes=None, stream=False,
+             version=None, name=None):
         return self.route(uri, methods=frozenset({"POST"}), host=host,
                           strict_slashes=strict_slashes, stream=stream,
-                          version=version)
+                          version=version, name=name)
 
-    def put(self, uri, host=None, strict_slashes=False, stream=False,
-            version=None):
+    def put(self, uri, host=None, strict_slashes=None, stream=False,
+            version=None, name=None):
         return self.route(uri, methods=frozenset({"PUT"}), host=host,
                           strict_slashes=strict_slashes, stream=stream,
-                          version=version)
+                          version=version, name=name)
 
-    def head(self, uri, host=None, strict_slashes=False, version=None):
+    def head(self, uri, host=None, strict_slashes=None, version=None,
+             name=None):
         return self.route(uri, methods=frozenset({"HEAD"}), host=host,
-                          strict_slashes=strict_slashes, version=version)
+                          strict_slashes=strict_slashes, version=version,
+                          name=name)
 
-    def options(self, uri, host=None, strict_slashes=False, version=None):
+    def options(self, uri, host=None, strict_slashes=None, version=None,
+                name=None):
         return self.route(uri, methods=frozenset({"OPTIONS"}), host=host,
-                          strict_slashes=strict_slashes, version=version)
+                          strict_slashes=strict_slashes, version=version,
+                          name=name)
 
-    def patch(self, uri, host=None, strict_slashes=False, stream=False,
-              version=None):
+    def patch(self, uri, host=None, strict_slashes=None, stream=False,
+              version=None, name=None):
         return self.route(uri, methods=frozenset({"PATCH"}), host=host,
                           strict_slashes=strict_slashes, stream=stream,
-                          version=version)
+                          version=version, name=name)
 
-    def delete(self, uri, host=None, strict_slashes=False, version=None):
+    def delete(self, uri, host=None, strict_slashes=None, version=None,
+               name=None):
         return self.route(uri, methods=frozenset({"DELETE"}), host=host,
-                          strict_slashes=strict_slashes, version=version)
+                          strict_slashes=strict_slashes, version=version,
+                          name=name)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
-                  strict_slashes=False, version=None):
+                  strict_slashes=None, version=None, name=None):
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -186,6 +200,9 @@ class Sanic:
         :param methods: list or tuple of methods allowed, these are overridden
                         if using a HTTPMethodView
         :param host:
+        :param strict_slashes:
+        :param version:
+        :param name: user defined route name for url_for
         :return: function or class instance
         """
         stream = False
@@ -208,14 +225,17 @@ class Sanic:
                     stream = True
                     break
 
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
+
         self.route(uri=uri, methods=methods, host=host,
                    strict_slashes=strict_slashes, stream=stream,
-                   version=version)(handler)
+                   version=version, name=name)(handler)
         return handler
 
     # Decorator
-    def websocket(self, uri, host=None, strict_slashes=False,
-                  subprotocols=None):
+    def websocket(self, uri, host=None, strict_slashes=None,
+                  subprotocols=None, name=None):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
         :param subprotocols: optional list of strings with the supported
@@ -229,6 +249,9 @@ class Sanic:
         # and will probably get confused as to why it's not working
         if not uri.startswith('/'):
             uri = '/' + uri
+
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
 
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
@@ -255,16 +278,19 @@ class Sanic:
 
             self.router.add(uri=uri, handler=websocket_handler,
                             methods=frozenset({'GET'}), host=host,
-                            strict_slashes=strict_slashes)
+                            strict_slashes=strict_slashes, name=name)
             return handler
 
         return response
 
     def add_websocket_route(self, handler, uri, host=None,
-                            strict_slashes=False):
+                            strict_slashes=None, name=None):
         """A helper method to register a function as a websocket route."""
-        return self.websocket(uri, host=host,
-                              strict_slashes=strict_slashes)(handler)
+        if strict_slashes is None:
+            strict_slashes = self.strict_slashes
+
+        return self.websocket(uri, host=host, strict_slashes=strict_slashes,
+                              name=name)(handler)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -387,9 +413,8 @@ class Sanic:
         uri, route = self.router.find_route_by_view_name(view_name)
 
         if not uri or not route:
-            raise URLBuildError(
-                    'Endpoint with name `{}` was not found'.format(
-                        view_name))
+            raise URLBuildError('Endpoint with name `{}` was not found'.format(
+                                view_name))
 
         if uri != '/' and uri.endswith('/'):
             uri = uri[:-1]

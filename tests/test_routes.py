@@ -71,6 +71,36 @@ def test_route_strict_slash():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
+def test_route_strict_slash_default_value():
+    app = Sanic('test_route_strict_slash', strict_slashes=True)
+
+    @app.get('/get')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/get/')
+    assert response.status == 404
+
+def test_route_strict_slash_without_passing_default_value():
+    app = Sanic('test_route_strict_slash')
+
+    @app.get('/get')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
+def test_route_strict_slash_default_value_can_be_overwritten():
+    app = Sanic('test_route_strict_slash', strict_slashes=True)
+
+    @app.get('/get', strict_slashes=False)
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
 def test_route_optional_slash():
     app = Sanic('test_route_optional_slash')
 

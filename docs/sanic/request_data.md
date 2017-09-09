@@ -97,6 +97,7 @@ The following variables are accessible as properties on `Request` objects:
 - `path`: The path of the request: `/posts/1/`
 - `query_string`: The query string of the request: `foo=bar` or a blank string `''`
 - `uri_template`: Template for matching route handler: `/posts/<id>/`
+- `token`: The value of Authorization header: `Basic YWRtaW46YWRtaW4=`
 
 
 ## Accessing values using `get` and `getlist`

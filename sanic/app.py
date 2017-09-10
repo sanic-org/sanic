@@ -10,7 +10,7 @@ from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 from ssl import create_default_context, Purpose
 
-from sanic.config import Config, LOGGING
+from sanic.config import Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
@@ -28,18 +28,7 @@ class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
-                 log_config=LOGGING, strict_slashes=False):
-        if log_config:
-            logging.config.dictConfig(log_config)
-        # Only set up a default log handler if the
-        # end-user application didn't set anything up.
-        if not logging.root.handlers and log.level == logging.NOTSET:
-            formatter = logging.Formatter(
-                "%(asctime)s: %(levelname)s: %(message)s")
-            handler = logging.StreamHandler()
-            handler.setFormatter(formatter)
-            log.addHandler(handler)
-            log.setLevel(logging.INFO)
+                 strict_slashes=False):
 
         # Get name from previous stack frame
         if name is None:
@@ -51,7 +40,6 @@ class Sanic:
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
-        self.log_config = log_config
         self.request_middleware = deque()
         self.response_middleware = deque()
         self.blueprints = {}
@@ -642,7 +630,7 @@ class Sanic:
     async def create_server(self, host=None, port=None, debug=False,
                             ssl=None, sock=None, protocol=None,
                             backlog=100, stop_event=None,
-                            log_config=LOGGING):
+                            log_config=None):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred

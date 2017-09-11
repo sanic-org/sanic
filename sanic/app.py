@@ -745,6 +745,8 @@ class Sanic:
             'request_handler': self.handle_request,
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
+            'response_timeout': self.config.RESPONSE_TIMEOUT,
+            'keep_alive_timeout': self.config.KEEP_ALIVE_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
             'keep_alive': self.config.KEEP_ALIVE,
             'loop': loop,

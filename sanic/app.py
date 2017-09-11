@@ -567,7 +567,7 @@ class Sanic:
     def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            log_config=None):
+            access_log=True):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -588,9 +588,6 @@ class Sanic:
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
 
-        if log_config:
-            self.log_config = log_config
-            logging.config.dictConfig(log_config)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
@@ -603,7 +600,7 @@ class Sanic:
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             workers=workers, protocol=protocol, backlog=backlog,
             register_sys_signals=register_sys_signals,
-            has_log=self.log_config is not None)
+            access_log=access_log)
 
         try:
             self.is_running = True
@@ -630,7 +627,7 @@ class Sanic:
     async def create_server(self, host=None, port=None, debug=False,
                             ssl=None, sock=None, protocol=None,
                             backlog=100, stop_event=None,
-                            log_config=None):
+                            access_log=True):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
@@ -639,8 +636,6 @@ class Sanic:
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
 
-        if log_config:
-            logging.config.dictConfig(log_config)
         if protocol is None:
             protocol = (WebSocketProtocol if self.websocket_enabled
                         else HttpProtocol)
@@ -654,7 +649,7 @@ class Sanic:
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             loop=get_event_loop(), protocol=protocol,
             backlog=backlog, run_async=True,
-            has_log=log_config is not None)
+            access_log=access_log)
 
         # Trigger before_start events
         await self.trigger_events(
@@ -699,7 +694,7 @@ class Sanic:
     def _helper(self, host=None, port=None, debug=False,
                 ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, has_log=True):
+                register_sys_signals=True, run_async=False, access_log=True):
         """Helper function used by `run` and `create_server`."""
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -738,7 +733,7 @@ class Sanic:
             'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog,
-            'has_log': has_log,
+            'access_log': access_log,
             'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
             'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
             'graceful_shutdown_timeout': self.config.GRACEFUL_SHUTDOWN_TIMEOUT

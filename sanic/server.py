@@ -65,15 +65,15 @@ class HttpProtocol(asyncio.Protocol):
         # request config
         'request_handler', 'request_timeout', 'request_max_size',
         'request_class', 'is_request_stream', 'router',
-        # enable or disable access log / error log purpose
-        'has_log',
+        # enable or disable access log purpose
+        'access_log',
         # connection management
         '_total_request_size', '_timeout_handler', '_last_communication_time',
         '_is_stream_handler')
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
-                 request_max_size=None, request_class=None, has_log=True,
+                 request_max_size=None, request_class=None, access_log=True,
                  keep_alive=True, is_request_stream=False, router=None,
                  state=None, debug=False, **kwargs):
         self.loop = loop
@@ -84,7 +84,7 @@ class HttpProtocol(asyncio.Protocol):
         self.headers = None
         self.router = router
         self.signal = signal
-        self.has_log = has_log
+        self.access_log = access_log
         self.connections = connections
         self.request_handler = request_handler
         self.error_handler = error_handler
@@ -246,7 +246,7 @@ class HttpProtocol(asyncio.Protocol):
                 response.output(
                     self.request.version, keep_alive,
                     self.request_timeout))
-            if self.has_log:
+            if self.access_log:
                 netlog.info('', extra={
                     'status': response.status,
                     'byte': len(response.body),
@@ -288,7 +288,7 @@ class HttpProtocol(asyncio.Protocol):
             response.transport = self.transport
             await response.stream(
                 self.request.version, keep_alive, self.request_timeout)
-            if self.has_log:
+            if self.access_log:
                 netlog.info('', extra={
                     'status': response.status,
                     'byte': -1,
@@ -333,7 +333,7 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing error failed, connection closed {}".format(repr(e)),
                 from_error=True)
         finally:
-            if self.has_log:
+            if self.access_log:
                 extra = dict()
                 if isinstance(response, HTTPResponse):
                     extra['status'] = response.status
@@ -424,7 +424,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
-          signal=Signal(), request_class=None, has_log=True, keep_alive=True,
+          signal=Signal(), request_class=None, access_log=True, keep_alive=True,
           is_request_stream=False, router=None, websocket_max_size=None,
           websocket_max_queue=None, state=None,
           graceful_shutdown_timeout=15.0):
@@ -453,7 +453,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param loop: asyncio compatible event loop
     :param protocol: subclass of asyncio protocol class
     :param request_class: Request class to use
-    :param has_log: disable/enable access log and error log
+    :param access_log: disable/enable access log
     :param is_request_stream: disable/enable Request.stream
     :param router: Router object
     :return: Nothing
@@ -476,7 +476,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         request_timeout=request_timeout,
         request_max_size=request_max_size,
         request_class=request_class,
-        has_log=has_log,
+        access_log=access_log,
         keep_alive=keep_alive,
         is_request_stream=is_request_stream,
         router=router,

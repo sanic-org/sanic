@@ -4,8 +4,6 @@ import syslog
 import platform
 import types
 
-from sanic.log import DefaultFilter
-
 SANIC_PREFIX = 'SANIC_'
 
 _address_dict = {

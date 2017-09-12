@@ -17,6 +17,9 @@ URL_FOR_VALUE2 = '/myurl?arg1=v1&arg1=v2#anchor'
 URL_FOR_ARGS3 = dict(arg1='v1', _anchor='anchor', _scheme='http',
                      _server='localhost:{}'.format(test_port), _external=True)
 URL_FOR_VALUE3 = 'http://localhost:{}/myurl?arg1=v1#anchor'.format(test_port)
+URL_FOR_ARGS4 = dict(arg1='v1', _anchor='anchor', _external=True,
+                     _server='http://localhost:{}'.format(test_port),)
+URL_FOR_VALUE4 = 'http://localhost:{}/myurl?arg1=v1#anchor'.format(test_port)
 
 
 def _generate_handlers_from_names(app, l):
@@ -49,7 +52,8 @@ def test_simple_url_for_getting(simple_app):
 @pytest.mark.parametrize('args,url',
                          [(URL_FOR_ARGS1, URL_FOR_VALUE1),
                           (URL_FOR_ARGS2, URL_FOR_VALUE2),
-                          (URL_FOR_ARGS3, URL_FOR_VALUE3)])
+                          (URL_FOR_ARGS3, URL_FOR_VALUE3),
+                          (URL_FOR_ARGS4, URL_FOR_VALUE4)])
 def test_simple_url_for_getting_with_more_params(args, url):
     app = Sanic('more_url_build')
 

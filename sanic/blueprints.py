@@ -218,6 +218,11 @@ class Blueprint:
         :param uri: endpoint at which the route will be accessible.
         :param file_or_directory: Static asset.
         """
+        name = kwargs.pop('name', 'static')
+        if not name.startswith(self.name + '.'):
+            name = '{}.{}'.format(self.name, name)
+
+        kwargs.update(name=name)
         static = FutureStatic(uri, file_or_directory, args, kwargs)
         self.statics.append(static)
 

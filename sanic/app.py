@@ -14,7 +14,7 @@ from sanic.config import Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
-from sanic.log import log
+from sanic.log import logger, error_logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol, Signal
@@ -542,7 +542,7 @@ class Sanic:
                 response = await self._run_response_middleware(request,
                                                                response)
             except:
-                log.exception(
+                error_logger.exception(
                     'Exception occured in one of response middleware handlers'
                 )
 
@@ -609,12 +609,12 @@ class Sanic:
             else:
                 serve_multiple(server_settings, workers)
         except:
-            log.exception(
+            error_logger.exception(
                 'Experienced exception while trying to serve')
             raise
         finally:
             self.is_running = False
-        log.info("Server Stopped")
+        logger.info("Server Stopped")
 
     def stop(self):
         """This kills the Sanic"""
@@ -757,9 +757,9 @@ class Sanic:
             server_settings[settings_name] = listeners
 
         if debug:
-            log.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
         if self.config.LOGO is not None:
-            log.debug(self.config.LOGO)
+            logger.debug(self.config.LOGO)
 
         if run_async:
             server_settings['run_async'] = True
@@ -769,6 +769,6 @@ class Sanic:
             proto = "http"
             if ssl is not None:
                 proto = "https"
-            log.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+            logger.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         return server_settings

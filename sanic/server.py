@@ -24,7 +24,7 @@ try:
 except ImportError:
     async_loop = asyncio
 
-from sanic.log import log, netlog
+from sanic.log import logger, access_logger, error_logger
 from sanic.response import HTTPResponse
 from sanic.request import Request
 from sanic.exceptions import (
@@ -247,7 +247,7 @@ class HttpProtocol(asyncio.Protocol):
                     self.request.version, keep_alive,
                     self.request_timeout))
             if self.access_log:
-                netlog.info('', extra={
+                access_logger.info('', extra={
                     'status': response.status,
                     'byte': len(response.body),
                     'host': '{0}:{1}'.format(self.request.ip[0],
@@ -256,13 +256,13 @@ class HttpProtocol(asyncio.Protocol):
                                                 self.request.url)
                 })
         except AttributeError:
-            log.error(
+            logger.error(
                 ('Invalid response object for url {}, '
                  'Expected Type: HTTPResponse, Actual Type: {}').format(
                     self.url, type(response)))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            log.error(
+            logger.error(
                 'Connection lost before response written @ {}'.format(
                     self.request.ip))
         except Exception as e:
@@ -289,7 +289,7 @@ class HttpProtocol(asyncio.Protocol):
             await response.stream(
                 self.request.version, keep_alive, self.request_timeout)
             if self.access_log:
-                netlog.info('', extra={
+                access_logger.info('', extra={
                     'status': response.status,
                     'byte': -1,
                     'host': '{0}:{1}'.format(self.request.ip[0],
@@ -298,13 +298,13 @@ class HttpProtocol(asyncio.Protocol):
                                                 self.request.url)
                 })
         except AttributeError:
-            log.error(
+            logger.error(
                 ('Invalid response object for url {}, '
                  'Expected Type: HTTPResponse, Actual Type: {}').format(
                     self.url, type(response)))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            log.error(
+            logger.error(
                 'Connection lost before response written @ {}'.format(
                     self.request.ip))
         except Exception as e:
@@ -325,7 +325,7 @@ class HttpProtocol(asyncio.Protocol):
             version = self.request.version if self.request else '1.1'
             self.transport.write(response.output(version))
         except RuntimeError:
-            log.error(
+            logger.error(
                 'Connection lost before error written @ {}'.format(
                     self.request.ip if self.request else 'Unknown'))
         except Exception as e:
@@ -350,21 +350,21 @@ class HttpProtocol(asyncio.Protocol):
                     extra['request'] = 'nil'
                 if self.parser and not (self.keep_alive
                                         and extra['status'] == 408):
-                    netlog.info('', extra=extra)
+                    access_logger.info('', extra=extra)
             self.transport.close()
 
     def bail_out(self, message, from_error=False):
         if from_error or self.transport.is_closing():
-            log.error(
+            logger.error(
                 ("Transport closed @ {} and exception "
                  "experienced during error handling").format(
                     self.transport.get_extra_info('peername')))
-            log.debug(
+            logger.debug(
                 'Exception:\n{}'.format(traceback.format_exc()))
         else:
             exception = ServerError(message)
             self.write_error(exception)
-            log.error(message)
+            logger.error(message)
 
     def cleanup(self):
         self.parser = None
@@ -508,7 +508,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except:
-        log.exception("Unable to start server")
+        logger.exception("Unable to start server")
         return
 
     trigger_events(after_start, loop)
@@ -519,14 +519,14 @@ def serve(host, port, request_handler, error_handler, before_start=None,
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:
-                log.warn('Sanic tried to use loop.add_signal_handler but it is'
+                logger.warn('Sanic tried to use loop.add_signal_handler but it is'
                          ' not implemented on this platform.')
     pid = os.getpid()
     try:
-        log.info('Starting worker [{}]'.format(pid))
+        logger.info('Starting worker [{}]'.format(pid))
         loop.run_forever()
     finally:
-        log.info("Stopping worker [{}]".format(pid))
+        logger.info("Stopping worker [{}]".format(pid))
 
         # Run the on_stop function if provided
         trigger_events(before_stop, loop)
@@ -588,7 +588,7 @@ def serve_multiple(server_settings, workers):
         server_settings['port'] = None
 
     def sig_handler(signal, frame):
-        log.info("Received signal {}. Shutting down.".format(
+        logger.info("Received signal {}. Shutting down.".format(
             Signals(signal).name))
         for process in processes:
             os.kill(process.pid, SIGINT)

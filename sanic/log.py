@@ -8,7 +8,8 @@ LOGGING_CONFIG_DEFAULTS = dict(
         loggers={
             "root": {
                 "level": "INFO",
-                "handlers": ["console"]},
+                "handlers": ["console"]
+            },
             "sanic.error": {
                 "level": "INFO",
                 "handlers": ["error_console"],
@@ -45,12 +46,6 @@ LOGGING_CONFIG_DEFAULTS = dict(
 )
 
 
-class AccessLogger:
-
-    def __init__(self, logger, access_log_format=None):
-        pass
-
-
-log = logging.getLogger('sanic')
+logger = logging.getLogger('root')
 error_logger = logging.getLogger('sanic.error')
 access_logger = logging.getLogger('sanic.access')

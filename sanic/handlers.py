@@ -12,7 +12,7 @@ from sanic.exceptions import (
     TRACEBACK_WRAPPER_HTML,
     TRACEBACK_WRAPPER_INNER_HTML,
     TRACEBACK_BORDER)
-from sanic.log import log
+from sanic.log import logger
 from sanic.response import text, html
 
 
@@ -90,7 +90,7 @@ class ErrorHandler:
                     'Exception raised in exception handler "{}" '
                     'for uri: "{}"\n{}').format(
                         handler.__name__, url, format_exc())
-                log.error(response_message)
+                logger.error(response_message)
                 return text(response_message, 500)
             else:
                 return text('An error occurred while handling an error', 500)
@@ -101,7 +101,7 @@ class ErrorHandler:
         Override this method in an ErrorHandler subclass to prevent
         logging exceptions.
         """
-        getattr(log, level)(message)
+        getattr(logger, level)(message)
 
     def default(self, request, exception):
         self.log(format_exc())
@@ -117,7 +117,7 @@ class ErrorHandler:
             response_message = (
                 'Exception occurred while handling uri: "{}"\n{}'.format(
                     request.url, format_exc()))
-            log.error(response_message)
+            logger.error(response_message)
             return html(html_output, status=500)
         else:
             return html(INTERNAL_SERVER_ERROR_HTML, status=500)

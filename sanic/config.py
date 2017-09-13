@@ -4,14 +4,8 @@ import syslog
 import platform
 import types
 
-SANIC_PREFIX = 'SANIC_'
 
-_address_dict = {
-    'Windows': ('localhost', 514),
-    'Darwin': '/var/run/syslog',
-    'Linux': '/dev/log',
-    'FreeBSD': '/var/run/log'
-}
+SANIC_PREFIX = 'SANIC_'
 
 
 class Config(dict):

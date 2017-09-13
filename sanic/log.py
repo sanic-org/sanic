@@ -19,7 +19,7 @@ LOGGING_CONFIG_DEFAULTS = dict(
 
             "sanic.access": {
                 "level": "INFO",
-                "handlers": ["console"],
+                "handlers": ["access_console"],
                 "propagate": True,
                 "qualname": "sanic.access"
             }
@@ -35,13 +35,24 @@ LOGGING_CONFIG_DEFAULTS = dict(
                 "formatter": "generic",
                 "stream": "sys.stderr"
             },
+            "access_console": {
+                "class": "logging.StreamHandler",
+                "formatter": "access",
+                "stream": "sys.stdout"
+            },
         },
         formatters={
             "generic": {
                 "format": "%(asctime)s [%(process)d] [%(levelname)s] %(message)s",
                 "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
                 "class": "logging.Formatter"
-            }
+            },
+            "access": {
+                "format": "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: " +
+                          "%(request)s %(message)s %(status)d %(byte)d",
+                "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
+                "class": "logging.Formatter"
+            },
         }
 )
 

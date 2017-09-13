@@ -14,7 +14,7 @@ from sanic.config import Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
-from sanic.log import logger, error_logger
+from sanic.log import logger, error_logger, LOGGING_CONFIG_DEFAULTS
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol, Signal
@@ -28,12 +28,15 @@ class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
-                 strict_slashes=False):
+                 strict_slashes=False, log_config=None):
 
         # Get name from previous stack frame
         if name is None:
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
+
+        # logging
+        logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         self.name = name
         self.router = router or Router()
@@ -567,7 +570,7 @@ class Sanic:
     def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            access_log=True):
+            access_log=True, log_config=None):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -585,6 +588,8 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
+        logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
+
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
 
@@ -627,12 +632,14 @@ class Sanic:
     async def create_server(self, host=None, port=None, debug=False,
                             ssl=None, sock=None, protocol=None,
                             backlog=100, stop_event=None,
-                            access_log=True):
+                            access_log=True, log_config=None):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
+        logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
+
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
 

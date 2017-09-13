@@ -17,7 +17,7 @@ except ImportError:
         json_loads = json.loads
 
 from sanic.exceptions import InvalidUsage
-from sanic.log import logger
+from sanic.log import error_logger
 
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
@@ -114,7 +114,7 @@ class Request(dict):
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
             except Exception:
-                logger.exception("Failed when parsing form")
+                error_logger.exception("Failed when parsing form")
 
         return self.parsed_form
 

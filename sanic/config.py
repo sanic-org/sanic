@@ -129,7 +129,7 @@ class Config(dict):
         self.KEEP_ALIVE = keep_alive
         # Apache httpd server default keepalive timeout = 5 seconds
         # Nginx server default keepalive timeout = 75 seconds
-        # Nginx performance tuning guidelines uses keepalive timeout = 15 seconds
+        # Nginx performance tuning guidelines uses keepalive = 15 seconds
         # IE client hard keepalive limit = 60 seconds
         # Firefox client hard keepalive limit = 115 seconds
 

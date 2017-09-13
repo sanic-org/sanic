@@ -20,10 +20,11 @@ class ReuseableTCPConnector(TCPConnector):
         new_conn = yield from super(ReuseableTCPConnector, self)\
                                                          .connect(req)
         if self.old_proto is not None:
-            if self.old_proto != new_conn.protocol:
+            if self.old_proto != new_conn._protocol:
                 raise RuntimeError(
                     "We got a new connection, wanted the same one!")
-        self.old_proto = new_conn.protocol
+        print(new_conn.__dict__)
+        self.old_proto = new_conn._protocol
         return new_conn
 
 
@@ -64,6 +65,8 @@ class ReuseableSanicTestClient(SanicTestClient):
                     **request_kwargs)
                 results[-1] = response
             except Exception as e2:
+                import traceback
+                traceback.print_tb(e2.__traceback__)
                 exceptions.append(e2)
             #Don't stop here! self.app.stop()
 
@@ -80,6 +83,8 @@ class ReuseableSanicTestClient(SanicTestClient):
                 loop._stopping = False
                 http_server = loop.run_until_complete(_server_co)
             except Exception as e1:
+                import traceback
+                traceback.print_tb(e1.__traceback__)
                 raise e1
             self._server = _server = http_server
         server.trigger_events(
@@ -93,7 +98,9 @@ class ReuseableSanicTestClient(SanicTestClient):
                 loop.run_until_complete(_server.wait_closed())
                 self.app.stop()
             except Exception as e3:
-                    exceptions.append(e3)
+                import traceback
+                traceback.print_tb(e3.__traceback__)
+                exceptions.append(e3)
         if exceptions:
             raise ValueError(
                 "Exception during request: {}".format(exceptions))

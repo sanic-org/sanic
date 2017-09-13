@@ -193,7 +193,6 @@ class HttpProtocol(asyncio.Protocol):
             log.info('KeepAlive Timeout. Closing connection.')
             self.transport.close()
 
-
     # -------------------------------------------- #
     # Parsing
     # -------------------------------------------- #

@@ -570,7 +570,7 @@ class Sanic:
     def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            access_log=True, log_config=None):
+            access_log=True):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -588,7 +588,6 @@ class Sanic:
         :param protocol: Subclass of asyncio protocol class
         :return: Nothing
         """
-        logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -632,13 +631,12 @@ class Sanic:
     async def create_server(self, host=None, port=None, debug=False,
                             ssl=None, sock=None, protocol=None,
                             backlog=100, stop_event=None,
-                            access_log=True, log_config=None):
+                            access_log=True):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
               way to run a Sanic application.
         """
-        logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000

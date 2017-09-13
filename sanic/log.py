@@ -1,4 +1,5 @@
 import logging
+import sys
 
 
 LOGGING_CONFIG_DEFAULTS = dict(
@@ -28,17 +29,17 @@ LOGGING_CONFIG_DEFAULTS = dict(
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "generic",
-            "stream": "sys.stdout"
+            "stream": sys.stdout
         },
         "error_console": {
             "class": "logging.StreamHandler",
             "formatter": "generic",
-            "stream": "sys.stderr"
+            "stream": sys.stderr
         },
         "access_console": {
             "class": "logging.StreamHandler",
             "formatter": "access",
-            "stream": "sys.stdout"
+            "stream": sys.stdout
         },
     },
     formatters={

@@ -24,7 +24,7 @@ try:
 except ImportError:
     async_loop = asyncio
 
-from sanic.log import logger, access_logger, error_logger
+from sanic.log import logger, access_logger
 from sanic.response import HTTPResponse
 from sanic.request import Request
 from sanic.exceptions import (
@@ -424,9 +424,9 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, ssl=None, sock=None, request_max_size=None,
           reuse_port=False, loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
-          signal=Signal(), request_class=None, access_log=True, keep_alive=True,
-          is_request_stream=False, router=None, websocket_max_size=None,
-          websocket_max_queue=None, state=None,
+          signal=Signal(), request_class=None, access_log=True,
+          keep_alive=True, is_request_stream=False, router=None,
+          websocket_max_size=None, websocket_max_queue=None, state=None,
           graceful_shutdown_timeout=15.0):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -519,8 +519,9 @@ def serve(host, port, request_handler, error_handler, before_start=None,
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:
-                logger.warn('Sanic tried to use loop.add_signal_handler but it is'
-                         ' not implemented on this platform.')
+                logger.warn(
+                    'Sanic tried to use loop.add_signal_handler but it is'
+                    ' not implemented on this platform.')
     pid = os.getpid()
     try:
         logger.info('Starting worker [{}]'.format(pid))

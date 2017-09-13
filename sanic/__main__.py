@@ -37,8 +37,8 @@ if __name__ == "__main__":
                 workers=args.workers, debug=args.debug, ssl=ssl)
     except ImportError as e:
         logger.error("No module named {} found.\n"
-                  "  Example File: project/sanic_server.py -> app\n"
-                  "  Example Module: project.sanic_server.app"
-                  .format(e.name))
+                     "  Example File: project/sanic_server.py -> app\n"
+                     "  Example Module: project.sanic_server.app"
+                     .format(e.name))
     except ValueError as e:
         logger.error("{}".format(e))

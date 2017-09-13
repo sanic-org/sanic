@@ -1,7 +1,4 @@
 import os
-import sys
-import syslog
-import platform
 import types
 
 

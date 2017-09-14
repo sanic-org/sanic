@@ -20,6 +20,13 @@ if __name__ == "__main__":
   app.run(debug=True, access_log=True)
 ```
 
+To use your own logging config, simply use `logging.config.dictConfig`, or
+pass `log_config` when you initialize `Sanic` app:
+
+```python
+app = Sanic('test', log_config=LOGGING_CONFIG)
+```
+
 And to close logging, simply assign access_log=False:
 
 ```python

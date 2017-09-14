@@ -54,7 +54,7 @@ There are three `loggers` used in sanic, and **must be defined if you want to cr
 #### Log format:
 
 In addition to default parameters provided by python (asctime, levelname, message),
-Sanic provides additional parameters for network logger with accessFilter:
+Sanic provides additional parameters for access logger with:
 
 - host (str)<br>
   request.ip

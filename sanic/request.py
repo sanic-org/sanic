@@ -68,6 +68,11 @@ class Request(dict):
         self._cookies = None
         self.stream = None
 
+    def __repr__(self):
+        if self.method is None or not self._parsed_url:
+            return '<%s>' % self.__class__.__name__
+        return '<%s: %s %r>' % (self.__class__.__name__, self.method, self.path)
+
     @property
     def json(self):
         if self.parsed_json is None:

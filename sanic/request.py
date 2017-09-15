@@ -71,10 +71,10 @@ class Request(dict):
 
     def __repr__(self):
         if self.method is None or not self.path:
-            return '<{class_name}>'.format(class_name=self.__class__.__name__)
-        return '<{class_name}: {method} {path}>'.format(class_name=self.__class__.__name__,
-                                                        method=self.method,
-                                                        path=self.path)
+            return '<{0}>'.format(self.__class__.__name__)
+        return '<{0}: {1} {2}>'.format(self.__class__.__name__,
+                                       self.method,
+                                       self.path)
 
     @property
     def json(self):

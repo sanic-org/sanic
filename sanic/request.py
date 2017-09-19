@@ -69,14 +69,24 @@ class Request(dict):
         self.stream = None
 
     @property
-    def json(self, loads=json_loads):
+    def json(self):
         if self.parsed_json is None:
             try:
-                self.parsed_json = loads(self.body)
+                self.parsed_json = json_loads(self.body)
             except Exception:
                 if not self.body:
                     return None
                 raise InvalidUsage("Failed when parsing body as json")
+
+        return self.parsed_json
+
+    def load_json(self, loads=json_loads):
+        try:
+            self.parsed_json = loads(self.body)
+        except Exception:
+            if not self.body:
+                return None
+            raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
 

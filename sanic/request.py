@@ -69,10 +69,10 @@ class Request(dict):
         self.stream = None
 
     @property
-    def json(self):
+    def json(self, loads=json_loads):
         if self.parsed_json is None:
             try:
-                self.parsed_json = json_loads(self.body)
+                self.parsed_json = loads(self.body)
             except Exception:
                 if not self.body:
                     return None

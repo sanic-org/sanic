@@ -1,12 +1,16 @@
 import os
 import sys
-import syslog
 import platform
 import types
 
 from sanic.log import DefaultFilter
 
 SANIC_PREFIX = 'SANIC_'
+
+try:
+    from syslog import LOG_DAEMON
+except ImportError:
+    LOG_DAEMON = 24
 
 _address_dict = {
     'Windows': ('localhost', 514),
@@ -66,7 +70,7 @@ LOGGING = {
             'class': 'logging.handlers.SysLogHandler',
             'address': _address_dict.get(platform.system(),
                                          ('localhost', 514)),
-            'facility': syslog.LOG_DAEMON,
+            'facility': LOG_DAEMON,
             'filters': ['accessFilter'],
             'formatter': 'access'
         },
@@ -74,7 +78,7 @@ LOGGING = {
             'class': 'logging.handlers.SysLogHandler',
             'address': _address_dict.get(platform.system(),
                                          ('localhost', 514)),
-            'facility': syslog.LOG_DAEMON,
+            'facility': LOG_DAEMON,
             'filters': ['errorFilter'],
             'formatter': 'simple'
         },

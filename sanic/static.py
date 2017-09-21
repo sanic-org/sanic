@@ -16,7 +16,7 @@ from sanic.handlers import ContentRangeHandler
 from sanic.response import file, file_stream, HTTPResponse
 
 
-def register(app, uri, file_or_directory, pattern,
+def register(app, uri, file_or_directory, host, pattern,
              use_modified_since, use_content_range,
              stream_large_files, name='static'):
     # TODO: Though sanic is not a file server, I feel like we should at least
@@ -29,6 +29,7 @@ def register(app, uri, file_or_directory, pattern,
     :param app: Sanic
     :param file_or_directory: File or directory path to serve from
     :param uri: URL to serve from
+    :param host: vhost to serve from. 'None' for all
     :param pattern: regular expression used to match files in the URL
     :param use_modified_since: If true, send file modified time, and return
                                not modified if the browser's matches the
@@ -103,7 +104,7 @@ def register(app, uri, file_or_directory, pattern,
                     if isinstance(stream_large_files, int):
                         threshold = stream_large_files
                     else:
-                        threshold = 1024*1000
+                        threshold = 1024 * 1000
 
                     if not stats:
                         stats = await stat(file_path)
@@ -122,4 +123,4 @@ def register(app, uri, file_or_directory, pattern,
     if not name.startswith('_static_'):
         name = '_static_{}'.format(name)
 
-    app.route(uri, methods=['GET', 'HEAD'], name=name)(_handler)
+    app.route(uri, methods=['GET', 'HEAD'], name=name, host=host)(_handler)

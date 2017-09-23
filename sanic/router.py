@@ -68,6 +68,7 @@ class Router:
     def __init__(self):
         self.routes_all = {}
         self.routes_names = {}
+        self.routes_static_files = {}
         self.routes_static = {}
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
@@ -148,6 +149,7 @@ class Router:
             provided, any method is allowed
         :param handler: request handler function.
             When executed, it should provide a response object.
+        :param name: user defined route name for url_for
         :return: Nothing
         """
         if host is not None:
@@ -231,6 +233,12 @@ class Router:
 
         # prefix the handler name with the blueprint name
         # if available
+        # special prefix for static files
+        is_static = False
+        if name and name.startswith('_static_'):
+            is_static = True
+            name = name.split('_static_', 1)[-1]
+
         if hasattr(handler, '__blueprintname__'):
             handler_name = '{}.{}'.format(
                 handler.__blueprintname__, name or handler.__name__)
@@ -245,9 +253,15 @@ class Router:
                 parameters=parameters, name=handler_name, uri=uri)
 
         self.routes_all[uri] = route
-        pairs = self.routes_names.get(handler_name)
-        if not (pairs and (pairs[0] + '/' == uri or uri + '/' == pairs[0])):
-            self.routes_names[handler_name] = (uri, route)
+        if is_static:
+            pair = self.routes_static_files.get(handler_name)
+            if not (pair and (pair[0] + '/' == uri or uri + '/' == pair[0])):
+                self.routes_static_files[handler_name] = (uri, route)
+
+        else:
+            pair = self.routes_names.get(handler_name)
+            if not (pair and (pair[0] + '/' == uri or uri + '/' == pair[0])):
+                self.routes_names[handler_name] = (uri, route)
 
         if properties['unhashable']:
             self.routes_always_check.append(route)
@@ -274,6 +288,11 @@ class Router:
                     self.routes_names.pop(handler_name)
                     break
 
+            for handler_name, pairs in self.routes_static_files.items():
+                if pairs[0] == uri:
+                    self.routes_static_files.pop(handler_name)
+                    break
+
         except KeyError:
             raise RouteDoesNotExist("Route was not registered: {}".format(uri))
 
@@ -289,14 +308,18 @@ class Router:
             self._get.cache_clear()
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
-    def find_route_by_view_name(self, view_name):
+    def find_route_by_view_name(self, view_name, name=None):
         """Find a route in the router based on the specified view name.
 
         :param view_name: string of view name to search by
+        :param kwargs: additional params, usually for static files
         :return: tuple containing (uri, Route)
         """
         if not view_name:
             return (None, None)
+
+        if view_name == 'static' or view_name.endswith('.static'):
+            return self.routes_static_files.get(name, (None, None))
 
         return self.routes_names.get(view_name, (None, None))
 

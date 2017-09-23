@@ -18,7 +18,7 @@ from sanic.response import file, file_stream, HTTPResponse
 
 def register(app, uri, file_or_directory, pattern,
              use_modified_since, use_content_range,
-             stream_large_files):
+             stream_large_files, name='static'):
     # TODO: Though sanic is not a file server, I feel like we should at least
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching
@@ -39,6 +39,7 @@ def register(app, uri, file_or_directory, pattern,
                               than the file() handler to send the file
                               If this is an integer, this represents the
                               threshold size to switch to file_stream()
+    :param name: user defined name used for url_for
     """
     # If we're not trying to match a file directly,
     # serve from the folder
@@ -117,4 +118,8 @@ def register(app, uri, file_or_directory, pattern,
                                path=file_or_directory,
                                relative_url=file_uri)
 
-    app.route(uri, methods=['GET', 'HEAD'])(_handler)
+    # special prefix for static files
+    if not name.startswith('_static_'):
+        name = '_static_{}'.format(name)
+
+    app.route(uri, methods=['GET', 'HEAD'], name=name)(_handler)

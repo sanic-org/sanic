@@ -189,10 +189,12 @@ class HttpProtocol(asyncio.Protocol):
                     and int(value) > self.request_max_size:
                 exception = PayloadTooLarge('Payload Too Large')
                 self.write_error(exception)
-
+            try:
+                value = value.decode()
+            except UnicodeDecodeError:
+                value = value.decode('latin_1')
             self.headers.append(
-                    (self._header_fragment.decode().casefold(),
-                     value.decode()))
+                    (self._header_fragment.decode().casefold(), value))
 
             self._header_fragment = b''
 

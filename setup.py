@@ -65,7 +65,7 @@ if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
 
-if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+if True or strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
 

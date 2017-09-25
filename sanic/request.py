@@ -71,12 +71,17 @@ class Request(dict):
     @property
     def json(self):
         if self.parsed_json is None:
-            try:
-                self.parsed_json = json_loads(self.body)
-            except Exception:
-                if not self.body:
-                    return None
-                raise InvalidUsage("Failed when parsing body as json")
+            self.load_json()
+
+        return self.parsed_json
+
+    def load_json(self, loads=json_loads):
+        try:
+            self.parsed_json = loads(self.body)
+        except Exception:
+            if not self.body:
+                return None
+            raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
 

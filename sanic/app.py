@@ -460,7 +460,10 @@ class Sanic:
 
         if external:
             if not scheme:
-                scheme = netloc[:8].split(':', 1)[0]
+                if ':' in netloc[:8]:
+                    scheme = netloc[:8].split(':', 1)[0]
+                else:
+                    scheme = 'http'
 
             if '://' in netloc[:8]:
                 netloc = netloc.split('://', 1)[-1]

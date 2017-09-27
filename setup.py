@@ -8,6 +8,7 @@ from distutils.errors import DistutilsPlatformError
 from distutils.util import strtobool
 
 from setuptools import setup
+from sys import platform
 
 
 def open_local(paths, mode='r', encoding='utf8'):
@@ -65,7 +66,7 @@ if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
 
-if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+if platform == "win32" or strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
 

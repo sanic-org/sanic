@@ -13,7 +13,7 @@ class SanicTestClient:
 
     async def _local_request(self, method, uri, cookies=None, *args, **kwargs):
         import aiohttp
-        if uri.startswith(('http:', 'https:', 'ftp:', 'ftps://' '//')):
+        if uri.startswith(('http:', 'https:', 'ftp:', 'ftps://', '//')):
             url = uri
         else:
             url = 'http://{host}:{port}{uri}'.format(
@@ -51,6 +51,7 @@ class SanicTestClient:
             def _collect_request(request):
                 if results[0] is None:
                     results[0] = request
+
             self.app.request_middleware.appendleft(_collect_request)
 
         @self.app.listener('after_server_start')

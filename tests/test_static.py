@@ -3,7 +3,8 @@ import os
 
 import pytest
 
-from sanic import Sanic
+
+from sanic import Sanic, exceptions
 
 
 @pytest.fixture(scope='module')
@@ -161,3 +162,38 @@ def test_static_content_range_error(file_name, static_file_directory):
     assert 'Content-Range' in response.headers
     assert response.headers['Content-Range'] == "bytes */%s" % (
         len(get_file_content(static_file_directory, file_name)),)
+
+
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+def test_static_file_vhost(static_file_directory, file_name):
+    app = Sanic('test_static')
+
+    app.static(
+        '/testing.file', get_file_path(static_file_directory, file_name), host='vhost')
+
+    # no vhost
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 404
+
+    # vhost
+    request, response = app.test_client.get('/testing.file', headers={"host": "vhost"})
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+def test_bp_static_file_vhost(static_file_directory, file_name):
+    from sanic import Blueprint
+
+    app = Sanic('test_static')
+    bp = Blueprint(name="bp", url_prefix="", host="vhost")
+    bp.static('/testing.file', get_file_path(static_file_directory, file_name))
+    app.blueprint(bp)
+
+
+    # no vhost
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 404
+
+    request, response = app.test_client.get('/testing.file', headers={"host": "vhost"})
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)

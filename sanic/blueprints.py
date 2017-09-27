@@ -14,7 +14,6 @@ FutureStatic = namedtuple('Route',
 
 
 class Blueprint:
-
     def __init__(self, name,
                  url_prefix=None,
                  host=None, version=None,
@@ -92,7 +91,7 @@ class Blueprint:
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
             app.static(uri, future.file_or_directory,
-                       *future.args, **future.kwargs)
+                       self.host, *future.args, **future.kwargs)
 
         # Event listeners
         for event, listeners in self.listeners.items():
@@ -115,6 +114,7 @@ class Blueprint:
                 name)
             self.routes.append(route)
             return handler
+
         return decorator
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
@@ -165,6 +165,7 @@ class Blueprint:
                                 False, version, name)
             self.websocket_routes.append(route)
             return handler
+
         return decorator
 
     def add_websocket_route(self, handler, uri, host=None, version=None,
@@ -184,13 +185,16 @@ class Blueprint:
 
         :param event: Event to listen to.
         """
+
         def decorator(listener):
             self.listeners[event].append(listener)
             return listener
+
         return decorator
 
     def middleware(self, *args, **kwargs):
         """Create a blueprint middleware from a decorated function."""
+
         def register_middleware(_middleware):
             future_middleware = FutureMiddleware(_middleware, args, kwargs)
             self.middlewares.append(future_middleware)
@@ -206,10 +210,12 @@ class Blueprint:
 
     def exception(self, *args, **kwargs):
         """Create a blueprint exception from a decorated function."""
+
         def decorator(handler):
             exception = FutureException(handler, args, kwargs)
             self.exceptions.append(exception)
             return handler
+
         return decorator
 
     def static(self, uri, file_or_directory, *args, **kwargs):

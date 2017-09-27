@@ -352,13 +352,13 @@ class Sanic:
                            attach_to=middleware_or_request)
 
     # Static Files
-    def static(self, uri, file_or_directory, pattern=r'/?.+',
+    def static(self, uri, file_or_directory, host=None, pattern=r'/?.+',
                use_modified_since=True, use_content_range=False,
                stream_large_files=False, name='static'):
         """Register a root to serve files from. The input can either be a
         file or a directory. See
         """
-        static_register(self, uri, file_or_directory, pattern,
+        static_register(self, uri, file_or_directory, host, pattern,
                         use_modified_since, use_content_range,
                         stream_large_files, name)
 

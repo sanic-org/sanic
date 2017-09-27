@@ -161,3 +161,20 @@ def test_static_content_range_error(file_name, static_file_directory):
     assert 'Content-Range' in response.headers
     assert response.headers['Content-Range'] == "bytes */%s" % (
         len(get_file_content(static_file_directory, file_name)),)
+
+
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+def test_static_file(static_file_directory, file_name):
+    app = Sanic('test_static')
+    app.static(
+        '/testing.file',
+        get_file_path(static_file_directory, file_name),
+        host="www.example.com"
+    )
+
+    headers = {"Host": "www.example.com"}
+    request, response = app.test_client.get('/testing.file', headers=headers)
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 404

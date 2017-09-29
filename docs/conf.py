@@ -25,7 +25,7 @@ import sanic
 
 # -- General configuration ------------------------------------------------
 
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinxcontrib.asyncio']
 
 templates_path = ['_templates']
 

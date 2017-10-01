@@ -345,13 +345,13 @@ class Sanic:
     # Static Files
     def static(self, uri, file_or_directory, pattern=r'/?.+',
                use_modified_since=True, use_content_range=False,
-               stream_large_files=False, name='static'):
+               stream_large_files=False, name='static', host=None):
         """Register a root to serve files from. The input can either be a
         file or a directory. See
         """
         static_register(self, uri, file_or_directory, pattern,
                         use_modified_since, use_content_range,
-                        stream_large_files, name)
+                        stream_large_files, name, host)
 
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.
@@ -451,7 +451,10 @@ class Sanic:
 
         if external:
             if not scheme:
-                scheme = netloc[:8].split(':', 1)[0]
+                if ':' in netloc[:8]:
+                    scheme = netloc[:8].split(':', 1)[0]
+                else:
+                    scheme = 'http'
 
             if '://' in netloc[:8]:
                 netloc = netloc.split('://', 1)[-1]
@@ -760,6 +763,8 @@ class Sanic:
             'request_handler': self.handle_request,
             'error_handler': self.error_handler,
             'request_timeout': self.config.REQUEST_TIMEOUT,
+            'response_timeout': self.config.RESPONSE_TIMEOUT,
+            'keep_alive_timeout': self.config.KEEP_ALIVE_TIMEOUT,
             'request_max_size': self.config.REQUEST_MAX_SIZE,
             'keep_alive': self.config.KEEP_ALIVE,
             'loop': loop,

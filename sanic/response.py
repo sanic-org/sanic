@@ -237,7 +237,8 @@ class HTTPResponse(BaseHTTPResponse):
 
 
 def json(body, status=200, headers=None,
-         content_type="application/json", **kwargs):
+         content_type="application/json", dumps=json_dumps,
+         **kwargs):
     """
     Returns response object with body in json format.
 
@@ -246,7 +247,7 @@ def json(body, status=200, headers=None,
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
-    return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
+    return HTTPResponse(dumps(body, **kwargs), headers=headers,
                         status=status, content_type=content_type)
 
 

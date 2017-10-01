@@ -18,7 +18,7 @@ from sanic.response import file, file_stream, HTTPResponse
 
 def register(app, uri, file_or_directory, pattern,
              use_modified_since, use_content_range,
-             stream_large_files, name='static'):
+             stream_large_files, name='static', host=None):
     # TODO: Though sanic is not a file server, I feel like we should at least
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching
@@ -122,4 +122,4 @@ def register(app, uri, file_or_directory, pattern,
     if not name.startswith('_static_'):
         name = '_static_{}'.format(name)
 
-    app.route(uri, methods=['GET', 'HEAD'], name=name)(_handler)
+    app.route(uri, methods=['GET', 'HEAD'], name=name, host=host)(_handler)

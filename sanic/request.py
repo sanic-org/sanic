@@ -19,8 +19,9 @@ except ImportError:
 from sanic.exceptions import InvalidUsage
 from sanic.log import error_logger
 
-
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+
+
 # HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
 # > If the media type remains unknown, the recipient SHOULD treat it
 # > as type "application/octet-stream"
@@ -68,15 +69,27 @@ class Request(dict):
         self._cookies = None
         self.stream = None
 
+    def __repr__(self):
+        if self.method is None or not self.path:
+            return '<{0}>'.format(self.__class__.__name__)
+        return '<{0}: {1} {2}>'.format(self.__class__.__name__,
+                                       self.method,
+                                       self.path)
+
     @property
     def json(self):
         if self.parsed_json is None:
-            try:
-                self.parsed_json = json_loads(self.body)
-            except Exception:
-                if not self.body:
-                    return None
-                raise InvalidUsage("Failed when parsing body as json")
+            self.load_json()
+
+        return self.parsed_json
+
+    def load_json(self, loads=json_loads):
+        try:
+            self.parsed_json = loads(self.body)
+        except Exception:
+            if not self.body:
+                return None
+            raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
 
@@ -170,8 +183,8 @@ class Request(dict):
             remote_addrs = [
                 addr for addr in [
                     addr.strip() for addr in forwarded_for
-                ] if addr
-            ]
+                    ] if addr
+                ]
             if len(remote_addrs) > 0:
                 self._remote_addr = remote_addrs[0]
             else:

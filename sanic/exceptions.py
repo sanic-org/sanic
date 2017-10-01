@@ -155,6 +155,13 @@ class ServerError(SanicException):
     pass
 
 
+@add_status_code(503)
+class ServiceUnavailable(SanicException):
+    """The server is currently unavailable (because it is overloaded or
+    down for maintenance). Generally, this is a temporary state."""
+    pass
+
+
 class URLBuildError(ServerError):
     pass
 
@@ -170,6 +177,13 @@ class FileNotFound(NotFound):
 
 @add_status_code(408)
 class RequestTimeout(SanicException):
+    """The Web server (running the Web site) thinks that there has been too
+    long an interval of time between 1) the establishment of an IP
+    connection (socket) between the client and the server and
+    2) the receipt of any data on that socket, so the server has dropped
+    the connection. The socket connection has actually been lost - the Web
+    server has 'timed out' on that particular socket connection.
+    """
     pass
 
 

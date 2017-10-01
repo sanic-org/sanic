@@ -129,7 +129,15 @@ class Config(dict):
 """
         self.REQUEST_MAX_SIZE = 100000000  # 100 megabytes
         self.REQUEST_TIMEOUT = 60  # 60 seconds
+        self.RESPONSE_TIMEOUT = 60  # 60 seconds
         self.KEEP_ALIVE = keep_alive
+        # Apache httpd server default keepalive timeout = 5 seconds
+        # Nginx server default keepalive timeout = 75 seconds
+        # Nginx performance tuning guidelines uses keepalive = 15 seconds
+        # IE client hard keepalive limit = 60 seconds
+        # Firefox client hard keepalive limit = 115 seconds
+
+        self.KEEP_ALIVE_TIMEOUT = 5  # 5 seconds
         self.WEBSOCKET_MAX_SIZE = 2 ** 20  # 1 megabytes
         self.WEBSOCKET_MAX_QUEUE = 32
         self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec

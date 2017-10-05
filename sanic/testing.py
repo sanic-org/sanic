@@ -1,7 +1,7 @@
 import traceback
 from json import JSONDecodeError
 
-from sanic.log import log
+from sanic.log import logger
 
 HOST = '127.0.0.1'
 PORT = 42101
@@ -19,7 +19,7 @@ class SanicTestClient:
             url = 'http://{host}:{port}{uri}'.format(
                 host=HOST, port=PORT, uri=uri)
 
-        log.info(url)
+        logger.info(url)
         conn = aiohttp.TCPConnector(verify_ssl=False)
         async with aiohttp.ClientSession(
                 cookies=cookies, connector=conn) as session:
@@ -61,7 +61,7 @@ class SanicTestClient:
                     **request_kwargs)
                 results[-1] = response
             except Exception as e:
-                log.error(
+                logger.error(
                     'Exception:\n{}'.format(traceback.format_exc()))
                 exceptions.append(e)
             self.app.stop()

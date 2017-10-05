@@ -320,7 +320,7 @@ class HttpProtocol(asyncio.Protocol):
                 extra['host'] = 'UNKNOWN'
                 extra['request'] = 'nil'
 
-            netlog.info('', extra=extra)
+            access_logger.info('', extra=extra)
 
     def write_response(self, response):
         """

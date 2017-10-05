@@ -301,7 +301,7 @@ class HttpProtocol(asyncio.Protocol):
     # Responding
     # -------------------------------------------- #
     def log_response(self, response):
-        if self.has_log:
+        if self.access_log:
             extra = {
                 'status': getattr(response, 'status', 0),
             }

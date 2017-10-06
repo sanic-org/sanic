@@ -300,6 +300,28 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
+    def log_response(self, response):
+        if self.access_log:
+            extra = {
+                'status': getattr(response, 'status', 0),
+            }
+
+            if isinstance(response, HTTPResponse):
+                extra['byte'] = len(response.body)
+            else:
+                extra['byte'] = -1
+
+            if self.request:
+                extra['host'] = '{0}:{1}'.format(self.request.ip[0],
+                                                 self.request.ip[1])
+                extra['request'] = '{0} {1}'.format(self.request.method,
+                                                    self.request.url)
+            else:
+                extra['host'] = 'UNKNOWN'
+                extra['request'] = 'nil'
+
+            access_logger.info('', extra=extra)
+
     def write_response(self, response):
         """
         Writes response content synchronously to the transport.
@@ -313,15 +335,7 @@ class HttpProtocol(asyncio.Protocol):
                 response.output(
                     self.request.version, keep_alive,
                     self.keep_alive_timeout))
-            if self.access_log:
-                access_logger.info('', extra={
-                    'status': response.status,
-                    'byte': len(response.body),
-                    'host': '{0}:{1}'.format(self.request.ip[0],
-                                             self.request.ip[1]),
-                    'request': '{0} {1}'.format(self.request.method,
-                                                self.request.url)
-                })
+            self.log_response(response)
         except AttributeError:
             logger.error(
                 ('Invalid response object for url {}, '
@@ -360,15 +374,7 @@ class HttpProtocol(asyncio.Protocol):
             response.transport = self.transport
             await response.stream(
                 self.request.version, keep_alive, self.keep_alive_timeout)
-            if self.access_log:
-                access_logger.info('', extra={
-                    'status': response.status,
-                    'byte': -1,
-                    'host': '{0}:{1}'.format(self.request.ip[0],
-                                             self.request.ip[1]),
-                    'request': '{0} {1}'.format(self.request.method,
-                                                self.request.url)
-                })
+            self.log_response(response)
         except AttributeError:
             logger.error(
                 ('Invalid response object for url {}, '
@@ -414,24 +420,9 @@ class HttpProtocol(asyncio.Protocol):
                     repr(e)), from_error=True
             )
         finally:
-            if self.access_log:
-                extra = dict()
-                if isinstance(response, HTTPResponse):
-                    extra['status'] = response.status
-                    extra['byte'] = len(response.body)
-                else:
-                    extra['status'] = 0
-                    extra['byte'] = -1
-                if self.request:
-                    extra['host'] = '%s:%d' % self.request.ip,
-                    extra['request'] = '%s %s' % (self.request.method,
-                                                  self.url)
-                else:
-                    extra['host'] = 'UNKNOWN'
-                    extra['request'] = 'nil'
-                if self.parser and not (self.keep_alive
-                                        and extra['status'] == 408):
-                    access_logger.info('', extra=extra)
+            if self.parser and (self.keep_alive
+                                or getattr(response, 'status', 0) == 408):
+                self.log_response(response)
             self.transport.close()
 
     def bail_out(self, message, from_error=False):

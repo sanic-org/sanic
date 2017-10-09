@@ -342,8 +342,10 @@ class HttpProtocol(asyncio.Protocol):
                          self.url, type(response))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            logger.error('Connection lost before response written @ %s',
-                         self.request.ip)
+            if self._debug:
+                logger.error('Connection lost before response written @ %s',
+                             self.request.ip)
+            keep_alive = False
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(
@@ -379,8 +381,10 @@ class HttpProtocol(asyncio.Protocol):
                          self.url, type(response))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            logger.error('Connection lost before response written @ %s',
-                         self.request.ip)
+            if self._debug:
+                logger.error('Connection lost before response written @ %s',
+                             self.request.ip)
+            keep_alive = False
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(
@@ -407,8 +411,9 @@ class HttpProtocol(asyncio.Protocol):
             version = self.request.version if self.request else '1.1'
             self.transport.write(response.output(version))
         except RuntimeError:
-            logger.error('Connection lost before error written @ %s',
-                         self.request.ip if self.request else 'Unknown')
+            if self._debug:
+                logger.error('Connection lost before error written @ %s',
+                             self.request.ip if self.request else 'Unknown')
         except Exception as e:
             self.bail_out(
                 "Writing error failed, connection closed {}".format(

@@ -94,7 +94,9 @@ class Router:
         if ':' in parameter_string:
             name, pattern = parameter_string.split(':', 1)
             if not name:
-                raise ValueError("Invalid parameter syntax: {}".format(parameter_string))
+                raise ValueError(
+                    "Invalid parameter syntax: {}".format(parameter_string)
+                )
 
         default = (str, pattern)
         # Pull from pre-configured types

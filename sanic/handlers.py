@@ -86,12 +86,13 @@ class ErrorHandler:
             self.log(format_exc())
             if self.debug:
                 url = getattr(request, 'url', 'unknown')
-                response_message = (
-                    'Exception raised in exception handler "{}" '
-                    'for uri: "{}"\n{}').format(
-                        handler.__name__, url, format_exc())
-                logger.error(response_message)
-                return text(response_message, 500)
+                response_message = ('Exception raised in exception handler '
+                                    '"%s" for uri: "%s"\n%s')
+                logger.error(response_message,
+                             handler.__name__, url, format_exc())
+
+                return text(response_message % (
+                    handler.__name__, url, format_exc()), 500)
             else:
                 return text('An error occurred while handling an error', 500)
         return response
@@ -114,10 +115,9 @@ class ErrorHandler:
         elif self.debug:
             html_output = self._render_traceback_html(exception, request)
 
-            response_message = (
-                'Exception occurred while handling uri: "{}"\n{}'.format(
-                    request.url, format_exc()))
-            logger.error(response_message)
+            response_message = ('Exception occurred while handling uri: '
+                                '"%s"\n%s')
+            logger.error(response_message, request.url, format_exc())
             return html(html_output, status=500)
         else:
             return html(INTERNAL_SERVER_ERROR_HTML, status=500)

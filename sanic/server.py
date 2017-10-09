@@ -337,15 +337,13 @@ class HttpProtocol(asyncio.Protocol):
                     self.keep_alive_timeout))
             self.log_response(response)
         except AttributeError:
-            logger.error(
-                ('Invalid response object for url {}, '
-                 'Expected Type: HTTPResponse, Actual Type: {}').format(
-                    self.url, type(response)))
+            logger.error('Invalid response object for url %s, '
+                         'Expected Type: HTTPResponse, Actual Type: %s',
+                         self.url, type(response))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            logger.error(
-                'Connection lost before response written @ {}'.format(
-                    self.request.ip))
+            logger.error('Connection lost before response written @ %s',
+                         self.request.ip)
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(
@@ -376,15 +374,13 @@ class HttpProtocol(asyncio.Protocol):
                 self.request.version, keep_alive, self.keep_alive_timeout)
             self.log_response(response)
         except AttributeError:
-            logger.error(
-                ('Invalid response object for url {}, '
-                 'Expected Type: HTTPResponse, Actual Type: {}').format(
-                    self.url, type(response)))
+            logger.error('Invalid response object for url %s, '
+                         'Expected Type: HTTPResponse, Actual Type: %s',
+                         self.url, type(response))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            logger.error(
-                'Connection lost before response written @ {}'.format(
-                    self.request.ip))
+            logger.error('Connection lost before response written @ %s',
+                         self.request.ip)
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(
@@ -411,9 +407,8 @@ class HttpProtocol(asyncio.Protocol):
             version = self.request.version if self.request else '1.1'
             self.transport.write(response.output(version))
         except RuntimeError:
-            logger.error(
-                'Connection lost before error written @ {}'.format(
-                    self.request.ip if self.request else 'Unknown'))
+            logger.error('Connection lost before error written @ %s',
+                         self.request.ip if self.request else 'Unknown')
         except Exception as e:
             self.bail_out(
                 "Writing error failed, connection closed {}".format(
@@ -427,12 +422,10 @@ class HttpProtocol(asyncio.Protocol):
 
     def bail_out(self, message, from_error=False):
         if from_error or self.transport.is_closing():
-            logger.error(
-                ("Transport closed @ {} and exception "
-                 "experienced during error handling").format(
-                    self.transport.get_extra_info('peername')))
-            logger.debug(
-                'Exception:\n{}'.format(traceback.format_exc()))
+            logger.error("Transport closed @ %s and exception "
+                         "experienced during error handling",
+                         self.transport.get_extra_info('peername'))
+            logger.debug('Exception:\n%s', traceback.format_exc())
         else:
             exception = ServerError(message)
             self.write_error(exception)
@@ -597,15 +590,14 @@ def serve(host, port, request_handler, error_handler, before_start=None,
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:
-                logger.warn(
-                    'Sanic tried to use loop.add_signal_handler but it is'
-                    ' not implemented on this platform.')
+                logger.warning('Sanic tried to use loop.add_signal_handler '
+                               'but it is not implemented on this platform.')
     pid = os.getpid()
     try:
-        logger.info('Starting worker [{}]'.format(pid))
+        logger.info('Starting worker [%s]', pid)
         loop.run_forever()
     finally:
-        logger.info("Stopping worker [{}]".format(pid))
+        logger.info("Stopping worker [%s]", pid)
 
         # Run the on_stop function if provided
         trigger_events(before_stop, loop)
@@ -667,8 +659,7 @@ def serve_multiple(server_settings, workers):
         server_settings['port'] = None
 
     def sig_handler(signal, frame):
-        logger.info("Received signal {}. Shutting down.".format(
-            Signals(signal).name))
+        logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         for process in processes:
             os.kill(process.pid, SIGINT)
 

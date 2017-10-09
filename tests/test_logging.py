@@ -104,4 +104,4 @@ def test_log_connection_lost(debug, monkeypatch):
         assert log.startswith(
             'Connection lost before response written @')
     else:
-        'Connection lost before response written @' not in log
+        assert 'Connection lost before response written @' not in log

@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from importlib import import_module
 
-from sanic.log import log
+from sanic.log import logger
 from sanic.app import Sanic
 
 if __name__ == "__main__":
@@ -36,9 +36,9 @@ if __name__ == "__main__":
         app.run(host=args.host, port=args.port,
                 workers=args.workers, debug=args.debug, ssl=ssl)
     except ImportError as e:
-        log.error("No module named {} found.\n"
-                  "  Example File: project/sanic_server.py -> app\n"
-                  "  Example Module: project.sanic_server.app"
-                  .format(e.name))
+        logger.error("No module named {} found.\n"
+                     "  Example File: project/sanic_server.py -> app\n"
+                     "  Example Module: project.sanic_server.app"
+                     .format(e.name))
     except ValueError as e:
-        log.error("{}".format(e))
+        logger.error("{}".format(e))

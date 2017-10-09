@@ -93,7 +93,14 @@ def ignore_404s(request, exception):
 Static files can be served globally, under the blueprint prefix.
 
 ```python
-bp.static('/folder/to/serve', '/web/path')
+
+# suppose bp.name == 'bp'
+
+bp.static('/web/path', '/folder/to/serve')
+# also you can pass name parameter to it for url_for
+bp.static('/web/path', '/folder/to/server', name='uploads')
+app.url_for('static', name='bp.uploads', filename='file.txt') == '/bp/web/path/file.txt'
+
 ```
 
 ## Start and stop

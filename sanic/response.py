@@ -56,6 +56,7 @@ ALL_STATUS_CODES = {
     415: b'Unsupported Media Type',
     416: b'Requested Range Not Satisfiable',
     417: b'Expectation Failed',
+    418: b'I\'m a teapot',
     422: b'Unprocessable Entity',
     423: b'Locked',
     424: b'Failed Dependency',
@@ -63,6 +64,7 @@ ALL_STATUS_CODES = {
     428: b'Precondition Required',
     429: b'Too Many Requests',
     431: b'Request Header Fields Too Large',
+    451: b'Unavailable For Legal Reasons',
     500: b'Internal Server Error',
     501: b'Not Implemented',
     502: b'Bad Gateway',
@@ -235,7 +237,8 @@ class HTTPResponse(BaseHTTPResponse):
 
 
 def json(body, status=200, headers=None,
-         content_type="application/json", **kwargs):
+         content_type="application/json", dumps=json_dumps,
+         **kwargs):
     """
     Returns response object with body in json format.
 
@@ -244,7 +247,7 @@ def json(body, status=200, headers=None,
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
-    return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
+    return HTTPResponse(dumps(body, **kwargs), headers=headers,
                         status=status, content_type=content_type)
 
 

@@ -98,7 +98,8 @@ class Cookie(dict):
     def __setitem__(self, key, value):
         if key not in self._keys:
             raise KeyError("Unknown cookie property")
-        return super().__setitem__(key, value)
+        if value is not False:
+            return super().__setitem__(key, value)
 
     def encode(self, encoding):
         output = ['%s=%s' % (self.key, _quote(self.value))]

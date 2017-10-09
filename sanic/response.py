@@ -305,7 +305,8 @@ async def file(
     headers = headers or {}
     if filename:
         headers.setdefault(
-            'Content-Disposition', f'attachment; filename="{filename}"')
+            'Content-Disposition',
+            'attachment; filename="{}"'.format(filename))
     filename = filename or path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:
@@ -339,7 +340,8 @@ async def file_stream(
     headers = headers or {}
     if filename:
         headers.setdefault(
-            'Content-Disposition', f'attachment; filename="{filename}"')
+            'Content-Disposition',
+            'attachment; filename="{}"'.format(filename))
     filename = filename or path.split(location)[-1]
 
     _file = await open_async(location, mode='rb')

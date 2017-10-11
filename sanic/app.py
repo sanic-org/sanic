@@ -54,7 +54,7 @@ class Sanic:
         self.is_running = False
         self.is_request_stream = False
         self.websocket_enabled = False
-        self.websocket_tasks = []
+        self.websocket_tasks = set()
 
         # Register alternative method names
         self.go_fast = self.run
@@ -259,7 +259,7 @@ class Sanic:
                 # its future is kept in self.websocket_tasks in case it
                 # needs to be cancelled due to the server being stopped
                 fut = ensure_future(handler(request, ws, *args, **kwargs))
-                self.websocket_tasks.append(fut)
+                self.websocket_tasks.add(fut)
                 try:
                     await fut
                 except (CancelledError, ConnectionClosed):

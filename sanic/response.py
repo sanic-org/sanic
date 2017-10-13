@@ -292,15 +292,22 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, mime_type=None, headers=None, _range=None):
+async def file(
+        location, mime_type=None, headers=None, filename=None, _range=None):
     """Return a response object with file data.
 
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
+    :param filename: Override filename.
     :param _range:
     """
-    filename = path.split(location)[-1]
+    headers = headers or {}
+    if filename:
+        headers.setdefault(
+            'Content-Disposition',
+            'attachment; filename="{}"'.format(filename))
+    filename = filename or path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:
         if _range:
@@ -312,24 +319,30 @@ async def file(location, mime_type=None, headers=None, _range=None):
             out_stream = await _file.read()
 
     mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
-
     return HTTPResponse(status=200,
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
 
 
-async def file_stream(location, chunk_size=4096, mime_type=None, headers=None,
-                      _range=None):
+async def file_stream(
+        location, chunk_size=4096, mime_type=None, headers=None,
+        filename=None, _range=None):
     """Return a streaming response object with file data.
 
     :param location: Location of file on system.
     :param chunk_size: The size of each chunk in the stream (in bytes)
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
+    :param filename: Override filename.
     :param _range:
     """
-    filename = path.split(location)[-1]
+    headers = headers or {}
+    if filename:
+        headers.setdefault(
+            'Content-Disposition',
+            'attachment; filename="{}"'.format(filename))
+    filename = filename or path.split(location)[-1]
 
     _file = await open_async(location, mode='rb')
 

@@ -71,6 +71,16 @@ def test_route_strict_slash():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
+def test_route_invalid_parameter_syntax():
+    with pytest.raises(ValueError):
+        app = Sanic('test_route_invalid_param_syntax')
+
+        @app.get('/get/<:string>', strict_slashes=True)
+        def handler(request):
+            return text('OK')
+
+        request, response = app.test_client.get('/get')
+
 def test_route_strict_slash_default_value():
     app = Sanic('test_route_strict_slash', strict_slashes=True)
 

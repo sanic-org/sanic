@@ -13,10 +13,18 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         self.websocket_max_queue = websocket_max_queue
 
-    def connection_timeout(self):
-        # timeouts make no sense for websocket routes
+    # timeouts make no sense for websocket routes
+    def request_timeout_callback(self):
         if self.websocket is None:
-            super().connection_timeout()
+            super().request_timeout_callback()
+
+    def response_timeout_callback(self):
+        if self.websocket is None:
+            super().response_timeout_callback()
+
+    def keep_alive_timeout_callback(self):
+        if self.websocket is None:
+            super().keep_alive_timeout_callback()
 
     def connection_lost(self, exc):
         if self.websocket is not None:

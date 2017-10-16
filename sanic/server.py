@@ -76,7 +76,7 @@ class HttpProtocol(asyncio.Protocol):
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
-                 response_timeout=60, keep_alive_timeout=15,
+                 response_timeout=60, keep_alive_timeout=5,
                  request_max_size=None, request_class=None, access_log=True,
                  keep_alive=True, is_request_stream=False, router=None,
                  state=None, debug=False, **kwargs):
@@ -192,6 +192,7 @@ class HttpProtocol(asyncio.Protocol):
         else:
             logger.info('KeepAlive Timeout. Closing connection.')
             self.transport.close()
+            self.transport = None
 
     # -------------------------------------------- #
     # Parsing
@@ -353,6 +354,7 @@ class HttpProtocol(asyncio.Protocol):
         finally:
             if not keep_alive:
                 self.transport.close()
+                self.transport = None
             else:
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout,
@@ -392,6 +394,7 @@ class HttpProtocol(asyncio.Protocol):
         finally:
             if not keep_alive:
                 self.transport.close()
+                self.transport = None
             else:
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout,
@@ -494,7 +497,7 @@ def trigger_events(events, loop):
 
 def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
-          request_timeout=60, response_timeout=60, keep_alive_timeout=60,
+          request_timeout=60, response_timeout=60, keep_alive_timeout=5,
           ssl=None, sock=None, request_max_size=None, reuse_port=False,
           loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
@@ -520,6 +523,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                        `app` instance and `loop`
     :param debug: enables debug output (slows server)
     :param request_timeout: time in seconds
+    :param response_timeout: time in seconds
+    :param keep_alive_timeout: time in seconds
     :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
     :param request_max_size: size in bytes, `None` for no limit

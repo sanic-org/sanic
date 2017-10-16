@@ -85,8 +85,35 @@ DB_USER = 'appuser'
 
 Out of the box there are just a few predefined values which can be overwritten when creating the application.
 
-    | Variable          | Default   | Description                       |
-    | ----------------- | --------- | --------------------------------- |
-    | REQUEST_MAX_SIZE  | 100000000 | How big a request may be (bytes)  |
-    | REQUEST_TIMEOUT   | 60        | How long a request can take (sec) |
-    | KEEP_ALIVE        | True      | Disables keep-alive when False    |
+    | Variable           | Default   | Description                                   |
+    | ------------------ | --------- | --------------------------------------------- |
+    | REQUEST_MAX_SIZE   | 100000000 | How big a request may be (bytes)              |
+    | REQUEST_TIMEOUT    | 60        | How long a request can take to arrive (sec)   |
+    | RESPONSE_TIMEOUT   | 60        | How long a response can take to process (sec) |
+    | KEEP_ALIVE         | True      | Disables keep-alive when False                |
+    | KEEP_ALIVE_TIMEOUT | 5         | How long to hold a TCP connection open (sec)  |
+
+### The different Timeout variables:
+
+A request timeout measures the duration of time between the instant when a new open TCP connection is passed to the Sanic backend server, and the instant when the whole HTTP request is received. If the time taken exceeds the `REQUEST_TIMEOUT` value (in seconds), this is considered a Client Error so Sanic generates a HTTP 408 response and sends that to the client. Adjust this value higher if your clients routinely pass very large request payloads or upload requests very slowly.
+
+A response timeout measures the duration of time between the instant the Sanic server passes the HTTP request to the Sanic App, and the instant a HTTP response is sent to the client. If the time taken exceeds the `RESPONSE_TIMEOUT` value (in seconds), this is considered a Server Error so Sanic generates a HTTP 503 response and sets that to the client. Adjust this value higher if your application is likely to have long-running process that delay the generation of a response.
+
+### What is Keep Alive? And what does the Keep Alive Timeout value do?
+
+Keep-Alive is a HTTP feature indroduced in HTTP 1.1. When sending a HTTP request, the client (usually a web browser application) can set a Keep-Alive header to indicate for the http server (Sanic) to not close the TCP connection after it has send the response. This allows the client to reuse the existing TCP connection to send subsequent HTTP requests, and ensures more efficient network traffic for both the client and the server.
+
+The `KEEP_ALIVE` config variable is set to `True` in Sanic by default. If you don't need this feature in your application, set it to `False` to cause all client connections to close immediately after a response is sent, regardless of the Keep-Alive header on the request.
+
+The amount of time the server holds the TCP connection open is decided by the server itself. In Sanic, that value is configured using the `KEEP_ALIVE_TIMEOUT` value. By default, it is set to 5 seconds, this is the same default setting as the Apache HTTP server and is a good balance between allowing enough time for the client to send a new request, and not holding open too many connections at once. Do not exceed 75 seconds unless you know your clients are using a browser which supports TCP connections held open for that long.
+
+For reference:
+```
+Apache httpd server default keepalive timeout = 5 seconds
+Nginx server default keepalive timeout = 75 seconds
+Nginx performance tuning guidelines uses keepalive = 15 seconds
+IE (5-9) client hard keepalive limit = 60 seconds
+Firefox client hard keepalive limit = 115 seconds
+Opera 11 client hard keepalive limit = 120 seconds
+Chrome 13+ client keepalive limit > 300+ seconds
+```

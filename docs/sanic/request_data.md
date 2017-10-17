@@ -120,3 +120,19 @@ args.get('titles') # => 'Post 1'
 
 args.getlist('titles') # => ['Post 1', 'Post 2']
 ```
+
+## Accessing the handler name with the request.endpoint attribute
+
+The `request.endpoint` attribute holds the handler's name. For instance, the below
+route will return "hello".
+
+```python
+from sanic.response import text
+from sanic import Sanic
+
+app = Sanic()
+
+@app.get("/")
+def hello(request):
+    return text(request.endpoint)
+```

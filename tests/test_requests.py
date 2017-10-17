@@ -369,3 +369,14 @@ def test_url_attributes_with_ssl(path, query, expected_url):
     assert parsed.path == request.path
     assert parsed.query == request.query_string
     assert parsed.netloc == request.host
+
+def test_endpoint_name():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    def my_unique_handler(request):
+        return text('Hello')
+
+    request, response = app.test_client.get('/')
+
+    assert request.endpoint == 'my_unique_handler'

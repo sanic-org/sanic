@@ -247,6 +247,7 @@ class Sanic:
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
+                request.endpoint = handler.__name__
                 try:
                     protocol = request.transport.get_protocol()
                 except AttributeError:
@@ -540,6 +541,7 @@ class Sanic:
 
                 # Fetch handler from router
                 handler, args, kwargs, uri = self.router.get(request)
+                request.endpoint = handler.__name__
                 request.uri_template = uri
                 if handler is None:
                     raise ServerError(

@@ -136,3 +136,24 @@ app = Sanic()
 def hello(request):
     return text(request.endpoint)
 ```
+
+Or, with a blueprint it will be include both, separated by a period. For example,
+ the below route would return foo.bar:
+
+```python
+from sanic import Sanic
+from sanic import Blueprint
+from sanic.response import text
+
+
+app = Sanic(__name__)
+blueprint = Blueprint('foo')
+
+@blueprint.get('/')
+async def bar(request):
+    return text(request.endpoint)
+
+app.blueprint(blueprint)
+
+app.run(host="0.0.0.0", port=8000, debug=True)
+```

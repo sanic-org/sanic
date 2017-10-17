@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Cors Example</title>
+</head>
+<body>
+<script>
+	var xhr1 = new XMLHttpRequest();
+
+	xhr1.onload = function () {
+		console.log(xhr1.responseText)
+	};
+
+	xhr1.open('GET', 'http://127.0.0.1:8000/');
+	xhr1.send();
+
+	var xhr2 = new XMLHttpRequest();
+
+	xhr2.onload = function () {
+		console.log(xhr2.responseText)
+	};
+
+	xhr2.open('GET', 'http://127.0.0.1:8000/t2');
+	xhr2.send();
+</script>
+
+<script>
+	var ws = new WebSocket('ws://127.0.0.1:8000/feed'),
+		messages = document.createElement('ul');
+	ws.onmessage = function (event) {
+		var messages = document.getElementsByTagName('ul')[0],
+			message = document.createElement('li'),
+			content = document.createTextNode('Received: ' + event.data);
+		message.appendChild(content);
+		messages.appendChild(message);
+	};
+	document.body.appendChild(messages);
+	window.setInterval(function () {
+		var data = 'bye!';
+		ws.send(data);
+		var messages = document.getElementsByTagName('ul')[0],
+			message = document.createElement('li'),
+			content = document.createTextNode('Sent: ' + data);
+		message.appendChild(content);
+		messages.appendChild(message);
+	}, 1000);
+</script>
+</body>
+</html>

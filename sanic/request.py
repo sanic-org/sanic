@@ -5,6 +5,7 @@ from collections import namedtuple
 from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
+from .ip import is_valid_ip, HEADER_PRECEDENCE_ORDER, NON_PUBLIC_IP_PREFIX
 
 try:
     from ujson import loads as json_loads
@@ -168,8 +169,14 @@ class Request(dict):
     @property
     def ip(self):
         if not hasattr(self, '_ip'):
-            self._ip = (self.transport.get_extra_info('peername') or
-                        (None, None))
+            self._ip = None
+            for key in HEADER_PRECEDENCE_ORDER:
+                value = self.headers.get(key, self.headers.get(key.replace('_', '-'), '')).strip()
+                if value is not None and value != '':
+                    for ip_str in [ip.strip().lower() for ip in value.split(',')]:
+                        if ip_str and is_valid_ip(ip_str):
+                            if not ip_str.startswith(NON_PUBLIC_IP_PREFIX):
+                                self._ip = ip_str
         return self._ip
 
     @property

@@ -312,7 +312,7 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 extra['byte'] = -1
 
-            if self.request:
+            if self.request is not None:
                 extra['host'] = '{0}:{1}'.format(self.request.ip[0],
                                                  self.request.ip[1])
                 extra['request'] = '{0} {1}'.format(self.request.method,

@@ -23,6 +23,9 @@ from sanic.websocket import WebSocketProtocol
 
 class GunicornWorker(base.Worker):
 
+    http_protocol = HttpProtocol
+    websocket_protocol = WebSocketProtocol
+
     def __init__(self, *args, **kw):  # pragma: no cover
         super().__init__(*args, **kw)
         cfg = self.cfg
@@ -46,8 +49,9 @@ class GunicornWorker(base.Worker):
 
     def run(self):
         is_debug = self.log.loglevel == logging.DEBUG
-        protocol = (WebSocketProtocol if self.app.callable.websocket_enabled
-                    else HttpProtocol)
+        protocol = (
+            self.websocket_protocol if self.app.callable.websocket_enabled
+            else self.http_protocol)
         self._server_settings = self.app.callable._helper(
             loop=self.loop,
             debug=is_debug,

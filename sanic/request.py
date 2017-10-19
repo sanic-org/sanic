@@ -5,6 +5,7 @@ from collections import namedtuple
 from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
+from .ip import is_valid_ip, HEADER_PRECEDENCE_ORDER, NON_PUBLIC_IP_PREFIX
 
 try:
     from ujson import loads as json_loads
@@ -166,11 +167,23 @@ class Request(dict):
         return self._cookies
 
     @property
-    def ip(self):
-        if not hasattr(self, '_ip'):
-            self._ip = (self.transport.get_extra_info('peername') or
-                        (None, None))
-        return self._ip
+    def ip(self, right_most_proxy=False):
+        # Need attr to differentiate the right_most_proxy thing
+        # Or we could use a separate method for right_most_proxy
+        attr = f'_ip{right_most_proxy}'
+        if not hasattr(self, attr):
+            setattr(self, attr, None)
+            for key in HEADER_PRECEDENCE_ORDER:
+                value = self.headers.get(key, self.headers.get(key.replace('_', '-'), '')).strip()
+                if value is not None and value != '':
+                    ips = [ip.strip().lower() for ip in value.split(',')]
+                    if right_most_proxy and len(ips) > 1:
+                        ips = reversed(ips)
+                    for ip_str in ips:
+                        if ip_str and is_valid_ip(ip_str):
+                            if not ip_str.startswith(NON_PUBLIC_IP_PREFIX):
+                                setattr(self, attr, ip_str)
+        return getattr(self, attr)
 
     @property
     def remote_addr(self):

@@ -1,4 +1,4 @@
-from sanic.response import STATUS_CODES
+from sanic.response import ALL_STATUS_CODES, COMMON_STATUS_CODES
 
 TRACEBACK_STYLE = '''
     <style>
@@ -275,7 +275,8 @@ def abort(status_code, message=None):
                     in response.py for the given status code.
     """
     if message is None:
-        message = STATUS_CODES.get(status_code)
+        message = COMMON_STATUS_CODES.get(status_code,
+                                          ALL_STATUS_CODES.get(status_code))
         # These are stored as bytes in the STATUS_CODES dict
         message = message.decode('utf8')
     sanic_exception = _sanic_exceptions.get(status_code, SanicException)

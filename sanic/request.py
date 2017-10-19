@@ -5,7 +5,6 @@ from collections import namedtuple
 from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
-from .ip import is_valid_ip, HEADER_PRECEDENCE_ORDER, NON_PUBLIC_IP_PREFIX
 
 try:
     from ujson import loads as json_loads

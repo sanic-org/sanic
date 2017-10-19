@@ -211,6 +211,32 @@ def test_content_type():
     assert response.text == 'application/json'
 
 
+def test_remote_addr():
+    app = Sanic('test_content_type')
+
+    @app.route('/')
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {
+        'X-Forwarded-For': '127.0.0.1, 127.0.1.2'
+    }
+    request, response = app.test_client.get('/', headers=headers)
+    assert request.remote_addr == '127.0.0.1'
+    assert response.text == '127.0.0.1'
+
+    request, response = app.test_client.get('/')
+    assert request.remote_addr == ''
+    assert response.text == ''
+
+    headers = {
+        'X-Forwarded-For': '127.0.0.1, ,   ,,127.0.1.2'
+    }
+    request, response = app.test_client.get('/', headers=headers)
+    assert request.remote_addr == '127.0.0.1'
+    assert response.text == '127.0.0.1'
+
+
 def test_match_info():
     app = Sanic('test_match_info')
 
@@ -258,6 +284,7 @@ def test_post_form_urlencoded():
     request, response = app.test_client.post('/', data=payload, headers=headers)
 
     assert request.form.get('test') == 'OK'
+
 
 @pytest.mark.parametrize(
     'payload', [

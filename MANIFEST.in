@@ -1,4 +1,7 @@
 include README.rst
+include MANIFEST.in
+include LICENSE
+include setup.py
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

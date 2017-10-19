@@ -4,11 +4,32 @@ import pytest
 from sanic import Sanic
 from sanic.response import text
 from sanic.router import RouteExists, RouteDoesNotExist
+from sanic.constants import HTTP_METHODS
 
 
 # ------------------------------------------------------------ #
 #  UTF-8
 # ------------------------------------------------------------ #
+
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_versioned_routes_get(method):
+    app = Sanic('test_shorhand_routes_get')
+
+    method = method.lower()
+
+    func = getattr(app, method)
+    if callable(func):
+        @func('/{}'.format(method), version=1)
+        def handler(request):
+            return text('OK')
+    else:
+        print(func)
+        raise
+
+    client_method = getattr(app.test_client, method)
+
+    request, response = client_method('/v1/{}'.format(method))
+    assert response.status== 200
 
 def test_shorthand_routes_get():
     app = Sanic('test_shorhand_routes_get')
@@ -49,6 +70,46 @@ def test_route_strict_slash():
 
     request, response = app.test_client.post('/post')
     assert response.status == 404
+
+def test_route_invalid_parameter_syntax():
+    with pytest.raises(ValueError):
+        app = Sanic('test_route_invalid_param_syntax')
+
+        @app.get('/get/<:string>', strict_slashes=True)
+        def handler(request):
+            return text('OK')
+
+        request, response = app.test_client.get('/get')
+
+def test_route_strict_slash_default_value():
+    app = Sanic('test_route_strict_slash', strict_slashes=True)
+
+    @app.get('/get')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/get/')
+    assert response.status == 404
+
+def test_route_strict_slash_without_passing_default_value():
+    app = Sanic('test_route_strict_slash')
+
+    @app.get('/get')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
+def test_route_strict_slash_default_value_can_be_overwritten():
+    app = Sanic('test_route_strict_slash', strict_slashes=True)
+
+    @app.get('/get', strict_slashes=False)
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
 
 def test_route_optional_slash():
     app = Sanic('test_route_optional_slash')
@@ -320,6 +381,7 @@ def test_websocket_route():
 
     @app.websocket('/ws')
     async def handler(request, ws):
+        assert ws.subprotocol is None
         ev.set()
 
     request, response = app.test_client.get('/ws', headers={
@@ -329,6 +391,48 @@ def test_websocket_route():
         'Sec-WebSocket-Version': '13'})
     assert response.status == 101
     assert ev.is_set()
+
+
+def test_websocket_route_with_subprotocols():
+    app = Sanic('test_websocket_route')
+    results = []
+
+    @app.websocket('/ws', subprotocols=['foo', 'bar'])
+    async def handler(request, ws):
+        results.append(ws.subprotocol)
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Protocol': 'bar'})
+    assert response.status == 101
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Protocol': 'bar, foo'})
+    assert response.status == 101
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Protocol': 'baz'})
+    assert response.status == 101
+
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13'})
+    assert response.status == 101
+    
+    assert results == ['bar', 'bar', None, None]
 
 
 def test_route_duplicate():

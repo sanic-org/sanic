@@ -215,3 +215,120 @@ and `recv` methods to send and receive data respectively.
 WebSocket support requires the [websockets](https://github.com/aaugustin/websockets)
 package by Aymeric Augustin.
 
+
+## About `strict_slashes`
+
+You can make `routes` strict to trailing slash or not, it's configurable.
+
+```python
+
+# provide default strict_slashes value for all routes
+app = Sanic('test_route_strict_slash', strict_slashes=True)
+
+# you can also overwrite strict_slashes value for specific route
+@app.get('/get', strict_slashes=False)
+def handler(request):
+    return text('OK')
+
+# It also works for blueprints
+bp = Blueprint('test_bp_strict_slash', strict_slashes=True)
+
+@bp.get('/bp/get', strict_slashes=False)
+def handler(request):
+    return text('OK')
+
+app.blueprint(bp)
+```
+
+## User defined route name
+
+You can pass `name` to change the route name to avoid using the default name  (`handler.__name__`).
+
+```python
+
+app = Sanic('test_named_route')
+
+@app.get('/get', name='get_handler')
+def handler(request):
+    return text('OK')
+
+# then you need use `app.url_for('get_handler')`
+# instead of # `app.url_for('handler')`
+
+# It also works for blueprints
+bp = Blueprint('test_named_bp')
+
+@bp.get('/bp/get', name='get_handler')
+def handler(request):
+    return text('OK')
+
+app.blueprint(bp)
+
+# then you need use `app.url_for('test_named_bp.get_handler')`
+# instead of `app.url_for('test_named_bp.handler')`
+
+# different names can be used for same url with different methods
+
+@app.get('/test', name='route_test')
+def handler(request):
+    return text('OK')
+
+@app.post('/test', name='route_post')
+def handler2(request):
+    return text('OK POST')
+
+@app.put('/test', name='route_put')
+def handler3(request):
+    return text('OK PUT')
+
+# below url are the same, you can use any of them
+# '/test'
+app.url_for('route_test')
+# app.url_for('route_post')
+# app.url_for('route_put')
+
+# for same handler name with different methods
+# you need specify the name (it's url_for issue)
+@app.get('/get')
+def handler(request):
+    return text('OK')
+
+@app.post('/post', name='post_handler')
+def handler(request):
+    return text('OK')
+
+# then
+# app.url_for('handler') == '/get'
+# app.url_for('post_handler') == '/post'
+```
+
+## Build URL for static files
+
+You can use `url_for` for static file url building now.
+If it's for file directly, `filename` can be ignored.
+
+```python
+
+app = Sanic('test_static')
+app.static('/static', './static')
+app.static('/uploads', './uploads', name='uploads')
+app.static('/the_best.png', '/home/ubuntu/test.png', name='best_png')
+
+bp = Blueprint('bp', url_prefix='bp')
+bp.static('/static', './static')
+bp.static('/uploads', './uploads', name='uploads')
+bp.static('/the_best.png', '/home/ubuntu/test.png', name='best_png')
+app.blueprint(bp)
+
+# then build the url
+app.url_for('static', filename='file.txt') == '/static/file.txt'
+app.url_for('static', name='static', filename='file.txt') == '/static/file.txt'
+app.url_for('static', name='uploads', filename='file.txt') == '/uploads/file.txt'
+app.url_for('static', name='best_png') == '/the_best.png'
+
+# blueprint url building
+app.url_for('static', name='bp.static', filename='file.txt') == '/bp/static/file.txt'
+app.url_for('static', name='bp.uploads', filename='file.txt') == '/bp/uploads/file.txt'
+app.url_for('static', name='bp.best_png') == '/bp/static/the_best.png'
+
+```

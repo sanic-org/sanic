@@ -16,6 +16,7 @@ Guides
    sanic/blueprints
    sanic/config
    sanic/cookies
+   sanic/decorators
    sanic/streaming
    sanic/class_based_views
    sanic/custom_protocol
@@ -25,6 +26,7 @@ Guides
    sanic/deploying
    sanic/extensions
    sanic/contributing
+   sanic/api_reference
 
 
 Module Documentation
@@ -33,4 +35,5 @@ Module Documentation
 .. toctree::
 
 * :ref:`genindex`
+* :ref:`modindex`
 * :ref:`search`

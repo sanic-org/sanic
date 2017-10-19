@@ -67,6 +67,8 @@ class Router:
 
     def __init__(self):
         self.routes_all = {}
+        self.routes_names = {}
+        self.routes_static_files = {}
         self.routes_static = {}
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
@@ -91,6 +93,10 @@ class Router:
         pattern = 'string'
         if ':' in parameter_string:
             name, pattern = parameter_string.split(':', 1)
+            if not name:
+                raise ValueError(
+                    "Invalid parameter syntax: {}".format(parameter_string)
+                )
 
         default = (str, pattern)
         # Pull from pre-configured types
@@ -98,32 +104,8 @@ class Router:
 
         return name, _type, pattern
 
-    def add(self, uri, methods, handler, host=None, strict_slashes=False):
-
-        # add regular version
-        self._add(uri, methods, handler, host)
-
-        if strict_slashes:
-            return
-
-        # Add versions with and without trailing /
-        slash_is_missing = (
-            not uri[-1] == '/'
-            and not self.routes_all.get(uri + '/', False)
-        )
-        without_slash_is_missing = (
-            uri[-1] == '/'
-            and not self.routes_all.get(uri[:-1], False)
-            and not uri == '/'
-        )
-        # add version with trailing slash
-        if slash_is_missing:
-            self._add(uri + '/', methods, handler, host)
-        # add version without trailing slash
-        elif without_slash_is_missing:
-            self._add(uri[:-1], methods, handler, host)
-
-    def _add(self, uri, methods, handler, host=None):
+    def add(self, uri, methods, handler, host=None, strict_slashes=False,
+            version=None, name=None):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -131,6 +113,47 @@ class Router:
             provided, any method is allowed
         :param handler: request handler function.
             When executed, it should provide a response object.
+        :param strict_slashes: strict to trailing slash
+        :param version: current version of the route or blueprint. See
+            docs for further details.
+        :return: Nothing
+        """
+        if version is not None:
+            if uri.startswith('/'):
+                uri = "/".join(["/v{}".format(str(version)), uri[1:]])
+            else:
+                uri = "/".join(["/v{}".format(str(version)), uri])
+        # add regular version
+        self._add(uri, methods, handler, host, name)
+
+        if strict_slashes:
+            return
+
+        # Add versions with and without trailing /
+        slash_is_missing = (
+            not uri[-1] == '/' and not self.routes_all.get(uri + '/', False)
+        )
+        without_slash_is_missing = (
+            uri[-1] == '/' and not
+            self.routes_all.get(uri[:-1], False) and not
+            uri == '/'
+        )
+        # add version with trailing slash
+        if slash_is_missing:
+            self._add(uri + '/', methods, handler, host, name)
+        # add version without trailing slash
+        elif without_slash_is_missing:
+            self._add(uri[:-1], methods, handler, host, name)
+
+    def _add(self, uri, methods, handler, host=None, name=None):
+        """Add a handler to the route list
+
+        :param uri: path to match
+        :param methods: sequence of accepted method names. If none are
+            provided, any method is allowed
+        :param handler: request handler function.
+            When executed, it should provide a response object.
+        :param name: user defined route name for url_for
         :return: Nothing
         """
         if host is not None:
@@ -144,7 +167,7 @@ class Router:
                                      "host strings, not {!r}".format(host))
 
                 for host_ in host:
-                    self.add(uri, methods, handler, host_)
+                    self.add(uri, methods, handler, host_, name)
                 return
 
         # Dict for faster lookups of if method allowed
@@ -212,22 +235,38 @@ class Router:
         else:
             route = self.routes_all.get(uri)
 
+        # prefix the handler name with the blueprint name
+        # if available
+        # special prefix for static files
+        is_static = False
+        if name and name.startswith('_static_'):
+            is_static = True
+            name = name.split('_static_', 1)[-1]
+
+        if hasattr(handler, '__blueprintname__'):
+            handler_name = '{}.{}'.format(
+                handler.__blueprintname__, name or handler.__name__)
+        else:
+            handler_name = name or getattr(handler, '__name__', None)
+
         if route:
             route = merge_route(route, methods, handler)
         else:
-            # prefix the handler name with the blueprint name
-            # if available
-            if hasattr(handler, '__blueprintname__'):
-                handler_name = '{}.{}'.format(
-                    handler.__blueprintname__, handler.__name__)
-            else:
-                handler_name = getattr(handler, '__name__', None)
-
             route = Route(
                 handler=handler, methods=methods, pattern=pattern,
                 parameters=parameters, name=handler_name, uri=uri)
 
         self.routes_all[uri] = route
+        if is_static:
+            pair = self.routes_static_files.get(handler_name)
+            if not (pair and (pair[0] + '/' == uri or uri + '/' == pair[0])):
+                self.routes_static_files[handler_name] = (uri, route)
+
+        else:
+            pair = self.routes_names.get(handler_name)
+            if not (pair and (pair[0] + '/' == uri or uri + '/' == pair[0])):
+                self.routes_names[handler_name] = (uri, route)
+
         if properties['unhashable']:
             self.routes_always_check.append(route)
         elif parameters:
@@ -248,6 +287,16 @@ class Router:
             uri = host + uri
         try:
             route = self.routes_all.pop(uri)
+            for handler_name, pairs in self.routes_names.items():
+                if pairs[0] == uri:
+                    self.routes_names.pop(handler_name)
+                    break
+
+            for handler_name, pairs in self.routes_static_files.items():
+                if pairs[0] == uri:
+                    self.routes_static_files.pop(handler_name)
+                    break
+
         except KeyError:
             raise RouteDoesNotExist("Route was not registered: {}".format(uri))
 
@@ -263,20 +312,20 @@ class Router:
             self._get.cache_clear()
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
-    def find_route_by_view_name(self, view_name):
+    def find_route_by_view_name(self, view_name, name=None):
         """Find a route in the router based on the specified view name.
 
         :param view_name: string of view name to search by
+        :param kwargs: additional params, usually for static files
         :return: tuple containing (uri, Route)
         """
         if not view_name:
             return (None, None)
 
-        for uri, route in self.routes_all.items():
-            if route.name == view_name:
-                return uri, route
+        if view_name == 'static' or view_name.endswith('.static'):
+            return self.routes_static_files.get(name, (None, None))
 
-        return (None, None)
+        return self.routes_names.get(view_name, (None, None))
 
     def get(self, request):
         """Get a request handler based on the URL of the request, or raises an

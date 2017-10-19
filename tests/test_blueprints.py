@@ -1,15 +1,41 @@
 import asyncio
 import inspect
+import pytest
 
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import json, text
 from sanic.exceptions import NotFound, ServerError, InvalidUsage
+from sanic.constants import HTTP_METHODS
 
 
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
+
+@pytest.mark.parametrize('method', HTTP_METHODS)
+def test_versioned_routes_get(method):
+    app = Sanic('test_shorhand_routes_get')
+    bp = Blueprint('test_text')
+
+    method = method.lower()
+
+    func = getattr(bp, method)
+    if callable(func):
+        @func('/{}'.format(method), version=1)
+        def handler(request):
+            return text('OK')
+    else:
+        print(func)
+        raise
+
+    app.blueprint(bp)
+
+    client_method = getattr(app.test_client, method)
+
+    request, response = client_method('/v1/{}'.format(method))
+    assert response.status == 200
+
 
 def test_bp():
     app = Sanic('test_text')
@@ -52,6 +78,65 @@ def test_bp_strict_slash():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
+def test_bp_strict_slash_default_value():
+    app = Sanic('test_route_strict_slash')
+    bp = Blueprint('test_text', strict_slashes=True)
+
+    @bp.get('/get')
+    def handler(request):
+        return text('OK')
+
+    @bp.post('/post/')
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(bp)
+
+    request, response = app.test_client.get('/get/')
+    assert response.status == 404
+
+    request, response = app.test_client.post('/post')
+    assert response.status == 404
+
+def test_bp_strict_slash_without_passing_default_value():
+    app = Sanic('test_route_strict_slash')
+    bp = Blueprint('test_text')
+
+    @bp.get('/get')
+    def handler(request):
+        return text('OK')
+
+    @bp.post('/post/')
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(bp)
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.post('/post')
+    assert response.text == 'OK'
+
+def test_bp_strict_slash_default_value_can_be_overwritten():
+    app = Sanic('test_route_strict_slash')
+    bp = Blueprint('test_text', strict_slashes=True)
+
+    @bp.get('/get', strict_slashes=False)
+    def handler(request):
+        return text('OK')
+
+    @bp.post('/post/', strict_slashes=False)
+    def handler(request):
+        return text('OK')
+
+    app.blueprint(bp)
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.post('/post')
+    assert response.text == 'OK'
 
 def test_bp_with_url_prefix():
     app = Sanic('test_text')

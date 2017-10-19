@@ -13,6 +13,9 @@ import sys
 # Add support for Markdown documentation using Recommonmark
 from recommonmark.parser import CommonMarkParser
 
+# Add support for auto-doc
+from recommonmark.transform import AutoStructify
+
 # Ensure that sanic is present in the path, to allow sphinx-apidoc to
 # autogenerate documentation from docstrings
 root_directory = os.path.dirname(os.getcwd())
@@ -22,7 +25,7 @@ import sanic
 
 # -- General configuration ------------------------------------------------
 
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinxcontrib.asyncio']
 
 templates_path = ['_templates']
 
@@ -140,3 +143,12 @@ epub_exclude_files = ['search.html']
 # -- Custom Settings -------------------------------------------------------
 
 suppress_warnings = ['image.nonlocal_uri']
+
+
+# app setup hook
+def setup(app):
+    app.add_config_value('recommonmark_config', {
+        'enable_eval_rst': True,
+        'enable_auto_doc_ref': True,
+    }, True)
+    app.add_transform(AutoStructify)

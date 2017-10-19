@@ -3,6 +3,7 @@ import sys
 import signal
 import asyncio
 import logging
+import traceback
 
 try:
     import ssl
@@ -73,10 +74,16 @@ class GunicornWorker(base.Worker):
             trigger_events(self._server_settings.get('before_stop', []),
                            self.loop)
             self.loop.run_until_complete(self.close())
+        except:
+            traceback.print_exc()
         finally:
-            trigger_events(self._server_settings.get('after_stop', []),
-                           self.loop)
-            self.loop.close()
+            try:
+                trigger_events(self._server_settings.get('after_stop', []),
+                               self.loop)
+            except:
+                traceback.print_exc()
+            finally:
+                self.loop.close()
 
         sys.exit(self.exit_code)
 
@@ -139,8 +146,8 @@ class GunicornWorker(base.Worker):
                 )
                 if self.max_requests and req_count > self.max_requests:
                     self.alive = False
-                    self.log.info(
-                        "Max requests exceeded, shutting down: %s", self)
+                    self.log.info("Max requests exceeded, shutting down: %s",
+                                  self)
                 elif pid == os.getpid() and self.ppid != os.getppid():
                     self.alive = False
                     self.log.info("Parent changed, shutting down: %s", self)

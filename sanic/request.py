@@ -17,10 +17,11 @@ except ImportError:
         json_loads = json.loads
 
 from sanic.exceptions import InvalidUsage
-from sanic.log import log
-
+from sanic.log import error_logger
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+
+
 # HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
 # > If the media type remains unknown, the recipient SHOULD treat it
 # > as type "application/octet-stream"
@@ -45,7 +46,7 @@ class Request(dict):
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url', 'uri_template', 'stream'
+        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -68,15 +69,27 @@ class Request(dict):
         self._cookies = None
         self.stream = None
 
+    def __repr__(self):
+        if self.method is None or not self.path:
+            return '<{0}>'.format(self.__class__.__name__)
+        return '<{0}: {1} {2}>'.format(self.__class__.__name__,
+                                       self.method,
+                                       self.path)
+
     @property
     def json(self):
         if self.parsed_json is None:
-            try:
-                self.parsed_json = json_loads(self.body)
-            except Exception:
-                if not self.body:
-                    return None
-                raise InvalidUsage("Failed when parsing body as json")
+            self.load_json()
+
+        return self.parsed_json
+
+    def load_json(self, loads=json_loads):
+        try:
+            self.parsed_json = loads(self.body)
+        except Exception:
+            if not self.body:
+                return None
+            raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
 
@@ -114,7 +127,7 @@ class Request(dict):
                     self.parsed_form, self.parsed_files = (
                         parse_multipart_form(self.body, boundary))
             except Exception:
-                log.exception("Failed when parsing form")
+                error_logger.exception("Failed when parsing form")
 
         return self.parsed_form
 
@@ -142,7 +155,7 @@ class Request(dict):
     @property
     def cookies(self):
         if self._cookies is None:
-            cookie = self.headers.get('Cookie') or self.headers.get('cookie')
+            cookie = self.headers.get('Cookie')
             if cookie is not None:
                 cookies = SimpleCookie()
                 cookies.load(cookie)
@@ -158,6 +171,25 @@ class Request(dict):
             self._ip = (self.transport.get_extra_info('peername') or
                         (None, None))
         return self._ip
+
+    @property
+    def remote_addr(self):
+        """Attempt to return the original client ip based on X-Forwarded-For.
+
+        :return: original client ip.
+        """
+        if not hasattr(self, '_remote_addr'):
+            forwarded_for = self.headers.get('X-Forwarded-For', '').split(',')
+            remote_addrs = [
+                addr for addr in [
+                    addr.strip() for addr in forwarded_for
+                    ] if addr
+                ]
+            if len(remote_addrs) > 0:
+                self._remote_addr = remote_addrs[0]
+            else:
+                self._remote_addr = ''
+        return self._remote_addr
 
     @property
     def scheme(self):

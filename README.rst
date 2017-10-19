@@ -11,34 +11,6 @@ Sanic is developed `on GitHub <https://github.com/channelcat/sanic/>`_. Contribu
 
 If you have a project that utilizes Sanic make sure to comment on the `issue <https://github.com/channelcat/sanic/issues/396>`_ that we use to track those projects!
 
-Benchmarks
-----------
-
-All tests were run on an AWS medium instance running ubuntu, using 1
-process. Each script delivered a small JSON response and was tested with
-wrk using 100 connections. Pypy was tested for Falcon and Flask but did
-not speed up requests.
-
-+-----------+-----------------------+----------------+---------------+
-| Server    | Implementation        | Requests/sec   | Avg Latency   |
-+===========+=======================+================+===============+
-| Sanic     | Python 3.5 + uvloop   | 33,342         | 2.96ms        |
-+-----------+-----------------------+----------------+---------------+
-| Wheezy    | gunicorn + meinheld   | 20,244         | 4.94ms        |
-+-----------+-----------------------+----------------+---------------+
-| Falcon    | gunicorn + meinheld   | 18,972         | 5.27ms        |
-+-----------+-----------------------+----------------+---------------+
-| Bottle    | gunicorn + meinheld   | 13,596         | 7.36ms        |
-+-----------+-----------------------+----------------+---------------+
-| Flask     | gunicorn + meinheld   | 4,988          | 20.08ms       |
-+-----------+-----------------------+----------------+---------------+
-| Kyoukai   | Python 3.5 + uvloop   | 3,889          | 27.44ms       |
-+-----------+-----------------------+----------------+---------------+
-| Aiohttp   | Python 3.5 + uvloop   | 2,979          | 33.42ms       |
-+-----------+-----------------------+----------------+---------------+
-| Tornado   | Python 3.5            | 2,138          | 46.66ms       |
-+-----------+-----------------------+----------------+---------------+
-
 Hello World Example
 -------------------
 
@@ -59,13 +31,13 @@ Hello World Example
 Installation
 ------------
 
--  ``python -m pip install sanic``
+-  ``pip install sanic``
 
 To install sanic without uvloop or json using bash, you can provide either or both of these environmental variables
 using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the NO_X to true will stop that features
 installation.
 
-- ``SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true python -m pip install sanic``
+- ``SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true pip install sanic``
 
 
 Documentation
@@ -83,6 +55,16 @@ Documentation
    :target: https://pypi.python.org/pypi/sanic/
 .. |PyPI version| image:: https://img.shields.io/pypi/pyversions/sanic.svg
    :target: https://pypi.python.org/pypi/sanic/
+   
+
+Examples
+--------
+`Non-Core examples <https://github.com/channelcat/sanic/wiki/Examples/>`_. Examples of plugins and Sanic that are outside the scope of Sanic core.
+
+`Extensions <https://github.com/channelcat/sanic/wiki/Extensions/>`_. Sanic extensions created by the community.
+
+`Projects <https://github.com/channelcat/sanic/wiki/Projects/>`_. Sanic in production use.
+
 
 TODO
 ----

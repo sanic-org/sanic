@@ -13,10 +13,18 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         self.websocket_max_queue = websocket_max_queue
 
-    def connection_timeout(self):
-        # timeouts make no sense for websocket routes
+    # timeouts make no sense for websocket routes
+    def request_timeout_callback(self):
         if self.websocket is None:
-            super().connection_timeout()
+            super().request_timeout_callback()
+
+    def response_timeout_callback(self):
+        if self.websocket is None:
+            super().response_timeout_callback()
+
+    def keep_alive_timeout_callback(self):
+        if self.websocket is None:
+            super().keep_alive_timeout_callback()
 
     def connection_lost(self, exc):
         if self.websocket is not None:
@@ -41,7 +49,7 @@ class WebSocketProtocol(HttpProtocol):
         else:
             super().write_response(response)
 
-    async def websocket_handshake(self, request):
+    async def websocket_handshake(self, request, subprotocols=None):
         # let the websockets package do the handshake with the client
         headers = []
 
@@ -57,6 +65,17 @@ class WebSocketProtocol(HttpProtocol):
         except InvalidHandshake:
             raise InvalidUsage('Invalid websocket request')
 
+        subprotocol = None
+        if subprotocols and 'Sec-Websocket-Protocol' in request.headers:
+            # select a subprotocol
+            client_subprotocols = [p.strip() for p in request.headers[
+                'Sec-Websocket-Protocol'].split(',')]
+            for p in client_subprotocols:
+                if p in subprotocols:
+                    subprotocol = p
+                    set_header('Sec-Websocket-Protocol', subprotocol)
+                    break
+
         # write the 101 response back to the client
         rv = b'HTTP/1.1 101 Switching Protocols\r\n'
         for k, v in headers:
@@ -69,5 +88,6 @@ class WebSocketProtocol(HttpProtocol):
             max_size=self.websocket_max_size,
             max_queue=self.websocket_max_queue
         )
+        self.websocket.subprotocol = subprotocol
         self.websocket.connection_made(request.transport)
         return self.websocket

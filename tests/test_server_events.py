@@ -59,3 +59,20 @@ def test_all_listeners():
     start_stop_app(random_name_app)
     for listener_name in AVAILABLE_LISTENERS:
         assert random_name_app.name + listener_name == output.pop()
+
+
+async def test_trigger_before_events_create_server():
+
+    class MySanicDb:
+        pass
+
+    app = Sanic("test_sanic_app")
+
+    @app.listener('before_server_start')
+    async def init_db(app, loop):
+        app.db = MySanicDb()
+
+    await app.create_server()
+
+    assert hasattr(app, "db")
+    assert isinstance(app.db, MySanicDb)

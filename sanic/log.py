@@ -1,18 +1,63 @@
 import logging
+import sys
 
 
-class DefaultFilter(logging.Filter):
+LOGGING_CONFIG_DEFAULTS = dict(
+    version=1,
+    disable_existing_loggers=False,
 
-    def __init__(self, param=None):
-        self.param = param
+    loggers={
+        "root": {
+            "level": "INFO",
+            "handlers": ["console"]
+        },
+        "sanic.error": {
+            "level": "INFO",
+            "handlers": ["error_console"],
+            "propagate": True,
+            "qualname": "sanic.error"
+        },
 
-    def filter(self, record):
-        if self.param is None:
-            return True
-        if record.levelno in self.param:
-            return True
-        return False
+        "sanic.access": {
+            "level": "INFO",
+            "handlers": ["access_console"],
+            "propagate": True,
+            "qualname": "sanic.access"
+        }
+    },
+    handlers={
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "generic",
+            "stream": sys.stdout
+        },
+        "error_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "generic",
+            "stream": sys.stderr
+        },
+        "access_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "access",
+            "stream": sys.stdout
+        },
+    },
+    formatters={
+        "generic": {
+            "format": "%(asctime)s [%(process)d] [%(levelname)s] %(message)s",
+            "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
+            "class": "logging.Formatter"
+        },
+        "access": {
+            "format": "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: " +
+                      "%(request)s %(message)s %(status)d %(byte)d",
+            "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
+            "class": "logging.Formatter"
+        },
+    }
+)
 
 
-log = logging.getLogger('sanic')
-netlog = logging.getLogger('network')
+logger = logging.getLogger('root')
+error_logger = logging.getLogger('sanic.error')
+access_logger = logging.getLogger('sanic.access')

@@ -167,23 +167,17 @@ class Request(dict):
         return self._cookies
 
     @property
-    def ip(self, right_most_proxy=False):
-        # Need attr to differentiate the right_most_proxy thing
-        # Or we could use a separate method for right_most_proxy
-        attr = f'_ip{right_most_proxy}'
-        if not hasattr(self, attr):
-            setattr(self, attr, None)
+    def ip(self):
+        if not hasattr(self, '_ip'):
+            self._ip = None
             for key in HEADER_PRECEDENCE_ORDER:
                 value = self.headers.get(key, self.headers.get(key.replace('_', '-'), '')).strip()
                 if value is not None and value != '':
-                    ips = [ip.strip().lower() for ip in value.split(',')]
-                    if right_most_proxy and len(ips) > 1:
-                        ips = reversed(ips)
-                    for ip_str in ips:
+                    for ip_str in [ip.strip().lower() for ip in value.split(',')]:
                         if ip_str and is_valid_ip(ip_str):
                             if not ip_str.startswith(NON_PUBLIC_IP_PREFIX):
-                                setattr(self, attr, ip_str)
-        return getattr(self, attr)
+                                self._ip = ip_str
+        return self._ip
 
     @property
     def remote_addr(self):

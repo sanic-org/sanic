@@ -1,16 +1,15 @@
 import socket
 
-# CAPS R OK BCUZ STR.CASEFOLD
+# CAPS R OK BCUZ WE HAZ CIDict
 HEADER_PRECEDENCE_ORDER = (
-    'HTTP_X_FORWARDED_FOR', 'X_FORWARDED_FOR',
-    # (client, proxy1, proxy2) OR (proxy2, proxy1, client)
-    'HTTP_CLIENT_IP',
-    'HTTP_X_REAL_IP',
-    'HTTP_X_FORWARDED',
-    'HTTP_X_CLUSTER_CLIENT_IP',
-    'HTTP_FORWARDED_FOR',
-    'HTTP_FORWARDED',
-    'HTTP_VIA',
+    'X_FORWARDED_FOR',
+    'CLIENT_IP',
+    'X_REAL_IP',
+    'X_FORWARDED',
+    'X_CLUSTER_CLIENT_IP',
+    'FORWARDED_FOR',
+    'FORWARDED',
+    'VIA',
     'REMOTE_ADDR',
 )
 

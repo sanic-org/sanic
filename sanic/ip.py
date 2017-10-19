@@ -44,9 +44,6 @@ NON_PUBLIC_IP_PREFIX = PRIVATE_IP_PREFIX + LOOPBACK_PREFIX
 
 
 def is_valid_ipv4(ip_str):
-    """
-    Check the validity of an IPv4 address
-    """
     try:
         socket.inet_pton(socket.AF_INET, ip_str)
     except AttributeError:  # pragma: no cover
@@ -61,9 +58,6 @@ def is_valid_ipv4(ip_str):
 
 
 def is_valid_ipv6(ip_str):
-    """
-    Check the validity of an IPv6 address
-    """
     try:
         socket.inet_pton(socket.AF_INET6, ip_str)
     except socket.error:
@@ -72,7 +66,4 @@ def is_valid_ipv6(ip_str):
 
 
 def is_valid_ip(ip_str):
-    """
-    Check the validity of an IP address
-    """
     return is_valid_ipv4(ip_str) or is_valid_ipv6(ip_str)

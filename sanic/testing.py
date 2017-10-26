@@ -76,14 +76,14 @@ class SanicTestClient:
             try:
                 request, response = results
                 return request, response
-            except:
+            except BaseException:
                 raise ValueError(
                     "Request and response object expected, got ({})".format(
                         results))
         else:
             try:
                 return results[-1]
-            except:
+            except BaseException:
                 raise ValueError(
                     "Request object expected, got ({})".format(results))
 

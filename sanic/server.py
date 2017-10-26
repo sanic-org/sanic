@@ -312,7 +312,7 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 extra['byte'] = -1
 
-            if self.request:
+            if self.request is not None:
                 extra['host'] = '{0}:{1}'.format(self.request.ip[0],
                                                  self.request.ip[1])
                 extra['request'] = '{0} {1}'.format(self.request.method,
@@ -588,7 +588,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
-    except:
+    except BaseException:
         logger.exception("Unable to start server")
         return
 

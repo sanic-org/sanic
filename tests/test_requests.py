@@ -27,6 +27,16 @@ def test_sync():
 
     assert response.text == 'Hello'
 
+def test_remote_address():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    def handler(request):
+        return text("{}".format(request.ip))
+
+    request, response = app.test_client.get('/')
+
+    assert response.text == '127.0.0.1'
 
 def test_text():
     app = Sanic('test_text')

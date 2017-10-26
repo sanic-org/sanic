@@ -574,7 +574,7 @@ class Sanic:
             try:
                 response = await self._run_response_middleware(request,
                                                                response)
-            except:
+            except BaseException:
                 error_logger.exception(
                     'Exception occured in one of response middleware handlers'
                 )
@@ -642,7 +642,7 @@ class Sanic:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
-        except:
+        except BaseException:
             error_logger.exception(
                 'Experienced exception while trying to serve')
             raise

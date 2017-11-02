@@ -221,8 +221,12 @@ class Blueprint:
         name = kwargs.pop('name', 'static')
         if not name.startswith(self.name + '.'):
             name = '{}.{}'.format(self.name, name)
-
         kwargs.update(name=name)
+
+        strict_slashes = kwargs.pop('strict_slashes', None)
+        if strict_slashes is None and self.strict_slashes is not None:
+            kwargs.update(strict_slashes=self.strict_slashes)
+
         static = FutureStatic(uri, file_or_directory, args, kwargs)
         self.statics.append(static)
 

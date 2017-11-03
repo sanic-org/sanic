@@ -18,7 +18,8 @@ from sanic.response import file, file_stream, HTTPResponse
 
 def register(app, uri, file_or_directory, pattern,
              use_modified_since, use_content_range,
-             stream_large_files, name='static', host=None, strict_slashes=None):
+             stream_large_files, name='static', host=None,
+             strict_slashes=None):
     # TODO: Though sanic is not a file server, I feel like we should at least
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching
@@ -103,7 +104,7 @@ def register(app, uri, file_or_directory, pattern,
                     if isinstance(stream_large_files, int):
                         threshold = stream_large_files
                     else:
-                        threshold = 1024*1000
+                        threshold = 1024 * 1000
 
                     if not stats:
                         stats = await stat(file_path)

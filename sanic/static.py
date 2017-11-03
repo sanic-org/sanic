@@ -104,7 +104,7 @@ def register(app, uri, file_or_directory, pattern,
                     if isinstance(stream_large_files, int):
                         threshold = stream_large_files
                     else:
-                        threshold = 1024 * 1000
+                        threshold = 1024 * 1024
 
                     if not stats:
                         stats = await stat(file_path)

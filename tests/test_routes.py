@@ -44,6 +44,24 @@ def test_shorthand_routes_get():
     request, response = app.test_client.post('/get')
     assert response.status == 405
 
+def test_shorthand_routes_multiple():
+    app = Sanic('test_shorthand_routes_multiple')
+
+    @app.get('/get')
+    def get_handler(request):
+        return text('OK')
+
+    @app.options('/get')
+    def options_handler(request):
+        return text('')
+
+    request, response = app.test_client.get('/get/')
+    assert response.status == 200
+    assert response.text == 'OK'
+
+    request, response = app.test_client.options('/get/')
+    assert response.status == 200
+
 def test_route_strict_slash():
     app = Sanic('test_route_strict_slash')
 
@@ -431,7 +449,7 @@ def test_websocket_route_with_subprotocols():
         'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
         'Sec-WebSocket-Version': '13'})
     assert response.status == 101
-    
+
     assert results == ['bar', 'bar', None, None]
 
 
@@ -754,6 +772,7 @@ def test_remove_route_without_clean_cache():
     assert response.status == 200
 
     app.remove_route('/test', clean_cache=True)
+    app.remove_route('/test/', clean_cache=True)
 
     request, response = app.test_client.get('/test')
     assert response.status == 404

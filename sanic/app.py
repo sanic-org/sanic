@@ -28,7 +28,8 @@ class Sanic:
 
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
-                 strict_slashes=False, log_config=None):
+                 strict_slashes=False, log_config=None,
+                 configure_logging=True):
 
         # Get name from previous stack frame
         if name is None:
@@ -36,7 +37,8 @@ class Sanic:
             name = getmodulename(frame_records[1])
 
         # logging
-        logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
+        if configure_logging:
+            logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         self.name = name
         self.router = router or Router()
@@ -47,6 +49,7 @@ class Sanic:
         self.response_middleware = deque()
         self.blueprints = {}
         self._blueprint_order = []
+        self.configure_logging = configure_logging
         self.debug = None
         self.sock = None
         self.strict_slashes = strict_slashes
@@ -793,7 +796,7 @@ class Sanic:
             listeners = [partial(listener, self) for listener in listeners]
             server_settings[settings_name] = listeners
 
-        if debug:
+        if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
         if self.config.LOGO is not None:
             logger.debug(self.config.LOGO)

@@ -90,4 +90,5 @@ class WebSocketProtocol(HttpProtocol):
         )
         self.websocket.subprotocol = subprotocol
         self.websocket.connection_made(request.transport)
+        self.websocket.connection_open()
         return self.websocket

@@ -223,7 +223,7 @@ class Blueprint:
             name = '{}.{}'.format(self.name, name)
         kwargs.update(name=name)
 
-        strict_slashes = kwargs.pop('strict_slashes', None)
+        strict_slashes = kwargs.get('strict_slashes')
         if strict_slashes is None and self.strict_slashes is not None:
             kwargs.update(strict_slashes=self.strict_slashes)
 

@@ -164,7 +164,7 @@ def test_static_content_range_error(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
-def test_static_file(static_file_directory, file_name):
+def test_static_file_specified_host(static_file_directory, file_name):
     app = Sanic('test_static')
     app.static(
         '/testing.file',

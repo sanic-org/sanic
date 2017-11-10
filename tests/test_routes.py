@@ -3,7 +3,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.response import text
-from sanic.router import RouteExists, RouteDoesNotExist
+from sanic.router import RouteExists, RouteDoesNotExist, Router
 from sanic.constants import HTTP_METHODS
 
 
@@ -850,3 +850,23 @@ def test_unmergeable_overload_routes():
 
     request, response = app.test_client.post('/overload_part')
     assert response.status == 405
+
+
+def test_custom_route_converters():
+    regex = r'[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-' \
+            r'[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}'
+    custom_router = Router(converters={
+        "uuid": (uuid.UUID, regex)
+    })
+    app = Sanic('test_dynamic_route', router=custom_router)
+    results = []
+
+    @app.route('/<id:uuid>', methods=None)
+    async def handler(request, id):
+        results.append(id)
+        return text('OK')
+
+    request, response = app.test_client.get('/folder/test123')
+
+    assert response.text == 'OK'
+    assert isinstance(results[0], uuid.UUID)

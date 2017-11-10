@@ -867,7 +867,7 @@ def test_custom_route_converters():
         results.append(id)
         return text('OK')
 
-    request, response = app.test_client.get('/folder/test123')
+    request, response = app.test_client.get('/folder/e010dcb8-6b40-11e7-8e04-0242ac120022')
 
     assert response.text == 'OK'
     assert isinstance(results[0], uuid.UUID)

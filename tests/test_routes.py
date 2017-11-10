@@ -1,5 +1,6 @@
 import asyncio
 import pytest
+import uuid
 
 from sanic import Sanic
 from sanic.response import text

@@ -580,7 +580,7 @@ class Sanic:
                                                                response)
             except BaseException:
                 error_logger.exception(
-                    'Exception occured in one of response middleware handlers'
+                    'Exception occurred in one of response middleware handlers'
                 )
 
         # pass the response to the correct callback

@@ -59,7 +59,7 @@ def test_middleware_response_exception():
     result = {'status_code': None}
 
     @app.middleware('response')
-    async def process_response(reqest, response):
+    async def process_response(request, response):
         result['status_code'] = response.status
         return response
 

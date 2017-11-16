@@ -1,11 +1,12 @@
 import asyncio
-import pytest
 import uuid
 
+import pytest
+
 from sanic import Sanic
-from sanic.response import text
-from sanic.router import RouteExists, RouteDoesNotExist, Router
 from sanic.constants import HTTP_METHODS
+from sanic.response import text
+from sanic.router import RouteExists, RouteDoesNotExist, Router, REGEX_TYPES
 
 
 # ------------------------------------------------------------ #
@@ -874,6 +875,28 @@ def test_custom_route_converters():
     custom_router = Router(converters={
         "uuid": (uuid.UUID, regex)
     })
+    app = Sanic('test_custom_route_converters', router=custom_router)
+    results = []
+
+    @app.route('/<id:uuid>')
+    async def handler(request, id):
+        results.append(id)
+        return text('OK')
+
+    request, response = app.test_client.get('/e010dcb8-6b40-11e7-8e04-0242ac120022')
+
+    assert response.text == 'OK'
+    assert isinstance(results[0], uuid.UUID)
+
+
+def test_extend_default_rules():
+    regex = r'[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-' \
+            r'[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}'
+    rules = dict(REGEX_TYPES)
+    rules.update({
+        "uuid": (uuid.UUID, regex)
+    })
+    custom_router = Router(converters=rules)
     app = Sanic('test_custom_route_converters', router=custom_router)
     results = []
 

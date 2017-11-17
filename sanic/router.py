@@ -119,8 +119,8 @@ class Router:
         :return: Nothing
         """
         if version is not None:
-            version = re.escape(str(version))
-            uri = "/".join(["/v{}".format(version.strip('/')), uri.lstrip('/')])
+            version = re.escape(str(version).strip('/').lstrip('v'))
+            uri = "/".join(["/v{}".format(version), uri.lstrip('/')])
         # add regular version
         self._add(uri, methods, handler, host, name)
 

@@ -119,10 +119,8 @@ class Router:
         :return: Nothing
         """
         if version is not None:
-            if uri.startswith('/'):
-                uri = "/".join(["/v{}".format(str(version)), uri[1:]])
-            else:
-                uri = "/".join(["/v{}".format(str(version)), uri])
+            version = re.escape(str(version))
+            uri = "/".join(["/v{}".format(version.strip('/')), uri.lstrip('/')])
         # add regular version
         self._add(uri, methods, handler, host, name)
 

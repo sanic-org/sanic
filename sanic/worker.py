@@ -74,13 +74,13 @@ class GunicornWorker(base.Worker):
             trigger_events(self._server_settings.get('before_stop', []),
                            self.loop)
             self.loop.run_until_complete(self.close())
-        except:
+        except BaseException:
             traceback.print_exc()
         finally:
             try:
                 trigger_events(self._server_settings.get('after_stop', []),
                                self.loop)
-            except:
+            except BaseException:
                 traceback.print_exc()
             finally:
                 self.loop.close()

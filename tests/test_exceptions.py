@@ -58,11 +58,11 @@ def exception_app():
         raise InvalidUsage("OK")
 
     @app.route('/abort/401')
-    def handler_invalid(request):
+    def handler_401_error(request):
         abort(401)
 
     @app.route('/abort')
-    def handler_invalid(request):
+    def handler_500_error(request):
         abort(500)
         return text("OK")
 
@@ -186,7 +186,7 @@ def test_exception_in_exception_handler_debug_off(exception_app):
     assert response.body == b'An error occurred while handling an error'
 
 
-def test_exception_in_exception_handler_debug_off(exception_app):
+def test_exception_in_exception_handler_debug_on(exception_app):
     """Test that an exception thrown in an error handler is handled"""
     request, response = exception_app.test_client.get(
         '/error_in_error_handler_handler',

@@ -588,7 +588,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
-    except:
+    except BaseException:
         logger.exception("Unable to start server")
         return
 

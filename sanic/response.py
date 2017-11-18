@@ -3,7 +3,7 @@ from os import path
 
 try:
     from ujson import dumps as json_dumps
-except:
+except BaseException:
     from json import dumps as json_dumps
 
 from aiofiles import open as open_async

@@ -567,15 +567,23 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         debug=debug,
     )
 
-    server_coroutine = loop.create_server(
-        server,
-        host,
-        port,
-        ssl=ssl,
-        reuse_port=reuse_port,
-        sock=sock,
-        backlog=backlog
-    )
+    if hasattr(sock, '__fspath__'):
+        server_coroutine = loop.create_unix_server(
+            server,
+            path=sock,
+            ssl=ssl,
+            backlog=backlog
+        )
+    else:
+        server_coroutine = loop.create_server(
+            server,
+            host,
+            port,
+            ssl=ssl,
+            reuse_port=reuse_port,
+            sock=sock,
+            backlog=backlog
+        )
 
     # Instead of pulling time at the end of every request,
     # pull it once per minute

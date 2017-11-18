@@ -567,7 +567,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         debug=debug,
     )
 
-    if isinstance(sock, str):
+    if hasattr(sock, '__fspath__'):
         server_coroutine = loop.create_unix_server(
             server,
             path=sock,

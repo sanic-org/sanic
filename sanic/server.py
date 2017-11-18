@@ -567,7 +567,12 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         debug=debug,
     )
 
-    server_coroutine = loop.create_server(
+    if isinstance(sock, str):
+        _create_server = loop.create_unix_server
+    else:
+        _create_server = loop.create_server
+
+    server_coroutine = _create_server(
         server,
         host,
         port,

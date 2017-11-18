@@ -568,19 +568,22 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     )
 
     if isinstance(sock, str):
-        _create_server = loop.create_unix_server
+        server_coroutine = loop.create_unix_server(
+            server,
+            path=sock,
+            ssl=ssl,
+            backlog=backlog
+        )
     else:
-        _create_server = loop.create_server
-
-    server_coroutine = _create_server(
-        server,
-        host,
-        port,
-        ssl=ssl,
-        reuse_port=reuse_port,
-        sock=sock,
-        backlog=backlog
-    )
+        server_coroutine = loop.create_server(
+            server,
+            host,
+            port,
+            ssl=ssl,
+            reuse_port=reuse_port,
+            sock=sock,
+            backlog=backlog
+        )
 
     # Instead of pulling time at the end of every request,
     # pull it once per minute

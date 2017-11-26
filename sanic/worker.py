@@ -115,7 +115,7 @@ class GunicornWorker(base.Worker):
             coros = []
             for conn in self.connections:
                 if hasattr(conn, "websocket") and conn.websocket:
-                    coros.append(conn.websocket.close_connection(force=True))
+                    coros.append(conn.websocket.close_connection(after_handshake=False))
                 else:
                     conn.close()
             _shutdown = asyncio.gather(*coros, loop=self.loop)

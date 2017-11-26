@@ -1,7 +1,7 @@
 # Extensions
 
 A list of Sanic extensions created by the community.
-
+- [Sanic-Plugins-Framework](https://github.com/ashleysommer/sanicpluginsframework): Library for easily creating and using Sanic plugins.
 - [Sessions](https://github.com/subyraman/sanic_session): Support for sessions.
   Allows using redis, memcache or an in memory store.
 - [CORS](https://github.com/ashleysommer/sanic-cors): A port of flask-cors.

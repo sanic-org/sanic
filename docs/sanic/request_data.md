@@ -75,6 +75,10 @@ The following variables are accessible as properties on `Request` objects:
 
 - `ip` (str) - IP address of the requester.
 
+- `port` (str) - Port address of the requester.
+
+- `socket` (tuple) - (IP, port) of the requester.
+
 - `app` - a reference to the Sanic application object that is handling this request. This is useful when inside blueprints or other handlers in modules that do not have access to the global `app` object.
 
   ```python

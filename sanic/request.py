@@ -46,7 +46,8 @@ class Request(dict):
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr'
+        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr',
+        '_socket', '_port'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -167,10 +168,26 @@ class Request(dict):
 
     @property
     def ip(self):
-        if not hasattr(self, '_ip'):
-            self._ip = (self.transport.get_extra_info('peername') or
-                        (None, None))
+        if not hasattr(self, '_socket'):
+            self._get_address()
         return self._ip
+
+    @property
+    def port(self):
+        if not hasattr(self, '_socket'):
+            self._get_address()
+        return self._port
+
+    @property
+    def socket(self):
+        if not hasattr(self, '_socket'):
+            self._get_socket()
+        return self._socket
+
+    def _get_address(self):
+        self._socket = (self.transport.get_extra_info('peername') or
+                        (None, None))
+        self._ip, self._port = self._socket
 
     @property
     def remote_addr(self):

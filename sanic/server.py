@@ -76,7 +76,7 @@ class HttpProtocol(asyncio.Protocol):
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
-                 response_timeout=60, keep_alive_timeout=15,
+                 response_timeout=60, keep_alive_timeout=5,
                  request_max_size=None, request_class=None, access_log=True,
                  keep_alive=True, is_request_stream=False, router=None,
                  state=None, debug=False, **kwargs):
@@ -192,6 +192,7 @@ class HttpProtocol(asyncio.Protocol):
         else:
             logger.info('KeepAlive Timeout. Closing connection.')
             self.transport.close()
+            self.transport = None
 
     # -------------------------------------------- #
     # Parsing
@@ -311,7 +312,7 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 extra['byte'] = -1
 
-            if self.request:
+            if self.request is not None:
                 extra['host'] = '{0}:{1}'.format(self.request.ip[0],
                                                  self.request.ip[1])
                 extra['request'] = '{0} {1}'.format(self.request.method,
@@ -342,8 +343,10 @@ class HttpProtocol(asyncio.Protocol):
                          self.url, type(response))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            logger.error('Connection lost before response written @ %s',
-                         self.request.ip)
+            if self._debug:
+                logger.error('Connection lost before response written @ %s',
+                             self.request.ip)
+            keep_alive = False
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(
@@ -351,6 +354,7 @@ class HttpProtocol(asyncio.Protocol):
         finally:
             if not keep_alive:
                 self.transport.close()
+                self.transport = None
             else:
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout,
@@ -379,8 +383,10 @@ class HttpProtocol(asyncio.Protocol):
                          self.url, type(response))
             self.write_error(ServerError('Invalid response type'))
         except RuntimeError:
-            logger.error('Connection lost before response written @ %s',
-                         self.request.ip)
+            if self._debug:
+                logger.error('Connection lost before response written @ %s',
+                             self.request.ip)
+            keep_alive = False
         except Exception as e:
             self.bail_out(
                 "Writing response failed, connection closed {}".format(
@@ -388,6 +394,7 @@ class HttpProtocol(asyncio.Protocol):
         finally:
             if not keep_alive:
                 self.transport.close()
+                self.transport = None
             else:
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout,
@@ -407,8 +414,9 @@ class HttpProtocol(asyncio.Protocol):
             version = self.request.version if self.request else '1.1'
             self.transport.write(response.output(version))
         except RuntimeError:
-            logger.error('Connection lost before error written @ %s',
-                         self.request.ip if self.request else 'Unknown')
+            if self._debug:
+                logger.error('Connection lost before error written @ %s',
+                             self.request.ip if self.request else 'Unknown')
         except Exception as e:
             self.bail_out(
                 "Writing error failed, connection closed {}".format(
@@ -489,7 +497,7 @@ def trigger_events(events, loop):
 
 def serve(host, port, request_handler, error_handler, before_start=None,
           after_start=None, before_stop=None, after_stop=None, debug=False,
-          request_timeout=60, response_timeout=60, keep_alive_timeout=60,
+          request_timeout=60, response_timeout=60, keep_alive_timeout=5,
           ssl=None, sock=None, request_max_size=None, reuse_port=False,
           loop=None, protocol=HttpProtocol, backlog=100,
           register_sys_signals=True, run_async=False, connections=None,
@@ -515,6 +523,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                        `app` instance and `loop`
     :param debug: enables debug output (slows server)
     :param request_timeout: time in seconds
+    :param response_timeout: time in seconds
+    :param keep_alive_timeout: time in seconds
     :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
     :param request_max_size: size in bytes, `None` for no limit
@@ -578,7 +588,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
-    except:
+    except BaseException:
         logger.exception("Unable to start server")
         return
 

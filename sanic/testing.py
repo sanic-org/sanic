@@ -8,8 +8,9 @@ PORT = 42101
 
 
 class SanicTestClient:
-    def __init__(self, app):
+    def __init__(self, app, port=PORT):
         self.app = app
+        self.port = port
 
     async def _local_request(self, method, uri, cookies=None, *args, **kwargs):
         import aiohttp
@@ -17,7 +18,7 @@ class SanicTestClient:
             url = uri
         else:
             url = 'http://{host}:{port}{uri}'.format(
-                host=HOST, port=PORT, uri=uri)
+                host=HOST, port=self.port, uri=uri)
 
         logger.info(url)
         conn = aiohttp.TCPConnector(verify_ssl=False)
@@ -66,7 +67,7 @@ class SanicTestClient:
                 exceptions.append(e)
             self.app.stop()
 
-        self.app.run(host=HOST, debug=debug, port=PORT, **server_kwargs)
+        self.app.run(host=HOST, debug=debug, port=self.port, **server_kwargs)
         self.app.listeners['after_server_start'].pop()
 
         if exceptions:
@@ -76,14 +77,14 @@ class SanicTestClient:
             try:
                 request, response = results
                 return request, response
-            except:
+            except BaseException:
                 raise ValueError(
                     "Request and response object expected, got ({})".format(
                         results))
         else:
             try:
                 return results[-1]
-            except:
+            except BaseException:
                 raise ValueError(
                     "Request object expected, got ({})".format(results))
 

@@ -1,11 +1,17 @@
 import uuid
+import logging
+
+from io import StringIO
 from importlib import reload
 
+import pytest
+from unittest.mock import Mock
+
+import sanic
 from sanic.response import text
 from sanic.log import LOGGING_CONFIG_DEFAULTS
 from sanic import Sanic
-from io import StringIO
-import logging
+
 
 logging_format = '''module: %(module)s; \
 function: %(funcName)s(); \
@@ -71,3 +77,31 @@ def test_logging_pass_customer_logconfig():
 
     for fmt in [h.formatter for h in logging.getLogger('sanic.access').handlers]:
         assert fmt._fmt == modified_config['formatters']['access']['format']
+
+
+@pytest.mark.parametrize('debug', (True, False, ))
+def test_log_connection_lost(debug, monkeypatch):
+    """ Should not log Connection lost exception on non debug """
+    app = Sanic('connection_lost')
+    stream = StringIO()
+    root = logging.getLogger('root')
+    root.addHandler(logging.StreamHandler(stream))
+    monkeypatch.setattr(sanic.server, 'logger', root)
+
+    @app.route('/conn_lost')
+    async def conn_lost(request):
+        response = text('Ok')
+        response.output = Mock(side_effect=RuntimeError)
+        return response
+
+    with pytest.raises(ValueError):
+        # catch ValueError: Exception during request
+        app.test_client.get('/conn_lost', debug=debug)
+
+    log = stream.getvalue()
+
+    if debug:
+        assert log.startswith(
+            'Connection lost before response written @')
+    else:
+        assert 'Connection lost before response written @' not in log

@@ -93,6 +93,10 @@ class Router:
         pattern = 'string'
         if ':' in parameter_string:
             name, pattern = parameter_string.split(':', 1)
+            if not name:
+                raise ValueError(
+                    "Invalid parameter syntax: {}".format(parameter_string)
+                )
 
         default = (str, pattern)
         # Pull from pre-configured types
@@ -115,10 +119,8 @@ class Router:
         :return: Nothing
         """
         if version is not None:
-            if uri.startswith('/'):
-                uri = "/".join(["/v{}".format(str(version)), uri[1:]])
-            else:
-                uri = "/".join(["/v{}".format(str(version)), uri])
+            version = re.escape(str(version).strip('/').lstrip('v'))
+            uri = "/".join(["/v{}".format(version), uri.lstrip('/')])
         # add regular version
         self._add(uri, methods, handler, host, name)
 
@@ -126,8 +128,15 @@ class Router:
             return
 
         # Add versions with and without trailing /
+        slashed_methods = self.routes_all.get(uri + '/', frozenset({}))
+        if isinstance(methods, Iterable):
+            _slash_is_missing = all(method in slashed_methods for
+                                    method in methods)
+        else:
+            _slash_is_missing = methods in slashed_methods
+
         slash_is_missing = (
-            not uri[-1] == '/' and not self.routes_all.get(uri + '/', False)
+            not uri[-1] == '/' and not _slash_is_missing
         )
         without_slash_is_missing = (
             uri[-1] == '/' and not

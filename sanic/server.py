@@ -635,7 +635,9 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         coros = []
         for conn in connections:
             if hasattr(conn, "websocket") and conn.websocket:
-                coros.append(conn.websocket.close_connection(after_handshake=True))
+                coros.append(
+                    conn.websocket.close_connection(after_handshake=True)
+                )
             else:
                 conn.close()
 

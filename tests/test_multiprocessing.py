@@ -3,7 +3,7 @@ import random
 import signal
 
 from sanic import Sanic
-from sanic.testing import HOST, PORT
+from sanic.testing import HOST
 
 
 def test_multiprocessing():
@@ -20,7 +20,7 @@ def test_multiprocessing():
 
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(1)
-    app.run(HOST, PORT, workers=num_workers)
+    app.run(HOST, app.test_port, workers=num_workers)
 
     assert len(process_list) == num_workers
 

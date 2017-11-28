@@ -312,13 +312,15 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 extra['byte'] = -1
 
+            extra['host'] = 'UNKNOWN'
             if self.request is not None:
-                extra['host'] = '{0}:{1}'.format(self.request.ip[0],
-                                                 self.request.ip[1])
+                if self.request.ip:
+                    extra['host'] = '{0}:{1}'.format(self.request.ip[0],
+                                                     self.request.ip[1])
+
                 extra['request'] = '{0} {1}'.format(self.request.method,
                                                     self.request.url)
             else:
-                extra['host'] = 'UNKNOWN'
                 extra['request'] = 'nil'
 
             access_logger.info('', extra=extra)

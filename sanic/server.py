@@ -315,8 +315,7 @@ class HttpProtocol(asyncio.Protocol):
             extra['host'] = 'UNKNOWN'
             if self.request is not None:
                 if self.request.ip:
-                    extra['host'] = '{0}:{1}'.format(self.request.ip[0],
-                                                     self.request.ip[1])
+                    extra['host'] = '{0[0]}:{0[1]}'.format(self.request.ip)
 
                 extra['request'] = '{0} {1}'.format(self.request.method,
                                                     self.request.url)

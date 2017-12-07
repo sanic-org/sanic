@@ -1,3 +1,4 @@
+import os
 import logging
 import logging.config
 import re
@@ -22,6 +23,7 @@ from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
+import sanic.reloader_helpers as reloader_helpers
 
 
 class Sanic:
@@ -604,7 +606,7 @@ class Sanic:
     def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            access_log=True):
+            access_log=True, auto_reload=False):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -638,12 +640,16 @@ class Sanic:
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             workers=workers, protocol=protocol, backlog=backlog,
             register_sys_signals=register_sys_signals,
-            access_log=access_log)
+            access_log=access_log, auto_reload=auto_reload)
 
         try:
             self.is_running = True
             if workers == 1:
-                serve(**server_settings)
+                if os.name == 'posix' and auto_reload and \
+                    os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
+                    reloader_helpers.watchdog(2)
+                else:
+                    serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
@@ -733,7 +739,8 @@ class Sanic:
     def _helper(self, host=None, port=None, debug=False,
                 ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, access_log=True):
+                register_sys_signals=True, run_async=False, access_log=True,
+                auto_reload=False):
         """Helper function used by `run` and `create_server`."""
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -799,14 +806,16 @@ class Sanic:
 
         if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
-        if self.config.LOGO is not None:
+
+        if self.config.LOGO is not None and \
+            os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
             logger.debug(self.config.LOGO)
 
         if run_async:
             server_settings['run_async'] = True
 
         # Serve
-        if host and port:
+        if host and port and os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
             proto = "http"
             if ssl is not None:
                 proto = "https"

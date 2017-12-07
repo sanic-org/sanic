@@ -646,7 +646,7 @@ class Sanic:
             self.is_running = True
             if workers == 1:
                 if os.name == 'posix' and auto_reload and \
-                    os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
+                        os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
                     reloader_helpers.watchdog(2)
                 else:
                     serve(**server_settings)
@@ -808,7 +808,7 @@ class Sanic:
             logger.setLevel(logging.DEBUG)
 
         if self.config.LOGO is not None and \
-            os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
+                os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
             logger.debug(self.config.LOGO)
 
         if run_async:

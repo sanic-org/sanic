@@ -150,6 +150,16 @@ class InvalidUsage(SanicException):
     pass
 
 
+@add_status_code(405)
+class MethodNotSupported(SanicException):
+    def __init__(self, message, method, allowed_methods):
+        super().__init__(message)
+        self.headers = dict()
+        self.headers["Allow"] = ", ".join(allowed_methods)
+        if method in ['HEAD', 'PATCH', 'PUT', 'DELETE']:
+            self.headers['Content-Length'] = 0
+
+
 @add_status_code(500)
 class ServerError(SanicException):
     pass

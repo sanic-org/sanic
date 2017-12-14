@@ -177,8 +177,6 @@ class URLBuildError(ServerError):
 
 
 class FileNotFound(NotFound):
-    pass
-
     def __init__(self, message, path, relative_url):
         super().__init__(message)
         self.path = path
@@ -208,8 +206,6 @@ class HeaderNotFound(InvalidUsage):
 
 @add_status_code(416)
 class ContentRangeError(SanicException):
-    pass
-
     def __init__(self, message, content_range):
         super().__init__(message)
         self.headers = {

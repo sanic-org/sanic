@@ -419,7 +419,7 @@ class Router:
         """
         try:
             handler = self.get(request)[0]
-        except (NotFound, InvalidUsage):
+        except (NotFound, MethodNotSupported):
             return False
         if (hasattr(handler, 'view_class') and
                 hasattr(handler.view_class, request.method.lower())):

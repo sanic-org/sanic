@@ -35,6 +35,25 @@ async def sample_streaming_fn(response):
     await asyncio.sleep(.001)
     response.write('bar')
 
+def test_method_not_allowed():
+    app = Sanic('method_not_allowed')
+
+    @app.get('/')
+    async def test(request):
+        return response.json({'hello': 'world'})
+
+    request, response = app.test_client.head('/')
+    assert response.headers['Allow']== 'GET'
+
+    @app.post('/')
+    async def test(request):
+        return response.json({'hello': 'world'})
+
+    request, response = app.test_client.head('/')
+    assert response.status == 405
+    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert response.headers['Content-Length'] == '0'
+
 
 @pytest.fixture
 def json_app():

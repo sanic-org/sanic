@@ -3,7 +3,7 @@ from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from functools import lru_cache
 
-from sanic.exceptions import NotFound, InvalidUsage
+from sanic.exceptions import NotFound, MethodNotSupported
 from sanic.views import CompositionView
 
 Route = namedtuple(
@@ -350,6 +350,16 @@ class Router:
         except NotFound:
             return self._get(request.path, request.method, '')
 
+    def get_supported_methods(self, url):
+        """Get a list of supported methods for a url and optional host.
+
+        :param url: URL string (including host)
+        :return: frozenset of supported methods
+        """
+        route = self.routes_all.get(url)
+        # if methods are None then this logic will prevent an error
+        return getattr(route, 'methods', None) or frozenset()
+
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method, host):
         """Get a request handler based on the URL of the request, or raises an
@@ -362,9 +372,10 @@ class Router:
         url = host + url
         # Check against known static routes
         route = self.routes_static.get(url)
-        method_not_supported = InvalidUsage(
-            'Method {} not allowed for URL {}'.format(
-                method, url), status_code=405)
+        method_not_supported = MethodNotSupported(
+            'Method {} not allowed for URL {}'.format(method, url),
+            method=method,
+            allowed_methods=self.get_supported_methods(url))
         if route:
             if route.methods and method not in route.methods:
                 raise method_not_supported
@@ -407,7 +418,7 @@ class Router:
         """
         try:
             handler = self.get(request)[0]
-        except (NotFound, InvalidUsage):
+        except (NotFound, MethodNotSupported):
             return False
         if (hasattr(handler, 'view_class') and
                 hasattr(handler.view_class, request.method.lower())):

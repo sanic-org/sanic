@@ -174,6 +174,10 @@ class HttpProtocol(asyncio.Protocol):
                                      self.response_timeout_callback)
             )
         else:
+            if self._request_stream_task:
+                self._request_stream_task.cancel()
+            if self._request_handler_task:
+                self._request_handler_task.cancel()
             try:
                 raise ServiceUnavailable('Response Timeout')
             except ServiceUnavailable as exception:

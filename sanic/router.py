@@ -3,7 +3,7 @@ from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from functools import lru_cache
 
-from sanic.exceptions import NotFound, InvalidUsage, MethodNotSupported
+from sanic.exceptions import NotFound, MethodNotSupported
 from sanic.views import CompositionView
 
 Route = namedtuple(
@@ -359,7 +359,8 @@ class Router:
         :return: frozenset of supported methods
         """
         route = self.routes_all.get(url)
-        return getattr(route, 'methods', frozenset())
+        # if methods are None then this logic will prevent an error
+        return getattr(route, 'methods', None) or frozenset()
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method, host):

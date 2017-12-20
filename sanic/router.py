@@ -3,7 +3,7 @@ from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from functools import lru_cache
 
-from sanic.exceptions import NotFound, InvalidUsage
+from sanic.exceptions import NotFound, MethodNotSupported
 from sanic.views import CompositionView
 
 Route = namedtuple(
@@ -67,6 +67,8 @@ class Router:
 
     def __init__(self):
         self.routes_all = {}
+        self.routes_names = {}
+        self.routes_static_files = {}
         self.routes_static = {}
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
@@ -91,6 +93,10 @@ class Router:
         pattern = 'string'
         if ':' in parameter_string:
             name, pattern = parameter_string.split(':', 1)
+            if not name:
+                raise ValueError(
+                    "Invalid parameter syntax: {}".format(parameter_string)
+                )
 
         default = (str, pattern)
         # Pull from pre-configured types
@@ -99,7 +105,7 @@ class Router:
         return name, _type, pattern
 
     def add(self, uri, methods, handler, host=None, strict_slashes=False,
-            version=None):
+            version=None, name=None):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -113,34 +119,38 @@ class Router:
         :return: Nothing
         """
         if version is not None:
-            if uri.startswith('/'):
-                uri = "/".join(["/v{}".format(str(version)), uri[1:]])
-            else:
-                uri = "/".join(["/v{}".format(str(version)), uri])
+            version = re.escape(str(version).strip('/').lstrip('v'))
+            uri = "/".join(["/v{}".format(version), uri.lstrip('/')])
         # add regular version
-        self._add(uri, methods, handler, host)
+        self._add(uri, methods, handler, host, name)
 
         if strict_slashes:
             return
 
         # Add versions with and without trailing /
+        slashed_methods = self.routes_all.get(uri + '/', frozenset({}))
+        if isinstance(methods, Iterable):
+            _slash_is_missing = all(method in slashed_methods for
+                                    method in methods)
+        else:
+            _slash_is_missing = methods in slashed_methods
+
         slash_is_missing = (
-            not uri[-1] == '/'
-            and not self.routes_all.get(uri + '/', False)
+            not uri[-1] == '/' and not _slash_is_missing
         )
         without_slash_is_missing = (
-            uri[-1] == '/'
-            and not self.routes_all.get(uri[:-1], False)
-            and not uri == '/'
+            uri[-1] == '/' and not
+            self.routes_all.get(uri[:-1], False) and not
+            uri == '/'
         )
         # add version with trailing slash
         if slash_is_missing:
-            self._add(uri + '/', methods, handler, host)
+            self._add(uri + '/', methods, handler, host, name)
         # add version without trailing slash
         elif without_slash_is_missing:
-            self._add(uri[:-1], methods, handler, host)
+            self._add(uri[:-1], methods, handler, host, name)
 
-    def _add(self, uri, methods, handler, host=None):
+    def _add(self, uri, methods, handler, host=None, name=None):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -148,6 +158,7 @@ class Router:
             provided, any method is allowed
         :param handler: request handler function.
             When executed, it should provide a response object.
+        :param name: user defined route name for url_for
         :return: Nothing
         """
         if host is not None:
@@ -161,7 +172,7 @@ class Router:
                                      "host strings, not {!r}".format(host))
 
                 for host_ in host:
-                    self.add(uri, methods, handler, host_)
+                    self.add(uri, methods, handler, host_, name)
                 return
 
         # Dict for faster lookups of if method allowed
@@ -229,22 +240,38 @@ class Router:
         else:
             route = self.routes_all.get(uri)
 
+        # prefix the handler name with the blueprint name
+        # if available
+        # special prefix for static files
+        is_static = False
+        if name and name.startswith('_static_'):
+            is_static = True
+            name = name.split('_static_', 1)[-1]
+
+        if hasattr(handler, '__blueprintname__'):
+            handler_name = '{}.{}'.format(
+                handler.__blueprintname__, name or handler.__name__)
+        else:
+            handler_name = name or getattr(handler, '__name__', None)
+
         if route:
             route = merge_route(route, methods, handler)
         else:
-            # prefix the handler name with the blueprint name
-            # if available
-            if hasattr(handler, '__blueprintname__'):
-                handler_name = '{}.{}'.format(
-                    handler.__blueprintname__, handler.__name__)
-            else:
-                handler_name = getattr(handler, '__name__', None)
-
             route = Route(
                 handler=handler, methods=methods, pattern=pattern,
                 parameters=parameters, name=handler_name, uri=uri)
 
         self.routes_all[uri] = route
+        if is_static:
+            pair = self.routes_static_files.get(handler_name)
+            if not (pair and (pair[0] + '/' == uri or uri + '/' == pair[0])):
+                self.routes_static_files[handler_name] = (uri, route)
+
+        else:
+            pair = self.routes_names.get(handler_name)
+            if not (pair and (pair[0] + '/' == uri or uri + '/' == pair[0])):
+                self.routes_names[handler_name] = (uri, route)
+
         if properties['unhashable']:
             self.routes_always_check.append(route)
         elif parameters:
@@ -265,6 +292,16 @@ class Router:
             uri = host + uri
         try:
             route = self.routes_all.pop(uri)
+            for handler_name, pairs in self.routes_names.items():
+                if pairs[0] == uri:
+                    self.routes_names.pop(handler_name)
+                    break
+
+            for handler_name, pairs in self.routes_static_files.items():
+                if pairs[0] == uri:
+                    self.routes_static_files.pop(handler_name)
+                    break
+
         except KeyError:
             raise RouteDoesNotExist("Route was not registered: {}".format(uri))
 
@@ -280,20 +317,20 @@ class Router:
             self._get.cache_clear()
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
-    def find_route_by_view_name(self, view_name):
+    def find_route_by_view_name(self, view_name, name=None):
         """Find a route in the router based on the specified view name.
 
         :param view_name: string of view name to search by
+        :param kwargs: additional params, usually for static files
         :return: tuple containing (uri, Route)
         """
         if not view_name:
             return (None, None)
 
-        for uri, route in self.routes_all.items():
-            if route.name == view_name:
-                return uri, route
+        if view_name == 'static' or view_name.endswith('.static'):
+            return self.routes_static_files.get(name, (None, None))
 
-        return (None, None)
+        return self.routes_names.get(view_name, (None, None))
 
     def get(self, request):
         """Get a request handler based on the URL of the request, or raises an
@@ -313,6 +350,16 @@ class Router:
         except NotFound:
             return self._get(request.path, request.method, '')
 
+    def get_supported_methods(self, url):
+        """Get a list of supported methods for a url and optional host.
+
+        :param url: URL string (including host)
+        :return: frozenset of supported methods
+        """
+        route = self.routes_all.get(url)
+        # if methods are None then this logic will prevent an error
+        return getattr(route, 'methods', None) or frozenset()
+
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, url, method, host):
         """Get a request handler based on the URL of the request, or raises an
@@ -325,9 +372,10 @@ class Router:
         url = host + url
         # Check against known static routes
         route = self.routes_static.get(url)
-        method_not_supported = InvalidUsage(
-            'Method {} not allowed for URL {}'.format(
-                method, url), status_code=405)
+        method_not_supported = MethodNotSupported(
+            'Method {} not allowed for URL {}'.format(method, url),
+            method=method,
+            allowed_methods=self.get_supported_methods(url))
         if route:
             if route.methods and method not in route.methods:
                 raise method_not_supported
@@ -370,7 +418,7 @@ class Router:
         """
         try:
             handler = self.get(request)[0]
-        except (NotFound, InvalidUsage):
+        except (NotFound, MethodNotSupported):
             return False
         if (hasattr(handler, 'view_class') and
                 hasattr(handler.view_class, request.method.lower())):

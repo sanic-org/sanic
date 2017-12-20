@@ -1,4 +1,4 @@
-from sanic.response import ALL_STATUS_CODES, COMMON_STATUS_CODES
+from sanic.response import STATUS_CODES
 
 TRACEBACK_STYLE = '''
     <style>
@@ -150,8 +150,25 @@ class InvalidUsage(SanicException):
     pass
 
 
+@add_status_code(405)
+class MethodNotSupported(SanicException):
+    def __init__(self, message, method, allowed_methods):
+        super().__init__(message)
+        self.headers = dict()
+        self.headers["Allow"] = ", ".join(allowed_methods)
+        if method in ['HEAD', 'PATCH', 'PUT', 'DELETE']:
+            self.headers['Content-Length'] = 0
+
+
 @add_status_code(500)
 class ServerError(SanicException):
+    pass
+
+
+@add_status_code(503)
+class ServiceUnavailable(SanicException):
+    """The server is currently unavailable (because it is overloaded or
+    down for maintenance). Generally, this is a temporary state."""
     pass
 
 
@@ -160,8 +177,6 @@ class URLBuildError(ServerError):
 
 
 class FileNotFound(NotFound):
-    pass
-
     def __init__(self, message, path, relative_url):
         super().__init__(message)
         self.path = path
@@ -170,6 +185,13 @@ class FileNotFound(NotFound):
 
 @add_status_code(408)
 class RequestTimeout(SanicException):
+    """The Web server (running the Web site) thinks that there has been too
+    long an interval of time between 1) the establishment of an IP
+    connection (socket) between the client and the server and
+    2) the receipt of any data on that socket, so the server has dropped
+    the connection. The socket connection has actually been lost - the Web
+    server has 'timed out' on that particular socket connection.
+    """
     pass
 
 
@@ -184,8 +206,6 @@ class HeaderNotFound(InvalidUsage):
 
 @add_status_code(416)
 class ContentRangeError(SanicException):
-    pass
-
     def __init__(self, message, content_range):
         super().__init__(message)
         self.headers = {
@@ -208,45 +228,47 @@ class Unauthorized(SanicException):
     """
     Unauthorized exception (401 HTTP status code).
 
+    :param message: Message describing the exception.
+    :param status_code: HTTP Status code.
     :param scheme: Name of the authentication scheme to be used.
-    :param challenge: A dict containing values to add to the WWW-Authenticate
-        header that is generated. This is especially useful when dealing with
-        the Digest scheme. (optional)
+
+    When present, kwargs is used to complete the WWW-Authentication header.
 
     Examples::
 
         # With a Basic auth-scheme, realm MUST be present:
-        challenge = {"realm": "Restricted Area"}
-        raise Unauthorized("Auth required.", "Basic", challenge)
+        raise Unauthorized("Auth required.",
+                           scheme="Basic",
+                           realm="Restricted Area")
 
         # With a Digest auth-scheme, things are a bit more complicated:
-        challenge = {
-            "realm": "Restricted Area",
-            "qop": "auth, auth-int",
-            "algorithm": "MD5",
-            "nonce": "abcdef",
-            "opaque": "zyxwvu"
-        }
-        raise Unauthorized("Auth required.", "Digest", challenge)
+        raise Unauthorized("Auth required.",
+                           scheme="Digest",
+                           realm="Restricted Area",
+                           qop="auth, auth-int",
+                           algorithm="MD5",
+                           nonce="abcdef",
+                           opaque="zyxwvu")
 
-        # With a Bearer auth-scheme, realm is optional:
-        challenge = {"realm": "Restricted Area"}
-        raise Unauthorized("Auth required.", "Bearer", challenge)
+        # With a Bearer auth-scheme, realm is optional so you can write:
+        raise Unauthorized("Auth required.", scheme="Bearer")
+
+        # or, if you want to specify the realm:
+        raise Unauthorized("Auth required.",
+                           scheme="Bearer",
+                           realm="Restricted Area")
     """
-    pass
+    def __init__(self, message, status_code=None, scheme=None, **kwargs):
+        super().__init__(message, status_code)
 
-    def __init__(self, message, scheme, challenge=None):
-        super().__init__(message)
+        # if auth-scheme is specified, set "WWW-Authenticate" header
+        if scheme is not None:
+            values = ["{!s}={!r}".format(k, v) for k, v in kwargs.items()]
+            challenge = ', '.join(values)
 
-        chal = ""
-
-        if challenge is not None:
-            values = ["{!s}={!r}".format(k, v) for k, v in challenge.items()]
-            chal = ', '.join(values)
-
-        self.headers = {
-            "WWW-Authenticate": "{} {}".format(scheme, chal).rstrip()
-        }
+            self.headers = {
+                "WWW-Authenticate": "{} {}".format(scheme, challenge).rstrip()
+            }
 
 
 def abort(status_code, message=None):
@@ -259,8 +281,7 @@ def abort(status_code, message=None):
                     in response.py for the given status code.
     """
     if message is None:
-        message = COMMON_STATUS_CODES.get(status_code,
-                                          ALL_STATUS_CODES.get(status_code))
+        message = STATUS_CODES.get(status_code)
         # These are stored as bytes in the STATUS_CODES dict
         message = message.decode('utf8')
     sanic_exception = _sanic_exceptions.get(status_code, SanicException)

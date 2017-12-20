@@ -131,5 +131,5 @@ def test_worker_close(worker):
     loop.run_until_complete(_close)
 
     assert worker.signal.stopped == True
-    conn.websocket.close_connection.assert_called_with(force=True)
+    conn.websocket.close_connection.assert_called_with(after_handshake=False)
     assert len(worker.servers) == 0

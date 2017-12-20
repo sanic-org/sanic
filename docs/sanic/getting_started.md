@@ -9,15 +9,16 @@ syntax, so earlier versions of python won't work.
 
   ```python
   from sanic import Sanic
-  from sanic.response import text
+  from sanic.response import json
 
-  app = Sanic(__name__)
+  app = Sanic()
 
   @app.route("/")
   async def test(request):
-      return text('Hello world!')
+      return json({"hello": "world"})
 
-  app.run(host="0.0.0.0", port=8000, debug=True)
+  if __name__ == "__main__":
+      app.run(host="0.0.0.0", port=8000)
   ```
   
 3. Run the server: `python3 main.py`

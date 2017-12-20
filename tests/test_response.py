@@ -35,6 +35,25 @@ async def sample_streaming_fn(response):
     await asyncio.sleep(.001)
     response.write('bar')
 
+def test_method_not_allowed():
+    app = Sanic('method_not_allowed')
+
+    @app.get('/')
+    async def test(request):
+        return response.json({'hello': 'world'})
+
+    request, response = app.test_client.head('/')
+    assert response.headers['Allow']== 'GET'
+
+    @app.post('/')
+    async def test(request):
+        return response.json({'hello': 'world'})
+
+    request, response = app.test_client.head('/')
+    assert response.status == 405
+    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert response.headers['Content-Length'] == '0'
+
 
 @pytest.fixture
 def json_app():
@@ -149,7 +168,22 @@ def test_file_response(file_name, static_file_directory):
     request, response = app.test_client.get('/files/{}'.format(file_name))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
+    assert 'Content-Disposition' not in response.headers
 
+@pytest.mark.parametrize('source,dest', [
+    ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
+def test_file_response_custom_filename(source, dest, static_file_directory):
+    app = Sanic('test_file_helper')
+    @app.route('/files/<filename>', methods=['GET'])
+    def file_route(request, filename):
+        file_path = os.path.join(static_file_directory, filename)
+        file_path = os.path.abspath(unquote(file_path))
+        return file(file_path, filename=dest)
+
+    request, response = app.test_client.get('/files/{}'.format(source))
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, source)
+    assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
 def test_file_head_response(file_name, static_file_directory):
@@ -191,7 +225,22 @@ def test_file_stream_response(file_name, static_file_directory):
     request, response = app.test_client.get('/files/{}'.format(file_name))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
+    assert 'Content-Disposition' not in response.headers
 
+@pytest.mark.parametrize('source,dest', [
+    ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
+def test_file_stream_response_custom_filename(source, dest, static_file_directory):
+    app = Sanic('test_file_helper')
+    @app.route('/files/<filename>', methods=['GET'])
+    def file_route(request, filename):
+        file_path = os.path.join(static_file_directory, filename)
+        file_path = os.path.abspath(unquote(file_path))
+        return file_stream(file_path, chunk_size=32, filename=dest)
+
+    request, response = app.test_client.get('/files/{}'.format(source))
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, source)
+    assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
 def test_file_stream_head_response(file_name, static_file_directory):

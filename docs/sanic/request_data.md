@@ -71,7 +71,13 @@ The following variables are accessible as properties on `Request` objects:
       return text("You are trying to create a user with the following POST: %s" % request.body)
   ```
 
+- `headers` (dict) - A case-insensitive dictionary that contains the request headers.
+
 - `ip` (str) - IP address of the requester.
+
+- `port` (str) - Port address of the requester.
+
+- `socket` (tuple) - (IP, port) of the requester.
 
 - `app` - a reference to the Sanic application object that is handling this request. This is useful when inside blueprints or other handlers in modules that do not have access to the global `app` object.
 
@@ -95,6 +101,7 @@ The following variables are accessible as properties on `Request` objects:
 - `path`: The path of the request: `/posts/1/`
 - `query_string`: The query string of the request: `foo=bar` or a blank string `''`
 - `uri_template`: Template for matching route handler: `/posts/<id>/`
+- `token`: The value of Authorization header: `Basic YWRtaW46YWRtaW4=`
 
 
 ## Accessing values using `get` and `getlist`

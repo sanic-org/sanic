@@ -20,7 +20,7 @@ def test_index_put_not_allowed():
     assert response.status == 405
 ```
 
-Internally, each time you call one of the `test_client` methods, the Sanic app is run at `127.0.01:42101` and 
+Internally, each time you call one of the `test_client` methods, the Sanic app is run at `127.0.0.1:42101` and 
 your test request is executed against your application, using `aiohttp`. 
 
 The `test_client` methods accept the following arguments and keyword arguments:
@@ -59,7 +59,7 @@ the available arguments to aiohttp can be found
 [in the documentation for ClientSession](https://aiohttp.readthedocs.io/en/stable/client_reference.html#client-session).
 
 
-# pytest-sanic
+## pytest-sanic
 
 [pytest-sanic](https://github.com/yunstanford/pytest-sanic) is a pytest plugin, it helps you to test your code asynchronously.
 Just write tests like,

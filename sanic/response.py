@@ -3,20 +3,14 @@ from os import path
 
 try:
     from ujson import dumps as json_dumps
-except:
+except BaseException:
     from json import dumps as json_dumps
 
 from aiofiles import open as open_async
 
 from sanic.cookies import CookieJar
 
-COMMON_STATUS_CODES = {
-    200: b'OK',
-    400: b'Bad Request',
-    404: b'Not Found',
-    500: b'Internal Server Error',
-}
-ALL_STATUS_CODES = {
+STATUS_CODES = {
     100: b'Continue',
     101: b'Switching Protocols',
     102: b'Processing',
@@ -56,6 +50,7 @@ ALL_STATUS_CODES = {
     415: b'Unsupported Media Type',
     416: b'Requested Range Not Satisfiable',
     417: b'Expectation Failed',
+    418: b'I\'m a teapot',
     422: b'Unprocessable Entity',
     423: b'Locked',
     424: b'Failed Dependency',
@@ -63,6 +58,7 @@ ALL_STATUS_CODES = {
     428: b'Precondition Required',
     429: b'Too Many Requests',
     431: b'Request Header Fields Too Large',
+    451: b'Unavailable For Legal Reasons',
     500: b'Internal Server Error',
     501: b'Not Implemented',
     502: b'Bad Gateway',
@@ -109,8 +105,9 @@ class BaseHTTPResponse:
 
 class StreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
-        'transport', 'streaming_fn',
-        'status', 'content_type', 'headers', '_cookies')
+        'transport', 'streaming_fn', 'status',
+        'content_type', 'headers', '_cookies'
+    )
 
     def __init__(self, streaming_fn, status=200, headers=None,
                  content_type='text/plain'):
@@ -159,11 +156,10 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
         headers = self._parse_headers()
 
-        # Try to pull from the common codes first
-        # Speeds up response rate 6% over pulling from all
-        status = COMMON_STATUS_CODES.get(self.status)
-        if not status:
-            status = ALL_STATUS_CODES.get(self.status)
+        if self.status is 200:
+            status = b'OK'
+        else:
+            status = STATUS_CODES.get(self.status)
 
         return (b'HTTP/%b %d %b\r\n'
                 b'%b'
@@ -206,11 +202,10 @@ class HTTPResponse(BaseHTTPResponse):
 
         headers = self._parse_headers()
 
-        # Try to pull from the common codes first
-        # Speeds up response rate 6% over pulling from all
-        status = COMMON_STATUS_CODES.get(self.status)
-        if not status:
-            status = ALL_STATUS_CODES.get(self.status, b'UNKNOWN RESPONSE')
+        if self.status is 200:
+            status = b'OK'
+        else:
+            status = STATUS_CODES.get(self.status, b'UNKNOWN RESPONSE')
 
         return (b'HTTP/%b %d %b\r\n'
                 b'Connection: %b\r\n'
@@ -234,7 +229,8 @@ class HTTPResponse(BaseHTTPResponse):
 
 
 def json(body, status=200, headers=None,
-         content_type="application/json", **kwargs):
+         content_type="application/json", dumps=json_dumps,
+         **kwargs):
     """
     Returns response object with body in json format.
 
@@ -243,7 +239,7 @@ def json(body, status=200, headers=None,
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
-    return HTTPResponse(json_dumps(body, **kwargs), headers=headers,
+    return HTTPResponse(dumps(body, **kwargs), headers=headers,
                         status=status, content_type=content_type)
 
 
@@ -288,15 +284,22 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, mime_type=None, headers=None, _range=None):
+async def file(
+        location, mime_type=None, headers=None, filename=None, _range=None):
     """Return a response object with file data.
 
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
+    :param filename: Override filename.
     :param _range:
     """
-    filename = path.split(location)[-1]
+    headers = headers or {}
+    if filename:
+        headers.setdefault(
+            'Content-Disposition',
+            'attachment; filename="{}"'.format(filename))
+    filename = filename or path.split(location)[-1]
 
     async with open_async(location, mode='rb') as _file:
         if _range:
@@ -308,24 +311,30 @@ async def file(location, mime_type=None, headers=None, _range=None):
             out_stream = await _file.read()
 
     mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
-
     return HTTPResponse(status=200,
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
 
 
-async def file_stream(location, chunk_size=4096, mime_type=None, headers=None,
-                      _range=None):
+async def file_stream(
+        location, chunk_size=4096, mime_type=None, headers=None,
+        filename=None, _range=None):
     """Return a streaming response object with file data.
 
     :param location: Location of file on system.
     :param chunk_size: The size of each chunk in the stream (in bytes)
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
+    :param filename: Override filename.
     :param _range:
     """
-    filename = path.split(location)[-1]
+    headers = headers or {}
+    if filename:
+        headers.setdefault(
+            'Content-Disposition',
+            'attachment; filename="{}"'.format(filename))
+    filename = filename or path.split(location)[-1]
 
     _file = await open_async(location, mode='rb')
 

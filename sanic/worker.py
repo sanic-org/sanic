@@ -23,6 +23,9 @@ from sanic.websocket import WebSocketProtocol
 
 class GunicornWorker(base.Worker):
 
+    http_protocol = HttpProtocol
+    websocket_protocol = WebSocketProtocol
+
     def __init__(self, *args, **kw):  # pragma: no cover
         super().__init__(*args, **kw)
         cfg = self.cfg
@@ -46,8 +49,9 @@ class GunicornWorker(base.Worker):
 
     def run(self):
         is_debug = self.log.loglevel == logging.DEBUG
-        protocol = (WebSocketProtocol if self.app.callable.websocket_enabled
-                    else HttpProtocol)
+        protocol = (
+            self.websocket_protocol if self.app.callable.websocket_enabled
+            else self.http_protocol)
         self._server_settings = self.app.callable._helper(
             loop=self.loop,
             debug=is_debug,
@@ -70,13 +74,13 @@ class GunicornWorker(base.Worker):
             trigger_events(self._server_settings.get('before_stop', []),
                            self.loop)
             self.loop.run_until_complete(self.close())
-        except:
+        except BaseException:
             traceback.print_exc()
         finally:
             try:
                 trigger_events(self._server_settings.get('after_stop', []),
                                self.loop)
-            except:
+            except BaseException:
                 traceback.print_exc()
             finally:
                 self.loop.close()
@@ -111,7 +115,9 @@ class GunicornWorker(base.Worker):
             coros = []
             for conn in self.connections:
                 if hasattr(conn, "websocket") and conn.websocket:
-                    coros.append(conn.websocket.close_connection(force=True))
+                    coros.append(
+                        conn.websocket.close_connection(after_handshake=False)
+                    )
                 else:
                     conn.close()
             _shutdown = asyncio.gather(*coros, loop=self.loop)
@@ -142,9 +148,8 @@ class GunicornWorker(base.Worker):
                 )
                 if self.max_requests and req_count > self.max_requests:
                     self.alive = False
-                    self.log.info(
-                            "Max requests exceeded, shutting down: %s", self
-                        )
+                    self.log.info("Max requests exceeded, shutting down: %s",
+                                  self)
                 elif pid == os.getpid() and self.ppid != os.getppid():
                     self.alive = False
                     self.log.info("Parent changed, shutting down: %s", self)

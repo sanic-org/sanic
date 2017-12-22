@@ -86,12 +86,18 @@ class Sanic:
 
         :param task: future, couroutine or awaitable
         """
-        @self.listener('before_server_start')
-        def run(app, loop):
+        try:
             if callable(task):
-                loop.create_task(task())
+                self.loop.create_task(task())
             else:
-                loop.create_task(task)
+                self.loop.create_task(task)
+        except SanicException:
+            @self.listener('before_server_start')
+            def run(app, loop):
+                if callable(task):
+                    loop.create_task(task())
+                else:
+                    loop.create_task(task)
 
     # Decorator
     def listener(self, event):

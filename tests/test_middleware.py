@@ -75,6 +75,7 @@ def test_middleware_response_exception():
     assert response.text == 'OK'
     assert result['status_code'] == 404
 
+
 def test_middleware_override_request():
     app = Sanic('test_middleware_override_request')
 
@@ -107,7 +108,6 @@ def test_middleware_override_response():
 
     assert response.status == 200
     assert response.text == 'OK'
-
 
 
 def test_middleware_order():
@@ -146,4 +146,4 @@ def test_middleware_order():
     request, response = app.test_client.get('/')
 
     assert response.status == 200
-    assert order == [1,2,3,4,5,6]
+    assert order == [1, 2, 3, 4, 5, 6]

@@ -20,7 +20,8 @@ def test_storage():
 
     @app.route('/')
     def handler(request):
-        return json({'user': request.get('user'), 'sidekick': request.get('sidekick')})
+        return json({'user': request.get('user'),
+                    'sidekick': request.get('sidekick')})
 
     request, response = app.test_client.get('/')
 

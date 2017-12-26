@@ -645,8 +645,13 @@ class Sanic:
         try:
             self.is_running = True
             if workers == 1:
-                if os.name == 'posix' and auto_reload and \
-                        os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
+                if auto_reload and os.name != 'posix':
+                    # This condition must be removed after implementing
+                    # auto reloader for other operating systems.
+                    raise NotImplementedError
+
+                if auto_reload and \
+                        os.environ.get('SANIC_SERVER_RUNNING') != 'true':
                     reloader_helpers.watchdog(2)
                 else:
                     serve(**server_settings)
@@ -808,14 +813,14 @@ class Sanic:
             logger.setLevel(logging.DEBUG)
 
         if self.config.LOGO is not None and \
-                os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
+                os.environ.get('SANIC_SERVER_RUNNING') != 'true':
             logger.debug(self.config.LOGO)
 
         if run_async:
             server_settings['run_async'] = True
 
         # Serve
-        if host and port and os.environ.get('MAIN_PROCESS_RUNNED') != 'true':
+        if host and port and os.environ.get('SANIC_SERVER_RUNNING') != 'true':
             proto = "http"
             if ssl is not None:
                 proto = "https"

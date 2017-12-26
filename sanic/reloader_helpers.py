@@ -7,7 +7,9 @@ from multiprocessing import Process
 
 
 def _iter_module_files():
-    """This iterates over all relevant Python files.  It goes through all
+    """This iterates over all relevant Python files.
+
+    It goes through all
     loaded files from modules, all files in folders of already loaded modules
     as well as all files reachable through a package.
     """
@@ -38,12 +40,12 @@ def _get_args_for_reloading():
 
 
 def restart_with_reloader():
-    """Create a new process and a subprocess in it
-    with the same arguments as this one.
+    """Create a new process and a subprocess in it with the same arguments as
+    this one.
     """
     args = _get_args_for_reloading()
     new_environ = os.environ.copy()
-    new_environ['MAIN_PROCESS_RUNNED'] = 'true'
+    new_environ['SANIC_SERVER_RUNNING'] = 'true'
     cmd = ' '.join(args)
     worker_process = Process(
                             target=subprocess.call, args=(cmd,),
@@ -58,7 +60,7 @@ def kill_process_children_unix(pid):
     :param pid: PID of process (process ID)
     :return: Nothing
     """
-    root_process_path = "/proc/%s/task/%s/children" % (pid, pid)
+    root_process_path = "/proc/{pid}/task/{pid}/children".format(pid=pid)
     if not os.path.isfile(root_process_path):
         return
     with open(root_process_path) as children_list_file:
@@ -87,12 +89,11 @@ def kill_program_completly(proc):
 
 
 def watchdog(sleep_interval):
-    """Whatch project files, restart worker process if a change happened.
+    """Watch project files, restart worker process if a change happened.
 
     :param sleep_interval: interval in second.
     :return: Nothing
     """
-
     mtimes = {}
     worker_process = restart_with_reloader()
     signal.signal(

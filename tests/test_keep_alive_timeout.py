@@ -68,7 +68,7 @@ class ReuseableSanicTestClient(SanicTestClient):
                 import traceback
                 traceback.print_tb(e2.__traceback__)
                 exceptions.append(e2)
-            # Don't stop here! self.app.stop()
+            #Don't stop here! self.app.stop()
 
         if self._server is not None:
             _server = self._server
@@ -266,3 +266,4 @@ def test_keep_alive_server_timeout():
     assert isinstance(exception, ValueError)
     assert "Connection reset" in exception.args[0] or \
            "got a new connection" in exception.args[0]
+

@@ -88,14 +88,20 @@ class Sanic:
         """
         try:
             if callable(task):
-                self.loop.create_task(task())
+                try:
+                    self.loop.create_task(task(self))
+                except TypeError:
+                    self.loop.create_task(task())
             else:
                 self.loop.create_task(task)
         except SanicException:
             @self.listener('before_server_start')
             def run(app, loop):
                 if callable(task):
-                    loop.create_task(task())
+                    try:
+                        loop.create_task(task(self))
+                    except TypeError:
+                        loop.create_task(task())
                 else:
                     loop.create_task(task)
 

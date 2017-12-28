@@ -110,3 +110,23 @@ async def notify_server_started_after_five_seconds():
 
 app.add_task(notify_server_started_after_five_seconds())
 ```
+
+Sanic will attempt to automatically inject the app, passing it as an argument to the task:
+
+```python
+async def notify_server_started_after_five_seconds(app):
+    await asyncio.sleep(5)
+    print(app.name)
+
+app.add_task(notify_server_started_after_five_seconds)
+```
+
+Or you can pass the app explicitly for the same effect:
+
+```python
+async def notify_server_started_after_five_seconds(app):
+    await asyncio.sleep(5)
+    print(app.name)
+
+app.add_task(notify_server_started_after_five_seconds(app))
+`

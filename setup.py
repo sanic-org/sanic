@@ -65,7 +65,8 @@ if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
 
-if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+# 'nt' means windows OS
+if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")) or os.name == 'nt':
     print("Installing without uvLoop")
     requirements.remove(uvloop)
 

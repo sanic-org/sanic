@@ -1,10 +1,12 @@
 import asyncio
+import uuid
+
 import pytest
 
 from sanic import Sanic
-from sanic.response import text
-from sanic.router import RouteExists, RouteDoesNotExist
 from sanic.constants import HTTP_METHODS
+from sanic.response import text
+from sanic.router import RouteExists, RouteDoesNotExist, Router, REGEX_TYPES
 
 
 # ------------------------------------------------------------ #
@@ -29,7 +31,8 @@ def test_versioned_routes_get(method):
     client_method = getattr(app.test_client, method)
 
     request, response = client_method('/v1/{}'.format(method))
-    assert response.status== 200
+    assert response.status == 200
+
 
 def test_shorthand_routes_get():
     app = Sanic('test_shorhand_routes_get')
@@ -43,6 +46,7 @@ def test_shorthand_routes_get():
 
     request, response = app.test_client.post('/get')
     assert response.status == 405
+
 
 def test_shorthand_routes_multiple():
     app = Sanic('test_shorthand_routes_multiple')
@@ -61,6 +65,7 @@ def test_shorthand_routes_multiple():
 
     request, response = app.test_client.options('/get/')
     assert response.status == 200
+
 
 def test_route_strict_slash():
     app = Sanic('test_route_strict_slash')
@@ -89,6 +94,7 @@ def test_route_strict_slash():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
+
 def test_route_invalid_parameter_syntax():
     with pytest.raises(ValueError):
         app = Sanic('test_route_invalid_param_syntax')
@@ -98,6 +104,7 @@ def test_route_invalid_parameter_syntax():
             return text('OK')
 
         request, response = app.test_client.get('/get')
+
 
 def test_route_strict_slash_default_value():
     app = Sanic('test_route_strict_slash', strict_slashes=True)
@@ -109,6 +116,7 @@ def test_route_strict_slash_default_value():
     request, response = app.test_client.get('/get/')
     assert response.status == 404
 
+
 def test_route_strict_slash_without_passing_default_value():
     app = Sanic('test_route_strict_slash')
 
@@ -119,6 +127,7 @@ def test_route_strict_slash_without_passing_default_value():
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
 
+
 def test_route_strict_slash_default_value_can_be_overwritten():
     app = Sanic('test_route_strict_slash', strict_slashes=True)
 
@@ -128,6 +137,7 @@ def test_route_strict_slash_default_value_can_be_overwritten():
 
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
+
 
 def test_route_optional_slash():
     app = Sanic('test_route_optional_slash')
@@ -142,6 +152,7 @@ def test_route_optional_slash():
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
 
+
 def test_shorthand_routes_post():
     app = Sanic('test_shorhand_routes_post')
 
@@ -154,6 +165,7 @@ def test_shorthand_routes_post():
 
     request, response = app.test_client.get('/post')
     assert response.status == 405
+
 
 def test_shorthand_routes_put():
     app = Sanic('test_shorhand_routes_put')
@@ -171,6 +183,7 @@ def test_shorthand_routes_put():
     request, response = app.test_client.get('/put')
     assert response.status == 405
 
+
 def test_shorthand_routes_delete():
     app = Sanic('test_shorhand_routes_delete')
 
@@ -186,6 +199,7 @@ def test_shorthand_routes_delete():
 
     request, response = app.test_client.get('/delete')
     assert response.status == 405
+
 
 def test_shorthand_routes_patch():
     app = Sanic('test_shorhand_routes_patch')
@@ -203,6 +217,7 @@ def test_shorthand_routes_patch():
     request, response = app.test_client.get('/patch')
     assert response.status == 405
 
+
 def test_shorthand_routes_head():
     app = Sanic('test_shorhand_routes_head')
 
@@ -219,6 +234,7 @@ def test_shorthand_routes_head():
     request, response = app.test_client.get('/head')
     assert response.status == 405
 
+
 def test_shorthand_routes_options():
     app = Sanic('test_shorhand_routes_options')
 
@@ -234,6 +250,7 @@ def test_shorthand_routes_options():
 
     request, response = app.test_client.get('/options')
     assert response.status == 405
+
 
 def test_static_routes():
     app = Sanic('test_dynamic_route')
@@ -717,6 +734,7 @@ def test_remove_inexistent_route():
     with pytest.raises(RouteDoesNotExist):
         app.remove_route('/test')
 
+
 def test_removing_slash():
     app = Sanic(__name__)
 
@@ -835,7 +853,6 @@ def test_unmergeable_overload_routes():
     request, response = app.test_client.post('/overload_whole')
     assert response.text == 'OK1'
 
-
     @app.route('/overload_part', methods=['GET'])
     async def handler1(request):
         return text('OK1')
@@ -850,3 +867,45 @@ def test_unmergeable_overload_routes():
 
     request, response = app.test_client.post('/overload_part')
     assert response.status == 405
+
+
+def test_custom_route_converters():
+    regex = r'[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-' \
+            r'[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}'
+    custom_router = Router(converters={
+        "uuid": (uuid.UUID, regex)
+    })
+    app = Sanic('test_custom_route_converters', router=custom_router)
+    results = []
+
+    @app.route('/<id:uuid>')
+    async def handler(request, id):
+        results.append(id)
+        return text('OK')
+
+    request, response = app.test_client.get('/e010dcb8-6b40-11e7-8e04-0242ac120022')
+
+    assert response.text == 'OK'
+    assert isinstance(results[0], uuid.UUID)
+
+
+def test_extend_default_rules():
+    regex = r'[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-' \
+            r'[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}'
+    rules = dict(REGEX_TYPES)
+    rules.update({
+        "uuid": (uuid.UUID, regex)
+    })
+    custom_router = Router(converters=rules)
+    app = Sanic('test_custom_route_converters', router=custom_router)
+    results = []
+
+    @app.route('/<id:uuid>')
+    async def handler(request, id):
+        results.append(id)
+        return text('OK')
+
+    request, response = app.test_client.get('/e010dcb8-6b40-11e7-8e04-0242ac120022')
+
+    assert response.text == 'OK'
+    assert isinstance(results[0], uuid.UUID)

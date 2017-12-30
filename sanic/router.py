@@ -2,6 +2,7 @@ import re
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from functools import lru_cache
+from types import MappingProxyType
 
 from sanic.exceptions import NotFound, MethodNotSupported
 from sanic.views import CompositionView
@@ -11,13 +12,13 @@ Route = namedtuple(
     ['handler', 'methods', 'pattern', 'parameters', 'name', 'uri'])
 Parameter = namedtuple('Parameter', ['name', 'cast'])
 
-REGEX_TYPES = {
+REGEX_TYPES = MappingProxyType({
     'string': (str, r'[^/]+'),
     'int': (int, r'\d+'),
     'number': (float, r'[0-9\\.]+'),
     'alpha': (str, r'[A-Za-z]+'),
     'path': (str, r'[^/].*?'),
-}
+})
 
 ROUTER_CACHE_SIZE = 1024
 
@@ -65,7 +66,7 @@ class Router:
     routes_always_check = None
     parameter_pattern = re.compile(r'<(.+?)>')
 
-    def __init__(self):
+    def __init__(self, converters=REGEX_TYPES):
         self.routes_all = {}
         self.routes_names = {}
         self.routes_static_files = {}
@@ -73,9 +74,9 @@ class Router:
         self.routes_dynamic = defaultdict(list)
         self.routes_always_check = []
         self.hosts = set()
+        self._converters = dict(converters)
 
-    @classmethod
-    def parse_parameter_string(cls, parameter_string):
+    def parse_parameter_string(self, parameter_string):
         """Parse a parameter string into its constituent name, type, and
         pattern
 
@@ -100,7 +101,7 @@ class Router:
 
         default = (str, pattern)
         # Pull from pre-configured types
-        _type, pattern = REGEX_TYPES.get(pattern, default)
+        _type, pattern = self._converters.get(pattern, default)
 
         return name, _type, pattern
 

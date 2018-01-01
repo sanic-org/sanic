@@ -141,16 +141,16 @@ def test_route_slashes_overload():
         return text('OK')
 
 
-    request, response = app.test_client.get('/get')
+    request, response = app.test_client.get('/hello')
     assert response.text == 'OK'
 
-    request, response = app.test_client.get('/get/')
+    request, response = app.test_client.get('/hello/')
     assert response.text == 'OK'
 
-    request, response = app.test_client.post('/get')
+    request, response = app.test_client.post('/hello')
     assert response.text == 'OK'
 
-    request, response = app.test_client.post('/get/')
+    request, response = app.test_client.post('/hello/')
     assert response.text == 'OK'
 
 def test_route_optional_slash():

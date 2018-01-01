@@ -129,6 +129,30 @@ def test_route_strict_slash_default_value_can_be_overwritten():
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
 
+def test_route_slashes_overload():
+    app = Sanic('test_route_slashes_overload')
+
+    @app.get('/hello/')
+    def handler(request):
+        return text('OK')
+
+    @app.post('/hello/')
+    def handler(request):
+        return text('OK')
+
+
+    request, response = app.test_client.get('/get')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.get('/get/')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.post('/get')
+    assert response.text == 'OK'
+
+    request, response = app.test_client.post('/get/')
+    assert response.text == 'OK'
+
 def test_route_optional_slash():
     app = Sanic('test_route_optional_slash')
 

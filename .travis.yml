@@ -25,12 +25,14 @@ before_install:
 install: pip install -U tox
 script: 
   - if [[ "${TOX_ENV}" =~ ^py ]] ; then
-      tox -e $TOX_ENV  -- --junit-xml=testresults.xml;
+      tox -e $TOX_ENV  -- --junit-xml=testresults.xml --cov-report=xml;
     else
       tox -e $TOX_ENV;
     fi
 after_script:
-  - if [[ "${TOX_ENV}" =~ ^py ]] ; then
+  - if [[ "${TOX_ENV}" = "py35" ]] ; then
+      testspace [${TOX_ENV}]testresults.xml{tests} [${TOX_ENV}]coverage.xml;
+    elif [[ "${TOX_ENV}" =~ ^py ]] ; then
       testspace [${TOX_ENV}]testresults.xml{tests};
     fi
 deploy:

@@ -431,7 +431,10 @@ class HttpProtocol(asyncio.Protocol):
             if self.parser and (self.keep_alive
                                 or getattr(response, 'status', 0) == 408):
                 self.log_response(response)
-            self.transport.close()
+            try:
+                self.transport.close()
+            except AttributeError as e:
+                logger.debug('Connection lost before server could close it.')
 
     def bail_out(self, message, from_error=False):
         if from_error or self.transport.is_closing():

@@ -101,7 +101,6 @@ def test_log_connection_lost(debug, monkeypatch):
     log = stream.getvalue()
 
     if debug:
-        assert log.startswith(
-            'Connection lost before response written @')
+        assert 'Connection lost before response written @' in log
     else:
         assert 'Connection lost before response written @' not in log

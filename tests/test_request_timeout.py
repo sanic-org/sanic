@@ -6,7 +6,7 @@ from sanic.response import text
 from sanic.config import Config
 import aiohttp
 from aiohttp import TCPConnector
-from sanic.testing import SanicTestClient, HOST, PORT
+from sanic.testing import SanicTestClient, HOST
 
 
 class DelayableTCPConnector(TCPConnector):
@@ -96,7 +96,7 @@ class DelayableTCPConnector(TCPConnector):
 
 class DelayableSanicTestClient(SanicTestClient):
     def __init__(self, app, loop, request_delay=1):
-        super(DelayableSanicTestClient, self).__init__(app)
+        super(DelayableSanicTestClient, self).__init__(app, port=app.test_port)
         self._request_delay = request_delay
         self._loop = None
 
@@ -108,7 +108,7 @@ class DelayableSanicTestClient(SanicTestClient):
             url = uri
         else:
             url = 'http://{host}:{port}{uri}'.format(
-                host=HOST, port=PORT, uri=uri)
+                host=HOST, port=self.port, uri=uri)
         conn = DelayableTCPConnector(pre_request_delay=self._request_delay,
                                      verify_ssl=False, loop=self._loop)
         async with aiohttp.ClientSession(cookies=cookies, connector=conn,

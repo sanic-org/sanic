@@ -7,7 +7,7 @@ from collections import deque, defaultdict
 from functools import partial
 from inspect import isawaitable, stack, getmodulename
 from traceback import format_exc
-from urllib.parse import urlencode, urlunparse
+from urllib.parse import quote, urlencode, urlunparse
 from ssl import create_default_context, Purpose
 
 from sanic.config import Config
@@ -25,7 +25,6 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 
 class Sanic:
-
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
                  strict_slashes=False, log_config=None,
@@ -111,9 +110,11 @@ class Sanic:
 
         :param event: event to listen to
         """
+
         def decorator(listener):
             self.listeners[event].append(listener)
             return listener
+
         return decorator
 
     # Decorator
@@ -135,7 +136,7 @@ class Sanic:
         # and will probably get confused as to why it's not working
         if not uri.startswith('/'):
             uri = '/' + uri
-
+        uri = quote(uri)
         if stream:
             self.is_request_stream = True
 
@@ -428,7 +429,7 @@ class Sanic:
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
         if not (uri and route):
             raise URLBuildError('Endpoint with name `{}` was not found'.format(
-                                view_name))
+                view_name))
 
         if view_name == 'static' or view_name.endswith('.static'):
             filename = kwargs.pop('filename', None)

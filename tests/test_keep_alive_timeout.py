@@ -7,7 +7,7 @@ from sanic.config import Config
 from sanic import server
 import aiohttp
 from aiohttp import TCPConnector
-from sanic.testing import SanicTestClient, HOST, PORT
+from sanic.testing import SanicTestClient, HOST
 
 
 class ReuseableTCPConnector(TCPConnector):
@@ -30,7 +30,7 @@ class ReuseableTCPConnector(TCPConnector):
 
 class ReuseableSanicTestClient(SanicTestClient):
     def __init__(self, app, loop=None):
-        super(ReuseableSanicTestClient, self).__init__(app)
+        super().__init__(app, port=app.test_port)
         if loop is None:
             loop = asyncio.get_event_loop()
         self._loop = loop
@@ -68,13 +68,14 @@ class ReuseableSanicTestClient(SanicTestClient):
                 import traceback
                 traceback.print_tb(e2.__traceback__)
                 exceptions.append(e2)
-            #Don't stop here! self.app.stop()
+            # Don't stop here! self.app.stop()
 
         if self._server is not None:
             _server = self._server
         else:
             _server_co = self.app.create_server(host=HOST, debug=debug,
-                                                port=PORT, **server_kwargs)
+                                                port=self.app.test_port,
+                                                **server_kwargs)
 
             server.trigger_events(
                 self.app.listeners['before_server_start'], loop)
@@ -88,7 +89,7 @@ class ReuseableSanicTestClient(SanicTestClient):
                 raise e1
             self._server = _server = http_server
         server.trigger_events(
-                self.app.listeners['after_server_start'], loop)
+            self.app.listeners['after_server_start'], loop)
         self.app.listeners['after_server_start'].pop()
 
         if do_kill_server:
@@ -133,7 +134,7 @@ class ReuseableSanicTestClient(SanicTestClient):
             url = uri
         else:
             url = 'http://{host}:{port}{uri}'.format(
-                host=HOST, port=PORT, uri=uri)
+                host=HOST, port=self.port, uri=uri)
         do_kill_session = kwargs.pop('end_session', False)
         if self._session:
             session = self._session

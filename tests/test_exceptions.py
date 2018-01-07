@@ -138,7 +138,7 @@ def test_unauthorized_exception(exception_app):
     request, response = exception_app.test_client.get('/401/basic')
     assert response.status == 401
     assert response.headers.get('WWW-Authenticate') is not None
-    assert response.headers.get('WWW-Authenticate') == "Basic realm='Sanic'"
+    assert response.headers.get('WWW-Authenticate') == 'Basic realm="Sanic"'
 
     request, response = exception_app.test_client.get('/401/digest')
     assert response.status == 401
@@ -146,10 +146,10 @@ def test_unauthorized_exception(exception_app):
     auth_header = response.headers.get('WWW-Authenticate')
     assert auth_header is not None
     assert auth_header.startswith('Digest')
-    assert "qop='auth, auth-int'" in auth_header
-    assert "algorithm='MD5'" in auth_header
-    assert "nonce='abcdef'" in auth_header
-    assert "opaque='zyxwvu'" in auth_header
+    assert 'qop="auth, auth-int"' in auth_header
+    assert 'algorithm="MD5"' in auth_header
+    assert 'nonce="abcdef"' in auth_header
+    assert 'opaque="zyxwvu"' in auth_header
 
     request, response = exception_app.test_client.get('/401/bearer')
     assert response.status == 401

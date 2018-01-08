@@ -374,8 +374,7 @@ class Router:
         :param method: request method
         :return: handler, arguments, keyword arguments
         """
-        url = unquote(url)
-        url = host + url
+        url = unquote(host + url)
         # Check against known static routes
         route = self.routes_static.get(url)
         method_not_supported = MethodNotSupported(

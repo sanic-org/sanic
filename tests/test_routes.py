@@ -29,7 +29,8 @@ def test_versioned_routes_get(method):
     client_method = getattr(app.test_client, method)
 
     request, response = client_method('/v1/{}'.format(method))
-    assert response.status== 200
+    assert response.status == 200
+
 
 def test_shorthand_routes_get():
     app = Sanic('test_shorhand_routes_get')
@@ -43,6 +44,7 @@ def test_shorthand_routes_get():
 
     request, response = app.test_client.post('/get')
     assert response.status == 405
+
 
 def test_shorthand_routes_multiple():
     app = Sanic('test_shorthand_routes_multiple')
@@ -61,6 +63,7 @@ def test_shorthand_routes_multiple():
 
     request, response = app.test_client.options('/get/')
     assert response.status == 200
+
 
 def test_route_strict_slash():
     app = Sanic('test_route_strict_slash')
@@ -89,6 +92,7 @@ def test_route_strict_slash():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
+
 def test_route_invalid_parameter_syntax():
     with pytest.raises(ValueError):
         app = Sanic('test_route_invalid_param_syntax')
@@ -98,6 +102,7 @@ def test_route_invalid_parameter_syntax():
             return text('OK')
 
         request, response = app.test_client.get('/get')
+
 
 def test_route_strict_slash_default_value():
     app = Sanic('test_route_strict_slash', strict_slashes=True)
@@ -109,6 +114,7 @@ def test_route_strict_slash_default_value():
     request, response = app.test_client.get('/get/')
     assert response.status == 404
 
+
 def test_route_strict_slash_without_passing_default_value():
     app = Sanic('test_route_strict_slash')
 
@@ -119,6 +125,7 @@ def test_route_strict_slash_without_passing_default_value():
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
 
+
 def test_route_strict_slash_default_value_can_be_overwritten():
     app = Sanic('test_route_strict_slash', strict_slashes=True)
 
@@ -128,6 +135,7 @@ def test_route_strict_slash_default_value_can_be_overwritten():
 
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
+
 
 def test_route_slashes_overload():
     app = Sanic('test_route_slashes_overload')
@@ -140,7 +148,6 @@ def test_route_slashes_overload():
     def handler(request):
         return text('OK')
 
-
     request, response = app.test_client.get('/hello')
     assert response.text == 'OK'
 
@@ -152,6 +159,7 @@ def test_route_slashes_overload():
 
     request, response = app.test_client.post('/hello/')
     assert response.text == 'OK'
+
 
 def test_route_optional_slash():
     app = Sanic('test_route_optional_slash')
@@ -166,6 +174,7 @@ def test_route_optional_slash():
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
 
+
 def test_shorthand_routes_post():
     app = Sanic('test_shorhand_routes_post')
 
@@ -178,6 +187,7 @@ def test_shorthand_routes_post():
 
     request, response = app.test_client.get('/post')
     assert response.status == 405
+
 
 def test_shorthand_routes_put():
     app = Sanic('test_shorhand_routes_put')
@@ -195,6 +205,7 @@ def test_shorthand_routes_put():
     request, response = app.test_client.get('/put')
     assert response.status == 405
 
+
 def test_shorthand_routes_delete():
     app = Sanic('test_shorhand_routes_delete')
 
@@ -210,6 +221,7 @@ def test_shorthand_routes_delete():
 
     request, response = app.test_client.get('/delete')
     assert response.status == 405
+
 
 def test_shorthand_routes_patch():
     app = Sanic('test_shorhand_routes_patch')
@@ -227,6 +239,7 @@ def test_shorthand_routes_patch():
     request, response = app.test_client.get('/patch')
     assert response.status == 405
 
+
 def test_shorthand_routes_head():
     app = Sanic('test_shorhand_routes_head')
 
@@ -243,6 +256,7 @@ def test_shorthand_routes_head():
     request, response = app.test_client.get('/head')
     assert response.status == 405
 
+
 def test_shorthand_routes_options():
     app = Sanic('test_shorhand_routes_options')
 
@@ -258,6 +272,7 @@ def test_shorthand_routes_options():
 
     request, response = app.test_client.get('/options')
     assert response.status == 405
+
 
 def test_static_routes():
     app = Sanic('test_dynamic_route')
@@ -741,6 +756,7 @@ def test_remove_inexistent_route():
     with pytest.raises(RouteDoesNotExist):
         app.remove_route('/test')
 
+
 def test_removing_slash():
     app = Sanic(__name__)
 
@@ -859,7 +875,6 @@ def test_unmergeable_overload_routes():
     request, response = app.test_client.post('/overload_whole')
     assert response.text == 'OK1'
 
-
     @app.route('/overload_part', methods=['GET'])
     async def handler1(request):
         return text('OK1')
@@ -874,3 +889,21 @@ def test_unmergeable_overload_routes():
 
     request, response = app.test_client.post('/overload_part')
     assert response.status == 405
+
+
+def test_unicode_routes():
+    app = Sanic('test_unicode_routes')
+
+    @app.get('/你好')
+    def handler1(request):
+        return text('OK1')
+
+    request, response = app.test_client.get('/你好')
+    assert response.text == 'OK1'
+
+    @app.route('/overload/<param>', methods=['GET'])
+    async def handler2(request, param):
+        return text('OK2 ' + param)
+
+    request, response = app.test_client.get('/overload/你好')
+    assert response.text == 'OK2 你好'

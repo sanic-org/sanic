@@ -2,6 +2,7 @@ import re
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from functools import lru_cache
+from urllib.parse import unquote
 
 from sanic.exceptions import NotFound, MethodNotSupported
 from sanic.views import CompositionView
@@ -373,7 +374,7 @@ class Router:
         :param method: request method
         :return: handler, arguments, keyword arguments
         """
-        url = host + url
+        url = unquote(host + url)
         # Check against known static routes
         route = self.routes_static.get(url)
         method_not_supported = MethodNotSupported(

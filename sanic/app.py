@@ -577,13 +577,17 @@ class Sanic:
                 if isawaitable(response):
                     response = await response
             except Exception as e:
-                if self.debug:
+                if isinstance(e, SanicException):
+                    response = self.error_handler.default(request=request,
+                                                          exception=e)
+                elif self.debug:
                     response = HTTPResponse(
                         "Error while handling error: {}\nStack: {}".format(
-                            e, format_exc()))
+                            e, format_exc()), status=500)
                 else:
                     response = HTTPResponse(
-                        "An error occurred while handling an error")
+                        "An error occurred while handling an error",
+                        status=500)
         finally:
             # -------------------------------------------- #
             # Response Middleware

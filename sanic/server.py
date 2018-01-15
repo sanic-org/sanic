@@ -5,7 +5,7 @@ from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
 from signal import (
-    SIGTERM, SIGINT,
+    SIGTERM, SIGINT, SIG_IGN,
     signal as signal_func,
     Signals
 )
@@ -607,6 +607,10 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     trigger_events(after_start, loop)
 
+    # Ignore SIGINT when run_multiple
+    if run_multiple:
+        signal_func(SIGINT, SIG_IGN)
+
     # Register signals for graceful termination
     if register_sys_signals:
         _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
@@ -694,6 +698,7 @@ def serve_multiple(server_settings, workers):
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
 
     processes = []
+
     for _ in range(workers):
         process = Process(target=serve, kwargs=server_settings)
         process.daemon = True

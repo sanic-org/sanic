@@ -549,8 +549,6 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     """
     if not run_async:
         # create new event_loop after fork
-        asyncio.get_event_loop().close()
-
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 

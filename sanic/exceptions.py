@@ -150,6 +150,16 @@ class InvalidUsage(SanicException):
     pass
 
 
+@add_status_code(405)
+class MethodNotSupported(SanicException):
+    def __init__(self, message, method, allowed_methods):
+        super().__init__(message)
+        self.headers = dict()
+        self.headers["Allow"] = ", ".join(allowed_methods)
+        if method in ['HEAD', 'PATCH', 'PUT', 'DELETE']:
+            self.headers['Content-Length'] = 0
+
+
 @add_status_code(500)
 class ServerError(SanicException):
     pass
@@ -167,8 +177,6 @@ class URLBuildError(ServerError):
 
 
 class FileNotFound(NotFound):
-    pass
-
     def __init__(self, message, path, relative_url):
         super().__init__(message)
         self.path = path
@@ -198,8 +206,6 @@ class HeaderNotFound(InvalidUsage):
 
 @add_status_code(416)
 class ContentRangeError(SanicException):
-    pass
-
     def __init__(self, message, content_range):
         super().__init__(message)
         self.headers = {
@@ -257,7 +263,7 @@ class Unauthorized(SanicException):
 
         # if auth-scheme is specified, set "WWW-Authenticate" header
         if scheme is not None:
-            values = ["{!s}={!r}".format(k, v) for k, v in kwargs.items()]
+            values = ['{!s}="{!s}"'.format(k, v) for k, v in kwargs.items()]
             challenge = ', '.join(values)
 
             self.headers = {

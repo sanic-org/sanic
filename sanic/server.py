@@ -174,6 +174,10 @@ class HttpProtocol(asyncio.Protocol):
                                      self.response_timeout_callback)
             )
         else:
+            if self._request_stream_task:
+                self._request_stream_task.cancel()
+            if self._request_handler_task:
+                self._request_handler_task.cancel()
             try:
                 raise ServiceUnavailable('Response Timeout')
             except ServiceUnavailable as exception:
@@ -312,13 +316,15 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 extra['byte'] = -1
 
+            extra['host'] = 'UNKNOWN'
             if self.request is not None:
-                extra['host'] = '{0}:{1}'.format(self.request.ip[0],
-                                                 self.request.ip[1])
+                if self.request.ip:
+                    extra['host'] = '{0}:{1}'.format(self.request.ip,
+                                                     self.request.port)
+
                 extra['request'] = '{0} {1}'.format(self.request.method,
                                                     self.request.url)
             else:
-                extra['host'] = 'UNKNOWN'
                 extra['request'] = 'nil'
 
             access_logger.info('', extra=extra)
@@ -426,7 +432,10 @@ class HttpProtocol(asyncio.Protocol):
             if self.parser and (self.keep_alive
                                 or getattr(response, 'status', 0) == 408):
                 self.log_response(response)
-            self.transport.close()
+            try:
+                self.transport.close()
+            except AttributeError as e:
+                logger.debug('Connection lost before server could close it.')
 
     def bail_out(self, message, from_error=False):
         if from_error or self.transport.is_closing():
@@ -635,7 +644,9 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         coros = []
         for conn in connections:
             if hasattr(conn, "websocket") and conn.websocket:
-                coros.append(conn.websocket.close_connection(force=True))
+                coros.append(
+                    conn.websocket.close_connection(after_handshake=True)
+                )
             else:
                 conn.close()
 

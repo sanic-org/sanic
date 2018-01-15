@@ -10,7 +10,7 @@ from random import choice
 
 from sanic import Sanic
 from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
-from sanic.testing import HOST, PORT
+from sanic.testing import HOST
 from unittest.mock import MagicMock
 
 JSON_DATA = {'ok': True}
@@ -34,6 +34,25 @@ async def sample_streaming_fn(response):
     response.write('foo,')
     await asyncio.sleep(.001)
     response.write('bar')
+
+def test_method_not_allowed():
+    app = Sanic('method_not_allowed')
+
+    @app.get('/')
+    async def test(request):
+        return response.json({'hello': 'world'})
+
+    request, response = app.test_client.head('/')
+    assert response.headers['Allow']== 'GET'
+
+    @app.post('/')
+    async def test(request):
+        return response.json({'hello': 'world'})
+
+    request, response = app.test_client.head('/')
+    assert response.status == 405
+    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert response.headers['Content-Length'] == '0'
 
 
 @pytest.fixture
@@ -120,7 +139,7 @@ def test_stream_response_writes_correct_content_to_transport(streaming_app):
 
         app.stop()
 
-    streaming_app.run(host=HOST, port=PORT)
+    streaming_app.run(host=HOST, port=streaming_app.test_port)
 
 
 @pytest.fixture

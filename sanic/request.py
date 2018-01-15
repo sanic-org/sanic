@@ -1,5 +1,6 @@
 import sys
 import json
+import socket
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
@@ -181,13 +182,22 @@ class Request(dict):
     @property
     def socket(self):
         if not hasattr(self, '_socket'):
-            self._get_socket()
+            self._get_address()
         return self._socket
 
     def _get_address(self):
-        self._socket = (self.transport.get_extra_info('peername') or
-                        (None, None))
-        self._ip, self._port = self._socket
+        sock = self.transport.get_extra_info('socket')
+
+        if sock.family == socket.AF_INET:
+            self._socket = (self.transport.get_extra_info('peername') or
+                            (None, None))
+            self._ip, self._port = self._socket
+        elif sock.family == socket.AF_INET6:
+            self._socket = (self.transport.get_extra_info('peername') or
+                            (None, None, None, None))
+            self._ip, self._port, *_ = self._socket
+        else:
+            self._ip, self._port = (None, None)
 
     @property
     def remote_addr(self):

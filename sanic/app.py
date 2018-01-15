@@ -86,12 +86,24 @@ class Sanic:
 
         :param task: future, couroutine or awaitable
         """
-        @self.listener('before_server_start')
-        def run(app, loop):
+        try:
             if callable(task):
-                loop.create_task(task())
+                try:
+                    self.loop.create_task(task(self))
+                except TypeError:
+                    self.loop.create_task(task())
             else:
-                loop.create_task(task)
+                self.loop.create_task(task)
+        except SanicException:
+            @self.listener('before_server_start')
+            def run(app, loop):
+                if callable(task):
+                    try:
+                        loop.create_task(task(self))
+                    except TypeError:
+                        loop.create_task(task())
+                else:
+                    loop.create_task(task)
 
     # Decorator
     def listener(self, event):
@@ -544,6 +556,7 @@ class Sanic:
 
                 # Fetch handler from router
                 handler, args, kwargs, uri = self.router.get(request)
+
                 request.uri_template = uri
                 if handler is None:
                     raise ServerError(
@@ -564,13 +577,17 @@ class Sanic:
                 if isawaitable(response):
                     response = await response
             except Exception as e:
-                if self.debug:
+                if isinstance(e, SanicException):
+                    response = self.error_handler.default(request=request,
+                                                          exception=e)
+                elif self.debug:
                     response = HTTPResponse(
                         "Error while handling error: {}\nStack: {}".format(
-                            e, format_exc()))
+                            e, format_exc()), status=500)
                 else:
                     response = HTTPResponse(
-                        "An error occurred while handling an error")
+                        "An error occurred while handling an error",
+                        status=500)
         finally:
             # -------------------------------------------- #
             # Response Middleware

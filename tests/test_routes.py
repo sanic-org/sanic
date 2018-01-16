@@ -2,7 +2,7 @@ import asyncio
 import pytest
 
 from sanic import Sanic
-from sanic.response import text
+from sanic.response import text, json
 from sanic.router import RouteExists, RouteDoesNotExist
 from sanic.constants import HTTP_METHODS
 
@@ -923,7 +923,7 @@ def test_uri_with_different_method_and_different_params():
     request, response = app.test_client.get('/ads/1234')
     assert response.status == 200
     assert response.json == {
-        'ad_id': '/ads/1234'
+        'ad_id': '1234'
     }
 
     request, response = app.test_client.post('/ads/post')

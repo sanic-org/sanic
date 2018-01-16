@@ -907,3 +907,27 @@ def test_unicode_routes():
 
     request, response = app.test_client.get('/overload/你好')
     assert response.text == 'OK2 你好'
+
+
+def test_uri_with_different_method_and_different_params():
+    app = Sanic('test_uri')
+
+    @app.route('/ads/<ad_id>', methods=['GET'])
+    async def ad_get(request, ad_id):
+        return json({'ad_id': ad_id})
+
+    @app.route('/ads/<action>', methods=['POST'])
+    async def ad_post(request, action):
+        return json({'action': action})
+
+    request, response = app.test_client.get('/ads/1234')
+    assert response.status == 200
+    assert response.json == {
+        'ad_id': '/ads/1234'
+    }
+
+    request, response = app.test_client.post('/ads/post')
+    assert response.status == 200
+    assert response.json == {
+        'action': 'post'
+    }

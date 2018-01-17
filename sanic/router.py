@@ -234,11 +234,11 @@ class Router:
             if properties['unhashable']:
                 routes_to_check = self.routes_always_check
                 ndx, route = self.check_dynamic_route_exists(
-                    pattern, routes_to_check)
+                    pattern, routes_to_check, parameters)
             else:
                 routes_to_check = self.routes_dynamic[url_hash(uri)]
                 ndx, route = self.check_dynamic_route_exists(
-                    pattern, routes_to_check)
+                    pattern, routes_to_check, parameters)
             if ndx != -1:
                 # Pop the ndx of the route, no dups of the same route
                 routes_to_check.pop(ndx)
@@ -285,9 +285,9 @@ class Router:
             self.routes_static[uri] = route
 
     @staticmethod
-    def check_dynamic_route_exists(pattern, routes_to_check):
+    def check_dynamic_route_exists(pattern, routes_to_check, parameters):
         for ndx, route in enumerate(routes_to_check):
-            if route.pattern == pattern:
+            if route.pattern == pattern and route.parameters == parameters:
                 return ndx, route
         else:
             return -1, None

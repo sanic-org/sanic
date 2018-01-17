@@ -73,6 +73,8 @@ The following variables are accessible as properties on `Request` objects:
 
 - `headers` (dict) - A case-insensitive dictionary that contains the request headers.
 
+- `method` (str) - HTTP method of the request (ie `GET`, `POST`).
+
 - `ip` (str) - IP address of the requester.
 
 - `port` (str) - Port address of the requester.

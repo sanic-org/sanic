@@ -446,3 +446,44 @@ def test_bp_shorthand():
         'Sec-WebSocket-Version': '13'})
     assert response.status == 101
     assert ev.is_set()
+
+def test_bp_group():
+    app = Sanic('test_nested_bp_groups')
+    
+    deep_0 = Blueprint('deep_0', url_prefix='/deep')
+    deep_1 = Blueprint('deep_1', url_prefix = '/deep1')
+
+    @deep_0.route('/')
+    def handler(request):
+        return text('D0_OK')
+    
+    @deep_1.route('/bottom')
+    def handler(request):
+        return text('D1B_OK')
+
+    mid_0 = Blueprint.group(deep_0, deep_1, url_prefix='/mid')
+    mid_1 = Blueprint('mid_tier', url_prefix='/mid1')
+    
+    @mid_1.route('/')
+    def handler(request):
+        return text('M1_OK')
+
+    top = Blueprint.group(mid_0, mid_1)
+    
+    app.blueprint(top)
+    
+    @app.route('/')
+    def handler(request):
+        return text('TOP_OK')
+    
+    request, response = app.test_client.get('/')
+    assert response.text == 'TOP_OK'
+    
+    request, response = app.test_client.get('/mid1')
+    assert response.text == 'M1_OK'
+    
+    request, response = app.test_client.get('/mid/deep')
+    assert response.text == 'D0_OK'
+    
+    request, response = app.test_client.get('/mid/deep1/bottom')
+    assert response.text == 'D1B_OK'

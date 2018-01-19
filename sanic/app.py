@@ -372,10 +372,14 @@ class Sanic:
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.
 
-        :param blueprint: Blueprint object
+        :param blueprint: Blueprint object or (list, tuple) thereof
         :param options: option dictionary with blueprint defaults
         :return: Nothing
         """
+        if isinstance(blueprint, (list, tuple)):
+            for item in blueprint:
+                self.blueprint(item, **options)
+            return
         if blueprint.name in self.blueprints:
             assert self.blueprints[blueprint.name] is blueprint, \
                 'A blueprint with the name "%s" is already registered.  ' \

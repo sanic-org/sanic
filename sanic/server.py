@@ -5,7 +5,7 @@ from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
 from signal import (
-    SIGTERM, SIGINT,
+    SIGTERM, SIGINT, SIG_IGN,
     signal as signal_func,
     Signals
 )
@@ -20,9 +20,10 @@ from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
 
 try:
-    import uvloop as async_loop
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
-    async_loop = asyncio
+    pass
 
 from sanic.log import logger, access_logger
 from sanic.response import HTTPResponse
@@ -509,11 +510,11 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           request_timeout=60, response_timeout=60, keep_alive_timeout=5,
           ssl=None, sock=None, request_max_size=None, reuse_port=False,
           loop=None, protocol=HttpProtocol, backlog=100,
-          register_sys_signals=True, run_async=False, connections=None,
-          signal=Signal(), request_class=None, access_log=True,
-          keep_alive=True, is_request_stream=False, router=None,
-          websocket_max_size=None, websocket_max_queue=None, state=None,
-          graceful_shutdown_timeout=15.0):
+          register_sys_signals=True, run_multiple=False, run_async=False,
+          connections=None, signal=Signal(), request_class=None,
+          access_log=True, keep_alive=True, is_request_stream=False,
+          router=None, websocket_max_size=None, websocket_max_queue=None,
+          state=None, graceful_shutdown_timeout=15.0):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -547,7 +548,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :return: Nothing
     """
     if not run_async:
-        loop = async_loop.new_event_loop()
+        # create new event_loop after fork
+        loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
     if debug:
@@ -603,9 +605,14 @@ def serve(host, port, request_handler, error_handler, before_start=None,
 
     trigger_events(after_start, loop)
 
+    # Ignore SIGINT when run_multiple
+    if run_multiple:
+        signal_func(SIGINT, SIG_IGN)
+
     # Register signals for graceful termination
     if register_sys_signals:
-        for _signal in (SIGINT, SIGTERM):
+        _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
+        for _signal in _singals:
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:
@@ -668,6 +675,7 @@ def serve_multiple(server_settings, workers):
     :return:
     """
     server_settings['reuse_port'] = True
+    server_settings['run_multiple'] = True
 
     # Handling when custom socket is not provided.
     if server_settings.get('sock') is None:
@@ -682,12 +690,13 @@ def serve_multiple(server_settings, workers):
     def sig_handler(signal, frame):
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         for process in processes:
-            os.kill(process.pid, SIGINT)
+            os.kill(process.pid, SIGTERM)
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
 
     processes = []
+
     for _ in range(workers):
         process = Process(target=serve, kwargs=server_settings)
         process.daemon = True

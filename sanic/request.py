@@ -1,9 +1,8 @@
 import sys
 import json
-import socket
 from cgi import parse_header
 from collections import namedtuple
-from http import cookies
+from http.cookies import SimpleCookie
 from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
 
@@ -158,17 +157,13 @@ class Request(dict):
     def cookies(self):
         if self._cookies is None:
             cookie = self.headers.get('Cookie')
-            self._cookies = {}
             if cookie is not None:
-                for chunk in cookie.split(';'):
-                    if '=' in chunk:
-                        key, val = chunk.split('=', 1)
-                    else:
-                        key, val = '', chunk
-                    key, val = key.strip(), val.strip()
-                    if key or val:
-                        self._cookies[key] = cookies._unquote(val)
-
+                cookies = SimpleCookie()
+                cookies.load(cookie)
+                self._cookies = {name: cookie.value
+                                 for name, cookie in cookies.items()}
+            else:
+                self._cookies = {}
         return self._cookies
 
     @property
@@ -186,22 +181,13 @@ class Request(dict):
     @property
     def socket(self):
         if not hasattr(self, '_socket'):
-            self._get_address()
+            self._get_socket()
         return self._socket
 
     def _get_address(self):
-        sock = self.transport.get_extra_info('socket')
-
-        if sock.family == socket.AF_INET:
-            self._socket = (self.transport.get_extra_info('peername') or
-                            (None, None))
-            self._ip, self._port = self._socket
-        elif sock.family == socket.AF_INET6:
-            self._socket = (self.transport.get_extra_info('peername') or
-                            (None, None, None, None))
-            self._ip, self._port, *_ = self._socket
-        else:
-            self._ip, self._port = (None, None)
+        self._socket = (self.transport.get_extra_info('peername') or
+                        (None, None))
+        self._ip, self._port = self._socket
 
     @property
     def remote_addr(self):

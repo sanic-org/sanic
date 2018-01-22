@@ -154,7 +154,9 @@ class Sanic:
                                 version=version, name=name)
                 return handler
             else:
-                raise ValueError('Required parameter `request` missing in the {0}()'.format(handler.__name__))
+                raise ValueError(
+                    'Required parameter `request` missing in the {0}()'.format(
+                        handler.__name__))
 
         return response
 

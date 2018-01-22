@@ -182,7 +182,7 @@ class Request(dict):
     @property
     def socket(self):
         if not hasattr(self, '_socket'):
-            self._get_socket()
+            self._get_address()
         return self._socket
 
     def _get_address(self):

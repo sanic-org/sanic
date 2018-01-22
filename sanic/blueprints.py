@@ -14,7 +14,6 @@ FutureStatic = namedtuple('Route',
 
 
 class Blueprint:
-
     def __init__(self, name,
                  url_prefix=None,
                  host=None, version=None,
@@ -37,6 +36,27 @@ class Blueprint:
         self.statics = []
         self.version = version
         self.strict_slashes = strict_slashes
+
+    @staticmethod
+    def group(*blueprints, url_prefix=''):
+        """Create a list of blueprints, optionally
+        grouping them under a general URL prefix.
+
+        :param blueprints: blueprints to be registered as a group
+        :param url_prefix: URL route to be prepended to all sub-prefixes
+        """
+        def chain(nested):
+            """itertools.chain() but leaves strings untouched"""
+            for i in nested:
+                if isinstance(i, (list, tuple)):
+                    yield from chain(i)
+                else:
+                    yield i
+        bps = []
+        for bp in chain(blueprints):
+            bp.url_prefix = url_prefix + bp.url_prefix
+            bps.append(bp)
+        return bps
 
     def register(self, app, options):
         """Register the blueprint to the sanic app."""

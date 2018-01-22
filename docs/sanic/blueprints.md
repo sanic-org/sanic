@@ -51,6 +51,73 @@ will look like:
 [Route(handler=<function bp_root at 0x7f908382f9d8>, methods=None, pattern=re.compile('^/$'), parameters=[])]
 ```
 
+## Blueprint groups and nesting
+
+Blueprints may also be registered as part of a list or tuple, where the registrar will recursively cycle through any sub-sequences of blueprints and register them accordingly. The `Blueprint.group` method is provided to simplify this process, allowing a 'mock' backend directory structure mimicking what's seen from the front end. Consider this (quite contrived) example:
+
+```
+api/
+├──content/
+│  ├──authors.py
+│  ├──static.py
+│  └──__init__.py
+├──info.py
+└──__init__.py
+app.py
+```
+
+Initialization of this app's blueprint hierarchy could go as follows:
+
+```python
+# api/content/authors.py
+from sanic import Blueprint
+
+authors = Blueprint('content_authors', url_prefix='/authors')
+```
+```python
+# api/content/static.py
+from sanic import Blueprint
+
+static = Blueprint('content_static', url_prefix='/static')
+```
+```python
+# api/content/__init__.py
+from sanic import Blueprint
+
+from .static import static
+from .authors import authors
+
+content = Blueprint.group(assets, authors, url_prefix='/content')
+```
+```python
+# api/info.py
+from sanic import Blueprint
+
+info = Blueprint('info', url_prefix='/info')
+```
+```python
+# api/__init__.py
+from sanic import Blueprint
+
+from .content import content
+from .info import info
+
+api = Blueprint.group(content, info, url_prefix='/api')
+```
+
+And registering these blueprints in `app.py` can now be done like so:
+
+```python
+# app.py
+from sanic import Sanic
+
+from .api import api
+
+app = Sanic(__name__)
+
+app.blueprint(api)
+```
+
 ## Using blueprints
 
 Blueprints have much the same functionality as an application instance.

@@ -23,4 +23,3 @@ def test_multiprocessing():
     app.run(HOST, app.test_port, workers=num_workers)
 
     assert len(process_list) == num_workers
-

@@ -33,7 +33,7 @@ Installation
 
 -  ``pip install sanic``
 
-To install sanic without uvloop or json using bash, you can provide either or both of these environmental variables
+To install sanic without uvloop or ujson using bash, you can provide either or both of these environmental variables
 using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the NO_X to true will stop that features
 installation.
 

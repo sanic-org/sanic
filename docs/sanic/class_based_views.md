@@ -92,10 +92,27 @@ class ViewWithDecorator(HTTPMethodView):
   def get(self, request, name):
     return text('Hello I have a decorator')
 
+  def post(self, request, name):
+    return text("Hello I also have a decorator")
+
 app.add_route(ViewWithDecorator.as_view(), '/url')
 ```
 
-#### URL Building
+But if you just want to decorate some functions and not all functions, you can do as follows:
+
+```python
+class ViewWithSomeDecorator(HTTPMethodView):
+
+    @staticmethod
+    @some_decorator_here
+    def get(request, name):
+        return text("Hello I have a decorator")
+
+    def post(self, request, name):
+        return text("Hello I don't have any decorators")
+```
+
+## URL Building
 
 If you wish to build a URL for an HTTPMethodView, remember that the class name will be the endpoint
 that you will pass into `url_for`. For example:

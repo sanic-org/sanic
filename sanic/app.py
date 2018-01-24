@@ -5,7 +5,7 @@ import warnings
 from asyncio import get_event_loop, ensure_future, CancelledError
 from collections import deque, defaultdict
 from functools import partial
-from inspect import isawaitable, stack, getmodulename
+from inspect import getmodulename, isawaitable, signature, stack
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 from ssl import create_default_context, Purpose
@@ -25,7 +25,6 @@ from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 
 class Sanic:
-
     def __init__(self, name=None, router=None, error_handler=None,
                  load_env=True, request_class=None,
                  strict_slashes=False, log_config=None,
@@ -111,9 +110,11 @@ class Sanic:
 
         :param event: event to listen to
         """
+
         def decorator(listener):
             self.listeners[event].append(listener)
             return listener
+
         return decorator
 
     # Decorator
@@ -143,12 +144,20 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
-            if stream:
-                handler.is_stream = stream
-            self.router.add(uri=uri, methods=methods, handler=handler,
-                            host=host, strict_slashes=strict_slashes,
-                            version=version, name=name)
-            return handler
+            args = [key for key in signature(handler).parameters.keys()]
+            if args:
+                if stream:
+                    handler.is_stream = stream
+
+                self.router.add(uri=uri, methods=methods, handler=handler,
+                                host=host, strict_slashes=strict_slashes,
+                                version=version, name=name)
+                return handler
+            else:
+                raise ValueError(
+                    'Required parameter `request` missing'
+                    'in the {0}() route?'.format(
+                        handler.__name__))
 
         return response
 
@@ -432,7 +441,7 @@ class Sanic:
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
         if not (uri and route):
             raise URLBuildError('Endpoint with name `{}` was not found'.format(
-                                view_name))
+                view_name))
 
         if view_name == 'static' or view_name.endswith('.static'):
             filename = kwargs.pop('filename', None)

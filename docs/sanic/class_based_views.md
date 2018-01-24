@@ -98,7 +98,7 @@ class ViewWithDecorator(HTTPMethodView):
 app.add_route(ViewWithDecorator.as_view(), '/url')
 ```
 
-But if you just want to decorator some functions and not all functions, you can use as followed.
+But if you just want to decorate some functions and not all functions, you can do as follows:
 
 ```python
 class ViewWithSomeDecorator(HTTPMethodView):

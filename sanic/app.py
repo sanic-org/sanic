@@ -155,7 +155,8 @@ class Sanic:
                 return handler
             else:
                 raise ValueError(
-                    'Required parameter `request` missing in the {0}() route?'.format(
+                    'Required parameter `request` missing'
+                    'in the {0}() route?'.format(
                         handler.__name__))
 
         return response

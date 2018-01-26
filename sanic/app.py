@@ -495,7 +495,7 @@ class Sanic:
             specific_pattern = '^{}$'.format(pattern)
             supplied_param = None
 
-            if kwargs.get(name):
+            if name in kwargs:
                 supplied_param = kwargs.get(name)
                 del kwargs[name]
             else:

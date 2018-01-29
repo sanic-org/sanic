@@ -19,6 +19,7 @@ A list of Sanic extensions created by the community.
 `Babel` library
 - [Dispatch](https://github.com/ashleysommer/sanic-dispatcher): A dispatcher inspired by `DispatcherMiddleware` in werkzeug. Can act as a Sanic-to-WSGI adapter.
 - [Sanic-OAuth](https://github.com/Sniedes722/Sanic-OAuth): OAuth Library for connecting to & creating your own token providers.
+- [sanic-oauth](https://gitlab.com/SirEdvin/sanic-oauth): OAuth Library with many provider and OAuth1/OAuth2 support.
 - [Sanic-nginx-docker-example](https://github.com/itielshwartz/sanic-nginx-docker-example): Simple and easy to use example of Sanic behined nginx using docker-compose.
 - [sanic-graphql](https://github.com/graphql-python/sanic-graphql): GraphQL integration with Sanic
 - [sanic-prometheus](https://github.com/dkruchinin/sanic-prometheus): Prometheus metrics for Sanic

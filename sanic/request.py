@@ -191,11 +191,15 @@ class Request(dict):
         if sock.family == socket.AF_INET:
             self._socket = (self.transport.get_extra_info('peername') or
                             (None, None))
-            self._ip, self._port = self._socket
+            # self._ip, self._port = self._socket
+            self._ip = self._socket[0]
+            self._port = self._socket[1]
         elif sock.family == socket.AF_INET6:
             self._socket = (self.transport.get_extra_info('peername') or
                             (None, None, None, None))
-            self._ip, self._port, *_ = self._socket
+            # self._ip, self._port, *_ = self._socket
+            self._ip = self._socket[0]
+            self._port = self._socket[1]
         else:
             self._ip, self._port = (None, None)
 

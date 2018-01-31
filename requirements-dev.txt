@@ -5,7 +5,7 @@ beautifulsoup4
 coverage
 httptools
 flake8
-pytest
+pytest==3.3.2
 tox
 ujson
 uvloop

@@ -43,7 +43,7 @@ setup_kwargs = {
     'packages': ['sanic'],
     'platforms': 'any',
     'classifiers': [
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',

@@ -6,12 +6,18 @@ from websockets import ConnectionClosed  # noqa
 
 
 class WebSocketProtocol(HttpProtocol):
-    def __init__(self, *args, websocket_max_size=None,
-                 websocket_max_queue=None, **kwargs):
+    def __init__(self, *args, websocket_timeout=10,
+                 websocket_max_size=None,
+                 websocket_max_queue=None,
+                 websocket_read_limit=2 ** 16,
+                 websocket_write_limit=2 ** 16, **kwargs):
         super().__init__(*args, **kwargs)
         self.websocket = None
+        self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size
         self.websocket_max_queue = websocket_max_queue
+        self.websocket_read_limit = websocket_read_limit
+        self.websocket_write_limit = websocket_write_limit
 
     # timeouts make no sense for websocket routes
     def request_timeout_callback(self):
@@ -85,8 +91,11 @@ class WebSocketProtocol(HttpProtocol):
 
         # hook up the websocket protocol
         self.websocket = WebSocketCommonProtocol(
+            timeout=self.websocket_timeout,
             max_size=self.websocket_max_size,
-            max_queue=self.websocket_max_queue
+            max_queue=self.websocket_max_queue,
+            read_limit=self.websocket_read_limit,
+            write_limit=self.websocket_write_limit
         )
         self.websocket.subprotocol = subprotocol
         self.websocket.connection_made(request.transport)

@@ -284,8 +284,8 @@ def parse_multipart_form(body, boundary):
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
         file_name = None
-        content_type = "text/plain"
-        content_charset = "utf-8"
+        content_type = 'text/plain'
+        content_charset = 'utf-8'
         field_name = None
         line_index = 2
         line_end_index = 0

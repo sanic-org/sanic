@@ -303,13 +303,11 @@ def parse_multipart_form(body, boundary):
                 form_line[colon_index + 2:])
 
             if form_header_field == 'content-disposition':
-                if 'filename' in form_parameters:
-                    file_name = form_parameters['filename']
-                field_name = form_parameters['name']
+                file_name = form_parameters.get('filename')
+                field_name = form_parameters.get('name')
             elif form_header_field == 'content-type':
                 content_type = form_header_value
-                if 'charset' in form_parameters:
-                    content_charset = form_parameters['charset']
+                content_charset = form_parameters.get('charset', 'utf-8')
 
         post_data = form_part[line_index:-4]
         if file_name:

@@ -239,7 +239,8 @@ def json(body, status=200, headers=None,
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
-    return HTTPResponse(dumps(body, **kwargs), headers=headers,
+    _body = dumps(body, **kwargs) if body else None
+    return HTTPResponse(_body, headers=headers,
                         status=status, content_type=content_type)
 
 

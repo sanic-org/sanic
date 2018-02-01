@@ -63,6 +63,10 @@ def json_app():
     async def test(request):
         return json(JSON_DATA)
 
+    @app.delete("/")
+    async def test_delete(request):
+        return json(None, status=204)
+
     return app
 
 
@@ -72,6 +76,14 @@ def test_json_response(json_app):
     assert response.status == 200
     assert response.text == json_dumps(JSON_DATA)
     assert response.json == JSON_DATA
+
+
+def test_no_content(json_app):
+    request, response = json_app.test_client.delete('/')
+    assert response.status == 204
+    assert response.text == ''
+    assert response.headers['Content-Length'] == '0'
+
 
 @pytest.fixture
 def streaming_app():

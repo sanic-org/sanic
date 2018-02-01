@@ -43,7 +43,7 @@ def test_method_not_allowed():
         return response.json({'hello': 'world'})
 
     request, response = app.test_client.head('/')
-    assert response.headers['Allow']== 'GET'
+    assert response.headers['Allow'] == 'GET'
 
     @app.post('/')
     async def test(request):

@@ -284,7 +284,8 @@ def parse_multipart_form(body, boundary):
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
         file_name = None
-        file_type = None
+        content_type = "text/plain"
+        content_charset = "utf-8"
         field_name = None
         line_index = 2
         line_end_index = 0
@@ -304,19 +305,21 @@ def parse_multipart_form(body, boundary):
             if form_header_field == 'content-disposition':
                 if 'filename' in form_parameters:
                     file_name = form_parameters['filename']
-                field_name = form_parameters.get('name')
+                field_name = form_parameters['name']
             elif form_header_field == 'content-type':
-                file_type = form_header_value
+                content_type = form_header_value
+                if 'charset' in form_parameters:
+                    content_charset = form_parameters['charset']
 
         post_data = form_part[line_index:-4]
-        if file_name or file_type:
-            file = File(type=file_type, name=file_name, body=post_data)
+        if file_name:
+            file = File(type=content_type, name=file_name, body=post_data)
             if field_name in files:
                 files[field_name].append(file)
             else:
                 files[field_name] = [file]
         else:
-            value = post_data.decode('utf-8')
+            value = post_data.decode(content_charset)
             if field_name in fields:
                 fields[field_name].append(value)
             else:

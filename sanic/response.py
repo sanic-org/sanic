@@ -72,6 +72,8 @@ STATUS_CODES = {
     511: b'Network Authentication Required'
 }
 
+EMPTY_STATUS_CODES = [204, 304]
+
 
 class BaseHTTPResponse:
     def _encode_body(self, data):
@@ -198,7 +200,7 @@ class HTTPResponse(BaseHTTPResponse):
 
         body = b''
         content_length = 0
-        if self.status is not 204 and self.status != 304:
+        if self.status not in EMPTY_STATUS_CODES:
             body = self.body
             content_length = self.headers.get('Content-Length', len(self.body))
 

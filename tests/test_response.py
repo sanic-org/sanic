@@ -16,7 +16,6 @@ from unittest.mock import MagicMock
 JSON_DATA = {'ok': True}
 
 
-
 def test_response_body_not_a_string():
     """Test when a response body sent from the application is not a string"""
     app = Sanic('response_body_not_a_string')
@@ -34,6 +33,7 @@ async def sample_streaming_fn(response):
     response.write('foo,')
     await asyncio.sleep(.001)
     response.write('bar')
+
 
 def test_method_not_allowed():
     app = Sanic('method_not_allowed')
@@ -195,9 +195,11 @@ def get_file_content(static_file_directory, file_name):
     with open(os.path.join(static_file_directory, file_name), 'rb') as file:
         return file.read()
 
+
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
 def test_file_response(file_name, static_file_directory):
     app = Sanic('test_file_helper')
+
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
@@ -209,10 +211,12 @@ def test_file_response(file_name, static_file_directory):
     assert response.body == get_file_content(static_file_directory, file_name)
     assert 'Content-Disposition' not in response.headers
 
+
 @pytest.mark.parametrize('source,dest', [
     ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
 def test_file_response_custom_filename(source, dest, static_file_directory):
     app = Sanic('test_file_helper')
+
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
@@ -224,9 +228,11 @@ def test_file_response_custom_filename(source, dest, static_file_directory):
     assert response.body == get_file_content(static_file_directory, source)
     assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
 
+
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
 def test_file_head_response(file_name, static_file_directory):
     app = Sanic('test_file_helper')
+
     @app.route('/files/<filename>', methods=['GET', 'HEAD'])
     async def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
@@ -251,25 +257,29 @@ def test_file_head_response(file_name, static_file_directory):
                'Content-Length']) == len(
                    get_file_content(static_file_directory, file_name))
 
+
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
 def test_file_stream_response(file_name, static_file_directory):
     app = Sanic('test_file_helper')
+
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
         file_path = os.path.abspath(unquote(file_path))
         return file_stream(file_path, chunk_size=32,
-                          mime_type=guess_type(file_path)[0] or 'text/plain')
+                           mime_type=guess_type(file_path)[0] or 'text/plain')
 
     request, response = app.test_client.get('/files/{}'.format(file_name))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
     assert 'Content-Disposition' not in response.headers
 
+
 @pytest.mark.parametrize('source,dest', [
     ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
 def test_file_stream_response_custom_filename(source, dest, static_file_directory):
     app = Sanic('test_file_helper')
+
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
@@ -281,9 +291,11 @@ def test_file_stream_response_custom_filename(source, dest, static_file_director
     assert response.body == get_file_content(static_file_directory, source)
     assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
 
+
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
 def test_file_stream_head_response(file_name, static_file_directory):
     app = Sanic('test_file_helper')
+
     @app.route('/files/<filename>', methods=['GET', 'HEAD'])
     async def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)

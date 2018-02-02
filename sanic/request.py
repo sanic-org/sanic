@@ -18,7 +18,7 @@ except ImportError:
         json_loads = json.loads
 
 from sanic.exceptions import InvalidUsage
-from sanic.log import error_logger
+from sanic.log import error_logger, logger
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 
@@ -309,18 +309,21 @@ def parse_multipart_form(body, boundary):
                 content_type = form_header_value
                 content_charset = form_parameters.get('charset', 'utf-8')
 
-        post_data = form_part[line_index:-4]
-        if file_name:
-            file = File(type=content_type, name=file_name, body=post_data)
-            if field_name in files:
-                files[field_name].append(file)
+        if field_name:
+            post_data = form_part[line_index:-4]
+            if file_name:
+                file = File(type=content_type, name=file_name, body=post_data)
+                if field_name in files:
+                    files[field_name].append(file)
+                else:
+                    files[field_name] = [file]
             else:
-                files[field_name] = [file]
+                value = post_data.decode(content_charset)
+                if field_name in fields:
+                    fields[field_name].append(value)
+                else:
+                    fields[field_name] = [value]
         else:
-            value = post_data.decode(content_charset)
-            if field_name in fields:
-                fields[field_name].append(value)
-            else:
-                fields[field_name] = [value]
+            logger.debug('Form-data field does not have a name parameter in the Content-Disposition header')
 
     return fields, files

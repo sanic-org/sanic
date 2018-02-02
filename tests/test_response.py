@@ -312,7 +312,7 @@ def test_file_stream_head_response(file_name, static_file_directory):
                 content_type=guess_type(file_path)[0] or 'text/plain')
         else:
             return file_stream(file_path, chunk_size=32, headers=headers,
-                        mime_type=guess_type(file_path)[0] or 'text/plain')
+                               mime_type=guess_type(file_path)[0] or 'text/plain')
 
     request, response = app.test_client.head('/files/{}'.format(file_name))
     assert response.status == 200

@@ -324,6 +324,7 @@ def parse_multipart_form(body, boundary):
                 else:
                     fields[field_name] = [value]
         else:
-            logger.debug('Form-data field does not have a name parameter in the Content-Disposition header')
+            logger.debug('Form-data field does not have a \'name\' parameter \
+                         in the Content-Disposition header')
 
     return fields, files

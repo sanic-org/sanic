@@ -198,7 +198,7 @@ class HTTPResponse(BaseHTTPResponse):
 
         body = b''
         content_length = 0
-        if self.status is not 204:
+        if self.status is not 204 and self.status != 304:
             body = self.body
             content_length = self.headers.get('Content-Length', len(self.body))
 

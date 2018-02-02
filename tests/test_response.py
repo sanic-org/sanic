@@ -67,6 +67,14 @@ def json_app():
     async def no_content_handler(request):
         return json(JSON_DATA, status=204)
 
+    @app.get("/no-content/unmodified")
+    async def no_content_unmodified_handler(request):
+        return json(None, status=304)
+
+    @app.get("/unmodified")
+    async def unmodified_handler(request):
+        return json(JSON_DATA, status=304)
+
     @app.delete("/")
     async def delete_handler(request):
         return json(None, status=204)
@@ -85,6 +93,16 @@ def test_json_response(json_app):
 def test_no_content(json_app):
     request, response = json_app.test_client.get('/no-content')
     assert response.status == 204
+    assert response.text == ''
+    assert response.headers['Content-Length'] == '0'
+
+    request, response = json_app.test_client.get('/no-content/unmodified')
+    assert response.status == 304
+    assert response.text == ''
+    assert response.headers['Content-Length'] == '0'
+
+    request, response = json_app.test_client.get('/unmodified')
+    assert response.status == 304
     assert response.text == ''
     assert response.headers['Content-Length'] == '0'
 

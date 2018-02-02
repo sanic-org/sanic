@@ -99,12 +99,12 @@ def test_no_content(json_app):
     request, response = json_app.test_client.get('/no-content/unmodified')
     assert response.status == 304
     assert response.text == ''
-    assert response.headers['Content-Length'] == '0'
+    assert response.headers.get('Content-Length') == None
 
     request, response = json_app.test_client.get('/unmodified')
     assert response.status == 304
     assert response.text == ''
-    assert response.headers['Content-Length'] == '0'
+    assert response.headers.get('Content-Length') == None
 
     request, response = json_app.test_client.delete('/')
     assert response.status == 204

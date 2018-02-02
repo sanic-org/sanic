@@ -72,7 +72,12 @@ STATUS_CODES = {
     511: b'Network Authentication Required'
 }
 
-EMPTY_STATUS_CODES = [204, 304]
+# These should all have no response body. The True/False indicates if they
+# should also include the content-length header.
+EMPTY_STATUS_CODES = {
+        204: True,
+        304: False
+        }
 
 
 class BaseHTTPResponse:
@@ -198,13 +203,17 @@ class HTTPResponse(BaseHTTPResponse):
         if keep_alive and keep_alive_timeout is not None:
             timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
 
-        body = b''
-        content_length = 0
-        if self.status not in EMPTY_STATUS_CODES:
-            body = self.body
-            content_length = self.headers.get('Content-Length', len(self.body))
-
+        body = self.body
+        content_length = self.headers.get('Content-Length', len(self.body))
         self.headers['Content-Length'] = content_length
+
+        if self.status in EMPTY_STATUS_CODES:
+            body = b''
+            content_length = 0
+            self.headers['Content-Length'] = content_length
+            if not EMPTY_STATUS_CODES.get(self.status):
+                del self.headers['Content-Length']
+
         self.headers['Content-Type'] = self.headers.get(
             'Content-Type', self.content_type)
 

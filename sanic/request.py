@@ -312,11 +312,11 @@ def parse_multipart_form(body, boundary):
         if field_name:
             post_data = form_part[line_index:-4]
             if file_name:
-                file = File(type=content_type, name=file_name, body=post_data)
+                form_file = File(type=content_type, name=file_name, body=post_data)
                 if field_name in files:
-                    files[field_name].append(file)
+                    files[field_name].append(form_file)
                 else:
-                    files[field_name] = [file]
+                    files[field_name] = [form_file]
             else:
                 value = post_data.decode(content_charset)
                 if field_name in fields:

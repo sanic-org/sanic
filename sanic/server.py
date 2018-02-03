@@ -195,7 +195,7 @@ class HttpProtocol(asyncio.Protocol):
                                      self.keep_alive_timeout_callback)
             )
         else:
-            logger.info('KeepAlive Timeout. Closing connection.')
+            logger.debug('KeepAlive Timeout. Closing connection.')
             self.transport.close()
             self.transport = None
 

@@ -1,5 +1,5 @@
 aiofiles
 httptools
-ujson; sys_platform != "windows" and implementation_name == "cpython"
-uvloop; sys_platform != "windows" and implementation_name == "cpython"
+ujson; sys_platform != "win32" and implementation_name == "cpython"
+uvloop; sys_platform != "win32" and implementation_name == "cpython"
 websockets

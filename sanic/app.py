@@ -117,6 +117,21 @@ class Sanic:
 
         return decorator
 
+    def register_listener(self, listener, event):
+        """
+        Register the listener for a given event.
+
+        Args:
+            listener: callable i.e. setup_db(app, loop)
+
+            event: when to register listener i.e. 'before_server_start'
+
+        Returns: listener
+
+        """
+
+        return self.listener(event)(listener)
+
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
               strict_slashes=None, stream=False, version=None, name=None):

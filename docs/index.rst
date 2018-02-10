@@ -14,6 +14,7 @@ Guides
    sanic/exceptions
    sanic/middleware
    sanic/blueprints
+   sanic/websocket
    sanic/config
    sanic/cookies
    sanic/decorators

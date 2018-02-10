@@ -72,6 +72,8 @@ STATUS_CODES = {
     511: b'Network Authentication Required'
 }
 
+EMPTY_STATUS_CODES = [204, 304]
+
 
 class BaseHTTPResponse:
     def _encode_body(self, data):
@@ -195,8 +197,14 @@ class HTTPResponse(BaseHTTPResponse):
         timeout_header = b''
         if keep_alive and keep_alive_timeout is not None:
             timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
-        self.headers['Content-Length'] = self.headers.get(
-            'Content-Length', len(self.body))
+
+        body = b''
+        content_length = 0
+        if self.status not in EMPTY_STATUS_CODES:
+            body = self.body
+            content_length = self.headers.get('Content-Length', len(self.body))
+
+        self.headers['Content-Length'] = content_length
         self.headers['Content-Type'] = self.headers.get(
             'Content-Type', self.content_type)
 
@@ -218,7 +226,7 @@ class HTTPResponse(BaseHTTPResponse):
                    b'keep-alive' if keep_alive else b'close',
                    timeout_header,
                    headers,
-                   self.body
+                   body
                )
 
     @property

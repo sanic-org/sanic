@@ -18,7 +18,7 @@ except ImportError:
         json_loads = json.loads
 
 from sanic.exceptions import InvalidUsage
-from sanic.log import error_logger
+from sanic.log import error_logger, logger
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 
@@ -284,7 +284,8 @@ def parse_multipart_form(body, boundary):
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
         file_name = None
-        file_type = None
+        content_type = 'text/plain'
+        content_charset = 'utf-8'
         field_name = None
         line_index = 2
         line_end_index = 0
@@ -302,24 +303,30 @@ def parse_multipart_form(body, boundary):
                 form_line[colon_index + 2:])
 
             if form_header_field == 'content-disposition':
-                if 'filename' in form_parameters:
-                    file_name = form_parameters['filename']
+                file_name = form_parameters.get('filename')
                 field_name = form_parameters.get('name')
             elif form_header_field == 'content-type':
-                file_type = form_header_value
+                content_type = form_header_value
+                content_charset = form_parameters.get('charset', 'utf-8')
 
-        post_data = form_part[line_index:-4]
-        if file_name or file_type:
-            file = File(type=file_type, name=file_name, body=post_data)
-            if field_name in files:
-                files[field_name].append(file)
+        if field_name:
+            post_data = form_part[line_index:-4]
+            if file_name:
+                form_file = File(type=content_type,
+                                 name=file_name,
+                                 body=post_data)
+                if field_name in files:
+                    files[field_name].append(form_file)
+                else:
+                    files[field_name] = [form_file]
             else:
-                files[field_name] = [file]
+                value = post_data.decode(content_charset)
+                if field_name in fields:
+                    fields[field_name].append(value)
+                else:
+                    fields[field_name] = [value]
         else:
-            value = post_data.decode('utf-8')
-            if field_name in fields:
-                fields[field_name].append(value)
-            else:
-                fields[field_name] = [value]
+            logger.debug('Form-data field does not have a \'name\' parameter \
+                         in the Content-Disposition header')
 
     return fields, files

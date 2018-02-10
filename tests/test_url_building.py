@@ -75,7 +75,7 @@ def test_fails_if_endpoint_not_found():
     app = Sanic('fail_url_build')
 
     @app.route('/fail')
-    def fail():
+    def fail(request):
         return text('this should fail')
 
     with pytest.raises(URLBuildError) as e:
@@ -93,7 +93,7 @@ def test_fails_url_build_if_param_not_passed():
     app = Sanic('fail_url_build')
 
     @app.route(url)
-    def fail():
+    def fail(request):
         return text('this should fail')
 
     fail_args = list(string.ascii_letters)
@@ -111,7 +111,7 @@ def test_fails_url_build_if_params_not_passed():
     app = Sanic('fail_url_build')
 
     @app.route('/fail')
-    def fail():
+    def fail(request):
         return text('this should fail')
 
     with pytest.raises(ValueError) as e:
@@ -134,7 +134,7 @@ def test_fails_with_int_message():
     app = Sanic('fail_url_build')
 
     @app.route(COMPLEX_PARAM_URL)
-    def fail():
+    def fail(request):
         return text('this should fail')
 
     failing_kwargs = dict(PASSING_KWARGS)
@@ -153,7 +153,7 @@ def test_fails_with_two_letter_string_message():
     app = Sanic('fail_url_build')
 
     @app.route(COMPLEX_PARAM_URL)
-    def fail():
+    def fail(request):
         return text('this should fail')
 
     failing_kwargs = dict(PASSING_KWARGS)
@@ -173,7 +173,7 @@ def test_fails_with_number_message():
     app = Sanic('fail_url_build')
 
     @app.route(COMPLEX_PARAM_URL)
-    def fail():
+    def fail(request):
         return text('this should fail')
 
     failing_kwargs = dict(PASSING_KWARGS)
@@ -193,7 +193,7 @@ def test_adds_other_supplied_values_as_query_string():
     app = Sanic('passes')
 
     @app.route(COMPLEX_PARAM_URL)
-    def passes():
+    def passes(request):
         return text('this should pass')
 
     new_kwargs = dict(PASSING_KWARGS)
@@ -216,7 +216,7 @@ def blueprint_app():
     second_print = Blueprint('second', url_prefix='/second')
 
     @first_print.route('/foo')
-    def foo():
+    def foo(request):
         return text('foo from first')
 
     @first_print.route('/foo/<param>')
@@ -225,7 +225,7 @@ def blueprint_app():
             'foo from first : {}'.format(param))
 
     @second_print.route('/foo')  # noqa
-    def foo():
+    def foo(request):
         return text('foo from second')
 
     @second_print.route('/foo/<param>')  # noqa

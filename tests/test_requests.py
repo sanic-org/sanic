@@ -104,17 +104,19 @@ def test_json():
 
     assert results.get('test') == True
 
+
 def test_empty_json():
     app = Sanic('test_json')
 
     @app.route('/')
     async def handler(request):
-        assert request.json == None
+        assert request.json is None
         return json(request.json)
 
     request, response = app.test_client.get('/')
     assert response.status == 200
     assert response.text == 'null'
+
 
 def test_invalid_json():
     app = Sanic('test_json')

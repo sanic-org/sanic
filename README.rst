@@ -21,19 +21,19 @@ Hello World Example
 
     app = Sanic()
 
-    @app.route("/")
+    @app.route('/')
     async def test(request):
-        return json({"hello": "world"})
+        return json({'hello': 'world'})
 
-    if __name__ == "__main__":
-        app.run(host="0.0.0.0", port=8000)
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=8000)
 
 Installation
 ------------
 
 -  ``pip install sanic``
 
-To install sanic without uvloop or json using bash, you can provide either or both of these environmental variables
+To install sanic without uvloop or ujson using bash, you can provide either or both of these environmental variables
 using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the NO_X to true will stop that features
 installation.
 

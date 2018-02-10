@@ -544,6 +544,16 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param protocol: subclass of asyncio protocol class
     :param request_class: Request class to use
     :param access_log: disable/enable access log
+    :param websocket_max_size: enforces the maximum size for
+                               incoming messages in bytes.
+    :param websocket_max_queue: sets the maximum length of the queue
+                                that holds incoming messages.
+    :param websocket_read_limit: sets the high-water limit of the buffer for
+                                 incoming bytes, the low-water limit is half
+                                 the high-water limit.
+    :param websocket_write_limit: sets the high-water limit of the buffer for
+                                  outgoing bytes, the low-water limit is a
+                                  quarter of the high-water limit.
     :param is_request_stream: disable/enable Request.stream
     :param router: Router object
     :return: Nothing

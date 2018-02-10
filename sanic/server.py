@@ -514,6 +514,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           connections=None, signal=Signal(), request_class=None,
           access_log=True, keep_alive=True, is_request_stream=False,
           router=None, websocket_max_size=None, websocket_max_queue=None,
+          websocket_read_limit=2 ** 16, websocket_write_limit=2 ** 16,
           state=None, graceful_shutdown_timeout=15.0):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -574,6 +575,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         router=router,
         websocket_max_size=websocket_max_size,
         websocket_max_queue=websocket_max_queue,
+        websocket_read_limit=websocket_read_limit,
+        websocket_write_limit=websocket_write_limit,
         state=state,
         debug=debug,
     )

@@ -807,6 +807,8 @@ class Sanic:
             'access_log': access_log,
             'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
             'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
+            'websocket_read_limit': self.config.WEBSOCKET_READ_LIMIT,
+            'websocket_write_limit': self.config.WEBSOCKET_WRITE_LIMIT,
             'graceful_shutdown_timeout': self.config.GRACEFUL_SHUTDOWN_TIMEOUT
         }
 

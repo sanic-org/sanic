@@ -28,6 +28,7 @@ Alternatively, the ``app.add_websocket_route`` method can be used instead of the
 decorator:
 
 .. code:: python
+
     async def feed(request, ws):
         pass
 

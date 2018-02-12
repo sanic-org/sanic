@@ -97,7 +97,7 @@ def has_message_body(status):
     https://tools.ietf.org/html/rfc2616#section-4.4
     https://tools.ietf.org/html/rfc2616#section-4.3
     """
-    return status not in [204, 304] and not (100 <= status < 200)
+    return status not in (204, 304) and not (100 <= status < 200)
 
 
 def is_entity_header(header):

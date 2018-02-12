@@ -92,8 +92,8 @@ _HOP_BY_HOP_HEADERS = frozenset([
 
 def has_message_body(status):
     """
-    According to the following RFC message body and length SHOULD NOT be included
-    in responses status 1XX, 204 and 304.
+    According to the following RFC message body and length SHOULD NOT
+    be included in responses status 1XX, 204 and 304.
     https://tools.ietf.org/html/rfc2616#section-4.4
     https://tools.ietf.org/html/rfc2616#section-4.3
     """
@@ -115,8 +115,9 @@ def remove_entity_headers(headers,
     """
     Removes all the entity headers present in the headers given.
     According to RFC 2616 Section 10.3.5,
-    Content-Location and Expires should be included as for the
-    "strong cache validator" in https://tools.ietf.org/html/rfc2616#section-10.3.5
+    Content-Location and Expires are allowed as for the
+    "strong cache validator".
+    https://tools.ietf.org/html/rfc2616#section-10.3.5
 
     returns the headers without the entity headers
     """

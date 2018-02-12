@@ -138,7 +138,8 @@ class HTTPResponse(BaseHTTPResponse):
         body = b''
         if http.has_message_body(self.status):
             body = self.body
-            self.headers['Content-Length'] = self.headers.get('Content-Length', len(self.body))
+            self.headers['Content-Length'] = self.headers.get(
+                'Content-Length', len(self.body))
 
         self.headers['Content-Type'] = self.headers.get(
                                        'Content-Type', self.content_type)

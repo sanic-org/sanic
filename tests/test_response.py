@@ -9,7 +9,6 @@ import pytest
 from random import choice
 
 from sanic import Sanic
-from sanic.http import is_entity_header
 from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 from sanic.testing import HOST
 from unittest.mock import MagicMock
@@ -101,13 +100,13 @@ def test_no_content(json_app):
     assert response.status == 304
     assert response.text == ''
     assert 'Content-Length' not in response.headers
-    for header in response.headers:
-        assert not is_entity_header(header)
+    assert 'Content-Type' not in response.headers
 
     request, response = json_app.test_client.get('/unmodified')
     assert response.status == 304
     assert response.text == ''
     assert 'Content-Length' not in response.headers
+    assert 'Content-Type' not in response.headers
 
     request, response = json_app.test_client.delete('/')
     assert response.status == 204

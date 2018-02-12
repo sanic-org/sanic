@@ -64,29 +64,29 @@ STATUS_CODES = {
 
 # According to https://tools.ietf.org/html/rfc2616#section-7.1
 _ENTITY_HEADERS = frozenset([
-    b'allow',
-    b'content-encoding',
-    b'content-language',
-    b'content-length',
-    b'content-location',
-    b'content-md5',
-    b'content-range',
-    b'content-type',
-    b'expires',
-    b'last-modified',
-    b'extension-header'
+    'allow',
+    'content-encoding',
+    'content-language',
+    'content-length',
+    'content-location',
+    'content-md5',
+    'content-range',
+    'content-type',
+    'expires',
+    'last-modified',
+    'extension-header'
 ])
 
 # According to https://tools.ietf.org/html/rfc2616#section-13.5.1
 _HOP_BY_HOP_HEADERS = frozenset([
-    b'connection',
-    b'keep-alive',
-    b'proxy-authenticate',
-    b'proxy-authorization',
-    b'te',
-    b'trailers',
-    b'transfer-encoding',
-    b'upgrade'
+    'connection',
+    'keep-alive',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailers',
+    'transfer-encoding',
+    'upgrade'
 ])
 
 
@@ -111,7 +111,7 @@ def is_hop_by_hop_header(header):
 
 
 def remove_entity_headers(headers,
-                          allowed=(b'content-location', b'expires')):
+                          allowed=('content-location', 'expires')):
     """
     Removes all the entity headers present in the headers given.
     According to RFC 2616 Section 10.3.5,

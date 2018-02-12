@@ -126,10 +126,3 @@ def remove_entity_headers(headers,
                if not is_entity_header(header)
                and header.lower() not in allowed}
     return headers
-
-
-def remove_hop_by_hop_headers(headers):
-    """Removes the Hop By Hop Headers."""
-    headers = {header: value for header, value in headers.items()
-               if not is_hop_by_hop_header(header)}
-    return headers

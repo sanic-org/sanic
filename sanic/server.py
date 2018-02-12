@@ -514,6 +514,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
           connections=None, signal=Signal(), request_class=None,
           access_log=True, keep_alive=True, is_request_stream=False,
           router=None, websocket_max_size=None, websocket_max_queue=None,
+          websocket_read_limit=2 ** 16, websocket_write_limit=2 ** 16,
           state=None, graceful_shutdown_timeout=15.0):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -543,6 +544,16 @@ def serve(host, port, request_handler, error_handler, before_start=None,
     :param protocol: subclass of asyncio protocol class
     :param request_class: Request class to use
     :param access_log: disable/enable access log
+    :param websocket_max_size: enforces the maximum size for
+                               incoming messages in bytes.
+    :param websocket_max_queue: sets the maximum length of the queue
+                                that holds incoming messages.
+    :param websocket_read_limit: sets the high-water limit of the buffer for
+                                 incoming bytes, the low-water limit is half
+                                 the high-water limit.
+    :param websocket_write_limit: sets the high-water limit of the buffer for
+                                  outgoing bytes, the low-water limit is a
+                                  quarter of the high-water limit.
     :param is_request_stream: disable/enable Request.stream
     :param router: Router object
     :return: Nothing
@@ -574,6 +585,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         router=router,
         websocket_max_size=websocket_max_size,
         websocket_max_queue=websocket_max_queue,
+        websocket_read_limit=websocket_read_limit,
+        websocket_write_limit=websocket_write_limit,
         state=state,
         debug=debug,
     )

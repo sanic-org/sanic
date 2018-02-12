@@ -8,7 +8,7 @@ except BaseException:
 
 from aiofiles import open as open_async
 
-from sanic.http import STATUS_CODES, EMPTY_STATUS_CODES
+from sanic import http
 from sanic.cookies import CookieJar
 
 
@@ -98,7 +98,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         if self.status is 200:
             status = b'OK'
         else:
-            status = STATUS_CODES.get(self.status)
+            status = http.STATUS_CODES.get(self.status)
 
         return (b'HTTP/%b %d %b\r\n'
                 b'%b'
@@ -136,21 +136,22 @@ class HTTPResponse(BaseHTTPResponse):
             timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
 
         body = b''
-        content_length = 0
-        if self.status not in EMPTY_STATUS_CODES:
+        if http.has_message_body(self.status):
             body = self.body
-            content_length = self.headers.get('Content-Length', len(self.body))
+            self.headers['Content-Length'] = self.headers.get('Content-Length', len(self.body))
 
-        self.headers['Content-Length'] = content_length
         self.headers['Content-Type'] = self.headers.get(
-            'Content-Type', self.content_type)
+                                       'Content-Type', self.content_type)
+
+        if self.status in (304, 412):
+            self.headers = http.remove_entity_headers(self.headers)
 
         headers = self._parse_headers()
 
         if self.status is 200:
             status = b'OK'
         else:
-            status = STATUS_CODES.get(self.status, b'UNKNOWN RESPONSE')
+            status = http.STATUS_CODES.get(self.status, b'UNKNOWN RESPONSE')
 
         return (b'HTTP/%b %d %b\r\n'
                 b'Connection: %b\r\n'

@@ -62,8 +62,6 @@ STATUS_CODES = {
     511: b'Network Authentication Required'
 }
 
-EMPTY_STATUS_CODES = [204, 304]
-
 # According to https://tools.ietf.org/html/rfc2616#section-7.1
 _ENTITY_HEADERS = frozenset([
     b'allow',
@@ -92,6 +90,16 @@ _HOP_BY_HOP_HEADERS = frozenset([
 ])
 
 
+def has_message_body(status):
+    """
+    According to the following RFC message body and length SHOULD NOT be included
+    in responses status 1XX, 204 and 304.
+    https://tools.ietf.org/html/rfc2616#section-4.4
+    https://tools.ietf.org/html/rfc2616#section-4.3
+    """
+    return status not in [204, 304] and not (100 <= status < 200)
+
+
 def is_entity_header(header):
     """Checks if the given header is an Entity Header"""
     return header.lower() in _ENTITY_HEADERS
@@ -107,20 +115,20 @@ def remove_entity_headers(headers,
     """
     Removes all the entity headers present in the headers given.
     According to RFC 2616 Section 10.3.5,
-    Content-Location and Expires should be included
-    https://tools.ietf.org/html/rfc2616#section-10.3.5
+    Content-Location and Expires should be included as for the
+    "strong cache validator" in https://tools.ietf.org/html/rfc2616#section-10.3.5
 
     returns the headers without the entity headers
     """
-    allowed = set([h.lower() for h in headers])
-    headers[:] = [(header, value) for header, value in headers
-                  if not is_entity_header(header)
-                  and header.lower() not in allowed]
+    allowed = set([h.lower() for h in allowed])
+    headers = {header: value for header, value in headers.items()
+               if not is_entity_header(header)
+               and header.lower() not in allowed}
     return headers
 
 
 def remove_hop_by_hop_headers(headers):
     """Removes the Hop By Hop Headers."""
-    headers[:] = [(header, value) for header, value in headers
-                  if not is_hop_by_hop_header(header)]
+    headers = {header: value for header, value in headers.items()
+               if not is_hop_by_hop_header(header)}
     return headers

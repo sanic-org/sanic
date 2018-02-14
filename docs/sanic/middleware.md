@@ -100,6 +100,20 @@ async def close_db(app, loop):
     await app.db.close()
 ```
 
+It's also possible to register a listener using the `register_listener` method. 
+This may be useful if you define your listeners in another module besides
+the one you instantiate your app in.
+
+```python
+app = Sanic()
+    
+async def setup_db(app, loop):
+    app.db = await db_setup()
+    
+app.register_listener(setup_db, 'before_server_start')
+
+```
+
 If you want to schedule a background task to run after the loop has started,
 Sanic provides the `add_task` method to easily do so.
 

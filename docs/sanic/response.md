@@ -91,7 +91,7 @@ from sanic import response
 
 @app.route('/raw')
 def handle_request(request):
-    return response.raw('raw data')
+    return response.raw(b'raw data')
 ```
 
 ## Modify headers or status

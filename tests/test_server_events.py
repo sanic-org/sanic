@@ -49,6 +49,23 @@ def test_single_listener(listener_name):
     assert random_name_app.name + listener_name == output.pop()
 
 
+@pytest.mark.parametrize('listener_name', AVAILABLE_LISTENERS)
+def test_register_listener(listener_name):
+    """
+    Test that listeners on their own work with
+    app.register_listener method
+    """
+    random_name_app = Sanic(''.join(
+        [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))
+    output = list()
+    # Register listener
+    listener = create_listener(listener_name, output)
+    random_name_app.register_listener(listener,
+                                      event=listener_name)
+    start_stop_app(random_name_app)
+    assert random_name_app.name + listener_name == output.pop()
+
+
 def test_all_listeners():
     random_name_app = Sanic(''.join(
         [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))

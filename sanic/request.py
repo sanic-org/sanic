@@ -3,7 +3,7 @@ import json
 import socket
 from cgi import parse_header
 from collections import namedtuple
-from http.cookies import SimpleCookie
+from http import cookies
 from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
 
@@ -158,14 +158,19 @@ class Request(dict):
     def cookies(self):
         if self._cookies is None:
             cookie = self.headers.get('Cookie')
+            self._cookies = {}
             if cookie is not None:
-                cookies = SimpleCookie()
-                cookies.load(cookie)
-                self._cookies = {name: cookie.value
-                                 for name, cookie in cookies.items()}
-            else:
-                self._cookies = {}
+                for chunk in cookie.split(';'):
+                    if '=' in chunk:
+                        key, val = chunk.split('=', 1)
+                    else:
+                        key, val = '', chunk
+                    key, val = key.strip(), val.strip()
+                    if key or val:
+                        self._cookies[key] = cookies._unquote(val)
+
         return self._cookies
+
 
     @property
     def ip(self):

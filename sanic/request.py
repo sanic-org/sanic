@@ -171,7 +171,6 @@ class Request(dict):
 
         return self._cookies
 
-
     @property
     def ip(self):
         if not hasattr(self, '_socket'):

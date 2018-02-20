@@ -51,8 +51,9 @@ setup_kwargs = {
     ],
 }
 
-ujson = 'ujson>=1.35'
-uvloop = 'uvloop>=0.5.3'
+env_dependency = '; sys_platform != "win32" and implementation_name == "cpython"'
+ujson = 'ujson>=1.35' + env_dependency
+uvloop = 'uvloop>=0.5.3' + env_dependency
 
 requirements = [
     'httptools>=0.0.9',
@@ -66,16 +67,9 @@ if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     requirements.remove(ujson)
 
 # 'nt' means windows OS
-if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")) or os.name == 'nt':
+if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
 
-try:
-    setup_kwargs['install_requires'] = requirements
-    setup(**setup_kwargs)
-except DistutilsPlatformError as exception:
-    requirements.remove(ujson)
-    requirements.remove(uvloop)
-    print("Installing without uJSON or uvLoop")
-    setup_kwargs['install_requires'] = requirements
-    setup(**setup_kwargs)
+setup_kwargs['install_requires'] = requirements
+setup(**setup_kwargs)

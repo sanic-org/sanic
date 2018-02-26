@@ -138,13 +138,14 @@ app.add_route(person_handler2, '/person/<name:[A-z]>', methods=['GET'])
 Sanic provides a `url_for` method, to generate URLs based on the handler method name. This is useful if you want to avoid hardcoding url paths into your app; instead, you can just reference the handler name. For example:
 
 ```python
+from sanic.response import redirect
+
 @app.route('/')
 async def index(request):
     # generate a URL for the endpoint `post_handler`
     url = app.url_for('post_handler', post_id=5)
     # the URL is `/posts/5`, redirect to it
-    return redirect(url)
-
+    return redirect(url)    
 
 @app.route('/posts/<post_id>')
 async def post_handler(request, post_id):

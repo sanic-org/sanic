@@ -1,3 +1,4 @@
+import os
 import logging
 import logging.config
 import re
@@ -22,6 +23,7 @@ from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
+import sanic.reloader_helpers as reloader_helpers
 
 
 class Sanic:
@@ -116,6 +118,19 @@ class Sanic:
             return listener
 
         return decorator
+
+    def register_listener(self, listener, event):
+        """
+        Register the listener for a given event.
+
+        Args:
+            listener: callable i.e. setup_db(app, loop)
+            event: when to register listener i.e. 'before_server_start'
+
+        Returns: listener
+        """
+
+        return self.listener(event)(listener)
 
     # Decorator
     def route(self, uri, methods=frozenset({'GET'}), host=None,
@@ -634,7 +649,7 @@ class Sanic:
     def run(self, host=None, port=None, debug=False, ssl=None,
             sock=None, workers=1, protocol=None,
             backlog=100, stop_event=None, register_sys_signals=True,
-            access_log=True):
+            access_log=True, auto_reload=False):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -668,12 +683,21 @@ class Sanic:
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             workers=workers, protocol=protocol, backlog=backlog,
             register_sys_signals=register_sys_signals,
-            access_log=access_log)
+            access_log=access_log, auto_reload=auto_reload)
 
         try:
             self.is_running = True
             if workers == 1:
-                serve(**server_settings)
+                if auto_reload and os.name != 'posix':
+                    # This condition must be removed after implementing
+                    # auto reloader for other operating systems.
+                    raise NotImplementedError
+
+                if auto_reload and \
+                        os.environ.get('SANIC_SERVER_RUNNING') != 'true':
+                    reloader_helpers.watchdog(2)
+                else:
+                    serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
@@ -763,7 +787,8 @@ class Sanic:
     def _helper(self, host=None, port=None, debug=False,
                 ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, access_log=True):
+                register_sys_signals=True, run_async=False, access_log=True,
+                auto_reload=False):
         """Helper function used by `run` and `create_server`."""
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -807,6 +832,8 @@ class Sanic:
             'access_log': access_log,
             'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
             'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
+            'websocket_read_limit': self.config.WEBSOCKET_READ_LIMIT,
+            'websocket_write_limit': self.config.WEBSOCKET_WRITE_LIMIT,
             'graceful_shutdown_timeout': self.config.GRACEFUL_SHUTDOWN_TIMEOUT
         }
 
@@ -829,14 +856,16 @@ class Sanic:
 
         if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
-        if self.config.LOGO is not None:
+
+        if self.config.LOGO is not None and \
+                os.environ.get('SANIC_SERVER_RUNNING') != 'true':
             logger.debug(self.config.LOGO)
 
         if run_async:
             server_settings['run_async'] = True
 
         # Serve
-        if host and port:
+        if host and port and os.environ.get('SANIC_SERVER_RUNNING') != 'true':
             proto = "http"
             if ssl is not None:
                 proto = "https"

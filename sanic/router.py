@@ -128,6 +128,13 @@ class Router:
         if strict_slashes:
             return
 
+        if not isinstance(host, str) and host is not None:
+            # we have gotten back to the top of the recursion tree where the
+            # host was originally a list. By now, we've processed the strict
+            # slashes logic on the leaf nodes (the individual host strings in
+            # the list of host)
+            return
+
         # Add versions with and without trailing /
         slashed_methods = self.routes_all.get(uri + '/', frozenset({}))
         unslashed_methods = self.routes_all.get(uri[:-1], frozenset({}))

@@ -81,10 +81,10 @@ class DelayableTCPConnector(TCPConnector):
         self._pre_request_delay = _pre_request_delay
 
     @asyncio.coroutine
-    def connect(self, req):
+    def connect(self, req, traces=None):
         d_req = DelayableTCPConnector.\
             RequestContextManager(req, self._pre_request_delay)
-        conn = yield from super(DelayableTCPConnector, self).connect(req)
+        conn = yield from super(DelayableTCPConnector, self).connect(req, traces=traces)
         if self._post_connect_delay and self._post_connect_delay > 0:
             _ = yield from asyncio.sleep(self._post_connect_delay,
                                          loop=self._loop)

@@ -52,7 +52,7 @@ def test_method_not_allowed():
     request, response = app.test_client.head('/')
     assert response.status == 405
     assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
-    assert response.headers['Content-Length'] == '0'
+    assert response.headers['Content-Length'] == '40'
 
 
 @pytest.fixture

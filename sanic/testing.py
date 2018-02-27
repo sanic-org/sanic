@@ -1,7 +1,7 @@
 import traceback
 from json import JSONDecodeError
-
 from sanic.log import logger
+
 
 HOST = '127.0.0.1'
 PORT = 42101

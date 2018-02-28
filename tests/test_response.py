@@ -45,6 +45,10 @@ def test_method_not_allowed():
     request, response = app.test_client.head('/')
     assert response.headers['Allow'] == 'GET'
 
+    request, response = app.test_client.post('/')
+    assert response.headers['Allow'] == 'GET'
+
+
     @app.post('/')
     async def test(request):
         return response.json({'hello': 'world'})
@@ -52,7 +56,12 @@ def test_method_not_allowed():
     request, response = app.test_client.head('/')
     assert response.status == 405
     assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
-    assert response.headers['Content-Length'] == '40'
+    assert response.headers['Content-Length'] == '0'
+
+    request, response = app.test_client.patch('/')
+    assert response.status == 405
+    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert response.headers['Content-Length'] == '0'
 
 
 @pytest.fixture

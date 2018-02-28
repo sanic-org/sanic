@@ -156,6 +156,8 @@ class MethodNotSupported(SanicException):
         super().__init__(message)
         self.headers = dict()
         self.headers["Allow"] = ", ".join(allowed_methods)
+        if method in ['HEAD', 'PATCH', 'PUT', 'DELETE']:
+            self.headers['Content-Length'] = 0
 
 
 @add_status_code(500)

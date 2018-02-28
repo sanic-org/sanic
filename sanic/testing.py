@@ -59,7 +59,9 @@ class SanicTestClient:
         @self.app.exception(MethodNotSupported)
         async def error_handler(request, exception):
             if request.method in ['HEAD', 'PATCH', 'PUT', 'DELETE']:
-                return text('', exception.status_code, headers=exception.headers)
+                return text(
+                    '', exception.status_code, headers=exception.headers
+                )
             else:
                 return self.app.error_handler.default(request, exception)
 

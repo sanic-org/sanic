@@ -15,17 +15,30 @@ class ReuseableTCPConnector(TCPConnector):
         super(ReuseableTCPConnector, self).__init__(*args, **kwargs)
         self.old_proto = None
 
-    @asyncio.coroutine
-    def connect(self, req):
-        new_conn = yield from super(ReuseableTCPConnector, self)\
-                                                         .connect(req)
-        if self.old_proto is not None:
-            if self.old_proto != new_conn._protocol:
-                raise RuntimeError(
-                    "We got a new connection, wanted the same one!")
-        print(new_conn.__dict__)
-        self.old_proto = new_conn._protocol
-        return new_conn
+    if aiohttp.__version__ >= '3.0':
+
+        async def connect(self, req, traces=None):
+            new_conn = await super(ReuseableTCPConnector, self)\
+                                    .connect(req, traces=traces)
+            if self.old_proto is not None:
+                if self.old_proto != new_conn._protocol:
+                    raise RuntimeError(
+                        "We got a new connection, wanted the same one!")
+            print(new_conn.__dict__)
+            self.old_proto = new_conn._protocol
+            return new_conn
+    else:
+
+        async def connect(self, req):
+            new_conn = await super(ReuseableTCPConnector, self)\
+                                    .connect(req)
+            if self.old_proto is not None:
+                if self.old_proto != new_conn._protocol:
+                    raise RuntimeError(
+                        "We got a new connection, wanted the same one!")
+            print(new_conn.__dict__)
+            self.old_proto = new_conn._protocol
+            return new_conn
 
 
 class ReuseableSanicTestClient(SanicTestClient):
@@ -168,7 +181,7 @@ class ReuseableSanicTestClient(SanicTestClient):
 
             response.body = await response.read()
         if do_kill_session:
-            session.close()
+            await session.close()
             self._session = None
         return response
 

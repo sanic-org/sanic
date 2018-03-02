@@ -1,7 +1,9 @@
 import traceback
 from json import JSONDecodeError
-
 from sanic.log import logger
+from sanic.exceptions import MethodNotSupported
+from sanic.response import text
+
 
 HOST = '127.0.0.1'
 PORT = 42101
@@ -53,6 +55,15 @@ class SanicTestClient:
                 if results[0] is None:
                     results[0] = request
             self.app.request_middleware.appendleft(_collect_request)
+
+        @self.app.exception(MethodNotSupported)
+        async def error_handler(request, exception):
+            if request.method in ['HEAD', 'PATCH', 'PUT', 'DELETE']:
+                return text(
+                    '', exception.status_code, headers=exception.headers
+                )
+            else:
+                return self.app.error_handler.default(request, exception)
 
         @self.app.listener('after_server_start')
         async def _collect_response(sanic, loop):

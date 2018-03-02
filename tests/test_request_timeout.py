@@ -28,19 +28,18 @@ class DelayableTCPConnector(TCPConnector):
             acting_as = self._acting_as
             return getattr(acting_as, item)
 
-        @asyncio.coroutine
-        def start(self, connection, read_until_eof=False):
+        async def start(self, connection, read_until_eof=False):
             if self.send_task is None:
                 raise RuntimeError("do a send() before you do a start()")
-            resp = yield from self.send_task
+            resp = await self.send_task
             self.send_task = None
             self.resp = resp
             self._acting_as = self.resp
             self.orig_start = getattr(resp, 'start')
 
             try:
-                ret = yield from self.orig_start(connection,
-                                                 read_until_eof)
+                ret = await self.orig_start(connection,
+                                            read_until_eof)
             except Exception as e:
                 raise e
             return ret
@@ -51,12 +50,11 @@ class DelayableTCPConnector(TCPConnector):
             if self.send_task is not None:
                 self.send_task.cancel()
 
-        @asyncio.coroutine
-        def delayed_send(self, *args, **kwargs):
+        async def delayed_send(self, *args, **kwargs):
             req = self.req
             if self.delay and self.delay > 0:
                 #sync_sleep(self.delay)
-                _ = yield from asyncio.sleep(self.delay)
+                await asyncio.sleep(self.delay)
             t = req.loop.time()
             print("sending at {}".format(t), flush=True)
             conn = next(iter(args)) # first arg is connection
@@ -81,27 +79,27 @@ class DelayableTCPConnector(TCPConnector):
         self._pre_request_delay = _pre_request_delay
 
     if aiohttp.__version__ >= '3.0':
-        @asyncio.coroutine
-        def connect(self, req, traces=None):
+
+        async def connect(self, req, traces=None):
             d_req = DelayableTCPConnector.\
                 RequestContextManager(req, self._pre_request_delay)
-            conn = yield from super(DelayableTCPConnector, self).connect(req, traces=traces)
+            conn = await super(DelayableTCPConnector, self).connect(req, traces=traces)
             if self._post_connect_delay and self._post_connect_delay > 0:
-                _ = yield from asyncio.sleep(self._post_connect_delay,
-                                             loop=self._loop)
+                await asyncio.sleep(self._post_connect_delay,
+                                    loop=self._loop)
             req.send = d_req.send
             t = req.loop.time()
             print("Connected at {}".format(t), flush=True)
             return conn
     else:
-        @asyncio.coroutine
-        def connect(self, req):
+
+        async def connect(self, req):
             d_req = DelayableTCPConnector.\
                 RequestContextManager(req, self._pre_request_delay)
-            conn = yield from super(DelayableTCPConnector, self).connect(req)
+            conn = await super(DelayableTCPConnector, self).connect(req)
             if self._post_connect_delay and self._post_connect_delay > 0:
-                _ = yield from asyncio.sleep(self._post_connect_delay,
-                                             loop=self._loop)
+                await asyncio.sleep(self._post_connect_delay,
+                                   loop=self._loop)
             req.send = d_req.send
             t = req.loop.time()
             print("Connected at {}".format(t), flush=True)

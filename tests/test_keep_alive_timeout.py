@@ -16,10 +16,10 @@ class ReuseableTCPConnector(TCPConnector):
         self.old_proto = None
 
     if aiohttp.__version__ >= '3.0':
-        @asyncio.coroutine
-        def connect(self, req, traces=None):
-            new_conn = yield from super(ReuseableTCPConnector, self)\
-                                                             .connect(req, traces=traces)
+
+        async def connect(self, req, traces=None):
+            new_conn = await super(ReuseableTCPConnector, self)\
+                                    .connect(req, traces=traces)
             if self.old_proto is not None:
                 if self.old_proto != new_conn._protocol:
                     raise RuntimeError(
@@ -28,10 +28,10 @@ class ReuseableTCPConnector(TCPConnector):
             self.old_proto = new_conn._protocol
             return new_conn
     else:
-        @asyncio.coroutine
-        def connect(self, req):
-            new_conn = yield from super(ReuseableTCPConnector, self)\
-                                                             .connect(req)
+
+        async def connect(self, req):
+            new_conn = await super(ReuseableTCPConnector, self)\
+                                    .connect(req)
             if self.old_proto is not None:
                 if self.old_proto != new_conn._protocol:
                     raise RuntimeError(

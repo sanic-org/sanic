@@ -18,8 +18,23 @@ matrix:
       python: 3.6
     - env: TOX_ENV=check
       python: 3.6
+before_install:
+  - mkdir -p $HOME/bin
+  - curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C $HOME/bin
+  - testspace config url $TS_ORG.testspace.com
 install: pip install -U tox
-script: tox -e $TOX_ENV
+script: 
+  - if [[ "${TOX_ENV}" =~ ^py ]] ; then
+      tox -e $TOX_ENV  -- --junit-xml=testresults.xml --cov-report=xml;
+    else
+      tox -e $TOX_ENV;
+    fi
+after_script:
+  - if [[ "${TOX_ENV}" = "py35" ]] ; then
+      testspace [${TOX_ENV}]testresults.xml{tests} [${TOX_ENV}]coverage.xml;
+    elif [[ "${TOX_ENV}" =~ ^py ]] ; then
+      testspace [${TOX_ENV}]testresults.xml{tests};
+    fi
 deploy:
   provider: pypi
   user: channelcat

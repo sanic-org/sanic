@@ -42,7 +42,7 @@ class RequestParameters(dict):
         return super().get(name, default)
 
 
-class Request(dict):
+class Request(object):
     """Properties of an HTTP request such as URL, headers, etc."""
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',

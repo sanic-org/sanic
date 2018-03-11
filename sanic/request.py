@@ -78,6 +78,9 @@ class Request(object):
                                        self.method,
                                        self.path)
 
+    def __nonzero__(self):
+        return True if self.app else False
+
     @property
     def json(self):
         if self.parsed_json is None:

@@ -48,7 +48,7 @@ class Request(dict):
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
         '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr',
-        '_socket', '_port'
+        '_socket', '_port', '__weakref__'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):

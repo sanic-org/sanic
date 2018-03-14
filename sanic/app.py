@@ -220,7 +220,7 @@ class Sanic:
                           name=name)
 
     def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
-                  strict_slashes=None, version=None, name=None):
+                  strict_slashes=None, version=None, name=None, stream=False):
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -233,9 +233,9 @@ class Sanic:
         :param strict_slashes:
         :param version:
         :param name: user defined route name for url_for
+        :param stream: boolean specifying if the handler is a stream handler
         :return: function or class instance
         """
-        stream = False
         # Handle HTTPMethodView differently
         if hasattr(handler, 'view_class'):
             methods = set()

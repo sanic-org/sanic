@@ -19,7 +19,7 @@ def test_multiprocessing():
             process.terminate()
 
     signal.signal(signal.SIGALRM, stop_on_alarm)
-    signal.alarm(1)
     app.run(HOST, PORT, workers=num_workers)
+    signal.alarm(1)
 
     assert len(process_list) == num_workers

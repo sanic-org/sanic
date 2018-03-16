@@ -279,4 +279,3 @@ def test_keep_alive_server_timeout():
     assert isinstance(exception, ValueError)
     assert "Connection reset" in exception.args[0] or \
            "got a new connection" in exception.args[0]
-

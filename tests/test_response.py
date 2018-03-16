@@ -10,7 +10,7 @@ from random import choice
 
 from sanic import Sanic
 from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
-from sanic.testing import HOST
+from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
 
 JSON_DATA = {'ok': True}
@@ -187,7 +187,7 @@ def test_stream_response_writes_correct_content_to_transport(streaming_app):
 
         app.stop()
 
-    streaming_app.run(host=HOST, port=streaming_app.test_port)
+    streaming_app.run(host=HOST, port=PORT)
 
 
 @pytest.fixture

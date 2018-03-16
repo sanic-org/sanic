@@ -7,7 +7,7 @@ from sanic.config import Config
 from sanic import server
 import aiohttp
 from aiohttp import TCPConnector
-from sanic.testing import SanicTestClient, HOST
+from sanic.testing import SanicTestClient, HOST, PORT
 
 
 class ReuseableTCPConnector(TCPConnector):
@@ -43,7 +43,7 @@ class ReuseableTCPConnector(TCPConnector):
 
 class ReuseableSanicTestClient(SanicTestClient):
     def __init__(self, app, loop=None):
-        super().__init__(app, port=app.test_port)
+        super(ReuseableSanicTestClient, self).__init__(app)
         if loop is None:
             loop = asyncio.get_event_loop()
         self._loop = loop
@@ -87,8 +87,7 @@ class ReuseableSanicTestClient(SanicTestClient):
             _server = self._server
         else:
             _server_co = self.app.create_server(host=HOST, debug=debug,
-                                                port=self.app.test_port,
-                                                **server_kwargs)
+                                                port=PORT, **server_kwargs)
 
             server.trigger_events(
                 self.app.listeners['before_server_start'], loop)
@@ -280,4 +279,3 @@ def test_keep_alive_server_timeout():
     assert isinstance(exception, ValueError)
     assert "Connection reset" in exception.args[0] or \
            "got a new connection" in exception.args[0]
-

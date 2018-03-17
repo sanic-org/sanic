@@ -7,7 +7,7 @@ from sanic.config import Config
 from sanic import server
 import aiohttp
 from aiohttp import TCPConnector
-from sanic.testing import SanicTestClient, HOST
+from sanic.testing import SanicTestClient, HOST, PORT
 
 
 class ReuseableTCPConnector(TCPConnector):
@@ -15,22 +15,35 @@ class ReuseableTCPConnector(TCPConnector):
         super(ReuseableTCPConnector, self).__init__(*args, **kwargs)
         self.old_proto = None
 
-    @asyncio.coroutine
-    def connect(self, req):
-        new_conn = yield from super(ReuseableTCPConnector, self)\
-                                                         .connect(req)
-        if self.old_proto is not None:
-            if self.old_proto != new_conn._protocol:
-                raise RuntimeError(
-                    "We got a new connection, wanted the same one!")
-        print(new_conn.__dict__)
-        self.old_proto = new_conn._protocol
-        return new_conn
+    if aiohttp.__version__ >= '3.0':
+
+        async def connect(self, req, traces=None):
+            new_conn = await super(ReuseableTCPConnector, self)\
+                                    .connect(req, traces=traces)
+            if self.old_proto is not None:
+                if self.old_proto != new_conn._protocol:
+                    raise RuntimeError(
+                        "We got a new connection, wanted the same one!")
+            print(new_conn.__dict__)
+            self.old_proto = new_conn._protocol
+            return new_conn
+    else:
+
+        async def connect(self, req):
+            new_conn = await super(ReuseableTCPConnector, self)\
+                                    .connect(req)
+            if self.old_proto is not None:
+                if self.old_proto != new_conn._protocol:
+                    raise RuntimeError(
+                        "We got a new connection, wanted the same one!")
+            print(new_conn.__dict__)
+            self.old_proto = new_conn._protocol
+            return new_conn
 
 
 class ReuseableSanicTestClient(SanicTestClient):
     def __init__(self, app, loop=None):
-        super().__init__(app, port=app.test_port)
+        super(ReuseableSanicTestClient, self).__init__(app)
         if loop is None:
             loop = asyncio.get_event_loop()
         self._loop = loop
@@ -74,8 +87,7 @@ class ReuseableSanicTestClient(SanicTestClient):
             _server = self._server
         else:
             _server_co = self.app.create_server(host=HOST, debug=debug,
-                                                port=self.app.test_port,
-                                                **server_kwargs)
+                                                port=PORT, **server_kwargs)
 
             server.trigger_events(
                 self.app.listeners['before_server_start'], loop)
@@ -168,7 +180,7 @@ class ReuseableSanicTestClient(SanicTestClient):
 
             response.body = await response.read()
         if do_kill_session:
-            session.close()
+            await session.close()
             self._session = None
         return response
 
@@ -267,4 +279,3 @@ def test_keep_alive_server_timeout():
     assert isinstance(exception, ValueError)
     assert "Connection reset" in exception.args[0] or \
            "got a new connection" in exception.args[0]
-

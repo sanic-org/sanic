@@ -79,9 +79,9 @@ class ErrorHandler:
         response = None
         try:
             if handler:
-                response = handler(request=request, exception=exception)
+                response = handler(request, exception)
             if response is None:
-                response = self.default(request=request, exception=exception)
+                response = self.default(request, exception)
         except Exception:
             self.log(format_exc())
             if self.debug:

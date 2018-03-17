@@ -1,5 +1,4 @@
 sudo: false
-dist: precise
 language: python
 cache:
   directories:
@@ -19,7 +18,7 @@ matrix:
     - env: TOX_ENV=check
       python: 3.6
 install: pip install -U tox
-script: tox -e $TOX_ENV
+script: travis_retry tox -e $TOX_ENV
 deploy:
   provider: pypi
   user: channelcat

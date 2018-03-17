@@ -9,7 +9,7 @@ from sanic import Sanic
 from sanic.exceptions import ServerError
 from sanic.response import json, text
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.testing import HOST
+from sanic.testing import HOST, PORT
 
 
 # ------------------------------------------------------------ #
@@ -340,7 +340,7 @@ def test_url_attributes_no_ssl(path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = app.test_client.get(path + '?{}'.format(query))
-    assert request.url == expected_url.format(HOST, app.test_port)
+    assert request.url == expected_url.format(HOST, PORT)
 
     parsed = urlparse(request.url)
 
@@ -371,9 +371,9 @@ def test_url_attributes_with_ssl(path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = app.test_client.get(
-        'https://{}:{}'.format(HOST, app.test_port) + path + '?{}'.format(query),
+        'https://{}:{}'.format(HOST, PORT) + path + '?{}'.format(query),
         server_kwargs={'ssl': context})
-    assert request.url == expected_url.format(HOST, app.test_port)
+    assert request.url == expected_url.format(HOST, PORT)
 
     parsed = urlparse(request.url)
 

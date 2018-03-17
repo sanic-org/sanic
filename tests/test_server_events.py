@@ -6,7 +6,7 @@ import signal
 import pytest
 
 from sanic import Sanic
-from sanic.testing import HOST
+from sanic.testing import HOST, PORT
 
 AVAILABLE_LISTENERS = [
     'before_server_start',
@@ -31,7 +31,7 @@ def start_stop_app(random_name_app, **run_kwargs):
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(1)
     try:
-        random_name_app.run(HOST, random_name_app.test_port, **run_kwargs)
+        random_name_app.run(HOST, PORT, **run_kwargs)
     except KeyboardInterrupt:
         pass
 
@@ -45,6 +45,23 @@ def test_single_listener(listener_name):
     # Register listener
     random_name_app.listener(listener_name)(
         create_listener(listener_name, output))
+    start_stop_app(random_name_app)
+    assert random_name_app.name + listener_name == output.pop()
+
+
+@pytest.mark.parametrize('listener_name', AVAILABLE_LISTENERS)
+def test_register_listener(listener_name):
+    """
+    Test that listeners on their own work with
+    app.register_listener method
+    """
+    random_name_app = Sanic(''.join(
+        [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))
+    output = list()
+    # Register listener
+    listener = create_listener(listener_name, output)
+    random_name_app.register_listener(listener,
+                                      event=listener_name)
     start_stop_app(random_name_app)
     assert random_name_app.name + listener_name == output.pop()
 

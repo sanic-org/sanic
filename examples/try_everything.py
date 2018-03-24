@@ -1,7 +1,7 @@
 import os
 
 from sanic import Sanic
-from sanic.log import log
+from sanic.log import logger
 from sanic import response
 from sanic.exceptions import ServerError
 
@@ -82,22 +82,22 @@ def query_string(request):
 
 @app.listener('before_server_start')
 def before_start(app, loop):
-    log.info("SERVER STARTING")
+    logger.info("SERVER STARTING")
 
 
 @app.listener('after_server_start')
 def after_start(app, loop):
-    log.info("OH OH OH OH OHHHHHHHH")
+    logger.info("OH OH OH OH OHHHHHHHH")
 
 
 @app.listener('before_server_stop')
 def before_stop(app, loop):
-    log.info("SERVER STOPPING")
+    logger.info("SERVER STOPPING")
 
 
 @app.listener('after_server_stop')
 def after_stop(app, loop):
-    log.info("TRIED EVERYTHING")
+    logger.info("TRIED EVERYTHING")
 
 
 if __name__ == '__main__':

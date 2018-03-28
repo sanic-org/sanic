@@ -1,7 +1,7 @@
 import os
 
 from sanic import Sanic
-from sanic.log import log
+from sanic.log import logger as log
 from sanic import response
 from sanic.exceptions import ServerError
 

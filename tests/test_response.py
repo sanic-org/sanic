@@ -10,6 +10,7 @@ from random import choice
 
 from sanic import Sanic
 from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
+from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
 
@@ -30,9 +31,10 @@ def test_response_body_not_a_string():
 
 
 async def sample_streaming_fn(response):
-    response.write('foo,')
+    await response.write('foo,')
     await asyncio.sleep(.001)
-    response.write('bar')
+    await response.write('bar')
+
 
 
 def test_method_not_allowed():
@@ -168,20 +170,39 @@ def test_stream_response_includes_chunked_header():
 
 def test_stream_response_writes_correct_content_to_transport(streaming_app):
     response = StreamingHTTPResponse(sample_streaming_fn)
-    response.transport = MagicMock(asyncio.Transport)
+    response.protocol = MagicMock(HttpProtocol)
+    response.protocol.transport = MagicMock(asyncio.Transport)
+
+    async def mock_drain():
+        pass
+
+    def mock_push_data(data):
+        response.protocol.transport.write(data)
+
+    response.protocol.push_data = mock_push_data
+    response.protocol.drain = mock_drain
 
     @streaming_app.listener('after_server_start')
     async def run_stream(app, loop):
         await response.stream()
-        assert response.transport.write.call_args_list[1][0][0] == (
+        # assert response.protocol.push_data.call_args_list[1][0][0] == (
+        #     b'4\r\nfoo,\r\n'
+        # )
+        assert response.protocol.transport.write.call_args_list[1][0][0] == (
             b'4\r\nfoo,\r\n'
         )
 
-        assert response.transport.write.call_args_list[2][0][0] == (
+        # assert response.protocol.push_data.call_args_list[2][0][0] == (
+        #     b'3\r\nbar\r\n'
+        # )
+        assert response.protocol.transport.write.call_args_list[2][0][0] == (
             b'3\r\nbar\r\n'
         )
 
-        assert response.transport.write.call_args_list[3][0][0] == (
+        # assert response.protocol.push_data.call_args_list[3][0][0] == (
+        #     b'0\r\n\r\n'
+        # )
+        assert response.protocol.transport.write.call_args_list[3][0][0] == (
             b'0\r\n\r\n'
         )
 

@@ -73,7 +73,9 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         '_total_request_size', '_request_timeout_handler',
         '_response_timeout_handler', '_keep_alive_timeout_handler',
-        '_last_request_time', '_last_response_time', '_is_stream_handler')
+        '_last_request_time', '_last_response_time', '_is_stream_handler',
+        '_not_paused')
+
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
@@ -100,6 +102,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
         self._is_stream_handler = False
+        self._not_paused = asyncio.Event(loop=loop)
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None
@@ -114,6 +117,7 @@ class HttpProtocol(asyncio.Protocol):
         if 'requests_count' not in self.state:
             self.state['requests_count'] = 0
         self._debug = debug
+        self._not_paused.set()
 
     @property
     def keep_alive(self):
@@ -141,6 +145,12 @@ class HttpProtocol(asyncio.Protocol):
             self._response_timeout_handler.cancel()
         if self._keep_alive_timeout_handler:
             self._keep_alive_timeout_handler.cancel()
+
+    def pause_writing(self):
+        self._not_paused.clear()
+
+    def resume_writing(self):
+        self._not_paused.set()
 
     def request_timeout_callback(self):
         # See the docstring in the RequestTimeout exception, to see
@@ -369,6 +379,12 @@ class HttpProtocol(asyncio.Protocol):
                 self._last_response_time = current_time
                 self.cleanup()
 
+    async def drain(self):
+        await self._not_paused.wait()
+
+    def push_data(self, data):
+        self.transport.write(data)
+
     async def stream_response(self, response):
         """
         Streams a response to the client asynchronously. Attaches
@@ -378,9 +394,11 @@ class HttpProtocol(asyncio.Protocol):
         if self._response_timeout_handler:
             self._response_timeout_handler.cancel()
             self._response_timeout_handler = None
+
+
         try:
             keep_alive = self.keep_alive
-            response.transport = self.transport
+            response.protocol = self
             await response.stream(
                 self.request.version, keep_alive, self.keep_alive_timeout)
             self.log_response(response)

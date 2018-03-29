@@ -66,7 +66,7 @@ def post_json(request):
 
 
 @app.route("/form")
-def post_json(request):
+def post_form_json(request):
     return response.json({"received": True, "form_data": request.form, "test": request.form.get('test')})
 
 

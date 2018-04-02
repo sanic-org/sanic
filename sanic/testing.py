@@ -45,7 +45,7 @@ class SanicTestClient:
 
     def _sanic_endpoint_test(
             self, method='get', uri='/', gather_request=True,
-            debug=False, server_kwargs={},
+            debug=False, server_kwargs={"auto_reload": False},
             *request_args, **request_kwargs):
         results = [None, None]
         exceptions = []

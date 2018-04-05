@@ -6,6 +6,7 @@ from urllib.parse import unquote
 
 from sanic.exceptions import NotFound, MethodNotSupported
 from sanic.views import CompositionView
+from sanic.blueprints import BlueprintNameHelper
 
 Route = namedtuple(
     'Route',
@@ -260,9 +261,9 @@ class Router:
             is_static = True
             name = name.split('_static_', 1)[-1]
 
-        if hasattr(handler, '__blueprintname__'):
+        if BlueprintNameHelper.is_blueprint_handler(handler):
             handler_name = '{}.{}'.format(
-                handler.__blueprintname__, name or handler.__name__)
+                BlueprintNameHelper.get_blueprintname_for_handler(handler), name or handler.__name__)
         else:
             handler_name = name or getattr(handler, '__name__', None)
 

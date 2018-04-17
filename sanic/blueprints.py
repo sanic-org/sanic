@@ -67,7 +67,8 @@ class Blueprint:
         for future in self.routes:
             # attach the blueprint name to the handler or method's class
             # so that it can be prefixed properly in the router
-            BlueprintNameHelper.set_blueprintname_for_handler(future.handler, self.name)
+            BlueprintNameHelper.set_bpname_for_handler(future.handler,
+                                                       self.name)
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
 
@@ -85,7 +86,8 @@ class Blueprint:
         for future in self.websocket_routes:
             # attach the blueprint name to the handler or method's class
             # so that it can be prefixed properly in the router
-            BlueprintNameHelper.set_blueprintname_for_handler(future.handler, self.name)
+            BlueprintNameHelper.set_bpname_for_handler(future.handler,
+                                                       self.name)
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
             app.websocket(uri=uri,
@@ -295,42 +297,52 @@ class Blueprint:
 
 class BlueprintNameHelper:
 
-    def set_blueprintname_for_handler(handler, blueprintname):
+    def set_bpname_for_handler(handler, blueprintname):
         try:
             # attempt to attach information to function's attribute
             handler.__blueprintname__ = blueprintname
         except:
-            # otherwise attach information to instance/class which contains handler method
-            BlueprintNameHelper.__set_blueprintname_from_class_method(handler, blueprintname)
+            # otherwise attach information to instance/class which contains
+            #  handler method
+            BlueprintNameHelper.__set_bpname_from_class_method(
+                handler,
+                blueprintname)
 
-    def get_blueprintname_for_handler(handler):
+    def get_bpname_for_handler(handler):
         try:
             # attempt to retrieve information from function's attribute
             handler.__blueprintname__
         except:
-            # otherwise retrieve information from instance/class which contains handler method
-            BlueprintNameHelper.__get_blueprintname_from_class_method(handler)
+            # otherwise retrieve information from instance/class which
+            # contains handler method
+            BlueprintNameHelper.__get_bpname_from_class_method(handler)
 
-    def is_blueprint_handler(handler):
+    def is_bp_handler(handler):
         if hasattr(handler, '__blueprintname__') or \
-                (hasattr(handler, '__self__') and
-                 hasattr(handler.__self__, BlueprintNameHelper.__get_blueprintname_attr_name_for_class_method(handler))):
+                (hasattr(handler, '__self__') and \
+                 hasattr(handler.__self__, \
+                    BlueprintNameHelper.\
+                        __get_bpname_attr_name_for_class_method(handler))):
             return True
         else:
             return False
 
-    def __get_blueprintname_from_class_method(class_method):
-        attr_name = BlueprintNameHelper.__get_blueprintname_attr_name_for_class_method(class_method)
+    def __get_bpname_from_class_method(class_method):
+        attr_name = \
+            BlueprintNameHelper.\
+                __get_bpname_attr_name_for_class_method(class_method)
         if hasattr(class_method.__self__, attr_name):
             return getattr(class_method.__self__, attr_name)
         else:
             return None
 
-    def __set_blueprintname_from_class_method(class_method, blueprintname):
-        attr_name = BlueprintNameHelper.__get_blueprintname_attr_name_for_class_method(class_method)
+    def __set_bpname_from_class_method(class_method, blueprintname):
+        attr_name = \
+            BlueprintNameHelper.\
+                __get_bpname_attr_name_for_class_method(class_method)
         setattr(class_method.__self__, attr_name, blueprintname)
 
-    def __get_blueprintname_attr_name_for_class_method(class_method):
+    def __get_bpname_attr_name_for_class_method(class_method):
         # create unique attribute name that is descriptive and reproduceable
         attr_name = '__blueprintname__for__'+class_method.__name__
         return attr_name

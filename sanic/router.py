@@ -261,9 +261,10 @@ class Router:
             is_static = True
             name = name.split('_static_', 1)[-1]
 
-        if BlueprintNameHelper.is_blueprint_handler(handler):
+        if BlueprintNameHelper.is_bp_handler(handler):
             handler_name = '{}.{}'.format(
-                BlueprintNameHelper.get_blueprintname_for_handler(handler), name or handler.__name__)
+                BlueprintNameHelper.get_bpname_for_handler(handler), \
+                    name or handler.__name__)
         else:
             handler_name = name or getattr(handler, '__name__', None)
 

@@ -312,7 +312,9 @@ class BlueprintNameHelper:
             BlueprintNameHelper.__get_blueprintname_from_class_method(handler)
 
     def is_blueprint_handler(handler):
-        if hasattr(handler, '__blueprintname__') or hasattr(handler.__self__, BlueprintNameHelper.__get_blueprintname_attr_name_for_class_method(handler)):
+        if hasattr(handler, '__blueprintname__') or \
+                (hasattr(handler, '__self__') and
+                 hasattr(handler.__self__, BlueprintNameHelper.__get_blueprintname_attr_name_for_class_method(handler))):
             return True
         else:
             return False

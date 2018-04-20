@@ -27,3 +27,4 @@ A list of Sanic extensions created by the community.
 - [sanic-transmute](https://github.com/yunstanford/sanic-transmute): A Sanic extension that generates APIs from python function and classes, and also generates Swagger UI/documentation automatically.
 - [pytest-sanic](https://github.com/yunstanford/pytest-sanic): A pytest plugin for Sanic. It helps you to test your code asynchronously.
 - [jinja2-sanic](https://github.com/yunstanford/jinja2-sanic): a jinja2 template renderer for Sanic.([Documentation](http://jinja2-sanic.readthedocs.io/en/latest/))
+- [GINO](https://github.com/fantix/gino): An asyncio ORM on top of SQLAlchemy core, delivered with a Sanic extension. ([Documentation](https://python-gino.readthedocs.io/))

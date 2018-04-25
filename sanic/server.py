@@ -354,9 +354,9 @@ class HttpProtocol(asyncio.Protocol):
                     extra['q'] = f'?{self.request.query_string}'
                 extra['H'] = f'HTTP/{self.request.version}'
 
-                if hasattr(self.request.headers, 'User-Agent'):
+                if 'User-Agent' in self.request.headers:
                     extra['User-Agent'] = self.request.headers['User-Agent']
-                if hasattr(self.request.headers, 'Referer'):
+                if 'Referer' in self.request.headers:
                     extra['Referer'] = self.request.headers['Referer']
             else:
                 extra['request'] = 'nil'

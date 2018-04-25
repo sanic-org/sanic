@@ -313,7 +313,9 @@ class HttpProtocol(asyncio.Protocol):
         %h %l %u %t \"%m %U%q %H\" %>s %b \"%{Referer}i\" \"%{User-agent}i\
 
         Python logging format:
-        %(h)s %(l)s %(u)s %(asctime)s "%(m)s %(U)s%(q)s %(H)s" %(s)d %(b)d "%(Referer)s" "%(User-Agent)s"
+        %(h)s %(l)s %(u)s %(asctime)s "%(m)s %(U)s%(q)s %(H)s" %(s)d %(b)d
+
+        With combined: "%(Referer)s" "%(User-Agent)s"
 
         :param response:
         :return:
@@ -352,8 +354,10 @@ class HttpProtocol(asyncio.Protocol):
                     extra['q'] = f'?{self.request.query_string}'
                 extra['H'] = f'HTTP/{self.request.version}'
 
-                extra['User-Agent'] = self.request.headers.get('User-Agent', '')
-                extra['Referer'] = self.request.headers.get('Referer', '')
+                if hasattr(self.request.headers, 'User-Agent'):
+                    extra['User-Agent'] = self.request.headers['User-Agent']
+                if hasattr(self.request.headers, 'Referer'):
+                    extra['Referer'] = self.request.headers['Referer']
             else:
                 extra['request'] = 'nil'
 

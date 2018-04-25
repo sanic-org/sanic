@@ -351,8 +351,8 @@ class HttpProtocol(asyncio.Protocol):
                 extra['m'] = self.request.method
                 extra['U'] = self.request.path
                 if self.request.query_string:
-                    extra['q'] = f'?{self.request.query_string}'
-                extra['H'] = f'HTTP/{self.request.version}'
+                    extra['q'] = '?{}'.format(self.request.query_string)
+                extra['H'] = 'HTTP/{}'.format(self.request.version)
 
                 if 'User-Agent' in self.request.headers:
                     extra['User-Agent'] = self.request.headers['User-Agent']

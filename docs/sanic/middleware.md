@@ -10,9 +10,10 @@ Additionally, Sanic provides listeners which allow you to run code at various po
 
 There are two types of middleware: request and response. Both are declared
 using the `@app.middleware` decorator, with the decorator's parameter being a
-string representing its type: `'request'` or `'response'`. Response middleware
-receives both the request and the response as arguments.
+string representing its type: `'request'` or `'response'`.
 
+* Request middleware receives only the `request` as argument.
+* Response middleware receives both the `request` and `response`.
 
 The simplest middleware doesn't modify the request or response at all:
 

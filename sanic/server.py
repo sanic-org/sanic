@@ -313,7 +313,7 @@ class HttpProtocol(asyncio.Protocol):
         %h %l %u %t \"%m %U%q %H\" %>s %b \"%{Referer}i\" \"%{User-agent}i\
 
         Python logging format:
-        %(h)s %(l)s %(u)s [%(asctime)s] "%(m)s %(U)s%(q)s %(H)s" %(s)d %(b)d "%(Referer)s" "%(User-Agent)s"
+        %(h)s %(l)s %(u)s %(asctime)s "%(m)s %(U)s%(q)s %(H)s" %(s)d %(b)d "%(Referer)s" "%(User-Agent)s"
 
         :param response:
         :return:

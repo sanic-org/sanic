@@ -49,9 +49,8 @@ LOGGING_CONFIG_DEFAULTS = dict(
             "class": "logging.Formatter"
         },
         "access": {
-            "format": "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: " +
-                      "%(request)s %(message)s %(status)d %(byte)d",
-            "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
+            "format": "%(h)s %(l)s %(u)s [%(asctime)s] \"%(m)s %(U)s%(q)s %(H)s\" %(s)d %(b)d",
+            "datefmt": "[%Y-%m-%d %H:%M:%S%z]",
             "class": "logging.Formatter"
         },
     }

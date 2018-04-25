@@ -79,7 +79,12 @@ Sanic provides additional parameters for access logger with:
   len(response.body)
 
 
-The default access log format is 
+The default access log format is apache common:
 ```python
-%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: %(request)s %(message)s %(status)d %(byte)d
+%(h)s %(l)s %(u)s %(asctime)s \"%(m)s %(U)s%(q)s %(H)s\" %(s)d %(b)d
+```
+
+Setting the access log format to apache combined can be as easy as changing the format to:
+```python
+%(h)s %(l)s %(u)s %(asctime)s \"%(m)s %(U)s%(q)s %(H)s\" %(s)d %(b)d "%(Referer)s" "%(User-Agent)s"
 ```

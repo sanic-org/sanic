@@ -326,8 +326,8 @@ class HttpProtocol(asyncio.Protocol):
                 'u': '-',
                 'H': '-',
                 'l': '-',
-                'Referer': '',
-                'User-Agent': '',
+                'Referer': '-',
+                'User-Agent': '-',
                 'q': ''
             }
 

@@ -307,24 +307,53 @@ class HttpProtocol(asyncio.Protocol):
     # Responding
     # -------------------------------------------- #
     def log_response(self, response):
+        """
+
+        Apache Combined format:
+        %h %l %u %t \"%m %U%q %H\" %>s %b \"%{Referer}i\" \"%{User-agent}i\
+
+        Python logging format:
+        %(h)s %(l)s %(u)s [%(asctime)s] "%(m)s %(U)s%(q)s %(H)s" %(s)d %(b)d "%(Referer)s" "%(User-Agent)s"
+
+        :param response:
+        :return:
+        """
         if self.access_log:
             extra = {
-                'status': getattr(response, 'status', 0),
+                's': getattr(response, 'status', 0),
+                'u': '-',
+                'H': '-',
+                'l': '-',
+                'Referer': '',
+                'User-Agent': '',
+                'q': ''
             }
 
             if isinstance(response, HTTPResponse):
-                extra['byte'] = len(response.body)
+                extra['b'] = len(response.body)
             else:
-                extra['byte'] = -1
+                extra['b'] = -1
 
-            extra['host'] = 'UNKNOWN'
+            extra['h'] = 'UNKNOWN'
             if self.request is not None:
                 if self.request.ip:
-                    extra['host'] = '{0}:{1}'.format(self.request.ip,
-                                                     self.request.port)
+                    extra['h'] = self.request.ip
 
-                extra['request'] = '{0} {1}'.format(self.request.method,
-                                                    self.request.url)
+                    if 'u' in self.request:
+                        extra['u'] = self.request.user
+
+                if self.request.remote_addr:
+                    extra['h'] = self.request.remote_addr
+
+                # for more flexibility
+                extra['m'] = self.request.method
+                extra['U'] = self.request.path
+                if self.request.query_string:
+                    extra['q'] = f'?{self.request.query_string}'
+                extra['H'] = f'HTTP/{self.request.version}'
+
+                extra['User-Agent'] = self.request.headers.get('User-Agent', '')
+                extra['Referer'] = self.request.headers.get('Referer', '')
             else:
                 extra['request'] = 'nil'
 

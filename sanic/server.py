@@ -339,7 +339,7 @@ class HttpProtocol(asyncio.Protocol):
                 if self.request.ip:
                     extra['h'] = self.request.ip
 
-                    if 'u' in self.request:
+                    if hasattr(self.request, 'user'):
                         extra['u'] = self.request.user
 
                 if self.request.remote_addr:

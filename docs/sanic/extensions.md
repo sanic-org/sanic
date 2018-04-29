@@ -28,3 +28,6 @@ A list of Sanic extensions created by the community.
 - [pytest-sanic](https://github.com/yunstanford/pytest-sanic): A pytest plugin for Sanic. It helps you to test your code asynchronously.
 - [jinja2-sanic](https://github.com/yunstanford/jinja2-sanic): a jinja2 template renderer for Sanic.([Documentation](http://jinja2-sanic.readthedocs.io/en/latest/))
 - [GINO](https://github.com/fantix/gino): An asyncio ORM on top of SQLAlchemy core, delivered with a Sanic extension. ([Documentation](https://python-gino.readthedocs.io/))
+- [Sanic-Auth](https://github.com/pyx/sanic-auth): A minimal backend agnostic session-based user authentication mechanism for Sanic.
+- [Sanic-CookieSession](https://github.com/pyx/sanic-cookiesession): A client-side only, cookie-based session, similar to the built-in session in Flask.
+- [Sanic-WTF](https://github.com/pyx/sanic-wtf): Sanic-WTF makes using WTForms with Sanic and CSRF (Cross-Site Request Forgery) protection a little bit easier.

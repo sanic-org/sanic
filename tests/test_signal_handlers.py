@@ -1,6 +1,6 @@
 from sanic import Sanic
 from sanic.response import HTTPResponse
-from sanic.testing import HOST
+from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
 import asyncio
 from queue import Queue
@@ -30,7 +30,7 @@ def test_register_system_signals():
     app.listener('before_server_start')(set_loop)
     app.listener('after_server_stop')(after)
 
-    app.run(HOST, app.test_port)
+    app.run(HOST, PORT)
     assert calledq.get() == True
 
 
@@ -46,5 +46,5 @@ def test_dont_register_system_signals():
     app.listener('before_server_start')(set_loop)
     app.listener('after_server_stop')(after)
 
-    app.run(HOST, app.test_port, register_sys_signals=False)
+    app.run(HOST, PORT, register_sys_signals=False)
     assert calledq.get() == False

@@ -6,7 +6,7 @@ from sanic.response import text
 from sanic.config import Config
 import aiohttp
 from aiohttp import TCPConnector
-from sanic.testing import SanicTestClient, HOST
+from sanic.testing import SanicTestClient, HOST, PORT
 
 
 class DelayableTCPConnector(TCPConnector):
@@ -58,18 +58,36 @@ class DelayableTCPConnector(TCPConnector):
             t = req.loop.time()
             print("sending at {}".format(t), flush=True)
             conn = next(iter(args)) # first arg is connection
-            try:
-                delayed_resp = self.orig_send(*args, **kwargs)
-            except Exception as e:
-                return aiohttp.ClientResponse(req.method, req.url)
+            if aiohttp.__version__ >= "3.1.0":
+                try:
+                    delayed_resp = await self.orig_send(*args, **kwargs)
+                except Exception as e:
+                    return aiohttp.ClientResponse(req.method, req.url,
+                        writer=None, continue100=None, timer=None,
+                        request_info=None, auto_decompress=None, traces=[],
+                        loop=req.loop, session=None)
+            else:
+                try:
+                    delayed_resp = self.orig_send(*args, **kwargs)
+                except Exception as e:
+                    return aiohttp.ClientResponse(req.method, req.url)
             return delayed_resp
 
-        def send(self, *args, **kwargs):
-            gen = self.delayed_send(*args, **kwargs)
-            task = self.req.loop.create_task(gen)
-            self.send_task = task
-            self._acting_as = task
-            return self
+        if aiohttp.__version__ >= "3.1.0":
+            # aiohttp changed the request.send method to async
+            async def send(self, *args, **kwargs):
+                gen = self.delayed_send(*args, **kwargs)
+                task = self.req.loop.create_task(gen)
+                self.send_task = task
+                self._acting_as = task
+                return self
+        else:
+            def send(self, *args, **kwargs):
+                gen = self.delayed_send(*args, **kwargs)
+                task = self.req.loop.create_task(gen)
+                self.send_task = task
+                self._acting_as = task
+                return self
 
     def __init__(self, *args, **kwargs):
         _post_connect_delay = kwargs.pop('post_connect_delay', 0)
@@ -108,7 +126,7 @@ class DelayableTCPConnector(TCPConnector):
 
 class DelayableSanicTestClient(SanicTestClient):
     def __init__(self, app, loop, request_delay=1):
-        super(DelayableSanicTestClient, self).__init__(app, port=app.test_port)
+        super(DelayableSanicTestClient, self).__init__(app)
         self._request_delay = request_delay
         self._loop = None
 

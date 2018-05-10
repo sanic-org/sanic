@@ -319,7 +319,7 @@ async def file(
             out_stream = await _file.read()
 
     mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
-    return HTTPResponse(status=200,
+    return HTTPResponse(status=206 if _range else 200,
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
@@ -374,7 +374,7 @@ async def file_stream(
         headers['Content-Range'] = 'bytes %s-%s/%s' % (
             _range.start, _range.end, _range.total)
     return StreamingHTTPResponse(streaming_fn=_streaming_fn,
-                                 status=200,
+                                 status=206 if _range else 200,
                                  headers=headers,
                                  content_type=mime_type)
 

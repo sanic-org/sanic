@@ -29,6 +29,7 @@ def test_request_stream_method_view():
                 if body is None:
                     break
                 result += body.decode('utf-8')
+                request.stream.task_done()
             return text(result)
 
     app.add_route(SimpleView.as_view(), '/method_view')
@@ -84,6 +85,7 @@ def test_request_stream_app():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     @app.put('/_put')
@@ -101,6 +103,7 @@ def test_request_stream_app():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     @app.patch('/_patch')
@@ -118,6 +121,7 @@ def test_request_stream_app():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     assert app.is_request_stream is True
@@ -178,6 +182,7 @@ def test_request_stream_handle_exception():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     # 404
@@ -232,6 +237,7 @@ def test_request_stream_blueprint():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     @bp.put('/_put')
@@ -249,6 +255,7 @@ def test_request_stream_blueprint():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     @bp.patch('/_patch')
@@ -266,6 +273,7 @@ def test_request_stream_blueprint():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     app.blueprint(bp)
@@ -330,6 +338,7 @@ def test_request_stream_composition_view():
             if body is None:
                 break
             result += body.decode('utf-8')
+            request.stream.task_done()
         return text(result)
 
     view = CompositionView()
@@ -369,6 +378,7 @@ def test_request_stream():
                 if body is None:
                     break
                 result += body.decode('utf-8')
+                request.stream.task_done()
             return text(result)
 
     @app.post('/stream', stream=True)
@@ -381,6 +391,7 @@ def test_request_stream():
                 if body is None:
                     break
                 response.write(body.decode('utf-8'))
+                request.stream.task_done()
         return stream(streaming)
 
     @app.get('/get')
@@ -397,6 +408,7 @@ def test_request_stream():
             if body is None:
                 break
             result += body.decode('utf-8')
+            request.stream.task_done()
         return text(result)
 
     @bp.get('/bp_get')
@@ -416,6 +428,7 @@ def test_request_stream():
             if body is None:
                 break
             result += body.decode('utf-8')
+            request.stream.task_done()
         return text(result)
 
     app.add_route(SimpleView.as_view(), '/method_view')

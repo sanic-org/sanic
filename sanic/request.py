@@ -78,6 +78,11 @@ class Request(dict):
                                        self.method,
                                        self.path)
 
+    def __bool__(self):
+        if self.transport:
+            return True
+        return False
+
     @property
     def json(self):
         if self.parsed_json is None:

@@ -303,7 +303,8 @@ class Sanic:
                     await fut
                 except (CancelledError, ConnectionClosed):
                     pass
-                self.websocket_tasks.remove(fut)
+                finally:
+                    self.websocket_tasks.remove(fut)
                 await ws.close()
 
             self.router.add(uri=uri, handler=websocket_handler,

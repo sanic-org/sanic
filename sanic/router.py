@@ -1,4 +1,5 @@
 import re
+import uuid
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from functools import lru_cache
@@ -18,6 +19,8 @@ REGEX_TYPES = {
     'number': (float, r'[0-9\\.]+'),
     'alpha': (str, r'[A-Za-z]+'),
     'path': (str, r'[^/].*?'),
+    'uuid': (uuid.UUID, r'[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-'
+             r'[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}')
 }
 
 ROUTER_CACHE_SIZE = 1024

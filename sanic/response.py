@@ -9,6 +9,7 @@ except BaseException:
 from aiofiles import open as open_async
 
 from sanic.cookies import CookieJar
+from sanic.server import CIDict
 
 STATUS_CODES = {
     100: b'Continue',
@@ -116,7 +117,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
-        self.headers = headers or {}
+        self.headers = CIDict(headers or {})
         self._cookies = None
 
     def write(self, data):
@@ -187,7 +188,7 @@ class HTTPResponse(BaseHTTPResponse):
             self.body = body_bytes
 
         self.status = status
-        self.headers = headers or {}
+        self.headers = CIDict(headers or {})
         self._cookies = None
 
     def output(

@@ -44,6 +44,14 @@ class CIDict(dict):
     This does not maintain the inputted case when calling items() or keys()
     in favor of speed, since headers are case insensitive
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._convert()
+
+    def _convert(self):
+        for k in list(self.keys()):
+            v = super().pop(k)
+            self[k] = v
 
     def get(self, key, default=None):
         return super().get(key.casefold(), default)

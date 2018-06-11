@@ -183,7 +183,7 @@ def test_stream_response_keep_alive_returns_correct_headers(
 def test_stream_response_includes_chunked_header():
     response = StreamingHTTPResponse(sample_streaming_fn)
     headers = response.get_headers()
-    assert b"Transfer-Encoding: chunked\r\n" in headers
+    assert b"transfer-encoding: chunked\r\n" in headers
 
 
 def test_stream_response_writes_correct_content_to_transport(streaming_app):

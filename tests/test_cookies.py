@@ -25,6 +25,7 @@ def test_cookies():
     assert response.text == 'Cookies are: working!'
     assert response_cookies['right_back'].value == 'at you'
 
+
 @pytest.mark.parametrize("httponly,expected", [
         (False, False),
         (True, True),

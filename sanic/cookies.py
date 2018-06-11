@@ -137,5 +137,8 @@ class MultiHeader:
     def __init__(self, name):
         self.name = name
 
+    def casefold(self):
+        return self
+
     def encode(self):
         return self.name.encode()

@@ -422,6 +422,28 @@ def test_dynamic_route_regex():
     assert response.status == 200
 
 
+def test_dynamic_route_uuid():
+    import uuid
+    app = Sanic('test_dynamic_route_uuid')
+
+    results = []
+
+    @app.route('/quirky/<unique_id:uuid>')
+    async def handler(request, unique_id):
+        results.append(unique_id)
+        return text('OK')
+
+    request, response = app.test_client.get('/quirky/123e4567-e89b-12d3-a456-426655440000')
+    assert response.text == 'OK'
+    assert type(results[0]) is uuid.UUID
+
+    request, response = app.test_client.get('/quirky/{}'.format(uuid.uuid4()))
+    assert response.status == 200
+
+    request, response = app.test_client.get('/quirky/non-existing')
+    assert response.status == 404
+
+
 def test_dynamic_route_path():
     app = Sanic('test_dynamic_route_path')
 

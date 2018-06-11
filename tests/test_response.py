@@ -9,6 +9,7 @@ import pytest
 from random import choice
 
 from sanic import Sanic
+from sanic.server import CIDict
 from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
@@ -62,6 +63,20 @@ def test_method_not_allowed():
     assert response.status == 405
     assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
     assert response.headers['Content-Length'] == '0'
+
+
+def test_response_header():
+    app = Sanic('test_response_header')
+    @app.get('/')
+    async def test(request):
+        return json({
+            "ok": True
+        }, headers={
+            'CONTENT-TYPE': 'application/json'
+        })
+
+    request, response = app.test_client.get('/')
+    assert dict(response.headers) == {'content-type': 'application/json', 'content-length': 11}
 
 
 @pytest.fixture

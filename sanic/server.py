@@ -26,7 +26,7 @@ except ImportError:
     pass
 
 from sanic.log import logger, access_logger
-from sanic.response import HTTPResponse
+from sanic.response import HTTPResponse, CIDict
 from sanic.request import Request
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError,
@@ -37,33 +37,6 @@ current_time = None
 
 class Signal:
     stopped = False
-
-
-class CIDict(dict):
-    """Case Insensitive dict where all keys are converted to lowercase
-    This does not maintain the inputted case when calling items() or keys()
-    in favor of speed, since headers are case insensitive
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._convert()
-
-    def _convert(self):
-        for k in list(self.keys()):
-            v = super().pop(k)
-            self[k] = v
-
-    def get(self, key, default=None):
-        return super().get(key.casefold(), default)
-
-    def __getitem__(self, key):
-        return super().__getitem__(key.casefold())
-
-    def __setitem__(self, key, value):
-        return super().__setitem__(key.casefold(), value)
-
-    def __contains__(self, key):
-        return super().__contains__(key.casefold())
 
 
 class HttpProtocol(asyncio.Protocol):

@@ -9,7 +9,7 @@ import pytest
 from random import choice
 
 from sanic import Sanic
-from sanic.server import CIDict
+from sanic.response import CIDict
 from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
@@ -76,7 +76,12 @@ def test_response_header():
         })
 
     request, response = app.test_client.get('/')
-    assert dict(response.headers) == {'content-type': 'application/json', 'content-length': 11}
+    assert dict(response.headers) == {
+        'Connection': 'keep-alive',
+        'Keep-Alive': '2',
+        'content-length': '11',
+        'content-type': 'application/json',
+    }
 
 
 @pytest.fixture

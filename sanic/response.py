@@ -9,7 +9,7 @@ except BaseException:
 from aiofiles import open as open_async
 
 from sanic.cookies import CookieJar
-from sanic.server import CIDict
+
 
 STATUS_CODES = {
     100: b'Continue',
@@ -74,6 +74,33 @@ STATUS_CODES = {
 }
 
 EMPTY_STATUS_CODES = [204, 304]
+
+
+class CIDict(dict):
+    """Case Insensitive dict where all keys are converted to lowercase
+    This does not maintain the inputted case when calling items() or keys()
+    in favor of speed, since headers are case insensitive
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._convert()
+
+    def _convert(self):
+        for k in list(self.keys()):
+            v = super().pop(k)
+            self[k] = v
+
+    def get(self, key, default=None):
+        return super().get(key.casefold(), default)
+
+    def __getitem__(self, key):
+        return super().__getitem__(key.casefold())
+
+    def __setitem__(self, key, value):
+        return super().__setitem__(key.casefold(), value)
+
+    def __contains__(self, key):
+        return super().__contains__(key.casefold())
 
 
 class BaseHTTPResponse:

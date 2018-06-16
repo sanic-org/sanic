@@ -76,7 +76,6 @@ class HttpProtocol(asyncio.Protocol):
         '_last_request_time', '_last_response_time', '_is_stream_handler',
         '_not_paused')
 
-
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
                  response_timeout=60, keep_alive_timeout=5,
@@ -394,7 +393,6 @@ class HttpProtocol(asyncio.Protocol):
         if self._response_timeout_handler:
             self._response_timeout_handler.cancel()
             self._response_timeout_handler = None
-
 
         try:
             keep_alive = self.keep_alive

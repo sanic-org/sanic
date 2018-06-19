@@ -125,6 +125,14 @@ class HttpProtocol(asyncio.Protocol):
             not self.signal.stopped and
             self.parser.should_keep_alive())
 
+    @property
+    def is_active_stream(self):
+        return (
+            self.is_request_stream and
+            not self._paused and
+            self.request is not None and
+            self.request.stream)
+
     # -------------------------------------------- #
     # Connection
     # -------------------------------------------- #
@@ -233,8 +241,7 @@ class HttpProtocol(asyncio.Protocol):
             exception = InvalidUsage(message)
             self.write_error(exception)
 
-        if self.is_request_stream and not self._paused and \
-           self.request is not None and self.request.stream:
+        if self.is_active_stream:
             if self.request.stream.qsize() > self.request_max_queue_size:
                 self.transport.pause_reading()
                 self._paused = True

@@ -1,4 +1,4 @@
-from sanic.response import STATUS_CODES
+from sanic.http import STATUS_CODES
 
 TRACEBACK_STYLE = '''
     <style>

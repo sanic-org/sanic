@@ -69,9 +69,8 @@ class CookieJar(dict):
             # remove it from header
             cookies = self.headers.popall(cookie_header)
             for cookie in cookies:
-                if cookie.key == key:
-                    continue
-                self.headers.add(cookie_header, cookie)
+                if cookie.key != key:
+                    self.headers.add(cookie_header, cookie)
             del self.cookie_headers[key]
             return super().__delitem__(key)
 

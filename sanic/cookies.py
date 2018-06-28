@@ -47,16 +47,15 @@ class CookieJar(dict):
         super().__init__()
         self.headers = headers
         self.cookie_headers = {}
+        self.header_key = "Set-Cookie"
 
     def __setitem__(self, key, value):
         # If this cookie doesn't exist, add it to the header keys
-        cookie_header = self.cookie_headers.get(key)
-        if not cookie_header:
+        if not self.cookie_headers.get(key):
             cookie = Cookie(key, value)
             cookie['path'] = '/'
-            cookie_header = MultiHeader("Set-Cookie")
-            self.cookie_headers[key] = cookie_header
-            self.headers[cookie_header] = cookie
+            self.cookie_headers[key] = self.header_key
+            self.headers.add(self.header_key, cookie)
             return super().__setitem__(key, cookie)
         else:
             self[key].value = value
@@ -67,7 +66,12 @@ class CookieJar(dict):
             self[key]['max-age'] = 0
         else:
             cookie_header = self.cookie_headers[key]
-            del self.headers[cookie_header]
+            # remove it from header
+            cookies = self.headers.popall(cookie_header)
+            for cookie in cookies:
+                if cookie.key == key:
+                    continue
+                self.headers.add(cookie_header, cookie)
             del self.cookie_headers[key]
             return super().__delitem__(key)
 
@@ -124,21 +128,3 @@ class Cookie(dict):
                 output.append('%s=%s' % (self._keys[key], value))
 
         return "; ".join(output).encode(encoding)
-
-# ------------------------------------------------------------ #
-#  Header Trickery
-# ------------------------------------------------------------ #
-
-
-class MultiHeader:
-    """String-holding object which allow us to set a header within response
-    that has a unique key, but may contain duplicate header names
-    """
-    def __init__(self, name):
-        self.name = name
-
-    def casefold(self):
-        return self
-
-    def encode(self):
-        return self.name.encode()

@@ -7,36 +7,12 @@ except BaseException:
     from json import dumps as json_dumps
 
 from aiofiles import open as open_async
+from multidict import CIMultiDict
 
 from sanic import http
 from sanic.cookies import CookieJar
 
 
-class CIDict(dict):
-    """Case Insensitive dict where all keys are converted to lowercase
-    This does not maintain the inputted case when calling items() or keys()
-    in favor of speed, since headers are case insensitive
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._convert()
-
-    def _convert(self):
-        for k in list(self.keys()):
-            v = super().pop(k)
-            self[k] = v
-
-    def get(self, key, default=None):
-        return super().get(key.casefold(), default)
-
-    def __getitem__(self, key):
-        return super().__getitem__(key.casefold())
-
-    def __setitem__(self, key, value):
-        return super().__setitem__(key.casefold(), value)
-
-    def __contains__(self, key):
-        return super().__contains__(key.casefold())
 
 
 class BaseHTTPResponse:
@@ -80,7 +56,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
-        self.headers = CIDict(headers or {})
+        self.headers = CIMultiDict(headers or {})
         self._cookies = None
 
     def write(self, data):
@@ -151,7 +127,7 @@ class HTTPResponse(BaseHTTPResponse):
             self.body = body_bytes
 
         self.status = status
-        self.headers = CIDict(headers or {})
+        self.headers = CIMultiDict(headers or {})
         self._cookies = None
 
     def output(

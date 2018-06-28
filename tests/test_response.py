@@ -9,7 +9,6 @@ import pytest
 from random import choice
 
 from sanic import Sanic
-from sanic.response import CIDict
 from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock

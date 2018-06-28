@@ -18,6 +18,7 @@ from time import time
 
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
+from multidict import CIMultiDict
 
 try:
     import uvloop
@@ -26,7 +27,7 @@ except ImportError:
     pass
 
 from sanic.log import logger, access_logger
-from sanic.response import HTTPResponse, CIDict
+from sanic.response import HTTPResponse
 from sanic.request import Request
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError,
@@ -237,7 +238,7 @@ class HttpProtocol(asyncio.Protocol):
     def on_headers_complete(self):
         self.request = self.request_class(
             url_bytes=self.url,
-            headers=CIDict(self.headers),
+            headers=CIMultiDict(self.headers),
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode(),
             transport=self.transport

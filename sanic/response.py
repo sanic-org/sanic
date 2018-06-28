@@ -13,8 +13,6 @@ from sanic import http
 from sanic.cookies import CookieJar
 
 
-
-
 class BaseHTTPResponse:
     def _encode_body(self, data):
         try:

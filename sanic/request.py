@@ -47,12 +47,13 @@ class Request(dict):
     __slots__ = (
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr',
+        '_ip', '_url_bytes', '_parsed_url', 'uri_template', 'stream', '_remote_addr',
         '_socket', '_port', '__weakref__'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
         # TODO: Content-Encoding detection
+        self._url_bytes = url_bytes
         self._parsed_url = parse_url(url_bytes)
         self.app = None
 

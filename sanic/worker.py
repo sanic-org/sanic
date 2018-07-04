@@ -116,7 +116,7 @@ class GunicornWorker(base.Worker):
             for conn in self.connections:
                 if hasattr(conn, "websocket") and conn.websocket:
                     coros.append(
-                        conn.websocket.close_connection(after_handshake=False)
+                        conn.websocket.close_connection()
                     )
                 else:
                     conn.close()

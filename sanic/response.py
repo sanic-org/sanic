@@ -364,7 +364,7 @@ def redirect(to, headers=None, status=302,
     safe_to = quote_plus(to, safe=':/#')
 
     # According to RFC 7231, a relative URI is now permitted.
-    headers['Location'] = to
+    headers['Location'] = safe_to
 
     return HTTPResponse(
         status=status,

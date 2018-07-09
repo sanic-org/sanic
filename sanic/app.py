@@ -315,13 +315,13 @@ class Sanic:
         return response
 
     def add_websocket_route(self, handler, uri, host=None,
-                            strict_slashes=None, name=None):
+                            strict_slashes=None, subprotocols=None, name=None):
         """A helper method to register a function as a websocket route."""
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
 
         return self.websocket(uri, host=host, strict_slashes=strict_slashes,
-                              name=name)(handler)
+                              subprotocols=subprotocols, name=name)(handler)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.

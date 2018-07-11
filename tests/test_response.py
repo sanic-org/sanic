@@ -64,6 +64,25 @@ def test_method_not_allowed():
     assert response.headers['Content-Length'] == '0'
 
 
+def test_response_header():
+    app = Sanic('test_response_header')
+    @app.get('/')
+    async def test(request):
+        return json({
+            "ok": True
+        }, headers={
+            'CONTENT-TYPE': 'application/json'
+        })
+
+    request, response = app.test_client.get('/')
+    assert dict(response.headers) == {
+        'Connection': 'keep-alive',
+        'Keep-Alive': '2',
+        'Content-Length': '11',
+        'Content-Type': 'application/json',
+    }
+
+
 @pytest.fixture
 def json_app():
     app = Sanic('json')

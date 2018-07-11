@@ -7,6 +7,7 @@ except BaseException:
     from json import dumps as json_dumps
 
 from aiofiles import open as open_async
+from multidict import CIMultiDict
 
 from sanic import http
 from sanic.cookies import CookieJar
@@ -53,7 +54,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
-        self.headers = headers or {}
+        self.headers = CIMultiDict(headers or {})
         self._cookies = None
 
     def write(self, data):
@@ -124,7 +125,7 @@ class HTTPResponse(BaseHTTPResponse):
             self.body = body_bytes
 
         self.status = status
-        self.headers = headers or {}
+        self.headers = CIMultiDict(headers or {})
         self._cookies = None
 
     def output(

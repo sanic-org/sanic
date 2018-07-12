@@ -107,7 +107,5 @@ def test_redirect_with_header_injection(redirect_app):
         allow_redirects=False)
 
     assert response.status == 302
-    assert response.headers["Location"] == "/unsafe%0Atest-header:+"\
-                                           "test-value%0A%0Atest-body"
     assert "test-header" not in response.headers
     assert not response.text.startswith('test-body')

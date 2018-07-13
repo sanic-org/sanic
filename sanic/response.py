@@ -1,5 +1,6 @@
 from mimetypes import guess_type
 from os import path
+from urllib.parse import quote_plus
 
 try:
     from ujson import dumps as json_dumps
@@ -360,8 +361,11 @@ def redirect(to, headers=None, status=302,
     """
     headers = headers or {}
 
+    # URL Quote the URL before redirecting
+    safe_to = quote_plus(to, safe=":/#?&=@[]!$&'()*+,;")
+
     # According to RFC 7231, a relative URI is now permitted.
-    headers['Location'] = to
+    headers['Location'] = safe_to
 
     return HTTPResponse(
         status=status,

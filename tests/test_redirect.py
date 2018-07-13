@@ -32,6 +32,10 @@ def redirect_app():
     def handler(request):
         return text('OK')
 
+    @app.route('/redirect_with_header_injection')
+    async def redirect_with_header_injection(request):
+        return redirect("/unsafe\ntest-header: test-value\n\ntest-body")
+
     return app
 
 
@@ -92,3 +96,16 @@ def test_chained_redirect(redirect_app):
         assert response.url.endswith('/3')
     except AttributeError:
         assert response.url.path.endswith('/3')
+
+
+def test_redirect_with_header_injection(redirect_app):
+    """
+    Test redirection to a URL with header and body injections.
+    """
+    request, response = redirect_app.test_client.get(
+        "/redirect_with_header_injection",
+        allow_redirects=False)
+
+    assert response.status == 302
+    assert "test-header" not in response.headers
+    assert not response.text.startswith('test-body')

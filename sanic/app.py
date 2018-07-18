@@ -7,6 +7,7 @@ from asyncio import get_event_loop, ensure_future, CancelledError
 from collections import deque, defaultdict
 from functools import partial
 from inspect import getmodulename, isawaitable, signature, stack
+from multidict import CIMultiDict
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 from ssl import create_default_context, Purpose
@@ -16,6 +17,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.log import logger, error_logger, LOGGING_CONFIG_DEFAULTS
+from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import serve, serve_multiple, HttpProtocol, Signal
@@ -630,10 +632,17 @@ class Sanic:
                 )
 
         # pass the response to the correct callback
-        if isinstance(response, StreamingHTTPResponse):
+        if write_callback is None or isinstance(response, StreamingHTTPResponse):
             await stream_callback(response)
         else:
             write_callback(response)
+
+    # -------------------------------------------------------------------- #
+    # ASGI
+    # -------------------------------------------------------------------- #
+
+    def __call__(self, scope):
+        return ASGIApp(self, scope)
 
     # -------------------------------------------------------------------- #
     # Testing
@@ -719,10 +728,6 @@ class Sanic:
     def stop(self):
         """This kills the Sanic"""
         get_event_loop().stop()
-
-    def __call__(self):
-        """gunicorn compatibility"""
-        return self
 
     async def create_server(self, host=None, port=None, debug=False,
                             ssl=None, sock=None, protocol=None,
@@ -880,3 +885,60 @@ class Sanic:
             logger.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
 
         return server_settings
+
+
+class ASGIApp:
+    def __init__(self, sanic_app, scope):
+        self.sanic_app = sanic_app
+        url_bytes = (scope.get('root_path', '') + scope['path']).encode('latin-1')
+        url_bytes += scope['query_string']
+        headers = CIMultiDict([
+            (key.decode('latin-1'), value.decode('latin-1'))
+            for key, value in scope.get('headers', [])
+        ])
+        version = scope['http_version']
+        method = scope['method']
+        self.request = Request(url_bytes, headers, version, method, None)
+
+    async def read_body(self, receive):
+        """
+        Read and return the entire body from an incoming ASGI message.
+        """
+        body = b''
+        more_body = True
+
+        while more_body:
+            message = await receive()
+            body += message.get('body', b'')
+            more_body = message.get('more_body', False)
+
+        return body
+
+    async def __call__(self, receive, send):
+        """
+        Handle the incoming request.
+        """
+        self.send = send
+        self.request.body = await self.read_body(receive)
+        await self.sanic_app.handle_request(self.request, None, self.stream_callback)
+
+    async def stream_callback(self, response):
+        """
+        Write the response.
+        """
+        if isinstance(response, StreamingHTTPResponse):
+            raise NotImplementedError('Not supported')
+
+        await self.send({
+            'type': 'http.response.start',
+            'status': response.status,
+            'headers': [
+                (name.encode('latin-1'), value.encode('latin-1'))
+                for name, value in response.headers.items()
+            ]
+        })
+        await self.send({
+            'type': 'http.response.body',
+            'body': response.body,
+            'more_body': False
+        })

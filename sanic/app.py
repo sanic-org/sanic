@@ -632,7 +632,8 @@ class Sanic:
                 )
 
         # pass the response to the correct callback
-        if write_callback is None or isinstance(response, StreamingHTTPResponse):
+        streaming = isinstance(response, StreamingHTTPResponse)
+        if write_callback is None or streaming:
             await stream_callback(response)
         else:
             write_callback(response)
@@ -890,7 +891,8 @@ class Sanic:
 class ASGIApp:
     def __init__(self, sanic_app, scope):
         self.sanic_app = sanic_app
-        url_bytes = (scope.get('root_path', '') + scope['path']).encode('latin-1')
+        url_bytes = scope.get('root_path', '') + scope['path']
+        url_bytes = url_bytes.encode('latin-1')
         url_bytes += scope['query_string']
         headers = CIMultiDict([
             (key.decode('latin-1'), value.decode('latin-1'))
@@ -920,7 +922,8 @@ class ASGIApp:
         """
         self.send = send
         self.request.body = await self.read_body(receive)
-        await self.sanic_app.handle_request(self.request, None, self.stream_callback)
+        handler = self.sanic_app.handle_request
+        await handler(self.request, None, self.stream_callback)
 
     async def stream_callback(self, response):
         """

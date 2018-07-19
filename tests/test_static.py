@@ -48,7 +48,7 @@ def test_static_file_content_type(static_file_directory, file_name):
     request, response = app.test_client.get('/testing.file')
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
-    assert response.headers['Content-Type'] == 'text/html'
+    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])

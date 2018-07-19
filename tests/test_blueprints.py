@@ -377,7 +377,7 @@ def test_bp_static_content_type(file_name):
     request, response = app.test_client.get('/testing.file')
     assert response.status == 200
     assert response.body == get_file_content(static_directory, file_name)
-    assert response.headers['Content-Type'] == 'text/html'
+    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
 
 def test_bp_shorthand():
     app = Sanic('test_shorhand_routes')

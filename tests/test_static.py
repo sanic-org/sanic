@@ -36,6 +36,21 @@ def test_static_file(static_file_directory, file_name):
     assert response.body == get_file_content(static_file_directory, file_name)
 
 
+@pytest.mark.parametrize('file_name', ['test.html'])
+def test_static_file_content_type(static_file_directory, file_name):
+    app = Sanic('test_static')
+    app.static(
+        '/testing.file',
+        get_file_path(static_file_directory, file_name),
+        content_type='text/html; charset=utf-8'
+    )
+
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+    assert response.headers['Content-Type'] == 'text/html'
+
+
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
 @pytest.mark.parametrize('base_uri', ['/static', '', '/dir'])
 def test_static_directory(file_name, base_uri, static_file_directory):

@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import os
 import pytest
 
 from sanic import Sanic
@@ -12,6 +13,14 @@ from sanic.constants import HTTP_METHODS
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
+
+def get_file_path(static_file_directory, file_name):
+    return os.path.join(static_file_directory, file_name)
+
+def get_file_content(static_file_directory, file_name):
+    """The content of the static file to check"""
+    with open(get_file_path(static_file_directory, file_name), 'rb') as file:
+        return file.read()
 
 @pytest.mark.parametrize('method', HTTP_METHODS)
 def test_versioned_routes_get(method):
@@ -348,6 +357,28 @@ def test_bp_static():
     assert response.status == 200
     assert response.body == current_file_contents
 
+@pytest.mark.parametrize('file_name', ['test.html'])
+def test_bp_static_content_type(file_name):
+    # This is done here, since no other test loads a file here
+    current_file = inspect.getfile(inspect.currentframe())
+    current_directory = os.path.dirname(os.path.abspath(current_file))
+    static_directory = os.path.join(current_directory, 'static')
+
+    app = Sanic('test_static')
+    blueprint = Blueprint('test_static')
+    blueprint.static(
+        '/testing.file',
+        get_file_path(static_directory, file_name),
+        content_type='text/html; charset=utf-8'
+    )
+
+    app.blueprint(blueprint)
+
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 200
+    assert response.body == get_file_content(static_directory, file_name)
+    assert response.headers['Content-Type'] == 'text/html'
+
 def test_bp_shorthand():
     app = Sanic('test_shorhand_routes')
     blueprint = Blueprint('test_shorhand_routes')
@@ -449,41 +480,41 @@ def test_bp_shorthand():
 
 def test_bp_group():
     app = Sanic('test_nested_bp_groups')
-    
+
     deep_0 = Blueprint('deep_0', url_prefix='/deep')
     deep_1 = Blueprint('deep_1', url_prefix = '/deep1')
 
     @deep_0.route('/')
     def handler(request):
         return text('D0_OK')
-    
+
     @deep_1.route('/bottom')
     def handler(request):
         return text('D1B_OK')
 
     mid_0 = Blueprint.group(deep_0, deep_1, url_prefix='/mid')
     mid_1 = Blueprint('mid_tier', url_prefix='/mid1')
-    
+
     @mid_1.route('/')
     def handler(request):
         return text('M1_OK')
 
     top = Blueprint.group(mid_0, mid_1)
-    
+
     app.blueprint(top)
-    
+
     @app.route('/')
     def handler(request):
         return text('TOP_OK')
-    
+
     request, response = app.test_client.get('/')
     assert response.text == 'TOP_OK'
-    
+
     request, response = app.test_client.get('/mid1')
     assert response.text == 'M1_OK'
-    
+
     request, response = app.test_client.get('/mid/deep')
     assert response.text == 'D0_OK'
-    
+
     request, response = app.test_client.get('/mid/deep1/bottom')
     assert response.text == 'D1B_OK'

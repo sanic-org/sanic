@@ -41,6 +41,7 @@ def register(app, uri, file_or_directory, pattern,
                               If this is an integer, this represents the
                               threshold size to switch to file_stream()
     :param name: user defined name used for url_for
+    :param content_type: user defined content type for header
     """
     # If we're not trying to match a file directly,
     # serve from the folder
@@ -98,7 +99,9 @@ def register(app, uri, file_or_directory, pattern,
             if request.method == 'HEAD':
                 return HTTPResponse(
                     headers=headers,
-                    content_type=content_type or guess_type(file_path)[0] or 'text/plain')
+                    content_type=content_type
+                    or guess_type(file_path)[0]
+                    or 'text/plain')
             else:
                 if stream_large_files:
                     if isinstance(stream_large_files, int):

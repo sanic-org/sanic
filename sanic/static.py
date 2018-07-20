@@ -99,9 +99,7 @@ def register(app, uri, file_or_directory, pattern,
             headers['Content-Type'] = content_type \
                 or guess_type(file_path)[0] or 'text/plain'
             if request.method == 'HEAD':
-                return HTTPResponse(
-                    headers=headers,
-                    content_type=content_type)
+                return HTTPResponse(headers=headers)
             else:
                 if stream_large_files:
                     if isinstance(stream_large_files, int):

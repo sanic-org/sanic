@@ -227,17 +227,19 @@ def get_file_content(static_file_directory, file_name):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
-def test_file_response(file_name, static_file_directory):
+@pytest.mark.parametrize('status', [200, 401])
+def test_file_response(file_name, static_file_directory, status):
     app = Sanic('test_file_helper')
 
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
         file_path = os.path.abspath(unquote(file_path))
-        return file(file_path, mime_type=guess_type(file_path)[0] or 'text/plain')
+        return file(file_path, status=status,
+                    mime_type=guess_type(file_path)[0] or 'text/plain')
 
     request, response = app.test_client.get('/files/{}'.format(file_name))
-    assert response.status == 200
+    assert response.status == status
     assert response.body == get_file_content(static_file_directory, file_name)
     assert 'Content-Disposition' not in response.headers
 

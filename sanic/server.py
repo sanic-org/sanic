@@ -363,6 +363,7 @@ class HttpProtocol(asyncio.Protocol):
         try:
             keep_alive = self.keep_alive
             response.transport = self.transport
+            response.stream_writer = asyncio.StreamWriter(self.transport, self)
             await response.stream(
                 self.request.version, keep_alive, self.keep_alive_timeout)
             self.log_response(response)

@@ -747,12 +747,12 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
-
+        # compatibility old access_log params
+        self.config.ACCESS_LOG = access_log
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             loop=get_event_loop(), protocol=protocol,
-            backlog=backlog, run_async=True,
-            access_log=access_log)
+            backlog=backlog, run_async=True)
 
         # Trigger before_start events
         await self.trigger_events(

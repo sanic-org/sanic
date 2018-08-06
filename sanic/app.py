@@ -571,6 +571,10 @@ class Sanic:
 
         :return: Nothing
         """
+        # Define `response` var here to remove warnings about
+        # allocation before assignment below.
+        response = None
+        cancelled = False
         try:
             # -------------------------------------------- #
             # Request Middleware
@@ -597,6 +601,13 @@ class Sanic:
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response
+        except CancelledError:
+            # If response handler times out, the server handles the error
+            # and cancels the handle_request job.
+            # In this case, the transport is already closed and we cannot
+            # issue a response.
+            response = None
+            cancelled = True
         except Exception as e:
             # -------------------------------------------- #
             # Response Generation Failed
@@ -622,13 +633,22 @@ class Sanic:
             # -------------------------------------------- #
             # Response Middleware
             # -------------------------------------------- #
-            try:
-                response = await self._run_response_middleware(request,
-                                                               response)
-            except BaseException:
-                error_logger.exception(
-                    'Exception occurred in one of response middleware handlers'
-                )
+            # Don't run response middleware if response is None
+            if response is not None:
+                try:
+                    response = await self._run_response_middleware(request,
+                                                                   response)
+                except CancelledError:
+                    # Response middleware can timeout too, as above.
+                    response = None
+                    cancelled = True
+                except BaseException:
+                    error_logger.exception(
+                        'Exception occurred in one of response '
+                        'middleware handlers'
+                    )
+            if cancelled:
+                raise CancelledError()
 
         # pass the response to the correct callback
         if isinstance(response, StreamingHTTPResponse):

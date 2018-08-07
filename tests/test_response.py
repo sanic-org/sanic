@@ -185,23 +185,14 @@ def test_stream_response_writes_correct_content_to_transport(streaming_app):
     @streaming_app.listener('after_server_start')
     async def run_stream(app, loop):
         await response.stream()
-        # assert response.protocol.push_data.call_args_list[1][0][0] == (
-        #     b'4\r\nfoo,\r\n'
-        # )
         assert response.protocol.transport.write.call_args_list[1][0][0] == (
             b'4\r\nfoo,\r\n'
         )
 
-        # assert response.protocol.push_data.call_args_list[2][0][0] == (
-        #     b'3\r\nbar\r\n'
-        # )
         assert response.protocol.transport.write.call_args_list[2][0][0] == (
             b'3\r\nbar\r\n'
         )
 
-        # assert response.protocol.push_data.call_args_list[3][0][0] == (
-        #     b'0\r\n\r\n'
-        # )
         assert response.protocol.transport.write.call_args_list[3][0][0] == (
             b'0\r\n\r\n'
         )

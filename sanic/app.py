@@ -671,8 +671,8 @@ class Sanic:
         """
         # Default auto_reload to false
         auto_reload = False
-        # If debug is set, default it to true
-        if debug:
+        # If debug is set, default it to true (unless on windows)
+        if debug and os.name == 'posix':
             auto_reload = True
         # Allow for overriding either of the defaults
         auto_reload = kwargs.get("auto_reload", auto_reload)

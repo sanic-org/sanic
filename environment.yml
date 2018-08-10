@@ -1,0 +1,20 @@
+name: py35
+dependencies:
+- openssl=1.0.2g=0
+- pip=8.1.1=py35_0
+- python=3.5.1=0
+- readline=6.2=2
+- setuptools=20.3=py35_0
+- sqlite=3.9.2=0
+- tk=8.5.18=0
+- wheel=0.29.0=py35_0
+- xz=5.0.5=1
+- zlib=1.2.8=0
+- pip:
+  - uvloop>=0.5.3
+  - httptools>=0.0.9
+  - ujson>=1.35
+  - aiofiles>=0.3.0
+  - websockets>=3.2
+  - sphinxcontrib-asyncio>=0.2.0
+  - https://github.com/channelcat/docutils-fork/zipball/master

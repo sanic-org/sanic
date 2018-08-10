@@ -1,10 +1,13 @@
-httptools
-ujson
-uvloop
-aiohttp
-pytest
+aiofiles
+aiohttp>=2.3.0
+chardet<=2.3.0
+beautifulsoup4
 coverage
+httptools
+flake8
+pytest==3.3.2
 tox
+ujson; sys_platform != "win32" and implementation_name == "cpython"
+uvloop; sys_platform != "win32" and implementation_name == "cpython"
 gunicorn
-bottle
-kyoukai
+multidict>=4.0,<5.0

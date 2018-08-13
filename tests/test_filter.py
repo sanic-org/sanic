@@ -1,5 +1,5 @@
 from functools import wraps
-from sanic import Sanic
+from sanic import Sanic, Blueprint
 from sanic.response import text
 
 
@@ -171,8 +171,82 @@ def test_handler_decorator():
     assert resp.text == 'async_index_async_filter'
 
 
-def test_blueprint_filter():
-    pass
+def test_sync_blueprint_filter_over_sync_handler():
+    app = Sanic('test_sync_app_filter_over_sync_handler')
+    bp = Blueprint(app.name)
+
+    @bp.get('/')
+    def sync_index(request):
+        return text('sync_index')
+
+    @bp.filter(sync_index)
+    def sync_filter(handler, request):
+        response = handler(request)
+        response.body += b"_sync_filter"
+        return response
+
+    app.blueprint(bp)
+    req, resp = app.test_client.get('/')
+    assert resp.text == 'sync_index_sync_filter'
+
+
+def test_sync_blueprint_filter_over_async_handler():
+    app = Sanic('test_sync_app_filter_over_async_handler')
+    bp = Blueprint(app.name)
+
+    @bp.get('/async')
+    async def async_index(request):
+        return text('async_index')
+
+    try:
+        @bp.filter(async_index)
+        def sync_filter(handler, request):
+            response = handler(request)
+            response.body += b"_async_filter"
+            return response
+    except TypeError:
+        pass
+    else:
+        raise Exception('This should not pass')
+
+
+def test_async_blueprint_filter_over_sync_handler():
+    app = Sanic('test_sync_app_filter_over_sync_handler')
+    bp = Blueprint(app.name)
+
+    @bp.get('/')
+    def sync_index(request):
+        return text('sync_index')
+
+    @bp.filter(sync_index)
+    async def async_filter(handler, request):
+        # the handler should always be awaitable
+        response = await handler(request)
+        response.body += b"_async_filter"
+        return response
+
+    app.blueprint(bp)
+    req, resp = app.test_client.get('/')
+    assert resp.text == 'sync_index_async_filter'
+
+
+def test_async_blueprint_filter_over_async_handler():
+    app = Sanic('test_sync_app_filter_over_sync_handler')
+    bp = Blueprint(app.name)
+
+    @bp.get('/')
+    async def async_index(request):
+        return text('async_index')
+
+    @bp.filter(async_index)
+    async def async_filter(handler, request):
+        response = await handler(request)
+        response.body += b"_async_filter"
+        return response
+
+    app.blueprint(bp)
+    req, resp = app.test_client.get('/')
+    assert resp.text == 'async_index_async_filter'
 
 
 if __name__ == '__main__':

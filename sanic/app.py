@@ -394,7 +394,9 @@ class Sanic:
         if view_name == 'static':
             if view_name.endswith('.static'):  # blueprint.static
                 name = view_name
-            uri, route = self.router.routes_static_files.get(name, (None, None))
+            uri, route = self.router.routes_static_files.get(
+                name, (None, None)
+            )
         else:
             uri, route = self.router.routes_names.get(view_name, (None, None))
         if uri is None or route is None:
@@ -445,8 +447,11 @@ class Sanic:
             update_handler(self.router.routes_dynamic)
             for i, one in enumerate(self.router.routes_always_check):
                 if one.handler is old_handler:
-                    self.router.routes_always_check[i] = one._replace(handler=new_handler)
-            return new_handler  # so one could continuously use handler decorator
+                    self.router.routes_always_check[i] = one._replace(
+                        handler=new_handler
+                    )
+            # so one could continuously use handler decorator
+            return new_handler
         return decorator
 
     # Static Files

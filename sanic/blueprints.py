@@ -227,8 +227,51 @@ class Blueprint:
             return register_middleware
 
     # Decorator
-    def filter(self, old_handler):
-        pass
+    def filter(self, old_handler=None, name=None):
+        # There should be a function to deduce handler from name.
+        # Currently I have no idea how to do it :( .
+        if old_handler is None and name is None:
+            raise Exception('You should give at lease one of old_handler/name')
+
+        def decorator(handler_filter):
+            handler_is_coroutine = iscoroutinefunction(old_handler)
+            filter_is_coroutine = iscoroutinefunction(handler_filter)
+            # ensure the outside filter must be a coroutine
+            # if the handler is already a coroutine
+            if handler_is_coroutine and not filter_is_coroutine:
+                raise TypeError("Coroutine inside a non-coroutine function")
+
+            if filter_is_coroutine:
+                # ensure the handler is given being a coroutine.
+                if not handler_is_coroutine:
+                    @wraps(old_handler)
+                    async def async_handler(*args, **kwargs):
+                        return old_handler(*args, **kwargs)
+                else:
+                    async_handler = old_handler
+
+                @wraps(async_handler)
+                async def new_handler(*args, **kwargs):
+                    return await handler_filter(async_handler, *args, **kwargs)
+            else:
+                # handler is just a normal function
+                # I force it to be async
+                @wraps(old_handler)
+                async def new_handler(*args, **kwargs):
+                    return handler_filter(old_handler, *args, **kwargs)
+
+            # we have the new handler now
+            for i, route in enumerate(self.routes):
+                if route.handler is old_handler:
+                    self.routes[i] = route._replace(handler=new_handler)
+            for i, route in enumerate(self.websocket_routes):
+                if route.handler is old_handler:
+                    self.websocket_routes[i] = route._replace(
+                        handler=new_handler
+                    )
+            # so one could continuously use handler decorator
+            return new_handler
+        return decorator
 
     def exception(self, *args, **kwargs):
         """Create a blueprint exception from a decorated function."""

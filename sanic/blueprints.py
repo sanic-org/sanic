@@ -1,4 +1,6 @@
 from collections import defaultdict, namedtuple
+from functools import wraps
+from inspect import iscoroutinefunction
 
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
@@ -223,6 +225,10 @@ class Blueprint:
             return register_middleware(middleware)
         else:
             return register_middleware
+
+    # Decorator
+    def filter(self, old_handler):
+        pass
 
     def exception(self, *args, **kwargs):
         """Create a blueprint exception from a decorated function."""

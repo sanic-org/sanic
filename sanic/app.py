@@ -5,8 +5,9 @@ import re
 import warnings
 from asyncio import get_event_loop, ensure_future, CancelledError
 from collections import deque, defaultdict
-from functools import partial
+from functools import partial, wraps
 from inspect import getmodulename, isawaitable, signature, stack
+from inspect import iscoroutinefunction
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 from ssl import create_default_context, Purpose
@@ -17,7 +18,7 @@ from sanic.exceptions import ServerError, URLBuildError, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.log import logger, error_logger, LOGGING_CONFIG_DEFAULTS
 from sanic.response import HTTPResponse, StreamingHTTPResponse
-from sanic.router import Router
+from sanic.router import Router, RouteDoesNotExist
 from sanic.server import serve, serve_multiple, HttpProtocol, Signal
 from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
@@ -381,6 +382,72 @@ class Sanic:
         else:
             return partial(self.register_middleware,
                            attach_to=middleware_or_request)
+
+    # Decorator
+    def filter(self, view_name, name='static'):
+        """
+        Add extra control to a handler
+        """
+        if not isinstance(view_name, str):
+            view_name = view_name.__name__
+        # special static files url_for
+        if view_name == 'static':
+            if view_name.endswith('.static'):  # blueprint.static
+                name = view_name
+            uri, route = self.router.routes_static_files.get(name, (None, None))
+        else:
+            uri, route = self.router.routes_names.get(view_name, (None, None))
+        if uri is None or route is None:
+            raise RouteDoesNotExist(view_name)
+        old_handler = route.handler
+
+        def decorator(handler_filter):
+            handler_is_coroutine = iscoroutinefunction(old_handler)
+            filter_is_coroutine = iscoroutinefunction(handler_filter)
+            # ensure the outside filter must be a coroutine
+            # if the handler is already a coroutine
+            if handler_is_coroutine and not filter_is_coroutine:
+                raise TypeError("Coroutine inside a non-coroutine function")
+
+            if filter_is_coroutine:
+                # ensure the handler is given being a coroutine.
+                if not handler_is_coroutine:
+                    @wraps(old_handler)
+                    async def async_handler(*args, **kwargs):
+                        return old_handler(*args, **kwargs)
+                else:
+                    async_handler = old_handler
+
+                @wraps(async_handler)
+                async def new_handler(*args, **kwargs):
+                    return await handler_filter(async_handler, *args, **kwargs)
+            else:
+                # handler is just a normal function
+                # I force it to be async
+                @wraps(old_handler)
+                async def new_handler(*args, **kwargs):
+                    return handler_filter(old_handler, *args, **kwargs)
+
+            # update the handler
+            def update_handler(target):
+                for k, v in target.items():
+                    if not hasattr(v, 'handler'):
+                        u, r = v
+                        if r.handler is old_handler:
+                            target[k] = u, r._replace(handler=new_handler)
+                    else:
+                        if v.handler is old_handler:
+                            target[k] = v._replace(handler=new_handler)
+            update_handler(self.router.routes_all)
+            update_handler(self.router.routes_names)
+            update_handler(self.router.routes_static_files)
+            update_handler(self.router.routes_static)
+            update_handler(self.router.routes_dynamic)
+            for i, one in enumerate(self.router.routes_always_check):
+                if one.handler is old_handler:
+                    self.router.routes_always_check[i] = one._replace(handler=new_handler)
+            return new_handler  # so one could continuously use handler decorator
+        return decorator
 
     # Static Files
     def static(self, uri, file_or_directory, pattern=r'/?.+',

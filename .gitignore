@@ -15,3 +15,5 @@ docs/_build/
 docs/_api/
 build/*
 .DS_Store
+# python venv
+venv

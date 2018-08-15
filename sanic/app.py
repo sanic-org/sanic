@@ -688,11 +688,12 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
+        # compatibility old access_log params
+        self.config.ACCESS_LOG = access_log
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             workers=workers, protocol=protocol, backlog=backlog,
-            register_sys_signals=register_sys_signals,
-            access_log=access_log, auto_reload=auto_reload)
+            register_sys_signals=register_sys_signals, auto_reload=auto_reload)
 
         try:
             self.is_running = True
@@ -746,12 +747,12 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
-
+        # compatibility old access_log params
+        self.config.ACCESS_LOG = access_log
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             loop=get_event_loop(), protocol=protocol,
-            backlog=backlog, run_async=True,
-            access_log=access_log)
+            backlog=backlog, run_async=True)
 
         # Trigger before_start events
         await self.trigger_events(
@@ -796,8 +797,7 @@ class Sanic:
     def _helper(self, host=None, port=None, debug=False,
                 ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, access_log=True,
-                auto_reload=False):
+                register_sys_signals=True, run_async=False, auto_reload=False):
         """Helper function used by `run` and `create_server`."""
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -838,7 +838,7 @@ class Sanic:
             'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog,
-            'access_log': access_log,
+            'access_log': self.config.ACCESS_LOG,
             'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
             'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
             'websocket_read_limit': self.config.WEBSOCKET_READ_LIMIT,

@@ -60,6 +60,7 @@ class HttpProtocol(asyncio.Protocol):
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
                  response_timeout=60, keep_alive_timeout=5,
+                 request_max_queue_size=20,
                  request_max_size=None, request_class=None, access_log=True,
                  keep_alive=True, is_request_stream=False, router=None,
                  state=None, debug=False, **kwargs):
@@ -78,9 +79,11 @@ class HttpProtocol(asyncio.Protocol):
         self.request_timeout = request_timeout
         self.response_timeout = response_timeout
         self.keep_alive_timeout = keep_alive_timeout
+        self.request_max_queue_size = request_max_queue_size
         self.request_max_size = request_max_size
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
+        self._paused = False
         self._is_stream_handler = False
         self._total_request_size = 0
         self._request_timeout_handler = None
@@ -103,6 +106,14 @@ class HttpProtocol(asyncio.Protocol):
             self._keep_alive and
             not self.signal.stopped and
             self.parser.should_keep_alive())
+
+    @property
+    def is_active_stream(self):
+        return (
+            self.is_request_stream and
+            not self._paused and
+            self.request is not None and
+            self.request.stream)
 
     # -------------------------------------------- #
     # Connection
@@ -211,6 +222,17 @@ class HttpProtocol(asyncio.Protocol):
                 message += '\n' + traceback.format_exc()
             exception = InvalidUsage(message)
             self.write_error(exception)
+
+        if self.is_active_stream:
+            if self.request.stream.qsize() > self.request_max_queue_size:
+                self.transport.pause_reading()
+                self._paused = True
+                self.loop.create_task(self.resume_reading())
+
+    async def resume_reading(self):
+        await self.request.stream.join()
+        self.transport.resume_reading()
+        self._paused = False
 
     def on_url(self, url):
         if not self.url:

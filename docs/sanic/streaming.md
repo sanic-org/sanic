@@ -2,7 +2,7 @@
 
 ## Request Streaming
 
-Sanic allows you to get request data by stream, as below. When the request ends, `request.stream.get()` returns `None`. Only post, put and patch decorator have stream argument.
+Sanic allows you to get request data by stream, as below. When the request ends, `request.stream.get()` returns `None`. In order to do flow controll, calling `request.stream.task_done()` right after processing is required. Only post, put and patch decorator have stream argument.
 
 ```python
 from sanic import Sanic
@@ -26,6 +26,7 @@ class SimpleView(HTTPMethodView):
             if body is None:
                 break
             result += body.decode('utf-8')
+            request.stream.task_done()
         return text(result)
 
 
@@ -38,6 +39,7 @@ async def handler(request):
                 break
             body = body.decode('utf-8').replace('1', 'A')
             response.write(body)
+            request.stream.task_done()
     return stream(streaming)
 
 
@@ -49,6 +51,7 @@ async def bp_handler(request):
         if body is None:
             break
         result += body.decode('utf-8').replace('1', 'A')
+        request.stream.task_done()
     return text(result)
 
 
@@ -59,6 +62,7 @@ async def post_handler(request):
         if body is None:
             break
         result += body.decode('utf-8')
+        request.stream.task_done()
     return text(result)
 
 app.blueprint(bp)

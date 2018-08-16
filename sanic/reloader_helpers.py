@@ -74,8 +74,14 @@ def kill_process_children_unix(pid):
         with open(children_proc_path) as children_list_file_2:
             children_list_pid_2 = children_list_file_2.read().split()
         for _pid in children_list_pid_2:
-            os.kill(int(_pid), signal.SIGTERM)
-
+            try:
+                os.kill(int(_pid), signal.SIGTERM)
+            except ProcessLookupError:
+                continue
+        try:
+            os.kill(int(child_pid), signal.SIGTERM)
+        except ProcessLookupError:
+            continue
 
 def kill_process_children_osx(pid):
     """Find and kill child processes of a process.
@@ -94,7 +100,7 @@ def kill_process_children(pid):
     """
     if sys.platform == 'darwin':
         kill_process_children_osx(pid)
-    elif sys.platform == 'posix':
+    elif sys.platform == 'linux':
         kill_process_children_unix(pid)
     else:
         pass                    # should signal error here
@@ -136,8 +142,8 @@ def watchdog(sleep_interval):
                 continue
             elif mtime > old_time:
                 kill_process_children(worker_process.pid)
+                worker_process.terminate()
                 worker_process = restart_with_reloader()
-
                 mtimes[filename] = mtime
                 break
 

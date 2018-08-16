@@ -9,14 +9,39 @@ import aiohttp
 from aiohttp import TCPConnector
 from sanic.testing import SanicTestClient, HOST, PORT
 
+try:
+    try:
+        import packaging # direct use
+    except ImportError:
+        # setuptools v39.0 and above.
+        try:
+            from setuptools.extern import packaging
+        except ImportError:
+            # Before setuptools v39.0
+            from pkg_resources.extern import packaging
+    version = packaging.version
+except ImportError:
+    raise RuntimeError("The 'packaging' library is missing.")
+
+aiohttp_version = version.parse(aiohttp.__version__)
 
 class ReuseableTCPConnector(TCPConnector):
     def __init__(self, *args, **kwargs):
         super(ReuseableTCPConnector, self).__init__(*args, **kwargs)
         self.old_proto = None
 
-    if aiohttp.__version__ >= '3.0':
-
+    if aiohttp_version >= version.parse('3.3.0'):
+        async def connect(self, req, traces, timeout):
+            new_conn = await super(ReuseableTCPConnector, self)\
+                                    .connect(req, traces, timeout)
+            if self.old_proto is not None:
+                if self.old_proto != new_conn._protocol:
+                    raise RuntimeError(
+                        "We got a new connection, wanted the same one!")
+            print(new_conn.__dict__)
+            self.old_proto = new_conn._protocol
+            return new_conn
+    elif aiohttp_version >= version.parse('3.0.0'):
         async def connect(self, req, traces=None):
             new_conn = await super(ReuseableTCPConnector, self)\
                                     .connect(req, traces=traces)
@@ -28,7 +53,6 @@ class ReuseableTCPConnector(TCPConnector):
             self.old_proto = new_conn._protocol
             return new_conn
     else:
-
         async def connect(self, req):
             new_conn = await super(ReuseableTCPConnector, self)\
                                     .connect(req)

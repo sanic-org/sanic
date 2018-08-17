@@ -83,6 +83,7 @@ def kill_process_children_unix(pid):
         except ProcessLookupError:
             continue
 
+
 def kill_process_children_osx(pid):
     """Find and kill child processes of a process.
 

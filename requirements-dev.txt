@@ -1,5 +1,5 @@
 aiofiles
-aiohttp>=2.3.0
+aiohttp>=2.3.0,<=3.2.1
 chardet<=2.3.0
 beautifulsoup4
 coverage

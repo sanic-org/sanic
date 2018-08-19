@@ -46,7 +46,7 @@ class BaseHTTPResponse:
 
 class StreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
-        'transport', 'streaming_fn', 'status',
+        'protocol', 'streaming_fn', 'status',
         'content_type', 'headers', '_cookies'
     )
 
@@ -58,7 +58,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.headers = CIMultiDict(headers or {})
         self._cookies = None
 
-    def write(self, data):
+    async def write(self, data):
         """Writes a chunk of data to the streaming response.
 
         :param data: bytes-ish data to be written.
@@ -66,8 +66,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         if type(data) != bytes:
             data = self._encode_body(data)
 
-        self.transport.write(
+        self.protocol.push_data(
             b"%x\r\n%b\r\n" % (len(data), data))
+        await self.protocol.drain()
 
     async def stream(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
@@ -77,10 +78,12 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         headers = self.get_headers(
             version, keep_alive=keep_alive,
             keep_alive_timeout=keep_alive_timeout)
-        self.transport.write(headers)
-
+        self.protocol.push_data(headers)
+        await self.protocol.drain()
         await self.streaming_fn(self)
-        self.transport.write(b'0\r\n\r\n')
+        self.protocol.push_data(b'0\r\n\r\n')
+        # no need to await drain here after this write, because it is the
+        # very last thing we write and nothing needs to wait for it.
 
     def get_headers(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
@@ -298,13 +301,13 @@ async def file_stream(location, status=200, chunk_size=4096, mime_type=None,
                     if len(content) < 1:
                         break
                     to_send -= len(content)
-                    response.write(content)
+                    await response.write(content)
             else:
                 while True:
                     content = await _file.read(chunk_size)
                     if len(content) < 1:
                         break
-                    response.write(content)
+                    await response.write(content)
         finally:
             await _file.close()
         return  # Returning from this fn closes the stream

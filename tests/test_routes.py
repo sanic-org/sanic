@@ -12,9 +12,7 @@ from sanic.constants import HTTP_METHODS
 # ------------------------------------------------------------ #
 
 @pytest.mark.parametrize('method', HTTP_METHODS)
-def test_versioned_routes_get(method):
-    app = Sanic('test_shorhand_routes_get')
-
+def test_versioned_routes_get(app, method):
     method = method.lower()
 
     func = getattr(app, method)
@@ -32,8 +30,7 @@ def test_versioned_routes_get(method):
     assert response.status == 200
 
 
-def test_shorthand_routes_get():
-    app = Sanic('test_shorhand_routes_get')
+def test_shorthand_routes_get(app):
 
     @app.get('/get')
     def handler(request):
@@ -46,8 +43,7 @@ def test_shorthand_routes_get():
     assert response.status == 405
 
 
-def test_shorthand_routes_multiple():
-    app = Sanic('test_shorthand_routes_multiple')
+def test_shorthand_routes_multiple(app):
 
     @app.get('/get')
     def get_handler(request):
@@ -65,8 +61,7 @@ def test_shorthand_routes_multiple():
     assert response.status == 200
 
 
-def test_route_strict_slash():
-    app = Sanic('test_route_strict_slash')
+def test_route_strict_slash(app):
 
     @app.get('/get', strict_slashes=True)
     def handler(request):
@@ -93,9 +88,8 @@ def test_route_strict_slash():
     assert response.status == 404
 
 
-def test_route_invalid_parameter_syntax():
+def test_route_invalid_parameter_syntax(app):
     with pytest.raises(ValueError):
-        app = Sanic('test_route_invalid_param_syntax')
 
         @app.get('/get/<:string>', strict_slashes=True)
         def handler(request):
@@ -115,8 +109,7 @@ def test_route_strict_slash_default_value():
     assert response.status == 404
 
 
-def test_route_strict_slash_without_passing_default_value():
-    app = Sanic('test_route_strict_slash')
+def test_route_strict_slash_without_passing_default_value(app):
 
     @app.get('/get')
     def handler(request):
@@ -137,8 +130,7 @@ def test_route_strict_slash_default_value_can_be_overwritten():
     assert response.text == 'OK'
 
 
-def test_route_slashes_overload():
-    app = Sanic('test_route_slashes_overload')
+def test_route_slashes_overload(app):
 
     @app.get('/hello/')
     def handler(request):
@@ -161,8 +153,7 @@ def test_route_slashes_overload():
     assert response.text == 'OK'
 
 
-def test_route_optional_slash():
-    app = Sanic('test_route_optional_slash')
+def test_route_optional_slash(app):
 
     @app.get('/get')
     def handler(request):
@@ -174,9 +165,8 @@ def test_route_optional_slash():
     request, response = app.test_client.get('/get/')
     assert response.text == 'OK'
 
-def test_route_strict_slashes_set_to_false_and_host_is_a_list():
+def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     #Part of regression test for issue #1120
-    app = Sanic('test_route_strict_slashes_set_to_false_and_host_is_a_list')
 
     site1 = 'localhost:{}'.format(app.test_client.port)
 
@@ -209,8 +199,7 @@ def test_route_strict_slashes_set_to_false_and_host_is_a_list():
     request, response = app.test_client.delete('http://' + site1 +'/delete')
     assert response.text == 'OK'
 
-def test_shorthand_routes_post():
-    app = Sanic('test_shorhand_routes_post')
+def test_shorthand_routes_post(app):
 
     @app.post('/post')
     def handler(request):
@@ -223,8 +212,7 @@ def test_shorthand_routes_post():
     assert response.status == 405
 
 
-def test_shorthand_routes_put():
-    app = Sanic('test_shorhand_routes_put')
+def test_shorthand_routes_put(app):
 
     @app.put('/put')
     def handler(request):
@@ -240,8 +228,7 @@ def test_shorthand_routes_put():
     assert response.status == 405
 
 
-def test_shorthand_routes_delete():
-    app = Sanic('test_shorhand_routes_delete')
+def test_shorthand_routes_delete(app):
 
     @app.delete('/delete')
     def handler(request):
@@ -257,8 +244,7 @@ def test_shorthand_routes_delete():
     assert response.status == 405
 
 
-def test_shorthand_routes_patch():
-    app = Sanic('test_shorhand_routes_patch')
+def test_shorthand_routes_patch(app):
 
     @app.patch('/patch')
     def handler(request):
@@ -274,8 +260,7 @@ def test_shorthand_routes_patch():
     assert response.status == 405
 
 
-def test_shorthand_routes_head():
-    app = Sanic('test_shorhand_routes_head')
+def test_shorthand_routes_head(app):
 
     @app.head('/head')
     def handler(request):
@@ -291,8 +276,7 @@ def test_shorthand_routes_head():
     assert response.status == 405
 
 
-def test_shorthand_routes_options():
-    app = Sanic('test_shorhand_routes_options')
+def test_shorthand_routes_options(app):
 
     @app.options('/options')
     def handler(request):
@@ -308,8 +292,7 @@ def test_shorthand_routes_options():
     assert response.status == 405
 
 
-def test_static_routes():
-    app = Sanic('test_dynamic_route')
+def test_static_routes(app):
 
     @app.route('/test')
     async def handler1(request):
@@ -326,9 +309,7 @@ def test_static_routes():
     assert response.text == 'OK2'
 
 
-def test_dynamic_route():
-    app = Sanic('test_dynamic_route')
-
+def test_dynamic_route(app):
     results = []
 
     @app.route('/folder/<name>')
@@ -342,9 +323,7 @@ def test_dynamic_route():
     assert results[0] == 'test123'
 
 
-def test_dynamic_route_string():
-    app = Sanic('test_dynamic_route_string')
-
+def test_dynamic_route_string(app):
     results = []
 
     @app.route('/folder/<name:string>')
@@ -363,9 +342,7 @@ def test_dynamic_route_string():
     assert results[1] == 'favicon.ico'
 
 
-def test_dynamic_route_int():
-    app = Sanic('test_dynamic_route_int')
-
+def test_dynamic_route_int(app):
     results = []
 
     @app.route('/folder/<folder_id:int>')
@@ -381,9 +358,7 @@ def test_dynamic_route_int():
     assert response.status == 404
 
 
-def test_dynamic_route_number():
-    app = Sanic('test_dynamic_route_number')
-
+def test_dynamic_route_number(app):
     results = []
 
     @app.route('/weight/<weight:number>')
@@ -402,8 +377,7 @@ def test_dynamic_route_number():
     assert response.status == 404
 
 
-def test_dynamic_route_regex():
-    app = Sanic('test_dynamic_route_regex')
+def test_dynamic_route_regex(app):
 
     @app.route('/folder/<folder_id:[A-Za-z0-9]{0,4}>')
     async def handler(request, folder_id):
@@ -422,9 +396,8 @@ def test_dynamic_route_regex():
     assert response.status == 200
 
 
-def test_dynamic_route_uuid():
+def test_dynamic_route_uuid(app):
     import uuid
-    app = Sanic('test_dynamic_route_uuid')
 
     results = []
 
@@ -444,8 +417,7 @@ def test_dynamic_route_uuid():
     assert response.status == 404
 
 
-def test_dynamic_route_path():
-    app = Sanic('test_dynamic_route_path')
+def test_dynamic_route_path(app):
 
     @app.route('/<path:path>/info')
     async def handler(request, path):
@@ -468,8 +440,7 @@ def test_dynamic_route_path():
     assert response.status == 200
 
 
-def test_dynamic_route_unhashable():
-    app = Sanic('test_dynamic_route_unhashable')
+def test_dynamic_route_unhashable(app):
 
     @app.route('/folder/<unhashable:[A-Za-z0-9/]+>/end/')
     async def handler(request, unhashable):
@@ -488,8 +459,7 @@ def test_dynamic_route_unhashable():
     assert response.status == 404
 
 
-def test_websocket_route():
-    app = Sanic('test_websocket_route')
+def test_websocket_route(app):
     ev = asyncio.Event()
 
     @app.websocket('/ws')
@@ -506,8 +476,7 @@ def test_websocket_route():
     assert ev.is_set()
 
 
-def test_websocket_route_with_subprotocols():
-    app = Sanic('test_websocket_route')
+def test_websocket_route_with_subprotocols(app):
     results = []
 
     @app.websocket('/ws', subprotocols=['foo', 'bar'])
@@ -548,8 +517,7 @@ def test_websocket_route_with_subprotocols():
     assert results == ['bar', 'bar', None, None]
 
 
-def test_route_duplicate():
-    app = Sanic('test_route_duplicate')
+def test_route_duplicate(app):
 
     with pytest.raises(RouteExists):
         @app.route('/test')
@@ -570,8 +538,7 @@ def test_route_duplicate():
             pass
 
 
-def test_method_not_allowed():
-    app = Sanic('test_method_not_allowed')
+def test_method_not_allowed(app):
 
     @app.route('/test', methods=['GET'])
     async def handler(request):
@@ -584,8 +551,7 @@ def test_method_not_allowed():
     assert response.status == 405
 
 
-def test_static_add_route():
-    app = Sanic('test_static_add_route')
+def test_static_add_route(app):
 
     async def handler1(request):
         return text('OK1')
@@ -603,8 +569,7 @@ def test_static_add_route():
     assert response.text == 'OK2'
 
 
-def test_dynamic_add_route():
-    app = Sanic('test_dynamic_add_route')
+def test_dynamic_add_route(app):
 
     results = []
 
@@ -619,8 +584,7 @@ def test_dynamic_add_route():
     assert results[0] == 'test123'
 
 
-def test_dynamic_add_route_string():
-    app = Sanic('test_dynamic_add_route_string')
+def test_dynamic_add_route_string(app):
 
     results = []
 
@@ -640,9 +604,7 @@ def test_dynamic_add_route_string():
     assert results[1] == 'favicon.ico'
 
 
-def test_dynamic_add_route_int():
-    app = Sanic('test_dynamic_add_route_int')
-
+def test_dynamic_add_route_int(app):
     results = []
 
     async def handler(request, folder_id):
@@ -659,9 +621,7 @@ def test_dynamic_add_route_int():
     assert response.status == 404
 
 
-def test_dynamic_add_route_number():
-    app = Sanic('test_dynamic_add_route_number')
-
+def test_dynamic_add_route_number(app):
     results = []
 
     async def handler(request, weight):
@@ -681,8 +641,7 @@ def test_dynamic_add_route_number():
     assert response.status == 404
 
 
-def test_dynamic_add_route_regex():
-    app = Sanic('test_dynamic_route_int')
+def test_dynamic_add_route_regex(app):
 
     async def handler(request, folder_id):
         return text('OK')
@@ -702,8 +661,7 @@ def test_dynamic_add_route_regex():
     assert response.status == 200
 
 
-def test_dynamic_add_route_unhashable():
-    app = Sanic('test_dynamic_add_route_unhashable')
+def test_dynamic_add_route_unhashable(app):
 
     async def handler(request, unhashable):
         return text('OK')
@@ -723,8 +681,7 @@ def test_dynamic_add_route_unhashable():
     assert response.status == 404
 
 
-def test_add_route_duplicate():
-    app = Sanic('test_add_route_duplicate')
+def test_add_route_duplicate(app):
 
     with pytest.raises(RouteExists):
         async def handler1(request):
@@ -747,8 +704,7 @@ def test_add_route_duplicate():
         app.add_route(handler2, '/test/<dynamic>/')
 
 
-def test_add_route_method_not_allowed():
-    app = Sanic('test_add_route_method_not_allowed')
+def test_add_route_method_not_allowed(app):
 
     async def handler(request):
         return text('OK')
@@ -762,8 +718,7 @@ def test_add_route_method_not_allowed():
     assert response.status == 405
 
 
-def test_remove_static_route():
-    app = Sanic('test_remove_static_route')
+def test_remove_static_route(app):
 
     async def handler1(request):
         return text('OK1')
@@ -790,8 +745,7 @@ def test_remove_static_route():
     assert response.status == 404
 
 
-def test_remove_dynamic_route():
-    app = Sanic('test_remove_dynamic_route')
+def test_remove_dynamic_route(app):
 
     async def handler(request, name):
         return text('OK')
@@ -806,15 +760,13 @@ def test_remove_dynamic_route():
     assert response.status == 404
 
 
-def test_remove_inexistent_route():
-    app = Sanic('test_remove_inexistent_route')
+def test_remove_inexistent_route(app):
 
     with pytest.raises(RouteDoesNotExist):
         app.remove_route('/test')
 
 
-def test_removing_slash():
-    app = Sanic(__name__)
+def test_removing_slash(app):
 
     @app.get('/rest/<resource>')
     def get(_):
@@ -827,8 +779,7 @@ def test_removing_slash():
     assert len(app.router.routes_all.keys()) == 2
 
 
-def test_remove_unhashable_route():
-    app = Sanic('test_remove_unhashable_route')
+def test_remove_unhashable_route(app):
 
     async def handler(request, unhashable):
         return text('OK')
@@ -856,8 +807,7 @@ def test_remove_unhashable_route():
     assert response.status == 404
 
 
-def test_remove_route_without_clean_cache():
-    app = Sanic('test_remove_static_route')
+def test_remove_route_without_clean_cache(app):
 
     async def handler(request):
         return text('OK')
@@ -884,8 +834,7 @@ def test_remove_route_without_clean_cache():
     assert response.status == 200
 
 
-def test_overload_routes():
-    app = Sanic('test_dynamic_route')
+def test_overload_routes(app):
 
     @app.route('/overload', methods=['GET'])
     async def handler1(request):
@@ -913,8 +862,7 @@ def test_overload_routes():
             return text('Duplicated')
 
 
-def test_unmergeable_overload_routes():
-    app = Sanic('test_dynamic_route')
+def test_unmergeable_overload_routes(app):
 
     @app.route('/overload_whole', methods=None)
     async def handler1(request):
@@ -947,8 +895,7 @@ def test_unmergeable_overload_routes():
     assert response.status == 405
 
 
-def test_unicode_routes():
-    app = Sanic('test_unicode_routes')
+def test_unicode_routes(app):
 
     @app.get('/你好')
     def handler1(request):
@@ -965,8 +912,7 @@ def test_unicode_routes():
     assert response.text == 'OK2 你好'
 
 
-def test_uri_with_different_method_and_different_params():
-    app = Sanic('test_uri')
+def test_uri_with_different_method_and_different_params(app):
 
     @app.route('/ads/<ad_id>', methods=['GET'])
     async def ad_get(request, ad_id):

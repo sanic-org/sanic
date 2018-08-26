@@ -23,7 +23,7 @@ def reset_logging():
     reload(logging)
 
 
-def test_log():
+def test_log(app):
     log_stream = StringIO()
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
@@ -33,7 +33,6 @@ def test_log():
         stream=log_stream
     )
     log = logging.getLogger()
-    app = Sanic('test_logging')
     rand_string = str(uuid.uuid4())
 
     @app.route('/')
@@ -80,9 +79,8 @@ def test_logging_pass_customer_logconfig():
 
 
 @pytest.mark.parametrize('debug', (True, False, ))
-def test_log_connection_lost(debug, monkeypatch):
+def test_log_connection_lost(app, debug, monkeypatch):
     """ Should not log Connection lost exception on non debug """
-    app = Sanic('connection_lost')
     stream = StringIO()
     root = logging.getLogger('root')
     root.addHandler(logging.StreamHandler(stream))

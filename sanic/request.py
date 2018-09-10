@@ -84,6 +84,12 @@ class Request(dict):
             return True
         return False
 
+    def body_append(self, data):
+        self.body.append(data)
+
+    def body_finish(self):
+        self.body = b''.join(self.body)
+
     @property
     def json(self):
         if self.parsed_json is None:

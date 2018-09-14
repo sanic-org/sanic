@@ -19,7 +19,7 @@ from sanic.response import file, file_stream, HTTPResponse
 def register(app, uri, file_or_directory, pattern,
              use_modified_since, use_content_range,
              stream_large_files, name='static', host=None,
-             strict_slashes=None):
+             strict_slashes=None, content_type=None):
     # TODO: Though sanic is not a file server, I feel like we should at least
     #       make a good effort here.  Modified-since is nice, but we could
     #       also look into etags, expires, and caching
@@ -41,6 +41,7 @@ def register(app, uri, file_or_directory, pattern,
                               If this is an integer, this represents the
                               threshold size to switch to file_stream()
     :param name: user defined name used for url_for
+    :param content_type: user defined content type for header
     """
     # If we're not trying to match a file directly,
     # serve from the folder
@@ -95,10 +96,10 @@ def register(app, uri, file_or_directory, pattern,
                         del headers['Content-Length']
                         for key, value in _range.headers.items():
                             headers[key] = value
+            headers['Content-Type'] = content_type \
+                or guess_type(file_path)[0] or 'text/plain'
             if request.method == 'HEAD':
-                return HTTPResponse(
-                    headers=headers,
-                    content_type=guess_type(file_path)[0] or 'text/plain')
+                return HTTPResponse(headers=headers)
             else:
                 if stream_large_files:
                     if isinstance(stream_large_files, int):

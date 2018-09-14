@@ -386,13 +386,14 @@ class Sanic:
     def static(self, uri, file_or_directory, pattern=r'/?.+',
                use_modified_since=True, use_content_range=False,
                stream_large_files=False, name='static', host=None,
-               strict_slashes=None):
+               strict_slashes=None, content_type=None):
         """Register a root to serve files from. The input can either be a
         file or a directory. See
         """
         static_register(self, uri, file_or_directory, pattern,
                         use_modified_since, use_content_range,
-                        stream_large_files, name, host, strict_slashes)
+                        stream_large_files, name, host, strict_slashes,
+                        content_type)
 
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.
@@ -570,6 +571,10 @@ class Sanic:
 
         :return: Nothing
         """
+        # Define `response` var here to remove warnings about
+        # allocation before assignment below.
+        response = None
+        cancelled = False
         try:
             # -------------------------------------------- #
             # Request Middleware
@@ -596,6 +601,13 @@ class Sanic:
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response
+        except CancelledError:
+            # If response handler times out, the server handles the error
+            # and cancels the handle_request job.
+            # In this case, the transport is already closed and we cannot
+            # issue a response.
+            response = None
+            cancelled = True
         except Exception as e:
             # -------------------------------------------- #
             # Response Generation Failed
@@ -621,13 +633,22 @@ class Sanic:
             # -------------------------------------------- #
             # Response Middleware
             # -------------------------------------------- #
-            try:
-                response = await self._run_response_middleware(request,
-                                                               response)
-            except BaseException:
-                error_logger.exception(
-                    'Exception occurred in one of response middleware handlers'
-                )
+            # Don't run response middleware if response is None
+            if response is not None:
+                try:
+                    response = await self._run_response_middleware(request,
+                                                                   response)
+                except CancelledError:
+                    # Response middleware can timeout too, as above.
+                    response = None
+                    cancelled = True
+                except BaseException:
+                    error_logger.exception(
+                        'Exception occurred in one of response '
+                        'middleware handlers'
+                    )
+            if cancelled:
+                raise CancelledError()
 
         # pass the response to the correct callback
         if isinstance(response, StreamingHTTPResponse):
@@ -670,8 +691,8 @@ class Sanic:
         """
         # Default auto_reload to false
         auto_reload = False
-        # If debug is set, default it to true
-        if debug:
+        # If debug is set, default it to true (unless on windows)
+        if debug and os.name == 'posix':
             auto_reload = True
         # Allow for overriding either of the defaults
         auto_reload = kwargs.get("auto_reload", auto_reload)
@@ -687,11 +708,12 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
+        # compatibility old access_log params
+        self.config.ACCESS_LOG = access_log
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             workers=workers, protocol=protocol, backlog=backlog,
-            register_sys_signals=register_sys_signals,
-            access_log=access_log, auto_reload=auto_reload)
+            register_sys_signals=register_sys_signals, auto_reload=auto_reload)
 
         try:
             self.is_running = True
@@ -745,12 +767,12 @@ class Sanic:
                 warnings.simplefilter('default')
             warnings.warn("stop_event will be removed from future versions.",
                           DeprecationWarning)
-
+        # compatibility old access_log params
+        self.config.ACCESS_LOG = access_log
         server_settings = self._helper(
             host=host, port=port, debug=debug, ssl=ssl, sock=sock,
             loop=get_event_loop(), protocol=protocol,
-            backlog=backlog, run_async=True,
-            access_log=access_log)
+            backlog=backlog, run_async=True)
 
         # Trigger before_start events
         await self.trigger_events(
@@ -795,8 +817,7 @@ class Sanic:
     def _helper(self, host=None, port=None, debug=False,
                 ssl=None, sock=None, workers=1, loop=None,
                 protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, access_log=True,
-                auto_reload=False):
+                register_sys_signals=True, run_async=False, auto_reload=False):
         """Helper function used by `run` and `create_server`."""
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -837,7 +858,7 @@ class Sanic:
             'loop': loop,
             'register_sys_signals': register_sys_signals,
             'backlog': backlog,
-            'access_log': access_log,
+            'access_log': self.config.ACCESS_LOG,
             'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
             'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
             'websocket_read_limit': self.config.WEBSOCKET_READ_LIMIT,

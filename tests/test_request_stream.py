@@ -83,7 +83,7 @@ def test_request_stream_app():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @app.put('/_put')
@@ -100,7 +100,7 @@ def test_request_stream_app():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @app.patch('/_patch')
@@ -117,7 +117,7 @@ def test_request_stream_app():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     assert app.is_request_stream is True
@@ -177,7 +177,7 @@ def test_request_stream_handle_exception():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     # 404
@@ -231,7 +231,7 @@ def test_request_stream_blueprint():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @bp.put('/_put')
@@ -248,7 +248,7 @@ def test_request_stream_blueprint():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @bp.patch('/_patch')
@@ -265,7 +265,7 @@ def test_request_stream_blueprint():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     app.blueprint(bp)
@@ -380,7 +380,7 @@ def test_request_stream():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @app.get('/get')

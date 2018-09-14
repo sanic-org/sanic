@@ -1,3 +1,80 @@
+Version 0.8
+-----------
+- 0.8.3
+ - Changes:
+   - Ownership changed to org 'huge-success'
+
+- 0.8.0
+ - Changes:
+   - Add Server-Sent Events extension (Innokenty Lebedev)
+   - Graceful handling of request_handler_task cancellation (Ashley Sommer)
+   - Sanitize URL before redirection (aveao)
+   - Add url_bytes to request (johndoe46)
+   - py37 support for travisci (yunstanford)
+   - Auto reloader support for OSX (garyo)
+   - Add UUID route support (Volodymyr Maksymiv)
+   - Add pausable response streams (Ashley Sommer)
+   - Add weakref to request slots (vopankov)
+   - remove ubuntu 12.04 from test fixture due to deprecation (yunstanford)
+   - Allow streaming handlers in add_route (kinware)
+   - use travis_retry for tox (Raphael Deems)
+   - update aiohttp version for test client (yunstanford)
+   - add redirect import for clarity (yingshaoxo)
+   - Update HTTP Entity headers (Arnulfo Solís)
+   - Add register_listener method (Stephan Fitzpatrick)
+   - Remove uvloop/ujson dependencies for Windows (abuckenheimer)
+   - Content-length header on 204/304 responses (Arnulfo Solís)
+   - Extend WebSocketProtocol arguments and add docs (Bob Olde Hampsink, yunstanford)
+   - Update development status from pre-alpha to beta (Maksim Anisenkov)
+   - KeepAlive Timout log level changed to debug (Arnulfo Solís)
+   - Pin pytest to 3.3.2 because of pytest-dev/pytest#3170 (Maksim Aniskenov)
+   - Install Python 3.5 and 3.6 on docker container for tests (Shahin Azad)
+   - Add support for blueprint groups and nesting (Elias Tarhini)
+   - Remove uvloop for windows setup (Aleksandr Kurlov)
+   - Auto Reload (Yaser Amari)
+   - Documentation updates/fixups (multiple contributors)
+
+ - Fixes:
+   - Fix: auto_reload in Linux (Ashley Sommer)
+   - Fix: broken tests for aiohttp >= 3.3.0 (Ashley Sommer)
+   - Fix: disable auto_reload by default on windows (abuckenheimer)
+   - Fix (1143): Turn off access log with gunicorn (hqy)
+   - Fix (1268): Support status code for file response (Cosmo Borsky)
+   - Fix (1266): Add content_type flag to Sanic.static (Cosmo Borsky)
+   - Fix: subprotocols parameter missing from add_websocket_route (ciscorn)
+   - Fix (1242): Responses for CI header (yunstanford)
+   - Fix (1237): add version constraint for websockets (yunstanford)
+   - Fix (1231): memory leak - always release resource (Phillip Xu)
+   - Fix (1221): make request truthy if transport exists (Raphael Deems)
+   - Fix failing tests for aiohttp>=3.1.0 (Ashley Sommer)
+   - Fix try_everything examples (PyManiacGR, kot83)
+   - Fix (1158): default to auto_reload in debug mode (Raphael Deems)
+   - Fix (1136): ErrorHandler.response handler call too restrictive (Julien Castiaux)
+   - Fix: raw requires bytes-like object (cloudship)
+   - Fix (1120): passing a list in to a route decorator's host arg (Timothy Ebiuwhe)
+   - Fix: Bug in multipart/form-data parser (DirkGuijt)
+   - Fix: Exception for missing parameter when value is null (NyanKiyoshi)
+   - Fix: Parameter check (Howie Hu)
+   - Fix (1089): Routing issue with named parameters and different methods (yunstanford)
+   - Fix (1085): Signal handling in multi-worker mode (yunstanford)
+   - Fix: single quote in readme.rst (Cosven)
+   - Fix: method typos (Dmitry Dygalo)
+   - Fix: log_response correct output for ip and port (Wibowo Arindrarto)
+   - Fix (1042): Exception Handling (Raphael Deems)
+   - Fix: Chinese URIs (Howie Hu)
+   - Fix (1079): timeout bug when self.transport is None (Raphael Deems)
+   - Fix (1074): fix strict_slashes when route has slash (Raphael Deems)
+   - Fix (1050): add samesite cookie to cookie keys (Raphael Deems)
+   - Fix (1065): allow add_task after server starts (Raphael Deems)
+   - Fix (1061): double quotes in unauthorized exception (Raphael Deems)
+   - Fix (1062): inject the app in add_task method (Raphael Deems)
+   - Fix: update environment.yml for readthedocs (Eli Uriegas)
+   - Fix: Cancel request task when response timeout is triggered (Jeong YunWon)
+   - Fix (1052): Method not allowed response for RFC7231 compliance (Raphael Deems)
+   - Fix: IPv6 Address and Socket Data Format (Dan Palmer)
+
+Note: Changelog was unmaintained between 0.1 and 0.7
+
 Version 0.1
 -----------
  - 0.1.7
@@ -5,18 +82,18 @@ Version 0.1
  - 0.1.6
   - Static files
   - Lazy Cookie Loading
- - 0.1.5 
+ - 0.1.5
   - Cookies
   - Blueprint listeners and ordering
   - Faster Router
   - Fix: Incomplete file reads on medium+ sized post requests
   - Breaking: after_start and before_stop now pass sanic as their first argument
- - 0.1.4 
+ - 0.1.4
   - Multiprocessing
  - 0.1.3
   - Blueprint support
   - Faster Response processing
- - 0.1.1 - 0.1.2 
+ - 0.1.1 - 0.1.2
   - Struggling to update pypi via CI
- - 0.1.0 
+ - 0.1.0
   - Released to public

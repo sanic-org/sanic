@@ -5,6 +5,7 @@ from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
 from httptools import parse_url
+from mimetypes import guess_type
 from urllib.parse import parse_qs, urlunparse
 
 try:
@@ -318,7 +319,8 @@ def parse_multipart_form(body, boundary):
         if field_name:
             post_data = form_part[line_index:-4]
             if file_name:
-                form_file = File(type=content_type,
+                file_type = guess_type(file_name)[0] or 'text/plain'
+                form_file = File(type=file_type,
                                  name=file_name,
                                  body=post_data)
                 if field_name in files:

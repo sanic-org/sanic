@@ -128,7 +128,7 @@ class Request(dict):
             try:
                 if content_type == 'application/x-www-form-urlencoded':
                     self.parsed_form = RequestParameters(
-                        parse_qs(self.body.decode('utf-8')))
+                        parse_qs(self.body.decode('latin1'), encoding='latin1'))
                 elif content_type == 'multipart/form-data':
                     # TODO: Stream this instead of reading to/from memory
                     boundary = parameters['boundary'].encode('utf-8')

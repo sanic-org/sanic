@@ -5,8 +5,7 @@ from tempfile import NamedTemporaryFile
 from sanic import Sanic
 
 
-def test_load_from_object():
-    app = Sanic('test_load_from_object')
+def test_load_from_object(app):
     class Config:
         not_for_config = 'should not be used'
         CONFIG_VALUE = 'should be used'
@@ -34,8 +33,7 @@ def test_load_env_prefix():
     assert app.config.TEST_ANSWER == 42
     del environ["MYAPP_TEST_ANSWER"]
 
-def test_load_from_file():
-    app = Sanic('test_load_from_file')
+def test_load_from_file(app):
     config = b"""
 VALUE = 'some value'
 condition = 1 == 1
@@ -53,14 +51,12 @@ if condition:
         assert 'condition' not in app.config
 
 
-def test_load_from_missing_file():
-    app = Sanic('test_load_from_missing_file')
+def test_load_from_missing_file(app):
     with pytest.raises(IOError):
         app.config.from_pyfile('non-existent file')
 
 
-def test_load_from_envvar():
-    app = Sanic('test_load_from_envvar')
+def test_load_from_envvar(app):
     config = b"VALUE = 'some value'"
     with NamedTemporaryFile() as config_file:
         config_file.write(config)
@@ -71,14 +67,12 @@ def test_load_from_envvar():
         assert app.config.VALUE == 'some value'
 
 
-def test_load_from_missing_envvar():
-    app = Sanic('test_load_from_missing_envvar')
+def test_load_from_missing_envvar(app):
     with pytest.raises(RuntimeError):
         app.config.from_envvar('non-existent variable')
 
 
-def test_overwrite_exisiting_config():
-    app = Sanic('test_overwrite_exisiting_config')
+def test_overwrite_exisiting_config(app):
     app.config.DEFAULT = 1
     class Config:
         DEFAULT = 2
@@ -87,7 +81,6 @@ def test_overwrite_exisiting_config():
     assert app.config.DEFAULT == 2
 
 
-def test_missing_config():
-    app = Sanic('test_missing_config')
+def test_missing_config(app):
     with pytest.raises(AttributeError):
         app.config.NON_EXISTENT

@@ -81,8 +81,7 @@ def exception_app():
     return app
 
 
-def test_catch_exception_list():
-    app = Sanic('exception_list')
+def test_catch_exception_list(app):
 
     @app.exception([SanicExceptionTestException, NotFound])
     def exception_list(request, exception):

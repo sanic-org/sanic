@@ -1,12 +1,10 @@
 import pytest
 
-from sanic import Sanic
 from sanic.response import text, redirect
 
 
 @pytest.fixture
-def redirect_app():
-    app = Sanic('test_redirection')
+def redirect_app(app):
 
     @app.route('/redirect_init')
     async def redirect_init(request):

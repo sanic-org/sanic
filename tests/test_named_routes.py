@@ -4,7 +4,6 @@
 import asyncio
 import pytest
 
-from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import text
 from sanic.exceptions import URLBuildError
@@ -16,8 +15,7 @@ from sanic.constants import HTTP_METHODS
 # ------------------------------------------------------------ #
 
 @pytest.mark.parametrize('method', HTTP_METHODS)
-def test_versioned_named_routes_get(method):
-    app = Sanic('test_shorhand_routes_get')
+def test_versioned_named_routes_get(app, method):
     bp = Blueprint('test_bp', url_prefix='/bp')
 
     method = method.lower()
@@ -57,8 +55,7 @@ def test_versioned_named_routes_get(method):
         app.url_for('handler')
 
 
-def test_shorthand_default_routes_get():
-    app = Sanic('test_shorhand_routes_get')
+def test_shorthand_default_routes_get(app):
 
     @app.get('/get')
     def handler(request):
@@ -68,8 +65,7 @@ def test_shorthand_default_routes_get():
     assert app.url_for('handler') == '/get'
 
 
-def test_shorthand_named_routes_get():
-    app = Sanic('test_shorhand_routes_get')
+def test_shorthand_named_routes_get(app):
     bp = Blueprint('test_bp', url_prefix='/bp')
 
     @app.get('/get', name='route_get')
@@ -93,8 +89,7 @@ def test_shorthand_named_routes_get():
         app.url_for('test_bp.handler2')
 
 
-def test_shorthand_named_routes_post():
-    app = Sanic('test_shorhand_routes_post')
+def test_shorthand_named_routes_post(app):
 
     @app.post('/post', name='route_name')
     def handler(request):
@@ -106,8 +101,7 @@ def test_shorthand_named_routes_post():
         app.url_for('handler')
 
 
-def test_shorthand_named_routes_put():
-    app = Sanic('test_shorhand_routes_put')
+def test_shorthand_named_routes_put(app):
 
     @app.put('/put', name='route_put')
     def handler(request):
@@ -121,8 +115,7 @@ def test_shorthand_named_routes_put():
         app.url_for('handler')
 
 
-def test_shorthand_named_routes_delete():
-    app = Sanic('test_shorhand_routes_delete')
+def test_shorthand_named_routes_delete(app):
 
     @app.delete('/delete', name='route_delete')
     def handler(request):
@@ -136,8 +129,7 @@ def test_shorthand_named_routes_delete():
         app.url_for('handler')
 
 
-def test_shorthand_named_routes_patch():
-    app = Sanic('test_shorhand_routes_patch')
+def test_shorthand_named_routes_patch(app):
 
     @app.patch('/patch', name='route_patch')
     def handler(request):
@@ -151,8 +143,7 @@ def test_shorthand_named_routes_patch():
         app.url_for('handler')
 
 
-def test_shorthand_named_routes_head():
-    app = Sanic('test_shorhand_routes_head')
+def test_shorthand_named_routes_head(app):
 
     @app.head('/head', name='route_head')
     def handler(request):
@@ -166,8 +157,7 @@ def test_shorthand_named_routes_head():
         app.url_for('handler')
 
 
-def test_shorthand_named_routes_options():
-    app = Sanic('test_shorhand_routes_options')
+def test_shorthand_named_routes_options(app):
 
     @app.options('/options', name='route_options')
     def handler(request):
@@ -181,8 +171,7 @@ def test_shorthand_named_routes_options():
         app.url_for('handler')
 
 
-def test_named_static_routes():
-    app = Sanic('test_dynamic_route')
+def test_named_static_routes(app):
 
     @app.route('/test', name='route_test')
     async def handler1(request):
@@ -205,9 +194,7 @@ def test_named_static_routes():
         app.url_for('handler2')
 
 
-def test_named_dynamic_route():
-    app = Sanic('test_dynamic_route')
-
+def test_named_dynamic_route(app):
     results = []
 
     @app.route('/folder/<name>', name='route_dynamic')
@@ -221,8 +208,7 @@ def test_named_dynamic_route():
         app.url_for('handler')
 
 
-def test_dynamic_named_route_regex():
-    app = Sanic('test_dynamic_route_regex')
+def test_dynamic_named_route_regex(app):
 
     @app.route('/folder/<folder_id:[A-Za-z0-9]{0,4}>', name='route_re')
     async def handler(request, folder_id):
@@ -235,8 +221,7 @@ def test_dynamic_named_route_regex():
         app.url_for('handler')
 
 
-def test_dynamic_named_route_path():
-    app = Sanic('test_dynamic_route_path')
+def test_dynamic_named_route_path(app):
 
     @app.route('/<path:path>/info', name='route_dynamic_path')
     async def handler(request, path):
@@ -249,8 +234,7 @@ def test_dynamic_named_route_path():
         app.url_for('handler')
 
 
-def test_dynamic_named_route_unhashable():
-    app = Sanic('test_dynamic_route_unhashable')
+def test_dynamic_named_route_unhashable(app):
 
     @app.route('/folder/<unhashable:[A-Za-z0-9/]+>/end/',
                name='route_unhashable')
@@ -265,8 +249,7 @@ def test_dynamic_named_route_unhashable():
         app.url_for('handler')
 
 
-def test_websocket_named_route():
-    app = Sanic('test_websocket_route')
+def test_websocket_named_route(app):
     ev = asyncio.Event()
 
     @app.websocket('/ws', name='route_ws')
@@ -280,8 +263,7 @@ def test_websocket_named_route():
         app.url_for('handler')
 
 
-def test_websocket_named_route_with_subprotocols():
-    app = Sanic('test_websocket_route')
+def test_websocket_named_route_with_subprotocols(app):
     results = []
 
     @app.websocket('/ws', subprotocols=['foo', 'bar'], name='route_ws')
@@ -294,8 +276,7 @@ def test_websocket_named_route_with_subprotocols():
         app.url_for('handler')
 
 
-def test_static_add_named_route():
-    app = Sanic('test_static_add_route')
+def test_static_add_named_route(app):
 
     async def handler1(request):
         return text('OK1')
@@ -319,9 +300,7 @@ def test_static_add_named_route():
         app.url_for('handler2')
 
 
-def test_dynamic_add_named_route():
-    app = Sanic('test_dynamic_add_route')
-
+def test_dynamic_add_named_route(app):
     results = []
 
     async def handler(request, name):
@@ -335,8 +314,7 @@ def test_dynamic_add_named_route():
         app.url_for('handler')
 
 
-def test_dynamic_add_named_route_unhashable():
-    app = Sanic('test_dynamic_add_route_unhashable')
+def test_dynamic_add_named_route_unhashable(app):
 
     async def handler(request, unhashable):
         return text('OK')
@@ -351,8 +329,7 @@ def test_dynamic_add_named_route_unhashable():
         app.url_for('handler')
 
 
-def test_overload_routes():
-    app = Sanic('test_dynamic_route')
+def test_overload_routes(app):
 
     @app.route('/overload', methods=['GET'], name='route_first')
     async def handler1(request):

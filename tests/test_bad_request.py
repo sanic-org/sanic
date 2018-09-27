@@ -1,9 +1,7 @@
 import asyncio
-from sanic import Sanic
 
 
-def test_bad_request_response():
-    app = Sanic('test_bad_request_response')
+def test_bad_request_response(app):
     lines = []
     @app.listener('after_server_start')
     async def _request(sanic, loop):

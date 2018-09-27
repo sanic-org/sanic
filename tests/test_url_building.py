@@ -1,7 +1,6 @@
 import pytest as pytest
 from urllib.parse import urlsplit, parse_qsl
 
-from sanic import Sanic
 from sanic.response import text
 from sanic.views import HTTPMethodView
 from sanic.blueprints import Blueprint
@@ -30,8 +29,7 @@ def _generate_handlers_from_names(app, l):
 
 
 @pytest.fixture
-def simple_app():
-    app = Sanic('simple_app')
+def simple_app(app):
     handler_names = list(string.ascii_letters)
 
     _generate_handlers_from_names(app, handler_names)
@@ -54,8 +52,7 @@ def test_simple_url_for_getting(simple_app):
                           (URL_FOR_ARGS2, URL_FOR_VALUE2),
                           (URL_FOR_ARGS3, URL_FOR_VALUE3),
                           (URL_FOR_ARGS4, URL_FOR_VALUE4)])
-def test_simple_url_for_getting_with_more_params(args, url):
-    app = Sanic('more_url_build')
+def test_simple_url_for_getting_with_more_params(app, args, url):
 
     @app.route('/myurl')
     def passes(request):
@@ -67,8 +64,7 @@ def test_simple_url_for_getting_with_more_params(args, url):
     assert response.text == 'this should pass'
 
 
-def test_fails_if_endpoint_not_found():
-    app = Sanic('fail_url_build')
+def test_fails_if_endpoint_not_found(app):
 
     @app.route('/fail')
     def fail(request):
@@ -80,13 +76,11 @@ def test_fails_if_endpoint_not_found():
     assert str(e.value) == 'Endpoint with name `passes` was not found'
 
 
-def test_fails_url_build_if_param_not_passed():
+def test_fails_url_build_if_param_not_passed(app):
     url = '/'
 
     for letter in string.ascii_letters:
         url += '<{}>/'.format(letter)
-
-    app = Sanic('fail_url_build')
 
     @app.route(url)
     def fail(request):
@@ -103,8 +97,7 @@ def test_fails_url_build_if_param_not_passed():
     assert 'Required parameter `Z` was not passed to url_for' in str(e.value)
 
 
-def test_fails_url_build_if_params_not_passed():
-    app = Sanic('fail_url_build')
+def test_fails_url_build_if_params_not_passed(app):
 
     @app.route('/fail')
     def fail(request):
@@ -126,8 +119,7 @@ PASSING_KWARGS = {
 EXPECTED_BUILT_URL = '/4/woof/ba/normal/1.001'
 
 
-def test_fails_with_int_message():
-    app = Sanic('fail_url_build')
+def test_fails_with_int_message(app):
 
     @app.route(COMPLEX_PARAM_URL)
     def fail(request):
@@ -145,8 +137,7 @@ def test_fails_with_int_message():
     assert str(e.value) == expected_error
 
 
-def test_fails_with_two_letter_string_message():
-    app = Sanic('fail_url_build')
+def test_fails_with_two_letter_string_message(app):
 
     @app.route(COMPLEX_PARAM_URL)
     def fail(request):
@@ -165,8 +156,7 @@ def test_fails_with_two_letter_string_message():
     assert str(e.value) == expected_error
 
 
-def test_fails_with_number_message():
-    app = Sanic('fail_url_build')
+def test_fails_with_number_message(app):
 
     @app.route(COMPLEX_PARAM_URL)
     def fail(request):
@@ -185,8 +175,7 @@ def test_fails_with_number_message():
     assert str(e.value) == expected_error
 
 
-def test_adds_other_supplied_values_as_query_string():
-    app = Sanic('passes')
+def test_adds_other_supplied_values_as_query_string(app):
 
     @app.route(COMPLEX_PARAM_URL)
     def passes(request):
@@ -205,8 +194,7 @@ def test_adds_other_supplied_values_as_query_string():
 
 
 @pytest.fixture
-def blueprint_app():
-    app = Sanic('blueprints')
+def blueprint_app(app):
 
     first_print = Blueprint('first', url_prefix='/first')
     second_print = Blueprint('second', url_prefix='/second')
@@ -252,8 +240,7 @@ def test_blueprints_work_with_params(blueprint_app):
 
 
 @pytest.fixture
-def methodview_app():
-    app = Sanic('methodview')
+def methodview_app(app):
 
     class ViewOne(HTTPMethodView):
         def get(self, request):

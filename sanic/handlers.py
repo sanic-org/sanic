@@ -153,12 +153,14 @@ class ContentRangeHandler:
                     'Invalid for Content Range parameters', self)
             else:
                 # this case represents `Content-Range: bytes 5-`
-                self.end = self.total
+                # Range header index starts with 0.
+                self.end = self.total - 1
         else:
             if self.start is None:
                 # this case represents `Content-Range: bytes -5`
-                self.start = self.total - self.end
-                self.end = self.total
+                # Range header index starts with 0.
+                self.start = self.total - self.end - 1
+                self.end = self.total - 1
         if self.start >= self.end:
             raise ContentRangeError(
                 'Invalid for Content Range parameters', self)

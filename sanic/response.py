@@ -316,6 +316,7 @@ async def file_stream(location, status=200, chunk_size=4096, mime_type=None,
     if _range:
         headers['Content-Range'] = 'bytes %s-%s/%s' % (
             _range.start, _range.end, _range.total)
+        status = 206
     return StreamingHTTPResponse(streaming_fn=_streaming_fn,
                                  status=status,
                                  headers=headers,

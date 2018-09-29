@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict, namedtuple
 
 from sanic.constants import HTTP_METHODS
@@ -54,7 +55,10 @@ class Blueprint:
                     yield i
         bps = []
         for bp in chain(blueprints):
+            if bp.url_prefix is None:
+                bp.url_prefix = ''
             bp.url_prefix = url_prefix + bp.url_prefix
+            bp.url_prefix = os.path.normpath(bp.url_prefix)
             bps.append(bp)
         return bps
 

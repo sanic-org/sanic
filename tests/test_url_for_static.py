@@ -211,11 +211,13 @@ def test_static_content_range_correct(app, file_name, static_file_directory):
     assert uri == app.url_for('static', name='static', filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    # Http request with a range header should return status 206.
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
+    # Http range header means content should contain the last byte, while slice doesn't.
     static_content = bytes(get_file_content(
-        static_file_directory, file_name))[12:19]
+        static_file_directory, file_name))[12:19 + 1]
     assert int(response.headers[
                'Content-Length']) == len(static_content)
     assert response.body == static_content
@@ -232,11 +234,13 @@ def test_static_content_range_correct(app, file_name, static_file_directory):
                               filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    # Http request with a range header should return status 206.
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
+    # Http range header means content should contain the last byte, while slice doesn't.
     static_content = bytes(get_file_content(
-        static_file_directory, file_name))[12:19]
+        static_file_directory, file_name))[12:19 + 1]
     assert int(response.headers[
                'Content-Length']) == len(static_content)
     assert response.body == static_content
@@ -262,7 +266,8 @@ def test_static_content_range_front(app, file_name, static_file_directory):
     assert uri == app.url_for('static', name='static', filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    # Http request with a range header should return status 206.
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -283,7 +288,8 @@ def test_static_content_range_front(app, file_name, static_file_directory):
                               filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    # Http request with a range header should return status 206.
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -313,7 +319,8 @@ def test_static_content_range_back(app, file_name, static_file_directory):
     assert uri == app.url_for('static', name='static', filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    # Http request with a range header should return status 206.
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -334,7 +341,8 @@ def test_static_content_range_back(app, file_name, static_file_directory):
                               filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    # Http request with a range header should return status 206.
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(

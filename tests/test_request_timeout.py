@@ -5,24 +5,12 @@ import asyncio
 from sanic.response import text
 from sanic.config import Config
 import aiohttp
-from aiohttp import TCPConnector, ClientResponse
-from sanic.testing import SanicTestClient, HOST, PORT
+from aiohttp import TCPConnector
+from sanic.testing import SanicTestClient, HOST, version
 
-try:
-    try:
-        import packaging # direct use
-    except ImportError:
-        # setuptools v39.0 and above.
-        try:
-            from setuptools.extern import packaging
-        except ImportError:
-            # Before setuptools v39.0
-            from pkg_resources.extern import packaging
-    version = packaging.version
-except ImportError:
-    raise RuntimeError("The 'packaging' library is missing.")
 
 aiohttp_version = version.parse(aiohttp.__version__)
+
 
 class DelayableTCPConnector(TCPConnector):
 

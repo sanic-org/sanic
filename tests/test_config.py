@@ -1,8 +1,18 @@
 from os import environ
+from pathlib import Path
+from contextlib import contextmanager
+from tempfile import TemporaryDirectory
+from textwrap import dedent
 import pytest
-from tempfile import NamedTemporaryFile
 
 from sanic import Sanic
+
+
+@contextmanager
+def temp_path():
+    """ a simple cross platform replacement for NamedTemporaryFile """
+    with TemporaryDirectory() as td:
+        yield Path(td, 'file')
 
 
 def test_load_from_object(app):
@@ -15,17 +25,20 @@ def test_load_from_object(app):
     assert app.config.CONFIG_VALUE == 'should be used'
     assert 'not_for_config' not in app.config
 
+
 def test_auto_load_env():
     environ["SANIC_TEST_ANSWER"] = "42"
     app = Sanic()
     assert app.config.TEST_ANSWER == 42
     del environ["SANIC_TEST_ANSWER"]
 
+
 def test_dont_load_env():
     environ["SANIC_TEST_ANSWER"] = "42"
     app = Sanic(load_env=False)
-    assert getattr(app.config, 'TEST_ANSWER', None) == None
+    assert getattr(app.config, 'TEST_ANSWER', None) is None
     del environ["SANIC_TEST_ANSWER"]
+
 
 def test_load_env_prefix():
     environ["MYAPP_TEST_ANSWER"] = "42"
@@ -33,17 +46,17 @@ def test_load_env_prefix():
     assert app.config.TEST_ANSWER == 42
     del environ["MYAPP_TEST_ANSWER"]
 
+
 def test_load_from_file(app):
-    config = b"""
-VALUE = 'some value'
-condition = 1 == 1
-if condition:
-    CONDITIONAL = 'should be set'
-    """
-    with NamedTemporaryFile() as config_file:
-        config_file.write(config)
-        config_file.seek(0)
-        app.config.from_pyfile(config_file.name)
+    config = dedent("""
+    VALUE = 'some value'
+    condition = 1 == 1
+    if condition:
+        CONDITIONAL = 'should be set'
+    """)
+    with temp_path() as config_path:
+        config_path.write_text(config)
+        app.config.from_pyfile(str(config_path))
         assert 'VALUE' in app.config
         assert app.config.VALUE == 'some value'
         assert 'CONDITIONAL' in app.config
@@ -57,11 +70,10 @@ def test_load_from_missing_file(app):
 
 
 def test_load_from_envvar(app):
-    config = b"VALUE = 'some value'"
-    with NamedTemporaryFile() as config_file:
-        config_file.write(config)
-        config_file.seek(0)
-        environ['APP_CONFIG'] = config_file.name
+    config = "VALUE = 'some value'"
+    with temp_path() as config_path:
+        config_path.write_text(config)
+        environ['APP_CONFIG'] = str(config_path)
         app.config.from_envvar('APP_CONFIG')
         assert 'VALUE' in app.config
         assert app.config.VALUE == 'some value'

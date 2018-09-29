@@ -4,16 +4,27 @@ import shlex
 import subprocess
 import urllib.request
 from unittest import mock
-from sanic.worker import GunicornWorker
-from sanic.app import Sanic
 import asyncio
-import logging
 import pytest
+from sanic.app import Sanic
+try:
+    from sanic.worker import GunicornWorker
+except ImportError:
+    pytestmark = pytest.mark.skip(
+        reason="GunicornWorker Not supported on this platform"
+    )
+    # this has to be defined or pytest will err on import
+    GunicornWorker = object
 
 
 @pytest.fixture(scope='module')
 def gunicorn_worker():
-    command = 'gunicorn --bind 127.0.0.1:1337 --worker-class sanic.worker.GunicornWorker examples.simple_server:app'
+    command = (
+        'gunicorn '
+        '--bind 127.0.0.1:1337 '
+        '--worker-class sanic.worker.GunicornWorker '
+        'examples.simple_server:app'
+    )
     worker = subprocess.Popen(shlex.split(command))
     time.sleep(3)
     yield

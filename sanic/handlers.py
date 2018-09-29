@@ -1,5 +1,5 @@
 import sys
-from traceback import format_exc, extract_tb
+from traceback import extract_tb
 
 from sanic.exceptions import (
     ContentRangeError,
@@ -83,16 +83,16 @@ class ErrorHandler:
             if response is None:
                 response = self.default(request, exception)
         except Exception:
-            self.log(format_exc())
-            if self.debug:
-                url = getattr(request, 'url', 'unknown')
-                response_message = ('Exception raised in exception handler '
-                                    '"%s" for uri: "%s"\n%s')
-                logger.error(response_message,
-                             handler.__name__, url, format_exc())
+            try:
+                url = repr(request.url)
+            except AttributeError:
+                url = "unknown"
+            response_message = ('Exception raised in exception handler '
+                                '"%s" for uri: %s')
+            logger.exception(response_message, handler.__name__, url)
 
-                return text(response_message % (
-                    handler.__name__, url, format_exc()), 500)
+            if self.debug:
+                return text(response_message % (handler.__name__, url), 500)
             else:
                 return text('An error occurred while handling an error', 500)
         return response
@@ -105,7 +105,14 @@ class ErrorHandler:
         getattr(logger, level)(message)
 
     def default(self, request, exception):
-        self.log(format_exc())
+        try:
+            url = repr(request.url)
+        except AttributeError:
+            url = "unknown"
+
+        response_message = ('Exception occurred while handling uri: %s')
+        logger.exception(response_message, url)
+
         if issubclass(type(exception), SanicException):
             return text(
                 'Error: {}'.format(exception),
@@ -115,9 +122,6 @@ class ErrorHandler:
         elif self.debug:
             html_output = self._render_traceback_html(exception, request)
 
-            response_message = ('Exception occurred while handling uri: '
-                                '"%s"\n%s')
-            logger.error(response_message, request.url, format_exc())
             return html(html_output, status=500)
         else:
             return html(INTERNAL_SERVER_ERROR_HTML, status=500)

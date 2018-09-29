@@ -41,4 +41,4 @@ if __name__ == "__main__":
                      "  Example Module: project.sanic_server.app"
                      .format(e.name))
     except ValueError as e:
-        logger.error("{}".format(e))
+        logger.exception("Failed to run app")

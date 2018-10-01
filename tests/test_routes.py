@@ -173,32 +173,33 @@ def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
 
     # before fix, this raises a RouteExists error
     @app.get('/get', host=[site1, 'site2.com'], strict_slashes=False)
-    def handler(request):
+    def get_handler(request):
         return text('OK')
 
     request, response = app.test_client.get('http://' + site1 + '/get')
     assert response.text == 'OK'
 
-    @app.post('/post', host=[site1, 'site2.com'], strict_slashes=False)  # noqa
-    def handler(request):
+    @app.post('/post', host=[site1, 'site2.com'], strict_slashes=False)
+    def post_handler(request):
         return text('OK')
 
     request, response = app.test_client.post('http://' + site1 + '/post')
     assert response.text == 'OK'
 
-    @app.put('/put', host=[site1, 'site2.com'], strict_slashes=False)  # noqa
-    def handler(request):
+    @app.put('/put', host=[site1, 'site2.com'], strict_slashes=False)
+    def put_handler(request):
         return text('OK')
 
     request, response = app.test_client.put('http://' + site1 + '/put')
     assert response.text == 'OK'
 
-    @app.delete('/delete', host=[site1, 'site2.com'], strict_slashes=False)  # noqa
-    def handler(request):
+    @app.delete('/delete', host=[site1, 'site2.com'], strict_slashes=False)
+    def delete_handler(request):
         return text('OK')
 
     request, response = app.test_client.delete('http://' + site1 + '/delete')
     assert response.text == 'OK'
+
 
 def test_shorthand_routes_post(app):
 

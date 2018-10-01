@@ -147,18 +147,23 @@ if base is not None:
                     self.notify()
 
                     req_count = sum(
-                        self.servers[srv]["requests_count"] for srv in self.servers
+                        srv['requests_count'] for srv in self.servers.values()
                     )
                     if self.max_requests and req_count > self.max_requests:
                         self.alive = False
-                        self.log.info("Max requests exceeded, shutting down: %s",
-                                      self)
+                        self.log.info(
+                            "Max requests exceeded, shutting down: %s",
+                            self
+                        )
                     elif pid == os.getpid() and self.ppid != os.getppid():
                         self.alive = False
-                        self.log.info("Parent changed, shutting down: %s", self)
+                        self.log.info(
+                            "Parent changed, shutting down: %s",
+                            self
+                        )
                     else:
                         await asyncio.sleep(1.0, loop=self.loop)
-            except (Exception, BaseException, GeneratorExit, KeyboardInterrupt):
+            except (BaseException, GeneratorExit, KeyboardInterrupt):
                 pass
 
         @staticmethod

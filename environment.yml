@@ -12,7 +12,7 @@ dependencies:
 - zlib=1.2.8=0
 - pip:
   - uvloop>=0.5.3
-  - httptools>=0.0.9
+  - httptools>=0.0.10
   - ujson>=1.35
   - aiofiles>=0.3.0
   - websockets>=3.2

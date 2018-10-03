@@ -1,5 +1,5 @@
 aiofiles
-httptools
+httptools>=0.0.10
 ujson; sys_platform != "win32" and implementation_name == "cpython"
 uvloop; sys_platform != "win32" and implementation_name == "cpython"
 websockets>=5.0,<6.0

@@ -150,10 +150,7 @@ class HttpProtocol(asyncio.Protocol):
                 self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            try:
-                raise RequestTimeout('Request Timeout')
-            except RequestTimeout as exception:
-                self.write_error(exception)
+            self.write_error(RequestTimeout('Request Timeout'))
 
     def response_timeout_callback(self):
         # Check if elapsed time since response was initiated exceeds our
@@ -170,10 +167,7 @@ class HttpProtocol(asyncio.Protocol):
                 self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            try:
-                raise ServiceUnavailable('Response Timeout')
-            except ServiceUnavailable as exception:
-                self.write_error(exception)
+            self.write_error(ServiceUnavailable('Response Timeout'))
 
     def keep_alive_timeout_callback(self):
         # Check if elapsed time since last response exceeds our configured
@@ -199,8 +193,7 @@ class HttpProtocol(asyncio.Protocol):
         # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
-            exception = PayloadTooLarge('Payload Too Large')
-            self.write_error(exception)
+            self.write_error(PayloadTooLarge('Payload Too Large'))
 
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
@@ -218,8 +211,7 @@ class HttpProtocol(asyncio.Protocol):
             message = 'Bad Request'
             if self._debug:
                 message += '\n' + traceback.format_exc()
-            exception = InvalidUsage(message)
-            self.write_error(exception)
+            self.write_error(InvalidUsage(message))
 
     def on_url(self, url):
         if not self.url:
@@ -233,8 +225,7 @@ class HttpProtocol(asyncio.Protocol):
         if value is not None:
             if self._header_fragment == b'Content-Length' \
                     and int(value) > self.request_max_size:
-                exception = PayloadTooLarge('Payload Too Large')
-                self.write_error(exception)
+                self.write_error(PayloadTooLarge('Payload Too Large'))
             try:
                 value = value.decode()
             except UnicodeDecodeError:
@@ -433,7 +424,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.log_response(response)
             try:
                 self.transport.close()
-            except AttributeError as e:
+            except AttributeError:
                 logger.debug('Connection lost before server could close it.')
 
     def bail_out(self, message, from_error=False):
@@ -443,8 +434,7 @@ class HttpProtocol(asyncio.Protocol):
                          self.transport.get_extra_info('peername'))
             logger.debug('Exception:', exc_info=True)
         else:
-            exception = ServerError(message)
-            self.write_error(exception)
+            self.write_error(ServerError(message))
             logger.error(message)
 
     def cleanup(self):

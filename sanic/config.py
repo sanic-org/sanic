@@ -39,6 +39,7 @@ class Config(dict):
         self.WEBSOCKET_READ_LIMIT = 2 ** 16
         self.WEBSOCKET_WRITE_LIMIT = 2 ** 16
         self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
+        self.ACCESS_LOG = True
 
         if load_env:
             prefix = SANIC_PREFIX if load_env is True else load_env

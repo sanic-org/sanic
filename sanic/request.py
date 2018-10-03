@@ -48,10 +48,11 @@ class Request(dict):
         'app', 'headers', 'version', 'method', '_cookies', 'transport',
         'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
         '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr',
-        '_socket', '_port', '__weakref__'
+        '_socket', '_port', '__weakref__', 'raw_url'
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
+        self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
         self.app = None
@@ -77,6 +78,11 @@ class Request(dict):
         return '<{0}: {1} {2}>'.format(self.__class__.__name__,
                                        self.method,
                                        self.path)
+
+    def __bool__(self):
+        if self.transport:
+            return True
+        return False
 
     @property
     def json(self):

@@ -10,8 +10,7 @@ import pytest
     ("put", "text", "OK2 test"),
     ("delete", "status", 405),
 ])
-def test_overload_dynamic_routes(method, attr, expected):
-    app = Sanic('test_dynamic_route')
+def test_overload_dynamic_routes(app, method, attr, expected):
 
     @app.route('/overload/<param>', methods=['GET'])
     async def handler1(request, param):
@@ -25,8 +24,7 @@ def test_overload_dynamic_routes(method, attr, expected):
     assert getattr(response, attr) == expected
 
 
-def test_overload_dynamic_routes_exist():
-    app = Sanic('test_dynamic_route')
+def test_overload_dynamic_routes_exist(app):
 
     @app.route('/overload/<param>', methods=['GET'])
     async def handler1(request, param):

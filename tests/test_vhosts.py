@@ -1,9 +1,7 @@
-from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import text
 
 
-def test_vhosts():
-    app = Sanic('test_vhosts')
+def test_vhosts(app):
 
     @app.route('/', host="example.com")
     async def handler(request):
@@ -22,8 +20,7 @@ def test_vhosts():
     assert response.text == "You're at subdomain.example.com!"
 
 
-def test_vhosts_with_list():
-    app = Sanic('test_vhosts')
+def test_vhosts_with_list(app):
 
     @app.route('/', host=["hello.com", "world.com"])
     async def handler(request):
@@ -37,8 +34,8 @@ def test_vhosts_with_list():
     request, response = app.test_client.get('/', headers=headers)
     assert response.text == "Hello, world!"
 
-def test_vhosts_with_defaults():
-    app = Sanic('test_vhosts')
+
+def test_vhosts_with_defaults(app):
 
     @app.route('/', host="hello.com")
     async def handler(request):

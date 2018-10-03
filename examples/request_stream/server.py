@@ -30,7 +30,7 @@ async def handler(request):
             if body is None:
                 break
             body = body.decode('utf-8').replace('1', 'A')
-            response.write(body)
+            await response.write(body)
     return stream(streaming)
 
 

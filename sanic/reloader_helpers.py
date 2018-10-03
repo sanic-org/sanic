@@ -55,9 +55,9 @@ def restart_with_reloader():
 
 
 def kill_process_children_unix(pid):
-    """Find and kill child process of a process (maximum two level).
+    """Find and kill child processes of a process (maximum two level).
 
-    :param pid: PID of process (process ID)
+    :param pid: PID of parent process (process ID)
     :return: Nothing
     """
     root_process_path = "/proc/{pid}/task/{pid}/children".format(pid=pid)
@@ -74,7 +74,37 @@ def kill_process_children_unix(pid):
         with open(children_proc_path) as children_list_file_2:
             children_list_pid_2 = children_list_file_2.read().split()
         for _pid in children_list_pid_2:
-            os.kill(int(_pid), signal.SIGTERM)
+            try:
+                os.kill(int(_pid), signal.SIGTERM)
+            except ProcessLookupError:
+                continue
+        try:
+            os.kill(int(child_pid), signal.SIGTERM)
+        except ProcessLookupError:
+            continue
+
+
+def kill_process_children_osx(pid):
+    """Find and kill child processes of a process.
+
+    :param pid: PID of parent process (process ID)
+    :return: Nothing
+    """
+    subprocess.run(['pkill', '-P', str(pid)])
+
+
+def kill_process_children(pid):
+    """Find and kill child processes of a process.
+
+    :param pid: PID of parent process (process ID)
+    :return: Nothing
+    """
+    if sys.platform == 'darwin':
+        kill_process_children_osx(pid)
+    elif sys.platform == 'linux':
+        kill_process_children_unix(pid)
+    else:
+        pass                    # should signal error here
 
 
 def kill_program_completly(proc):
@@ -83,7 +113,7 @@ def kill_program_completly(proc):
     :param proc: worker process (process ID)
     :return: Nothing
     """
-    kill_process_children_unix(proc.pid)
+    kill_process_children(proc.pid)
     proc.terminate()
     os._exit(0)
 
@@ -112,9 +142,9 @@ def watchdog(sleep_interval):
                 mtimes[filename] = mtime
                 continue
             elif mtime > old_time:
-                kill_process_children_unix(worker_process.pid)
+                kill_process_children(worker_process.pid)
+                worker_process.terminate()
                 worker_process = restart_with_reloader()
-
                 mtimes[filename] = mtime
                 break
 

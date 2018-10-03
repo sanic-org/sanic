@@ -1,14 +1,12 @@
-from json import loads as json_loads, dumps as json_dumps
-from sanic import Sanic
-from sanic.response import json, text
+from json import dumps as json_dumps
+from sanic.response import text
 
 
 # ------------------------------------------------------------ #
 #  UTF-8
 # ------------------------------------------------------------ #
 
-def test_utf8_query_string():
-    app = Sanic('test_utf8_query_string')
+def test_utf8_query_string(app):
 
     @app.route('/')
     async def handler(request):
@@ -18,8 +16,7 @@ def test_utf8_query_string():
     assert request.args.get('utf8') == '✓'
 
 
-def test_utf8_response():
-    app = Sanic('test_utf8_response')
+def test_utf8_response(app):
 
     @app.route('/')
     async def handler(request):
@@ -29,8 +26,7 @@ def test_utf8_response():
     assert response.text == '✓'
 
 
-def skip_test_utf8_route():
-    app = Sanic('skip_test_utf8_route')
+def skip_test_utf8_route(app):
 
     @app.route('/')
     async def handler(request):
@@ -41,8 +37,7 @@ def skip_test_utf8_route():
     assert response.text == 'OK'
 
 
-def test_utf8_post_json():
-    app = Sanic('test_utf8_post_json')
+def test_utf8_post_json(app):
 
     @app.route('/')
     async def handler(request):

@@ -5,7 +5,6 @@ import ssl
 
 import pytest
 
-from sanic import Sanic
 from sanic.exceptions import ServerError
 from sanic.response import json, text
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
@@ -16,8 +15,7 @@ from sanic.testing import HOST, PORT
 #  GET
 # ------------------------------------------------------------ #
 
-def test_sync():
-    app = Sanic('test_text')
+def test_sync(app):
 
     @app.route('/')
     def handler(request):
@@ -27,8 +25,8 @@ def test_sync():
 
     assert response.text == 'Hello'
 
-def test_remote_address():
-    app = Sanic('test_text')
+
+def test_remote_address(app):
 
     @app.route('/')
     def handler(request):
@@ -38,8 +36,8 @@ def test_remote_address():
 
     assert response.text == '127.0.0.1'
 
-def test_text():
-    app = Sanic('test_text')
+
+def test_text(app):
 
     @app.route('/')
     async def handler(request):
@@ -50,8 +48,7 @@ def test_text():
     assert response.text == 'Hello'
 
 
-def test_headers():
-    app = Sanic('test_text')
+def test_headers(app):
 
     @app.route('/')
     async def handler(request):
@@ -63,8 +60,7 @@ def test_headers():
     assert response.headers.get('spam') == 'great'
 
 
-def test_non_str_headers():
-    app = Sanic('test_text')
+def test_non_str_headers(app):
 
     @app.route('/')
     async def handler(request):
@@ -75,8 +71,8 @@ def test_non_str_headers():
 
     assert response.headers.get('answer') == '42'
 
-def test_invalid_response():
-    app = Sanic('test_invalid_response')
+
+def test_invalid_response(app):
 
     @app.exception(ServerError)
     def handler_exception(request, exception):
@@ -91,8 +87,7 @@ def test_invalid_response():
     assert response.text == "Internal Server Error."
 
 
-def test_json():
-    app = Sanic('test_json')
+def test_json(app):
 
     @app.route('/')
     async def handler(request):
@@ -105,8 +100,7 @@ def test_json():
     assert results.get('test') == True
 
 
-def test_empty_json():
-    app = Sanic('test_json')
+def test_empty_json(app):
 
     @app.route('/')
     async def handler(request):
@@ -118,8 +112,7 @@ def test_empty_json():
     assert response.text == 'null'
 
 
-def test_invalid_json():
-    app = Sanic('test_json')
+def test_invalid_json(app):
 
     @app.route('/')
     async def handler(request):
@@ -131,8 +124,7 @@ def test_invalid_json():
     assert response.status == 400
 
 
-def test_query_string():
-    app = Sanic('test_query_string')
+def test_query_string(app):
 
     @app.route('/')
     async def handler(request):
@@ -145,8 +137,7 @@ def test_query_string():
     assert request.args.get('test2') == 'false'
 
 
-def test_uri_template():
-    app = Sanic('test_uri_template')
+def test_uri_template(app):
 
     @app.route('/foo/<id:int>/bar/<name:[A-z]+>')
     async def handler(request):
@@ -156,8 +147,7 @@ def test_uri_template():
     assert request.uri_template == '/foo/<id:int>/bar/<name:[A-z]+>'
 
 
-def test_token():
-    app = Sanic('test_post_token')
+def test_token(app):
 
     @app.route('/')
     async def handler(request):
@@ -204,8 +194,7 @@ def test_token():
     assert request.token is None
 
 
-def test_content_type():
-    app = Sanic('test_content_type')
+def test_content_type(app):
 
     @app.route('/')
     async def handler(request):
@@ -223,8 +212,7 @@ def test_content_type():
     assert response.text == 'application/json'
 
 
-def test_remote_addr():
-    app = Sanic('test_content_type')
+def test_remote_addr(app):
 
     @app.route('/')
     async def handler(request):
@@ -249,8 +237,7 @@ def test_remote_addr():
     assert response.text == '127.0.0.1'
 
 
-def test_match_info():
-    app = Sanic('test_match_info')
+def test_match_info(app):
 
     @app.route('/api/v1/user/<user_id>/')
     async def handler(request, user_id):
@@ -266,8 +253,7 @@ def test_match_info():
 #  POST
 # ------------------------------------------------------------ #
 
-def test_post_json():
-    app = Sanic('test_post_json')
+def test_post_json(app):
 
     @app.route('/', methods=['POST'])
     async def handler(request):
@@ -283,8 +269,7 @@ def test_post_json():
     assert response.text == 'OK'
 
 
-def test_post_form_urlencoded():
-    app = Sanic('test_post_form_urlencoded')
+def test_post_form_urlencoded(app):
 
     @app.route('/', methods=['POST'])
     async def handler(request):
@@ -311,8 +296,7 @@ def test_post_form_urlencoded():
         'OK\r\n' \
         '------sanic--\r\n',
     ])
-def test_post_form_multipart_form_data(payload):
-    app = Sanic('test_post_form_multipart_form_data')
+def test_post_form_multipart_form_data(app, payload):
 
     @app.route('/', methods=['POST'])
     async def handler(request):
@@ -331,8 +315,7 @@ def test_post_form_multipart_form_data(payload):
         ('/bar/baz', '', 'http://{}:{}/bar/baz'),
         ('/moo/boo', 'arg1=val1', 'http://{}:{}/moo/boo?arg1=val1')
     ])
-def test_url_attributes_no_ssl(path, query, expected_url):
-    app = Sanic('test_url_attrs_no_ssl')
+def test_url_attributes_no_ssl(app, path, query, expected_url):
 
     async def handler(request):
         return text('OK')
@@ -356,9 +339,7 @@ def test_url_attributes_no_ssl(path, query, expected_url):
         ('/bar/baz', '', 'https://{}:{}/bar/baz'),
         ('/moo/boo', 'arg1=val1', 'https://{}:{}/moo/boo?arg1=val1')
     ])
-def test_url_attributes_with_ssl(path, query, expected_url):
-    app = Sanic('test_url_attrs_with_ssl')
-
+def test_url_attributes_with_ssl(app, path, query, expected_url):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     context.load_cert_chain(

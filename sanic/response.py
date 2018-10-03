@@ -236,7 +236,7 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(location, status=200, mime_type=None, headers=None,
+async def file(location, status=None, mime_type=None, headers=None,
                filename=None, _range=None):
     """Return a response object with file data.
 
@@ -263,13 +263,13 @@ async def file(location, status=200, mime_type=None, headers=None,
             out_stream = await _file.read()
 
     mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
-    return HTTPResponse(status=206 if _range else status,
+    return HTTPResponse(status=status if status else (206 if _range else 200),
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
 
 
-async def file_stream(location, status=200, chunk_size=4096, mime_type=None,
+async def file_stream(location, status=None, chunk_size=4096, mime_type=None,
                       headers=None, filename=None, _range=None):
     """Return a streaming response object with file data.
 
@@ -317,7 +317,7 @@ async def file_stream(location, status=200, chunk_size=4096, mime_type=None,
         headers['Content-Range'] = 'bytes %s-%s/%s' % (
             _range.start, _range.end, _range.total)
     return StreamingHTTPResponse(streaming_fn=_streaming_fn,
-                                 status=206 if _range else status,
+                                 status=status if status else (206 if _range else 200),
                                  headers=headers,
                                  content_type=mime_type)
 

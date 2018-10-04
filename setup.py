@@ -60,7 +60,7 @@ requirements = [
     uvloop,
     ujson,
     'aiofiles>=0.3.0',
-    'websockets>=5.0,<6.0',
+    'websockets>=6.0,<7.0',
     'multidict>=4.0,<5.0',
 ]
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):

@@ -79,7 +79,7 @@ class ErrorHandler:
         response = None
         try:
             if handler:
-                response = handler(req, exception)
+                response = handler(request, exception)
             if response is None:
                 response = self.default(request, exception)
         except Exception:

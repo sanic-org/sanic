@@ -1,5 +1,5 @@
 import sys
-from traceback import extract_tb
+from traceback import extract_tb, format_exc
 
 from sanic.exceptions import (
     ContentRangeError,

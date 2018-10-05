@@ -79,10 +79,11 @@ class ErrorHandler:
         response = None
         try:
             if handler:
-                response = handler(request, exception)
+                response = handler(req, exception)
             if response is None:
                 response = self.default(request, exception)
         except Exception:
+            self.log(format_exc())
             try:
                 url = repr(request.url)
             except AttributeError:
@@ -99,12 +100,11 @@ class ErrorHandler:
 
     def log(self, message, level='error'):
         """
-        Override this method in an ErrorHandler subclass to prevent
-        logging exceptions.
+        Deprecated, do not use.
         """
-        getattr(logger, level)(message)
 
     def default(self, request, exception):
+        self.log(format_exc())
         try:
             url = repr(request.url)
         except AttributeError:

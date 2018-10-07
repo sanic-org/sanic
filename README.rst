@@ -47,8 +47,8 @@ Documentation
 
 .. |Join the chat at https://gitter.im/sanic-python/Lobby| image:: https://badges.gitter.im/sanic-python/Lobby.svg
    :target: https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-.. |Codecov| image:: https://codecov.io/gh/yunstanford/sanic/branch/integrate-with-codecov/graph/badge.svg
-    :target: https://codecov.io/gh/yunstanford/sanic
+.. |Codecov| image:: https://codecov.io/gh/huge-success/sanic/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/huge-success/sanic
 .. |Build Status| image:: https://travis-ci.org/huge-success/sanic.svg?branch=master
    :target: https://travis-ci.org/huge-success/sanic
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest

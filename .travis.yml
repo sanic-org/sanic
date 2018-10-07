@@ -25,8 +25,12 @@ matrix:
       python: 3.6
     - env: TOX_ENV=check
       python: 3.6
-install: pip install -U tox
+install:
+  - pip install -U tox
+  - pip install codecov
 script: travis_retry tox -e $TOX_ENV
+after_success:
+  - codecov
 deploy:
   provider: pypi
   user: channelcat

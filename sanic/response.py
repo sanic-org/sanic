@@ -1,5 +1,6 @@
 from mimetypes import guess_type
 from os import path
+from urllib.parse import quote_plus
 
 try:
     from ujson import dumps as json_dumps
@@ -7,6 +8,7 @@ except BaseException:
     from json import dumps as json_dumps
 
 from aiofiles import open as open_async
+from multidict import CIMultiDict
 
 from sanic import http
 from sanic.cookies import CookieJar
@@ -44,7 +46,7 @@ class BaseHTTPResponse:
 
 class StreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
-        'transport', 'streaming_fn', 'status',
+        'protocol', 'streaming_fn', 'status',
         'content_type', 'headers', '_cookies'
     )
 
@@ -53,10 +55,10 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
-        self.headers = headers or {}
+        self.headers = CIMultiDict(headers or {})
         self._cookies = None
 
-    def write(self, data):
+    async def write(self, data):
         """Writes a chunk of data to the streaming response.
 
         :param data: bytes-ish data to be written.
@@ -64,8 +66,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         if type(data) != bytes:
             data = self._encode_body(data)
 
-        self.transport.write(
+        self.protocol.push_data(
             b"%x\r\n%b\r\n" % (len(data), data))
+        await self.protocol.drain()
 
     async def stream(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
@@ -75,10 +78,12 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         headers = self.get_headers(
             version, keep_alive=keep_alive,
             keep_alive_timeout=keep_alive_timeout)
-        self.transport.write(headers)
-
+        self.protocol.push_data(headers)
+        await self.protocol.drain()
         await self.streaming_fn(self)
-        self.transport.write(b'0\r\n\r\n')
+        self.protocol.push_data(b'0\r\n\r\n')
+        # no need to await drain here after this write, because it is the
+        # very last thing we write and nothing needs to wait for it.
 
     def get_headers(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
@@ -124,7 +129,7 @@ class HTTPResponse(BaseHTTPResponse):
             self.body = body_bytes
 
         self.status = status
-        self.headers = headers or {}
+        self.headers = CIMultiDict(headers or {})
         self._cookies = None
 
     def output(
@@ -231,8 +236,8 @@ def html(body, status=200, headers=None):
                         content_type="text/html; charset=utf-8")
 
 
-async def file(
-        location, mime_type=None, headers=None, filename=None, _range=None):
+async def file(location, status=200, mime_type=None, headers=None,
+               filename=None, _range=None):
     """Return a response object with file data.
 
     :param location: Location of file on system.
@@ -258,15 +263,14 @@ async def file(
             out_stream = await _file.read()
 
     mime_type = mime_type or guess_type(filename)[0] or 'text/plain'
-    return HTTPResponse(status=200,
+    return HTTPResponse(status=status,
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
 
 
-async def file_stream(
-        location, chunk_size=4096, mime_type=None, headers=None,
-        filename=None, _range=None):
+async def file_stream(location, status=200, chunk_size=4096, mime_type=None,
+                      headers=None, filename=None, _range=None):
     """Return a streaming response object with file data.
 
     :param location: Location of file on system.
@@ -297,13 +301,13 @@ async def file_stream(
                     if len(content) < 1:
                         break
                     to_send -= len(content)
-                    response.write(content)
+                    await response.write(content)
             else:
                 while True:
                     content = await _file.read(chunk_size)
                     if len(content) < 1:
                         break
-                    response.write(content)
+                    await response.write(content)
         finally:
             await _file.close()
         return  # Returning from this fn closes the stream
@@ -313,7 +317,7 @@ async def file_stream(
         headers['Content-Range'] = 'bytes %s-%s/%s' % (
             _range.start, _range.end, _range.total)
     return StreamingHTTPResponse(streaming_fn=_streaming_fn,
-                                 status=200,
+                                 status=status,
                                  headers=headers,
                                  content_type=mime_type)
 
@@ -359,8 +363,11 @@ def redirect(to, headers=None, status=302,
     """
     headers = headers or {}
 
+    # URL Quote the URL before redirecting
+    safe_to = quote_plus(to, safe=":/#?&=@[]!$&'()*+,;")
+
     # According to RFC 7231, a relative URI is now permitted.
-    headers['Location'] = to
+    headers['Location'] = safe_to
 
     return HTTPResponse(
         status=status,

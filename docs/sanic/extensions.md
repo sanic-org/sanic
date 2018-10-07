@@ -31,3 +31,4 @@ A list of Sanic extensions created by the community.
 - [Sanic-Auth](https://github.com/pyx/sanic-auth): A minimal backend agnostic session-based user authentication mechanism for Sanic.
 - [Sanic-CookieSession](https://github.com/pyx/sanic-cookiesession): A client-side only, cookie-based session, similar to the built-in session in Flask.
 - [Sanic-WTF](https://github.com/pyx/sanic-wtf): Sanic-WTF makes using WTForms with Sanic and CSRF (Cross-Site Request Forgery) protection a little bit easier.
+- [sanic-sse](https://github.com/inn0kenty/sanic_sse): [Server-Sent Events](https://en.wikipedia.org/wiki/Server-sent_events) implementation for Sanic.

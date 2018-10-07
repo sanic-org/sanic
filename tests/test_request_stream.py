@@ -1,5 +1,4 @@
 import asyncio
-from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.views import CompositionView
 from sanic.views import HTTPMethodView
@@ -9,10 +8,8 @@ from sanic.response import stream, text
 data = "abc" * 100000
 
 
-def test_request_stream_method_view():
+def test_request_stream_method_view(app):
     '''for self.is_request_stream = True'''
-
-    app = Sanic('test_request_stream_method_view')
 
     class SimpleView(HTTPMethodView):
 
@@ -44,10 +41,8 @@ def test_request_stream_method_view():
     assert response.text == data
 
 
-def test_request_stream_app():
+def test_request_stream_app(app):
     '''for self.is_request_stream = True and decorators'''
-
-    app = Sanic('test_request_stream_app')
 
     @app.get('/get')
     async def get(request):
@@ -83,7 +78,7 @@ def test_request_stream_app():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @app.put('/_put')
@@ -100,7 +95,7 @@ def test_request_stream_app():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @app.patch('/_patch')
@@ -117,7 +112,7 @@ def test_request_stream_app():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     assert app.is_request_stream is True
@@ -163,10 +158,8 @@ def test_request_stream_app():
     assert response.text == data
 
 
-def test_request_stream_handle_exception():
+def test_request_stream_handle_exception(app):
     '''for handling exceptions properly'''
-
-    app = Sanic('test_request_stream_exception')
 
     @app.post('/post/<id>', stream=True)
     async def post(request, id):
@@ -177,7 +170,7 @@ def test_request_stream_handle_exception():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     # 404
@@ -191,10 +184,8 @@ def test_request_stream_handle_exception():
     assert response.text == 'Error: Method GET not allowed for URL /post/random_id'
 
 
-def test_request_stream_blueprint():
+def test_request_stream_blueprint(app):
     '''for self.is_request_stream = True'''
-
-    app = Sanic('test_request_stream_blueprint')
     bp = Blueprint('test_blueprint_request_stream_blueprint')
 
     @app.get('/get')
@@ -231,7 +222,7 @@ def test_request_stream_blueprint():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @bp.put('/_put')
@@ -248,7 +239,7 @@ def test_request_stream_blueprint():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @bp.patch('/_patch')
@@ -265,7 +256,7 @@ def test_request_stream_blueprint():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     app.blueprint(bp)
@@ -313,10 +304,8 @@ def test_request_stream_blueprint():
     assert response.text == data
 
 
-def test_request_stream_composition_view():
+def test_request_stream_composition_view(app):
     '''for self.is_request_stream = True'''
-
-    app = Sanic('test_request_stream__composition_view')
 
     def get_handler(request):
         assert request.stream is None
@@ -348,11 +337,9 @@ def test_request_stream_composition_view():
     assert response.text == data
 
 
-def test_request_stream():
+def test_request_stream(app):
     '''test for complex application'''
-
     bp = Blueprint('test_blueprint_request_stream')
-    app = Sanic('test_request_stream')
 
     class SimpleView(HTTPMethodView):
 
@@ -380,7 +367,7 @@ def test_request_stream():
                 body = await request.stream.get()
                 if body is None:
                     break
-                response.write(body.decode('utf-8'))
+                await response.write(body.decode('utf-8'))
         return stream(streaming)
 
     @app.get('/get')

@@ -9,8 +9,7 @@ import pytest
 #  GET
 # ------------------------------------------------------------ #
 
-def test_cookies():
-    app = Sanic('test_text')
+def test_cookies(app):
 
     @app.route('/')
     def handler(request):
@@ -25,12 +24,12 @@ def test_cookies():
     assert response.text == 'Cookies are: working!'
     assert response_cookies['right_back'].value == 'at you'
 
+
 @pytest.mark.parametrize("httponly,expected", [
         (False, False),
         (True, True),
 ])
-def test_false_cookies_encoded(httponly, expected):
-    app = Sanic('test_text')
+def test_false_cookies_encoded(app, httponly, expected):
 
     @app.route('/')
     def handler(request):
@@ -48,8 +47,7 @@ def test_false_cookies_encoded(httponly, expected):
         (False, False),
         (True, True),
 ])
-def test_false_cookies(httponly, expected):
-    app = Sanic('test_text')
+def test_false_cookies(app, httponly, expected):
 
     @app.route('/')
     def handler(request):
@@ -64,8 +62,7 @@ def test_false_cookies(httponly, expected):
 
     assert ('HttpOnly' in response_cookies['right_back'].output()) == expected
 
-def test_http2_cookies():
-    app = Sanic('test_http2_cookies')
+def test_http2_cookies(app):
 
     @app.route('/')
     async def handler(request):
@@ -77,8 +74,7 @@ def test_http2_cookies():
 
     assert response.text == 'Cookies are: working!'
 
-def test_cookie_options():
-    app = Sanic('test_text')
+def test_cookie_options(app):
 
     @app.route('/')
     def handler(request):
@@ -95,8 +91,7 @@ def test_cookie_options():
     assert response_cookies['test'].value == 'at you'
     assert response_cookies['test']['httponly'] == True
 
-def test_cookie_deletion():
-    app = Sanic('test_text')
+def test_cookie_deletion(app):
 
     @app.route('/')
     def handler(request):

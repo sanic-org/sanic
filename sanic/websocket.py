@@ -57,17 +57,11 @@ class WebSocketProtocol(HttpProtocol):
 
     async def websocket_handshake(self, request, subprotocols=None):
         # let the websockets package do the handshake with the client
-        headers = []
-
-        def get_header(k):
-            return request.headers.get(k, '')
-
-        def set_header(k, v):
-            headers.append((k, v))
+        headers = {}
 
         try:
-            key = handshake.check_request(get_header)
-            handshake.build_response(set_header, key)
+            key = handshake.check_request(request.headers)
+            handshake.build_response(headers, key)
         except InvalidHandshake:
             raise InvalidUsage('Invalid websocket request')
 
@@ -79,12 +73,12 @@ class WebSocketProtocol(HttpProtocol):
             for p in client_subprotocols:
                 if p in subprotocols:
                     subprotocol = p
-                    set_header('Sec-Websocket-Protocol', subprotocol)
+                    headers['Sec-Websocket-Protocol'] = subprotocol
                     break
 
         # write the 101 response back to the client
         rv = b'HTTP/1.1 101 Switching Protocols\r\n'
-        for k, v in headers:
+        for k, v in headers.items():
             rv += k.encode('utf-8') + b': ' + v.encode('utf-8') + b'\r\n'
         rv += b'\r\n'
         request.transport.write(rv)

@@ -1,7 +1,5 @@
-from sanic import Sanic
-from sanic import Blueprint
-from sanic.response import json
-
+from sanic import Blueprint, Sanic
+from sanic.response import file, json
 
 app = Sanic(__name__)
 blueprint = Blueprint('name', url_prefix='/my_blueprint')
@@ -19,7 +17,12 @@ async def foo2(request):
     return json({'msg': 'hi from blueprint2'})
 
 
-@blueprint3.websocket('/foo')
+@blueprint3.route('/foo')
+async def index(request):
+    return await file('websocket.html')
+
+
+@app.websocket('/feed')
 async def foo3(request, ws):
     while True:
         data = 'hello!'

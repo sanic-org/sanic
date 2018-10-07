@@ -3,8 +3,6 @@ import os
 
 import pytest
 
-from sanic import Sanic
-
 
 @pytest.fixture(scope='module')
 def static_file_directory():
@@ -26,8 +24,7 @@ def get_file_content(static_file_directory, file_name):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
-def test_static_file(static_file_directory, file_name):
-    app = Sanic('test_static')
+def test_static_file(app, static_file_directory, file_name):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name))
 
@@ -36,11 +33,23 @@ def test_static_file(static_file_directory, file_name):
     assert response.body == get_file_content(static_file_directory, file_name)
 
 
+@pytest.mark.parametrize('file_name', ['test.html'])
+def test_static_file_content_type(app, static_file_directory, file_name):
+    app.static(
+        '/testing.file',
+        get_file_path(static_file_directory, file_name),
+        content_type='text/html; charset=utf-8'
+    )
+
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
+
+
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
 @pytest.mark.parametrize('base_uri', ['/static', '', '/dir'])
-def test_static_directory(file_name, base_uri, static_file_directory):
-
-    app = Sanic('test_static')
+def test_static_directory(app, file_name, base_uri, static_file_directory):
     app.static(base_uri, static_file_directory)
 
     request, response = app.test_client.get(
@@ -50,8 +59,7 @@ def test_static_directory(file_name, base_uri, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_head_request(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_head_request(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -66,8 +74,7 @@ def test_static_head_request(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_correct(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_correct(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -87,8 +94,7 @@ def test_static_content_range_correct(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_front(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_front(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -108,8 +114,7 @@ def test_static_content_range_front(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_back(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_back(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -129,8 +134,7 @@ def test_static_content_range_back(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_empty(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_empty(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -146,8 +150,7 @@ def test_static_content_range_empty(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_error(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_error(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -164,8 +167,7 @@ def test_static_content_range_error(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
-def test_static_file_specified_host(static_file_directory, file_name):
-    app = Sanic('test_static')
+def test_static_file_specified_host(app, static_file_directory, file_name):
     app.static(
         '/testing.file',
         get_file_path(static_file_directory, file_name),

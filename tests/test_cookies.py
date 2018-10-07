@@ -108,3 +108,18 @@ def test_cookie_deletion(app):
     assert int(response_cookies['i_want_to_die']['max-age']) == 0
     with pytest.raises(KeyError):
         hold_my_beer = response.cookies['i_never_existed']
+
+
+def test_cookie_parsing():
+    app = Sanic('test_text')
+
+    @app.route('/')
+    def handler(request):
+        test_1 = request.cookies.get('test_1')
+        test_2 = request.cookies.get('test_2')
+        return json({'test_1': test_1, 'test_2': test_2})
+
+    headers = {'cookie': 'test_1=t1; test_2=t 2'}
+    request, response = app.test_client.get('/', headers=headers)
+    assert response.json['test_1'] == 't1'
+    assert response.json['test_2'] == 't 2'

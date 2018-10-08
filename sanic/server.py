@@ -544,6 +544,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                                   quarter of the high-water limit.
     :param is_request_stream: disable/enable Request.stream
     :param router: Router object
+    :param graceful_shutdown_timeout: How long take to Force close non-idle
+                                      connection
     :return: Nothing
     """
     if not run_async:

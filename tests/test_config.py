@@ -89,6 +89,16 @@ def test_overwrite_exisiting_config(app):
     assert app.config.DEFAULT == 2
 
 
+def test_overwrite_exisiting_config_ignore_lowercase(app):
+    app.config.default = 1
+
+    class Config:
+        default = 2
+
+    app.config.from_object(Config)
+    assert app.config.default == 1
+
+
 def test_missing_config(app):
     with pytest.raises(AttributeError) as e:
         app.config.NON_EXISTENT

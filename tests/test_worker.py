@@ -4,17 +4,10 @@ import shlex
 import subprocess
 import urllib.request
 from unittest import mock
+from sanic.worker import GunicornWorker
+from sanic.app import Sanic
 import asyncio
 import pytest
-from sanic.app import Sanic
-try:
-    from sanic.worker import GunicornWorker
-except ImportError:
-    pytestmark = pytest.mark.skip(
-        reason="GunicornWorker Not supported on this platform"
-    )
-    # this has to be defined or pytest will err on import
-    GunicornWorker = object
 
 
 @pytest.fixture(scope='module')
@@ -107,10 +100,11 @@ def test_run_max_requests_exceeded(worker):
     _runner = asyncio.ensure_future(worker._check_alive(), loop=loop)
     loop.run_until_complete(_runner)
 
-    assert worker.alive == False
+    assert not worker.alive
     worker.notify.assert_called_with()
     worker.log.info.assert_called_with("Max requests exceeded, shutting down: %s",
                                        worker)
+
 
 def test_worker_close(worker):
     loop = asyncio.new_event_loop()
@@ -124,8 +118,8 @@ def test_worker_close(worker):
     conn = mock.Mock()
     conn.websocket = mock.Mock()
     conn.websocket.close_connection = mock.Mock(
-            wraps=asyncio.coroutine(lambda *a, **kw: None)
-        )
+        wraps=asyncio.coroutine(lambda *a, **kw: None)
+    )
     worker.connections = set([conn])
     worker.log = mock.Mock()
     worker.loop = loop
@@ -141,6 +135,6 @@ def test_worker_close(worker):
     _close = asyncio.ensure_future(worker.close(), loop=loop)
     loop.run_until_complete(_close)
 
-    assert worker.signal.stopped == True
-    assert conn.websocket.close_connection.called == True
+    assert worker.signal.stopped
+    assert conn.websocket.close_connection.called
     assert len(worker.servers) == 0

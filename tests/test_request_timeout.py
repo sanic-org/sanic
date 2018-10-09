@@ -6,7 +6,23 @@ from sanic.response import text
 from sanic.config import Config
 import aiohttp
 from aiohttp import TCPConnector
-from sanic.testing import SanicTestClient, HOST, version
+from sanic.testing import SanicTestClient, HOST
+
+try:
+    try:
+        # direct use
+        import packaging
+        version = packaging.version
+    except (ImportError, AttributeError):
+        # setuptools v39.0 and above.
+        try:
+            from setuptools.extern import packaging
+        except ImportError:
+            # Before setuptools v39.0
+            from pkg_resources.extern import packaging
+    version = packaging.version
+except ImportError:
+    raise RuntimeError("The 'packaging' library is missing.")
 
 
 aiohttp_version = version.parse(aiohttp.__version__)
@@ -44,8 +60,7 @@ class DelayableTCPConnector(TCPConnector):
                 if aiohttp_version >= version.parse("3.3.0"):
                     ret = await self.orig_start(connection)
                 else:
-                    ret = await self.orig_start(connection,
-                                                read_until_eof)
+                    ret = await self.orig_start(connection, read_until_eof)
             except Exception as e:
                 raise e
             return ret
@@ -59,57 +74,43 @@ class DelayableTCPConnector(TCPConnector):
         async def delayed_send(self, *args, **kwargs):
             req = self.req
             if self.delay and self.delay > 0:
-                #sync_sleep(self.delay)
+                # sync_sleep(self.delay)
                 await asyncio.sleep(self.delay)
             t = req.loop.time()
             print("sending at {}".format(t), flush=True)
             conn = next(iter(args))  # first arg is connection
 
-            if aiohttp_version >= version.parse("3.1.0"):
-                try:
-                    delayed_resp = await self.orig_send(*args, **kwargs)
-                except Exception as e:
-                    if aiohttp_version >= version.parse("3.3.0"):
-                        return aiohttp.ClientResponse(req.method, req.url,
-                                                      writer=None,
-                                                      continue100=None,
-                                                      timer=None,
-                                                      request_info=None,
-                                                      traces=[],
-                                                      loop=req.loop,
-                                                      session=None)
-                    else:
-                        return aiohttp.ClientResponse(req.method, req.url,
-                                                      writer=None,
-                                                      continue100=None,
-                                                      timer=None,
-                                                      request_info=None,
-                                                      auto_decompress=None,
-                                                      traces=[],
-                                                      loop=req.loop,
-                                                      session=None)
-            else:
-                try:
-                    delayed_resp = self.orig_send(*args, **kwargs)
-                except Exception as e:
+            try:
+                return await self.orig_send(*args, **kwargs)
+            except Exception as e:
+                if aiohttp_version < version.parse("3.1.0"):
                     return aiohttp.ClientResponse(req.method, req.url)
-            return delayed_resp
+                kw = dict(
+                    writer=None,
+                    continue100=None,
+                    timer=None,
+                    request_info=None,
+                    traces=[],
+                    loop=req.loop,
+                    session=None
+                )
+                if aiohttp_version < version.parse("3.3.0"):
+                    kw['auto_decompress'] = None
+                return aiohttp.ClientResponse(req.method, req.url, **kw)
+
+        def _send(self, *args, **kwargs):
+            gen = self.delayed_send(*args, **kwargs)
+            task = self.req.loop.create_task(gen)
+            self.send_task = task
+            self._acting_as = task
+            return self
 
         if aiohttp_version >= version.parse("3.1.0"):
             # aiohttp changed the request.send method to async
             async def send(self, *args, **kwargs):
-                gen = self.delayed_send(*args, **kwargs)
-                task = self.req.loop.create_task(gen)
-                self.send_task = task
-                self._acting_as = task
-                return self
+                return self._send(*args, **kwargs)
         else:
-            def send(self, *args, **kwargs):
-                gen = self.delayed_send(*args, **kwargs)
-                task = self.req.loop.create_task(gen)
-                self.send_task = task
-                self._acting_as = task
-                return self
+            send = _send
 
     def __init__(self, *args, **kwargs):
         _post_connect_delay = kwargs.pop('post_connect_delay', 0)
@@ -118,45 +119,18 @@ class DelayableTCPConnector(TCPConnector):
         self._post_connect_delay = _post_connect_delay
         self._pre_request_delay = _pre_request_delay
 
-    if aiohttp_version >= version.parse("3.3.0"):
-        async def connect(self, req, traces, timeout):
-            d_req = DelayableTCPConnector.\
-                RequestContextManager(req, self._pre_request_delay)
-            conn = await super(DelayableTCPConnector, self).\
-                connect(req, traces, timeout)
-            if self._post_connect_delay and self._post_connect_delay > 0:
-                await asyncio.sleep(self._post_connect_delay,
-                                    loop=self._loop)
-            req.send = d_req.send
-            t = req.loop.time()
-            print("Connected at {}".format(t), flush=True)
-            return conn
-    elif aiohttp_version >= version.parse("3.0.0"):
-        async def connect(self, req, traces=None):
-            d_req = DelayableTCPConnector.\
-                RequestContextManager(req, self._pre_request_delay)
-            conn = await super(DelayableTCPConnector, self).\
-                connect(req, traces=traces)
-            if self._post_connect_delay and self._post_connect_delay > 0:
-                await asyncio.sleep(self._post_connect_delay,
-                                    loop=self._loop)
-            req.send = d_req.send
-            t = req.loop.time()
-            print("Connected at {}".format(t), flush=True)
-            return conn
-    else:
-
-        async def connect(self, req):
-            d_req = DelayableTCPConnector.\
-                RequestContextManager(req, self._pre_request_delay)
-            conn = await super(DelayableTCPConnector, self).connect(req)
-            if self._post_connect_delay and self._post_connect_delay > 0:
-                await asyncio.sleep(self._post_connect_delay,
-                                   loop=self._loop)
-            req.send = d_req.send
-            t = req.loop.time()
-            print("Connected at {}".format(t), flush=True)
-            return conn
+    async def connect(self, req, *args, **kwargs):
+        d_req = DelayableTCPConnector.\
+            RequestContextManager(req, self._pre_request_delay)
+        conn = await super(DelayableTCPConnector, self).\
+            connect(req, *args, **kwargs)
+        if self._post_connect_delay and self._post_connect_delay > 0:
+            await asyncio.sleep(self._post_connect_delay,
+                                loop=self._loop)
+        req.send = d_req.send
+        t = req.loop.time()
+        print("Connected at {}".format(t), flush=True)
+        return conn
 
 
 class DelayableSanicTestClient(SanicTestClient):

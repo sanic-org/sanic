@@ -1,30 +1,12 @@
-import sys
 import traceback
 from json import JSONDecodeError
 from sanic.log import logger
 from sanic.exceptions import MethodNotSupported
 from sanic.response import text
 
-try:
-    try:
-        # direct use
-        import packaging as _packaging
-        version = _packaging.version
-    except (ImportError, AttributeError):
-        # setuptools v39.0 and above.
-        try:
-            from setuptools.extern import packaging as _packaging
-        except ImportError:
-            # Before setuptools v39.0
-            from pkg_resources.extern import packaging as _packaging
-    version = _packaging.version
-except ImportError:
-    raise RuntimeError("The 'packaging' library is missing.")
-
 
 HOST = '127.0.0.1'
 PORT = 42101
-is_windows = sys.platform in ['win32', 'cygwin']
 
 
 class SanicTestClient:

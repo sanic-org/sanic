@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import inspect
 import os
@@ -12,7 +13,7 @@ from sanic.response import (
     HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 )
 from sanic.server import HttpProtocol
-from sanic.testing import HOST, PORT, is_windows
+from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
 
 JSON_DATA = {'ok': True}
@@ -74,6 +75,7 @@ def test_response_header(app):
             'CONTENT-TYPE': 'application/json'
         })
 
+    is_windows = sys.platform in ['win32', 'cygwin']
     request, response = app.test_client.get('/')
     assert dict(response.headers) == {
         'Connection': 'keep-alive',

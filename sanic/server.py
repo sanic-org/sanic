@@ -55,7 +55,8 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         '_total_request_size', '_request_timeout_handler',
         '_response_timeout_handler', '_keep_alive_timeout_handler',
-        '_last_request_time', '_last_response_time', '_is_stream_handler')
+        '_last_request_time', '_last_response_time', '_is_stream_handler',
+        '_not_paused')
 
     def __init__(self, *, loop, request_handler, error_handler,
                  signal=Signal(), connections=set(), request_timeout=60,
@@ -82,6 +83,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
         self._is_stream_handler = False
+        self._not_paused = asyncio.Event(loop=loop)
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None
@@ -96,6 +98,7 @@ class HttpProtocol(asyncio.Protocol):
         if 'requests_count' not in self.state:
             self.state['requests_count'] = 0
         self._debug = debug
+        self._not_paused.set()
 
     @property
     def keep_alive(self):
@@ -124,6 +127,12 @@ class HttpProtocol(asyncio.Protocol):
         if self._keep_alive_timeout_handler:
             self._keep_alive_timeout_handler.cancel()
 
+    def pause_writing(self):
+        self._not_paused.clear()
+
+    def resume_writing(self):
+        self._not_paused.set()
+
     def request_timeout_callback(self):
         # See the docstring in the RequestTimeout exception, to see
         # exactly what this timeout is checking for.
@@ -141,10 +150,7 @@ class HttpProtocol(asyncio.Protocol):
                 self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            try:
-                raise RequestTimeout('Request Timeout')
-            except RequestTimeout as exception:
-                self.write_error(exception)
+            self.write_error(RequestTimeout('Request Timeout'))
 
     def response_timeout_callback(self):
         # Check if elapsed time since response was initiated exceeds our
@@ -161,10 +167,7 @@ class HttpProtocol(asyncio.Protocol):
                 self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            try:
-                raise ServiceUnavailable('Response Timeout')
-            except ServiceUnavailable as exception:
-                self.write_error(exception)
+            self.write_error(ServiceUnavailable('Response Timeout'))
 
     def keep_alive_timeout_callback(self):
         # Check if elapsed time since last response exceeds our configured
@@ -190,8 +193,7 @@ class HttpProtocol(asyncio.Protocol):
         # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
-            exception = PayloadTooLarge('Payload Too Large')
-            self.write_error(exception)
+            self.write_error(PayloadTooLarge('Payload Too Large'))
 
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
@@ -209,8 +211,7 @@ class HttpProtocol(asyncio.Protocol):
             message = 'Bad Request'
             if self._debug:
                 message += '\n' + traceback.format_exc()
-            exception = InvalidUsage(message)
-            self.write_error(exception)
+            self.write_error(InvalidUsage(message))
 
     def on_url(self, url):
         if not self.url:
@@ -224,8 +225,7 @@ class HttpProtocol(asyncio.Protocol):
         if value is not None:
             if self._header_fragment == b'Content-Length' \
                     and int(value) > self.request_max_size:
-                exception = PayloadTooLarge('Payload Too Large')
-                self.write_error(exception)
+                self.write_error(PayloadTooLarge('Payload Too Large'))
             try:
                 value = value.decode()
             except UnicodeDecodeError:
@@ -351,6 +351,12 @@ class HttpProtocol(asyncio.Protocol):
                 self._last_response_time = current_time
                 self.cleanup()
 
+    async def drain(self):
+        await self._not_paused.wait()
+
+    def push_data(self, data):
+        self.transport.write(data)
+
     async def stream_response(self, response):
         """
         Streams a response to the client asynchronously. Attaches
@@ -360,9 +366,10 @@ class HttpProtocol(asyncio.Protocol):
         if self._response_timeout_handler:
             self._response_timeout_handler.cancel()
             self._response_timeout_handler = None
+
         try:
             keep_alive = self.keep_alive
-            response.transport = self.transport
+            response.protocol = self
             await response.stream(
                 self.request.version, keep_alive, self.keep_alive_timeout)
             self.log_response(response)
@@ -417,7 +424,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.log_response(response)
             try:
                 self.transport.close()
-            except AttributeError as e:
+            except AttributeError:
                 logger.debug('Connection lost before server could close it.')
 
     def bail_out(self, message, from_error=False):
@@ -427,8 +434,7 @@ class HttpProtocol(asyncio.Protocol):
                          self.transport.get_extra_info('peername'))
             logger.debug('Exception:\n%s', traceback.format_exc())
         else:
-            exception = ServerError(message)
-            self.write_error(exception)
+            self.write_error(ServerError(message))
             logger.error(message)
 
     def cleanup(self):
@@ -538,6 +544,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                                   quarter of the high-water limit.
     :param is_request_stream: disable/enable Request.stream
     :param router: Router object
+    :param graceful_shutdown_timeout: How long take to Force close non-idle
+                                      connection
     :return: Nothing
     """
     if not run_async:

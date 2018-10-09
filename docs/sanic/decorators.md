@@ -34,6 +34,6 @@ def authorized():
 @app.route("/")
 @authorized()
 async def test(request):
-    return json({status: 'authorized'})
+    return json({'status': 'authorized'})
 ``` 
 

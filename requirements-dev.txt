@@ -1,9 +1,9 @@
 aiofiles
-aiohttp>=2.3.0
+aiohttp>=2.3.0,<=3.2.1
 chardet<=2.3.0
 beautifulsoup4
 coverage
-httptools
+httptools>=0.0.10
 flake8
 pytest==3.3.2
 tox

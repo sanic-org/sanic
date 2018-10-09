@@ -56,11 +56,11 @@ ujson = 'ujson>=1.35' + env_dependency
 uvloop = 'uvloop>=0.5.3' + env_dependency
 
 requirements = [
-    'httptools>=0.0.9',
+    'httptools>=0.0.10',
     uvloop,
     ujson,
     'aiofiles>=0.3.0',
-    'websockets>=5.0,<6.0',
+    'websockets>=6.0,<7.0',
     'multidict>=4.0,<5.0',
 ]
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):

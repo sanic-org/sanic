@@ -1,10 +1,10 @@
 import asyncio
 import inspect
+import os
 import pytest
 
-from sanic import Sanic
 from sanic.blueprints import Blueprint
-from sanic.response import json, text
+from sanic.response import text
 from sanic.exceptions import NotFound, ServerError, InvalidUsage
 from sanic.constants import HTTP_METHODS
 
@@ -13,9 +13,16 @@ from sanic.constants import HTTP_METHODS
 #  GET
 # ------------------------------------------------------------ #
 
+def get_file_path(static_file_directory, file_name):
+    return os.path.join(static_file_directory, file_name)
+
+def get_file_content(static_file_directory, file_name):
+    """The content of the static file to check"""
+    with open(get_file_path(static_file_directory, file_name), 'rb') as file:
+        return file.read()
+
 @pytest.mark.parametrize('method', HTTP_METHODS)
-def test_versioned_routes_get(method):
-    app = Sanic('test_shorhand_routes_get')
+def test_versioned_routes_get(app, method):
     bp = Blueprint('test_text')
 
     method = method.lower()
@@ -37,8 +44,7 @@ def test_versioned_routes_get(method):
     assert response.status == 200
 
 
-def test_bp():
-    app = Sanic('test_text')
+def test_bp(app):
     bp = Blueprint('test_text')
 
     @bp.route('/')
@@ -51,8 +57,7 @@ def test_bp():
 
     assert response.text == 'Hello'
 
-def test_bp_strict_slash():
-    app = Sanic('test_route_strict_slash')
+def test_bp_strict_slash(app):
     bp = Blueprint('test_text')
 
     @bp.get('/get', strict_slashes=True)
@@ -78,8 +83,7 @@ def test_bp_strict_slash():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
-def test_bp_strict_slash_default_value():
-    app = Sanic('test_route_strict_slash')
+def test_bp_strict_slash_default_value(app):
     bp = Blueprint('test_text', strict_slashes=True)
 
     @bp.get('/get')
@@ -98,8 +102,7 @@ def test_bp_strict_slash_default_value():
     request, response = app.test_client.post('/post')
     assert response.status == 404
 
-def test_bp_strict_slash_without_passing_default_value():
-    app = Sanic('test_route_strict_slash')
+def test_bp_strict_slash_without_passing_default_value(app):
     bp = Blueprint('test_text')
 
     @bp.get('/get')
@@ -118,8 +121,7 @@ def test_bp_strict_slash_without_passing_default_value():
     request, response = app.test_client.post('/post')
     assert response.text == 'OK'
 
-def test_bp_strict_slash_default_value_can_be_overwritten():
-    app = Sanic('test_route_strict_slash')
+def test_bp_strict_slash_default_value_can_be_overwritten(app):
     bp = Blueprint('test_text', strict_slashes=True)
 
     @bp.get('/get', strict_slashes=False)
@@ -138,8 +140,7 @@ def test_bp_strict_slash_default_value_can_be_overwritten():
     request, response = app.test_client.post('/post')
     assert response.text == 'OK'
 
-def test_bp_with_url_prefix():
-    app = Sanic('test_text')
+def test_bp_with_url_prefix(app):
     bp = Blueprint('test_text', url_prefix='/test1')
 
     @bp.route('/')
@@ -152,8 +153,7 @@ def test_bp_with_url_prefix():
     assert response.text == 'Hello'
 
 
-def test_several_bp_with_url_prefix():
-    app = Sanic('test_text')
+def test_several_bp_with_url_prefix(app):
     bp = Blueprint('test_text', url_prefix='/test1')
     bp2 = Blueprint('test_text2', url_prefix='/test2')
 
@@ -173,8 +173,7 @@ def test_several_bp_with_url_prefix():
     request, response = app.test_client.get('/test2/')
     assert response.text == 'Hello2'
 
-def test_bp_with_host():
-    app = Sanic('test_bp_host')
+def test_bp_with_host(app):
     bp = Blueprint('test_bp_host', url_prefix='/test1', host="example.com")
 
     @bp.route('/')
@@ -200,8 +199,7 @@ def test_bp_with_host():
     assert response.text == 'Hello subdomain!'
 
 
-def test_several_bp_with_host():
-    app = Sanic('test_text')
+def test_several_bp_with_host(app):
     bp = Blueprint('test_text',
                    url_prefix='/test',
                    host="example.com")
@@ -244,8 +242,7 @@ def test_several_bp_with_host():
         headers=headers)
     assert response.text == 'Hello3'
 
-def test_bp_middleware():
-    app = Sanic('test_middleware')
+def test_bp_middleware(app):
     blueprint = Blueprint('test_middleware')
 
     @blueprint.middleware('response')
@@ -263,8 +260,7 @@ def test_bp_middleware():
     assert response.status == 200
     assert response.text == 'OK'
 
-def test_bp_exception_handler():
-    app = Sanic('test_middleware')
+def test_bp_exception_handler(app):
     blueprint = Blueprint('test_middleware')
 
     @blueprint.route('/1')
@@ -296,8 +292,7 @@ def test_bp_exception_handler():
     request, response = app.test_client.get('/3')
     assert response.status == 200
 
-def test_bp_listeners():
-    app = Sanic('test_middleware')
+def test_bp_listeners(app):
     blueprint = Blueprint('test_middleware')
 
     order = []
@@ -332,12 +327,11 @@ def test_bp_listeners():
 
     assert order == [1,2,3,4,5,6]
 
-def test_bp_static():
+def test_bp_static(app):
     current_file = inspect.getfile(inspect.currentframe())
     with open(current_file, 'rb') as file:
         current_file_contents = file.read()
 
-    app = Sanic('test_static')
     blueprint = Blueprint('test_static')
 
     blueprint.static('/testing.file', current_file)
@@ -348,8 +342,28 @@ def test_bp_static():
     assert response.status == 200
     assert response.body == current_file_contents
 
-def test_bp_shorthand():
-    app = Sanic('test_shorhand_routes')
+@pytest.mark.parametrize('file_name', ['test.html'])
+def test_bp_static_content_type(app, file_name):
+    # This is done here, since no other test loads a file here
+    current_file = inspect.getfile(inspect.currentframe())
+    current_directory = os.path.dirname(os.path.abspath(current_file))
+    static_directory = os.path.join(current_directory, 'static')
+
+    blueprint = Blueprint('test_static')
+    blueprint.static(
+        '/testing.file',
+        get_file_path(static_directory, file_name),
+        content_type='text/html; charset=utf-8'
+    )
+
+    app.blueprint(blueprint)
+
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 200
+    assert response.body == get_file_content(static_directory, file_name)
+    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
+
+def test_bp_shorthand(app):
     blueprint = Blueprint('test_shorhand_routes')
     ev = asyncio.Event()
 
@@ -447,43 +461,41 @@ def test_bp_shorthand():
     assert response.status == 101
     assert ev.is_set()
 
-def test_bp_group():
-    app = Sanic('test_nested_bp_groups')
-    
+def test_bp_group(app):
     deep_0 = Blueprint('deep_0', url_prefix='/deep')
     deep_1 = Blueprint('deep_1', url_prefix = '/deep1')
 
     @deep_0.route('/')
     def handler(request):
         return text('D0_OK')
-    
+
     @deep_1.route('/bottom')
     def handler(request):
         return text('D1B_OK')
 
     mid_0 = Blueprint.group(deep_0, deep_1, url_prefix='/mid')
     mid_1 = Blueprint('mid_tier', url_prefix='/mid1')
-    
+
     @mid_1.route('/')
     def handler(request):
         return text('M1_OK')
 
     top = Blueprint.group(mid_0, mid_1)
-    
+
     app.blueprint(top)
-    
+
     @app.route('/')
     def handler(request):
         return text('TOP_OK')
-    
+
     request, response = app.test_client.get('/')
     assert response.text == 'TOP_OK'
-    
+
     request, response = app.test_client.get('/mid1')
     assert response.text == 'M1_OK'
-    
+
     request, response = app.test_client.get('/mid/deep')
     assert response.text == 'D0_OK'
-    
+
     request, response = app.test_client.get('/mid/deep1/bottom')
     assert response.text == 'D1B_OK'

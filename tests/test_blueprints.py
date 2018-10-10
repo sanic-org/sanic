@@ -516,8 +516,8 @@ def test_bp_group_with_default_url_prefix(app):
         resource = {'resource_id': resource_id}
         return json(resource)
 
-    bp_resources_group = Blueprint.group(bp_resources, bp_resource, url_prefix='/resources/')
-    bp_api_v1 = Blueprint('bp_api_v1', url_prefix='/')
+    bp_resources_group = Blueprint.group(bp_resources, bp_resource, url_prefix='/resources')
+    bp_api_v1 = Blueprint('bp_api_v1')
     @bp_api_v1.get('/info')
     def api_v1_info(request):
         return text('api_version: v1')

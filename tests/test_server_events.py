@@ -11,6 +11,12 @@ AVAILABLE_LISTENERS = [
     'after_server_stop'
 ]
 
+skipif_no_alarm = pytest.mark.skipif(
+    not hasattr(signal, 'SIGALRM'),
+    reason='SIGALRM is not implemented for this platform, we have to come '
+    'up with another timeout strategy to test these'
+)
+
 
 def create_listener(listener_name, in_list):
     async def _listener(app, loop):
@@ -32,6 +38,7 @@ def start_stop_app(random_name_app, **run_kwargs):
         pass
 
 
+@skipif_no_alarm
 @pytest.mark.parametrize('listener_name', AVAILABLE_LISTENERS)
 def test_single_listener(app, listener_name):
     """Test that listeners on their own work"""
@@ -43,6 +50,7 @@ def test_single_listener(app, listener_name):
     assert app.name + listener_name == output.pop()
 
 
+@skipif_no_alarm
 @pytest.mark.parametrize('listener_name', AVAILABLE_LISTENERS)
 def test_register_listener(app, listener_name):
     """
@@ -52,12 +60,12 @@ def test_register_listener(app, listener_name):
     output = []
     # Register listener
     listener = create_listener(listener_name, output)
-    app.register_listener(listener,
-                                      event=listener_name)
+    app.register_listener(listener, event=listener_name)
     start_stop_app(app)
     assert app.name + listener_name == output.pop()
 
 
+@skipif_no_alarm
 def test_all_listeners(app):
     output = []
     for listener_name in AVAILABLE_LISTENERS:

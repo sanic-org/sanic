@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import inspect
 import os
@@ -8,7 +9,9 @@ from urllib.parse import unquote
 import pytest
 from random import choice
 
-from sanic.response import HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
+from sanic.response import (
+    HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
+)
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 from unittest.mock import MagicMock
@@ -72,11 +75,15 @@ def test_response_header(app):
             'CONTENT-TYPE': 'application/json'
         })
 
+    is_windows = sys.platform in ['win32', 'cygwin']
     request, response = app.test_client.get('/')
     assert dict(response.headers) == {
         'Connection': 'keep-alive',
-        'Keep-Alive': '2',
-        'Content-Length': '11',
+        'Keep-Alive': str(app.config.KEEP_ALIVE_TIMEOUT),
+        # response body contains an extra \r at the end if its windows
+        # TODO: this is the only place this difference shows up in our tests
+        # we should figure out a way to unify testing on both platforms
+        'Content-Length': '12' if is_windows else '11',
         'Content-Type': 'application/json',
     }
 

@@ -10,7 +10,7 @@ except BaseException:
 from aiofiles import open as open_async
 from multidict import CIMultiDict
 
-from sanic import http
+from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 from sanic.cookies import CookieJar
 
 
@@ -103,7 +103,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         if self.status is 200:
             status = b'OK'
         else:
-            status = http.STATUS_CODES.get(self.status)
+            status = STATUS_CODES.get(self.status)
 
         return (b'HTTP/%b %d %b\r\n'
                 b'%b'
@@ -141,7 +141,7 @@ class HTTPResponse(BaseHTTPResponse):
             timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
 
         body = b''
-        if http.has_message_body(self.status):
+        if has_message_body(self.status):
             body = self.body
             self.headers['Content-Length'] = self.headers.get(
                 'Content-Length', len(self.body))
@@ -150,14 +150,14 @@ class HTTPResponse(BaseHTTPResponse):
                                        'Content-Type', self.content_type)
 
         if self.status in (304, 412):
-            self.headers = http.remove_entity_headers(self.headers)
+            self.headers = remove_entity_headers(self.headers)
 
         headers = self._parse_headers()
 
         if self.status is 200:
             status = b'OK'
         else:
-            status = http.STATUS_CODES.get(self.status, b'UNKNOWN RESPONSE')
+            status = STATUS_CODES.get(self.status, b'UNKNOWN RESPONSE')
 
         return (b'HTTP/%b %d %b\r\n'
                 b'Connection: %b\r\n'

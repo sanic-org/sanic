@@ -89,13 +89,12 @@ def test_load_from_missing_envvar(app):
 
 
 def test_load_config_from_file_invalid_syntax(app):
-    config = b"VALUE = some value"
-    with NamedTemporaryFile() as config_file:
-        config_file.write(config)
-        config_file.seek(0)
+    config = "VALUE = some value"
+    with temp_path() as config_path:
+        config_path.write_text(config)
 
         with pytest.raises(PyFileError):
-            app.config.from_pyfile(config_file.name)
+            app.config.from_pyfile(config_path)
 
 
 def test_overwrite_exisiting_config(app):

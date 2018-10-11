@@ -223,11 +223,6 @@ class InvalidRangeType(ContentRangeError):
     pass
 
 
-class PyFileError(Exception):
-    def __init__(self, file):
-        super().__init__('could not execute config file %s', file)
-
-
 @add_status_code(401)
 class Unauthorized(SanicException):
     """

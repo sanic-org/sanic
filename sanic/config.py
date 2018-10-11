@@ -1,8 +1,6 @@
 import os
 import types
 
-from sanic.exceptions import PyFileError
-
 
 SANIC_PREFIX = 'SANIC_'
 
@@ -85,9 +83,6 @@ class Config(dict):
         except IOError as e:
             e.strerror = 'Unable to load configuration file (%s)' % e.strerror
             raise
-        except Exception as e:
-            raise PyFileError(filename) from e
-
         self.from_object(module)
         return True
 

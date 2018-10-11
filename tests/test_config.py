@@ -6,7 +6,6 @@ from textwrap import dedent
 import pytest
 
 from sanic import Sanic
-from sanic.exceptions import PyFileError
 
 
 @contextmanager
@@ -86,16 +85,6 @@ def test_load_from_missing_envvar(app):
         assert str(e.value) == ("The environment variable 'non-existent "
                                 "variable' is not set and thus configuration "
                                 "could not be loaded.")
-
-
-def test_load_config_from_file_invalid_syntax(app):
-    config = b"VALUE = some value"
-    with NamedTemporaryFile() as config_file:
-        config_file.write(config)
-        config_file.seek(0)
-
-        with pytest.raises(PyFileError):
-            app.config.from_pyfile(config_file.name)
 
 
 def test_overwrite_exisiting_config(app):

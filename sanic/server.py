@@ -120,6 +120,10 @@ class HttpProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc):
         self.connections.discard(self)
+        if self._request_handler_task:
+            self._request_handler_task.cancel()
+        if self._request_stream_task:
+            self._request_stream_task.cancel()
         if self._request_timeout_handler:
             self._request_timeout_handler.cancel()
         if self._response_timeout_handler:

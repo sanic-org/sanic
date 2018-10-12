@@ -1,4 +1,4 @@
-from sanic.http import STATUS_CODES
+from sanic.helpers import STATUS_CODES
 
 TRACEBACK_STYLE = '''
     <style>
@@ -221,6 +221,11 @@ class Forbidden(SanicException):
 
 class InvalidRangeType(ContentRangeError):
     pass
+
+
+class PyFileError(Exception):
+    def __init__(self, file):
+        super().__init__('could not execute config file %s', file)
 
 
 @add_status_code(401)

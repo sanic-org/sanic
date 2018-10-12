@@ -54,6 +54,8 @@ class Blueprint:
                     yield i
         bps = []
         for bp in chain(blueprints):
+            if bp.url_prefix is None:
+                bp.url_prefix = ''
             bp.url_prefix = url_prefix + bp.url_prefix
             bps.append(bp)
         return bps

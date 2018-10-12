@@ -499,3 +499,40 @@ def test_bp_group(app):
 
     request, response = app.test_client.get('/mid/deep1/bottom')
     assert response.text == 'D1B_OK'
+
+
+def test_bp_group_with_default_url_prefix(app):
+
+    from sanic.response import json
+    bp_resources = Blueprint('bp_resources')
+    @bp_resources.get('/')
+    def list_resources_handler(request):
+        resource = {}
+        return json([resource])
+
+    bp_resource = Blueprint('bp_resource', url_prefix='/<resource_id>')
+    @bp_resource.get('/')
+    def get_resource_hander(request, resource_id):
+        resource = {'resource_id': resource_id}
+        return json(resource)
+
+    bp_resources_group = Blueprint.group(bp_resources, bp_resource, url_prefix='/resources')
+    bp_api_v1 = Blueprint('bp_api_v1')
+    @bp_api_v1.get('/info')
+    def api_v1_info(request):
+        return text('api_version: v1')
+
+    bp_api_v1_group = Blueprint.group(bp_api_v1, bp_resources_group, url_prefix='/v1')
+    bp_api_group = Blueprint.group(bp_api_v1_group, url_prefix='/api')
+    app.blueprint(bp_api_group)
+
+    request, response = app.test_client.get('/api/v1/info')
+    assert response.text == 'api_version: v1'
+
+    request, response = app.test_client.get('/api/v1/resources')
+    assert response.json == [{}]
+
+    from uuid import uuid4
+    resource_id = str(uuid4())
+    request, response = app.test_client.get('/api/v1/resources/{0}'.format(resource_id))
+    assert response.json == {'resource_id': resource_id}

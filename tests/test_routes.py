@@ -3,7 +3,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.response import text, json
-from sanic.router import RouteExists, RouteDoesNotExist
+from sanic.router import RouteExists, RouteDoesNotExist, ParameterNameConflicts
 from sanic.constants import HTTP_METHODS
 
 
@@ -935,3 +935,10 @@ def test_uri_with_different_method_and_different_params(app):
     assert response.json == {
         'action': 'post'
     }
+
+
+def test_route_raise_ParameterNameConflicts(app):
+    with pytest.raises(ParameterNameConflicts):
+        @app.get('/api/v1/<user>/<user>/')
+        def handler(request, user):
+            return text('OK')

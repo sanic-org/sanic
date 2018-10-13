@@ -38,6 +38,10 @@ class RouteDoesNotExist(Exception):
     pass
 
 
+class ParameterNameConflicts(Exception):
+    pass
+
+
 class Router:
     """Router supports basic routing with parameters and method checks
 
@@ -195,11 +199,18 @@ class Router:
             methods = frozenset(methods)
 
         parameters = []
+        parameter_names = set()
         properties = {"unhashable": None}
 
         def add_parameter(match):
             name = match.group(1)
             name, _type, pattern = self.parse_parameter_string(name)
+
+            if name in parameter_names:
+                raise ParameterNameConflicts(
+                        "Multiple parameter named <{name}> "
+                        "in route uri {uri}".format(name=name, uri=uri))
+            parameter_names.add(name)
 
             parameter = Parameter(
                 name=name, cast=_type)

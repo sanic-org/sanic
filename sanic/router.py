@@ -207,7 +207,9 @@ class Router:
             name, _type, pattern = self.parse_parameter_string(name)
 
             if name in parameter_names:
-                raise ParameterNameConflicts("Multiple parameter named <{name}> in route uri {uri}".format(name=name, uri=uri))
+                raise ParameterNameConflicts(
+                        "Multiple parameter named <{name}> "
+                        "in route uri {uri}".format(name=name, uri=uri))
             parameter_names.add(name)
 
             parameter = Parameter(

@@ -1,4 +1,3 @@
-import traceback
 from json import JSONDecodeError
 from sanic.log import logger
 from sanic.exceptions import MethodNotSupported
@@ -73,8 +72,7 @@ class SanicTestClient:
                     **request_kwargs)
                 results[-1] = response
             except Exception as e:
-                logger.error(
-                    'Exception:\n{}'.format(traceback.format_exc()))
+                logger.exception('Exception')
                 exceptions.append(e)
             self.app.stop()
 

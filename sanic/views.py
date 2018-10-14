@@ -48,6 +48,7 @@ class HTTPMethodView:
         """Return view function for use with the routing system, that
         dispatches request to appropriate handler method.
         """
+
         def view(*args, **kwargs):
             self = view.view_class(*class_args, **class_kwargs)
             return self.dispatch_request(*args, **kwargs)
@@ -94,11 +95,13 @@ class CompositionView:
         for method in methods:
             if method not in HTTP_METHODS:
                 raise InvalidUsage(
-                    '{} is not a valid HTTP method.'.format(method))
+                    "{} is not a valid HTTP method.".format(method)
+                )
 
             if method in self.handlers:
                 raise InvalidUsage(
-                    'Method {} is already registered.'.format(method))
+                    "Method {} is already registered.".format(method)
+                )
             self.handlers[method] = handler
 
     def __call__(self, request, *args, **kwargs):

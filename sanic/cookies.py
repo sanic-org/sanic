@@ -8,14 +8,12 @@ import string
 # Straight up copied this section of dark magic from SimpleCookie
 
 _LegalChars = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
-_UnescapedChars = _LegalChars + ' ()/<=>?@[]{}'
+_UnescapedChars = _LegalChars + " ()/<=>?@[]{}"
 
-_Translator = {n: '\\%03o' % n
-               for n in set(range(256)) - set(map(ord, _UnescapedChars))}
-_Translator.update({
-    ord('"'): '\\"',
-    ord('\\'): '\\\\',
-})
+_Translator = {
+    n: "\\%03o" % n for n in set(range(256)) - set(map(ord, _UnescapedChars))
+}
+_Translator.update({ord('"'): '\\"', ord("\\"): "\\\\"})
 
 
 def _quote(str):
@@ -30,7 +28,7 @@ def _quote(str):
         return '"' + str.translate(_Translator) + '"'
 
 
-_is_legal_key = re.compile('[%s]+' % re.escape(_LegalChars)).fullmatch
+_is_legal_key = re.compile("[%s]+" % re.escape(_LegalChars)).fullmatch
 
 # ------------------------------------------------------------ #
 #  Custom SimpleCookie
@@ -53,7 +51,7 @@ class CookieJar(dict):
         # If this cookie doesn't exist, add it to the header keys
         if not self.cookie_headers.get(key):
             cookie = Cookie(key, value)
-            cookie['path'] = '/'
+            cookie["path"] = "/"
             self.cookie_headers[key] = self.header_key
             self.headers.add(self.header_key, cookie)
             return super().__setitem__(key, cookie)
@@ -62,8 +60,8 @@ class CookieJar(dict):
 
     def __delitem__(self, key):
         if key not in self.cookie_headers:
-            self[key] = ''
-            self[key]['max-age'] = 0
+            self[key] = ""
+            self[key]["max-age"] = 0
         else:
             cookie_header = self.cookie_headers[key]
             # remove it from header
@@ -77,6 +75,7 @@ class CookieJar(dict):
 
 class Cookie(dict):
     """A stripped down version of Morsel from SimpleCookie #gottagofast"""
+
     _keys = {
         "expires": "expires",
         "path": "Path",
@@ -88,7 +87,7 @@ class Cookie(dict):
         "version": "Version",
         "samesite": "SameSite",
     }
-    _flags = {'secure', 'httponly'}
+    _flags = {"secure", "httponly"}
 
     def __init__(self, key, value):
         if key in self._keys:
@@ -106,24 +105,27 @@ class Cookie(dict):
             return super().__setitem__(key, value)
 
     def encode(self, encoding):
-        output = ['%s=%s' % (self.key, _quote(self.value))]
+        output = ["%s=%s" % (self.key, _quote(self.value))]
         for key, value in self.items():
-            if key == 'max-age':
+            if key == "max-age":
                 try:
-                    output.append('%s=%d' % (self._keys[key], value))
+                    output.append("%s=%d" % (self._keys[key], value))
                 except TypeError:
-                    output.append('%s=%s' % (self._keys[key], value))
-            elif key == 'expires':
+                    output.append("%s=%s" % (self._keys[key], value))
+            elif key == "expires":
                 try:
-                    output.append('%s=%s' % (
-                        self._keys[key],
-                        value.strftime("%a, %d-%b-%Y %T GMT")
-                    ))
+                    output.append(
+                        "%s=%s"
+                        % (
+                            self._keys[key],
+                            value.strftime("%a, %d-%b-%Y %T GMT"),
+                        )
+                    )
                 except AttributeError:
-                    output.append('%s=%s' % (self._keys[key], value))
+                    output.append("%s=%s" % (self._keys[key], value))
             elif key in self._flags and self[key]:
                 output.append(self._keys[key])
             else:
-                output.append('%s=%s' % (self._keys[key], value))
+                output.append("%s=%s" % (self._keys[key], value))
 
         return "; ".join(output).encode(encoding)

@@ -436,7 +436,7 @@ class HttpProtocol(asyncio.Protocol):
             logger.error("Transport closed @ %s and exception "
                          "experienced during error handling",
                          self.transport.get_extra_info('peername'))
-            logger.debug('Exception:\n%s', traceback.format_exc())
+            logger.debug('Exception:', exc_info=True)
         else:
             self.write_error(ServerError(message))
             logger.error(message)

@@ -27,10 +27,17 @@ import sanic.reloader_helpers as reloader_helpers
 
 
 class Sanic:
-    def __init__(self, name=None, router=None, error_handler=None,
-                 load_env=True, request_class=None,
-                 strict_slashes=False, log_config=None,
-                 configure_logging=True):
+    def __init__(
+        self,
+        name=None,
+        router=None,
+        error_handler=None,
+        load_env=True,
+        request_class=None,
+        strict_slashes=False,
+        log_config=None,
+        configure_logging=True,
+    ):
 
         # Get name from previous stack frame
         if name is None:
@@ -71,8 +78,9 @@ class Sanic:
         """
         if not self.is_running:
             raise SanicException(
-                'Loop can only be retrieved after the app has started '
-                'running. Not supported with `create_server` function')
+                "Loop can only be retrieved after the app has started "
+                "running. Not supported with `create_server` function"
+            )
         return get_event_loop()
 
     # -------------------------------------------------------------------- #
@@ -96,7 +104,8 @@ class Sanic:
             else:
                 self.loop.create_task(task)
         except SanicException:
-            @self.listener('before_server_start')
+
+            @self.listener("before_server_start")
             def run(app, loop):
                 if callable(task):
                     try:
@@ -133,8 +142,16 @@ class Sanic:
         return self.listener(event)(listener)
 
     # Decorator
-    def route(self, uri, methods=frozenset({'GET'}), host=None,
-              strict_slashes=None, stream=False, version=None, name=None):
+    def route(
+        self,
+        uri,
+        methods=frozenset({"GET"}),
+        host=None,
+        strict_slashes=None,
+        stream=False,
+        version=None,
+        name=None,
+    ):
         """Decorate a function to be registered as a route
 
         :param uri: path of the URL
@@ -149,8 +166,8 @@ class Sanic:
 
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
-        if not uri.startswith('/'):
-            uri = '/' + uri
+        if not uri.startswith("/"):
+            uri = "/" + uri
 
         if stream:
             self.is_request_stream = True
@@ -164,63 +181,141 @@ class Sanic:
                 if stream:
                     handler.is_stream = stream
 
-                self.router.add(uri=uri, methods=methods, handler=handler,
-                                host=host, strict_slashes=strict_slashes,
-                                version=version, name=name)
+                self.router.add(
+                    uri=uri,
+                    methods=methods,
+                    handler=handler,
+                    host=host,
+                    strict_slashes=strict_slashes,
+                    version=version,
+                    name=name,
+                )
                 return handler
             else:
                 raise ValueError(
-                    'Required parameter `request` missing '
-                    'in the {0}() route?'.format(
-                        handler.__name__))
+                    "Required parameter `request` missing "
+                    "in the {0}() route?".format(handler.__name__)
+                )
 
         return response
 
     # Shorthand method decorators
-    def get(self, uri, host=None, strict_slashes=None, version=None,
-            name=None):
-        return self.route(uri, methods=frozenset({"GET"}), host=host,
-                          strict_slashes=strict_slashes, version=version,
-                          name=name)
+    def get(
+        self, uri, host=None, strict_slashes=None, version=None, name=None
+    ):
+        return self.route(
+            uri,
+            methods=frozenset({"GET"}),
+            host=host,
+            strict_slashes=strict_slashes,
+            version=version,
+            name=name,
+        )
 
-    def post(self, uri, host=None, strict_slashes=None, stream=False,
-             version=None, name=None):
-        return self.route(uri, methods=frozenset({"POST"}), host=host,
-                          strict_slashes=strict_slashes, stream=stream,
-                          version=version, name=name)
+    def post(
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        stream=False,
+        version=None,
+        name=None,
+    ):
+        return self.route(
+            uri,
+            methods=frozenset({"POST"}),
+            host=host,
+            strict_slashes=strict_slashes,
+            stream=stream,
+            version=version,
+            name=name,
+        )
 
-    def put(self, uri, host=None, strict_slashes=None, stream=False,
-            version=None, name=None):
-        return self.route(uri, methods=frozenset({"PUT"}), host=host,
-                          strict_slashes=strict_slashes, stream=stream,
-                          version=version, name=name)
+    def put(
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        stream=False,
+        version=None,
+        name=None,
+    ):
+        return self.route(
+            uri,
+            methods=frozenset({"PUT"}),
+            host=host,
+            strict_slashes=strict_slashes,
+            stream=stream,
+            version=version,
+            name=name,
+        )
 
-    def head(self, uri, host=None, strict_slashes=None, version=None,
-             name=None):
-        return self.route(uri, methods=frozenset({"HEAD"}), host=host,
-                          strict_slashes=strict_slashes, version=version,
-                          name=name)
+    def head(
+        self, uri, host=None, strict_slashes=None, version=None, name=None
+    ):
+        return self.route(
+            uri,
+            methods=frozenset({"HEAD"}),
+            host=host,
+            strict_slashes=strict_slashes,
+            version=version,
+            name=name,
+        )
 
-    def options(self, uri, host=None, strict_slashes=None, version=None,
-                name=None):
-        return self.route(uri, methods=frozenset({"OPTIONS"}), host=host,
-                          strict_slashes=strict_slashes, version=version,
-                          name=name)
+    def options(
+        self, uri, host=None, strict_slashes=None, version=None, name=None
+    ):
+        return self.route(
+            uri,
+            methods=frozenset({"OPTIONS"}),
+            host=host,
+            strict_slashes=strict_slashes,
+            version=version,
+            name=name,
+        )
 
-    def patch(self, uri, host=None, strict_slashes=None, stream=False,
-              version=None, name=None):
-        return self.route(uri, methods=frozenset({"PATCH"}), host=host,
-                          strict_slashes=strict_slashes, stream=stream,
-                          version=version, name=name)
+    def patch(
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        stream=False,
+        version=None,
+        name=None,
+    ):
+        return self.route(
+            uri,
+            methods=frozenset({"PATCH"}),
+            host=host,
+            strict_slashes=strict_slashes,
+            stream=stream,
+            version=version,
+            name=name,
+        )
 
-    def delete(self, uri, host=None, strict_slashes=None, version=None,
-               name=None):
-        return self.route(uri, methods=frozenset({"DELETE"}), host=host,
-                          strict_slashes=strict_slashes, version=version,
-                          name=name)
+    def delete(
+        self, uri, host=None, strict_slashes=None, version=None, name=None
+    ):
+        return self.route(
+            uri,
+            methods=frozenset({"DELETE"}),
+            host=host,
+            strict_slashes=strict_slashes,
+            version=version,
+            name=name,
+        )
 
-    def add_route(self, handler, uri, methods=frozenset({'GET'}), host=None,
-                  strict_slashes=None, version=None, name=None, stream=False):
+    def add_route(
+        self,
+        handler,
+        uri,
+        methods=frozenset({"GET"}),
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        stream=False,
+    ):
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -237,35 +332,42 @@ class Sanic:
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
-        if hasattr(handler, 'view_class'):
+        if hasattr(handler, "view_class"):
             methods = set()
 
             for method in HTTP_METHODS:
                 _handler = getattr(handler.view_class, method.lower(), None)
                 if _handler:
                     methods.add(method)
-                    if hasattr(_handler, 'is_stream'):
+                    if hasattr(_handler, "is_stream"):
                         stream = True
 
         # handle composition view differently
         if isinstance(handler, CompositionView):
             methods = handler.handlers.keys()
             for _handler in handler.handlers.values():
-                if hasattr(_handler, 'is_stream'):
+                if hasattr(_handler, "is_stream"):
                     stream = True
                     break
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
 
-        self.route(uri=uri, methods=methods, host=host,
-                   strict_slashes=strict_slashes, stream=stream,
-                   version=version, name=name)(handler)
+        self.route(
+            uri=uri,
+            methods=methods,
+            host=host,
+            strict_slashes=strict_slashes,
+            stream=stream,
+            version=version,
+            name=name,
+        )(handler)
         return handler
 
     # Decorator
-    def websocket(self, uri, host=None, strict_slashes=None,
-                  subprotocols=None, name=None):
+    def websocket(
+        self, uri, host=None, strict_slashes=None, subprotocols=None, name=None
+    ):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
         :param subprotocols: optional list of strings with the supported
@@ -277,8 +379,8 @@ class Sanic:
 
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
-        if not uri.startswith('/'):
-            uri = '/' + uri
+        if not uri.startswith("/"):
+            uri = "/" + uri
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
@@ -307,21 +409,38 @@ class Sanic:
                     self.websocket_tasks.remove(fut)
                 await ws.close()
 
-            self.router.add(uri=uri, handler=websocket_handler,
-                            methods=frozenset({'GET'}), host=host,
-                            strict_slashes=strict_slashes, name=name)
+            self.router.add(
+                uri=uri,
+                handler=websocket_handler,
+                methods=frozenset({"GET"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                name=name,
+            )
             return handler
 
         return response
 
-    def add_websocket_route(self, handler, uri, host=None,
-                            strict_slashes=None, subprotocols=None, name=None):
+    def add_websocket_route(
+        self,
+        handler,
+        uri,
+        host=None,
+        strict_slashes=None,
+        subprotocols=None,
+        name=None,
+    ):
         """A helper method to register a function as a websocket route."""
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
 
-        return self.websocket(uri, host=host, strict_slashes=strict_slashes,
-                              subprotocols=subprotocols, name=name)(handler)
+        return self.websocket(
+            uri,
+            host=host,
+            strict_slashes=strict_slashes,
+            subprotocols=subprotocols,
+            name=name,
+        )(handler)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -332,7 +451,7 @@ class Sanic:
         if not self.websocket_enabled:
             # if the server is stopped, we want to cancel any ongoing
             # websocket tasks, to allow the server to exit promptly
-            @self.listener('before_server_stop')
+            @self.listener("before_server_stop")
             def cancel_websocket_tasks(app, loop):
                 for task in self.websocket_tasks:
                     task.cancel()
@@ -361,10 +480,10 @@ class Sanic:
 
         return response
 
-    def register_middleware(self, middleware, attach_to='request'):
-        if attach_to == 'request':
+    def register_middleware(self, middleware, attach_to="request"):
+        if attach_to == "request":
             self.request_middleware.append(middleware)
-        if attach_to == 'response':
+        if attach_to == "response":
             self.response_middleware.appendleft(middleware)
         return middleware
 
@@ -379,21 +498,40 @@ class Sanic:
             return self.register_middleware(middleware_or_request)
 
         else:
-            return partial(self.register_middleware,
-                           attach_to=middleware_or_request)
+            return partial(
+                self.register_middleware, attach_to=middleware_or_request
+            )
 
     # Static Files
-    def static(self, uri, file_or_directory, pattern=r'/?.+',
-               use_modified_since=True, use_content_range=False,
-               stream_large_files=False, name='static', host=None,
-               strict_slashes=None, content_type=None):
+    def static(
+        self,
+        uri,
+        file_or_directory,
+        pattern=r"/?.+",
+        use_modified_since=True,
+        use_content_range=False,
+        stream_large_files=False,
+        name="static",
+        host=None,
+        strict_slashes=None,
+        content_type=None,
+    ):
         """Register a root to serve files from. The input can either be a
         file or a directory. See
         """
-        static_register(self, uri, file_or_directory, pattern,
-                        use_modified_since, use_content_range,
-                        stream_large_files, name, host, strict_slashes,
-                        content_type)
+        static_register(
+            self,
+            uri,
+            file_or_directory,
+            pattern,
+            use_modified_since,
+            use_content_range,
+            stream_large_files,
+            name,
+            host,
+            strict_slashes,
+            content_type,
+        )
 
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.
@@ -407,10 +545,10 @@ class Sanic:
                 self.blueprint(item, **options)
             return
         if blueprint.name in self.blueprints:
-            assert self.blueprints[blueprint.name] is blueprint, \
-                'A blueprint with the name "%s" is already registered.  ' \
-                'Blueprint names must be unique.' % \
-                (blueprint.name,)
+            assert self.blueprints[blueprint.name] is blueprint, (
+                'A blueprint with the name "%s" is already registered.  '
+                "Blueprint names must be unique." % (blueprint.name,)
+            )
         else:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)
@@ -419,11 +557,13 @@ class Sanic:
     def register_blueprint(self, *args, **kwargs):
         # TODO: deprecate 1.0
         if self.debug:
-            warnings.simplefilter('default')
-        warnings.warn("Use of register_blueprint will be deprecated in "
-                      "version 1.0.  Please use the blueprint method"
-                      " instead",
-                      DeprecationWarning)
+            warnings.simplefilter("default")
+        warnings.warn(
+            "Use of register_blueprint will be deprecated in "
+            "version 1.0.  Please use the blueprint method"
+            " instead",
+            DeprecationWarning,
+        )
         return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
@@ -449,67 +589,66 @@ class Sanic:
         # find the route by the supplied view name
         kw = {}
         # special static files url_for
-        if view_name == 'static':
-            kw.update(name=kwargs.pop('name', 'static'))
-        elif view_name.endswith('.static'):  # blueprint.static
-            kwargs.pop('name', None)
+        if view_name == "static":
+            kw.update(name=kwargs.pop("name", "static"))
+        elif view_name.endswith(".static"):  # blueprint.static
+            kwargs.pop("name", None)
             kw.update(name=view_name)
 
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
         if not (uri and route):
-            raise URLBuildError('Endpoint with name `{}` was not found'.format(
-                view_name))
+            raise URLBuildError(
+                "Endpoint with name `{}` was not found".format(view_name)
+            )
 
-        if view_name == 'static' or view_name.endswith('.static'):
-            filename = kwargs.pop('filename', None)
+        if view_name == "static" or view_name.endswith(".static"):
+            filename = kwargs.pop("filename", None)
             # it's static folder
-            if '<file_uri:' in uri:
-                folder_ = uri.split('<file_uri:', 1)[0]
-                if folder_.endswith('/'):
+            if "<file_uri:" in uri:
+                folder_ = uri.split("<file_uri:", 1)[0]
+                if folder_.endswith("/"):
                     folder_ = folder_[:-1]
 
-                if filename.startswith('/'):
+                if filename.startswith("/"):
                     filename = filename[1:]
 
-                uri = '{}/{}'.format(folder_, filename)
+                uri = "{}/{}".format(folder_, filename)
 
-        if uri != '/' and uri.endswith('/'):
+        if uri != "/" and uri.endswith("/"):
             uri = uri[:-1]
 
         out = uri
 
         # find all the parameters we will need to build in the URL
-        matched_params = re.findall(
-            self.router.parameter_pattern, uri)
+        matched_params = re.findall(self.router.parameter_pattern, uri)
 
         # _method is only a placeholder now, don't know how to support it
-        kwargs.pop('_method', None)
-        anchor = kwargs.pop('_anchor', '')
+        kwargs.pop("_method", None)
+        anchor = kwargs.pop("_anchor", "")
         # _external need SERVER_NAME in config or pass _server arg
-        external = kwargs.pop('_external', False)
-        scheme = kwargs.pop('_scheme', '')
+        external = kwargs.pop("_external", False)
+        scheme = kwargs.pop("_scheme", "")
         if scheme and not external:
-            raise ValueError('When specifying _scheme, _external must be True')
+            raise ValueError("When specifying _scheme, _external must be True")
 
-        netloc = kwargs.pop('_server', None)
+        netloc = kwargs.pop("_server", None)
         if netloc is None and external:
-            netloc = self.config.get('SERVER_NAME', '')
+            netloc = self.config.get("SERVER_NAME", "")
 
         if external:
             if not scheme:
-                if ':' in netloc[:8]:
-                    scheme = netloc[:8].split(':', 1)[0]
+                if ":" in netloc[:8]:
+                    scheme = netloc[:8].split(":", 1)[0]
                 else:
-                    scheme = 'http'
+                    scheme = "http"
 
-            if '://' in netloc[:8]:
-                netloc = netloc.split('://', 1)[-1]
+            if "://" in netloc[:8]:
+                netloc = netloc.split("://", 1)[-1]
 
         for match in matched_params:
-            name, _type, pattern = self.router.parse_parameter_string(
-                match)
+            name, _type, pattern = self.router.parse_parameter_string(match)
             # we only want to match against each individual parameter
-            specific_pattern = '^{}$'.format(pattern)
+            specific_pattern = "^{}$".format(pattern)
             supplied_param = None
 
             if name in kwargs:
@@ -517,8 +656,10 @@ class Sanic:
                 del kwargs[name]
             else:
                 raise URLBuildError(
-                    'Required parameter `{}` was not passed to url_for'.format(
-                        name))
+                    "Required parameter `{}` was not passed to url_for".format(
+                        name
+                    )
+                )
 
             supplied_param = str(supplied_param)
             # determine if the parameter supplied by the caller passes the test
@@ -529,25 +670,28 @@ class Sanic:
                 if _type != str:
                     msg = (
                         'Value "{}" for parameter `{}` does not '
-                        'match pattern for type `{}`: {}'.format(
-                            supplied_param, name, _type.__name__, pattern))
+                        "match pattern for type `{}`: {}".format(
+                            supplied_param, name, _type.__name__, pattern
+                        )
+                    )
                 else:
                     msg = (
                         'Value "{}" for parameter `{}` '
-                        'does not satisfy pattern {}'.format(
-                            supplied_param, name, pattern))
+                        "does not satisfy pattern {}".format(
+                            supplied_param, name, pattern
+                        )
+                    )
                 raise URLBuildError(msg)
 
             # replace the parameter in the URL with the supplied value
-            replacement_regex = '(<{}.*?>)'.format(name)
+            replacement_regex = "(<{}.*?>)".format(name)
 
-            out = re.sub(
-                replacement_regex, supplied_param, out)
+            out = re.sub(replacement_regex, supplied_param, out)
 
         # parse the remainder of the keyword arguments into a querystring
-        query_string = urlencode(kwargs, doseq=True) if kwargs else ''
+        query_string = urlencode(kwargs, doseq=True) if kwargs else ""
         # scheme://netloc/path;parameters?query#fragment
-        out = urlunparse((scheme, netloc, out, '', query_string, anchor))
+        out = urlunparse((scheme, netloc, out, "", query_string, anchor))
 
         return out
 
@@ -594,8 +738,11 @@ class Sanic:
                 request.uri_template = uri
                 if handler is None:
                     raise ServerError(
-                        ("'None' was returned while requesting a "
-                         "handler from the router"))
+                        (
+                            "'None' was returned while requesting a "
+                            "handler from the router"
+                        )
+                    )
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)
@@ -619,16 +766,20 @@ class Sanic:
                     response = await response
             except Exception as e:
                 if isinstance(e, SanicException):
-                    response = self.error_handler.default(request=request,
-                                                          exception=e)
+                    response = self.error_handler.default(
+                        request=request, exception=e
+                    )
                 elif self.debug:
                     response = HTTPResponse(
                         "Error while handling error: {}\nStack: {}".format(
-                            e, format_exc()), status=500)
+                            e, format_exc()
+                        ),
+                        status=500,
+                    )
                 else:
                     response = HTTPResponse(
-                        "An error occurred while handling an error",
-                        status=500)
+                        "An error occurred while handling an error", status=500
+                    )
         finally:
             # -------------------------------------------- #
             # Response Middleware
@@ -636,16 +787,17 @@ class Sanic:
             # Don't run response middleware if response is None
             if response is not None:
                 try:
-                    response = await self._run_response_middleware(request,
-                                                                   response)
+                    response = await self._run_response_middleware(
+                        request, response
+                    )
                 except CancelledError:
                     # Response middleware can timeout too, as above.
                     response = None
                     cancelled = True
                 except BaseException:
                     error_logger.exception(
-                        'Exception occurred in one of response '
-                        'middleware handlers'
+                        "Exception occurred in one of response "
+                        "middleware handlers"
                     )
             if cancelled:
                 raise CancelledError()
@@ -668,10 +820,21 @@ class Sanic:
     # Execution
     # -------------------------------------------------------------------- #
 
-    def run(self, host=None, port=None, debug=False, ssl=None,
-            sock=None, workers=1, protocol=None,
-            backlog=100, stop_event=None, register_sys_signals=True,
-            access_log=True, **kwargs):
+    def run(
+        self,
+        host=None,
+        port=None,
+        debug=False,
+        ssl=None,
+        sock=None,
+        workers=1,
+        protocol=None,
+        backlog=100,
+        stop_event=None,
+        register_sys_signals=True,
+        access_log=True,
+        **kwargs
+    ):
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
@@ -692,7 +855,7 @@ class Sanic:
         # Default auto_reload to false
         auto_reload = False
         # If debug is set, default it to true (unless on windows)
-        if debug and os.name == 'posix':
+        if debug and os.name == "posix":
             auto_reload = True
         # Allow for overriding either of the defaults
         auto_reload = kwargs.get("auto_reload", auto_reload)
@@ -701,30 +864,43 @@ class Sanic:
             host, port = host or "127.0.0.1", port or 8000
 
         if protocol is None:
-            protocol = (WebSocketProtocol if self.websocket_enabled
-                        else HttpProtocol)
+            protocol = (
+                WebSocketProtocol if self.websocket_enabled else HttpProtocol
+            )
         if stop_event is not None:
             if debug:
-                warnings.simplefilter('default')
-            warnings.warn("stop_event will be removed from future versions.",
-                          DeprecationWarning)
+                warnings.simplefilter("default")
+            warnings.warn(
+                "stop_event will be removed from future versions.",
+                DeprecationWarning,
+            )
         # compatibility old access_log params
         self.config.ACCESS_LOG = access_log
         server_settings = self._helper(
-            host=host, port=port, debug=debug, ssl=ssl, sock=sock,
-            workers=workers, protocol=protocol, backlog=backlog,
-            register_sys_signals=register_sys_signals, auto_reload=auto_reload)
+            host=host,
+            port=port,
+            debug=debug,
+            ssl=ssl,
+            sock=sock,
+            workers=workers,
+            protocol=protocol,
+            backlog=backlog,
+            register_sys_signals=register_sys_signals,
+            auto_reload=auto_reload,
+        )
 
         try:
             self.is_running = True
             if workers == 1:
-                if auto_reload and os.name != 'posix':
+                if auto_reload and os.name != "posix":
                     # This condition must be removed after implementing
                     # auto reloader for other operating systems.
                     raise NotImplementedError
 
-                if auto_reload and \
-                        os.environ.get('SANIC_SERVER_RUNNING') != 'true':
+                if (
+                    auto_reload
+                    and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+                ):
                     reloader_helpers.watchdog(2)
                 else:
                     serve(**server_settings)
@@ -732,7 +908,8 @@ class Sanic:
                 serve_multiple(server_settings, workers)
         except BaseException:
             error_logger.exception(
-                'Experienced exception while trying to serve')
+                "Experienced exception while trying to serve"
+            )
             raise
         finally:
             self.is_running = False
@@ -746,10 +923,18 @@ class Sanic:
         """gunicorn compatibility"""
         return self
 
-    async def create_server(self, host=None, port=None, debug=False,
-                            ssl=None, sock=None, protocol=None,
-                            backlog=100, stop_event=None,
-                            access_log=True):
+    async def create_server(
+        self,
+        host=None,
+        port=None,
+        debug=False,
+        ssl=None,
+        sock=None,
+        protocol=None,
+        backlog=100,
+        stop_event=None,
+        access_log=True,
+    ):
         """Asynchronous version of `run`.
 
         NOTE: This does not support multiprocessing and is not the preferred
@@ -760,24 +945,34 @@ class Sanic:
             host, port = host or "127.0.0.1", port or 8000
 
         if protocol is None:
-            protocol = (WebSocketProtocol if self.websocket_enabled
-                        else HttpProtocol)
+            protocol = (
+                WebSocketProtocol if self.websocket_enabled else HttpProtocol
+            )
         if stop_event is not None:
             if debug:
-                warnings.simplefilter('default')
-            warnings.warn("stop_event will be removed from future versions.",
-                          DeprecationWarning)
+                warnings.simplefilter("default")
+            warnings.warn(
+                "stop_event will be removed from future versions.",
+                DeprecationWarning,
+            )
         # compatibility old access_log params
         self.config.ACCESS_LOG = access_log
         server_settings = self._helper(
-            host=host, port=port, debug=debug, ssl=ssl, sock=sock,
-            loop=get_event_loop(), protocol=protocol,
-            backlog=backlog, run_async=True)
+            host=host,
+            port=port,
+            debug=debug,
+            ssl=ssl,
+            sock=sock,
+            loop=get_event_loop(),
+            protocol=protocol,
+            backlog=backlog,
+            run_async=True,
+        )
 
         # Trigger before_start events
         await self.trigger_events(
-            server_settings.get('before_start', []),
-            server_settings.get('loop')
+            server_settings.get("before_start", []),
+            server_settings.get("loop"),
         )
 
         return await serve(**server_settings)
@@ -814,15 +1009,27 @@ class Sanic:
                     break
         return response
 
-    def _helper(self, host=None, port=None, debug=False,
-                ssl=None, sock=None, workers=1, loop=None,
-                protocol=HttpProtocol, backlog=100, stop_event=None,
-                register_sys_signals=True, run_async=False, auto_reload=False):
+    def _helper(
+        self,
+        host=None,
+        port=None,
+        debug=False,
+        ssl=None,
+        sock=None,
+        workers=1,
+        loop=None,
+        protocol=HttpProtocol,
+        backlog=100,
+        stop_event=None,
+        register_sys_signals=True,
+        run_async=False,
+        auto_reload=False,
+    ):
         """Helper function used by `run` and `create_server`."""
         if isinstance(ssl, dict):
             # try common aliaseses
-            cert = ssl.get('cert') or ssl.get('certificate')
-            key = ssl.get('key') or ssl.get('keyfile')
+            cert = ssl.get("cert") or ssl.get("certificate")
+            key = ssl.get("key") or ssl.get("keyfile")
             if cert is None or key is None:
                 raise ValueError("SSLContext or certificate and key required.")
             context = create_default_context(purpose=Purpose.CLIENT_AUTH)
@@ -830,40 +1037,42 @@ class Sanic:
             ssl = context
         if stop_event is not None:
             if debug:
-                warnings.simplefilter('default')
-            warnings.warn("stop_event will be removed from future versions.",
-                          DeprecationWarning)
+                warnings.simplefilter("default")
+            warnings.warn(
+                "stop_event will be removed from future versions.",
+                DeprecationWarning,
+            )
 
         self.error_handler.debug = debug
         self.debug = debug
 
         server_settings = {
-            'protocol': protocol,
-            'request_class': self.request_class,
-            'is_request_stream': self.is_request_stream,
-            'router': self.router,
-            'host': host,
-            'port': port,
-            'sock': sock,
-            'ssl': ssl,
-            'signal': Signal(),
-            'debug': debug,
-            'request_handler': self.handle_request,
-            'error_handler': self.error_handler,
-            'request_timeout': self.config.REQUEST_TIMEOUT,
-            'response_timeout': self.config.RESPONSE_TIMEOUT,
-            'keep_alive_timeout': self.config.KEEP_ALIVE_TIMEOUT,
-            'request_max_size': self.config.REQUEST_MAX_SIZE,
-            'keep_alive': self.config.KEEP_ALIVE,
-            'loop': loop,
-            'register_sys_signals': register_sys_signals,
-            'backlog': backlog,
-            'access_log': self.config.ACCESS_LOG,
-            'websocket_max_size': self.config.WEBSOCKET_MAX_SIZE,
-            'websocket_max_queue': self.config.WEBSOCKET_MAX_QUEUE,
-            'websocket_read_limit': self.config.WEBSOCKET_READ_LIMIT,
-            'websocket_write_limit': self.config.WEBSOCKET_WRITE_LIMIT,
-            'graceful_shutdown_timeout': self.config.GRACEFUL_SHUTDOWN_TIMEOUT
+            "protocol": protocol,
+            "request_class": self.request_class,
+            "is_request_stream": self.is_request_stream,
+            "router": self.router,
+            "host": host,
+            "port": port,
+            "sock": sock,
+            "ssl": ssl,
+            "signal": Signal(),
+            "debug": debug,
+            "request_handler": self.handle_request,
+            "error_handler": self.error_handler,
+            "request_timeout": self.config.REQUEST_TIMEOUT,
+            "response_timeout": self.config.RESPONSE_TIMEOUT,
+            "keep_alive_timeout": self.config.KEEP_ALIVE_TIMEOUT,
+            "request_max_size": self.config.REQUEST_MAX_SIZE,
+            "keep_alive": self.config.KEEP_ALIVE,
+            "loop": loop,
+            "register_sys_signals": register_sys_signals,
+            "backlog": backlog,
+            "access_log": self.config.ACCESS_LOG,
+            "websocket_max_size": self.config.WEBSOCKET_MAX_SIZE,
+            "websocket_max_queue": self.config.WEBSOCKET_MAX_QUEUE,
+            "websocket_read_limit": self.config.WEBSOCKET_READ_LIMIT,
+            "websocket_write_limit": self.config.WEBSOCKET_WRITE_LIMIT,
+            "graceful_shutdown_timeout": self.config.GRACEFUL_SHUTDOWN_TIMEOUT,
         }
 
         # -------------------------------------------- #
@@ -871,10 +1080,10 @@ class Sanic:
         # -------------------------------------------- #
 
         for event_name, settings_name, reverse in (
-                ("before_server_start", "before_start", False),
-                ("after_server_start", "after_start", False),
-                ("before_server_stop", "before_stop", True),
-                ("after_server_stop", "after_stop", True),
+            ("before_server_start", "before_start", False),
+            ("after_server_start", "after_start", False),
+            ("before_server_stop", "before_stop", True),
+            ("after_server_stop", "after_stop", True),
         ):
             listeners = self.listeners[event_name].copy()
             if reverse:
@@ -886,18 +1095,20 @@ class Sanic:
         if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
 
-        if self.config.LOGO is not None and \
-                os.environ.get('SANIC_SERVER_RUNNING') != 'true':
+        if (
+            self.config.LOGO is not None
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):
             logger.debug(self.config.LOGO)
 
         if run_async:
-            server_settings['run_async'] = True
+            server_settings["run_async"] = True
 
         # Serve
-        if host and port and os.environ.get('SANIC_SERVER_RUNNING') != 'true':
+        if host and port and os.environ.get("SANIC_SERVER_RUNNING") != "true":
             proto = "http"
             if ssl is not None:
                 proto = "https"
-            logger.info('Goin\' Fast @ {}://{}:{}'.format(proto, host, port))
+            logger.info("Goin' Fast @ {}://{}:{}".format(proto, host, port))
 
         return server_settings

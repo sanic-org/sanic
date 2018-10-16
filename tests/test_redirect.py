@@ -1,5 +1,4 @@
 import pytest
-import json
 from urllib.parse import quote
 
 from sanic.response import text, redirect

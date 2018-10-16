@@ -18,7 +18,7 @@ def _iter_module_files():
     for module in list(sys.modules.values()):
         if module is None:
             continue
-        filename = getattr(module, '__file__', None)
+        filename = getattr(module, "__file__", None)
         if filename:
             old = None
             while not os.path.isfile(filename):
@@ -27,7 +27,7 @@ def _iter_module_files():
                 if filename == old:
                     break
             else:
-                if filename[-4:] in ('.pyc', '.pyo'):
+                if filename[-4:] in (".pyc", ".pyo"):
                     filename = filename[:-1]
                 yield filename
 
@@ -45,11 +45,13 @@ def restart_with_reloader():
     """
     args = _get_args_for_reloading()
     new_environ = os.environ.copy()
-    new_environ['SANIC_SERVER_RUNNING'] = 'true'
-    cmd = ' '.join(args)
+    new_environ["SANIC_SERVER_RUNNING"] = "true"
+    cmd = " ".join(args)
     worker_process = Process(
-                            target=subprocess.call, args=(cmd,),
-                            kwargs=dict(shell=True, env=new_environ))
+        target=subprocess.call,
+        args=(cmd,),
+        kwargs=dict(shell=True, env=new_environ),
+    )
     worker_process.start()
     return worker_process
 
@@ -67,8 +69,10 @@ def kill_process_children_unix(pid):
         children_list_pid = children_list_file.read().split()
 
     for child_pid in children_list_pid:
-        children_proc_path = "/proc/%s/task/%s/children" % \
-            (child_pid, child_pid)
+        children_proc_path = "/proc/%s/task/%s/children" % (
+            child_pid,
+            child_pid,
+        )
         if not os.path.isfile(children_proc_path):
             continue
         with open(children_proc_path) as children_list_file_2:
@@ -90,7 +94,7 @@ def kill_process_children_osx(pid):
     :param pid: PID of parent process (process ID)
     :return: Nothing
     """
-    subprocess.run(['pkill', '-P', str(pid)])
+    subprocess.run(["pkill", "-P", str(pid)])
 
 
 def kill_process_children(pid):
@@ -99,12 +103,12 @@ def kill_process_children(pid):
     :param pid: PID of parent process (process ID)
     :return: Nothing
     """
-    if sys.platform == 'darwin':
+    if sys.platform == "darwin":
         kill_process_children_osx(pid)
-    elif sys.platform == 'linux':
+    elif sys.platform == "linux":
         kill_process_children_unix(pid)
     else:
-        pass                    # should signal error here
+        pass  # should signal error here
 
 
 def kill_program_completly(proc):
@@ -127,9 +131,11 @@ def watchdog(sleep_interval):
     mtimes = {}
     worker_process = restart_with_reloader()
     signal.signal(
-        signal.SIGTERM, lambda *args: kill_program_completly(worker_process))
+        signal.SIGTERM, lambda *args: kill_program_completly(worker_process)
+    )
     signal.signal(
-        signal.SIGINT, lambda *args: kill_program_completly(worker_process))
+        signal.SIGINT, lambda *args: kill_program_completly(worker_process)
+    )
     while True:
         for filename in _iter_module_files():
             try:

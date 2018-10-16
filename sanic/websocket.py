@@ -6,11 +6,16 @@ from websockets import ConnectionClosed  # noqa
 
 
 class WebSocketProtocol(HttpProtocol):
-    def __init__(self, *args, websocket_timeout=10,
-                 websocket_max_size=None,
-                 websocket_max_queue=None,
-                 websocket_read_limit=2 ** 16,
-                 websocket_write_limit=2 ** 16, **kwargs):
+    def __init__(
+        self,
+        *args,
+        websocket_timeout=10,
+        websocket_max_size=None,
+        websocket_max_queue=None,
+        websocket_read_limit=2 ** 16,
+        websocket_write_limit=2 ** 16,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.websocket = None
         self.websocket_timeout = websocket_timeout
@@ -63,24 +68,26 @@ class WebSocketProtocol(HttpProtocol):
             key = handshake.check_request(request.headers)
             handshake.build_response(headers, key)
         except InvalidHandshake:
-            raise InvalidUsage('Invalid websocket request')
+            raise InvalidUsage("Invalid websocket request")
 
         subprotocol = None
-        if subprotocols and 'Sec-Websocket-Protocol' in request.headers:
+        if subprotocols and "Sec-Websocket-Protocol" in request.headers:
             # select a subprotocol
-            client_subprotocols = [p.strip() for p in request.headers[
-                'Sec-Websocket-Protocol'].split(',')]
+            client_subprotocols = [
+                p.strip()
+                for p in request.headers["Sec-Websocket-Protocol"].split(",")
+            ]
             for p in client_subprotocols:
                 if p in subprotocols:
                     subprotocol = p
-                    headers['Sec-Websocket-Protocol'] = subprotocol
+                    headers["Sec-Websocket-Protocol"] = subprotocol
                     break
 
         # write the 101 response back to the client
-        rv = b'HTTP/1.1 101 Switching Protocols\r\n'
+        rv = b"HTTP/1.1 101 Switching Protocols\r\n"
         for k, v in headers.items():
-            rv += k.encode('utf-8') + b': ' + v.encode('utf-8') + b'\r\n'
-        rv += b'\r\n'
+            rv += k.encode("utf-8") + b": " + v.encode("utf-8") + b"\r\n"
+        rv += b"\r\n"
         request.transport.write(rv)
 
         # hook up the websocket protocol
@@ -89,7 +96,7 @@ class WebSocketProtocol(HttpProtocol):
             max_size=self.websocket_max_size,
             max_queue=self.websocket_max_queue,
             read_limit=self.websocket_read_limit,
-            write_limit=self.websocket_write_limit
+            write_limit=self.websocket_write_limit,
         )
         self.websocket.subprotocol = subprotocol
         self.websocket.connection_made(request.transport)

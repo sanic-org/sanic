@@ -1,7 +1,7 @@
 Sanic
 =====
 
-|Join the chat at https://gitter.im/sanic-python/Lobby| |Build Status| |Codecov| |PyPI| |PyPI version|
+|Join the chat at https://gitter.im/sanic-python/Lobby| |Build Status| |Codecov| |PyPI| |PyPI version| |Code style black|
 
 Sanic is a Flask-like Python 3.5+ web server that's written to go fast.  It's based on the work done by the amazing folks at magicstack, and was inspired by `this article <https://magic.io/blog/uvloop-blazing-fast-python-networking/>`_.
 
@@ -57,7 +57,8 @@ Documentation
    :target: https://pypi.python.org/pypi/sanic/
 .. |PyPI version| image:: https://img.shields.io/pypi/pyversions/sanic.svg
    :target: https://pypi.python.org/pypi/sanic/
-   
+.. |Code style black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
    
 Questions and Discussion
 ------------------------

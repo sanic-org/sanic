@@ -8,7 +8,7 @@ A list of Sanic extensions created by the community.
 - [Compress](https://github.com/subyraman/sanic_compress): Allows you to easily gzip Sanic responses. A port of Flask-Compress.
 - [Jinja2](https://github.com/lixxu/sanic-jinja2): Support for Jinja2 template.
 - [Sanic JWT](https://github.com/ahopkins/sanic-jwt): Authentication, JWT, and permission scoping for Sanic.
-- [OpenAPI/Swagger](https://github.com/channelcat/sanic-openapi): OpenAPI support, plus a Swagger UI.
+- [OpenAPI/Swagger](https://github.com/abatilo/sanic-swagger): Document your Sanic API with OpenAPI with a swagger UI (and attrs!)
 - [Pagination](https://github.com/lixxu/python-paginate): Simple pagination support.
 - [Motor](https://github.com/lixxu/sanic-motor): Simple motor wrapper.
 - [Sanic CRUD](https://github.com/Typhon66/sanic_crud): CRUD REST API generation with peewee models.

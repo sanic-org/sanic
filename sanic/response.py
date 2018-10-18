@@ -2,16 +2,17 @@ from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
 
+from aiofiles import open as open_async
+from multidict import CIMultiDict
+
+from sanic.cookies import CookieJar
+from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
+
+
 try:
     from ujson import dumps as json_dumps
 except BaseException:
     from json import dumps as json_dumps
-
-from aiofiles import open as open_async
-from multidict import CIMultiDict
-
-from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
-from sanic.cookies import CookieJar
 
 
 class BaseHTTPResponse:

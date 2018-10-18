@@ -3,6 +3,7 @@ from collections import defaultdict, namedtuple
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
 
+
 FutureRoute = namedtuple(
     "Route",
     [

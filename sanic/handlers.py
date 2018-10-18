@@ -1,20 +1,21 @@
 import sys
+
 from traceback import extract_tb, format_exc
 
 from sanic.exceptions import (
-    ContentRangeError,
-    HeaderNotFound,
     INTERNAL_SERVER_ERROR_HTML,
-    InvalidRangeType,
-    SanicException,
+    TRACEBACK_BORDER,
     TRACEBACK_LINE_HTML,
     TRACEBACK_STYLE,
     TRACEBACK_WRAPPER_HTML,
     TRACEBACK_WRAPPER_INNER_HTML,
-    TRACEBACK_BORDER,
+    ContentRangeError,
+    HeaderNotFound,
+    InvalidRangeType,
+    SanicException,
 )
 from sanic.log import logger
-from sanic.response import text, html
+from sanic.response import html, text
 
 
 class ErrorHandler:

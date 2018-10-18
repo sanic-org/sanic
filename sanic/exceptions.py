@@ -1,5 +1,6 @@
 from sanic.helpers import STATUS_CODES
 
+
 TRACEBACK_STYLE = """
     <style>
         body {

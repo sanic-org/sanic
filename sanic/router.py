@@ -1,12 +1,14 @@
 import re
 import uuid
+
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from functools import lru_cache
 from urllib.parse import unquote
 
-from sanic.exceptions import NotFound, MethodNotSupported
+from sanic.exceptions import MethodNotSupported, NotFound
 from sanic.views import CompositionView
+
 
 Route = namedtuple(
     "Route", ["handler", "methods", "pattern", "parameters", "name", "uri"]

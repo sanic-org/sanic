@@ -1,29 +1,31 @@
-import os
 import logging
 import logging.config
+import os
 import re
 import warnings
-from asyncio import get_event_loop, ensure_future, CancelledError
-from collections import deque, defaultdict
+
+from asyncio import CancelledError, ensure_future, get_event_loop
+from collections import defaultdict, deque
 from functools import partial
 from inspect import getmodulename, isawaitable, signature, stack
+from ssl import Purpose, create_default_context
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
-from ssl import create_default_context, Purpose
+
+import sanic.reloader_helpers as reloader_helpers
 
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import ServerError, URLBuildError, SanicException
+from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
-from sanic.log import logger, error_logger, LOGGING_CONFIG_DEFAULTS
+from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import serve, serve_multiple, HttpProtocol, Signal
+from sanic.server import HttpProtocol, Signal, serve, serve_multiple
 from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
-from sanic.websocket import WebSocketProtocol, ConnectionClosed
-import sanic.reloader_helpers as reloader_helpers
+from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic:

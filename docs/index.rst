@@ -21,6 +21,7 @@ Guides
    sanic/streaming
    sanic/class_based_views
    sanic/custom_protocol
+   sanic/sockets
    sanic/ssl
    sanic/logging
    sanic/testing

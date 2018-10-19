@@ -2,6 +2,7 @@ aiofiles
 aiohttp>=2.3.0,<=3.2.1
 chardet<=2.3.0
 beautifulsoup4
+black==18.9b0
 coverage
 httptools>=0.0.10
 flake8

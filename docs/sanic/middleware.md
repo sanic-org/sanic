@@ -53,6 +53,25 @@ The above code will apply the two middleware in order. First, the middleware
 header for preventing Cross-Site-Scripting (XSS) attacks. These two functions
 are invoked *after* a user function returns a response.
 
+## Modifying the request parameters
+
+Middleware can also be used to make modifications to the matched request parameters. The matched request parameters can be accessed as `request.match_info`, and can also be modified before you access it in your view.
+
+```
+@app.middleware('request')
+async def replace_kwargs(request):
+    request.match_info = {
+        k: v.replace('-', '_')
+        for k, v in request.match_info.items()
+    }
+
+@app.route('/tag/<tag>')
+async def tag_handler(request, tag):
+    return text('Tag - {}'.format(tag))
+```
+
+In the above example, if you were to access `/tag/foo-bar`, it would translate the `tag` parameter to `foo_bar` as the matched value.
+
 ## Responding early
 
 If middleware returns a `HTTPResponse` object, the request will stop processing
@@ -79,7 +98,7 @@ If you want to execute startup/teardown code as your server starts or closes, yo
 - `before_server_stop`
 - `after_server_stop`
 
-These listeners are implemented as decorators on functions which accept the app object as well as the asyncio loop. 
+These listeners are implemented as decorators on functions which accept the app object as well as the asyncio loop.
 
 For example:
 
@@ -101,16 +120,16 @@ async def close_db(app, loop):
     await app.db.close()
 ```
 
-It's also possible to register a listener using the `register_listener` method. 
+It's also possible to register a listener using the `register_listener` method.
 This may be useful if you define your listeners in another module besides
 the one you instantiate your app in.
 
 ```python
 app = Sanic()
-    
+
 async def setup_db(app, loop):
     app.db = await db_setup()
-    
+
 app.register_listener(setup_db, 'before_server_start')
 
 ```

@@ -68,6 +68,7 @@ def test_middleware_response_exception(app):
     assert response.text == 'OK'
     assert result['status_code'] == 404
 
+
 def test_middleware_override_request(app):
 
     @app.middleware
@@ -134,4 +135,30 @@ def test_middleware_order(app):
     request, response = app.test_client.get('/')
 
     assert response.status == 200
-    assert order == [1,2,3,4,5,6]
+    assert order == [1, 2, 3, 4, 5, 6]
+
+
+def test_middleware_override_match_info(app):
+
+    @app.route('/<info>')
+    async def handler(request, info):
+        return text(info)
+
+    request, response = app.test_client.get('/foo-bar')
+
+    assert request._match_info is None
+    assert response.status == 200
+    assert response.text == 'foo-bar'
+
+    @app.middleware('request')
+    async def replace_kwargs(request):
+        request.match_info = {
+            k: v.replace('-', '_')
+            for k, v in request.match_info.items()
+        }
+
+    request, response = app.test_client.get('/foo-bar')
+
+    assert request._match_info is not None
+    assert response.status == 200
+    assert response.text == 'foo_bar'

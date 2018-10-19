@@ -391,15 +391,19 @@ class Router:
         """
         # No virtual hosts specified; default behavior
         if not self.hosts:
-            return self._get(request.path, request.method, "")
+            handler, args, kwargs, uri = self._get(request.path, request.method, "")
         # virtual hosts specified; try to match route to the host header
         try:
-            return self._get(
+            handler, args, kwargs, uri = self._get(
                 request.path, request.method, request.headers.get("Host", "")
             )
         # try default hosts
         except NotFound:
-            return self._get(request.path, request.method, "")
+            handler, args, kwargs, uri = self._get(request.path, request.method, "")
+
+        kwargs = kwargs if request._match_info is None else request._match_info
+
+        return handler, args, kwargs, uri
 
     def get_supported_methods(self, url):
         """Get a list of supported methods for a url and optional host.

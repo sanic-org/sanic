@@ -67,6 +67,7 @@ class Request(dict):
         "_port",
         "__weakref__",
         "raw_url",
+        "_match_info",
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -89,6 +90,7 @@ class Request(dict):
         self.uri_template = None
         self._cookies = None
         self.stream = None
+        self._match_info = None
 
     def __repr__(self):
         if self.method is None or not self.path:
@@ -269,7 +271,13 @@ class Request(dict):
     @property
     def match_info(self):
         """return matched info after resolving route"""
+        if self._match_info is not None:
+            return self._match_info
         return self.app.router.get(self)[2]
+
+    @match_info.setter
+    def match_info(self, value):
+        self._match_info = value
 
     @property
     def path(self):

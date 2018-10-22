@@ -19,15 +19,15 @@ def redirect_app(app):
         return text('OK')
 
     @app.route('/1')
-    def handler(request):
+    def handler1(request):
         return redirect('/2')
 
     @app.route('/2')
-    def handler(request):
+    def handler2(request):
         return redirect('/3')
 
     @app.route('/3')
-    def handler(request):
+    def handler3(request):
         return text('OK')
 
     @app.route('/redirect_with_header_injection')

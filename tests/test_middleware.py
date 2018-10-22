@@ -11,11 +11,11 @@ def test_middleware_request(app):
     results = []
 
     @app.middleware
-    async def handler(request):
+    async def handler1(request):
         results.append(request)
 
     @app.route('/')
-    async def handler(request):
+    async def handler2(request):
         return text('OK')
 
     request, response = app.test_client.get('/')
@@ -28,7 +28,7 @@ def test_middleware_response(app):
     results = []
 
     @app.middleware('request')
-    async def process_response(request):
+    async def process_request(request):
         results.append(request)
 
     @app.middleware('response')
@@ -67,6 +67,7 @@ def test_middleware_response_exception(app):
     request, response = app.test_client.get('/page_not_found')
     assert response.text == 'OK'
     assert result['status_code'] == 404
+
 
 def test_middleware_override_request(app):
 
@@ -134,4 +135,4 @@ def test_middleware_order(app):
     request, response = app.test_client.get('/')
 
     assert response.status == 200
-    assert order == [1,2,3,4,5,6]
+    assert order == [1, 2, 3, 4, 5, 6]

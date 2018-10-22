@@ -3,6 +3,7 @@ import asyncio
 
 def test_bad_request_response(app):
     lines = []
+
     @app.listener('after_server_start')
     async def _request(sanic, loop):
         connect = asyncio.open_connection('127.0.0.1', 42101)

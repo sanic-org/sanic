@@ -64,12 +64,12 @@ def test_shorthand_routes_multiple(app):
 def test_route_strict_slash(app):
 
     @app.get('/get', strict_slashes=True)
-    def handler(request):
+    def handler1(request):
         assert request.stream is None
         return text('OK')
 
     @app.post('/post/', strict_slashes=True)
-    def handler(request):
+    def handler2(request):
         assert request.stream is None
         return text('OK')
 
@@ -133,11 +133,11 @@ def test_route_strict_slash_default_value_can_be_overwritten():
 def test_route_slashes_overload(app):
 
     @app.get('/hello/')
-    def handler(request):
+    def handler_get(request):
         return text('OK')
 
     @app.post('/hello/')
-    def handler(request):
+    def handler_post(request):
         return text('OK')
 
     request, response = app.test_client.get('/hello')
@@ -408,7 +408,8 @@ def test_dynamic_route_uuid(app):
         results.append(unique_id)
         return text('OK')
 
-    request, response = app.test_client.get('/quirky/123e4567-e89b-12d3-a456-426655440000')
+    url = '/quirky/123e4567-e89b-12d3-a456-426655440000'
+    request, response = app.test_client.get(url)
     assert response.text == 'OK'
     assert type(results[0]) is uuid.UUID
 
@@ -532,11 +533,11 @@ def test_route_duplicate(app):
 
     with pytest.raises(RouteExists):
         @app.route('/test/<dynamic>/')
-        async def handler1(request, dynamic):
+        async def handler3(request, dynamic):
             pass
 
         @app.route('/test/<dynamic>/')
-        async def handler2(request, dynamic):
+        async def handler4(request, dynamic):
             pass
 
 
@@ -882,12 +883,12 @@ def test_unmergeable_overload_routes(app):
     assert response.text == 'OK1'
 
     @app.route('/overload_part', methods=['GET'])
-    async def handler1(request):
+    async def handler3(request):
         return text('OK1')
 
     with pytest.raises(RouteExists):
         @app.route('/overload_part')
-        async def handler2(request):
+        async def handler4(request):
             return text('Duplicated')
 
     request, response = app.test_client.get('/overload_part')

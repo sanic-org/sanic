@@ -97,7 +97,7 @@ def test_json(app):
 
     results = json_loads(response.text)
 
-    assert results.get('test') == True
+    assert results.get('test') is True
 
 
 def test_empty_json(app):
@@ -278,22 +278,23 @@ def test_post_form_urlencoded(app):
     payload = 'test=OK'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-    request, response = app.test_client.post('/', data=payload, headers=headers)
+    request, response = app.test_client.post('/', data=payload,
+                                             headers=headers)
 
     assert request.form.get('test') == 'OK'
 
 
 @pytest.mark.parametrize(
     'payload', [
-        '------sanic\r\n' \
-        'Content-Disposition: form-data; name="test"\r\n' \
-        '\r\n' \
-        'OK\r\n' \
+        '------sanic\r\n'
+        'Content-Disposition: form-data; name="test"\r\n'
+        '\r\n'
+        'OK\r\n'
         '------sanic--\r\n',
-        '------sanic\r\n' \
-        'content-disposition: form-data; name="test"\r\n' \
-        '\r\n' \
-        'OK\r\n' \
+        '------sanic\r\n'
+        'content-disposition: form-data; name="test"\r\n'
+        '\r\n'
+        'OK\r\n'
         '------sanic--\r\n',
     ])
 def test_post_form_multipart_form_data(app, payload):

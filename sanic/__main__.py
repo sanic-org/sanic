@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 from importlib import import_module
 
-from sanic.log import logger
 from sanic.app import Sanic
+from sanic.log import logger
+
 
 if __name__ == "__main__":
     parser = ArgumentParser(prog="sanic")

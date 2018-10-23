@@ -1,6 +1,7 @@
 from json import JSONDecodeError
-from sanic.log import logger
+
 from sanic.exceptions import MethodNotSupported
+from sanic.log import logger
 from sanic.response import text
 
 

@@ -1,9 +1,15 @@
-import os
-import sys
-import signal
 import asyncio
 import logging
+import os
+import signal
+import sys
 import traceback
+
+import gunicorn.workers.base as base
+
+from sanic.server import HttpProtocol, Signal, serve, trigger_events
+from sanic.websocket import WebSocketProtocol
+
 
 try:
     import ssl
@@ -16,10 +22,6 @@ try:
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
-import gunicorn.workers.base as base
-
-from sanic.server import trigger_events, serve, HttpProtocol, Signal
-from sanic.websocket import WebSocketProtocol
 
 
 class GunicornWorker(base.Worker):

@@ -1,10 +1,16 @@
-import sys
 import json
+import sys
+
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
-from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
+
+from httptools import parse_url
+
+from sanic.exceptions import InvalidUsage
+from sanic.log import error_logger, logger
+
 
 try:
     from ujson import loads as json_loads
@@ -18,8 +24,6 @@ except ImportError:
     else:
         json_loads = json.loads
 
-from sanic.exceptions import InvalidUsage
-from sanic.log import error_logger, logger
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 

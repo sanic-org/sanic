@@ -1,9 +1,10 @@
 import os
-import sys
 import signal
 import subprocess
-from time import sleep
+import sys
+
 from multiprocessing import Process
+from time import sleep
 
 
 def _iter_module_files():

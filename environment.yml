@@ -17,5 +17,5 @@ dependencies:
   - aiofiles>=0.3.0
   - websockets>=6.0
   - sphinxcontrib-asyncio>=0.2.0
-  - multidict>=4.0<5.0
+  - multidict>=4.0,<5.0
   - https://github.com/channelcat/docutils-fork/zipball/master

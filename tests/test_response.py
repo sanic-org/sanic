@@ -40,7 +40,7 @@ async def sample_streaming_fn(response):
 def test_method_not_allowed(app):
 
     @app.get('/')
-    async def test(request):
+    async def test_get(request):
         return response.json({'hello': 'world'})
 
     request, response = app.test_client.head('/')
@@ -49,9 +49,8 @@ def test_method_not_allowed(app):
     request, response = app.test_client.post('/')
     assert response.headers['Allow'] == 'GET'
 
-
     @app.post('/')
-    async def test(request):
+    async def test_post(request):
         return response.json({'hello': 'world'})
 
     request, response = app.test_client.head('/')
@@ -239,7 +238,8 @@ def get_file_content(static_file_directory, file_name):
         return file.read()
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
 @pytest.mark.parametrize('status', [200, 401])
 def test_file_response(app, file_name, static_file_directory, status):
 
@@ -256,9 +256,15 @@ def test_file_response(app, file_name, static_file_directory, status):
     assert 'Content-Disposition' not in response.headers
 
 
-@pytest.mark.parametrize('source,dest', [
-    ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
-def test_file_response_custom_filename(app, source, dest, static_file_directory):
+@pytest.mark.parametrize(
+    'source,dest',
+    [
+        ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'),
+        ('python.png', 'logo.png')
+    ]
+)
+def test_file_response_custom_filename(app, source, dest,
+                                       static_file_directory):
 
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
@@ -269,7 +275,8 @@ def test_file_response_custom_filename(app, source, dest, static_file_directory)
     request, response = app.test_client.get('/files/{}'.format(source))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
+    assert response.headers['Content-Disposition'] == \
+        'attachment; filename="{}"'.format(dest)
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
@@ -300,7 +307,8 @@ def test_file_head_response(app, file_name, static_file_directory):
                    get_file_content(static_file_directory, file_name))
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
 def test_file_stream_response(app, file_name, static_file_directory):
 
     @app.route('/files/<filename>', methods=['GET'])
@@ -316,9 +324,15 @@ def test_file_stream_response(app, file_name, static_file_directory):
     assert 'Content-Disposition' not in response.headers
 
 
-@pytest.mark.parametrize('source,dest', [
-    ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
-def test_file_stream_response_custom_filename(app, source, dest, static_file_directory):
+@pytest.mark.parametrize(
+    'source,dest',
+    [
+        ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'),
+        ('python.png', 'logo.png')
+    ]
+)
+def test_file_stream_response_custom_filename(app, source, dest,
+                                              static_file_directory):
 
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
@@ -329,7 +343,8 @@ def test_file_stream_response_custom_filename(app, source, dest, static_file_dir
     request, response = app.test_client.get('/files/{}'.format(source))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
+    assert response.headers['Content-Disposition'] == \
+        'attachment; filename="{}"'.format(dest)
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
@@ -350,8 +365,10 @@ def test_file_stream_head_response(app, file_name, static_file_directory):
                 headers=headers,
                 content_type=guess_type(file_path)[0] or 'text/plain')
         else:
-            return file_stream(file_path, chunk_size=32, headers=headers,
-                               mime_type=guess_type(file_path)[0] or 'text/plain')
+            return file_stream(
+                file_path, chunk_size=32, headers=headers,
+                mime_type=guess_type(file_path)[0] or 'text/plain'
+            )
 
     request, response = app.test_client.head('/files/{}'.format(file_name))
     assert response.status == 200

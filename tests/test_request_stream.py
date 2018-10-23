@@ -181,7 +181,8 @@ def test_request_stream_handle_exception(app):
     # 405
     request, response = app.test_client.get('/post/random_id', data=data)
     assert response.status == 405
-    assert response.text == 'Error: Method GET not allowed for URL /post/random_id'
+    assert response.text == 'Error: Method GET not allowed for URL' \
+        ' /post/random_id'
 
 
 def test_request_stream_blueprint(app):

@@ -140,10 +140,11 @@ class ReuseableSanicTestClient(SanicTestClient):
             if self._tcp_connector:
                 conn = self._tcp_connector
             else:
-                conn = ReuseableTCPConnector(verify_ssl=False,
-                                             loop=self._loop,
-                                             keepalive_timeout=
-                                             request_keepalive)
+                conn = ReuseableTCPConnector(
+                    verify_ssl=False,
+                    loop=self._loop,
+                    keepalive_timeout=request_keepalive
+                )
                 self._tcp_connector = conn
             session = aiohttp.ClientSession(cookies=cookies,
                                             connector=conn,

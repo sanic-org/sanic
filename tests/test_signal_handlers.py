@@ -11,11 +11,14 @@ async def stop(app, loop):
 
 calledq = Queue()
 
+
 def set_loop(app, loop):
     loop.add_signal_handler = MagicMock()
 
+
 def after(app, loop):
     calledq.put(loop.add_signal_handler.called)
+
 
 def test_register_system_signals(app):
     """Test if sanic register system signals"""
@@ -29,7 +32,7 @@ def test_register_system_signals(app):
     app.listener('after_server_stop')(after)
 
     app.run(HOST, PORT)
-    assert calledq.get() == True
+    assert calledq.get() is True
 
 
 def test_dont_register_system_signals(app):
@@ -44,4 +47,4 @@ def test_dont_register_system_signals(app):
     app.listener('after_server_stop')(after)
 
     app.run(HOST, PORT, register_sys_signals=False)
-    assert calledq.get() == False
+    assert calledq.get() is False

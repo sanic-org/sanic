@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
-from sanic import Sanic
-from sanic.response import json, text
+from sanic.response import text
 import pytest
 
 
@@ -62,6 +61,7 @@ def test_false_cookies(app, httponly, expected):
 
     assert ('HttpOnly' in response_cookies['right_back'].output()) == expected
 
+
 def test_http2_cookies(app):
 
     @app.route('/')
@@ -74,6 +74,7 @@ def test_http2_cookies(app):
 
     assert response.text == 'Cookies are: working!'
 
+
 def test_cookie_options(app):
 
     @app.route('/')
@@ -81,7 +82,8 @@ def test_cookie_options(app):
         response = text("OK")
         response.cookies['test'] = 'at you'
         response.cookies['test']['httponly'] = True
-        response.cookies['test']['expires'] = datetime.now() + timedelta(seconds=10)
+        response.cookies['test']['expires'] = (datetime.now() +
+                                               timedelta(seconds=10))
         return response
 
     request, response = app.test_client.get('/')
@@ -89,7 +91,8 @@ def test_cookie_options(app):
     response_cookies.load(response.headers.get('Set-Cookie', {}))
 
     assert response_cookies['test'].value == 'at you'
-    assert response_cookies['test']['httponly'] == True
+    assert response_cookies['test']['httponly'] is True
+
 
 def test_cookie_deletion(app):
 
@@ -107,4 +110,4 @@ def test_cookie_deletion(app):
 
     assert int(response_cookies['i_want_to_die']['max-age']) == 0
     with pytest.raises(KeyError):
-        hold_my_beer = response.cookies['i_never_existed']
+        response.cookies['i_never_existed']

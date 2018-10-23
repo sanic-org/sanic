@@ -12,8 +12,7 @@ from ssl import Purpose, create_default_context
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 
-import sanic.reloader_helpers as reloader_helpers
-
+from sanic import reloader_helpers
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError

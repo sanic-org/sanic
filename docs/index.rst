@@ -24,6 +24,8 @@ Guides
    sanic/ssl
    sanic/logging
    sanic/testing
+   sanic/debug_mode
+   sanic/versioning
    sanic/deploying
    sanic/extensions
    sanic/contributing

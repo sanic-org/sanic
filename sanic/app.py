@@ -370,8 +370,7 @@ class Sanic:
     ):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
-        :param subprotocols: optional list of strings with the supported
-                             subprotocols
+        :param subprotocols: optional list of strings with the supported subprotocols
         :param host:
         :return: decorated function
         """

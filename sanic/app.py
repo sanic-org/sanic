@@ -835,6 +835,11 @@ class Sanic:
         access_log=True,
         **kwargs
     ):
+        try:
+            assert "loop" not in kwargs
+        except AssertionError:
+            raise TypeError("loop is not a valid argument. For asynchronous support, check https://sanic.readthedocs.io/en/latest/sanic/deploying.html#asynchronous-support")
+
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 

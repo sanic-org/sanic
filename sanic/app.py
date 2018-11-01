@@ -841,7 +841,7 @@ class Sanic:
                 "change to create_server().\nSee more: "
                 "https://sanic.readthedocs.io/en/latest/sanic/deploying.html"
                 "#asynchronous-support"
-                )
+            )
 
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.

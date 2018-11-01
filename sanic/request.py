@@ -1,10 +1,16 @@
-import sys
 import json
+import sys
+
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
-from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
+
+from httptools import parse_url
+
+from sanic.exceptions import InvalidUsage
+from sanic.log import error_logger, logger
+
 
 try:
     from ujson import loads as json_loads
@@ -18,8 +24,6 @@ except ImportError:
     else:
         json_loads = json.loads
 
-from sanic.exceptions import InvalidUsage
-from sanic.log import error_logger, logger
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 
@@ -67,7 +71,6 @@ class Request(dict):
         "_port",
         "__weakref__",
         "raw_url",
-        "_match_info",
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -90,7 +93,6 @@ class Request(dict):
         self.uri_template = None
         self._cookies = None
         self.stream = None
-        self._match_info = None
 
     def __repr__(self):
         if self.method is None or not self.path:
@@ -271,13 +273,7 @@ class Request(dict):
     @property
     def match_info(self):
         """return matched info after resolving route"""
-        if self._match_info is not None:
-            return self._match_info
         return self.app.router.get(self)[2]
-
-    @match_info.setter
-    def match_info(self, value):
-        self._match_info = value
 
     @property
     def path(self):

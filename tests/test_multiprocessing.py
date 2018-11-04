@@ -69,7 +69,7 @@ def test_pickle_app(app, protocol):
 
 
 @pytest.mark.parametrize('protocol', [3, 4])
-def test_pikcle_app_with_bp(app, protocol):
+def test_pickle_app_with_bp(app, protocol):
     from sanic import Blueprint
     bp = Blueprint('test_text')
     bp.route('/')(handler)

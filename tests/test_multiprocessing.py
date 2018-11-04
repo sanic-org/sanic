@@ -1,9 +1,11 @@
 import multiprocessing
 import random
 import signal
+import pickle
 import pytest
 
 from sanic.testing import HOST, PORT
+from sanic.response import text
 
 
 @pytest.mark.skipif(
@@ -27,3 +29,54 @@ def test_multiprocessing(app):
     app.run(HOST, PORT, workers=num_workers)
 
     assert len(process_list) == num_workers
+
+
+def test_multiprocessing_with_blueprint(app):
+    from sanic import Blueprint
+    # Selects a number at random so we can spot check
+    num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
+    process_list = set()
+
+    def stop_on_alarm(*args):
+        for process in multiprocessing.active_children():
+            process_list.add(process.pid)
+            process.terminate()
+
+    signal.signal(signal.SIGALRM, stop_on_alarm)
+    signal.alarm(3)
+
+    bp = Blueprint('test_text')
+    app.blueprint(bp)
+    app.run(HOST, PORT, workers=num_workers)
+
+    assert len(process_list) == num_workers
+
+
+# this function must be outside a test function so that it can be
+# able to be pickled (local functions cannot be pickled).
+def handler(request):
+    return text('Hello')
+
+# Muliprocessing on Windows requires app to be able to be pickled
+@pytest.mark.parametrize('protocol', [3, 4])
+def test_pickle_app(app, protocol):
+    app.route('/')(handler)
+    p_app = pickle.dumps(app, protocol=protocol)
+    up_p_app = pickle.loads(p_app)
+    assert up_p_app
+    request, response = app.test_client.get('/')
+    assert response.text == 'Hello'
+
+
+@pytest.mark.parametrize('protocol', [3, 4])
+def test_pikcle_app_with_bp(app, protocol):
+    from sanic import Blueprint
+    bp = Blueprint('test_text')
+    bp.route('/')(handler)
+    app.blueprint(bp)
+    p_app = pickle.dumps(app, protocol=protocol)
+    up_p_app = pickle.loads(p_app)
+    assert up_p_app
+    request, response = app.test_client.get('/')
+    assert app.is_request_stream is False
+    assert response.text == 'Hello'

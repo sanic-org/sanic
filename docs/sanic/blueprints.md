@@ -48,7 +48,7 @@ by that blueprint. In this example, the registered routes in the `app.router`
 will look like:
 
 ```python
-[Route(handler=<function bp_root at 0x7f908382f9d8>, methods=None, pattern=re.compile('^/$'), parameters=[])]
+[Route(handler=<function bp_root at 0x7f908382f9d8>, methods=frozenset({'GET'}), pattern=re.compile('^/$'), parameters=[], name='my_blueprint.bp_root', uri='/')]
 ```
 
 ## Blueprint groups and nesting
@@ -87,7 +87,7 @@ from sanic import Blueprint
 from .static import static
 from .authors import authors
 
-content = Blueprint.group(assets, authors, url_prefix='/content')
+content = Blueprint.group(static, authors, url_prefix='/content')
 ```
 ```python
 # api/info.py
@@ -254,5 +254,3 @@ async def root(request):
 async def post_handler(request, post_id):
     return text('Post {} in Blueprint V1'.format(post_id))
 ```
-
-

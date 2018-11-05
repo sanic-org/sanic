@@ -835,6 +835,14 @@ class Sanic:
         access_log=True,
         **kwargs
     ):
+        if "loop" in kwargs:
+            raise TypeError(
+                "loop is not a valid argument. To use an existing loop, "
+                "change to create_server().\nSee more: "
+                "https://sanic.readthedocs.io/en/latest/sanic/deploying.html"
+                "#asynchronous-support"
+            )
+
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 

@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 
+from sanic.blueprint_grpoup import BlueprintGroup
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
 
@@ -78,15 +79,17 @@ class Blueprint:
             for i in nested:
                 if isinstance(i, (list, tuple)):
                     yield from chain(i)
+                elif isinstance(i, (BlueprintGroup)):
+                    yield from i.blueprints
                 else:
                     yield i
 
-        bps = []
+        bps = BlueprintGroup(url_prefix=url_prefix)
         for bp in chain(blueprints):
             if bp.url_prefix is None:
                 bp.url_prefix = ""
             bp.url_prefix = url_prefix + bp.url_prefix
-            bps.append(bp)
+            bps.blueprints = bp
         return bps
 
     def register(self, app, options):
@@ -325,6 +328,11 @@ class Blueprint:
         if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
             middleware = args[0]
             args = []
+            return register_middleware(middleware)
+        elif len(args) == 2 and len(kwargs) == 0 and callable(args[0]):
+            # This will be used in case of Blueprint Group
+            middleware = args[0]
+            args = args[1:]
             return register_middleware(middleware)
         else:
             return register_middleware

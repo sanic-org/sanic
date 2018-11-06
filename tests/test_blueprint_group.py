@@ -2,9 +2,8 @@ from pytest import raises
 
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
-from sanic.response import text, HTTPResponse
 from sanic.request import Request
-from sanic.exceptions import Unauthorized
+from sanic.response import text, HTTPResponse
 
 MIDDLEWARE_INVOKE_COUNTER = {
     'request': 0,

@@ -6,7 +6,7 @@ LOGGING_CONFIG_DEFAULTS = dict(
     version=1,
     disable_existing_loggers=False,
     loggers={
-        "root": {"level": "INFO", "handlers": ["console"]},
+        "sanic.root": {"level": "INFO", "handlers": ["console"]},
         "sanic.error": {
             "level": "INFO",
             "handlers": ["error_console"],

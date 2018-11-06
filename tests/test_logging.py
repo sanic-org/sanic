@@ -11,6 +11,7 @@ import sanic
 from sanic.response import text
 from sanic.log import LOGGING_CONFIG_DEFAULTS
 from sanic import Sanic
+from sanic.log import logger
 
 
 logging_format = '''module: %(module)s; \
@@ -46,10 +47,10 @@ def test_log(app):
 
 
 def test_logging_defaults():
-    reset_logging()
+    # reset_logging()
     app = Sanic("test_logging")
 
-    for fmt in [h.formatter for h in logging.getLogger('root').handlers]:
+    for fmt in [h.formatter for h in logging.getLogger('sanic.root').handlers]:
         assert fmt._fmt == LOGGING_CONFIG_DEFAULTS['formatters']['generic']['format']
 
     for fmt in [h.formatter for h in logging.getLogger('sanic.error').handlers]:
@@ -60,7 +61,7 @@ def test_logging_defaults():
 
 
 def test_logging_pass_customer_logconfig():
-    reset_logging()
+    # reset_logging()
 
     modified_config = LOGGING_CONFIG_DEFAULTS
     modified_config['formatters']['generic']['format'] = '%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s'
@@ -68,7 +69,7 @@ def test_logging_pass_customer_logconfig():
 
     app = Sanic("test_logging", log_config=modified_config)
 
-    for fmt in [h.formatter for h in logging.getLogger('root').handlers]:
+    for fmt in [h.formatter for h in logging.getLogger('sanic.root').handlers]:
         assert fmt._fmt == modified_config['formatters']['generic']['format']
 
     for fmt in [h.formatter for h in logging.getLogger('sanic.error').handlers]:
@@ -82,7 +83,7 @@ def test_logging_pass_customer_logconfig():
 def test_log_connection_lost(app, debug, monkeypatch):
     """ Should not log Connection lost exception on non debug """
     stream = StringIO()
-    root = logging.getLogger('root')
+    root = logging.getLogger('sanic.root')
     root.addHandler(logging.StreamHandler(stream))
     monkeypatch.setattr(sanic.server, 'logger', root)
 
@@ -102,3 +103,23 @@ def test_log_connection_lost(app, debug, monkeypatch):
         assert 'Connection lost before response written @' in log
     else:
         assert 'Connection lost before response written @' not in log
+
+
+def test_logger(caplog):
+    rand_string = str(uuid.uuid4())
+
+    app = Sanic()
+
+    @app.get('/')
+    def log_info(request):
+        logger.info(rand_string)
+        return text('hello')
+
+    with caplog.at_level(logging.INFO):
+        request, response = app.test_client.get('/')
+
+    assert caplog.record_tuples[0] == ('sanic.root', logging.INFO, 'Goin\' Fast @ http://127.0.0.1:42101')
+    assert caplog.record_tuples[1] == ('sanic.root', logging.INFO, 'http://127.0.0.1:42101/')
+    assert caplog.record_tuples[2] == ('sanic.root', logging.INFO, rand_string)
+    assert caplog.record_tuples[-1] == ('sanic.root', logging.INFO, 'Server Stopped')
+

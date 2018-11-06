@@ -9,15 +9,51 @@ A simple example using default settings would be like this:
 
 ```python
 from sanic import Sanic
+from sanic.log import logger
+from sanic.response import text
 
 app = Sanic('test')
 
 @app.route('/')
 async def test(request):
-    return response.text('Hello World!')
+    logger.info('Here is your log')
+    return text('Hello World!')
 
 if __name__ == "__main__":
   app.run(debug=True, access_log=True)
+```
+
+After the server is running, you can see some messages looks like:
+```
+[2018-11-06 21:16:53 +0800] [24622] [DEBUG]
+                 ▄▄▄▄▄
+        ▀▀▀██████▄▄▄       _______________
+      ▄▄▄▄▄  █████████▄  /                 \
+     ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
+   ▀▀█████▄▄ ▀██████▄██ | _________________/
+   ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
+        ▀▀▀▄  ▀▀███ ▀       ▄▄
+     ▄███▀▀██▄████████▄ ▄▀▀▀▀▀▀█▌
+   ██▀▄▄▄██▀▄███▀ ▀▀████      ▄██
+▄▀▀▀▄██▄▀▀▌████▒▒▒▒▒▒███     ▌▄▄▀
+▌    ▐▀████▐███▒▒▒▒▒▐██▌
+▀▄▄▄▄▀   ▀▀████▒▒▒▒▄██▀
+          ▀▀█████████▀
+        ▄▄██▀██████▀█
+      ▄██▀     ▀▀▀  █
+     ▄█             ▐▌
+ ▄▄▄▄█▌              ▀█▄▄▄▄▀▀▄
+▌     ▐                ▀▀▄▄▄▀
+ ▀▀▄▄▀
+
+[2018-11-06 21:16:53 +0800] [24622] [INFO] Goin' Fast @ http://127.0.0.1:8000
+[2018-11-06 21:16:53 +0800] [24667] [INFO] Starting worker [24667]
+```
+
+You can send a request to server and it will print the log messages:
+```
+[2018-11-06 21:18:53 +0800] [25685] [INFO] Here is your log
+[2018-11-06 21:18:53 +0800] - (sanic.access)[INFO][127.0.0.1:57038]: GET http://localhost:8000/  200 12
 ```
 
 To use your own logging config, simply use `logging.config.dictConfig`, or
@@ -49,7 +85,7 @@ By default, log_config parameter is set to use sanic.log.LOGGING_CONFIG_DEFAULTS
 
 There are three `loggers` used in sanic, and **must be defined if you want to create your own logging configuration**:
 
-- root:<br>
+- sanic.root:<br>
   Used to log internal messages.
 
 - sanic.error:<br>

@@ -1,3 +1,5 @@
+from pytest import raises
+
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import text
@@ -6,6 +8,17 @@ MIDDLEWARE_INVOKE_COUNTER = {
         'request': 0,
         'response': 0
     }
+
+
+def test_bp_group_indexing(app: Sanic):
+    blueprint_1 = Blueprint('blueprint_1', url_prefix="/bp1")
+    blueprint_2 = Blueprint('blueprint_2', url_prefix='/bp2')
+
+    group = Blueprint.group(blueprint_1, blueprint_2)
+    assert group[0] == blueprint_1
+
+    with raises(expected_exception=IndexError) as e:
+        _ = group[3]
 
 
 def test_bp_group(app: Sanic):

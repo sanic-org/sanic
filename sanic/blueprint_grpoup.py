@@ -59,6 +59,20 @@ class BlueprintGroup(object):
             self._iter_position += 1
             return self._blueprints[self._iter_position - 1]
 
+    def __getitem__(self, item):
+        """
+        This method returns a blueprint inside the group specified by
+        an index value. This will enable indexing, splice and slicing
+        of the blueprint group like we can do with regular list/tuple.
+
+        This method is provided to ensure backward compatibility with
+        any of the pre-existing usage that might break.
+
+        :param item: Index of the Blueprint item in the group
+        :return: Blueprint object
+        """
+        return self._blueprints[item]
+
     def middleware(self, *args, **kwargs):
         """
         A decorator that can be used to implement a Middleware plugin to

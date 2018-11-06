@@ -15,7 +15,7 @@ from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
-from sanic.blueprint_grpoup import BlueprintGroup
+from sanic.blueprint_group import BlueprintGroup
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError

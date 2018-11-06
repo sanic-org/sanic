@@ -1,6 +1,6 @@
 from collections import defaultdict, namedtuple
 
-from sanic.blueprint_grpoup import BlueprintGroup
+from sanic.blueprint_group import BlueprintGroup
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
 

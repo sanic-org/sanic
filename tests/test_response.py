@@ -1,20 +1,19 @@
-import sys
 import asyncio
 import inspect
 import os
-from aiofiles import os as async_os
 from mimetypes import guess_type
+from random import choice
+from unittest.mock import MagicMock
 from urllib.parse import unquote
 
 import pytest
-from random import choice
+from aiofiles import os as async_os
 
 from sanic.response import (
     HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 )
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
-from unittest.mock import MagicMock
 
 JSON_DATA = {'ok': True}
 
@@ -38,7 +37,6 @@ async def sample_streaming_fn(response):
 
 
 def test_method_not_allowed(app):
-
     @app.get('/')
     async def test_get(request):
         return response.json({'hello': 'world'})
@@ -55,12 +53,12 @@ def test_method_not_allowed(app):
 
     request, response = app.test_client.head('/')
     assert response.status == 405
-    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert set(response.headers['Allow'].split(', ')) == {'GET', 'POST'}
     assert response.headers['Content-Length'] == '0'
 
     request, response = app.test_client.patch('/')
     assert response.status == 405
-    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert set(response.headers['Allow'].split(', ')) == {'GET', 'POST'}
     assert response.headers['Content-Length'] == '0'
 
 
@@ -74,15 +72,11 @@ def test_response_header(app):
             'CONTENT-TYPE': 'application/json'
         })
 
-    is_windows = sys.platform in ['win32', 'cygwin']
     request, response = app.test_client.get('/')
     assert dict(response.headers) == {
         'Connection': 'keep-alive',
         'Keep-Alive': str(app.config.KEEP_ALIVE_TIMEOUT),
-        # response body contains an extra \r at the end if its windows
-        # TODO: this is the only place this difference shows up in our tests
-        # we should figure out a way to unify testing on both platforms
-        'Content-Length': '12' if is_windows else '11',
+        'Content-Length': '11',
         'Content-Type': 'application/json',
     }
 

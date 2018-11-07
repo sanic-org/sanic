@@ -167,17 +167,17 @@ class ContentRangeHandler:
                 )
             else:
                 # this case represents `Content-Range: bytes 5-`
-                self.end = self.total
+                self.end = self.total - 1
         else:
             if self.start is None:
                 # this case represents `Content-Range: bytes -5`
                 self.start = self.total - self.end
-                self.end = self.total
+                self.end = self.total - 1
         if self.start >= self.end:
             raise ContentRangeError(
                 "Invalid for Content Range parameters", self
             )
-        self.size = self.end - self.start
+        self.size = self.end - self.start + 1
         self.headers = {
             "Content-Range": "bytes %s-%s/%s"
             % (self.start, self.end, self.total)

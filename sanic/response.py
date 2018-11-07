@@ -302,6 +302,7 @@ async def file(
                 _range.end,
                 _range.total,
             )
+            status = 206
         else:
             out_stream = await _file.read()
 
@@ -371,6 +372,7 @@ async def file_stream(
             _range.end,
             _range.total,
         )
+        status = 206
     return StreamingHTTPResponse(
         streaming_fn=_streaming_fn,
         status=status,

@@ -81,6 +81,53 @@ def test_response_header(app):
     }
 
 
+def test_response_content_length(app):
+    @app.get("/response_with_space")
+    async def response_with_space(request):
+        return json({
+            "message": "Data",
+            "details":   "Some Details"
+        }, headers={
+            'CONTENT-TYPE': 'application/json'
+        })
+
+    @app.get("/response_without_space")
+    async def response_without_space(request):
+        return json({
+            "message":"Data",
+            "details":"Some Details"
+        }, headers={
+            'CONTENT-TYPE': 'application/json'
+        })
+
+    _, response = app.test_client.get("/response_with_space")
+    content_length_for_response_with_space = response.headers.get("Content-Length")
+
+    _, response = app.test_client.get("/response_without_space")
+    content_length_for_response_without_space = response.headers.get("Content-Length")
+
+    assert content_length_for_response_with_space == content_length_for_response_without_space
+
+    assert content_length_for_response_with_space == '43'
+
+
+def test_response_content_length_with_different_data_types(app):
+    @app.get("/")
+    async def get_data_with_different_types(request):
+        # Indentation issues in the Response is intentional. Please do not fix
+        return json({
+            'bool':  True,
+            'none':  None,
+            'string':'string',
+            'number': -1},
+            headers={
+                'CONTENT-TYPE': 'application/json'
+            })
+
+    _, response = app.test_client.get("/")
+    assert response.headers.get("Content-Length") == '55'
+
+
 @pytest.fixture
 def json_app(app):
 

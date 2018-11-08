@@ -79,7 +79,7 @@ class Blueprint:
             for i in nested:
                 if isinstance(i, (list, tuple)):
                     yield from chain(i)
-                elif isinstance(i, (BlueprintGroup)):
+                elif isinstance(i, BlueprintGroup):
                     yield from i.blueprints
                 else:
                     yield i

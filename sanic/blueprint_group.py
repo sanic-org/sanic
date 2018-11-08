@@ -1,4 +1,4 @@
-class BlueprintGroup(object):
+class BlueprintGroup:
     """
     This class provides a mechanism to implement a Blueprint Group
     using the `Blueprint.group` method. To avoid having to re-write
@@ -13,7 +13,7 @@ class BlueprintGroup(object):
 
         :param url_prefix: URL: to be prefixed before all the Blueprint Prefix
         """
-        self._blueprints = list()
+        self._blueprints = []
         self._iter_position = 0
         self._url_prefix = url_prefix
 
@@ -44,7 +44,7 @@ class BlueprintGroup(object):
 
     def __iter__(self):
         """Tun the class Blueprint Group into an Iterable item"""
-        return self
+        return iter(self._blueprints)
 
     def __next__(self):
         """

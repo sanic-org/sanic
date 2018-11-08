@@ -13,6 +13,20 @@ MIDDLEWARE_INVOKE_COUNTER = {
 AUTH = "dGVzdDp0ZXN0Cg=="
 
 
+def test_bp_group_iterate_with_next(app: Sanic):
+    blueprint_1 = Blueprint('blueprint_1', url_prefix="/bp1")
+    blueprint_2 = Blueprint('blueprint_2', url_prefix='/bp2')
+
+    group = Blueprint.group(blueprint_1, blueprint_2, url_prefix="/api")
+
+    assert next(group).url_prefix == "/api/bp1"
+
+    assert next(group).url_prefix == "/api/bp2"
+
+    with raises(expected_exception=StopIteration) as e:
+        next(group)
+
+
 def test_bp_group_indexing(app: Sanic):
     blueprint_1 = Blueprint('blueprint_1', url_prefix="/bp1")
     blueprint_2 = Blueprint('blueprint_2', url_prefix='/bp2')

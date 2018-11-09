@@ -7,6 +7,8 @@ class BlueprintGroup:
     class as a list/tuple inside the existing implementation.
     """
 
+    __slots__ = ("_blueprints", "_url_prefix")
+
     def __init__(self, url_prefix=None):
         """
         Create a new Blueprint Group
@@ -14,7 +16,6 @@ class BlueprintGroup:
         :param url_prefix: URL: to be prefixed before all the Blueprint Prefix
         """
         self._blueprints = []
-        self._iter_position = 0
         self._url_prefix = url_prefix
 
     @property
@@ -45,19 +46,6 @@ class BlueprintGroup:
     def __iter__(self):
         """Tun the class Blueprint Group into an Iterable item"""
         return iter(self._blueprints)
-
-    def __next__(self):
-        """
-        A Custom method to iterate over the Blueprint Objects in the
-        group under consideration
-        """
-        if not len(self._blueprints) or self._iter_position >= len(
-            self._blueprints
-        ):
-            raise StopIteration
-        else:
-            self._iter_position += 1
-            return self._blueprints[self._iter_position - 1]
 
     def __getitem__(self, item):
         """

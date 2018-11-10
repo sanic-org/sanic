@@ -130,8 +130,3 @@ def test_cookie_set_unknown_property():
     with pytest.raises(expected_exception=KeyError) as e:
         c["invalid"] = "value"
         assert e.message == "Unknown cookie property"
-
-
-def test_cookie_encoding_invalid_type():
-    c = Cookie("test_cookie", "value")
-    c["max-age"] = "2d"

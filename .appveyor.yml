@@ -26,11 +26,6 @@ build: off
 
 test_script: tox
 
-cache:
-  # Not including the .tox directory since it takes longer to download/extract
-  # the cache archive than for tox to clean install from the pip cache.
-  - "%LOCALAPPDATA%\pip\Cache -> tox.ini"
-
 notifications:
   - provider: Email
     on_build_success: false

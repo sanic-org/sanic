@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
 from sanic.response import text
 import pytest
-
+from sanic.cookies import Cookie
 
 # ------------------------------------------------------------ #
 #  GET
@@ -111,3 +111,27 @@ def test_cookie_deletion(app):
     assert int(response_cookies['i_want_to_die']['max-age']) == 0
     with pytest.raises(KeyError):
         response.cookies['i_never_existed']
+
+
+def test_cookie_reserved_cookie():
+    with pytest.raises(expected_exception=KeyError) as e:
+        Cookie("domain", "testdomain.com")
+        assert e.message == "Cookie name is a reserved word"
+
+
+def test_cookie_illegal_key_format():
+    with pytest.raises(expected_exception=KeyError) as e:
+        Cookie("testå", "test")
+        assert e.message == "Cookie key contains illegal characters"
+
+
+def test_cookie_set_unknown_property():
+    c = Cookie("test_cookie", "value")
+    with pytest.raises(expected_exception=KeyError) as e:
+        c["invalid"] = "value"
+        assert e.message == "Unknown cookie property"
+
+
+def test_cookie_encoding_invalid_type():
+    c = Cookie("test_cookie", "value")
+    c["max-age"] = "2d"

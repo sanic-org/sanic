@@ -363,3 +363,83 @@ def test_url_attributes_with_ssl(app, path, query, expected_url):
     assert parsed.path == request.path
     assert parsed.query == request.query_string
     assert parsed.netloc == request.host
+
+
+def test_form_with_multiple_values(app):
+
+    @app.route('/', methods=['POST'])
+    async def handler(request):
+        return text("OK")
+
+    payload="selectedItems=v1&selectedItems=v2&selectedItems=v3"
+
+    headers = {'content-type': 'application/x-www-form-urlencoded'}
+
+    request, response = app.test_client.post('/', data=payload,
+                                             headers=headers)
+
+    assert request.form.getlist("selectedItems") == ["v1", "v2", "v3"]
+
+
+def test_request_string_representation(app):
+    @app.route('/', methods=["GET"])
+    async def get(request):
+        return text("OK")
+
+    request, _ = app.test_client.get("/")
+    assert repr(request) == '<Request: GET />'
+
+
+@pytest.mark.parametrize(
+    'payload', [
+        '------sanic\r\n'
+        'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
+        '\r\n'
+        'OK\r\n'
+        '------sanic--\r\n',
+        '------sanic\r\n'
+        'content-disposition: form-data; filename="filename"; name="test"\r\n'
+        '\r\n'
+        'content-type: application/json; {"field": "value"}\r\n'
+        '------sanic--\r\n',
+    ])
+def test_request_multipart_files(app, payload):
+    @app.route("/", methods=["POST"])
+    async def post(request):
+        return text("OK")
+
+    headers = {'content-type': 'multipart/form-data; boundary=----sanic'}
+
+    request, _ = app.test_client.post(data=payload, headers=headers)
+    assert request.files.get('test').name == "filename"
+
+
+def test_request_multipart_file_with_json_content_type(app):
+    @app.route("/", methods=["POST"])
+    async def post(request):
+        return text("OK")
+
+    payload = '------sanic\r\nContent-Disposition: form-data; name="file"; filename="test.json"' \
+              '\r\nContent-Type: application/json\r\n\r\n\r\n------sanic--'
+
+    headers = {'content-type': 'multipart/form-data; boundary=------sanic'}
+
+    request, _ = app.test_client.post(data=payload, headers=headers)
+    assert request.files.get('file').type == 'application/json'
+
+
+def test_request_multipart_with_multiple_files_and_type(app):
+    @app.route("/", methods=["POST"])
+    async def post(request):
+        return text("OK")
+
+    payload = '------sanic\r\nContent-Disposition: form-data; name="file"; filename="test.json"' \
+              '\r\nContent-Type: application/json\r\n\r\n\r\n' \
+              '------sanic\r\nContent-Disposition: form-data; name="file"; filename="some_file.pdf"\r\n' \
+              'Content-Type: application/pdf\r\n\r\n\r\n------sanic--'
+    headers = {'content-type': 'multipart/form-data; boundary=------sanic'}
+
+    request, _ = app.test_client.post(data=payload, headers=headers)
+    assert len(request.files.getlist('file')) == 2
+    assert request.files.getlist('file')[0].type == 'application/json'
+    assert request.files.getlist('file')[1].type == 'application/pdf'

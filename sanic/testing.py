@@ -1,6 +1,7 @@
 from json import JSONDecodeError
-from sanic.log import logger
+
 from sanic.exceptions import MethodNotSupported
+from sanic.log import logger
 from sanic.response import text
 
 
@@ -33,7 +34,7 @@ class SanicTestClient:
             ) as response:
                 try:
                     response.text = await response.text()
-                except UnicodeDecodeError as e:
+                except UnicodeDecodeError:
                     response.text = None
 
                 try:

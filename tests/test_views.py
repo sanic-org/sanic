@@ -129,7 +129,7 @@ def test_with_middleware_response(app):
     results = []
 
     @app.middleware('request')
-    async def process_response(request):
+    async def process_request(request):
         results.append(request)
 
     @app.middleware('response')
@@ -162,7 +162,8 @@ def test_with_custom_class_methods(app):
 
         def get(self, request):
             self._iternal_method()
-            return text('I am get method and global var is {}'.format(self.global_var))
+            return text('I am get method and global var '
+                        'is {}'.format(self.global_var))
 
     app.add_route(DummyView.as_view(), '/')
     request, response = app.test_client.get('/')

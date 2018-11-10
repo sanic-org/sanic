@@ -1,4 +1,3 @@
-import pytest
 import asyncio
 import contextlib
 
@@ -34,7 +33,7 @@ async def test_request_cancel_when_connection_lost(loop, app, test_client):
     assert app.still_serving_cancelled_request is False
 
 
-async def test_stream_request_cancel_when_connection_lost(loop, app, test_client):
+async def test_stream_request_cancel_when_conn_lost(loop, app, test_client):
     app.still_serving_cancelled_request = False
 
     @app.post('/post/<id>', stream=True)

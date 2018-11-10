@@ -4,11 +4,11 @@ from sanic.response import text
 def test_vhosts(app):
 
     @app.route('/', host="example.com")
-    async def handler(request):
+    async def handler1(request):
         return text("You're at example.com!")
 
     @app.route('/', host="subdomain.example.com")
-    async def handler(request):
+    async def handler2(request):
         return text("You're at subdomain.example.com!")
 
     headers = {"Host": "example.com"}
@@ -38,11 +38,11 @@ def test_vhosts_with_list(app):
 def test_vhosts_with_defaults(app):
 
     @app.route('/', host="hello.com")
-    async def handler(request):
+    async def handler1(request):
         return text("Hello, world!")
 
     @app.route('/')
-    async def handler(request):
+    async def handler2(request):
         return text("default")
 
     headers = {"Host": "hello.com"}

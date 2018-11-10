@@ -13,12 +13,16 @@ URL_FOR_ARGS1 = dict(arg1=['v1', 'v2'])
 URL_FOR_VALUE1 = '/myurl?arg1=v1&arg1=v2'
 URL_FOR_ARGS2 = dict(arg1=['v1', 'v2'], _anchor='anchor')
 URL_FOR_VALUE2 = '/myurl?arg1=v1&arg1=v2#anchor'
-URL_FOR_ARGS3 = dict(arg1='v1', _anchor='anchor', _scheme='http',
-                     _server='{}:{}'.format(test_host, test_port), _external=True)
-URL_FOR_VALUE3 = 'http://{}:{}/myurl?arg1=v1#anchor'.format(test_host, test_port)
+URL_FOR_ARGS3 = dict(
+    arg1='v1', _anchor='anchor', _scheme='http',
+    _server='{}:{}'.format(test_host, test_port), _external=True
+)
+URL_FOR_VALUE3 = 'http://{}:{}/myurl?arg1=v1#anchor'.format(test_host,
+                                                            test_port)
 URL_FOR_ARGS4 = dict(arg1='v1', _anchor='anchor', _external=True,
                      _server='http://{}:{}'.format(test_host, test_port))
-URL_FOR_VALUE4 = 'http://{}:{}/myurl?arg1=v1#anchor'.format(test_host, test_port)
+URL_FOR_VALUE4 = 'http://{}:{}/myurl?arg1=v1#anchor'.format(test_host,
+                                                            test_port)
 
 
 def _generate_handlers_from_names(app, l):

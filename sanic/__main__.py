@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 from importlib import import_module
 
-from sanic.log import logger
 from sanic.app import Sanic
+from sanic.log import logger
+
 
 if __name__ == "__main__":
     parser = ArgumentParser(prog="sanic")
@@ -51,5 +52,5 @@ if __name__ == "__main__":
             "  Example File: project/sanic_server.py -> app\n"
             "  Example Module: project.sanic_server.app".format(e.name)
         )
-    except ValueError as e:
+    except ValueError:
         logger.exception("Failed to run app")

@@ -1,7 +1,7 @@
 from mimetypes import guess_type
 from os import path
 from re import sub
-from time import strftime, gmtime
+from time import gmtime, strftime
 from urllib.parse import unquote
 
 from aiofiles.os import stat
@@ -13,7 +13,7 @@ from sanic.exceptions import (
     InvalidUsage,
 )
 from sanic.handlers import ContentRangeHandler
-from sanic.response import file, file_stream, HTTPResponse
+from sanic.response import HTTPResponse, file, file_stream
 
 
 def register(

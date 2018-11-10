@@ -1,29 +1,30 @@
-import os
 import logging
 import logging.config
+import os
 import re
 import warnings
-from asyncio import get_event_loop, ensure_future, CancelledError
-from collections import deque, defaultdict
+
+from asyncio import CancelledError, ensure_future, get_event_loop
+from collections import defaultdict, deque
 from functools import partial
 from inspect import getmodulename, isawaitable, signature, stack
+from ssl import Purpose, create_default_context
 from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
-from ssl import create_default_context, Purpose
 
+from sanic import reloader_helpers
 from sanic.config import Config
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import ServerError, URLBuildError, SanicException
+from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
-from sanic.log import logger, error_logger, LOGGING_CONFIG_DEFAULTS
+from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import serve, serve_multiple, HttpProtocol, Signal
+from sanic.server import HttpProtocol, Signal, serve, serve_multiple
 from sanic.static import register as static_register
 from sanic.testing import SanicTestClient
 from sanic.views import CompositionView
-from sanic.websocket import WebSocketProtocol, ConnectionClosed
-import sanic.reloader_helpers as reloader_helpers
+from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic:
@@ -370,8 +371,7 @@ class Sanic:
     ):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
-        :param subprotocols: optional list of strings with the supported
-                             subprotocols
+        :param subprotocols: optional list of str with supported subprotocols
         :param host:
         :return: decorated function
         """
@@ -567,7 +567,7 @@ class Sanic:
         return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
-        """Build a URL based on a view name and the values provided.
+        r"""Build a URL based on a view name and the values provided.
 
         In order to build a URL, all request parameters must be supplied as
         keyword arguments, and each parameter must pass the test for the
@@ -578,7 +578,7 @@ class Sanic:
         the output URL's query string.
 
         :param view_name: string referencing the view name
-        :param \*\*kwargs: keys and values that are used to build request
+        :param \**kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL
@@ -835,6 +835,14 @@ class Sanic:
         access_log=True,
         **kwargs
     ):
+        if "loop" in kwargs:
+            raise TypeError(
+                "loop is not a valid argument. To use an existing loop, "
+                "change to create_server().\nSee more: "
+                "https://sanic.readthedocs.io/en/latest/sanic/deploying.html"
+                "#asynchronous-support"
+            )
+
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 

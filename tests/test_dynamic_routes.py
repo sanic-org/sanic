@@ -1,4 +1,3 @@
-from sanic import Sanic
 from sanic.response import text
 from sanic.router import RouteExists
 import pytest

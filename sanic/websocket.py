@@ -1,8 +1,9 @@
+from httptools import HttpParserUpgrade
+from websockets import ConnectionClosed  # noqa
+from websockets import InvalidHandshake, WebSocketCommonProtocol, handshake
+
 from sanic.exceptions import InvalidUsage
 from sanic.server import HttpProtocol
-from httptools import HttpParserUpgrade
-from websockets import handshake, WebSocketCommonProtocol, InvalidHandshake
-from websockets import ConnectionClosed  # noqa
 
 
 class WebSocketProtocol(HttpProtocol):

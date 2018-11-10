@@ -1,4 +1,5 @@
 import pytest
+from urllib.parse import quote
 
 from sanic.response import text, redirect
 
@@ -19,15 +20,15 @@ def redirect_app(app):
         return text('OK')
 
     @app.route('/1')
-    def handler(request):
+    def handler1(request):
         return redirect('/2')
 
     @app.route('/2')
-    def handler(request):
+    def handler2(request):
         return redirect('/3')
 
     @app.route('/3')
-    def handler(request):
+    def handler3(request):
         return text('OK')
 
     @app.route('/redirect_with_header_injection')
@@ -107,3 +108,25 @@ def test_redirect_with_header_injection(redirect_app):
     assert response.status == 302
     assert "test-header" not in response.headers
     assert not response.text.startswith('test-body')
+
+
+@pytest.mark.parametrize("test_str", ["sanic-test", "sanictest", "sanic test"])
+async def test_redirect_with_params(app, test_client, test_str):
+
+    @app.route("/api/v1/test/<test>/")
+    async def init_handler(request, test):
+        assert test == test_str
+        return redirect("/api/v2/test/{}/".format(quote(test)))
+
+    @app.route("/api/v2/test/<test>/")
+    async def target_handler(request, test):
+        assert test == test_str
+        return text("OK")
+
+    test_cli = await test_client(app)
+
+    response = await test_cli.get("/api/v1/test/{}/".format(quote(test_str)))
+    assert response.status == 200
+
+    txt = await response.text()
+    assert txt == "OK"

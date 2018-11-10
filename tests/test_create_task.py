@@ -28,6 +28,7 @@ def test_create_task(app):
     request, response = app.test_client.get('/late')
     assert response.body == b'True'
 
+
 def test_create_task_with_app_arg(app):
     q = Queue()
 

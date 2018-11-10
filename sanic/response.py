@@ -1,17 +1,23 @@
+from functools import partial
 from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
 
-try:
-    from ujson import dumps as json_dumps
-except BaseException:
-    from json import dumps as json_dumps
-
 from aiofiles import open as open_async
 from multidict import CIMultiDict
 
-from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 from sanic.cookies import CookieJar
+from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
+
+
+try:
+    from ujson import dumps as json_dumps
+except BaseException:
+    from json import dumps
+
+    # This is done in order to ensure that the JSON response is
+    # kept consistent across both ujson and inbuilt json usage.
+    json_dumps = partial(dumps, separators=(",", ":"))
 
 
 class BaseHTTPResponse:
@@ -301,6 +307,7 @@ async def file(
                 _range.end,
                 _range.total,
             )
+            status = 206
         else:
             out_stream = await _file.read()
 
@@ -370,6 +377,7 @@ async def file_stream(
             _range.end,
             _range.total,
         )
+        status = 206
     return StreamingHTTPResponse(
         streaming_fn=_streaming_fn,
         status=status,
@@ -421,7 +429,7 @@ def redirect(
     headers = headers or {}
 
     # URL Quote the URL before redirecting
-    safe_to = quote_plus(to, safe=":/#?&=@[]!$&'()*+,;")
+    safe_to = quote_plus(to, safe=":/%#?&=@[]!$&'()*+,;")
 
     # According to RFC 7231, a relative URI is now permitted.
     headers["Location"] = safe_to

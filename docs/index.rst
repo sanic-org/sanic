@@ -21,8 +21,11 @@ Guides
    sanic/streaming
    sanic/class_based_views
    sanic/custom_protocol
+   sanic/sockets
    sanic/ssl
    sanic/logging
+   sanic/versioning
+   sanic/debug_mode
    sanic/testing
    sanic/deploying
    sanic/extensions

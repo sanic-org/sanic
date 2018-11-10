@@ -1,20 +1,21 @@
 import sys
+
 from traceback import extract_tb, format_exc
 
 from sanic.exceptions import (
-    ContentRangeError,
-    HeaderNotFound,
     INTERNAL_SERVER_ERROR_HTML,
-    InvalidRangeType,
-    SanicException,
+    TRACEBACK_BORDER,
     TRACEBACK_LINE_HTML,
     TRACEBACK_STYLE,
     TRACEBACK_WRAPPER_HTML,
     TRACEBACK_WRAPPER_INNER_HTML,
-    TRACEBACK_BORDER,
+    ContentRangeError,
+    HeaderNotFound,
+    InvalidRangeType,
+    SanicException,
 )
 from sanic.log import logger
-from sanic.response import text, html
+from sanic.response import html, text
 
 
 class ErrorHandler:
@@ -166,17 +167,17 @@ class ContentRangeHandler:
                 )
             else:
                 # this case represents `Content-Range: bytes 5-`
-                self.end = self.total
+                self.end = self.total - 1
         else:
             if self.start is None:
                 # this case represents `Content-Range: bytes -5`
                 self.start = self.total - self.end
-                self.end = self.total
+                self.end = self.total - 1
         if self.start >= self.end:
             raise ContentRangeError(
                 "Invalid for Content Range parameters", self
             )
-        self.size = self.end - self.start
+        self.size = self.end - self.start + 1
         self.headers = {
             "Content-Range": "bytes %s-%s/%s"
             % (self.start, self.end, self.total)

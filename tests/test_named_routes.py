@@ -336,7 +336,7 @@ def test_overload_routes(app):
         return text('OK1')
 
     @app.route('/overload', methods=['POST', 'PUT'], name='route_second')
-    async def handler1(request):
+    async def handler2(request):
         return text('OK2')
 
     request, response = app.test_client.get(app.url_for('route_first'))

@@ -23,7 +23,8 @@ def get_file_content(static_file_directory, file_name):
         return file.read()
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
 def test_static_file(app, static_file_directory, file_name):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name))
@@ -83,11 +84,11 @@ def test_static_content_range_correct(app, file_name, static_file_directory):
         'Range': 'bytes=12-19'
     }
     request, response = app.test_client.get('/testing.file', headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
-        static_file_directory, file_name))[12:19]
+        static_file_directory, file_name))[12:20]
     assert int(response.headers[
                'Content-Length']) == len(static_content)
     assert response.body == static_content
@@ -103,7 +104,7 @@ def test_static_content_range_front(app, file_name, static_file_directory):
         'Range': 'bytes=12-'
     }
     request, response = app.test_client.get('/testing.file', headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -123,7 +124,7 @@ def test_static_content_range_back(app, file_name, static_file_directory):
         'Range': 'bytes=-12'
     }
     request, response = app.test_client.get('/testing.file', headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -143,8 +144,8 @@ def test_static_content_range_empty(app, file_name, static_file_directory):
     assert response.status == 200
     assert 'Content-Length' in response.headers
     assert 'Content-Range' not in response.headers
-    assert int(response.headers[
-               'Content-Length']) == len(get_file_content(static_file_directory, file_name))
+    assert int(response.headers['Content-Length']) == \
+        len(get_file_content(static_file_directory, file_name))
     assert response.body == bytes(
         get_file_content(static_file_directory, file_name))
 
@@ -166,7 +167,8 @@ def test_static_content_range_error(app, file_name, static_file_directory):
         len(get_file_content(static_file_directory, file_name)),)
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
 def test_static_file_specified_host(app, static_file_directory, file_name):
     app.static(
         '/testing.file',

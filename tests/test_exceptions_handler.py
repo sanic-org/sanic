@@ -131,7 +131,7 @@ def test_exception_handler_lookup():
 
     try:
         ModuleNotFoundError
-    except:
+    except Exception:
         class ModuleNotFoundError(ImportError):
             pass
 

@@ -78,7 +78,7 @@ class DelayableTCPConnector(TCPConnector):
                 await asyncio.sleep(self.delay)
             t = req.loop.time()
             print("sending at {}".format(t), flush=True)
-            conn = next(iter(args))  # first arg is connection
+            next(iter(args))  # first arg is connection
 
             try:
                 return await self.orig_send(*args, **kwargs)

@@ -1,20 +1,19 @@
-import sys
 import asyncio
 import inspect
 import os
-from aiofiles import os as async_os
 from mimetypes import guess_type
+from random import choice
+from unittest.mock import MagicMock
 from urllib.parse import unquote
 
 import pytest
-from random import choice
+from aiofiles import os as async_os
 
 from sanic.response import (
     HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
 )
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
-from unittest.mock import MagicMock
 
 JSON_DATA = {'ok': True}
 
@@ -38,9 +37,8 @@ async def sample_streaming_fn(response):
 
 
 def test_method_not_allowed(app):
-
     @app.get('/')
-    async def test(request):
+    async def test_get(request):
         return response.json({'hello': 'world'})
 
     request, response = app.test_client.head('/')
@@ -49,19 +47,18 @@ def test_method_not_allowed(app):
     request, response = app.test_client.post('/')
     assert response.headers['Allow'] == 'GET'
 
-
     @app.post('/')
-    async def test(request):
+    async def test_post(request):
         return response.json({'hello': 'world'})
 
     request, response = app.test_client.head('/')
     assert response.status == 405
-    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert set(response.headers['Allow'].split(', ')) == {'GET', 'POST'}
     assert response.headers['Content-Length'] == '0'
 
     request, response = app.test_client.patch('/')
     assert response.status == 405
-    assert set(response.headers['Allow'].split(', ')) == set(['GET', 'POST'])
+    assert set(response.headers['Allow'].split(', ')) == {'GET', 'POST'}
     assert response.headers['Content-Length'] == '0'
 
 
@@ -75,17 +72,60 @@ def test_response_header(app):
             'CONTENT-TYPE': 'application/json'
         })
 
-    is_windows = sys.platform in ['win32', 'cygwin']
     request, response = app.test_client.get('/')
     assert dict(response.headers) == {
         'Connection': 'keep-alive',
         'Keep-Alive': str(app.config.KEEP_ALIVE_TIMEOUT),
-        # response body contains an extra \r at the end if its windows
-        # TODO: this is the only place this difference shows up in our tests
-        # we should figure out a way to unify testing on both platforms
-        'Content-Length': '12' if is_windows else '11',
+        'Content-Length': '11',
         'Content-Type': 'application/json',
     }
+
+
+def test_response_content_length(app):
+    @app.get("/response_with_space")
+    async def response_with_space(request):
+        return json({
+            "message": "Data",
+            "details":   "Some Details"
+        }, headers={
+            'CONTENT-TYPE': 'application/json'
+        })
+
+    @app.get("/response_without_space")
+    async def response_without_space(request):
+        return json({
+            "message":"Data",
+            "details":"Some Details"
+        }, headers={
+            'CONTENT-TYPE': 'application/json'
+        })
+
+    _, response = app.test_client.get("/response_with_space")
+    content_length_for_response_with_space = response.headers.get("Content-Length")
+
+    _, response = app.test_client.get("/response_without_space")
+    content_length_for_response_without_space = response.headers.get("Content-Length")
+
+    assert content_length_for_response_with_space == content_length_for_response_without_space
+
+    assert content_length_for_response_with_space == '43'
+
+
+def test_response_content_length_with_different_data_types(app):
+    @app.get("/")
+    async def get_data_with_different_types(request):
+        # Indentation issues in the Response is intentional. Please do not fix
+        return json({
+            'bool':  True,
+            'none':  None,
+            'string':'string',
+            'number': -1},
+            headers={
+                'CONTENT-TYPE': 'application/json'
+            })
+
+    _, response = app.test_client.get("/")
+    assert response.headers.get("Content-Length") == '55'
 
 
 @pytest.fixture
@@ -239,7 +279,8 @@ def get_file_content(static_file_directory, file_name):
         return file.read()
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
 @pytest.mark.parametrize('status', [200, 401])
 def test_file_response(app, file_name, static_file_directory, status):
 
@@ -256,9 +297,15 @@ def test_file_response(app, file_name, static_file_directory, status):
     assert 'Content-Disposition' not in response.headers
 
 
-@pytest.mark.parametrize('source,dest', [
-    ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
-def test_file_response_custom_filename(app, source, dest, static_file_directory):
+@pytest.mark.parametrize(
+    'source,dest',
+    [
+        ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'),
+        ('python.png', 'logo.png')
+    ]
+)
+def test_file_response_custom_filename(app, source, dest,
+                                       static_file_directory):
 
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
@@ -269,7 +316,8 @@ def test_file_response_custom_filename(app, source, dest, static_file_directory)
     request, response = app.test_client.get('/files/{}'.format(source))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
+    assert response.headers['Content-Disposition'] == \
+        'attachment; filename="{}"'.format(dest)
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
@@ -300,7 +348,8 @@ def test_file_head_response(app, file_name, static_file_directory):
                    get_file_content(static_file_directory, file_name))
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
 def test_file_stream_response(app, file_name, static_file_directory):
 
     @app.route('/files/<filename>', methods=['GET'])
@@ -316,9 +365,15 @@ def test_file_stream_response(app, file_name, static_file_directory):
     assert 'Content-Disposition' not in response.headers
 
 
-@pytest.mark.parametrize('source,dest', [
-    ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'), ('python.png', 'logo.png')])
-def test_file_stream_response_custom_filename(app, source, dest, static_file_directory):
+@pytest.mark.parametrize(
+    'source,dest',
+    [
+        ('test.file', 'my_file.txt'), ('decode me.txt', 'readme.md'),
+        ('python.png', 'logo.png')
+    ]
+)
+def test_file_stream_response_custom_filename(app, source, dest,
+                                              static_file_directory):
 
     @app.route('/files/<filename>', methods=['GET'])
     def file_route(request, filename):
@@ -329,7 +384,8 @@ def test_file_stream_response_custom_filename(app, source, dest, static_file_dir
     request, response = app.test_client.get('/files/{}'.format(source))
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers['Content-Disposition'] == 'attachment; filename="{}"'.format(dest)
+    assert response.headers['Content-Disposition'] == \
+        'attachment; filename="{}"'.format(dest)
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
@@ -350,8 +406,10 @@ def test_file_stream_head_response(app, file_name, static_file_directory):
                 headers=headers,
                 content_type=guess_type(file_path)[0] or 'text/plain')
         else:
-            return file_stream(file_path, chunk_size=32, headers=headers,
-                               mime_type=guess_type(file_path)[0] or 'text/plain')
+            return file_stream(
+                file_path, chunk_size=32, headers=headers,
+                mime_type=guess_type(file_path)[0] or 'text/plain'
+            )
 
     request, response = app.test_client.head('/files/{}'.format(file_name))
     assert response.status == 200

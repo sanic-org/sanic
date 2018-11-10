@@ -102,8 +102,8 @@ def test_run_max_requests_exceeded(worker):
 
     assert not worker.alive
     worker.notify.assert_called_with()
-    worker.log.info.assert_called_with("Max requests exceeded, shutting down: %s",
-                                       worker)
+    worker.log.info.assert_called_with("Max requests exceeded, shutting "
+                                       "down: %s", worker)
 
 
 def test_worker_close(worker):
@@ -125,7 +125,8 @@ def test_worker_close(worker):
     worker.loop = loop
     server = mock.Mock()
     server.close = mock.Mock(wraps=lambda *a, **kw: None)
-    server.wait_closed = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
+    server.wait_closed = mock.Mock(wraps=asyncio.coroutine(
+        lambda *a, **kw: None))
     worker.servers = {
         server: {"requests_count": 14},
     }

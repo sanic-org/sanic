@@ -173,7 +173,7 @@ class DelayableSanicTestClient(SanicTestClient):
                 return response
 
 
-Config.REQUEST_TIMEOUT = 2
+Config.REQUEST_TIMEOUT = 0.6
 request_timeout_default_app = Sanic('test_request_timeout_default')
 request_no_timeout_app = Sanic('test_request_no_timeout')
 
@@ -189,14 +189,14 @@ async def handler2(request):
 
 
 def test_default_server_error_request_timeout():
-    client = DelayableSanicTestClient(request_timeout_default_app, None, 3)
+    client = DelayableSanicTestClient(request_timeout_default_app, None, 2)
     request, response = client.get('/1')
     assert response.status == 408
     assert response.text == 'Error: Request Timeout'
 
 
 def test_default_server_error_request_dont_timeout():
-    client = DelayableSanicTestClient(request_no_timeout_app, None, 1)
+    client = DelayableSanicTestClient(request_no_timeout_app, None, 0.2)
     request, response = client.get('/1')
     assert response.status == 200
     assert response.text == 'OK'

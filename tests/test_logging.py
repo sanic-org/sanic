@@ -123,3 +123,13 @@ def test_logger(caplog):
     assert caplog.record_tuples[2] == ('sanic.root', logging.INFO, rand_string)
     assert caplog.record_tuples[-1] == ('sanic.root', logging.INFO, 'Server Stopped')
 
+
+def test_logging_modified_root_logger_config():
+    reset_logging()
+
+    modified_config = LOGGING_CONFIG_DEFAULTS
+    modified_config['loggers']['sanic.root']['level'] = 'DEBUG'
+
+    app = Sanic("test_logging", log_config=modified_config)
+
+    assert logging.getLogger('sanic.root').getEffectiveLevel() == logging.DEBUG

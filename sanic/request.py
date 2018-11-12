@@ -85,7 +85,7 @@ class Request(dict):
         self.transport = transport
 
         # Init but do not inhale
-        self.body = []
+        self.body_init()
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -106,11 +106,14 @@ class Request(dict):
             return True
         return False
 
-    def body_append(self, data):
+    def body_init(self):
+        self.body = []
+
+    def body_push(self, data):
         self.body.append(data)
 
     def body_finish(self):
-        self.body = b''.join(self.body)
+        self.body = b"".join(self.body)
 
     @property
     def json(self):

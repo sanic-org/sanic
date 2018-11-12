@@ -300,7 +300,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.request.stream.put(body)
             )
             return
-        self.request.body_append(body)
+        self.request.body_push(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -798,4 +798,3 @@ def serve_multiple(server_settings, workers):
     for process in processes:
         process.terminate()
     server_settings.get("sock").close()
-

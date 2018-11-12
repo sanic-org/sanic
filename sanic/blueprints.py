@@ -5,7 +5,7 @@ from sanic.views import CompositionView
 
 
 FutureRoute = namedtuple(
-    "Route",
+    "FutureRoute",
     [
         "handler",
         "uri",
@@ -17,11 +17,15 @@ FutureRoute = namedtuple(
         "name",
     ],
 )
-FutureListener = namedtuple("Listener", ["handler", "uri", "methods", "host"])
-FutureMiddleware = namedtuple("Route", ["middleware", "args", "kwargs"])
-FutureException = namedtuple("Route", ["handler", "args", "kwargs"])
+FutureListener = namedtuple(
+    "FutureListener", ["handler", "uri", "methods", "host"]
+)
+FutureMiddleware = namedtuple(
+    "FutureMiddleware", ["middleware", "args", "kwargs"]
+)
+FutureException = namedtuple("FutureException", ["handler", "args", "kwargs"])
 FutureStatic = namedtuple(
-    "Route", ["uri", "file_or_directory", "args", "kwargs"]
+    "FutureStatic", ["uri", "file_or_directory", "args", "kwargs"]
 )
 
 

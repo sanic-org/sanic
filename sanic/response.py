@@ -1,3 +1,4 @@
+from functools import partial
 from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
@@ -12,7 +13,11 @@ from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 try:
     from ujson import dumps as json_dumps
 except BaseException:
-    from json import dumps as json_dumps
+    from json import dumps
+
+    # This is done in order to ensure that the JSON response is
+    # kept consistent across both ujson and inbuilt json usage.
+    json_dumps = partial(dumps, separators=(",", ":"))
 
 
 class BaseHTTPResponse:
@@ -302,6 +307,7 @@ async def file(
                 _range.end,
                 _range.total,
             )
+            status = 206
         else:
             out_stream = await _file.read()
 
@@ -371,6 +377,7 @@ async def file_stream(
             _range.end,
             _range.total,
         )
+        status = 206
     return StreamingHTTPResponse(
         streaming_fn=_streaming_fn,
         status=status,

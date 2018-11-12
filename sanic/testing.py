@@ -34,7 +34,7 @@ class SanicTestClient:
             ) as response:
                 try:
                     response.text = await response.text()
-                except UnicodeDecodeError as e:
+                except UnicodeDecodeError:
                     response.text = None
 
                 try:

@@ -48,6 +48,20 @@ def test_load_env_prefix():
     del environ["MYAPP_TEST_ANSWER"]
 
 
+def test_load_env_prefix_float_values():
+    environ["MYAPP_TEST_ROI"] = "2.3"
+    app = Sanic(load_env="MYAPP_")
+    assert app.config.TEST_ROI == 2.3
+    del environ["MYAPP_TEST_ROI"]
+
+
+def test_load_env_prefix_string_value():
+    environ["MYAPP_TEST_TOKEN"] = "somerandomtesttoken"
+    app = Sanic(load_env="MYAPP_")
+    assert app.config.TEST_TOKEN == "somerandomtesttoken"
+    del environ["MYAPP_TEST_TOKEN"]
+
+
 def test_load_from_file(app):
     config = dedent("""
     VALUE = 'some value'

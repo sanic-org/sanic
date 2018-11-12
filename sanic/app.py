@@ -371,8 +371,7 @@ class Sanic:
     ):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
-        :param subprotocols: optional list of strings with the supported
-                             subprotocols
+        :param subprotocols: optional list of str with supported subprotocols
         :param host:
         :return: decorated function
         """
@@ -568,7 +567,7 @@ class Sanic:
         return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
-        """Build a URL based on a view name and the values provided.
+        r"""Build a URL based on a view name and the values provided.
 
         In order to build a URL, all request parameters must be supplied as
         keyword arguments, and each parameter must pass the test for the
@@ -579,7 +578,7 @@ class Sanic:
         the output URL's query string.
 
         :param view_name: string referencing the view name
-        :param \*\*kwargs: keys and values that are used to build request
+        :param \**kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL
@@ -836,6 +835,14 @@ class Sanic:
         access_log=True,
         **kwargs
     ):
+        if "loop" in kwargs:
+            raise TypeError(
+                "loop is not a valid argument. To use an existing loop, "
+                "change to create_server().\nSee more: "
+                "https://sanic.readthedocs.io/en/latest/sanic/deploying.html"
+                "#asynchronous-support"
+            )
+
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 

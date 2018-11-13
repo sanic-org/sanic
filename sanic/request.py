@@ -1,24 +1,29 @@
-import sys
 import json
-import socket
+import sys
+
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
-from httptools import parse_url
 from urllib.parse import parse_qs, urlunparse
+
+from httptools import parse_url
+
+from sanic.exceptions import InvalidUsage
+from sanic.log import error_logger, logger
+
 
 try:
     from ujson import loads as json_loads
 except ImportError:
     if sys.version_info[:2] == (3, 5):
+
         def json_loads(data):
             # on Python 3.5 json.loads only supports str not bytes
             return json.loads(data.decode())
+
     else:
         json_loads = json.loads
 
-from sanic.exceptions import InvalidUsage
-from sanic.log import error_logger, logger
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 
@@ -44,14 +49,32 @@ class RequestParameters(dict):
 
 class Request(dict):
     """Properties of an HTTP request such as URL, headers, etc."""
+
     __slots__ = (
-        'app', 'headers', 'version', 'method', '_cookies', 'transport',
-        'body', 'parsed_json', 'parsed_args', 'parsed_form', 'parsed_files',
-        '_ip', '_parsed_url', 'uri_template', 'stream', '_remote_addr',
-        '_socket', '_port'
+        "app",
+        "headers",
+        "version",
+        "method",
+        "_cookies",
+        "transport",
+        "body",
+        "parsed_json",
+        "parsed_args",
+        "parsed_form",
+        "parsed_files",
+        "_ip",
+        "_parsed_url",
+        "uri_template",
+        "stream",
+        "_remote_addr",
+        "_socket",
+        "_port",
+        "__weakref__",
+        "raw_url",
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
+        self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
         self.app = None
@@ -62,7 +85,7 @@ class Request(dict):
         self.transport = transport
 
         # Init but do not inhale
-        self.body = []
+        self.body_init()
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -73,10 +96,24 @@ class Request(dict):
 
     def __repr__(self):
         if self.method is None or not self.path:
-            return '<{0}>'.format(self.__class__.__name__)
-        return '<{0}: {1} {2}>'.format(self.__class__.__name__,
-                                       self.method,
-                                       self.path)
+            return "<{0}>".format(self.__class__.__name__)
+        return "<{0}: {1} {2}>".format(
+            self.__class__.__name__, self.method, self.path
+        )
+
+    def __bool__(self):
+        if self.transport:
+            return True
+        return False
+
+    def body_init(self):
+        self.body = []
+
+    def body_push(self, data):
+        self.body.append(data)
+
+    def body_finish(self):
+        self.body = b"".join(self.body)
 
     @property
     def json(self):
@@ -101,8 +138,8 @@ class Request(dict):
 
         :return: token related to request
         """
-        prefixes = ('Bearer', 'Token')
-        auth_header = self.headers.get('Authorization')
+        prefixes = ("Bearer", "Token")
+        auth_header = self.headers.get("Authorization")
 
         if auth_header is not None:
             for prefix in prefixes:
@@ -117,17 +154,20 @@ class Request(dict):
             self.parsed_form = RequestParameters()
             self.parsed_files = RequestParameters()
             content_type = self.headers.get(
-                'Content-Type', DEFAULT_HTTP_CONTENT_TYPE)
+                "Content-Type", DEFAULT_HTTP_CONTENT_TYPE
+            )
             content_type, parameters = parse_header(content_type)
             try:
-                if content_type == 'application/x-www-form-urlencoded':
+                if content_type == "application/x-www-form-urlencoded":
                     self.parsed_form = RequestParameters(
-                        parse_qs(self.body.decode('utf-8')))
-                elif content_type == 'multipart/form-data':
+                        parse_qs(self.body.decode("utf-8"))
+                    )
+                elif content_type == "multipart/form-data":
                     # TODO: Stream this instead of reading to/from memory
-                    boundary = parameters['boundary'].encode('utf-8')
-                    self.parsed_form, self.parsed_files = (
-                        parse_multipart_form(self.body, boundary))
+                    boundary = parameters["boundary"].encode("utf-8")
+                    self.parsed_form, self.parsed_files = parse_multipart_form(
+                        self.body, boundary
+                    )
             except Exception:
                 error_logger.exception("Failed when parsing form")
 
@@ -145,7 +185,8 @@ class Request(dict):
         if self.parsed_args is None:
             if self.query_string:
                 self.parsed_args = RequestParameters(
-                    parse_qs(self.query_string))
+                    parse_qs(self.query_string)
+                )
             else:
                 self.parsed_args = RequestParameters()
         return self.parsed_args
@@ -157,47 +198,42 @@ class Request(dict):
     @property
     def cookies(self):
         if self._cookies is None:
-            cookie = self.headers.get('Cookie')
+            cookie = self.headers.get("Cookie")
             if cookie is not None:
                 cookies = SimpleCookie()
                 cookies.load(cookie)
-                self._cookies = {name: cookie.value
-                                 for name, cookie in cookies.items()}
+                self._cookies = {
+                    name: cookie.value for name, cookie in cookies.items()
+                }
             else:
                 self._cookies = {}
         return self._cookies
 
     @property
     def ip(self):
-        if not hasattr(self, '_socket'):
+        if not hasattr(self, "_socket"):
             self._get_address()
         return self._ip
 
     @property
     def port(self):
-        if not hasattr(self, '_socket'):
+        if not hasattr(self, "_socket"):
             self._get_address()
         return self._port
 
     @property
     def socket(self):
-        if not hasattr(self, '_socket'):
+        if not hasattr(self, "_socket"):
             self._get_address()
         return self._socket
 
     def _get_address(self):
-        sock = self.transport.get_extra_info('socket')
-
-        if sock.family == socket.AF_INET:
-            self._socket = (self.transport.get_extra_info('peername') or
-                            (None, None))
-            self._ip, self._port = self._socket
-        elif sock.family == socket.AF_INET6:
-            self._socket = (self.transport.get_extra_info('peername') or
-                            (None, None, None, None))
-            self._ip, self._port, *_ = self._socket
-        else:
-            self._ip, self._port = (None, None)
+        self._socket = self.transport.get_extra_info("peername") or (
+            None,
+            None,
+        )
+        self._ip = self._socket[0]
+        self._port = self._socket[1]
 
     @property
     def remote_addr(self):
@@ -205,29 +241,31 @@ class Request(dict):
 
         :return: original client ip.
         """
-        if not hasattr(self, '_remote_addr'):
-            forwarded_for = self.headers.get('X-Forwarded-For', '').split(',')
+        if not hasattr(self, "_remote_addr"):
+            forwarded_for = self.headers.get("X-Forwarded-For", "").split(",")
             remote_addrs = [
-                addr for addr in [
-                    addr.strip() for addr in forwarded_for
-                    ] if addr
-                ]
+                addr
+                for addr in [addr.strip() for addr in forwarded_for]
+                if addr
+            ]
             if len(remote_addrs) > 0:
                 self._remote_addr = remote_addrs[0]
             else:
-                self._remote_addr = ''
+                self._remote_addr = ""
         return self._remote_addr
 
     @property
     def scheme(self):
-        if self.app.websocket_enabled \
-                and self.headers.get('upgrade') == 'websocket':
-            scheme = 'ws'
+        if (
+            self.app.websocket_enabled
+            and self.headers.get("upgrade") == "websocket"
+        ):
+            scheme = "ws"
         else:
-            scheme = 'http'
+            scheme = "http"
 
-        if self.transport.get_extra_info('sslcontext'):
-            scheme += 's'
+        if self.transport.get_extra_info("sslcontext"):
+            scheme += "s"
 
         return scheme
 
@@ -235,11 +273,11 @@ class Request(dict):
     def host(self):
         # it appears that httptools doesn't return the host
         # so pull it from the headers
-        return self.headers.get('Host', '')
+        return self.headers.get("Host", "")
 
     @property
     def content_type(self):
-        return self.headers.get('Content-Type', DEFAULT_HTTP_CONTENT_TYPE)
+        return self.headers.get("Content-Type", DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
     def match_info(self):
@@ -248,27 +286,23 @@ class Request(dict):
 
     @property
     def path(self):
-        return self._parsed_url.path.decode('utf-8')
+        return self._parsed_url.path.decode("utf-8")
 
     @property
     def query_string(self):
         if self._parsed_url.query:
-            return self._parsed_url.query.decode('utf-8')
+            return self._parsed_url.query.decode("utf-8")
         else:
-            return ''
+            return ""
 
     @property
     def url(self):
-        return urlunparse((
-            self.scheme,
-            self.host,
-            self.path,
-            None,
-            self.query_string,
-            None))
+        return urlunparse(
+            (self.scheme, self.host, self.path, None, self.query_string, None)
+        )
 
 
-File = namedtuple('File', ['type', 'body', 'name'])
+File = namedtuple("File", ["type", "body", "name"])
 
 
 def parse_multipart_form(body, boundary):
@@ -284,37 +318,38 @@ def parse_multipart_form(body, boundary):
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
         file_name = None
-        content_type = 'text/plain'
-        content_charset = 'utf-8'
+        content_type = "text/plain"
+        content_charset = "utf-8"
         field_name = None
         line_index = 2
         line_end_index = 0
         while not line_end_index == -1:
-            line_end_index = form_part.find(b'\r\n', line_index)
-            form_line = form_part[line_index:line_end_index].decode('utf-8')
+            line_end_index = form_part.find(b"\r\n", line_index)
+            form_line = form_part[line_index:line_end_index].decode("utf-8")
             line_index = line_end_index + 2
 
             if not form_line:
                 break
 
-            colon_index = form_line.index(':')
+            colon_index = form_line.index(":")
             form_header_field = form_line[0:colon_index].lower()
             form_header_value, form_parameters = parse_header(
-                form_line[colon_index + 2:])
+                form_line[colon_index + 2 :]
+            )
 
-            if form_header_field == 'content-disposition':
-                file_name = form_parameters.get('filename')
-                field_name = form_parameters.get('name')
-            elif form_header_field == 'content-type':
+            if form_header_field == "content-disposition":
+                file_name = form_parameters.get("filename")
+                field_name = form_parameters.get("name")
+            elif form_header_field == "content-type":
                 content_type = form_header_value
-                content_charset = form_parameters.get('charset', 'utf-8')
+                content_charset = form_parameters.get("charset", "utf-8")
 
         if field_name:
             post_data = form_part[line_index:-4]
             if file_name:
-                form_file = File(type=content_type,
-                                 name=file_name,
-                                 body=post_data)
+                form_file = File(
+                    type=content_type, name=file_name, body=post_data
+                )
                 if field_name in files:
                     files[field_name].append(form_file)
                 else:
@@ -326,7 +361,9 @@ def parse_multipart_form(body, boundary):
                 else:
                     fields[field_name] = [value]
         else:
-            logger.debug('Form-data field does not have a \'name\' parameter \
-                         in the Content-Disposition header')
+            logger.debug(
+                "Form-data field does not have a 'name' parameter \
+                         in the Content-Disposition header"
+            )
 
     return fields, files

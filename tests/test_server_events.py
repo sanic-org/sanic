@@ -1,12 +1,8 @@
-from io import StringIO
-from random import choice
-from string import ascii_letters
 import signal
 
 import pytest
 
-from sanic import Sanic
-from sanic.testing import HOST
+from sanic.testing import HOST, PORT
 
 AVAILABLE_LISTENERS = [
     'before_server_start',
@@ -14,6 +10,12 @@ AVAILABLE_LISTENERS = [
     'before_server_stop',
     'after_server_stop'
 ]
+
+skipif_no_alarm = pytest.mark.skipif(
+    not hasattr(signal, 'SIGALRM'),
+    reason='SIGALRM is not implemented for this platform, we have to come '
+    'up with another timeout strategy to test these'
+)
 
 
 def create_listener(listener_name, in_list):
@@ -31,59 +33,53 @@ def start_stop_app(random_name_app, **run_kwargs):
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(1)
     try:
-        random_name_app.run(HOST, random_name_app.test_port, **run_kwargs)
+        random_name_app.run(HOST, PORT, **run_kwargs)
     except KeyboardInterrupt:
         pass
 
 
+@skipif_no_alarm
 @pytest.mark.parametrize('listener_name', AVAILABLE_LISTENERS)
-def test_single_listener(listener_name):
+def test_single_listener(app, listener_name):
     """Test that listeners on their own work"""
-    random_name_app = Sanic(''.join(
-        [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))
-    output = list()
+    output = []
     # Register listener
-    random_name_app.listener(listener_name)(
+    app.listener(listener_name)(
         create_listener(listener_name, output))
-    start_stop_app(random_name_app)
-    assert random_name_app.name + listener_name == output.pop()
+    start_stop_app(app)
+    assert app.name + listener_name == output.pop()
 
 
+@skipif_no_alarm
 @pytest.mark.parametrize('listener_name', AVAILABLE_LISTENERS)
-def test_register_listener(listener_name):
+def test_register_listener(app, listener_name):
     """
     Test that listeners on their own work with
     app.register_listener method
     """
-    random_name_app = Sanic(''.join(
-        [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))
-    output = list()
+    output = []
     # Register listener
     listener = create_listener(listener_name, output)
-    random_name_app.register_listener(listener,
-                                      event=listener_name)
-    start_stop_app(random_name_app)
-    assert random_name_app.name + listener_name == output.pop()
+    app.register_listener(listener, event=listener_name)
+    start_stop_app(app)
+    assert app.name + listener_name == output.pop()
 
 
-def test_all_listeners():
-    random_name_app = Sanic(''.join(
-        [choice(ascii_letters) for _ in range(choice(range(5, 10)))]))
-    output = list()
+@skipif_no_alarm
+def test_all_listeners(app):
+    output = []
     for listener_name in AVAILABLE_LISTENERS:
         listener = create_listener(listener_name, output)
-        random_name_app.listener(listener_name)(listener)
-    start_stop_app(random_name_app)
+        app.listener(listener_name)(listener)
+    start_stop_app(app)
     for listener_name in AVAILABLE_LISTENERS:
-        assert random_name_app.name + listener_name == output.pop()
+        assert app.name + listener_name == output.pop()
 
 
-async def test_trigger_before_events_create_server():
+async def test_trigger_before_events_create_server(app):
 
     class MySanicDb:
         pass
-
-    app = Sanic("test_sanic_app")
 
     @app.listener('before_server_start')
     async def init_db(app, loop):

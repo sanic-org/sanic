@@ -43,6 +43,7 @@ and ``recv`` methods to send and receive data respectively.
 You could setup your own WebSocket configuration through ``app.config``, like
 
 .. code:: python
+
     app.config.WEBSOCKET_MAX_SIZE = 2 ** 20
     app.config.WEBSOCKET_MAX_QUEUE = 32
     app.config.WEBSOCKET_READ_LIMIT = 2 ** 16

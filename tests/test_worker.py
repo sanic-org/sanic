@@ -7,13 +7,17 @@ from unittest import mock
 from sanic.worker import GunicornWorker
 from sanic.app import Sanic
 import asyncio
-import logging
 import pytest
 
 
 @pytest.fixture(scope='module')
 def gunicorn_worker():
-    command = 'gunicorn --bind 127.0.0.1:1337 --worker-class sanic.worker.GunicornWorker examples.simple_server:app'
+    command = (
+        'gunicorn '
+        '--bind 127.0.0.1:1337 '
+        '--worker-class sanic.worker.GunicornWorker '
+        'examples.simple_server:app'
+    )
     worker = subprocess.Popen(shlex.split(command))
     time.sleep(3)
     yield
@@ -96,10 +100,11 @@ def test_run_max_requests_exceeded(worker):
     _runner = asyncio.ensure_future(worker._check_alive(), loop=loop)
     loop.run_until_complete(_runner)
 
-    assert worker.alive == False
+    assert not worker.alive
     worker.notify.assert_called_with()
-    worker.log.info.assert_called_with("Max requests exceeded, shutting down: %s",
-                                       worker)
+    worker.log.info.assert_called_with("Max requests exceeded, shutting "
+                                       "down: %s", worker)
+
 
 def test_worker_close(worker):
     loop = asyncio.new_event_loop()
@@ -113,14 +118,15 @@ def test_worker_close(worker):
     conn = mock.Mock()
     conn.websocket = mock.Mock()
     conn.websocket.close_connection = mock.Mock(
-            wraps=asyncio.coroutine(lambda *a, **kw: None)
-        )
+        wraps=asyncio.coroutine(lambda *a, **kw: None)
+    )
     worker.connections = set([conn])
     worker.log = mock.Mock()
     worker.loop = loop
     server = mock.Mock()
     server.close = mock.Mock(wraps=lambda *a, **kw: None)
-    server.wait_closed = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
+    server.wait_closed = mock.Mock(wraps=asyncio.coroutine(
+        lambda *a, **kw: None))
     worker.servers = {
         server: {"requests_count": 14},
     }
@@ -130,6 +136,6 @@ def test_worker_close(worker):
     _close = asyncio.ensure_future(worker.close(), loop=loop)
     loop.run_until_complete(_close)
 
-    assert worker.signal.stopped == True
-    conn.websocket.close_connection.assert_called_with(after_handshake=False)
+    assert worker.signal.stopped
+    assert conn.websocket.close_connection.called
     assert len(worker.servers) == 0

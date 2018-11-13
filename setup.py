@@ -21,7 +21,7 @@ def open_local(paths, mode='r', encoding='utf8'):
 
 with open_local(['sanic', '__init__.py'], encoding='latin1') as fp:
     try:
-        version = re.findall(r"^__version__ = '([^']+)'\r?$",
+        version = re.findall(r"^__version__ = \"([^']+)\"\r?$",
                              fp.read(), re.M)[0]
     except IndexError:
         raise RuntimeError('Unable to determine version.')
@@ -48,6 +48,7 @@ setup_kwargs = {
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 }
 
@@ -56,11 +57,12 @@ ujson = 'ujson>=1.35' + env_dependency
 uvloop = 'uvloop>=0.5.3' + env_dependency
 
 requirements = [
-    'httptools>=0.0.9',
+    'httptools>=0.0.10',
     uvloop,
     ujson,
     'aiofiles>=0.3.0',
-    'websockets>=4.0',
+    'websockets>=6.0,<7.0',
+    'multidict>=4.0,<5.0',
 ]
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")

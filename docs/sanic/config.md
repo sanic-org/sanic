@@ -85,13 +85,15 @@ DB_USER = 'appuser'
 
 Out of the box there are just a few predefined values which can be overwritten when creating the application.
 
-    | Variable           | Default   | Description                                   |
-    | ------------------ | --------- | --------------------------------------------- |
-    | REQUEST_MAX_SIZE   | 100000000 | How big a request may be (bytes)              |
-    | REQUEST_TIMEOUT    | 60        | How long a request can take to arrive (sec)   |
-    | RESPONSE_TIMEOUT   | 60        | How long a response can take to process (sec) |
-    | KEEP_ALIVE         | True      | Disables keep-alive when False                |
-    | KEEP_ALIVE_TIMEOUT | 5         | How long to hold a TCP connection open (sec)  |
+    | Variable                  | Default   | Description                                            |
+    | ------------------------- | --------- | ------------------------------------------------------ |
+    | REQUEST_MAX_SIZE          | 100000000 | How big a request may be (bytes)                       |
+    | REQUEST_TIMEOUT           | 60        | How long a request can take to arrive (sec)            |
+    | RESPONSE_TIMEOUT          | 60        | How long a response can take to process (sec)          |
+    | KEEP_ALIVE                | True      | Disables keep-alive when False                         |
+    | KEEP_ALIVE_TIMEOUT        | 5         | How long to hold a TCP connection open (sec)           |
+    | GRACEFUL_SHUTDOWN_TIMEOUT | 15.0      | How long take to force close non-idle connection (sec) |
+    | ACCESS_LOG                | True      | Disable or enable access log                           |
 
 ### The different Timeout variables:
 

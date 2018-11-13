@@ -3,7 +3,6 @@ import os
 
 import pytest
 
-from sanic import Sanic
 from sanic.blueprints import Blueprint
 
 
@@ -26,9 +25,9 @@ def get_file_content(static_file_directory, file_name):
         return file.read()
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
-def test_static_file(static_file_directory, file_name):
-    app = Sanic('test_static')
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
+def test_static_file(app, static_file_directory, file_name):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name))
     app.static(
@@ -102,9 +101,7 @@ def test_static_file(static_file_directory, file_name):
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
 @pytest.mark.parametrize('base_uri', ['/static', '', '/dir'])
-def test_static_directory(file_name, base_uri, static_file_directory):
-
-    app = Sanic('test_static')
+def test_static_directory(app, file_name, base_uri, static_file_directory):
     app.static(base_uri, static_file_directory)
     base_uri2 = base_uri + '/2'
     app.static(base_uri2, static_file_directory, name='uploads')
@@ -156,10 +153,8 @@ def test_static_directory(file_name, base_uri, static_file_directory):
     assert response.body == get_file_content(static_file_directory, file_name)
 
 
-
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_head_request(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_head_request(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -198,8 +193,7 @@ def test_static_head_request(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_correct(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_correct(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -218,11 +212,11 @@ def test_static_content_range_correct(file_name, static_file_directory):
     assert uri == app.url_for('static', name='static', filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
-        static_file_directory, file_name))[12:19]
+        static_file_directory, file_name))[12:20]
     assert int(response.headers[
                'Content-Length']) == len(static_content)
     assert response.body == static_content
@@ -239,19 +233,18 @@ def test_static_content_range_correct(file_name, static_file_directory):
                               filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
-        static_file_directory, file_name))[12:19]
+        static_file_directory, file_name))[12:20]
     assert int(response.headers[
                'Content-Length']) == len(static_content)
     assert response.body == static_content
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_front(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_front(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -270,7 +263,7 @@ def test_static_content_range_front(file_name, static_file_directory):
     assert uri == app.url_for('static', name='static', filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -291,7 +284,7 @@ def test_static_content_range_front(file_name, static_file_directory):
                               filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -302,8 +295,7 @@ def test_static_content_range_front(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_back(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_back(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -322,7 +314,7 @@ def test_static_content_range_back(file_name, static_file_directory):
     assert uri == app.url_for('static', name='static', filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -343,7 +335,7 @@ def test_static_content_range_back(file_name, static_file_directory):
                               filename='any')
 
     request, response = app.test_client.get(uri, headers=headers)
-    assert response.status == 200
+    assert response.status == 206
     assert 'Content-Length' in response.headers
     assert 'Content-Range' in response.headers
     static_content = bytes(get_file_content(
@@ -354,8 +346,7 @@ def test_static_content_range_back(file_name, static_file_directory):
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_empty(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_empty(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)
@@ -374,8 +365,8 @@ def test_static_content_range_empty(file_name, static_file_directory):
     assert response.status == 200
     assert 'Content-Length' in response.headers
     assert 'Content-Range' not in response.headers
-    assert int(response.headers[
-               'Content-Length']) == len(get_file_content(static_file_directory, file_name))
+    assert int(response.headers['Content-Length']) == \
+        len(get_file_content(static_file_directory, file_name))
     assert response.body == bytes(
         get_file_content(static_file_directory, file_name))
 
@@ -394,15 +385,14 @@ def test_static_content_range_empty(file_name, static_file_directory):
     assert response.status == 200
     assert 'Content-Length' in response.headers
     assert 'Content-Range' not in response.headers
-    assert int(response.headers[
-               'Content-Length']) == len(get_file_content(static_file_directory, file_name))
+    assert int(response.headers['Content-Length']) == \
+        len(get_file_content(static_file_directory, file_name))
     assert response.body == bytes(
         get_file_content(static_file_directory, file_name))
 
 
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_error(file_name, static_file_directory):
-    app = Sanic('test_static')
+def test_static_content_range_error(app, file_name, static_file_directory):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name),
         use_content_range=True)

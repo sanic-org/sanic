@@ -1,6 +1,7 @@
 import re
 import string
 
+
 # ------------------------------------------------------------ #
 #  SimpleCookie
 # ------------------------------------------------------------ #
@@ -8,18 +9,16 @@ import string
 # Straight up copied this section of dark magic from SimpleCookie
 
 _LegalChars = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
-_UnescapedChars = _LegalChars + ' ()/<=>?@[]{}'
+_UnescapedChars = _LegalChars + " ()/<=>?@[]{}"
 
-_Translator = {n: '\\%03o' % n
-               for n in set(range(256)) - set(map(ord, _UnescapedChars))}
-_Translator.update({
-    ord('"'): '\\"',
-    ord('\\'): '\\\\',
-})
+_Translator = {
+    n: "\\%03o" % n for n in set(range(256)) - set(map(ord, _UnescapedChars))
+}
+_Translator.update({ord('"'): '\\"', ord("\\"): "\\\\"})
 
 
 def _quote(str):
-    """Quote a string for use in a cookie header.
+    r"""Quote a string for use in a cookie header.
     If the string does not need to be double-quoted, then just return the
     string.  Otherwise, surround the string in doublequotes and quote
     (with a \) special characters.
@@ -30,7 +29,7 @@ def _quote(str):
         return '"' + str.translate(_Translator) + '"'
 
 
-_is_legal_key = re.compile('[%s]+' % re.escape(_LegalChars)).fullmatch
+_is_legal_key = re.compile("[%s]+" % re.escape(_LegalChars)).fullmatch
 
 # ------------------------------------------------------------ #
 #  Custom SimpleCookie
@@ -47,33 +46,37 @@ class CookieJar(dict):
         super().__init__()
         self.headers = headers
         self.cookie_headers = {}
+        self.header_key = "Set-Cookie"
 
     def __setitem__(self, key, value):
         # If this cookie doesn't exist, add it to the header keys
-        cookie_header = self.cookie_headers.get(key)
-        if not cookie_header:
+        if not self.cookie_headers.get(key):
             cookie = Cookie(key, value)
-            cookie['path'] = '/'
-            cookie_header = MultiHeader("Set-Cookie")
-            self.cookie_headers[key] = cookie_header
-            self.headers[cookie_header] = cookie
+            cookie["path"] = "/"
+            self.cookie_headers[key] = self.header_key
+            self.headers.add(self.header_key, cookie)
             return super().__setitem__(key, cookie)
         else:
             self[key].value = value
 
     def __delitem__(self, key):
         if key not in self.cookie_headers:
-            self[key] = ''
-            self[key]['max-age'] = 0
+            self[key] = ""
+            self[key]["max-age"] = 0
         else:
             cookie_header = self.cookie_headers[key]
-            del self.headers[cookie_header]
+            # remove it from header
+            cookies = self.headers.popall(cookie_header)
+            for cookie in cookies:
+                if cookie.key != key:
+                    self.headers.add(cookie_header, cookie)
             del self.cookie_headers[key]
             return super().__delitem__(key)
 
 
 class Cookie(dict):
     """A stripped down version of Morsel from SimpleCookie #gottagofast"""
+
     _keys = {
         "expires": "expires",
         "path": "Path",
@@ -85,7 +88,7 @@ class Cookie(dict):
         "version": "Version",
         "samesite": "SameSite",
     }
-    _flags = {'secure', 'httponly'}
+    _flags = {"secure", "httponly"}
 
     def __init__(self, key, value):
         if key in self._keys:
@@ -103,39 +106,27 @@ class Cookie(dict):
             return super().__setitem__(key, value)
 
     def encode(self, encoding):
-        output = ['%s=%s' % (self.key, _quote(self.value))]
+        output = ["%s=%s" % (self.key, _quote(self.value))]
         for key, value in self.items():
-            if key == 'max-age':
+            if key == "max-age":
                 try:
-                    output.append('%s=%d' % (self._keys[key], value))
+                    output.append("%s=%d" % (self._keys[key], value))
                 except TypeError:
-                    output.append('%s=%s' % (self._keys[key], value))
-            elif key == 'expires':
+                    output.append("%s=%s" % (self._keys[key], value))
+            elif key == "expires":
                 try:
-                    output.append('%s=%s' % (
-                        self._keys[key],
-                        value.strftime("%a, %d-%b-%Y %T GMT")
-                    ))
+                    output.append(
+                        "%s=%s"
+                        % (
+                            self._keys[key],
+                            value.strftime("%a, %d-%b-%Y %T GMT"),
+                        )
+                    )
                 except AttributeError:
-                    output.append('%s=%s' % (self._keys[key], value))
+                    output.append("%s=%s" % (self._keys[key], value))
             elif key in self._flags and self[key]:
                 output.append(self._keys[key])
             else:
-                output.append('%s=%s' % (self._keys[key], value))
+                output.append("%s=%s" % (self._keys[key], value))
 
         return "; ".join(output).encode(encoding)
-
-# ------------------------------------------------------------ #
-#  Header Trickery
-# ------------------------------------------------------------ #
-
-
-class MultiHeader:
-    """String-holding object which allow us to set a header within response
-    that has a unique key, but may contain duplicate header names
-    """
-    def __init__(self, name):
-        self.name = name
-
-    def encode(self):
-        return self.name.encode()

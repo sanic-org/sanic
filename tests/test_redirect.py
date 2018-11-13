@@ -1,12 +1,11 @@
 import pytest
+from urllib.parse import quote
 
-from sanic import Sanic
 from sanic.response import text, redirect
 
 
 @pytest.fixture
-def redirect_app():
-    app = Sanic('test_redirection')
+def redirect_app(app):
 
     @app.route('/redirect_init')
     async def redirect_init(request):
@@ -21,16 +20,20 @@ def redirect_app():
         return text('OK')
 
     @app.route('/1')
-    def handler(request):
+    def handler1(request):
         return redirect('/2')
 
     @app.route('/2')
-    def handler(request):
+    def handler2(request):
         return redirect('/3')
 
     @app.route('/3')
-    def handler(request):
+    def handler3(request):
         return text('OK')
+
+    @app.route('/redirect_with_header_injection')
+    async def redirect_with_header_injection(request):
+        return redirect("/unsafe\ntest-header: test-value\n\ntest-body")
 
     return app
 
@@ -92,3 +95,38 @@ def test_chained_redirect(redirect_app):
         assert response.url.endswith('/3')
     except AttributeError:
         assert response.url.path.endswith('/3')
+
+
+def test_redirect_with_header_injection(redirect_app):
+    """
+    Test redirection to a URL with header and body injections.
+    """
+    request, response = redirect_app.test_client.get(
+        "/redirect_with_header_injection",
+        allow_redirects=False)
+
+    assert response.status == 302
+    assert "test-header" not in response.headers
+    assert not response.text.startswith('test-body')
+
+
+@pytest.mark.parametrize("test_str", ["sanic-test", "sanictest", "sanic test"])
+async def test_redirect_with_params(app, test_client, test_str):
+
+    @app.route("/api/v1/test/<test>/")
+    async def init_handler(request, test):
+        assert test == test_str
+        return redirect("/api/v2/test/{}/".format(quote(test)))
+
+    @app.route("/api/v2/test/<test>/")
+    async def target_handler(request, test):
+        assert test == test_str
+        return text("OK")
+
+    test_cli = await test_client(app)
+
+    response = await test_cli.get("/api/v1/test/{}/".format(quote(test_str)))
+    assert response.status == 200
+
+    txt = await response.text()
+    assert txt == "OK"

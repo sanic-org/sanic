@@ -1,6 +1,5 @@
 import random
 
-from sanic import Sanic
 from sanic.response import json
 
 try:
@@ -9,8 +8,7 @@ except ImportError:
     from json import loads
 
 
-def test_storage():
-    app = Sanic('test_text')
+def test_storage(app):
 
     @app.middleware('request')
     def store(request):
@@ -20,7 +18,10 @@ def test_storage():
 
     @app.route('/')
     def handler(request):
-        return json({'user': request.get('user'), 'sidekick': request.get('sidekick')})
+        return json({
+            'user': request.get('user'),
+            'sidekick': request.get('sidekick')
+        })
 
     request, response = app.test_client.get('/')
 
@@ -29,8 +30,7 @@ def test_storage():
     assert response_json.get('sidekick') is None
 
 
-def test_app_injection():
-    app = Sanic('test_app_injection')
+def test_app_injection(app):
     expected = random.choice(range(0, 100))
 
     @app.listener('after_server_start')

@@ -10,13 +10,14 @@ Additionally, Sanic provides listeners which allow you to run code at various po
 
 There are two types of middleware: request and response. Both are declared
 using the `@app.middleware` decorator, with the decorator's parameter being a
-string representing its type: `'request'` or `'response'`. Response middleware
-receives both the request and the response as arguments.
+string representing its type: `'request'` or `'response'`.
 
+* Request middleware receives only the `request` as argument.
+* Response middleware receives both the `request` and `response`.
 
 The simplest middleware doesn't modify the request or response at all:
 
-```python
+```
 @app.middleware('request')
 async def print_on_request(request):
 	print("I print when a request is received by the server")
@@ -32,7 +33,7 @@ Middleware can modify the request or response parameter it is given, *as long
 as it does not return it*. The following example shows a practical use-case for
 this.
 
-```python
+```
 app = Sanic(__name__)
 
 @app.middleware('response')
@@ -59,7 +60,7 @@ and the response will be returned. If this occurs to a request before the
 relevant user route handler is reached, the handler will never be called.
 Returning a response will also prevent any further middleware from running.
 
-```python
+```
 @app.middleware('request')
 async def halt_request(request):
 	return text('I halted the request')
@@ -78,11 +79,11 @@ If you want to execute startup/teardown code as your server starts or closes, yo
 - `before_server_stop`
 - `after_server_stop`
 
-These listeners are implemented as decorators on functions which accept the app object as well as the asyncio loop. 
+These listeners are implemented as decorators on functions which accept the app object as well as the asyncio loop.
 
 For example:
 
-```python
+```
 @app.listener('before_server_start')
 async def setup_db(app, loop):
     app.db = await db_setup()
@@ -100,16 +101,16 @@ async def close_db(app, loop):
     await app.db.close()
 ```
 
-It's also possible to register a listener using the `register_listener` method. 
+It's also possible to register a listener using the `register_listener` method.
 This may be useful if you define your listeners in another module besides
 the one you instantiate your app in.
 
-```python
+```
 app = Sanic()
-    
+
 async def setup_db(app, loop):
     app.db = await db_setup()
-    
+
 app.register_listener(setup_db, 'before_server_start')
 
 ```
@@ -117,7 +118,7 @@ app.register_listener(setup_db, 'before_server_start')
 If you want to schedule a background task to run after the loop has started,
 Sanic provides the `add_task` method to easily do so.
 
-```python
+```
 async def notify_server_started_after_five_seconds():
     await asyncio.sleep(5)
     print('Server successfully started!')
@@ -127,7 +128,7 @@ app.add_task(notify_server_started_after_five_seconds())
 
 Sanic will attempt to automatically inject the app, passing it as an argument to the task:
 
-```python
+```
 async def notify_server_started_after_five_seconds(app):
     await asyncio.sleep(5)
     print(app.name)
@@ -137,7 +138,7 @@ app.add_task(notify_server_started_after_five_seconds)
 
 Or you can pass the app explicitly for the same effect:
 
-```python
+```
 async def notify_server_started_after_five_seconds(app):
     await asyncio.sleep(5)
     print(app.name)

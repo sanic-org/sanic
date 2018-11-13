@@ -1,8 +1,5 @@
-from sanic import Sanic
 from sanic.server import HttpProtocol
 from sanic.response import text
-
-app = Sanic('test_custom_porotocol')
 
 
 class CustomHttpProtocol(HttpProtocol):
@@ -16,12 +13,12 @@ class CustomHttpProtocol(HttpProtocol):
         self.transport.close()
 
 
-@app.route('/1')
-async def handler_1(request):
-    return 'OK'
+def test_use_custom_protocol(app):
 
+    @app.route('/1')
+    async def handler_1(request):
+        return 'OK'
 
-def test_use_custom_protocol():
     server_kwargs = {
         'protocol': CustomHttpProtocol
     }

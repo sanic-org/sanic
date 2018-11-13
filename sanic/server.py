@@ -1,36 +1,38 @@
 import asyncio
 import os
 import traceback
+
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
-from signal import (
-    SIGTERM, SIGINT, SIG_IGN,
-    signal as signal_func,
-    Signals
-)
-from socket import (
-    socket,
-    SOL_SOCKET,
-    SO_REUSEADDR,
-)
+from signal import SIG_IGN, SIGINT, SIGTERM, Signals
+from signal import signal as signal_func
+from socket import SO_REUSEADDR, SOL_SOCKET, socket
 from time import time
 
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
+from multidict import CIMultiDict
+
+from sanic.exceptions import (
+    InvalidUsage,
+    PayloadTooLarge,
+    RequestTimeout,
+    ServerError,
+    ServiceUnavailable,
+)
+from sanic.log import access_logger, logger
+from sanic.request import Request
+from sanic.response import HTTPResponse
+
 
 try:
     import uvloop
+
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
 
-from sanic.log import logger, access_logger
-from sanic.response import HTTPResponse
-from sanic.request import Request
-from sanic.exceptions import (
-    RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError,
-    ServiceUnavailable)
 
 current_time = None
 
@@ -39,48 +41,61 @@ class Signal:
     stopped = False
 
 
-class CIDict(dict):
-    """Case Insensitive dict where all keys are converted to lowercase
-    This does not maintain the inputted case when calling items() or keys()
-    in favor of speed, since headers are case insensitive
-    """
-
-    def get(self, key, default=None):
-        return super().get(key.casefold(), default)
-
-    def __getitem__(self, key):
-        return super().__getitem__(key.casefold())
-
-    def __setitem__(self, key, value):
-        return super().__setitem__(key.casefold(), value)
-
-    def __contains__(self, key):
-        return super().__contains__(key.casefold())
-
-
 class HttpProtocol(asyncio.Protocol):
     __slots__ = (
         # event loop, connection
-        'loop', 'transport', 'connections', 'signal',
+        "loop",
+        "transport",
+        "connections",
+        "signal",
         # request params
-        'parser', 'request', 'url', 'headers',
+        "parser",
+        "request",
+        "url",
+        "headers",
         # request config
-        'request_handler', 'request_timeout', 'response_timeout',
-        'keep_alive_timeout', 'request_max_size', 'request_class',
-        'is_request_stream', 'router',
+        "request_handler",
+        "request_timeout",
+        "response_timeout",
+        "keep_alive_timeout",
+        "request_max_size",
+        "request_class",
+        "is_request_stream",
+        "router",
         # enable or disable access log purpose
-        'access_log',
+        "access_log",
         # connection management
-        '_total_request_size', '_request_timeout_handler',
-        '_response_timeout_handler', '_keep_alive_timeout_handler',
-        '_last_request_time', '_last_response_time', '_is_stream_handler')
+        "_total_request_size",
+        "_request_timeout_handler",
+        "_response_timeout_handler",
+        "_keep_alive_timeout_handler",
+        "_last_request_time",
+        "_last_response_time",
+        "_is_stream_handler",
+        "_not_paused",
+    )
 
-    def __init__(self, *, loop, request_handler, error_handler,
-                 signal=Signal(), connections=set(), request_timeout=60,
-                 response_timeout=60, keep_alive_timeout=5,
-                 request_max_size=None, request_class=None, access_log=True,
-                 keep_alive=True, is_request_stream=False, router=None,
-                 state=None, debug=False, **kwargs):
+    def __init__(
+        self,
+        *,
+        loop,
+        request_handler,
+        error_handler,
+        signal=Signal(),
+        connections=set(),
+        request_timeout=60,
+        response_timeout=60,
+        keep_alive_timeout=5,
+        request_max_size=None,
+        request_class=None,
+        access_log=True,
+        keep_alive=True,
+        is_request_stream=False,
+        router=None,
+        state=None,
+        debug=False,
+        **kwargs
+    ):
         self.loop = loop
         self.transport = None
         self.request = None
@@ -100,6 +115,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
         self._is_stream_handler = False
+        self._not_paused = asyncio.Event(loop=loop)
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None
@@ -109,18 +125,20 @@ class HttpProtocol(asyncio.Protocol):
         self._request_handler_task = None
         self._request_stream_task = None
         self._keep_alive = keep_alive
-        self._header_fragment = b''
+        self._header_fragment = b""
         self.state = state if state else {}
-        if 'requests_count' not in self.state:
-            self.state['requests_count'] = 0
+        if "requests_count" not in self.state:
+            self.state["requests_count"] = 0
         self._debug = debug
+        self._not_paused.set()
 
     @property
     def keep_alive(self):
         return (
-            self._keep_alive and
-            not self.signal.stopped and
-            self.parser.should_keep_alive())
+            self._keep_alive
+            and not self.signal.stopped
+            and self.parser.should_keep_alive()
+        )
 
     # -------------------------------------------- #
     # Connection
@@ -129,18 +147,29 @@ class HttpProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.connections.add(self)
         self._request_timeout_handler = self.loop.call_later(
-            self.request_timeout, self.request_timeout_callback)
+            self.request_timeout, self.request_timeout_callback
+        )
         self.transport = transport
         self._last_request_time = current_time
 
     def connection_lost(self, exc):
         self.connections.discard(self)
+        if self._request_handler_task:
+            self._request_handler_task.cancel()
+        if self._request_stream_task:
+            self._request_stream_task.cancel()
         if self._request_timeout_handler:
             self._request_timeout_handler.cancel()
         if self._response_timeout_handler:
             self._response_timeout_handler.cancel()
         if self._keep_alive_timeout_handler:
             self._keep_alive_timeout_handler.cancel()
+
+    def pause_writing(self):
+        self._not_paused.clear()
+
+    def resume_writing(self):
+        self._not_paused.set()
 
     def request_timeout_callback(self):
         # See the docstring in the RequestTimeout exception, to see
@@ -150,19 +179,15 @@ class HttpProtocol(asyncio.Protocol):
         time_elapsed = current_time - self._last_request_time
         if time_elapsed < self.request_timeout:
             time_left = self.request_timeout - time_elapsed
-            self._request_timeout_handler = (
-                self.loop.call_later(time_left,
-                                     self.request_timeout_callback)
+            self._request_timeout_handler = self.loop.call_later(
+                time_left, self.request_timeout_callback
             )
         else:
             if self._request_stream_task:
                 self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            try:
-                raise RequestTimeout('Request Timeout')
-            except RequestTimeout as exception:
-                self.write_error(exception)
+            self.write_error(RequestTimeout("Request Timeout"))
 
     def response_timeout_callback(self):
         # Check if elapsed time since response was initiated exceeds our
@@ -170,19 +195,15 @@ class HttpProtocol(asyncio.Protocol):
         time_elapsed = current_time - self._last_request_time
         if time_elapsed < self.response_timeout:
             time_left = self.response_timeout - time_elapsed
-            self._response_timeout_handler = (
-                self.loop.call_later(time_left,
-                                     self.response_timeout_callback)
+            self._response_timeout_handler = self.loop.call_later(
+                time_left, self.response_timeout_callback
             )
         else:
             if self._request_stream_task:
                 self._request_stream_task.cancel()
             if self._request_handler_task:
                 self._request_handler_task.cancel()
-            try:
-                raise ServiceUnavailable('Response Timeout')
-            except ServiceUnavailable as exception:
-                self.write_error(exception)
+            self.write_error(ServiceUnavailable("Response Timeout"))
 
     def keep_alive_timeout_callback(self):
         # Check if elapsed time since last response exceeds our configured
@@ -190,12 +211,11 @@ class HttpProtocol(asyncio.Protocol):
         time_elapsed = current_time - self._last_response_time
         if time_elapsed < self.keep_alive_timeout:
             time_left = self.keep_alive_timeout - time_elapsed
-            self._keep_alive_timeout_handler = (
-                self.loop.call_later(time_left,
-                                     self.keep_alive_timeout_callback)
+            self._keep_alive_timeout_handler = self.loop.call_later(
+                time_left, self.keep_alive_timeout_callback
             )
         else:
-            logger.debug('KeepAlive Timeout. Closing connection.')
+            logger.debug("KeepAlive Timeout. Closing connection.")
             self.transport.close()
             self.transport = None
 
@@ -208,8 +228,7 @@ class HttpProtocol(asyncio.Protocol):
         # memory limits
         self._total_request_size += len(data)
         if self._total_request_size > self.request_max_size:
-            exception = PayloadTooLarge('Payload Too Large')
-            self.write_error(exception)
+            self.write_error(PayloadTooLarge("Payload Too Large"))
 
         # Create parser if this is the first time we're receiving data
         if self.parser is None:
@@ -218,17 +237,16 @@ class HttpProtocol(asyncio.Protocol):
             self.parser = HttpRequestParser(self)
 
         # requests count
-        self.state['requests_count'] = self.state['requests_count'] + 1
+        self.state["requests_count"] = self.state["requests_count"] + 1
 
         # Parse request chunk or close connection
         try:
             self.parser.feed_data(data)
         except HttpParserError:
-            message = 'Bad Request'
+            message = "Bad Request"
             if self._debug:
-                message += '\n' + traceback.format_exc()
-            exception = InvalidUsage(message)
-            self.write_error(exception)
+                message += "\n" + traceback.format_exc()
+            self.write_error(InvalidUsage(message))
 
     def on_url(self, url):
         if not self.url:
@@ -240,26 +258,28 @@ class HttpProtocol(asyncio.Protocol):
         self._header_fragment += name
 
         if value is not None:
-            if self._header_fragment == b'Content-Length' \
-                    and int(value) > self.request_max_size:
-                exception = PayloadTooLarge('Payload Too Large')
-                self.write_error(exception)
+            if (
+                self._header_fragment == b"Content-Length"
+                and int(value) > self.request_max_size
+            ):
+                self.write_error(PayloadTooLarge("Payload Too Large"))
             try:
                 value = value.decode()
             except UnicodeDecodeError:
-                value = value.decode('latin_1')
+                value = value.decode("latin_1")
             self.headers.append(
-                    (self._header_fragment.decode().casefold(), value))
+                (self._header_fragment.decode().casefold(), value)
+            )
 
-            self._header_fragment = b''
+            self._header_fragment = b""
 
     def on_headers_complete(self):
         self.request = self.request_class(
             url_bytes=self.url,
-            headers=CIDict(self.headers),
+            headers=CIMultiDict(self.headers),
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode(),
-            transport=self.transport
+            transport=self.transport,
         )
         # Remove any existing KeepAlive handler here,
         # It will be recreated if required on the new request.
@@ -268,7 +288,8 @@ class HttpProtocol(asyncio.Protocol):
             self._keep_alive_timeout_handler = None
         if self.is_request_stream:
             self._is_stream_handler = self.router.is_stream_handler(
-                self.request)
+                self.request
+            )
             if self._is_stream_handler:
                 self.request.stream = asyncio.Queue()
                 self.execute_request_handler()
@@ -276,9 +297,10 @@ class HttpProtocol(asyncio.Protocol):
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:
             self._request_stream_task = self.loop.create_task(
-                self.request.stream.put(body))
+                self.request.stream.put(body)
+            )
             return
-        self.request.body.append(body)
+        self.request.body_push(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -288,47 +310,49 @@ class HttpProtocol(asyncio.Protocol):
             self._request_timeout_handler = None
         if self.is_request_stream and self._is_stream_handler:
             self._request_stream_task = self.loop.create_task(
-                self.request.stream.put(None))
+                self.request.stream.put(None)
+            )
             return
-        self.request.body = b''.join(self.request.body)
+        self.request.body_finish()
         self.execute_request_handler()
 
     def execute_request_handler(self):
         self._response_timeout_handler = self.loop.call_later(
-            self.response_timeout, self.response_timeout_callback)
+            self.response_timeout, self.response_timeout_callback
+        )
         self._last_request_time = current_time
         self._request_handler_task = self.loop.create_task(
             self.request_handler(
-                self.request,
-                self.write_response,
-                self.stream_response))
+                self.request, self.write_response, self.stream_response
+            )
+        )
 
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
     def log_response(self, response):
         if self.access_log:
-            extra = {
-                'status': getattr(response, 'status', 0),
-            }
+            extra = {"status": getattr(response, "status", 0)}
 
             if isinstance(response, HTTPResponse):
-                extra['byte'] = len(response.body)
+                extra["byte"] = len(response.body)
             else:
-                extra['byte'] = -1
+                extra["byte"] = -1
 
-            extra['host'] = 'UNKNOWN'
+            extra["host"] = "UNKNOWN"
             if self.request is not None:
                 if self.request.ip:
-                    extra['host'] = '{0}:{1}'.format(self.request.ip,
-                                                     self.request.port)
+                    extra["host"] = "{0}:{1}".format(
+                        self.request.ip, self.request.port
+                    )
 
-                extra['request'] = '{0} {1}'.format(self.request.method,
-                                                    self.request.url)
+                extra["request"] = "{0} {1}".format(
+                    self.request.method, self.request.url
+                )
             else:
-                extra['request'] = 'nil'
+                extra["request"] = "nil"
 
-            access_logger.info('', extra=extra)
+            access_logger.info("", extra=extra)
 
     def write_response(self, response):
         """
@@ -341,33 +365,45 @@ class HttpProtocol(asyncio.Protocol):
             keep_alive = self.keep_alive
             self.transport.write(
                 response.output(
-                    self.request.version, keep_alive,
-                    self.keep_alive_timeout))
+                    self.request.version, keep_alive, self.keep_alive_timeout
+                )
+            )
             self.log_response(response)
         except AttributeError:
-            logger.error('Invalid response object for url %s, '
-                         'Expected Type: HTTPResponse, Actual Type: %s',
-                         self.url, type(response))
-            self.write_error(ServerError('Invalid response type'))
+            logger.error(
+                "Invalid response object for url %s, "
+                "Expected Type: HTTPResponse, Actual Type: %s",
+                self.url,
+                type(response),
+            )
+            self.write_error(ServerError("Invalid response type"))
         except RuntimeError:
             if self._debug:
-                logger.error('Connection lost before response written @ %s',
-                             self.request.ip)
+                logger.error(
+                    "Connection lost before response written @ %s",
+                    self.request.ip,
+                )
             keep_alive = False
         except Exception as e:
             self.bail_out(
-                "Writing response failed, connection closed {}".format(
-                    repr(e)))
+                "Writing response failed, connection closed {}".format(repr(e))
+            )
         finally:
             if not keep_alive:
                 self.transport.close()
                 self.transport = None
             else:
                 self._keep_alive_timeout_handler = self.loop.call_later(
-                    self.keep_alive_timeout,
-                    self.keep_alive_timeout_callback)
+                    self.keep_alive_timeout, self.keep_alive_timeout_callback
+                )
                 self._last_response_time = current_time
                 self.cleanup()
+
+    async def drain(self):
+        await self._not_paused.wait()
+
+    def push_data(self, data):
+        self.transport.write(data)
 
     async def stream_response(self, response):
         """
@@ -378,34 +414,41 @@ class HttpProtocol(asyncio.Protocol):
         if self._response_timeout_handler:
             self._response_timeout_handler.cancel()
             self._response_timeout_handler = None
+
         try:
             keep_alive = self.keep_alive
-            response.transport = self.transport
+            response.protocol = self
             await response.stream(
-                self.request.version, keep_alive, self.keep_alive_timeout)
+                self.request.version, keep_alive, self.keep_alive_timeout
+            )
             self.log_response(response)
         except AttributeError:
-            logger.error('Invalid response object for url %s, '
-                         'Expected Type: HTTPResponse, Actual Type: %s',
-                         self.url, type(response))
-            self.write_error(ServerError('Invalid response type'))
+            logger.error(
+                "Invalid response object for url %s, "
+                "Expected Type: HTTPResponse, Actual Type: %s",
+                self.url,
+                type(response),
+            )
+            self.write_error(ServerError("Invalid response type"))
         except RuntimeError:
             if self._debug:
-                logger.error('Connection lost before response written @ %s',
-                             self.request.ip)
+                logger.error(
+                    "Connection lost before response written @ %s",
+                    self.request.ip,
+                )
             keep_alive = False
         except Exception as e:
             self.bail_out(
-                "Writing response failed, connection closed {}".format(
-                    repr(e)))
+                "Writing response failed, connection closed {}".format(repr(e))
+            )
         finally:
             if not keep_alive:
                 self.transport.close()
                 self.transport = None
             else:
                 self._keep_alive_timeout_handler = self.loop.call_later(
-                    self.keep_alive_timeout,
-                    self.keep_alive_timeout_callback)
+                    self.keep_alive_timeout, self.keep_alive_timeout_callback
+                )
                 self._last_response_time = current_time
                 self.cleanup()
 
@@ -418,35 +461,39 @@ class HttpProtocol(asyncio.Protocol):
         response = None
         try:
             response = self.error_handler.response(self.request, exception)
-            version = self.request.version if self.request else '1.1'
+            version = self.request.version if self.request else "1.1"
             self.transport.write(response.output(version))
         except RuntimeError:
             if self._debug:
-                logger.error('Connection lost before error written @ %s',
-                             self.request.ip if self.request else 'Unknown')
+                logger.error(
+                    "Connection lost before error written @ %s",
+                    self.request.ip if self.request else "Unknown",
+                )
         except Exception as e:
             self.bail_out(
-                "Writing error failed, connection closed {}".format(
-                    repr(e)), from_error=True
+                "Writing error failed, connection closed {}".format(repr(e)),
+                from_error=True,
             )
         finally:
-            if self.parser and (self.keep_alive
-                                or getattr(response, 'status', 0) == 408):
+            if self.parser and (
+                self.keep_alive or getattr(response, "status", 0) == 408
+            ):
                 self.log_response(response)
             try:
                 self.transport.close()
-            except AttributeError as e:
-                logger.debug('Connection lost before server could close it.')
+            except AttributeError:
+                logger.debug("Connection lost before server could close it.")
 
     def bail_out(self, message, from_error=False):
         if from_error or self.transport.is_closing():
-            logger.error("Transport closed @ %s and exception "
-                         "experienced during error handling",
-                         self.transport.get_extra_info('peername'))
-            logger.debug('Exception:\n%s', traceback.format_exc())
+            logger.error(
+                "Transport closed @ %s and exception "
+                "experienced during error handling",
+                self.transport.get_extra_info("peername"),
+            )
+            logger.debug("Exception:", exc_info=True)
         else:
-            exception = ServerError(message)
-            self.write_error(exception)
+            self.write_error(ServerError(message))
             logger.error(message)
 
     def cleanup(self):
@@ -505,17 +552,43 @@ def trigger_events(events, loop):
             loop.run_until_complete(result)
 
 
-def serve(host, port, request_handler, error_handler, before_start=None,
-          after_start=None, before_stop=None, after_stop=None, debug=False,
-          request_timeout=60, response_timeout=60, keep_alive_timeout=5,
-          ssl=None, sock=None, request_max_size=None, reuse_port=False,
-          loop=None, protocol=HttpProtocol, backlog=100,
-          register_sys_signals=True, run_multiple=False, run_async=False,
-          connections=None, signal=Signal(), request_class=None,
-          access_log=True, keep_alive=True, is_request_stream=False,
-          router=None, websocket_max_size=None, websocket_max_queue=None,
-          websocket_read_limit=2 ** 16, websocket_write_limit=2 ** 16,
-          state=None, graceful_shutdown_timeout=15.0):
+def serve(
+    host,
+    port,
+    request_handler,
+    error_handler,
+    before_start=None,
+    after_start=None,
+    before_stop=None,
+    after_stop=None,
+    debug=False,
+    request_timeout=60,
+    response_timeout=60,
+    keep_alive_timeout=5,
+    ssl=None,
+    sock=None,
+    request_max_size=None,
+    reuse_port=False,
+    loop=None,
+    protocol=HttpProtocol,
+    backlog=100,
+    register_sys_signals=True,
+    run_multiple=False,
+    run_async=False,
+    connections=None,
+    signal=Signal(),
+    request_class=None,
+    access_log=True,
+    keep_alive=True,
+    is_request_stream=False,
+    router=None,
+    websocket_max_size=None,
+    websocket_max_queue=None,
+    websocket_read_limit=2 ** 16,
+    websocket_write_limit=2 ** 16,
+    state=None,
+    graceful_shutdown_timeout=15.0,
+):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
@@ -556,6 +629,8 @@ def serve(host, port, request_handler, error_handler, before_start=None,
                                   quarter of the high-water limit.
     :param is_request_stream: disable/enable Request.stream
     :param router: Router object
+    :param graceful_shutdown_timeout: How long take to Force close non-idle
+                                      connection
     :return: Nothing
     """
     if not run_async:
@@ -598,7 +673,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         ssl=ssl,
         reuse_port=reuse_port,
         sock=sock,
-        backlog=backlog
+        backlog=backlog,
     )
 
     # Instead of pulling time at the end of every request,
@@ -629,11 +704,13 @@ def serve(host, port, request_handler, error_handler, before_start=None,
             try:
                 loop.add_signal_handler(_signal, loop.stop)
             except NotImplementedError:
-                logger.warning('Sanic tried to use loop.add_signal_handler '
-                               'but it is not implemented on this platform.')
+                logger.warning(
+                    "Sanic tried to use loop.add_signal_handler "
+                    "but it is not implemented on this platform."
+                )
     pid = os.getpid()
     try:
-        logger.info('Starting worker [%s]', pid)
+        logger.info("Starting worker [%s]", pid)
         loop.run_forever()
     finally:
         logger.info("Stopping worker [%s]", pid)
@@ -664,9 +741,7 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         coros = []
         for conn in connections:
             if hasattr(conn, "websocket") and conn.websocket:
-                coros.append(
-                    conn.websocket.close_connection(after_handshake=True)
-                )
+                coros.append(conn.websocket.close_connection())
             else:
                 conn.close()
 
@@ -687,18 +762,18 @@ def serve_multiple(server_settings, workers):
     :param stop_event: if provided, is used as a stop signal
     :return:
     """
-    server_settings['reuse_port'] = True
-    server_settings['run_multiple'] = True
+    server_settings["reuse_port"] = True
+    server_settings["run_multiple"] = True
 
     # Handling when custom socket is not provided.
-    if server_settings.get('sock') is None:
+    if server_settings.get("sock") is None:
         sock = socket()
         sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        sock.bind((server_settings['host'], server_settings['port']))
+        sock.bind((server_settings["host"], server_settings["port"]))
         sock.set_inheritable(True)
-        server_settings['sock'] = sock
-        server_settings['host'] = None
-        server_settings['port'] = None
+        server_settings["sock"] = sock
+        server_settings["host"] = None
+        server_settings["port"] = None
 
     def sig_handler(signal, frame):
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
@@ -722,4 +797,4 @@ def serve_multiple(server_settings, workers):
     # the above processes will block this until they're stopped
     for process in processes:
         process.terminate()
-    server_settings.get('sock').close()
+    server_settings.get("sock").close()

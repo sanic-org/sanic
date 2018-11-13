@@ -1,6 +1,7 @@
-from sanic.response import STATUS_CODES
+from sanic.helpers import STATUS_CODES
 
-TRACEBACK_STYLE = '''
+
+TRACEBACK_STYLE = """
     <style>
         body {
             padding: 20px;
@@ -61,9 +62,9 @@ TRACEBACK_STYLE = '''
             font-size: 14px;
         }
     </style>
-'''
+"""
 
-TRACEBACK_WRAPPER_HTML = '''
+TRACEBACK_WRAPPER_HTML = """
     <html>
         <head>
             {style}
@@ -78,27 +79,27 @@ TRACEBACK_WRAPPER_HTML = '''
             </div>
         </body>
     </html>
-'''
+"""
 
-TRACEBACK_WRAPPER_INNER_HTML = '''
+TRACEBACK_WRAPPER_INNER_HTML = """
     <h1>{exc_name}</h1>
     <h3><code>{exc_value}</code></h3>
     <div class="tb-wrapper">
         <p class="tb-header">Traceback (most recent call last):</p>
         {frame_html}
     </div>
-'''
+"""
 
-TRACEBACK_BORDER = '''
+TRACEBACK_BORDER = """
     <div class="tb-border">
         <b><i>
             The above exception was the direct cause of the
             following exception:
         </i></b>
     </div>
-'''
+"""
 
-TRACEBACK_LINE_HTML = '''
+TRACEBACK_LINE_HTML = """
     <div class="frame-line">
         <p class="frame-descriptor">
             File {0.filename}, line <i>{0.lineno}</i>,
@@ -106,15 +107,15 @@ TRACEBACK_LINE_HTML = '''
         </p>
         <p class="frame-code"><code>{0.line}</code></p>
     </div>
-'''
+"""
 
-INTERNAL_SERVER_ERROR_HTML = '''
+INTERNAL_SERVER_ERROR_HTML = """
     <h1>Internal Server Error</h1>
     <p>
         The server encountered an internal error and cannot complete
         your request.
     </p>
-'''
+"""
 
 
 _sanic_exceptions = {}
@@ -124,15 +125,16 @@ def add_status_code(code):
     """
     Decorator used for adding exceptions to _sanic_exceptions.
     """
+
     def class_decorator(cls):
         cls.status_code = code
         _sanic_exceptions[code] = cls
         return cls
+
     return class_decorator
 
 
 class SanicException(Exception):
-
     def __init__(self, message, status_code=None):
         super().__init__(message)
 
@@ -156,8 +158,8 @@ class MethodNotSupported(SanicException):
         super().__init__(message)
         self.headers = dict()
         self.headers["Allow"] = ", ".join(allowed_methods)
-        if method in ['HEAD', 'PATCH', 'PUT', 'DELETE']:
-            self.headers['Content-Length'] = 0
+        if method in ["HEAD", "PATCH", "PUT", "DELETE"]:
+            self.headers["Content-Length"] = 0
 
 
 @add_status_code(500)
@@ -169,6 +171,7 @@ class ServerError(SanicException):
 class ServiceUnavailable(SanicException):
     """The server is currently unavailable (because it is overloaded or
     down for maintenance). Generally, this is a temporary state."""
+
     pass
 
 
@@ -192,6 +195,7 @@ class RequestTimeout(SanicException):
     the connection. The socket connection has actually been lost - the Web
     server has 'timed out' on that particular socket connection.
     """
+
     pass
 
 
@@ -209,8 +213,8 @@ class ContentRangeError(SanicException):
     def __init__(self, message, content_range):
         super().__init__(message)
         self.headers = {
-            'Content-Type': 'text/plain',
-            "Content-Range": "bytes */%s" % (content_range.total,)
+            "Content-Type": "text/plain",
+            "Content-Range": "bytes */%s" % (content_range.total,),
         }
 
 
@@ -221,6 +225,11 @@ class Forbidden(SanicException):
 
 class InvalidRangeType(ContentRangeError):
     pass
+
+
+class PyFileError(Exception):
+    def __init__(self, file):
+        super().__init__("could not execute config file %s", file)
 
 
 @add_status_code(401)
@@ -258,13 +267,14 @@ class Unauthorized(SanicException):
                            scheme="Bearer",
                            realm="Restricted Area")
     """
+
     def __init__(self, message, status_code=None, scheme=None, **kwargs):
         super().__init__(message, status_code)
 
         # if auth-scheme is specified, set "WWW-Authenticate" header
         if scheme is not None:
             values = ['{!s}="{!s}"'.format(k, v) for k, v in kwargs.items()]
-            challenge = ', '.join(values)
+            challenge = ", ".join(values)
 
             self.headers = {
                 "WWW-Authenticate": "{} {}".format(scheme, challenge).rstrip()
@@ -283,6 +293,6 @@ def abort(status_code, message=None):
     if message is None:
         message = STATUS_CODES.get(status_code)
         # These are stored as bytes in the STATUS_CODES dict
-        message = message.decode('utf8')
+        message = message.decode("utf8")
     sanic_exception = _sanic_exceptions.get(status_code, SanicException)
     raise sanic_exception(message=message, status_code=status_code)

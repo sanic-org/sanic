@@ -1,8 +1,10 @@
 import os
 import types
 
+from sanic.exceptions import PyFileError
 
-SANIC_PREFIX = 'SANIC_'
+
+SANIC_PREFIX = "SANIC_"
 
 
 class Config(dict):
@@ -39,6 +41,7 @@ class Config(dict):
         self.WEBSOCKET_READ_LIMIT = 2 ** 16
         self.WEBSOCKET_WRITE_LIMIT = 2 ** 16
         self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
+        self.ACCESS_LOG = True
 
         if load_env:
             prefix = SANIC_PREFIX if load_env is True else load_env
@@ -62,9 +65,10 @@ class Config(dict):
         """
         config_file = os.environ.get(variable_name)
         if not config_file:
-            raise RuntimeError('The environment variable %r is not set and '
-                               'thus configuration could not be loaded.' %
-                               variable_name)
+            raise RuntimeError(
+                "The environment variable %r is not set and "
+                "thus configuration could not be loaded." % variable_name
+            )
         return self.from_pyfile(config_file)
 
     def from_pyfile(self, filename):
@@ -73,15 +77,20 @@ class Config(dict):
 
         :param filename: an absolute path to the config file
         """
-        module = types.ModuleType('config')
+        module = types.ModuleType("config")
         module.__file__ = filename
         try:
             with open(filename) as config_file:
-                exec(compile(config_file.read(), filename, 'exec'),
-                     module.__dict__)
+                exec(
+                    compile(config_file.read(), filename, "exec"),
+                    module.__dict__,
+                )
         except IOError as e:
-            e.strerror = 'Unable to load configuration file (%s)' % e.strerror
+            e.strerror = "Unable to load configuration file (%s)" % e.strerror
             raise
+        except Exception as e:
+            raise PyFileError(filename) from e
+
         self.from_object(module)
         return True
 

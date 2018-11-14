@@ -25,7 +25,7 @@ class SanicTestClient:
             )
 
         logger.info(url)
-        conn = aiohttp.TCPConnector(verify_ssl=False)
+        conn = aiohttp.TCPConnector(ssl=False)
         async with aiohttp.ClientSession(
             cookies=cookies, connector=conn
         ) as session:

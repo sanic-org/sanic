@@ -13,7 +13,7 @@ Parameter = namedtuple('Parameter', ['name', 'cast'])
 
 REGEX_TYPES = {
     'string': (str, r'[^/]+'),
-    'int': (int, r'\d+'),
+    'int': (int, r'-?\d+'),
     'number': (float, r'[0-9\\.]+'),
     'alpha': (str, r'[A-Za-z]+'),
     'path': (str, r'[^/].*?'),

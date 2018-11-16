@@ -31,6 +31,10 @@ def test_multiprocessing(app):
     assert len(process_list) == num_workers
 
 
+@pytest.mark.skipif(
+    not hasattr(signal, 'SIGALRM'),
+    reason='SIGALRM is not implemented for this platform',
+)
 def test_multiprocessing_with_blueprint(app):
     from sanic import Blueprint
     # Selects a number at random so we can spot check

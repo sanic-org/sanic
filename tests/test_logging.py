@@ -11,6 +11,7 @@ import sanic
 from sanic.response import text
 from sanic.log import LOGGING_CONFIG_DEFAULTS
 from sanic import Sanic
+from sanic.log import logger
 
 
 logging_format = '''module: %(module)s; \
@@ -46,7 +47,7 @@ def test_log(app):
 
 
 def test_logging_defaults():
-    reset_logging()
+    # reset_logging()
     app = Sanic("test_logging")
 
     for fmt in [h.formatter for h in logging.getLogger('sanic.root').handlers]:
@@ -60,7 +61,7 @@ def test_logging_defaults():
 
 
 def test_logging_pass_customer_logconfig():
-    reset_logging()
+    # reset_logging()
 
     modified_config = LOGGING_CONFIG_DEFAULTS
     modified_config['formatters']['generic']['format'] = '%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s'
@@ -104,6 +105,25 @@ def test_log_connection_lost(app, debug, monkeypatch):
         assert 'Connection lost before response written @' not in log
 
 
+def test_logger(caplog):
+    rand_string = str(uuid.uuid4())
+
+    app = Sanic()
+
+    @app.get('/')
+    def log_info(request):
+        logger.info(rand_string)
+        return text('hello')
+
+    with caplog.at_level(logging.INFO):
+        request, response = app.test_client.get('/')
+
+    assert caplog.record_tuples[0] == ('sanic.root', logging.INFO, 'Goin\' Fast @ http://127.0.0.1:42101')
+    assert caplog.record_tuples[1] == ('sanic.root', logging.INFO, 'http://127.0.0.1:42101/')
+    assert caplog.record_tuples[2] == ('sanic.root', logging.INFO, rand_string)
+    assert caplog.record_tuples[-1] == ('sanic.root', logging.INFO, 'Server Stopped')
+
+
 def test_logging_modified_root_logger_config():
     reset_logging()
 
@@ -113,4 +133,3 @@ def test_logging_modified_root_logger_config():
     app = Sanic("test_logging", log_config=modified_config)
 
     assert logging.getLogger('sanic.root').getEffectiveLevel() == logging.DEBUG
-

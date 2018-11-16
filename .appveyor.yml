@@ -1,0 +1,32 @@
+version: "{branch}.{build}"
+
+environment:
+  matrix:
+    - TOXENV: py35-no-ext
+      PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "64"
+
+    - TOXENV: py36-no-ext
+      PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.x"
+      PYTHON_ARCH: "64"
+
+    - TOXENV: py37-no-ext
+      PYTHON: "C:\\Python37-x64"
+      PYTHON_VERSION: "3.7.x"
+      PYTHON_ARCH: "64"
+
+init: SET "PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+install:
+  - pip install tox
+
+build: off
+
+test_script: tox
+
+notifications:
+  - provider: Email
+    on_build_success: false
+    on_build_status_changed: false

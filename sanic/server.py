@@ -300,7 +300,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.request.stream.put(body)
             )
             return
-        self.request.body.append(body)
+        self.request.body_push(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -313,7 +313,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.request.stream.put(None)
             )
             return
-        self.request.body = b"".join(self.request.body)
+        self.request.body_finish()
         self.execute_request_handler()
 
     def execute_request_handler(self):

@@ -34,3 +34,41 @@ def test_is_hop_by_hop_header():
     )
     for header, expected in tests:
         assert helpers.is_hop_by_hop_header(header) is expected
+
+
+def test_remove_entity_headers():
+    tests = (
+        (
+            {},
+            {}
+        ),
+        (
+            {
+                "Allow": "GET, POST, HEAD",
+            },
+            {}
+        ),
+        (
+            {
+                "Content-Type": "application/json",
+                "Expires": "Wed, 21 Oct 2015 07:28:00 GMT",
+                "Foo": "Bar"
+            },
+            {
+                "Expires": "Wed, 21 Oct 2015 07:28:00 GMT",
+                "Foo": "Bar"
+            },
+        ),
+        (
+            {
+                "Allow": "GET, POST, HEAD",
+                "Content-Location": "/test"
+            },
+            {
+                "Content-Location": "/test"
+            },
+        ),
+    )
+
+    for header, expected in tests:
+        assert helpers.remove_entity_headers(header) == expected

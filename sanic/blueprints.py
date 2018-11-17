@@ -15,6 +15,7 @@ FutureRoute = namedtuple(
         "stream",
         "version",
         "name",
+        "extra",
     ],
 )
 FutureListener = namedtuple(
@@ -36,6 +37,7 @@ class Blueprint:
         url_prefix=None,
         host=None,
         version=None,
+        extra=None,
         strict_slashes=False,
     ):
         """Create a new blueprint
@@ -55,6 +57,7 @@ class Blueprint:
         self.middlewares = []
         self.statics = []
         self.version = version
+        self.extra = extra
         self.strict_slashes = strict_slashes
 
     @staticmethod
@@ -96,6 +99,7 @@ class Blueprint:
             uri = url_prefix + future.uri if url_prefix else future.uri
 
             version = future.version or self.version
+            extra = future.extra or self.extra
 
             app.route(
                 uri=uri[1:] if uri.startswith("//") else uri,
@@ -105,6 +109,7 @@ class Blueprint:
                 stream=future.stream,
                 version=version,
                 name=future.name,
+                extra=extra,
             )(future.handler)
 
         for future in self.websocket_routes:
@@ -155,6 +160,7 @@ class Blueprint:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         """Create a blueprint route from a decorated function.
 
@@ -174,6 +180,7 @@ class Blueprint:
                 stream,
                 version,
                 name,
+                extra,
             )
             self.routes.append(route)
             return handler
@@ -189,6 +196,7 @@ class Blueprint:
         strict_slashes=None,
         version=None,
         name=None,
+        extra=None,
     ):
         """Create a blueprint route from a function.
 
@@ -224,6 +232,7 @@ class Blueprint:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            extra=extra,
         )(handler)
         return handler
 
@@ -317,7 +326,13 @@ class Blueprint:
 
     # Shorthand method decorators
     def get(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -326,6 +341,7 @@ class Blueprint:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def post(
@@ -336,6 +352,7 @@ class Blueprint:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -345,6 +362,7 @@ class Blueprint:
             stream=stream,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def put(
@@ -355,6 +373,7 @@ class Blueprint:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -364,10 +383,17 @@ class Blueprint:
             stream=stream,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def head(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -376,18 +402,25 @@ class Blueprint:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def options(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
             methods=["OPTIONS"],
             host=host,
             strict_slashes=strict_slashes,
-            version=version,
             name=name,
+            extra=extra,
         )
 
     def patch(
@@ -398,6 +431,7 @@ class Blueprint:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -407,10 +441,17 @@ class Blueprint:
             stream=stream,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def delete(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -419,4 +460,5 @@ class Blueprint:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            extra=extra,
         )

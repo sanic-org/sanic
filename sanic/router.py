@@ -127,6 +127,7 @@ class Router:
         strict_slashes=False,
         version=None,
         name=None,
+        extra=None,
     ):
         """Add a handler to the route list
 

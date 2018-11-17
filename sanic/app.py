@@ -152,6 +152,7 @@ class Sanic:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         """Decorate a function to be registered as a route
 
@@ -161,6 +162,7 @@ class Sanic:
         :param strict_slashes:
         :param stream:
         :param version:
+        :param extra:
         :param name: user defined route name for url_for
         :return: decorated function
         """
@@ -190,6 +192,7 @@ class Sanic:
                     strict_slashes=strict_slashes,
                     version=version,
                     name=name,
+                    extra=extra,
                 )
                 return handler
             else:
@@ -202,7 +205,13 @@ class Sanic:
 
     # Shorthand method decorators
     def get(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -221,6 +230,7 @@ class Sanic:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -230,6 +240,7 @@ class Sanic:
             stream=stream,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def put(
@@ -240,6 +251,7 @@ class Sanic:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -249,10 +261,17 @@ class Sanic:
             stream=stream,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def head(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -261,10 +280,17 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def options(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -273,6 +299,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            extra=None,
         )
 
     def patch(
@@ -283,6 +310,7 @@ class Sanic:
         stream=False,
         version=None,
         name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -292,10 +320,17 @@ class Sanic:
             stream=stream,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def delete(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        extra=None,
     ):
         return self.route(
             uri,
@@ -304,6 +339,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            extra=extra,
         )
 
     def add_route(
@@ -316,6 +352,7 @@ class Sanic:
         version=None,
         name=None,
         stream=False,
+        extra=None,
     ):
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -362,6 +399,7 @@ class Sanic:
             stream=stream,
             version=version,
             name=name,
+            extra=extra,
         )(handler)
         return handler
 

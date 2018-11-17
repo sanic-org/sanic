@@ -128,6 +128,6 @@ def remove_entity_headers(headers, allowed=("content-location", "expires")):
     headers = {
         header: value
         for header, value in headers.items()
-        if not is_entity_header(header) and header.lower() not in allowed
+        if not is_entity_header(header) or header.lower() in allowed
     }
     return headers

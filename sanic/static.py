@@ -114,7 +114,7 @@ def register(
                 return HTTPResponse(headers=headers)
             else:
                 if stream_large_files:
-                    if isinstance(stream_large_files, int):
+                    if type(stream_large_files) == int:
                         threshold = stream_large_files
                     else:
                         threshold = 1024 * 1024

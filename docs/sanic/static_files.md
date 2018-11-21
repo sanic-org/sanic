@@ -1,7 +1,7 @@
 # Static Files
 
 Static files and directories, such as an image file, are served by Sanic when
-registered with the `app.static` method. The method takes an endpoint URL and a
+registered with the `app.static()` method. The method takes an endpoint URL and a
 filename. The file specified will then be accessible via the given endpoint.
 
 ```python
@@ -42,4 +42,42 @@ app.url_for('static', name='bp.static', filename='file.txt') == '/bp/static/file
 app.url_for('static', name='bp.best_png') == '/bp/test_best.png'
 
 app.run(host="0.0.0.0", port=8000)
+```
+
+> **Note:** Sanic does not provide directory index when you serve a static directory.
+
+## Virtual Host
+
+The `app.static()` method also support **virtual host**. You can serve your static files with spefic **virtual host** with `host` argument. For example:
+
+```python
+from sanic import Sanic
+
+app = Sanic(__name__)
+
+app.static('/static', './static')
+app.static('/example_static', './example_static', host='www.example.com')
+```
+
+## Streaming Large File
+
+In some cases, you might server large file(ex: videos, images, etc.) with Sanic. You can choose to use **streaming file** rather than download directly.
+
+Here is an example:
+```python
+from sanic import Sanic
+
+app = Sanic(__name__)
+
+app.static('/large_video.mp4', '/home/ubuntu/large_video.mp4', stream_large_files=True)
+```
+
+When `stream_large_files` is `True`, Sanic will use `file_stream()` instead of `file()` to serve static files. This will use **1KB** as the default chunk size. And, if needed, you can also use a custom chunk size. For example:
+```python
+from sanic import Sanic
+
+app = Sanic(__name__)
+
+chunk_size = 1024 * 1024 * 8 # Set chunk size to 8KB
+app.static('/large_video.mp4', '/home/ubuntu/large_video.mp4', stream_large_files=chunk_size)
 ```

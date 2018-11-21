@@ -1,5 +1,6 @@
 import inspect
 import os
+from time import gmtime, strftime
 
 import pytest
 
@@ -23,8 +24,41 @@ def get_file_content(static_file_directory, file_name):
         return file.read()
 
 
+@pytest.fixture(scope='module')
+def large_file(static_file_directory):
+    large_file_path = os.path.join(static_file_directory, 'large.file')
+
+    size = 2 * 1024 * 1024
+    with open(large_file_path, 'w') as f:
+        f.write('a' * size)
+
+    yield large_file_path
+
+    os.remove(large_file_path)
+
+
+@pytest.fixture(autouse=True, scope='module')
+def symlink(static_file_directory):
+    src = os.path.abspath(os.path.join(os.path.dirname(static_file_directory), 'conftest.py'))
+    symlink = 'symlink'
+    dist = os.path.join(static_file_directory, symlink)
+    os.symlink(src, dist)
+    yield symlink
+    os.remove(dist)
+
+
+@pytest.fixture(autouse=True, scope='module')
+def hard_link(static_file_directory):
+    src = os.path.abspath(os.path.join(os.path.dirname(static_file_directory), 'conftest.py'))
+    hard_link = 'hard_link'
+    dist = os.path.join(static_file_directory, hard_link)
+    os.link(src, dist)
+    yield hard_link
+    os.remove(dist)
+
+
 @pytest.mark.parametrize('file_name',
-                         ['test.file', 'decode me.txt', 'python.png'])
+                         ['test.file', 'decode me.txt', 'python.png', 'symlink', 'hard_link'])
 def test_static_file(app, static_file_directory, file_name):
     app.static(
         '/testing.file', get_file_path(static_file_directory, file_name))
@@ -48,7 +82,7 @@ def test_static_file_content_type(app, static_file_directory, file_name):
     assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
 
 
-@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'symlink', 'hard_link'])
 @pytest.mark.parametrize('base_uri', ['/static', '', '/dir'])
 def test_static_directory(app, file_name, base_uri, static_file_directory):
     app.static(base_uri, static_file_directory)
@@ -134,11 +168,15 @@ def test_static_content_range_back(app, file_name, static_file_directory):
     assert response.body == static_content
 
 
+@pytest.mark.parametrize('use_modified_since', [True, False])
 @pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
-def test_static_content_range_empty(app, file_name, static_file_directory):
+def test_static_content_range_empty(app, file_name, static_file_directory, use_modified_since):
     app.static(
-        '/testing.file', get_file_path(static_file_directory, file_name),
-        use_content_range=True)
+        '/testing.file',
+        get_file_path(static_file_directory, file_name),
+        use_content_range=True,
+        use_modified_since=use_modified_since
+    )
 
     request, response = app.test_client.get('/testing.file')
     assert response.status == 200
@@ -182,3 +220,57 @@ def test_static_file_specified_host(app, static_file_directory, file_name):
     assert response.body == get_file_content(static_file_directory, file_name)
     request, response = app.test_client.get('/testing.file')
     assert response.status == 404
+
+
+@pytest.mark.parametrize('use_modified_since', [True, False])
+@pytest.mark.parametrize('stream_large_files', [True, 1024])
+@pytest.mark.parametrize('file_name', ['test.file', 'large.file'])
+def test_static_stream_large_file(app, static_file_directory, file_name, use_modified_since, stream_large_files, large_file):
+    app.static(
+        '/testing.file',
+        get_file_path(static_file_directory, file_name),
+        use_modified_since=use_modified_since,
+        stream_large_files=stream_large_files
+    )
+
+    request, response = app.test_client.get('/testing.file')
+
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt', 'python.png'])
+def test_use_modified_since(app, static_file_directory, file_name):
+
+    file_stat = os.stat(get_file_path(static_file_directory, file_name))
+    modified_since = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime(file_stat.st_mtime))
+
+    app.static(
+        '/testing.file',
+        get_file_path(static_file_directory, file_name),
+        use_modified_since=True
+    )
+
+    request, response = app.test_client.get(
+        '/testing.file', headers={'If-Modified-Since': modified_since})
+
+    assert response.status == 304
+
+
+def test_file_not_found(app, static_file_directory):
+    app.static('/static', static_file_directory)
+
+    request, response = app.test_client.get('/static/not_found')
+
+    assert response.status == 404
+    assert response.text == 'Error: File not found'
+
+
+@pytest.mark.parametrize('static_name', ['_static_name', 'static'])
+@pytest.mark.parametrize('file_name', ['test.html'])
+def test_static_name(app, static_file_directory, static_name, file_name):
+    app.static('/static', static_file_directory, name=static_name)
+
+    request, response = app.test_client.get('/static/{}'.format(file_name))
+
+    assert response.status == 200

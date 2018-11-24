@@ -653,7 +653,7 @@ def test_route_handler_add(app: Sanic):
     assert response.json["response"] == "OK"
 
 
-def test_websocked_route(app: Sanic):
+def test_websocket_route(app: Sanic):
     event = asyncio.Event()
 
     async def websocket_handler(request, ws):

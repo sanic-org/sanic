@@ -1,17 +1,30 @@
 import asyncio
 import inspect
 import os
+
 import pytest
 
+from sanic.app import Sanic
 from sanic.blueprints import Blueprint
-from sanic.response import text
-from sanic.exceptions import NotFound, ServerError, InvalidUsage
 from sanic.constants import HTTP_METHODS
+from sanic.exceptions import NotFound, ServerError, InvalidUsage
+from sanic.request import Request
+from sanic.response import text, json
+from sanic.views import CompositionView
 
 
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
+
+@pytest.fixture(scope='module')
+def static_file_directory():
+    """The static directory to serve"""
+    current_file = inspect.getfile(inspect.currentframe())
+    current_directory = os.path.dirname(os.path.abspath(current_file))
+    static_directory = os.path.join(current_directory, 'static')
+    return static_directory
+
 
 def get_file_path(static_file_directory, file_name):
     return os.path.join(static_file_directory, file_name)
@@ -36,7 +49,7 @@ def test_versioned_routes_get(app, method):
             return text('OK')
     else:
         print(func)
-        raise
+        raise Exception("{} is not callable".format(func))
 
     app.blueprint(bp)
 
@@ -414,7 +427,7 @@ def test_bp_shorthand(app):
         assert request.stream is None
         return text('OK')
 
-    @blueprint.websocket('/ws')
+    @blueprint.websocket('/ws/', strict_slashes=True)
     async def websocket_handler(request, ws):
         assert request.stream is None
         ev.set()
@@ -465,7 +478,7 @@ def test_bp_shorthand(app):
     request, response = app.test_client.get('/delete')
     assert response.status == 405
 
-    request, response = app.test_client.get('/ws', headers={
+    request, response = app.test_client.get('/ws/', headers={
         'Upgrade': 'websocket',
         'Connection': 'upgrade',
         'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
@@ -515,7 +528,6 @@ def test_bp_group(app):
 
 
 def test_bp_group_with_default_url_prefix(app):
-
     from sanic.response import json
     bp_resources = Blueprint('bp_resources')
 
@@ -555,3 +567,109 @@ def test_bp_group_with_default_url_prefix(app):
     request, response = app.test_client.get(
         '/api/v1/resources/{0}'.format(resource_id))
     assert response.json == {'resource_id': resource_id}
+
+
+def test_blueprint_middleware_with_args(app: Sanic):
+    bp = Blueprint(name="with_args_bp", url_prefix="/wa")
+
+    @bp.middleware
+    def middleware_with_no_tag(request: Request):
+        if request.headers.get("content-type") == "application/json":
+            request.headers["accepts"] = "plain/text"
+        else:
+            request.headers["accepts"] = "application/json"
+
+    @bp.route("/")
+    def default_route(request):
+        if request.headers.get("accepts") == "application/json":
+            return json({"test": "value"})
+        else:
+            return text("value")
+
+    app.blueprint(bp)
+
+    _, response = app.test_client.get("/wa", headers={"content-type": "application/json"})
+    assert response.text == "value"
+
+    _, response = app.test_client.get("/wa", headers={"content-type": "plain/text"})
+    assert response.json.get("test") == "value"
+    d = {}
+
+
+@pytest.mark.parametrize('file_name',
+                         ['test.file'])
+def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
+    current_file = inspect.getfile(inspect.currentframe())
+    with open(current_file, 'rb') as file:
+        current_file_contents = file.read()
+
+    bp = Blueprint(name="static", url_prefix="/static", strict_slashes=False)
+
+    bp.static(
+        "/test.file/",
+        get_file_path(static_file_directory, file_name),
+        name="static.testing",
+        strict_slashes=True)
+
+    app.blueprint(bp)
+
+    uri = app.url_for('static', name='static.testing')
+    assert uri == "/static/test.file"
+
+    _, response = app.test_client.get("/static/test.file")
+    assert response.status == 404
+
+    _, response = app.test_client.get("/static/test.file/")
+    assert response.status == 200
+
+
+def test_route_handler_add(app: Sanic):
+    view = CompositionView()
+
+    async def get_handler(request):
+        return json({
+            "response": "OK"
+        })
+
+    view.add(["GET"], get_handler, stream=False)
+
+    async def default_handler(request):
+        return text("OK")
+
+    bp = Blueprint(name="handler", url_prefix="/handler")
+    bp.add_route(
+        default_handler,
+        uri="/default/",
+        strict_slashes=True)
+
+    bp.add_route(view, uri="/view", name="test")
+
+    app.blueprint(bp)
+
+    _, response = app.test_client.get("/handler/default/")
+    assert response.text == "OK"
+
+    _, response = app.test_client.get("/handler/view")
+    assert response.json["response"] == "OK"
+
+
+def test_websocket_route(app: Sanic):
+    event = asyncio.Event()
+
+    async def websocket_handler(request, ws):
+        assert ws.subprotocol is None
+        event.set()
+
+    bp = Blueprint(name="handler", url_prefix="/ws")
+    bp.add_websocket_route(websocket_handler, "/test", name="test")
+
+    app.blueprint(bp)
+
+    _, response = app.test_client.get("/ws/test", headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13'
+    })
+    assert response.status == 101
+    assert event.is_set()

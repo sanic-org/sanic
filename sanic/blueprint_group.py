@@ -73,6 +73,7 @@ class BlueprintGroup:
         :param kwargs: Optional Keyword arg to use with Middleware
         :return: Partial function to apply the middleware
         """
+        kwargs["bp_group"] = True
 
         def register_middleware_for_blueprints(fn):
             for blueprint in self.blueprints:

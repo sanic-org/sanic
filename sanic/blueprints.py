@@ -329,13 +329,14 @@ class Blueprint:
             middleware = args[0]
             args = []
             return register_middleware(middleware)
-        elif len(args) == 2 and len(kwargs) == 0 and callable(args[0]):
-            # This will be used in case of Blueprint Group
-            middleware = args[0]
-            args = args[1:]
-            return register_middleware(middleware)
         else:
-            return register_middleware
+            if kwargs.get("bp_group") and callable(args[0]):
+                middleware = args[0]
+                args = args[1:]
+                kwargs.pop("bp_group")
+                return register_middleware(middleware)
+            else:
+                return register_middleware
 
     def exception(self, *args, **kwargs):
         """

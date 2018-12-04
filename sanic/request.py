@@ -275,10 +275,6 @@ class Request(dict):
         return self._remote_addr
 
     @property
-    def stream(self):
-        return self.stream
-
-    @property
     def scheme(self):
         if (
             self.app.websocket_enabled

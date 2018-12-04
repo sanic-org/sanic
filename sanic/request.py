@@ -1,5 +1,6 @@
 import json
 import sys
+import asyncio
 
 from cgi import parse_header
 from collections import namedtuple
@@ -45,6 +46,25 @@ class RequestParameters(dict):
     def getlist(self, name, default=None):
         """Return the entire list"""
         return super().get(name, default)
+
+
+class StreamBuffer:
+
+    def __init__(self, buffer_size=None):
+        self._buffer_size = buffer_size or 100
+        self._queue = asyncio.Queue()
+
+    async def read(self):
+        """ Stop reading when gets None """
+        payload = await self._queue.get()
+        self._queue.task_done()
+        return payload
+
+    async def put(self, payload):
+        await self._queue.put(payload)
+
+    def is_full(self):
+        return self._queue.full()
 
 
 class Request(dict):
@@ -253,6 +273,10 @@ class Request(dict):
             else:
                 self._remote_addr = ""
         return self._remote_addr
+
+    @property
+    def stream(self):
+        return self.stream
 
     @property
     def scheme(self):

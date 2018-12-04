@@ -1,6 +1,6 @@
+import asyncio
 import json
 import sys
-import asyncio
 
 from cgi import parse_header
 from collections import namedtuple
@@ -49,7 +49,6 @@ class RequestParameters(dict):
 
 
 class StreamBuffer:
-
     def __init__(self, buffer_size=None):
         self._buffer_size = buffer_size or 100
         self._queue = asyncio.Queue()

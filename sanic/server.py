@@ -294,7 +294,9 @@ class HttpProtocol(asyncio.Protocol):
                 self.request
             )
             if self._is_stream_handler:
-                self.request.stream = StreamBuffer(self.request_body_buffer_queue_size)
+                self.request.stream = StreamBuffer(
+                    self.request_body_buffer_queue_size
+                )
                 self.execute_request_handler()
 
     def on_body(self, body):

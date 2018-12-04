@@ -7,7 +7,7 @@ from sanic.response import stream, text
 from sanic.request import StreamBuffer
 
 
-data = "abc" * 100000
+data = "abc" * 10000000
 
 
 def test_request_stream_method_view(app):

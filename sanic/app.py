@@ -1071,6 +1071,7 @@ class Sanic:
             "response_timeout": self.config.RESPONSE_TIMEOUT,
             "keep_alive_timeout": self.config.KEEP_ALIVE_TIMEOUT,
             "request_max_size": self.config.REQUEST_MAX_SIZE,
+            "request_buffer_queue_size": self.config.REQUEST_BUFFER_QUEUE_SIZE,
             "keep_alive": self.config.KEEP_ALIVE,
             "loop": loop,
             "register_sys_signals": register_sys_signals,

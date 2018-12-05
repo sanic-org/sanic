@@ -88,6 +88,7 @@ Out of the box there are just a few predefined values which can be overwritten w
     | Variable                  | Default   | Description                                            |
     | ------------------------- | --------- | ------------------------------------------------------ |
     | REQUEST_MAX_SIZE          | 100000000 | How big a request may be (bytes)                       |
+    | REQUEST_BUFFER_QUEUE_SIZE | 100       | Request streaming buffer queue size                    |
     | REQUEST_TIMEOUT           | 60        | How long a request can take to arrive (sec)            |
     | RESPONSE_TIMEOUT          | 60        | How long a response can take to process (sec)          |
     | KEEP_ALIVE                | True      | Disables keep-alive when False                         |

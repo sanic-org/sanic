@@ -32,6 +32,7 @@ class Config(dict):
  ▀▀▄▄▀
 """
         self.REQUEST_MAX_SIZE = 100000000  # 100 megabytes
+        self.REQUEST_BUFFER_QUEUE_SIZE = 100
         self.REQUEST_TIMEOUT = 60  # 60 seconds
         self.RESPONSE_TIMEOUT = 60  # 60 seconds
         self.KEEP_ALIVE = keep_alive

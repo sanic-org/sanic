@@ -31,6 +31,7 @@ Guides
    sanic/extensions
    sanic/contributing
    sanic/api_reference
+   sanic/examples
 
 
 Module Documentation

@@ -38,12 +38,16 @@ A list of Sanic extensions created by the community.
 
 - [pytest-sanic](https://github.com/yunstanford/pytest-sanic): A pytest plugin for Sanic. It helps you to test your code asynchronously.
 
+## Project Creation Template
+
+- [cookiecutter-sanic](https://github.com/harshanarayana/cookiecutter-sanic) Get your sanic application up and running in a matter of second in a well defined project structure.
+    Batteries included for deployment, unit testing, automated release management and changelog generation.
+
 ## Templating
 
 - [Sanic-WTF](https://github.com/pyx/sanic-wtf): Sanic-WTF makes using WTForms with Sanic and CSRF (Cross-Site Request Forgery) protection a little bit easier.
 - [Jinja2](https://github.com/lixxu/sanic-jinja2): Support for Jinja2 template.
-- [jinja2-sanic](https://github.com/yunstanford/jinja2-sanic): a jinja2 template renderer for Sanic.([Documentation](http://jinja2-sanic.readthedocs.io/en/latest/))
-
+- [jinja2-sanic](https://github.com/yunstanford/jinja2-sanic): a jinja2 template renderer for Sanic.([Documentation](http://jinja2-sanic.readthedocs.io/en/latest/)) 
 
 ## API Helper Utilities
 

@@ -373,8 +373,8 @@ class Blueprint:
 
         :param uri: URL to be tagged to **GET** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check if the request
-            URLs need to terminate with a */*
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
         :return: Object decorated with :func:`route` method
@@ -402,8 +402,8 @@ class Blueprint:
 
         :param uri: URL to be tagged to **POST** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check if the request
-            URLs need to terminate with a */*
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
         :return: Object decorated with :func:`route` method
@@ -432,8 +432,8 @@ class Blueprint:
 
         :param uri: URL to be tagged to **PUT** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check if the request
-            URLs need to terminate with a */*
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
         :return: Object decorated with :func:`route` method
@@ -456,8 +456,8 @@ class Blueprint:
 
         :param uri: URL to be tagged to **HEAD** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check if the request
-            URLs need to terminate with a */*
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
         :return: Object decorated with :func:`route` method
@@ -479,8 +479,8 @@ class Blueprint:
 
         :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check if the request
-            URLs need to terminate with a */*
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
         :return: Object decorated with :func:`route` method
@@ -508,8 +508,8 @@ class Blueprint:
 
         :param uri: URL to be tagged to **PATCH** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check if the request
-            URLs need to terminate with a */*
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
         :return: Object decorated with :func:`route` method
@@ -532,8 +532,8 @@ class Blueprint:
 
         :param uri: URL to be tagged to **DELETE** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check if the request
-            URLs need to terminate with a */*
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
         :return: Object decorated with :func:`route` method

@@ -26,10 +26,11 @@ class ErrorHandler:
 
     This error handling framework is built into the core that can be extended
     by the developers to perform a wide range of tasks from recording the error
-    stats to reporting them to an external service that can be used for realtime
-    alerting system.
+    stats to reporting them to an external service that can be used for
+    realtime alerting system.
 
     """
+
     handlers = None
     cached_handlers = None
     _missing = object()
@@ -75,7 +76,8 @@ class ErrorHandler:
         :param exception: Type of exception that need to be handled
         :param handler: Reference to the method that will handle the exception
 
-        :type exception: :class:`sanic.exceptions.SanicException` or :class:`Exception`
+        :type exception: :class:`sanic.exceptions.SanicException` or
+            :class:`Exception`
         :type handler: ``function``
 
         :return: None
@@ -91,7 +93,8 @@ class ErrorHandler:
 
         :param exception: Type of exception
 
-        :type exception: :class:`sanic.exceptions.SanicException` or :class:`Exception`
+        :type exception: :class:`sanic.exceptions.SanicException` or
+            :class:`Exception`
 
         :return: Registered function if found ``None`` otherwise
         """
@@ -113,7 +116,8 @@ class ErrorHandler:
         :param exception: Exception to handle
 
         :type request: :class:`sanic.request.Request`
-        :type exception: :class:`sanic.exceptions.SanicException` or :class:`Exception`
+        :type exception: :class:`sanic.exceptions.SanicException` or
+            :class:`Exception`
 
         :return: Wrap the return value obtained from :func:`default`
             or registered handler for that type of exception.
@@ -158,7 +162,8 @@ class ErrorHandler:
         :param exception: Exception object
 
         :type request: :class:`sanic.request.Request`
-        :type exception: :class:`sanic.exceptions.SanicException` or :class:`Exception`
+        :type exception: :class:`sanic.exceptions.SanicException` or
+            :class:`Exception`
         :return:
         """
         self.log(format_exc())

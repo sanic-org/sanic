@@ -115,5 +115,25 @@ to secure your ``sanic`` api endpoints.
 
 .. literalinclude:: ../../examples/authorized_sanic.py
 
+Sanic Websocket
+~~~~~~~~~~~~~~~
 
+``Sanic`` provides an ability to easily add a route and map it to a ``websocket`` handlers.
 
+.. literalinclude:: ../../examples/websocket.html
+.. literalinclude:: ../../examples/websocket.py
+
+vhost Suppport
+~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../examples/vhosts.py
+
+Unit Testing With Parallel Test Run Support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example shows you how to get up and running with unit testing ``sanic`` application with parallel test
+execution support provided by the ``pytest-xdist`` plugin.
+
+.. literalinclude:: ../../examples/pytest_xdist.py
+
+For more examples and useful samples please visit the `Huge-Sanic's GitHub Page <https://github.com/huge-success/sanic/tree/master/examples>`_

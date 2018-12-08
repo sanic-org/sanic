@@ -331,6 +331,17 @@ class Router:
 
     @staticmethod
     def check_dynamic_route_exists(pattern, routes_to_check, parameters):
+        """
+        Check if a URL pattern exists in a list of routes provided based on
+        the comparison of URL pattern and the parameters.
+
+        :param pattern: URL parameter pattern
+        :param routes_to_check: list of dynamic routes either hashable or
+            unhashable routes.
+        :param parameters: List of :class:`Parameter` items
+        :return: Tuple of index and route if matching route exists else
+            -1 for index and None for route
+        """
         for ndx, route in enumerate(routes_to_check):
             if route.pattern == pattern and route.parameters == parameters:
                 return ndx, route

@@ -10,9 +10,9 @@ from subprocess import Popen, PIPE
 GIT_COMMANDS = {
     "get_tag": ["git describe --tags --abbrev=0"],
     "create_new_branch": ["git checkout -b {new_version} master"],
-    "commit_version_change": ["git commit -m 'Bumping up version from {current_version} to {new_version}"],
+    "commit_version_change": ["git commit -m 'Bumping up version from {current_version} to {new_version}'"],
     "push_new_branch": ["git push origin {new_version}"],
-    "create_new_tag": ["git tag -a {new_version} -m 'Bumping up version from {current_version} to {new_version}"],
+    "create_new_tag": ["git tag -a {new_version} -m 'Bumping up version from {current_version} to {new_version}'"],
     "push_tag": ["git push origin {new_version}"],
     "get_change_log": ['git log --no-merges --pretty=format:"%h: %cn: %s" {current_version}..']
 }

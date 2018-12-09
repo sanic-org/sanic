@@ -304,8 +304,8 @@ class HttpProtocol(asyncio.Protocol):
             self._request_stream_task = self.loop.create_task(
                 self.body_append(body)
             )
-            return
-        self.request.body_push(body)
+        else:
+            self.request.body_push(body)
 
     async def body_append(self, body):
         if self.request.stream.is_full():

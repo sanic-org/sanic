@@ -107,6 +107,26 @@ Monitoring and Error Handling
 
 .. literalinclude:: ../../examples/exception_monitoring.py
 
+Monitoring using external Service Providers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* `LogDNA <https://logdna.com/>`_
+
+.. literalinclude:: ../../examples/logdna_example.py
+
+* `RayGun <https://raygun.com/>`_
+
+.. literalinclude:: ../../examples/raygun_example.py
+
+* `Rollbar <https://rollbar.com>`_
+
+.. literalinclude:: ../../examples/rollbar_example.py
+
+* `Sentry <http://sentry.io>`_
+
+.. literalinclude:: ../../examples/sentry_example.py
+
+
 Security
 ~~~~~~~~
 

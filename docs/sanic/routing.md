@@ -6,11 +6,11 @@ A basic route looks like the following, where `app` is an instance of the
 `Sanic` class:
 
 ```python
-from sanic.response import json
+from sanic.response import text
 
 @app.route("/")
 async def test(request):
-    return json({ "hello": "world" })
+    return text('Hello World!)
 ```
 
 When the url `http://server.url/` is accessed (the base url of the server), the

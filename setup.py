@@ -33,7 +33,7 @@ with open_local(['README.rst']) as rm:
 setup_kwargs = {
     'name': 'sanic',
     'version': version,
-    'url': 'http://github.com/channelcat/sanic/',
+    'url': 'http://github.com/huge-success/sanic/',
     'license': 'MIT',
     'author': 'Channel Cat',
     'author_email': 'channelcat@gmail.com',

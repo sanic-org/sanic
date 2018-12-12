@@ -10,7 +10,7 @@ from sanic.response import text
 
 @app.route("/")
 async def test(request):
-    return text('Hello World!)
+    return text('Hello World!')
 ```
 
 When the url `http://server.url/` is accessed (the base url of the server), the

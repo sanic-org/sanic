@@ -68,6 +68,25 @@ def test_simple_url_for_getting_with_more_params(app, args, url):
     assert response.text == 'this should pass'
 
 
+def test_url_for_with_server_name(app):
+
+    server_name = '{}:{}'.format(test_host, test_port)
+    app.config.update({
+        'SERVER_NAME': server_name
+    })
+    path = '/myurl'
+
+    @app.route(path)
+    def passes(request):
+        return text('this should pass')
+
+    url = 'http://{}{}'.format(server_name, path)
+    assert url == app.url_for('passes', _server=None, _external=True)
+    request, response = app.test_client.get(url)
+    assert response.status == 200
+    assert response.text == 'this should pass'
+
+
 def test_fails_if_endpoint_not_found(app):
 
     @app.route('/fail')

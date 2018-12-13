@@ -232,9 +232,15 @@ def test_composition_view_runs_methods_as_expected(app, method):
         request, response = getattr(app.test_client, method.lower())('/')
         assert response.text == 'first method'
 
+        response = view(request)
+        assert response.body.decode() == 'first method'
+
     if method in ['DELETE', 'PATCH']:
         request, response = getattr(app.test_client, method.lower())('/')
         assert response.text == 'second method'
+
+        response = view(request)
+        assert response.body.decode() == 'second method'
 
 
 @pytest.mark.parametrize('method', HTTP_METHODS)

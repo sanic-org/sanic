@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import os
+from collections import namedtuple
 from mimetypes import guess_type
 from random import choice
 from unittest.mock import MagicMock
@@ -9,9 +10,8 @@ from urllib.parse import unquote
 import pytest
 from aiofiles import os as async_os
 
-from sanic.response import (
-    HTTPResponse, stream, StreamingHTTPResponse, file, file_stream, json
-)
+from sanic.response import (HTTPResponse, StreamingHTTPResponse, file,
+                            file_stream, json, raw, stream, text)
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 
@@ -422,3 +422,41 @@ def test_file_stream_head_response(app, file_name, static_file_directory):
     assert int(response.headers[
                'Content-Length']) == len(
                    get_file_content(static_file_directory, file_name))
+
+
+@pytest.mark.parametrize('file_name',
+                         ['test.file', 'decode me.txt', 'python.png'])
+@pytest.mark.parametrize('size,start,end', [
+    (1024, 0, 1024),
+    (4096, 1024, 8192),
+    ])
+def test_file_stream_response_range(app, file_name, static_file_directory, size, start, end):
+
+    Range = namedtuple('Range', ['size', 'start', 'end', 'total'])
+    total = len(get_file_content(static_file_directory, file_name))
+    range = Range(size=size, start=start, end=end, total=total)
+
+    @app.route('/files/<filename>', methods=['GET'])
+    def file_route(request, filename):
+        file_path = os.path.join(static_file_directory, filename)
+        file_path = os.path.abspath(unquote(file_path))
+        return file_stream(
+            file_path,
+            chunk_size=32,
+            mime_type=guess_type(file_path)[0] or 'text/plain',
+            _range=range)
+
+    request, response = app.test_client.get('/files/{}'.format(file_name))
+    assert response.status == 206
+    assert 'Content-Range' in response.headers
+    assert response.headers['Content-Range'] == 'bytes {}-{}/{}'.format(range.start, range.end, range.total)
+
+def test_raw_response(app):
+
+    @app.get('/test')
+    def handler(request):
+        return raw(b'raw_response')
+
+    request, response = app.test_client.get('/test')
+    assert response.content_type == 'application/octet-stream'
+    assert response.body == b'raw_response'

@@ -66,6 +66,10 @@ def exception_app():
         abort(500)
         return text("OK")
 
+    @app.route('/abort/message')
+    def handler_abort_message(request):
+        abort(500, message='Abort')
+
     @app.route('/divide_by_zero')
     def handle_unhandled_exception(request):
         1 / 0
@@ -201,3 +205,7 @@ def test_abort(exception_app):
 
     request, response = exception_app.test_client.get('/abort')
     assert response.status == 500
+
+    request, response = exception_app.test_client.get('/abort/message')
+    assert response.status == 500
+    assert response.text == 'Error: Abort'

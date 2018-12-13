@@ -673,3 +673,34 @@ def test_websocket_route(app: Sanic):
     })
     assert response.status == 101
     assert event.is_set()
+
+
+def test_duplicate_blueprint(app):
+    bp_name = 'bp'
+    bp = Blueprint(bp_name)
+    bp1 = Blueprint(bp_name)
+
+    app.blueprint(bp)
+
+    with pytest.raises(AssertionError) as excinfo:
+        app.blueprint(bp1)
+
+    assert str(excinfo.value) == (
+        'A blueprint with the name "{}" is already registered.  '
+        'Blueprint names must be unique.'
+    ).format(bp_name)
+
+
+@pytest.mark.parametrize('debug', [True, False, None])
+def test_register_blueprint(app, debug):
+    bp = Blueprint('bp')
+
+    app.debug = debug
+    with pytest.warns(DeprecationWarning) as record:
+        app.register_blueprint(bp)
+    
+    assert record[0].message.args[0] == (
+        "Use of register_blueprint will be deprecated in "
+        "version 1.0.  Please use the blueprint method"
+        " instead"
+    )

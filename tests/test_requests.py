@@ -340,7 +340,7 @@ def test_url_attributes_no_ssl(app, path, query, expected_url):
         ('/bar/baz', '', 'https://{}:{}/bar/baz'),
         ('/moo/boo', 'arg1=val1', 'https://{}:{}/moo/boo?arg1=val1')
     ])
-def test_url_attributes_with_ssl(app, path, query, expected_url):
+def test_url_attributes_with_ssl_context(app, path, query, expected_url):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     context.load_cert_chain(
@@ -363,6 +363,58 @@ def test_url_attributes_with_ssl(app, path, query, expected_url):
     assert parsed.path == request.path
     assert parsed.query == request.query_string
     assert parsed.netloc == request.host
+
+
+@pytest.mark.parametrize(
+    'path,query,expected_url', [
+        ('/foo', '', 'https://{}:{}/foo'),
+        ('/bar/baz', '', 'https://{}:{}/bar/baz'),
+        ('/moo/boo', 'arg1=val1', 'https://{}:{}/moo/boo?arg1=val1')
+    ])
+def test_url_attributes_with_ssl_dict(app, path, query, expected_url):
+
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    ssl_cert = os.path.join(current_dir, 'certs/selfsigned.cert')
+    ssl_key = os.path.join(current_dir, 'certs/selfsigned.key')
+
+    ssl_dict = {
+        'cert': ssl_cert,
+        'key': ssl_key
+    }
+
+    async def handler(request):
+        return text('OK')
+
+    app.add_route(handler, path)
+
+    request, response = app.test_client.get(
+        'https://{}:{}'.format(HOST, PORT) + path + '?{}'.format(query),
+        server_kwargs={'ssl': ssl_dict})
+    assert request.url == expected_url.format(HOST, PORT)
+
+    parsed = urlparse(request.url)
+
+    assert parsed.scheme == request.scheme
+    assert parsed.path == request.path
+    assert parsed.query == request.query_string
+    assert parsed.netloc == request.host
+
+
+def test_invalid_ssl_dict(app):
+
+    @app.get('/test')
+    async def handler(request):
+        return text('ssl test')
+
+    ssl_dict = {
+        'cert': None,
+        'key': None
+    }
+
+    with pytest.raises(ValueError) as excinfo:
+        request, response = app.test_client.get('/test', server_kwargs={'ssl': ssl_dict})
+
+    assert str(excinfo.value) == 'SSLContext or certificate and key required.'
 
 
 def test_form_with_multiple_values(app):

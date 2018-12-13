@@ -1,11 +1,11 @@
 import asyncio
+
 import pytest
 
 from sanic import Sanic
-from sanic.response import text, json
-from sanic.router import RouteExists, RouteDoesNotExist, ParameterNameConflicts
 from sanic.constants import HTTP_METHODS
-
+from sanic.response import json, text
+from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
 
 # ------------------------------------------------------------ #
 #  UTF-8
@@ -462,10 +462,11 @@ def test_dynamic_route_unhashable(app):
     assert response.status == 404
 
 
-def test_websocket_route(app):
+@pytest.mark.parametrize('url', ['/ws', 'ws'])
+def test_websocket_route(app, url):
     ev = asyncio.Event()
 
-    @app.websocket('/ws')
+    @app.websocket(url)
     async def handler(request, ws):
         assert ws.subprotocol is None
         ev.set()
@@ -520,6 +521,24 @@ def test_websocket_route_with_subprotocols(app):
     assert results == ['bar', 'bar', None, None]
 
 
+@pytest.mark.parametrize('strict_slashes', [True, False, None])
+def test_add_webscoket_route(app, strict_slashes):
+    ev = asyncio.Event()
+
+    async def handler(request, ws):
+        assert ws.subprotocol is None
+        ev.set()
+
+    app.add_websocket_route(handler, '/ws', strict_slashes=strict_slashes)
+    request, response = app.test_client.get('/ws', headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13'})
+    assert response.status == 101
+    assert ev.is_set()
+
+
 def test_route_duplicate(app):
 
     with pytest.raises(RouteExists):
@@ -554,7 +573,8 @@ def test_method_not_allowed(app):
     assert response.status == 405
 
 
-def test_static_add_route(app):
+@pytest.mark.parametrize('strict_slashes', [True, False, None])
+def test_static_add_route(app, strict_slashes):
 
     async def handler1(request):
         return text('OK1')
@@ -562,8 +582,8 @@ def test_static_add_route(app):
     async def handler2(request):
         return text('OK2')
 
-    app.add_route(handler1, '/test')
-    app.add_route(handler2, '/test2')
+    app.add_route(handler1, '/test', strict_slashes=strict_slashes)
+    app.add_route(handler2, '/test2', strict_slashes=strict_slashes)
 
     request, response = app.test_client.get('/test')
     assert response.text == 'OK1'

@@ -62,6 +62,7 @@ class HttpProtocol(asyncio.Protocol):
         "request_class",
         "is_request_stream",
         "router",
+        "error_handler",
         # enable or disable access log purpose
         "access_log",
         # connection management
@@ -73,6 +74,12 @@ class HttpProtocol(asyncio.Protocol):
         "_last_response_time",
         "_is_stream_handler",
         "_not_paused",
+        "_request_handler_task",
+        "_request_stream_task",
+        "_keep_alive",
+        "_header_fragment",
+        "state",
+        "_debug",
     )
 
     def __init__(

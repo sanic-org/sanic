@@ -1,7 +1,27 @@
-include README.rst
-include MANIFEST.in
-include LICENSE
+# Non Code related contents
+include LICENSE *.rst *.md *.yml *.toml Makefile *.cfg
+graft .github
+
+# Release
+include release.py
 include setup.py
 
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
+# Requirements
+include *.txt
+
+# Tests
+include tox.ini .coveragerc
+graft tests
+
+# Examples
+graft examples
+
+# Documentation
+graft docs
+prune docs/_build
+
+# Docker setup
+graft docker
+
+global-exclude __pycache__
+global-exclude *.py[co]

@@ -11,6 +11,7 @@ A list of Sanic extensions created by the community.
 ## Security
 
 - [Sanic JWT](https://github.com/ahopkins/sanic-jwt): Authentication, JWT, and permission scoping for Sanic.
+- [Secure](https://github.com/cakinney/secure): Secure 🔒 is a lightweight package that adds optional security headers and cookie attributes for Python web frameworks.
 - [Sessions](https://github.com/subyraman/sanic_session): Support for sessions. Allows using redis, memcache or an in memory store.
 - [CORS](https://github.com/ashleysommer/sanic-cors): A port of flask-cors.
 - [Sanic-JWT-Extended](https://github.com/devArtoria/Sanic-JWT-Extended): Provides extended JWT support for 

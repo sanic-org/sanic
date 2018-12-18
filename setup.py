@@ -4,10 +4,25 @@ Sanic
 import codecs
 import os
 import re
-from distutils.errors import DistutilsPlatformError
+import sys
 from distutils.util import strtobool
 
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
+
+
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = ''
+
+    def run_tests(self):
+        import shlex
+        import pytest
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
 
 
 def open_local(paths, mode='r', encoding='utf8'):
@@ -25,7 +40,6 @@ with open_local(['sanic', '__init__.py'], encoding='latin1') as fp:
                              fp.read(), re.M)[0]
     except IndexError:
         raise RuntimeError('Unable to determine version.')
-
 
 with open_local(['README.rst']) as rm:
     long_description = rm.read()
@@ -64,14 +78,33 @@ requirements = [
     'websockets>=6.0,<7.0',
     'multidict>=4.0,<5.0',
 ]
+tests_require = [
+    'pytest==3.3.2',
+    'multidict>=4.0,<5.0',
+    'gunicorn',
+    'pytest-cov',
+    'aiohttp>=2.3.0,<=3.2.1',
+    'beautifulsoup4',
+    uvloop,
+    ujson,
+    'pytest-sanic',
+    'pytest-sugar'
+]
+
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
+    tests_require.remove(ujson)
 
 # 'nt' means windows OS
 if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
+    tests_require.remove(uvloop)
 
 setup_kwargs['install_requires'] = requirements
+setup_kwargs['tests_require'] = tests_require
+setup_kwargs['cmdclass'] = {
+    'test': PyTest
+}
 setup(**setup_kwargs)

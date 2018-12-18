@@ -1,27 +1,14 @@
 # Non Code related contents
-include LICENSE *.rst *.md *.yml *.toml Makefile *.cfg
-graft .github
+include LICENSE
+include README.rst
 
-# Release
-include release.py
+# Setup
 include setup.py
-
-# Requirements
-include *.txt
+include Makefile
 
 # Tests
-include tox.ini .coveragerc
+include .coveragerc
 graft tests
-
-# Examples
-graft examples
-
-# Documentation
-graft docs
-prune docs/_build
-
-# Docker setup
-graft docker
 
 global-exclude __pycache__
 global-exclude *.py[co]

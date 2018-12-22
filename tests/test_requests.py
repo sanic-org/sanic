@@ -1,15 +1,16 @@
-from json import loads as json_loads, dumps as json_dumps
-from urllib.parse import urlparse
+import logging
 import os
 import ssl
+from json import dumps as json_dumps
+from json import loads as json_loads
+from urllib.parse import urlparse
 
 import pytest
 
 from sanic.exceptions import ServerError
-from sanic.response import json, text
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
+from sanic.response import json, text
 from sanic.testing import HOST, PORT
-
 
 # ------------------------------------------------------------ #
 #  GET
@@ -266,6 +267,7 @@ def test_post_json(app):
         '/', data=json_dumps(payload), headers=headers)
 
     assert request.json.get('test') == 'OK'
+    assert request.json.get('test') == 'OK' # for request.parsed_json
     assert response.text == 'OK'
 
 
@@ -282,6 +284,7 @@ def test_post_form_urlencoded(app):
                                              headers=headers)
 
     assert request.form.get('test') == 'OK'
+    assert request.form.get('test') == 'OK' # For request.parsed_form
 
 
 @pytest.mark.parametrize(
@@ -471,13 +474,73 @@ def test_request_multipart_file_with_json_content_type(app):
     async def post(request):
         return text("OK")
 
-    payload = '------sanic\r\nContent-Disposition: form-data; name="file"; filename="test.json"' \
-              '\r\nContent-Type: application/json\r\n\r\n\r\n------sanic--'
+    payload = (
+        '------sanic\r\n'
+        'Content-Disposition: form-data; name="file"; filename="test.json"\r\n'
+        'Content-Type: application/json\r\n'
+        'Content-Length: 0'
+        '\r\n'
+        '\r\n'
+        '------sanic--'
+    )
 
     headers = {'content-type': 'multipart/form-data; boundary=------sanic'}
 
     request, _ = app.test_client.post(data=payload, headers=headers)
     assert request.files.get('file').type == 'application/json'
+
+
+def test_request_multipart_file_without_field_name(app, caplog):
+
+    @app.route("/", methods=["POST"])
+    async def post(request):
+        return text("OK")
+
+    payload = (
+        '------sanic\r\nContent-Disposition: form-data; filename="test.json"'
+        '\r\nContent-Type: application/json\r\n\r\n\r\n------sanic--'
+    )
+
+    headers = {'content-type': 'multipart/form-data; boundary=------sanic'}
+
+    request, _ = app.test_client.post(data=payload, headers=headers, debug=True)
+    with caplog.at_level(logging.DEBUG):
+        request.form
+
+    assert caplog.record_tuples[-1] == ('sanic.root', logging.DEBUG, 
+        "Form-data field does not have a 'name' parameter "
+        "in the Content-Disposition header" 
+    )
+
+
+def test_request_multipart_file_duplicate_filed_name(app):
+
+    @app.route("/", methods=["POST"])
+    async def post(request):
+        return text("OK")
+
+    payload = (
+        '--e73ffaa8b1b2472b8ec848de833cb05b\r\n'
+        'Content-Disposition: form-data; name="file"\r\n'
+        'Content-Type: application/octet-stream\r\n'
+        'Content-Length: 15\r\n'
+        '\r\n'
+        '{"test":"json"}\r\n'
+        '--e73ffaa8b1b2472b8ec848de833cb05b\r\n'
+        'Content-Disposition: form-data; name="file"\r\n'
+        'Content-Type: application/octet-stream\r\n'
+        'Content-Length: 15\r\n'
+        '\r\n'
+        '{"test":"json2"}\r\n'
+        '--e73ffaa8b1b2472b8ec848de833cb05b--\r\n'
+    )
+
+    headers = {
+        'Content-Type': 'multipart/form-data; boundary=e73ffaa8b1b2472b8ec848de833cb05b'
+    }
+
+    request, _ = app.test_client.post(data=payload, headers=headers, debug=True)
+    assert request.form.getlist('file') == ['{"test":"json"}', '{"test":"json2"}']
 
 
 def test_request_multipart_with_multiple_files_and_type(app):
@@ -495,3 +558,150 @@ def test_request_multipart_with_multiple_files_and_type(app):
     assert len(request.files.getlist('file')) == 2
     assert request.files.getlist('file')[0].type == 'application/json'
     assert request.files.getlist('file')[1].type == 'application/pdf'
+
+
+def test_request_repr(app):
+
+    @app.get('/')
+    def handler(request):
+        return text('pass')
+
+    request, response = app.test_client.get('/')
+    assert repr(request) == '<Request: GET />'
+
+    request.method = None
+    assert repr(request) == '<Request>'
+
+
+def test_request_bool(app):
+
+    @app.get('/')
+    def handler(request):
+        return text('pass')
+
+    request, response = app.test_client.get('/')
+    assert bool(request)
+
+    request.transport = False
+    assert not bool(request)
+
+
+def test_request_parsing_form_failed(app, caplog):
+
+    @app.route('/', methods=['POST'])
+    async def handler(request):
+        return text('OK')
+
+    payload = 'test=OK'
+    headers = {'content-type': 'multipart/form-data'}
+
+    request, response = app.test_client.post('/', data=payload, headers=headers)
+
+    with caplog.at_level(logging.ERROR):
+        request.form
+
+    assert caplog.record_tuples[-1] == ('sanic.error', logging.ERROR, 'Failed when parsing form')
+
+
+def test_request_args_no_query_string(app):
+
+    @app.get('/')
+    def handler(request):
+        return text('pass')
+
+    request, response = app.test_client.get('/')
+
+    assert request.args == {}
+
+
+def test_request_raw_args(app):
+
+    params = {'test': 'OK'}
+
+    @app.get('/')
+    def handler(request):
+        return text('pass')
+
+    request, response = app.test_client.get('/', params=params)
+
+    assert request.raw_args == params
+
+
+def test_request_cookies(app):
+
+    cookies = {'test': 'OK'}
+
+    @app.get('/')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/', cookies=cookies)
+
+    assert request.cookies == cookies
+    assert request.cookies == cookies # For request._cookies
+
+
+def test_request_cookies_without_cookies(app):
+
+    @app.get('/')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/')
+
+    assert request.cookies == {}
+
+
+def test_request_port(app):
+
+    @app.get('/')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/')
+
+    port = request.port
+    assert isinstance(port, int)
+
+    delattr(request, '_socket')
+    delattr(request, '_port')
+
+    port = request.port
+    assert isinstance(port, int)
+    assert hasattr(request, '_socket')
+    assert hasattr(request, '_port')
+
+
+def test_request_socket(app):
+
+    @app.get('/')
+    def handler(request):
+        return text('OK')
+
+    request, response = app.test_client.get('/')
+
+    socket = request.socket
+    assert isinstance(socket, tuple)
+
+    ip = socket[0]
+    port = socket[1]
+
+    assert ip == request.ip
+    assert port == request.port
+
+    delattr(request, '_socket')
+
+    socket = request.socket
+    assert isinstance(socket, tuple)
+    assert hasattr(request, '_socket')
+
+
+def test_request_form_invalid_content_type(app):
+
+    @app.route("/", methods=["POST"])
+    async def post(request):
+        return text("OK")
+
+    request, response = app.test_client.post('/', json={'test': 'OK'})
+
+    assert request.form == {}

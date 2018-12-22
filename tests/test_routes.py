@@ -468,6 +468,7 @@ def test_websocket_route(app, url):
 
     @app.websocket(url)
     async def handler(request, ws):
+        assert request.scheme == 'ws'
         assert ws.subprotocol is None
         ev.set()
 
@@ -785,8 +786,11 @@ def test_remove_dynamic_route(app):
 
 def test_remove_inexistent_route(app):
 
-    with pytest.raises(RouteDoesNotExist):
-        app.remove_route('/test')
+    uri = '/test'
+    with pytest.raises(RouteDoesNotExist) as excinfo:
+        app.remove_route(uri)
+
+    assert str(excinfo.value) == 'Route was not registered: {}'.format(uri)
 
 
 def test_removing_slash(app):
@@ -963,3 +967,17 @@ def test_route_raise_ParameterNameConflicts(app):
         @app.get('/api/v1/<user>/<user>/')
         def handler(request, user):
             return text('OK')
+
+
+def test_route_invalid_host(app):
+
+    host = 321
+    with pytest.raises(ValueError) as excinfo:
+        @app.get('/test', host=host)
+        def handler(request):
+            return text('pass')
+
+    assert str(excinfo.value) == (
+        "Expected either string or Iterable of "
+        "host strings, not {!r}"
+    ).format(host)

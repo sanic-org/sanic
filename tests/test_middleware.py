@@ -1,7 +1,9 @@
-from sanic.request import Request
-from sanic.response import text, HTTPResponse
-from sanic.exceptions import NotFound
+import logging
+from asyncio import CancelledError
 
+from sanic.exceptions import NotFound
+from sanic.request import Request
+from sanic.response import HTTPResponse, text
 
 # ------------------------------------------------------------ #
 #  GET
@@ -67,6 +69,49 @@ def test_middleware_response_exception(app):
     request, response = app.test_client.get('/page_not_found')
     assert response.text == 'OK'
     assert result['status_code'] == 404
+
+
+def test_middleware_response_raise_cancelled_error(app, caplog):
+
+    @app.middleware('response')
+    async def process_response(request, response):
+        raise CancelledError('CancelledError at response middleware')
+
+    @app.get('/')
+    def handler(request):
+        return text('OK')
+
+    with caplog.at_level(logging.ERROR):
+        reqrequest, response = app.test_client.get('/')
+
+    assert response.status == 503
+    assert caplog.record_tuples[0] == (
+        'sanic.root',
+        logging.ERROR,
+        'Exception occurred while handling uri: \'http://127.0.0.1:42101/\''
+    )
+
+
+def test_middleware_response_raise_exception(app, caplog):
+
+    @app.middleware('response')
+    async def process_response(request, response):
+        raise Exception('Exception at response middleware')
+
+    with caplog.at_level(logging.ERROR):
+        reqrequest, response = app.test_client.get('/')
+
+    assert response.status == 404
+    assert caplog.record_tuples[0] == (
+        'sanic.root',
+        logging.ERROR,
+        'Exception occurred while handling uri: \'http://127.0.0.1:42101/\''
+    )
+    assert caplog.record_tuples[1] == (
+        'sanic.error',
+        logging.ERROR,
+        'Exception occurred in one of response middleware handlers'
+    )
 
 
 def test_middleware_override_request(app):

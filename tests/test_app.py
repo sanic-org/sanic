@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import pytest
 
@@ -69,7 +70,7 @@ def test_app_handle_request_handler_is_none(app, monkeypatch):
 
 @pytest.mark.parametrize('websocket_enabled', [True, False])
 @pytest.mark.parametrize('enable', [True, False])
-def test_enable_websocket(app, websocket_enabled, enable):
+def test_app_enable_websocket(app, websocket_enabled, enable):
     app.websocket_enabled = websocket_enabled
     app.enable_websocket(enable=enable)
 
@@ -80,3 +81,69 @@ def test_enable_websocket(app, websocket_enabled, enable):
         await ws.send('test')
 
     assert app.websocket_enabled == True
+
+
+def test_handle_request_with_nested_exception(app, monkeypatch):
+
+    err_msg = 'Mock Exception'
+
+    # Not sure how to raise an exception in app.error_handler.response(), use mock here
+    def mock_error_handler_response(*args, **kwargs):
+        raise Exception(err_msg)
+
+    monkeypatch.setattr(app.error_handler, 'response', mock_error_handler_response)
+
+    @app.get('/')
+    def handler(request):
+        raise Exception
+        return text('OK')
+
+    request, response = app.test_client.get('/')
+    assert response.status == 500
+    assert response.text == 'An error occurred while handling an error'
+
+
+def test_handle_request_with_nested_exception_debug(app, monkeypatch):
+
+    err_msg = 'Mock Exception'
+
+    # Not sure how to raise an exception in app.error_handler.response(), use mock here
+    def mock_error_handler_response(*args, **kwargs):
+        raise Exception(err_msg)
+
+    monkeypatch.setattr(app.error_handler, 'response', mock_error_handler_response)
+
+    @app.get('/')
+    def handler(request):
+        raise Exception
+        return text('OK')
+
+    request, response = app.test_client.get('/', debug=True)
+    assert response.status == 500
+    assert response.text.startswith(
+        'Error while handling error: {}\nStack: Traceback (most recent call last):\n'.format(err_msg)
+    )
+
+
+def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
+
+    # Not sure how to raise an exception in app.error_handler.response(), use mock here
+    def mock_error_handler_response(*args, **kwargs):
+        raise SanicException('Mock SanicException')
+
+    monkeypatch.setattr(app.error_handler, 'response', mock_error_handler_response)
+
+    @app.get('/')
+    def handler(request):
+        raise Exception
+        return text('OK')
+
+    with caplog.at_level(logging.ERROR):
+        request, response = app.test_client.get('/')
+    assert response.status == 500
+    assert response.text == 'Error: Mock SanicException'
+    assert caplog.record_tuples[0] == (
+        'sanic.root',
+        logging.ERROR,
+        "Exception occurred while handling uri: 'http://127.0.0.1:42101/'"
+    )

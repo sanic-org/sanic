@@ -205,6 +205,69 @@ def test_static_content_range_error(app, file_name, static_file_directory):
         len(get_file_content(static_file_directory, file_name)),)
 
 
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+def test_static_content_range_invalid_unit(app, file_name, static_file_directory):
+    app.static(
+        '/testing.file', get_file_path(static_file_directory, file_name),
+        use_content_range=True)
+
+    unit = 'bit'
+    headers = {
+        'Range': '{}=1-0'.format(unit)
+    }
+    request, response = app.test_client.get('/testing.file', headers=headers)
+
+    assert response.status == 416
+    assert response.text == "Error: {} is not a valid Range Type".format(unit)
+
+
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+def test_static_content_range_invalid_start(app, file_name, static_file_directory):
+    app.static(
+        '/testing.file', get_file_path(static_file_directory, file_name),
+        use_content_range=True)
+
+    start = 'start'
+    headers = {
+        'Range': 'bytes={}-0'.format(start)
+    }
+    request, response = app.test_client.get('/testing.file', headers=headers)
+
+    assert response.status == 416
+    assert response.text == "Error: '{}' is invalid for Content Range".format(start)
+
+
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+def test_static_content_range_invalid_end(app, file_name, static_file_directory):
+    app.static(
+        '/testing.file', get_file_path(static_file_directory, file_name),
+        use_content_range=True)
+
+    end = 'end'
+    headers = {
+        'Range': 'bytes=1-{}'.format(end)
+    }
+    request, response = app.test_client.get('/testing.file', headers=headers)
+
+    assert response.status == 416
+    assert response.text == "Error: '{}' is invalid for Content Range".format(end)
+
+
+@pytest.mark.parametrize('file_name', ['test.file', 'decode me.txt'])
+def test_static_content_range_invalid_parameters(app, file_name, static_file_directory):
+    app.static(
+        '/testing.file', get_file_path(static_file_directory, file_name),
+        use_content_range=True)
+
+    headers = {
+        'Range': 'bytes=-'
+    }
+    request, response = app.test_client.get('/testing.file', headers=headers)
+
+    assert response.status == 416
+    assert response.text == "Error: Invalid for Content Range parameters"
+
+
 @pytest.mark.parametrize('file_name',
                          ['test.file', 'decode me.txt', 'python.png'])
 def test_static_file_specified_host(app, static_file_directory, file_name):
@@ -274,3 +337,19 @@ def test_static_name(app, static_file_directory, static_name, file_name):
     request, response = app.test_client.get('/static/{}'.format(file_name))
 
     assert response.status == 200
+
+
+@pytest.mark.parametrize('file_name',
+                         ['test.file'])
+def test_static_remove_route(app, static_file_directory, file_name):
+    app.static(
+        '/testing.file',
+        get_file_path(static_file_directory, file_name)
+    )
+
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 200
+
+    app.remove_route('/testing.file')
+    request, response = app.test_client.get('/testing.file')
+    assert response.status == 404

@@ -130,3 +130,62 @@ def test_cookie_set_unknown_property():
     with pytest.raises(expected_exception=KeyError) as e:
         c["invalid"] = "value"
         assert e.message == "Unknown cookie property"
+
+
+def test_cookie_set_same_key(app):
+
+    cookies = {'test': 'wait'}
+
+    @app.get('/')
+    def handler(request):
+        response = text('pass')
+        response.cookies['test'] = 'modified'
+        response.cookies['test'] = 'pass'
+        return response
+
+    request, response = app.test_client.get('/', cookies=cookies)
+    assert response.status == 200
+    assert response.cookies['test'].value == 'pass'
+
+
+@pytest.mark.parametrize('max_age', ['0', 30, '30'])
+def test_cookie_max_age(app, max_age):
+    cookies = {'test': 'wait'}
+
+    @app.get('/')
+    def handler(request):
+        response = text('pass')
+        response.cookies['test'] = 'pass'
+        response.cookies['test']['max-age'] = max_age
+        return response
+
+    request, response = app.test_client.get('/', cookies=cookies)
+    assert response.status == 200
+
+    assert response.cookies['test'].value == 'pass'
+    assert response.cookies['test']['max-age'] == str(max_age)
+
+
+@pytest.mark.parametrize('expires', [
+    datetime.now() + timedelta(seconds=60), 
+    'Fri, 21-Dec-2018 15:30:00 GMT'
+    ])
+def test_cookie_expires(app, expires):
+    cookies = {'test': 'wait'}
+
+    @app.get('/')
+    def handler(request):
+        response = text('pass')
+        response.cookies['test'] = 'pass'
+        response.cookies['test']['expires'] = expires
+        return response
+
+    request, response = app.test_client.get('/', cookies=cookies)
+    assert response.status == 200
+
+    assert response.cookies['test'].value == 'pass'
+
+    if isinstance(expires, datetime):
+        expires = expires.strftime("%a, %d-%b-%Y %T GMT")
+
+    assert response.cookies['test']['expires'] == expires

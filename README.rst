@@ -48,6 +48,18 @@ Sanic is developed `on GitHub <https://github.com/huge-success/sanic/>`_. We als
 
 If you have a project that utilizes Sanic make sure to comment on the `issue <https://github.com/huge-success/sanic/issues/396>`_ that we use to track those projects!
 
+Installation
+------------
+
+-  ``pip3 install sanic``
+
+To install sanic without uvloop or ujson using bash, you can provide either or both of these environmental variables
+using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the ``SANIC_NO_X`` (``X`` = ``UVLOOP``/``UJSON``)
+to true will stop that features installation.
+
+- ``SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true pip install sanic``
+
+
 Hello World Example
 -------------------
 
@@ -64,17 +76,6 @@ Hello World Example
 
     if __name__ == '__main__':
         app.run(host='0.0.0.0', port=8000)
-
-Installation
-------------
-
--  ``pip install sanic``
-
-To install sanic without uvloop or ujson using bash, you can provide either or both of these environmental variables
-using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the NO_X to true will stop that features
-installation.
-
-- ``SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true pip install sanic``
 
 
 Documentation

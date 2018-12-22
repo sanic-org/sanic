@@ -25,21 +25,21 @@ Dependency Changes
 effort required in managing the dependencies. Please make sure you have read and understood the following section of
 the document that explains the way ``sanic`` manages dependencies inside the ``setup.py`` file.
 
-+------------------------+-----------------------------------------------+----------------------------+
-| Dependency Type        | Usage                                         | Installation               |
-+========================+===============================================+============================+
-| requirements           | Bare minimum dependencies required for sanic  | pip3 install -e .          |
-|                        | to function                                   |                            |
-+------------------------+-----------------------------------------------+----------------------------+
-| tests_require /        | Dependencies required to run the Unit Tests   | pip3 install -e '[.test]'  |
-| extras_require['test'] | for ``sanic``                                 |                            |
-+------------------------+-----------------------------------------------+----------------------------+
-| extras_require['dev']  | Additional Development requirements to add    | pip3 install -e '[.dev]'   |
-|                        | contributing                                  |                            |
-+------------------------+-----------------------------------------------+----------------------------+
-| extras_require['docs'] | Dependencies required to enable building and  |pip3 install -e '[.docs]'   |
-|                        | enhancing sanic documentation                 |                            |
-+------------------------+-----------------------------------------------+----------------------------+
++------------------------+-----------------------------------------------+--------------------------------+
+| Dependency Type        | Usage                                         | Installation                   |
++========================+===============================================+================================+
+| requirements           | Bare minimum dependencies required for sanic  | ``pip3 install -e .``          |
+|                        | to function                                   |                                |
++------------------------+-----------------------------------------------+--------------------------------+
+| tests_require /        | Dependencies required to run the Unit Tests   | ``pip3 install -e '[.test]'``  |
+| extras_require['test'] | for ``sanic``                                 |                                |
++------------------------+-----------------------------------------------+--------------------------------+
+| extras_require['dev']  | Additional Development requirements to add    | ``pip3 install -e '[.dev]'``   |
+|                        | contributing                                  |                                |
++------------------------+-----------------------------------------------+--------------------------------+
+| extras_require['docs'] | Dependencies required to enable building and  | ``pip3 install -e '[.docs]'``  |
+|                        | enhancing sanic documentation                 |                                |
++------------------------+-----------------------------------------------+--------------------------------+
 
 Running tests
 -------------

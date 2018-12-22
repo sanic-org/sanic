@@ -145,10 +145,6 @@ def test_cookie_set_same_key(app):
 
     request, response = app.test_client.get('/', cookies=cookies)
     assert response.status == 200
-
-    response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
-
     assert response.cookies['test'].value == 'pass'
 
 
@@ -165,9 +161,6 @@ def test_cookie_max_age(app, max_age):
 
     request, response = app.test_client.get('/', cookies=cookies)
     assert response.status == 200
-
-    response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
 
     assert response.cookies['test'].value == 'pass'
     assert response.cookies['test']['max-age'] == str(max_age)
@@ -189,9 +182,6 @@ def test_cookie_expires(app, expires):
 
     request, response = app.test_client.get('/', cookies=cookies)
     assert response.status == 200
-
-    response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
 
     assert response.cookies['test'].value == 'pass'
 

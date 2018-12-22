@@ -264,6 +264,29 @@ def test_stream_response_writes_correct_content_to_transport(streaming_app):
     streaming_app.run(host=HOST, port=PORT)
 
 
+def test_stream_response_with_cookies(app):
+
+    @app.route("/")
+    async def test(request):
+        response = stream(sample_streaming_fn, content_type='text/csv')
+        response.cookies['test'] = 'modified'
+        response.cookies['test'] = 'pass'
+        return response
+
+    request, response = app.test_client.get('/')
+    assert response.cookies['test'].value == 'pass'
+
+
+def test_stream_response_without_cookies(app):
+
+    @app.route("/")
+    async def test(request):
+        return stream(sample_streaming_fn, content_type='text/csv')
+
+    request, response = app.test_client.get('/')
+    assert response.cookies == {}
+
+
 @pytest.fixture
 def static_file_directory():
     """The static directory to serve"""
@@ -450,6 +473,7 @@ def test_file_stream_response_range(app, file_name, static_file_directory, size,
     assert response.status == 206
     assert 'Content-Range' in response.headers
     assert response.headers['Content-Range'] == 'bytes {}-{}/{}'.format(range.start, range.end, range.total)
+
 
 def test_raw_response(app):
 

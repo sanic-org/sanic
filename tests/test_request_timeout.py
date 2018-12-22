@@ -188,6 +188,11 @@ async def handler2(request):
     return text('OK')
 
 
+@request_timeout_default_app.websocket('/ws1')
+async def ws_handler1(request, ws):
+    await ws.send('OK')
+
+
 def test_default_server_error_request_timeout():
     client = DelayableSanicTestClient(request_timeout_default_app, None, 2)
     request, response = client.get('/1')
@@ -200,3 +205,19 @@ def test_default_server_error_request_dont_timeout():
     request, response = client.get('/1')
     assert response.status == 200
     assert response.text == 'OK'
+
+
+def test_default_server_error_websocket_request_timeout():
+
+    headers={
+        'Upgrade': 'websocket',
+        'Connection': 'upgrade',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version': '13'
+    }
+
+    client = DelayableSanicTestClient(request_timeout_default_app, None, 2)
+    request, response = client.get('/ws1', headers=headers)
+
+    assert response.status == 408
+    assert response.text == 'Error: Request Timeout'

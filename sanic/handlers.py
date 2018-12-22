@@ -61,7 +61,7 @@ class ErrorHandler:
         self.handlers.append((exception, handler))
 
     def lookup(self, exception):
-        handler = self.cached_handlers.get(exception, self._missing)
+        handler = self.cached_handlers.get(type(exception), self._missing)
         if handler is self._missing:
             for exception_class, handler in self.handlers:
                 if isinstance(exception, exception_class):

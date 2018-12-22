@@ -47,6 +47,36 @@ async def ignore_404s(request, exception):
 	return text("Yep, I totally found the page: {}".format(request.url))
 ```
 
+You can also add an exception handler as such:
+
+```python
+from sanic import Sanic
+
+async def server_error_handler(request, exception):
+	return text("Oops, server error", status=500)
+
+app = Sanic()
+app.error_handler.add(Exception, server_error_handler)
+```
+
+In some cases, you might want want to add some more error handling
+functionality to what is provided by default. In that case, you 
+can subclass Sanic's default error handler as such:
+
+```python
+from sanic import Sanic
+from sanic.handlers import ErrorHnadler
+
+class CustomErrorHandler(ErrorHandler):
+	def default(self, request, exception):
+		''' handles errors that have no error handlers assigned '''
+		# You custom error handling logic...
+		return super().default(request, exception)
+		
+app = Sanic()
+app.error_handler = CustomErrorHandler()
+```
+
 ## Useful exceptions
 
 Some of the most useful exceptions are presented below:

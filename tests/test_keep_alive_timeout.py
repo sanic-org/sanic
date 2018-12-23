@@ -141,7 +141,7 @@ class ReuseableSanicTestClient(SanicTestClient):
                 conn = self._tcp_connector
             else:
                 conn = ReuseableTCPConnector(
-                    verify_ssl=False,
+                    ssl=False,
                     loop=self._loop,
                     keepalive_timeout=request_keepalive
                 )

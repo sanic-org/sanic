@@ -31,13 +31,13 @@ the document that explains the way ``sanic`` manages dependencies inside the ``s
 | requirements           | Bare minimum dependencies required for sanic  | ``pip3 install -e .``          |
 |                        | to function                                   |                                |
 +------------------------+-----------------------------------------------+--------------------------------+
-| tests_require /        | Dependencies required to run the Unit Tests   | ``pip3 install -e '[.test]'``  |
+| tests_require /        | Dependencies required to run the Unit Tests   | ``pip3 install -e '.[test]'``  |
 | extras_require['test'] | for ``sanic``                                 |                                |
 +------------------------+-----------------------------------------------+--------------------------------+
-| extras_require['dev']  | Additional Development requirements to add    | ``pip3 install -e '[.dev]'``   |
+| extras_require['dev']  | Additional Development requirements to add    | ``pip3 install -e '.[dev]'``   |
 |                        | contributing                                  |                                |
 +------------------------+-----------------------------------------------+--------------------------------+
-| extras_require['docs'] | Dependencies required to enable building and  | ``pip3 install -e '[.docs]'``  |
+| extras_require['docs'] | Dependencies required to enable building and  | ``pip3 install -e '.[docs]'``  |
 |                        | enhancing sanic documentation                 |                                |
 +------------------------+-----------------------------------------------+--------------------------------+
 

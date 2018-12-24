@@ -1,6 +1,7 @@
 # Non Code related contents
 include LICENSE
 include README.rst
+include pyproject.toml
 
 # Setup
 include setup.py

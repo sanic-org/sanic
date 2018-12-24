@@ -1,4 +1,4 @@
-.PHONY: help test test-coverage install docker-test
+.PHONY: help test test-coverage install docker-test black fix-import beautify
 
 .DEFAULT: help
 

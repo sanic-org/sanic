@@ -1,6 +1,8 @@
 import os
 import types
 
+import import_string
+
 from sanic.exceptions import PyFileError
 
 
@@ -111,6 +113,8 @@ class Config(dict):
 
         :param obj: an object holding the configuration
         """
+        if isinstance(obj, str):
+            obj = import_string(obj)
         for key in dir(obj):
             if key.isupper():
                 self[key] = getattr(obj, key)

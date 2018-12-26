@@ -4,7 +4,7 @@ Sanic
 import codecs
 import os
 import re
-from distutils.errors import DistutilsPlatformError
+
 from distutils.util import strtobool
 
 from setuptools import setup
@@ -63,6 +63,7 @@ requirements = [
     'aiofiles>=0.3.0',
     'websockets>=6.0,<7.0',
     'multidict>=4.0,<5.0',
+    'import-string>=0.1.0'
 ]
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")

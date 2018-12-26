@@ -1,10 +1,8 @@
 import os
 import types
 
-import import_string
-
 from sanic.exceptions import PyFileError
-
+from sanic.helpers import import_string
 
 SANIC_PREFIX = "SANIC_"
 

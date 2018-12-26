@@ -35,6 +35,11 @@ def test_load_from_object_string(app):
     assert 'not_for_config' not in app.config
 
 
+def test_load_from_object_string_exception(app):
+    with pytest.raises(ImportError):
+        app.config.from_object('test_config.Config.test')
+
+
 def test_auto_load_env():
     environ["SANIC_TEST_ANSWER"] = "42"
     app = Sanic()

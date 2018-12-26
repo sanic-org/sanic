@@ -16,12 +16,20 @@ def temp_path():
         yield Path(td, 'file')
 
 
-def test_load_from_object(app):
-    class Config:
+class Config:
         not_for_config = 'should not be used'
         CONFIG_VALUE = 'should be used'
 
+
+def test_load_from_object(app):
     app.config.from_object(Config)
+    assert 'CONFIG_VALUE' in app.config
+    assert app.config.CONFIG_VALUE == 'should be used'
+    assert 'not_for_config' not in app.config
+
+
+def test_load_from_object_string(app):
+    app.config.from_object('test_config.Config')
     assert 'CONFIG_VALUE' in app.config
     assert app.config.CONFIG_VALUE == 'should be used'
     assert 'not_for_config' not in app.config

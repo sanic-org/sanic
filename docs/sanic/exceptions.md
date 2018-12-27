@@ -65,7 +65,7 @@ can subclass Sanic's default error handler as such:
 
 ```python
 from sanic import Sanic
-from sanic.handlers import ErrorHnadler
+from sanic.handlers import ErrorHandler
 
 class CustomErrorHandler(ErrorHandler):
 	def default(self, request, exception):

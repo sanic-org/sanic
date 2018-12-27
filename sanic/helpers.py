@@ -1,6 +1,7 @@
 """Defines basics of HTTP standard."""
 from importlib import import_module
 
+
 STATUS_CODES = {
     100: b"Continue",
     101: b"Switching Protocols",
@@ -135,6 +136,17 @@ def remove_entity_headers(headers, allowed=("content-location", "expires")):
 
 
 def import_string(module_name):
-    module, obj = module_name.rsplit('.', 1)
+    """
+    import a module or class by string path.
+
+    :module_name: str with path of module or path to import and
+    instanciate a class
+    :returns: a module object or one instance from class if
+    module_name is a valid path to class
+
+    """
+    module, klass = module_name.rsplit(".", 1)
     module = import_module(module)
-    return getattr(module, obj)()
+    if hasattr(module, klass):
+        return getattr(module, klass)()
+    return module

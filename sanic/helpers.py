@@ -1,5 +1,7 @@
 """Defines basics of HTTP standard."""
+
 from importlib import import_module
+from inspect import ismodule
 
 
 STATUS_CODES = {
@@ -147,6 +149,7 @@ def import_string(module_name):
     """
     module, klass = module_name.rsplit(".", 1)
     module = import_module(module)
-    if hasattr(module, klass):
-        return getattr(module, klass)()
-    return module
+    obj = getattr(module, klass)
+    if ismodule(obj):
+        return obj
+    return obj()

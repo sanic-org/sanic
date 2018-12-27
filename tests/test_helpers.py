@@ -1,3 +1,5 @@
+import inspect
+
 from sanic import helpers
 from sanic.config import Config
 import pytest
@@ -76,9 +78,14 @@ def test_remove_entity_headers():
         assert helpers.remove_entity_headers(header) == expected
 
 
-def test_import_string():
+def test_import_string_class():
     obj = helpers.import_string('sanic.config.Config')
     assert isinstance(obj, Config)
+
+
+def test_import_string_module():
+    module = helpers.import_string('sanic.config')
+    assert inspect.ismodule(module)
 
 
 def test_import_string_exception():

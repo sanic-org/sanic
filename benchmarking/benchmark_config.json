@@ -1,0 +1,8 @@
+{
+  "sanic": {
+    "command": ["sys.executable", "sanic_server.py"],
+    "apis": {
+      "": [500, 200, 0, "GET", null, "text/json", null]
+    }
+  }
+}

@@ -38,11 +38,17 @@ class Blueprint:
         version=None,
         strict_slashes=False,
     ):
-        """Create a new blueprint
+        """
+        In *Sanic* terminology, a **Blueprint** is a logical collection of
+        URLs that perform a specific set of tasks which can be identified by
+        a unique name.
 
         :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
-        :param strict_slashes: strict to trailing slash
+        :param host: IP Address of FQDN for the sanic server to use.
+        :param version: Blueprint Version
+        :param strict_slashes: Enforce the API urls are requested with a
+            training */*
         """
         self.name = name
         self.url_prefix = url_prefix
@@ -59,8 +65,9 @@ class Blueprint:
 
     @staticmethod
     def group(*blueprints, url_prefix=""):
-        """Create a list of blueprints, optionally
-        grouping them under a general URL prefix.
+        """
+        Create a list of blueprints, optionally grouping them under a
+        general URL prefix.
 
         :param blueprints: blueprints to be registered as a group
         :param url_prefix: URL route to be prepended to all sub-prefixes
@@ -83,7 +90,14 @@ class Blueprint:
         return bps
 
     def register(self, app, options):
-        """Register the blueprint to the sanic app."""
+        """
+        Register the blueprint to the sanic app.
+
+        :param app: Instance of :class:`sanic.app.Sanic` class
+        :param options: Options to be used while registering the
+            blueprint into the app.
+            *url_prefix* - URL Prefix to override the blueprint prefix
+        """
 
         url_prefix = options.get("url_prefix", self.url_prefix)
 
@@ -160,6 +174,15 @@ class Blueprint:
 
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
+        :param host: IP Address of FQDN for the sanic server to use.
+        :param strict_slashes: Enforce the API urls are requested with a
+            training */*
+        :param stream: If the route should provide a streaming support
+        :param version: Blueprint Version
+        :param name: Unique name to identify the Route
+
+        :return a decorated method that when invoked will return an object
+            of type :class:`FutureRoute`
         """
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
@@ -196,9 +219,10 @@ class Blueprint:
                         or class instance with a view_class method.
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
-        :param host:
-        :param strict_slashes:
-        :param version:
+        :param host: IP Address of FQDN for the sanic server to use.
+        :param strict_slashes: Enforce the API urls are requested with a
+            training */*
+        :param version: Blueprint Version
         :param name: user defined route name for url_for
         :return: function or class instance
         """
@@ -233,6 +257,11 @@ class Blueprint:
         """Create a blueprint websocket route from a decorated function.
 
         :param uri: endpoint at which the route will be accessible.
+        :param host: IP Address of FQDN for the sanic server to use.
+        :param strict_slashes: Enforce the API urls are requested with a
+            training */*
+        :param version: Blueprint Version
+        :param name: Unique name to identify the Websocket Route
         """
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
@@ -254,6 +283,9 @@ class Blueprint:
         :param handler: function for handling uri requests. Accepts function,
                         or class instance with a view_class method.
         :param uri: endpoint at which the route will be accessible.
+        :param host: IP Address of FQDN for the sanic server to use.
+        :param version: Blueprint Version
+        :param name: Unique name to identify the Websocket Route
         :return: function or class instance
         """
         self.websocket(uri=uri, host=host, version=version, name=name)(handler)
@@ -272,7 +304,14 @@ class Blueprint:
         return decorator
 
     def middleware(self, *args, **kwargs):
-        """Create a blueprint middleware from a decorated function."""
+        """
+        Create a blueprint middleware from a decorated function.
+
+        :param args: Positional arguments to be used while invoking the
+            middleware
+        :param kwargs: optional keyword args that can be used with the
+            middleware.
+        """
 
         def register_middleware(_middleware):
             future_middleware = FutureMiddleware(_middleware, args, kwargs)
@@ -288,7 +327,17 @@ class Blueprint:
             return register_middleware
 
     def exception(self, *args, **kwargs):
-        """Create a blueprint exception from a decorated function."""
+        """
+        This method enables the process of creating a global exception
+        handler for the current blueprint under question.
+
+        :param args: List of Python exceptions to be caught by the handler
+        :param kwargs: Additional optional arguments to be passed to the
+            exception handler
+
+        :return a decorated method to handle global exceptions for any
+            route registered under this blueprint.
+        """
 
         def decorator(handler):
             exception = FutureException(handler, args, kwargs)
@@ -319,9 +368,20 @@ class Blueprint:
     def get(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **GET** *HTTP* method
+
+        :param uri: URL to be tagged to **GET** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
-            methods=["GET"],
+            methods=frozenset({"GET"}),
             host=host,
             strict_slashes=strict_slashes,
             version=version,
@@ -337,9 +397,20 @@ class Blueprint:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **POST** *HTTP* method
+
+        :param uri: URL to be tagged to **POST** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
-            methods=["POST"],
+            methods=frozenset({"POST"}),
             host=host,
             strict_slashes=strict_slashes,
             stream=stream,
@@ -356,9 +427,20 @@ class Blueprint:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **PUT** *HTTP* method
+
+        :param uri: URL to be tagged to **PUT** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
-            methods=["PUT"],
+            methods=frozenset({"PUT"}),
             host=host,
             strict_slashes=strict_slashes,
             stream=stream,
@@ -369,9 +451,20 @@ class Blueprint:
     def head(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **HEAD** *HTTP* method
+
+        :param uri: URL to be tagged to **HEAD** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
-            methods=["HEAD"],
+            methods=frozenset({"HEAD"}),
             host=host,
             strict_slashes=strict_slashes,
             version=version,
@@ -381,9 +474,20 @@ class Blueprint:
     def options(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **OPTIONS** *HTTP* method
+
+        :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
-            methods=["OPTIONS"],
+            methods=frozenset({"OPTIONS"}),
             host=host,
             strict_slashes=strict_slashes,
             version=version,
@@ -399,9 +503,20 @@ class Blueprint:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **PATCH** *HTTP* method
+
+        :param uri: URL to be tagged to **PATCH** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
-            methods=["PATCH"],
+            methods=frozenset({"PATCH"}),
             host=host,
             strict_slashes=strict_slashes,
             stream=stream,
@@ -412,9 +527,20 @@ class Blueprint:
     def delete(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **DELETE** *HTTP* method
+
+        :param uri: URL to be tagged to **DELETE** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`sanic.app.Sanic` to check
+            if the request URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
-            methods=["DELETE"],
+            methods=frozenset({"DELETE"}),
             host=host,
             strict_slashes=strict_slashes,
             version=version,

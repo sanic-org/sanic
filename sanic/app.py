@@ -204,6 +204,17 @@ class Sanic:
     def get(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **GET** *HTTP* method
+
+        :param uri: URL to be tagged to **GET** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"GET"}),
@@ -222,6 +233,17 @@ class Sanic:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **POST** *HTTP* method
+
+        :param uri: URL to be tagged to **POST** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"POST"}),
@@ -241,6 +263,17 @@ class Sanic:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **PUT** *HTTP* method
+
+        :param uri: URL to be tagged to **PUT** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"PUT"}),
@@ -266,6 +299,17 @@ class Sanic:
     def options(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **OPTIONS** *HTTP* method
+
+        :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"OPTIONS"}),
@@ -284,6 +328,17 @@ class Sanic:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **DELETE** *HTTP* method
+
+        :param uri: URL to be tagged to **PATCH** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"PATCH"}),
@@ -297,6 +352,17 @@ class Sanic:
     def delete(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **DELETE** *HTTP* method
+
+        :param uri: URL to be tagged to **DELETE** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"DELETE"}),
@@ -430,7 +496,22 @@ class Sanic:
         subprotocols=None,
         name=None,
     ):
-        """A helper method to register a function as a websocket route."""
+        """
+        A helper method to register a function as a websocket route.
+
+        :param handler: a callable function or instance of a class
+                        that can handle the websocket request
+        :param host: Host IP or FQDN details
+        :param uri: URL path that will be mapped to the websocket
+                    handler
+        :param strict_slashes: If the API endpoint needs to terminate
+                with a "/" or not
+        :param subprotocols: Subprotocols to be used with websocket
+                handshake
+        :param name: A unique name assigned to the URL so that it can
+                be used with :func:`url_for`
+        :return: Objected decorated by :func:`websocket`
+        """
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
 
@@ -459,6 +540,16 @@ class Sanic:
         self.websocket_enabled = enable
 
     def remove_route(self, uri, clean_cache=True, host=None):
+        """
+        This method provides the app user a mechanism by which an already
+        existing route can be removed from the :class:`Sanic` object
+
+        :param uri: URL Path to be removed from the app
+        :param clean_cache: Instruct sanic if it needs to clean up the LRU
+            route cache
+        :param host: IP address or FQDN specific to the host
+        :return: None
+        """
         self.router.remove(uri, clean_cache, host)
 
     # Decorator
@@ -481,6 +572,21 @@ class Sanic:
         return response
 
     def register_middleware(self, middleware, attach_to="request"):
+        """
+        Register an application level middleware that will be attached
+        to all the API URLs registered under this application.
+
+        This method is internally invoked by the :func:`middleware`
+        decorator provided at the app level.
+
+        :param middleware: Callback method to be attached to the
+            middleware
+        :param attach_to: The state at which the middleware needs to be
+            invoked in the lifecycle of an *HTTP Request*.
+            **request** - Invoke before the request is processed
+            **response** - Invoke before the response is returned back
+        :return: decorated method
+        """
         if attach_to == "request":
             self.request_middleware.append(middleware)
         if attach_to == "response":
@@ -489,10 +595,14 @@ class Sanic:
 
     # Decorator
     def middleware(self, middleware_or_request):
-        """Decorate and register middleware to be called before a request.
-        Can either be called as @app.middleware or @app.middleware('request')
         """
+        Decorate and register middleware to be called before a request.
+        Can either be called as *@app.middleware* or
+        *@app.middleware('request')*
 
+        :param: middleware_or_request: Optional parameter to use for
+            identifying which type of middleware is being registered.
+        """
         # Detect which way this was called, @middleware or @middleware('AT')
         if callable(middleware_or_request):
             return self.register_middleware(middleware_or_request)
@@ -516,8 +626,30 @@ class Sanic:
         strict_slashes=None,
         content_type=None,
     ):
-        """Register a root to serve files from. The input can either be a
-        file or a directory. See
+        """
+        Register a root to serve files from. The input can either be a
+        file or a directory. This method will enable an easy and simple way
+        to setup the :class:`Route` necessary to serve the static files.
+
+        :param uri: URL path to be used for serving static content
+        :param file_or_directory: Path for the Static file/directory with
+            static files
+        :param pattern: Regex Pattern identifying the valid static files
+        :param use_modified_since: If true, send file modified time, and return
+            not modified if the browser's matches the server's
+        :param use_content_range: If true, process header for range requests
+            and sends the file part that is requested
+        :param stream_large_files: If true, use the
+            :func:`StreamingHTTPResponse.file_stream` handler rather
+            than the :func:`HTTPResponse.file` handler to send the file.
+            If this is an integer, this represents the threshold size to
+            switch to :func:`StreamingHTTPResponse.file_stream`
+        :param name: user defined name used for url_for
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param content_type: user defined content type for header
+        :return: None
         """
         static_register(
             self,
@@ -555,7 +687,17 @@ class Sanic:
         blueprint.register(self, options)
 
     def register_blueprint(self, *args, **kwargs):
-        # TODO: deprecate 1.0
+        """
+        Proxy method provided for invoking the :func:`blueprint` method
+
+        .. note::
+            To be deprecated in 1.0. Use :func:`blueprint` instead.
+
+        :param args: Blueprint object or (list, tuple) thereof
+        :param kwargs: option dictionary with blueprint defaults
+        :return: None
+        """
+
         if self.debug:
             warnings.simplefilter("default")
         warnings.warn(
@@ -700,6 +842,9 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def converted_response_type(self, response):
+        """
+        No implementation provided.
+        """
         pass
 
     async def handle_request(self, request, write_callback, stream_callback):
@@ -835,6 +980,23 @@ class Sanic:
         access_log=True,
         **kwargs
     ):
+        """Run the HTTP Server and listen until keyboard interrupt or term
+        signal. On termination, drain connections before closing.
+
+        :param host: Address to host on
+        :param port: Port to host on
+        :param debug: Enables debug output (slows server)
+        :param ssl: SSLContext, or location of certificate and key
+            for SSL encryption of worker(s)
+        :param sock: Socket for the server to accept connections from
+        :param workers: Number of processes received before it is respected
+        :param backlog: a number of unaccepted connections that the system
+            will allow before refusing new connections
+        :param stop_event: event to be triggered before stopping the app
+        :param register_sys_signals: Register SIG* events
+        :param protocol: Subclass of asyncio protocol class
+        :return: Nothing
+        """
         if "loop" in kwargs:
             raise TypeError(
                 "loop is not a valid argument. To use an existing loop, "
@@ -843,23 +1005,6 @@ class Sanic:
                 "#asynchronous-support"
             )
 
-        """Run the HTTP Server and listen until keyboard interrupt or term
-        signal. On termination, drain connections before closing.
-
-        :param host: Address to host on
-        :param port: Port to host on
-        :param debug: Enables debug output (slows server)
-        :param ssl: SSLContext, or location of certificate and key
-                            for SSL encryption of worker(s)
-        :param sock: Socket for the server to accept connections from
-        :param workers: Number of processes
-                            received before it is respected
-        :param backlog:
-        :param stop_event:
-        :param register_sys_signals:
-        :param protocol: Subclass of asyncio protocol class
-        :return: Nothing
-        """
         # Default auto_reload to false
         auto_reload = False
         # If debug is set, default it to true (unless on windows)
@@ -943,10 +1088,16 @@ class Sanic:
         stop_event=None,
         access_log=True,
     ):
-        """Asynchronous version of `run`.
+        """
+        Asynchronous version of :func:`run`.
 
-        NOTE: This does not support multiprocessing and is not the preferred
-              way to run a Sanic application.
+        This method will take care of the operations necessary to invoke
+        the *before_start* events via :func:`trigger_events` method invocation
+        before starting the *sanic* app in Async mode.
+
+        .. note::
+            This does not support multiprocessing and is not the preferred
+            way to run a :class:`Sanic` application.
         """
 
         if sock is None:
@@ -1071,6 +1222,7 @@ class Sanic:
             "response_timeout": self.config.RESPONSE_TIMEOUT,
             "keep_alive_timeout": self.config.KEEP_ALIVE_TIMEOUT,
             "request_max_size": self.config.REQUEST_MAX_SIZE,
+            "request_buffer_queue_size": self.config.REQUEST_BUFFER_QUEUE_SIZE,
             "keep_alive": self.config.KEEP_ALIVE,
             "loop": loop,
             "register_sys_signals": register_sys_signals,

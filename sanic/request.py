@@ -1,3 +1,4 @@
+import asyncio
 import json
 import sys
 
@@ -45,6 +46,23 @@ class RequestParameters(dict):
     def getlist(self, name, default=None):
         """Return the entire list"""
         return super().get(name, default)
+
+
+class StreamBuffer:
+    def __init__(self, buffer_size=100):
+        self._queue = asyncio.Queue(buffer_size)
+
+    async def read(self):
+        """ Stop reading when gets None """
+        payload = await self._queue.get()
+        self._queue.task_done()
+        return payload
+
+    async def put(self, payload):
+        await self._queue.put(payload)
+
+    def is_full(self):
+        return self._queue.full()
 
 
 class Request(dict):

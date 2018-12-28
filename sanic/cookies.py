@@ -106,6 +106,18 @@ class Cookie(dict):
             return super().__setitem__(key, value)
 
     def encode(self, encoding):
+        """
+        Encode the cookie content in a specific type of encoding instructed
+        by the developer. Leverages the :func:`str.encode` method provided
+        by python.
+
+        This method can be used to encode and embed ``utf-8`` content into
+        the cookies.
+
+        :param encoding: Encoding to be used with the cookie
+        :return: Cookie encoded in a codec of choosing.
+        :except: UnicodeEncodeError
+        """
         output = ["%s=%s" % (self.key, _quote(self.value))]
         for key, value in self.items():
             if key == "max-age":

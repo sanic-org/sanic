@@ -22,7 +22,7 @@ from sanic.exceptions import (
     ServiceUnavailable,
 )
 from sanic.log import access_logger, logger
-from sanic.request import Request
+from sanic.request import Request, StreamBuffer
 from sanic.response import HTTPResponse
 
 
@@ -42,6 +42,10 @@ class Signal:
 
 
 class HttpProtocol(asyncio.Protocol):
+    """
+    This class provides a basic HTTP implementation of the sanic framework.
+    """
+
     __slots__ = (
         # event loop, connection
         "loop",
@@ -59,6 +63,7 @@ class HttpProtocol(asyncio.Protocol):
         "response_timeout",
         "keep_alive_timeout",
         "request_max_size",
+        "request_buffer_queue_size",
         "request_class",
         "is_request_stream",
         "router",
@@ -89,11 +94,12 @@ class HttpProtocol(asyncio.Protocol):
         request_handler,
         error_handler,
         signal=Signal(),
-        connections=set(),
+        connections=None,
         request_timeout=60,
         response_timeout=60,
         keep_alive_timeout=5,
         request_max_size=None,
+        request_buffer_queue_size=100,
         request_class=None,
         access_log=True,
         keep_alive=True,
@@ -112,10 +118,11 @@ class HttpProtocol(asyncio.Protocol):
         self.router = router
         self.signal = signal
         self.access_log = access_log
-        self.connections = connections
+        self.connections = connections or set()
         self.request_handler = request_handler
         self.error_handler = error_handler
         self.request_timeout = request_timeout
+        self.request_buffer_queue_size = request_buffer_queue_size
         self.response_timeout = response_timeout
         self.keep_alive_timeout = keep_alive_timeout
         self.request_max_size = request_max_size
@@ -141,6 +148,13 @@ class HttpProtocol(asyncio.Protocol):
 
     @property
     def keep_alive(self):
+        """
+        Check if the connection needs to be kept alive based on the params
+        attached to the `_keep_alive` attribute, :attr:`Signal.stopped`
+        and :func:`HttpProtocol.parser.should_keep_alive`
+
+        :return: ``True`` if connection is to be kept alive ``False`` else
+        """
         return (
             self._keep_alive
             and not self.signal.stopped
@@ -213,8 +227,13 @@ class HttpProtocol(asyncio.Protocol):
             self.write_error(ServiceUnavailable("Response Timeout"))
 
     def keep_alive_timeout_callback(self):
-        # Check if elapsed time since last response exceeds our configured
-        # maximum keep alive timeout value
+        """
+        Check if elapsed time since last response exceeds our configured
+        maximum keep alive timeout value and if so, close the transport
+        pipe and let the response writer handle the error.
+
+        :return: None
+        """
         time_elapsed = current_time - self._last_response_time
         if time_elapsed < self.keep_alive_timeout:
             time_left = self.keep_alive_timeout - time_elapsed
@@ -298,16 +317,26 @@ class HttpProtocol(asyncio.Protocol):
                 self.request
             )
             if self._is_stream_handler:
-                self.request.stream = asyncio.Queue()
+                self.request.stream = StreamBuffer(
+                    self.request_buffer_queue_size
+                )
                 self.execute_request_handler()
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:
             self._request_stream_task = self.loop.create_task(
-                self.request.stream.put(body)
+                self.body_append(body)
             )
-            return
-        self.request.body_push(body)
+        else:
+            self.request.body_push(body)
+
+    async def body_append(self, body):
+        if self.request.stream.is_full():
+            self.transport.pause_reading()
+            await self.request.stream.put(body)
+            self.transport.resume_reading()
+        else:
+            await self.request.stream.put(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -324,6 +353,12 @@ class HttpProtocol(asyncio.Protocol):
         self.execute_request_handler()
 
     def execute_request_handler(self):
+        """
+        Invoke the request handler defined by the
+        :func:`sanic.app.Sanic.handle_request` method
+
+        :return: None
+        """
         self._response_timeout_handler = self.loop.call_later(
             self.response_timeout, self.response_timeout_callback
         )
@@ -338,6 +373,17 @@ class HttpProtocol(asyncio.Protocol):
     # Responding
     # -------------------------------------------- #
     def log_response(self, response):
+        """
+        Helper method provided to enable the logging of responses in case if
+        the :attr:`HttpProtocol.access_log` is enabled.
+
+        :param response: Response generated for the current request
+
+        :type response: :class:`sanic.response.HTTPResponse` or
+            :class:`sanic.response.StreamingHTTPResponse`
+
+        :return: None
+        """
         if self.access_log:
             extra = {"status": getattr(response, "status", 0)}
 
@@ -492,6 +538,20 @@ class HttpProtocol(asyncio.Protocol):
                 logger.debug("Connection lost before server could close it.")
 
     def bail_out(self, message, from_error=False):
+        """
+        In case if the transport pipes are closed and the sanic app encounters
+        an error while writing data to the transport pipe, we log the error
+        with proper details.
+
+        :param message: Error message to display
+        :param from_error: If the bail out was invoked while handling an
+            exception scenario.
+
+        :type message: str
+        :type from_error: bool
+
+        :return: None
+        """
         if from_error or self.transport.is_closing():
             logger.error(
                 "Transport closed @ %s and exception "
@@ -575,6 +635,7 @@ def serve(
     ssl=None,
     sock=None,
     request_max_size=None,
+    request_buffer_queue_size=100,
     reuse_port=False,
     loop=None,
     protocol=HttpProtocol,
@@ -635,6 +696,7 @@ def serve(
                                   outgoing bytes, the low-water limit is a
                                   quarter of the high-water limit.
     :param is_request_stream: disable/enable Request.stream
+    :param request_buffer_queue_size: streaming request buffer queue size
     :param router: Router object
     :param graceful_shutdown_timeout: How long take to Force close non-idle
                                       connection

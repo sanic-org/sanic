@@ -22,7 +22,7 @@ def test_versioned_routes_get(app, method):
             return text('OK')
     else:
         print(func)
-        raise
+        raise Exception("Method: {} is not callable".format(method))
 
     client_method = getattr(app.test_client, method)
 

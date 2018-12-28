@@ -1,7 +1,15 @@
-include README.rst
-include MANIFEST.in
+# Non Code related contents
 include LICENSE
-include setup.py
+include README.rst
+include pyproject.toml
 
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
+# Setup
+include setup.py
+include Makefile
+
+# Tests
+include .coveragerc
+graft tests
+
+global-exclude __pycache__
+global-exclude *.py[co]

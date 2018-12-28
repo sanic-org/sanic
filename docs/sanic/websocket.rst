@@ -1,7 +1,7 @@
 WebSocket
 =========
 
-Sanic supports websockets, to setup a WebSocket:
+Sanic provides an easy to user abstraction on top of `websockets`. To setup a WebSocket:
 
 .. code:: python
 
@@ -35,7 +35,7 @@ decorator:
     app.add_websocket_route(feed, '/feed')
 
 
-Handlers for a WebSocket route are passed the request as first argument, and a
+Handlers for a WebSocket route is invoked with the request as first argument, and a
 WebSocket protocol object as second argument. The protocol object has ``send``
 and ``recv`` methods to send and receive data respectively.
 

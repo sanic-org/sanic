@@ -42,6 +42,10 @@ class Signal:
 
 
 class HttpProtocol(asyncio.Protocol):
+    """
+    This class provides a basic HTTP implementation of the sanic framework.
+    """
+
     __slots__ = (
         # event loop, connection
         "loop",
@@ -144,6 +148,13 @@ class HttpProtocol(asyncio.Protocol):
 
     @property
     def keep_alive(self):
+        """
+        Check if the connection needs to be kept alive based on the params
+        attached to the `_keep_alive` attribute, :attr:`Signal.stopped`
+        and :func:`HttpProtocol.parser.should_keep_alive`
+
+        :return: ``True`` if connection is to be kept alive ``False`` else
+        """
         return (
             self._keep_alive
             and not self.signal.stopped
@@ -216,8 +227,13 @@ class HttpProtocol(asyncio.Protocol):
             self.write_error(ServiceUnavailable("Response Timeout"))
 
     def keep_alive_timeout_callback(self):
-        # Check if elapsed time since last response exceeds our configured
-        # maximum keep alive timeout value
+        """
+        Check if elapsed time since last response exceeds our configured
+        maximum keep alive timeout value and if so, close the transport
+        pipe and let the response writer handle the error.
+
+        :return: None
+        """
         time_elapsed = current_time - self._last_response_time
         if time_elapsed < self.keep_alive_timeout:
             time_left = self.keep_alive_timeout - time_elapsed
@@ -337,6 +353,12 @@ class HttpProtocol(asyncio.Protocol):
         self.execute_request_handler()
 
     def execute_request_handler(self):
+        """
+        Invoke the request handler defined by the
+        :func:`sanic.app.Sanic.handle_request` method
+
+        :return: None
+        """
         self._response_timeout_handler = self.loop.call_later(
             self.response_timeout, self.response_timeout_callback
         )
@@ -351,6 +373,17 @@ class HttpProtocol(asyncio.Protocol):
     # Responding
     # -------------------------------------------- #
     def log_response(self, response):
+        """
+        Helper method provided to enable the logging of responses in case if
+        the :attr:`HttpProtocol.access_log` is enabled.
+
+        :param response: Response generated for the current request
+
+        :type response: :class:`sanic.response.HTTPResponse` or
+            :class:`sanic.response.StreamingHTTPResponse`
+
+        :return: None
+        """
         if self.access_log:
             extra = {"status": getattr(response, "status", 0)}
 
@@ -505,6 +538,20 @@ class HttpProtocol(asyncio.Protocol):
                 logger.debug("Connection lost before server could close it.")
 
     def bail_out(self, message, from_error=False):
+        """
+        In case if the transport pipes are closed and the sanic app encounters
+        an error while writing data to the transport pipe, we log the error
+        with proper details.
+
+        :param message: Error message to display
+        :param from_error: If the bail out was invoked while handling an
+            exception scenario.
+
+        :type message: str
+        :type from_error: bool
+
+        :return: None
+        """
         if from_error or self.transport.is_closing():
             logger.error(
                 "Transport closed @ %s and exception "

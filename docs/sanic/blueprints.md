@@ -118,9 +118,9 @@ app = Sanic(__name__)
 app.blueprint(api)
 ```
 
-## Using blueprints
+## Using Blueprints
 
-Blueprints have much the same functionality as an application instance.
+Blueprints have almost the same functionality as an application instance.
 
 ### WebSocket routes
 
@@ -201,7 +201,7 @@ async def close_connection(app, loop):
 Blueprints can be very useful for API versioning, where one blueprint may point
 at `/v1/<routes>`, and another pointing at `/v2/<routes>`.
 
-When a blueprint is initialised, it can take an optional `url_prefix` argument,
+When a blueprint is initialised, it can take an optional `version` argument,
 which will be prepended to all routes defined on the blueprint. This feature
 can be used to implement our API versioning scheme.
 
@@ -210,8 +210,8 @@ can be used to implement our API versioning scheme.
 from sanic.response import text
 from sanic import Blueprint
 
-blueprint_v1 = Blueprint('v1', url_prefix='/v1')
-blueprint_v2 = Blueprint('v2', url_prefix='/v2')
+blueprint_v1 = Blueprint('v1', url_prefix='/api', version="v1")
+blueprint_v2 = Blueprint('v2', url_prefix='/api', version="v2")
 
 @blueprint_v1.route('/')
 async def api_v1_root(request):
@@ -222,7 +222,7 @@ async def api_v2_root(request):
     return text('Welcome to version 2 of our documentation')
 ```
 
-When we register our blueprints on the app, the routes `/v1` and `/v2` will now
+When we register our blueprints on the app, the routes `/v1/api` and `/v2/api` will now
 point to the individual blueprints, which allows the creation of *sub-sites*
 for each API version.
 
@@ -232,8 +232,8 @@ from sanic import Sanic
 from blueprints import blueprint_v1, blueprint_v2
 
 app = Sanic(__name__)
-app.blueprint(blueprint_v1, url_prefix='/v1')
-app.blueprint(blueprint_v2, url_prefix='/v2')
+app.blueprint(blueprint_v1)
+app.blueprint(blueprint_v2)
 
 app.run(host='0.0.0.0', port=8000, debug=True)
 ```
@@ -246,7 +246,7 @@ takes the format `<blueprint_name>.<handler_name>`. For example:
 ```python
 @blueprint_v1.route('/')
 async def root(request):
-    url = request.app.url_for('v1.post_handler', post_id=5) # --> '/v1/post/5'
+    url = request.app.url_for('v1.post_handler', post_id=5) # --> '/v1/api/post/5'
     return redirect(url)
 
 

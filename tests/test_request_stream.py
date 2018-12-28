@@ -4,8 +4,10 @@ from sanic.views import CompositionView
 from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
 from sanic.response import stream, text
+from sanic.request import StreamBuffer
 
-data = "abc" * 100000
+
+data = "abc" * 10000000
 
 
 def test_request_stream_method_view(app):
@@ -19,10 +21,10 @@ def test_request_stream_method_view(app):
 
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, asyncio.Queue)
+            assert isinstance(request.stream, StreamBuffer)
             result = ''
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 result += body.decode('utf-8')
@@ -71,11 +73,11 @@ def test_request_stream_app(app):
 
     @app.post('/post/<id>', stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -88,11 +90,11 @@ def test_request_stream_app(app):
 
     @app.put('/put', stream=True)
     async def put(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -105,11 +107,11 @@ def test_request_stream_app(app):
 
     @app.patch('/patch', stream=True)
     async def patch(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -163,11 +165,11 @@ def test_request_stream_handle_exception(app):
 
     @app.post('/post/<id>', stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -216,11 +218,11 @@ def test_request_stream_blueprint(app):
 
     @bp.post('/post/<id>', stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -233,11 +235,11 @@ def test_request_stream_blueprint(app):
 
     @bp.put('/put', stream=True)
     async def put(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -250,11 +252,11 @@ def test_request_stream_blueprint(app):
 
     @bp.patch('/patch', stream=True)
     async def patch(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -313,10 +315,10 @@ def test_request_stream_composition_view(app):
         return text('OK')
 
     async def post_handler(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
         result = ''
         while True:
-            body = await request.stream.get()
+            body = await request.stream.read()
             if body is None:
                 break
             result += body.decode('utf-8')
@@ -350,10 +352,10 @@ def test_request_stream(app):
 
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, asyncio.Queue)
+            assert isinstance(request.stream, StreamBuffer)
             result = ''
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 result += body.decode('utf-8')
@@ -361,11 +363,11 @@ def test_request_stream(app):
 
     @app.post('/stream', stream=True)
     async def handler(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
 
         async def streaming(response):
             while True:
-                body = await request.stream.get()
+                body = await request.stream.read()
                 if body is None:
                     break
                 await response.write(body.decode('utf-8'))
@@ -378,10 +380,10 @@ def test_request_stream(app):
 
     @bp.post('/bp_stream', stream=True)
     async def bp_stream(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
         result = ''
         while True:
-            body = await request.stream.get()
+            body = await request.stream.read()
             if body is None:
                 break
             result += body.decode('utf-8')
@@ -397,10 +399,10 @@ def test_request_stream(app):
         return text('OK')
 
     async def post_handler(request):
-        assert isinstance(request.stream, asyncio.Queue)
+        assert isinstance(request.stream, StreamBuffer)
         result = ''
         while True:
-            body = await request.stream.get()
+            body = await request.stream.read()
             if body is None:
                 break
             result += body.decode('utf-8')

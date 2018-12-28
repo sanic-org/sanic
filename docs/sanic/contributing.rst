@@ -16,7 +16,7 @@ directory with a virtual environment already set up, then run:
 
 .. code:: bash
 
-   pip3 install -e . '[.dev]'
+   pip3 install -e '.[dev]'
 
 Dependency Changes
 ------------------
@@ -35,7 +35,7 @@ the document that explains the way ``sanic`` manages dependencies inside the ``s
 | extras_require['test'] | for ``sanic``                                 |                                |
 +------------------------+-----------------------------------------------+--------------------------------+
 | extras_require['dev']  | Additional Development requirements to add    | ``pip3 install -e '.[dev]'``   |
-|                        | contributing                                  |                                |
+|                        | for contributing                              |                                |
 +------------------------+-----------------------------------------------+--------------------------------+
 | extras_require['docs'] | Dependencies required to enable building and  | ``pip3 install -e '.[docs]'``  |
 |                        | enhancing sanic documentation                 |                                |

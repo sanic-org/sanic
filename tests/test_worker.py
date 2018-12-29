@@ -4,6 +4,7 @@ import shlex
 import subprocess
 import urllib.request
 from unittest import mock
+from urllib.error import HTTPError
 from sanic.worker import GunicornWorker
 from sanic.app import Sanic
 import asyncio
@@ -24,10 +25,87 @@ def gunicorn_worker():
     worker.kill()
 
 
+@pytest.fixture(scope='module')
+def gunicorn_worker_log_level_info():
+    command = (
+        'gunicorn '
+        '--bind 127.0.0.1:1338 '
+        '--worker-class sanic.worker.GunicornWorker '
+        '--log-level info '
+        'examples.simple_server:app'
+    )
+    worker = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    time.sleep(2)
+    return worker
+
+
+@pytest.fixture(scope='module')
+def gunicorn_worker_log_level_warning():
+    command = (
+        'gunicorn '
+        '--bind 127.0.0.1:1339 '
+        '--worker-class sanic.worker.GunicornWorker '
+        '--log-level warning '
+        'examples.simple_server:app'
+    )
+    worker = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    time.sleep(2)
+    return worker
+
+
+@pytest.fixture(scope='module')
+def gunicorn_worker_log_level_warning2():
+    command = (
+        'gunicorn '
+        '--bind 127.0.0.1:1340 '
+        '--worker-class sanic.worker.GunicornWorker '
+        '--log-level warning '
+        'examples.exception_monitoring:app'
+    )
+    worker = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    time.sleep(2)
+    return worker
+
+
 def test_gunicorn_worker(gunicorn_worker):
     with urllib.request.urlopen("http://localhost:1337/") as f:
         res = json.loads(f.read(100).decode())
     assert res["test"]
+
+
+def test_gunicorn_worker_logs_info(gunicorn_worker_log_level_info):
+    """
+    on base of our log-level we get an access message
+    """
+    with urllib.request.urlopen('http://localhost:1338/') as _:
+        gunicorn_worker_log_level_info.kill()
+        assert b"(sanic.access)[INFO][127.0.0.1" in gunicorn_worker_log_level_info.stdout.read()
+
+
+def test_gunicorn_worker_logs_warning(gunicorn_worker_log_level_warning):
+    """
+    with log-level warning we are not getting an access messages anymore
+    """
+    with urllib.request.urlopen('http://localhost:1339/') as _:
+        gunicorn_worker_log_level_warning.kill()
+        assert not gunicorn_worker_log_level_warning.stdout.read()
+
+
+def test_gunicorn_worker_logs_warning_on_error(gunicorn_worker_log_level_warning2):
+    """
+    with log-level warning we get an error log but don't get an access log
+    """
+    try:
+        url = urllib.request.urlopen('http://localhost:1340/')
+    except HTTPError:
+        pass
+    else:
+        url.close()
+
+    gunicorn_worker_log_level_warning2.kill()
+    log_message = gunicorn_worker_log_level_warning2.stdout.read()
+    assert b"(sanic.access)[INFO][127.0.0.1" not in log_message
+    assert b"[ERROR] Exception occurred while handling uri" in log_message
 
 
 class GunicornTestWorker(GunicornWorker):

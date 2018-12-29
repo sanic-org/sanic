@@ -57,6 +57,10 @@ class GunicornWorker(base.Worker):
             if self.app.callable.websocket_enabled
             else self.http_protocol
         )
+
+        # set ACCESS_LOG on base of logging level
+        self.app.callable.config.ACCESS_LOG = self.log.loglevel <= logging.INFO
+
         self._server_settings = self.app.callable._helper(
             loop=self.loop,
             debug=is_debug,

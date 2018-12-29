@@ -1256,7 +1256,7 @@ class Sanic:
             logger.setLevel(logging.DEBUG)
 
         if (
-            self.config.LOGO is not None
+            not self.config.LOGO
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
         ):
             logger.debug(self.config.LOGO)

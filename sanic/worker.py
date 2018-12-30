@@ -58,9 +58,6 @@ class GunicornWorker(base.Worker):
             else self.http_protocol
         )
 
-        # set ACCESS_LOG on base of logging level
-        self.app.callable.config.ACCESS_LOG = self.log.loglevel <= logging.INFO
-
         self._server_settings = self.app.callable._helper(
             loop=self.loop,
             debug=is_debug,

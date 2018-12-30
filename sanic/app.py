@@ -977,7 +977,7 @@ class Sanic:
         backlog=100,
         stop_event=None,
         register_sys_signals=True,
-        access_log=True,
+        access_log=None,
         **kwargs
     ):
         """Run the HTTP Server and listen until keyboard interrupt or term
@@ -1027,8 +1027,10 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
-        # compatibility old access_log params
-        self.config.ACCESS_LOG = access_log
+        # if access_log is passed explicitly change config.ACCESS_LOG
+        if access_log is not None:
+            self.config.ACCESS_LOG = access_log
+
         server_settings = self._helper(
             host=host,
             port=port,
@@ -1086,7 +1088,7 @@ class Sanic:
         protocol=None,
         backlog=100,
         stop_event=None,
-        access_log=True,
+        access_log=None,
     ):
         """
         Asynchronous version of :func:`run`.
@@ -1114,8 +1116,10 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
-        # compatibility old access_log params
-        self.config.ACCESS_LOG = access_log
+        # if access_log is passed explicitly change config.ACCESS_LOG
+        if access_log is not None:
+            self.config.ACCESS_LOG = access_log
+
         server_settings = self._helper(
             host=host,
             port=port,

@@ -72,10 +72,16 @@ To improve the performance add `debug=False` and `access_log=False` in the `run`
 app.run(host='0.0.0.0', port=1337, workers=4, debug=False, access_log=False)
 ```
 
-Running via Gunicorn you can set `--log-level` higher than `info` to not get any access logs anymore.
+Running via Gunicorn you can set Environment variable `SANIC_ACCESS_LOG="False"`
 
 ```
-gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker --log-level warning
+env SANIC_ACCESS_LOG="False" gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker --log-level warning
+```
+
+Or you can rewrite app config directly
+
+```python
+app.config.ACCESS_LOG = False
 ```
 
 ## Asynchronous support

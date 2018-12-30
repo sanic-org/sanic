@@ -3,12 +3,16 @@ from sanic import Sanic
 import asyncio
 from asyncio import sleep as aio_sleep
 from sanic.response import text
-from sanic.config import Config
 from sanic import server
 import aiohttp
 from aiohttp import TCPConnector
 from sanic.testing import SanicTestClient, HOST, PORT
 
+
+CONFIG_FOR_TESTS = {
+    "KEEP_ALIVE_TIMEOUT": 2,
+    "KEEP_ALIVE": True
+}
 
 class ReuseableTCPConnector(TCPConnector):
     def __init__(self, *args, **kwargs):
@@ -141,7 +145,7 @@ class ReuseableSanicTestClient(SanicTestClient):
     # loop, so the changes above are required too.
     async def _local_request(self, method, uri, cookies=None, *args, **kwargs):
         request_keepalive = kwargs.pop(
-            "request_keepalive", Config.KEEP_ALIVE_TIMEOUT
+            "request_keepalive", CONFIG_FOR_TESTS['KEEP_ALIVE_TIMEOUT']
         )
         if uri.startswith(("http:", "https:", "ftp:", "ftps://" "//")):
             url = uri
@@ -191,11 +195,13 @@ class ReuseableSanicTestClient(SanicTestClient):
         return response
 
 
-Config.KEEP_ALIVE_TIMEOUT = 2
-Config.KEEP_ALIVE = True
 keep_alive_timeout_app_reuse = Sanic("test_ka_timeout_reuse")
 keep_alive_app_client_timeout = Sanic("test_ka_client_timeout")
 keep_alive_app_server_timeout = Sanic("test_ka_server_timeout")
+
+keep_alive_timeout_app_reuse.config.update(CONFIG_FOR_TESTS)
+keep_alive_app_client_timeout.config.update(CONFIG_FOR_TESTS)
+keep_alive_app_server_timeout.config.update(CONFIG_FOR_TESTS)
 
 
 @keep_alive_timeout_app_reuse.route("/1")

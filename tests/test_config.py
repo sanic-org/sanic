@@ -224,6 +224,20 @@ def test_config_access_log_passing_in_run(app):
     assert app.config.ACCESS_LOG == True
 
 
+async def test_config_access_log_passing_in_create_server(app):
+    assert app.config.ACCESS_LOG == True
+
+    @app.listener('after_server_start')
+    async def _request(sanic, loop):
+        app.stop()
+
+    await app.create_server(port=1341, access_log=False)
+    assert app.config.ACCESS_LOG == False
+
+    await app.create_server(port=1342, access_log=True)
+    assert app.config.ACCESS_LOG == True
+
+
 def test_config_rewrite_keep_alive():
     config = Config()
     assert config.KEEP_ALIVE == DEFAULT_CONFIG["KEEP_ALIVE"]

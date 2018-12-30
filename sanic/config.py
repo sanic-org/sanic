@@ -30,8 +30,8 @@ DEFAULT_CONFIG = {
 
 class Config(dict):
     def __init__(self, defaults=None, load_env=True, keep_alive=None):
-        super().__init__(DEFAULT_CONFIG)
-        super().__init__(defaults or {})
+        defaults = defaults or {}
+        super().__init__({**DEFAULT_CONFIG, **defaults})
 
         self.LOGO = BASE_LOGO
 

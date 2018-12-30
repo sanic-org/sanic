@@ -9,6 +9,7 @@ async def stop(app, loop):
     await asyncio.sleep(0.1)
     app.stop()
 
+
 calledq = Queue()
 
 
@@ -23,13 +24,13 @@ def after(app, loop):
 def test_register_system_signals(app):
     """Test if sanic register system signals"""
 
-    @app.route('/hello')
+    @app.route("/hello")
     async def hello_route(request):
         return HTTPResponse()
 
-    app.listener('after_server_start')(stop)
-    app.listener('before_server_start')(set_loop)
-    app.listener('after_server_stop')(after)
+    app.listener("after_server_start")(stop)
+    app.listener("before_server_start")(set_loop)
+    app.listener("after_server_stop")(after)
 
     app.run(HOST, PORT)
     assert calledq.get() is True
@@ -38,13 +39,13 @@ def test_register_system_signals(app):
 def test_dont_register_system_signals(app):
     """Test if sanic don't register system signals"""
 
-    @app.route('/hello')
+    @app.route("/hello")
     async def hello_route(request):
         return HTTPResponse()
 
-    app.listener('after_server_start')(stop)
-    app.listener('before_server_start')(set_loop)
-    app.listener('after_server_stop')(after)
+    app.listener("after_server_start")(stop)
+    app.listener("before_server_start")(set_loop)
+    app.listener("after_server_stop")(after)
 
     app.run(HOST, PORT, register_sys_signals=False)
     assert calledq.get() is False

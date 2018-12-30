@@ -13,26 +13,26 @@ def test_create_task(app):
 
     app.add_task(coro)
 
-    @app.route('/early')
+    @app.route("/early")
     def not_set(request):
         return text(e.is_set())
 
-    @app.route('/late')
+    @app.route("/late")
     async def set(request):
         await asyncio.sleep(0.1)
         return text(e.is_set())
 
-    request, response = app.test_client.get('/early')
-    assert response.body == b'False'
+    request, response = app.test_client.get("/early")
+    assert response.body == b"False"
 
-    request, response = app.test_client.get('/late')
-    assert response.body == b'True'
+    request, response = app.test_client.get("/late")
+    assert response.body == b"True"
 
 
 def test_create_task_with_app_arg(app):
     q = Queue()
 
-    @app.route('/')
+    @app.route("/")
     def not_set(request):
         return "hello"
 
@@ -41,5 +41,5 @@ def test_create_task_with_app_arg(app):
 
     app.add_task(coro)
 
-    request, response = app.test_client.get('/')
-    assert q.get() == 'test_create_task_with_app_arg'
+    request, response = app.test_client.get("/")
+    assert q.get() == "test_create_task_with_app_arg"

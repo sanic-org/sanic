@@ -13,7 +13,7 @@ from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
-from sanic.config import Config
+from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
@@ -1256,10 +1256,14 @@ class Sanic:
             logger.setLevel(logging.DEBUG)
 
         if (
-            self.config.LOGO is not None
+            self.config.LOGO
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
         ):
-            logger.debug(self.config.LOGO)
+            logger.debug(
+                self.config.LOGO
+                if isinstance(self.config.LOGO, str)
+                else BASE_LOGO
+            )
 
         if run_async:
             server_settings["run_async"] = True

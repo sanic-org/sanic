@@ -13,8 +13,14 @@ kyk = Kyoukai("example_app")
 logger = logging.getLogger("Kyoukai")
 logger.setLevel(logging.ERROR)
 
+
 @kyk.route("/")
 async def index(ctx: HTTPRequestContext):
-    return ujson.dumps({"test":True}), 200, {"Content-Type": "application/json"}
+    return (
+        ujson.dumps({"test": True}),
+        200,
+        {"Content-Type": "application/json"},
+    )
+
 
 kyk.run()

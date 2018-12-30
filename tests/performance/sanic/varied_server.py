@@ -2,8 +2,10 @@ import sys
 import os
 import inspect
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-sys.path.insert(0, currentdir + '/../../../')
+currentdir = os.path.dirname(
+    os.path.abspath(inspect.getfile(inspect.currentframe()))
+)
+sys.path.insert(0, currentdir + "/../../../")
 
 from sanic import Sanic
 from sanic.response import json, text
@@ -17,7 +19,7 @@ async def test(request):
     return json({"test": True})
 
 
-@app.route("/sync", methods=['GET', 'POST'])
+@app.route("/sync", methods=["GET", "POST"])
 def test(request):
     return json({"test": True})
 
@@ -44,13 +46,19 @@ def post_json(request):
 
 @app.route("/query_string")
 def query_string(request):
-    return json({"parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string})
+    return json(
+        {
+            "parsed": True,
+            "args": request.args,
+            "url": request.url,
+            "query_string": request.query_string,
+        }
+    )
 
 
 import sys
 
 app.run(host="0.0.0.0", port=sys.argv[1])
-
 
 
 # import asyncio_redis

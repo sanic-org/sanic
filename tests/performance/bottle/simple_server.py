@@ -4,8 +4,9 @@ from bottle import route, run
 import ujson
 
 
-@route('/')
+@route("/")
 def index():
-    return ujson.dumps({'test': True})
+    return ujson.dumps({"test": True})
+
 
 app = bottle.default_app()

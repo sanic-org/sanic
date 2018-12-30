@@ -5,38 +5,38 @@ from sanic.exceptions import ServiceUnavailable
 from sanic.config import Config
 
 Config.RESPONSE_TIMEOUT = 1
-response_timeout_app = Sanic('test_response_timeout')
-response_timeout_default_app = Sanic('test_response_timeout_default')
-response_handler_cancelled_app = Sanic('test_response_handler_cancelled')
+response_timeout_app = Sanic("test_response_timeout")
+response_timeout_default_app = Sanic("test_response_timeout_default")
+response_handler_cancelled_app = Sanic("test_response_handler_cancelled")
 
 
-@response_timeout_app.route('/1')
+@response_timeout_app.route("/1")
 async def handler_1(request):
     await asyncio.sleep(2)
-    return text('OK')
+    return text("OK")
 
 
 @response_timeout_app.exception(ServiceUnavailable)
 def handler_exception(request, exception):
-    return text('Response Timeout from error_handler.', 503)
+    return text("Response Timeout from error_handler.", 503)
 
 
 def test_server_error_response_timeout():
-    request, response = response_timeout_app.test_client.get('/1')
+    request, response = response_timeout_app.test_client.get("/1")
     assert response.status == 503
-    assert response.text == 'Response Timeout from error_handler.'
+    assert response.text == "Response Timeout from error_handler."
 
 
-@response_timeout_default_app.route('/1')
+@response_timeout_default_app.route("/1")
 async def handler_2(request):
     await asyncio.sleep(2)
-    return text('OK')
+    return text("OK")
 
 
 def test_default_server_error_response_timeout():
-    request, response = response_timeout_default_app.test_client.get('/1')
+    request, response = response_timeout_default_app.test_client.get("/1")
     assert response.status == 503
-    assert response.text == 'Error: Response Timeout'
+    assert response.text == "Error: Response Timeout"
 
 
 response_handler_cancelled_app.flag = False
@@ -52,14 +52,14 @@ def handler_cancelled(request, exception):
     # is already closed when we get a CancelledError.
 
 
-@response_handler_cancelled_app.route('/1')
+@response_handler_cancelled_app.route("/1")
 async def handler_3(request):
     await asyncio.sleep(2)
-    return text('OK')
+    return text("OK")
 
 
 def test_response_handler_cancelled():
-    request, response = response_handler_cancelled_app.test_client.get('/1')
+    request, response = response_handler_cancelled_app.test_client.get("/1")
     assert response.status == 503
-    assert response.text == 'Error: Response Timeout'
+    assert response.text == "Error: Response Timeout"
     assert response_handler_cancelled_app.flag is False

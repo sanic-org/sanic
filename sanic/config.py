@@ -5,32 +5,18 @@ from sanic.exceptions import PyFileError
 
 
 SANIC_PREFIX = "SANIC_"
+BASE_LOGO = """
+
+                 Sanic
+         Build Fast. Run Fast.
+
+"""
 
 
 class Config(dict):
     def __init__(self, defaults=None, load_env=True, keep_alive=True):
         super().__init__(defaults or {})
-        self.LOGO = """
-                 ▄▄▄▄▄
-        ▀▀▀██████▄▄▄       _______________
-      ▄▄▄▄▄  █████████▄  /                 \\
-     ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
-   ▀▀█████▄▄ ▀██████▄██ | _________________/
-   ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
-        ▀▀▀▄  ▀▀███ ▀       ▄▄
-     ▄███▀▀██▄████████▄ ▄▀▀▀▀▀▀█▌
-   ██▀▄▄▄██▀▄███▀ ▀▀████      ▄██
-▄▀▀▀▄██▄▀▀▌████▒▒▒▒▒▒███     ▌▄▄▀
-▌    ▐▀████▐███▒▒▒▒▒▐██▌
-▀▄▄▄▄▀   ▀▀████▒▒▒▒▄██▀
-          ▀▀█████████▀
-        ▄▄██▀██████▀█
-      ▄██▀     ▀▀▀  █
-     ▄█             ▐▌
- ▄▄▄▄█▌              ▀█▄▄▄▄▀▀▄
-▌     ▐                ▀▀▄▄▄▀
- ▀▀▄▄▀
-"""
+        self.LOGO = BASE_LOGO
         self.REQUEST_MAX_SIZE = 100000000  # 100 megabytes
         self.REQUEST_BUFFER_QUEUE_SIZE = 100
         self.REQUEST_TIMEOUT = 60  # 60 seconds

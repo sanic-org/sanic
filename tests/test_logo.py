@@ -5,29 +5,36 @@ import pytest
 from sanic.config import BASE_LOGO
 
 
-@pytest.fixture
-def server(app):
+def test_logo_base(app, caplog):
     server = app.create_server(debug=True)
-    loop = asyncio.get_event_loop()
-    task = asyncio.ensure_future(server)
-    return loop, task
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop._stopping = False
 
-
-def test_logo_base(app, server, caplog):
-    loop, task = server
     with caplog.at_level(logging.DEBUG):
-        runner = loop.run_until_complete(task)
-        runner.close()
+        _server = loop.run_until_complete(server)
+
+    _server.close()
+    loop.run_until_complete(_server.wait_closed())
+    app.stop()
 
     assert caplog.record_tuples[0] == ("sanic.root", logging.DEBUG, BASE_LOGO)
 
 
-def test_logo_false(app, server, caplog):
+def test_logo_false(app, caplog):
     app.config.LOGO = False
-    loop, task = server
+
+    server = app.create_server(debug=True)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop._stopping = False
+
     with caplog.at_level(logging.DEBUG):
-        runner = loop.run_until_complete(task)
-        runner.close()
+        _server = loop.run_until_complete(server)
+
+    _server.close()
+    loop.run_until_complete(_server.wait_closed())
+    app.stop()
 
     assert caplog.record_tuples[0] == (
         "sanic.root",
@@ -36,22 +43,38 @@ def test_logo_false(app, server, caplog):
     )
 
 
-def test_logo_true(app, server, caplog):
+def test_logo_true(app, caplog):
     app.config.LOGO = True
-    loop, task = server
+
+    server = app.create_server(debug=True)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop._stopping = False
+
     with caplog.at_level(logging.DEBUG):
-        runner = loop.run_until_complete(task)
-        runner.close()
+        _server = loop.run_until_complete(server)
+
+    _server.close()
+    loop.run_until_complete(_server.wait_closed())
+    app.stop()
 
     assert caplog.record_tuples[0] == ("sanic.root", logging.DEBUG, BASE_LOGO)
 
 
-def test_logo_custom(app, server, caplog):
+def test_logo_custom(app, caplog):
     app.config.LOGO = "My Custom Logo"
-    loop, task = server
+
+    server = app.create_server(debug=True)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop._stopping = False
+
     with caplog.at_level(logging.DEBUG):
-        runner = loop.run_until_complete(task)
-        runner.close()
+        _server = loop.run_until_complete(server)
+
+    _server.close()
+    loop.run_until_complete(_server.wait_closed())
+    app.stop()
 
     assert caplog.record_tuples[0] == (
         "sanic.root",

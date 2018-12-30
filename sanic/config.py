@@ -124,7 +124,7 @@ class Config(dict):
                     try:
                         self[config_key] = float(v)
                     except ValueError:
-                        if v in ['True', 'False']:
-                            self[config_key] = v == 'True'
+                        if v in ["True", "False"]:
+                            self[config_key] = v == "True"
                         else:
                             self[config_key] = v

@@ -208,3 +208,32 @@ def test_config_custom_defaults_with_env():
 
     for key, value in environ_defaults.items():
         del environ[key]
+
+
+def test_config_access_log_passing_in_run(app):
+    assert app.config.ACCESS_LOG == True
+
+    @app.listener('after_server_start')
+    async def _request(sanic, loop):
+        app.stop()
+
+    app.run(port=1340, access_log=False)
+    assert app.config.ACCESS_LOG == False
+
+    app.run(port=1340, access_log=True)
+    assert app.config.ACCESS_LOG == True
+
+
+def test_config_rewrite_keep_alive():
+    config = Config()
+    assert config.KEEP_ALIVE == DEFAULT_CONFIG["KEEP_ALIVE"]
+    config = Config(keep_alive=True)
+    assert config.KEEP_ALIVE == True
+    config = Config(keep_alive=False)
+    assert config.KEEP_ALIVE == False
+
+    # use defaults
+    config = Config(defaults={"KEEP_ALIVE": False})
+    assert config.KEEP_ALIVE == False
+    config = Config(defaults={"KEEP_ALIVE": True})
+    assert config.KEEP_ALIVE == True

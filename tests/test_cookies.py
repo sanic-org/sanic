@@ -8,109 +8,99 @@ from sanic.cookies import Cookie
 #  GET
 # ------------------------------------------------------------ #
 
+
 def test_cookies(app):
-
-    @app.route('/')
+    @app.route("/")
     def handler(request):
-        response = text('Cookies are: {}'.format(request.cookies['test']))
-        response.cookies['right_back'] = 'at you'
+        response = text("Cookies are: {}".format(request.cookies["test"]))
+        response.cookies["right_back"] = "at you"
         return response
 
-    request, response = app.test_client.get('/', cookies={"test": "working!"})
+    request, response = app.test_client.get("/", cookies={"test": "working!"})
     response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
+    response_cookies.load(response.headers.get("Set-Cookie", {}))
 
-    assert response.text == 'Cookies are: working!'
-    assert response_cookies['right_back'].value == 'at you'
+    assert response.text == "Cookies are: working!"
+    assert response_cookies["right_back"].value == "at you"
 
 
-@pytest.mark.parametrize("httponly,expected", [
-        (False, False),
-        (True, True),
-])
+@pytest.mark.parametrize("httponly,expected", [(False, False), (True, True)])
 def test_false_cookies_encoded(app, httponly, expected):
-
-    @app.route('/')
+    @app.route("/")
     def handler(request):
-        response = text('hello cookies')
-        response.cookies['hello'] = 'world'
-        response.cookies['hello']['httponly'] = httponly
-        return text(response.cookies['hello'].encode('utf8'))
+        response = text("hello cookies")
+        response.cookies["hello"] = "world"
+        response.cookies["hello"]["httponly"] = httponly
+        return text(response.cookies["hello"].encode("utf8"))
 
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
 
-    assert ('HttpOnly' in response.text) == expected
+    assert ("HttpOnly" in response.text) == expected
 
 
-@pytest.mark.parametrize("httponly,expected", [
-        (False, False),
-        (True, True),
-])
+@pytest.mark.parametrize("httponly,expected", [(False, False), (True, True)])
 def test_false_cookies(app, httponly, expected):
-
-    @app.route('/')
+    @app.route("/")
     def handler(request):
-        response = text('hello cookies')
-        response.cookies['right_back'] = 'at you'
-        response.cookies['right_back']['httponly'] = httponly
+        response = text("hello cookies")
+        response.cookies["right_back"] = "at you"
+        response.cookies["right_back"]["httponly"] = httponly
         return response
 
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
     response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
+    response_cookies.load(response.headers.get("Set-Cookie", {}))
 
-    assert ('HttpOnly' in response_cookies['right_back'].output()) == expected
+    assert ("HttpOnly" in response_cookies["right_back"].output()) == expected
 
 
 def test_http2_cookies(app):
-
-    @app.route('/')
+    @app.route("/")
     async def handler(request):
-        response = text('Cookies are: {}'.format(request.cookies['test']))
+        response = text("Cookies are: {}".format(request.cookies["test"]))
         return response
 
-    headers = {'cookie': 'test=working!'}
-    request, response = app.test_client.get('/', headers=headers)
+    headers = {"cookie": "test=working!"}
+    request, response = app.test_client.get("/", headers=headers)
 
-    assert response.text == 'Cookies are: working!'
+    assert response.text == "Cookies are: working!"
 
 
 def test_cookie_options(app):
-
-    @app.route('/')
+    @app.route("/")
     def handler(request):
         response = text("OK")
-        response.cookies['test'] = 'at you'
-        response.cookies['test']['httponly'] = True
-        response.cookies['test']['expires'] = (datetime.now() +
-                                               timedelta(seconds=10))
+        response.cookies["test"] = "at you"
+        response.cookies["test"]["httponly"] = True
+        response.cookies["test"]["expires"] = datetime.now() + timedelta(
+            seconds=10
+        )
         return response
 
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
     response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
+    response_cookies.load(response.headers.get("Set-Cookie", {}))
 
-    assert response_cookies['test'].value == 'at you'
-    assert response_cookies['test']['httponly'] is True
+    assert response_cookies["test"].value == "at you"
+    assert response_cookies["test"]["httponly"] is True
 
 
 def test_cookie_deletion(app):
-
-    @app.route('/')
+    @app.route("/")
     def handler(request):
         response = text("OK")
-        del response.cookies['i_want_to_die']
-        response.cookies['i_never_existed'] = 'testing'
-        del response.cookies['i_never_existed']
+        del response.cookies["i_want_to_die"]
+        response.cookies["i_never_existed"] = "testing"
+        del response.cookies["i_never_existed"]
         return response
 
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
     response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get('Set-Cookie', {}))
+    response_cookies.load(response.headers.get("Set-Cookie", {}))
 
-    assert int(response_cookies['i_want_to_die']['max-age']) == 0
+    assert int(response_cookies["i_want_to_die"]["max-age"]) == 0
     with pytest.raises(KeyError):
-        response.cookies['i_never_existed']
+        response.cookies["i_never_existed"]
 
 
 def test_cookie_reserved_cookie():
@@ -134,58 +124,58 @@ def test_cookie_set_unknown_property():
 
 def test_cookie_set_same_key(app):
 
-    cookies = {'test': 'wait'}
+    cookies = {"test": "wait"}
 
-    @app.get('/')
+    @app.get("/")
     def handler(request):
-        response = text('pass')
-        response.cookies['test'] = 'modified'
-        response.cookies['test'] = 'pass'
+        response = text("pass")
+        response.cookies["test"] = "modified"
+        response.cookies["test"] = "pass"
         return response
 
-    request, response = app.test_client.get('/', cookies=cookies)
+    request, response = app.test_client.get("/", cookies=cookies)
     assert response.status == 200
-    assert response.cookies['test'].value == 'pass'
+    assert response.cookies["test"].value == "pass"
 
 
-@pytest.mark.parametrize('max_age', ['0', 30, '30'])
+@pytest.mark.parametrize("max_age", ["0", 30, "30"])
 def test_cookie_max_age(app, max_age):
-    cookies = {'test': 'wait'}
+    cookies = {"test": "wait"}
 
-    @app.get('/')
+    @app.get("/")
     def handler(request):
-        response = text('pass')
-        response.cookies['test'] = 'pass'
-        response.cookies['test']['max-age'] = max_age
+        response = text("pass")
+        response.cookies["test"] = "pass"
+        response.cookies["test"]["max-age"] = max_age
         return response
 
-    request, response = app.test_client.get('/', cookies=cookies)
+    request, response = app.test_client.get("/", cookies=cookies)
     assert response.status == 200
 
-    assert response.cookies['test'].value == 'pass'
-    assert response.cookies['test']['max-age'] == str(max_age)
+    assert response.cookies["test"].value == "pass"
+    assert response.cookies["test"]["max-age"] == str(max_age)
 
 
-@pytest.mark.parametrize('expires', [
-    datetime.now() + timedelta(seconds=60), 
-    'Fri, 21-Dec-2018 15:30:00 GMT'
-    ])
+@pytest.mark.parametrize(
+    "expires",
+    [datetime.now() + timedelta(seconds=60), "Fri, 21-Dec-2018 15:30:00 GMT"],
+)
 def test_cookie_expires(app, expires):
-    cookies = {'test': 'wait'}
+    cookies = {"test": "wait"}
 
-    @app.get('/')
+    @app.get("/")
     def handler(request):
-        response = text('pass')
-        response.cookies['test'] = 'pass'
-        response.cookies['test']['expires'] = expires
+        response = text("pass")
+        response.cookies["test"] = "pass"
+        response.cookies["test"]["expires"] = expires
         return response
 
-    request, response = app.test_client.get('/', cookies=cookies)
+    request, response = app.test_client.get("/", cookies=cookies)
     assert response.status == 200
 
-    assert response.cookies['test'].value == 'pass'
+    assert response.cookies["test"].value == "pass"
 
     if isinstance(expires, datetime):
         expires = expires.strftime("%a, %d-%b-%Y %T GMT")
 
-    assert response.cookies['test']['expires'] == expires
+    assert response.cookies["test"]["expires"] == expires

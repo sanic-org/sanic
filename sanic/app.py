@@ -13,7 +13,7 @@ from traceback import format_exc
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
-from sanic.config import Config, BASE_LOGO
+from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler

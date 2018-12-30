@@ -17,12 +17,13 @@ from sanic.views import CompositionView
 #  GET
 # ------------------------------------------------------------ #
 
-@pytest.fixture(scope='module')
+
+@pytest.fixture(scope="module")
 def static_file_directory():
     """The static directory to serve"""
     current_file = inspect.getfile(inspect.currentframe())
     current_directory = os.path.dirname(os.path.abspath(current_file))
-    static_directory = os.path.join(current_directory, 'static')
+    static_directory = os.path.join(current_directory, "static")
     return static_directory
 
 
@@ -32,21 +33,23 @@ def get_file_path(static_file_directory, file_name):
 
 def get_file_content(static_file_directory, file_name):
     """The content of the static file to check"""
-    with open(get_file_path(static_file_directory, file_name), 'rb') as file:
+    with open(get_file_path(static_file_directory, file_name), "rb") as file:
         return file.read()
 
 
-@pytest.mark.parametrize('method', HTTP_METHODS)
+@pytest.mark.parametrize("method", HTTP_METHODS)
 def test_versioned_routes_get(app, method):
-    bp = Blueprint('test_text')
+    bp = Blueprint("test_text")
 
     method = method.lower()
 
     func = getattr(bp, method)
     if callable(func):
-        @func('/{}'.format(method), version=1)
+
+        @func("/{}".format(method), version=1)
         def handler(request):
-            return text('OK')
+            return text("OK")
+
     else:
         print(func)
         raise Exception("{} is not callable".format(func))
@@ -55,245 +58,231 @@ def test_versioned_routes_get(app, method):
 
     client_method = getattr(app.test_client, method)
 
-    request, response = client_method('/v1/{}'.format(method))
+    request, response = client_method("/v1/{}".format(method))
     assert response.status == 200
 
 
 def test_bp(app):
-    bp = Blueprint('test_text')
+    bp = Blueprint("test_text")
 
-    @bp.route('/')
+    @bp.route("/")
     def handler(request):
-        return text('Hello')
+        return text("Hello")
 
     app.blueprint(bp)
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
     assert app.is_request_stream is False
 
-    assert response.text == 'Hello'
+    assert response.text == "Hello"
 
 
 def test_bp_strict_slash(app):
-    bp = Blueprint('test_text')
+    bp = Blueprint("test_text")
 
-    @bp.get('/get', strict_slashes=True)
+    @bp.get("/get", strict_slashes=True)
     def get_handler(request):
-        return text('OK')
+        return text("OK")
 
-    @bp.post('/post/', strict_slashes=True)
+    @bp.post("/post/", strict_slashes=True)
     def post_handler(request):
-        return text('OK')
+        return text("OK")
 
     app.blueprint(bp)
 
-    request, response = app.test_client.get('/get')
-    assert response.text == 'OK'
+    request, response = app.test_client.get("/get")
+    assert response.text == "OK"
     assert response.json is None
 
-    request, response = app.test_client.get('/get/')
+    request, response = app.test_client.get("/get/")
     assert response.status == 404
 
-    request, response = app.test_client.post('/post/')
-    assert response.text == 'OK'
+    request, response = app.test_client.post("/post/")
+    assert response.text == "OK"
 
-    request, response = app.test_client.post('/post')
+    request, response = app.test_client.post("/post")
     assert response.status == 404
 
 
 def test_bp_strict_slash_default_value(app):
-    bp = Blueprint('test_text', strict_slashes=True)
+    bp = Blueprint("test_text", strict_slashes=True)
 
-    @bp.get('/get')
+    @bp.get("/get")
     def get_handler(request):
-        return text('OK')
+        return text("OK")
 
-    @bp.post('/post/')
+    @bp.post("/post/")
     def post_handler(request):
-        return text('OK')
+        return text("OK")
 
     app.blueprint(bp)
 
-    request, response = app.test_client.get('/get/')
+    request, response = app.test_client.get("/get/")
     assert response.status == 404
 
-    request, response = app.test_client.post('/post')
+    request, response = app.test_client.post("/post")
     assert response.status == 404
 
 
 def test_bp_strict_slash_without_passing_default_value(app):
-    bp = Blueprint('test_text')
+    bp = Blueprint("test_text")
 
-    @bp.get('/get')
+    @bp.get("/get")
     def get_handler(request):
-        return text('OK')
+        return text("OK")
 
-    @bp.post('/post/')
+    @bp.post("/post/")
     def post_handler(request):
-        return text('OK')
+        return text("OK")
 
     app.blueprint(bp)
 
-    request, response = app.test_client.get('/get/')
-    assert response.text == 'OK'
+    request, response = app.test_client.get("/get/")
+    assert response.text == "OK"
 
-    request, response = app.test_client.post('/post')
-    assert response.text == 'OK'
+    request, response = app.test_client.post("/post")
+    assert response.text == "OK"
 
 
 def test_bp_strict_slash_default_value_can_be_overwritten(app):
-    bp = Blueprint('test_text', strict_slashes=True)
+    bp = Blueprint("test_text", strict_slashes=True)
 
-    @bp.get('/get', strict_slashes=False)
+    @bp.get("/get", strict_slashes=False)
     def get_handler(request):
-        return text('OK')
+        return text("OK")
 
-    @bp.post('/post/', strict_slashes=False)
+    @bp.post("/post/", strict_slashes=False)
     def post_handler(request):
-        return text('OK')
+        return text("OK")
 
     app.blueprint(bp)
 
-    request, response = app.test_client.get('/get/')
-    assert response.text == 'OK'
+    request, response = app.test_client.get("/get/")
+    assert response.text == "OK"
 
-    request, response = app.test_client.post('/post')
-    assert response.text == 'OK'
+    request, response = app.test_client.post("/post")
+    assert response.text == "OK"
 
 
 def test_bp_with_url_prefix(app):
-    bp = Blueprint('test_text', url_prefix='/test1')
+    bp = Blueprint("test_text", url_prefix="/test1")
 
-    @bp.route('/')
+    @bp.route("/")
     def handler(request):
-        return text('Hello')
+        return text("Hello")
 
     app.blueprint(bp)
-    request, response = app.test_client.get('/test1/')
+    request, response = app.test_client.get("/test1/")
 
-    assert response.text == 'Hello'
+    assert response.text == "Hello"
 
 
 def test_several_bp_with_url_prefix(app):
-    bp = Blueprint('test_text', url_prefix='/test1')
-    bp2 = Blueprint('test_text2', url_prefix='/test2')
+    bp = Blueprint("test_text", url_prefix="/test1")
+    bp2 = Blueprint("test_text2", url_prefix="/test2")
 
-    @bp.route('/')
+    @bp.route("/")
     def handler(request):
-        return text('Hello')
+        return text("Hello")
 
-    @bp2.route('/')
+    @bp2.route("/")
     def handler2(request):
-        return text('Hello2')
+        return text("Hello2")
 
     app.blueprint(bp)
     app.blueprint(bp2)
-    request, response = app.test_client.get('/test1/')
-    assert response.text == 'Hello'
+    request, response = app.test_client.get("/test1/")
+    assert response.text == "Hello"
 
-    request, response = app.test_client.get('/test2/')
-    assert response.text == 'Hello2'
+    request, response = app.test_client.get("/test2/")
+    assert response.text == "Hello2"
 
 
 def test_bp_with_host(app):
-    bp = Blueprint('test_bp_host', url_prefix='/test1', host="example.com")
+    bp = Blueprint("test_bp_host", url_prefix="/test1", host="example.com")
 
-    @bp.route('/')
+    @bp.route("/")
     def handler1(request):
-        return text('Hello')
+        return text("Hello")
 
-    @bp.route('/', host="sub.example.com")
+    @bp.route("/", host="sub.example.com")
     def handler2(request):
-        return text('Hello subdomain!')
+        return text("Hello subdomain!")
 
     app.blueprint(bp)
     headers = {"Host": "example.com"}
-    request, response = app.test_client.get(
-        '/test1/',
-        headers=headers)
-    assert response.text == 'Hello'
+    request, response = app.test_client.get("/test1/", headers=headers)
+    assert response.text == "Hello"
 
     headers = {"Host": "sub.example.com"}
-    request, response = app.test_client.get(
-        '/test1/',
-        headers=headers)
+    request, response = app.test_client.get("/test1/", headers=headers)
 
-    assert response.text == 'Hello subdomain!'
+    assert response.text == "Hello subdomain!"
 
 
 def test_several_bp_with_host(app):
-    bp = Blueprint('test_text',
-                   url_prefix='/test',
-                   host="example.com")
-    bp2 = Blueprint('test_text2',
-                    url_prefix='/test',
-                    host="sub.example.com")
+    bp = Blueprint("test_text", url_prefix="/test", host="example.com")
+    bp2 = Blueprint("test_text2", url_prefix="/test", host="sub.example.com")
 
-    @bp.route('/')
+    @bp.route("/")
     def handler(request):
-        return text('Hello')
+        return text("Hello")
 
-    @bp2.route('/')
+    @bp2.route("/")
     def handler1(request):
-        return text('Hello2')
+        return text("Hello2")
 
-    @bp2.route('/other/')
+    @bp2.route("/other/")
     def handler2(request):
-        return text('Hello3')
+        return text("Hello3")
 
     app.blueprint(bp)
     app.blueprint(bp2)
 
     assert bp.host == "example.com"
     headers = {"Host": "example.com"}
-    request, response = app.test_client.get(
-        '/test/',
-        headers=headers)
-    assert response.text == 'Hello'
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello"
 
     assert bp2.host == "sub.example.com"
     headers = {"Host": "sub.example.com"}
-    request, response = app.test_client.get(
-        '/test/',
-        headers=headers)
+    request, response = app.test_client.get("/test/", headers=headers)
 
-    assert response.text == 'Hello2'
-    request, response = app.test_client.get(
-        '/test/other/',
-        headers=headers)
-    assert response.text == 'Hello3'
+    assert response.text == "Hello2"
+    request, response = app.test_client.get("/test/other/", headers=headers)
+    assert response.text == "Hello3"
 
 
 def test_bp_middleware(app):
-    blueprint = Blueprint('test_middleware')
+    blueprint = Blueprint("test_middleware")
 
-    @blueprint.middleware('response')
+    @blueprint.middleware("response")
     async def process_response(request, response):
-        return text('OK')
+        return text("OK")
 
-    @app.route('/')
+    @app.route("/")
     async def handler(request):
-        return text('FAIL')
+        return text("FAIL")
 
     app.blueprint(blueprint)
 
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
 
     assert response.status == 200
-    assert response.text == 'OK'
+    assert response.text == "OK"
 
 
 def test_bp_exception_handler(app):
-    blueprint = Blueprint('test_middleware')
+    blueprint = Blueprint("test_middleware")
 
-    @blueprint.route('/1')
+    @blueprint.route("/1")
     def handler_1(request):
         raise InvalidUsage("OK")
 
-    @blueprint.route('/2')
+    @blueprint.route("/2")
     def handler_2(request):
         raise ServerError("OK")
 
-    @blueprint.route('/3')
+    @blueprint.route("/3")
     def handler_3(request):
         raise NotFound("OK")
 
@@ -303,131 +292,131 @@ def test_bp_exception_handler(app):
 
     app.blueprint(blueprint)
 
-    request, response = app.test_client.get('/1')
+    request, response = app.test_client.get("/1")
     assert response.status == 400
 
-    request, response = app.test_client.get('/2')
+    request, response = app.test_client.get("/2")
     assert response.status == 200
-    assert response.text == 'OK'
+    assert response.text == "OK"
 
-    request, response = app.test_client.get('/3')
+    request, response = app.test_client.get("/3")
     assert response.status == 200
 
 
 def test_bp_listeners(app):
-    blueprint = Blueprint('test_middleware')
+    blueprint = Blueprint("test_middleware")
 
     order = []
 
-    @blueprint.listener('before_server_start')
+    @blueprint.listener("before_server_start")
     def handler_1(sanic, loop):
         order.append(1)
 
-    @blueprint.listener('after_server_start')
+    @blueprint.listener("after_server_start")
     def handler_2(sanic, loop):
         order.append(2)
 
-    @blueprint.listener('after_server_start')
+    @blueprint.listener("after_server_start")
     def handler_3(sanic, loop):
         order.append(3)
 
-    @blueprint.listener('before_server_stop')
+    @blueprint.listener("before_server_stop")
     def handler_4(sanic, loop):
         order.append(5)
 
-    @blueprint.listener('before_server_stop')
+    @blueprint.listener("before_server_stop")
     def handler_5(sanic, loop):
         order.append(4)
 
-    @blueprint.listener('after_server_stop')
+    @blueprint.listener("after_server_stop")
     def handler_6(sanic, loop):
         order.append(6)
 
     app.blueprint(blueprint)
 
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
 
     assert order == [1, 2, 3, 4, 5, 6]
 
 
 def test_bp_static(app):
     current_file = inspect.getfile(inspect.currentframe())
-    with open(current_file, 'rb') as file:
+    with open(current_file, "rb") as file:
         current_file_contents = file.read()
 
-    blueprint = Blueprint('test_static')
+    blueprint = Blueprint("test_static")
 
-    blueprint.static('/testing.file', current_file)
+    blueprint.static("/testing.file", current_file)
 
     app.blueprint(blueprint)
 
-    request, response = app.test_client.get('/testing.file')
+    request, response = app.test_client.get("/testing.file")
     assert response.status == 200
     assert response.body == current_file_contents
 
 
-@pytest.mark.parametrize('file_name', ['test.html'])
+@pytest.mark.parametrize("file_name", ["test.html"])
 def test_bp_static_content_type(app, file_name):
     # This is done here, since no other test loads a file here
     current_file = inspect.getfile(inspect.currentframe())
     current_directory = os.path.dirname(os.path.abspath(current_file))
-    static_directory = os.path.join(current_directory, 'static')
+    static_directory = os.path.join(current_directory, "static")
 
-    blueprint = Blueprint('test_static')
+    blueprint = Blueprint("test_static")
     blueprint.static(
-        '/testing.file',
+        "/testing.file",
         get_file_path(static_directory, file_name),
-        content_type='text/html; charset=utf-8'
+        content_type="text/html; charset=utf-8",
     )
 
     app.blueprint(blueprint)
 
-    request, response = app.test_client.get('/testing.file')
+    request, response = app.test_client.get("/testing.file")
     assert response.status == 200
     assert response.body == get_file_content(static_directory, file_name)
-    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
+    assert response.headers["Content-Type"] == "text/html; charset=utf-8"
 
 
 def test_bp_shorthand(app):
-    blueprint = Blueprint('test_shorhand_routes')
+    blueprint = Blueprint("test_shorhand_routes")
     ev = asyncio.Event()
 
-    @blueprint.get('/get')
+    @blueprint.get("/get")
     def handler(request):
         assert request.stream is None
-        return text('OK')
+        return text("OK")
 
-    @blueprint.put('/put')
+    @blueprint.put("/put")
     def put_handler(request):
         assert request.stream is None
-        return text('OK')
+        return text("OK")
 
-    @blueprint.post('/post')
+    @blueprint.post("/post")
     def post_handler(request):
         assert request.stream is None
-        return text('OK')
+        return text("OK")
 
-    @blueprint.head('/head')
+    @blueprint.head("/head")
     def head_handler(request):
         assert request.stream is None
-        return text('OK')
+        return text("OK")
 
-    @blueprint.options('/options')
+    @blueprint.options("/options")
     def options_handler(request):
         assert request.stream is None
-        return text('OK')
+        return text("OK")
 
-    @blueprint.patch('/patch')
+    @blueprint.patch("/patch")
     def patch_handler(request):
         assert request.stream is None
-        return text('OK')
+        return text("OK")
 
-    @blueprint.delete('/delete')
+    @blueprint.delete("/delete")
     def delete_handler(request):
         assert request.stream is None
-        return text('OK')
+        return text("OK")
 
-    @blueprint.websocket('/ws/', strict_slashes=True)
+    @blueprint.websocket("/ws/", strict_slashes=True)
     async def websocket_handler(request, ws):
         assert request.stream is None
         ev.set()
@@ -436,137 +425,146 @@ def test_bp_shorthand(app):
 
     assert app.is_request_stream is False
 
-    request, response = app.test_client.get('/get')
-    assert response.text == 'OK'
+    request, response = app.test_client.get("/get")
+    assert response.text == "OK"
 
-    request, response = app.test_client.post('/get')
+    request, response = app.test_client.post("/get")
     assert response.status == 405
 
-    request, response = app.test_client.put('/put')
-    assert response.text == 'OK'
+    request, response = app.test_client.put("/put")
+    assert response.text == "OK"
 
-    request, response = app.test_client.get('/post')
+    request, response = app.test_client.get("/post")
     assert response.status == 405
 
-    request, response = app.test_client.post('/post')
-    assert response.text == 'OK'
+    request, response = app.test_client.post("/post")
+    assert response.text == "OK"
 
-    request, response = app.test_client.get('/post')
+    request, response = app.test_client.get("/post")
     assert response.status == 405
 
-    request, response = app.test_client.head('/head')
+    request, response = app.test_client.head("/head")
     assert response.status == 200
 
-    request, response = app.test_client.get('/head')
+    request, response = app.test_client.get("/head")
     assert response.status == 405
 
-    request, response = app.test_client.options('/options')
-    assert response.text == 'OK'
+    request, response = app.test_client.options("/options")
+    assert response.text == "OK"
 
-    request, response = app.test_client.get('/options')
+    request, response = app.test_client.get("/options")
     assert response.status == 405
 
-    request, response = app.test_client.patch('/patch')
-    assert response.text == 'OK'
+    request, response = app.test_client.patch("/patch")
+    assert response.text == "OK"
 
-    request, response = app.test_client.get('/patch')
+    request, response = app.test_client.get("/patch")
     assert response.status == 405
 
-    request, response = app.test_client.delete('/delete')
-    assert response.text == 'OK'
+    request, response = app.test_client.delete("/delete")
+    assert response.text == "OK"
 
-    request, response = app.test_client.get('/delete')
+    request, response = app.test_client.get("/delete")
     assert response.status == 405
 
-    request, response = app.test_client.get('/ws/', headers={
-        'Upgrade': 'websocket',
-        'Connection': 'upgrade',
-        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
-        'Sec-WebSocket-Version': '13'})
+    request, response = app.test_client.get(
+        "/ws/",
+        headers={
+            "Upgrade": "websocket",
+            "Connection": "upgrade",
+            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+            "Sec-WebSocket-Version": "13",
+        },
+    )
     assert response.status == 101
     assert ev.is_set()
 
 
 def test_bp_group(app):
-    deep_0 = Blueprint('deep_0', url_prefix='/deep')
-    deep_1 = Blueprint('deep_1', url_prefix='/deep1')
+    deep_0 = Blueprint("deep_0", url_prefix="/deep")
+    deep_1 = Blueprint("deep_1", url_prefix="/deep1")
 
-    @deep_0.route('/')
+    @deep_0.route("/")
     def handler(request):
-        return text('D0_OK')
+        return text("D0_OK")
 
-    @deep_1.route('/bottom')
+    @deep_1.route("/bottom")
     def bottom_handler(request):
-        return text('D1B_OK')
+        return text("D1B_OK")
 
-    mid_0 = Blueprint.group(deep_0, deep_1, url_prefix='/mid')
-    mid_1 = Blueprint('mid_tier', url_prefix='/mid1')
+    mid_0 = Blueprint.group(deep_0, deep_1, url_prefix="/mid")
+    mid_1 = Blueprint("mid_tier", url_prefix="/mid1")
 
-    @mid_1.route('/')
+    @mid_1.route("/")
     def handler1(request):
-        return text('M1_OK')
+        return text("M1_OK")
 
     top = Blueprint.group(mid_0, mid_1)
 
     app.blueprint(top)
 
-    @app.route('/')
+    @app.route("/")
     def handler2(request):
-        return text('TOP_OK')
+        return text("TOP_OK")
 
-    request, response = app.test_client.get('/')
-    assert response.text == 'TOP_OK'
+    request, response = app.test_client.get("/")
+    assert response.text == "TOP_OK"
 
-    request, response = app.test_client.get('/mid1')
-    assert response.text == 'M1_OK'
+    request, response = app.test_client.get("/mid1")
+    assert response.text == "M1_OK"
 
-    request, response = app.test_client.get('/mid/deep')
-    assert response.text == 'D0_OK'
+    request, response = app.test_client.get("/mid/deep")
+    assert response.text == "D0_OK"
 
-    request, response = app.test_client.get('/mid/deep1/bottom')
-    assert response.text == 'D1B_OK'
+    request, response = app.test_client.get("/mid/deep1/bottom")
+    assert response.text == "D1B_OK"
 
 
 def test_bp_group_with_default_url_prefix(app):
     from sanic.response import json
-    bp_resources = Blueprint('bp_resources')
 
-    @bp_resources.get('/')
+    bp_resources = Blueprint("bp_resources")
+
+    @bp_resources.get("/")
     def list_resources_handler(request):
         resource = {}
         return json([resource])
 
-    bp_resource = Blueprint('bp_resource', url_prefix='/<resource_id>')
+    bp_resource = Blueprint("bp_resource", url_prefix="/<resource_id>")
 
-    @bp_resource.get('/')
+    @bp_resource.get("/")
     def get_resource_hander(request, resource_id):
-        resource = {'resource_id': resource_id}
+        resource = {"resource_id": resource_id}
         return json(resource)
 
-    bp_resources_group = Blueprint.group(bp_resources, bp_resource,
-                                         url_prefix='/resources')
-    bp_api_v1 = Blueprint('bp_api_v1')
+    bp_resources_group = Blueprint.group(
+        bp_resources, bp_resource, url_prefix="/resources"
+    )
+    bp_api_v1 = Blueprint("bp_api_v1")
 
-    @bp_api_v1.get('/info')
+    @bp_api_v1.get("/info")
     def api_v1_info(request):
-        return text('api_version: v1')
+        return text("api_version: v1")
 
-    bp_api_v1_group = Blueprint.group(bp_api_v1, bp_resources_group,
-                                      url_prefix='/v1')
-    bp_api_group = Blueprint.group(bp_api_v1_group, url_prefix='/api')
+    bp_api_v1_group = Blueprint.group(
+        bp_api_v1, bp_resources_group, url_prefix="/v1"
+    )
+    bp_api_group = Blueprint.group(bp_api_v1_group, url_prefix="/api")
     app.blueprint(bp_api_group)
 
-    request, response = app.test_client.get('/api/v1/info')
-    assert response.text == 'api_version: v1'
+    request, response = app.test_client.get("/api/v1/info")
+    assert response.text == "api_version: v1"
 
-    request, response = app.test_client.get('/api/v1/resources')
+    request, response = app.test_client.get("/api/v1/resources")
     assert response.json == [{}]
 
     from uuid import uuid4
+
     resource_id = str(uuid4())
     request, response = app.test_client.get(
-        '/api/v1/resources/{0}'.format(resource_id))
-    assert response.json == {'resource_id': resource_id}
+        "/api/v1/resources/{0}".format(resource_id)
+    )
+    assert response.json == {"resource_id": resource_id}
 
 
 def test_blueprint_middleware_with_args(app: Sanic):
@@ -588,19 +586,22 @@ def test_blueprint_middleware_with_args(app: Sanic):
 
     app.blueprint(bp)
 
-    _, response = app.test_client.get("/wa", headers={"content-type": "application/json"})
+    _, response = app.test_client.get(
+        "/wa", headers={"content-type": "application/json"}
+    )
     assert response.text == "value"
 
-    _, response = app.test_client.get("/wa", headers={"content-type": "plain/text"})
+    _, response = app.test_client.get(
+        "/wa", headers={"content-type": "plain/text"}
+    )
     assert response.json.get("test") == "value"
     d = {}
 
 
-@pytest.mark.parametrize('file_name',
-                         ['test.file'])
+@pytest.mark.parametrize("file_name", ["test.file"])
 def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
     current_file = inspect.getfile(inspect.currentframe())
-    with open(current_file, 'rb') as file:
+    with open(current_file, "rb") as file:
         current_file_contents = file.read()
 
     bp = Blueprint(name="static", url_prefix="/static", strict_slashes=False)
@@ -609,11 +610,12 @@ def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
         "/test.file/",
         get_file_path(static_file_directory, file_name),
         name="static.testing",
-        strict_slashes=True)
+        strict_slashes=True,
+    )
 
     app.blueprint(bp)
 
-    uri = app.url_for('static', name='static.testing')
+    uri = app.url_for("static", name="static.testing")
     assert uri == "/static/test.file"
 
     _, response = app.test_client.get("/static/test.file")
@@ -627,9 +629,7 @@ def test_route_handler_add(app: Sanic):
     view = CompositionView()
 
     async def get_handler(request):
-        return json({
-            "response": "OK"
-        })
+        return json({"response": "OK"})
 
     view.add(["GET"], get_handler, stream=False)
 
@@ -637,10 +637,7 @@ def test_route_handler_add(app: Sanic):
         return text("OK")
 
     bp = Blueprint(name="handler", url_prefix="/handler")
-    bp.add_route(
-        default_handler,
-        uri="/default/",
-        strict_slashes=True)
+    bp.add_route(default_handler, uri="/default/", strict_slashes=True)
 
     bp.add_route(view, uri="/view", name="test")
 
@@ -665,18 +662,21 @@ def test_websocket_route(app: Sanic):
 
     app.blueprint(bp)
 
-    _, response = app.test_client.get("/ws/test", headers={
-        'Upgrade': 'websocket',
-        'Connection': 'upgrade',
-        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
-        'Sec-WebSocket-Version': '13'
-    })
+    _, response = app.test_client.get(
+        "/ws/test",
+        headers={
+            "Upgrade": "websocket",
+            "Connection": "upgrade",
+            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+            "Sec-WebSocket-Version": "13",
+        },
+    )
     assert response.status == 101
     assert event.is_set()
 
 
 def test_duplicate_blueprint(app):
-    bp_name = 'bp'
+    bp_name = "bp"
     bp = Blueprint(bp_name)
     bp1 = Blueprint(bp_name)
 
@@ -687,18 +687,18 @@ def test_duplicate_blueprint(app):
 
     assert str(excinfo.value) == (
         'A blueprint with the name "{}" is already registered.  '
-        'Blueprint names must be unique.'
+        "Blueprint names must be unique."
     ).format(bp_name)
 
 
-@pytest.mark.parametrize('debug', [True, False, None])
+@pytest.mark.parametrize("debug", [True, False, None])
 def test_register_blueprint(app, debug):
-    bp = Blueprint('bp')
+    bp = Blueprint("bp")
 
     app.debug = debug
     with pytest.warns(DeprecationWarning) as record:
         app.register_blueprint(bp)
-    
+
     assert record[0].message.args[0] == (
         "Use of register_blueprint will be deprecated in "
         "version 1.0.  Please use the blueprint method"

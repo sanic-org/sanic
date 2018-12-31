@@ -1029,7 +1029,12 @@ class Sanic:
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
-            self.config.ACCESS_LOG = access_log
+            if isinstance(access_log, bool):
+                self.config.ACCESS_LOG = access_log
+            else:
+                raise ServerError(
+                    ("'access_log' passed in 'run' should be boolean")
+                )
 
         server_settings = self._helper(
             host=host,
@@ -1118,7 +1123,15 @@ class Sanic:
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
-            self.config.ACCESS_LOG = access_log
+            if isinstance(access_log, bool):
+                self.config.ACCESS_LOG = access_log
+            else:
+                raise ServerError(
+                    (
+                        "'access_log' passed in 'create_server' "
+                        "should be boolean"
+                    )
+                )
 
         server_settings = self._helper(
             host=host,

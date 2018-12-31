@@ -7,7 +7,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.config import Config, DEFAULT_CONFIG
-from sanic.exceptions import PyFileError
+from sanic.exceptions import PyFileError, ServerError
 
 
 @contextmanager
@@ -223,6 +223,10 @@ def test_config_access_log_passing_in_run(app):
     app.run(port=1340, access_log=True)
     assert app.config.ACCESS_LOG == True
 
+    with pytest.raises(ServerError) as e:
+        app.run(port=1340, access_log='string')
+        assert str(e.value) == ("'access_log' passed in 'run' should be boolean")
+
 
 async def test_config_access_log_passing_in_create_server(app):
     assert app.config.ACCESS_LOG == True
@@ -236,6 +240,10 @@ async def test_config_access_log_passing_in_create_server(app):
 
     await app.create_server(port=1342, access_log=True)
     assert app.config.ACCESS_LOG == True
+
+    with pytest.raises(ServerError) as e:
+        await app.create_server(port=1343, access_log='somestring')
+        assert str(e.value) == ("'access_log' passed in 'create_server' should be boolean")
 
 
 def test_config_rewrite_keep_alive():

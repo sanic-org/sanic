@@ -69,26 +69,27 @@ class Request(dict):
     """Properties of an HTTP request such as URL, headers, etc."""
 
     __slots__ = (
-        "app",
-        "headers",
-        "version",
-        "method",
+        "__weakref__",
         "_cookies",
-        "transport",
-        "body",
-        "parsed_json",
-        "parsed_args",
-        "parsed_form",
-        "parsed_files",
         "_ip",
         "_parsed_url",
-        "uri_template",
-        "stream",
+        "_port",
         "_remote_addr",
         "_socket",
-        "_port",
-        "__weakref__",
+        "app",
+        "body",
+        "endpoint",
+        "headers",
+        "method",
+        "parsed_args",
+        "parsed_files",
+        "parsed_form",
+        "parsed_json",
         "raw_url",
+        "stream",
+        "transport",
+        "uri_template",
+        "version",
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -111,6 +112,7 @@ class Request(dict):
         self.uri_template = None
         self._cookies = None
         self.stream = None
+        self.endpoint = None
 
     def __repr__(self):
         if self.method is None or not self.path:

@@ -126,3 +126,40 @@ args.get('titles') # => 'Post 1'
 
 args.getlist('titles') # => ['Post 1', 'Post 2']
 ```
+
+## Accessing the handler name with the request.endpoint attribute
+
+The `request.endpoint` attribute holds the handler's name. For instance, the below
+route will return "hello".
+
+```python
+from sanic.response import text
+from sanic import Sanic
+
+app = Sanic()
+
+@app.get("/")
+def hello(request):
+    return text(request.endpoint)
+```
+
+Or, with a blueprint it will be include both, separated by a period. For example,
+ the below route would return foo.bar:
+
+```python
+from sanic import Sanic
+from sanic import Blueprint
+from sanic.response import text
+
+
+app = Sanic(__name__)
+blueprint = Blueprint('foo')
+
+@blueprint.get('/')
+async def bar(request):
+    return text(request.endpoint)
+
+app.blueprint(blueprint)
+
+app.run(host="0.0.0.0", port=8000, debug=True)
+```

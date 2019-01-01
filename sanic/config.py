@@ -1,5 +1,6 @@
 import os
 import types
+from distutils.util import strtobool
 
 from sanic.exceptions import PyFileError
 
@@ -124,7 +125,7 @@ class Config(dict):
                     try:
                         self[config_key] = float(v)
                     except ValueError:
-                        if v in ["True", "False"]:
-                            self[config_key] = v == "True"
-                        else:
+                        try:
+                            self[config_key] = bool(strtobool(v))
+                        except ValueError:
                             self[config_key] = v

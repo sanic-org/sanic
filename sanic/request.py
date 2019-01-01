@@ -89,6 +89,7 @@ class Request(dict):
         "_port",
         "__weakref__",
         "raw_url",
+        "_locals",
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -318,6 +319,12 @@ class Request(dict):
         return urlunparse(
             (self.scheme, self.host, self.path, None, self.query_string, None)
         )
+
+    @property
+    def locals(self):
+        if not hasattr(self, "_locals"):
+            self._locals = {}
+        return self._locals
 
 
 File = namedtuple("File", ["type", "body", "name"])

@@ -45,7 +45,7 @@ Sanic | Build fast. Run fast.
 
 .. end-badges
 
-Sanic is a Python web server that's written to go fast. It allows usage the `async` and `await` syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic is a Python web server and web framework that's written to go fast. It allows usage the `async` and `await` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
 `Source code on GitHub <https://github.com/huge-success/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_. 
 

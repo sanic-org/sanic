@@ -2,7 +2,6 @@ import logging
 import logging.config
 import os
 import re
-import typing
 import warnings
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
@@ -12,6 +11,7 @@ from inspect import getmodulename, isawaitable, signature, stack
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
+from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
@@ -969,18 +969,18 @@ class Sanic:
 
     def run(
         self,
-        host: typing.Optional[str] = None,
-        port: typing.Optional[int] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
         debug: bool = False,
-        ssl: typing.Union[dict, SSLContext, None] = None,
-        sock: typing.Optional[socket] = None,
+        ssl: Union[dict, SSLContext, None] = None,
+        sock: Optional[socket] = None,
         workers: int = 1,
-        protocol: typing.Type[Protocol] = None,
+        protocol: Type[Protocol] = None,
         backlog: int = 100,
-        stop_event: typing.Any = None,
+        stop_event: Any = None,
         register_sys_signals: bool = True,
-        access_log: typing.Optional[bool] = None,
-        **kwargs: typing.Any
+        access_log: Optional[bool] = None,
+        **kwargs: Any
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -1095,15 +1095,15 @@ class Sanic:
 
     async def create_server(
         self,
-        host: typing.Optional[str] = None,
-        port: typing.Optional[int] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
         debug: bool = False,
-        ssl: typing.Union[dict, SSLContext, None] = None,
-        sock: typing.Optional[socket] = None,
-        protocol: typing.Type[Protocol] = None,
+        ssl: Union[dict, SSLContext, None] = None,
+        sock: Optional[socket] = None,
+        protocol: Type[Protocol] = None,
         backlog: int = 100,
-        stop_event: typing.Any = None,
-        access_log: typing.Optional[bool] = None,
+        stop_event: Any = None,
+        access_log: Optional[bool] = None,
     ) -> None:
         """
         Asynchronous version of :func:`run`.

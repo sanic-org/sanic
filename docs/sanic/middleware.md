@@ -36,20 +36,31 @@ this.
 ```
 app = Sanic(__name__)
 
+
+@app.middleware('request')
+async def add_key(request):
+    # Add a key to request object like dict object
+    request['foo'] = 'bar'
+
+
 @app.middleware('response')
 async def custom_banner(request, response):
 	response.headers["Server"] = "Fake-Server"
+
 
 @app.middleware('response')
 async def prevent_xss(request, response):
 	response.headers["x-xss-protection"] = "1; mode=block"
 
+
 app.run(host="0.0.0.0", port=8000)
 ```
 
-The above code will apply the two middleware in order. First, the middleware
+The above code will apply the three middleware in order. The first middleware
+**add_key** will add a new key `foo` into `request` object. This worked due to
+`request` object can be manipulated like `dict` object. Then, the second middleware
 **custom_banner** will change the HTTP response header *Server* to
-*Fake-Server*, and the second middleware **prevent_xss** will add the HTTP
+*Fake-Server*, and the last middleware **prevent_xss** will add the HTTP
 header for preventing Cross-Site-Scripting (XSS) attacks. These two functions
 are invoked *after* a user function returns a response.
 

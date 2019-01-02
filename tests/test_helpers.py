@@ -42,35 +42,19 @@ def test_is_hop_by_hop_header():
 
 def test_remove_entity_headers():
     tests = (
-        (
-            {},
-            {}
-        ),
-        (
-            {
-                "Allow": "GET, POST, HEAD",
-            },
-            {}
-        ),
+        ({}, {}),
+        ({"Allow": "GET, POST, HEAD"}, {}),
         (
             {
                 "Content-Type": "application/json",
                 "Expires": "Wed, 21 Oct 2015 07:28:00 GMT",
-                "Foo": "Bar"
+                "Foo": "Bar",
             },
-            {
-                "Expires": "Wed, 21 Oct 2015 07:28:00 GMT",
-                "Foo": "Bar"
-            },
+            {"Expires": "Wed, 21 Oct 2015 07:28:00 GMT", "Foo": "Bar"},
         ),
         (
-            {
-                "Allow": "GET, POST, HEAD",
-                "Content-Location": "/test"
-            },
-            {
-                "Content-Location": "/test"
-            },
+            {"Allow": "GET, POST, HEAD", "Content-Location": "/test"},
+            {"Content-Location": "/test"},
         ),
     )
 

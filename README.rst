@@ -1,5 +1,8 @@
-Sanic
-=====
+.. image:: https://raw.githubusercontent.com/huge-success/sanic-assets/master/png/sanic-framework-logo-400x97.png
+    :alt: Sanic | Build fast. Run fast.
+
+Sanic | Build fast. Run fast.
+=============================
 
 .. start-badges
 
@@ -13,8 +16,10 @@ Sanic
     * - Package
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support
-      - |Join the chat at https://gitter.im/sanic-python/Lobby|
+      - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby|
 
+.. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
+   :target: https://community.sanicframework.org/
 .. |Join the chat at https://gitter.im/sanic-python/Lobby| image:: https://badges.gitter.im/sanic-python/Lobby.svg
    :target: https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 .. |Codecov| image:: https://codecov.io/gh/huge-success/sanic/branch/master/graph/badge.svg
@@ -40,24 +45,26 @@ Sanic
 
 .. end-badges
 
-Sanic is a Flask-like Python 3.5+ web server that's written to go fast.  It's based on the work done by the amazing folks at magicstack, and was inspired by `this article <https://magic.io/blog/uvloop-blazing-fast-python-networking/>`_.
+Sanic is a Python web server and web framework that's written to go fast. It allows usage the `async` and `await` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
-On top of being Flask-like, Sanic supports async request handlers.  This means you can use the new shiny async/await syntax from Python 3.5, making your code non-blocking and speedy.
+`Source code on GitHub <https://github.com/huge-success/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_. 
 
-Sanic is developed `on GitHub <https://github.com/huge-success/sanic/>`_. We also have `a community discussion board <https://community.sanicframework.org/>`_. Contributions are welcome!
+The project is maintained by the community, for the community **Contributions are welcome!**
 
-If you have a project that utilizes Sanic make sure to comment on the `issue <https://github.com/huge-success/sanic/issues/396>`_ that we use to track those projects!
+The goal of the project is to provide a simple way to get up and running a highly performant HTTP server that is easy to build, to expand, and ultimately to scale.
 
 Installation
 ------------
 
--  ``pip3 install sanic``
+``pip3 install sanic``
 
-To install sanic without uvloop or ujson using bash, you can provide either or both of these environmental variables
-using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the ``SANIC_NO_X`` (``X`` = ``UVLOOP``/``UJSON``)
-to true will stop that features installation.
-
-- ``SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true pip install sanic``
+    Sanic makes use of ``uvloop`` and ``ujson`` to help with performance. If you do not want to use those packages, simply add an environmental variable ``SANIC_NO_UVLOOP=true`` or ``SANIC_NO_UJSON=true`` at install time.
+    
+    .. code:: shell
+    
+       $ export SANIC_NO_UVLOOP=true
+       $ export SANIC_NO_UJSON=true 
+       $ pip3 install sanic
 
 
 Hello World Example
@@ -76,6 +83,27 @@ Hello World Example
 
     if __name__ == '__main__':
         app.run(host='0.0.0.0', port=8000)
+        
+Sanic can now be easily run using ``python3 hello.py``.
+
+.. code::
+
+    [2018-12-30 11:37:41 +0200] [13564] [INFO] Goin' Fast @ http://0.0.0.0:8000
+    [2018-12-30 11:37:41 +0200] [13564] [INFO] Starting worker [13564]
+
+And, we can verify it is working: ``curl localhost:8000 -i``
+
+.. code::
+
+    HTTP/1.1 200 OK
+    Connection: keep-alive
+    Keep-Alive: 5
+    Content-Length: 17
+    Content-Type: application/json
+
+    {"hello":"world"}
+    
+**Now, let's go build something fast!**
 
 
 Documentation
@@ -89,37 +117,7 @@ Questions and Discussion
 
 `Ask a question or join the conversation <https://community.sanicframework.org/>`_.
 
+Contribution
+------------
 
-Examples
---------
-`Non-Core examples <https://github.com/huge-success/sanic/wiki/Examples/>`_. Examples of plugins and Sanic that are outside the scope of Sanic core.
-
-`Extensions <https://github.com/huge-success/sanic/wiki/Extensions/>`_. Sanic extensions created by the community.
-
-`Projects <https://github.com/huge-success/sanic/wiki/Projects/>`_. Sanic in production use.
-
-
-Final Thoughts
---------------
-
-::
-
-                     ▄▄▄▄▄
-            ▀▀▀██████▄▄▄       _______________
-          ▄▄▄▄▄  █████████▄  /                 \
-         ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
-       ▀▀█████▄▄ ▀██████▄██ | _________________/
-       ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
-            ▀▀▀▄  ▀▀███ ▀       ▄▄
-         ▄███▀▀██▄████████▄ ▄▀▀▀▀▀▀█▌
-       ██▀▄▄▄██▀▄███▀ ▀▀████      ▄██
-    ▄▀▀▀▄██▄▀▀▌████▒▒▒▒▒▒███     ▌▄▄▀
-    ▌    ▐▀████▐███▒▒▒▒▒▐██▌
-    ▀▄▄▄▄▀   ▀▀████▒▒▒▒▄██▀
-              ▀▀█████████▀
-            ▄▄██▀██████▀█
-          ▄██▀     ▀▀▀  █
-         ▄█             ▐▌
-     ▄▄▄▄█▌              ▀█▄▄▄▄▀▀▄
-    ▌     ▐                ▀▀▄▄▄▀
-     ▀▀▄▄▀
+We are always happy to have new contributions. We have `marked issues good for anyone looking to get started <https://github.com/huge-success/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner>`_, and welcome `questions on the forums <https://community.sanicframework.org/>`_. Please take a look at our `Contribution guidelines <https://github.com/huge-success/sanic/blob/master/CONTRIBUTING.md>`_.

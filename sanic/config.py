@@ -1,5 +1,6 @@
 import os
 import types
+
 from distutils.util import strtobool
 
 from sanic.exceptions import PyFileError

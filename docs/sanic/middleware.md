@@ -57,7 +57,7 @@ app.run(host="0.0.0.0", port=8000)
 ```
 
 The above code will apply the three middleware in order. The first middleware
-**add_key** will add a new key `foo` into `request` object. This worked due to
+**add_key** will add a new key `foo` into `request` object. This worked because
 `request` object can be manipulated like `dict` object. Then, the second middleware
 **custom_banner** will change the HTTP response header *Server* to
 *Fake-Server*, and the last middleware **prevent_xss** will add the HTTP

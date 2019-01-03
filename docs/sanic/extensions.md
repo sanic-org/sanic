@@ -41,7 +41,7 @@ A list of Sanic extensions created by the community.
 
 ## Project Creation Template
 
-- [cookiecutter-sanic](https://github.com/harshanarayana/cookiecutter-sanic) Get your sanic application up and running in a matter of second in a well defined project structure.
+- [cookiecutter-sanic](https://github.com/harshanarayana/cookiecutter-sanic): Get your sanic application up and running in a matter of second in a well defined project structure.
     Batteries included for deployment, unit testing, automated release management and changelog generation.
 
 ## Templating

@@ -156,4 +156,12 @@ execution support provided by the ``pytest-xdist`` plugin.
 
 .. literalinclude:: ../../examples/pytest_xdist.py
 
+
+Amending Request Object
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``request`` object in ``Sanic`` is a kind of ``dict`` object, this means that ``reqeust`` object can be manipulated as a regular ``dict`` object.
+
+.. literalinclude:: ../../examples/amending_request_object.py
+
 For more examples and useful samples please visit the `Huge-Sanic's GitHub Page <https://github.com/huge-success/sanic/tree/master/examples>`_

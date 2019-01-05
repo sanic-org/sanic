@@ -24,10 +24,56 @@ def gunicorn_worker():
     worker.kill()
 
 
+@pytest.fixture(scope='module')
+def gunicorn_worker_with_access_logs():
+    command = (
+        'gunicorn '
+        '--bind 127.0.0.1:1338 '
+        '--worker-class sanic.worker.GunicornWorker '
+        'examples.simple_server:app'
+    )
+    worker = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    time.sleep(2)
+    return worker
+
+
+@pytest.fixture(scope='module')
+def gunicorn_worker_with_env_var():
+    command = (
+        'env SANIC_ACCESS_LOG="False" '
+        'gunicorn '
+        '--bind 127.0.0.1:1339 '
+        '--worker-class sanic.worker.GunicornWorker '
+        '--log-level info '
+        'examples.simple_server:app'
+    )
+    worker = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    time.sleep(2)
+    return worker
+
+
 def test_gunicorn_worker(gunicorn_worker):
     with urllib.request.urlopen("http://localhost:1337/") as f:
         res = json.loads(f.read(100).decode())
     assert res["test"]
+
+
+def test_gunicorn_worker_no_logs(gunicorn_worker_with_env_var):
+    """
+    if SANIC_ACCESS_LOG was set to False do not show access logs
+    """
+    with urllib.request.urlopen('http://localhost:1339/') as _:
+        gunicorn_worker_with_env_var.kill()
+        assert not gunicorn_worker_with_env_var.stdout.read()
+
+
+def test_gunicorn_worker_with_logs(gunicorn_worker_with_access_logs):
+    """
+    default - show access logs
+    """
+    with urllib.request.urlopen('http://localhost:1338/') as _:
+        gunicorn_worker_with_access_logs.kill()
+        assert b"(sanic.access)[INFO][127.0.0.1" in gunicorn_worker_with_access_logs.stdout.read()
 
 
 class GunicornTestWorker(GunicornWorker):

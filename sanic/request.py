@@ -229,12 +229,20 @@ class Request(dict):
 
     @property
     def ip(self):
+        """
+        peer ip
+        :return:
+        """
         if not hasattr(self, "_socket"):
             self._get_address()
         return self._ip
 
     @property
     def port(self):
+        """
+        peer port
+        :return:
+        """
         if not hasattr(self, "_socket"):
             self._get_address()
         return self._port
@@ -253,6 +261,20 @@ class Request(dict):
         self._ip = self._socket[0]
         self._port = self._socket[1]
 
+    @property
+    def server_port(self):
+        """
+        server port
+        :return:
+        """
+        forwarded_port = self.headers.get('x-forwarded-port')
+        if forwarded_port:
+            return int(forwarded_port)
+        else:
+            _, port = self.transport.get_extra_info('sockname')
+            return port
+
+    # TODO leverage x-original-uri
     @property
     def remote_addr(self):
         """Attempt to return the original client ip based on X-Forwarded-For.
@@ -274,6 +296,10 @@ class Request(dict):
 
     @property
     def scheme(self):
+        forwarded_proto = self.headers.get('x-forwarded-proto') or self.headers.get('x-scheme')
+        if forwarded_proto:
+            return forwarded_proto
+
         if (
             self.app.websocket_enabled
             and self.headers.get("upgrade") == "websocket"
@@ -317,6 +343,25 @@ class Request(dict):
     def url(self):
         return urlunparse(
             (self.scheme, self.host, self.path, None, self.query_string, None)
+        )
+
+    def url_for(self, view_name, **kwargs):
+        # TODO support view_name in "/endpoint" / view class
+        scheme = self.scheme
+        host = self.host
+        port = self.server_port
+
+        if (scheme.lower() in ('http', 'ws') and port == 80) or (scheme.lower() in ('https', 'wss') and port == 443):
+            netloc = host
+        else:
+            netloc = f"{host}:{port}"
+
+        return self.app.url_for(
+            view_name,
+            _external=True,
+            _scheme=scheme,
+            _server=netloc,
+            **kwargs,
         )
 
 

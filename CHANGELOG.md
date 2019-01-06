@@ -1,3 +1,39 @@
+Version 18.12
+-------------
+18.12.0
+  - Changes:
+    - Improved codebase test coverage from 81% to 91%.
+    - Added stream_large_files and host examples in static_file document
+    - Added methods to append and finish body content on Request (#1379)
+    - Integrated with .appveyor.yml for windows ci support
+    - Added documentation for AF_INET6 and AF_UNIX socket usage
+    - Adopt black/isort for codestyle
+    - Cancel task when connection_lost
+    - Simplify request ip and port retrieval logic
+    - Handle config error in load config file.
+    - Integrate with codecov for CI
+    - Add missed documentation for config section.
+    - Deprecate Handler.log
+    - Pinned httptools requirement to version 0.0.10+
+
+  - Fixes:
+    - Fix `remove_entity_headers` helper function (#1415)
+    - Fix TypeError when use Blueprint.group() to group blueprint with default url_prefix, Use os.path.normpath to avoid invalid url_prefix like api//v1
+    f8a6af1 Rename the `http` module to `helpers` to prevent conflicts with the built-in Python http library (fixes #1323)
+    - Fix unittests on windows
+    - Fix Namespacing of sanic logger
+    - Fix missing quotes in decorator example
+    - Fix redirect with quoted param
+    - Fix doc for latest blueprint code
+    - Fix build of latex documentation relating to markdown lists
+    - Fix loop exception handling in app.py
+    - Fix content length mismatch in windows and other platform
+    - Fix Range header handling for static files (#1402)
+    - Fix the logger and make it work (#1397)
+    - Fix type pikcle->pickle in multiprocessing test
+    - Fix pickling blueprints Change the string passed in the "name" section of the namedtuples in Blueprint to match the name of the Blueprint module attribute name. This allows blueprints to be pickled and unpickled, without errors, which is a requirment of running Sanic in multiprocessing mode in Windows. Added a test for pickling and unpickling blueprints Added a test for pickling and unpickling sanic itself Added a test for enabling multiprocessing on an app with a blueprint (only useful to catch this bug if the tests are run on Windows).
+    - Fix document for logging
+
 Version 0.8
 -----------
 0.8.3

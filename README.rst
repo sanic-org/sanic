@@ -111,6 +111,11 @@ Documentation
 
 `Documentation on Readthedocs <http://sanic.readthedocs.io/>`_.
 
+Changelog
+---------
+
+`Release Changelogs <https://github.com/huge-success/sanic/blob/master/CHANGELOG.md>`_.
+
    
 Questions and Discussion
 ------------------------

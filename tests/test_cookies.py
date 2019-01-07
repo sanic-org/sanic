@@ -138,7 +138,7 @@ def test_cookie_set_same_key(app):
     assert response.cookies["test"].value == "pass"
 
 
-@pytest.mark.parametrize("max_age", ["0", 30, "30", "test"])
+@pytest.mark.parametrize("max_age", ["0", 30, 30.0, 30.1, "30", "test"])
 def test_cookie_max_age(app, max_age):
     cookies = {"test": "wait"}
 
@@ -154,7 +154,7 @@ def test_cookie_max_age(app, max_age):
 
     assert response.cookies["test"].value == "pass"
 
-    if str(max_age).isdigit():
+    if str(max_age).isdigit() and int(max_age) == float(max_age):
         assert response.cookies["test"]["max-age"] == str(max_age)
     else:
         assert response.cookies["test"]["max-age"] == str(DEFAULT_MAX_AGE)

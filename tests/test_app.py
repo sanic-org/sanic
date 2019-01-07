@@ -155,8 +155,8 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
         request, response = app.test_client.get("/")
     assert response.status == 500
     assert response.text == "Error: Mock SanicException"
-    assert caplog.record_tuples[0] == (
+    assert (
         "sanic.root",
         logging.ERROR,
         "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
-    )
+    ) in caplog.record_tuples

@@ -740,7 +740,9 @@ def test_request_server_port(app):
     def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get("/")
+    request, response = app.test_client.get("/", headers={
+        'Host': 'my_server'
+    })
     assert request.server_port == app.test_client.port
 
 
@@ -749,7 +751,9 @@ def test_request_server_port_in_host_header(app):
     def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get("/", headers={'Host': 'my_server:5555'})
+    request, response = app.test_client.get("/", headers={
+        'Host': 'my_server:5555'
+    })
     assert request.server_port == 5555
 
 

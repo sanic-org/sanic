@@ -262,19 +262,26 @@ class Request(dict):
         self._port = self._socket[1]
 
     @property
+    def server_name(self):
+        """
+        server name. in contrast with host, server_name doesn't contain port part.
+        :return:
+        """
+        return self.app.config.get("SERVER_NAME") or self.headers.get('x-forwarded-host') or self.host.split(':')[0]
+
+    @property
     def server_port(self):
         """
         server port
         :return:
         """
-        forwarded_port = self.headers.get('x-forwarded-port')
+        forwarded_port = self.headers.get('x-forwarded-port') or (self.host.split(':')[1] if ':' in self.host else None)
         if forwarded_port:
             return int(forwarded_port)
         else:
             _, port = self.transport.get_extra_info('sockname')
             return port
 
-    # TODO leverage x-original-uri
     @property
     def remote_addr(self):
         """Attempt to return the original client ip based on X-Forwarded-For.
@@ -346,15 +353,18 @@ class Request(dict):
         )
 
     def url_for(self, view_name, **kwargs):
-        # TODO support view_name in "/endpoint" / view class
+        """
+        Same as Sanic.url_for, but automatically determine `scheme` and `netloc` base on the request.
+        Since this method is aiming to generate correct schema & netloc, `_external` is implied.
+        """
         scheme = self.scheme
-        host = self.host
+        host = self.server_name
         port = self.server_port
 
         if (scheme.lower() in ('http', 'ws') and port == 80) or (scheme.lower() in ('https', 'wss') and port == 443):
             netloc = host
         else:
-            netloc = f"{host}:{port}"
+            netloc = "{}:{}".format(host, port)
 
         return self.app.url_for(
             view_name,

@@ -89,7 +89,7 @@ tests_require = [
     "pytest==3.3.2",
     "multidict>=4.0,<5.0",
     "gunicorn",
-    "pytest-cov",
+    "pytest-cov==2.6.0",
     "aiohttp>=2.3.0,<=3.2.1",
     "beautifulsoup4",
     uvloop,

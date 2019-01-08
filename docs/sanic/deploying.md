@@ -15,6 +15,7 @@ keyword arguments:
 - `protocol` *(default `HttpProtocol`)*: Subclass
   of
   [asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
+- `access_log` *(default `True`)*: Enables log on handling requests (significantly slows server).
 
 ## Workers
 
@@ -62,6 +63,26 @@ after it has processed a given number of requests. This can be a convenient way 
 of the memory leak.
 
 See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
+
+## Disable debug logging
+
+To improve the performance add `debug=False` and `access_log=False` in the `run` arguments.
+
+```python
+app.run(host='0.0.0.0', port=1337, workers=4, debug=False, access_log=False)
+```
+
+Running via Gunicorn you can set Environment variable `SANIC_ACCESS_LOG="False"`
+
+```
+env SANIC_ACCESS_LOG="False" gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker --log-level warning
+```
+
+Or you can rewrite app config directly
+
+```python
+app.config.ACCESS_LOG = False
+```
 
 ## Asynchronous support
 This is suitable if you *need* to share the sanic process with other applications, in particular the `loop`.

@@ -29,9 +29,10 @@ Guides
    sanic/testing
    sanic/deploying
    sanic/extensions
+   sanic/examples
+   sanic/changelog
    sanic/contributing
    sanic/api_reference
-   sanic/examples
 
 
 Module Documentation

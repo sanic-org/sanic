@@ -2,12 +2,14 @@ from sanic import Sanic
 import asyncio
 from sanic.response import text
 from sanic.exceptions import ServiceUnavailable
-from sanic.config import Config
 
-Config.RESPONSE_TIMEOUT = 1
 response_timeout_app = Sanic("test_response_timeout")
 response_timeout_default_app = Sanic("test_response_timeout_default")
 response_handler_cancelled_app = Sanic("test_response_handler_cancelled")
+
+response_timeout_app.config.RESPONSE_TIMEOUT = 1
+response_timeout_default_app.config.RESPONSE_TIMEOUT = 1
+response_handler_cancelled_app.config.RESPONSE_TIMEOUT = 1
 
 
 @response_timeout_app.route("/1")

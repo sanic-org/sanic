@@ -73,6 +73,8 @@ def test_middleware_response_exception(app):
 
 
 def test_middleware_response_raise_cancelled_error(app, caplog):
+    app.config.RESPONSE_TIMEOUT = 1
+
     @app.middleware("response")
     async def process_response(request, response):
         raise CancelledError("CancelledError at response middleware")

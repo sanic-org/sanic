@@ -25,7 +25,6 @@ except ImportError:
     else:
         json_loads = json.loads
 
-
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 
 
@@ -231,7 +230,6 @@ class Request(dict):
     def ip(self):
         """
         peer ip
-        :return:
         """
         if not hasattr(self, "_socket"):
             self._get_address()
@@ -241,7 +239,6 @@ class Request(dict):
     def port(self):
         """
         peer port
-        :return:
         """
         if not hasattr(self, "_socket"):
             self._get_address()
@@ -264,22 +261,28 @@ class Request(dict):
     @property
     def server_name(self):
         """
-        server name. in contrast with host, server_name doesn't contain port part.
-        :return:
+        server name.
+        The difference between `Request.server_name` and `Request.host`
+        is that server_name doesn't contain port number part.
         """
-        return self.app.config.get("SERVER_NAME") or self.headers.get('x-forwarded-host') or self.host.split(':')[0]
+        return (
+            self.app.config.get("SERVER_NAME")
+            or self.headers.get("x-forwarded-host")
+            or self.host.split(":")[0]
+        )
 
     @property
     def server_port(self):
         """
         server port
-        :return:
         """
-        forwarded_port = self.headers.get('x-forwarded-port') or (self.host.split(':')[1] if ':' in self.host else None)
+        forwarded_port = self.headers.get("x-forwarded-port") or (
+            self.host.split(":")[1] if ":" in self.host else None
+        )
         if forwarded_port:
             return int(forwarded_port)
         else:
-            _, port = self.transport.get_extra_info('sockname')
+            _, port = self.transport.get_extra_info("sockname")
             return port
 
     @property
@@ -303,7 +306,9 @@ class Request(dict):
 
     @property
     def scheme(self):
-        forwarded_proto = self.headers.get('x-forwarded-proto') or self.headers.get('x-scheme')
+        forwarded_proto = self.headers.get(
+            "x-forwarded-proto"
+        ) or self.headers.get("x-scheme")
         if forwarded_proto:
             return forwarded_proto
 
@@ -354,24 +359,23 @@ class Request(dict):
 
     def url_for(self, view_name, **kwargs):
         """
-        Same as Sanic.url_for, but automatically determine `scheme` and `netloc` base on the request.
-        Since this method is aiming to generate correct schema & netloc, `_external` is implied.
+        Same as `Sanic.url_for`, but automatically determine `scheme` and
+        `netloc` base on the request. Since this method is aiming to generate
+        correct schema & netloc, `_external` is implied.
         """
         scheme = self.scheme
         host = self.server_name
         port = self.server_port
 
-        if (scheme.lower() in ('http', 'ws') and port == 80) or (scheme.lower() in ('https', 'wss') and port == 443):
+        if (scheme.lower() in ("http", "ws") and port == 80) or (
+            scheme.lower() in ("https", "wss") and port == 443
+        ):
             netloc = host
         else:
             netloc = "{}:{}".format(host, port)
 
         return self.app.url_for(
-            view_name,
-            _external=True,
-            _scheme=scheme,
-            _server=netloc,
-            **kwargs,
+            view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs
         )
 
 

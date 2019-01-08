@@ -86,7 +86,7 @@ requirements = [
 ]
 
 tests_require = [
-    "pytest==3.3.2",
+    "pytest==4.1.0",
     "multidict>=4.0,<5.0",
     "gunicorn",
     "pytest-cov",

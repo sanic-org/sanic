@@ -86,12 +86,12 @@ def test_middleware_response_raise_cancelled_error(app, caplog):
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get("/")
 
-    assert response.status == 503
-    assert caplog.record_tuples[0] == (
-        "sanic.root",
-        logging.ERROR,
-        "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
-    )
+        assert response.status == 503
+        assert (
+            "sanic.root",
+            logging.ERROR,
+            "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
+        ) in caplog.record_tuples
 
 
 def test_middleware_response_raise_exception(app, caplog):
@@ -103,16 +103,16 @@ def test_middleware_response_raise_exception(app, caplog):
         reqrequest, response = app.test_client.get("/")
 
     assert response.status == 404
-    assert caplog.record_tuples[0] == (
+    assert (
         "sanic.root",
         logging.ERROR,
         "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
-    )
-    assert caplog.record_tuples[1] == (
+    ) in caplog.record_tuples
+    assert (
         "sanic.error",
         logging.ERROR,
         "Exception occurred in one of response middleware handlers",
-    )
+    ) in caplog.record_tuples
 
 
 def test_middleware_override_request(app):

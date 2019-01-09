@@ -5,6 +5,7 @@ from sanic.config import BASE_LOGO
 
 try:
     import uvloop  # noqa
+
     ROW = 0
 except BaseException:
     ROW = 1

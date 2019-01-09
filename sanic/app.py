@@ -456,6 +456,13 @@ class Sanic:
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
+                if not getattr(handler, "__blueprintname__", False):
+                    request.endpoint = handler.__name__
+                else:
+                    request.endpoint = (
+                        getattr(handler, "__blueprintname__", "")
+                        + handler.__name__
+                    )
                 try:
                     protocol = request.transport.get_protocol()
                 except AttributeError:
@@ -890,6 +897,16 @@ class Sanic:
                             "handler from the router"
                         )
                     )
+                else:
+                    if not getattr(handler, "__blueprintname__", False):
+                        request.endpoint = self._build_endpoint_name(
+                            handler.__name__
+                        )
+                    else:
+                        request.endpoint = self._build_endpoint_name(
+                            getattr(handler, "__blueprintname__", ""),
+                            handler.__name__,
+                        )
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)
@@ -1318,3 +1335,7 @@ class Sanic:
             logger.info("Goin' Fast @ {}://{}:{}".format(proto, host, port))
 
         return server_settings
+
+    def _build_endpoint_name(self, *parts):
+        parts = [self.name, *parts]
+        return ".".join(parts)

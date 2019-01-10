@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 
 import pytest
 
+from sanic import Sanic
+from sanic import Blueprint
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.response import json, text
@@ -809,3 +811,40 @@ def test_url_for_with_forwarded_request(app):
         'X-Forwarded-Port': '443',
     })
     assert request.url_for('view_name') == 'https://my_server/another_view'
+def test_endpoint_basic():
+    app = Sanic()
+
+    @app.route("/")
+    def my_unique_handler(request):
+        return text("Hello")
+
+    request, response = app.test_client.get("/")
+
+    assert request.endpoint == "test_requests.my_unique_handler"
+
+
+def test_endpoint_named_app():
+    app = Sanic("named")
+
+    @app.route("/")
+    def my_unique_handler(request):
+        return text("Hello")
+
+    request, response = app.test_client.get("/")
+
+    assert request.endpoint == "named.my_unique_handler"
+
+
+def test_endpoint_blueprint():
+    bp = Blueprint("my_blueprint", url_prefix="/bp")
+
+    @bp.route("/")
+    async def bp_root(request):
+        return text("Hello")
+
+    app = Sanic("named")
+    app.blueprint(bp)
+
+    request, response = app.test_client.get("/bp")
+
+    assert request.endpoint == "named.my_blueprint.bp_root"

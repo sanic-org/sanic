@@ -27,9 +27,6 @@ bp = Blueprint('my_blueprint')
 async def bp_root(request):
     return json({'my': 'blueprint'})
     
-@bp.route('/test')
-async def bp_test(request):
-	return json({'my': 'test'})
 
 ```
 

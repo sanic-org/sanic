@@ -22,11 +22,11 @@ from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import HttpProtocol, Signal, serve, serve_multiple
-from sanic.static import register as static_register
-from sanic.testing import SanicTestClient
+from sanic.protocol import HttpProtocol
+from sanic.server import Signal, serve, create_server, serve_multiple
+
 from sanic.views import CompositionView
-from sanic.websocket import ConnectionClosed, WebSocketProtocol
+from sanic import websocket_exceptions
 
 
 class Sanic:
@@ -478,7 +478,8 @@ class Sanic:
                 self.websocket_tasks.add(fut)
                 try:
                     await fut
-                except (CancelledError, ConnectionClosed):
+                except (CancelledError,
+                        getattr(websocket_exceptions, "ConnectionClosed")):
                     pass
                 finally:
                     self.websocket_tasks.remove(fut)
@@ -660,6 +661,7 @@ class Sanic:
         :param content_type: user defined content type for header
         :return: None
         """
+        from sanic.static import register as static_register
         static_register(
             self,
             uri,
@@ -978,11 +980,20 @@ class Sanic:
 
     @property
     def test_client(self):
+        from sanic.testing import SanicTestClient
         return SanicTestClient(self)
 
     # -------------------------------------------------------------------- #
     # Execution
     # -------------------------------------------------------------------- #
+
+    def ensure_protocol(self, protocol):
+        if protocol is None:
+            if self.websocket_enabled:
+                from sanic.websocket import WebSocketProtocol
+                return WebSocketProtocol
+            return HttpProtocol
+        return protocol
 
     def run(
         self,
@@ -1048,10 +1059,7 @@ class Sanic:
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
 
-        if protocol is None:
-            protocol = (
-                WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
+        protocol = self.ensure_protocol(protocol)
         if stop_event is not None:
             if debug:
                 warnings.simplefilter("default")
@@ -1121,6 +1129,7 @@ class Sanic:
         backlog: int = 100,
         stop_event: Any = None,
         access_log: Optional[bool] = None,
+        server_kwargs: Optional[dict] = None,
     ) -> None:
         """
         Asynchronous version of :func:`run`.
@@ -1160,10 +1169,7 @@ class Sanic:
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
 
-        if protocol is None:
-            protocol = (
-                WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
+        protocol = self.ensure_protocol(protocol)
         if stop_event is not None:
             if debug:
                 warnings.simplefilter("default")
@@ -1192,8 +1198,12 @@ class Sanic:
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
-
-        return await serve(**server_settings)
+        server_kwargs = server_kwargs if server_kwargs else {}
+        if server_kwargs.get("start_serving", True):
+            return await serve(**server_settings)
+        else:
+            return create_server(
+                server_kwargs=server_kwargs, **server_kwargs)
 
     async def trigger_events(self, events, loop):
         """Trigger events (functions or async)

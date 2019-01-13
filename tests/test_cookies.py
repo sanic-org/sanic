@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
 from sanic.response import text
 import pytest
-from sanic.cookies import Cookie
+from sanic.cookies import Cookie, DEFAULT_MAX_AGE
 
 # ------------------------------------------------------------ #
 #  GET
@@ -138,7 +138,7 @@ def test_cookie_set_same_key(app):
     assert response.cookies["test"].value == "pass"
 
 
-@pytest.mark.parametrize("max_age", ["0", 30, "30"])
+@pytest.mark.parametrize("max_age", ["0", 30, 30.0, 30.1, "30", "test"])
 def test_cookie_max_age(app, max_age):
     cookies = {"test": "wait"}
 
@@ -153,7 +153,11 @@ def test_cookie_max_age(app, max_age):
     assert response.status == 200
 
     assert response.cookies["test"].value == "pass"
-    assert response.cookies["test"]["max-age"] == str(max_age)
+
+    if str(max_age).isdigit() and int(max_age) == float(max_age):
+        assert response.cookies["test"]["max-age"] == str(max_age)
+    else:
+        assert response.cookies["test"]["max-age"] == str(DEFAULT_MAX_AGE)
 
 
 @pytest.mark.parametrize(

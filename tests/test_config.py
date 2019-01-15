@@ -231,10 +231,12 @@ async def test_config_access_log_passing_in_create_server(app):
     async def _request(sanic, loop):
         app.stop()
 
-    await app.create_server(port=1341, access_log=False)
+    await app.create_server(port=1341, access_log=False,
+                            return_asyncio_server=True)
     assert app.config.ACCESS_LOG == False
 
-    await app.create_server(port=1342, access_log=True)
+    await app.create_server(port=1342, access_log=True,
+                            return_asyncio_server=True)
     assert app.config.ACCESS_LOG == True
 
 

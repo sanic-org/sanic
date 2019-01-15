@@ -25,7 +25,7 @@ def test_create_asyncio_server(app):
     asyncio_srv_coro = app.create_server(return_asyncio_server=True)
     assert isawaitable(asyncio_srv_coro)
     srv = loop.run_until_complete(asyncio_srv_coro)
-    assert isinstance(srv, asyncio_base_events.Server)
+    assert srv.is_serving() is True
 
 
 def test_asyncio_server_start_serving(app):

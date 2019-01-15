@@ -26,8 +26,13 @@ def test_create_asyncio_server(app):
     asyncio_srv_coro = app.create_server(
         return_asyncio_server=True)
     assert isawaitable(asyncio_srv_coro)
-    srv = loop.run_until_complete(asyncio_srv_coro)
-    assert srv.is_serving() is True
+
+    try:
+        import uvloop
+    except ImportError:
+        # this test is valid only for sanic + asyncio setup
+        srv = loop.run_until_complete(asyncio_srv_coro)
+        assert srv.is_serving() is True
 
 
 @pytest.mark.skipif(sys.version_info < (3, 7),

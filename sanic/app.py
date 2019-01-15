@@ -1121,6 +1121,8 @@ class Sanic:
         backlog: int = 100,
         stop_event: Any = None,
         access_log: Optional[bool] = None,
+        return_asyncio_server=False,
+        asyncio_server_kwargs=None,
     ) -> None:
         """
         Asynchronous version of :func:`run`.
@@ -1154,6 +1156,13 @@ class Sanic:
         :type stop_event: None
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool
+        :param return_asyncio_server: flag that defines whether there's a need
+                                      to return asyncio.Server or
+                                      start it serving right away
+        :type return_asyncio_server: bool
+        :param asyncio_server_kwargs: key-value arguments for
+                                      asyncio/uvloop create_server method
+        :type asyncio_server_kwargs: dict
         :return: Nothing
         """
 
@@ -1184,7 +1193,7 @@ class Sanic:
             loop=get_event_loop(),
             protocol=protocol,
             backlog=backlog,
-            run_async=True,
+            run_async=return_asyncio_server,
         )
 
         # Trigger before_start events
@@ -1193,7 +1202,10 @@ class Sanic:
             server_settings.get("loop"),
         )
 
-        return await serve(**server_settings)
+        return await serve(
+            asyncio_server_kwargs=asyncio_server_kwargs,
+            **server_settings
+        )
 
     async def trigger_events(self, events, loop):
         """Trigger events (functions or async)

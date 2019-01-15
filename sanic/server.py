@@ -656,6 +656,7 @@ def serve(
     websocket_write_limit=2 ** 16,
     state=None,
     graceful_shutdown_timeout=15.0,
+    asyncio_server_kwargs=None,
 ):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -700,6 +701,8 @@ def serve(
     :param router: Router object
     :param graceful_shutdown_timeout: How long take to Force close non-idle
                                       connection
+    :param asyncio_server_kwargs: key-value args for asyncio/uvloop
+                                  create_server method
     :return: Nothing
     """
     if not run_async:
@@ -734,7 +737,9 @@ def serve(
         state=state,
         debug=debug,
     )
-
+    asyncio_server_kwargs = (
+        asyncio_server_kwargs if asyncio_server_kwargs else {}
+    )
     server_coroutine = loop.create_server(
         server,
         host,
@@ -743,6 +748,7 @@ def serve(
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog,
+        **asyncio_server_kwargs
     )
 
     # Instead of pulling time at the end of every request,

@@ -17,6 +17,11 @@ def test_app_loop_running(app):
     assert response.text == "pass"
 
 
+def test_create_asyncio_server(app):
+    asyncio_srv = app.create_server(return_asyncio_server=True)
+    assert isinstance(asyncio_srv, asyncio.AbstractServer)
+
+
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
         app.loop

@@ -1203,8 +1203,7 @@ class Sanic:
         )
 
         return await serve(
-            asyncio_server_kwargs=asyncio_server_kwargs,
-            **server_settings
+            asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
 
     async def trigger_events(self, events, loop):

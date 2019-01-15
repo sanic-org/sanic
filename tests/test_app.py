@@ -27,28 +27,30 @@ def test_app_loop_running(app):
     assert response.text == "pass"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7) and uvloop_installed(),
+@pytest.mark.skipif(sys.version_info < (3, 7),
                     reason="requires python3.7 or higher")
 def test_create_asyncio_server(app):
-    loop = asyncio.get_event_loop()
-    asyncio_srv_coro = app.create_server(
-        return_asyncio_server=True)
-    assert isawaitable(asyncio_srv_coro)
-    srv = loop.run_until_complete(asyncio_srv_coro)
-    assert srv.is_serving() is True
+    if not uvloop_installed():
+        loop = asyncio.get_event_loop()
+        asyncio_srv_coro = app.create_server(
+            return_asyncio_server=True)
+        assert isawaitable(asyncio_srv_coro)
+        srv = loop.run_until_complete(asyncio_srv_coro)
+        assert srv.is_serving() is True
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7) and uvloop_installed(),
+@pytest.mark.skipif(sys.version_info < (3, 7),
                     reason="requires python3.7 or higher")
 def test_asyncio_server_start_serving(app):
-    loop = asyncio.get_event_loop()
-    asyncio_srv_coro = app.create_server(
-        return_asyncio_server=True,
-        asyncio_server_kwargs=dict(
-            start_serving=False
-        ))
-    srv = loop.run_until_complete(asyncio_srv_coro)
-    assert srv.is_serving() is False
+    if not uvloop_installed():
+        loop = asyncio.get_event_loop()
+        asyncio_srv_coro = app.create_server(
+            return_asyncio_server=True,
+            asyncio_server_kwargs=dict(
+                start_serving=False
+            ))
+        srv = loop.run_until_complete(asyncio_srv_coro)
+        assert srv.is_serving() is False
 
 
 def test_app_loop_not_running(app):

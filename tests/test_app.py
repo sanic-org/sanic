@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+from asyncio import base_events as asyncio_base_events
+
 from inspect import isawaitable
 import pytest
 
@@ -23,7 +25,7 @@ def test_create_asyncio_server(app):
     asyncio_srv_coro = app.create_server(return_asyncio_server=True)
     assert isawaitable(asyncio_srv_coro)
     srv = loop.run_until_complete(asyncio_srv_coro)
-    assert isinstance(srv, asyncio.AbstractServer)
+    assert isinstance(srv, asyncio_base_events.Server)
 
 
 def test_asyncio_server_start_serving(app):

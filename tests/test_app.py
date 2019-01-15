@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from inspect import isawaitable
 import pytest
 
 from sanic.exceptions import SanicException
@@ -18,8 +19,26 @@ def test_app_loop_running(app):
 
 
 def test_create_asyncio_server(app):
-    asyncio_srv = app.create_server(return_asyncio_server=True)
-    assert isinstance(asyncio_srv, asyncio.AbstractServer)
+    loop = asyncio.get_event_loop()
+    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    assert isawaitable(asyncio_srv_coro)
+    srv = loop.run_until_complete(asyncio_srv_coro)
+    assert isinstance(srv, asyncio.AbstractServer)
+
+
+def test_asyncio_server_start_serving(app):
+    try:
+        import uvloop
+    except ImportError:
+        # this test is valid only for sanic + asyncio setup
+        loop = asyncio.get_event_loop()
+        asyncio_srv_coro = app.create_server(
+            return_asyncio_server=True,
+            asyncio_server_kwargs=dict(
+                start_serving=False
+            ))
+        srv = loop.run_until_complete(asyncio_srv_coro)
+        assert srv.is_serving() is False
 
 
 def test_app_loop_not_running(app):

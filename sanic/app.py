@@ -8,6 +8,7 @@ from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
 from inspect import getmodulename, isawaitable, signature, stack
+from multidict import CIMultiDict
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -21,6 +22,7 @@ from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.request import Request
 from sanic.router import Router
 from sanic.server import HttpProtocol, Signal, serve, serve_multiple
 from sanic.static import register as static_register
@@ -967,7 +969,7 @@ class Sanic:
                 raise CancelledError()
 
         # pass the response to the correct callback
-        if isinstance(response, StreamingHTTPResponse):
+        if write_callback is None or isinstance(response, StreamingHTTPResponse):
             await stream_callback(response)
         else:
             write_callback(response)
@@ -1106,9 +1108,8 @@ class Sanic:
         """This kills the Sanic"""
         get_event_loop().stop()
 
-    def __call__(self):
-        """gunicorn compatibility"""
-        return self
+    def __call__(self, scope):
+        return ASGIApp(self, scope)
 
     async def create_server(
         self,
@@ -1339,3 +1340,80 @@ class Sanic:
     def _build_endpoint_name(self, *parts):
         parts = [self.name, *parts]
         return ".".join(parts)
+
+
+class MockTransport:
+    def __init__(self, scope):
+        self.scope = scope
+
+    def get_extra_info(self, info):
+        if info == 'peername':
+            return self.scope.get('server')
+        elif info == 'sslcontext':
+            return self.scope.get('scheme') in ["https", "wss"]
+
+class ASGIApp:
+    def __init__(self, sanic_app, scope):
+        self.sanic_app = sanic_app
+        url_bytes = scope.get('root_path', '') + scope['path']
+        url_bytes = url_bytes.encode('latin-1')
+        url_bytes += scope['query_string']
+        headers = CIMultiDict([
+            (key.decode('latin-1'), value.decode('latin-1'))
+            for key, value in scope.get('headers', [])
+        ])
+        version = scope['http_version']
+        method = scope['method']
+        self.request = Request(url_bytes, headers, version, method, MockTransport(scope))
+        self.request.app = sanic_app
+
+    async def read_body(self, receive):
+        """
+        Read and return the entire body from an incoming ASGI message.
+        """
+        body = b''
+        more_body = True
+
+        while more_body:
+            message = await receive()
+            body += message.get('body', b'')
+            more_body = message.get('more_body', False)
+
+        return body
+
+    async def __call__(self, receive, send):
+        """
+        Handle the incoming request.
+        """
+        self.send = send
+        self.request.body = await self.read_body(receive)
+        handler = self.sanic_app.handle_request
+        await handler(self.request, None, self.stream_callback)
+
+    async def stream_callback(self, response):
+        """
+        Write the response.
+        """
+        if isinstance(response, StreamingHTTPResponse):
+            raise NotImplementedError('Not supported')
+
+        headers = [
+            (str(name).encode('latin-1'), str(value).encode('latin-1'))
+            for name, value in response.headers.items()
+        ]
+        if 'content-length' not in response.headers:
+            headers += [(
+                b'content-length',
+                str(len(response.body)).encode('latin-1')
+            )]
+
+        await self.send({
+            'type': 'http.response.start',
+            'status': response.status,
+            'headers': headers
+        })
+        await self.send({
+            'type': 'http.response.body',
+            'body': response.body,
+            'more_body': False
+        })

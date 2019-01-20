@@ -28,9 +28,11 @@ The following variables are accessible as properties on `Request` objects:
       return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
   ```
 
-- `raw_args` (dict) - On many cases you would need to access the url arguments in
-  a less packed dictionary. For same previous URL `?key1=value1&key2=value2`, the
-  `raw_args` dictionary would look like `{'key1': 'value1', 'key2': 'value2'}`.
+- `not_grouped_args` (list) - On many cases you would need to access the url arguments in
+  a less packed form. For same previous URL `?key1=value1&key2=value2`, the
+  `not_grouped_args` list would look like `[('key1', 'value1'), ('key2', 'value2')]`.
+  And in case of the multiple params with the same key like `?key1=value1&key2=value2&key1=value3`
+  the `not_grouped_args` list would look like `[('key1', 'value1'), ('key2', 'value2'), ('key1', 'value3')]`.
 
 - `files` (dictionary of `File` objects) - List of files that have a name, body, and type
 

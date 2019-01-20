@@ -1,11 +1,12 @@
 import asyncio
 import json
 import sys
+import warnings
 
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
-from urllib.parse import parse_qs, urlunparse
+from urllib.parse import parse_qs, parse_qsl, urlunparse
 
 from httptools import parse_url
 
@@ -82,6 +83,7 @@ class Request(dict):
         "headers",
         "method",
         "parsed_args",
+        "parsed_not_grouped_args",
         "parsed_files",
         "parsed_form",
         "parsed_json",
@@ -109,6 +111,7 @@ class Request(dict):
         self.parsed_form = None
         self.parsed_files = None
         self.parsed_args = None
+        self.parsed_not_grouped_args = None
         self.uri_template = None
         self._cookies = None
         self.stream = None
@@ -212,8 +215,23 @@ class Request(dict):
         return self.parsed_args
 
     @property
-    def raw_args(self):
+    def raw_args(self) -> dict:
+        if self.app.debug:  # pragma: no cover
+            warnings.simplefilter("default")
+        warnings.warn(
+            "Use of raw_args will be deprecated in "
+            "the future versions. Please use args or not_grouped_args "
+            "properties instead",
+            DeprecationWarning,
+        )
         return {k: v[0] for k, v in self.args.items()}
+
+    @property
+    def not_grouped_args(self) -> list:
+        if self.parsed_not_grouped_args is None:
+            if self.query_string:
+                self.parsed_not_grouped_args = parse_qsl(self.query_string)
+        return self.parsed_not_grouped_args
 
     @property
     def cookies(self):

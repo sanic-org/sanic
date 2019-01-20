@@ -626,6 +626,31 @@ def test_request_raw_args(app):
     assert request.raw_args == params
 
 
+def test_request_not_grouped_args(app):
+    # test multiple params with the same key
+    params = [('test', 'value1'), ('test', 'value2')]
+
+    @app.get("/")
+    def handler(request):
+        return text("pass")
+
+    request, response = app.test_client.get("/", params=params)
+
+    assert request.not_grouped_args == params
+
+    # test unique params
+    params = [('test1', 'value1'), ('test2', 'value2')]
+
+    request, response = app.test_client.get("/", params=params)
+
+    assert request.not_grouped_args == params
+
+    # test no params
+    request, response = app.test_client.get("/")
+
+    assert not request.not_grouped_args
+
+
 def test_request_cookies(app):
 
     cookies = {"test": "OK"}

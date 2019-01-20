@@ -115,8 +115,6 @@ class Request(dict):
         self.endpoint = None
 
     def __repr__(self):
-        if self.method is None or not self.path:
-            return "<{0}>".format(self.__class__.__name__)
         return "<{0}: {1} {2}>".format(
             self.__class__.__name__, self.method, self.path
         )

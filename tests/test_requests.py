@@ -566,7 +566,7 @@ def test_request_repr(app):
     assert repr(request) == "<Request: GET />"
 
     request.method = None
-    assert repr(request) == "<Request>"
+    assert repr(request) == "<Request: None />"
 
 
 def test_request_bool(app):

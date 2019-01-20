@@ -33,6 +33,7 @@ Guides
    sanic/changelog
    sanic/contributing
    sanic/api_reference
+   sanic/asyncio_python37
 
 
 Module Documentation

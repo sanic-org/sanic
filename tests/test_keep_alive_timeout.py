@@ -51,7 +51,9 @@ class ReuseableSanicTestClient(SanicTestClient):
         uri="/",
         gather_request=True,
         debug=False,
-        server_kwargs={},
+        server_kwargs={
+            "return_asyncio_server": True,
+        },
         *request_args,
         **request_kwargs
     ):

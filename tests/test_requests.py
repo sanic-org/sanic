@@ -638,6 +638,9 @@ def test_request_not_grouped_args(app):
 
     assert request.not_grouped_args == params
 
+    # test cached value
+    assert request.parsed_not_grouped_args == request.not_grouped_args
+
     # test unique params
     params = [('test1', 'value1'), ('test2', 'value2')]
 

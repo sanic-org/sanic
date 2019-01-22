@@ -10,7 +10,7 @@ import pytest
 from sanic import Sanic
 from sanic import Blueprint
 from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
 from sanic.response import json, text
 from sanic.testing import HOST, PORT
 
@@ -130,6 +130,9 @@ def test_query_string(app):
 
     assert request.args.get("test1") == "1"
     assert request.args.get("test2") == "false"
+    assert request.args.getlist("test2") == ["false", "true"]
+    assert request.args.getlist("test1") == ["1"]
+    assert request.args.get("test3", default="My value") == "My value"
 
 
 def test_uri_template(app):
@@ -626,7 +629,7 @@ def test_request_raw_args(app):
     assert request.raw_args == params
 
 
-def test_request_not_grouped_args(app):
+def test_request_query_args(app):
     # test multiple params with the same key
     params = [('test', 'value1'), ('test', 'value2')]
 
@@ -636,22 +639,65 @@ def test_request_not_grouped_args(app):
 
     request, response = app.test_client.get("/", params=params)
 
-    assert request.not_grouped_args == params
+    assert request.query_args == params
 
     # test cached value
-    assert request.parsed_not_grouped_args == request.not_grouped_args
+    assert request.parsed_not_grouped_args[(False, False, "utf-8", "replace")] == request.query_args
+
+    # test params directly in the url
+    request, response = app.test_client.get("/?test=value1&test=value2")
+
+    assert request.query_args == params
 
     # test unique params
     params = [('test1', 'value1'), ('test2', 'value2')]
 
     request, response = app.test_client.get("/", params=params)
 
-    assert request.not_grouped_args == params
+    assert request.query_args == params
 
     # test no params
     request, response = app.test_client.get("/")
 
-    assert not request.not_grouped_args
+    assert not request.query_args
+
+
+def test_request_query_args_custom_parsing(app):
+    @app.get("/")
+    def handler(request):
+        return text("pass")
+
+    request, response = app.test_client.get("/?test1=value1&test2=&test3=value3")
+
+    assert request.get_query_args(
+        keep_blank_values=True
+    ) == [
+        ('test1', 'value1'), ('test2', ''), ('test3', 'value3')
+    ]
+    assert request.query_args == [
+        ('test1', 'value1'), ('test3', 'value3')
+    ]
+    assert request.get_query_args(
+        keep_blank_values=False
+    ) == [
+        ('test1', 'value1'), ('test3', 'value3')
+    ]
+
+    assert request.get_args(
+        keep_blank_values=True
+    ) == RequestParameters(
+        {"test1": ["value1"], "test2": [""], "test3": ["value3"]}
+    )
+
+    assert request.args == RequestParameters(
+        {"test1": ["value1"], "test3": ["value3"]}
+    )
+
+    assert request.get_args(
+        keep_blank_values=False
+    ) == RequestParameters(
+        {"test1": ["value1"], "test3": ["value3"]}
+    )
 
 
 def test_request_cookies(app):

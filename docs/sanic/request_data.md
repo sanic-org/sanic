@@ -19,6 +19,8 @@ The following variables are accessible as properties on `Request` objects:
   URL that resembles `?key1=value1&key2=value2`. If that URL were to be parsed,
   the `args` dictionary would look like `{'key1': ['value1'], 'key2': ['value2']}`.
   The request's `query_string` variable holds the unparsed string value.
+  Property is providing the default parsing strategy. If you would like to change it look to the section below
+  (`Changing the default parsing rules of the queryset`).
 
   ```python
   from sanic.response import json
@@ -28,11 +30,54 @@ The following variables are accessible as properties on `Request` objects:
       return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
   ```
 
-- `not_grouped_args` (list) - On many cases you would need to access the url arguments in
-  a less packed form. For same previous URL `?key1=value1&key2=value2`, the
-  `not_grouped_args` list would look like `[('key1', 'value1'), ('key2', 'value2')]`.
+- `query_args` (list) - On many cases you would need to access the url arguments in
+  a less packed form. `query_args` is the list of `(key, value)` tuples.
+  Property is providing the default parsing strategy. If you would like to change it look to the section below
+  (`Changing the default parsing rules of the queryset`).
+  For the same previous URL queryset `?key1=value1&key2=value2`, the
+  `query_args` list would look like `[('key1', 'value1'), ('key2', 'value2')]`.
   And in case of the multiple params with the same key like `?key1=value1&key2=value2&key1=value3`
-  the `not_grouped_args` list would look like `[('key1', 'value1'), ('key2', 'value2'), ('key1', 'value3')]`.
+  the `query_args` list would look like `[('key1', 'value1'), ('key2', 'value2'), ('key1', 'value3')]`.
+
+  The difference between Request.args and Request.query_args
+  for the queryset `?key1=value1&key2=value2&key1=value3`
+
+  ```python
+  from sanic import Sanic
+  from sanic.response import json
+
+  app = Sanic(__name__)
+
+
+  @app.route("/test_request_args")
+  async def test_request_args(request):
+      return json({
+          "parsed": True,
+          "url": request.url,
+          "query_string": request.query_string,
+          "args": request.args,
+          "raw_args": request.raw_args,
+          "query_args": request.query_args,
+      })
+
+  if __name__ == '__main__':
+      app.run(host="0.0.0.0", port=8000)
+  ```
+
+  Output
+
+  ```
+  {
+    "parsed":true,
+    "url":"http:\/\/0.0.0.0:8000\/test_request_args?key1=value1&key2=value2&key1=value3",
+    "query_string":"key1=value1&key2=value2&key1=value3",
+    "args":{"key1":["value1","value3"],"key2":["value2"]},
+    "raw_args":{"key1":"value1","key2":"value2"},
+    "query_args":[["key1","value1"],["key2","value2"],["key1","value3"]]
+  }
+  ```
+
+  `raw_args` contains only the first entry of `key1`. Will be deprecated in the future versions.
 
 - `files` (dictionary of `File` objects) - List of files that have a name, body, and type
 
@@ -106,6 +151,34 @@ The following variables are accessible as properties on `Request` objects:
 - `query_string`: The query string of the request: `foo=bar` or a blank string `''`
 - `uri_template`: Template for matching route handler: `/posts/<id>/`
 - `token`: The value of Authorization header: `Basic YWRtaW46YWRtaW4=`
+
+
+## Changing the default parsing rules of the queryset
+
+The default parameters that are using internally in `args` and `query_args` properties to parse queryset:
+
+- `keep_blank_values` (bool): `True` - flag indicating whether blank values in
+  percent-encoded queries should be treated as blank strings.
+  A true value indicates that blanks should be retained as blank
+  strings.  The default false value indicates that blank values
+  are to be ignored and treated as if they were  not included.
+- `strict_parsing` (bool): `False` - flag indicating what to do with parsing errors. If
+  false (the default), errors are silently ignored. If true,
+  errors raise a ValueError exception.
+- `encoding` and `errors` (str): 'utf-8' and 'replace' - specify how to decode percent-encoded sequences
+  into Unicode characters, as accepted by the bytes.decode() method.
+
+If you would like to change that default parameters you could call `get_args` and `get_query_args` methods
+with new values.
+
+```python
+from sanic.response import json
+
+@app.route("/query_string")
+def query_string(request):
+
+    return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
+```
 
 
 ## Accessing values using `get` and `getlist`

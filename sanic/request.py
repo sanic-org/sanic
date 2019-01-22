@@ -4,7 +4,7 @@ import sys
 import warnings
 
 from cgi import parse_header
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs, parse_qsl, urlunparse
 
@@ -110,8 +110,8 @@ class Request(dict):
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
-        self.parsed_args = None
-        self.parsed_not_grouped_args = None
+        self.parsed_args = defaultdict(RequestParameters)
+        self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
         self._cookies = None
         self.stream = None
@@ -203,16 +203,34 @@ class Request(dict):
 
         return self.parsed_files
 
-    @property
-    def args(self):
-        if self.parsed_args is None:
+    def get_args(
+        self,
+        keep_blank_values: bool = False,
+        strict_parsing: bool = False,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+    ) -> RequestParameters:
+        if not self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]:
             if self.query_string:
-                self.parsed_args = RequestParameters(
-                    parse_qs(self.query_string)
+                self.parsed_args[
+                    (keep_blank_values, strict_parsing, encoding, errors)
+                ] = RequestParameters(
+                    parse_qs(
+                        qs=self.query_string,
+                        keep_blank_values=keep_blank_values,
+                        strict_parsing=strict_parsing,
+                        encoding=encoding,
+                        errors=errors,
+                    )
                 )
-            else:
-                self.parsed_args = RequestParameters()
-        return self.parsed_args
+
+        return self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]
+
+    args = property(get_args)
 
     @property
     def raw_args(self) -> dict:
@@ -220,18 +238,37 @@ class Request(dict):
             warnings.simplefilter("default")
         warnings.warn(
             "Use of raw_args will be deprecated in "
-            "the future versions. Please use args or not_grouped_args "
+            "the future versions. Please use args or query_args "
             "properties instead",
             DeprecationWarning,
         )
         return {k: v[0] for k, v in self.args.items()}
 
-    @property
-    def not_grouped_args(self) -> list:
-        if self.parsed_not_grouped_args is None:
+    def get_query_args(
+        self,
+        keep_blank_values: bool = False,
+        strict_parsing: bool = False,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+    ) -> list:
+        if not self.parsed_not_grouped_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]:
             if self.query_string:
-                self.parsed_not_grouped_args = parse_qsl(self.query_string)
-        return self.parsed_not_grouped_args
+                self.parsed_not_grouped_args[
+                    (keep_blank_values, strict_parsing, encoding, errors)
+                ] = parse_qsl(
+                    qs=self.query_string,
+                    keep_blank_values=keep_blank_values,
+                    strict_parsing=strict_parsing,
+                    encoding=encoding,
+                    errors=errors,
+                )
+        return self.parsed_not_grouped_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]
+
+    query_args = property(get_query_args)
 
     @property
     def cookies(self):

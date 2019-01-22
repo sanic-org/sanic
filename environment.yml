@@ -1,21 +1,18 @@
-name: py35
+name: py36
 dependencies:
-- openssl=1.0.2g=0
-- pip=8.1.1=py35_0
-- python=3.5.1=0
-- readline=6.2=2
-- setuptools=40.4.3=py35_0
-- sqlite=3.9.2=0
-- tk=8.5.18=0
-- wheel=0.29.0=py35_0
-- xz=5.0.5=1
-- zlib=1.2.8=0
+- pip=18.1=py36_0
+- python=3.6.5=0
+- setuptools=40.4.3=py36_0
 - pip:
-  - uvloop>=0.5.3
   - httptools>=0.0.10
+  - uvloop>=0.5.3
   - ujson>=1.35
   - aiofiles>=0.3.0
-  - websockets>=6.0
-  - sphinxcontrib-asyncio>=0.2.0
+  - websockets>=6.0,<7.0
   - multidict>=4.0,<5.0
+  - sphinx==1.8.3
+  - sphinx_rtd_theme==0.4.2
+  - recommonmark==0.5.0
+  - sphinxcontrib-asyncio>=0.2.0
   - docutils==0.14
+  - pygments==2.3.1

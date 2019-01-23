@@ -4,7 +4,7 @@ import sys
 import warnings
 
 from cgi import parse_header
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs, parse_qsl, urlunparse
 

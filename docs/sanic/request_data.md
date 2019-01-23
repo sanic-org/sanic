@@ -157,7 +157,7 @@ The following variables are accessible as properties on `Request` objects:
 
 The default parameters that are using internally in `args` and `query_args` properties to parse queryset:
 
-- `keep_blank_values` (bool): `True` - flag indicating whether blank values in
+- `keep_blank_values` (bool): `False` - flag indicating whether blank values in
   percent-encoded queries should be treated as blank strings.
   A true value indicates that blanks should be retained as blank
   strings.  The default false value indicates that blank values
@@ -169,17 +169,34 @@ The default parameters that are using internally in `args` and `query_args` prop
   into Unicode characters, as accepted by the bytes.decode() method.
 
 If you would like to change that default parameters you could call `get_args` and `get_query_args` methods
-with new values.
+with the new values.
+
+For the queryset `/?test1=value1&test2=&test3=value3`:
 
 ```python
 from sanic.response import json
 
 @app.route("/query_string")
 def query_string(request):
-
-    return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
+    args_with_blank_values = request.get_args(keep_blank_values=True)
+    return json({
+        "parsed": True,
+        "url": request.url,
+        "args_with_blank_values": args_with_blank_values,
+        "query_string": request.query_string
+    })
 ```
 
+The output will be:
+
+```
+{
+    "parsed": true,
+    "url": "http:\/\/0.0.0.0:8000\/query_string?test1=value1&test2=&test3=value3",
+    "args_with_blank_values": {"test1": ["value1""], "test2": "", "test3": ["value3"]},
+    "query_string": "test1=value1&test2=&test3=value3"
+}
+```
 
 ## Accessing values using `get` and `getlist`
 

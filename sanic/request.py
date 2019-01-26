@@ -210,6 +210,28 @@ class Request(dict):
         encoding: str = "utf-8",
         errors: str = "replace",
     ) -> RequestParameters:
+        """
+        Method to parse `query_string` using `urllib.parse.parse_qs`.
+        This methods is used by `args` property.
+        Can be used directly if you need to change default parameters.
+        :param keep_blank_values: flag indicating whether blank values in
+            percent-encoded queries should be treated as blank strings.
+            A true value indicates that blanks should be retained as blank
+            strings.  The default false value indicates that blank values
+            are to be ignored and treated as if they were  not included.
+        :type keep_blank_values: bool
+        :param strict_parsing: flag indicating what to do with parsing errors.
+            If false (the default), errors are silently ignored. If true,
+            errors raise a ValueError exception.
+        :type strict_parsing: bool
+        :param encoding: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type encoding: str
+        :param errors: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type errors: str
+        :return: RequestParameters
+        """
         if not self.parsed_args[
             (keep_blank_values, strict_parsing, encoding, errors)
         ]:
@@ -251,6 +273,28 @@ class Request(dict):
         encoding: str = "utf-8",
         errors: str = "replace",
     ) -> list:
+        """
+        Method to parse `query_string` using `urllib.parse.parse_qsl`.
+        This methods is used by `query_args` property.
+        Can be used directly if you need to change default parameters.
+        :param keep_blank_values: flag indicating whether blank values in
+            percent-encoded queries should be treated as blank strings.
+            A true value indicates that blanks should be retained as blank
+            strings.  The default false value indicates that blank values
+            are to be ignored and treated as if they were  not included.
+        :type keep_blank_values: bool
+        :param strict_parsing: flag indicating what to do with parsing errors.
+            If false (the default), errors are silently ignored. If true,
+            errors raise a ValueError exception.
+        :type strict_parsing: bool
+        :param encoding: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type encoding: str
+        :param errors: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type errors: str
+        :return: list
+        """
         if not self.parsed_not_grouped_args[
             (keep_blank_values, strict_parsing, encoding, errors)
         ]:

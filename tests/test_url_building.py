@@ -229,15 +229,7 @@ def test_fails_with_number_message(app):
     assert str(e.value) == expected_error
 
 
-@pytest.mark.parametrize(
-    "number",
-    [
-        3,
-        -3,
-        13.123,
-        -13.123,
-    ],
-)
+@pytest.mark.parametrize("number", [3, -3, 13.123, -13.123])
 def test_passes_with_negative_number_message(app, number):
     @app.route("path/<possibly_neg:number>/another-word")
     def good(request, possibly_neg):

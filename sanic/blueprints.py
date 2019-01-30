@@ -212,6 +212,7 @@ class Blueprint:
         strict_slashes=None,
         version=None,
         name=None,
+        stream=False,
     ):
         """Create a blueprint route from a function.
 
@@ -224,6 +225,7 @@ class Blueprint:
             training */*
         :param version: Blueprint Version
         :param name: user defined route name for url_for
+        :param stream: boolean specifying if the handler is a stream handler
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -246,6 +248,7 @@ class Blueprint:
             methods=methods,
             host=host,
             strict_slashes=strict_slashes,
+            stream=stream,
             version=version,
             name=name,
         )(handler)

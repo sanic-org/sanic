@@ -270,6 +270,18 @@ def test_request_stream_blueprint(app):
 
         return stream(streaming)
 
+    async def post_add_route(request):
+        assert isinstance(request.stream, StreamBuffer)
+
+        async def streaming(response):
+            while True:
+                body = await request.stream.read()
+                if body is None:
+                    break
+                await response.write(body.decode("utf-8"))
+        return stream(streaming)
+
+    bp.add_route(post_add_route, '/post/add_route', methods=['POST'], stream=True)
     app.blueprint(bp)
 
     assert app.is_request_stream is True
@@ -311,6 +323,10 @@ def test_request_stream_blueprint(app):
     assert response.text == "_PATCH"
 
     request, response = app.test_client.patch("/patch", data=data)
+    assert response.status == 200
+    assert response.text == data
+
+    request, response = app.test_client.post("/post/add_route", data=data)
     assert response.status == 200
     assert response.text == data
 

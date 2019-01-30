@@ -42,7 +42,7 @@ async def handler(request):
 
 
 @bp.put('/bp_stream', stream=True)
-async def bp_handler(request):
+async def bp_put_handler(request):
     result = ''
     while True:
         body = await request.stream.read()
@@ -50,6 +50,19 @@ async def bp_handler(request):
             break
         result += body.decode('utf-8').replace('1', 'A')
     return text(result)
+
+
+# You can also use `bp.add_route()` with stream argument
+async def bp_post_handler(request):
+    result = ''
+    while True:
+        body = await request.stream.read()
+        if body is None:
+            break
+        result += body.decode('utf-8').replace('1', 'A')
+    return text(result)
+
+bp.add_route(bp_post_handler, '/bp_stream', methods=['POST'], stream=True)
 
 
 async def post_handler(request):

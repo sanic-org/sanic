@@ -193,4 +193,4 @@ def test_cookie_expires_illegal_instance_type(expires):
     c = Cookie("test_cookie", "value")
     with pytest.raises(expected_exception=KeyError) as e:
         c["expires"] = expires
-        assert e.message == "Cookie 'expires' property must be a datetime instance"
+        assert e.message == "Cookie 'expires' property must be a datetime"

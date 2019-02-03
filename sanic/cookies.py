@@ -109,8 +109,11 @@ class Cookie(dict):
             if key.lower() == "max-age":
                 if not str(value).isdigit():
                     value = DEFAULT_MAX_AGE
-            elif key.lower() == "expires" and type(value) is not datetime.datetime:
-                raise KeyError("Cookie 'expires' property must be a datetime instance")
+            elif key.lower() == "expires":
+                if type(value) is not datetime.datetime:
+                    raise KeyError(
+                        "Cookie 'expires' property must be a datetime"
+                    )
             return super().__setitem__(key, value)
 
     def encode(self, encoding):

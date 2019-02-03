@@ -162,7 +162,7 @@ def test_cookie_max_age(app, max_age):
 
 @pytest.mark.parametrize(
     "expires",
-    [datetime.now() + timedelta(seconds=60), "Fri, 21-Dec-2018 15:30:00 GMT"],
+    [datetime.now() + timedelta(seconds=60)],
 )
 def test_cookie_expires(app, expires):
     cookies = {"test": "wait"}
@@ -183,3 +183,14 @@ def test_cookie_expires(app, expires):
         expires = expires.strftime("%a, %d-%b-%Y %T GMT")
 
     assert response.cookies["test"]["expires"] == expires
+
+
+@pytest.mark.parametrize(
+    "expires",
+    ["Fri, 21-Dec-2018 15:30:00 GMT"],
+)
+def test_cookie_expires_illegal_instance_type(expires):
+    c = Cookie("test_cookie", "value")
+    with pytest.raises(expected_exception=KeyError) as e:
+        c["expires"] = expires
+        assert e.message == "Cookie 'expires' property must be a datetime instance"

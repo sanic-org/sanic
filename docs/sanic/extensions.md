@@ -67,6 +67,7 @@ A list of Sanic extensions created by the community.
 ## Monitoring and Reporting
 
 - [sanic-prometheus](https://github.com/dkruchinin/sanic-prometheus): Prometheus metrics for Sanic
+- [sanic-zipkin](https://github.com/kevinqqnj/sanic-zipkin): Easily report request/function/RPC traces to zipkin/jaeger, through aiozipkin.
 
 
 ## Sample Applications

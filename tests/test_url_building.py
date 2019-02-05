@@ -170,9 +170,25 @@ def test_fails_with_int_message(app):
 
     expected_error = (
         'Value "not_int" for parameter `foo` '
-        "does not match pattern for type `int`: \d+"
+        "does not match pattern for type `int`: -?\d+"
     )
     assert str(e.value) == expected_error
+
+
+def test_passes_with_negative_int_message(app):
+    @app.route("path/<possibly_neg:int>/another-word")
+    def good(request, possibly_neg):
+        assert isinstance(possibly_neg, int)
+        return text("this should pass with `{}`".format(possibly_neg))
+
+    u_plus_3 = app.url_for("good", possibly_neg=3)
+    assert u_plus_3 == "/path/3/another-word", u_plus_3
+    request, response = app.test_client.get(u_plus_3)
+    assert response.text == "this should pass with `3`"
+    u_neg_3 = app.url_for("good", possibly_neg=-3)
+    assert u_neg_3 == "/path/-3/another-word", u_neg_3
+    request, response = app.test_client.get(u_neg_3)
+    assert response.text == "this should pass with `-3`"
 
 
 def test_fails_with_two_letter_string_message(app):
@@ -207,10 +223,24 @@ def test_fails_with_number_message(app):
 
     expected_error = (
         'Value "foo" for parameter `some_number` '
-        "does not match pattern for type `float`: [0-9\\\\.]+"
+        "does not match pattern for type `float`: -?[0-9\\\\.]+"
     )
 
     assert str(e.value) == expected_error
+
+
+@pytest.mark.parametrize("number", [3, -3, 13.123, -13.123])
+def test_passes_with_negative_number_message(app, number):
+    @app.route("path/<possibly_neg:number>/another-word")
+    def good(request, possibly_neg):
+        assert isinstance(possibly_neg, (int, float))
+        return text("this should pass with `{}`".format(possibly_neg))
+
+    u = app.url_for("good", possibly_neg=number)
+    assert u == "/path/{}/another-word".format(number), u
+    request, response = app.test_client.get(u)
+    # For ``number``, it has been cast to a float - so a ``3`` becomes a ``3.0``
+    assert response.text == "this should pass with `{}`".format(float(number))
 
 
 def test_adds_other_supplied_values_as_query_string(app):

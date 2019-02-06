@@ -1,6 +1,6 @@
 import re
 import string
-import datetime
+from datetime import datetime
 
 
 DEFAULT_MAX_AGE = 0
@@ -110,8 +110,8 @@ class Cookie(dict):
                 if not str(value).isdigit():
                     value = DEFAULT_MAX_AGE
             elif key.lower() == "expires":
-                if type(value) is not datetime.datetime:
-                    raise KeyError(
+                if not isinstance(value, datetime):
+                    raise TypeError(
                         "Cookie 'expires' property must be a datetime"
                     )
             return super().__setitem__(key, value)
@@ -139,10 +139,7 @@ class Cookie(dict):
             elif key == "expires":
                 output.append(
                     "%s=%s"
-                    % (
-                        self._keys[key],
-                        value.strftime("%a, %d-%b-%Y %T GMT"),
-                    )
+                    % (self._keys[key], value.strftime("%a, %d-%b-%Y %T GMT"))
                 )
             elif key in self._flags and self[key]:
                 output.append(self._keys[key])

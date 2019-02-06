@@ -48,7 +48,7 @@ app.run(host="0.0.0.0", port=8000)
 
 ## Virtual Host
 
-The `app.static()` method also support **virtual host**. You can serve your static files with spefic **virtual host** with `host` argument. For example:
+The `app.static()` method also support **virtual host**. You can serve your static files with specific **virtual host** with `host` argument. For example:
 
 ```python
 from sanic import Sanic

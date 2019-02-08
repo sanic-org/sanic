@@ -17,7 +17,6 @@ A list of Sanic extensions created by the community.
 - [Sanic-JWT-Extended](https://github.com/devArtoria/Sanic-JWT-Extended): Provides extended JWT support for 
 - [UserAgent](https://github.com/lixxu/sanic-useragent): Add `user_agent` to request
 - [Limiter](https://github.com/bohea/sanic-limiter): Rate limiting for sanic.
-- [Sanic-OAuth](https://github.com/Sniedes722/Sanic-OAuth): OAuth Library for connecting to & creating your own token providers.
 - [sanic-oauth](https://gitlab.com/SirEdvin/sanic-oauth): OAuth Library with many provider and OAuth1/OAuth2 support.
 - [Sanic-Auth](https://github.com/pyx/sanic-auth): A minimal backend agnostic session-based user authentication mechanism for Sanic.
 - [Sanic-CookieSession](https://github.com/pyx/sanic-cookiesession): A client-side only, cookie-based session, similar to the built-in session in Flask.

@@ -33,6 +33,7 @@ A list of Sanic extensions created by the community.
 - [Sanic CRUD](https://github.com/Typhon66/sanic_crud): CRUD REST API generation with peewee models.
 - [sanic-graphql](https://github.com/graphql-python/sanic-graphql): GraphQL integration with Sanic
 - [GINO](https://github.com/fantix/gino): An asyncio ORM on top of SQLAlchemy core, delivered with a Sanic extension. ([Documentation](https://python-gino.readthedocs.io/))
+- [Databases](https://github.com/encode/databases): Async database access for SQLAlchemy core, with support for PostgreSQL, MySQL, and SQLite.
 
 ## Unit Testing
 

@@ -1,7 +1,7 @@
 name: py36
 dependencies:
 - pip=18.1=py36_0
-- python=3.6.5=0
+- python=3.6=0
 - setuptools=40.4.3=py36_0
 - pip:
   - httptools>=0.0.10

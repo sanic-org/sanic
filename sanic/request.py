@@ -364,7 +364,7 @@ def parse_multipart_form(body, boundary):
 
         if field_name:
             post_data = form_part[line_index:-4]
-            if file_name:
+            if file_name is not None:
                 form_file = File(
                     type=content_type, name=file_name, body=post_data
                 )

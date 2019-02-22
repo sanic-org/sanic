@@ -1,12 +1,12 @@
 import asyncio
+import email.utils
 import json
 import sys
 
-import email.utils
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
-from urllib.parse import parse_qs, urlunparse, unquote
+from urllib.parse import parse_qs, unquote, urlunparse
 
 from httptools import parse_url
 
@@ -363,7 +363,8 @@ def parse_multipart_form(body, boundary):
                 # non-ASCII filenames in RFC2231, "filename*" format
                 if file_name is None and form_parameters.get("filename*"):
                     encoding, _, value = email.utils.decode_rfc2231(
-                        form_parameters["filename*"])
+                        form_parameters["filename*"]
+                    )
                     file_name = unquote(value, encoding=encoding)
             elif form_header_field == "content-type":
                 content_type = form_header_value

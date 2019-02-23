@@ -100,7 +100,7 @@ def test_cookie_deletion(app):
 
     assert int(response_cookies["i_want_to_die"]["max-age"]) == 0
     with pytest.raises(KeyError):
-        response.cookies["i_never_existed"]
+        _ = response.cookies["i_never_existed"]
 
 
 def test_cookie_reserved_cookie():

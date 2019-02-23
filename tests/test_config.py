@@ -144,7 +144,9 @@ def test_overwrite_exisiting_config_ignore_lowercase(app):
 
 
 def test_missing_config(app):
-    with pytest.raises(AttributeError, match="Config has no 'NON_EXISTENT'") as e:
+    with pytest.raises(
+        AttributeError, match="Config has no 'NON_EXISTENT'"
+    ) as e:
         _ = app.config.NON_EXISTENT
 
 

@@ -89,7 +89,7 @@ class Blueprint:
             if bp.url_prefix is None:
                 bp.url_prefix = ""
             bp.url_prefix = url_prefix + bp.url_prefix
-            bps.blueprints = bp
+            bps.append(bp)
         return bps
 
     def register(self, app, options):

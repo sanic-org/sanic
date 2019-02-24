@@ -1,4 +1,7 @@
-class BlueprintGroup:
+from collections import MutableSequence
+
+
+class BlueprintGroup(MutableSequence):
     """
     This class provides a mechanism to implement a Blueprint Group
     using the `Blueprint.group` method. To avoid having to re-write
@@ -34,15 +37,6 @@ class BlueprintGroup:
         """
         return self._blueprints
 
-    @blueprints.setter
-    def blueprints(self, blueprint):
-        """
-        Add a new Blueprint to the Group under consideration.
-        :param blueprint: Instance of Blueprint
-        :return: None
-        """
-        self._blueprints.append(blueprint)
-
     def __iter__(self):
         """Tun the class Blueprint Group into an Iterable item"""
         return iter(self._blueprints)
@@ -60,6 +54,50 @@ class BlueprintGroup:
         :return: Blueprint object
         """
         return self._blueprints[item]
+
+    def __setitem__(self, index: int, item: object) -> None:
+        """
+        Abstract method implemented to turn the `BlueprintGroup` class
+        into a list like object to support all the existing behavior.
+
+        This method is used to perform the list's indexed setter operation.
+
+        :param index: Index to use for inserting a new Blueprint item
+        :param item: New `Blueprint` object.
+        :return: None
+        """
+        self._blueprints[index] = item
+
+    def __delitem__(self, index: int) -> None:
+        """
+        Abstract method implemented to turn the `BlueprintGroup` class
+        into a list like object to support all the existing behavior.
+
+        This method is used to delete an item from the list of blueprint
+        groups like it can be done on a regular list with index.
+
+        :param index: Index to use for removing a new Blueprint item
+        :return: None
+        """
+        del self._blueprints[index]
+
+    def __len__(self) -> int:
+        """
+        Get the Length of the blueprint group object.
+        :return: Length of Blueprint group object
+        """
+        return len(self._blueprints)
+
+    def insert(self, index: int, item: object) -> None:
+        """
+        The Abstract class `MutableSequence` leverages this insert method to
+        perform the `BlueprintGroup.append` operation.
+
+        :param index: Index to use for removing a new Blueprint item
+        :param item: New `Blueprint` object.
+        :return: None
+        """
+        self._blueprints.insert(index, item)
 
     def middleware(self, *args, **kwargs):
         """

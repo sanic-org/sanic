@@ -134,7 +134,7 @@ def test_query_string(app):
 
 def test_uri_template(app):
     @app.route("/foo/<id:int>/bar/<name:[A-z]+>")
-    async def handler(request):
+    async def handler(request, id, name):
         return text("OK")
 
     request, response = app.test_client.get("/foo/123/bar/baz")

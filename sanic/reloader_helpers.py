@@ -36,7 +36,15 @@ def _iter_module_files():
 def _get_args_for_reloading():
     """Returns the executable."""
     rv = [sys.executable]
-    rv.extend(sys.argv)
+    main_module = sys.modules["__main__"]
+    mod_spec = getattr(main_module, "__spec__", None)
+    if mod_spec:
+        # Parent exe was launched as a module rather than a script
+        rv.extend(["-m", mod_spec.name])
+        if len(sys.argv) > 1:
+            rv.extend(sys.argv[1:])
+    else:
+        rv.extend(sys.argv)
     return rv
 
 
@@ -44,6 +52,7 @@ def restart_with_reloader():
     """Create a new process and a subprocess in it with the same arguments as
     this one.
     """
+    cwd = os.getcwd()
     args = _get_args_for_reloading()
     new_environ = os.environ.copy()
     new_environ["SANIC_SERVER_RUNNING"] = "true"
@@ -51,7 +60,7 @@ def restart_with_reloader():
     worker_process = Process(
         target=subprocess.call,
         args=(cmd,),
-        kwargs=dict(shell=True, env=new_environ),
+        kwargs={"cwd": cwd, "shell": True, "env": new_environ},
     )
     worker_process.start()
     return worker_process

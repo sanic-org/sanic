@@ -15,6 +15,7 @@ from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
+from sanic.blueprint_group import BlueprintGroup
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
@@ -597,9 +598,11 @@ class Sanic:
         :return: decorated method
         """
         if attach_to == "request":
-            self.request_middleware.append(middleware)
+            if middleware not in self.request_middleware:
+                self.request_middleware.append(middleware)
         if attach_to == "response":
-            self.response_middleware.appendleft(middleware)
+            if middleware not in self.response_middleware:
+                self.response_middleware.appendleft(middleware)
         return middleware
 
     # Decorator
@@ -681,7 +684,7 @@ class Sanic:
         :param options: option dictionary with blueprint defaults
         :return: Nothing
         """
-        if isinstance(blueprint, (list, tuple)):
+        if isinstance(blueprint, (list, tuple, BlueprintGroup)):
             for item in blueprint:
                 self.blueprint(item, **options)
             return

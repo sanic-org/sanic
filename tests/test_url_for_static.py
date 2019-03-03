@@ -83,13 +83,45 @@ def test_static_file(app, static_file_directory, file_name):
     uri = app.url_for("static", _external=True, _server="http://localhost")
     assert uri == "http://localhost/testing.file"
 
-    uri = app.url_for(
-        "static",
-        name="test_bp_static.static",
-        _external=True,
-        _server="http://localhost",
-    )
-    assert uri == "http://localhost/bp/testing.file"
+    uri = app.url_for('static', _external=True, _server='http://localhost',
+                      _port=80)
+    assert uri == 'http://localhost/testing.file'
+
+    uri = app.url_for('static', _external=True, _server='http://localhost',
+                      _port=80)
+    assert uri == 'http://localhost/testing.file'
+
+    uri = app.url_for('static', _external=True, _server='https://localhost',
+                      _port=443)
+    assert uri == 'https://localhost/testing.file'
+
+    uri = app.url_for('static', _external=True, _server='http://localhost',
+                      _port=8080)
+    assert uri == 'http://localhost:8080/testing.file'
+
+    uri = app.url_for('static', _external=True, _server='https://localhost',
+                      _port=4433)
+    assert uri == 'https://localhost:4433/testing.file'
+
+    uri = app.url_for('static', name='test_bp_static.static',
+                      _external=True, _server='http://localhost')
+    assert uri == 'http://localhost/bp/testing.file'
+
+    uri = app.url_for('static', name='test_bp_static.static',
+                      _external=True, _server='http://localhost', _port=80)
+    assert uri == 'http://localhost/bp/testing.file'
+
+    uri = app.url_for('static', name='test_bp_static.static',
+                      _external=True, _server='https://localhost', _port=443)
+    assert uri == 'https://localhost/bp/testing.file'
+
+    uri = app.url_for('static', name='test_bp_static.static',
+                      _external=True, _server='http://localhost', _port=8080)
+    assert uri == 'http://localhost:8080/bp/testing.file'
+
+    uri = app.url_for('static', name='test_bp_static.static',
+                      _external=True, _server='https://localhost', _port=4433)
+    assert uri == 'https://localhost:4433/bp/testing.file'
 
     # test for defined name
     uri = app.url_for("static", name="testing_file")

@@ -127,7 +127,7 @@ Blueprints have almost the same functionality as an application instance.
 WebSocket handlers can be registered on a blueprint using the `@bp.websocket`
 decorator or `bp.add_websocket_route` method.
 
-### Middleware
+### Blueprint Middleware
 
 Using blueprints allows you to also register middleware globally.
 
@@ -143,6 +143,36 @@ async def halt_request(request):
 @bp.middleware('response')
 async def halt_response(request, response):
 	return text('I halted the response')
+```
+
+### Blueprint Group Middleware
+Using this middleware will ensure that you can apply a common middleware to all the blueprints that form the
+current blueprint group under consideration.
+
+```python
+bp1 = Blueprint('bp1', url_prefix='/bp1')
+bp2 = Blueprint('bp2', url_prefix='/bp2')
+
+@bp1.middleware('request')
+async def bp1_only_middleware(request):
+    print('applied on Blueprint : bp1 Only')
+
+@bp1.route('/')
+async def bp1_route(request):
+    return text('bp1')
+
+@bp2.route('/<param>')
+async def bp2_route(request, param):
+    return text(param)
+
+group = Blueprint.group(bp1, bp2)
+
+@group.middleware('request')
+async def group_middleware(request):
+    print('common middleware applied for both bp1 and bp2')
+    
+# Register Blueprint group under the app
+app.blueprint(group)
 ```
 
 ### Exceptions

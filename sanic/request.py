@@ -7,8 +7,7 @@ import warnings
 from cgi import parse_header
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
-from urllib.parse import parse_qs, parse_qsl, urlunparse
-
+from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url
 

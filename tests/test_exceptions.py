@@ -74,7 +74,7 @@ def exception_app():
 
     @app.route("/divide_by_zero")
     def handle_unhandled_exception(request):
-        1 / 0
+        _ = 1 / 0
 
     @app.route("/error_in_error_handler_handler")
     def custom_error_handler(request):
@@ -82,7 +82,7 @@ def exception_app():
 
     @app.exception(SanicExceptionTestException)
     def error_in_error_handler_handler(request, exception):
-        1 / 0
+        _ = 1 / 0
 
     return app
 

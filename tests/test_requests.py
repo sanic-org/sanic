@@ -137,7 +137,7 @@ def test_query_string(app):
 
 def test_uri_template(app):
     @app.route("/foo/<id:int>/bar/<name:[A-z]+>")
-    async def handler(request):
+    async def handler(request, id, name):
         return text("OK")
 
     request, response = app.test_client.get("/foo/123/bar/baz")
@@ -435,21 +435,41 @@ def test_request_string_representation(app):
 
 
 @pytest.mark.parametrize(
-    "payload",
+    "payload,filename",
     [
-        "------sanic\r\n"
-        'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
-        "\r\n"
-        "OK\r\n"
-        "------sanic--\r\n",
-        "------sanic\r\n"
-        'content-disposition: form-data; filename="filename"; name="test"\r\n'
-        "\r\n"
-        'content-type: application/json; {"field": "value"}\r\n'
-        "------sanic--\r\n",
+        ("------sanic\r\n"
+         'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
+         "\r\n"
+         "OK\r\n"
+         "------sanic--\r\n", "filename"),
+        ("------sanic\r\n"
+         'content-disposition: form-data; filename="filename"; name="test"\r\n'
+         "\r\n"
+         'content-type: application/json; {"field": "value"}\r\n'
+         "------sanic--\r\n", "filename"),
+        ("------sanic\r\n"
+         'Content-Disposition: form-data; filename=""; name="test"\r\n'
+         "\r\n"
+         "OK\r\n"
+         "------sanic--\r\n", ""),
+        ("------sanic\r\n"
+         'content-disposition: form-data; filename=""; name="test"\r\n'
+         "\r\n"
+         'content-type: application/json; {"field": "value"}\r\n'
+         "------sanic--\r\n", ""),
+        ("------sanic\r\n"
+         'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+         "\r\n"
+         "OK\r\n"
+         "------sanic--\r\n", "filename_\u00A0_test"),
+        ("------sanic\r\n"
+         'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+         "\r\n"
+         'content-type: application/json; {"field": "value"}\r\n'
+         "------sanic--\r\n", "filename_\u00A0_test"),
     ],
 )
-def test_request_multipart_files(app, payload):
+def test_request_multipart_files(app, payload, filename):
     @app.route("/", methods=["POST"])
     async def post(request):
         return text("OK")
@@ -457,7 +477,7 @@ def test_request_multipart_files(app, payload):
     headers = {"content-type": "multipart/form-data; boundary=----sanic"}
 
     request, _ = app.test_client.post(data=payload, headers=headers)
-    assert request.files.get("test").name == "filename"
+    assert request.files.get("test").name == filename
 
 
 def test_request_multipart_file_with_json_content_type(app):
@@ -569,7 +589,7 @@ def test_request_repr(app):
     assert repr(request) == "<Request: GET />"
 
     request.method = None
-    assert repr(request) == "<Request>"
+    assert repr(request) == "<Request: None />"
 
 
 def test_request_bool(app):

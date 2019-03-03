@@ -39,5 +39,5 @@ def test_overload_dynamic_routes_exist(app):
     with pytest.raises(RouteExists):
 
         @app.route("/overload/<param>", methods=["PUT", "DELETE"])
-        async def handler3(request):
+        async def handler3(request, param):
             return text("Duplicated")

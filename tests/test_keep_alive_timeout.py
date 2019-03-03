@@ -9,10 +9,8 @@ from aiohttp import TCPConnector
 from sanic.testing import SanicTestClient, HOST, PORT
 
 
-CONFIG_FOR_TESTS = {
-    "KEEP_ALIVE_TIMEOUT": 2,
-    "KEEP_ALIVE": True
-}
+CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
+
 
 class ReuseableTCPConnector(TCPConnector):
     def __init__(self, *args, **kwargs):
@@ -51,7 +49,7 @@ class ReuseableSanicTestClient(SanicTestClient):
         uri="/",
         gather_request=True,
         debug=False,
-        server_kwargs={},
+        server_kwargs={"return_asyncio_server": True},
         *request_args,
         **request_kwargs
     ):
@@ -145,7 +143,7 @@ class ReuseableSanicTestClient(SanicTestClient):
     # loop, so the changes above are required too.
     async def _local_request(self, method, uri, cookies=None, *args, **kwargs):
         request_keepalive = kwargs.pop(
-            "request_keepalive", CONFIG_FOR_TESTS['KEEP_ALIVE_TIMEOUT']
+            "request_keepalive", CONFIG_FOR_TESTS["KEEP_ALIVE_TIMEOUT"]
         )
         if uri.startswith(("http:", "https:", "ftp:", "ftps://" "//")):
             url = uri

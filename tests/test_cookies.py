@@ -100,7 +100,7 @@ def test_cookie_deletion(app):
 
     assert int(response_cookies["i_want_to_die"]["max-age"]) == 0
     with pytest.raises(KeyError):
-        response.cookies["i_never_existed"]
+        _ = response.cookies["i_never_existed"]
 
 
 def test_cookie_reserved_cookie():
@@ -160,10 +160,7 @@ def test_cookie_max_age(app, max_age):
         assert response.cookies["test"]["max-age"] == str(DEFAULT_MAX_AGE)
 
 
-@pytest.mark.parametrize(
-    "expires",
-    [datetime.now() + timedelta(seconds=60), "Fri, 21-Dec-2018 15:30:00 GMT"],
-)
+@pytest.mark.parametrize("expires", [datetime.now() + timedelta(seconds=60)])
 def test_cookie_expires(app, expires):
     cookies = {"test": "wait"}
 
@@ -183,3 +180,11 @@ def test_cookie_expires(app, expires):
         expires = expires.strftime("%a, %d-%b-%Y %T GMT")
 
     assert response.cookies["test"]["expires"] == expires
+
+
+@pytest.mark.parametrize("expires", ["Fri, 21-Dec-2018 15:30:00 GMT"])
+def test_cookie_expires_illegal_instance_type(expires):
+    c = Cookie("test_cookie", "value")
+    with pytest.raises(expected_exception=TypeError) as e:
+        c["expires"] = expires
+        assert e.message == "Cookie 'expires' property must be a datetime"

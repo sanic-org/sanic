@@ -1,11 +1,12 @@
 import asyncio
+import email.utils
 import json
 import sys
 
 from cgi import parse_header
 from collections import namedtuple
 from http.cookies import SimpleCookie
-from urllib.parse import parse_qs, urlunparse
+from urllib.parse import parse_qs, unquote, urlunparse
 
 from httptools import parse_url
 
@@ -69,26 +70,27 @@ class Request(dict):
     """Properties of an HTTP request such as URL, headers, etc."""
 
     __slots__ = (
-        "app",
-        "headers",
-        "version",
-        "method",
+        "__weakref__",
         "_cookies",
-        "transport",
-        "body",
-        "parsed_json",
-        "parsed_args",
-        "parsed_form",
-        "parsed_files",
         "_ip",
         "_parsed_url",
-        "uri_template",
-        "stream",
+        "_port",
         "_remote_addr",
         "_socket",
-        "_port",
-        "__weakref__",
+        "app",
+        "body",
+        "endpoint",
+        "headers",
+        "method",
+        "parsed_args",
+        "parsed_files",
+        "parsed_form",
+        "parsed_json",
         "raw_url",
+        "stream",
+        "transport",
+        "uri_template",
+        "version",
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -111,10 +113,9 @@ class Request(dict):
         self.uri_template = None
         self._cookies = None
         self.stream = None
+        self.endpoint = None
 
     def __repr__(self):
-        if self.method is None or not self.path:
-            return "<{0}>".format(self.__class__.__name__)
         return "<{0}: {1} {2}>".format(
             self.__class__.__name__, self.method, self.path
         )
@@ -356,15 +357,28 @@ def parse_multipart_form(body, boundary):
             )
 
             if form_header_field == "content-disposition":
-                file_name = form_parameters.get("filename")
                 field_name = form_parameters.get("name")
+                file_name = form_parameters.get("filename")
+
+                # non-ASCII filenames in RFC2231, "filename*" format
+                if file_name is None and form_parameters.get("filename*"):
+                    encoding, _, value = email.utils.decode_rfc2231(
+                        form_parameters["filename*"]
+                    )
+                    file_name = unquote(value, encoding=encoding)
             elif form_header_field == "content-type":
                 content_type = form_header_value
                 content_charset = form_parameters.get("charset", "utf-8")
 
         if field_name:
             post_data = form_part[line_index:-4]
-            if file_name:
+            if file_name is None:
+                value = post_data.decode(content_charset)
+                if field_name in fields:
+                    fields[field_name].append(value)
+                else:
+                    fields[field_name] = [value]
+            else:
                 form_file = File(
                     type=content_type, name=file_name, body=post_data
                 )
@@ -372,12 +386,6 @@ def parse_multipart_form(body, boundary):
                     files[field_name].append(form_file)
                 else:
                     files[field_name] = [form_file]
-            else:
-                value = post_data.decode(content_charset)
-                if field_name in fields:
-                    fields[field_name].append(value)
-                else:
-                    fields[field_name] = [value]
         else:
             logger.debug(
                 "Form-data field does not have a 'name' parameter "

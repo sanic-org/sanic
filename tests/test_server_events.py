@@ -83,7 +83,7 @@ async def test_trigger_before_events_create_server(app):
     async def init_db(app, loop):
         app.db = MySanicDb()
 
-    await app.create_server()
+    await app.create_server(debug=True, return_asyncio_server=True)
 
     assert hasattr(app, "db")
     assert isinstance(app.db, MySanicDb)

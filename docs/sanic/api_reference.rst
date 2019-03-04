@@ -20,6 +20,15 @@ sanic.blueprints module
     :undoc-members:
     :show-inheritance:
 
+sanic.blueprint_group module
+----------------------------
+
+.. automodule:: sanic.blueprint_group
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 sanic.config module
 -------------------
 

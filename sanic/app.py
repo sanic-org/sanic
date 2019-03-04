@@ -4,15 +4,18 @@ import os
 import re
 import warnings
 
-from asyncio import CancelledError, ensure_future, get_event_loop
+from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
 from inspect import getmodulename, isawaitable, signature, stack
-from ssl import Purpose, create_default_context
+from socket import socket
+from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
+from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
+from sanic.blueprint_group import BlueprintGroup
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
@@ -454,6 +457,13 @@ class Sanic:
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
+                if not getattr(handler, "__blueprintname__", False):
+                    request.endpoint = handler.__name__
+                else:
+                    request.endpoint = (
+                        getattr(handler, "__blueprintname__", "")
+                        + handler.__name__
+                    )
                 try:
                     protocol = request.transport.get_protocol()
                 except AttributeError:
@@ -588,9 +598,11 @@ class Sanic:
         :return: decorated method
         """
         if attach_to == "request":
-            self.request_middleware.append(middleware)
+            if middleware not in self.request_middleware:
+                self.request_middleware.append(middleware)
         if attach_to == "response":
-            self.response_middleware.appendleft(middleware)
+            if middleware not in self.response_middleware:
+                self.response_middleware.appendleft(middleware)
         return middleware
 
     # Decorator
@@ -672,7 +684,7 @@ class Sanic:
         :param options: option dictionary with blueprint defaults
         :return: Nothing
         """
-        if isinstance(blueprint, (list, tuple)):
+        if isinstance(blueprint, (list, tuple, BlueprintGroup)):
             for item in blueprint:
                 self.blueprint(item, **options)
             return
@@ -888,6 +900,16 @@ class Sanic:
                             "handler from the router"
                         )
                     )
+                else:
+                    if not getattr(handler, "__blueprintname__", False):
+                        request.endpoint = self._build_endpoint_name(
+                            handler.__name__
+                        )
+                    else:
+                        request.endpoint = self._build_endpoint_name(
+                            getattr(handler, "__blueprintname__", ""),
+                            handler.__name__,
+                        )
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)
@@ -967,34 +989,47 @@ class Sanic:
 
     def run(
         self,
-        host=None,
-        port=None,
-        debug=False,
-        ssl=None,
-        sock=None,
-        workers=1,
-        protocol=None,
-        backlog=100,
-        stop_event=None,
-        register_sys_signals=True,
-        access_log=True,
-        **kwargs
-    ):
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        debug: bool = False,
+        ssl: Union[dict, SSLContext, None] = None,
+        sock: Optional[socket] = None,
+        workers: int = 1,
+        protocol: Type[Protocol] = None,
+        backlog: int = 100,
+        stop_event: Any = None,
+        register_sys_signals: bool = True,
+        access_log: Optional[bool] = None,
+        **kwargs: Any
+    ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
         :param host: Address to host on
+        :type host: str
         :param port: Port to host on
+        :type port: int
         :param debug: Enables debug output (slows server)
+        :type debug: bool
         :param ssl: SSLContext, or location of certificate and key
             for SSL encryption of worker(s)
+        :type ssl:SSLContext or dict
         :param sock: Socket for the server to accept connections from
+        :type sock: socket
         :param workers: Number of processes received before it is respected
+        :type workers: int
+        :param protocol: Subclass of asyncio Protocol class
+        :type protocol: type[Protocol]
         :param backlog: a number of unaccepted connections that the system
             will allow before refusing new connections
-        :param stop_event: event to be triggered before stopping the app
+        :type backlog: int
+        :param stop_event: event to be triggered
+            before stopping the app - deprecated
+        :type stop_event: None
         :param register_sys_signals: Register SIG* events
-        :param protocol: Subclass of asyncio protocol class
+        :type register_sys_signals: bool
+        :param access_log: Enables writing access logs (slows server)
+        :type access_log: bool
         :return: Nothing
         """
         if "loop" in kwargs:
@@ -1027,8 +1062,10 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
-        # compatibility old access_log params
-        self.config.ACCESS_LOG = access_log
+        # if access_log is passed explicitly change config.ACCESS_LOG
+        if access_log is not None:
+            self.config.ACCESS_LOG = access_log
+
         server_settings = self._helper(
             host=host,
             port=port,
@@ -1078,16 +1115,18 @@ class Sanic:
 
     async def create_server(
         self,
-        host=None,
-        port=None,
-        debug=False,
-        ssl=None,
-        sock=None,
-        protocol=None,
-        backlog=100,
-        stop_event=None,
-        access_log=True,
-    ):
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        debug: bool = False,
+        ssl: Union[dict, SSLContext, None] = None,
+        sock: Optional[socket] = None,
+        protocol: Type[Protocol] = None,
+        backlog: int = 100,
+        stop_event: Any = None,
+        access_log: Optional[bool] = None,
+        return_asyncio_server=False,
+        asyncio_server_kwargs=None,
+    ) -> None:
         """
         Asynchronous version of :func:`run`.
 
@@ -1098,6 +1137,36 @@ class Sanic:
         .. note::
             This does not support multiprocessing and is not the preferred
             way to run a :class:`Sanic` application.
+
+        :param host: Address to host on
+        :type host: str
+        :param port: Port to host on
+        :type port: int
+        :param debug: Enables debug output (slows server)
+        :type debug: bool
+        :param ssl: SSLContext, or location of certificate and key
+            for SSL encryption of worker(s)
+        :type ssl:SSLContext or dict
+        :param sock: Socket for the server to accept connections from
+        :type sock: socket
+        :param protocol: Subclass of asyncio Protocol class
+        :type protocol: type[Protocol]
+        :param backlog: a number of unaccepted connections that the system
+            will allow before refusing new connections
+        :type backlog: int
+        :param stop_event: event to be triggered
+            before stopping the app - deprecated
+        :type stop_event: None
+        :param access_log: Enables writing access logs (slows server)
+        :type access_log: bool
+        :param return_asyncio_server: flag that defines whether there's a need
+                                      to return asyncio.Server or
+                                      start it serving right away
+        :type return_asyncio_server: bool
+        :param asyncio_server_kwargs: key-value arguments for
+                                      asyncio/uvloop create_server method
+        :type asyncio_server_kwargs: dict
+        :return: Nothing
         """
 
         if sock is None:
@@ -1114,8 +1183,10 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
-        # compatibility old access_log params
-        self.config.ACCESS_LOG = access_log
+        # if access_log is passed explicitly change config.ACCESS_LOG
+        if access_log is not None:
+            self.config.ACCESS_LOG = access_log
+
         server_settings = self._helper(
             host=host,
             port=port,
@@ -1125,7 +1196,7 @@ class Sanic:
             loop=get_event_loop(),
             protocol=protocol,
             backlog=backlog,
-            run_async=True,
+            run_async=return_asyncio_server,
         )
 
         # Trigger before_start events
@@ -1134,7 +1205,9 @@ class Sanic:
             server_settings.get("loop"),
         )
 
-        return await serve(**server_settings)
+        return await serve(
+            asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
+        )
 
     async def trigger_events(self, events, loop):
         """Trigger events (functions or async)
@@ -1276,3 +1349,7 @@ class Sanic:
             logger.info("Goin' Fast @ {}://{}:{}".format(proto, host, port))
 
         return server_settings
+
+    def _build_endpoint_name(self, *parts):
+        parts = [self.name, *parts]
+        return ".".join(parts)

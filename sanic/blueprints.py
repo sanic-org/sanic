@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 
+from sanic.blueprint_group import BlueprintGroup
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
 
@@ -78,10 +79,12 @@ class Blueprint:
             for i in nested:
                 if isinstance(i, (list, tuple)):
                     yield from chain(i)
+                elif isinstance(i, BlueprintGroup):
+                    yield from i.blueprints
                 else:
                     yield i
 
-        bps = []
+        bps = BlueprintGroup(url_prefix=url_prefix)
         for bp in chain(blueprints):
             if bp.url_prefix is None:
                 bp.url_prefix = ""
@@ -212,6 +215,7 @@ class Blueprint:
         strict_slashes=None,
         version=None,
         name=None,
+        stream=False,
     ):
         """Create a blueprint route from a function.
 
@@ -224,6 +228,7 @@ class Blueprint:
             training */*
         :param version: Blueprint Version
         :param name: user defined route name for url_for
+        :param stream: boolean specifying if the handler is a stream handler
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -246,6 +251,7 @@ class Blueprint:
             methods=methods,
             host=host,
             strict_slashes=strict_slashes,
+            stream=stream,
             version=version,
             name=name,
         )(handler)
@@ -324,7 +330,13 @@ class Blueprint:
             args = []
             return register_middleware(middleware)
         else:
-            return register_middleware
+            if kwargs.get("bp_group") and callable(args[0]):
+                middleware = args[0]
+                args = args[1:]
+                kwargs.pop("bp_group")
+                return register_middleware(middleware)
+            else:
+                return register_middleware
 
     def exception(self, *args, **kwargs):
         """

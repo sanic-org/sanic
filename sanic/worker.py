@@ -57,6 +57,7 @@ class GunicornWorker(base.Worker):
             if self.app.callable.websocket_enabled
             else self.http_protocol
         )
+
         self._server_settings = self.app.callable._helper(
             loop=self.loop,
             debug=is_debug,

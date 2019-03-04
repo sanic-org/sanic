@@ -3,7 +3,6 @@ from json import JSONDecodeError
 from sanic import Sanic
 import asyncio
 from sanic.response import text
-from sanic.config import Config
 import aiohttp
 from aiohttp import TCPConnector
 from sanic.testing import SanicTestClient, HOST
@@ -152,9 +151,7 @@ class DelayableSanicTestClient(SanicTestClient):
                 host=HOST, port=self.port, uri=uri
             )
         conn = DelayableTCPConnector(
-            pre_request_delay=self._request_delay,
-            verify_ssl=False,
-            loop=self._loop,
+            pre_request_delay=self._request_delay, ssl=False, loop=self._loop
         )
         async with aiohttp.ClientSession(
             cookies=cookies, connector=conn, loop=self._loop
@@ -183,9 +180,10 @@ class DelayableSanicTestClient(SanicTestClient):
                 return response
 
 
-Config.REQUEST_TIMEOUT = 0.6
 request_timeout_default_app = Sanic("test_request_timeout_default")
 request_no_timeout_app = Sanic("test_request_no_timeout")
+request_timeout_default_app.config.REQUEST_TIMEOUT = 0.6
+request_no_timeout_app.config.REQUEST_TIMEOUT = 0.6
 
 
 @request_timeout_default_app.route("/1")

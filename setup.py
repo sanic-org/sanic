@@ -73,17 +73,22 @@ setup_kwargs = {
 env_dependency = (
     '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
 )
-ujson = "ujson>=1.35" + env_dependency
+
+ujson = "ujson>=1.35" + env_dependency + ' and python_version < "3.6"'
+orjson = 'orjson>=2.0.1; implementation_name == "cpython" and python_version > "3.5"'
 uvloop = "uvloop>=0.5.3" + env_dependency
 
 requirements = [
     "httptools>=0.0.10",
     uvloop,
     ujson,
+    orjson,
     "aiofiles>=0.3.0",
     "websockets>=6.0,<7.0",
     "multidict>=4.0,<5.0",
 ]
+
+print(requirements)
 
 tests_require = [
     "pytest==4.1.0",
@@ -94,9 +99,15 @@ tests_require = [
     "beautifulsoup4",
     uvloop,
     ujson,
+    orjson,
     "pytest-sanic",
     "pytest-sugar",
 ]
+
+if strtobool(os.environ.get("SANIC_NO_ORJSON", "no")):
+    print("Installing without orjson")
+    requirements.remove(orjson)
+    tests_require.remove(orjson)
 
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")

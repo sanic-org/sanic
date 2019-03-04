@@ -15,7 +15,10 @@ from sanic.log import error_logger, logger
 
 
 try:
-    from ujson import loads as json_loads
+    if sys.version_info < (3, 6):
+        from orjson import loads as json_loads
+    else:
+        from ujson import loads as json_loads
 except ImportError:
     if sys.version_info[:2] == (3, 5):
 

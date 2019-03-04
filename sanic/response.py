@@ -1,6 +1,7 @@
 from functools import partial
 from mimetypes import guess_type
 from os import path
+from sys import version_info
 from urllib.parse import quote_plus
 
 from aiofiles import open as open_async
@@ -11,13 +12,16 @@ from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 
 
 try:
-    from ujson import dumps as json_dumps
+    if version_info < (3, 6):
+        from ujson import dumps as _json_dumps
+    else:
+        from orjson import dumps as _json_dumps
 except BaseException:
     from json import dumps
 
     # This is done in order to ensure that the JSON response is
     # kept consistent across both ujson and inbuilt json usage.
-    json_dumps = partial(dumps, separators=(",", ":"))
+    _json_dumps = partial(dumps, separators=(",", ":"))
 
 
 class BaseHTTPResponse:
@@ -200,6 +204,13 @@ class HTTPResponse(BaseHTTPResponse):
         return self._cookies
 
 
+def json_dumps(*args, **kwargs):
+    data = _json_dumps(*args, **kwargs)
+    if isinstance(data, bytes):
+        data = data.decode("utf-8")
+    return data
+
+
 def json(
     body,
     status=200,
@@ -214,6 +225,8 @@ def json(
     :param body: Response data to be serialized.
     :param status: Response code.
     :param headers: Custom Headers.
+    :param content_type: Content Type to be used for `HTTPResponse`
+    :param dumps: Method to use for serializing payload into JSON
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
     return HTTPResponse(

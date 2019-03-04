@@ -205,6 +205,14 @@ class HTTPResponse(BaseHTTPResponse):
 
 
 def json_dumps(*args, **kwargs):
+    """
+    This method provides a non breaking change for the python
+    imports being done by the existing code if any.
+
+    If any of the current code was doing a
+    `from sanic.response import json_dumps`, the behavior can
+    change since orjson.dumps returns bytes by default as return
+    """
     data = _json_dumps(*args, **kwargs)
     if isinstance(data, bytes):
         data = data.decode("utf-8")

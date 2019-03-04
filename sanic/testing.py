@@ -3,6 +3,7 @@ from json import JSONDecodeError
 from sanic.exceptions import MethodNotSupported
 from sanic.log import logger
 from sanic.response import text
+from socket import socket
 
 
 HOST = "127.0.0.1"
@@ -11,18 +12,12 @@ PORT = 42101
 
 class SanicTestClient:
     def __init__(self, app, port=PORT):
+        """Use port=None to bind to a random port"""
         self.app = app
         self.port = port
 
-    async def _local_request(self, method, uri, cookies=None, *args, **kwargs):
+    async def _local_request(self, method, url, cookies=None, *args, **kwargs):
         import aiohttp
-
-        if uri.startswith(("http:", "https:", "ftp:", "ftps://" "//")):
-            url = uri
-        else:
-            url = "http://{host}:{port}{uri}".format(
-                host=HOST, port=self.port, uri=uri
-            )
 
         logger.info(url)
         conn = aiohttp.TCPConnector(ssl=False)
@@ -79,11 +74,27 @@ class SanicTestClient:
             else:
                 return self.app.error_handler.default(request, exception)
 
+        if self.port:
+            server_kwargs = dict(host=HOST, port=self.port, **server_kwargs)
+            host, port = HOST, self.port
+        else:
+            sock = socket()
+            sock.bind((HOST, 0))
+            server_kwargs = dict(sock=sock, **server_kwargs)
+            host, port = sock.getsockname()
+
+        if uri.startswith(("http:", "https:", "ftp:", "ftps://", "//")):
+            url = uri
+        else:
+            url = "http://{host}:{port}{uri}".format(
+                host=host, port=port, uri=uri
+            )
+
         @self.app.listener("after_server_start")
         async def _collect_response(sanic, loop):
             try:
                 response = await self._local_request(
-                    method, uri, *request_args, **request_kwargs
+                    method, url, *request_args, **request_kwargs
                 )
                 results[-1] = response
             except Exception as e:
@@ -91,7 +102,7 @@ class SanicTestClient:
                 exceptions.append(e)
             self.app.stop()
 
-        self.app.run(host=HOST, debug=debug, port=self.port, **server_kwargs)
+        self.app.run(debug=debug, **server_kwargs)
         self.app.listeners["after_server_start"].pop()
 
         if exceptions:

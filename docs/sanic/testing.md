@@ -59,6 +59,23 @@ the available arguments to aiohttp can be found
 [in the documentation for ClientSession](https://aiohttp.readthedocs.io/en/stable/client_reference.html#client-session).
 
 
+## Using a random port
+
+If you need to test using a free unpriveleged port chosen by the kernel
+instead of the default with `SanicTestClient`, you can do so by specifying
+`port=None`. On most systems the port will be in the range 1024 to 65535.
+
+```python
+# Import the Sanic app, usually created with Sanic(__name__)
+from external_server import app
+from sanic.testing import SanicTestClient
+
+def test_index_returns_200():
+    request, response = SanicTestClient(app, port=None).get('/')
+    assert response.status == 200
+```
+
+
 ## pytest-sanic
 
 [pytest-sanic](https://github.com/yunstanford/pytest-sanic) is a pytest plugin, it helps you to test your code asynchronously.

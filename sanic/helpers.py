@@ -137,7 +137,7 @@ def remove_entity_headers(headers, allowed=("content-location", "expires")):
     return headers
 
 
-def import_string(module_name):
+def import_string(module_name, package=None):
     """
     import a module or class by string path.
 
@@ -148,7 +148,7 @@ def import_string(module_name):
 
     """
     module, klass = module_name.rsplit(".", 1)
-    module = import_module(module)
+    module = import_module(module, package=package)
     obj = getattr(module, klass)
     if ismodule(obj):
         return obj

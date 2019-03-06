@@ -155,8 +155,8 @@ def test_fails_with_int_message(app):
         app.url_for('fail', **failing_kwargs)
 
     expected_error = (
-        'Value "not_int" for parameter `foo` '
-        'does not match pattern for type `int`: \d+')
+        r'Value "not_int" for parameter `foo` '
+        r'does not match pattern for type `int`: \d+')
     assert str(e.value) == expected_error
 
 

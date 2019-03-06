@@ -81,6 +81,7 @@ def test_middleware_response_raise_cancelled_error(app, caplog):
     def handler(request):
         return text('OK')
 
+    caplog.set_level(logging.ERROR, logger="sanic.root")
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get('/')
 
@@ -98,6 +99,7 @@ def test_middleware_response_raise_exception(app, caplog):
     async def process_response(request, response):
         raise Exception('Exception at response middleware')
 
+    caplog.set_level(logging.ERROR, logger="sanic.root")
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get('/')
 

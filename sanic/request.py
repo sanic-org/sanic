@@ -230,7 +230,7 @@ class Request(dict):
     @property
     def ip(self):
         """
-        peer ip
+        :return: peer ip of the socket
         """
         if not hasattr(self, "_socket"):
             self._get_address()
@@ -239,7 +239,7 @@ class Request(dict):
     @property
     def port(self):
         """
-        peer port
+        :return: peer port of the socket
         """
         if not hasattr(self, "_socket"):
             self._get_address()
@@ -262,9 +262,10 @@ class Request(dict):
     @property
     def server_name(self):
         """
-        server name.
-        The difference between `Request.server_name` and `Request.host`
-        is that server_name doesn't contain port number part.
+        Attempt to get the server's hostname in this order:
+        `config.SERVER_NAME`, `x-forwarded-host` header, :func:`Request.host`
+        :return: the server name without port number
+        :rtype: str
         """
         return (
             self.app.config.get("SERVER_NAME")
@@ -275,7 +276,11 @@ class Request(dict):
     @property
     def server_port(self):
         """
-        server port
+        Attempt to get the server's port in this order:
+        `x-forwarded-port` header, :func:`Request.host`, actual port used by
+        the transport layer socket.
+        :return: server port
+        :rtype: int
         """
         forwarded_port = self.headers.get("x-forwarded-port") or (
             self.host.split(":")[1] if ":" in self.host else None
@@ -288,7 +293,8 @@ class Request(dict):
 
     @property
     def remote_addr(self):
-        """Attempt to return the original client ip based on X-Forwarded-For.
+        """
+        Attempt to return the original client ip based on X-Forwarded-For.
 
         :return: original client ip.
         """
@@ -307,6 +313,14 @@ class Request(dict):
 
     @property
     def scheme(self):
+        """
+        Attempt to get the request scheme.
+        Seeking the value in this order:
+        `x-forwarded-proto` header, `x-scheme` header, the sanic app itself.
+
+        :return: http|https|ws|wss or arbitrary value given by the headers.
+        :rtype: str
+        """
         forwarded_proto = self.headers.get(
             "x-forwarded-proto"
         ) or self.headers.get("x-scheme")
@@ -328,8 +342,12 @@ class Request(dict):
 
     @property
     def host(self):
+        """
+        :return: the Host specified in the header, may contains port number.
+        """
         # it appears that httptools doesn't return the host
         # so pull it from the headers
+
         return self.headers.get("Host", "")
 
     @property
@@ -360,9 +378,13 @@ class Request(dict):
 
     def url_for(self, view_name, **kwargs):
         """
-        Same as `Sanic.url_for`, but automatically determine `scheme` and
-        `netloc` base on the request. Since this method is aiming to generate
-        correct schema & netloc, `_external` is implied.
+        Same as :func:`sanic.Sanic.url_for`, but automatically determine
+        `scheme` and `netloc` base on the request. Since this method is aiming
+        to generate correct schema & netloc, `_external` is implied.
+
+        :param kwargs: takes same parameters as in :func:`sanic.Sanic.url_for`
+        :return: an absolute url to the given view
+        :rtype: str
         """
         scheme = self.scheme
         host = self.server_name

@@ -264,6 +264,7 @@ class Request(dict):
         """
         Attempt to get the server's hostname in this order:
         `config.SERVER_NAME`, `x-forwarded-host` header, :func:`Request.host`
+
         :return: the server name without port number
         :rtype: str
         """

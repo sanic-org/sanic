@@ -138,6 +138,7 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
         raise Exception
         return text('OK')
 
+    caplog.set_level(logging.ERROR, logger="sanic.root")
     with caplog.at_level(logging.ERROR):
         request, response = app.test_client.get('/')
     assert response.status == 500

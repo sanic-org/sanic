@@ -151,9 +151,7 @@ class DelayableSanicTestClient(SanicTestClient):
                 host=HOST, port=self.port, uri=uri
             )
         conn = DelayableTCPConnector(
-            pre_request_delay=self._request_delay,
-            ssl=False,
-            loop=self._loop,
+            pre_request_delay=self._request_delay, ssl=False, loop=self._loop
         )
         async with aiohttp.ClientSession(
             cookies=cookies, connector=conn, loop=self._loop

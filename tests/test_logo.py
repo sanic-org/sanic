@@ -12,7 +12,7 @@ except BaseException:
 
 
 def test_logo_base(app, caplog):
-    server = app.create_server(debug=True)
+    server = app.create_server(debug=True, return_asyncio_server=True)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False
@@ -31,7 +31,7 @@ def test_logo_base(app, caplog):
 def test_logo_false(app, caplog):
     app.config.LOGO = False
 
-    server = app.create_server(debug=True)
+    server = app.create_server(debug=True, return_asyncio_server=True)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False
@@ -50,7 +50,7 @@ def test_logo_false(app, caplog):
 def test_logo_true(app, caplog):
     app.config.LOGO = True
 
-    server = app.create_server(debug=True)
+    server = app.create_server(debug=True, return_asyncio_server=True)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False
@@ -69,7 +69,7 @@ def test_logo_true(app, caplog):
 def test_logo_custom(app, caplog):
     app.config.LOGO = "My Custom Logo"
 
-    server = app.create_server(debug=True)
+    server = app.create_server(debug=True, return_asyncio_server=True)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False

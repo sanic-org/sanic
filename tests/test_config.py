@@ -144,9 +144,10 @@ def test_overwrite_exisiting_config_ignore_lowercase(app):
 
 
 def test_missing_config(app):
-    with pytest.raises(AttributeError) as e:
-        app.config.NON_EXISTENT
-        assert str(e.value) == ("Config has no 'NON_EXISTENT'")
+    with pytest.raises(
+        AttributeError, match="Config has no 'NON_EXISTENT'"
+    ) as e:
+        _ = app.config.NON_EXISTENT
 
 
 def test_config_defaults():
@@ -166,7 +167,7 @@ def test_config_custom_defaults():
     custom_defaults = {
         "REQUEST_MAX_SIZE": 1,
         "KEEP_ALIVE": False,
-        "ACCESS_LOG": False
+        "ACCESS_LOG": False,
     }
     conf = Config(defaults=custom_defaults)
     for key, value in DEFAULT_CONFIG.items():
@@ -182,13 +183,13 @@ def test_config_custom_defaults_with_env():
     custom_defaults = {
         "REQUEST_MAX_SIZE123": 1,
         "KEEP_ALIVE123": False,
-        "ACCESS_LOG123": False
+        "ACCESS_LOG123": False,
     }
 
     environ_defaults = {
         "SANIC_REQUEST_MAX_SIZE123": "2",
         "SANIC_KEEP_ALIVE123": "True",
-        "SANIC_ACCESS_LOG123": "False"
+        "SANIC_ACCESS_LOG123": "False",
     }
 
     for key, value in environ_defaults.items():
@@ -201,8 +202,8 @@ def test_config_custom_defaults_with_env():
             try:
                 value = int(value)
             except ValueError:
-                if value in ['True', 'False']:
-                    value = value == 'True'
+                if value in ["True", "False"]:
+                    value = value == "True"
 
         assert getattr(conf, key) == value
 
@@ -213,7 +214,7 @@ def test_config_custom_defaults_with_env():
 def test_config_access_log_passing_in_run(app):
     assert app.config.ACCESS_LOG == True
 
-    @app.listener('after_server_start')
+    @app.listener("after_server_start")
     async def _request(sanic, loop):
         app.stop()
 
@@ -227,14 +228,18 @@ def test_config_access_log_passing_in_run(app):
 async def test_config_access_log_passing_in_create_server(app):
     assert app.config.ACCESS_LOG == True
 
-    @app.listener('after_server_start')
+    @app.listener("after_server_start")
     async def _request(sanic, loop):
         app.stop()
 
-    await app.create_server(port=1341, access_log=False)
+    await app.create_server(
+        port=1341, access_log=False, return_asyncio_server=True
+    )
     assert app.config.ACCESS_LOG == False
 
-    await app.create_server(port=1342, access_log=True)
+    await app.create_server(
+        port=1342, access_log=True, return_asyncio_server=True
+    )
     assert app.config.ACCESS_LOG == True
 
 

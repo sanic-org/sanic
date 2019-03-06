@@ -34,9 +34,6 @@ except ImportError:
     pass
 
 
-current_time = None
-
-
 class Signal:
     stopped = False
 
@@ -171,7 +168,7 @@ class HttpProtocol(asyncio.Protocol):
             self.request_timeout, self.request_timeout_callback
         )
         self.transport = transport
-        self._last_request_time = current_time
+        self._last_request_time = time()
 
     def connection_lost(self, exc):
         self.connections.discard(self)
@@ -197,7 +194,7 @@ class HttpProtocol(asyncio.Protocol):
         # exactly what this timeout is checking for.
         # Check if elapsed time since request initiated exceeds our
         # configured maximum request timeout value
-        time_elapsed = current_time - self._last_request_time
+        time_elapsed = time() - self._last_request_time
         if time_elapsed < self.request_timeout:
             time_left = self.request_timeout - time_elapsed
             self._request_timeout_handler = self.loop.call_later(
@@ -213,7 +210,7 @@ class HttpProtocol(asyncio.Protocol):
     def response_timeout_callback(self):
         # Check if elapsed time since response was initiated exceeds our
         # configured maximum request timeout value
-        time_elapsed = current_time - self._last_request_time
+        time_elapsed = time() - self._last_request_time
         if time_elapsed < self.response_timeout:
             time_left = self.response_timeout - time_elapsed
             self._response_timeout_handler = self.loop.call_later(
@@ -234,7 +231,7 @@ class HttpProtocol(asyncio.Protocol):
 
         :return: None
         """
-        time_elapsed = current_time - self._last_response_time
+        time_elapsed = time() - self._last_response_time
         if time_elapsed < self.keep_alive_timeout:
             time_left = self.keep_alive_timeout - time_elapsed
             self._keep_alive_timeout_handler = self.loop.call_later(
@@ -362,7 +359,7 @@ class HttpProtocol(asyncio.Protocol):
         self._response_timeout_handler = self.loop.call_later(
             self.response_timeout, self.response_timeout_callback
         )
-        self._last_request_time = current_time
+        self._last_request_time = time()
         self._request_handler_task = self.loop.create_task(
             self.request_handler(
                 self.request, self.write_response, self.stream_response
@@ -449,7 +446,7 @@ class HttpProtocol(asyncio.Protocol):
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout, self.keep_alive_timeout_callback
                 )
-                self._last_response_time = current_time
+                self._last_response_time = time()
                 self.cleanup()
 
     async def drain(self):
@@ -502,7 +499,7 @@ class HttpProtocol(asyncio.Protocol):
                 self._keep_alive_timeout_handler = self.loop.call_later(
                     self.keep_alive_timeout, self.keep_alive_timeout_callback
                 )
-                self._last_response_time = current_time
+                self._last_response_time = time()
                 self.cleanup()
 
     def write_error(self, exception):
@@ -595,18 +592,6 @@ class HttpProtocol(asyncio.Protocol):
             self.transport = None
 
 
-def update_current_time(loop):
-    """Cache the current time, since it is needed at the end of every
-    keep-alive request to update the request timeout time
-
-    :param loop:
-    :return:
-    """
-    global current_time
-    current_time = time()
-    loop.call_later(1, partial(update_current_time, loop))
-
-
 def trigger_events(events, loop):
     """Trigger event callbacks (functions or async)
 
@@ -656,6 +641,7 @@ def serve(
     websocket_write_limit=2 ** 16,
     state=None,
     graceful_shutdown_timeout=15.0,
+    asyncio_server_kwargs=None,
 ):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -700,6 +686,8 @@ def serve(
     :param router: Router object
     :param graceful_shutdown_timeout: How long take to Force close non-idle
                                       connection
+    :param asyncio_server_kwargs: key-value args for asyncio/uvloop
+                                  create_server method
     :return: Nothing
     """
     if not run_async:
@@ -734,7 +722,9 @@ def serve(
         state=state,
         debug=debug,
     )
-
+    asyncio_server_kwargs = (
+        asyncio_server_kwargs if asyncio_server_kwargs else {}
+    )
     server_coroutine = loop.create_server(
         server,
         host,
@@ -743,11 +733,8 @@ def serve(
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog,
+        **asyncio_server_kwargs
     )
-
-    # Instead of pulling time at the end of every request,
-    # pull it once per minute
-    loop.call_soon(partial(update_current_time, loop))
 
     if run_async:
         return server_coroutine

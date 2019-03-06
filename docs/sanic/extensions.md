@@ -17,7 +17,6 @@ A list of Sanic extensions created by the community.
 - [Sanic-JWT-Extended](https://github.com/devArtoria/Sanic-JWT-Extended): Provides extended JWT support for 
 - [UserAgent](https://github.com/lixxu/sanic-useragent): Add `user_agent` to request
 - [Limiter](https://github.com/bohea/sanic-limiter): Rate limiting for sanic.
-- [Sanic-OAuth](https://github.com/Sniedes722/Sanic-OAuth): OAuth Library for connecting to & creating your own token providers.
 - [sanic-oauth](https://gitlab.com/SirEdvin/sanic-oauth): OAuth Library with many provider and OAuth1/OAuth2 support.
 - [Sanic-Auth](https://github.com/pyx/sanic-auth): A minimal backend agnostic session-based user authentication mechanism for Sanic.
 - [Sanic-CookieSession](https://github.com/pyx/sanic-cookiesession): A client-side only, cookie-based session, similar to the built-in session in Flask.
@@ -34,6 +33,7 @@ A list of Sanic extensions created by the community.
 - [Sanic CRUD](https://github.com/Typhon66/sanic_crud): CRUD REST API generation with peewee models.
 - [sanic-graphql](https://github.com/graphql-python/sanic-graphql): GraphQL integration with Sanic
 - [GINO](https://github.com/fantix/gino): An asyncio ORM on top of SQLAlchemy core, delivered with a Sanic extension. ([Documentation](https://python-gino.readthedocs.io/))
+- [Databases](https://github.com/encode/databases): Async database access for SQLAlchemy core, with support for PostgreSQL, MySQL, and SQLite.
 
 ## Unit Testing
 
@@ -67,6 +67,7 @@ A list of Sanic extensions created by the community.
 ## Monitoring and Reporting
 
 - [sanic-prometheus](https://github.com/dkruchinin/sanic-prometheus): Prometheus metrics for Sanic
+- [sanic-zipkin](https://github.com/kevinqqnj/sanic-zipkin): Easily report request/function/RPC traces to zipkin/jaeger, through aiozipkin.
 
 
 ## Sample Applications

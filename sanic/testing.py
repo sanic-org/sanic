@@ -1,9 +1,9 @@
 from json import JSONDecodeError
+from socket import socket
 
 from sanic.exceptions import MethodNotSupported
 from sanic.log import logger
 from sanic.response import text
-from socket import socket
 
 
 HOST = "127.0.0.1"

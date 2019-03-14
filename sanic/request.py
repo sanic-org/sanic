@@ -2,11 +2,12 @@ import asyncio
 import email.utils
 import json
 import sys
+import warnings
 
 from cgi import parse_header
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
-from urllib.parse import parse_qs, unquote, urlunparse
+from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url
 
@@ -83,6 +84,7 @@ class Request(dict):
         "headers",
         "method",
         "parsed_args",
+        "parsed_not_grouped_args",
         "parsed_files",
         "parsed_form",
         "parsed_json",
@@ -109,7 +111,8 @@ class Request(dict):
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
-        self.parsed_args = None
+        self.parsed_args = defaultdict(RequestParameters)
+        self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
         self._cookies = None
         self.stream = None
@@ -199,20 +202,116 @@ class Request(dict):
 
         return self.parsed_files
 
-    @property
-    def args(self):
-        if self.parsed_args is None:
+    def get_args(
+        self,
+        keep_blank_values: bool = False,
+        strict_parsing: bool = False,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+    ) -> RequestParameters:
+        """
+        Method to parse `query_string` using `urllib.parse.parse_qs`.
+        This methods is used by `args` property.
+        Can be used directly if you need to change default parameters.
+        :param keep_blank_values: flag indicating whether blank values in
+            percent-encoded queries should be treated as blank strings.
+            A true value indicates that blanks should be retained as blank
+            strings.  The default false value indicates that blank values
+            are to be ignored and treated as if they were  not included.
+        :type keep_blank_values: bool
+        :param strict_parsing: flag indicating what to do with parsing errors.
+            If false (the default), errors are silently ignored. If true,
+            errors raise a ValueError exception.
+        :type strict_parsing: bool
+        :param encoding: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type encoding: str
+        :param errors: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type errors: str
+        :return: RequestParameters
+        """
+        if not self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]:
             if self.query_string:
-                self.parsed_args = RequestParameters(
-                    parse_qs(self.query_string)
+                self.parsed_args[
+                    (keep_blank_values, strict_parsing, encoding, errors)
+                ] = RequestParameters(
+                    parse_qs(
+                        qs=self.query_string,
+                        keep_blank_values=keep_blank_values,
+                        strict_parsing=strict_parsing,
+                        encoding=encoding,
+                        errors=errors,
+                    )
                 )
-            else:
-                self.parsed_args = RequestParameters()
-        return self.parsed_args
+
+        return self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]
+
+    args = property(get_args)
 
     @property
-    def raw_args(self):
+    def raw_args(self) -> dict:
+        if self.app.debug:  # pragma: no cover
+            warnings.simplefilter("default")
+        warnings.warn(
+            "Use of raw_args will be deprecated in "
+            "the future versions. Please use args or query_args "
+            "properties instead",
+            DeprecationWarning,
+        )
         return {k: v[0] for k, v in self.args.items()}
+
+    def get_query_args(
+        self,
+        keep_blank_values: bool = False,
+        strict_parsing: bool = False,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+    ) -> list:
+        """
+        Method to parse `query_string` using `urllib.parse.parse_qsl`.
+        This methods is used by `query_args` property.
+        Can be used directly if you need to change default parameters.
+        :param keep_blank_values: flag indicating whether blank values in
+            percent-encoded queries should be treated as blank strings.
+            A true value indicates that blanks should be retained as blank
+            strings.  The default false value indicates that blank values
+            are to be ignored and treated as if they were  not included.
+        :type keep_blank_values: bool
+        :param strict_parsing: flag indicating what to do with parsing errors.
+            If false (the default), errors are silently ignored. If true,
+            errors raise a ValueError exception.
+        :type strict_parsing: bool
+        :param encoding: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type encoding: str
+        :param errors: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type errors: str
+        :return: list
+        """
+        if not self.parsed_not_grouped_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]:
+            if self.query_string:
+                self.parsed_not_grouped_args[
+                    (keep_blank_values, strict_parsing, encoding, errors)
+                ] = parse_qsl(
+                    qs=self.query_string,
+                    keep_blank_values=keep_blank_values,
+                    strict_parsing=strict_parsing,
+                    encoding=encoding,
+                    errors=errors,
+                )
+        return self.parsed_not_grouped_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]
+
+    query_args = property(get_query_args)
 
     @property
     def cookies(self):

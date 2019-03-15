@@ -31,7 +31,7 @@ This example shows how to use sanic with Python 3.7, to be precise: how to retri
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
     try:
-        os.remote(server_socket)
+        os.remove(server_socket)
     finally:
         sock.bind(server_socket)
 
@@ -40,7 +40,7 @@ This example shows how to use sanic with Python 3.7, to be precise: how to retri
         srv_coro = app.create_server(
             sock=sock,
             return_asyncio_server=True,
-            asyncio_server_args=dict(
+            asyncio_server_kwargs=dict(
                 start_serving=False
             )
         )

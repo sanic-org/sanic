@@ -59,7 +59,7 @@ app = Sanic()
 app.error_handler.add(Exception, server_error_handler)
 ```
 
-In some cases, you might want want to add some more error handling
+In some cases, you might want to add some more error handling
 functionality to what is provided by default. In that case, you 
 can subclass Sanic's default error handler as such:
 

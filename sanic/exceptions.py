@@ -123,7 +123,7 @@ _sanic_exceptions = {}
 
 def add_status_code(code):
     """
-    Decorator used for adding exceptions to _sanic_exceptions.
+    Decorator used for adding exceptions to :class:`SanicException`.
     """
 
     def class_decorator(cls):

@@ -4,16 +4,19 @@ import os
 import re
 import warnings
 
-from asyncio import CancelledError, ensure_future, get_event_loop
+from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
 from inspect import getmodulename, isawaitable, signature, stack
-from ssl import Purpose, create_default_context
+from socket import socket
+from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
+from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
-from sanic.config import Config
+from sanic.blueprint_group import BlueprintGroup
+from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
@@ -204,6 +207,17 @@ class Sanic:
     def get(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **GET** *HTTP* method
+
+        :param uri: URL to be tagged to **GET** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"GET"}),
@@ -222,6 +236,17 @@ class Sanic:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **POST** *HTTP* method
+
+        :param uri: URL to be tagged to **POST** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"POST"}),
@@ -241,6 +266,17 @@ class Sanic:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **PUT** *HTTP* method
+
+        :param uri: URL to be tagged to **PUT** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"PUT"}),
@@ -266,6 +302,17 @@ class Sanic:
     def options(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **OPTIONS** *HTTP* method
+
+        :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"OPTIONS"}),
@@ -284,6 +331,17 @@ class Sanic:
         version=None,
         name=None,
     ):
+        """
+        Add an API URL under the **DELETE** *HTTP* method
+
+        :param uri: URL to be tagged to **PATCH** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"PATCH"}),
@@ -297,6 +355,17 @@ class Sanic:
     def delete(
         self, uri, host=None, strict_slashes=None, version=None, name=None
     ):
+        """
+        Add an API URL under the **DELETE** *HTTP* method
+
+        :param uri: URL to be tagged to **DELETE** method of *HTTP*
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param version: API Version
+        :param name: Unique name that can be used to identify the Route
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"DELETE"}),
@@ -388,6 +457,13 @@ class Sanic:
         def response(handler):
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
+                if not getattr(handler, "__blueprintname__", False):
+                    request.endpoint = handler.__name__
+                else:
+                    request.endpoint = (
+                        getattr(handler, "__blueprintname__", "")
+                        + handler.__name__
+                    )
                 try:
                     protocol = request.transport.get_protocol()
                 except AttributeError:
@@ -430,7 +506,22 @@ class Sanic:
         subprotocols=None,
         name=None,
     ):
-        """A helper method to register a function as a websocket route."""
+        """
+        A helper method to register a function as a websocket route.
+
+        :param handler: a callable function or instance of a class
+                        that can handle the websocket request
+        :param host: Host IP or FQDN details
+        :param uri: URL path that will be mapped to the websocket
+                    handler
+        :param strict_slashes: If the API endpoint needs to terminate
+                with a "/" or not
+        :param subprotocols: Subprotocols to be used with websocket
+                handshake
+        :param name: A unique name assigned to the URL so that it can
+                be used with :func:`url_for`
+        :return: Objected decorated by :func:`websocket`
+        """
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
 
@@ -459,6 +550,16 @@ class Sanic:
         self.websocket_enabled = enable
 
     def remove_route(self, uri, clean_cache=True, host=None):
+        """
+        This method provides the app user a mechanism by which an already
+        existing route can be removed from the :class:`Sanic` object
+
+        :param uri: URL Path to be removed from the app
+        :param clean_cache: Instruct sanic if it needs to clean up the LRU
+            route cache
+        :param host: IP address or FQDN specific to the host
+        :return: None
+        """
         self.router.remove(uri, clean_cache, host)
 
     # Decorator
@@ -481,18 +582,39 @@ class Sanic:
         return response
 
     def register_middleware(self, middleware, attach_to="request"):
+        """
+        Register an application level middleware that will be attached
+        to all the API URLs registered under this application.
+
+        This method is internally invoked by the :func:`middleware`
+        decorator provided at the app level.
+
+        :param middleware: Callback method to be attached to the
+            middleware
+        :param attach_to: The state at which the middleware needs to be
+            invoked in the lifecycle of an *HTTP Request*.
+            **request** - Invoke before the request is processed
+            **response** - Invoke before the response is returned back
+        :return: decorated method
+        """
         if attach_to == "request":
-            self.request_middleware.append(middleware)
+            if middleware not in self.request_middleware:
+                self.request_middleware.append(middleware)
         if attach_to == "response":
-            self.response_middleware.appendleft(middleware)
+            if middleware not in self.response_middleware:
+                self.response_middleware.appendleft(middleware)
         return middleware
 
     # Decorator
     def middleware(self, middleware_or_request):
-        """Decorate and register middleware to be called before a request.
-        Can either be called as @app.middleware or @app.middleware('request')
         """
+        Decorate and register middleware to be called before a request.
+        Can either be called as *@app.middleware* or
+        *@app.middleware('request')*
 
+        :param: middleware_or_request: Optional parameter to use for
+            identifying which type of middleware is being registered.
+        """
         # Detect which way this was called, @middleware or @middleware('AT')
         if callable(middleware_or_request):
             return self.register_middleware(middleware_or_request)
@@ -516,8 +638,30 @@ class Sanic:
         strict_slashes=None,
         content_type=None,
     ):
-        """Register a root to serve files from. The input can either be a
-        file or a directory. See
+        """
+        Register a root to serve files from. The input can either be a
+        file or a directory. This method will enable an easy and simple way
+        to setup the :class:`Route` necessary to serve the static files.
+
+        :param uri: URL path to be used for serving static content
+        :param file_or_directory: Path for the Static file/directory with
+            static files
+        :param pattern: Regex Pattern identifying the valid static files
+        :param use_modified_since: If true, send file modified time, and return
+            not modified if the browser's matches the server's
+        :param use_content_range: If true, process header for range requests
+            and sends the file part that is requested
+        :param stream_large_files: If true, use the
+            :func:`StreamingHTTPResponse.file_stream` handler rather
+            than the :func:`HTTPResponse.file` handler to send the file.
+            If this is an integer, this represents the threshold size to
+            switch to :func:`StreamingHTTPResponse.file_stream`
+        :param name: user defined name used for url_for
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param content_type: user defined content type for header
+        :return: None
         """
         static_register(
             self,
@@ -540,7 +684,7 @@ class Sanic:
         :param options: option dictionary with blueprint defaults
         :return: Nothing
         """
-        if isinstance(blueprint, (list, tuple)):
+        if isinstance(blueprint, (list, tuple, BlueprintGroup)):
             for item in blueprint:
                 self.blueprint(item, **options)
             return
@@ -555,7 +699,17 @@ class Sanic:
         blueprint.register(self, options)
 
     def register_blueprint(self, *args, **kwargs):
-        # TODO: deprecate 1.0
+        """
+        Proxy method provided for invoking the :func:`blueprint` method
+
+        .. note::
+            To be deprecated in 1.0. Use :func:`blueprint` instead.
+
+        :param args: Blueprint object or (list, tuple) thereof
+        :param kwargs: option dictionary with blueprint defaults
+        :return: None
+        """
+
         if self.debug:
             warnings.simplefilter("default")
         warnings.warn(
@@ -700,6 +854,9 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def converted_response_type(self, response):
+        """
+        No implementation provided.
+        """
         pass
 
     async def handle_request(self, request, write_callback, stream_callback):
@@ -743,6 +900,16 @@ class Sanic:
                             "handler from the router"
                         )
                     )
+                else:
+                    if not getattr(handler, "__blueprintname__", False):
+                        request.endpoint = self._build_endpoint_name(
+                            handler.__name__
+                        )
+                    else:
+                        request.endpoint = self._build_endpoint_name(
+                            getattr(handler, "__blueprintname__", ""),
+                            handler.__name__,
+                        )
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)
@@ -822,19 +989,49 @@ class Sanic:
 
     def run(
         self,
-        host=None,
-        port=None,
-        debug=False,
-        ssl=None,
-        sock=None,
-        workers=1,
-        protocol=None,
-        backlog=100,
-        stop_event=None,
-        register_sys_signals=True,
-        access_log=True,
-        **kwargs
-    ):
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        debug: bool = False,
+        ssl: Union[dict, SSLContext, None] = None,
+        sock: Optional[socket] = None,
+        workers: int = 1,
+        protocol: Type[Protocol] = None,
+        backlog: int = 100,
+        stop_event: Any = None,
+        register_sys_signals: bool = True,
+        access_log: Optional[bool] = None,
+        **kwargs: Any
+    ) -> None:
+        """Run the HTTP Server and listen until keyboard interrupt or term
+        signal. On termination, drain connections before closing.
+
+        :param host: Address to host on
+        :type host: str
+        :param port: Port to host on
+        :type port: int
+        :param debug: Enables debug output (slows server)
+        :type debug: bool
+        :param ssl: SSLContext, or location of certificate and key
+            for SSL encryption of worker(s)
+        :type ssl:SSLContext or dict
+        :param sock: Socket for the server to accept connections from
+        :type sock: socket
+        :param workers: Number of processes received before it is respected
+        :type workers: int
+        :param protocol: Subclass of asyncio Protocol class
+        :type protocol: type[Protocol]
+        :param backlog: a number of unaccepted connections that the system
+            will allow before refusing new connections
+        :type backlog: int
+        :param stop_event: event to be triggered
+            before stopping the app - deprecated
+        :type stop_event: None
+        :param register_sys_signals: Register SIG* events
+        :type register_sys_signals: bool
+        :param access_log: Enables writing access logs (slows server)
+        :type access_log: bool
+        :return: Nothing
+        """
         if "loop" in kwargs:
             raise TypeError(
                 "loop is not a valid argument. To use an existing loop, "
@@ -843,23 +1040,6 @@ class Sanic:
                 "#asynchronous-support"
             )
 
-        """Run the HTTP Server and listen until keyboard interrupt or term
-        signal. On termination, drain connections before closing.
-
-        :param host: Address to host on
-        :param port: Port to host on
-        :param debug: Enables debug output (slows server)
-        :param ssl: SSLContext, or location of certificate and key
-                            for SSL encryption of worker(s)
-        :param sock: Socket for the server to accept connections from
-        :param workers: Number of processes
-                            received before it is respected
-        :param backlog:
-        :param stop_event:
-        :param register_sys_signals:
-        :param protocol: Subclass of asyncio protocol class
-        :return: Nothing
-        """
         # Default auto_reload to false
         auto_reload = False
         # If debug is set, default it to true (unless on windows)
@@ -882,8 +1062,10 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
-        # compatibility old access_log params
-        self.config.ACCESS_LOG = access_log
+        # if access_log is passed explicitly change config.ACCESS_LOG
+        if access_log is not None:
+            self.config.ACCESS_LOG = access_log
+
         server_settings = self._helper(
             host=host,
             port=port,
@@ -933,20 +1115,58 @@ class Sanic:
 
     async def create_server(
         self,
-        host=None,
-        port=None,
-        debug=False,
-        ssl=None,
-        sock=None,
-        protocol=None,
-        backlog=100,
-        stop_event=None,
-        access_log=True,
-    ):
-        """Asynchronous version of `run`.
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        debug: bool = False,
+        ssl: Union[dict, SSLContext, None] = None,
+        sock: Optional[socket] = None,
+        protocol: Type[Protocol] = None,
+        backlog: int = 100,
+        stop_event: Any = None,
+        access_log: Optional[bool] = None,
+        return_asyncio_server=False,
+        asyncio_server_kwargs=None,
+    ) -> None:
+        """
+        Asynchronous version of :func:`run`.
 
-        NOTE: This does not support multiprocessing and is not the preferred
-              way to run a Sanic application.
+        This method will take care of the operations necessary to invoke
+        the *before_start* events via :func:`trigger_events` method invocation
+        before starting the *sanic* app in Async mode.
+
+        .. note::
+            This does not support multiprocessing and is not the preferred
+            way to run a :class:`Sanic` application.
+
+        :param host: Address to host on
+        :type host: str
+        :param port: Port to host on
+        :type port: int
+        :param debug: Enables debug output (slows server)
+        :type debug: bool
+        :param ssl: SSLContext, or location of certificate and key
+            for SSL encryption of worker(s)
+        :type ssl:SSLContext or dict
+        :param sock: Socket for the server to accept connections from
+        :type sock: socket
+        :param protocol: Subclass of asyncio Protocol class
+        :type protocol: type[Protocol]
+        :param backlog: a number of unaccepted connections that the system
+            will allow before refusing new connections
+        :type backlog: int
+        :param stop_event: event to be triggered
+            before stopping the app - deprecated
+        :type stop_event: None
+        :param access_log: Enables writing access logs (slows server)
+        :type access_log: bool
+        :param return_asyncio_server: flag that defines whether there's a need
+                                      to return asyncio.Server or
+                                      start it serving right away
+        :type return_asyncio_server: bool
+        :param asyncio_server_kwargs: key-value arguments for
+                                      asyncio/uvloop create_server method
+        :type asyncio_server_kwargs: dict
+        :return: Nothing
         """
 
         if sock is None:
@@ -963,8 +1183,10 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
-        # compatibility old access_log params
-        self.config.ACCESS_LOG = access_log
+        # if access_log is passed explicitly change config.ACCESS_LOG
+        if access_log is not None:
+            self.config.ACCESS_LOG = access_log
+
         server_settings = self._helper(
             host=host,
             port=port,
@@ -974,7 +1196,7 @@ class Sanic:
             loop=get_event_loop(),
             protocol=protocol,
             backlog=backlog,
-            run_async=True,
+            run_async=return_asyncio_server,
         )
 
         # Trigger before_start events
@@ -983,7 +1205,9 @@ class Sanic:
             server_settings.get("loop"),
         )
 
-        return await serve(**server_settings)
+        return await serve(
+            asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
+        )
 
     async def trigger_events(self, events, loop):
         """Trigger events (functions or async)
@@ -1071,6 +1295,7 @@ class Sanic:
             "response_timeout": self.config.RESPONSE_TIMEOUT,
             "keep_alive_timeout": self.config.KEEP_ALIVE_TIMEOUT,
             "request_max_size": self.config.REQUEST_MAX_SIZE,
+            "request_buffer_queue_size": self.config.REQUEST_BUFFER_QUEUE_SIZE,
             "keep_alive": self.config.KEEP_ALIVE,
             "loop": loop,
             "register_sys_signals": register_sys_signals,
@@ -1104,10 +1329,14 @@ class Sanic:
             logger.setLevel(logging.DEBUG)
 
         if (
-            self.config.LOGO is not None
+            self.config.LOGO
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
         ):
-            logger.debug(self.config.LOGO)
+            logger.debug(
+                self.config.LOGO
+                if isinstance(self.config.LOGO, str)
+                else BASE_LOGO
+            )
 
         if run_async:
             server_settings["run_async"] = True
@@ -1120,3 +1349,7 @@ class Sanic:
             logger.info("Goin' Fast @ {}://{}:{}".format(proto, host, port))
 
         return server_settings
+
+    def _build_endpoint_name(self, *parts):
+        parts = [self.name, *parts]
+        return ".".join(parts)

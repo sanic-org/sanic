@@ -6,49 +6,46 @@ from sanic.response import text
 #  UTF-8
 # ------------------------------------------------------------ #
 
+
 def test_utf8_query_string(app):
-
-    @app.route('/')
+    @app.route("/")
     async def handler(request):
-        return text('OK')
+        return text("OK")
 
-    request, response = app.test_client.get('/', params=[("utf8", '✓')])
-    assert request.args.get('utf8') == '✓'
+    request, response = app.test_client.get("/", params=[("utf8", "✓")])
+    assert request.args.get("utf8") == "✓"
 
 
 def test_utf8_response(app):
-
-    @app.route('/')
+    @app.route("/")
     async def handler(request):
-        return text('✓')
+        return text("✓")
 
-    request, response = app.test_client.get('/')
-    assert response.text == '✓'
+    request, response = app.test_client.get("/")
+    assert response.text == "✓"
 
 
 def skip_test_utf8_route(app):
-
-    @app.route('/')
+    @app.route("/")
     async def handler(request):
-        return text('OK')
+        return text("OK")
 
     # UTF-8 Paths are not supported
-    request, response = app.test_client.get('/✓')
-    assert response.text == 'OK'
+    request, response = app.test_client.get("/✓")
+    assert response.text == "OK"
 
 
 def test_utf8_post_json(app):
-
-    @app.route('/')
+    @app.route("/")
     async def handler(request):
-        return text('OK')
+        return text("OK")
 
-    payload = {'test': '✓'}
-    headers = {'content-type': 'application/json'}
+    payload = {"test": "✓"}
+    headers = {"content-type": "application/json"}
 
     request, response = app.test_client.get(
-        '/',
-        data=json_dumps(payload), headers=headers)
+        "/", data=json_dumps(payload), headers=headers
+    )
 
-    assert request.json.get('test') == '✓'
-    assert response.text == 'OK'
+    assert request.json.get("test") == "✓"
+    assert response.text == "OK"

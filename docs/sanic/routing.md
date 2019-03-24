@@ -164,24 +164,24 @@ url = app.url_for('post_handler', post_id=5, arg_one='one', arg_two='two')
 url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'])
 # /posts/5?arg_one=one&arg_one=two
 ```
-- Also some special arguments (`_anchor`, `_external`, `_scheme`, `_method`, `_server`) passed to `url_for` will have special url building (`_method` is not support now and will be ignored). For example:
+- Also some special arguments (`_anchor`, `_external`, `_scheme`, `_method`, `_server`) passed to `url_for` will have special url building (`_method` is not supported now and will be ignored). For example:
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one='one', _anchor='anchor')
 # /posts/5?arg_one=one#anchor
 
 url = app.url_for('post_handler', post_id=5, arg_one='one', _external=True)
 # //server/posts/5?arg_one=one
-# _external requires passed argument _server or SERVER_NAME in app.config or url will be same as no _external
+# _external requires you to pass an argument _server or set SERVER_NAME in app.config if not url will be same as no _external
 
 url = app.url_for('post_handler', post_id=5, arg_one='one', _scheme='http', _external=True)
 # http://server/posts/5?arg_one=one
 # when specifying _scheme, _external must be True
 
-# you can pass all special arguments one time
+# you can pass all special arguments at once
 url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'], arg_two=2, _anchor='anchor', _scheme='http', _external=True, _server='another_server:8888')
 # http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor
 ```
-- All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be thrown.
+- All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be raised.
 
 ## WebSocket routes
 
@@ -209,7 +209,7 @@ async def feed(request, ws):
 app.add_websocket_route(my_websocket_handler, '/feed')
 ```
 
-Handlers for a WebSocket route are passed the request as first argument, and a
+Handlers to a WebSocket route are invoked with the request as first argument, and a
 WebSocket protocol object as second argument. The protocol object has `send`
 and `recv` methods to send and receive data respectively.
 
@@ -243,7 +243,8 @@ app.blueprint(bp)
 
 ## User defined route name
 
-You can pass `name` to change the route name to avoid using the default name  (`handler.__name__`).
+A custom route name can be used by passing a `name` argument while registering the route which will
+override the default route name generated using the `handler.__name__` attribute.
 
 ```python
 
@@ -305,8 +306,8 @@ def handler(request):
 
 ## Build URL for static files
 
-You can use `url_for` for static file url building now.
-If it's for file directly, `filename` can be ignored.
+Sanic supports using `url_for` method to build static file urls. In case if the static url
+is pointing to a directory, `filename` parameter to the `url_for` can be ignored.   q
 
 ```python
 

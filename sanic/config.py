@@ -1,47 +1,44 @@
 import os
 import types
 
+from distutils.util import strtobool
+
 from sanic.exceptions import PyFileError
 
 
 SANIC_PREFIX = "SANIC_"
+BASE_LOGO = """
+
+                 Sanic
+         Build Fast. Run Fast.
+
+"""
+
+DEFAULT_CONFIG = {
+    "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
+    "REQUEST_BUFFER_QUEUE_SIZE": 100,
+    "REQUEST_TIMEOUT": 60,  # 60 seconds
+    "RESPONSE_TIMEOUT": 60,  # 60 seconds
+    "KEEP_ALIVE": True,
+    "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
+    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabytes
+    "WEBSOCKET_MAX_QUEUE": 32,
+    "WEBSOCKET_READ_LIMIT": 2 ** 16,
+    "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
+    "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
+    "ACCESS_LOG": True,
+}
 
 
 class Config(dict):
-    def __init__(self, defaults=None, load_env=True, keep_alive=True):
-        super().__init__(defaults or {})
-        self.LOGO = """
-                 ▄▄▄▄▄
-        ▀▀▀██████▄▄▄       _______________
-      ▄▄▄▄▄  █████████▄  /                 \\
-     ▀▀▀▀█████▌ ▀▐▄ ▀▐█ |   Gotta go fast!  |
-   ▀▀█████▄▄ ▀██████▄██ | _________________/
-   ▀▄▄▄▄▄  ▀▀█▄▀█════█▀ |/
-        ▀▀▀▄  ▀▀███ ▀       ▄▄
-     ▄███▀▀██▄████████▄ ▄▀▀▀▀▀▀█▌
-   ██▀▄▄▄██▀▄███▀ ▀▀████      ▄██
-▄▀▀▀▄██▄▀▀▌████▒▒▒▒▒▒███     ▌▄▄▀
-▌    ▐▀████▐███▒▒▒▒▒▐██▌
-▀▄▄▄▄▀   ▀▀████▒▒▒▒▄██▀
-          ▀▀█████████▀
-        ▄▄██▀██████▀█
-      ▄██▀     ▀▀▀  █
-     ▄█             ▐▌
- ▄▄▄▄█▌              ▀█▄▄▄▄▀▀▄
-▌     ▐                ▀▀▄▄▄▀
- ▀▀▄▄▀
-"""
-        self.REQUEST_MAX_SIZE = 100000000  # 100 megabytes
-        self.REQUEST_TIMEOUT = 60  # 60 seconds
-        self.RESPONSE_TIMEOUT = 60  # 60 seconds
-        self.KEEP_ALIVE = keep_alive
-        self.KEEP_ALIVE_TIMEOUT = 5  # 5 seconds
-        self.WEBSOCKET_MAX_SIZE = 2 ** 20  # 1 megabytes
-        self.WEBSOCKET_MAX_QUEUE = 32
-        self.WEBSOCKET_READ_LIMIT = 2 ** 16
-        self.WEBSOCKET_WRITE_LIMIT = 2 ** 16
-        self.GRACEFUL_SHUTDOWN_TIMEOUT = 15.0  # 15 sec
-        self.ACCESS_LOG = True
+    def __init__(self, defaults=None, load_env=True, keep_alive=None):
+        defaults = defaults or {}
+        super().__init__({**DEFAULT_CONFIG, **defaults})
+
+        self.LOGO = BASE_LOGO
+
+        if keep_alive is not None:
+            self.KEEP_ALIVE = keep_alive
 
         if load_env:
             prefix = SANIC_PREFIX if load_env is True else load_env
@@ -129,4 +126,7 @@ class Config(dict):
                     try:
                         self[config_key] = float(v)
                     except ValueError:
-                        self[config_key] = v
+                        try:
+                            self[config_key] = bool(strtobool(v))
+                        except ValueError:
+                            self[config_key] = v

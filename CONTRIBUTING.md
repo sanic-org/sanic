@@ -18,8 +18,21 @@ So assume you have already cloned the repo and are in the working directory with
 a virtual environment already set up, then run:
 
 ```bash
-python setup.py develop && pip install -r requirements-dev.txt
+pip3 install -e . "[.dev]"
 ```
+
+# Dependency Changes
+
+`Sanic` doesn't use `requirements*.txt` files to manage any kind of dependencies related to it in order to simplify the
+effort required in managing the dependencies. Please make sure you have read and understood the following section of
+the document that explains the way `sanic` manages dependencies inside the `setup.py` file.
+
+| Dependency Type                           | Usage                                                                      | Installation                 |
+| ------------------------------------------| -------------------------------------------------------------------------- | ---------------------------  |
+| requirements                              | Bare minimum dependencies required for sanic to function                   | pip3 install -e .            |
+| tests_require / extras_require['test']    | Dependencies required to run the Unit Tests for `sanic`                    | pip3 install -e '[.test]'    |
+| extras_require['dev']                     | Additional Development requirements to add contributing                    | pip3 install -e '[.dev]'     |
+| extras_require['docs']                    | Dependencies required to enable building and enhancing sanic documentation | pip3 install -e '[.docs]'    |
 
 ## Running tests
 

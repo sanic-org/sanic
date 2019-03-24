@@ -9,9 +9,9 @@ from sanic.response import text
 
 
 @pytest.mark.skipif(
-    not hasattr(signal, 'SIGALRM'),
-    reason='SIGALRM is not implemented for this platform, we have to come '
-    'up with another timeout strategy to test these'
+    not hasattr(signal, "SIGALRM"),
+    reason="SIGALRM is not implemented for this platform, we have to come "
+    "up with another timeout strategy to test these",
 )
 def test_multiprocessing(app):
     """Tests that the number of children we produce is correct"""
@@ -32,11 +32,12 @@ def test_multiprocessing(app):
 
 
 @pytest.mark.skipif(
-    not hasattr(signal, 'SIGALRM'),
-    reason='SIGALRM is not implemented for this platform',
+    not hasattr(signal, "SIGALRM"),
+    reason="SIGALRM is not implemented for this platform",
 )
 def test_multiprocessing_with_blueprint(app):
     from sanic import Blueprint
+
     # Selects a number at random so we can spot check
     num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
     process_list = set()
@@ -49,7 +50,7 @@ def test_multiprocessing_with_blueprint(app):
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(3)
 
-    bp = Blueprint('test_text')
+    bp = Blueprint("test_text")
     app.blueprint(bp)
     app.run(HOST, PORT, workers=num_workers)
 
@@ -59,28 +60,30 @@ def test_multiprocessing_with_blueprint(app):
 # this function must be outside a test function so that it can be
 # able to be pickled (local functions cannot be pickled).
 def handler(request):
-    return text('Hello')
+    return text("Hello")
+
 
 # Muliprocessing on Windows requires app to be able to be pickled
-@pytest.mark.parametrize('protocol', [3, 4])
+@pytest.mark.parametrize("protocol", [3, 4])
 def test_pickle_app(app, protocol):
-    app.route('/')(handler)
+    app.route("/")(handler)
     p_app = pickle.dumps(app, protocol=protocol)
     up_p_app = pickle.loads(p_app)
     assert up_p_app
-    request, response = app.test_client.get('/')
-    assert response.text == 'Hello'
+    request, response = app.test_client.get("/")
+    assert response.text == "Hello"
 
 
-@pytest.mark.parametrize('protocol', [3, 4])
+@pytest.mark.parametrize("protocol", [3, 4])
 def test_pickle_app_with_bp(app, protocol):
     from sanic import Blueprint
-    bp = Blueprint('test_text')
-    bp.route('/')(handler)
+
+    bp = Blueprint("test_text")
+    bp.route("/")(handler)
     app.blueprint(bp)
     p_app = pickle.dumps(app, protocol=protocol)
     up_p_app = pickle.loads(p_app)
     assert up_p_app
-    request, response = app.test_client.get('/')
+    request, response = app.test_client.get("/")
     assert app.is_request_stream is False
-    assert response.text == 'Hello'
+    assert response.text == "Hello"

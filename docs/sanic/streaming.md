@@ -2,7 +2,7 @@
 
 ## Request Streaming
 
-Sanic allows you to get request data by stream, as below. When the request ends, `request.stream.get()` returns `None`. Only post, put and patch decorator have stream argument.
+Sanic allows you to get request data by stream, as below. When the request ends, `await request.stream.read()` returns `None`. Only post, put and patch decorator have stream argument.
 
 ```python
 from sanic import Sanic
@@ -22,7 +22,7 @@ class SimpleView(HTTPMethodView):
     async def post(self, request):
         result = ''
         while True:
-            body = await request.stream.get()
+            body = await request.stream.read()
             if body is None:
                 break
             result += body.decode('utf-8')
@@ -33,7 +33,7 @@ class SimpleView(HTTPMethodView):
 async def handler(request):
     async def streaming(response):
         while True:
-            body = await request.stream.get()
+            body = await request.stream.read()
             if body is None:
                 break
             body = body.decode('utf-8').replace('1', 'A')
@@ -42,20 +42,33 @@ async def handler(request):
 
 
 @bp.put('/bp_stream', stream=True)
-async def bp_handler(request):
+async def bp_put_handler(request):
     result = ''
     while True:
-        body = await request.stream.get()
+        body = await request.stream.read()
         if body is None:
             break
         result += body.decode('utf-8').replace('1', 'A')
     return text(result)
 
 
+# You can also use `bp.add_route()` with stream argument
+async def bp_post_handler(request):
+    result = ''
+    while True:
+        body = await request.stream.read()
+        if body is None:
+            break
+        result += body.decode('utf-8').replace('1', 'A')
+    return text(result)
+
+bp.add_route(bp_post_handler, '/bp_stream', methods=['POST'], stream=True)
+
+
 async def post_handler(request):
     result = ''
     while True:
-        body = await request.stream.get()
+        body = await request.stream.read()
         if body is None:
             break
         result += body.decode('utf-8')

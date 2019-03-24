@@ -1,10 +1,13 @@
+import asyncio
+import email.utils
 import json
 import sys
+import warnings
 
 from cgi import parse_header
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
-from urllib.parse import parse_qs, urlunparse
+from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url
 
@@ -47,30 +50,49 @@ class RequestParameters(dict):
         return super().get(name, default)
 
 
+class StreamBuffer:
+    def __init__(self, buffer_size=100):
+        self._queue = asyncio.Queue(buffer_size)
+
+    async def read(self):
+        """ Stop reading when gets None """
+        payload = await self._queue.get()
+        self._queue.task_done()
+        return payload
+
+    async def put(self, payload):
+        await self._queue.put(payload)
+
+    def is_full(self):
+        return self._queue.full()
+
+
 class Request(dict):
     """Properties of an HTTP request such as URL, headers, etc."""
 
     __slots__ = (
-        "app",
-        "headers",
-        "version",
-        "method",
+        "__weakref__",
         "_cookies",
-        "transport",
-        "body",
-        "parsed_json",
-        "parsed_args",
-        "parsed_form",
-        "parsed_files",
         "_ip",
         "_parsed_url",
-        "uri_template",
-        "stream",
+        "_port",
         "_remote_addr",
         "_socket",
-        "_port",
-        "__weakref__",
+        "app",
+        "body",
+        "endpoint",
+        "headers",
+        "method",
+        "parsed_args",
+        "parsed_not_grouped_args",
+        "parsed_files",
+        "parsed_form",
+        "parsed_json",
         "raw_url",
+        "stream",
+        "transport",
+        "uri_template",
+        "version",
     )
 
     def __init__(self, url_bytes, headers, version, method, transport):
@@ -89,14 +111,14 @@ class Request(dict):
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
-        self.parsed_args = None
+        self.parsed_args = defaultdict(RequestParameters)
+        self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
         self._cookies = None
         self.stream = None
+        self.endpoint = None
 
     def __repr__(self):
-        if self.method is None or not self.path:
-            return "<{0}>".format(self.__class__.__name__)
         return "<{0}: {1} {2}>".format(
             self.__class__.__name__, self.method, self.path
         )
@@ -180,20 +202,116 @@ class Request(dict):
 
         return self.parsed_files
 
-    @property
-    def args(self):
-        if self.parsed_args is None:
+    def get_args(
+        self,
+        keep_blank_values: bool = False,
+        strict_parsing: bool = False,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+    ) -> RequestParameters:
+        """
+        Method to parse `query_string` using `urllib.parse.parse_qs`.
+        This methods is used by `args` property.
+        Can be used directly if you need to change default parameters.
+        :param keep_blank_values: flag indicating whether blank values in
+            percent-encoded queries should be treated as blank strings.
+            A true value indicates that blanks should be retained as blank
+            strings.  The default false value indicates that blank values
+            are to be ignored and treated as if they were  not included.
+        :type keep_blank_values: bool
+        :param strict_parsing: flag indicating what to do with parsing errors.
+            If false (the default), errors are silently ignored. If true,
+            errors raise a ValueError exception.
+        :type strict_parsing: bool
+        :param encoding: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type encoding: str
+        :param errors: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type errors: str
+        :return: RequestParameters
+        """
+        if not self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]:
             if self.query_string:
-                self.parsed_args = RequestParameters(
-                    parse_qs(self.query_string)
+                self.parsed_args[
+                    (keep_blank_values, strict_parsing, encoding, errors)
+                ] = RequestParameters(
+                    parse_qs(
+                        qs=self.query_string,
+                        keep_blank_values=keep_blank_values,
+                        strict_parsing=strict_parsing,
+                        encoding=encoding,
+                        errors=errors,
+                    )
                 )
-            else:
-                self.parsed_args = RequestParameters()
-        return self.parsed_args
+
+        return self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]
+
+    args = property(get_args)
 
     @property
-    def raw_args(self):
+    def raw_args(self) -> dict:
+        if self.app.debug:  # pragma: no cover
+            warnings.simplefilter("default")
+        warnings.warn(
+            "Use of raw_args will be deprecated in "
+            "the future versions. Please use args or query_args "
+            "properties instead",
+            DeprecationWarning,
+        )
         return {k: v[0] for k, v in self.args.items()}
+
+    def get_query_args(
+        self,
+        keep_blank_values: bool = False,
+        strict_parsing: bool = False,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+    ) -> list:
+        """
+        Method to parse `query_string` using `urllib.parse.parse_qsl`.
+        This methods is used by `query_args` property.
+        Can be used directly if you need to change default parameters.
+        :param keep_blank_values: flag indicating whether blank values in
+            percent-encoded queries should be treated as blank strings.
+            A true value indicates that blanks should be retained as blank
+            strings.  The default false value indicates that blank values
+            are to be ignored and treated as if they were  not included.
+        :type keep_blank_values: bool
+        :param strict_parsing: flag indicating what to do with parsing errors.
+            If false (the default), errors are silently ignored. If true,
+            errors raise a ValueError exception.
+        :type strict_parsing: bool
+        :param encoding: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type encoding: str
+        :param errors: specify how to decode percent-encoded sequences
+            into Unicode characters, as accepted by the bytes.decode() method.
+        :type errors: str
+        :return: list
+        """
+        if not self.parsed_not_grouped_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]:
+            if self.query_string:
+                self.parsed_not_grouped_args[
+                    (keep_blank_values, strict_parsing, encoding, errors)
+                ] = parse_qsl(
+                    qs=self.query_string,
+                    keep_blank_values=keep_blank_values,
+                    strict_parsing=strict_parsing,
+                    encoding=encoding,
+                    errors=errors,
+                )
+        return self.parsed_not_grouped_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]
+
+    query_args = property(get_query_args)
 
     @property
     def cookies(self):
@@ -338,15 +456,28 @@ def parse_multipart_form(body, boundary):
             )
 
             if form_header_field == "content-disposition":
-                file_name = form_parameters.get("filename")
                 field_name = form_parameters.get("name")
+                file_name = form_parameters.get("filename")
+
+                # non-ASCII filenames in RFC2231, "filename*" format
+                if file_name is None and form_parameters.get("filename*"):
+                    encoding, _, value = email.utils.decode_rfc2231(
+                        form_parameters["filename*"]
+                    )
+                    file_name = unquote(value, encoding=encoding)
             elif form_header_field == "content-type":
                 content_type = form_header_value
                 content_charset = form_parameters.get("charset", "utf-8")
 
         if field_name:
             post_data = form_part[line_index:-4]
-            if file_name:
+            if file_name is None:
+                value = post_data.decode(content_charset)
+                if field_name in fields:
+                    fields[field_name].append(value)
+                else:
+                    fields[field_name] = [value]
+            else:
                 form_file = File(
                     type=content_type, name=file_name, body=post_data
                 )
@@ -354,16 +485,10 @@ def parse_multipart_form(body, boundary):
                     files[field_name].append(form_file)
                 else:
                     files[field_name] = [form_file]
-            else:
-                value = post_data.decode(content_charset)
-                if field_name in fields:
-                    fields[field_name].append(value)
-                else:
-                    fields[field_name] = [value]
         else:
             logger.debug(
-                "Form-data field does not have a 'name' parameter \
-                         in the Content-Disposition header"
+                "Form-data field does not have a 'name' parameter "
+                "in the Content-Disposition header"
             )
 
     return fields, files

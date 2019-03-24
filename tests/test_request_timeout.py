@@ -3,7 +3,6 @@ from json import JSONDecodeError
 from sanic import Sanic
 import asyncio
 from sanic.response import text
-from sanic.config import Config
 import aiohttp
 from aiohttp import TCPConnector
 from sanic.testing import SanicTestClient, HOST
@@ -12,6 +11,7 @@ try:
     try:
         # direct use
         import packaging
+
         version = packaging.version
     except (ImportError, AttributeError):
         # setuptools v39.0 and above.
@@ -29,15 +29,15 @@ aiohttp_version = version.parse(aiohttp.__version__)
 
 
 class DelayableTCPConnector(TCPConnector):
-
     class RequestContextManager(object):
         def __new__(cls, req, delay):
-            cls = super(DelayableTCPConnector.RequestContextManager, cls).\
-                __new__(cls)
+            cls = super(
+                DelayableTCPConnector.RequestContextManager, cls
+            ).__new__(cls)
             cls.req = req
             cls.send_task = None
             cls.resp = None
-            cls.orig_send = getattr(req, 'send')
+            cls.orig_send = getattr(req, "send")
             cls.orig_start = None
             cls.delay = delay
             cls._acting_as = req
@@ -54,7 +54,7 @@ class DelayableTCPConnector(TCPConnector):
             self.send_task = None
             self.resp = resp
             self._acting_as = self.resp
-            self.orig_start = getattr(resp, 'start')
+            self.orig_start = getattr(resp, "start")
 
             try:
                 if aiohttp_version >= version.parse("3.3.0"):
@@ -92,10 +92,10 @@ class DelayableTCPConnector(TCPConnector):
                     request_info=None,
                     traces=[],
                     loop=req.loop,
-                    session=None
+                    session=None,
                 )
                 if aiohttp_version < version.parse("3.3.0"):
-                    kw['auto_decompress'] = None
+                    kw["auto_decompress"] = None
                 return aiohttp.ClientResponse(req.method, req.url, **kw)
 
         def _send(self, *args, **kwargs):
@@ -109,24 +109,26 @@ class DelayableTCPConnector(TCPConnector):
             # aiohttp changed the request.send method to async
             async def send(self, *args, **kwargs):
                 return self._send(*args, **kwargs)
+
         else:
             send = _send
 
     def __init__(self, *args, **kwargs):
-        _post_connect_delay = kwargs.pop('post_connect_delay', 0)
-        _pre_request_delay = kwargs.pop('pre_request_delay', 0)
+        _post_connect_delay = kwargs.pop("post_connect_delay", 0)
+        _pre_request_delay = kwargs.pop("pre_request_delay", 0)
         super(DelayableTCPConnector, self).__init__(*args, **kwargs)
         self._post_connect_delay = _post_connect_delay
         self._pre_request_delay = _pre_request_delay
 
     async def connect(self, req, *args, **kwargs):
-        d_req = DelayableTCPConnector.\
-            RequestContextManager(req, self._pre_request_delay)
-        conn = await super(DelayableTCPConnector, self).\
-            connect(req, *args, **kwargs)
+        d_req = DelayableTCPConnector.RequestContextManager(
+            req, self._pre_request_delay
+        )
+        conn = await super(DelayableTCPConnector, self).connect(
+            req, *args, **kwargs
+        )
         if self._post_connect_delay and self._post_connect_delay > 0:
-            await asyncio.sleep(self._post_connect_delay,
-                                loop=self._loop)
+            await asyncio.sleep(self._post_connect_delay, loop=self._loop)
         req.send = d_req.send
         t = req.loop.time()
         print("Connected at {}".format(t), flush=True)
@@ -139,24 +141,27 @@ class DelayableSanicTestClient(SanicTestClient):
         self._request_delay = request_delay
         self._loop = None
 
-    async def _local_request(self, method, uri, cookies=None, *args,
-                             **kwargs):
+    async def _local_request(self, method, uri, cookies=None, *args, **kwargs):
         if self._loop is None:
             self._loop = asyncio.get_event_loop()
-        if uri.startswith(('http:', 'https:', 'ftp:', 'ftps://' '//')):
+        if uri.startswith(("http:", "https:", "ftp:", "ftps://" "//")):
             url = uri
         else:
-            url = 'http://{host}:{port}{uri}'.format(
-                host=HOST, port=self.port, uri=uri)
-        conn = DelayableTCPConnector(pre_request_delay=self._request_delay,
-                                     ssl=False, loop=self._loop)
-        async with aiohttp.ClientSession(cookies=cookies, connector=conn,
-                                         loop=self._loop) as session:
+            url = "http://{host}:{port}{uri}".format(
+                host=HOST, port=self.port, uri=uri
+            )
+        conn = DelayableTCPConnector(
+            pre_request_delay=self._request_delay, ssl=False, loop=self._loop
+        )
+        async with aiohttp.ClientSession(
+            cookies=cookies, connector=conn, loop=self._loop
+        ) as session:
             # Insert a delay after creating the connection
             # But before sending the request.
 
             async with getattr(session, method.lower())(
-                    url, *args, **kwargs) as response:
+                url, *args, **kwargs
+            ) as response:
                 try:
                     response.text = await response.text()
                 except UnicodeDecodeError:
@@ -164,39 +169,63 @@ class DelayableSanicTestClient(SanicTestClient):
 
                 try:
                     response.json = await response.json()
-                except (JSONDecodeError,
-                        UnicodeDecodeError,
-                        aiohttp.ClientResponseError):
+                except (
+                    JSONDecodeError,
+                    UnicodeDecodeError,
+                    aiohttp.ClientResponseError,
+                ):
                     response.json = None
 
                 response.body = await response.read()
                 return response
 
 
-Config.REQUEST_TIMEOUT = 0.6
-request_timeout_default_app = Sanic('test_request_timeout_default')
-request_no_timeout_app = Sanic('test_request_no_timeout')
+request_timeout_default_app = Sanic("test_request_timeout_default")
+request_no_timeout_app = Sanic("test_request_no_timeout")
+request_timeout_default_app.config.REQUEST_TIMEOUT = 0.6
+request_no_timeout_app.config.REQUEST_TIMEOUT = 0.6
 
 
-@request_timeout_default_app.route('/1')
+@request_timeout_default_app.route("/1")
 async def handler1(request):
-    return text('OK')
+    return text("OK")
 
 
-@request_no_timeout_app.route('/1')
+@request_no_timeout_app.route("/1")
 async def handler2(request):
-    return text('OK')
+    return text("OK")
+
+
+@request_timeout_default_app.websocket("/ws1")
+async def ws_handler1(request, ws):
+    await ws.send("OK")
 
 
 def test_default_server_error_request_timeout():
     client = DelayableSanicTestClient(request_timeout_default_app, None, 2)
-    request, response = client.get('/1')
+    request, response = client.get("/1")
     assert response.status == 408
-    assert response.text == 'Error: Request Timeout'
+    assert response.text == "Error: Request Timeout"
 
 
 def test_default_server_error_request_dont_timeout():
     client = DelayableSanicTestClient(request_no_timeout_app, None, 0.2)
-    request, response = client.get('/1')
+    request, response = client.get("/1")
     assert response.status == 200
-    assert response.text == 'OK'
+    assert response.text == "OK"
+
+
+def test_default_server_error_websocket_request_timeout():
+
+    headers = {
+        "Upgrade": "websocket",
+        "Connection": "upgrade",
+        "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+        "Sec-WebSocket-Version": "13",
+    }
+
+    client = DelayableSanicTestClient(request_timeout_default_app, None, 2)
+    request, response = client.get("/ws1", headers=headers)
+
+    assert response.status == 408
+    assert response.text == "Error: Request Timeout"

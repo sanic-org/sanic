@@ -1,6 +1,10 @@
 import re
 import string
 
+from datetime import datetime
+
+
+DEFAULT_MAX_AGE = 0
 
 # ------------------------------------------------------------ #
 #  SimpleCookie
@@ -103,9 +107,29 @@ class Cookie(dict):
         if key not in self._keys:
             raise KeyError("Unknown cookie property")
         if value is not False:
+            if key.lower() == "max-age":
+                if not str(value).isdigit():
+                    value = DEFAULT_MAX_AGE
+            elif key.lower() == "expires":
+                if not isinstance(value, datetime):
+                    raise TypeError(
+                        "Cookie 'expires' property must be a datetime"
+                    )
             return super().__setitem__(key, value)
 
     def encode(self, encoding):
+        """
+        Encode the cookie content in a specific type of encoding instructed
+        by the developer. Leverages the :func:`str.encode` method provided
+        by python.
+
+        This method can be used to encode and embed ``utf-8`` content into
+        the cookies.
+
+        :param encoding: Encoding to be used with the cookie
+        :return: Cookie encoded in a codec of choosing.
+        :except: UnicodeEncodeError
+        """
         output = ["%s=%s" % (self.key, _quote(self.value))]
         for key, value in self.items():
             if key == "max-age":
@@ -114,16 +138,10 @@ class Cookie(dict):
                 except TypeError:
                     output.append("%s=%s" % (self._keys[key], value))
             elif key == "expires":
-                try:
-                    output.append(
-                        "%s=%s"
-                        % (
-                            self._keys[key],
-                            value.strftime("%a, %d-%b-%Y %T GMT"),
-                        )
-                    )
-                except AttributeError:
-                    output.append("%s=%s" % (self._keys[key], value))
+                output.append(
+                    "%s=%s"
+                    % (self._keys[key], value.strftime("%a, %d-%b-%Y %T GMT"))
+                )
             elif key in self._flags and self[key]:
                 output.append(self._keys[key])
             else:

@@ -29,7 +29,7 @@ def test_sync(app):
     assert response.text == "Hello"
 
 
-def test_remote_address(app):
+def test_ip(app):
     @app.route("/")
     def handler(request):
         return text("{}".format(request.ip))
@@ -203,10 +203,22 @@ def test_content_type(app):
     assert response.text == "application/json"
 
 
-def test_remote_addr(app):
+def test_remote_addr_with_two_proxies(app):
+    app.config.PROXIES_COUNT = 2
+
     @app.route("/")
     async def handler(request):
         return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.2"
+    assert response.text == "127.0.0.2"
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
 
     headers = {"X-Forwarded-For": "127.0.0.1, 127.0.1.2"}
     request, response = app.test_client.get("/", headers=headers)
@@ -221,6 +233,86 @@ def test_remote_addr(app):
     request, response = app.test_client.get("/", headers=headers)
     assert request.remote_addr == "127.0.0.1"
     assert response.text == "127.0.0.1"
+
+    headers = {
+        "X-Forwarded-For": ", 127.0.2.2, ,  ,127.0.0.1, ,   ,,127.0.1.2"
+    }
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.1"
+    assert response.text == "127.0.0.1"
+
+
+def test_remote_addr_with_infinite_number_of_proxies(app):
+    app.config.PROXIES_COUNT = -1
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.2"
+    assert response.text == "127.0.0.2"
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.1.1"
+    assert response.text == "127.0.1.1"
+
+    headers = {
+        "X-Forwarded-For": "127.0.0.5, 127.0.0.4, 127.0.0.3, 127.0.0.2, 127.0.0.1"
+    }
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.5"
+    assert response.text == "127.0.0.5"
+
+
+def test_remote_addr_without_proxy(app):
+    app.config.PROXIES_COUNT = 0
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+    headers = {"X-Forwarded-For": "127.0.0.1, 127.0.1.2"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+
+def test_remote_addr_custom_headers(app):
+    app.config.PROXIES_COUNT = 1
+    app.config.REAL_IP_HEADER = "Client-IP"
+    app.config.FORWARDED_FOR_HEADER = "Forwarded"
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "Forwarded": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.1.1"
+    assert response.text == "127.0.1.1"
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+    headers = {"Client-IP": "127.0.0.2", "Forwarded": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.2"
+    assert response.text == "127.0.0.2"
 
 
 def test_match_info(app):

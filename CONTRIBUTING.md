@@ -18,7 +18,7 @@ So assume you have already cloned the repo and are in the working directory with
 a virtual environment already set up, then run:
 
 ```bash
-pip3 install -e . "[.dev]"
+pip3 install -e . ".[dev]"
 ```
 
 # Dependency Changes
@@ -30,9 +30,9 @@ the document that explains the way `sanic` manages dependencies inside the `setu
 | Dependency Type                           | Usage                                                                      | Installation                 |
 | ------------------------------------------| -------------------------------------------------------------------------- | ---------------------------  |
 | requirements                              | Bare minimum dependencies required for sanic to function                   | pip3 install -e .            |
-| tests_require / extras_require['test']    | Dependencies required to run the Unit Tests for `sanic`                    | pip3 install -e '[.test]'    |
-| extras_require['dev']                     | Additional Development requirements to add contributing                    | pip3 install -e '[.dev]'     |
-| extras_require['docs']                    | Dependencies required to enable building and enhancing sanic documentation | pip3 install -e '[.docs]'    |
+| tests_require / extras_require['test']    | Dependencies required to run the Unit Tests for `sanic`                    | pip3 install -e '.[test]'    |
+| extras_require['dev']                     | Additional Development requirements to add contributing                    | pip3 install -e '.[dev]'     |
+| extras_require['docs']                    | Dependencies required to enable building and enhancing sanic documentation | pip3 install -e '.[docs]'    |
 
 ## Running tests
 

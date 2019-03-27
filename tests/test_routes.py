@@ -365,7 +365,16 @@ def test_dynamic_route_number(app):
     request, response = app.test_client.get("/weight/1234.56")
     assert response.status == 200
 
+    request, response = app.test_client.get("/weight/.12")
+    assert response.status == 200
+
+    request, response = app.test_client.get("/weight/12.")
+    assert response.status == 200
+
     request, response = app.test_client.get("/weight/1234-56")
+    assert response.status == 404
+
+    request, response = app.test_client.get("/weight/12.34.56")
     assert response.status == 404
 
 
@@ -672,7 +681,16 @@ def test_dynamic_add_route_number(app):
     request, response = app.test_client.get("/weight/1234.56")
     assert response.status == 200
 
+    request, response = app.test_client.get("/weight/.12")
+    assert response.status == 200
+
+    request, response = app.test_client.get("/weight/12.")
+    assert response.status == 200
+
     request, response = app.test_client.get("/weight/1234-56")
+    assert response.status == 404
+
+    request, response = app.test_client.get("/weight/12.34.56")
     assert response.status == 404
 
 

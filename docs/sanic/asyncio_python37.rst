@@ -4,7 +4,7 @@ Python 3.7 AsyncIO examples
 With Python 3.7 AsyncIO got major update for the following types:
 
  - asyncio.AbstractEventLoop
- - asyncio.AnstractServer
+ - asyncio.AbstractServer
 
 
 This example shows how to use sanic with Python 3.7, to be precise: how to retrieve an asyncio server instance:

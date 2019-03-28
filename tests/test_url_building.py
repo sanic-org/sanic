@@ -223,7 +223,7 @@ def test_fails_with_number_message(app):
 
     expected_error = (
         'Value "foo" for parameter `some_number` '
-        "does not match pattern for type `float`: -?[0-9\\\\.]+"
+        r"does not match pattern for type `float`: -?(?:\d+(?:\.\d*)?|\.\d+)"
     )
 
     assert str(e.value) == expected_error

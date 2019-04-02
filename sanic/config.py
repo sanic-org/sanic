@@ -129,7 +129,8 @@ class Config(dict):
                         except ValueError:
                             self[config_key] = v
 
-def strtobool (val):
+
+def strtobool(val):
     """
     This function was borrowed from distutils.utils. While distutils
     is part of stdlib, it feels odd to use distutils in main application code.

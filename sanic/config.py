@@ -1,8 +1,6 @@
 import os
 import types
 
-from distutils.util import strtobool
-
 from sanic.exceptions import PyFileError
 
 
@@ -130,3 +128,16 @@ class Config(dict):
                             self[config_key] = bool(strtobool(v))
                         except ValueError:
                             self[config_key] = v
+
+def strtobool (val):
+    """
+    This function was borrowed from distutils.utils. While distutils
+    is part of stdlib, it feels odd to use distutils in main application code.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError("invalid truth value %r" % (val,))

@@ -332,7 +332,7 @@ class Sanic:
         name=None,
     ):
         """
-        Add an API URL under the **DELETE** *HTTP* method
+        Add an API URL under the **PATCH** *HTTP* method
 
         :param uri: URL to be tagged to **PATCH** method of *HTTP*
         :param host: Host IP or FQDN for the service to use

@@ -16,3 +16,4 @@ docs/_api/
 build/*
 .DS_Store
 dist/*
+pip-wheel-metadata/

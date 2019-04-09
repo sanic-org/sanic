@@ -880,8 +880,6 @@ class Sanic:
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
-
-            request.app = self
             response = await self._run_request_middleware(request)
             # No middleware results
             if not response:

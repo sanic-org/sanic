@@ -1287,6 +1287,7 @@ class Sanic:
             "port": port,
             "sock": sock,
             "ssl": ssl,
+            "app": self,
             "signal": Signal(),
             "debug": debug,
             "request_handler": self.handle_request,

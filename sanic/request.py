@@ -95,7 +95,7 @@ class Request(dict):
         "version",
     )
 
-    def __init__(self, url_bytes, headers, version, method, transport, app=None):
+    def __init__(self, url_bytes, headers, version, method, transport, app):
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)

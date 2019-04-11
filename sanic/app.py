@@ -180,26 +180,27 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
-            args = [key for key in signature(handler).parameters.keys()]
-            if args:
-                if stream:
-                    handler.is_stream = stream
+            args = list(signature(handler).parameters.keys())
 
-                self.router.add(
-                    uri=uri,
-                    methods=methods,
-                    handler=handler,
-                    host=host,
-                    strict_slashes=strict_slashes,
-                    version=version,
-                    name=name,
-                )
-                return handler
-            else:
+            if not args:
                 raise ValueError(
                     "Required parameter `request` missing "
                     "in the {0}() route?".format(handler.__name__)
                 )
+
+            if stream:
+                handler.is_stream = stream
+
+            self.router.add(
+                uri=uri,
+                methods=methods,
+                handler=handler,
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+            )
+            return handler
 
         return response
 
@@ -332,7 +333,7 @@ class Sanic:
         name=None,
     ):
         """
-        Add an API URL under the **DELETE** *HTTP* method
+        Add an API URL under the **PATCH** *HTTP* method
 
         :param uri: URL to be tagged to **PATCH** method of *HTTP*
         :param host: Host IP or FQDN for the service to use

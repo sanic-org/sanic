@@ -44,6 +44,8 @@ class HttpProtocol(asyncio.Protocol):
     """
 
     __slots__ = (
+        # app
+        "app",
         # event loop, connection
         "loop",
         "transport",
@@ -88,6 +90,7 @@ class HttpProtocol(asyncio.Protocol):
         self,
         *,
         loop,
+        app,
         request_handler,
         error_handler,
         signal=Signal(),
@@ -107,6 +110,7 @@ class HttpProtocol(asyncio.Protocol):
         **kwargs
     ):
         self.loop = loop
+        self.app = app
         self.transport = None
         self.request = None
         self.parser = None
@@ -303,6 +307,7 @@ class HttpProtocol(asyncio.Protocol):
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode(),
             transport=self.transport,
+            app=self.app,
         )
         # Remove any existing KeepAlive handler here,
         # It will be recreated if required on the new request.
@@ -607,6 +612,7 @@ def trigger_events(events, loop):
 def serve(
     host,
     port,
+    app,
     request_handler,
     error_handler,
     before_start=None,
@@ -704,6 +710,7 @@ def serve(
         loop=loop,
         connections=connections,
         signal=signal,
+        app=app,
         request_handler=request_handler,
         error_handler=error_handler,
         request_timeout=request_timeout,

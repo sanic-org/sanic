@@ -92,7 +92,7 @@ to run the app in general.
 Here is an incomplete example (please see `run_async.py` in examples for something more practical):
 
 ```python
-server = app.create_server(host="0.0.0.0", port=8000)
+server = app.create_server(host="0.0.0.0", port=8000, return_asyncio_server=True)
 loop = asyncio.get_event_loop()
 task = asyncio.ensure_future(server)
 loop.run_forever()

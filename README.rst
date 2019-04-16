@@ -64,7 +64,7 @@ Installation
     
        $ export SANIC_NO_UVLOOP=true
        $ export SANIC_NO_UJSON=true 
-       $ pip3 install sanic
+       $ pip3 install --no-binary :all: sanic
 
 
 Hello World Example

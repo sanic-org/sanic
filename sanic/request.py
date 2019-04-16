@@ -355,19 +355,38 @@ class Request(dict):
 
     @property
     def remote_addr(self):
-        """Attempt to return the original client ip based on X-Forwarded-For.
+        """Attempt to return the original client ip based on X-Forwarded-For
+        or X-Real-IP. If HTTP headers are unavailable or untrusted, returns
+        an empty string.
 
         :return: original client ip.
         """
         if not hasattr(self, "_remote_addr"):
-            forwarded_for = self.headers.get("X-Forwarded-For", "").split(",")
-            remote_addrs = [
-                addr
-                for addr in [addr.strip() for addr in forwarded_for]
-                if addr
-            ]
-            if len(remote_addrs) > 0:
-                self._remote_addr = remote_addrs[0]
+            if self.app.config.PROXIES_COUNT == 0:
+                self._remote_addr = ""
+            elif self.app.config.REAL_IP_HEADER and self.headers.get(
+                self.app.config.REAL_IP_HEADER
+            ):
+                self._remote_addr = self.headers[
+                    self.app.config.REAL_IP_HEADER
+                ]
+            elif self.app.config.FORWARDED_FOR_HEADER:
+                forwarded_for = self.headers.get(
+                    self.app.config.FORWARDED_FOR_HEADER, ""
+                ).split(",")
+                remote_addrs = [
+                    addr
+                    for addr in [addr.strip() for addr in forwarded_for]
+                    if addr
+                ]
+                if self.app.config.PROXIES_COUNT == -1:
+                    self._remote_addr = remote_addrs[0]
+                elif len(remote_addrs) >= self.app.config.PROXIES_COUNT:
+                    self._remote_addr = remote_addrs[
+                        -self.app.config.PROXIES_COUNT
+                    ]
+                else:
+                    self._remote_addr = ""
             else:
                 self._remote_addr = ""
         return self._remote_addr

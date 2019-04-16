@@ -64,6 +64,26 @@ of the memory leak.
 
 See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
 
+## Running behind a reverse proxy
+
+Sanic can be used with a reverse proxy (e.g. nginx). There's a simple example of nginx configuration:
+
+```
+server {
+  listen 80;
+  server_name example.org;
+
+  location / {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  }
+}
+```
+
+If you want to get real client ip, you should configure `X-Real-IP` and `X-Forwarded-For` HTTP headers and set `app.config.PROXIES_COUNT` to `1`; see the configuration page for more information.
+
 ## Disable debug logging
 
 To improve the performance add `debug=False` and `access_log=False` in the `run` arguments.

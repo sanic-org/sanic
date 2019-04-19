@@ -96,6 +96,7 @@ tests_require = [
     ujson,
     "pytest-sanic",
     "pytest-sugar",
+    "pytest-benchmark",
 ]
 
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):

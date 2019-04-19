@@ -554,11 +554,15 @@ class HttpProtocol(asyncio.Protocol):
 
         :return: None
         """
-        if from_error or self.transport.is_closing():
+        if from_error or self.transport is None or self.transport.is_closing():
             logger.error(
                 "Transport closed @ %s and exception "
                 "experienced during error handling",
-                self.transport.get_extra_info("peername"),
+                (
+                    self.transport.get_extra_info("peername")
+                    if self.transport is not None
+                    else "N/A"
+                ),
             )
             logger.debug("Exception:", exc_info=True)
         else:

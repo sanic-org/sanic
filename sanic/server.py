@@ -119,7 +119,7 @@ class HttpProtocol(asyncio.Protocol):
         self.router = router
         self.signal = signal
         self.access_log = access_log
-        self.connections = connections or set()
+        self.connections = connections if connections is not None else set()
         self.request_handler = request_handler
         self.error_handler = error_handler
         self.request_timeout = request_timeout

@@ -60,6 +60,8 @@ async def index(request):
     return response.stream(streaming_fn, content_type='text/plain')
 ```
 
+See [Streaming](streaming.md) for more information.
+
 ## File Streaming
 For large files, a combination of File and Streaming above
 ```python

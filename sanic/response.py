@@ -59,16 +59,23 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         "status",
         "content_type",
         "headers",
+        "chunked",
         "_cookies",
     )
 
     def __init__(
-        self, streaming_fn, status=200, headers=None, content_type="text/plain"
+        self,
+        streaming_fn,
+        status=200,
+        headers=None,
+        content_type="text/plain",
+        chunked=None,
     ):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
         self.headers = CIMultiDict(headers or {})
+        self.chunked = chunked
         self._cookies = None
 
     async def write(self, data):
@@ -79,7 +86,10 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         if type(data) != bytes:
             data = self._encode_body(data)
 
-        self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
+        if self.chunked:
+            self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
+        else:
+            self.protocol.push_data(data)
         await self.protocol.drain()
 
     async def stream(
@@ -88,6 +98,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         """Streams headers, runs the `streaming_fn` callback that writes
         content to the response body, then finalizes the response body.
         """
+        if self.chunked is None:
+            self.chunked = version != "1.0"
         headers = self.get_headers(
             version,
             keep_alive=keep_alive,
@@ -96,7 +108,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.protocol.push_data(headers)
         await self.protocol.drain()
         await self.streaming_fn(self)
-        self.protocol.push_data(b"0\r\n\r\n")
+        if self.chunked:
+            self.protocol.push_data(b"0\r\n\r\n")
         # no need to await drain here after this write, because it is the
         # very last thing we write and nothing needs to wait for it.
 
@@ -109,8 +122,13 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         if keep_alive and keep_alive_timeout is not None:
             timeout_header = b"Keep-Alive: %d\r\n" % keep_alive_timeout
 
-        self.headers["Transfer-Encoding"] = "chunked"
-        self.headers.pop("Content-Length", None)
+        chunked = self.chunked
+        if chunked is None:
+            chunked = version != "1.0"
+
+        if chunked:
+            self.headers["Transfer-Encoding"] = "chunked"
+            self.headers.pop("Content-Length", None)
         self.headers["Content-Type"] = self.headers.get(
             "Content-Type", self.content_type
         )
@@ -327,6 +345,7 @@ async def file_stream(
     mime_type=None,
     headers=None,
     filename=None,
+    chunked=None,
     _range=None,
 ):
     """Return a streaming response object with file data.
@@ -336,6 +355,7 @@ async def file_stream(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
+    :param chunked: Enable or disable chunked transfer-encoding (default: auto)
     :param _range:
     """
     headers = headers or {}
@@ -383,6 +403,7 @@ async def file_stream(
         status=status,
         headers=headers,
         content_type=mime_type,
+        chunked=chunked,
     )
 
 
@@ -391,6 +412,7 @@ def stream(
     status=200,
     headers=None,
     content_type="text/plain; charset=utf-8",
+    chunked=None,
 ):
     """Accepts an coroutine `streaming_fn` which can be used to
     write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
@@ -409,9 +431,14 @@ def stream(
         writes content to that response.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
+    :param chunked: Enable or disable chunked transfer-encoding (default: auto)
     """
     return StreamingHTTPResponse(
-        streaming_fn, headers=headers, content_type=content_type, status=status
+        streaming_fn,
+        headers=headers,
+        content_type=content_type,
+        status=status,
+        chunked=chunked,
     )
 
 

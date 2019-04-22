@@ -69,7 +69,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         status=200,
         headers=None,
         content_type="text/plain",
-        chunked=None,
+        chunked=True,
     ):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
@@ -98,8 +98,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         """Streams headers, runs the `streaming_fn` callback that writes
         content to the response body, then finalizes the response body.
         """
-        if self.chunked is None:
-            self.chunked = version != "1.0"
+        if version != "1.1":
+            self.chunked = False
         headers = self.get_headers(
             version,
             keep_alive=keep_alive,
@@ -122,11 +122,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         if keep_alive and keep_alive_timeout is not None:
             timeout_header = b"Keep-Alive: %d\r\n" % keep_alive_timeout
 
-        chunked = self.chunked
-        if chunked is None:
-            chunked = version != "1.0"
-
-        if chunked:
+        if self.chunked and version == "1.1":
             self.headers["Transfer-Encoding"] = "chunked"
             self.headers.pop("Content-Length", None)
         self.headers["Content-Type"] = self.headers.get(
@@ -345,7 +341,7 @@ async def file_stream(
     mime_type=None,
     headers=None,
     filename=None,
-    chunked=None,
+    chunked=True,
     _range=None,
 ):
     """Return a streaming response object with file data.
@@ -355,7 +351,7 @@ async def file_stream(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
-    :param chunked: Enable or disable chunked transfer-encoding (default: auto)
+    :param chunked: Enable or disable chunked transfer-encoding
     :param _range:
     """
     headers = headers or {}
@@ -412,7 +408,7 @@ def stream(
     status=200,
     headers=None,
     content_type="text/plain; charset=utf-8",
-    chunked=None,
+    chunked=True,
 ):
     """Accepts an coroutine `streaming_fn` which can be used to
     write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
@@ -431,7 +427,7 @@ def stream(
         writes content to that response.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
-    :param chunked: Enable or disable chunked transfer-encoding (default: auto)
+    :param chunked: Enable or disable chunked transfer-encoding
     """
     return StreamingHTTPResponse(
         streaming_fn,

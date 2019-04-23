@@ -7,6 +7,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.response import json, text
 from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
 
+
 # ------------------------------------------------------------ #
 #  UTF-8
 # ------------------------------------------------------------ #
@@ -468,16 +469,8 @@ def test_websocket_route(app, url):
         assert ws.subprotocol is None
         ev.set()
 
-    request, response = app.test_client.get(
-        "/ws",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-        },
-    )
-    assert response.status == 101
+    request, response = app.test_client.websocket(url)
+    assert response.opened is True
     assert ev.is_set()
 
 
@@ -487,54 +480,24 @@ def test_websocket_route_with_subprotocols(app):
     @app.websocket("/ws", subprotocols=["foo", "bar"])
     async def handler(request, ws):
         results.append(ws.subprotocol)
+        assert ws.subprotocol is not None
 
-    request, response = app.test_client.get(
-        "/ws",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-            "Sec-WebSocket-Protocol": "bar",
-        },
+    request, response = app.test_client.websocket("/ws", subprotocols=["bar"])
+    assert response.opened is True
+    assert results == ["bar"]
+
+    request, response = app.test_client.websocket(
+        "/ws", subprotocols=["bar", "foo"]
     )
-    assert response.status == 101
+    assert response.opened is True
+    assert results == ["bar", "bar"]
 
-    request, response = app.test_client.get(
-        "/ws",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-            "Sec-WebSocket-Protocol": "bar, foo",
-        },
-    )
-    assert response.status == 101
+    request, response = app.test_client.websocket("/ws", subprotocols=["baz"])
+    assert response.opened is True
+    assert results == ["bar", "bar", None]
 
-    request, response = app.test_client.get(
-        "/ws",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-            "Sec-WebSocket-Protocol": "baz",
-        },
-    )
-    assert response.status == 101
-
-    request, response = app.test_client.get(
-        "/ws",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-        },
-    )
-    assert response.status == 101
-
+    request, response = app.test_client.websocket("/ws")
+    assert response.opened is True
     assert results == ["bar", "bar", None, None]
 
 
@@ -547,16 +510,8 @@ def test_add_webscoket_route(app, strict_slashes):
         ev.set()
 
     app.add_websocket_route(handler, "/ws", strict_slashes=strict_slashes)
-    request, response = app.test_client.get(
-        "/ws",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-        },
-    )
-    assert response.status == 101
+    request, response = app.test_client.websocket("/ws")
+    assert response.opened is True
     assert ev.is_set()
 
 

@@ -1,7 +1,9 @@
-from sanic import Sanic
 import asyncio
-from sanic.response import text
+
+from sanic import Sanic
 from sanic.exceptions import ServiceUnavailable
+from sanic.response import text
+
 
 response_timeout_app = Sanic("test_response_timeout")
 response_timeout_default_app = Sanic("test_response_timeout_default")

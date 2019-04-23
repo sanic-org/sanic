@@ -1,11 +1,12 @@
 import multiprocessing
+import pickle
 import random
 import signal
-import pickle
+
 import pytest
 
-from sanic.testing import HOST, PORT
 from sanic.response import text
+from sanic.testing import HOST, PORT
 
 
 @pytest.mark.skipif(

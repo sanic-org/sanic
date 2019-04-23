@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+
 import pytest
 
 from sanic.blueprints import Blueprint
-from sanic.response import text
-from sanic.exceptions import URLBuildError
 from sanic.constants import HTTP_METHODS
+from sanic.exceptions import URLBuildError
+from sanic.response import text
 
 
 # ------------------------------------------------------------ #

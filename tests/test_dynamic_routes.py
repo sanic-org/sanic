@@ -1,6 +1,7 @@
+import pytest
+
 from sanic.response import text
 from sanic.router import RouteExists
-import pytest
 
 
 @pytest.mark.parametrize(

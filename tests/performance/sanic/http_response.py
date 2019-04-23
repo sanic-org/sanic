@@ -1,16 +1,18 @@
-import asyncpg
-import sys
-import os
 import inspect
+import os
+import sys
+import timeit
+
+import asyncpg
+
+from sanic.response import json
+
 
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe()))
 )
 sys.path.insert(0, currentdir + "/../../../")
 
-import timeit
-
-from sanic.response import json
 
 print(json({"test": True}).output())
 

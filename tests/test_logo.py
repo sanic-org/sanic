@@ -1,7 +1,8 @@
-import logging
 import asyncio
+import logging
 
 from sanic.config import BASE_LOGO
+
 
 try:
     import uvloop  # noqa

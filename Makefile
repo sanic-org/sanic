@@ -47,12 +47,12 @@ ifdef include_tests
 	isort -rc sanic tests
 else
 	$(info Sorting Imports)
-	isort -rc sanic
+	isort -rc sanic tests
 endif
 endif
 
 black:
-	black --config ./pyproject.toml sanic tests
+	black --config ./.black.toml sanic tests
 
 fix-import: black
-	isort -rc sanic
+	isort -rc sanic tests

@@ -4,6 +4,7 @@ import pytest
 
 from sanic.testing import HOST, PORT
 
+
 AVAILABLE_LISTENERS = [
     "before_server_start",
     "after_server_start",

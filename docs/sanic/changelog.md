@@ -1,3 +1,18 @@
+Version 19.6
+------------
+19.6.0
+  - Changes:
+    - Remove `aiohttp` dependencey and create new `SanicTestClient` based upon
+    [`requests-async`](https://github.com/encode/requests-async).
+
+  - Deprecation:
+    - Support for Python 3.5
+
+Note: Sanic will not support Python 3.5 from version 19.6 and forward. However,
+version 18.12LTS will have its support period extended thru December 2020, and
+therefore passing Python's official support version 3.5, which is set to expire
+in September 2020.
+
 Version 19.3
 -------------
 19.3.1

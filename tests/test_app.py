@@ -3,6 +3,7 @@ import logging
 import sys
 
 from inspect import isawaitable
+
 import pytest
 
 from sanic.exceptions import SanicException
@@ -11,7 +12,7 @@ from sanic.response import text
 
 def uvloop_installed():
     try:
-        import uvloop
+        import uvloop  # noqa
 
         return True
     except ImportError:

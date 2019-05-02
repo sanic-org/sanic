@@ -1,17 +1,17 @@
-import uuid
 import logging
+import uuid
 
-from io import StringIO
 from importlib import reload
-
-import pytest
+from io import StringIO
 from unittest.mock import Mock
 
+import pytest
+
 import sanic
-from sanic.response import text
-from sanic.log import LOGGING_CONFIG_DEFAULTS
+
 from sanic import Sanic
-from sanic.log import logger
+from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
+from sanic.response import text
 
 
 logging_format = """module: %(module)s; \

@@ -1,10 +1,8 @@
-import asyncio
 from sanic.blueprints import Blueprint
-from sanic.views import CompositionView
-from sanic.views import HTTPMethodView
-from sanic.views import stream as stream_decorator
-from sanic.response import stream, text
 from sanic.request import StreamBuffer
+from sanic.response import stream, text
+from sanic.views import CompositionView, HTTPMethodView
+from sanic.views import stream as stream_decorator
 
 
 data = "abc" * 10000000

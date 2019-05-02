@@ -1,12 +1,13 @@
+from contextlib import contextmanager
 from os import environ
 from pathlib import Path
-from contextlib import contextmanager
 from tempfile import TemporaryDirectory
 from textwrap import dedent
+
 import pytest
 
 from sanic import Sanic
-from sanic.config import Config, DEFAULT_CONFIG
+from sanic.config import DEFAULT_CONFIG, Config
 from sanic.exceptions import PyFileError
 
 

@@ -2,15 +2,16 @@
 """ Minimal helloworld application.
 """
 
-from wheezy.http import HTTPResponse
-from wheezy.http import WSGIApplication
+import ujson
+
+from wheezy.http import HTTPResponse, WSGIApplication
 from wheezy.http.response import json_response
 from wheezy.routing import url
 from wheezy.web.handlers import BaseHandler
-from wheezy.web.middleware import bootstrap_defaults
-from wheezy.web.middleware import path_routing_middleware_factory
-
-import ujson
+from wheezy.web.middleware import (
+    bootstrap_defaults,
+    path_routing_middleware_factory,
+)
 
 
 class WelcomeHandler(BaseHandler):

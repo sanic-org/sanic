@@ -1,8 +1,10 @@
+import asyncio
+
+from queue import Queue
+from unittest.mock import MagicMock
+
 from sanic.response import HTTPResponse
 from sanic.testing import HOST, PORT
-from unittest.mock import MagicMock
-import asyncio
-from queue import Queue
 
 
 async def stop(app, loop):

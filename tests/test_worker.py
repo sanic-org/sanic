@@ -1,13 +1,16 @@
-import time
+import asyncio
 import json
 import shlex
 import subprocess
+import time
 import urllib.request
+
 from unittest import mock
-from sanic.worker import GunicornWorker
-from sanic.app import Sanic
-import asyncio
+
 import pytest
+
+from sanic.app import Sanic
+from sanic.worker import GunicornWorker
 
 
 @pytest.fixture(scope="module")

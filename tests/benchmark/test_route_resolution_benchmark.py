@@ -1,7 +1,9 @@
 from random import choice, seed
+
 from pytest import mark
 
 import sanic.router
+
 
 seed("Pack my box with five dozen liquor jugs.")
 

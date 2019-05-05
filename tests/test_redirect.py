@@ -1,7 +1,8 @@
-import pytest
 from urllib.parse import quote
 
-from sanic.response import text, redirect
+import pytest
+
+from sanic.response import redirect, text
 
 
 @pytest.fixture

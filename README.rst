@@ -17,6 +17,8 @@ Sanic | Build fast. Run fast.
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support
       - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby| |Awesome|
+    * - Stats
+      - | |Downloads|
 
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
@@ -45,10 +47,13 @@ Sanic | Build fast. Run fast.
 .. |Awesome| image:: https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg
     :alt: Awesome Sanic List
     :target: https://github.com/mekicha/awesome-sanic
+.. |Downloads| image:: https://pepy.tech/badge/sanic/month
+    :alt: Downloads
+    :target: https://pepy.tech/project/sanic
 
 .. end-badges
 
-Sanic is a Python web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic is a **Python 3.6+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
 `Source code on GitHub <https://github.com/huge-success/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_. 
 

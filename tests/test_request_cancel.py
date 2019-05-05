@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 
-from sanic.response import text, stream
+from sanic.response import stream, text
 
 
 async def test_request_cancel_when_connection_lost(loop, app, test_client):

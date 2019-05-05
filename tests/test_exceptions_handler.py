@@ -1,8 +1,10 @@
-from sanic import Sanic
-from sanic.response import text
-from sanic.exceptions import InvalidUsage, ServerError, NotFound
-from sanic.handlers import ErrorHandler
 from bs4 import BeautifulSoup
+
+from sanic import Sanic
+from sanic.exceptions import InvalidUsage, NotFound, ServerError
+from sanic.handlers import ErrorHandler
+from sanic.response import text
+
 
 exception_handler_app = Sanic("test_exception_handler")
 

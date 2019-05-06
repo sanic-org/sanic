@@ -1,18 +1,19 @@
 import logging
 import os
 import ssl
+
 from json import dumps as json_dumps
 from json import loads as json_loads
 from urllib.parse import urlparse
 
 import pytest
 
-from sanic import Sanic
-from sanic import Blueprint
+from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
 from sanic.response import json, text
 from sanic.testing import HOST, PORT
+
 
 # ------------------------------------------------------------ #
 #  GET
@@ -29,7 +30,7 @@ def test_sync(app):
     assert response.text == "Hello"
 
 
-def test_remote_address(app):
+def test_ip(app):
     @app.route("/")
     def handler(request):
         return text("{}".format(request.ip))
@@ -130,11 +131,14 @@ def test_query_string(app):
 
     assert request.args.get("test1") == "1"
     assert request.args.get("test2") == "false"
+    assert request.args.getlist("test2") == ["false", "true"]
+    assert request.args.getlist("test1") == ["1"]
+    assert request.args.get("test3", default="My value") == "My value"
 
 
 def test_uri_template(app):
     @app.route("/foo/<id:int>/bar/<name:[A-z]+>")
-    async def handler(request):
+    async def handler(request, id, name):
         return text("OK")
 
     request, response = app.test_client.get("/foo/123/bar/baz")
@@ -200,10 +204,22 @@ def test_content_type(app):
     assert response.text == "application/json"
 
 
-def test_remote_addr(app):
+def test_remote_addr_with_two_proxies(app):
+    app.config.PROXIES_COUNT = 2
+
     @app.route("/")
     async def handler(request):
         return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.2"
+    assert response.text == "127.0.0.2"
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
 
     headers = {"X-Forwarded-For": "127.0.0.1, 127.0.1.2"}
     request, response = app.test_client.get("/", headers=headers)
@@ -218,6 +234,86 @@ def test_remote_addr(app):
     request, response = app.test_client.get("/", headers=headers)
     assert request.remote_addr == "127.0.0.1"
     assert response.text == "127.0.0.1"
+
+    headers = {
+        "X-Forwarded-For": ", 127.0.2.2, ,  ,127.0.0.1, ,   ,,127.0.1.2"
+    }
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.1"
+    assert response.text == "127.0.0.1"
+
+
+def test_remote_addr_with_infinite_number_of_proxies(app):
+    app.config.PROXIES_COUNT = -1
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.2"
+    assert response.text == "127.0.0.2"
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.1.1"
+    assert response.text == "127.0.1.1"
+
+    headers = {
+        "X-Forwarded-For": "127.0.0.5, 127.0.0.4, 127.0.0.3, 127.0.0.2, 127.0.0.1"
+    }
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.5"
+    assert response.text == "127.0.0.5"
+
+
+def test_remote_addr_without_proxy(app):
+    app.config.PROXIES_COUNT = 0
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+    headers = {"X-Forwarded-For": "127.0.0.1, 127.0.1.2"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+
+def test_remote_addr_custom_headers(app):
+    app.config.PROXIES_COUNT = 1
+    app.config.REAL_IP_HEADER = "Client-IP"
+    app.config.FORWARDED_FOR_HEADER = "Forwarded"
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {"X-Real-IP": "127.0.0.2", "Forwarded": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.1.1"
+    assert response.text == "127.0.1.1"
+
+    headers = {"X-Forwarded-For": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == ""
+    assert response.text == ""
+
+    headers = {"Client-IP": "127.0.0.2", "Forwarded": "127.0.1.1"}
+    request, response = app.test_client.get("/", headers=headers)
+    assert request.remote_addr == "127.0.0.2"
+    assert response.text == "127.0.0.2"
 
 
 def test_match_info(app):
@@ -432,21 +528,59 @@ def test_request_string_representation(app):
 
 
 @pytest.mark.parametrize(
-    "payload",
+    "payload,filename",
     [
-        "------sanic\r\n"
-        'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
-        "\r\n"
-        "OK\r\n"
-        "------sanic--\r\n",
-        "------sanic\r\n"
-        'content-disposition: form-data; filename="filename"; name="test"\r\n'
-        "\r\n"
-        'content-type: application/json; {"field": "value"}\r\n'
-        "------sanic--\r\n",
+        (
+            "------sanic\r\n"
+            'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
+            "\r\n"
+            "OK\r\n"
+            "------sanic--\r\n",
+            "filename",
+        ),
+        (
+            "------sanic\r\n"
+            'content-disposition: form-data; filename="filename"; name="test"\r\n'
+            "\r\n"
+            'content-type: application/json; {"field": "value"}\r\n'
+            "------sanic--\r\n",
+            "filename",
+        ),
+        (
+            "------sanic\r\n"
+            'Content-Disposition: form-data; filename=""; name="test"\r\n'
+            "\r\n"
+            "OK\r\n"
+            "------sanic--\r\n",
+            "",
+        ),
+        (
+            "------sanic\r\n"
+            'content-disposition: form-data; filename=""; name="test"\r\n'
+            "\r\n"
+            'content-type: application/json; {"field": "value"}\r\n'
+            "------sanic--\r\n",
+            "",
+        ),
+        (
+            "------sanic\r\n"
+            'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+            "\r\n"
+            "OK\r\n"
+            "------sanic--\r\n",
+            "filename_\u00A0_test",
+        ),
+        (
+            "------sanic\r\n"
+            'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+            "\r\n"
+            'content-type: application/json; {"field": "value"}\r\n'
+            "------sanic--\r\n",
+            "filename_\u00A0_test",
+        ),
     ],
 )
-def test_request_multipart_files(app, payload):
+def test_request_multipart_files(app, payload, filename):
     @app.route("/", methods=["POST"])
     async def post(request):
         return text("OK")
@@ -454,7 +588,7 @@ def test_request_multipart_files(app, payload):
     headers = {"content-type": "multipart/form-data; boundary=----sanic"}
 
     request, _ = app.test_client.post(data=payload, headers=headers)
-    assert request.files.get("test").name == "filename"
+    assert request.files.get("test").name == filename
 
 
 def test_request_multipart_file_with_json_content_type(app):
@@ -566,7 +700,7 @@ def test_request_repr(app):
     assert repr(request) == "<Request: GET />"
 
     request.method = None
-    assert repr(request) == "<Request>"
+    assert repr(request) == "<Request: None />"
 
 
 def test_request_bool(app):
@@ -624,6 +758,75 @@ def test_request_raw_args(app):
     request, response = app.test_client.get("/", params=params)
 
     assert request.raw_args == params
+
+
+def test_request_query_args(app):
+    # test multiple params with the same key
+    params = [("test", "value1"), ("test", "value2")]
+
+    @app.get("/")
+    def handler(request):
+        return text("pass")
+
+    request, response = app.test_client.get("/", params=params)
+
+    assert request.query_args == params
+
+    # test cached value
+    assert (
+        request.parsed_not_grouped_args[(False, False, "utf-8", "replace")]
+        == request.query_args
+    )
+
+    # test params directly in the url
+    request, response = app.test_client.get("/?test=value1&test=value2")
+
+    assert request.query_args == params
+
+    # test unique params
+    params = [("test1", "value1"), ("test2", "value2")]
+
+    request, response = app.test_client.get("/", params=params)
+
+    assert request.query_args == params
+
+    # test no params
+    request, response = app.test_client.get("/")
+
+    assert not request.query_args
+
+
+def test_request_query_args_custom_parsing(app):
+    @app.get("/")
+    def handler(request):
+        return text("pass")
+
+    request, response = app.test_client.get(
+        "/?test1=value1&test2=&test3=value3"
+    )
+
+    assert request.get_query_args(keep_blank_values=True) == [
+        ("test1", "value1"),
+        ("test2", ""),
+        ("test3", "value3"),
+    ]
+    assert request.query_args == [("test1", "value1"), ("test3", "value3")]
+    assert request.get_query_args(keep_blank_values=False) == [
+        ("test1", "value1"),
+        ("test3", "value3"),
+    ]
+
+    assert request.get_args(keep_blank_values=True) == RequestParameters(
+        {"test1": ["value1"], "test2": [""], "test3": ["value3"]}
+    )
+
+    assert request.args == RequestParameters(
+        {"test1": ["value1"], "test3": ["value3"]}
+    )
+
+    assert request.get_args(keep_blank_values=False) == RequestParameters(
+        {"test1": ["value1"], "test3": ["value3"]}
+    )
 
 
 def test_request_cookies(app):

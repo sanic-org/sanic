@@ -42,7 +42,7 @@ async def handler(request):
 
 
 @bp.put('/bp_stream', stream=True)
-async def bp_handler(request):
+async def bp_put_handler(request):
     result = ''
     while True:
         body = await request.stream.read()
@@ -50,6 +50,19 @@ async def bp_handler(request):
             break
         result += body.decode('utf-8').replace('1', 'A')
     return text(result)
+
+
+# You can also use `bp.add_route()` with stream argument
+async def bp_post_handler(request):
+    result = ''
+    while True:
+        body = await request.stream.read()
+        if body is None:
+            break
+        result += body.decode('utf-8').replace('1', 'A')
+    return text(result)
+
+bp.add_route(bp_post_handler, '/bp_stream', methods=['POST'], stream=True)
 
 
 async def post_handler(request):
@@ -103,4 +116,28 @@ async def index(request):
                 await response.write(record[0])
 
     return stream(stream_from_db)
+```
+
+If a client supports HTTP/1.1, Sanic will use [chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding); you can explicitly enable or disable it using `chunked` option of the `stream` function.
+
+## File Streaming
+
+Sanic provides `sanic.response.file_stream` function that is useful when you want to send a large file. It returns a `StreamingHTTPResponse` object and will use chunked transfer encoding by default; for this reason Sanic doesn't add `Content-Length` HTTP header in the response. If you want to use this header, you can disable chunked transfer encoding and add it manually:
+
+```python
+from aiofiles import os as async_os
+from sanic.response import file_stream
+
+@app.route("/")
+async def index(request):
+    file_path = "/srv/www/whatever.png"
+
+    file_stat = await async_os.stat(file_path)
+    headers = {"Content-Length": str(file_stat.st_size)}
+
+    return await file_stream(
+        file_path,
+        headers=headers,
+        chunked=False,
+    )
 ```

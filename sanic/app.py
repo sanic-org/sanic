@@ -16,6 +16,7 @@ from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
+from sanic.blueprint_group import BlueprintGroup
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
@@ -181,26 +182,27 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
-            args = [key for key in signature(handler).parameters.keys()]
-            if args:
-                if stream:
-                    handler.is_stream = stream
+            args = list(signature(handler).parameters.keys())
 
-                self.router.add(
-                    uri=uri,
-                    methods=methods,
-                    handler=handler,
-                    host=host,
-                    strict_slashes=strict_slashes,
-                    version=version,
-                    name=name,
-                )
-                return handler
-            else:
+            if not args:
                 raise ValueError(
                     "Required parameter `request` missing "
                     "in the {0}() route?".format(handler.__name__)
                 )
+
+            if stream:
+                handler.is_stream = stream
+
+            self.router.add(
+                uri=uri,
+                methods=methods,
+                handler=handler,
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+            )
+            return handler
 
         return response
 
@@ -333,7 +335,7 @@ class Sanic:
         name=None,
     ):
         """
-        Add an API URL under the **DELETE** *HTTP* method
+        Add an API URL under the **PATCH** *HTTP* method
 
         :param uri: URL to be tagged to **PATCH** method of *HTTP*
         :param host: Host IP or FQDN for the service to use
@@ -599,9 +601,11 @@ class Sanic:
         :return: decorated method
         """
         if attach_to == "request":
-            self.request_middleware.append(middleware)
+            if middleware not in self.request_middleware:
+                self.request_middleware.append(middleware)
         if attach_to == "response":
-            self.response_middleware.appendleft(middleware)
+            if middleware not in self.response_middleware:
+                self.response_middleware.appendleft(middleware)
         return middleware
 
     # Decorator
@@ -683,7 +687,7 @@ class Sanic:
         :param options: option dictionary with blueprint defaults
         :return: Nothing
         """
-        if isinstance(blueprint, (list, tuple)):
+        if isinstance(blueprint, (list, tuple, BlueprintGroup)):
             for item in blueprint:
                 self.blueprint(item, **options)
             return
@@ -879,8 +883,6 @@ class Sanic:
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
-
-            request.app = self
             response = await self._run_request_middleware(request)
             # No middleware results
             if not response:
@@ -1122,6 +1124,8 @@ class Sanic:
         backlog: int = 100,
         stop_event: Any = None,
         access_log: Optional[bool] = None,
+        return_asyncio_server=False,
+        asyncio_server_kwargs=None,
     ) -> None:
         """
         Asynchronous version of :func:`run`.
@@ -1155,6 +1159,13 @@ class Sanic:
         :type stop_event: None
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool
+        :param return_asyncio_server: flag that defines whether there's a need
+                                      to return asyncio.Server or
+                                      start it serving right away
+        :type return_asyncio_server: bool
+        :param asyncio_server_kwargs: key-value arguments for
+                                      asyncio/uvloop create_server method
+        :type asyncio_server_kwargs: dict
         :return: Nothing
         """
 
@@ -1185,7 +1196,7 @@ class Sanic:
             loop=get_event_loop(),
             protocol=protocol,
             backlog=backlog,
-            run_async=True,
+            run_async=return_asyncio_server,
         )
 
         # Trigger before_start events
@@ -1194,7 +1205,9 @@ class Sanic:
             server_settings.get("loop"),
         )
 
-        return await serve(**server_settings)
+        return await serve(
+            asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
+        )
 
     async def trigger_events(self, events, loop):
         """Trigger events (functions or async)
@@ -1274,6 +1287,7 @@ class Sanic:
             "port": port,
             "sock": sock,
             "ssl": ssl,
+            "app": self,
             "signal": Signal(),
             "debug": debug,
             "request_handler": self.handle_request,

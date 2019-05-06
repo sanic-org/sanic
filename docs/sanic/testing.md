@@ -1,8 +1,8 @@
 # Testing
 
 Sanic endpoints can be tested locally using the `test_client` object, which
-depends on the additional [aiohttp](https://aiohttp.readthedocs.io/en/stable/)
-library. 
+depends on the additional [`requests-async`](https://github.com/encode/requests-async)
+library, which implements an API that mirrors the `requests` library.
 
 The `test_client` exposes `get`, `post`, `put`, `delete`, `patch`, `head` and `options` methods
 for you to run against your application. A simple example (using pytest) is like follows:
@@ -21,7 +21,7 @@ def test_index_put_not_allowed():
 ```
 
 Internally, each time you call one of the `test_client` methods, the Sanic app is run at `127.0.0.1:42101` and 
-your test request is executed against your application, using `aiohttp`. 
+your test request is executed against your application, using `requests-async`. 
 
 The `test_client` methods accept the following arguments and keyword arguments:
 
@@ -33,7 +33,7 @@ The `test_client` methods accept the following arguments and keyword arguments:
 - `server_kwargs` *(default `{}`) a dict of additional arguments to pass into `app.run` before the test request is run.
 - `debug` *(default `False`)* A boolean which determines whether to run the server in debug mode.
 
-The function further takes the `*request_args` and `**request_kwargs`, which are passed directly to the aiohttp ClientSession request.
+The function further takes the `*request_args` and `**request_kwargs`, which are passed directly to the request.
 
 For example, to supply data to a GET request, you would do the following:
 
@@ -55,8 +55,25 @@ def test_post_json_request_includes_data():
 
 
 More information about
-the available arguments to aiohttp can be found
-[in the documentation for ClientSession](https://aiohttp.readthedocs.io/en/stable/client_reference.html#client-session).
+the available arguments to `requests-async` can be found
+[in the documentation for `requests`](https://2.python-requests.org/en/master/).
+
+
+## Using a random port
+
+If you need to test using a free unpriveleged port chosen by the kernel
+instead of the default with `SanicTestClient`, you can do so by specifying
+`port=None`. On most systems the port will be in the range 1024 to 65535.
+
+```python
+# Import the Sanic app, usually created with Sanic(__name__)
+from external_server import app
+from sanic.testing import SanicTestClient
+
+def test_index_returns_200():
+    request, response = SanicTestClient(app, port=None).get('/')
+    assert response.status == 200
+```
 
 
 ## pytest-sanic

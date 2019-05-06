@@ -1,14 +1,16 @@
-import sys
-import os
 import inspect
+import os
+import sys
+
+from sanic import Sanic
+from sanic.response import json
+
 
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe()))
 )
 sys.path.insert(0, currentdir + "/../../../")
 
-from sanic import Sanic
-from sanic.response import json
 
 app = Sanic("test")
 

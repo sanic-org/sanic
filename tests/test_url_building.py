@@ -1,13 +1,16 @@
-import pytest as pytest
-from urllib.parse import urlsplit, parse_qsl
-
-from sanic.response import text
-from sanic.views import HTTPMethodView
-from sanic.blueprints import Blueprint
-from sanic.testing import PORT as test_port, HOST as test_host
-from sanic.exceptions import URLBuildError
-
 import string
+
+from urllib.parse import parse_qsl, urlsplit
+
+import pytest as pytest
+
+from sanic.blueprints import Blueprint
+from sanic.exceptions import URLBuildError
+from sanic.response import text
+from sanic.testing import HOST as test_host
+from sanic.testing import PORT as test_port
+from sanic.views import HTTPMethodView
+
 
 URL_FOR_ARGS1 = dict(arg1=["v1", "v2"])
 URL_FOR_VALUE1 = "/myurl?arg1=v1&arg1=v2"
@@ -169,10 +172,26 @@ def test_fails_with_int_message(app):
         app.url_for("fail", **failing_kwargs)
 
     expected_error = (
-        'Value "not_int" for parameter `foo` '
-        "does not match pattern for type `int`: \d+"
+        r'Value "not_int" for parameter `foo` '
+        r"does not match pattern for type `int`: -?\d+"
     )
     assert str(e.value) == expected_error
+
+
+def test_passes_with_negative_int_message(app):
+    @app.route("path/<possibly_neg:int>/another-word")
+    def good(request, possibly_neg):
+        assert isinstance(possibly_neg, int)
+        return text("this should pass with `{}`".format(possibly_neg))
+
+    u_plus_3 = app.url_for("good", possibly_neg=3)
+    assert u_plus_3 == "/path/3/another-word", u_plus_3
+    request, response = app.test_client.get(u_plus_3)
+    assert response.text == "this should pass with `3`"
+    u_neg_3 = app.url_for("good", possibly_neg=-3)
+    assert u_neg_3 == "/path/-3/another-word", u_neg_3
+    request, response = app.test_client.get(u_neg_3)
+    assert response.text == "this should pass with `-3`"
 
 
 def test_fails_with_two_letter_string_message(app):
@@ -207,10 +226,24 @@ def test_fails_with_number_message(app):
 
     expected_error = (
         'Value "foo" for parameter `some_number` '
-        "does not match pattern for type `float`: [0-9\\\\.]+"
+        r"does not match pattern for type `float`: -?(?:\d+(?:\.\d*)?|\.\d+)"
     )
 
     assert str(e.value) == expected_error
+
+
+@pytest.mark.parametrize("number", [3, -3, 13.123, -13.123])
+def test_passes_with_negative_number_message(app, number):
+    @app.route("path/<possibly_neg:number>/another-word")
+    def good(request, possibly_neg):
+        assert isinstance(possibly_neg, (int, float))
+        return text("this should pass with `{}`".format(possibly_neg))
+
+    u = app.url_for("good", possibly_neg=number)
+    assert u == "/path/{}/another-word".format(number), u
+    request, response = app.test_client.get(u)
+    # For ``number``, it has been cast to a float - so a ``3`` becomes a ``3.0``
+    assert response.text == "this should pass with `{}`".format(float(number))
 
 
 def test_adds_other_supplied_values_as_query_string(app):

@@ -1,10 +1,22 @@
 import asyncio
 import logging
+import sys
+
+from inspect import isawaitable
 
 import pytest
 
 from sanic.exceptions import SanicException
 from sanic.response import text
+
+
+def uvloop_installed():
+    try:
+        import uvloop  # noqa
+
+        return True
+    except ImportError:
+        return False
 
 
 def test_app_loop_running(app):
@@ -17,9 +29,35 @@ def test_app_loop_running(app):
     assert response.text == "pass"
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7), reason="requires python3.7 or higher"
+)
+def test_create_asyncio_server(app):
+    if not uvloop_installed():
+        loop = asyncio.get_event_loop()
+        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        assert isawaitable(asyncio_srv_coro)
+        srv = loop.run_until_complete(asyncio_srv_coro)
+        assert srv.is_serving() is True
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 7), reason="requires python3.7 or higher"
+)
+def test_asyncio_server_start_serving(app):
+    if not uvloop_installed():
+        loop = asyncio.get_event_loop()
+        asyncio_srv_coro = app.create_server(
+            return_asyncio_server=True,
+            asyncio_server_kwargs=dict(start_serving=False),
+        )
+        srv = loop.run_until_complete(asyncio_srv_coro)
+        assert srv.is_serving() is False
+
+
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
-        app.loop
+        _ = app.loop
 
     assert str(excinfo.value) == (
         "Loop can only be retrieved after the app has started "
@@ -103,7 +141,6 @@ def test_handle_request_with_nested_exception(app, monkeypatch):
     @app.get("/")
     def handler(request):
         raise Exception
-        return text("OK")
 
     request, response = app.test_client.get("/")
     assert response.status == 500
@@ -125,7 +162,6 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
     @app.get("/")
     def handler(request):
         raise Exception
-        return text("OK")
 
     request, response = app.test_client.get("/", debug=True)
     assert response.status == 500
@@ -149,7 +185,6 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
     @app.get("/")
     def handler(request):
         raise Exception
-        return text("OK")
 
     with caplog.at_level(logging.ERROR):
         request, response = app.test_client.get("/")

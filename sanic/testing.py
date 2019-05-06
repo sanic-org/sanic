@@ -1,4 +1,10 @@
 
+from json import JSONDecodeError
+from socket import socket
+
+import requests_async as requests
+import websockets
+
 import asyncio
 import http
 import io
@@ -18,54 +24,10 @@ HOST = "127.0.0.1"
 PORT = 42101
 
 
-# Annotations for `Session.request()`
-Cookies = typing.Union[
-    typing.MutableMapping[str, str], requests.cookies.RequestsCookieJar
-]
-Params = typing.Union[bytes, typing.MutableMapping[str, str]]
-DataType = typing.Union[bytes, typing.MutableMapping[str, str], typing.IO]
-TimeOut = typing.Union[float, typing.Tuple[float, float]]
-FileType = typing.MutableMapping[str, typing.IO]
-AuthType = typing.Union[
-    typing.Tuple[str, str],
-    requests.auth.AuthBase,
-    typing.Callable[[requests.Request], requests.Request],
-]
 
-
-class _HeaderDict(requests.packages.urllib3._collections.HTTPHeaderDict):
-    def get_all(self, key: str, default: str) -> str:
-        return self.getheaders(key)
-
-
-class _MockOriginalResponse:
-    """
-    We have to jump through some hoops to present the response as if
-    it was made using urllib3.
-    """
-
-    def __init__(self, headers: typing.List[typing.Tuple[bytes, bytes]]) -> None:
-        self.msg = _HeaderDict(headers)
-        self.closed = False
-
-    def isclosed(self) -> bool:
-        return self.closed
-
-
-class _Upgrade(Exception):
-    def __init__(self, session: "WebSocketTestSession") -> None:
-        self.session = session
-
-
-def _get_reason_phrase(status_code: int) -> str:
-    try:
-        return http.HTTPStatus(status_code).phrase
-    except ValueError:
-        return ""
-
-
-class _ASGIAdapter(requests.adapters.HTTPAdapter):
-    def __init__(self, app: ASGIApp, raise_server_exceptions: bool = True) -> None:
+class SanicTestClient:
+    def __init__(self, app, port=PORT):
+        """Use port=None to bind to a random port"""
         self.app = app
         self.raise_server_exceptions = raise_server_exceptions
 
@@ -76,22 +38,55 @@ class _ASGIAdapter(requests.adapters.HTTPAdapter):
             request.url
         )
 
-        default_port = {"http": 80, "ws": 80, "https": 443, "wss": 443}[scheme]
+    def get_new_session(self):
+        return requests.Session()
 
-        if ":" in netloc:
-            host, port_string = netloc.split(":", 1)
-            port = int(port_string)
-        else:
-            host = netloc
-            port = default_port
+    async def _local_request(self, method, url, *args, **kwargs):
+        logger.info(url)
+        raw_cookies = kwargs.pop("raw_cookies", None)
 
-        # Include the 'host' header.
-        if "host" in request.headers:
-            headers = []  # type: typing.List[typing.Tuple[bytes, bytes]]
-        elif port == default_port:
-            headers = [(b"host", host.encode())]
+        if method == "websocket":
+            async with websockets.connect(url, *args, **kwargs) as websocket:
+                websocket.opened = websocket.open
+                return websocket
         else:
-            headers = [(b"host", ("%s:%d" % (host, port)).encode())]
+            async with self.get_new_session() as session:
+
+                try:
+                    response = await getattr(session, method.lower())(
+                        url, verify=False, *args, **kwargs
+                    )
+                except NameError:
+                    raise Exception(response.status_code)
+
+                try:
+                    response.json = response.json()
+                except (JSONDecodeError, UnicodeDecodeError):
+                    response.json = None
+
+                response.body = await response.read()
+                response.status = response.status_code
+                response.content_type = response.headers.get("content-type")
+
+                if raw_cookies:
+                    response.raw_cookies = {}
+                    for cookie in response.cookies:
+                        response.raw_cookies[cookie.name] = cookie
+
+                return response
+
+    def _sanic_endpoint_test(
+        self,
+        method="get",
+        uri="/",
+        gather_request=True,
+        debug=False,
+        server_kwargs={"auto_reload": False},
+        *request_args,
+        **request_kwargs
+    ):
+        results = [None, None]
+        exceptions = []
 
         # Include other request headers.
         headers += [
@@ -158,25 +153,31 @@ class _ASGIAdapter(requests.adapters.HTTPAdapter):
             else:
                 body_bytes = body
 
-            request_complete = True
-            return {"type": "http.request", "body": body_bytes}
+        if self.port:
+            server_kwargs = dict(host=HOST, port=self.port, **server_kwargs)
+            host, port = HOST, self.port
+        else:
+            sock = socket()
+            sock.bind((HOST, 0))
+            server_kwargs = dict(sock=sock, **server_kwargs)
+            host, port = sock.getsockname()
 
-        async def send(message: Message) -> None:
-            nonlocal raw_kwargs, response_started, response_complete, template, context
+        if uri.startswith(
+            ("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")
+        ):
+            url = uri
+        else:
+            uri = uri if uri.startswith("/") else "/{uri}".format(uri=uri)
+            scheme = "ws" if method == "websocket" else "http"
+            url = "{scheme}://{host}:{port}{uri}".format(
+                scheme=scheme, host=host, port=port, uri=uri
+            )
 
-            if message["type"] == "http.response.start":
-                assert (
-                    not response_started
-                ), 'Received multiple "http.response.start" messages.'
-                raw_kwargs["version"] = 11
-                raw_kwargs["status"] = message["status"]
-                raw_kwargs["reason"] = _get_reason_phrase(message["status"])
-                raw_kwargs["headers"] = [
-                    (key.decode(), value.decode()) for key, value in message["headers"]
-                ]
-                raw_kwargs["preload_content"] = False
-                raw_kwargs["original_response"] = _MockOriginalResponse(
-                    raw_kwargs["headers"]
+        @self.app.listener("after_server_start")
+        async def _collect_response(sanic, loop):
+            try:
+                response = await self._local_request(
+                    method, url, *request_args, **request_kwargs
                 )
                 response_started = True
             elif message["type"] == "http.response.body":
@@ -204,11 +205,9 @@ class _ASGIAdapter(requests.adapters.HTTPAdapter):
         template = None
         context = None
 
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+
+        self.app.run(debug=debug, **server_kwargs)
+        self.app.listeners["after_server_start"].pop()
 
         self.app.is_running = True
         try:
@@ -350,6 +349,7 @@ class SanicTestClient(requests.Session):
         return self.request("options", *args, **kwargs)
 
     def head(self, *args, **kwargs):
-        if 'uri' in kwargs:
-            kwargs['url'] = kwargs.pop('uri')
-        return self.request("head", *args, **kwargs)
+        return self._sanic_endpoint_test("head", *args, **kwargs)
+
+    def websocket(self, *args, **kwargs):
+        return self._sanic_endpoint_test("websocket", *args, **kwargs)

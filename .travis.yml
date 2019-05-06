@@ -5,10 +5,6 @@ cache:
     - $HOME/.cache/pip
 matrix:
   include:
-    - env: TOX_ENV=py35
-      python: 3.5
-    - env: TOX_ENV=py35-no-ext
-      python: 3.5
     - env: TOX_ENV=py36
       python: 3.6
     - env: TOX_ENV=py36-no-ext
@@ -33,9 +29,9 @@ after_success:
   - codecov
 deploy:
   provider: pypi
-  user: channelcat
+  user: brewmaster
   password:
-    secure: h7oNDjA/ObDBGK7xt55SV0INHOclMJW/byxMrNxvCZ0JxiRk7WBNtWYt0WJjyf5lO/L0/sfgiAk0GIdFon57S24njSLPAq/a4ptkWZ68s2A+TaF6ezJSZvE9V8khivjoeub90TzfX6P5aukRja1CSxXKJm+v0V8hGE4CZGyCgEDvK3JqIakpXllSDl19DhVftCS/lQZD7AXrZlg1kZnPCMtB5IbCVR4L2bfrSJVNptBi2CqqxacY2MOLu+jv5FzJ2BGVIJ2zoIJS2T+JmGJzpiamF6y8Amv0667i9lg2DXWCtI3PsQzCmwa3F/ZsI+ohUAvJC5yvzP7SyTJyXifRBdJ9O137QkNAHFoJOOY3B4GSnTo8/boajKXEqGiV4h2EgwNjBaR0WJl0pB7HHUCBMkNRWqo6ACB8eCr04tXWXPvkGIc+wPjq960hsUZea1O31MuktYc9Ot6eiFqm7OKoItdi7LxCen1eTj93ePgkiEnVZ+p/04Hh1U7CX31UJMNu5kCvZPIANnAuDsS2SK7Qkr88OAuWL0wmrBcXKOcnVkJtZ5mzx8T54bI1RrSYtFDBLFfOPb0GucSziMBtQpE76qPEauVwIXBk3RnR8N57xBR/lvTaIk758tf+haO0llEO5rVls1zLNZ+VlTzXy7hX0OZbdopIAcCFBFWqWMAdXQc=
+    secure: "GoawLwmbtJOgKB6AJ0ZSYUUnNwIoonseHBxaAUH3zu79TS/Afrq+yB3lsVaMSG0CbyDgN4FrfD1phT1NzbvZ1VcLIOTDtCrmpQ1kLDw+zwgF40ab8sp8fPkKVHHHfCCs1mjltHIpxQa5lZTJcAs6Bpi/lbUWWwYxFzSV8pHw4W4hY09EHUd2o+evLTSVxaploetSt725DJUYKICUr2eAtCC11IDnIW4CzBJEx6krVV3uhzfTJW0Ls17x0c6sdZ9icMnV/G9xO/eQH6RIHe4xcrWJ6cmLDNKoGAkJp+BKr1CeVVg7Jw/MzPjvZKL2/ki6Beue1y6GUIy7lOS7jPVaOEhJ23b0zQwFcLMZw+Tt+E3v6QfHk+B/WBBBnM3zUZed9UI+QyW8+lqLLt39sQX0FO0P3eaDh8qTXtUuon2jTyFMMAMTFRTNpJmpAzuBH9yeMmDeALPTh0HphI+BkoUl5q1QbWFYjjnZMH2CatApxpLybt9A7rwm//PbOG0TSI93GEKNQ4w5DYryKTfwHzRBptNSephJSuxZYEfJsmUtas5es1D7Fe0PkyjxNNSU+eO+8wsTlitLUsJO4k0jAgy+cEKdU7YJ3J0GZVXocSkrNnUfd2hQPcJ3UtEJx3hLqqr8EM7EZBAasc1yGHh36NFetclzFY24YPih0G1+XurhTys="
   on:
     tags: true
   distributions: "sdist bdist_wheel"

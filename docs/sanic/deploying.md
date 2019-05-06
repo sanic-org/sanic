@@ -64,6 +64,26 @@ of the memory leak.
 
 See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
 
+## Running behind a reverse proxy
+
+Sanic can be used with a reverse proxy (e.g. nginx). There's a simple example of nginx configuration:
+
+```
+server {
+  listen 80;
+  server_name example.org;
+
+  location / {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  }
+}
+```
+
+If you want to get real client ip, you should configure `X-Real-IP` and `X-Forwarded-For` HTTP headers and set `app.config.PROXIES_COUNT` to `1`; see the configuration page for more information.
+
 ## Disable debug logging
 
 To improve the performance add `debug=False` and `access_log=False` in the `run` arguments.
@@ -92,7 +112,7 @@ to run the app in general.
 Here is an incomplete example (please see `run_async.py` in examples for something more practical):
 
 ```python
-server = app.create_server(host="0.0.0.0", port=8000)
+server = app.create_server(host="0.0.0.0", port=8000, return_asyncio_server=True)
 loop = asyncio.get_event_loop()
 task = asyncio.ensure_future(server)
 loop.run_forever()

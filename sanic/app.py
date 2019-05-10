@@ -556,7 +556,8 @@ class Sanic:
         existing route can be removed from the :class:`Sanic` object
 
         .. warning::
-            remove_route is deprecated in v19.06 and will be removed from future versions.
+            remove_route is deprecated in v19.06 and will be removed
+            from future versions.
 
         :param uri: URL Path to be removed from the app
         :param clean_cache: Instruct sanic if it needs to clean up the LRU
@@ -565,7 +566,8 @@ class Sanic:
         :return: None
         """
         warnings.warn(
-            "remove_route is deprecated and will be removed from future versions.",
+            "remove_route is deprecated and will be removed "
+            "from future versions.",
             DeprecationWarning,
             stacklevel=2,
         )

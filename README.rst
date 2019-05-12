@@ -16,7 +16,7 @@ Sanic | Build fast. Run fast.
     * - Package
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support
-      - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby|
+      - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby| |Awesome|
     * - Stats
       - | |Downloads|
 
@@ -44,6 +44,9 @@ Sanic | Build fast. Run fast.
 .. |Supported implementations| image:: https://img.shields.io/pypi/implementation/sanic.svg
     :alt: Supported implementations
     :target: https://pypi.python.org/pypi/sanic
+.. |Awesome| image:: https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg
+    :alt: Awesome Sanic List
+    :target: https://github.com/mekicha/awesome-sanic
 .. |Downloads| image:: https://pepy.tech/badge/sanic/month
     :alt: Downloads
     :target: https://pepy.tech/project/sanic

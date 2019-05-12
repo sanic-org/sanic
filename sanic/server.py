@@ -842,6 +842,8 @@ def serve_multiple(server_settings, workers):
         server_settings["host"] = None
         server_settings["port"] = None
 
+    processes = []
+
     def sig_handler(signal, frame):
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         for process in processes:
@@ -849,8 +851,6 @@ def serve_multiple(server_settings, workers):
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
-
-    processes = []
 
     for _ in range(workers):
         process = Process(target=serve, kwargs=server_settings)

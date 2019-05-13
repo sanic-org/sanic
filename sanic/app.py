@@ -441,8 +441,12 @@ class Sanic:
     ):
         """Decorate a function to be registered as a websocket route
         :param uri: path of the URL
+        :param host: Host IP or FQDN details
+        :param strict_slashes: If the API endpoint needs to terminate
+                with a "/" or not
         :param subprotocols: optional list of str with supported subprotocols
-        :param host:
+        :param name: A unique name assigned to the URL so that it can
+                be used with :func:`url_for`
         :return: decorated function
         """
         self.enable_websocket()

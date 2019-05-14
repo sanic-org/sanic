@@ -1,7 +1,7 @@
 # Getting Started
 
 Make sure you have both [pip](https://pip.pypa.io/en/stable/installing/) and at
-least version 3.5 of Python before starting. Sanic uses the new `async`/`await`
+least version 3.6 of Python before starting. Sanic uses the new `async`/`await`
 syntax, so earlier versions of python won't work.
 
 ## 1. Install Sanic

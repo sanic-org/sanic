@@ -783,9 +783,6 @@ class Sanic:
 
                 uri = "{}/{}".format(folder_, filename)
 
-        if uri != "/" and uri.endswith("/"):
-            uri = uri[:-1]
-
         out = uri
 
         # find all the parameters we will need to build in the URL

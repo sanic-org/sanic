@@ -103,6 +103,21 @@ def test_url_for_with_server_name(app):
     assert response.text == "this should pass"
 
 
+def test_url_for_with_strict_slashes(app):
+    path = '/strict-slashes/'
+
+    @app.route(path, strict_slashes=True)
+    def passes(request):
+        return text('this should pass')
+
+    endpoint = app.url_for("passes")
+
+    assert endpoint == path
+    _, response = app.test_client.get(endpoint)
+    assert response.status == 200
+    assert response.text == 'this should pass'
+
+
 def test_fails_if_endpoint_not_found(app):
     @app.route("/fail")
     def fail(request):

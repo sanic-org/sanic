@@ -239,7 +239,7 @@ def test_dynamic_named_route_unhashable(app):
     route = app.router.routes_all["/folder/<unhashable:[A-Za-z0-9/]+>/end/"]
     assert route.name == "route_unhashable"
     url = app.url_for("route_unhashable", unhashable="test/asdf")
-    assert url == "/folder/test/asdf/end"
+    assert url == "/folder/test/asdf/end/"
     with pytest.raises(URLBuildError):
         app.url_for("handler")
 
@@ -320,7 +320,7 @@ def test_dynamic_add_named_route_unhashable(app):
     route = app.router.routes_all["/folder/<unhashable:[A-Za-z0-9/]+>/end/"]
     assert route.name == "route_unhashable"
     url = app.url_for("route_unhashable", unhashable="folder1")
-    assert url == "/folder/folder1/end"
+    assert url == "/folder/folder1/end/"
     with pytest.raises(URLBuildError):
         app.url_for("handler")
 

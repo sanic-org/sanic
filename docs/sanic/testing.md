@@ -4,6 +4,15 @@ Sanic endpoints can be tested locally using the `test_client` object, which
 depends on the additional [`requests-async`](https://github.com/encode/requests-async)
 library, which implements an API that mirrors the `requests` library.
 
+
+## `SanicTestClient`
+
+The `SanicTestClient` is available as an instance of your Sanic `app` as `app.test_client`. However, out of the box, it will **not** be usable because `requests-async` is **not** a core dependency of Sanic. In order to have access to it in your development environment, install Sanic with the extra dependencies:
+
+```bash
+$ pip install sanic[test]
+```
+
 The `test_client` exposes `get`, `post`, `put`, `delete`, `patch`, `head` and `options` methods
 for you to run against your application. A simple example (using pytest) is like follows:
 

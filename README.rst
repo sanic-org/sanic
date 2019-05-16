@@ -18,7 +18,7 @@ Sanic | Build fast. Run fast.
     * - Support
       - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby| |Awesome|
     * - Stats
-      - | |Downloads|
+      - | |Downloads| |Conda downloads|
 
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
@@ -50,6 +50,9 @@ Sanic | Build fast. Run fast.
 .. |Downloads| image:: https://pepy.tech/badge/sanic/month
     :alt: Downloads
     :target: https://pepy.tech/project/sanic
+.. |Conda downloads| image:: https://img.shields.io/conda/dn/conda-forge/sanic.svg
+    :alt: Downloads
+    :target: https://anaconda.org/conda-forge/sanic
 
 .. end-badges
 

@@ -241,42 +241,46 @@ def test_keep_alive_timeout_reuse():
     """If the server keep-alive timeout and client keep-alive timeout are
      both longer than the delay, the client _and_ server will successfully
      reuse the existing connection."""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    client = ReuseableSanicTestClient(keep_alive_timeout_app_reuse, loop)
-    headers = {"Connection": "keep-alive"}
-    request, response = client.get("/1", headers=headers)
-    assert response.status == 200
-    assert response.text == "OK"
-    loop.run_until_complete(aio_sleep(1))
-    request, response = client.get("/1")
-    assert response.status == 200
-    assert response.text == "OK"
-    client.kill_server()
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        client = ReuseableSanicTestClient(keep_alive_timeout_app_reuse, loop)
+        headers = {"Connection": "keep-alive"}
+        request, response = client.get("/1", headers=headers)
+        assert response.status == 200
+        assert response.text == "OK"
+        loop.run_until_complete(aio_sleep(1))
+        request, response = client.get("/1")
+        assert response.status == 200
+        assert response.text == "OK"
+    finally:
+        client.kill_server()
 
 
 def test_keep_alive_client_timeout():
     """If the server keep-alive timeout is longer than the client
     keep-alive timeout, client will try to create a new connection here."""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    client = ReuseableSanicTestClient(keep_alive_app_client_timeout, loop)
-    headers = {"Connection": "keep-alive"}
     try:
-        request, response = client.get(
-            "/1", headers=headers, request_keepalive=1
-        )
-        assert response.status == 200
-        assert response.text == "OK"
-        loop.run_until_complete(aio_sleep(2))
-        exception = None
-        request, response = client.get("/1", request_keepalive=1)
-    except ValueError as e:
-        exception = e
-    assert exception is not None
-    assert isinstance(exception, ValueError)
-    assert "got a new connection" in exception.args[0]
-    client.kill_server()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        client = ReuseableSanicTestClient(keep_alive_app_client_timeout, loop)
+        headers = {"Connection": "keep-alive"}
+        try:
+            request, response = client.get(
+                "/1", headers=headers, request_keepalive=1
+            )
+            assert response.status == 200
+            assert response.text == "OK"
+            loop.run_until_complete(aio_sleep(2))
+            exception = None
+            request, response = client.get("/1", request_keepalive=1)
+        except ValueError as e:
+            exception = e
+        assert exception is not None
+        assert isinstance(exception, ValueError)
+        assert "got a new connection" in exception.args[0]
+    finally:
+        client.kill_server()
 
 
 def test_keep_alive_server_timeout():
@@ -284,25 +288,27 @@ def test_keep_alive_server_timeout():
     keep-alive timeout, the client will either a 'Connection reset' error
     _or_ a new connection. Depending on how the event-loop handles the
     broken server connection."""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    client = ReuseableSanicTestClient(keep_alive_app_server_timeout, loop)
-    headers = {"Connection": "keep-alive"}
     try:
-        request, response = client.get(
-            "/1", headers=headers, request_keepalive=60
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        client = ReuseableSanicTestClient(keep_alive_app_server_timeout, loop)
+        headers = {"Connection": "keep-alive"}
+        try:
+            request, response = client.get(
+                "/1", headers=headers, request_keepalive=60
+            )
+            assert response.status == 200
+            assert response.text == "OK"
+            loop.run_until_complete(aio_sleep(3))
+            exception = None
+            request, response = client.get("/1", request_keepalive=60)
+        except ValueError as e:
+            exception = e
+        assert exception is not None
+        assert isinstance(exception, ValueError)
+        assert (
+            "Connection reset" in exception.args[0]
+            or "got a new connection" in exception.args[0]
         )
-        assert response.status == 200
-        assert response.text == "OK"
-        loop.run_until_complete(aio_sleep(3))
-        exception = None
-        request, response = client.get("/1", request_keepalive=60)
-    except ValueError as e:
-        exception = e
-    assert exception is not None
-    assert isinstance(exception, ValueError)
-    assert (
-        "Connection reset" in exception.args[0]
-        or "got a new connection" in exception.args[0]
-    )
-    client.kill_server()
+    finally:
+        client.kill_server()

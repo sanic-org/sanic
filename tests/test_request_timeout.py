@@ -13,37 +13,26 @@ class DelayableSanicConnectionPool(httpcore.ConnectionPool):
         self._request_delay = request_delay
         super().__init__(*args, **kwargs)
 
-    async def request(
+    async def send(
         self,
-        method,
-        url,
-        headers=(),
-        body=b"",
+        request,
         stream=False,
         ssl=None,
         timeout=None,
     ):
-        if ssl is None:
-            ssl = self.ssl_config
-        if timeout is None:
-            timeout = self.timeout
-
-        parsed_url = httpcore.URL(url)
-        request = httpcore.Request(
-            method, parsed_url, headers=headers, body=body
-        )
-        connection = await self.acquire_connection(
-            parsed_url, ssl=ssl, timeout=timeout
-        )
+        connection = await self.acquire_connection(request.url.origin)
+        if connection.h11_connection is None and connection.h2_connection is None:
+            await connection.connect(ssl=ssl, timeout=timeout)
         if self._request_delay:
-            print(f"\t>> Sleeping ({self._request_delay})")
             await asyncio.sleep(self._request_delay)
-        response = await connection.send(request)
-        if not stream:
-            try:
-                await response.read()
-            finally:
-                await response.close()
+        try:
+            response = await connection.send(
+                request, stream=stream, ssl=ssl, timeout=timeout
+            )
+        except BaseException as exc:
+            self.active_connections.remove(connection)
+            self.max_connections.release()
+            raise exc
         return response
 
 

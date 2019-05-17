@@ -16,45 +16,28 @@ from sanic.response import text
 from sanic.testing import HOST, PORT, SanicTestClient
 
 
-# import traceback
-
-
-
-
-
-
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
 old_conn = None
 
 
 class ReusableSanicConnectionPool(httpcore.ConnectionPool):
-    async def acquire_connection(self, url, ssl, timeout):
+    async def acquire_connection(self, origin):
         global old_conn
-        if timeout.connect_timeout and not timeout.pool_timeout:
-            timeout.pool_timeout = timeout.connect_timeout
-        key = (url.scheme, url.hostname, url.port, ssl, timeout)
-        try:
-            connection = self._keepalive_connections[key].pop()
-            if not self._keepalive_connections[key]:
-                del self._keepalive_connections[key]
-            self.num_keepalive_connections -= 1
-            self.num_active_connections += 1
+        connection = self.active_connections.pop_by_origin(origin, http2_only=True)
+        if connection is None:
+            connection = self.keepalive_connections.pop_by_origin(origin)
 
-        except (KeyError, IndexError):
-            ssl_context = await self.get_ssl_context(url, ssl)
-            try:
-                await asyncio.wait_for(
-                    self._max_connections.acquire(), timeout.pool_timeout
-                )
-            except asyncio.TimeoutError:
-                raise PoolTimeout()
-            release = functools.partial(self.release_connection, key=key)
-            connection = httpcore.connections.Connection(
-                timeout=timeout, on_release=release
+        if connection is None:
+            await self.max_connections.acquire()
+            connection = httpcore.HTTPConnection(
+                origin,
+                ssl=self.ssl,
+                timeout=self.timeout,
+                backend=self.backend,
+                release_func=self.release_connection,
             )
-            self.num_active_connections += 1
-            await connection.open(url.hostname, url.port, ssl=ssl_context)
+        self.active_connections.add(connection)
 
         if old_conn is not None:
             if old_conn != connection:
@@ -69,62 +52,6 @@ class ReusableSanicConnectionPool(httpcore.ConnectionPool):
 class ReusableSanicAdapter(requests.adapters.HTTPAdapter):
     def __init__(self):
         self.pool = ReusableSanicConnectionPool()
-
-    async def send(
-        self,
-        request,
-        stream=False,
-        timeout=None,
-        verify=True,
-        cert=None,
-        proxies=None,
-    ):
-
-        method = request.method
-        url = request.url
-        headers = [
-            (_encode(k), _encode(v)) for k, v in request.headers.items()
-        ]
-
-        if not request.body:
-            body = b""
-        elif isinstance(request.body, str):
-            body = _encode(request.body)
-        else:
-            body = request.body
-
-        if isinstance(timeout, tuple):
-            timeout_kwargs = {
-                "connect_timeout": timeout[0],
-                "read_timeout": timeout[1],
-            }
-        else:
-            timeout_kwargs = {
-                "connect_timeout": timeout,
-                "read_timeout": timeout,
-            }
-
-        ssl = httpcore.SSLConfig(cert=cert, verify=verify)
-        timeout = httpcore.TimeoutConfig(**timeout_kwargs)
-
-        try:
-            response = await self.pool.request(
-                method,
-                url,
-                headers=headers,
-                body=body,
-                stream=stream,
-                ssl=ssl,
-                timeout=timeout,
-            )
-        except (httpcore.BadResponse, socket.error) as err:
-            raise ConnectionError(err, request=request)
-        except httpcore.ConnectTimeout as err:
-            raise requests.exceptions.ConnectTimeout(err, request=request)
-        except httpcore.ReadTimeout as err:
-            raise requests.exceptions.ReadTimeout(err, request=request)
-
-        return self.build_response(request, response)
 
 
 class ResusableSanicSession(requests.Session):
@@ -153,13 +80,14 @@ class ReuseableSanicTestClient(SanicTestClient):
         uri="/",
         gather_request=True,
         debug=False,
-        server_kwargs={"return_asyncio_server": True},
+        server_kwargs=None,
         *request_args,
         **request_kwargs,
     ):
         loop = self._loop
         results = [None, None]
         exceptions = []
+        server_kwargs = server_kwargs or {"return_asyncio_server": True}
         if gather_request:
 
             def _collect_request(request):
@@ -187,7 +115,6 @@ class ReuseableSanicTestClient(SanicTestClient):
                 )
                 results[-1] = response
             except Exception as e2:
-                # traceback.print_tb(e2.__traceback__)
                 exceptions.append(e2)
 
         if self._server is not None:
@@ -205,7 +132,6 @@ class ReuseableSanicTestClient(SanicTestClient):
                 loop._stopping = False
                 _server = loop.run_until_complete(_server_co)
             except Exception as e1:
-                # traceback.print_tb(e1.__traceback__)
                 raise e1
             self._server = _server
         server.trigger_events(self.app.listeners["after_server_start"], loop)
@@ -257,36 +183,32 @@ class ReuseableSanicTestClient(SanicTestClient):
         request_keepalive = kwargs.pop(
             "request_keepalive", CONFIG_FOR_TESTS["KEEP_ALIVE_TIMEOUT"]
         )
-        if self._session:
-            _session = self._session
-        else:
-            _session = ResusableSanicSession()
-            self._session = _session
-        async with _session as session:
-            try:
-                response = await getattr(session, method.lower())(
-                    url,
-                    verify=False,
-                    timeout=request_keepalive,
-                    *args,
-                    **kwargs,
-                )
-            except NameError:
-                raise Exception(response.status_code)
+        if not self._session:
+            self._session = ResusableSanicSession()
+        try:
+            response = await getattr(self._session, method.lower())(
+                url,
+                verify=False,
+                timeout=request_keepalive,
+                *args,
+                **kwargs,
+            )
+        except NameError:
+            raise Exception(response.status_code)
 
-            try:
-                response.json = response.json()
-            except (JSONDecodeError, UnicodeDecodeError):
-                response.json = None
+        try:
+            response.json = response.json()
+        except (JSONDecodeError, UnicodeDecodeError):
+            response.json = None
 
-            response.body = await response.read()
-            response.status = response.status_code
-            response.content_type = response.headers.get("content-type")
+        response.body = await response.read()
+        response.status = response.status_code
+        response.content_type = response.headers.get("content-type")
 
-            if raw_cookies:
-                response.raw_cookies = {}
-                for cookie in response.cookies:
-                    response.raw_cookies[cookie.name] = cookie
+        if raw_cookies:
+            response.raw_cookies = {}
+            for cookie in response.cookies:
+                response.raw_cookies[cookie.name] = cookie
 
         return response
 

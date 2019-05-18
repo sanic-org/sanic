@@ -60,7 +60,7 @@ Sanic is a **Python 3.6+** web server and web framework that's written to go fas
 
 `Source code on GitHub <https://github.com/huge-success/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_. 
 
-The project is maintained by the community, for the community **Contributions are welcome!**
+The project is maintained by the community, for the community. **Contributions are welcome!**
 
 The goal of the project is to provide a simple way to get up and running a highly performant HTTP server that is easy to build, to expand, and ultimately to scale.
 

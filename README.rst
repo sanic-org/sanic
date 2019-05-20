@@ -78,6 +78,12 @@ Installation
        $ pip3 install --no-binary :all: sanic
 
 
+.. note::
+
+  If you are running on a clean install of Fedora 28 or above, please make sure you have the ``redhat-rpm-config`` package installed in case if you want to
+  use ``sanic`` with ``ujson`` dependency.
+
+
 Hello World Example
 -------------------
 

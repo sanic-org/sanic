@@ -6,6 +6,8 @@ syntax, so earlier versions of python won't work.
 
 ## 1. Install Sanic
 
+>   If you are running on a clean install of Fedora 28 or above, please make sure you have the ``redhat-rpm-config`` package installed in case if you want to use ``sanic`` with ``ujson`` dependency.
+
 ```bash
 pip3 install sanic
 ```

@@ -30,6 +30,17 @@ def test_sync(app):
     assert response.text == "Hello"
 
 
+@pytest.mark.asyncio
+async def test_sync_asgi(app):
+    @app.route("/")
+    def handler(request):
+        return text("Hello")
+
+    request, response = await app.asgi_client.get("/")
+
+    assert response.text == "Hello"
+
+
 def test_ip(app):
     @app.route("/")
     def handler(request):
@@ -38,6 +49,17 @@ def test_ip(app):
     request, response = app.test_client.get("/")
 
     assert response.text == "127.0.0.1"
+
+
+@pytest.mark.asyncio
+async def test_ip_asgi(app):
+    @app.route("/")
+    def handler(request):
+        return text("{}".format(request.ip))
+
+    request, response = await app.asgi_client.get("/")
+
+    assert response.text == "mockserver"
 
 
 def test_text(app):

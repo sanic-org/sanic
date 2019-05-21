@@ -708,6 +708,8 @@ def serve(
     if debug:
         loop.set_debug(debug)
 
+    app.asgi = False
+
     connections = connections if connections is not None else set()
     server = partial(
         protocol,

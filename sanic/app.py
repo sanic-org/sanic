@@ -8,7 +8,6 @@ from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
 from inspect import getmodulename, isawaitable, signature, stack
-from multidict import CIMultiDict
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -24,11 +23,10 @@ from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
-from sanic.request import Request
 from sanic.router import Router
 from sanic.server import HttpProtocol, Signal, serve, serve_multiple
 from sanic.static import register as static_register
-from sanic.testing import SanicTestClient, SanicASGITestClient
+from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -56,6 +54,7 @@ class Sanic:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         self.name = name
+        self.asgi = True
         self.router = router or Router()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
@@ -468,13 +467,23 @@ class Sanic:
                         getattr(handler, "__blueprintname__", "")
                         + handler.__name__
                     )
-                try:
-                    protocol = request.transport.get_protocol()
-                except AttributeError:
-                    # On Python3.5 the Transport classes in asyncio do not
-                    # have a get_protocol() method as in uvloop
-                    protocol = request.transport._protocol
-                ws = await protocol.websocket_handshake(request, subprotocols)
+
+                    pass
+
+                if self.asgi:
+                    ws = request.transport.get_websocket_connection()
+                else:
+                    try:
+                        protocol = request.transport.get_protocol()
+                    except AttributeError:
+                        # On Python3.5 the Transport classes in asyncio do not
+                        # have a get_protocol() method as in uvloop
+                        protocol = request.transport._protocol
+                    protocol.app = self
+
+                    ws = await protocol.websocket_handshake(
+                        request, subprotocols
+                    )
 
                 # schedule the application handler
                 # its future is kept in self.websocket_tasks in case it
@@ -985,7 +994,13 @@ class Sanic:
         if write_callback is None or isinstance(
             response, StreamingHTTPResponse
         ):
-            await stream_callback(response)
+            if stream_callback:
+                await stream_callback(response)
+            else:
+                # Should only end here IF it is an ASGI websocket. 
+                # TODO:
+                # - Add exception handling
+                pass
         else:
             write_callback(response)
 
@@ -1374,5 +1389,5 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     async def __call__(self, scope, receive, send):
-        asgi_app = ASGIApp(self, scope, receive, send)
+        asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()

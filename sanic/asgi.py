@@ -1,24 +1,50 @@
-from sanic.request import Request
-from multidict import CIMultiDict
-from sanic.response import StreamingHTTPResponse
+from typing import Any, Awaitable, Callable, MutableMapping, Union
 
+from multidict import CIMultiDict
+
+from sanic.request import Request
+from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.websocket import WebSocketConnection
+
+
+ASGIScope = MutableMapping[str, Any]
+ASGIMessage = MutableMapping[str, Any]
+ASGISend = Callable[[ASGIMessage], Awaitable[None]]
+ASGIReceive = Callable[[], Awaitable[ASGIMessage]]
 
 class MockTransport:
-    def __init__(self, scope):
+    def __init__(self, scope: ASGIScope) -> None:
         self.scope = scope
 
-    def get_extra_info(self, info):
+    def get_extra_info(self, info: str) -> Union[str, bool]:
         if info == "peername":
             return self.scope.get("server")
         elif info == "sslcontext":
             return self.scope.get("scheme") in ["https", "wss"]
 
+    def get_websocket_connection(self) -> WebSocketConnection:
+        return self._websocket_connection
+
+    def create_websocket_connection(
+        self,
+        send: ASGISend,
+        receive: ASGIReceive,
+    ) -> WebSocketConnection:
+        self._websocket_connection = WebSocketConnection(send, receive)
+        return self._websocket_connection
+
 
 class ASGIApp:
-    def __init__(self, sanic_app, scope, receive, send):
-        self.sanic_app = sanic_app
-        self.receive = receive
-        self.send = send
+    def __init__(self) -> None:
+        self.ws = None
+
+    @classmethod
+    async def create(cls, sanic_app, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> "ASGIApp":
+        instance = cls()
+        instance.sanic_app = sanic_app
+        instance.receive = receive
+        instance.send = send
+
         url_bytes = scope.get("root_path", "") + scope["path"]
         url_bytes = url_bytes.encode("latin-1")
         url_bytes += scope["query_string"]
@@ -28,18 +54,30 @@ class ASGIApp:
                 for key, value in scope.get("headers", [])
             ]
         )
-        version = scope["http_version"]
-        method = scope["method"]
-        self.request = Request(
-            url_bytes,
-            headers,
-            version,
-            method,
-            MockTransport(scope),
-            sanic_app,
+
+        transport = MockTransport(scope)
+
+        if scope["type"] == "http":
+            version = scope["http_version"]
+            method = scope["method"]
+        elif scope["type"] == "websocket":
+            version = "1.1"
+            method = "GET"
+
+            instance.ws = transport.create_websocket_connection(send, receive)
+            await instance.ws.accept()
+        else:
+            pass
+            # TODO:
+            # - close connection
+
+        instance.request = Request(
+            url_bytes, headers, version, method, transport, sanic_app
         )
 
-    async def read_body(self):
+        return instance
+
+    async def read_body(self) -> bytes:
         """
         Read and return the entire body from an incoming ASGI message.
         """
@@ -53,15 +91,16 @@ class ASGIApp:
 
         return body
 
-    async def __call__(self):
+    async def __call__(self) -> None:
         """
         Handle the incoming request.
         """
         self.request.body = await self.read_body()
         handler = self.sanic_app.handle_request
-        await handler(self.request, None, self.stream_callback)
+        callback = None if self.ws else self.stream_callback
+        await handler(self.request, None, callback)
 
-    async def stream_callback(self, response):
+    async def stream_callback(self, response: HTTPResponse) -> None:
         """
         Write the response.
         """

@@ -1,15 +1,20 @@
+import typing
+import types
+import asyncio
+
 from json import JSONDecodeError
 from socket import socket
-from urllib.parse import unquote, urljoin, urlsplit
+from urllib.parse import unquote, urlsplit
 
 import httpcore
 import requests_async as requests
-import typing
 import websockets
+
 from sanic.asgi import ASGIApp
 from sanic.exceptions import MethodNotSupported
 from sanic.log import logger
 from sanic.response import text
+
 
 HOST = "127.0.0.1"
 PORT = 42101
@@ -314,7 +319,7 @@ class TestASGIApp(ASGIApp):
 
 
 async def app_call_with_return(self, scope, receive, send):
-    asgi_app = TestASGIApp(self, scope, receive, send)
+    asgi_app = await TestASGIApp.create(self, scope, receive, send)
     return await asgi_app()
 
 

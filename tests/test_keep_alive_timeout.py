@@ -19,10 +19,6 @@ from sanic.testing import HOST, PORT, SanicTestClient
 # import traceback
 
 
-
-
-
-
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
 old_conn = None

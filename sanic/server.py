@@ -457,7 +457,7 @@ class HttpProtocol(asyncio.Protocol):
     async def drain(self):
         await self._not_paused.wait()
 
-    def push_data(self, data):
+    async def push_data(self, data):
         self.transport.write(data)
 
     async def stream_response(self, response):

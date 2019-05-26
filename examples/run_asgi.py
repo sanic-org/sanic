@@ -1,12 +1,12 @@
 """
 1. Create a simple Sanic app
-2. Run with an ASGI server:
+0. Run with an ASGI server:
     $ uvicorn run_asgi:app
     or
     $ hypercorn run_asgi:app
 """
 
-import os
+from pathlib import Path
 from sanic import Sanic, response
 
 
@@ -14,17 +14,17 @@ app = Sanic(__name__)
 
 
 @app.route("/text")
-def handler(request):
+def handler_text(request):
     return response.text("Hello")
 
 
 @app.route("/json")
-def handler_foo(request):
-    return response.text("bar")
+def handler_json(request):
+    return response.json({"foo": "bar"})
 
 
 @app.websocket("/ws")
-async def feed(request, ws):
+async def handler_ws(request, ws):
     name = "<someone>"
     while True:
         data = f"Hello {name}"
@@ -36,12 +36,23 @@ async def feed(request, ws):
 
 
 @app.route("/file")
-async def test_file(request):
-    return await response.file(os.path.abspath("setup.py"))
+async def handler_file(request):
+    return await response.file(Path("../") / "setup.py")
 
 
 @app.route("/file_stream")
-async def test_file_stream(request):
+async def handler_file_stream(request):
     return await response.file_stream(
-        os.path.abspath("setup.py"), chunk_size=1024
+        Path("../") / "setup.py", chunk_size=1024
     )
+
+
+@app.route("/stream", stream=True)
+async def handler_stream(request):
+    while True:
+        body = await request.stream.read()
+        if body is None:
+            break
+        body = body.decode("utf-8").replace("1", "A")
+        # await response.write(body)
+    return stream(streaming)

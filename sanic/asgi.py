@@ -5,12 +5,13 @@ from multidict import CIMultiDict
 from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.websocket import WebSocketConnection
-
+from sanic.server import StreamBuffer
 
 ASGIScope = MutableMapping[str, Any]
 ASGIMessage = MutableMapping[str, Any]
 ASGISend = Callable[[ASGIMessage], Awaitable[None]]
 ASGIReceive = Callable[[], Awaitable[ASGIMessage]]
+
 
 class MockTransport:
     def __init__(self, scope: ASGIScope) -> None:
@@ -26,9 +27,7 @@ class MockTransport:
         return self._websocket_connection
 
     def create_websocket_connection(
-        self,
-        send: ASGISend,
-        receive: ASGIReceive,
+        self, send: ASGISend, receive: ASGIReceive
     ) -> WebSocketConnection:
         self._websocket_connection = WebSocketConnection(send, receive)
         return self._websocket_connection
@@ -39,7 +38,9 @@ class ASGIApp:
         self.ws = None
 
     @classmethod
-    async def create(cls, sanic_app, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> "ASGIApp":
+    async def create(
+        cls, sanic_app, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
+    ) -> "ASGIApp":
         instance = cls()
         instance.sanic_app = sanic_app
         instance.receive = receive
@@ -53,6 +54,10 @@ class ASGIApp:
                 (key.decode("latin-1"), value.decode("latin-1"))
                 for key, value in scope.get("headers", [])
             ]
+        )
+
+        instance.do_stream = (
+            True if headers.get("expect") == "100-continue" else False
         )
 
         transport = MockTransport(scope)
@@ -75,6 +80,9 @@ class ASGIApp:
             url_bytes, headers, version, method, transport, sanic_app
         )
 
+        if sanic_app.is_request_stream:
+            instance.request.stream = StreamBuffer()
+
         return instance
 
     async def read_body(self) -> bytes:
@@ -83,7 +91,6 @@ class ASGIApp:
         """
         body = b""
         more_body = True
-
         while more_body:
             message = await self.receive()
             body += message.get("body", b"")
@@ -91,11 +98,31 @@ class ASGIApp:
 
         return body
 
+    async def stream_body(self) -> None:
+        """
+        Read and stream the body in chunks from an incoming ASGI message.
+        """
+        more_body = True
+
+        while more_body:
+            message = await self.receive()
+            chunk = message.get("body", b"")
+            await self.request.stream.put(chunk)
+            # self.sanic_app.loop.create_task(self.request.stream.put(chunk))
+
+            more_body = message.get("more_body", False)
+
+        await self.request.stream.put(None)
+
     async def __call__(self) -> None:
         """
         Handle the incoming request.
         """
-        self.request.body = await self.read_body()
+        if not self.do_stream:
+            self.request.body = await self.read_body()
+        else:
+            self.sanic_app.loop.create_task(self.stream_body())
+
         handler = self.sanic_app.handle_request
         callback = None if self.ws else self.stream_callback
         await handler(self.request, None, callback)

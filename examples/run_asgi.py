@@ -6,22 +6,24 @@
     $ hypercorn run_asgi:app
 """
 
-from sanic import Sanic
-from sanic.response import text
+import os
+from sanic import Sanic, response
 
 
 app = Sanic(__name__)
 
-@app.route("/")
+
+@app.route("/text")
 def handler(request):
-    return text("Hello")
+    return response.text("Hello")
 
-@app.route("/foo")
+
+@app.route("/json")
 def handler_foo(request):
-    return text("bar")
+    return response.text("bar")
 
 
-@app.websocket('/feed')
+@app.websocket("/ws")
 async def feed(request, ws):
     name = "<someone>"
     while True:
@@ -33,5 +35,13 @@ async def feed(request, ws):
             break
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route("/file")
+async def test_file(request):
+    return await response.file(os.path.abspath("setup.py"))
+
+
+@app.route("/file_stream")
+async def test_file_stream(request):
+    return await response.file_stream(
+        os.path.abspath("setup.py"), chunk_size=1024
+    )

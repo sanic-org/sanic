@@ -24,7 +24,7 @@ class WebSocketProtocol(HttpProtocol):
     ):
         super().__init__(*args, **kwargs)
         self.websocket = None
-        self.app = None
+        # self.app = None
         self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size
         self.websocket_max_queue = websocket_max_queue

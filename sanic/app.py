@@ -82,7 +82,7 @@ class Sanic:
 
         Only supported when using the `app.run` method.
         """
-        if not self.is_running:
+        if not self.is_running and self.asgi is False:
             raise SanicException(
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
@@ -997,7 +997,7 @@ class Sanic:
             if stream_callback:
                 await stream_callback(response)
             else:
-                # Should only end here IF it is an ASGI websocket. 
+                # Should only end here IF it is an ASGI websocket.
                 # TODO:
                 # - Add exception handling
                 pass

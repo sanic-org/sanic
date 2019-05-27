@@ -1,6 +1,6 @@
-import typing
-import types
 import asyncio
+import types
+import typing
 
 from json import JSONDecodeError
 from socket import socket

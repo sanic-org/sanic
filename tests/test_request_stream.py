@@ -71,15 +71,13 @@ def test_request_stream_app(app):
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     @app.put("/_put")
     async def _put(request):
@@ -89,15 +87,13 @@ def test_request_stream_app(app):
     @app.put("/put", stream=True)
     async def put(request):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     @app.patch("/_patch")
     async def _patch(request):
@@ -107,15 +103,14 @@ def test_request_stream_app(app):
     @app.patch("/patch", stream=True)
     async def patch(request):
         assert isinstance(request.stream, StreamBuffer)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
 
     assert app.is_request_stream is True
 
@@ -166,15 +161,13 @@ def test_request_stream_handle_exception(app):
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     # 404
     request, response = app.test_client.post("/in_valid_post", data=data)
@@ -222,15 +215,13 @@ def test_request_stream_blueprint(app):
     @bp.post("/post/<id>", stream=True)
     async def post(request, id):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     @bp.put("/_put")
     async def _put(request):
@@ -240,15 +231,13 @@ def test_request_stream_blueprint(app):
     @bp.put("/put", stream=True)
     async def put(request):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     @bp.patch("/_patch")
     async def _patch(request):
@@ -258,27 +247,23 @@ def test_request_stream_blueprint(app):
     @bp.patch("/patch", stream=True)
     async def patch(request):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     async def post_add_route(request):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     bp.add_route(
         post_add_route, "/post/add_route", methods=["POST"], stream=True
@@ -388,15 +373,13 @@ def test_request_stream(app):
     @app.post("/stream", stream=True)
     async def handler(request):
         assert isinstance(request.stream, StreamBuffer)
-
-        async def streaming(response):
-            while True:
-                body = await request.stream.read()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
-
-        return stream(streaming)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
 
     @app.get("/get")
     async def get(request):

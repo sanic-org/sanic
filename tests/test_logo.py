@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from sanic.config import BASE_LOGO
+from sanic.testing import PORT
 
 
 try:
@@ -13,7 +14,9 @@ except BaseException:
 
 
 def test_logo_base(app, caplog):
-    server = app.create_server(debug=True, return_asyncio_server=True)
+    server = app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False
@@ -32,7 +35,9 @@ def test_logo_base(app, caplog):
 def test_logo_false(app, caplog):
     app.config.LOGO = False
 
-    server = app.create_server(debug=True, return_asyncio_server=True)
+    server = app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False
@@ -45,13 +50,17 @@ def test_logo_false(app, caplog):
     app.stop()
 
     assert caplog.record_tuples[ROW][1] == logging.INFO
-    assert caplog.record_tuples[ROW][2] == "Goin' Fast @ http://127.0.0.1:8000"
+    assert caplog.record_tuples[ROW][
+        2
+    ] == "Goin' Fast @ http://127.0.0.1:{}".format(PORT)
 
 
 def test_logo_true(app, caplog):
     app.config.LOGO = True
 
-    server = app.create_server(debug=True, return_asyncio_server=True)
+    server = app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False
@@ -70,7 +79,9 @@ def test_logo_true(app, caplog):
 def test_logo_custom(app, caplog):
     app.config.LOGO = "My Custom Logo"
 
-    server = app.create_server(debug=True, return_asyncio_server=True)
+    server = app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop._stopping = False

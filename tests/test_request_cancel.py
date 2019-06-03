@@ -4,7 +4,7 @@ import contextlib
 from sanic.response import stream, text
 
 
-async def test_request_cancel_when_connection_lost(loop, app, test_client):
+async def test_request_cancel_when_connection_lost(loop, app, sanic_client):
     app.still_serving_cancelled_request = False
 
     @app.get("/")
@@ -14,7 +14,7 @@ async def test_request_cancel_when_connection_lost(loop, app, test_client):
         app.still_serving_cancelled_request = True
         return text("OK")
 
-    test_cli = await test_client(app)
+    test_cli = await sanic_client(app)
 
     # schedule client call
     task = loop.create_task(test_cli.get("/"))
@@ -33,7 +33,7 @@ async def test_request_cancel_when_connection_lost(loop, app, test_client):
     assert app.still_serving_cancelled_request is False
 
 
-async def test_stream_request_cancel_when_conn_lost(loop, app, test_client):
+async def test_stream_request_cancel_when_conn_lost(loop, app, sanic_client):
     app.still_serving_cancelled_request = False
 
     @app.post("/post/<id>", stream=True)
@@ -53,7 +53,7 @@ async def test_stream_request_cancel_when_conn_lost(loop, app, test_client):
 
         return stream(streaming)
 
-    test_cli = await test_client(app)
+    test_cli = await sanic_client(app)
 
     # schedule client call
     task = loop.create_task(test_cli.post("/post/1"))

@@ -726,3 +726,10 @@ def test_strict_slashes_behavior_adoption(app):
     app.blueprint(bp2)
     assert app.test_client.get("/third")[1].status == 200
     assert app.test_client.get("/third/")[1].status == 200
+
+    @app.get("/f1", strict_slashes=False)
+    def f1(request):
+        return text("f1")
+
+    assert app.test_client.get("/f1")[1].status == 200
+    assert app.test_client.get("/f1/")[1].status == 200

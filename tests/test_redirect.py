@@ -110,7 +110,7 @@ def test_redirect_with_header_injection(redirect_app):
 
 
 @pytest.mark.parametrize("test_str", ["sanic-test", "sanictest", "sanic test"])
-async def test_redirect_with_params(app, test_client, test_str):
+async def test_redirect_with_params(app, sanic_client, test_str):
     @app.route("/api/v1/test/<test>/")
     async def init_handler(request, test):
         assert test == test_str
@@ -121,7 +121,7 @@ async def test_redirect_with_params(app, test_client, test_str):
         assert test == test_str
         return text("OK")
 
-    test_cli = await test_client(app)
+    test_cli = await sanic_client(app)
 
     response = await test_cli.get("/api/v1/test/{}/".format(quote(test_str)))
     assert response.status == 200

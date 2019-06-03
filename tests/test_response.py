@@ -231,9 +231,7 @@ def test_chunked_streaming_returns_correct_content(streaming_app):
     assert response.text == "foo,bar"
 
 
-def test_non_chunked_streaming_adds_correct_headers(
-    non_chunked_streaming_app
-):
+def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
     request, response = non_chunked_streaming_app.test_client.get("/")
     assert "Transfer-Encoding" not in response.headers
     assert response.headers["Content-Type"] == "text/csv"

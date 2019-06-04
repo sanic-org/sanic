@@ -55,7 +55,7 @@ async def handler_stream(request):
             break
         body = body.decode("utf-8").replace("1", "A")
         # await response.write(body)
-    return stream(streaming)
+    return response.stream(body)
 
 
 @app.listener("before_server_start")

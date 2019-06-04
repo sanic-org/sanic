@@ -1,15 +1,13 @@
 import asyncio
 import warnings
-
 from http.cookies import SimpleCookie
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Union
-from urllib.parse import quote
 
 from multidict import CIMultiDict
-
-from sanic.exceptions import InvalidUsage, ServerError
+from urllib.parse import quote
 from sanic.log import logger
+from sanic.exceptions import InvalidUsage, ServerError
 from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.server import StreamBuffer
@@ -107,20 +105,18 @@ class Lifespan:
         if "before_server_start" in self.asgi_app.sanic_app.listeners:
             warnings.warn(
                 'You have set a listener for "before_server_start" in ASGI mode. '
-                "It will be executed as early as possible, but not before "
-                "the ASGI server is started."
+                'It will be executed as early as possible, but not before '
+                'the ASGI server is started.'
             )
         if "after_server_stop" in self.asgi_app.sanic_app.listeners:
             warnings.warn(
                 'You have set a listener for "after_server_stop" in ASGI mode. '
-                "It will be executed as late as possible, but not before "
-                "the ASGI server is stopped."
+                'It will be executed as late as possible, but not after '
+                'the ASGI server is stopped.'
             )
 
     async def pre_startup(self) -> None:
-        for handler in self.asgi_app.sanic_app.listeners[
-            "before_server_start"
-        ]:
+        for handler in self.asgi_app.sanic_app.listeners["before_server_start"]:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
@@ -128,6 +124,13 @@ class Lifespan:
                 await response
 
     async def startup(self) -> None:
+        for handler in self.asgi_app.sanic_app.listeners["before_server_start"]:
+            response = handler(
+                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
+            )
+            if isawaitable(response):
+                await response
+
         for handler in self.asgi_app.sanic_app.listeners["after_server_start"]:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
@@ -143,10 +146,7 @@ class Lifespan:
             if isawaitable(response):
                 await response
 
-    async def post_shutdown(self) -> None:
-        for handler in self.asgi_app.sanic_app.listeners[
-            "before_server_start"
-        ]:
+        for handler in self.asgi_app.sanic_app.listeners["after_server_stop"]:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
@@ -191,7 +191,6 @@ class ASGIApp:
             True if headers.get("expect") == "100-continue" else False
         )
         instance.lifespan = Lifespan(instance)
-        await instance.pre_startup()
 
         if scope["type"] == "lifespan":
             await instance.lifespan(scope, receive, send)
@@ -291,9 +290,7 @@ class ASGIApp:
                 type(response),
             )
             exception = ServerError("Invalid response type")
-            response = self.sanic_app.error_handler.response(
-                self.request, exception
-            )
+            response = self.sanic_app.error_handler.response(self.request, exception)
             headers = [
                 (str(name).encode("latin-1"), str(value).encode("latin-1"))
                 for name, value in response.headers.items()
@@ -310,10 +307,7 @@ class ASGIApp:
         if response.cookies:
             cookies = SimpleCookie()
             cookies.load(response.cookies)
-            headers += [
-                (b"set-cookie", cookie.encode("utf-8"))
-                for name, cookie in response.cookies.items()
-            ]
+            headers += [(b"set-cookie", cookie.encode("utf-8")) for name, cookie in response.cookies.items()]
 
         await self.transport.send(
             {

@@ -340,7 +340,7 @@ class HttpProtocol(asyncio.Protocol):
             else:
                 self.write_error(
                     HeaderExpectationFailed(
-                        "Unknow Expect: {expect}".format(expect=expect)
+                        "Unknown Expect: {expect}".format(expect=expect)
                     )
                 )
 

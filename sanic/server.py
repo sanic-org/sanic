@@ -15,6 +15,7 @@ from httptools.parser.errors import HttpParserError
 from multidict import CIMultiDict
 
 from sanic.exceptions import (
+    HeaderExpectationFailed,
     InvalidUsage,
     PayloadTooLarge,
     RequestTimeout,
@@ -22,7 +23,7 @@ from sanic.exceptions import (
     ServiceUnavailable,
 )
 from sanic.log import access_logger, logger
-from sanic.request import Request, StreamBuffer
+from sanic.request import Request, StreamBuffer, EXPECT_HEADER
 from sanic.response import HTTPResponse
 
 
@@ -314,6 +315,10 @@ class HttpProtocol(asyncio.Protocol):
         if self._keep_alive_timeout_handler:
             self._keep_alive_timeout_handler.cancel()
             self._keep_alive_timeout_handler = None
+
+        if self.request.headers.get(EXPECT_HEADER):
+            self.expect_handler()
+
         if self.is_request_stream:
             self._is_stream_handler = self.router.is_stream_handler(
                 self.request
@@ -323,6 +328,17 @@ class HttpProtocol(asyncio.Protocol):
                     self.request_buffer_queue_size
                 )
                 self.execute_request_handler()
+
+    def expect_handler(self):
+        """
+        Handler for Expect Header.
+        """
+        expect = self.request.headers.get(EXPECT_HEADER)
+        if self.request.version == "1.1":
+            if expect.lower() == "100-continue":
+                self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
+            else:
+                self.write_error(HeaderExpectationFailed("Unknow Expect: {expect}".format(expect=expect)))
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:

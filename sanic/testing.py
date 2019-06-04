@@ -16,6 +16,7 @@ from sanic.log import logger
 from sanic.response import text
 
 
+ASGI_HOST = "mockserver"
 HOST = "127.0.0.1"
 PORT = 42101
 
@@ -275,7 +276,7 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):
                 body = message.get("body", b"")
                 more_body = message.get("more_body", False)
                 if request.method != "HEAD":
-                    raw_kwargs["body"] += body
+                    raw_kwargs["content"] += body
                 if not more_body:
                     response_complete = True
             elif message["type"] == "http.response.template":
@@ -285,7 +286,7 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):
         request_complete = False
         response_started = False
         response_complete = False
-        raw_kwargs = {"body": b""}  # type: typing.Dict[str, typing.Any]
+        raw_kwargs = {"content": b""}  # type: typing.Dict[str, typing.Any]
         template = None
         context = None
         return_value = None
@@ -327,11 +328,11 @@ class SanicASGITestClient(requests.ASGISession):
     def __init__(
         self,
         app: "Sanic",
-        base_url: str = "http://mockserver",
+        base_url: str = "http://{}".format(ASGI_HOST),
         suppress_exceptions: bool = False,
     ) -> None:
         app.__class__.__call__ = app_call_with_return
-
+        app.asgi = True
         super().__init__(app)
 
         adapter = SanicASGIAdapter(
@@ -343,12 +344,16 @@ class SanicASGITestClient(requests.ASGISession):
         self.app = app
         self.base_url = base_url
 
-    async def send(self, *args, **kwargs):
-        return await super().send(*args, **kwargs)
+    # async def send(self, prepared_request, *args, **kwargs):
+    #     return await super().send(*args, **kwargs)
 
     async def request(self, method, url, gather_request=True, *args, **kwargs):
         self.gather_request = gather_request
+        print(url)
         response = await super().request(method, url, *args, **kwargs)
+        response.status = response.status_code
+        response.body = response.content
+        response.content_type = response.headers.get("content-type")
 
         if hasattr(response, "return_value"):
             request = response.return_value
@@ -361,124 +366,3 @@ class SanicASGITestClient(requests.ASGISession):
         settings = super().merge_environment_settings(*args, **kwargs)
         settings.update({"gather_return": self.gather_request})
         return settings
-
-
-# class SanicASGITestClient(requests.ASGISession):
-#     __test__ = False  # For pytest to not discover this up.
-
-#     def __init__(
-#         self,
-#         app: "Sanic",
-#         base_url: str = "http://mockserver",
-#         suppress_exceptions: bool = False,
-#     ) -> None:
-#         app.testing = True
-#         super().__init__(
-#             app, base_url=base_url, suppress_exceptions=suppress_exceptions
-#         )
-#         # adapter = _ASGIAdapter(
-#         #     app, raise_server_exceptions=raise_server_exceptions
-#         # )
-#         # self.mount("http://", adapter)
-#         # self.mount("https://", adapter)
-#         # self.mount("ws://", adapter)
-#         # self.mount("wss://", adapter)
-#         # self.headers.update({"user-agent": "testclient"})
-#         # self.base_url = base_url
-
-#     # def request(
-#     #     self,
-#     #     method: str,
-#     #     url: str = "/",
-#     #     params: typing.Any = None,
-#     #     data: typing.Any = None,
-#     #     headers: typing.MutableMapping[str, str] = None,
-#     #     cookies: typing.Any = None,
-#     #     files: typing.Any = None,
-#     #     auth: typing.Any = None,
-#     #     timeout: typing.Any = None,
-#     #     allow_redirects: bool = None,
-#     #     proxies: typing.MutableMapping[str, str] = None,
-#     #     hooks: typing.Any = None,
-#     #     stream: bool = None,
-#     #     verify: typing.Union[bool, str] = None,
-#     #     cert: typing.Union[str, typing.Tuple[str, str]] = None,
-#     #     json: typing.Any = None,
-#     #     debug=None,
-#     #     gather_request=True,
-#     # ) -> requests.Response:
-#     #     if debug is not None:
-#     #         self.app.debug = debug
-
-#     #     url = urljoin(self.base_url, url)
-#     #     response = super().request(
-#     #         method,
-#     #         url,
-#     #         params=params,
-#     #         data=data,
-#     #         headers=headers,
-#     #         cookies=cookies,
-#     #         files=files,
-#     #         auth=auth,
-#     #         timeout=timeout,
-#     #         allow_redirects=allow_redirects,
-#     #         proxies=proxies,
-#     #         hooks=hooks,
-#     #         stream=stream,
-#     #         verify=verify,
-#     #         cert=cert,
-#     #         json=json,
-#     #     )
-
-#     #     response.status = response.status_code
-#     #     response.body = response.content
-#     #     try:
-#     #         response.json = response.json()
-#     #     except:
-#     #         response.json = None
-
-#     #     if gather_request:
-#     #         request = response.request
-#     #         parsed = urlparse(request.url)
-#     #         request.scheme = parsed.scheme
-#     #         request.path = parsed.path
-#     #         request.args = parse_qs(parsed.query)
-#     #         return request, response
-
-#     #     return response
-
-#     # def get(self, *args, **kwargs):
-#     #     if "uri" in kwargs:
-#     #         kwargs["url"] = kwargs.pop("uri")
-#     #     return self.request("get", *args, **kwargs)
-
-#     # def post(self, *args, **kwargs):
-#     #     if "uri" in kwargs:
-#     #         kwargs["url"] = kwargs.pop("uri")
-#     #     return self.request("post", *args, **kwargs)
-
-#     # def put(self, *args, **kwargs):
-#     #     if "uri" in kwargs:
-#     #         kwargs["url"] = kwargs.pop("uri")
-#     #     return self.request("put", *args, **kwargs)
-
-#     # def delete(self, *args, **kwargs):
-#     #     if "uri" in kwargs:
-#     #         kwargs["url"] = kwargs.pop("uri")
-#     #     return self.request("delete", *args, **kwargs)
-
-#     # def patch(self, *args, **kwargs):
-#     #     if "uri" in kwargs:
-#     #         kwargs["url"] = kwargs.pop("uri")
-#     #     return self.request("patch", *args, **kwargs)
-
-#     # def options(self, *args, **kwargs):
-#     #     if "uri" in kwargs:
-#     #         kwargs["url"] = kwargs.pop("uri")
-#     #     return self.request("options", *args, **kwargs)
-
-#     # def head(self, *args, **kwargs):
-#     #     return self._sanic_endpoint_test("head", *args, **kwargs)
-
-#     # def websocket(self, *args, **kwargs):
-#     #     return self._sanic_endpoint_test("websocket", *args, **kwargs)

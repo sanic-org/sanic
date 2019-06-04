@@ -406,6 +406,7 @@ class Router:
         if not self.hosts:
             return self._get(request.path, request.method, "")
         # virtual hosts specified; try to match route to the host header
+
         try:
             return self._get(
                 request.path, request.method, request.headers.get("Host", "")

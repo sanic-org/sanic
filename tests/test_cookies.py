@@ -27,6 +27,24 @@ def test_cookies(app):
     assert response_cookies["right_back"].value == "at you"
 
 
+@pytest.mark.asyncio
+async def test_cookies_asgi(app):
+    @app.route("/")
+    def handler(request):
+        response = text("Cookies are: {}".format(request.cookies["test"]))
+        response.cookies["right_back"] = "at you"
+        return response
+
+    request, response = await app.asgi_client.get(
+        "/", cookies={"test": "working!"}
+    )
+    response_cookies = SimpleCookie()
+    response_cookies.load(response.headers.get("set-cookie", {}))
+
+    assert response.text == "Cookies are: working!"
+    assert response_cookies["right_back"].value == "at you"
+
+
 @pytest.mark.parametrize("httponly,expected", [(False, False), (True, True)])
 def test_false_cookies_encoded(app, httponly, expected):
     @app.route("/")

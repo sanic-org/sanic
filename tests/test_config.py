@@ -226,6 +226,7 @@ def test_config_access_log_passing_in_run(app):
     assert app.config.ACCESS_LOG == True
 
 
+@pytest.mark.asyncio
 async def test_config_access_log_passing_in_create_server(app):
     assert app.config.ACCESS_LOG == True
 

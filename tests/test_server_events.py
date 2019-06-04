@@ -76,6 +76,7 @@ def test_all_listeners(app):
         assert app.name + listener_name == output.pop()
 
 
+@pytest.mark.asyncio
 async def test_trigger_before_events_create_server(app):
     class MySanicDb:
         pass

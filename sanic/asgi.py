@@ -1,13 +1,15 @@
 import asyncio
 import warnings
 
-from functools import partial
+from http.cookies import SimpleCookie
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Union
+from urllib.parse import quote
 
 from multidict import CIMultiDict
 
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import InvalidUsage, ServerError
+from sanic.log import logger
 from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.server import StreamBuffer
@@ -102,16 +104,30 @@ class Lifespan:
     def __init__(self, asgi_app: "ASGIApp") -> None:
         self.asgi_app = asgi_app
 
-    async def startup(self) -> None:
-        if self.asgi_app.sanic_app.listeners["before_server_start"]:
+        if "before_server_start" in self.asgi_app.sanic_app.listeners:
             warnings.warn(
-                'You have set a listener for "before_server_start". In ASGI mode it will be ignored. Perhaps you want to run it "after_server_start" instead?'
+                'You have set a listener for "before_server_start" in ASGI mode. '
+                "It will be executed as early as possible, but not before "
+                "the ASGI server is started."
             )
-        if self.asgi_app.sanic_app.listeners["after_server_stop"]:
+        if "after_server_stop" in self.asgi_app.sanic_app.listeners:
             warnings.warn(
-                'You have set a listener for "after_server_stop". In ASGI mode it will be ignored. Perhaps you want to run it "before_server_stop" instead?'
+                'You have set a listener for "after_server_stop" in ASGI mode. '
+                "It will be executed as late as possible, but not before "
+                "the ASGI server is stopped."
             )
 
+    async def pre_startup(self) -> None:
+        for handler in self.asgi_app.sanic_app.listeners[
+            "before_server_start"
+        ]:
+            response = handler(
+                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
+            )
+            if isawaitable(response):
+                await response
+
+    async def startup(self) -> None:
         for handler in self.asgi_app.sanic_app.listeners["after_server_start"]:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
@@ -121,6 +137,16 @@ class Lifespan:
 
     async def shutdown(self) -> None:
         for handler in self.asgi_app.sanic_app.listeners["before_server_stop"]:
+            response = handler(
+                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
+            )
+            if isawaitable(response):
+                await response
+
+    async def post_shutdown(self) -> None:
+        for handler in self.asgi_app.sanic_app.listeners[
+            "before_server_start"
+        ]:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
@@ -164,14 +190,15 @@ class ASGIApp:
         instance.do_stream = (
             True if headers.get("expect") == "100-continue" else False
         )
+        instance.lifespan = Lifespan(instance)
+        await instance.pre_startup()
 
         if scope["type"] == "lifespan":
-            lifespan = Lifespan(instance)
-            await lifespan(scope, receive, send)
+            await instance.lifespan(scope, receive, send)
         else:
-            url_bytes = scope.get("root_path", "") + scope["path"]
+            url_bytes = scope.get("root_path", "") + quote(scope["path"])
             url_bytes = url_bytes.encode("latin-1")
-            url_bytes += scope["query_string"]
+            url_bytes += b"?" + scope["query_string"]
 
             if scope["type"] == "http":
                 version = scope["http_version"]
@@ -250,16 +277,42 @@ class ASGIApp:
         Write the response.
         """
 
-        headers = [
-            (str(name).encode("latin-1"), str(value).encode("latin-1"))
-            for name, value in response.headers.items()
-        ]
+        try:
+            headers = [
+                (str(name).encode("latin-1"), str(value).encode("latin-1"))
+                for name, value in response.headers.items()
+                # if name not in ("Set-Cookie",)
+            ]
+        except AttributeError:
+            logger.error(
+                "Invalid response object for url %s, "
+                "Expected Type: HTTPResponse, Actual Type: %s",
+                self.request.url,
+                type(response),
+            )
+            exception = ServerError("Invalid response type")
+            response = self.sanic_app.error_handler.response(
+                self.request, exception
+            )
+            headers = [
+                (str(name).encode("latin-1"), str(value).encode("latin-1"))
+                for name, value in response.headers.items()
+                if name not in (b"Set-Cookie",)
+            ]
 
         if "content-length" not in response.headers and not isinstance(
             response, StreamingHTTPResponse
         ):
             headers += [
                 (b"content-length", str(len(response.body)).encode("latin-1"))
+            ]
+
+        if response.cookies:
+            cookies = SimpleCookie()
+            cookies.load(response.cookies)
+            headers += [
+                (b"set-cookie", cookie.encode("utf-8"))
+                for name, cookie in response.cookies.items()
             ]
 
         await self.transport.send(

@@ -54,7 +54,7 @@ class Sanic:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         self.name = name
-        self.asgi = True
+        self.asgi = False
         self.router = router or Router()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
@@ -1393,5 +1393,6 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     async def __call__(self, scope, receive, send):
+        self.asgi = True
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()

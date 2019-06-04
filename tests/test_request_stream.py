@@ -71,7 +71,7 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
     else:
         with pytest.raises(ValueError) as e:
             app.test_client.post("/method_view", data=data, headers={"EXPECT": "100-continue-extra"})
-            assert "Unknow Expect: 100-continue-extra" in str(e)
+            assert "Unknown Expect: 100-continue-extra" in str(e)
 
 
 def test_request_stream_app(app):

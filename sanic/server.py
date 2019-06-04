@@ -23,7 +23,7 @@ from sanic.exceptions import (
     ServiceUnavailable,
 )
 from sanic.log import access_logger, logger
-from sanic.request import Request, StreamBuffer, EXPECT_HEADER
+from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
 
 
@@ -338,7 +338,11 @@ class HttpProtocol(asyncio.Protocol):
             if expect.lower() == "100-continue":
                 self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
             else:
-                self.write_error(HeaderExpectationFailed("Unknow Expect: {expect}".format(expect=expect)))
+                self.write_error(
+                    HeaderExpectationFailed(
+                        "Unknow Expect: {expect}".format(expect=expect)
+                    )
+                )
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:

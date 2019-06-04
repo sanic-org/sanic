@@ -257,7 +257,7 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):
             return {"type": "http.request", "body": body_bytes}
 
         async def send(message) -> None:
-            nonlocal raw_kwargs, response_started, response_complete, template, context
+            nonlocal raw_kwargs, response_started, response_complete, template, context  # noqa
 
             if message["type"] == "http.response.start":
                 assert (
@@ -267,9 +267,10 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):
                 raw_kwargs["headers"] = message["headers"]
                 response_started = True
             elif message["type"] == "http.response.body":
-                assert (
-                    response_started
-                ), 'Received "http.response.body" without "http.response.start".'
+                assert response_started, (
+                    'Received "http.response.body" '
+                    'without "http.response.start".'
+                )
                 assert (
                     not response_complete
                 ), 'Received "http.response.body" after response completed.'
@@ -327,7 +328,7 @@ async def app_call_with_return(self, scope, receive, send):
 class SanicASGITestClient(requests.ASGISession):
     def __init__(
         self,
-        app: "Sanic",
+        app,
         base_url: str = "http://{}".format(ASGI_HOST),
         suppress_exceptions: bool = False,
     ) -> None:

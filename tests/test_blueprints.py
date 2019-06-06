@@ -687,3 +687,49 @@ def test_register_blueprint(app, debug):
         "version 1.0.  Please use the blueprint method"
         " instead"
     )
+
+
+def test_strict_slashes_behavior_adoption(app):
+    app.strict_slashes = True
+
+    @app.get("/test")
+    def handler_test(request):
+        return text("Test")
+
+    assert app.test_client.get("/test")[1].status == 200
+    assert app.test_client.get("/test/")[1].status == 404
+
+    bp = Blueprint("bp")
+
+    @bp.get("/one", strict_slashes=False)
+    def one(request):
+        return text("one")
+
+    @bp.get("/second")
+    def second(request):
+        return text("second")
+
+    app.blueprint(bp)
+
+    assert app.test_client.get("/one")[1].status == 200
+    assert app.test_client.get("/one/")[1].status == 200
+
+    assert app.test_client.get("/second")[1].status == 200
+    assert app.test_client.get("/second/")[1].status == 404
+
+    bp2 = Blueprint("bp2", strict_slashes=False)
+
+    @bp2.get("/third")
+    def third(request):
+        return text("third")
+
+    app.blueprint(bp2)
+    assert app.test_client.get("/third")[1].status == 200
+    assert app.test_client.get("/third/")[1].status == 200
+
+    @app.get("/f1", strict_slashes=False)
+    def f1(request):
+        return text("f1")
+
+    assert app.test_client.get("/f1")[1].status == 200
+    assert app.test_client.get("/f1/")[1].status == 200

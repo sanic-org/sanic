@@ -111,7 +111,6 @@ def test_request_stream_app(app):
             result += body.decode("utf-8")
         return text(result)
 
-
     assert app.is_request_stream is True
 
     request, response = app.test_client.get("/get")

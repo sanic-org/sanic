@@ -24,7 +24,9 @@ old_conn = None
 class ReusableSanicConnectionPool(httpcore.ConnectionPool):
     async def acquire_connection(self, origin):
         global old_conn
-        connection = self.active_connections.pop_by_origin(origin, http2_only=True)
+        connection = self.active_connections.pop_by_origin(
+            origin, http2_only=True
+        )
         if connection is None:
             connection = self.keepalive_connections.pop_by_origin(origin)
 
@@ -187,11 +189,7 @@ class ReuseableSanicTestClient(SanicTestClient):
             self._session = ResusableSanicSession()
         try:
             response = await getattr(self._session, method.lower())(
-                url,
-                verify=False,
-                timeout=request_keepalive,
-                *args,
-                **kwargs,
+                url, verify=False, timeout=request_keepalive, *args, **kwargs
             )
         except NameError:
             raise Exception(response.status_code)

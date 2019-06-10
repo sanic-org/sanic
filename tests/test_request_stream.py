@@ -1,4 +1,6 @@
+import pytest
 from sanic.blueprints import Blueprint
+from sanic.exceptions import HeaderExpectationFailed
 from sanic.request import StreamBuffer
 from sanic.response import stream, text
 from sanic.views import CompositionView, HTTPMethodView
@@ -38,6 +40,38 @@ def test_request_stream_method_view(app):
     request, response = app.test_client.post("/method_view", data=data)
     assert response.status == 200
     assert response.text == data
+
+
+@pytest.mark.parametrize("headers, expect_raise_exception", [
+({"EXPECT": "100-continue"}, False),
+({"EXPECT": "100-continue-extra"}, True),
+])
+def test_request_stream_100_continue(app, headers, expect_raise_exception):
+    class SimpleView(HTTPMethodView):
+
+        @stream_decorator
+        async def post(self, request):
+            assert isinstance(request.stream, StreamBuffer)
+            result = ""
+            while True:
+                body = await request.stream.read()
+                if body is None:
+                    break
+                result += body.decode("utf-8")
+            return text(result)
+
+    app.add_route(SimpleView.as_view(), "/method_view")
+
+    assert app.is_request_stream is True
+
+    if not expect_raise_exception:
+        request, response = app.test_client.post("/method_view", data=data, headers={"EXPECT": "100-continue"})
+        assert response.status == 200
+        assert response.text == data
+    else:
+        with pytest.raises(ValueError) as e:
+            app.test_client.post("/method_view", data=data, headers={"EXPECT": "100-continue-extra"})
+            assert "Unknown Expect: 100-continue-extra" in str(e)
 
 
 def test_request_stream_app(app):

@@ -37,7 +37,7 @@ class Blueprint:
         url_prefix=None,
         host=None,
         version=None,
-        strict_slashes=False,
+        strict_slashes=None,
     ):
         """
         In *Sanic* terminology, a **Blueprint** is a logical collection of

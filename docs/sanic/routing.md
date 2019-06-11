@@ -241,6 +241,45 @@ def handler(request):
 app.blueprint(bp)
 ```
 
+The behavior of how the `strict_slashes` flag follows a defined hierarchy which decides if a specific route
+falls under the `strict_slashes` behavior.
+
+```bash
+|___ Route
+     |___ Blueprint
+            |___ Application
+```
+
+Above hierarchy defines how the `strict_slashes` flag will behave. The first non `None` value of the `strict_slashes`
+found in the above order will be applied to the route in question.
+
+```python
+from sanic import Sanic, Blueprint
+from sanic.response import text
+
+app = Sanic("sample_strict_slashes", strict_slashes=True)
+
+@app.get("/r1")
+def r1(request):
+    return text("strict_slashes is applicable from App level")
+
+@app.get("/r2", strict_slashes=False)
+def r2(request):
+    return text("strict_slashes is not applicable due to  False value set in route level")
+
+bp = Blueprint("bp", strict_slashes=False)
+
+@bp.get("/r3", strict_slashes=True)
+def r3(request):
+    return text("strict_slashes applicable from blueprint route level")
+
+bp1 = Blueprint("bp1", strict_slashes=True)
+
+@bp.get("/r4")
+def r3(request):
+    return text("strict_slashes applicable from blueprint level")
+```
+
 ## User defined route name
 
 A custom route name can be used by passing a `name` argument while registering the route which will

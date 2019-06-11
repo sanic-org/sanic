@@ -193,7 +193,7 @@ The output will be:
 {
     "parsed": true,
     "url": "http:\/\/0.0.0.0:8000\/query_string?test1=value1&test2=&test3=value3",
-    "args_with_blank_values": {"test1": ["value1""], "test2": "", "test3": ["value3"]},
+    "args_with_blank_values": {"test1": ["value1"], "test2": "", "test3": ["value3"]},
     "query_string": "test1=value1&test2=&test3=value3"
 }
 ```

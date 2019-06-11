@@ -1,13 +1,15 @@
 import asyncio
 import warnings
+
 from http.cookies import SimpleCookie
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Union
+from urllib.parse import quote
 
 from multidict import CIMultiDict
-from urllib.parse import quote
-from sanic.log import logger
+
 from sanic.exceptions import InvalidUsage, ServerError
+from sanic.log import logger
 from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.server import StreamBuffer

@@ -53,6 +53,13 @@ import myapp.default_settings
 app = Sanic('myapp')
 app.config.from_object(myapp.default_settings)
 ```
+or also by path to config:
+
+```
+app = Sanic('myapp')
+app.config.from_object('config.path.config.Class')
+```
+
 
 You could use a class or any other object as well.
 

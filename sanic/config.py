@@ -2,6 +2,7 @@ import os
 import types
 
 from sanic.exceptions import PyFileError
+from sanic.helpers import import_string
 
 
 SANIC_PREFIX = "SANIC_"
@@ -102,6 +103,9 @@ class Config(dict):
             from yourapplication import default_config
             app.config.from_object(default_config)
 
+            or also:
+            app.config.from_object('myproject.config.MyConfigClass')
+
         You should not use this function to load the actual configuration but
         rather configuration defaults. The actual config should be loaded
         with :meth:`from_pyfile` and ideally from a location not within the
@@ -109,6 +113,8 @@ class Config(dict):
 
         :param obj: an object holding the configuration
         """
+        if isinstance(obj, str):
+            obj = import_string(obj)
         for key in dir(obj):
             if key.isupper():
                 self[key] = getattr(obj, key)

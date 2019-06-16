@@ -18,15 +18,28 @@ def temp_path():
         yield Path(td, "file")
 
 
-def test_load_from_object(app):
-    class Config:
-        not_for_config = "should not be used"
-        CONFIG_VALUE = "should be used"
+class ConfigTest:
+        not_for_config = 'should not be used'
+        CONFIG_VALUE = 'should be used'
 
-    app.config.from_object(Config)
+
+def test_load_from_object(app):
+    app.config.from_object(ConfigTest)
     assert "CONFIG_VALUE" in app.config
     assert app.config.CONFIG_VALUE == "should be used"
     assert "not_for_config" not in app.config
+
+
+def test_load_from_object_string(app):
+    app.config.from_object('test_config.ConfigTest')
+    assert 'CONFIG_VALUE' in app.config
+    assert app.config.CONFIG_VALUE == 'should be used'
+    assert 'not_for_config' not in app.config
+
+
+def test_load_from_object_string_exception(app):
+    with pytest.raises(ImportError):
+        app.config.from_object('test_config.Config.test')
 
 
 def test_auto_load_env():

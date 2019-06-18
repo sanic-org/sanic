@@ -1,7 +1,12 @@
 # Deploying
 
-Deploying Sanic is made simple by the inbuilt webserver. After defining an
-instance of `sanic.Sanic`, we can call the `run` method with the following
+Deploying Sanic is very simple using one of three options: the inbuilt webserver,
+an [ASGI webserver](https://asgi.readthedocs.io/en/latest/implementations.html), or `gunicorn`.
+It is also very common to place Sanic behind a reverse proxy, like `nginx`. 
+
+## Running via Sanic webserver
+
+After defining an instance of `sanic.Sanic`, we can call the `run` method with the following
 keyword arguments:
 
 - `host` *(default `"127.0.0.1"`)*: Address to host the server on.
@@ -17,7 +22,13 @@ keyword arguments:
   [asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
 - `access_log` *(default `True`)*: Enables log on handling requests (significantly slows server).
 
-## Workers
+```python
+app.run(host='0.0.0.0', port=1337, access_log=False)
+```
+
+In the above example, we decided to turn off the access log in order to increase performance.
+
+### Workers
 
 By default, Sanic listens in the main process using only one CPU core. To crank
 up the juice, just specify the number of workers in the `run` arguments.
@@ -29,9 +40,9 @@ app.run(host='0.0.0.0', port=1337, workers=4)
 Sanic will automatically spin up multiple processes and route traffic between
 them. We recommend as many workers as you have available cores.
 
-## Running via command
+### Running via command
 
-If you like using command line arguments, you can launch a Sanic server by
+If you like using command line arguments, you can launch a Sanic webserver by
 executing the module. For example, if you initialized Sanic as `app` in a file
 named `server.py`, you could run the server like so:
 
@@ -45,6 +56,33 @@ directly run by the interpreter.
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337, workers=4)
 ```
+
+## Running via ASGI
+
+Sanic is also ASGI-compliant. This means you can use your preferred ASGI webserver
+to run Sanic. The three main implementations of ASGI are
+[Daphne](http://github.com/django/daphne), [Uvicorn](https://www.uvicorn.org/),
+and [Hypercorn](https://pgjones.gitlab.io/hypercorn/index.html).
+
+Follow their documentation for the proper way to run them, but it should look
+something like:
+
+```
+daphne myapp:app
+uvicorn myapp:app
+hypercorn myapp:app
+```
+
+A couple things to note when using ASGI:
+
+1. When using the Sanic webserver, websockets will run using the [`websockets`](https://websockets.readthedocs.io/) package. In ASGI mode, there is no need for this package since websockets are managed in the ASGI server.
+1. The ASGI [lifespan protocol](https://asgi.readthedocs.io/en/latest/specs/lifespan.html) supports
+only two server events: startup and shutdown. Sanic has four: before startup, after startup, 
+before shutdown, and after shutdown. Therefore, in ASGI mode, the startup and shutdown events will 
+run consecutively and not actually around the server process beginning and ending (since that 
+is now controlled by the ASGI server). Therefore, it is best to use `after_server_start` and 
+`before_server_stop`.
+1. ASGI mode is still in "beta" as of Sanic v19.6.
 
 ## Running via Gunicorn
 
@@ -64,7 +102,9 @@ of the memory leak.
 
 See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
 
-## Running behind a reverse proxy
+## Other deployment considerations
+
+### Running behind a reverse proxy
 
 Sanic can be used with a reverse proxy (e.g. nginx). There's a simple example of nginx configuration:
 
@@ -84,7 +124,7 @@ server {
 
 If you want to get real client ip, you should configure `X-Real-IP` and `X-Forwarded-For` HTTP headers and set `app.config.PROXIES_COUNT` to `1`; see the configuration page for more information.
 
-## Disable debug logging
+### Disable debug logging for performance
 
 To improve the performance add `debug=False` and `access_log=False` in the `run` arguments.
 
@@ -104,9 +144,10 @@ Or you can rewrite app config directly
 app.config.ACCESS_LOG = False
 ```
 
-## Asynchronous support
-This is suitable if you *need* to share the sanic process with other applications, in particular the `loop`.
-However be advised that this method does not support using multiple processes, and is not the preferred way
+### Asynchronous support and sharing the loop
+
+This is suitable if you *need* to share the Sanic process with other applications, in particular the `loop`.
+However, be advised that this method does not support using multiple processes, and is not the preferred way
 to run the app in general.
 
 Here is an incomplete example (please see `run_async.py` in examples for something more practical):

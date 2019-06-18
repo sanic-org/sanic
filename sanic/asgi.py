@@ -260,7 +260,6 @@ class ASGIApp:
             message = await self.transport.receive()
             chunk = message.get("body", b"")
             await self.request.stream.put(chunk)
-            # self.sanic_app.loop.create_task(self.request.stream.put(chunk))
 
             more_body = message.get("more_body", False)
 
@@ -288,7 +287,6 @@ class ASGIApp:
             headers = [
                 (str(name).encode("latin-1"), str(value).encode("latin-1"))
                 for name, value in response.headers.items()
-                # if name not in ("Set-Cookie",)
             ]
         except AttributeError:
             logger.error(

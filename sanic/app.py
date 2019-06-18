@@ -1393,6 +1393,9 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     async def __call__(self, scope, receive, send):
+        """To be ASGI compliant, our instance must be a callable that accepts
+        three arguments: scope, receive, send. See the ASGI reference for more
+        details: https://asgi.readthedocs.io/en/latest/"""
         self.asgi = True
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()

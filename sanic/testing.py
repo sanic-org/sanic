@@ -183,6 +183,14 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):
         *args: typing.Any,
         **kwargs: typing.Any,
     ) -> requests.Response:
+        """This method is taken MOSTLY verbatim from requests-asyn. The
+        difference is the capturing of a response on the ASGI call and then
+        returning it on the response object. This is implemented to achieve:
+
+        request, response = await app.asgi_client.get("/")
+
+        You can see the original code here:
+        https://github.com/encode/requests-async/blob/614f40f77f19e6c6da8a212ae799107b0384dbf9/requests_async/asgi.py#L51"""  # noqa
         scheme, netloc, path, query, fragment = urlsplit(
             request.url
         )  # type: ignore
@@ -344,9 +352,6 @@ class SanicASGITestClient(requests.ASGISession):
         self.headers.update({"user-agent": "testclient"})
         self.app = app
         self.base_url = base_url
-
-    # async def send(self, prepared_request, *args, **kwargs):
-    #     return await super().send(*args, **kwargs)
 
     async def request(self, method, url, gather_request=True, *args, **kwargs):
         self.gather_request = gather_request

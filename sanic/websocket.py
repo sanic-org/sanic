@@ -143,9 +143,8 @@ class WebSocketConnection:
             return message["text"]
         elif message["type"] == "websocket.disconnect":
             pass
-            # await self._send({
-            #     "type": "websocket.close"
-            # })
+
+    receive = recv
 
     async def accept(self) -> None:
         await self._send({"type": "websocket.accept", "subprotocol": ""})

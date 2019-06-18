@@ -136,7 +136,7 @@ class SanicTestClient:
             try:
                 request, response = results
                 return request, response
-            except BaseException:
+            except BaseException:  # noqa
                 raise ValueError(
                     "Request and response object expected, got ({})".format(
                         results
@@ -145,7 +145,7 @@ class SanicTestClient:
         else:
             try:
                 return results[-1]
-            except BaseException:
+            except BaseException:  # noqa
                 raise ValueError(
                     "Request object expected, got ({})".format(results)
                 )
@@ -175,7 +175,7 @@ class SanicTestClient:
         return self._sanic_endpoint_test("websocket", *args, **kwargs)
 
 
-class SanicASGIAdapter(requests.asgi.ASGIAdapter):
+class SanicASGIAdapter(requests.asgi.ASGIAdapter):  # noqa
     async def send(  # type: ignore
         self,
         request: requests.PreparedRequest,
@@ -218,19 +218,43 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):
             for key, value in request.headers.items()
         ]
 
-        scope = {
-            "type": "http",
-            "http_version": "1.1",
-            "method": request.method,
-            "path": unquote(path),
-            "root_path": "",
-            "scheme": scheme,
-            "query_string": query.encode(),
-            "headers": headers,
-            "client": ["testclient", 50000],
-            "server": [host, port],
-            "extensions": {"http.response.template": {}},
-        }
+        no_response = False
+        if scheme in {"ws", "wss"}:
+            subprotocol = request.headers.get("sec-websocket-protocol", None)
+            if subprotocol is None:
+                subprotocols = []  # type: typing.Sequence[str]
+            else:
+                subprotocols = [
+                    value.strip() for value in subprotocol.split(",")
+                ]
+
+            scope = {
+                "type": "websocket",
+                "path": unquote(path),
+                "root_path": "",
+                "scheme": scheme,
+                "query_string": query.encode(),
+                "headers": headers,
+                "client": ["testclient", 50000],
+                "server": [host, port],
+                "subprotocols": subprotocols,
+            }
+            no_response = True
+
+        else:
+            scope = {
+                "type": "http",
+                "http_version": "1.1",
+                "method": request.method,
+                "path": unquote(path),
+                "root_path": "",
+                "scheme": scheme,
+                "query_string": query.encode(),
+                "headers": headers,
+                "client": ["testclient", 50000],
+                "server": [host, port],
+                "extensions": {"http.response.template": {}},
+            }
 
         async def receive():
             nonlocal request_complete, response_complete
@@ -306,6 +330,10 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):
             if not self.suppress_exceptions:
                 raise exc from None
 
+        if no_response:
+            response_started = True
+            raw_kwargs = {"status_code": 204, "headers": []}
+
         if not self.suppress_exceptions:
             assert response_started, "TestClient did not receive any response."
         elif not response_started:
@@ -349,13 +377,15 @@ class SanicASGITestClient(requests.ASGISession):
         )
         self.mount("http://", adapter)
         self.mount("https://", adapter)
+        self.mount("ws://", adapter)
+        self.mount("wss://", adapter)
         self.headers.update({"user-agent": "testclient"})
         self.app = app
         self.base_url = base_url
 
     async def request(self, method, url, gather_request=True, *args, **kwargs):
+
         self.gather_request = gather_request
-        print(url)
         response = await super().request(method, url, *args, **kwargs)
         response.status = response.status_code
         response.body = response.content
@@ -372,3 +402,22 @@ class SanicASGITestClient(requests.ASGISession):
         settings = super().merge_environment_settings(*args, **kwargs)
         settings.update({"gather_return": self.gather_request})
         return settings
+
+    async def websocket(self, uri, subprotocols=None, *args, **kwargs):
+        if uri.startswith(("ws:", "wss:")):
+            url = uri
+        else:
+            uri = uri if uri.startswith("/") else "/{uri}".format(uri=uri)
+            url = "ws://testserver{uri}".format(uri=uri)
+
+            headers = kwargs.get("headers", {})
+            headers.setdefault("connection", "upgrade")
+            headers.setdefault("sec-websocket-key", "testserver==")
+            headers.setdefault("sec-websocket-version", "13")
+            if subprotocols is not None:
+                headers.setdefault(
+                    "sec-websocket-protocol", ", ".join(subprotocols)
+                )
+            kwargs["headers"] = headers
+
+            return await self.request("websocket", url, **kwargs)

@@ -88,7 +88,7 @@ class MockTransport:
         self._websocket_connection = WebSocketConnection(send, receive)
         return self._websocket_connection
 
-    def add_task(self) -> None:
+    def add_task(self) -> None:  # noqa
         raise NotImplementedError
 
     async def send(self, data) -> None:
@@ -119,15 +119,15 @@ class Lifespan:
                 "the ASGI server is stopped."
             )
 
-    async def pre_startup(self) -> None:
-        for handler in self.asgi_app.sanic_app.listeners[
-            "before_server_start"
-        ]:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
-            if isawaitable(response):
-                await response
+    # async def pre_startup(self) -> None:
+    #     for handler in self.asgi_app.sanic_app.listeners[
+    #         "before_server_start"
+    #     ]:
+    #         response = handler(
+    #             self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
+    #         )
+    #         if isawaitable(response):
+    #             await response
 
     async def startup(self) -> None:
         for handler in self.asgi_app.sanic_app.listeners[
@@ -233,7 +233,14 @@ class ASGIApp:
             )
 
             if sanic_app.is_request_stream:
-                instance.request.stream = StreamBuffer()
+                is_stream_handler = sanic_app.router.is_stream_handler(
+                    instance.request
+                )
+                if is_stream_handler:
+                    instance.request.stream = StreamBuffer(
+                        sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE
+                    )
+                    instance.do_stream = True
 
         return instance
 

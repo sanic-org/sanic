@@ -474,6 +474,19 @@ def test_websocket_route(app, url):
     assert ev.is_set()
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("url", ["/ws", "ws"])
+async def test_websocket_route_asgi(app, url):
+    ev = asyncio.Event()
+
+    @app.websocket(url)
+    async def handler(request, ws):
+        ev.set()
+
+    request, response = await app.asgi_client.websocket(url)
+    assert ev.is_set()
+
+
 def test_websocket_route_with_subprotocols(app):
     results = []
 

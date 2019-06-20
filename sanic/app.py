@@ -15,6 +15,7 @@ from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
+from sanic.asgi import ASGIApp
 from sanic.blueprint_group import BlueprintGroup
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
@@ -25,7 +26,7 @@ from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import HttpProtocol, Signal, serve, serve_multiple
 from sanic.static import register as static_register
-from sanic.testing import SanicTestClient
+from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -53,6 +54,7 @@ class Sanic:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         self.name = name
+        self.asgi = False
         self.router = router or Router()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
@@ -80,7 +82,7 @@ class Sanic:
 
         Only supported when using the `app.run` method.
         """
-        if not self.is_running:
+        if not self.is_running and self.asgi is False:
             raise SanicException(
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
@@ -469,13 +471,23 @@ class Sanic:
                         getattr(handler, "__blueprintname__", "")
                         + handler.__name__
                     )
-                try:
-                    protocol = request.transport.get_protocol()
-                except AttributeError:
-                    # On Python3.5 the Transport classes in asyncio do not
-                    # have a get_protocol() method as in uvloop
-                    protocol = request.transport._protocol
-                ws = await protocol.websocket_handshake(request, subprotocols)
+
+                    pass
+
+                if self.asgi:
+                    ws = request.transport.get_websocket_connection()
+                else:
+                    try:
+                        protocol = request.transport.get_protocol()
+                    except AttributeError:
+                        # On Python3.5 the Transport classes in asyncio do not
+                        # have a get_protocol() method as in uvloop
+                        protocol = request.transport._protocol
+                    protocol.app = self
+
+                    ws = await protocol.websocket_handshake(
+                        request, subprotocols
+                    )
 
                 # schedule the application handler
                 # its future is kept in self.websocket_tasks in case it
@@ -983,8 +995,16 @@ class Sanic:
                 raise CancelledError()
 
         # pass the response to the correct callback
-        if isinstance(response, StreamingHTTPResponse):
-            await stream_callback(response)
+        if write_callback is None or isinstance(
+            response, StreamingHTTPResponse
+        ):
+            if stream_callback:
+                await stream_callback(response)
+            else:
+                # Should only end here IF it is an ASGI websocket.
+                # TODO:
+                # - Add exception handling
+                pass
         else:
             write_callback(response)
 
@@ -995,6 +1015,10 @@ class Sanic:
     @property
     def test_client(self):
         return SanicTestClient(self)
+
+    @property
+    def asgi_client(self):
+        return SanicASGITestClient(self)
 
     # -------------------------------------------------------------------- #
     # Execution
@@ -1121,10 +1145,6 @@ class Sanic:
     def stop(self):
         """This kills the Sanic"""
         get_event_loop().stop()
-
-    def __call__(self):
-        """gunicorn compatibility"""
-        return self
 
     async def create_server(
         self,
@@ -1367,3 +1387,15 @@ class Sanic:
     def _build_endpoint_name(self, *parts):
         parts = [self.name, *parts]
         return ".".join(parts)
+
+    # -------------------------------------------------------------------- #
+    # ASGI
+    # -------------------------------------------------------------------- #
+
+    async def __call__(self, scope, receive, send):
+        """To be ASGI compliant, our instance must be a callable that accepts
+        three arguments: scope, receive, send. See the ASGI reference for more
+        details: https://asgi.readthedocs.io/en/latest/"""
+        self.asgi = True
+        asgi_app = await ASGIApp.create(self, scope, receive, send)
+        await asgi_app()

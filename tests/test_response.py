@@ -292,7 +292,7 @@ def test_stream_response_writes_correct_content_to_transport_when_chunked(
     async def mock_drain():
         pass
 
-    def mock_push_data(data):
+    async def mock_push_data(data):
         response.protocol.transport.write(data)
 
     response.protocol.push_data = mock_push_data
@@ -330,7 +330,7 @@ def test_stream_response_writes_correct_content_to_transport_when_not_chunked(
     async def mock_drain():
         pass
 
-    def mock_push_data(data):
+    async def mock_push_data(data):
         response.protocol.transport.write(data)
 
     response.protocol.push_data = mock_push_data

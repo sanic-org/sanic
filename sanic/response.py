@@ -87,9 +87,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             data = self._encode_body(data)
 
         if self.chunked:
-            self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
+            await self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
         else:
-            self.protocol.push_data(data)
+            await self.protocol.push_data(data)
         await self.protocol.drain()
 
     async def stream(
@@ -105,11 +105,11 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             keep_alive=keep_alive,
             keep_alive_timeout=keep_alive_timeout,
         )
-        self.protocol.push_data(headers)
+        await self.protocol.push_data(headers)
         await self.protocol.drain()
         await self.streaming_fn(self)
         if self.chunked:
-            self.protocol.push_data(b"0\r\n\r\n")
+            await self.protocol.push_data(b"0\r\n\r\n")
         # no need to await drain here after this write, because it is the
         # very last thing we write and nothing needs to wait for it.
 

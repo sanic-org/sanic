@@ -1,10 +1,13 @@
 import asyncio
 import contextlib
 
+import pytest
+
 from sanic.response import stream, text
 
 
-async def test_request_cancel_when_connection_lost(loop, app, sanic_client):
+@pytest.mark.asyncio
+async def test_request_cancel_when_connection_lost(app):
     app.still_serving_cancelled_request = False
 
     @app.get("/")
@@ -14,10 +17,9 @@ async def test_request_cancel_when_connection_lost(loop, app, sanic_client):
         app.still_serving_cancelled_request = True
         return text("OK")
 
-    test_cli = await sanic_client(app)
-
     # schedule client call
-    task = loop.create_task(test_cli.get("/"))
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(app.asgi_client.get("/"))
     loop.call_later(0.01, task)
     await asyncio.sleep(0.5)
 
@@ -33,7 +35,8 @@ async def test_request_cancel_when_connection_lost(loop, app, sanic_client):
     assert app.still_serving_cancelled_request is False
 
 
-async def test_stream_request_cancel_when_conn_lost(loop, app, sanic_client):
+@pytest.mark.asyncio
+async def test_stream_request_cancel_when_conn_lost(app):
     app.still_serving_cancelled_request = False
 
     @app.post("/post/<id>", stream=True)
@@ -53,10 +56,9 @@ async def test_stream_request_cancel_when_conn_lost(loop, app, sanic_client):
 
         return stream(streaming)
 
-    test_cli = await sanic_client(app)
-
     # schedule client call
-    task = loop.create_task(test_cli.post("/post/1"))
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(app.asgi_client.post("/post/1"))
     loop.call_later(0.01, task)
     await asyncio.sleep(0.5)
 

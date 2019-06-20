@@ -1,4 +1,5 @@
 import pytest
+
 from sanic.blueprints import Blueprint
 from sanic.exceptions import HeaderExpectationFailed
 from sanic.request import StreamBuffer
@@ -42,13 +43,15 @@ def test_request_stream_method_view(app):
     assert response.text == data
 
 
-@pytest.mark.parametrize("headers, expect_raise_exception", [
-({"EXPECT": "100-continue"}, False),
-({"EXPECT": "100-continue-extra"}, True),
-])
+@pytest.mark.parametrize(
+    "headers, expect_raise_exception",
+    [
+        ({"EXPECT": "100-continue"}, False),
+        ({"EXPECT": "100-continue-extra"}, True),
+    ],
+)
 def test_request_stream_100_continue(app, headers, expect_raise_exception):
     class SimpleView(HTTPMethodView):
-
         @stream_decorator
         async def post(self, request):
             assert isinstance(request.stream, StreamBuffer)
@@ -65,12 +68,18 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
     assert app.is_request_stream is True
 
     if not expect_raise_exception:
-        request, response = app.test_client.post("/method_view", data=data, headers={"EXPECT": "100-continue"})
+        request, response = app.test_client.post(
+            "/method_view", data=data, headers={"EXPECT": "100-continue"}
+        )
         assert response.status == 200
         assert response.text == data
     else:
         with pytest.raises(ValueError) as e:
-            app.test_client.post("/method_view", data=data, headers={"EXPECT": "100-continue-extra"})
+            app.test_client.post(
+                "/method_view",
+                data=data,
+                headers={"EXPECT": "100-continue-extra"},
+            )
             assert "Unknown Expect: 100-continue-extra" in str(e)
 
 
@@ -184,6 +193,121 @@ def test_request_stream_app(app):
     assert response.text == "_PATCH"
 
     request, response = app.test_client.patch("/patch", data=data)
+    assert response.status == 200
+    assert response.text == data
+
+
+@pytest.mark.asyncio
+async def test_request_stream_app_asgi(app):
+    """for self.is_request_stream = True and decorators"""
+
+    @app.get("/get")
+    async def get(request):
+        assert request.stream is None
+        return text("GET")
+
+    @app.head("/head")
+    async def head(request):
+        assert request.stream is None
+        return text("HEAD")
+
+    @app.delete("/delete")
+    async def delete(request):
+        assert request.stream is None
+        return text("DELETE")
+
+    @app.options("/options")
+    async def options(request):
+        assert request.stream is None
+        return text("OPTIONS")
+
+    @app.post("/_post/<id>")
+    async def _post(request, id):
+        assert request.stream is None
+        return text("_POST")
+
+    @app.post("/post/<id>", stream=True)
+    async def post(request, id):
+        assert isinstance(request.stream, StreamBuffer)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
+
+    @app.put("/_put")
+    async def _put(request):
+        assert request.stream is None
+        return text("_PUT")
+
+    @app.put("/put", stream=True)
+    async def put(request):
+        assert isinstance(request.stream, StreamBuffer)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
+
+    @app.patch("/_patch")
+    async def _patch(request):
+        assert request.stream is None
+        return text("_PATCH")
+
+    @app.patch("/patch", stream=True)
+    async def patch(request):
+        assert isinstance(request.stream, StreamBuffer)
+        result = ""
+        while True:
+            body = await request.stream.read()
+            if body is None:
+                break
+            result += body.decode("utf-8")
+        return text(result)
+
+    assert app.is_request_stream is True
+
+    request, response = await app.asgi_client.get("/get")
+    assert response.status == 200
+    assert response.text == "GET"
+
+    request, response = await app.asgi_client.head("/head")
+    assert response.status == 200
+    assert response.text == ""
+
+    request, response = await app.asgi_client.delete("/delete")
+    assert response.status == 200
+    assert response.text == "DELETE"
+
+    request, response = await app.asgi_client.options("/options")
+    assert response.status == 200
+    assert response.text == "OPTIONS"
+
+    request, response = await app.asgi_client.post("/_post/1", data=data)
+    assert response.status == 200
+    assert response.text == "_POST"
+
+    request, response = await app.asgi_client.post("/post/1", data=data)
+    assert response.status == 200
+    assert response.text == data
+
+    request, response = await app.asgi_client.put("/_put", data=data)
+    assert response.status == 200
+    assert response.text == "_PUT"
+
+    request, response = await app.asgi_client.put("/put", data=data)
+    assert response.status == 200
+    assert response.text == data
+
+    request, response = await app.asgi_client.patch("/_patch", data=data)
+    assert response.status == 200
+    assert response.text == "_PATCH"
+
+    request, response = await app.asgi_client.patch("/patch", data=data)
     assert response.status == 200
     assert response.text == data
 

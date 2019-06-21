@@ -2,11 +2,38 @@ Version 19.6
 ------------
 19.6.0
   - Changes:
-    - Remove `aiohttp` dependencey and create new `SanicTestClient` based upon
-    [`requests-async`](https://github.com/encode/requests-async).
+    - [#1562](https://github.com/huge-success/sanic/pull/1562)
+      Remove `aiohttp` dependencey and create new `SanicTestClient` based upon
+      [`requests-async`](https://github.com/encode/requests-async).
+
+    - [#1475](https://github.com/huge-success/sanic/pull/1475)
+      Added ASGI support (Beta)
+
+    - [#1436](https://github.com/huge-success/sanic/pull/1436)
+      Add Configure support from object string
+
+    - [#1544](https://github.com/huge-success/sanic/pull/1544)
+      Drop dependency on distutil
+
+  - Fixes:
+    - [#1587](https://github.com/huge-success/sanic/pull/1587)
+      Add missing handle for Expect header.
+
+    - [#1560](https://github.com/huge-success/sanic/pull/1560)
+      Allow to disable Transfer-Encoding: chunked.
+
+    - [#1558](https://github.com/huge-success/sanic/pull/1558)
+      Fix graceful shutdown.
+
+    - [#1594](https://github.com/huge-success/sanic/pull/1594)
+      Strict Slashes behavior fix
 
   - Deprecation:
-    - Support for Python 3.5
+    - [#1562](https://github.com/huge-success/sanic/pull/1562)
+      Drop support for Python 3.5
+
+    - [#1568](https://github.com/huge-success/sanic/pull/1568)
+      Deprecate route removal.
 
 Note: Sanic will not support Python 3.5 from version 19.6 and forward. However,
 version 18.12LTS will have its support period extended thru December 2020, and

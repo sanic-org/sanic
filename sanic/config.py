@@ -80,7 +80,7 @@ class Config(dict):
         module.__file__ = filename
         try:
             with open(filename) as config_file:
-                exec(
+                exec(  # nosec
                     compile(config_file.read(), filename, "exec"),
                     module.__dict__,
                 )

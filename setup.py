@@ -112,7 +112,7 @@ if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
 
 extras_require = {
     "test": tests_require,
-    "dev": tests_require + ["aiofiles", "tox", "black", "flake8"],
+    "dev": tests_require + ["aiofiles", "tox", "black", "flake8", "bandit"],
     "docs": [
         "sphinx",
         "sphinx_rtd_theme",

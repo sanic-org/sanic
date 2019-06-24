@@ -7,9 +7,9 @@ import pytest
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import NotFound, ServerError, InvalidUsage
+from sanic.exceptions import InvalidUsage, NotFound, ServerError
 from sanic.request import Request
-from sanic.response import text, json
+from sanic.response import json, text
 from sanic.views import CompositionView
 
 
@@ -467,16 +467,8 @@ def test_bp_shorthand(app):
     request, response = app.test_client.get("/delete")
     assert response.status == 405
 
-    request, response = app.test_client.get(
-        "/ws/",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-        },
-    )
-    assert response.status == 101
+    request, response = app.test_client.websocket("/ws/")
+    assert response.opened is True
     assert ev.is_set()
 
 
@@ -595,14 +587,13 @@ def test_blueprint_middleware_with_args(app: Sanic):
         "/wa", headers={"content-type": "plain/text"}
     )
     assert response.json.get("test") == "value"
-    d = {}
 
 
 @pytest.mark.parametrize("file_name", ["test.file"])
 def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
     current_file = inspect.getfile(inspect.currentframe())
     with open(current_file, "rb") as file:
-        current_file_contents = file.read()
+        file.read()
 
     bp = Blueprint(name="static", url_prefix="/static", strict_slashes=False)
 
@@ -662,16 +653,8 @@ def test_websocket_route(app: Sanic):
 
     app.blueprint(bp)
 
-    _, response = app.test_client.get(
-        "/ws/test",
-        headers={
-            "Upgrade": "websocket",
-            "Connection": "upgrade",
-            "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-            "Sec-WebSocket-Version": "13",
-        },
-    )
-    assert response.status == 101
+    _, response = app.test_client.websocket("/ws/test")
+    assert response.opened is True
     assert event.is_set()
 
 
@@ -704,3 +687,49 @@ def test_register_blueprint(app, debug):
         "version 1.0.  Please use the blueprint method"
         " instead"
     )
+
+
+def test_strict_slashes_behavior_adoption(app):
+    app.strict_slashes = True
+
+    @app.get("/test")
+    def handler_test(request):
+        return text("Test")
+
+    assert app.test_client.get("/test")[1].status == 200
+    assert app.test_client.get("/test/")[1].status == 404
+
+    bp = Blueprint("bp")
+
+    @bp.get("/one", strict_slashes=False)
+    def one(request):
+        return text("one")
+
+    @bp.get("/second")
+    def second(request):
+        return text("second")
+
+    app.blueprint(bp)
+
+    assert app.test_client.get("/one")[1].status == 200
+    assert app.test_client.get("/one/")[1].status == 200
+
+    assert app.test_client.get("/second")[1].status == 200
+    assert app.test_client.get("/second/")[1].status == 404
+
+    bp2 = Blueprint("bp2", strict_slashes=False)
+
+    @bp2.get("/third")
+    def third(request):
+        return text("third")
+
+    app.blueprint(bp2)
+    assert app.test_client.get("/third")[1].status == 200
+    assert app.test_client.get("/third/")[1].status == 200
+
+    @app.get("/f1", strict_slashes=False)
+    def f1(request):
+        return text("f1")
+
+    assert app.test_client.get("/f1")[1].status == 200
+    assert app.test_client.get("/f1/")[1].status == 200

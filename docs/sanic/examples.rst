@@ -160,7 +160,7 @@ execution support provided by the ``pytest-xdist`` plugin.
 Amending Request Object
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``request`` object in ``Sanic`` is a kind of ``dict`` object, this means that ``reqeust`` object can be manipulated as a regular ``dict`` object.
+The ``request`` object in ``Sanic`` is a kind of ``dict`` object, this means that ``request`` object can be manipulated as a regular ``dict`` object.
 
 .. literalinclude:: ../../examples/amending_request_object.py
 

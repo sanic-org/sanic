@@ -218,6 +218,11 @@ class ContentRangeError(SanicException):
         }
 
 
+@add_status_code(417)
+class HeaderExpectationFailed(SanicException):
+    pass
+
+
 @add_status_code(403)
 class Forbidden(SanicException):
     pass

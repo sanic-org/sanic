@@ -15,6 +15,7 @@ from httptools.parser.errors import HttpParserError
 from multidict import CIMultiDict
 
 from sanic.exceptions import (
+    HeaderExpectationFailed,
     InvalidUsage,
     PayloadTooLarge,
     RequestTimeout,
@@ -22,7 +23,7 @@ from sanic.exceptions import (
     ServiceUnavailable,
 )
 from sanic.log import access_logger, logger
-from sanic.request import Request, StreamBuffer
+from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
 
 
@@ -44,6 +45,8 @@ class HttpProtocol(asyncio.Protocol):
     """
 
     __slots__ = (
+        # app
+        "app",
         # event loop, connection
         "loop",
         "transport",
@@ -88,6 +91,7 @@ class HttpProtocol(asyncio.Protocol):
         self,
         *,
         loop,
+        app,
         request_handler,
         error_handler,
         signal=Signal(),
@@ -107,6 +111,7 @@ class HttpProtocol(asyncio.Protocol):
         **kwargs
     ):
         self.loop = loop
+        self.app = app
         self.transport = None
         self.request = None
         self.parser = None
@@ -115,7 +120,7 @@ class HttpProtocol(asyncio.Protocol):
         self.router = router
         self.signal = signal
         self.access_log = access_log
-        self.connections = connections or set()
+        self.connections = connections if connections is not None else set()
         self.request_handler = request_handler
         self.error_handler = error_handler
         self.request_timeout = request_timeout
@@ -303,12 +308,17 @@ class HttpProtocol(asyncio.Protocol):
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode(),
             transport=self.transport,
+            app=self.app,
         )
         # Remove any existing KeepAlive handler here,
         # It will be recreated if required on the new request.
         if self._keep_alive_timeout_handler:
             self._keep_alive_timeout_handler.cancel()
             self._keep_alive_timeout_handler = None
+
+        if self.request.headers.get(EXPECT_HEADER):
+            self.expect_handler()
+
         if self.is_request_stream:
             self._is_stream_handler = self.router.is_stream_handler(
                 self.request
@@ -318,6 +328,21 @@ class HttpProtocol(asyncio.Protocol):
                     self.request_buffer_queue_size
                 )
                 self.execute_request_handler()
+
+    def expect_handler(self):
+        """
+        Handler for Expect Header.
+        """
+        expect = self.request.headers.get(EXPECT_HEADER)
+        if self.request.version == "1.1":
+            if expect.lower() == "100-continue":
+                self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
+            else:
+                self.write_error(
+                    HeaderExpectationFailed(
+                        "Unknown Expect: {expect}".format(expect=expect)
+                    )
+                )
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:
@@ -452,7 +477,7 @@ class HttpProtocol(asyncio.Protocol):
     async def drain(self):
         await self._not_paused.wait()
 
-    def push_data(self, data):
+    async def push_data(self, data):
         self.transport.write(data)
 
     async def stream_response(self, response):
@@ -549,11 +574,15 @@ class HttpProtocol(asyncio.Protocol):
 
         :return: None
         """
-        if from_error or self.transport.is_closing():
+        if from_error or self.transport is None or self.transport.is_closing():
             logger.error(
                 "Transport closed @ %s and exception "
                 "experienced during error handling",
-                self.transport.get_extra_info("peername"),
+                (
+                    self.transport.get_extra_info("peername")
+                    if self.transport is not None
+                    else "N/A"
+                ),
             )
             logger.debug("Exception:", exc_info=True)
         else:
@@ -607,6 +636,7 @@ def trigger_events(events, loop):
 def serve(
     host,
     port,
+    app,
     request_handler,
     error_handler,
     before_start=None,
@@ -698,12 +728,15 @@ def serve(
     if debug:
         loop.set_debug(debug)
 
+    app.asgi = False
+
     connections = connections if connections is not None else set()
     server = partial(
         protocol,
         loop=loop,
         connections=connections,
         signal=signal,
+        app=app,
         request_handler=request_handler,
         error_handler=error_handler,
         request_timeout=request_timeout,
@@ -831,6 +864,8 @@ def serve_multiple(server_settings, workers):
         server_settings["host"] = None
         server_settings["port"] = None
 
+    processes = []
+
     def sig_handler(signal, frame):
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         for process in processes:
@@ -838,8 +873,6 @@ def serve_multiple(server_settings, workers):
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
-
-    processes = []
 
     for _ in range(workers):
         process = Process(target=serve, kwargs=server_settings)

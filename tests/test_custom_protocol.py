@@ -1,5 +1,5 @@
-from sanic.server import HttpProtocol
 from sanic.response import text
+from sanic.server import HttpProtocol
 
 
 class CustomHttpProtocol(HttpProtocol):

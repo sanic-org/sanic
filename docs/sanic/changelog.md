@@ -1,6 +1,159 @@
-Version 18.12
--------------
-18.12.0
+# Changelog
+
+## Version 19.6
+
+  - Changes:
+    - [#1562](https://github.com/huge-success/sanic/pull/1562)
+      Remove `aiohttp` dependencey and create new `SanicTestClient` based upon
+      [`requests-async`](https://github.com/encode/requests-async).
+
+    - [#1475](https://github.com/huge-success/sanic/pull/1475)
+      Added ASGI support (Beta)
+
+    - [#1436](https://github.com/huge-success/sanic/pull/1436)
+      Add Configure support from object string
+
+    - [#1544](https://github.com/huge-success/sanic/pull/1544)
+      Drop dependency on distutil
+
+  - Fixes:
+    - [#1587](https://github.com/huge-success/sanic/pull/1587)
+      Add missing handle for Expect header.
+
+    - [#1560](https://github.com/huge-success/sanic/pull/1560)
+      Allow to disable Transfer-Encoding: chunked.
+
+    - [#1558](https://github.com/huge-success/sanic/pull/1558)
+      Fix graceful shutdown.
+
+    - [#1594](https://github.com/huge-success/sanic/pull/1594)
+      Strict Slashes behavior fix
+
+  - Deprecation:
+    - [#1562](https://github.com/huge-success/sanic/pull/1562)
+      Drop support for Python 3.5
+
+    - [#1568](https://github.com/huge-success/sanic/pull/1568)
+      Deprecate route removal.
+
+Note: Sanic will not support Python 3.5 from version 19.6 and forward. However,
+version 18.12LTS will have its support period extended thru December 2020, and
+therefore passing Python's official support version 3.5, which is set to expire
+in September 2020.
+
+
+## Version 19.3
+
+  - Changes:
+    - [#1497](https://github.com/huge-success/sanic/pull/1497)
+      Add support for zero-length and RFC 5987 encoded filename for
+      multipart/form-data requests.
+
+    - [#1484](https://github.com/huge-success/sanic/pull/1484)
+      The type of `expires` attribute of `sanic.cookies.Cookie` is now
+      enforced to be of type `datetime`.
+
+    - [#1482](https://github.com/huge-success/sanic/pull/1482)
+      Add support for the `stream` parameter of `sanic.Sanic.add_route()`
+      available to `sanic.Blueprint.add_route()`.
+
+    - [#1481](https://github.com/huge-success/sanic/pull/1481)
+      Accept negative values for route parameters with type `int` or `number`.
+
+    - [#1476](https://github.com/huge-success/sanic/pull/1476)
+      Deprecated the use of `sanic.request.Request.raw_args` - it has a
+      fundamental flaw in which is drops repeated query string parameters.
+      Added `sanic.request.Request.query_args` as a replacement for the
+      original use-case.
+
+    - [#1472](https://github.com/huge-success/sanic/pull/1472)
+      Remove an unwanted `None` check in Request class `repr` implementation.
+      This changes the default `repr` of a Request from `<Request>` to
+      `<Request: None />`
+
+    - [#1470](https://github.com/huge-success/sanic/pull/1470)
+      Added 2 new parameters to `sanic.app.Sanic.create_server`:
+      - `return_asyncio_server` - whether to return an asyncio.Server.
+      - `asyncio_server_kwargs` - kwargs to pass to `loop.create_server` for
+        the event loop that sanic is using.
+
+      This is a breaking change.
+
+    - [#1499](https://github.com/huge-success/sanic/pull/1499)
+      Added a set of test cases that test and benchmark route resolution.
+
+    - [#1457](https://github.com/huge-success/sanic/pull/1457)
+      The type of the `"max-age"` value in a `sanic.cookies.Cookie` is now
+      enforced to be an integer. Non-integer values are replaced with `0`.
+
+    - [#1445](https://github.com/huge-success/sanic/pull/1445)
+      Added the `endpoint` attribute to an incoming `request`, containing the
+      name of the handler function.
+
+    - [#1423](https://github.com/huge-success/sanic/pull/1423)
+      Improved request streaming. `request.stream` is now a bounded-size buffer
+      instead of an unbounded queue. Callers must now call
+      `await request.stream.read()` instead of `await request.stream.get()`
+      to read each portion of the body.
+
+      This is a breaking change.
+
+  - Fixes:
+    - [#1502](https://github.com/huge-success/sanic/pull/1502)
+      Sanic was prefetching `time.time()` and updating it once per second to
+      avoid excessive `time.time()` calls. The implementation was observed to
+      cause memory leaks in some cases. The benefit of the prefetch appeared
+      to negligible, so this has been removed. Fixes
+      [#1500](https://github.com/huge-success/sanic/pull/1500)
+
+    - [#1501](https://github.com/huge-success/sanic/pull/1501)
+      Fix a bug in the auto-reloader when the process was launched as a module
+      i.e. `python -m init0.mod1` where the sanic server is started
+      in `init0/mod1.py` with `debug` enabled and imports another module in
+      `init0`.
+
+    - [#1376](https://github.com/huge-success/sanic/pull/1376)
+      Allow sanic test client to bind to a random port by specifying
+      `port=None` when constructing a `SanicTestClient`
+
+    - [#1399](https://github.com/huge-success/sanic/pull/1399)
+      Added the ability to specify middleware on a blueprint group, so that all
+      routes produced from the blueprints in the group have the middleware
+      applied.
+
+    - [#1442](https://github.com/huge-success/sanic/pull/1442)
+      Allow the the use the `SANIC_ACCESS_LOG` environment variable to
+      enable/disable the access log when not explicitly passed to `app.run()`.
+      This allows the access log to be disabled for example when running via
+      gunicorn.
+
+  - Developer infrastructure:
+    - [#1529](https://github.com/huge-success/sanic/pull/1529) Update project PyPI credentials
+    - [#1515](https://github.com/huge-success/sanic/pull/1515) fix linter issue causing travis build failures (fix #1514)
+    - [#1490](https://github.com/huge-success/sanic/pull/1490) Fix python version in doc build
+    - [#1478](https://github.com/huge-success/sanic/pull/1478) Upgrade setuptools version and use native docutils in doc build
+    - [#1464](https://github.com/huge-success/sanic/pull/1464) Upgrade pytest, and fix caplog unit tests
+
+  - Typos and Documentation:
+    - [#1516](https://github.com/huge-success/sanic/pull/1516) Fix typo at the exception documentation
+    - [#1510](https://github.com/huge-success/sanic/pull/1510) fix typo in Asyncio example
+    - [#1486](https://github.com/huge-success/sanic/pull/1486) Documentation typo
+    - [#1477](https://github.com/huge-success/sanic/pull/1477) Fix grammar in README.md
+    - [#1489](https://github.com/huge-success/sanic/pull/1489) Added "databases" to the extensions list
+    - [#1483](https://github.com/huge-success/sanic/pull/1483) Add sanic-zipkin to extensions list
+    - [#1487](https://github.com/huge-success/sanic/pull/1487) Removed link to deleted repo, Sanic-OAuth, from the extensions list
+    - [#1460](https://github.com/huge-success/sanic/pull/1460) 18.12 changelog
+    - [#1449](https://github.com/huge-success/sanic/pull/1449) Add example of amending request object
+    - [#1446](https://github.com/huge-success/sanic/pull/1446) Update README
+    - [#1444](https://github.com/huge-success/sanic/pull/1444) Update README
+    - [#1443](https://github.com/huge-success/sanic/pull/1443) Update README, including new logo
+    - [#1440](https://github.com/huge-success/sanic/pull/1440) fix minor type and pip install instruction mismatch
+    - [#1424](https://github.com/huge-success/sanic/pull/1424) Documentation Enhancements
+
+Note: 19.3.0 was skipped for packagement purposes and not released on PyPI
+
+## Version 18.12
+
   - Changes:
     - Improved codebase test coverage from 81% to 91%.
     - Added stream_large_files and host examples in static_file document
@@ -34,8 +187,8 @@ Version 18.12
     - Fix pickling blueprints Change the string passed in the "name" section of the namedtuples in Blueprint to match the name of the Blueprint module attribute name. This allows blueprints to be pickled and unpickled, without errors, which is a requirment of running Sanic in multiprocessing mode in Windows. Added a test for pickling and unpickling blueprints Added a test for pickling and unpickling sanic itself Added a test for enabling multiprocessing on an app with a blueprint (only useful to catch this bug if the tests are run on Windows).
     - Fix document for logging
 
-Version 0.8
------------
+## Version 0.8
+
 0.8.3
   - Changes:
     - Ownership changed to org 'huge-success'
@@ -111,8 +264,8 @@ Version 0.8
 
 Note: Changelog was unmaintained between 0.1 and 0.7
 
-Version 0.1
------------
+## Version 0.1
+
  - 0.1.7
   - Reversed static url and directory arguments to meet spec
  - 0.1.6

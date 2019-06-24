@@ -1,13 +1,16 @@
-import pytest as pytest
-from urllib.parse import urlsplit, parse_qsl
-
-from sanic.response import text
-from sanic.views import HTTPMethodView
-from sanic.blueprints import Blueprint
-from sanic.testing import PORT as test_port, HOST as test_host
-from sanic.exceptions import URLBuildError
-
 import string
+
+from urllib.parse import parse_qsl, urlsplit
+
+import pytest as pytest
+
+from sanic.blueprints import Blueprint
+from sanic.exceptions import URLBuildError
+from sanic.response import text
+from sanic.testing import HOST as test_host
+from sanic.testing import PORT as test_port
+from sanic.views import HTTPMethodView
+
 
 URL_FOR_ARGS1 = dict(arg1=["v1", "v2"])
 URL_FOR_VALUE1 = "/myurl?arg1=v1&arg1=v2"
@@ -170,7 +173,7 @@ def test_fails_with_int_message(app):
 
     expected_error = (
         r'Value "not_int" for parameter `foo` '
-        r'does not match pattern for type `int`: -?\d+'
+        r"does not match pattern for type `int`: -?\d+"
     )
     assert str(e.value) == expected_error
 
@@ -223,7 +226,7 @@ def test_fails_with_number_message(app):
 
     expected_error = (
         'Value "foo" for parameter `some_number` '
-        "does not match pattern for type `float`: -?[0-9\\\\.]+"
+        r"does not match pattern for type `float`: -?(?:\d+(?:\.\d*)?|\.\d+)"
     )
 
     assert str(e.value) == expected_error

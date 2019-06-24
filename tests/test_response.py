@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import os
+
 from collections import namedtuple
 from mimetypes import guess_type
 from random import choice
@@ -8,6 +9,7 @@ from unittest.mock import MagicMock
 from urllib.parse import unquote
 
 import pytest
+
 from aiofiles import os as async_os
 
 from sanic.response import (
@@ -18,10 +20,10 @@ from sanic.response import (
     json,
     raw,
     stream,
-    text,
 )
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
+
 
 JSON_DATA = {"ok": True}
 
@@ -77,10 +79,10 @@ def test_response_header(app):
 
     request, response = app.test_client.get("/")
     assert dict(response.headers) == {
-        "Connection": "keep-alive",
-        "Keep-Alive": str(app.config.KEEP_ALIVE_TIMEOUT),
-        "Content-Length": "11",
-        "Content-Type": "application/json",
+        "connection": "keep-alive",
+        "keep-alive": str(app.config.KEEP_ALIVE_TIMEOUT),
+        "content-length": "11",
+        "content-type": "application/json",
     }
 
 
@@ -192,19 +194,54 @@ def test_no_content(json_app):
 def streaming_app(app):
     @app.route("/")
     async def test(request):
-        return stream(sample_streaming_fn, content_type="text/csv")
+        return stream(
+            sample_streaming_fn,
+            headers={"Content-Length": "7"},
+            content_type="text/csv",
+        )
 
     return app
 
 
-def test_streaming_adds_correct_headers(streaming_app):
+@pytest.fixture
+def non_chunked_streaming_app(app):
+    @app.route("/")
+    async def test(request):
+        return stream(
+            sample_streaming_fn,
+            headers={"Content-Length": "7"},
+            content_type="text/csv",
+            chunked=False,
+        )
+
+    return app
+
+
+def test_chunked_streaming_adds_correct_headers(streaming_app):
     request, response = streaming_app.test_client.get("/")
     assert response.headers["Transfer-Encoding"] == "chunked"
     assert response.headers["Content-Type"] == "text/csv"
+    # Content-Length is not allowed by HTTP/1.1 specification
+    # when "Transfer-Encoding: chunked" is used
+    assert "Content-Length" not in response.headers
 
 
-def test_streaming_returns_correct_content(streaming_app):
+def test_chunked_streaming_returns_correct_content(streaming_app):
     request, response = streaming_app.test_client.get("/")
+    assert response.text == "foo,bar"
+
+
+def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
+    request, response = non_chunked_streaming_app.test_client.get("/")
+    assert "Transfer-Encoding" not in response.headers
+    assert response.headers["Content-Type"] == "text/csv"
+    assert response.headers["Content-Length"] == "7"
+
+
+def test_non_chunked_streaming_returns_correct_content(
+    non_chunked_streaming_app
+):
+    request, response = non_chunked_streaming_app.test_client.get("/")
     assert response.text == "foo,bar"
 
 
@@ -227,13 +264,27 @@ def test_stream_response_keep_alive_returns_correct_headers(
     assert b"Keep-Alive: %s\r\n" % str(keep_alive_timeout).encode() in headers
 
 
-def test_stream_response_includes_chunked_header():
+def test_stream_response_includes_chunked_header_http11():
     response = StreamingHTTPResponse(sample_streaming_fn)
-    headers = response.get_headers()
+    headers = response.get_headers(version="1.1")
     assert b"Transfer-Encoding: chunked\r\n" in headers
 
 
-def test_stream_response_writes_correct_content_to_transport(streaming_app):
+def test_stream_response_does_not_include_chunked_header_http10():
+    response = StreamingHTTPResponse(sample_streaming_fn)
+    headers = response.get_headers(version="1.0")
+    assert b"Transfer-Encoding: chunked\r\n" not in headers
+
+
+def test_stream_response_does_not_include_chunked_header_if_disabled():
+    response = StreamingHTTPResponse(sample_streaming_fn, chunked=False)
+    headers = response.get_headers(version="1.1")
+    assert b"Transfer-Encoding: chunked\r\n" not in headers
+
+
+def test_stream_response_writes_correct_content_to_transport_when_chunked(
+    streaming_app
+):
     response = StreamingHTTPResponse(sample_streaming_fn)
     response.protocol = MagicMock(HttpProtocol)
     response.protocol.transport = MagicMock(asyncio.Transport)
@@ -241,7 +292,7 @@ def test_stream_response_writes_correct_content_to_transport(streaming_app):
     async def mock_drain():
         pass
 
-    def mock_push_data(data):
+    async def mock_push_data(data):
         response.protocol.transport.write(data)
 
     response.protocol.push_data = mock_push_data
@@ -262,6 +313,42 @@ def test_stream_response_writes_correct_content_to_transport(streaming_app):
             b"0\r\n\r\n"
         )
 
+        assert len(response.protocol.transport.write.call_args_list) == 4
+
+        app.stop()
+
+    streaming_app.run(host=HOST, port=PORT)
+
+
+def test_stream_response_writes_correct_content_to_transport_when_not_chunked(
+    streaming_app,
+):
+    response = StreamingHTTPResponse(sample_streaming_fn)
+    response.protocol = MagicMock(HttpProtocol)
+    response.protocol.transport = MagicMock(asyncio.Transport)
+
+    async def mock_drain():
+        pass
+
+    async def mock_push_data(data):
+        response.protocol.transport.write(data)
+
+    response.protocol.push_data = mock_push_data
+    response.protocol.drain = mock_drain
+
+    @streaming_app.listener("after_server_start")
+    async def run_stream(app, loop):
+        await response.stream(version="1.0")
+        assert response.protocol.transport.write.call_args_list[1][0][0] == (
+            b"foo,"
+        )
+
+        assert response.protocol.transport.write.call_args_list[2][0][0] == (
+            b"bar"
+        )
+
+        assert len(response.protocol.transport.write.call_args_list) == 3
+
         app.stop()
 
     streaming_app.run(host=HOST, port=PORT)
@@ -276,7 +363,7 @@ def test_stream_response_with_cookies(app):
         return response
 
     request, response = app.test_client.get("/")
-    assert response.cookies["test"].value == "pass"
+    assert response.cookies["test"] == "pass"
 
 
 def test_stream_response_without_cookies(app):

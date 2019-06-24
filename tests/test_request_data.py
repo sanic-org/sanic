@@ -2,6 +2,7 @@ import random
 
 from sanic.response import json
 
+
 try:
     from ujson import loads
 except ImportError:

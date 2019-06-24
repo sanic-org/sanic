@@ -1,9 +1,8 @@
 import os
 import types
 
-from distutils.util import strtobool
-
 from sanic.exceptions import PyFileError
+from sanic.helpers import import_string
 
 
 SANIC_PREFIX = "SANIC_"
@@ -27,6 +26,9 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "ACCESS_LOG": True,
+    "PROXIES_COUNT": -1,
+    "FORWARDED_FOR_HEADER": "X-Forwarded-For",
+    "REAL_IP_HEADER": "X-Real-IP",
 }
 
 
@@ -78,7 +80,7 @@ class Config(dict):
         module.__file__ = filename
         try:
             with open(filename) as config_file:
-                exec(
+                exec(  # nosec
                     compile(config_file.read(), filename, "exec"),
                     module.__dict__,
                 )
@@ -101,6 +103,9 @@ class Config(dict):
             from yourapplication import default_config
             app.config.from_object(default_config)
 
+            or also:
+            app.config.from_object('myproject.config.MyConfigClass')
+
         You should not use this function to load the actual configuration but
         rather configuration defaults. The actual config should be loaded
         with :meth:`from_pyfile` and ideally from a location not within the
@@ -108,6 +113,8 @@ class Config(dict):
 
         :param obj: an object holding the configuration
         """
+        if isinstance(obj, str):
+            obj = import_string(obj)
         for key in dir(obj):
             if key.isupper():
                 self[key] = getattr(obj, key)
@@ -127,6 +134,23 @@ class Config(dict):
                         self[config_key] = float(v)
                     except ValueError:
                         try:
-                            self[config_key] = bool(strtobool(v))
+                            self[config_key] = strtobool(v)
                         except ValueError:
                             self[config_key] = v
+
+
+def strtobool(val):
+    """
+    This function was borrowed from distutils.utils. While distutils
+    is part of stdlib, it feels odd to use distutils in main application code.
+
+    The function was modified to walk its talk and actually return bool
+    and not int.
+    """
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    elif val in ("n", "no", "f", "false", "off", "0"):
+        return False
+    else:
+        raise ValueError("invalid truth value %r" % (val,))

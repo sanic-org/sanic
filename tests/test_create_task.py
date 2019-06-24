@@ -1,7 +1,9 @@
-from sanic.response import text
-from threading import Event
 import asyncio
+
 from queue import Queue
+from threading import Event
+
+from sanic.response import text
 
 
 def test_create_task(app):

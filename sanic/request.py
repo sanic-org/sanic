@@ -379,7 +379,9 @@ class Request(dict):
                     for addr in [addr.strip() for addr in forwarded_for]
                     if addr
                 ]
-                if self.app.config.PROXIES_COUNT == -1:
+                if len(remote_addrs) == 0:
+                    self._remote_addr = ""
+                elif self.app.config.PROXIES_COUNT == -1:
                     self._remote_addr = remote_addrs[0]
                 elif len(remote_addrs) >= self.app.config.PROXIES_COUNT:
                     self._remote_addr = remote_addrs[

@@ -1,7 +1,7 @@
 WebSocket
 =========
 
-Sanic provides an easy to user abstraction on top of `websockets`. To setup a WebSocket:
+Sanic provides an easy to use abstraction on top of `websockets`. To setup a WebSocket:
 
 .. code:: python
 

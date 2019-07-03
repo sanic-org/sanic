@@ -43,21 +43,21 @@ on the URL.
 
 ### Supported types
 
-* string
+* `string`
     * "Bob" or "Python 3" both would work here
-* int
+* `int`
     * 10, 20, 30, -10 all work here
     * No floats work here
-* number
+* `number`
     * 1, 1.5, 10, -10 all work here
-* alpha
+* `alpha`
     * "Bob", "Python" all work here
     * If it contains a symbol or a non alphanumeric character it will fail
-* path
+* `path`
     * "hello", "hello.text" and "hello world" all work here
-* uuid
+* `uuid`
     * 123a123a-a12a-1a1a-a1a1-1a12a1a12345 and all other UUIDv4 work here
-* regex expression
+* `regex expression`
 
 If no type is set then a string is expected. The argument given to the function will always be a string, independent of the type.
 

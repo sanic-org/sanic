@@ -41,24 +41,61 @@ inside the quotes. If the parameter does not match the specified type, Sanic
 will throw a `NotFound` exception, resulting in a `404: Page not found` error
 on the URL.
 
+### Supported types
+
+* string
+    * "Bob" or "Python 3" both would work here
+* int
+    * 10, 20, 30, -10 all work here
+    * No floats work here
+* number
+    * 1, 1.5, 10, -10 all work here
+* alpha
+    * "Bob", "Python" all work here
+    * If it contains a symbol or a non alphanumeric character it will fail
+* path
+    * "hello", "hello.text" and "hello world" all work here
+* uuid
+    * 123a123a-a12a-1a1a-a1a1-1a12a1a12345 and all other UUIDv4 work here
+* regex expression
+
+If no type is set then a string is expected. The argument given to the function will
+    always be a string, independent of the type.
+
 ```python
 from sanic.response import text
 
-@app.route('/number/<integer_arg:int>')
+@app.route('/string/<string_arg:string>')
+async def string_handler(request, string_arg):
+    return text('String - {}'.format(string_arg))
+
+@app.route('/int/<integer_arg:int>')
 async def integer_handler(request, integer_arg):
-	return text('Integer - {}'.format(integer_arg))
+    return text('Integer - {}'.format(integer_arg))
 
 @app.route('/number/<number_arg:number>')
 async def number_handler(request, number_arg):
-	return text('Number - {}'.format(number_arg))
+    return text('Number - {}'.format(number_arg))
+
+@app.route('/alpha/<alpha_arg:alpha>')
+async def number_handler(request, alpha_arg):
+    return text('Alpha - {}'.format(alpha_arg))
+    
+@app.route('/path/<path_arg:path>')
+async def number_handler(request, path_arg):
+    return text('Path - {}'.format(path_arg))
+
+@app.route('/uuid/<uuid_arg:uuid>')
+async def number_handler(request, uuid_arg):
+    return text('Uuid - {}'.format(uuid_arg))
 
 @app.route('/person/<name:[A-z]+>')
 async def person_handler(request, name):
-	return text('Person - {}'.format(name))
+    return text('Person - {}'.format(name))
 
 @app.route('/folder/<folder_id:[A-z0-9]{0,4}>')
 async def folder_handler(request, folder_id):
-	return text('Folder - {}'.format(folder_id))
+    return text('Folder - {}'.format(folder_id))
 
 ```
 

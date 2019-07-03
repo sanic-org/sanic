@@ -59,8 +59,7 @@ on the URL.
     * 123a123a-a12a-1a1a-a1a1-1a12a1a12345 and all other UUIDv4 work here
 * regex expression
 
-If no type is set then a string is expected. The argument given to the function will
-    always be a string, independent of the type.
+If no type is set then a string is expected. The argument given to the function will always be a string, independent of the type.
 
 ```python
 from sanic.response import text
@@ -98,6 +97,8 @@ async def folder_handler(request, folder_id):
     return text('Folder - {}'.format(folder_id))
 
 ```
+
+**Warning** `str` is not a valid type tag. If you want `str` recognition then you must use `string` 
 
 ## HTTP request types
 

@@ -1,4 +1,4 @@
-from collections import MutableSequence
+from collections.abc import MutableSequence
 
 
 class BlueprintGroup(MutableSequence):

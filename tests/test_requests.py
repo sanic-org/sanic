@@ -629,6 +629,21 @@ async def test_remote_addr_custom_headers_asgi(app):
     assert response.text == "127.0.0.2"
 
 
+def test_forwarded_scheme(app):
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    request, response = app.test_client.get("/")
+    assert request.scheme == 'http'
+
+    request, response = app.test_client.get("/", headers={'X-Forwarded-Proto': 'https'})
+    assert request.scheme == 'https'
+
+    request, response = app.test_client.get("/", headers={'X-Scheme': 'https'})
+    assert request.scheme == 'https'
+
+
 def test_match_info(app):
     @app.route("/api/v1/user/<user_id>/")
     async def handler(request, user_id):
@@ -1656,6 +1671,70 @@ def test_request_socket(app):
     assert hasattr(request, "_socket")
 
 
+def test_request_server_name(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/")
+    assert request.server_name == '127.0.0.1'
+
+
+def test_request_server_name_in_host_header(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/", headers={'Host': 'my_server:5555'})
+    assert request.server_name == 'my_server'
+
+
+def test_request_server_name_forwarded(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/", headers={
+        'Host': 'my_server:5555',
+        'X-Forwarded-Host': 'your_server'
+    })
+    assert request.server_name == 'your_server'
+
+
+def test_request_server_port(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/", headers={
+        'Host': 'my_server'
+    })
+    assert request.server_port == app.test_client.port
+
+
+def test_request_server_port_in_host_header(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/", headers={
+        'Host': 'my_server:5555'
+    })
+    assert request.server_port == 5555
+
+
+def test_request_server_port_forwarded(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/", headers={
+        'Host': 'my_server:5555',
+        'X-Forwarded-Port': '4444'
+    })
+    assert request.server_port == 4444
+
+
 def test_request_form_invalid_content_type(app):
     @app.route("/", methods=["POST"])
     async def post(request):
@@ -1666,6 +1745,38 @@ def test_request_form_invalid_content_type(app):
     assert request.form == {}
 
 
+def test_url_for_with_forwarded_request(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    @app.get("/another_view/")
+    def view_name(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/", headers={
+        'X-Forwarded-Proto': 'https',
+    })
+    assert app.url_for('view_name') == '/another_view'
+    assert app.url_for('view_name', _external=True) == 'http:///another_view'
+    assert request.url_for('view_name') == 'https://127.0.0.1:{}/another_view'.format(app.test_client.port)
+
+    app.config.SERVER_NAME = "my_server"
+    request, response = app.test_client.get("/", headers={
+        'X-Forwarded-Proto': 'https',
+        'X-Forwarded-Port': '6789',
+    })
+    assert app.url_for('view_name') == '/another_view'
+    assert app.url_for('view_name', _external=True) == 'http://my_server/another_view'
+    assert request.url_for('view_name') == 'https://my_server:6789/another_view'
+
+    request, response = app.test_client.get("/", headers={
+        'X-Forwarded-Proto': 'https',
+        'X-Forwarded-Port': '443',
+    })
+    assert request.url_for('view_name') == 'https://my_server/another_view'
+
+    
 @pytest.mark.asyncio
 async def test_request_form_invalid_content_type_asgi(app):
     @app.route("/", methods=["POST"])
@@ -1676,7 +1787,7 @@ async def test_request_form_invalid_content_type_asgi(app):
 
     assert request.form == {}
 
-
+    
 def test_endpoint_basic():
     app = Sanic()
 

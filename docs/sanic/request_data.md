@@ -145,12 +145,16 @@ The following variables are accessible as properties on `Request` objects:
 
   ```
 - `url`: The full URL of the request, ie: `http://localhost:8000/posts/1/?foo=bar`
-- `scheme`: The URL scheme associated with the request: `http` or `https`
-- `host`: The host associated with the request: `localhost:8080`
+- `scheme`: The URL scheme associated with the request: 'http|https|ws|wss' or arbitrary value given by the headers.
+- `host`: The host associated with the request(which in the `Host` header): `localhost:8080`
+- `server_name`: The hostname of the server, without port number. the value is seeked in this order: `config.SERVER_NAME`, `x-forwarded-host` header, :func:`Request.host`
+- `server_port`: Like `server_name`. Seeked in this order: `x-forwarded-port` header, :func:`Request.host`, actual port used by the transport layer socket.
 - `path`: The path of the request: `/posts/1/`
 - `query_string`: The query string of the request: `foo=bar` or a blank string `''`
 - `uri_template`: Template for matching route handler: `/posts/<id>/`
 - `token`: The value of Authorization header: `Basic YWRtaW46YWRtaW4=`
+
+- `url_for`: Just like `sanic.Sanic.url_for`, but automatically determine `scheme` and `netloc` base on the request. Since this method is aiming to generate correct schema & netloc, `_external` is implied.
 
 
 ## Changing the default parsing rules of the queryset

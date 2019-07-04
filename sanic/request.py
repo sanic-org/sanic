@@ -27,7 +27,6 @@ except ImportError:
     else:
         json_loads = json.loads
 
-
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 EXPECT_HEADER = "EXPECT"
 
@@ -329,12 +328,18 @@ class Request(dict):
 
     @property
     def ip(self):
+        """
+        :return: peer ip of the socket
+        """
         if not hasattr(self, "_socket"):
             self._get_address()
         return self._ip
 
     @property
     def port(self):
+        """
+        :return: peer port of the socket
+        """
         if not hasattr(self, "_socket"):
             self._get_address()
         return self._port
@@ -352,6 +357,39 @@ class Request(dict):
         )
         self._ip = self._socket[0]
         self._port = self._socket[1]
+
+    @property
+    def server_name(self):
+        """
+        Attempt to get the server's hostname in this order:
+        `config.SERVER_NAME`, `x-forwarded-host` header, :func:`Request.host`
+
+        :return: the server name without port number
+        :rtype: str
+        """
+        return (
+            self.app.config.get("SERVER_NAME")
+            or self.headers.get("x-forwarded-host")
+            or self.host.split(":")[0]
+        )
+
+    @property
+    def server_port(self):
+        """
+        Attempt to get the server's port in this order:
+        `x-forwarded-port` header, :func:`Request.host`, actual port used by
+        the transport layer socket.
+        :return: server port
+        :rtype: int
+        """
+        forwarded_port = self.headers.get("x-forwarded-port") or (
+            self.host.split(":")[1] if ":" in self.host else None
+        )
+        if forwarded_port:
+            return int(forwarded_port)
+        else:
+            _, port = self.transport.get_extra_info("sockname")
+            return port
 
     @property
     def remote_addr(self):
@@ -393,6 +431,20 @@ class Request(dict):
 
     @property
     def scheme(self):
+        """
+        Attempt to get the request scheme.
+        Seeking the value in this order:
+        `x-forwarded-proto` header, `x-scheme` header, the sanic app itself.
+
+        :return: http|https|ws|wss or arbitrary value given by the headers.
+        :rtype: str
+        """
+        forwarded_proto = self.headers.get(
+            "x-forwarded-proto"
+        ) or self.headers.get("x-scheme")
+        if forwarded_proto:
+            return forwarded_proto
+
         if (
             self.app.websocket_enabled
             and self.headers.get("upgrade") == "websocket"
@@ -408,8 +460,12 @@ class Request(dict):
 
     @property
     def host(self):
+        """
+        :return: the Host specified in the header, may contains port number.
+        """
         # it appears that httptools doesn't return the host
         # so pull it from the headers
+
         return self.headers.get("Host", "")
 
     @property
@@ -436,6 +492,31 @@ class Request(dict):
     def url(self):
         return urlunparse(
             (self.scheme, self.host, self.path, None, self.query_string, None)
+        )
+
+    def url_for(self, view_name, **kwargs):
+        """
+        Same as :func:`sanic.Sanic.url_for`, but automatically determine
+        `scheme` and `netloc` base on the request. Since this method is aiming
+        to generate correct schema & netloc, `_external` is implied.
+
+        :param kwargs: takes same parameters as in :func:`sanic.Sanic.url_for`
+        :return: an absolute url to the given view
+        :rtype: str
+        """
+        scheme = self.scheme
+        host = self.server_name
+        port = self.server_port
+
+        if (scheme.lower() in ("http", "ws") and port == 80) or (
+            scheme.lower() in ("https", "wss") and port == 443
+        ):
+            netloc = host
+        else:
+            netloc = "{}:{}".format(host, port)
+
+        return self.app.url_for(
+            view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs
         )
 
 

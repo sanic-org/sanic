@@ -5,8 +5,11 @@ from collections import deque
 import pytest
 import uvicorn
 
+from sanic import Sanic
 from sanic.asgi import MockTransport
 from sanic.exceptions import InvalidUsage
+from sanic.request import Request
+from sanic.response import text
 from sanic.websocket import WebSocketConnection
 
 
@@ -201,3 +204,28 @@ def test_improper_websocket_connection(transport, send, receive):
     transport.create_websocket_connection(send, receive)
     connection = transport.get_websocket_connection()
     assert isinstance(connection, WebSocketConnection)
+
+
+@pytest.mark.asyncio
+async def test_request_class_regular(app):
+    @app.get("/regular")
+    def regular_request(request):
+        return text(request.__class__.__name__)
+
+    _, response = await app.asgi_client.get("/regular")
+    assert response.body == b"Request"
+
+
+@pytest.mark.asyncio
+async def test_request_class_custom():
+    class MyCustomRequest(Request):
+        pass
+
+    app = Sanic(request_class=MyCustomRequest)
+
+    @app.get("/custom")
+    def custom_request(request):
+        return text(request.__class__.__name__)
+
+    _, response = await app.asgi_client.get("/custom")
+    assert response.body == b"MyCustomRequest"

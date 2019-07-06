@@ -88,7 +88,7 @@ class MockTransport:
         self._websocket_connection = WebSocketConnection(send, receive)
         return self._websocket_connection
 
-    def add_task(self) -> None:  # noqa
+    def add_task(self) -> None:
         raise NotImplementedError
 
     async def send(self, data) -> None:
@@ -119,27 +119,20 @@ class Lifespan:
                 "the ASGI server is stopped."
             )
 
-    # async def pre_startup(self) -> None:
-    #     for handler in self.asgi_app.sanic_app.listeners[
-    #         "before_server_start"
-    #     ]:
-    #         response = handler(
-    #             self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-    #         )
-    #         if isawaitable(response):
-    #             await response
-
     async def startup(self) -> None:
-        for handler in self.asgi_app.sanic_app.listeners[
-            "before_server_start"
-        ]:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
-            if isawaitable(response):
-                await response
+        """
+        Gather the listeners to fire on server start.
+        Because we are using a third-party server and not Sanic server, we do
+        not have access to fire anything BEFORE the server starts.
+        Therefore, we fire before_server_start and after_server_start
+        in sequence since the ASGI lifespan protocol only supports a single
+        startup event.
+        """
+        listeners = self.asgi_app.sanic_app.listeners.get(
+            "before_server_start", []
+        ) + self.asgi_app.sanic_app.listeners.get("after_server_start", [])
 
-        for handler in self.asgi_app.sanic_app.listeners["after_server_start"]:
+        for handler in listeners:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
@@ -147,14 +140,19 @@ class Lifespan:
                 await response
 
     async def shutdown(self) -> None:
-        for handler in self.asgi_app.sanic_app.listeners["before_server_stop"]:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
-            if isawaitable(response):
-                await response
+        """
+        Gather the listeners to fire on server stop.
+        Because we are using a third-party server and not Sanic server, we do
+        not have access to fire anything AFTER the server stops.
+        Therefore, we fire before_server_stop and after_server_stop
+        in sequence since the ASGI lifespan protocol only supports a single
+        shutdown event.
+        """
+        listeners = self.asgi_app.sanic_app.listeners.get(
+            "before_server_stop", []
+        ) + self.asgi_app.sanic_app.listeners.get("after_server_stop", [])
 
-        for handler in self.asgi_app.sanic_app.listeners["after_server_stop"]:
+        for handler in listeners:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
@@ -223,7 +221,8 @@ class ASGIApp:
                 # TODO:
                 # - close connection
 
-            instance.request = Request(
+            request_class = sanic_app.request_class or Request
+            instance.request = request_class(
                 url_bytes,
                 headers,
                 version,

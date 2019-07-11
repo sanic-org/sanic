@@ -1,7 +1,6 @@
 import asyncio
 import warnings
 
-from http.cookies import SimpleCookie
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Union
 from urllib.parse import quote
@@ -288,11 +287,22 @@ class ASGIApp:
         """
         Write the response.
         """
-
+        headers = []
+        cookies = {}
         try:
-            headers = [
+            cookies = {
+                v.key: v
+                for _, v in list(
+                    filter(
+                        lambda item: item[0].lower() == "set-cookie",
+                        response.headers.items(),
+                    )
+                )
+            }
+            headers += [
                 (str(name).encode("latin-1"), str(value).encode("latin-1"))
                 for name, value in response.headers.items()
+                if name.lower() not in ["set-cookie"]
             ]
         except AttributeError:
             logger.error(
@@ -319,12 +329,18 @@ class ASGIApp:
             ]
 
         if response.cookies:
-            cookies = SimpleCookie()
-            cookies.load(response.cookies)
-            headers += [
-                (b"set-cookie", cookie.encode("utf-8"))
-                for name, cookie in response.cookies.items()
-            ]
+            cookies.update(
+                {
+                    v.key: v
+                    for _, v in response.cookies.items()
+                    if v.key not in cookies.keys()
+                }
+            )
+
+        headers += [
+            (b"set-cookie", cookie.encode("utf-8"))
+            for k, cookie in cookies.items()
+        ]
 
         await self.transport.send(
             {

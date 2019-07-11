@@ -288,7 +288,7 @@ class ASGIApp:
         Write the response.
         """
         headers = []
-        cookies = dict()
+        cookies = {}
         try:
             cookies = {
                 v.key: v

@@ -19,6 +19,13 @@ help:
 	@echo "beautify [sort_imports=1] [include_tests=1]"
 	@echo " 	Analyze and fix linting issue using black and optionally fix import sort using isort"
 	@echo ""
+	@echo "docs"
+	@echo "     Generate Sanic documentation"
+	@echo ""
+	@echo "clean-docs"
+	@echo "     Clean Sanic documentation"
+	@echo ""
+
 
 clean:
 	find . ! -path "./.eggs/*" -name "*.pyc" -exec rm {} \;
@@ -56,3 +63,10 @@ black:
 
 fix-import: black
 	isort -rc sanic tests
+
+
+docs-clean:
+	cd docs && make clean
+
+docs: docs-clean
+	cd docs && make html

@@ -40,6 +40,10 @@ the document that explains the way ``sanic`` manages dependencies inside the ``s
 | extras_require['docs'] | Dependencies required to enable building and  | ``pip3 install -e '.[docs]'``  |
 |                        | enhancing sanic documentation                 |                                |
 +------------------------+-----------------------------------------------+--------------------------------+
+| extras_require['all']  | Dependencies required to perform all sanic    | ``pip3 install -e '.[docs]'``  |
+|                        | development activities including documenting  |                                |
++------------------------+-----------------------------------------------+--------------------------------+
+
 
 Running tests
 -------------

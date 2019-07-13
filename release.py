@@ -125,7 +125,7 @@ def _update_release_version_for_sanic(
         config_parser.read_file(cfg)
     config_parser.set("version", "current_version", new_version)
 
-    version_file = config_parser.get("version", "file")
+    version_files = config_parser.get("version", "files")
     current_version_line = config_parser.get(
         "version", "current_version_pattern"
     ).format(current_version=current_version)
@@ -133,12 +133,13 @@ def _update_release_version_for_sanic(
         "version", "new_version_pattern"
     ).format(new_version=new_version)
 
-    with open(version_file) as init_file:
-        data = init_file.read()
+    for version_file in version_files.split(","):
+        with open(version_file) as init_file:
+            data = init_file.read()
 
-    new_data = data.replace(current_version_line, new_version_line)
-    with open(version_file, "w") as init_file:
-        init_file.write(new_data)
+        new_data = data.replace(current_version_line, new_version_line)
+        with open(version_file, "w") as init_file:
+            init_file.write(new_data)
 
     with open(config_file, "w") as config:
         config_parser.write(config)

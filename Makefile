@@ -25,6 +25,9 @@ help:
 	@echo "clean-docs"
 	@echo "     Clean Sanic documentation"
 	@echo ""
+	@echo "docs-test"
+	@echo "		Test Sanic Documentation for errors"
+	@echo ""
 
 
 clean:
@@ -70,3 +73,6 @@ docs-clean:
 
 docs: docs-clean
 	cd docs && make html
+
+docs-test: docs-clean
+	cd docs && make dummy

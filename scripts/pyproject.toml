@@ -1,7 +1,7 @@
 [tool.towncrier]
     package = "sanic"
     package_dir = "."
-    filename = "CHANGELOG.rst"
+    filename = "../CHANGELOG.rst"
     directory = "./changelogs"
     underlines = ["=", "*", "~"]
     issue_format = "`#{issue} <https://github.com/huge-success/sanic/issues/{issue}>`__"

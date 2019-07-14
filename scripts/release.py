@@ -5,7 +5,7 @@ from collections import OrderedDict
 from configparser import RawConfigParser
 from datetime import datetime
 from json import dumps
-from os import path
+from os import path, chdir
 from subprocess import Popen, PIPE
 
 from jinja2 import Environment, BaseLoader
@@ -54,6 +54,18 @@ RELEASE_NOTE_UPDATE_URL = (
     "https://api.github.com/repos/huge-success/sanic/releases/tags/"
     "{new_version}?access_token={token}"
 )
+
+
+class Directory:
+    def __init__(self):
+        self._old_path = path.dirname(path.abspath(__file__))
+        self._new_path = path.dirname(self._old_path)
+
+    def __enter__(self):
+        chdir(self._new_path)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        chdir(self._old_path)
 
 
 def _run_shell_command(command: list):
@@ -302,4 +314,5 @@ if __name__ == "__main__":
         required=False,
     )
     args = cli.parse_args()
-    release(args)
+    with Directory() as _:
+        release(args)

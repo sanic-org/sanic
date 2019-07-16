@@ -294,6 +294,8 @@ def abort(status_code, message=None):
     :param status_code: The HTTP status code to return.
     :param message: The HTTP response body. Defaults to the messages
                     in response.py for the given status code.
+
+    :return: HTTP response message for status code.
     """
     if message is None:
         message = STATUS_CODES.get(status_code)

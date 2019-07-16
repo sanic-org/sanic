@@ -25,7 +25,6 @@ from sanic.response import text
 
 @app.route('/youshallnotpass')
 async def no_no(request):
-
 	return abort(401)
 ```
 

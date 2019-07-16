@@ -25,9 +25,7 @@ from sanic.response import text
 
 @app.route('/youshallnotpass')
 async def no_no(request):
-        abort(401)
-        # this won't happen
-        text("OK")
+        return abort(401)
 ```
 
 ## Handling exceptions
@@ -60,7 +58,7 @@ app.error_handler.add(Exception, server_error_handler)
 ```
 
 In some cases, you might want to add some more error handling
-functionality to what is provided by default. In that case, you 
+functionality to what is provided by default. In that case, you
 can subclass Sanic's default error handler as such:
 
 ```python
@@ -72,7 +70,7 @@ class CustomErrorHandler(ErrorHandler):
 		''' handles errors that have no error handlers assigned '''
 		# You custom error handling logic...
 		return super().default(request, exception)
-		
+
 app = Sanic()
 app.error_handler = CustomErrorHandler()
 ```

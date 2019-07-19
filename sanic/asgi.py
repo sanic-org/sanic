@@ -5,8 +5,7 @@ from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Union
 from urllib.parse import quote
 
-from multidict import CIMultiDict
-
+from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
 from sanic.request import Request
@@ -186,7 +185,7 @@ class ASGIApp:
         instance.transport.add_task = sanic_app.loop.create_task
         instance.transport.loop = sanic_app.loop
 
-        headers = CIMultiDict(
+        headers = Header(
             [
                 (key.decode("latin-1"), value.decode("latin-1"))
                 for key, value in scope.get("headers", [])

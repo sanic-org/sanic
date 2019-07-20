@@ -365,7 +365,7 @@ class Request(dict):
     def server_name(self):
         """
         Attempt to get the server's hostname in this order:
-        `config.SERVER_NAME`, `x-forwarded-host` header, :func:`Request.host`
+        `config.SERVER_NAME`, `forwarded` header, `x-forwarded-host` header, :func:`Request.host`
 
         :return: the server name without port number
         :rtype: str
@@ -406,9 +406,9 @@ class Request(dict):
 
     @property
     def remote_addr(self):
-        """Attempt to return the original client ip based on X-Forwarded-For
-        or X-Real-IP. If HTTP headers are unavailable or untrusted, returns
-        an empty string.
+        """Attempt to return the original client ip based on `forwarded`,
+        `x-forwarded-for` or `x-real-ip`. If HTTP headers are unavailable or
+        untrusted, returns an empty string.
 
         :return: original client ip.
         """
@@ -421,7 +421,8 @@ class Request(dict):
         """
         Attempt to get the request scheme.
         Seeking the value in this order:
-        `x-forwarded-proto` header, `x-scheme` header, the sanic app itself.
+        `forwarded` header, `x-forwarded-proto` header,
+        `x-scheme` header, the sanic app itself.
 
         :return: http|https|ws|wss or arbitrary value given by the headers.
         :rtype: str

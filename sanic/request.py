@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
+from sanic.forwarded import parse_forwarded, parse_xforwarded
 from sanic.log import error_logger, logger
 
 
@@ -87,6 +88,7 @@ class Request(dict):
         "parsed_files",
         "parsed_form",
         "parsed_json",
+        "parsed_forwarded",
         "raw_url",
         "stream",
         "transport",
@@ -107,6 +109,7 @@ class Request(dict):
 
         # Init but do not inhale
         self.body_init()
+        self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -372,6 +375,15 @@ class Request(dict):
             or self.headers.get("x-forwarded-host")
             or self.host.split(":")[0]
         )
+
+    @property
+    def forwarded(self):
+        if self.parsed_forwarded is None:
+            self.parsed_forwarded = (
+                parse_forwarded(self.headers.get('forwarded'), self.app.config.FORWARDED_SECRET) or
+                parse_xforwarded(self.headers, self.app.config)
+            )
+        return self.parsed_forwarded
 
     @property
     def server_port(self):

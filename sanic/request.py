@@ -389,19 +389,20 @@ class Request(dict):
     def server_port(self):
         """
         Attempt to get the server's port in this order:
-        `x-forwarded-port` header, :func:`Request.host`, actual port used by
-        the transport layer socket.
+        `forwarded` header, `x-forwarded-port` header, :func:`Request.host`,
+        actual port used by the transport layer socket.
         :return: server port
         :rtype: int
         """
-        forwarded_port = self.forwarded.get("port") or (
-            self.host.split(":")[1] if ":" in self.host else None
-        )
-        if forwarded_port:
-            return int(forwarded_port)
+        if self.forwarded:
+            forwarded_port = self.forwarded.get("port") or (
+                "80" if self.scheme in ("http", "ws") else "443"
+            )
+        elif ":" in self.host:
+            forwarded_port = self.host.split(":")[1]
         else:
-            _, port = self.transport.get_extra_info("sockname")
-            return port
+            return self.transport.get_extra_info("sockname")[1]
+        return int(forwarded_port)
 
     @property
     def remote_addr(self):

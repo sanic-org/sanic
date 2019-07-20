@@ -372,7 +372,7 @@ class Request(dict):
         """
         return (
             self.app.config.get("SERVER_NAME")
-            or self.headers.get("x-forwarded-host")
+            or self.forwarded.get("host")
             or self.host.split(":")[0]
         )
 
@@ -394,7 +394,7 @@ class Request(dict):
         :return: server port
         :rtype: int
         """
-        forwarded_port = self.headers.get("x-forwarded-port") or (
+        forwarded_port = self.forwarded.get("port") or (
             self.host.split(":")[1] if ":" in self.host else None
         )
         if forwarded_port:
@@ -412,33 +412,7 @@ class Request(dict):
         :return: original client ip.
         """
         if not hasattr(self, "_remote_addr"):
-            if self.app.config.PROXIES_COUNT == 0:
-                self._remote_addr = ""
-            elif self.app.config.REAL_IP_HEADER and self.headers.get(
-                self.app.config.REAL_IP_HEADER
-            ):
-                self._remote_addr = self.headers[
-                    self.app.config.REAL_IP_HEADER
-                ]
-            elif self.app.config.FORWARDED_FOR_HEADER:
-                forwarded_for = self.headers.get(
-                    self.app.config.FORWARDED_FOR_HEADER, ""
-                ).split(",")
-                remote_addrs = [
-                    addr
-                    for addr in [addr.strip() for addr in forwarded_for]
-                    if addr
-                ]
-                if self.app.config.PROXIES_COUNT == -1:
-                    self._remote_addr = remote_addrs[0]
-                elif len(remote_addrs) >= self.app.config.PROXIES_COUNT:
-                    self._remote_addr = remote_addrs[
-                        -self.app.config.PROXIES_COUNT
-                    ]
-                else:
-                    self._remote_addr = ""
-            else:
-                self._remote_addr = ""
+            self._remote_addr = self.forwarded.get("for") or ""
         return self._remote_addr
 
     @property
@@ -451,9 +425,7 @@ class Request(dict):
         :return: http|https|ws|wss or arbitrary value given by the headers.
         :rtype: str
         """
-        forwarded_proto = self.headers.get(
-            "x-forwarded-proto"
-        ) or self.headers.get("x-scheme")
+        forwarded_proto = self.forwarded.get("proto")
         if forwarded_proto:
             return forwarded_proto
 

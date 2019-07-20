@@ -39,7 +39,10 @@ def parse_xforwarded(headers, config):
         addr = addr.strip()
     if not addr:
         return None
-    other = ((h, headers.get(f'x-forwarded-{h}')) for h in ('proto', 'host', 'port', 'path'))
+    other = (
+        ('proto', headers.get('x-scheme')),
+        *((h, headers.get(f'x-forwarded-{h}')) for h in ('proto', 'host', 'port', 'path'))
+    )
     return {'for': addr, **{h: v for h, v in other if v}}
 
 def test_parse_forwarded():

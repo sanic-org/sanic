@@ -44,10 +44,3 @@ def parse_xforwarded(headers, config):
         *((h, headers.get(f'x-forwarded-{h}')) for h in ('proto', 'host', 'port', 'path'))
     )
     return {'for': addr, **{h: v for h, v in other if v}}
-
-def test_parse_forwarded():
-    example_header = 'secret=first;for=1.2.3.4, for=injected,host=", for=23.45.67.89;proto=https;host=site.tld;path="/app";secret=egah2CGj55fSJFs, for="[::1]";port=8000'
-    assert parse_forwarded(example_header) == {'for': '[::1]', 'port': '8000'}
-    assert parse_forwarded(example_header, secret='non-exist') == None
-    assert parse_forwarded(example_header, secret='first') == {'for': '1.2.3.4'}
-    assert parse_forwarded(example_header, secret='egah2CGj55fSJFs') == {'for': '23.45.67.89', 'proto': 'https', 'host': 'site.tld', 'path': '/app'}

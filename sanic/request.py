@@ -365,7 +365,8 @@ class Request(dict):
     def server_name(self):
         """
         Attempt to get the server's hostname in this order:
-        `config.SERVER_NAME`, `forwarded` header, `x-forwarded-host` header, :func:`Request.host`
+        `config.SERVER_NAME`, `forwarded` header, `x-forwarded-host` header,
+        :func:`Request.host`
 
         :return: the server name without port number
         :rtype: str
@@ -380,8 +381,12 @@ class Request(dict):
     def forwarded(self):
         if self.parsed_forwarded is None:
             self.parsed_forwarded = (
-                parse_forwarded(self.headers.get('forwarded'), self.app.config.FORWARDED_SECRET) or
-                parse_xforwarded(self.headers, self.app.config)
+                parse_forwarded(
+                    self.headers.get("forwarded"),
+                    self.app.config.FORWARDED_SECRET,
+                )
+                or parse_xforwarded(self.headers, self.app.config)
+                or {}
             )
         return self.parsed_forwarded
 

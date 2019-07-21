@@ -3,43 +3,42 @@ import re
 
 # https://tools.ietf.org/html/rfc7230#section-3.2.6 and
 # https://tools.ietf.org/html/rfc7239#section-4
-_token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
-# forwarded_pair = f'(^|[;,])\\s*{_token}=(?:{_token}|{_quoted})', re.ASCII)
-# Same as forwarded_pair but for fast *reverse* string matching:
+# These regexes are for *reversed* strings because that works much faster for
+# right-to-left matching than the other way around. Be wary that all things are
+# a bit backwards! _regex matches forwarded pairs alike ";key=value"
+_token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"((?:[^"]|"\\)*)"'
 _regex = re.compile(f"(?:{_token}|{_quoted})={_token}\\s*($|[;,])", re.ASCII)
 
 
-def parse_forwarded(header, secret=None):
+def parse_forwarded(header: str, secret: str) -> dict:
     """Parse HTTP Forwarded header.
-    Last proxy is returned, or if a secret is provided, a proxy with
-    secret="yoursecret".
-    :return: dict with fields from matched element
+    Accepts only the rightmost element that includes secret="yoursecret".
+    :return: dict with matching keys (lower case) and values, or None.
     """
-    if header is None or secret is not None and secret not in header:
+    if header is None or not secret or secret not in header:
         return None
-    ret = {}
-    pos = len(header)
     # Loop over <separator><key>=<value> elements from right to left
+    sep = pos = None
     for m in _regex.finditer(header[::-1]):
-        # If scanner jumps over something unrecognized, clear values
-        if m.end() != pos:
+        # Start of new element? (on parser skips and non-semicolon right sep)
+        if m.start() != pos or sep != ";":
+            if secret is True:
+                return ret
             ret = {}
-        pos = m.start()
-        val_quoted, val_token, key, sep = m.groups()
-        key, val = key.lower()[::-1], (val_token or val_quoted)[::-1]
+        pos = m.end()
+        val_token, val_quoted, key, sep = m.groups()
+        key = key.lower()[::-1]
+        val = (val_token or val_quoted.replace('"\\', '"'))[::-1]
         ret[key] = val
-        if secret is not None and key == "secret" and val == secret:
-            secret = None
-        if sep != ";":
-            # Element done; stop parsing if secret matched
-            if secret is None:
-                break
-            ret = {}  # Advancing to previous comma-separated element
-    return ret if secret is None and ret else None
+        if secret is not True and key == "secret" and val == secret:
+            secret = True
+        if secret is True and sep != ";":
+            return ret
+    return ret if secret is True else None
 
 
 def parse_xforwarded(headers, config):
-    """Parse X-Real-IP and X-Forwarded-* headers."""
+    """Parse X-Real-IP, X-Scheme and X-Forwarded-* headers."""
     proxies_count = config.PROXIES_COUNT
     if not proxies_count:
         return None
@@ -61,7 +60,7 @@ def parse_xforwarded(headers, config):
         (key, headers.get(header))
         for key, header in (
             ("proto", "x-scheme"),
-            ("proto", "x-forwarded-proto"),
+            ("proto", "x-forwarded-proto"),  # Overrides X-Scheme if present
             ("host", "x-forwarded-host"),
             ("port", "x-forwarded-port"),
             ("path", "x-forwarded-path"),

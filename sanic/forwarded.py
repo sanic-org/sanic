@@ -49,15 +49,15 @@ def parse_xforwarded(headers, config):
         return None
     h1, h2 = config.REAL_IP_HEADER, config.FORWARDED_FOR_HEADER
     addr = h1 and headers.get(h1)
-    forwarded_for = h2 and headers.get(h2)
+    forwarded_for = h2 and headers.getall(h2, None)
     if not addr and forwarded_for:
         assert proxies_count == -1 or proxies_count > 0, config.PROXIES_COUNT
+        # Combine, split and filter multiple headers' entries
+        proxies = (p.strip() for h in forwarded_for for p in h.split(","))
+        proxies = [p for p in proxies if p]
         try:
-            proxies = [
-                p for p in map(str.strip, forwarded_for.split(",")) if p
-            ]
             addr = proxies[-proxies_count] if proxies_count > 0 else proxies[0]
-        except (AttributeError, IndexError):
+        except IndexError:
             return None
     if not addr:
         return None

@@ -10,12 +10,17 @@ _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"((?:[^"]|"\\)*)"'
 _regex = re.compile(f"(?:{_token}|{_quoted})={_token}\\s*($|[;,])", re.ASCII)
 
 
-def parse_forwarded(header: str, secret: str) -> dict:
-    """Parse HTTP Forwarded header.
-    Accepts only the rightmost element that includes secret="yoursecret".
-    :return: dict with matching keys (lower case) and values, or None.
+def parse_forwarded(headers, config):
+    """Parse HTTP Forwarded headers.
+    Accepts only the last element with secret=`config.FORWARDED_SECRET`
+    :return: dict with matching keys (lowercase) and values, or None.
     """
-    if header is None or not secret or secret not in header:
+    header = headers.getall("forwarded", None)
+    secret = config.FORWARDED_SECRET
+    if header is None or not secret:
+        return None
+    header = ",".join(header)  # Join multiple header lines
+    if secret not in header:
         return None
     # Loop over <separator><key>=<value> elements from right to left
     ret = sep = pos = None

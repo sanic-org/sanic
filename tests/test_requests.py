@@ -400,6 +400,7 @@ async def test_content_type_asgi(app):
     assert request.content_type == "application/json"
     assert response.text == "application/json"
 
+
 def test_standard_forwarded(app):
     @app.route("/")
     async def handler(request):
@@ -488,6 +489,7 @@ def test_standard_forwarded(app):
     headers = {"Forwarded": r'b0rked;secret=mySecret;proto=wss'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
+
 
 def test_remote_addr_with_two_proxies(app):
     app.config.PROXIES_COUNT = 2

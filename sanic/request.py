@@ -381,10 +381,7 @@ class Request(dict):
     def forwarded(self):
         if self.parsed_forwarded is None:
             self.parsed_forwarded = (
-                parse_forwarded(
-                    self.headers.get("forwarded"),
-                    self.app.config.FORWARDED_SECRET,
-                )
+                parse_forwarded(self.headers, self.app.config)
                 or parse_xforwarded(self.headers, self.app.config)
                 or {}
             )

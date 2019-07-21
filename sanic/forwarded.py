@@ -1,5 +1,6 @@
 import re
 
+
 # https://tools.ietf.org/html/rfc7230#section-3.2.6 and
 # https://tools.ietf.org/html/rfc7239#section-4
 _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'

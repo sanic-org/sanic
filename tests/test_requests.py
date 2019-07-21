@@ -443,6 +443,10 @@ def test_standard_forwarded(app):
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == { "for": "127.0.0.2", "proto": "ws" }
 
+    # Header present but not matching anything
+    request, response = app.test_client.get("/", headers={"Forwarded": "."})
+    assert response.json == {}
+
     # Forwarded header present but no matching secret -> use X-headers
     headers = {
         "Forwarded": 'for=1.1.1.1;secret=x, for=127.0.0.1',
@@ -477,6 +481,11 @@ def test_standard_forwarded(app):
 
     # Secret insulated by malformed field #2
     headers = {"Forwarded": r'for=test;b0rked;secret=mySecret;proto=wss'}
+    request, response = app.test_client.get("/", headers=headers)
+    assert response.json == {"proto": "wss", "secret": "mySecret"}
+
+    # Unexpected termination should not lose existing acceptable values
+    headers = {"Forwarded": r'b0rked;secret=mySecret;proto=wss'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
 

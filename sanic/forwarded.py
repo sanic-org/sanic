@@ -18,18 +18,23 @@ def parse_forwarded(header, secret=None):
     if header is None or secret is not None and secret not in header:
         return None
     ret = {}
+    pos = len(header)
+    # Loop over <separator><key>=<value> elements from right to left
     for m in _regex.finditer(header[::-1]):
+        # If scanner jumps over something unrecognized, clear values
+        if m.end() != pos:
+            ret = {}
+        pos = m.start()
         val_quoted, val_token, key, sep = m.groups()
         key, val = key.lower()[::-1], (val_token or val_quoted)[::-1]
-        if key != "secret":
-            ret[key] = val
-        elif val == secret:
+        ret[key] = val
+        if secret is not None and key == "secret" and val == secret:
             secret = None
-        if sep == ";":
-            continue
-        if secret is None:
-            break
-        ret = {}  # Advancing to previous comma-separated element
+        if sep != ";":
+            # Element done; stop parsing if secret matched
+            if secret is None:
+                break
+            ret = {}  # Advancing to previous comma-separated element
     return ret if secret is None and ret else None
 
 

@@ -18,7 +18,7 @@ def parse_forwarded(header: str, secret: str) -> dict:
     if header is None or not secret or secret not in header:
         return None
     # Loop over <separator><key>=<value> elements from right to left
-    sep = pos = None
+    ret = sep = pos = None
     for m in _regex.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
         if m.start() != pos or sep != ";":

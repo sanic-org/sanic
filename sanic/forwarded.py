@@ -28,7 +28,7 @@ def parse_forwarded(headers, config):
         # Start of new element? (on parser skips and non-semicolon right sep)
         if m.start() != pos or sep != ";":
             if secret is True:
-                return ret
+                return normalize(ret)
             ret = {}
         pos = m.end()
         val_token, val_quoted, key, sep = m.groups()
@@ -38,8 +38,8 @@ def parse_forwarded(headers, config):
         if secret is not True and key == "secret" and val == secret:
             secret = True
         if secret is True and sep != ";":
-            return ret
-    return ret if secret is True else None
+            return normalize(ret)
+    return normalize(ret) if secret is True else None
 
 
 def parse_xforwarded(headers, config):
@@ -71,4 +71,44 @@ def parse_xforwarded(headers, config):
             ("path", "x-forwarded-path"),
         )
     )
-    return {"for": addr, **{k: v for k, v in other if v}}
+    return normalize({"for": addr, **{k: v for k, v in other if v}})
+
+
+_ipv6 = r"(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
+_ipv6_re = re.compile(_ipv6)
+_host_re = re.compile(r"((?:\[{_ipv6}\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?")
+
+def parse_host(host):
+    m = _host_re.match(host)
+    if not m:
+        return None, None
+    host, port = m.groups()
+    return host.lower(), port and int(port)
+
+def bracketv6(addr):
+    return f"[{addr}]" if _ipv6_re.match(addr) else addr
+
+def normalize(fwd: dict) -> dict:
+    """Normalize and convert values extracted from forwarded headers.
+    Modifies fwd in place and returns the same object.
+    """
+    if "proto" in fwd:
+        fwd["proto"] = fwd["proto"].lower()
+    if "by" in fwd:
+        fwd["by"] = bracketv6(fwd["by"]).lower()
+    if "for" in fwd:
+        fwd["for"] = bracketv6(fwd["for"]).lower()
+    if "port" in fwd:
+        try:
+            fwd["port"] = int(fwd["port"])
+        except ValueError:
+            fwd.pop("port", None)
+    if "host" in fwd:
+        host, port = parse_host(fwd["host"])
+        if host:
+            fwd["host"] = host
+            if port:
+                fwd["port"] = port
+        else:
+            del fwd["host"]
+    return fwd

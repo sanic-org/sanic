@@ -462,7 +462,7 @@ def test_standard_forwarded(app):
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {
         "for": "127.0.0.4",
-        "port": "1234",
+        "port": 1234,
         "secret": "mySecret"
     }
 
@@ -1778,9 +1778,9 @@ def test_request_server_name_in_host_header(app):
         return text("OK")
 
     request, response = app.test_client.get(
-        "/", headers={"Host": "my_server:5555"}
+        "/", headers={"Host": "my-server:5555"}
     )
-    assert request.server_name == "my_server"
+    assert request.server_name == "my-server"
 
 
 def test_request_server_name_forwarded(app):
@@ -1800,7 +1800,7 @@ def test_request_server_port(app):
     def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get("/", headers={"Host": "my_server"})
+    request, response = app.test_client.get("/", headers={"Host": "my-server"})
     assert request.server_port == app.test_client.port
 
 
@@ -1810,7 +1810,7 @@ def test_request_server_port_in_host_header(app):
         return text("OK")
 
     request, response = app.test_client.get(
-        "/", headers={"Host": "my_server:5555"}
+        "/", headers={"Host": "my-server:5555"}
     )
     assert request.server_port == 5555
 
@@ -1821,7 +1821,7 @@ def test_request_server_port_forwarded(app):
         return text("OK")
 
     request, response = app.test_client.get(
-        "/", headers={"Host": "my_server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Port": "4444"}
+        "/", headers={"Host": "my-server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Port": "4444"}
     )
     assert request.server_port == 4444
 
@@ -1845,23 +1845,23 @@ def test_url_for_with_forwarded_request(app):
     def view_name(request):
         return text("OK")
 
-    app.config.SERVER_NAME = "my_server"
+    app.config.SERVER_NAME = "my-server"
     request, response = app.test_client.get(
         "/", headers={"X-Forwarded-For": "127.1.2.3", "X-Forwarded-Proto": "https", "X-Forwarded-Port": "6789"}
     )
     assert app.url_for("view_name") == "/another_view"
     assert (
         app.url_for("view_name", _external=True)
-        == "http://my_server/another_view"
+        == "http://my-server/another_view"
     )
     assert (
-        request.url_for("view_name") == "https://my_server:6789/another_view"
+        request.url_for("view_name") == "https://my-server:6789/another_view"
     )
 
     request, response = app.test_client.get(
         "/", headers={"X-Forwarded-For": "127.1.2.3", "X-Forwarded-Proto": "https", "X-Forwarded-Port": "443"}
     )
-    assert request.url_for("view_name") == "https://my_server/another_view"
+    assert request.url_for("view_name") == "https://my-server/another_view"
 
 
 @pytest.mark.asyncio

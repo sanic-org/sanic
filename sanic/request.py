@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
-from sanic.forwarded import parse_forwarded, parse_xforwarded
+from sanic.forwarded import parse_forwarded, parse_xforwarded, parse_host
 from sanic.log import error_logger, logger
 
 
@@ -371,10 +371,11 @@ class Request(dict):
         :return: the server name without port number
         :rtype: str
         """
-        servername = self.app.config.get("SERVER_NAME")
-        if servername:
-            return servername.split("//")[-1].split(":", 1)[0].split("/", 1)[0]
-        return (self.forwarded.get("host") or self.host).split(":", 1)[0]
+        server_name = self.app.config.get("SERVER_NAME")
+        if server_name:
+            host = server_name.split("//", 1)[-1].split("/", 1)[0]
+            return parse_host(host)[0]
+        return self.forwarded.get("host") or parse_host(self.host)[0]
 
     @property
     def forwarded(self):
@@ -396,14 +397,13 @@ class Request(dict):
         :rtype: int
         """
         if self.forwarded:
-            forwarded_port = self.forwarded.get("port") or (
-                "80" if self.scheme in ("http", "ws") else "443"
+            return self.forwarded.get("port") or (
+                80 if self.scheme in ("http", "ws") else 443
             )
-        elif ":" in self.host:
-            forwarded_port = self.host.split(":")[1]
-        else:
-            return self.transport.get_extra_info("sockname")[1]
-        return int(forwarded_port)
+        return (
+            parse_host(self.host)[1]
+            or self.transport.get_extra_info("sockname")[1]
+        )
 
     @property
     def remote_addr(self):

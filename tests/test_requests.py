@@ -1782,6 +1782,11 @@ def test_request_server_name_in_host_header(app):
     )
     assert request.server_name == "my-server"
 
+    request, response = app.test_client.get(
+        "/", headers={"Host": "[2a00:1450:400f:80c::200e]:5555"}
+    )
+    assert request.server_name == "[2a00:1450:400f:80c::200e]"
+
 
 def test_request_server_name_forwarded(app):
     @app.get("/")
@@ -1811,6 +1816,11 @@ def test_request_server_port_in_host_header(app):
 
     request, response = app.test_client.get(
         "/", headers={"Host": "my-server:5555"}
+    )
+    assert request.server_port == 5555
+
+    request, response = app.test_client.get(
+        "/", headers={"Host": "[2a00:1450:400f:80c::200e]:5555"}
     )
     assert request.server_port == 5555
 

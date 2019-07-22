@@ -448,7 +448,7 @@ class Request(dict):
     @property
     def host(self):
         """
-        :return: the Host specified in the header, may contains port number.
+        :return: the Host specified in the header, may contain a port number.
         """
         # it appears that httptools doesn't return the host
         # so pull it from the headers

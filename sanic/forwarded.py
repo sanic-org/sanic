@@ -79,14 +79,14 @@ _ipv6_re = re.compile(_ipv6)
 _host_re = re.compile(r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?")
 
 def parse_host(host):
-    m = _host_re.match(host)
+    m = _host_re.fullmatch(host)
     if not m:
         return None, None
     host, port = m.groups()
     return host.lower(), port and int(port)
 
 def bracketv6(addr):
-    return f"[{addr}]" if _ipv6_re.match(addr) else addr
+    return f"[{addr}]" if _ipv6_re.fullmatch(addr) else addr
 
 def normalize(fwd: dict) -> dict:
     """Normalize and convert values extracted from forwarded headers.

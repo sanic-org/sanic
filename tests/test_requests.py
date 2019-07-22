@@ -413,7 +413,7 @@ def test_standard_forwarded(app):
             'for=1.1.1.1, for=injected;host="'
             ', for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret'
             ',for=broken;;secret=b0rked'
-            ', for=127.0.0.1;scheme=http;port=1234'
+            ', for=127.0.0.3;scheme=http;port=1234'
         ),
         "X-Real-IP": "127.0.0.2",
         "X-Forwarded-For": "127.0.1.1",
@@ -489,6 +489,25 @@ def test_standard_forwarded(app):
     headers = {"Forwarded": r'b0rked;secret=mySecret;proto=wss'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
+
+    # Field normalization #1
+    headers = {
+        "Forwarded": 'PROTO=WSS;BY="BAD::F00D";FOR="CAFE::1";PORT=X;HOST="a:2";SECRET=mySecret'
+    }
+    request, response = app.test_client.get("/", headers=headers)
+    assert response.json == {
+        "proto": "wss",
+        "by": "[bad::f00d]",
+        "for": "[cafe::1]",
+        "host": "a",
+        "port": 2,
+        "secret": "mySecret"
+    }
+
+    # Field normalization #2 (remove malformed host and keep separate port)
+    headers = {"Forwarded": 'host="a_:2";port=1;secret=mySecret'}
+    request, response = app.test_client.get("/", headers=headers)
+    assert response.json == {"port": 1, "secret": "mySecret"}
 
 
 def test_remote_addr_with_two_proxies(app):
@@ -1787,6 +1806,11 @@ def test_request_server_name_in_host_header(app):
     )
     assert request.server_name == "[2a00:1450:400f:80c::200e]"
 
+    request, response = app.test_client.get(
+        "/", headers={"Host": "mal_formed"}
+    )
+    assert request.server_name == None   # For now (later maybe 127.0.0.1)
+
 
 def test_request_server_name_forwarded(app):
     @app.get("/")
@@ -1824,6 +1848,11 @@ def test_request_server_port_in_host_header(app):
     )
     assert request.server_port == 5555
 
+    request, response = app.test_client.get(
+        "/", headers={"Host": "mal_formed:5555"}
+    )
+    assert request.server_port == app.test_client.port
+
 
 def test_request_server_port_forwarded(app):
     @app.get("/")
@@ -1844,6 +1873,23 @@ def test_request_form_invalid_content_type(app):
     request, response = app.test_client.post("/", json={"test": "OK"})
 
     assert request.form == {}
+
+
+def test_server_name_and_url_for(app):
+    @app.get("/foo")
+    def handler(request):
+        return text("ok")
+
+    app.config.SERVER_NAME = "my-server"
+    assert app.url_for("handler", _external=True) == "http://my-server/foo"
+    request, response = app.test_client.get("/foo")
+    assert request.url_for("handler") == f"http://my-server:{app.test_client.port}/foo"
+
+    app.config.SERVER_NAME = "https://my-server/path"
+    request, response = app.test_client.get("/foo")
+    url = f"https://my-server/path/foo"
+    assert app.url_for("handler", _external=True) == url
+    assert request.url_for("handler") == url
 
 
 def test_url_for_with_forwarded_request(app):

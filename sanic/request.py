@@ -371,11 +371,10 @@ class Request(dict):
         :return: the server name without port number
         :rtype: str
         """
-        server_name = self.app.config.get("SERVER_NAME")
-        if server_name:
-            return server_name.split("//")[-1].split(":", 1)[0].split("/", 1)[0]
+        servername = self.app.config.get("SERVER_NAME")
+        if servername:
+            return servername.split("//")[-1].split(":", 1)[0].split("/", 1)[0]
         return (self.forwarded.get("host") or self.host).split(":", 1)[0]
-
 
     @property
     def forwarded(self):

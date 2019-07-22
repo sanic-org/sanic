@@ -492,8 +492,8 @@ class Request(dict):
         :return: an absolute url to the given view
         :rtype: str
         """
-        # Use only SERVER_NAME is it is defined
-        if self.app.config.SERVER_NAME:
+        # Full URL SERVER_NAME can only be handled in app.url_for
+        if "//" in self.app.config.SERVER_NAME:
             return self.app.url_for(view_name, _external=True, **kwargs)
 
         scheme = self.scheme

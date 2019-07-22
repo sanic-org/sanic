@@ -388,7 +388,7 @@ class Request(dict):
         if forwarded_port:
             return int(forwarded_port)
         else:
-            _, port = self.transport.get_extra_info("sockname")
+            port = self.transport.get_extra_info("sockname")[1]
             return port
 
     @property

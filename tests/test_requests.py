@@ -1790,9 +1790,9 @@ def test_request_server_name_forwarded(app):
 
     request, response = app.test_client.get(
         "/",
-        headers={"Host": "my_server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Host": "your_server"},
+        headers={"Host": "my-server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Host": "your-server"},
     )
-    assert request.server_name == "your_server"
+    assert request.server_name == "your-server"
 
 
 def test_request_server_port(app):

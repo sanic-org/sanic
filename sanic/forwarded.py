@@ -76,7 +76,10 @@ def parse_xforwarded(headers, config):
 
 _ipv6 = r"(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
 _ipv6_re = re.compile(_ipv6)
-_host_re = re.compile(r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?")
+_host_re = re.compile(
+    r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?"
+)
+
 
 def parse_host(host):
     m = _host_re.fullmatch(host)
@@ -85,8 +88,10 @@ def parse_host(host):
     host, port = m.groups()
     return host.lower(), port and int(port)
 
+
 def bracketv6(addr):
     return f"[{addr}]" if _ipv6_re.fullmatch(addr) else addr
+
 
 def normalize(fwd: dict) -> dict:
     """Normalize and convert values extracted from forwarded headers.

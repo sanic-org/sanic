@@ -404,14 +404,6 @@ class Request(dict):
             parse_host(self.host)[1]
             or self.transport.get_extra_info("sockname")[1]
         )
-<<<<<<< HEAD
-=======
-        if forwarded_port:
-            return int(forwarded_port)
-        else:
-            port = self.transport.get_extra_info("sockname")[1]
-            return port
->>>>>>> sockaddrfix
 
     @property
     def remote_addr(self):

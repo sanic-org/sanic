@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
-from sanic.forwarded import parse_forwarded, parse_xforwarded, parse_host
+from sanic.forwarded import parse_forwarded, parse_host, parse_xforwarded
 from sanic.log import error_logger, logger
 
 

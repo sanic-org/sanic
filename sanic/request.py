@@ -492,6 +492,10 @@ class Request(dict):
         :return: an absolute url to the given view
         :rtype: str
         """
+        # Use only SERVER_NAME is it is defined
+        if self.app.config.SERVER_NAME:
+            return self.app.url_for(view_name, _external=True, **kwargs)
+
         scheme = self.scheme
         host = self.server_name
         port = self.server_port

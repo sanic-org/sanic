@@ -1,13 +1,15 @@
 import asyncio
 import os
+import stat
 import traceback
 
 from functools import partial
 from inspect import isawaitable
+from ipaddress import ip_address
 from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from socket import SO_REUSEADDR, SOL_SOCKET, socket
+from socket import AF_INET, AF_INET6, AF_UNIX, SO_REUSEADDR, SOL_SOCKET, socket
 from time import time
 
 from httptools import HttpRequestParser
@@ -842,6 +844,34 @@ def serve(
         loop.close()
 
 
+def bind_socket(host: str, port: int) -> socket:
+    """Create socket and bind to host.
+    :param host: IPv4, IPv6, hostname or unix:/tmp/socket may be specified
+    :param port: IP port number, 0 or None for UNIX sockets
+    :return: socket.socket object
+    """
+    if host.lower().startswith("unix:"):  # UNIX socket
+        name = host[5:]
+        sock = socket(AF_UNIX)
+        if os.path.exists(name) and os.stat(name) == stat.S_ISSOCK:
+            os.unlink(name)
+        oldmask = os.umask(0o111)
+        try:
+            sock.bind(name)
+        finally:
+            os.umask(oldmask)
+        return sock
+    try:  # IP address: family must be specified for IPv6 at least
+        ip = ip_address(host)
+        host = str(ip)
+        sock = socket(AF_INET6 if ip.version == 6 else AF_INET)
+    except ValueError:  # Hostname, may become AF_INET or AF_INET6
+        sock = socket()
+    sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    sock.bind((host, port))
+    return sock
+
+
 def serve_multiple(server_settings, workers):
     """Start multiple server processes simultaneously.  Stop on interrupt
     and terminate signals, and drain connections when complete.
@@ -856,9 +886,7 @@ def serve_multiple(server_settings, workers):
 
     # Handling when custom socket is not provided.
     if server_settings.get("sock") is None:
-        sock = socket()
-        sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        sock.bind((server_settings["host"], server_settings["port"]))
+        sock = bind_socket(server_settings["host"], server_settings["port"])
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None
@@ -886,4 +914,8 @@ def serve_multiple(server_settings, workers):
     # the above processes will block this until they're stopped
     for process in processes:
         process.terminate()
-    server_settings.get("sock").close()
+
+    sock = server_settings.get("sock")
+    if sock.family == AF_UNIX:
+        os.unlink(sock.getsockname())
+    sock.close()

@@ -7,7 +7,9 @@ if __name__ == "__main__":
         import towncrier
         import click
     except ImportError:
-        print("Please make sure you have a installed towncrier and click before using this tool")
+        print(
+            "Please make sure you have a installed towncrier and click before using this tool"
+        )
         exit(1)
 
     @click.command()
@@ -16,9 +18,12 @@ if __name__ == "__main__":
         "draft",
         default=False,
         flag_value=True,
-        help="Render the news fragments, don't write to files, " "don't check versions.",
+        help="Render the news fragments, don't write to files, "
+        "don't check versions.",
     )
-    @click.option("--dir", "directory", default=path.dirname(path.abspath(__file__)))
+    @click.option(
+        "--dir", "directory", default=path.dirname(path.abspath(__file__))
+    )
     @click.option("--name", "project_name", default=None)
     @click.option(
         "--version",
@@ -34,9 +39,21 @@ if __name__ == "__main__":
         flag_value=True,
         help="Do not ask for confirmation to remove news fragments.",
     )
-    def _main(draft, directory, project_name, project_version, project_date, answer_yes):
+    def _main(
+        draft,
+        directory,
+        project_name,
+        project_version,
+        project_date,
+        answer_yes,
+    ):
         return towncrier.__main(
-            draft, directory, project_name, project_version, project_date, answer_yes
+            draft,
+            directory,
+            project_name,
+            project_version,
+            project_date,
+            answer_yes,
         )
 
     _main()

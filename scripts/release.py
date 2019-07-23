@@ -254,13 +254,14 @@ def release(args: Namespace):
         new_version=new_version,
         config_file=args.config,
     )
-    _tag_release(
-        current_version=current_version,
-        new_version=new_version,
-        milestone=args.milestone,
-        release_name=args.release_name,
-        token=args.token,
-    )
+    if args.tag_release:
+        _tag_release(
+            current_version=current_version,
+            new_version=new_version,
+            milestone=args.milestone,
+            release_name=args.release_name,
+            token=args.token,
+        )
 
 
 if __name__ == "__main__":
@@ -291,13 +292,13 @@ if __name__ == "__main__":
         "--token",
         "-t",
         help="Git access token with necessary access to Huge Sanic Org",
-        required=True,
+        required=False,
     )
     cli.add_argument(
         "--milestone",
         "-ms",
         help="Git Release milestone information to include in relase note",
-        required=True,
+        required=False,
     )
     cli.add_argument(
         "--release-name",
@@ -313,6 +314,21 @@ if __name__ == "__main__":
         action="store_true",
         required=False,
     )
+    cli.add_argument(
+        "--tag-release",
+        help="Tag a new release for Sanic",
+        default=False,
+        action="store_true",
+        required=False,
+    )
     args = cli.parse_args()
+    if args.tag_release:
+        for key, value in {
+            "--token/-t": args.token,
+            "--milestone/-m": args.milestone,
+        }.items():
+            if not value:
+                print(f"{key} is mandatory while using --tag-release")
+                exit(1)
     with Directory():
         release(args)

@@ -1,5 +1,6 @@
 import asyncio
 import os
+import socket
 import stat
 import traceback
 
@@ -9,7 +10,6 @@ from ipaddress import ip_address
 from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from socket import AF_INET, AF_INET6, AF_UNIX, SO_REUSEADDR, SOL_SOCKET, socket
 from time import time
 
 from httptools import HttpRequestParser
@@ -852,7 +852,7 @@ def bind_socket(host: str, port: int) -> socket:
     """
     if host.lower().startswith("unix:"):  # UNIX socket
         name = host[5:]
-        sock = socket(AF_UNIX)
+        sock = socket.socket(socket.AF_UNIX)
         if os.path.exists(name) and os.stat(name) == stat.S_ISSOCK:
             os.unlink(name)
         oldmask = os.umask(0o111)
@@ -864,10 +864,12 @@ def bind_socket(host: str, port: int) -> socket:
     try:  # IP address: family must be specified for IPv6 at least
         ip = ip_address(host)
         host = str(ip)
-        sock = socket(AF_INET6 if ip.version == 6 else AF_INET)
+        sock = socket.socket(
+            socket.AF_INET6 if ip.version == 6 else socket.AF_INET
+        )
     except ValueError:  # Hostname, may become AF_INET or AF_INET6
-        sock = socket()
-    sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        sock = socket.socket()
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((host, port))
     return sock
 
@@ -916,6 +918,7 @@ def serve_multiple(server_settings, workers):
         process.terminate()
 
     sock = server_settings.get("sock")
-    if sock.family == AF_UNIX:
+    # Test for AF_UNIX in a Windows-compatible manner
+    if sock.family not in (socket.AF_INET, socket.AF_INET6):
         os.unlink(sock.getsockname())
     sock.close()

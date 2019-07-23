@@ -760,6 +760,9 @@ def serve(
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
     )
+    # create_server cannot bind UNIX sockets, so do it here
+    if host and host.startswith("unix:"):
+        sock, host, port = bind_socket(host, port), None, None
     server_coroutine = loop.create_server(
         server,
         host,

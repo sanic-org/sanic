@@ -314,5 +314,5 @@ if __name__ == "__main__":
         required=False,
     )
     args = cli.parse_args()
-    with Directory() as _:
+    with Directory():
         release(args)

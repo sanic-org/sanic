@@ -10,6 +10,7 @@ from subprocess import Popen, PIPE
 
 from jinja2 import Environment, BaseLoader
 from requests import patch
+import towncrier
 
 GIT_COMMANDS = {
     "get_tag": ["git describe --tags --abbrev=0"],
@@ -130,7 +131,7 @@ def _get_current_tag(git_command_name="get_tag"):
 
 
 def _update_release_version_for_sanic(
-    current_version, new_version, config_file
+    current_version, new_version, config_file, generate_changelog
 ):
     config_parser = RawConfigParser()
     with open(config_file) as cfg:
@@ -155,6 +156,16 @@ def _update_release_version_for_sanic(
 
     with open(config_file, "w") as config:
         config_parser.write(config)
+
+    if generate_changelog:
+        towncrier.__main(
+            draft=False,
+            directory=path.dirname(path.abspath(__file__)),
+            project_name=None,
+            project_version=new_version,
+            project_date=None,
+            answer_yes=True,
+        )
 
     command = GIT_COMMANDS.get("commit_version_change")
     command[0] = command[0].format(
@@ -253,6 +264,7 @@ def release(args: Namespace):
         current_version=current_version,
         new_version=new_version,
         config_file=args.config,
+        generate_changelog=args.generate_changelog,
     )
     if args.tag_release:
         _tag_release(
@@ -317,6 +329,13 @@ if __name__ == "__main__":
     cli.add_argument(
         "--tag-release",
         help="Tag a new release for Sanic",
+        default=False,
+        action="store_true",
+        required=False,
+    )
+    cli.add_argument(
+        "--generate-changelog",
+        help="Generate changelog for Sanic as part of release",
         default=False,
         action="store_true",
         required=False,

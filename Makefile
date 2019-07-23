@@ -86,9 +86,10 @@ docs-test: docs-clean
 changelog:
 	python scripts/changelog.py
 
-release: changelog
+release:
 ifdef version
-	python scripts/release.py --release-version ${version}
+	python scripts/release.py --release-version ${version} --generate-changelog
 else
-	python scripts/release.py
+	python scripts/release.py --generate-changelog
 endif
+

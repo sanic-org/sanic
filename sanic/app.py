@@ -7,7 +7,7 @@ import warnings
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
-from inspect import getmodulename, isawaitable, signature, stack
+from inspect import getmodulename, isawaitable, isasyncgen, signature, stack
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -940,6 +940,15 @@ class Sanic:
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response
+                elif isasyncgen(response):
+                    agen = response
+                    response = await agen.asend(None)
+                    async def callback(res):
+                        try:
+                            await agen.asend(res)
+                        except StopAsyncIteration:
+                            pass
+                    response = StreamingHTTPResponse(callback, headers=response.headers)
         except CancelledError:
             # If response handler times out, the server handles the error
             # and cancels the handle_request job.

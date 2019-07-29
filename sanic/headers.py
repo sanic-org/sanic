@@ -1,7 +1,7 @@
 import re
 
 token, quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"((?:[^"]|\\")*)"'
-parameter = re.compile(f';\s*{token}=(?:{token}|{quoted})', re.ASCII)
+parameter = re.compile(fr';\s*{token}=(?:{token}|{quoted})', re.ASCII)
 
 
 def parse_options_header(value: str):

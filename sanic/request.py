@@ -11,8 +11,9 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
-from sanic.log import error_logger, logger
 from sanic.headers import parse_options_header
+from sanic.log import error_logger, logger
+
 
 try:
     from ujson import loads as json_loads

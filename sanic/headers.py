@@ -1,5 +1,6 @@
 import re
 
+
 token, quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"((?:[^"]|\\")*)"'
 parameter = re.compile(fr";\s*{token}=(?:{token}|{quoted})", re.ASCII)
 

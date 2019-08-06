@@ -441,14 +441,16 @@ class Sanic:
     def websocket(
         self, uri, host=None, strict_slashes=None, subprotocols=None, name=None
     ):
-        """Decorate a function to be registered as a websocket route
+        """
+        Decorate a function to be registered as a websocket route
+
         :param uri: path of the URL
         :param host: Host IP or FQDN details
         :param strict_slashes: If the API endpoint needs to terminate
-                with a "/" or not
+                               with a "/" or not
         :param subprotocols: optional list of str with supported subprotocols
         :param name: A unique name assigned to the URL so that it can
-                be used with :func:`url_for`
+                     be used with :func:`url_for`
         :return: decorated function
         """
         self.enable_websocket()
@@ -1049,8 +1051,8 @@ class Sanic:
         :param debug: Enables debug output (slows server)
         :type debug: bool
         :param ssl: SSLContext, or location of certificate and key
-            for SSL encryption of worker(s)
-        :type ssl:SSLContext or dict
+                    for SSL encryption of worker(s)
+        :type ssl: SSLContext or dict
         :param sock: Socket for the server to accept connections from
         :type sock: socket
         :param workers: Number of processes received before it is respected
@@ -1058,10 +1060,10 @@ class Sanic:
         :param protocol: Subclass of asyncio Protocol class
         :type protocol: type[Protocol]
         :param backlog: a number of unaccepted connections that the system
-            will allow before refusing new connections
+                        will allow before refusing new connections
         :type backlog: int
         :param stop_event: event to be triggered
-            before stopping the app - deprecated
+                           before stopping the app - deprecated
         :type stop_event: None
         :param register_sys_signals: Register SIG* events
         :type register_sys_signals: bool
@@ -1178,17 +1180,17 @@ class Sanic:
         :param debug: Enables debug output (slows server)
         :type debug: bool
         :param ssl: SSLContext, or location of certificate and key
-            for SSL encryption of worker(s)
-        :type ssl:SSLContext or dict
+                    for SSL encryption of worker(s)
+        :type ssl: SSLContext or dict
         :param sock: Socket for the server to accept connections from
         :type sock: socket
         :param protocol: Subclass of asyncio Protocol class
         :type protocol: type[Protocol]
         :param backlog: a number of unaccepted connections that the system
-            will allow before refusing new connections
+                        will allow before refusing new connections
         :type backlog: int
         :param stop_event: event to be triggered
-            before stopping the app - deprecated
+                           before stopping the app - deprecated
         :type stop_event: None
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool

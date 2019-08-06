@@ -5,11 +5,12 @@ from collections import OrderedDict
 from configparser import RawConfigParser
 from datetime import datetime
 from json import dumps
-from os import path
+from os import path, chdir
 from subprocess import Popen, PIPE
 
 from jinja2 import Environment, BaseLoader
 from requests import patch
+import towncrier
 
 GIT_COMMANDS = {
     "get_tag": ["git describe --tags --abbrev=0"],
@@ -54,6 +55,18 @@ RELEASE_NOTE_UPDATE_URL = (
     "https://api.github.com/repos/huge-success/sanic/releases/tags/"
     "{new_version}?access_token={token}"
 )
+
+
+class Directory:
+    def __init__(self):
+        self._old_path = path.dirname(path.abspath(__file__))
+        self._new_path = path.dirname(self._old_path)
+
+    def __enter__(self):
+        chdir(self._new_path)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        chdir(self._old_path)
 
 
 def _run_shell_command(command: list):
@@ -118,14 +131,14 @@ def _get_current_tag(git_command_name="get_tag"):
 
 
 def _update_release_version_for_sanic(
-    current_version, new_version, config_file
+    current_version, new_version, config_file, generate_changelog
 ):
     config_parser = RawConfigParser()
     with open(config_file) as cfg:
         config_parser.read_file(cfg)
     config_parser.set("version", "current_version", new_version)
 
-    version_file = config_parser.get("version", "file")
+    version_files = config_parser.get("version", "files")
     current_version_line = config_parser.get(
         "version", "current_version_pattern"
     ).format(current_version=current_version)
@@ -133,15 +146,26 @@ def _update_release_version_for_sanic(
         "version", "new_version_pattern"
     ).format(new_version=new_version)
 
-    with open(version_file) as init_file:
-        data = init_file.read()
+    for version_file in version_files.split(","):
+        with open(version_file) as init_file:
+            data = init_file.read()
 
-    new_data = data.replace(current_version_line, new_version_line)
-    with open(version_file, "w") as init_file:
-        init_file.write(new_data)
+        new_data = data.replace(current_version_line, new_version_line)
+        with open(version_file, "w") as init_file:
+            init_file.write(new_data)
 
     with open(config_file, "w") as config:
         config_parser.write(config)
+
+    if generate_changelog:
+        towncrier.__main(
+            draft=False,
+            directory=path.dirname(path.abspath(__file__)),
+            project_name=None,
+            project_version=new_version,
+            project_date=None,
+            answer_yes=True,
+        )
 
     command = GIT_COMMANDS.get("commit_version_change")
     command[0] = command[0].format(
@@ -240,14 +264,16 @@ def release(args: Namespace):
         current_version=current_version,
         new_version=new_version,
         config_file=args.config,
+        generate_changelog=args.generate_changelog,
     )
-    _tag_release(
-        current_version=current_version,
-        new_version=new_version,
-        milestone=args.milestone,
-        release_name=args.release_name,
-        token=args.token,
-    )
+    if args.tag_release:
+        _tag_release(
+            current_version=current_version,
+            new_version=new_version,
+            milestone=args.milestone,
+            release_name=args.release_name,
+            token=args.token,
+        )
 
 
 if __name__ == "__main__":
@@ -278,13 +304,13 @@ if __name__ == "__main__":
         "--token",
         "-t",
         help="Git access token with necessary access to Huge Sanic Org",
-        required=True,
+        required=False,
     )
     cli.add_argument(
         "--milestone",
         "-ms",
         help="Git Release milestone information to include in relase note",
-        required=True,
+        required=False,
     )
     cli.add_argument(
         "--release-name",
@@ -300,5 +326,28 @@ if __name__ == "__main__":
         action="store_true",
         required=False,
     )
+    cli.add_argument(
+        "--tag-release",
+        help="Tag a new release for Sanic",
+        default=False,
+        action="store_true",
+        required=False,
+    )
+    cli.add_argument(
+        "--generate-changelog",
+        help="Generate changelog for Sanic as part of release",
+        default=False,
+        action="store_true",
+        required=False,
+    )
     args = cli.parse_args()
-    release(args)
+    if args.tag_release:
+        for key, value in {
+            "--token/-t": args.token,
+            "--milestone/-m": args.milestone,
+        }.items():
+            if not value:
+                print(f"{key} is mandatory while using --tag-release")
+                exit(1)
+    with Directory():
+        release(args)

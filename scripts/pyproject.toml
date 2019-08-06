@@ -1,0 +1,33 @@
+[tool.towncrier]
+package = "sanic"
+package_dir = "."
+filename = "../CHANGELOG.rst"
+directory = "./changelogs"
+underlines = ["=", "*", "~"]
+issue_format = "`#{issue} <https://github.com/huge-success/sanic/issues/{issue}>`__"
+title_format = "Version {version}"
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Improved Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Deprecations and Removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous internal changes"
+showcontent = true

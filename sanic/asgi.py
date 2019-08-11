@@ -328,6 +328,11 @@ class ASGIApp:
                 (b"content-length", str(len(response.body)).encode("latin-1"))
             ]
 
+        if "content-type" not in response.headers:
+            headers += [
+                (b"content-type", str(response.content_type).encode("latin-1"))
+            ]
+
         if response.cookies:
             cookies.update(
                 {

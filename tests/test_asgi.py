@@ -9,7 +9,7 @@ from sanic import Sanic
 from sanic.asgi import MockTransport
 from sanic.exceptions import InvalidUsage
 from sanic.request import Request
-from sanic.response import text
+from sanic.response import json, text
 from sanic.websocket import WebSocketConnection
 
 
@@ -256,3 +256,27 @@ async def test_cookie_customization(app):
         assert cookie_map.get(k).get("value") == v.value
         if cookie_map.get(k).get("HttpOnly"):
             assert "HttpOnly" in v._rest.keys()
+
+
+@pytest.mark.asyncio
+async def test_json_content_type(app):
+    @app.get("/json")
+    def send_json(request):
+        return json({"foo": "bar"})
+
+    @app.get("/text")
+    def send_text(request):
+        return text("foobar")
+
+    @app.get("/custom")
+    def send_custom(request):
+        return text("foobar", content_type="somethingelse")
+
+    _, response = await app.asgi_client.get("/json")
+    assert response.headers.get("content-type") == "application/json"
+
+    _, response = await app.asgi_client.get("/text")
+    assert response.headers.get("content-type") == "text/plain; charset=utf-8"
+
+    _, response = await app.asgi_client.get("/custom")
+    assert response.headers.get("content-type") == "somethingelse"

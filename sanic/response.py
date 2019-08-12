@@ -4,8 +4,8 @@ from os import path
 from urllib.parse import quote_plus
 
 from aiofiles import open as open_async
-from multidict import CIMultiDict
 
+from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 
@@ -74,7 +74,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
-        self.headers = CIMultiDict(headers or {})
+        self.headers = Header(headers or {})
         self.chunked = chunked
         self._cookies = None
 
@@ -164,7 +164,7 @@ class HTTPResponse(BaseHTTPResponse):
             self.body = body_bytes
 
         self.status = status
-        self.headers = CIMultiDict(headers or {})
+        self.headers = Header(headers or {})
         self._cookies = None
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):

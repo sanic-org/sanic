@@ -1,3 +1,26 @@
+Version 19.6.3
+==============
+
+Features
+********
+
+- Enable Towncrier Support
+
+  As part of this feature, `towncrier` is being introduced as a mechanism to partially  automate the process
+  of generating and managing change logs as part of each of pull requests. (`#1631 <https://github.com/huge-success/sanic/issues/1631>`__)
+
+
+Improved Documentation
+**********************
+
+- Documentation infrastructure changes
+
+  - Enable having a single common `CHANGELOG` file for both GitHub page and documentation
+  - Fix Sphinix deprecation warnings
+  - Fix documentation warnings due to invalid `rst` indentation
+  - Enable common contribution guidelines file across GitHub and documentation via `CONTRIBUTING.rst` (`#1631 <https://github.com/huge-success/sanic/issues/1631>`__)
+
+
 Version 19.6.2
 ==============
 

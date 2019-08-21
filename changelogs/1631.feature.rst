@@ -1,4 +1,0 @@
-Enable Towncrier Support
-
-As part of this feature, `towncrier` is being introduced as a mechanism to partially  automate the process
-of generating and managing change logs as part of each of pull requests.

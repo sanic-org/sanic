@@ -1,11 +1,12 @@
 import re
+import typing
 
 
 token, quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"((?:[^"]|\\")*)"'
 parameter = re.compile(fr";\s*{token}=(?:{token}|{quoted})", re.ASCII)
 
 
-def parse_options_header(value: str):
+def parse_options_header(value: str) -> typing.Tuple[str, dict]:
     """Parse HTTP header values of Content-Type format."""
     pos = value.find(";")
     if pos == -1:

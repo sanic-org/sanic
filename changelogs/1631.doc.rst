@@ -1,6 +1,0 @@
-Documentation infrastructure changes
-
-- Enable having a single common `CHANGELOG` file for both GitHub page and documentation
-- Fix Sphinix deprecation warnings
-- Fix documentation warnings due to invalid `rst` indentation
-- Enable common contribution guidelines file across GitHub and documentation via `CONTRIBUTING.rst`

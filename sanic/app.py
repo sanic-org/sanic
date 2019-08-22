@@ -22,7 +22,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
-from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.response import HTTPResponse, StreamingHTTPResponse, NewStreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import HttpProtocol, Signal, serve, serve_multiple
 from sanic.static import register as static_register
@@ -377,6 +377,17 @@ class Sanic:
             version=version,
             name=name,
         )
+
+    def stream(self, *args, **kwargs):
+        route_dec = self.route(*args, **kwargs)
+
+        def dec(func):
+            def wrapper(request):
+                async def inner_wrapper(response):
+                    return await func(request, response)
+                return NewStreamingHTTPResponse(inner_wrapper)
+            return route_dec(wrapper)
+        return dec
 
     def add_route(
         self,
@@ -998,7 +1009,7 @@ class Sanic:
 
         # pass the response to the correct callback
         if write_callback is None or isinstance(
-            response, StreamingHTTPResponse
+            response, (StreamingHTTPResponse, NewStreamingHTTPResponse)
         ):
             if stream_callback:
                 await stream_callback(response)

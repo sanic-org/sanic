@@ -8,10 +8,11 @@ token, quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
 parameter = re.compile(fr";\s*{token}=(?:{token}|{quoted})", re.ASCII)
 firefox_quote_escape = re.compile(r'\\"(?!; |\s*$)')
 
-# Note: this intentionally leaves out the quoted-pair escape sequence specified
-# in RFCs because browsers escape quotes as %22 and do not escape backslashes.
-# In particular, a file upload named foo"bar\ is sent as filename="foo%22bar\"
-# by all browsers, and would parse incorrectly if quoted-pair were handled.
+# RFC's quoted-pair escapes are mostly ignored by browsers. Chrome, Firefox and
+# curl all have different escaping, that we try to handle as well as possible,
+# even though no client espaces in a way that would allow perfect handling.
+
+# For more information, consult ../tests/test_requests.py
 
 
 def parse_content_header(value: str) -> typing.Tuple[str, Options]:

@@ -558,14 +558,13 @@ def parse_multipart_form(body, boundary):
             if form_header_field == "content-disposition":
                 field_name = form_parameters.get("name")
                 file_name = form_parameters.get("filename")
-                encoding = content_charset
+
                 # non-ASCII filenames in RFC2231, "filename*" format
                 if file_name is None and form_parameters.get("filename*"):
-                    encoding, _, file_name = email.utils.decode_rfc2231(
+                    encoding, _, value = email.utils.decode_rfc2231(
                         form_parameters["filename*"]
                     )
-                if file_name is not None:
-                    file_name = unquote(file_name, encoding=encoding)
+                    file_name = unquote(value, encoding=encoding)
             elif form_header_field == "content-type":
                 content_type = form_header_value
                 content_charset = form_parameters.get("charset", "utf-8")

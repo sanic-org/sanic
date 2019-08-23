@@ -27,11 +27,29 @@ from sanic import headers
             ("attachment", {"filename": "strange;name", "size": "123"})
         ),
         (
-            # Note: browsers don't use quoted-pair escapes but instead %22 for
-            # double quote (which gets unquoted later on in sanic.request),
-            # and backslashes are *NOT* escaped.
-            'form-data; name="files"; filename="fo%22o;bar\\"',
-            ("form-data", {"name": "files", "filename": 'fo%22o;bar\\'})
+            'form-data; name="files"; filename="fo\\"o;bar\\"',
+            ('form-data', {'name': 'files', 'filename': 'fo"o;bar\\'})
+            # cgi.parse_header:
+            # ('form-data', {'name': 'files', 'filename': 'fo%22o;bar\\'})
+            # werkzeug.parse_options_header:
+            # ('form-data', {'name': 'files', 'filename': '"fo%22o', 'bar\\"': None})
+        ),
+        # <input type=file name="foo&quot;;bar\"> with Unicode filename!
+        (
+            # Chrome:
+            # Content-Disposition: form-data; name="foo%22;bar\"; filename="😀"
+            'form-data; name="foo%22;bar\\"; filename="😀"',
+            ('form-data', {'name': 'foo";bar\\', 'filename': '😀'})
+            # cgi: ('form-data', {'name': 'foo%22;bar"; filename="😀'})
+            # werkzeug: ('form-data', {'name': 'foo%22;bar"; filename='})
+        ),
+        (
+            # Firefox:
+            # Content-Disposition: form-data; name="foo\";bar\"; filename="😀"
+            'form-data; name="foo\\";bar\\"; filename="😀"',
+            ('form-data', {'name': 'foo";bar\\', 'filename': '😀'})
+            # cgi: ('form-data', {'name': 'foo";bar"; filename="😀'})
+            # werkzeug: ('form-data', {'name': 'foo";bar"; filename='})
         ),
     ]
 )

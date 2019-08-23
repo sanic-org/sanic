@@ -1,6 +1,7 @@
 import re
 import typing
 
+
 Options = typing.Dict[str, str]  # key=value fields in various headers
 
 token, quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'

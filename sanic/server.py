@@ -921,7 +921,8 @@ def serve_multiple(server_settings, workers):
         process.terminate()
 
     sock = server_settings.get("sock")
-    # Test for AF_UNIX in a Windows-compatible manner
-    if sock.family not in (socket.AF_INET, socket.AF_INET6):
-        os.unlink(sock.getsockname())
+    sockname = sock.getsockname()
     sock.close()
+    # Remove UNIX socket
+    if isinstance(sockname, str):
+        os.unlink(sockname)

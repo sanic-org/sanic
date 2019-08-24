@@ -856,7 +856,7 @@ def bind_socket(host: str, port: int) -> socket:
     if host.lower().startswith("unix:"):  # UNIX socket
         name = host[5:]
         sock = socket.socket(socket.AF_UNIX)
-        if os.path.exists(name) and os.stat(name) == stat.S_ISSOCK:
+        if os.path.exists(name) and stat.S_ISSOCK(os.stat(name).st_mode):
             os.unlink(name)
         oldmask = os.umask(0o111)
         try:

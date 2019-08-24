@@ -762,7 +762,10 @@ def serve(
     )
     # create_server cannot bind UNIX sockets, so do it here
     if host and host.startswith("unix:"):
+        unix_socket_name = host[5:]
         sock, host, port = bind_socket(host, port), None, None
+    else:
+        unix_socket_name = None
     server_coroutine = loop.create_server(
         server,
         host,
@@ -845,6 +848,11 @@ def serve(
         trigger_events(after_stop, loop)
 
         loop.close()
+        try:
+            if unix_socket_name:
+                os.unlink(unix_socket_name)
+        except FileNotFoundError:
+            pass
 
 
 def bind_socket(host: str, port: int) -> socket:

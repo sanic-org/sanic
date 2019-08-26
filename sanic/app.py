@@ -1008,7 +1008,7 @@ class Sanic:
                 # - Add exception handling
                 pass
         else:
-            write_callback(response)
+            await write_callback(response)
 
     # -------------------------------------------------------------------- #
     # Testing

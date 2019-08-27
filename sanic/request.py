@@ -4,7 +4,6 @@ import json
 import sys
 import warnings
 
-from cgi import parse_header
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
@@ -12,6 +11,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
+from sanic.headers import parse_content_header
 from sanic.log import error_logger, logger
 
 
@@ -177,7 +177,7 @@ class Request(dict):
             content_type = self.headers.get(
                 "Content-Type", DEFAULT_HTTP_CONTENT_TYPE
             )
-            content_type, parameters = parse_header(content_type)
+            content_type, parameters = parse_content_header(content_type)
             try:
                 if content_type == "application/x-www-form-urlencoded":
                     self.parsed_form = RequestParameters(
@@ -561,7 +561,7 @@ def parse_multipart_form(body, boundary):
 
             colon_index = form_line.index(":")
             form_header_field = form_line[0:colon_index].lower()
-            form_header_value, form_parameters = parse_header(
+            form_header_value, form_parameters = parse_content_header(
                 form_line[colon_index + 2 :]
             )
 

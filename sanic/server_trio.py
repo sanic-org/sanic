@@ -108,9 +108,6 @@ async def trigger_events(events):
             await result
 
 
-def serve_multiple(server_settings, workers):
-    return serve(**server_settings, workers=workers)
-
 def serve(
     host,
     port,

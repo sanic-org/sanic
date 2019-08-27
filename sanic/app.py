@@ -24,7 +24,7 @@ from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import HttpProtocol, Signal, serve, serve_multiple
+from sanic.server import HttpProtocol, Signal, serve
 from sanic.static import register as static_register
 from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
@@ -1120,21 +1120,18 @@ class Sanic:
 
         try:
             self.is_running = True
-            if workers == 1:
-                if auto_reload and os.name != "posix":
-                    # This condition must be removed after implementing
-                    # auto reloader for other operating systems.
-                    raise NotImplementedError
+            if auto_reload and os.name != "posix":
+                # This condition must be removed after implementing
+                # auto reloader for other operating systems.
+                raise NotImplementedError
 
-                if (
-                    auto_reload
-                    and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-                ):
-                    reloader_helpers.watchdog(2)
-                else:
-                    serve(**server_settings)
+            if (
+                auto_reload
+                and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+            ):
+                reloader_helpers.watchdog(2)
             else:
-                serve_multiple(server_settings, workers)
+                serve(**server_settings, workers=workers)
         except BaseException:
             error_logger.exception(
                 "Experienced exception while trying to serve"

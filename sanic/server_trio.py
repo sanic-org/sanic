@@ -34,19 +34,23 @@ from sanic.response import HTTPResponse
 class Signal:
     stopped = False
 
+idle_connections = set()
+
 class HttpProtocol:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
         self.request_class = self.request_class or Request
 
     async def run(self, stream):
-        async with stream, trio.open_nursery() as self.nursery:
-            try:
+        try:
+            async with stream, trio.open_nursery() as self.nursery:
                 while True:
                     self.nursery.cancel_scope.deadline = trio.current_time() + self.request_timeout
                     # Read headers
                     buffer = bytearray()
+                    idle_connections.add(self.nursery.cancel_scope)
                     async for data in stream:
+                        idle_connections.remove(self.nursery.cancel_scope)
                         prevpos = max(0, len(buffer) - 3)
                         buffer += data
                         pos = buffer.find(b"\r\n\r\n", prevpos)
@@ -82,10 +86,12 @@ class HttpProtocol:
                             request.version, keep_alive, self.keep_alive_timeout
                         ))
                     await self.request_handler(request, write_response, None)
-            except trio.BrokenResourceError:
-                pass  # Connection reset by peer
-            except Exception:
-                logger.exception("Error in server")
+        except trio.BrokenResourceError:
+            pass  # Connection reset by peer
+        except Exception:
+            logger.exception("Error in server")
+        finally:
+            idle_connections.remove(self.nursery.cancel_scope)
 
     async def error_response(self, message):
         pass
@@ -277,7 +283,9 @@ async def runaccept(listeners, master_pid, before_start, after_start, before_sto
                     if s != SIGHUP:
                         os.kill(master_pid, SIGTERM)
                     acceptor.cancel_scope.cancel()
-            main_nursery.cancel_scope.deadline = trio.current_time() + graceful_shutdown_timeout
+            now = trio.current_time()
+            for c in idle_connections: c.deadline = now + 0.1
+            main_nursery.cancel_scope.deadline = now + graceful_shutdown_timeout
             await trigger_events(before_stop)
         await trigger_events(after_stop)
         logger.info(f"Gracefully finished worker [{pid}]")

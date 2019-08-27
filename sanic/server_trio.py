@@ -284,7 +284,7 @@ async def runaccept(listeners, master_pid, before_start, after_start, before_sto
                         os.kill(master_pid, SIGTERM)
                     acceptor.cancel_scope.cancel()
             now = trio.current_time()
-            for c in idle_connections: c.deadline = now + 0.1
+            for c in idle_connections: c.cancel()
             main_nursery.cancel_scope.deadline = now + graceful_shutdown_timeout
             await trigger_events(before_stop)
         await trigger_events(after_stop)

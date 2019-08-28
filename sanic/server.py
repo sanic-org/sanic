@@ -652,6 +652,7 @@ def serve(
     keep_alive_timeout=5,
     ssl=None,
     sock=None,
+    unix=None,
     request_max_size=None,
     request_buffer_queue_size=100,
     reuse_port=False,
@@ -698,6 +699,7 @@ def serve(
     :param keep_alive_timeout: time in seconds
     :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
+    :param unix: Unix socket to listen on instead of TCP port
     :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
@@ -762,8 +764,8 @@ def serve(
         asyncio_server_kwargs if asyncio_server_kwargs else {}
     )
     # UNIX sockets are always bound by us (to preserve semantics between modes)
-    if host and host.startswith("unix:"):
-        sock = bind_socket(host, port)
+    if unix:
+        sock = bind_unix_socket(unix, backlog=backlog)
     server_coroutine = loop.create_server(
         server,
         None if sock else host,
@@ -846,38 +848,16 @@ def serve(
         trigger_events(after_stop, loop)
 
         loop.close()
-        remove_dead_socket(host)
+        remove_unix_socket(unix)
 
 
-def bind_socket(host: str, port: int, backlog=100) -> socket:
-    """Create socket and bind to host.
-    :param host: IPv4, IPv6, hostname or unix:/tmp/socket may be specified
-    :param port: IP port number, 0 or None for UNIX sockets
+def bind_socket(host: str, port: int, *, backlog=100) -> socket:
+    """Create TCP server socket.
+    :param host: IPv4, IPv6 or hostname may be specified
+    :param port: TCP port number
+    :param backlog: Maximum number of connections to queue
     :return: socket.socket object
     """
-    if host.lower().startswith("unix:"):  # UNIX socket
-        path = host[5:]
-        if os.path.exists(path) and not stat.S_ISSOCK(os.stat(path).st_mode):
-            raise FileExistsError(f"Existing file is not a socket: {path}")
-        sock = socket.socket(socket.AF_UNIX)
-        try:
-            # Atomic zero-downtime socket replace
-            tmp_path = f"{path}.{uuid4().hex[:8]}"
-            old_mask = os.umask(0o111)
-            try:
-                sock.bind(tmp_path)
-            finally:
-                os.umask(old_mask)
-            try:
-                sock.listen(backlog)
-                os.rename(tmp_path, path)
-            except:
-                os.unlink(tmp_path)
-                raise
-        except:
-            sock.close()
-            raise
-        return sock
     try:  # IP address: family must be specified for IPv6 at least
         ip = ip_address(host)
         host = str(ip)
@@ -888,15 +868,42 @@ def bind_socket(host: str, port: int, backlog=100) -> socket:
         sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((host, port))
+    sock.listen(backlog)
     return sock
 
 
-def remove_dead_socket(host: str) -> None:
-    """Remove dead unix socket during server exit, if host refers to one."""
-    if not host or not host.lower().startswith("unix:"):
-        return
-    path = host[5:]
-    if os.path.exists(path) and stat.S_ISSOCK(os.stat(path).st_mode):
+def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket:
+    """Create unix socket.
+    :param path: filesystem path
+    :param backlog: Maximum number of connections to queue
+    :return: socket.socket object
+    """
+    if os.path.exists(path) and not stat.S_ISSOCK(os.stat(path).st_mode):
+        raise FileExistsError(f"Existing file is not a socket: {path}")
+    sock = socket.socket(socket.AF_UNIX)
+    try:
+        # Atomic zero-downtime socket replace
+        tmp_path = f"{path}.{uuid4().hex[:8]}"
+        old_mask = os.umask(~mode & 0o777)
+        try:
+            sock.bind(tmp_path)
+        finally:
+            os.umask(old_mask)
+        try:
+            sock.listen(backlog)
+            os.rename(tmp_path, path)
+        except:
+            os.unlink(tmp_path)
+            raise
+    except:
+        sock.close()
+        raise
+    return sock
+
+
+def remove_unix_socket(path: str) -> None:
+    """Remove dead unix socket during server exit."""
+    if path and os.path.exists(path) and stat.S_ISSOCK(os.stat(path).st_mode):
         # Is it actually dead (doesn't belong to a new server instance)?
         testsock = socket.socket(socket.AF_UNIX)
         try:
@@ -918,11 +925,17 @@ def serve_multiple(server_settings, workers):
     """
     server_settings["reuse_port"] = True
     server_settings["run_multiple"] = True
-    host = server_settings["host"]
 
-    # Handling when custom socket is not provided.
-    if server_settings.get("sock") is None:
-        sock = bind_socket(host, server_settings["port"])
+    # Create a listening socket or use the one in settings
+    sock = server_settings.get("sock")
+    unix = server_settings["unix"]
+    backlog = server_settings["backlog"]
+    if unix:
+        sock = bind_unix_socket(unix, backlog=backlog)
+    if sock is None:
+        sock = bind_socket(
+            server_settings["host"], server_settings["port"], backlog=backlog
+        )
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None
@@ -951,5 +964,5 @@ def serve_multiple(server_settings, workers):
     for process in processes:
         process.terminate()
 
-    server_settings.get("sock").close()
-    remove_dead_socket(host)
+    sock.close()
+    remove_unix_socket(unix)

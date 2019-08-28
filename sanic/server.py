@@ -892,10 +892,10 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket:
         try:
             sock.listen(backlog)
             os.rename(tmp_path, path)
-        except:
+        except BaseException:
             os.unlink(tmp_path)
             raise
-    except:
+    except BaseException:
         sock.close()
         raise
     return sock

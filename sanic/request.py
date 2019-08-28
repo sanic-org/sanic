@@ -4,7 +4,6 @@ import json
 import sys
 import warnings
 
-from cgi import parse_header
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
@@ -12,7 +11,9 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
-from sanic.forwarded import parse_forwarded, parse_host, parse_xforwarded
+from sanic.headers import (
+    parse_content_header, parse_forwarded, parse_host, parse_xforwarded
+)
 from sanic.log import error_logger, logger
 
 
@@ -180,7 +181,7 @@ class Request(dict):
             content_type = self.headers.get(
                 "Content-Type", DEFAULT_HTTP_CONTENT_TYPE
             )
-            content_type, parameters = parse_header(content_type)
+            content_type, parameters = parse_content_header(content_type)
             try:
                 if content_type == "application/x-www-form-urlencoded":
                     self.parsed_form = RequestParameters(
@@ -215,20 +216,25 @@ class Request(dict):
         Method to parse `query_string` using `urllib.parse.parse_qs`.
         This methods is used by `args` property.
         Can be used directly if you need to change default parameters.
-        :param keep_blank_values: flag indicating whether blank values in
+
+        :param keep_blank_values:
+            flag indicating whether blank values in
             percent-encoded queries should be treated as blank strings.
             A true value indicates that blanks should be retained as blank
             strings.  The default false value indicates that blank values
             are to be ignored and treated as if they were  not included.
         :type keep_blank_values: bool
-        :param strict_parsing: flag indicating what to do with parsing errors.
+        :param strict_parsing:
+            flag indicating what to do with parsing errors.
             If false (the default), errors are silently ignored. If true,
             errors raise a ValueError exception.
         :type strict_parsing: bool
-        :param encoding: specify how to decode percent-encoded sequences
+        :param encoding:
+            specify how to decode percent-encoded sequences
             into Unicode characters, as accepted by the bytes.decode() method.
         :type encoding: str
-        :param errors: specify how to decode percent-encoded sequences
+        :param errors:
+            specify how to decode percent-encoded sequences
             into Unicode characters, as accepted by the bytes.decode() method.
         :type errors: str
         :return: RequestParameters
@@ -278,20 +284,25 @@ class Request(dict):
         Method to parse `query_string` using `urllib.parse.parse_qsl`.
         This methods is used by `query_args` property.
         Can be used directly if you need to change default parameters.
-        :param keep_blank_values: flag indicating whether blank values in
+
+        :param keep_blank_values:
+            flag indicating whether blank values in
             percent-encoded queries should be treated as blank strings.
             A true value indicates that blanks should be retained as blank
             strings.  The default false value indicates that blank values
             are to be ignored and treated as if they were  not included.
         :type keep_blank_values: bool
-        :param strict_parsing: flag indicating what to do with parsing errors.
+        :param strict_parsing:
+            flag indicating what to do with parsing errors.
             If false (the default), errors are silently ignored. If true,
             errors raise a ValueError exception.
         :type strict_parsing: bool
-        :param encoding: specify how to decode percent-encoded sequences
+        :param encoding:
+            specify how to decode percent-encoded sequences
             into Unicode characters, as accepted by the bytes.decode() method.
         :type encoding: str
-        :param errors: specify how to decode percent-encoded sequences
+        :param errors:
+            specify how to decode percent-encoded sequences
             into Unicode characters, as accepted by the bytes.decode() method.
         :type errors: str
         :return: list
@@ -542,7 +553,7 @@ def parse_multipart_form(body, boundary):
 
             colon_index = form_line.index(":")
             form_header_field = form_line[0:colon_index].lower()
-            form_header_value, form_parameters = parse_header(
+            form_header_value, form_parameters = parse_content_header(
                 form_line[colon_index + 2 :]
             )
 

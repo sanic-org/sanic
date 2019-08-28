@@ -466,12 +466,12 @@ def test_standard_forwarded(app):
         "secret": "mySecret"
     }
 
-    # Test quote handling
-    headers = {"Forwarded": r'for=test;quoted="\",x=x;y=\"";secret=mySecret'}
+    # Test escapes (modify this if you see anyone implementing quoted-pairs)
+    headers = {"Forwarded": 'for=test;quoted="\\,x=x;y=\\";secret=mySecret'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {
         "for": "test",
-        "quoted": '",x=x;y="',
+        "quoted": '\\,x=x;y=\\',
         "secret": "mySecret"
     }
 

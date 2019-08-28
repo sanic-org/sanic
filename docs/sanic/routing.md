@@ -203,16 +203,21 @@ async def post_handler(request, post_id):
 Other things to keep in mind when using `url_for`:
 
 - Keyword arguments passed to `url_for` that are not request parameters will be included in the URL's query string. For example:
+
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one='one', arg_two='two')
 # /posts/5?arg_one=one&arg_two=two
 ```
+
 - Multivalue argument can be passed to `url_for`. For example:
+
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'])
 # /posts/5?arg_one=one&arg_one=two
 ```
+
 - Also some special arguments (`_anchor`, `_external`, `_scheme`, `_method`, `_server`) passed to `url_for` will have special url building (`_method` is not supported now and will be ignored). For example:
+
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one='one', _anchor='anchor')
 # /posts/5?arg_one=one#anchor
@@ -229,6 +234,7 @@ url = app.url_for('post_handler', post_id=5, arg_one='one', _scheme='http', _ext
 url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'], arg_two=2, _anchor='anchor', _scheme='http', _external=True, _server='another_server:8888')
 # http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor
 ```
+
 - All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be raised.
 
 ## WebSocket routes

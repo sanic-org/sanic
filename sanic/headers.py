@@ -1,13 +1,48 @@
 import re
+import typing
+
+
+Options = typing.Dict[str, str]  # key=value fields in various headers
+
+_token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
+_param = re.compile(fr";\s*{_token}=(?:{_token}|{_quoted})", re.ASCII)
+_firefox_quote_escape = re.compile(r'\\"(?!; |\s*$)')
+
+# RFC's quoted-pair escapes are mostly ignored by browsers. Chrome, Firefox and
+# curl all have different escaping, that we try to handle as well as possible,
+# even though no client espaces in a way that would allow perfect handling.
+
+# For more information, consult ../tests/test_requests.py
+
+
+def parse_content_header(value: str) -> typing.Tuple[str, Options]:
+    """Parse content-type and content-disposition header values.
+
+    E.g. 'form-data; name=upload; filename=\"file.txt\"' to
+    ('form-data', {'name': 'upload', 'filename': 'file.txt'})
+
+    Mostly identical to cgi.parse_header and werkzeug.parse_options_header
+    but runs faster and handles special characters better. Unescapes quotes.
+    """
+    value = _firefox_quote_escape.sub("%22", value)
+    pos = value.find(";")
+    if pos == -1:
+        options = {}
+    else:
+        options = {
+            m.group(1).lower(): m.group(2) or m.group(3).replace("%22", '"')
+            for m in _param.finditer(value[pos:])
+        }
+        value = value[:pos]
+    return value.strip().lower(), options
 
 
 # https://tools.ietf.org/html/rfc7230#section-3.2.6 and
 # https://tools.ietf.org/html/rfc7239#section-4
-# These regexes are for *reversed* strings because that works much faster for
+# This regex is for *reversed* strings because that works much faster for
 # right-to-left matching than the other way around. Be wary that all things are
-# a bit backwards! _regex matches forwarded pairs alike ";key=value"
-_token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"((?:[^"]|"\\)*)"'
-_regex = re.compile(f"(?:{_token}|{_quoted})={_token}\\s*($|[;,])", re.ASCII)
+# a bit backwards! _rparam matches forwarded pairs alike ";key=value"
+_rparam = re.compile(f"(?:{_token}|{_quoted})={_token}\\s*($|[;,])", re.ASCII)
 
 
 def parse_forwarded(headers, config):
@@ -24,7 +59,7 @@ def parse_forwarded(headers, config):
         return None
     # Loop over <separator><key>=<value> elements from right to left
     ret = sep = pos = None
-    for m in _regex.finditer(header[::-1]):
+    for m in _rparam.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
         if m.start() != pos or sep != ";":
             if secret is True:

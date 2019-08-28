@@ -11,6 +11,7 @@ from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import time
+from uuid import uuid4
 
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
@@ -110,7 +111,7 @@ class HttpProtocol(asyncio.Protocol):
         router=None,
         state=None,
         debug=False,
-        **kwargs
+        **kwargs,
     ):
         self.loop = loop
         self.app = app
@@ -760,21 +761,18 @@ def serve(
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
     )
-    # create_server cannot bind UNIX sockets, so do it here
+    # UNIX sockets are always bound by us (to preserve semantics between modes)
     if host and host.startswith("unix:"):
-        unix_socket_name = host[5:]
-        sock, host, port = bind_socket(host, port), None, None
-    else:
-        unix_socket_name = None
+        sock = bind_socket(host, port)
     server_coroutine = loop.create_server(
         server,
-        host,
-        port,
+        None if sock else host,
+        None if sock else port,
         ssl=ssl,
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog,
-        **asyncio_server_kwargs
+        **asyncio_server_kwargs,
     )
 
     if run_async:
@@ -848,29 +846,37 @@ def serve(
         trigger_events(after_stop, loop)
 
         loop.close()
-        try:
-            if unix_socket_name:
-                os.unlink(unix_socket_name)
-        except FileNotFoundError:
-            pass
+        remove_dead_socket(host)
 
 
-def bind_socket(host: str, port: int) -> socket:
+def bind_socket(host: str, port: int, backlog=100) -> socket:
     """Create socket and bind to host.
     :param host: IPv4, IPv6, hostname or unix:/tmp/socket may be specified
     :param port: IP port number, 0 or None for UNIX sockets
     :return: socket.socket object
     """
     if host.lower().startswith("unix:"):  # UNIX socket
-        name = host[5:]
+        path = host[5:]
+        if os.path.exists(path) and not stat.S_ISSOCK(os.stat(path).st_mode):
+            raise FileExistsError(f"Existing file is not a socket: {path}")
         sock = socket.socket(socket.AF_UNIX)
-        if os.path.exists(name) and stat.S_ISSOCK(os.stat(name).st_mode):
-            os.unlink(name)
-        oldmask = os.umask(0o111)
         try:
-            sock.bind(name)
-        finally:
-            os.umask(oldmask)
+            # Atomic zero-downtime socket replace
+            tmp_path = f"{path}.{uuid4().hex[:8]}"
+            old_mask = os.umask(0o111)
+            try:
+                sock.bind(tmp_path)
+            finally:
+                os.umask(old_mask)
+            try:
+                sock.listen(backlog)
+                os.rename(tmp_path, path)
+            except:
+                os.unlink(tmp_path)
+                raise
+        except:
+            sock.close()
+            raise
         return sock
     try:  # IP address: family must be specified for IPv6 at least
         ip = ip_address(host)
@@ -885,6 +891,22 @@ def bind_socket(host: str, port: int) -> socket:
     return sock
 
 
+def remove_dead_socket(host: str) -> None:
+    """Remove dead unix socket during server exit, if host refers to one."""
+    if not host or not host.lower().startswith("unix:"):
+        return
+    path = host[5:]
+    if os.path.exists(path) and stat.S_ISSOCK(os.stat(path).st_mode):
+        # Is it actually dead (doesn't belong to a new server instance)?
+        testsock = socket.socket(socket.AF_UNIX)
+        try:
+            testsock.connect(path)
+        except ConnectionRefusedError:
+            os.unlink(path)
+        finally:
+            testsock.close()
+
+
 def serve_multiple(server_settings, workers):
     """Start multiple server processes simultaneously.  Stop on interrupt
     and terminate signals, and drain connections when complete.
@@ -896,10 +918,11 @@ def serve_multiple(server_settings, workers):
     """
     server_settings["reuse_port"] = True
     server_settings["run_multiple"] = True
+    host = server_settings["host"]
 
     # Handling when custom socket is not provided.
     if server_settings.get("sock") is None:
-        sock = bind_socket(server_settings["host"], server_settings["port"])
+        sock = bind_socket(host, server_settings["port"])
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None
@@ -928,9 +951,5 @@ def serve_multiple(server_settings, workers):
     for process in processes:
         process.terminate()
 
-    sock = server_settings.get("sock")
-    sockname = sock.getsockname()
-    sock.close()
-    # Remove UNIX socket
-    if isinstance(sockname, str):
-        os.unlink(sockname)
+    server_settings.get("sock").close()
+    remove_dead_socket(host)

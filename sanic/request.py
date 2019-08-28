@@ -12,7 +12,10 @@ from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
-    parse_content_header, parse_forwarded, parse_host, parse_xforwarded
+    parse_content_header,
+    parse_forwarded,
+    parse_host,
+    parse_xforwarded,
 )
 from sanic.log import error_logger, logger
 

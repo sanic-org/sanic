@@ -86,8 +86,13 @@ class HttpProtocol:
         self.__dict__.update(kwargs)
         self.request_class = self.request_class or Request
         self.stream = None
+        self.servername = None  # User-visible server hostname, no port!
 
     async def ssl_init(self):
+        def servername_callback(sock, req_hostname, cb_context):
+            self.servername = req_hostname
+
+        self.ssl.sni_callback = servername_callback
         self.stream = trio.SSLStream(
             self.stream, self.ssl, server_side=True, https_compatible=True
         )
@@ -210,7 +215,7 @@ class HttpProtocol:
                 b"Upgrade: h2c\r\n"
                 b"\r\n" + self.conn.data_to_send()
             )
-        else:  # h2 ALPN negotiated on SSL init
+        else:  # straight into HTTP/2 mode
             self.conn.initiate_connection()
             await self.stream.send_all(self.conn.data_to_send())
         # A trigger mechanism that ensures promptly sending data from self.conn
@@ -219,6 +224,7 @@ class HttpProtocol:
         self.send_some, self.can_send = trio.open_memory_channel(1)
         self.nursery.start_soon(self.h2_sender)
         idle_connections.add(self.nursery.cancel_scope)
+        self.requests = {}
         async for data in self.stream:
             for event in self.conn.receive_data(data):
                 # print("-*-", event)
@@ -226,7 +232,7 @@ class HttpProtocol:
                     self.nursery.start_soon(
                         self.h2request, event.stream_id, event.headers
                     )
-                    idle_connections.discard(self.nursery.cancel_scope)
+                    #idle_connections.discard(self.nursery.cancel_scope)
                 if isinstance(event, ConnectionTerminated):
                     return
             await self.send_some.send(...)
@@ -237,9 +243,6 @@ class HttpProtocol:
             old = hdrs.get(name)
             hdrs[name] = value if old is None else f"{old}, {value}"
         # Process response
-        self.nursery.cancel_scope.deadline = (
-            trio.current_time() + self.response_timeout
-        )
         request = self.request_class(
             url_bytes=hdrs.get(":path", "").encode(),
             headers=Header(headers),
@@ -260,7 +263,8 @@ class HttpProtocol:
             self.conn.send_data(stream_id, response.body, end_stream=True)
             await self.send_some.send(...)
 
-        await self.request_handler(request, write_response, None)
+        with trio.fail_after(self.response_timeout):
+            await self.request_handler(request, write_response, None)
 
     async def websocket(self):
         logger.info("Websocket requested, not yet implemented")

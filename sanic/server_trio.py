@@ -31,70 +31,191 @@ from sanic.log import access_logger, logger
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
 
+
 class Signal:
     stopped = False
 
+
 idle_connections = set()
+
 
 class HttpProtocol:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
         self.request_class = self.request_class or Request
+        self.stream = None
 
     async def run(self, stream):
+        assert not self.stream
+        self.stream = stream
+        self.ssl = False
         try:
             async with stream, trio.open_nursery() as self.nursery:
-                while True:
-                    self.nursery.cancel_scope.deadline = trio.current_time() + self.request_timeout
-                    # Read headers
-                    buffer = bytearray()
-                    idle_connections.add(self.nursery.cancel_scope)
-                    async for data in stream:
-                        idle_connections.remove(self.nursery.cancel_scope)
-                        prevpos = max(0, len(buffer) - 3)
-                        buffer += data
-                        pos = buffer.find(b"\r\n\r\n", prevpos)
-                        if pos > 0: break  # End of headers
-                        if buffer > request_max_size:
-                            self.error_response("request too large")
-                            return
-                    else:
-                        return  # Peer closed connection
-                    headers = buffer[:pos]
-                    del buffer[:pos + 4]
-                    try:
-                        headers = headers.decode()
-                    except UnicodeDecodeError:
-                        headers = headers.decode("ISO-8859-1")
-                    req, *headers = headers.split("\r\n")
-                    method, path, version = req.split(" ")
-                    version = version[5:]
-                    assert version == "1.1"
-                    headers = dict(h.split(": ", 1) for h in headers)
-                    self.nursery.cancel_scope.deadline = trio.current_time() + self.response_timeout
-                    request = self.request_class(
-                        url_bytes=path.encode(),
-                        headers=Header(headers),
-                        version=version,
-                        method=method,
-                        transport=None,
-                        app=self.app,
-                    )
-                    keep_alive = True
-                    async def write_response(response):
-                        await stream.send_all(response.output(
-                            request.version, keep_alive, self.keep_alive_timeout
-                        ))
-                    await self.request_handler(request, write_response, None)
+                await self.http1()
+                self.nursery.cancel_scope.cancel()
         except trio.BrokenResourceError:
             pass  # Connection reset by peer
         except Exception:
             logger.exception("Error in server")
         finally:
-            idle_connections.remove(self.nursery.cancel_scope)
+            idle_connections.discard(self.nursery.cancel_scope)
 
     async def error_response(self, message):
         pass
+
+    async def http1(self):
+        while True:
+            self.nursery.cancel_scope.deadline = (
+                trio.current_time() + self.request_timeout
+            )
+            # Read headers
+            buffer = bytearray()
+            idle_connections.add(self.nursery.cancel_scope)
+            async for data in self.stream:
+                idle_connections.discard(self.nursery.cancel_scope)
+                prevpos = max(0, len(buffer) - 3)
+                buffer += data
+                pos = buffer.find(b"\r\n\r\n", prevpos)
+                if pos > 0:
+                    break  # End of headers
+                if buffer > request_max_size:
+                    self.error_response("request too large")
+                    return
+            else:
+                return  # Peer closed connection
+            headers = buffer[:pos]
+            if headers == b"PRI * HTTP/2.0":  # HTTP2 without Upgrade (nghttp)
+                return await self.http2(data_received=buffer)
+            del buffer[: pos + 4]
+            try:
+                headers = headers.decode()
+            except UnicodeDecodeError:
+                headers = headers.decode("ISO-8859-1")
+            req, *headers = headers.split("\r\n")
+            method, path, version = req.split(" ")
+            version = version[5:]
+            assert version == "1.1"
+            headers = [
+                (name.casefold(), value)
+                for name, value in (h.split(": ", 1) for h in headers)
+            ]
+            hdrs = {}
+            for name, value in headers:
+                old = hdrs.get(name)
+                hdrs[name] = value if old is None else f"{old}, {value}"
+            if hdrs.get("upgrade") == "h2c":  # HTTP2 with Upgrade (curl)
+                assert (
+                    not buffer
+                ), "Extra bytes after upgrade request: {buffer!r}"
+                return await self.http2(settings_header=hdrs["http2-settings"])
+            # Process response
+            self.nursery.cancel_scope.deadline = (
+                trio.current_time() + self.response_timeout
+            )
+            request = self.request_class(
+                url_bytes=path.encode(),
+                headers=Header(headers),
+                version=version,
+                method=method,
+                transport=None,
+                app=self.app,
+            )
+            keep_alive = True
+
+            async def write_response(response):
+                await self.stream.send_all(
+                    response.output(
+                        request.version, keep_alive, self.keep_alive_timeout
+                    )
+                )
+
+            await self.request_handler(request, write_response, None)
+
+    async def h2_sender(self):
+        async for _ in self.can_send:
+            await self.stream.send_all(self.conn.data_to_send())
+
+    async def http2(self, data_received=None, settings_header=None):
+        import h2
+        from h2.events import (
+            RequestReceived,
+            DataReceived,
+            ConnectionTerminated,
+        )
+
+        config = h2.config.H2Configuration(
+            client_side=False,
+            header_encoding="utf-8",
+            validate_outbound_headers=False,
+            normalize_outbound_headers=False,
+            validate_inbound_headers=False,
+            normalize_inbound_headers=False,
+            logger=None,  # logger
+        )
+        self.conn = h2.connection.H2Connection(config=config)
+        if settings_header:  # Upgrade from HTTP 1.1
+            self.conn.initiate_upgrade_connection(settings_header)
+            await self.stream.send_all(
+                b"HTTP/1.1 101 Switching Protocols\r\n"
+                b"Connection: Upgrade\r\n"
+                b"Upgrade: h2c\r\n\r\n" + c.data_to_send()
+            )
+        else:  # h2 ALPN negotiated on SSL init
+            self.conn.initiate_connection()
+            await self.stream.send_all(self.conn.data_to_send())
+        # A trigger mechanism that ensures promptly sending data from self.conn
+        # to stream; size must be > 0 to avoid data left unsent in buffer
+        # when a stream is canceled while awaiting on send_some.
+        self.send_some, self.can_send = trio.open_memory_channel(1)
+        self.nursery.start_soon(self.h2_sender)
+        idle_connections.add(self.nursery.cancel_scope)
+        async for data in self.stream:
+            if data_received:
+                data = data_received + data
+                data_received = None
+            # print(">>>", data)
+            for event in self.conn.receive_data(data):
+                # print("-*-", event)
+                if isinstance(event, RequestReceived):
+                    self.nursery.start_soon(
+                        self.h2request, event.stream_id, event.headers
+                    )
+                    idle_connections.discard(self.nursery.cancel_scope)
+                if isinstance(event, ConnectionTerminated):
+                    return
+            await self.send_some.send(...)
+
+    async def h2request(self, stream_id, headers):
+        hdrs = {}
+        for name, value in headers:
+            old = hdrs.get(name)
+            hdrs[name] = value if old is None else f"{old}, {value}"
+        # Process response
+        self.nursery.cancel_scope.deadline = (
+            trio.current_time() + self.response_timeout
+        )
+        request = self.request_class(
+            url_bytes=hdrs.get(":path", "").encode(),
+            headers=Header(headers),
+            version="h2",
+            method=hdrs[":method"],
+            transport=None,
+            app=self.app,
+        )
+
+        async def write_response(response):
+            headers = (
+                (":status", f"{response.status}"),
+                ("content-length", f"{len(response.body)}"),
+                ("content-type", response.content_type),
+                *response.headers,
+            )
+            self.conn.send_headers(stream_id, headers)
+            self.conn.send_data(stream_id, response.body, end_stream=True)
+            await self.send_some.send(...)
+
+        await self.request_handler(request, write_response, None)
+
 
 async def trigger_events(events):
     """Trigger event callbacks (functions or async)
@@ -174,7 +295,9 @@ def serve(
         await proto.run(stream)
 
     app.asgi = False
-    assert not (run_async or run_multiple or asyncio_server_kwargs or loop), "Not implemented"
+    assert not (
+        run_async or run_multiple or asyncio_server_kwargs or loop
+    ), "Not implemented"
 
     acceptor = partial(
         runaccept,
@@ -198,15 +321,8 @@ def serve(
     )
     return server() if run_async else server()
 
-def runserver(
-    acceptor,
-    host,
-    port,
-    ssl,
-    sock,
-    backlog,
-    workers,
-):
+
+def runserver(acceptor, host, port, ssl, sock, backlog, workers):
     if host and host.startswith("unix:"):
         open_listeners = partial(
             # Not Implemented: open_unix_listeners, path=host[5:], backlog=backlog
@@ -214,13 +330,17 @@ def runserver(
     else:
         open_listeners = partial(
             trio.open_tcp_listeners,
-            host=host, port=port or 8000, backlog=backlog
+            host=host,
+            port=port or 8000,
+            backlog=backlog,
         )
     try:
         listeners = trio.run(open_listeners)
     except Exception:
         logger.exception("Unable to start server")
         return
+    for l in listeners:
+        l.socket.set_inheritable(True)
     if ssl:
         listeners = [
             trio.SSLListener(l, ssl, https_compatible=True) for l in listeners
@@ -230,14 +350,15 @@ def runserver(
     processes = []
     # Setup signal handlers to avoid crashing
     sig = None
+
     def handler(s, tb):
         nonlocal sig
         sig = s
+
     for s in (SIGINT, SIGTERM, SIGHUP):
         signal_func(s, handler)
 
     if workers:
-        for l in listeners: l.socket.set_inheritable(True)
         while True:
             while len(processes) < workers:
                 p = Process(target=runworker)
@@ -249,16 +370,28 @@ def runserver(
             s, sig = sig, None
             if not s:
                 continue
-            for p in processes: os.kill(p.pid, SIGHUP)
+            for p in processes:
+                os.kill(p.pid, SIGHUP)
             if s in (SIGINT, SIGTERM):
                 break
-        for l in listeners: trio.run(l.aclose)
-        for p in processes: p.join()
+        for l in listeners:
+            trio.run(l.aclose)
+        for p in processes:
+            p.join()
     else:
         runworker()
 
 
-async def runaccept(listeners, master_pid, before_start, after_start, before_stop, after_stop, handle_connection, graceful_shutdown_timeout):
+async def runaccept(
+    listeners,
+    master_pid,
+    before_start,
+    after_start,
+    before_stop,
+    after_stop,
+    handle_connection,
+    graceful_shutdown_timeout,
+):
     try:
         pid = os.getpid()
         logger.info("Starting worker [%s]", pid)
@@ -266,23 +399,30 @@ async def runaccept(listeners, master_pid, before_start, after_start, before_sto
             await trigger_events(before_start)
             # Accept connections until a signal is received, then perform graceful exit
             async with trio.open_nursery() as acceptor:
-                acceptor.start_soon(partial(
-                    trio.serve_listeners,
-                    handler=handle_connection,
-                    listeners=listeners,
-                    handler_nursery=main_nursery
-                ))
+                acceptor.start_soon(
+                    partial(
+                        trio.serve_listeners,
+                        handler=handle_connection,
+                        listeners=listeners,
+                        handler_nursery=main_nursery,
+                    )
+                )
                 await trigger_events(after_start)
                 # Wait for a signal and then exit gracefully
-                with trio.open_signal_receiver(SIGINT, SIGTERM, SIGHUP) as sigiter:
+                with trio.open_signal_receiver(
+                    SIGINT, SIGTERM, SIGHUP
+                ) as sigiter:
                     s = await sigiter.__anext__()
                     logger.info(f"Received {Signals(s).name}")
                     if s != SIGHUP:
                         os.kill(master_pid, SIGTERM)
                     acceptor.cancel_scope.cancel()
             now = trio.current_time()
-            for c in idle_connections: c.cancel()
-            main_nursery.cancel_scope.deadline = now + graceful_shutdown_timeout
+            for c in idle_connections:
+                c.cancel()
+            main_nursery.cancel_scope.deadline = (
+                now + graceful_shutdown_timeout
+            )
             await trigger_events(before_stop)
         await trigger_events(after_stop)
         logger.info(f"Gracefully finished worker [{pid}]")

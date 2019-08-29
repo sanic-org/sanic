@@ -1298,6 +1298,7 @@ class Sanic:
                 raise ValueError("SSLContext or certificate and key required.")
             context = create_default_context(purpose=Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
+            context.set_alpn_protocols(["h2", "http/1.1"])
             ssl = context
         if stop_event is not None:
             if debug:

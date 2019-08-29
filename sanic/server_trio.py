@@ -7,16 +7,16 @@ import time
 import traceback
 
 from functools import partial
+from h2.config import H2Configuration
+from h2.connection import H2Connection
+from h2.events import RequestReceived, DataReceived, ConnectionTerminated
 from inspect import isawaitable
 from ipaddress import ip_address
 from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, SIGHUP, Signals
 from signal import signal as signal_func
 from time import time, sleep as time_sleep
-
-from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
-from multidict import CIMultiDict
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -36,7 +36,49 @@ class Signal:
     stopped = False
 
 
+h2config = H2Configuration(
+    client_side=False,
+    header_encoding="utf-8",
+    validate_outbound_headers=False,
+    normalize_outbound_headers=False,
+    validate_inbound_headers=False,
+    normalize_inbound_headers=False,
+    logger=None,  # logger
+)
+
+
 idle_connections = set()
+
+
+def parse_h1_request(data: bytes) -> dict:
+    try:
+        data = data.decode()
+    except UnicodeDecodeError:
+        data = data.decode("ISO-8859-1")
+    req, *hlines = data.split("\r\n")
+    method, path, version = req.split(" ")
+    assert version == "HTTP/1.1"
+    headers = {":method": method, ":path": path}
+    for name, value in (h.split(": ", 1) for h in hlines):
+        name = name.lower()
+        old = headers.get(name)
+        headers[name] = value if old is None else f"{old}, {value}"
+    return headers
+
+
+def push_back(stream, data):
+    orig_class = stream.__class__
+
+    class PushbackStream(orig_class):
+        async def receive_some(self, max_bytes=None):
+            if max_bytes and max_bytes < len(data):
+                ret = data[:max_bytes]
+                del data[:max_bytes]
+                return ret
+            self.__class__ = orig_class
+            return data
+
+    stream.__class__ = PushbackStream
 
 
 class HttpProtocol:
@@ -45,14 +87,52 @@ class HttpProtocol:
         self.request_class = self.request_class or Request
         self.stream = None
 
+    async def ssl_init(self):
+        self.stream = trio.SSLStream(
+            self.stream, self.ssl, server_side=True, https_compatible=True
+        )
+        await self.stream.do_handshake()
+        self.alpn = self.stream.selected_alpn_protocol()
+
+    async def sniff_protocol(self):
+        buffer = bytearray()
+        req = await self._receive_request_using(buffer)
+        if isinstance(req, bytearray):
+            # HTTP1 but might be Upgrade to websocket or h2c
+            headers = parse_h1_request(req)
+            upgrade = headers.get("upgrade")
+            if upgrade == "h2c":
+                return self.http2(settings_header=headers["http2-settings"])
+            if upgrade == "websocket":
+                return self.websocket()
+            return self.http1(headers=headers)
+        push_back(self.stream, buffer)
+        if req == "ssl":
+            if not self.ssl:
+                raise RuntimeError("Only plain HTTP supported (not SSL).")
+            await self.ssl_init()
+            if not self.alpn or self.alpn == "http/1.1":
+                return self.http1()
+            if self.alpn == "h2":
+                return self.http2()
+            raise RuntimeError(f"Unknown ALPN {self.alpn}")
+        # HTTP2 (not Upgrade)
+        if req == "h2":
+            return self.http2()
+
     async def run(self, stream):
         assert not self.stream
         self.stream = stream
-        self.ssl = False
         try:
             async with stream, trio.open_nursery() as self.nursery:
-                await self.http1()
-                self.nursery.cancel_scope.cancel()
+                self.nursery.cancel_scope.deadline = (
+                    trio.current_time() + self.request_timeout
+                )
+                protocol_coroutine = await self.sniff_protocol()
+                if not protocol_coroutine:
+                    return
+                await protocol_coroutine
+                self.nursery.cancel_scope.cancel()  # Terminate all connections
         except trio.BrokenResourceError:
             pass  # Connection reset by peer
         except Exception:
@@ -60,66 +140,48 @@ class HttpProtocol:
         finally:
             idle_connections.discard(self.nursery.cancel_scope)
 
-    async def error_response(self, message):
-        pass
-
-    async def http1(self):
-        while True:
-            self.nursery.cancel_scope.deadline = (
-                trio.current_time() + self.request_timeout
-            )
-            # Read headers
-            buffer = bytearray()
-            idle_connections.add(self.nursery.cancel_scope)
+    async def _receive_request_using(self, buffer: bytearray):
+        idle_connections.add(self.nursery.cancel_scope)
+        with trio.fail_after(self.request_timeout):
             async for data in self.stream:
                 idle_connections.discard(self.nursery.cancel_scope)
                 prevpos = max(0, len(buffer) - 3)
                 buffer += data
+                if buffer[0] < 0x20:
+                    return "ssl"
+                if len(buffer) > self.request_max_size:
+                    raise RuntimeError("Request larger than request_max_size")
                 pos = buffer.find(b"\r\n\r\n", prevpos)
                 if pos > 0:
-                    break  # End of headers
-                if buffer > request_max_size:
-                    self.error_response("request too large")
+                    req = buffer[:pos]
+                    if req == b"PRI * HTTP/2.0": return "h2"
+                    del buffer[: pos + 4]
+                    return req
+        if buffer:
+            raise RuntimeError("Peer disconnected after {buffer!r}")
+
+    async def http1(self, headers=None):
+        buffer = bytearray()
+        while True:
+            # Process request
+            if headers is None:
+                req = await self._receive_request_using(buffer)
+                if not req:
                     return
-            else:
-                return  # Peer closed connection
-            headers = buffer[:pos]
-            if headers == b"PRI * HTTP/2.0":  # HTTP2 without Upgrade (nghttp)
-                return await self.http2(data_received=buffer)
-            del buffer[: pos + 4]
-            try:
-                headers = headers.decode()
-            except UnicodeDecodeError:
-                headers = headers.decode("ISO-8859-1")
-            req, *headers = headers.split("\r\n")
-            method, path, version = req.split(" ")
-            version = version[5:]
-            assert version == "1.1"
-            headers = [
-                (name.casefold(), value)
-                for name, value in (h.split(": ", 1) for h in headers)
-            ]
-            hdrs = {}
-            for name, value in headers:
-                old = hdrs.get(name)
-                hdrs[name] = value if old is None else f"{old}, {value}"
-            if hdrs.get("upgrade") == "h2c":  # HTTP2 with Upgrade (curl)
-                assert (
-                    not buffer
-                ), "Extra bytes after upgrade request: {buffer!r}"
-                return await self.http2(settings_header=hdrs["http2-settings"])
+                headers = parse_h1_request(req)
             # Process response
             self.nursery.cancel_scope.deadline = (
                 trio.current_time() + self.response_timeout
             )
             request = self.request_class(
-                url_bytes=path.encode(),
+                url_bytes=headers[":path"].encode(),
                 headers=Header(headers),
-                version=version,
-                method=method,
+                version="1.1",
+                method=headers[":method"],
                 transport=None,
                 app=self.app,
             )
+            headers = None
             keep_alive = True
 
             async def write_response(response):
@@ -130,35 +192,23 @@ class HttpProtocol:
                 )
 
             await self.request_handler(request, write_response, None)
+            self.nursery.cancel_scope.deadline = (
+                trio.current_time() + self.request_timeout
+            )
 
     async def h2_sender(self):
         async for _ in self.can_send:
             await self.stream.send_all(self.conn.data_to_send())
 
-    async def http2(self, data_received=None, settings_header=None):
-        import h2
-        from h2.events import (
-            RequestReceived,
-            DataReceived,
-            ConnectionTerminated,
-        )
-
-        config = h2.config.H2Configuration(
-            client_side=False,
-            header_encoding="utf-8",
-            validate_outbound_headers=False,
-            normalize_outbound_headers=False,
-            validate_inbound_headers=False,
-            normalize_inbound_headers=False,
-            logger=None,  # logger
-        )
-        self.conn = h2.connection.H2Connection(config=config)
+    async def http2(self, settings_header=None):
+        self.conn = H2Connection(config=h2config)
         if settings_header:  # Upgrade from HTTP 1.1
             self.conn.initiate_upgrade_connection(settings_header)
             await self.stream.send_all(
                 b"HTTP/1.1 101 Switching Protocols\r\n"
                 b"Connection: Upgrade\r\n"
-                b"Upgrade: h2c\r\n\r\n" + c.data_to_send()
+                b"Upgrade: h2c\r\n"
+                b"\r\n" + self.conn.data_to_send()
             )
         else:  # h2 ALPN negotiated on SSL init
             self.conn.initiate_connection()
@@ -170,10 +220,6 @@ class HttpProtocol:
         self.nursery.start_soon(self.h2_sender)
         idle_connections.add(self.nursery.cancel_scope)
         async for data in self.stream:
-            if data_received:
-                data = data_received + data
-                data_received = None
-            # print(">>>", data)
             for event in self.conn.receive_data(data):
                 # print("-*-", event)
                 if isinstance(event, RequestReceived):
@@ -215,6 +261,9 @@ class HttpProtocol:
             await self.send_some.send(...)
 
         await self.request_handler(request, write_response, None)
+
+    async def websocket(self):
+        logger.info("Websocket requested, not yet implemented")
 
 
 async def trigger_events(events):
@@ -274,6 +323,7 @@ def serve(
             connections=connections,
             signal=signal,
             app=app,
+            ssl=ssl,
             request_handler=request_handler,
             error_handler=error_handler,
             request_timeout=request_timeout,
@@ -314,7 +364,6 @@ def serve(
         acceptor=acceptor,
         host=host,
         port=port,
-        ssl=ssl,
         sock=sock,
         backlog=backlog,
         workers=workers,
@@ -322,7 +371,7 @@ def serve(
     return server() if run_async else server()
 
 
-def runserver(acceptor, host, port, ssl, sock, backlog, workers):
+def runserver(acceptor, host, port, sock, backlog, workers):
     if host and host.startswith("unix:"):
         open_listeners = partial(
             # Not Implemented: open_unix_listeners, path=host[5:], backlog=backlog
@@ -341,10 +390,6 @@ def runserver(acceptor, host, port, ssl, sock, backlog, workers):
         return
     for l in listeners:
         l.socket.set_inheritable(True)
-    if ssl:
-        listeners = [
-            trio.SSLListener(l, ssl, https_compatible=True) for l in listeners
-        ]
     master_pid = os.getpid()
     runworker = lambda: trio.run(acceptor, listeners, master_pid)
     processes = []

@@ -110,37 +110,37 @@ Out of the box there are just a few predefined values which can be overwritten w
 
 #### `REQUEST_TIMEOUT`
 
-A request timeout measures the duration of time between the instant when a new open TCP connection is passed to the 
-Sanic backend server, and the instant when the whole HTTP request is received. If the time taken exceeds the 
-`REQUEST_TIMEOUT` value (in seconds), this is considered a Client Error so Sanic generates an `HTTP 408` response 
-and sends that to the client. Set this parameter's value higher if your clients routinely pass very large request payloads 
+A request timeout measures the duration of time between the instant when a new open TCP connection is passed to the
+Sanic backend server, and the instant when the whole HTTP request is received. If the time taken exceeds the
+`REQUEST_TIMEOUT` value (in seconds), this is considered a Client Error so Sanic generates an `HTTP 408` response
+and sends that to the client. Set this parameter's value higher if your clients routinely pass very large request payloads
 or upload requests very slowly.
 
 #### `RESPONSE_TIMEOUT`
 
-A response timeout measures the duration of time between the instant the Sanic server passes the HTTP request to the 
-Sanic App, and the instant a HTTP response is sent to the client. If the time taken exceeds the `RESPONSE_TIMEOUT` 
-value (in seconds), this is considered a Server Error so Sanic generates an `HTTP 503` response and sends that to the 
-client. Set this parameter's value higher if your application is likely to have long-running process that delay the 
+A response timeout measures the duration of time between the instant the Sanic server passes the HTTP request to the
+Sanic App, and the instant a HTTP response is sent to the client. If the time taken exceeds the `RESPONSE_TIMEOUT`
+value (in seconds), this is considered a Server Error so Sanic generates an `HTTP 503` response and sends that to the
+client. Set this parameter's value higher if your application is likely to have long-running process that delay the
 generation of a response.
 
 #### `KEEP_ALIVE_TIMEOUT`
 
 ##### What is Keep Alive? And what does the Keep Alive Timeout value do?
 
-`Keep-Alive` is a HTTP feature introduced in `HTTP 1.1`. When sending a HTTP request, the client (usually a web browser application) 
-can set a `Keep-Alive` header to indicate the http server (Sanic) to not close the TCP connection after it has send the response. 
-This allows the client to reuse the existing TCP connection to send subsequent HTTP requests, and ensures more efficient 
+`Keep-Alive` is a HTTP feature introduced in `HTTP 1.1`. When sending a HTTP request, the client (usually a web browser application)
+can set a `Keep-Alive` header to indicate the http server (Sanic) to not close the TCP connection after it has send the response.
+This allows the client to reuse the existing TCP connection to send subsequent HTTP requests, and ensures more efficient
 network traffic for both the client and the server.
 
-The `KEEP_ALIVE` config variable is set to `True` in Sanic by default. If you don't need this feature in your application, 
-set it to `False` to cause all client connections to close immediately after a response is sent, regardless of 
+The `KEEP_ALIVE` config variable is set to `True` in Sanic by default. If you don't need this feature in your application,
+set it to `False` to cause all client connections to close immediately after a response is sent, regardless of
 the `Keep-Alive` header on the request.
 
-The amount of time the server holds the TCP connection open is decided by the server itself. 
-In Sanic, that value is configured using the `KEEP_ALIVE_TIMEOUT` value. By default, it is set to 5 seconds. 
-This is the same default setting as the Apache HTTP server and is a good balance between allowing enough time for 
-the client to send a new request, and not holding open too many connections at once. Do not exceed 75 seconds unless 
+The amount of time the server holds the TCP connection open is decided by the server itself.
+In Sanic, that value is configured using the `KEEP_ALIVE_TIMEOUT` value. By default, it is set to 5 seconds.
+This is the same default setting as the Apache HTTP server and is a good balance between allowing enough time for
+the client to send a new request, and not holding open too many connections at once. Do not exceed 75 seconds unless
 you know your clients are using a browser which supports TCP connections held open for that long.
 
 For reference:
@@ -154,16 +154,49 @@ Opera 11 client hard keepalive limit = 120 seconds
 Chrome 13+ client keepalive limit > 300+ seconds
 ```
 
-### About proxy servers and client ip
+### Proxy configuration
 
-When you use a reverse proxy server (e.g. nginx), the value of `request.ip` will contain ip of a proxy, typically `127.0.0.1`. To determine the real client ip, `X-Forwarded-For` and `X-Real-IP` HTTP headers are used. But client can fake these headers if they have not been overridden by a proxy. Sanic has a set of options to determine the level of confidence in these headers.
+When you use a reverse proxy server (e.g. nginx), the value of `request.ip` will contain ip of a proxy, typically `127.0.0.1`. Sanic may be configured to use proxy headers for determining the true client IP, available as `request.remote_addr`. The full external URL is also constructed from header fields if available.
 
-* If you have a single proxy, set `PROXIES_COUNT` to `1`. Then Sanic will use `X-Real-IP` if available or the last ip from `X-Forwarded-For`.
+Without proper precautions, a malicious client may use proxy headers to spoof its own IP. To avoid such issues, Sanic does not use any proxy headers unless explicitly enabled.
 
-* If you have multiple proxies, set `PROXIES_COUNT` equal to their number to allow Sanic to select the correct ip from `X-Forwarded-For`.
+Services behind reverse proxies must configure `FORWARDED_SECRET`, `REAL_IP_HEADER` and/or `PROXIES_COUNT`.
 
-* If you don't use a proxy, set `PROXIES_COUNT` to `0` to ignore these headers and prevent ip falsification.
+#### Forwarded header
 
-* If you don't use `X-Real-IP` (e.g. your proxy sends only `X-Forwarded-For`), set `REAL_IP_HEADER` to an empty string.
+```
+Forwarded: for="1.2.3.4";proto="https";host="yoursite.com";secret="Pr0xy", for="10.0.0.1";proto="http";host="proxy.internal"
+```
 
-The real ip will be available in `request.remote_addr`. If HTTP headers are unavailable or untrusted, `request.remote_addr` will be an empty string; in this case use `request.ip` instead.
+* Set `FORWARDED_SECRET` to a password used by the proxy ([nginx instructions](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/)).
+
+Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
+
+All other proxy headers are ignored once a trusted forwarded element is found, as it already carries complete information about the client.
+
+#### Traditional proxy headers
+
+```
+X-Real-IP: 1.2.3.4
+X-Forwarded-For: 1.2.3.4, 10.0.0.1
+X-Forwarded-Proto: https
+X-Forwarded-Host: yoursite.com
+```
+
+* Set `REAL_IP_HEADER` to `x-real-ip`, `true-client-ip`, `cf-connecting-ip` or other name of such header.
+* Set `PROXIES_COUNT` to the number of entries expected in `x-forwarded-for` (name configurable via `FORWARDED_FOR_HEADER`).
+
+If client IP is found by one of these methods, Sanic uses the following headers for URL parts:
+
+* `x-forwarded-proto`, `x-forwarded-host`, `x-forwarded-port`, `x-forwarded-path` and if necessary, `x-scheme`.
+
+#### Proxy config if ...
+
+* proxy supports `forwarded` with a secret key: set `FORWARDED_SECRET`
+* custom header with client IP: set `REAL_IP_HEADER` to the name of that header
+* `x-forwarded-for`: set `PROXIES_COUNT` to `1` for a single proxy, or a greater number to allow Sanic to select the correct IP
+* no proxies: no configuration required!
+
+#### Changes in Sanic 19.9
+
+Earlier Sanic versions had unsafe default settings. From 19.9 proxy settings must be set manually, and support for negative PROXIES_COUNT has been removed.

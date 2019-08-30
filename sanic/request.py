@@ -428,7 +428,7 @@ class Request(dict):
         :return: original client ip.
         """
         if not hasattr(self, "_remote_addr"):
-            self._remote_addr = self.forwarded.get("for") or ""
+            self._remote_addr = self.forwarded.get("for", "")
         return self._remote_addr
 
     @property

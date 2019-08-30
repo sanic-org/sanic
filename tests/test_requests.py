@@ -476,17 +476,17 @@ def test_standard_forwarded(app):
     }
 
     # Secret insulated by malformed field #1
-    headers = {"Forwarded": r'for=test;secret=mySecret;b0rked;proto=wss;'}
+    headers = {"Forwarded": 'for=test;secret=mySecret;b0rked;proto=wss;'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"for": "test", "secret": "mySecret"}
 
     # Secret insulated by malformed field #2
-    headers = {"Forwarded": r'for=test;b0rked;secret=mySecret;proto=wss'}
+    headers = {"Forwarded": 'for=test;b0rked;secret=mySecret;proto=wss'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
 
     # Unexpected termination should not lose existing acceptable values
-    headers = {"Forwarded": r'b0rked;secret=mySecret;proto=wss'}
+    headers = {"Forwarded": 'b0rked;secret=mySecret;proto=wss'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
 

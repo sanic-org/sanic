@@ -59,10 +59,11 @@ def parse_forwarded(headers, config):
         return None
     # Loop over <separator><key>=<value> elements from right to left
     ret = sep = pos = None
+    found = False
     for m in _rparam.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
         if m.start() != pos or sep != ";":
-            if secret is True:
+            if found:
                 return normalize(ret)
             ret = {}
         pos = m.end()
@@ -70,11 +71,11 @@ def parse_forwarded(headers, config):
         key = key.lower()[::-1]
         val = (val_token or val_quoted.replace('"\\', '"'))[::-1]
         ret[key] = val
-        if secret is not True and key == "secret" and val == secret:
-            secret = True
-        if secret is True and sep != ";":
+        if key == "secret" and val == secret:
+            found = True
+        if found and sep != ";":
             return normalize(ret)
-    return normalize(ret) if secret is True else None
+    return normalize(ret) if found else None
 
 
 def parse_xforwarded(headers, config):
@@ -109,7 +110,7 @@ def parse_xforwarded(headers, config):
     return normalize({"for": addr, **{k: v for k, v in other if v}})
 
 
-_ipv6 = r"(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
+_ipv6 = "(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
 _ipv6_re = re.compile(_ipv6)
 _host_re = re.compile(
     r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?"

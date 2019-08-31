@@ -90,12 +90,13 @@ def parse_xforwarded(headers, config):
     proxies_count = config.PROXIES_COUNT
     addr = real_ip_header and headers.get(real_ip_header)
     if not addr and proxies_count:
+        assert proxies_count > 0
         try:
             # Combine, split and filter multiple headers' entries
             forwarded_for = headers.getall(config.FORWARDED_FOR_HEADER)
             proxies = (p.strip() for h in forwarded_for for p in h.split(","))
             proxies = [p for p in proxies if p]
-            addr = proxies[-proxies_count] if proxies_count > 0 else proxies[0]
+            addr = proxies[-proxies_count]
         except (KeyError, IndexError):
             pass
     # No processing of other headers if no address is found

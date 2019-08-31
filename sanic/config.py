@@ -27,9 +27,9 @@ DEFAULT_CONFIG = {
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "ACCESS_LOG": True,
     "FORWARDED_SECRET": None,
-    "PROXIES_COUNT": -1,
+    "REAL_IP_HEADER": None,
+    "PROXIES_COUNT": None,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
-    "REAL_IP_HEADER": "X-Real-IP",
 }
 
 

@@ -406,8 +406,10 @@ def test_standard_forwarded(app):
     async def handler(request):
         return json(request.forwarded)
 
-    # Without FORWARDED_SECRET, X-headers should be respected
-    app.config.PROXIES_COUNT = -1
+    # Without matching FORWARDED_SECRET, X-headers should be respected
+    app.config.FORWARDED_SECRET = "don't have this"
+    app.config.PROXIES_COUNT = 1
+    app.config.REAL_IP_HEADER = "x-real-ip"
     headers = {
         "Forwarded": (
             'for=1.1.1.1, for=injected;host="'
@@ -512,6 +514,7 @@ def test_standard_forwarded(app):
 
 def test_remote_addr_with_two_proxies(app):
     app.config.PROXIES_COUNT = 2
+    app.config.REAL_IP_HEADER = "x-real-ip"
 
     @app.route("/")
     async def handler(request):
@@ -552,6 +555,7 @@ def test_remote_addr_with_two_proxies(app):
 @pytest.mark.asyncio
 async def test_remote_addr_with_two_proxies_asgi(app):
     app.config.PROXIES_COUNT = 2
+    app.config.REAL_IP_HEADER = "x-real-ip"
 
     @app.route("/")
     async def handler(request):
@@ -587,57 +591,6 @@ async def test_remote_addr_with_two_proxies_asgi(app):
     request, response = await app.asgi_client.get("/", headers=headers)
     assert request.remote_addr == "127.0.0.1"
     assert response.text == "127.0.0.1"
-
-
-def test_remote_addr_with_infinite_number_of_proxies(app):
-    app.config.PROXIES_COUNT = -1
-
-    @app.route("/")
-    async def handler(request):
-        return text(request.remote_addr)
-
-    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
-    request, response = app.test_client.get("/", headers=headers)
-    assert request.remote_addr == "127.0.0.2"
-    assert response.text == "127.0.0.2"
-
-    headers = {"X-Forwarded-For": "127.0.1.1"}
-    request, response = app.test_client.get("/", headers=headers)
-    assert request.remote_addr == "127.0.1.1"
-    assert response.text == "127.0.1.1"
-
-    headers = {
-        "X-Forwarded-For": "127.0.0.5, 127.0.0.4, 127.0.0.3, 127.0.0.2, 127.0.0.1"
-    }
-    request, response = app.test_client.get("/", headers=headers)
-    assert request.remote_addr == "127.0.0.5"
-    assert response.text == "127.0.0.5"
-
-
-@pytest.mark.asyncio
-async def test_remote_addr_with_infinite_number_of_proxies_asgi(app):
-    app.config.PROXIES_COUNT = -1
-
-    @app.route("/")
-    async def handler(request):
-        return text(request.remote_addr)
-
-    headers = {"X-Real-IP": "127.0.0.2", "X-Forwarded-For": "127.0.1.1"}
-    request, response = await app.asgi_client.get("/", headers=headers)
-    assert request.remote_addr == "127.0.0.2"
-    assert response.text == "127.0.0.2"
-
-    headers = {"X-Forwarded-For": "127.0.1.1"}
-    request, response = await app.asgi_client.get("/", headers=headers)
-    assert request.remote_addr == "127.0.1.1"
-    assert response.text == "127.0.1.1"
-
-    headers = {
-        "X-Forwarded-For": "127.0.0.5, 127.0.0.4, 127.0.0.3, 127.0.0.2, 127.0.0.1"
-    }
-    request, response = await app.asgi_client.get("/", headers=headers)
-    assert request.remote_addr == "127.0.0.5"
-    assert response.text == "127.0.0.5"
 
 
 def test_remote_addr_without_proxy(app):
@@ -743,6 +696,7 @@ def test_forwarded_scheme(app):
     async def handler(request):
         return text(request.remote_addr)
 
+    app.config.PROXIES_COUNT = 1
     request, response = app.test_client.get("/")
     assert request.scheme == "http"
 
@@ -1817,6 +1771,7 @@ def test_request_server_name_forwarded(app):
     def handler(request):
         return text("OK")
 
+    app.config.PROXIES_COUNT = 1
     request, response = app.test_client.get(
         "/",
         headers={"Host": "my-server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Host": "your-server"},
@@ -1859,6 +1814,7 @@ def test_request_server_port_forwarded(app):
     def handler(request):
         return text("OK")
 
+    app.config.PROXIES_COUNT = 1
     request, response = app.test_client.get(
         "/", headers={"Host": "my-server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Port": "4444"}
     )
@@ -1902,6 +1858,7 @@ def test_url_for_with_forwarded_request(app):
         return text("OK")
 
     app.config.SERVER_NAME = "my-server"
+    app.config.PROXIES_COUNT = 1
     request, response = app.test_client.get(
         "/", headers={"X-Forwarded-For": "127.1.2.3", "X-Forwarded-Proto": "https", "X-Forwarded-Port": "6789"}
     )

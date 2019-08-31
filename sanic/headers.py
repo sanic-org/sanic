@@ -63,8 +63,10 @@ def parse_forwarded(headers, config):
     for m in _rparam.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
         if m.start() != pos or sep != ";":
+            # Was the previous element (from right) what we wanted?
             if found:
                 return normalize(ret)
+            # Clear values and parse as new element
             ret = {}
         pos = m.end()
         val_token, val_quoted, key, sep = m.groups()
@@ -73,28 +75,30 @@ def parse_forwarded(headers, config):
         ret[key] = val
         if key == "secret" and val == secret:
             found = True
+        # Check if we would return on next round, to avoid useless parse
         if found and sep != ";":
             return normalize(ret)
+    # If there is garbage on the beginning of the header, we may miss the
+    # returns inside the loop and end up here, so check if found and return
+    # accordingly:
     return normalize(ret) if found else None
 
 
 def parse_xforwarded(headers, config):
-    """Parse X-Real-IP, X-Scheme and X-Forwarded-* headers."""
+    """Parse traditional proxy headers."""
+    real_ip_header = config.REAL_IP_HEADER
     proxies_count = config.PROXIES_COUNT
-    if not proxies_count:
-        return None
-    h1, h2 = config.REAL_IP_HEADER, config.FORWARDED_FOR_HEADER
-    addr = h1 and headers.get(h1)
-    forwarded_for = h2 and headers.getall(h2, None)
-    if not addr and forwarded_for:
-        assert proxies_count == -1 or proxies_count > 0, config.PROXIES_COUNT
-        # Combine, split and filter multiple headers' entries
-        proxies = (p.strip() for h in forwarded_for for p in h.split(","))
-        proxies = [p for p in proxies if p]
+    addr = real_ip_header and headers.get(real_ip_header)
+    if not addr and proxies_count:
         try:
+            # Combine, split and filter multiple headers' entries
+            forwarded_for = headers.getall(config.FORWARDED_FOR_HEADER)
+            proxies = (p.strip() for h in forwarded_for for p in h.split(","))
+            proxies = [p for p in proxies if p]
             addr = proxies[-proxies_count] if proxies_count > 0 else proxies[0]
-        except IndexError:
-            return None
+        except (KeyError, IndexError):
+            pass
+    # No processing of other headers if no address is found
     if not addr:
         return None
     other = (
@@ -128,7 +132,6 @@ def parse_host(host):
 def bracketv6(addr):
     return f"[{addr}]" if _ipv6_re.fullmatch(addr) else addr
 
-
 def normalize(fwd: dict) -> dict:
     """Normalize and convert values extracted from forwarded headers.
     Modifies fwd in place and returns the same object.
@@ -143,7 +146,7 @@ def normalize(fwd: dict) -> dict:
         try:
             fwd["port"] = int(fwd["port"])
         except ValueError:
-            fwd.pop("port", None)
+            del fwd["port"]
     if "host" in fwd:
         host, port = parse_host(fwd["host"])
         if host:

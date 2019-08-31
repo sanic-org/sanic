@@ -133,6 +133,7 @@ def parse_host(host):
 def bracketv6(addr):
     return f"[{addr}]" if _ipv6_re.fullmatch(addr) else addr
 
+
 def normalize(fwd: dict) -> dict:
     """Normalize and convert values extracted from forwarded headers.
     Modifies fwd in place and returns the same object.

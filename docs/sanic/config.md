@@ -165,12 +165,13 @@ Services behind reverse proxies must configure `FORWARDED_SECRET`, `REAL_IP_HEAD
 #### Forwarded header
 
 ```
-Forwarded: for="1.2.3.4";proto="https";host="yoursite.com";secret="Pr0xy", for="10.0.0.1";proto="http";host="proxy.internal"
+Forwarded: for="1.2.3.4"; proto="https"; host="yoursite.com"; secret="Pr0xy",
+           for="10.0.0.1"; by="_1234proxy"; proto="http"; host="proxy.internal"
 ```
 
-* Set `FORWARDED_SECRET` to a password used by the proxy ([nginx instructions](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/)).
+* Set `FORWARDED_SECRET` to an identifier used by the proxy of interest.
 
-Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
+Secrets are looked for in keys `secret` and `by`, with the intent of securely identifying a specific proxy server. Given the above header, secret `Pr0xy` would use the information on the first line and secret `_1234proxy` would use the second line. Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
 
 All other proxy headers are ignored once a trusted forwarded element is found, as it already carries complete information about the client.
 
@@ -190,13 +191,17 @@ If client IP is found by one of these methods, Sanic uses the following headers 
 
 * `x-forwarded-proto`, `x-forwarded-host`, `x-forwarded-port`, `x-forwarded-path` and if necessary, `x-scheme`.
 
-#### Proxy config if ...
+#### Proxy config if using ...
 
-* proxy supports `forwarded` with a secret key: set `FORWARDED_SECRET`
-* custom header with client IP: set `REAL_IP_HEADER` to the name of that header
+* a proxy that supports `forwarded`: set `FORWARDED_SECRET` to the value that the proxy inserts in the header
+  * Apache Traffic Server: `CONFIG proxy.config.http.insert_forwarded STRING for|proto|host|by=_secret`
+  * NGHTTPX: `nghttpx --add-forwarded=for,proto,host,by --forwarded-for=ip --forwarded-by=_secret`
+  * NGINX: https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/
+
+* a custom header with client IP: set `REAL_IP_HEADER` to the name of that header
 * `x-forwarded-for`: set `PROXIES_COUNT` to `1` for a single proxy, or a greater number to allow Sanic to select the correct IP
 * no proxies: no configuration required!
 
 #### Changes in Sanic 19.9
 
-Earlier Sanic versions had unsafe default settings. From 19.9 proxy settings must be set manually, and support for negative PROXIES_COUNT has been removed.
+Earlier Sanic versions had unsafe default settings. From 19.9 onwards proxy settings must be set manually, and support for negative PROXIES_COUNT has been removed.

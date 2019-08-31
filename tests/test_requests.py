@@ -406,8 +406,7 @@ def test_standard_forwarded(app):
     async def handler(request):
         return json(request.forwarded)
 
-    # Without matching FORWARDED_SECRET, X-headers should be respected
-    app.config.FORWARDED_SECRET = "don't have this"
+    # Without configured FORWARDED_SECRET, x-headers should be respected
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     headers = {
@@ -510,6 +509,12 @@ def test_standard_forwarded(app):
     headers = {"Forwarded": 'host="a_:2";port=1;secret=mySecret'}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"port": 1, "secret": "mySecret"}
+
+    # Using "by" field as secret
+    app.config.FORWARDED_SECRET = "_proxy-secret"
+    headers = {"Forwarded": 'for=1.2.3.4; by=_proxy-secret'}
+    request, response = app.test_client.get("/", headers=headers)
+    assert response.json == {"for": "1.2.3.4", "by": "_proxy-secret"}
 
 
 def test_remote_addr_with_two_proxies(app):

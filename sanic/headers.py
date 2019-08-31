@@ -73,7 +73,7 @@ def parse_forwarded(headers, config):
         key = key.lower()[::-1]
         val = (val_token or val_quoted.replace('"\\', '"'))[::-1]
         ret[key] = val
-        if key == "secret" and val == secret:
+        if key in ("secret", "by") and val == secret:
             found = True
         # Check if we would return on next round, to avoid useless parse
         if found and sep != ";":

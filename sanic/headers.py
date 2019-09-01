@@ -107,6 +107,7 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
     # No processing of other headers if no address is found
     if not addr:
         return None
+
     def options():
         yield "for", addr
         for key, header in (
@@ -117,6 +118,7 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
             ("path", "x-forwarded-path"),
         ):
             yield key, headers.get(header)
+
     return fwd_normalize(options())
 
 

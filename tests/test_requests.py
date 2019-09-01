@@ -512,6 +512,118 @@ def test_standard_forwarded(app):
     assert response.json == {"for": "1.2.3.4", "by": "_proxySecret"}
 
 
+@pytest.mark.asyncio
+async def test_standard_forwarded_asgi(app):
+    @app.route("/")
+    async def handler(request):
+        return json(request.forwarded)
+
+    # Without configured FORWARDED_SECRET, x-headers should be respected
+    app.config.PROXIES_COUNT = 1
+    app.config.REAL_IP_HEADER = "x-real-ip"
+    headers = {
+        "Forwarded": (
+            'for=1.1.1.1, for=injected;host="'
+            ', for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret'
+            ',for=broken;;secret=b0rked'
+            ', for=127.0.0.3;scheme=http;port=1234'
+        ),
+        "X-Real-IP": "127.0.0.2",
+        "X-Forwarded-For": "127.0.1.1",
+        "X-Scheme": "ws",
+    }
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == { "for": "127.0.0.2", "proto": "ws" }
+    assert request.remote_addr == "127.0.0.2"
+    assert request.scheme == "ws"
+    assert request.server_port == 80
+
+    app.config.FORWARDED_SECRET = "mySecret"
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {
+        "for": "[::2]",
+        "proto": "https",
+        "host": "me.tld",
+        "path": "/app/",
+        "secret": "mySecret"
+    }
+    assert request.remote_addr == "[::2]"
+    assert request.server_name == "me.tld"
+    assert request.scheme == "https"
+    assert request.server_port == 443
+
+    # Empty Forwarded header -> use X-headers
+    headers["Forwarded"] = ""
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == { "for": "127.0.0.2", "proto": "ws" }
+
+    # Header present but not matching anything
+    request, response = await app.asgi_client.get("/", headers={"Forwarded": "."})
+    assert response.json() == {}
+
+    # Forwarded header present but no matching secret -> use X-headers
+    headers = {
+        "Forwarded": 'for=1.1.1.1;secret=x, for=127.0.0.1',
+        "X-Real-IP": "127.0.0.2"
+    }
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {"for": "127.0.0.2"}
+    assert request.remote_addr == "127.0.0.2"
+
+    # Different formatting and hitting both ends of the header
+    headers = {"Forwarded": 'Secret="mySecret";For=127.0.0.4;Port=1234'}
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {
+        "for": "127.0.0.4",
+        "port": 1234,
+        "secret": "mySecret"
+    }
+
+    # Test escapes (modify this if you see anyone implementing quoted-pairs)
+    headers = {"Forwarded": 'for=test;quoted="\\,x=x;y=\\";secret=mySecret'}
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {
+        "for": "test",
+        "quoted": '\\,x=x;y=\\',
+        "secret": "mySecret"
+    }
+
+    # Secret insulated by malformed field #1
+    headers = {"Forwarded": 'for=test;secret=mySecret;b0rked;proto=wss;'}
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {"for": "test", "secret": "mySecret"}
+
+    # Secret insulated by malformed field #2
+    headers = {"Forwarded": 'for=test;b0rked;secret=mySecret;proto=wss'}
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {"proto": "wss", "secret": "mySecret"}
+
+    # Unexpected termination should not lose existing acceptable values
+    headers = {"Forwarded": 'b0rked;secret=mySecret;proto=wss'}
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {"proto": "wss", "secret": "mySecret"}
+
+    # Field normalization
+    headers = {
+        "Forwarded": 'PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";'
+          'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
+    }
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {
+        "proto": "wss",
+        "by": "[cafe::8000]",
+        "host": "a:2",
+        "path": '/With Spaces"Quoted"/sanicApp?key=val',
+        "secret": "mySecret",
+    }
+
+    # Using "by" field as secret
+    app.config.FORWARDED_SECRET = "_proxySecret"
+    headers = {"Forwarded": 'for=1.2.3.4; by=_proxySecret'}
+    request, response = await app.asgi_client.get("/", headers=headers)
+    assert response.json() == {"for": "1.2.3.4", "by": "_proxySecret"}
+
+
 def test_remote_addr_with_two_proxies(app):
     app.config.PROXIES_COUNT = 2
     app.config.REAL_IP_HEADER = "x-real-ip"

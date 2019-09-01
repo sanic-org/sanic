@@ -1,6 +1,8 @@
 import re
+
 from typing import Dict, Iterable, Optional, Tuple
 from urllib.parse import unquote
+
 
 Options = Dict[str, str]  # key=value fields in various headers
 OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys

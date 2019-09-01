@@ -166,12 +166,14 @@ Services behind reverse proxies must configure `FORWARDED_SECRET`, `REAL_IP_HEAD
 
 ```
 Forwarded: for="1.2.3.4"; proto="https"; host="yoursite.com"; secret="Pr0xy",
-           for="10.0.0.1"; by="_1234proxy"; proto="http"; host="proxy.internal"
+           for="10.0.0.1"; proto="http"; host="proxy.internal"; by="_1234proxy"
 ```
 
 * Set `FORWARDED_SECRET` to an identifier used by the proxy of interest.
 
-Secrets are looked for in keys `secret` and `by`, with the intent of securely identifying a specific proxy server. Given the above header, secret `Pr0xy` would use the information on the first line and secret `_1234proxy` would use the second line. Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
+The secret is used to securely identify a specific proxy server. Given the above header, secret `Pr0xy` would use the information on the first line and secret `_1234proxy` would use the second line. The secret must exactly match the value of `secret` or `by`. A secret in `by` must begin with an underscore and use only characters specified in [RFC 7239 section 6.3](https://tools.ietf.org/html/rfc7239#section-6.3), while `secret` has no such restrictions.
+
+Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
 
 All other proxy headers are ignored once a trusted forwarded element is found, as it already carries complete information about the client.
 
@@ -196,7 +198,9 @@ If client IP is found by one of these methods, Sanic uses the following headers 
 * a proxy that supports `forwarded`: set `FORWARDED_SECRET` to the value that the proxy inserts in the header
   * Apache Traffic Server: `CONFIG proxy.config.http.insert_forwarded STRING for|proto|host|by=_secret`
   * NGHTTPX: `nghttpx --add-forwarded=for,proto,host,by --forwarded-for=ip --forwarded-by=_secret`
-  * NGINX: https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/
+  * NGINX: after [the official instructions](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/), add anywhere in your config:
+
+        proxy_set_header Forwarded "$proxy_add_forwarded;by=\"_$server_name\";proto=$scheme;host=\"$http_host\";path=\"$request_uri\";secret=_secret";
 
 * a custom header with client IP: set `REAL_IP_HEADER` to the name of that header
 * `x-forwarded-for`: set `PROXIES_COUNT` to `1` for a single proxy, or a greater number to allow Sanic to select the correct IP

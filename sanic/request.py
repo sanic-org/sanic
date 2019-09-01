@@ -378,8 +378,8 @@ class Request(dict):
     @property
     def server_name(self):
         """
-        Attempt to get the server's hostname in this order:
-        `config.SERVER_NAME`, `forwarded` header, `x-forwarded-host` header,
+        Attempt to get the server's external hostname in this order:
+        `config.SERVER_NAME`, proxied or direct Host headers
         :func:`Request.host`
 
         :return: the server name without port number
@@ -389,7 +389,7 @@ class Request(dict):
         if server_name:
             host = server_name.split("//", 1)[-1].split("/", 1)[0]
             return parse_host(host)[0]
-        return self.forwarded.get("host") or parse_host(self.host)[0]
+        return parse_host(self.host)[0]
 
     @property
     def forwarded(self):
@@ -404,8 +404,9 @@ class Request(dict):
     @property
     def server_port(self):
         """
-        Attempt to get the server's port in this order:
-        `forwarded` header, `x-forwarded-port` header, :func:`Request.host`,
+        Attempt to get the server's external port number in this order:
+        `config.SERVER_NAME`, proxied or direct Host headers
+        :func:`Request.host`,
         actual port used by the transport layer socket.
         :return: server port
         :rtype: int
@@ -462,12 +463,10 @@ class Request(dict):
     @property
     def host(self):
         """
-        :return: the Host specified in the header, may contain a port number.
+        :return: proxied or direct Host header. Hostname and port number may be
+          separated by sanic.headers.parse_host(request.host).
         """
-        # it appears that httptools doesn't return the host
-        # so pull it from the headers
-
-        return self.headers.get("Host", "")
+        return self.forwarded.get("host", self.headers.get("Host", ""))
 
     @property
     def content_type(self):

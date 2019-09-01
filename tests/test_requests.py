@@ -491,30 +491,25 @@ def test_standard_forwarded(app):
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
 
-    # Field normalization #1
+    # Field normalization
     headers = {
-        "Forwarded": 'PROTO=WSS;BY="BAD::F00D";FOR="CAFE::1";PORT=X;HOST="a:2";SECRET=mySecret'
+        "Forwarded": 'PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";'
+          'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
     }
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {
         "proto": "wss",
-        "by": "[bad::f00d]",
-        "for": "[cafe::1]",
-        "host": "a",
-        "port": 2,
-        "secret": "mySecret"
+        "by": "[cafe::8000]",
+        "host": "a:2",
+        "path": '/With Spaces"Quoted"/sanicApp?key=val',
+        "secret": "mySecret",
     }
 
-    # Field normalization #2 (remove malformed host and keep separate port)
-    headers = {"Forwarded": 'host="a_:2";port=1;secret=mySecret'}
-    request, response = app.test_client.get("/", headers=headers)
-    assert response.json == {"port": 1, "secret": "mySecret"}
-
     # Using "by" field as secret
-    app.config.FORWARDED_SECRET = "_proxy-secret"
-    headers = {"Forwarded": 'for=1.2.3.4; by=_proxy-secret'}
+    app.config.FORWARDED_SECRET = "_proxySecret"
+    headers = {"Forwarded": 'for=1.2.3.4; by=_proxySecret'}
     request, response = app.test_client.get("/", headers=headers)
-    assert response.json == {"for": "1.2.3.4", "by": "_proxy-secret"}
+    assert response.json == {"for": "1.2.3.4", "by": "_proxySecret"}
 
 
 def test_remote_addr_with_two_proxies(app):

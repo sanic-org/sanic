@@ -1,12 +1,18 @@
 import re
-import typing
+from typing import Dict, Iterable, Optional, Tuple
+from urllib.parse import unquote
 
-
-Options = typing.Dict[str, str]  # key=value fields in various headers
+Options = Dict[str, str]  # key=value fields in various headers
+OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys
 
 _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
 _param = re.compile(fr";\s*{_token}=(?:{_token}|{_quoted})", re.ASCII)
 _firefox_quote_escape = re.compile(r'\\"(?!; |\s*$)')
+_ipv6 = "(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
+_ipv6_re = re.compile(_ipv6)
+_host_re = re.compile(
+    r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?"
+)
 
 # RFC's quoted-pair escapes are mostly ignored by browsers. Chrome, Firefox and
 # curl all have different escaping, that we try to handle as well as possible,
@@ -15,7 +21,7 @@ _firefox_quote_escape = re.compile(r'\\"(?!; |\s*$)')
 # For more information, consult ../tests/test_requests.py
 
 
-def parse_content_header(value: str) -> typing.Tuple[str, Options]:
+def parse_content_header(value: str) -> Tuple[str, Options]:
     """Parse content-type and content-disposition header values.
 
     E.g. 'form-data; name=upload; filename=\"file.txt\"' to
@@ -45,10 +51,10 @@ def parse_content_header(value: str) -> typing.Tuple[str, Options]:
 _rparam = re.compile(f"(?:{_token}|{_quoted})={_token}\\s*($|[;,])", re.ASCII)
 
 
-def parse_forwarded(headers, config):
-    """Parse HTTP Forwarded headers.
-    Accepts only the last element with secret=`config.FORWARDED_SECRET`
-    :return: dict with matching keys (lowercase) and values, or None.
+def parse_forwarded(headers, config) -> Optional[Options]:
+    """Parse RFC 7239 Forwarded headers.
+    The value of `by` or `secret` must match `config.FORWARDED_SECRET`
+    :return: dict with keys and values, or None if nothing matched
     """
     header = headers.getall("forwarded", None)
     secret = config.FORWARDED_SECRET
@@ -58,33 +64,32 @@ def parse_forwarded(headers, config):
     if secret not in header:
         return None
     # Loop over <separator><key>=<value> elements from right to left
-    ret = sep = pos = None
+    sep = pos = None
+    options = []
     found = False
     for m in _rparam.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
         if m.start() != pos or sep != ";":
             # Was the previous element (from right) what we wanted?
             if found:
-                return normalize(ret)
+                break
             # Clear values and parse as new element
-            ret = {}
+            del options[:]
         pos = m.end()
         val_token, val_quoted, key, sep = m.groups()
         key = key.lower()[::-1]
         val = (val_token or val_quoted.replace('"\\', '"'))[::-1]
-        ret[key] = val
+        options.append((key, val))
         if key in ("secret", "by") and val == secret:
             found = True
         # Check if we would return on next round, to avoid useless parse
         if found and sep != ";":
-            return normalize(ret)
-    # If there is garbage on the beginning of the header, we may miss the
-    # returns inside the loop and end up here, so check if found and return
-    # accordingly:
-    return normalize(ret) if found else None
+            break
+    # If secret was found, return the matching options in left-to-right order
+    return fwd_normalize(reversed(options)) if found else None
 
 
-def parse_xforwarded(headers, config):
+def parse_xforwarded(headers, config) -> Optional[Options]:
     """Parse traditional proxy headers."""
     real_ip_header = config.REAL_IP_HEADER
     proxies_count = config.PROXIES_COUNT
@@ -102,59 +107,57 @@ def parse_xforwarded(headers, config):
     # No processing of other headers if no address is found
     if not addr:
         return None
-    other = (
-        (key, headers.get(header))
+    def options():
+        yield "for", addr
         for key, header in (
             ("proto", "x-scheme"),
             ("proto", "x-forwarded-proto"),  # Overrides X-Scheme if present
             ("host", "x-forwarded-host"),
             ("port", "x-forwarded-port"),
             ("path", "x-forwarded-path"),
-        )
-    )
-    return normalize({"for": addr, **{k: v for k, v in other if v}})
+        ):
+            yield key, headers.get(header)
+    return fwd_normalize(options())
 
 
-_ipv6 = "(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
-_ipv6_re = re.compile(_ipv6)
-_host_re = re.compile(
-    r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?"
-)
+def fwd_normalize(fwd: OptionsIterable) -> Options:
+    """Normalize and convert values extracted from forwarded headers."""
+    ret = {}
+    for key, val in fwd:
+        if val is not None:
+            try:
+                if key in ("by", "for"):
+                    ret[key] = fwd_normalize_address(val)
+                elif key in ("host", "proto"):
+                    ret[key] = val.lower()
+                elif key == "port":
+                    ret[key] = int(val)
+                elif key == "path":
+                    ret[key] = unquote(val)
+                else:
+                    ret[key] = val
+            except ValueError:
+                pass
+    return ret
 
 
-def parse_host(host):
+def fwd_normalize_address(addr: str) -> str:
+    """Normalize address fields of proxy headers."""
+    if addr == "unknown":
+        raise ValueError()  # omit unknown value identifiers
+    if addr.startswith("_"):
+        return addr  # do not lower-case obfuscated strings
+    if _ipv6_re.fullmatch(addr):
+        addr = f"[{addr}]"  # bracket IPv6
+    return addr.lower()
+
+
+def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
+    """Split host:port into hostname and port.
+    :return: None in place of missing elements
+    """
     m = _host_re.fullmatch(host)
     if not m:
         return None, None
     host, port = m.groups()
     return host.lower(), port and int(port)
-
-
-def bracketv6(addr):
-    return f"[{addr}]" if _ipv6_re.fullmatch(addr) else addr
-
-
-def normalize(fwd: dict) -> dict:
-    """Normalize and convert values extracted from forwarded headers.
-    Modifies fwd in place and returns the same object.
-    """
-    if "proto" in fwd:
-        fwd["proto"] = fwd["proto"].lower()
-    if "by" in fwd:
-        fwd["by"] = bracketv6(fwd["by"]).lower()
-    if "for" in fwd:
-        fwd["for"] = bracketv6(fwd["for"]).lower()
-    if "port" in fwd:
-        try:
-            fwd["port"] = int(fwd["port"])
-        except ValueError:
-            del fwd["port"]
-    if "host" in fwd:
-        host, port = parse_host(fwd["host"])
-        if host:
-            fwd["host"] = host
-            if port:
-                fwd["port"] = port
-        else:
-            del fwd["host"]
-    return fwd

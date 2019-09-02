@@ -220,22 +220,28 @@ class HttpProtocol:
             else:
                 self.set_timeout("response")
             headers = None
+            _response = None
+            # request.respond()
+            async def respond(response=None, *, status=200, headers=None, content_type="text/html"):
+                nonlocal _response
+                if _response:
+                    raise ServerError("Duplicate responses for a single request!")
+                if _response is None:
+                    _response = NewStreamingHTTPResponse(self.stream)
+                    await _response.write_headers(status, headers, content_type)
+                    return _response
+                _response = response
+                await self.stream.send_all(
+                    response.output("1.1", self.keep_alive, self.keep_alive_timeout)
+                )
 
-            # Process response
-            request.respond = self.h1_respond
+            request.respond = respond
             await self.request_handler(request)
+            if not _response:
+                raise ServerError("Request handler made no response.")
+            if hasattr(_response, "aclose"):
+                await _response.aclose()
             self.set_timeout("request")
-
-    async def h1_respond(self, response):
-        # TODO: Prevent multiple responses
-        if isinstance(response, dict):
-            headers = response
-            response = NewStreamingHTTPResponse(self.stream)
-            await response.write_headers(headers[":status"], headers, headers["content-type"])
-            return response
-        await self.stream.send_all(
-            response.output("1.1", self.keep_alive, self.keep_alive_timeout)
-        )
 
     async def h2_sender(self):
         async for _ in self.can_send:

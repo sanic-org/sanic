@@ -15,8 +15,8 @@ from uuid import uuid4
 
 from httptools import HttpRequestParser
 from httptools.parser.errors import HttpParserError
-from multidict import CIMultiDict
 
+from sanic.compat import Header
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -33,7 +33,8 @@ from sanic.response import HTTPResponse
 try:
     import uvloop
 
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
 
@@ -307,7 +308,7 @@ class HttpProtocol(asyncio.Protocol):
     def on_headers_complete(self):
         self.request = self.request_class(
             url_bytes=self.url,
-            headers=CIMultiDict(self.headers),
+            headers=Header(self.headers),
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode(),
             transport=self.transport,

@@ -7,24 +7,36 @@ matrix:
   include:
     - env: TOX_ENV=py36
       python: 3.6
+      name: "Python 3.6 with Extensions"
     - env: TOX_ENV=py36-no-ext
       python: 3.6
+      name: "Python 3.6 without Extensions"
     - env: TOX_ENV=py37
       python: 3.7
       dist: xenial
       sudo: true
+      name: "Python 3.7 with Extensions"
     - env: TOX_ENV=py37-no-ext
       python: 3.7
       dist: xenial
       sudo: true
+      name: "Python 3.7 without Extensions"
     - env: TOX_ENV=lint
       python: 3.6
+      name: "Python 3.6 Linter checks"
     - env: TOX_ENV=check
       python: 3.6
+      name: "Python 3.6 Package checks"
     - env: TOX_ENV=security
       python: 3.7
       dist: xenial
       sudo: true
+      name: "Python 3.7 Bandit security scan"
+    - env: TOX_ENV=docs
+      python: 3.7
+      dist: xenial
+      sudo: true
+      name: "Python 3.7 Documentation tests"
 install:
   - pip install -U tox
   - pip install codecov

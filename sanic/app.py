@@ -1309,6 +1309,12 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
+        if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
+            raise ValueError(
+                "PROXIES_COUNT cannot be negative. "
+                "https://sanic.readthedocs.io/en/latest/sanic/config.html"
+                "#proxy-configuration"
+            )
 
         self.error_handler.debug = debug
         self.debug = debug

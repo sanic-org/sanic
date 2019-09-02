@@ -26,9 +26,10 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "ACCESS_LOG": True,
-    "PROXIES_COUNT": -1,
+    "FORWARDED_SECRET": None,
+    "REAL_IP_HEADER": None,
+    "PROXIES_COUNT": None,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
-    "REAL_IP_HEADER": "X-Real-IP",
 }
 
 

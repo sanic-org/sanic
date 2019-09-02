@@ -11,7 +11,12 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 
 from sanic.exceptions import InvalidUsage
-from sanic.headers import parse_content_header
+from sanic.headers import (
+    parse_content_header,
+    parse_forwarded,
+    parse_host,
+    parse_xforwarded,
+)
 from sanic.log import error_logger, logger
 
 
@@ -87,6 +92,7 @@ class Request(dict):
         "parsed_files",
         "parsed_form",
         "parsed_json",
+        "parsed_forwarded",
         "raw_url",
         "stream",
         "transport",
@@ -107,6 +113,7 @@ class Request(dict):
 
         # Init but do not inhale
         self.body_init()
+        self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -371,72 +378,58 @@ class Request(dict):
     @property
     def server_name(self):
         """
-        Attempt to get the server's hostname in this order:
-        `config.SERVER_NAME`, `x-forwarded-host` header, :func:`Request.host`
+        Attempt to get the server's external hostname in this order:
+        `config.SERVER_NAME`, proxied or direct Host headers
+        :func:`Request.host`
 
         :return: the server name without port number
         :rtype: str
         """
-        return (
-            self.app.config.get("SERVER_NAME")
-            or self.headers.get("x-forwarded-host")
-            or self.host.split(":")[0]
-        )
+        server_name = self.app.config.get("SERVER_NAME")
+        if server_name:
+            host = server_name.split("//", 1)[-1].split("/", 1)[0]
+            return parse_host(host)[0]
+        return parse_host(self.host)[0]
+
+    @property
+    def forwarded(self):
+        if self.parsed_forwarded is None:
+            self.parsed_forwarded = (
+                parse_forwarded(self.headers, self.app.config)
+                or parse_xforwarded(self.headers, self.app.config)
+                or {}
+            )
+        return self.parsed_forwarded
 
     @property
     def server_port(self):
         """
-        Attempt to get the server's port in this order:
-        `x-forwarded-port` header, :func:`Request.host`, actual port used by
-        the transport layer socket.
+        Attempt to get the server's external port number in this order:
+        `config.SERVER_NAME`, proxied or direct Host headers
+        :func:`Request.host`,
+        actual port used by the transport layer socket.
         :return: server port
         :rtype: int
         """
-        forwarded_port = self.headers.get("x-forwarded-port") or (
-            self.host.split(":")[1] if ":" in self.host else None
+        if self.forwarded:
+            return self.forwarded.get("port") or (
+                80 if self.scheme in ("http", "ws") else 443
+            )
+        return (
+            parse_host(self.host)[1]
+            or self.transport.get_extra_info("sockname")[1]
         )
-        if forwarded_port:
-            return int(forwarded_port)
-        else:
-            port = self.transport.get_extra_info("sockname")[1]
-            return port
 
     @property
     def remote_addr(self):
-        """Attempt to return the original client ip based on X-Forwarded-For
-        or X-Real-IP. If HTTP headers are unavailable or untrusted, returns
-        an empty string.
+        """Attempt to return the original client ip based on `forwarded`,
+        `x-forwarded-for` or `x-real-ip`. If HTTP headers are unavailable or
+        untrusted, returns an empty string.
 
         :return: original client ip.
         """
         if not hasattr(self, "_remote_addr"):
-            if self.app.config.PROXIES_COUNT == 0:
-                self._remote_addr = ""
-            elif self.app.config.REAL_IP_HEADER and self.headers.get(
-                self.app.config.REAL_IP_HEADER
-            ):
-                self._remote_addr = self.headers[
-                    self.app.config.REAL_IP_HEADER
-                ]
-            elif self.app.config.FORWARDED_FOR_HEADER:
-                forwarded_for = self.headers.get(
-                    self.app.config.FORWARDED_FOR_HEADER, ""
-                ).split(",")
-                remote_addrs = [
-                    addr
-                    for addr in [addr.strip() for addr in forwarded_for]
-                    if addr
-                ]
-                if self.app.config.PROXIES_COUNT == -1:
-                    self._remote_addr = remote_addrs[0]
-                elif len(remote_addrs) >= self.app.config.PROXIES_COUNT:
-                    self._remote_addr = remote_addrs[
-                        -self.app.config.PROXIES_COUNT
-                    ]
-                else:
-                    self._remote_addr = ""
-            else:
-                self._remote_addr = ""
+            self._remote_addr = self.forwarded.get("for", "")
         return self._remote_addr
 
     @property
@@ -444,14 +437,13 @@ class Request(dict):
         """
         Attempt to get the request scheme.
         Seeking the value in this order:
-        `x-forwarded-proto` header, `x-scheme` header, the sanic app itself.
+        `forwarded` header, `x-forwarded-proto` header,
+        `x-scheme` header, the sanic app itself.
 
         :return: http|https|ws|wss or arbitrary value given by the headers.
         :rtype: str
         """
-        forwarded_proto = self.headers.get(
-            "x-forwarded-proto"
-        ) or self.headers.get("x-scheme")
+        forwarded_proto = self.forwarded.get("proto")
         if forwarded_proto:
             return forwarded_proto
 
@@ -471,12 +463,10 @@ class Request(dict):
     @property
     def host(self):
         """
-        :return: the Host specified in the header, may contains port number.
+        :return: proxied or direct Host header. Hostname and port number may be
+          separated by sanic.headers.parse_host(request.host).
         """
-        # it appears that httptools doesn't return the host
-        # so pull it from the headers
-
-        return self.headers.get("Host", "")
+        return self.forwarded.get("host", self.headers.get("Host", ""))
 
     @property
     def content_type(self):
@@ -514,6 +504,10 @@ class Request(dict):
         :return: an absolute url to the given view
         :rtype: str
         """
+        # Full URL SERVER_NAME can only be handled in app.url_for
+        if "//" in self.app.config.SERVER_NAME:
+            return self.app.url_for(view_name, _external=True, **kwargs)
+
         scheme = self.scheme
         host = self.server_name
         port = self.server_port

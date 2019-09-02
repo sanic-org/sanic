@@ -88,6 +88,7 @@ class Request(dict):
         "parsed_form",
         "parsed_json",
         "raw_url",
+        "respond",
         "stream",
         "transport",
         "uri_template",

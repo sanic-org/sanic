@@ -1010,6 +1010,29 @@ class Sanic:
         else:
             await write_callback(response)
 
+    async def handle_request_trio(self, request):
+        # Request middleware
+        response = await self._run_request_middleware(request)
+        if response:
+            return await request.respond(response)
+        # Fetch handler from router
+        handler, args, kwargs, uri = self.router.get(request)
+        if handler is None:
+            raise ServerError(
+                "None was returned while requesting a handler from the router"
+            )
+        bp = getattr(handler, "__blueprintname__", None)
+        bp = (bp,) if bp else ()
+        request.endpoint = self._build_endpoint_name(*bp, handler.__name__)
+        request.uri_template = uri
+        # Run main handler
+        response = handler(request, *args, **kwargs)
+        if isawaitable(response):
+            response = await response
+        # Returned (non-streaming) response
+        if response is not None:
+            await request.respond(response)
+
     # -------------------------------------------------------------------- #
     # Testing
     # -------------------------------------------------------------------- #
@@ -1323,7 +1346,7 @@ class Sanic:
             "app": self,
             "signal": Signal(),
             "debug": debug,
-            "request_handler": self.handle_request,
+            "request_handler": self.handle_request_trio,
             "error_handler": self.error_handler,
             "request_timeout": self.config.REQUEST_TIMEOUT,
             "response_timeout": self.config.RESPONSE_TIMEOUT,

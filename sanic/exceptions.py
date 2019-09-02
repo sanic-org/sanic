@@ -175,6 +175,11 @@ class ServiceUnavailable(SanicException):
     pass
 
 
+@add_status_code(505)
+class VersionNotSupported(SanicException):
+    pass
+
+
 class URLBuildError(ServerError):
     pass
 

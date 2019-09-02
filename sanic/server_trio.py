@@ -25,16 +25,24 @@ from sanic.exceptions import (
     PayloadTooLarge,
     RequestTimeout,
     ServerError,
+    VersionNotSupported,
     ServiceUnavailable,
 )
 from sanic.log import access_logger, logger
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
-from sanic.response import HTTPResponse
+from sanic.response import HTTPResponse, NewStreamingHTTPResponse
 
 
 class Signal:
     stopped = False
 
+
+# Compatibility wrapper for request StreamBuffer (asyncio)
+class TrioStreamBuffer:
+    def __init__(self, buffer_size=100):
+        self.sender, self.receiver = trio.open_memory_channel(100)
+        self.read = self.receiver.receive
+        self.put = self.sender.send
 
 h2config = H2Configuration(
     client_side=False,
@@ -49,7 +57,6 @@ h2config = H2Configuration(
 
 idle_connections = set()
 
-
 def parse_h1_request(data: bytes) -> dict:
     try:
         data = data.decode()
@@ -57,7 +64,8 @@ def parse_h1_request(data: bytes) -> dict:
         data = data.decode("ISO-8859-1")
     req, *hlines = data.split("\r\n")
     method, path, version = req.split(" ")
-    assert version == "HTTP/1.1"
+    if version != "HTTP/1.1":
+        raise VersionNotSupported(f"Expected 'HTTP/1.1', got '{version}'")
     headers = {":method": method, ":path": path}
     for name, value in (h.split(": ", 1) for h in hlines):
         name = name.lower()
@@ -79,6 +87,28 @@ def push_back(stream, data):
             return data
 
     stream.__class__ = PushbackStream
+
+class H1StreamRequest:
+    def __init__(self, headers, stream, set_timeout):
+        self.length = int(headers.get("content-length"))
+        if self.length <= 0:
+            raise InvalidUsage("Content-length must be positive")
+        self.expect_continue = headers.get("expect", "").lower() == "100-continue"
+        self.stream = stream
+        self.set_timeout = set_timeout
+
+    async def read(self):
+        if self.expect_continue:
+            await self.stream.send_all(b"HTTP/1.1 100 Continue\r\n\r\n")
+            self.except_continue = False
+        buf = await self.stream.read_some()
+        if len(buf) > self.length:
+            push_back(self.stream, buf[self.length:])
+            del buf[self.length:]
+        self.length -= len(buf)
+        # Extend or switch deadline
+        self.set_timeout("request" if self.length else "response")
+        return buf
 
 
 class HttpProtocol:
@@ -125,14 +155,17 @@ class HttpProtocol:
         if req == "h2":
             return self.http2()
 
+    def set_timeout(self, timeout: str):
+        self.nursery.cancel_scope.deadline = (
+            trio.current_time() + getattr(self, f"{timeout}_timeout")
+        )
+
     async def run(self, stream):
         assert not self.stream
         self.stream = stream
         try:
             async with stream, trio.open_nursery() as self.nursery:
-                self.nursery.cancel_scope.deadline = (
-                    trio.current_time() + self.request_timeout
-                )
+                self.set_timeout("request")
                 protocol_coroutine = await self.sniff_protocol()
                 if not protocol_coroutine:
                     return
@@ -163,7 +196,7 @@ class HttpProtocol:
                     del buffer[: pos + 4]
                     return req
         if buffer:
-            raise RuntimeError("Peer disconnected after {buffer!r}")
+            raise RuntimeError(f"Peer disconnected after {buffer!r}")
 
     async def http1(self, headers=None):
         buffer = bytearray()
@@ -174,10 +207,6 @@ class HttpProtocol:
                 if not req:
                     return
                 headers = parse_h1_request(req)
-            # Process response
-            self.nursery.cancel_scope.deadline = (
-                trio.current_time() + self.response_timeout
-            )
             request = self.request_class(
                 url_bytes=headers[":path"].encode(),
                 headers=Header(headers),
@@ -186,20 +215,27 @@ class HttpProtocol:
                 transport=None,
                 app=self.app,
             )
+            if "content-length" in headers:
+                request.stream = H1StreamRequest(headers, self.streams)
+            else:
+                self.set_timeout("response")
             headers = None
-            keep_alive = True
 
-            async def write_response(response):
-                await self.stream.send_all(
-                    response.output(
-                        request.version, keep_alive, self.keep_alive_timeout
-                    )
-                )
+            # Process response
+            request.respond = self.h1_respond
+            await self.request_handler(request)
+            self.set_timeout("request")
 
-            await self.request_handler(request, write_response, None)
-            self.nursery.cancel_scope.deadline = (
-                trio.current_time() + self.request_timeout
-            )
+    async def h1_respond(self, response):
+        # TODO: Prevent multiple responses
+        if isinstance(response, dict):
+            headers = response
+            response = NewStreamingHTTPResponse(self.stream)
+            await response.write_headers(headers[":status"], headers, headers["content-type"])
+            return response
+        await self.stream.send_all(
+            response.output("1.1", self.keep_alive, self.keep_alive_timeout)
+        )
 
     async def h2_sender(self):
         async for _ in self.can_send:

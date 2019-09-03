@@ -71,7 +71,7 @@ class StreamBuffer:
         return self._queue.full()
 
 
-class Request(dict):
+class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
 
     __slots__ = (
@@ -82,6 +82,7 @@ class Request(dict):
         "_port",
         "_remote_addr",
         "_socket",
+        "_storagedict",
         "app",
         "body",
         "endpoint",
@@ -121,6 +122,7 @@ class Request(dict):
         self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
         self._cookies = None
+        self._storagedict = None
         self.stream = None
         self.endpoint = None
 
@@ -133,6 +135,28 @@ class Request(dict):
         if self.transport:
             return True
         return False
+
+    def get(self, key, default=None):
+        """Request data storage. Arbitrary per-request data may be stored."""
+        return (
+            default
+            if self._storagedict is None else
+            self._storagedict.get(key, default)
+        )
+
+    def __getitem__(self, key):
+        """Request data storage. Arbitrary per-request data may be stored."""
+        return self._storagedict[key]
+
+    def __delitem__(self, key):
+        """Request data storage. Arbitrary per-request data may be stored."""
+        del self._storagedict[key]
+
+    def __setitem__(self, key, value):
+        """Request data storage. Arbitrary per-request data may be stored."""
+        if self._storagedict is None:
+            self._storagedict = {}
+        self._storagedict[key] = value
 
     def body_init(self):
         self.body = []

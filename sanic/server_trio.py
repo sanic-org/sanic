@@ -37,13 +37,6 @@ class Signal:
     stopped = False
 
 
-# Compatibility wrapper for request StreamBuffer (asyncio)
-class TrioStreamBuffer:
-    def __init__(self, buffer_size=100):
-        self.sender, self.receiver = trio.open_memory_channel(100)
-        self.read = self.receiver.receive
-        self.put = self.sender.send
-
 h2config = H2Configuration(
     client_side=False,
     header_encoding="utf-8",
@@ -63,7 +56,7 @@ def parse_h1_request(data: bytes) -> dict:
     except UnicodeDecodeError:
         data = data.decode("ISO-8859-1")
     req, *hlines = data.split("\r\n")
-    method, path, version = req.split(" ")
+    method, path, version = req.split(" ", 2)
     if version != "HTTP/1.1":
         raise VersionNotSupported(f"Expected 'HTTP/1.1', got '{version}'")
     headers = {":method": method, ":path": path}
@@ -75,6 +68,8 @@ def parse_h1_request(data: bytes) -> dict:
 
 
 def push_back(stream, data):
+    if not data:
+        return
     orig_class = stream.__class__
 
     class PushbackStream(orig_class):
@@ -89,10 +84,12 @@ def push_back(stream, data):
     stream.__class__ = PushbackStream
 
 class H1StreamRequest:
+    __slots__ = "length", "pos", "stream", "set_timeout", "trigger_continue"
     def __init__(self, headers, stream, set_timeout, trigger_continue):
         self.length = int(headers.get("content-length"))
         if self.length < 0:
             raise InvalidUsage("Content-length must be positive")
+        self.pos = 0
         self.stream = stream
         self.set_timeout = set_timeout
         self.trigger_continue = trigger_continue
@@ -105,12 +102,12 @@ class H1StreamRequest:
 
     async def read(self):
         await self.trigger_continue()
-        if self.length == 0: return None
+        if self.pos == self.length: return None
         buf = await self.stream.receive_some()
         if len(buf) > self.length:
             push_back(self.stream, buf[self.length:])
             buf = buf[:self.length]
-        self.length -= len(buf)
+        self.pos += len(buf)
         # Extend or switch deadline
         self.set_timeout("request" if self.length else "response")
         return buf

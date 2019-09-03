@@ -1025,6 +1025,9 @@ class Sanic:
         bp = (bp,) if bp else ()
         request.endpoint = self._build_endpoint_name(*bp, handler.__name__)
         request.uri_template = uri
+        # Load header body before starting handler?
+        if not hasattr(handler, "is_stream"):
+            await request.receive_body()
         # Run main handler
         response = handler(request, *args, **kwargs)
         if isawaitable(response):

@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url
 
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import HeaderExpectationFailed, InvalidUsage
 from sanic.log import error_logger, logger
 
 
@@ -136,6 +136,20 @@ class Request(dict):
 
     def body_finish(self):
         self.body = b"".join(self.body)
+
+    async def receive_body(self):
+        if self.stream:
+            max_size = self.stream.request_max_size
+            body = []
+            if self.stream.length > max_size:
+                raise HeaderExpectationFailed("Request body is too large.")
+            async for data in request.stream:
+                if self.stream.pos > max_size:
+                    raise HeaderExpectationFailed("Request body is too large.")
+                body.append(data)
+            self.body = b"".join(body)
+            self.stream = None
+
 
     @property
     def json(self):

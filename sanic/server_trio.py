@@ -91,7 +91,7 @@ def push_back(stream, data):
 class H1StreamRequest:
     def __init__(self, headers, stream, set_timeout, trigger_continue):
         self.length = int(headers.get("content-length"))
-        if self.length <= 0:
+        if self.length < 0:
             raise InvalidUsage("Content-length must be positive")
         self.stream = stream
         self.set_timeout = set_timeout
@@ -205,6 +205,7 @@ class HttpProtocol:
 
     async def http1(self, headers=None):
         buffer = bytearray()
+        _response = None
         while True:
             # Process request
             if headers is None:
@@ -230,6 +231,8 @@ class HttpProtocol:
             if "chunked" in headers.get("transfer-encoding", "").lower():
                 raise RuntimeError("Chunked requests not supported")  # FIXME
             if "content-length" in headers:
+                push_back(self.stream, buffer)
+                del buffer[:]
                 request.stream = H1StreamRequest(
                     headers,
                     self.stream,
@@ -246,7 +249,7 @@ class HttpProtocol:
                 if _response:
                     raise ServerError("Duplicate responses for a single request!")
                 await trigger_continue()
-                if _response is None:
+                if response is None:
                     _response = NewStreamingHTTPResponse(self.stream)
                     await _response.write_headers(status, headers, content_type)
                     return _response
@@ -261,6 +264,7 @@ class HttpProtocol:
                 raise ServerError("Request handler made no response.")
             if hasattr(_response, "aclose"):
                 await _response.aclose()
+            _response = None
             self.set_timeout("request")
 
     async def h2_sender(self):

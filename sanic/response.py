@@ -161,7 +161,7 @@ class NewStreamingHTTPResponse(BaseHTTPResponse):
         if self.chunked is None and self.length is None:
             raise RuntimeError("Response body is closed")
 
-        if isinstance(data, (bytes, bytearray)):
+        if not isinstance(data, (bytes, bytearray)):
             data = self._encode_body(data)
         size = len(data)
 

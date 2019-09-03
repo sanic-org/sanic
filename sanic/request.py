@@ -140,9 +140,12 @@ class Request:
         """Request data storage. Arbitrary per-request data may be stored."""
         return (
             default
-            if self._storagedict is None else
-            self._storagedict.get(key, default)
+            if self._storagedict is None
+            else self._storagedict.get(key, default)
         )
+
+    def __contains__(self, key):
+        return key in self._storagedict if self._storagedict else False
 
     def __getitem__(self, key):
         """Request data storage. Arbitrary per-request data may be stored."""

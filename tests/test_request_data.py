@@ -12,18 +12,31 @@ except ImportError:
 def test_storage(app):
     @app.middleware("request")
     def store(request):
-        request["user"] = "sanic"
-        request["sidekick"] = "tails"
+        user = request.get("user", "sanic")  # No _storagedict yet -> default
+        request["user"] = user
+        sidekick = request.get("sidekick", "tails")  # Item missing -> default
+        request["sidekick"] = sidekick
         del request["sidekick"]
 
     @app.route("/")
     def handler(request):
         return json(
-            {"user": request.get("user"), "sidekick": request.get("sidekick")}
+            {
+                "user": request.get("user"),
+                "sidekick": request.get("sidekick"),
+                "has_user": "user" in request,
+                "has_sidekick": "sidekick" in request,
+            }
         )
 
     request, response = app.test_client.get("/")
 
+    assert response.json == {
+        "user": "sanic",
+        "sidekick": None,
+        "has_user": True,
+        "has_sidekick": False,
+    }
     response_json = loads(response.text)
     assert response_json["user"] == "sanic"
     assert response_json.get("sidekick") is None

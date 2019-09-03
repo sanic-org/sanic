@@ -82,7 +82,6 @@ class Request:
         "_port",
         "_remote_addr",
         "_socket",
-        "_storagedict",
         "app",
         "body",
         "endpoint",
@@ -95,6 +94,7 @@ class Request:
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
+        "storage",
         "stream",
         "transport",
         "uri_template",
@@ -122,7 +122,7 @@ class Request:
         self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
         self._cookies = None
-        self._storagedict = {}
+        self.storage = {}
         self.stream = None
         self.endpoint = None
 
@@ -138,23 +138,23 @@ class Request:
 
     def get(self, key, default=None):
         """Request data storage. Arbitrary per-request data may be stored."""
-        return self._storagedict.get(key, default)
+        return self.storage.get(key, default)
 
     def __contains__(self, key):
         """Request data storage. Arbitrary per-request data may be stored."""
-        return key in self._storagedict
+        return key in self.storage
 
     def __getitem__(self, key):
         """Request data storage. Arbitrary per-request data may be stored."""
-        return self._storagedict[key]
+        return self.storage[key]
 
     def __delitem__(self, key):
         """Request data storage. Arbitrary per-request data may be stored."""
-        del self._storagedict[key]
+        del self.storage[key]
 
     def __setitem__(self, key, value):
         """Request data storage. Arbitrary per-request data may be stored."""
-        self._storagedict[key] = value
+        self.storage[key] = value
 
     def body_init(self):
         self.body = []

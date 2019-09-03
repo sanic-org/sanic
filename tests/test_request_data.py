@@ -16,11 +16,10 @@ def test_storage(app):
             request["foo"]
         except KeyError:
             pass
-        user = request.get("user", "sanic")  # No _storagedict yet -> default
-        request["user"] = user
-        request["bar"] = request["user"]
+        request["user"] = "sanic"
         sidekick = request.get("sidekick", "tails")  # Item missing -> default
         request["sidekick"] = sidekick
+        request["bar"] = request["sidekick"]
         del request["sidekick"]
 
     @app.route("/")

@@ -122,7 +122,7 @@ class Request:
         self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
         self._cookies = None
-        self._storagedict = None
+        self._storagedict = {}
         self.stream = None
         self.endpoint = None
 
@@ -138,19 +138,14 @@ class Request:
 
     def get(self, key, default=None):
         """Request data storage. Arbitrary per-request data may be stored."""
-        return (
-            default
-            if self._storagedict is None
-            else self._storagedict.get(key, default)
-        )
+        return self._storagedict.get(key, default)
 
     def __contains__(self, key):
-        return key in self._storagedict if self._storagedict else False
+        """Request data storage. Arbitrary per-request data may be stored."""
+        return key in self._storagedict
 
     def __getitem__(self, key):
         """Request data storage. Arbitrary per-request data may be stored."""
-        if self._storagedict is None:
-            raise KeyError("Nothing is stored yet.")
         return self._storagedict[key]
 
     def __delitem__(self, key):
@@ -159,8 +154,6 @@ class Request:
 
     def __setitem__(self, key, value):
         """Request data storage. Arbitrary per-request data may be stored."""
-        if self._storagedict is None:
-            self._storagedict = {}
         self._storagedict[key] = value
 
     def body_init(self):

@@ -147,88 +147,77 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 class NewStreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
         "stream",
-        "keep_alive",
-        "keep_alive_timeout",
+        "length",
     )
 
     def __init__(self, stream):
         self.stream = stream
+        self.length = None
 
-    async def write(self, data):
+    async def write(self, data=b"", end_stream=False):
         """Writes a chunk of data to the streaming response.
          :param data: bytes-ish data to be written.
         """
-        if self.chunked is None:
-            raise RuntimeError(
-                "cannot write data before setting content type, "
-                "try using response.write_headers() first"
-            )
+        if self.chunked is None and self.length is None:
+            raise RuntimeError("Response body is closed")
 
-        if type(data) != bytes:
+        if isinstance(data, (bytes, bytearray)):
             data = self._encode_body(data)
+        size = len(data)
 
         if self.chunked:
-            await self.stream.send_all(b"%x\r\n%b\r\n" % (len(data), data))
+            if size and not end_stream:
+                data = b"%x\r\n%b\r\n" % (size, data)
+            elif size:
+                data = b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
+                self.chunked = None
+            else:
+                data = b"0\r\n\r\n"
+                self.chunked = None
         else:
-            await self.stream.send_all(data)
+            self.length -= size
+            if self.length < 0:
+                await self.stream.aclose()
+                raise RuntimeError(
+                    "Response body larger than specified in content-length"
+                )
+        await self.stream.send_all(data)
 
     async def aclose(self):
         if self.chunked:
-            await self.stream.send_all(b"0\r\n\r\n")
+            await self.write(end_stream=True)
+        elif self.length:
+            l, self.length = self.length, None
+            raise RuntimeError(f"Response aclosed with {l} bytes missing")
 
     async def write_headers(
-        self, status=200, headers=None, content_type="text/plain", chunked=True
+        self, status=200, headers=None, content_type="text/plain"
     ):
-        self.chunked = chunked
-        headers = self.get_headers(
-            status, headers, content_type, chunked
-        )
+        headers = self.get_headers(status, headers, content_type)
         await self.stream.send_all(headers)
 
     def _headers_as_bytes(self, headers: Header) -> bytes:
-        hbytes = b""
-        for name, value in headers.items():
-            try:
-                hbytes += b"%b: %b\r\n" % (
-                    name.encode(),
-                    value.encode("utf-8"),
-                )
-            except AttributeError:
-                hbytes += b"%b: %b\r\n" % (
-                    str(name).encode(),
-                    str(value).encode("utf-8"),
-                )
-
-        return hbytes
+        headers = "".join(f"{n}: {v!s}\r\n" for n, v in headers.items())
+        return headers.encode()
 
     def get_headers(
-        self, status=200, headers=None, content_type="text/plain", chunked=True
+        self, status=200, headers=None, content_type="text/plain"
     ) -> bytes:
         headers = Header(headers or {})
-        # This is all returned in a kind-of funky way
-        # We tried to make this as fast as possible in pure python
-        timeout_header = b""
-        #if self.keep_alive and self.keep_alive_timeout is not None:
-        #    timeout_header = b"Keep-Alive: %d\r\n" % self.keep_alive_timeout
 
-        if chunked:
-            headers["Transfer-Encoding"] = "chunked"
-            headers.pop("Content-Length", None)
-        headers["Content-Type"] = headers.get("Content-Type", content_type)
+        if "content-length" in headers:
+            self.length = int(headers["content-length"])
+            self.chunked = False
+        else:
+            headers["transfer-encoding"] = "chunked"
+            self.chunked = True
+
+        if "content-type" not in headers:
+            headers["content-type"] = content_type
 
         headers = self._headers_as_bytes(headers)
-
-        if status == 200:
-            status_code = b"OK"
-        else:
-            status_code = STATUS_CODES.get(status)
-
-        return (b"HTTP/1.1 %d %b\r\n" b"%b" b"%b\r\n") % (
-            status,
-            status_code,
-            timeout_header,
-            headers,
-        )
+        status_code = b"OK" if status == 200 else STATUS_CODES.get(status)
+        return b"HTTP/1.1 %d %b\r\n%b\r\n" % (status, status_code, headers)
 
 
 class HTTPResponse(BaseHTTPResponse):

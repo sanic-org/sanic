@@ -89,22 +89,27 @@ def push_back(stream, data):
     stream.__class__ = PushbackStream
 
 class H1StreamRequest:
-    def __init__(self, headers, stream, set_timeout):
+    def __init__(self, headers, stream, set_timeout, trigger_continue):
         self.length = int(headers.get("content-length"))
         if self.length <= 0:
             raise InvalidUsage("Content-length must be positive")
-        self.expect_continue = headers.get("expect", "").lower() == "100-continue"
         self.stream = stream
         self.set_timeout = set_timeout
+        self.trigger_continue = trigger_continue
+
+    async def __aiter__(self):
+        while True:
+            data = await self.read()
+            if not data: return
+            yield data
 
     async def read(self):
-        if self.expect_continue:
-            await self.stream.send_all(b"HTTP/1.1 100 Continue\r\n\r\n")
-            self.except_continue = False
-        buf = await self.stream.read_some()
+        await self.trigger_continue()
+        if self.length == 0: return None
+        buf = await self.stream.receive_some()
         if len(buf) > self.length:
             push_back(self.stream, buf[self.length:])
-            del buf[self.length:]
+            buf = buf[:self.length]
         self.length -= len(buf)
         # Extend or switch deadline
         self.set_timeout("request" if self.length else "response")
@@ -215,17 +220,32 @@ class HttpProtocol:
                 transport=None,
                 app=self.app,
             )
+            need_continue = headers.get("expect", "").lower() == "100-continue"
+            async def trigger_continue():
+                nonlocal need_continue
+                if need_continue is False:
+                    return
+                await self.stream.send_all(b"HTTP/1.1 100 Continue\r\n\r\n")
+                need_continue = False
+            if "chunked" in headers.get("transfer-encoding", "").lower():
+                raise RuntimeError("Chunked requests not supported")  # FIXME
             if "content-length" in headers:
-                request.stream = H1StreamRequest(headers, self.streams)
+                request.stream = H1StreamRequest(
+                    headers,
+                    self.stream,
+                    self.set_timeout,
+                    trigger_continue,
+                )
             else:
                 self.set_timeout("response")
             headers = None
             _response = None
-            # request.respond()
+            # Implement request.respond:
             async def respond(response=None, *, status=200, headers=None, content_type="text/html"):
                 nonlocal _response
                 if _response:
                     raise ServerError("Duplicate responses for a single request!")
+                await trigger_continue()
                 if _response is None:
                     _response = NewStreamingHTTPResponse(self.stream)
                     await _response.write_headers(status, headers, content_type)

@@ -12,8 +12,13 @@ except ImportError:
 def test_storage(app):
     @app.middleware("request")
     def store(request):
+        try:
+            request["foo"]
+        except KeyError:
+            pass
         user = request.get("user", "sanic")  # No _storagedict yet -> default
         request["user"] = user
+        request["bar"] = request["user"]
         sidekick = request.get("sidekick", "tails")  # Item missing -> default
         request["sidekick"] = sidekick
         del request["sidekick"]
@@ -24,7 +29,7 @@ def test_storage(app):
             {
                 "user": request.get("user"),
                 "sidekick": request.get("sidekick"),
-                "has_user": "user" in request,
+                "has_bar": "bar" in request,
                 "has_sidekick": "sidekick" in request,
             }
         )
@@ -34,7 +39,7 @@ def test_storage(app):
     assert response.json == {
         "user": "sanic",
         "sidekick": None,
-        "has_user": True,
+        "has_bar": True,
         "has_sidekick": False,
     }
     response_json = loads(response.text)

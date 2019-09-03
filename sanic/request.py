@@ -149,6 +149,8 @@ class Request:
 
     def __getitem__(self, key):
         """Request data storage. Arbitrary per-request data may be stored."""
+        if self._storagedict is None:
+            raise KeyError("Nothing is stored yet.")
         return self._storagedict[key]
 
     def __delitem__(self, key):

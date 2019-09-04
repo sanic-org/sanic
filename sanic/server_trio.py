@@ -250,7 +250,13 @@ class HttpProtocol:
                     _response = NewStreamingHTTPResponse(self.stream)
                     await _response.write_headers(status, headers, content_type)
                     return _response
+                # Middleware has a chance to replace the response
+                response = await self.app._run_response_middleware(
+                    request, response
+                )
                 _response = response
+                if not isinstance(response, HTTPResponse):
+                    raise ServerError(f"Handling {request.path}: HTTPResponse expected but got {type(response).__name__}")
                 await self.stream.send_all(
                     response.output("1.1", self.keep_alive, self.keep_alive_timeout)
                 )

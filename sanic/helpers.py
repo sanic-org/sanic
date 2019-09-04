@@ -154,6 +154,7 @@ def import_string(module_name, package=None):
         return obj
     return obj()
 
+
 class ContextObject:
     """Storage of arbitrary values using attribute syntax.
 

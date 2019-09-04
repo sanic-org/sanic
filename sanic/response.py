@@ -7,6 +7,7 @@ from aiofiles import open as open_async
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar
+from sanic.headers import format_http1
 from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 
 
@@ -30,20 +31,7 @@ class BaseHTTPResponse:
             return str(data).encode()
 
     def _parse_headers(self):
-        headers = b""
-        for name, value in self.headers.items():
-            try:
-                headers += b"%b: %b\r\n" % (
-                    name.encode(),
-                    value.encode("utf-8"),
-                )
-            except AttributeError:
-                headers += b"%b: %b\r\n" % (
-                    str(name).encode(),
-                    str(value).encode("utf-8"),
-                )
-
-        return headers
+        return format_http1(self.headers.items())
 
     @property
     def cookies(self):

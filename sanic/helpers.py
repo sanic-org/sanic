@@ -153,3 +153,24 @@ def import_string(module_name, package=None):
     if ismodule(obj):
         return obj
     return obj()
+
+class ContextObject:
+    """Storage of arbitrary values using attribute syntax.
+
+    >>> context.key_name = 123
+    >>> "key_name" in context
+    True
+    >>> context.key_name
+    123
+    >>> context.no_such_key
+    None
+    """
+    def __getattr__(self, key):
+        """Return None for missing keys."""
+        # Except system attributes
+        if key.startswith("_"):
+            raise AttributeError(f"ContextObject has no attribute {key!r}")
+
+    def __contains__(self, key):
+        """Test if a key actually exists."""
+        return key in self.__dict__

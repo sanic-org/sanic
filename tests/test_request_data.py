@@ -8,8 +8,43 @@ try:
 except ImportError:
     from json import loads
 
+def test_custom_context(app):
+    @app.middleware("request")
+    def store(request):
+        request.custom_context.user = "sanic"
+        request.custom_context.session = None
 
-def test_storage(app):
+    @app.route("/")
+    def handler(request):
+        # Accessing non-existant underscored key should fail (not return None)
+        try:
+            invalid = request.custom_context.__html__
+        except AttributeError as e:
+            invalid = str(e)
+        return json({
+            "user": request.custom_context.user,
+            "session": request.custom_context.session,
+            "missing": request.custom_context.missing,
+            "has_user": "user" in request.custom_context,
+            "has_session": "session" in request.custom_context,
+            "has_missing": "missing" in request.custom_context,
+            "invalid": invalid
+        })
+
+    request, response = app.test_client.get("/")
+    assert response.json == {
+        "user": "sanic",
+        "session": None,
+        "missing": None,
+        "has_user": True,
+        "has_session": True,
+        "has_missing": False,
+        "invalid": "ContextObject has no attribute '__html__'",
+    }
+
+
+# Remove this once the deprecated API is abolished.
+def test_custom_context_old(app):
     @app.middleware("request")
     def store(request):
         try:

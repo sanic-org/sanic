@@ -17,6 +17,7 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
+from sanic.helpers import ContextObject
 from sanic.log import error_logger, logger
 
 
@@ -84,6 +85,7 @@ class Request:
         "_socket",
         "app",
         "body",
+        "custom_context",
         "endpoint",
         "headers",
         "method",
@@ -94,7 +96,6 @@ class Request:
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
-        "storage",
         "stream",
         "transport",
         "uri_template",
@@ -114,6 +115,7 @@ class Request:
 
         # Init but do not inhale
         self.body_init()
+        self.custom_context = ContextObject()
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -122,7 +124,6 @@ class Request:
         self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
         self._cookies = None
-        self.storage = {}
         self.stream = None
         self.endpoint = None
 
@@ -137,24 +138,29 @@ class Request:
         return False
 
     def get(self, key, default=None):
-        """Request data storage. Arbitrary per-request data may be stored."""
-        return self.storage.get(key, default)
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return self.custom_context.__dict__.get(key, default)
 
     def __contains__(self, key):
-        """Request data storage. Arbitrary per-request data may be stored."""
-        return key in self.storage
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return key in self.custom_context
 
     def __getitem__(self, key):
-        """Request data storage. Arbitrary per-request data may be stored."""
-        return self.storage[key]
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return getattr(self.custom_context, key)
 
     def __delitem__(self, key):
-        """Request data storage. Arbitrary per-request data may be stored."""
-        del self.storage[key]
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        delattr(self.custom_context, key)
 
     def __setitem__(self, key, value):
-        """Request data storage. Arbitrary per-request data may be stored."""
-        self.storage[key] = value
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        setattr(self.custom_context, key, value)
 
     def body_init(self):
         self.body = []

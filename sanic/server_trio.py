@@ -70,15 +70,15 @@ def parse_h1_request(data: bytes) -> dict:
 def push_back(stream, data):
     if not data:
         return
-    orig_class = stream.__class__
+    stream_type = type(stream)
 
-    class PushbackStream(orig_class):
+    class PushbackStream(stream_type):
         async def receive_some(self, max_bytes=None):
             if max_bytes and max_bytes < len(data):
                 ret = data[:max_bytes]
                 del data[:max_bytes]
                 return ret
-            self.__class__ = orig_class
+            self.__class__ = stream_type
             return data
 
     stream.__class__ = PushbackStream

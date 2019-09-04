@@ -168,9 +168,10 @@ class ContextObject:
     """
     def __getattr__(self, key):
         """Return None for missing keys."""
+        if not key.startswith("_"):
+            return None
         # Except system attributes
-        if key.startswith("_"):
-            raise AttributeError(f"ContextObject has no attribute {key!r}")
+        raise AttributeError(f"ContextObject has no attribute {key!r}")
 
     def __contains__(self, key):
         """Test if a key actually exists."""

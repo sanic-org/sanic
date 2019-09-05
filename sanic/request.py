@@ -1,7 +1,6 @@
 import asyncio
 import email.utils
 import json
-import sys
 import warnings
 
 from collections import defaultdict, namedtuple
@@ -23,14 +22,7 @@ from sanic.log import error_logger, logger
 try:
     from ujson import loads as json_loads
 except ImportError:
-    if sys.version_info[:2] == (3, 5):
-
-        def json_loads(data):
-            # on Python 3.5 json.loads only supports str not bytes
-            return json.loads(data.decode())
-
-    else:
-        json_loads = json.loads
+    json_loads = json.loads
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 EXPECT_HEADER = "EXPECT"

@@ -3,6 +3,8 @@ import re
 from typing import Any, Dict, Iterable, Optional, Tuple
 from urllib.parse import unquote
 
+from sanic.helpers import STATUS_CODES
+
 
 HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
 Options = Dict[str, str]  # key=value fields in various headers
@@ -175,3 +177,21 @@ def format_http1(headers: HeaderIterable) -> bytes:
     - Values are converted into strings if necessary.
     """
     return "".join(f"{name}: {val}\r\n" for name, val in headers).encode()
+
+
+def format_http1_response(
+    status: int, headers: HeaderIterable, body=b""
+) -> bytes:
+    """Format a full HTTP/1.1 response.
+
+    - If `body` is included, content-length must be specified in headers.
+    """
+    headers = format_http1(headers)
+    if status == 200:
+        return b"HTTP/1.1 200 OK\r\n%b\r\n%b" % (headers, body)
+    return b"HTTP/1.1 %d %b\r\n%b\r\n%b" % (
+        status,
+        STATUS_CODES.get(status, b"UNKNOWN"),
+        headers,
+        body,
+    )

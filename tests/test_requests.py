@@ -419,11 +419,13 @@ def test_standard_forwarded(app):
         "X-Real-IP": "127.0.0.2",
         "X-Forwarded-For": "127.0.1.1",
         "X-Scheme": "ws",
+        "Host": "local.site",
     }
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == { "for": "127.0.0.2", "proto": "ws" }
     assert request.remote_addr == "127.0.0.2"
     assert request.scheme == "ws"
+    assert request.server_name == "local.site"
     assert request.server_port == 80
 
     app.config.FORWARDED_SECRET = "mySecret"
@@ -1897,7 +1899,7 @@ def test_request_server_port(app):
         return text("OK")
 
     request, response = app.test_client.get("/", headers={"Host": "my-server"})
-    assert request.server_port == app.test_client.port
+    assert request.server_port == 80  # Host with no port means default port
 
 
 def test_request_server_port_in_host_header(app):
@@ -1914,11 +1916,6 @@ def test_request_server_port_in_host_header(app):
         "/", headers={"Host": "[2a00:1450:400f:80c::200e]:5555"}
     )
     assert request.server_port == 5555
-
-    request, response = app.test_client.get(
-        "/", headers={"Host": "mal_formed:5555"}
-    )
-    assert request.server_port == app.test_client.port
 
 
 def test_request_server_port_forwarded(app):
@@ -1948,10 +1945,10 @@ def test_server_name_and_url_for(app):
     def handler(request):
         return text("ok")
 
-    app.config.SERVER_NAME = "my-server"
+    app.config.SERVER_NAME = "my-server"  # This means default port
     assert app.url_for("handler", _external=True) == "http://my-server/foo"
     request, response = app.test_client.get("/foo")
-    assert request.url_for("handler") == f"http://my-server:{app.test_client.port}/foo"
+    assert request.url_for("handler") == f"http://my-server/foo"
 
     app.config.SERVER_NAME = "https://my-server/path"
     request, response = app.test_client.get("/foo")

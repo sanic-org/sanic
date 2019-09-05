@@ -84,6 +84,7 @@ class Request(dict):
         "_socket",
         "app",
         "body",
+        "conn_info",
         "endpoint",
         "headers",
         "method",
@@ -113,6 +114,7 @@ class Request(dict):
 
         # Init but do not inhale
         self.body_init()
+        self.conn_info = None
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -359,32 +361,18 @@ class Request(dict):
         """
         :return: peer ip of the socket
         """
-        if not hasattr(self, "_socket"):
-            self._get_address()
-        return self._ip
+        return self.conn_info.client if self.conn_info else ""
 
     @property
     def port(self):
         """
         :return: peer port of the socket
         """
-        if not hasattr(self, "_socket"):
-            self._get_address()
-        return self._port
+        return self.conn_info.client_port if self.conn_info else 0
 
     @property
     def socket(self):
-        if not hasattr(self, "_socket"):
-            self._get_address()
-        return self._socket
-
-    def _get_address(self):
-        self._socket = self.transport.get_extra_info("peername") or (
-            None,
-            None,
-        )
-        self._ip = self._socket[0]
-        self._port = self._socket[1]
+        return self.conn_info.peername if self.conn_info else (None, None)
 
     @property
     def path(self) -> str:

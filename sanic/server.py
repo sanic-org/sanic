@@ -43,6 +43,39 @@ class Signal:
     stopped = False
 
 
+class ConnInfo:
+    """Local and remote addresses and SSL status info."""
+
+    __slots__ = (
+        "sockname",
+        "peername",
+        "server",
+        "server_port",
+        "client",
+        "client_port",
+        "ssl",
+    )
+
+    def __init__(self, transport):
+        self.ssl = bool(transport.get_extra_info("sslcontext"))
+        self.sockname = a = transport.get_extra_info("sockname")
+        if isinstance(a, str):  # UNIX socket
+            self.server = self.client = a
+            self.server_port = self.client_port = 0
+            return
+        if a is None:  # ASGI doesn't have sockname
+            self.server, self.server_port = "", 0
+        else:
+            self.server = f"{a[0]}" if len(a) == 2 else f"[{a[0]}]"
+            self.server_port = a[1]
+            # self.server gets non-standard port appended
+            if a[1] != (443 if self.ssl else 80):
+                self.server = f"{self.server}:{a[1]}"
+        self.peername = a = transport.get_extra_info("peername")
+        self.client = f"{a[0]}" if len(a) == 2 else f"[{a[0]}]"
+        self.client_port = a[1]
+
+
 class HttpProtocol(asyncio.Protocol):
     """
     This class provides a basic HTTP implementation of the sanic framework.
@@ -56,6 +89,7 @@ class HttpProtocol(asyncio.Protocol):
         "transport",
         "connections",
         "signal",
+        "conn_info",
         # request params
         "parser",
         "request",
@@ -117,6 +151,7 @@ class HttpProtocol(asyncio.Protocol):
         self.loop = loop
         self.app = app
         self.transport = None
+        self.conn_info = None
         self.request = None
         self.parser = None
         self.url = None
@@ -177,6 +212,7 @@ class HttpProtocol(asyncio.Protocol):
             self.request_timeout, self.request_timeout_callback
         )
         self.transport = transport
+        self.conn_info = ConnInfo(transport)
         self._last_request_time = time()
 
     def connection_lost(self, exc):
@@ -314,6 +350,7 @@ class HttpProtocol(asyncio.Protocol):
             transport=self.transport,
             app=self.app,
         )
+        self.request.conn_info = self.conn_info
         # Remove any existing KeepAlive handler here,
         # It will be recreated if required on the new request.
         if self._keep_alive_timeout_handler:

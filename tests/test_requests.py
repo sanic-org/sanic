@@ -1798,14 +1798,6 @@ def test_request_port(app):
     port = request.port
     assert isinstance(port, int)
 
-    delattr(request, "_socket")
-    delattr(request, "_port")
-
-    port = request.port
-    assert isinstance(port, int)
-    assert hasattr(request, "_socket")
-    assert hasattr(request, "_port")
-
 
 @pytest.mark.asyncio
 async def test_request_port_asgi(app):
@@ -1817,14 +1809,6 @@ async def test_request_port_asgi(app):
 
     port = request.port
     assert isinstance(port, int)
-
-    delattr(request, "_socket")
-    delattr(request, "_port")
-
-    port = request.port
-    assert isinstance(port, int)
-    assert hasattr(request, "_socket")
-    assert hasattr(request, "_port")
 
 
 def test_request_socket(app):
@@ -1842,12 +1826,6 @@ def test_request_socket(app):
 
     assert ip == request.ip
     assert port == request.port
-
-    delattr(request, "_socket")
-
-    socket = request.socket
-    assert isinstance(socket, tuple)
-    assert hasattr(request, "_socket")
 
 
 def test_request_server_name(app):

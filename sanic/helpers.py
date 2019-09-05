@@ -166,6 +166,7 @@ class ContextObject:
     >>> context.no_such_key
     None
     """
+
     def __getattr__(self, key):
         """Return None for missing keys."""
         if not key.startswith("_"):

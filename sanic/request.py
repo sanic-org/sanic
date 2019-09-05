@@ -354,7 +354,7 @@ class Request(dict):
         """return matched info after resolving route"""
         return self.app.router.get(self)[2]
 
-    ### Transport properties (obtained from local interface only)
+    # Transport properties (obtained from local interface only)
 
     @property
     def ip(self):
@@ -379,7 +379,7 @@ class Request(dict):
         """Path of the local HTTP request."""
         return self._parsed_url.path.decode("utf-8")
 
-    ## Proxy properties (using SERVER_NAME/forwarded/request/transport info)
+    # Proxy properties (using SERVER_NAME/forwarded/request/transport info)
 
     @property
     def forwarded(self):
@@ -465,7 +465,8 @@ class Request(dict):
     @property
     def server_port(self) -> int:
         """
-        The port the client connected to, by forwarded `port` or `request.host`.
+        The port the client connected to, by forwarded `port` or
+        `request.host`.
 
         Default port is returned as 80 and 443 based on `request.scheme`.
         """

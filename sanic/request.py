@@ -21,7 +21,7 @@ from sanic.log import error_logger, logger
 try:
     from ujson import loads as json_loads
 except ImportError:
-    import json.loads as json_loads
+    from json import loads as json_loads
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 EXPECT_HEADER = "EXPECT"

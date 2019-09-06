@@ -12,7 +12,7 @@ from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 
 try:
     from ujson import dumps as json_dumps
-except BaseException:
+except ImportError:
     from json import dumps
 
     # This is done in order to ensure that the JSON response is

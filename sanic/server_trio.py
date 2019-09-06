@@ -521,7 +521,7 @@ async def runaccept(
                 acceptor.start_soon(
                     partial(
                         trio.serve_listeners,
-                        handler=proto().run,
+                        handler=lambda stream: proto().run(stream),
                         listeners=listeners,
                         handler_nursery=main_nursery,
                     )

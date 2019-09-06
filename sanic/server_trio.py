@@ -249,10 +249,8 @@ class HttpProtocol:
                     raise ServerError("Duplicate responses for a single request!")
                 await trigger_continue()
                 if response is None:
-                    _response = NewStreamingHTTPResponse(self.stream)
-                    await _response.write_headers(status, headers, content_type)
-                    return _response
-                # Middleware has a chance to replace the response
+                    response = NewStreamingHTTPResponse(self.stream, status, headers, content_type)
+                # Middleware has a chance to replace or modify the response
                 response = await self.app._run_response_middleware(
                     request, response
                 )

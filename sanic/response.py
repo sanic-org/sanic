@@ -120,11 +120,16 @@ class NewStreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
         "stream",
         "length",
+        "status",
+        "headers",
     )
 
-    def __init__(self, stream):
+    def __init__(self, stream, status, headers, content_type):
         self.stream = stream
         self.length = None
+        self.status = status
+        headers["Content-Type"] = content_type
+        self.headers = headers
 
     async def write(self, data=b"", end_stream=False):
         """Writes a chunk of data to the streaming response.
@@ -153,6 +158,10 @@ class NewStreamingHTTPResponse(BaseHTTPResponse):
                 raise RuntimeError(
                     "Response body larger than specified in content-length"
                 )
+        # Prepend header block to data, if not yet sent
+        if self.status is not None:
+            data = format_http1_response(self.status, self.headers, data)
+            self.status = self.headers = None
         await self.stream.send_all(data)
 
     async def aclose(self):
@@ -161,16 +170,6 @@ class NewStreamingHTTPResponse(BaseHTTPResponse):
         elif self.length:
             l, self.length = self.length, None
             raise RuntimeError(f"Response aclosed with {l} bytes missing")
-
-    async def write_headers(
-        self, status=200, headers=None, content_type="text/plain"
-    ):
-        headers = self.get_headers(status, headers, content_type)
-        await self.stream.send_all(headers)
-
-    def _headers_as_bytes(self, headers: Header) -> bytes:
-        headers = "".join(f"{n}: {v!s}\r\n" for n, v in headers.items())
-        return headers.encode()
 
     def get_headers(
         self, status=200, headers=None, content_type="text/plain"

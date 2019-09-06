@@ -13,10 +13,12 @@ from h2.events import RequestReceived, DataReceived, ConnectionTerminated
 from inspect import isawaitable
 from ipaddress import ip_address
 from multiprocessing import Process
-from signal import SIG_IGN, SIGINT, SIGTERM, SIGHUP, Signals
+from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import time, sleep as time_sleep
 from httptools.parser.errors import HttpParserError
+
+SIGHUP = SIGTERM
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -391,31 +393,30 @@ def serve(
     workers=1,
     loop=None,
 ):
-    async def handle_connection(stream):
-        proto = protocol(
-            connections=connections,
-            signal=signal,
-            app=app,
-            ssl=ssl,
-            request_handler=request_handler,
-            error_handler=error_handler,
-            request_timeout=request_timeout,
-            response_timeout=response_timeout,
-            keep_alive_timeout=keep_alive_timeout,
-            request_max_size=request_max_size,
-            request_class=request_class,
-            access_log=access_log,
-            keep_alive=keep_alive,
-            is_request_stream=is_request_stream,
-            router=router,
-            websocket_max_size=websocket_max_size,
-            websocket_max_queue=websocket_max_queue,
-            websocket_read_limit=websocket_read_limit,
-            websocket_write_limit=websocket_write_limit,
-            state=state,
-            debug=debug,
-        )
-        await proto.run(stream)
+    proto = partial(
+        protocol,
+        connections=connections,
+        signal=signal,
+        app=app,
+        ssl=ssl,
+        request_handler=request_handler,
+        error_handler=error_handler,
+        request_timeout=request_timeout,
+        response_timeout=response_timeout,
+        keep_alive_timeout=keep_alive_timeout,
+        request_max_size=request_max_size,
+        request_class=request_class,
+        access_log=access_log,
+        keep_alive=keep_alive,
+        is_request_stream=is_request_stream,
+        router=router,
+        websocket_max_size=websocket_max_size,
+        websocket_max_queue=websocket_max_queue,
+        websocket_read_limit=websocket_read_limit,
+        websocket_write_limit=websocket_write_limit,
+        state=state,
+        debug=debug,
+    )
 
     app.asgi = False
     assert not (
@@ -428,7 +429,7 @@ def serve(
         after_start=after_start,
         before_stop=before_stop,
         after_stop=after_stop,
-        handle_connection=handle_connection,
+        proto=proto,
         graceful_shutdown_timeout=graceful_shutdown_timeout,
     )
 
@@ -479,7 +480,7 @@ def runserver(acceptor, host, port, sock, backlog, workers):
     if workers:
         while True:
             while len(processes) < workers:
-                p = Process(target=runworker)
+                p = Process(target=trio.run, args=(acceptor, listeners, master_pid))
                 p.daemon = True
                 p.start()
                 processes.append(p)
@@ -507,7 +508,7 @@ async def runaccept(
     after_start,
     before_stop,
     after_stop,
-    handle_connection,
+    proto,
     graceful_shutdown_timeout,
 ):
     try:
@@ -520,7 +521,7 @@ async def runaccept(
                 acceptor.start_soon(
                     partial(
                         trio.serve_listeners,
-                        handler=handle_connection,
+                        handler=proto().run,
                         listeners=listeners,
                         handler_nursery=main_nursery,
                     )

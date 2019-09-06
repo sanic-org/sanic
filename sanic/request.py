@@ -132,11 +132,6 @@ class Request:
             self.__class__.__name__, self.method, self.path
         )
 
-    def __bool__(self):
-        if self.transport:
-            return True
-        return False
-
     def get(self, key, default=None):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""

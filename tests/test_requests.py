@@ -1499,9 +1499,6 @@ def test_request_bool(app):
     request, response = app.test_client.get("/")
     assert bool(request)
 
-    request.transport = False
-    assert not bool(request)
-
 
 def test_request_parsing_form_failed(app, caplog):
     @app.route("/", methods=["POST"])

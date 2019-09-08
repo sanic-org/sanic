@@ -23,12 +23,7 @@ except BaseException:
 
 class BaseHTTPResponse:
     def _encode_body(self, data):
-        try:
-            # Try to encode it regularly
-            return data.encode()
-        except AttributeError:
-            # Convert it to a str if you can't
-            return str(data).encode()
+        return f"{data}".encode()
 
     def _parse_headers(self):
         return format_http1(self.headers.items())

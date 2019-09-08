@@ -180,12 +180,14 @@ def format_http1(headers: HeaderIterable) -> bytes:
 
 
 def format_http1_response(
-    status: int, headers: HeaderIterable, body=b""
+    status: int, headers: HeaderIterable, body: Optional[bytes] = None
 ) -> bytes:
     """Format a full HTTP/1.1 response.
 
     - If `body` is included, content-length must be specified in headers.
     """
+    if body is None:
+        body = b""
     headers = format_http1(headers)
     if status == 200:
         return b"HTTP/1.1 200 OK\r\n%b\r\n%b" % (headers, body)

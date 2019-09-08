@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url
 
+from sanic.compat import Header
 from sanic.exceptions import HeaderExpectationFailed, InvalidUsage
 from sanic.headers import (
     parse_content_header,
@@ -94,7 +95,6 @@ class Request(dict):
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
-        "respond",
         "stream",
         "transport",
         "uri_template",
@@ -145,18 +145,22 @@ class Request(dict):
         self.body = b"".join(self.body)
 
     async def receive_body(self):
-        if self.stream:
-            max_size = self.stream.request_max_size
+        if not self.stream.pos:
+            max_size = self.app.config.REQUEST_MAX_SIZE
             body = []
             if self.stream.length > max_size:
                 raise HeaderExpectationFailed("Request body is too large.")
-            async for data in request.stream:
+            async for data in self.stream:
                 if self.stream.pos > max_size:
                     raise HeaderExpectationFailed("Request body is too large.")
                 body.append(data)
             self.body = b"".join(body)
-            self.stream = None
 
+    def respond(self, status=200, headers=None, content_type="text/html"):
+        headers = Header(headers or {})
+        if "content-type" not in headers:
+            headers["content-type"] = content_type
+        return self.stream.respond(status, headers)
 
     @property
     def json(self):

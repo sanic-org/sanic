@@ -1,4 +1,3 @@
-import trio
 import os
 import socket
 import stat
@@ -7,18 +6,20 @@ import time
 import traceback
 
 from functools import partial
-from h2.config import H2Configuration
-from h2.connection import H2Connection
-from h2.events import RequestReceived, DataReceived, ConnectionTerminated
 from inspect import isawaitable
 from ipaddress import ip_address
 from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from time import time, sleep as time_sleep
-from httptools.parser.errors import HttpParserError
+from time import sleep as time_sleep
+from time import time
 
-SIGHUP = SIGTERM
+import trio
+
+from h2.config import H2Configuration
+from h2.connection import H2Connection
+from h2.events import ConnectionTerminated, DataReceived, RequestReceived
+from httptools.parser.errors import HttpParserError
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -26,13 +27,22 @@ from sanic.exceptions import (
     InvalidUsage,
     PayloadTooLarge,
     RequestTimeout,
+    SanicException,
     ServerError,
-    VersionNotSupported,
     ServiceUnavailable,
+    VersionNotSupported,
 )
 from sanic.log import access_logger, logger
+from sanic.protocol import H1Stream
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
-from sanic.response import HTTPResponse, NewStreamingHTTPResponse
+from sanic.response import HTTPResponse
+
+
+try:
+    from signal import SIGHUP
+except:
+    SIGHUP = SIGTERM
+
 
 
 class Signal:
@@ -51,6 +61,7 @@ h2config = H2Configuration(
 
 
 idle_connections = set()
+
 
 def parse_h1_request(data: bytes) -> dict:
     try:
@@ -85,35 +96,6 @@ def push_back(stream, data):
 
     stream.__class__ = PushbackStream
 
-class H1StreamRequest:
-    __slots__ = "length", "pos", "stream", "set_timeout", "trigger_continue"
-    def __init__(self, headers, stream, set_timeout, trigger_continue):
-        self.length = int(headers.get("content-length"))
-        if self.length < 0:
-            raise InvalidUsage("Content-length must be positive")
-        self.pos = 0
-        self.stream = stream
-        self.set_timeout = set_timeout
-        self.trigger_continue = trigger_continue
-
-    async def __aiter__(self):
-        while True:
-            data = await self.read()
-            if not data: return
-            yield data
-
-    async def read(self):
-        await self.trigger_continue()
-        if self.pos == self.length: return None
-        buf = await self.stream.receive_some()
-        if len(buf) > self.length:
-            push_back(self.stream, buf[self.length:])
-            buf = buf[:self.length]
-        self.pos += len(buf)
-        # Extend or switch deadline
-        self.set_timeout("request" if self.length else "response")
-        return buf
-
 
 class HttpProtocol:
     def __init__(self, **kwargs):
@@ -143,9 +125,10 @@ class HttpProtocol:
             if upgrade == "h2c":
                 return self.http2(settings_header=headers["http2-settings"])
             if upgrade == "websocket":
-                return self.websocket()
+                self.websocket = True
+            self.stream.push_back(buffer)
             return self.http1(headers=headers)
-        push_back(self.stream, buffer)
+        self.stream.push_back(buffer)
         if req == "ssl":
             if not self.ssl:
                 raise RuntimeError("Only plain HTTP supported (not SSL).")
@@ -160,13 +143,14 @@ class HttpProtocol:
             return self.http2()
 
     def set_timeout(self, timeout: str):
-        self.nursery.cancel_scope.deadline = (
-            trio.current_time() + getattr(self, f"{timeout}_timeout")
+        self.nursery.cancel_scope.deadline = trio.current_time() + getattr(
+            self, f"{timeout}_timeout"
         )
 
     async def run(self, stream):
         assert not self.stream
         self.stream = stream
+        self.stream.push_back = partial(push_back, stream)
         try:
             async with stream, trio.open_nursery() as self.nursery:
                 self.set_timeout("request")
@@ -196,7 +180,8 @@ class HttpProtocol:
                 pos = buffer.find(b"\r\n\r\n", prevpos)
                 if pos > 0:
                     req = buffer[:pos]
-                    if req == b"PRI * HTTP/2.0": return "h2"
+                    if req == b"PRI * HTTP/2.0":
+                        return "h2"
                     del buffer[: pos + 4]
                     return req
         if buffer:
@@ -221,53 +206,29 @@ class HttpProtocol:
                 app=self.app,
             )
             need_continue = headers.get("expect", "").lower() == "100-continue"
-            async def trigger_continue():
-                nonlocal need_continue
-                if need_continue is False:
-                    return
-                await self.stream.send_all(b"HTTP/1.1 100 Continue\r\n\r\n")
-                need_continue = False
+
             if "chunked" in headers.get("transfer-encoding", "").lower():
                 raise RuntimeError("Chunked requests not supported")  # FIXME
             if "content-length" in headers:
                 push_back(self.stream, buffer)
                 del buffer[:]
-                request.stream = H1StreamRequest(
-                    headers,
-                    self.stream,
-                    self.set_timeout,
-                    trigger_continue,
-                )
-            else:
-                self.set_timeout("response")
+            request.stream = H1Stream(
+                headers, self.stream, self.set_timeout, need_continue
+            )
             headers = None
-            _response = None
-            # Implement request.respond:
-            async def respond(response=None, *, status=200, headers=None, content_type="text/html"):
-                nonlocal _response
-                if _response:
-                    raise ServerError("Duplicate responses for a single request!")
-                await trigger_continue()
-                if response is None:
-                    response = NewStreamingHTTPResponse(self.stream, status, headers, content_type)
-                # Middleware has a chance to replace or modify the response
-                response = await self.app._run_response_middleware(
-                    request, response
-                )
-                _response = response
-                if not isinstance(response, HTTPResponse):
-                    raise ServerError(f"Handling {request.path}: HTTPResponse expected but got {type(response).__name__}")
-                await self.stream.send_all(
-                    response.output("1.1", self.keep_alive, self.keep_alive_timeout)
-                )
-
-            request.respond = respond
-            await self.request_handler(request)
-            if not _response:
-                raise ServerError("Request handler made no response.")
-            if hasattr(_response, "aclose"):
-                await _response.aclose()
-            _response = None
+            try:
+                await self.request_handler(request)
+            except Exception as e:
+                r = self.app.error_handler.default(request, e)
+                try:
+                    await request.stream.respond(r.status, r.headers).send(
+                        data_bytes=r.body
+                    )
+                except RuntimeError:
+                    pass  # If we cannot send to client anymore
+                raise
+            finally:
+                await request.stream.aclose()
             self.set_timeout("request")
 
     async def h2_sender(self):
@@ -301,7 +262,7 @@ class HttpProtocol:
                     self.nursery.start_soon(
                         self.h2request, event.stream_id, event.headers
                     )
-                    #idle_connections.discard(self.nursery.cancel_scope)
+                    # idle_connections.discard(self.nursery.cancel_scope)
                 if isinstance(event, ConnectionTerminated):
                     return
             await self.send_some.send(...)
@@ -478,7 +439,9 @@ def runserver(acceptor, host, port, sock, backlog, workers):
     if workers:
         while True:
             while len(processes) < workers:
-                p = Process(target=trio.run, args=(acceptor, listeners, master_pid))
+                p = Process(
+                    target=trio.run, args=(acceptor, listeners, master_pid)
+                )
                 p.daemon = True
                 p.start()
                 processes.append(p)

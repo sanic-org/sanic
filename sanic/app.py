@@ -22,7 +22,11 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
-from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.response import (
+    BaseHTTPResponse,
+    HTTPResponse,
+    StreamingHTTPResponse,
+)
 from sanic.router import Router
 from sanic.server import HttpProtocol, Signal, serve
 from sanic.static import register as static_register
@@ -1033,8 +1037,16 @@ class Sanic:
         if isawaitable(response):
             response = await response
         # Returned (non-streaming) response
-        if response is not None:
-            await request.respond(response)
+        if isinstance(response, BaseHTTPResponse):
+            await request.respond(
+                status=response.status,
+                headers=response.headers,
+                content_type=response.content_type,
+            ).send(data_bytes=response.body, end_stream=True)
+        elif response is not None:
+            raise ServerError(
+                f"Handling {request.path}: HTTPResponse expected but got {type(response).__name__} {response!r:.200}"
+            )
 
     # -------------------------------------------------------------------- #
     # Testing
@@ -1065,7 +1077,7 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.

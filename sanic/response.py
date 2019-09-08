@@ -173,7 +173,7 @@ def json(
     headers=None,
     content_type="application/json",
     dumps=json_dumps,
-    **kwargs
+    **kwargs,
 ):
     """
     Returns response object with body in json format.

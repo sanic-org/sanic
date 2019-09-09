@@ -8,7 +8,7 @@ import traceback
 from functools import partial
 from inspect import isawaitable
 from ipaddress import ip_address
-from multiprocessing import Process
+import multiprocessing as mp
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import sleep as time_sleep
@@ -401,10 +401,10 @@ def serve(
         backlog=backlog,
         workers=workers,
     )
-    return server() if run_async else server()
+    return server() if run_async else trio.run(server)
 
 
-def runserver(acceptor, host, port, sock, backlog, workers):
+async def runserver(acceptor, host, port, sock, backlog, workers):
     if host and host.startswith("unix:"):
         open_listeners = partial(
             # Not Implemented: open_unix_listeners, path=host[5:], backlog=backlog
@@ -417,54 +417,51 @@ def runserver(acceptor, host, port, sock, backlog, workers):
             backlog=backlog,
         )
     try:
-        listeners = trio.run(open_listeners)
+        listeners = await open_listeners()
     except Exception:
         logger.exception("Unable to start server")
         return
     for l in listeners:
         l.socket.set_inheritable(True)
-    master_pid = os.getpid()
-    runworker = lambda: trio.run(acceptor, listeners, master_pid)
     processes = []
-    # Setup signal handlers to avoid crashing
-    sig = None
 
-    def handler(s, tb):
-        nonlocal sig
-        sig = s
-
-    for s in (SIGINT, SIGTERM, SIGHUP):
-        signal_func(s, handler)
-
-    if workers:
-        while True:
-            while len(processes) < workers:
-                p = Process(
-                    target=trio.run, args=(acceptor, listeners, master_pid)
-                )
-                p.daemon = True
-                p.start()
-                processes.append(p)
-            time_sleep(0.1)  # Poll for dead processes
-            processes = [p for p in processes if p.is_alive()]
-            s, sig = sig, None
-            if not s:
-                continue
+    try:
+        if workers:
+            # Spawn method is consistent across platforms and, unlike the fork
+            # method, can be used from within async functions (such as this one).
+            mp.set_start_method("spawn")
+            with trio.open_signal_receiver(SIGINT, SIGTERM, SIGHUP) as sigiter:
+                while True:
+                    while len(processes) < workers:
+                        p = mp.Process(
+                            target=trio.run, args=(acceptor, listeners)
+                        )
+                        p.daemon = True
+                        p.start()
+                        processes.append(p)
+                    # Wait for signals and periodically check processes
+                    with trio.move_on_after(0.1):
+                        s = await sigiter.__anext__()
+                        if s in (SIGTERM, SIGINT):
+                            break
+                        logger.info("SIGHUP: Restarting all workers!")
+                        for p in processes:
+                            p.terminate()
+                    processes = [p for p in processes if p.is_alive()]
+        else:  # workers=0 single-process mode
+            await acceptor(listeners)
+    finally:
+        with trio.CancelScope() as cs:
+            cs.shield = True
+            # Close listeners and wait for workers to terminate
+            for l in listeners:
+                await l.aclose()
             for p in processes:
-                os.kill(p.pid, SIGHUP)
-            if s in (SIGINT, SIGTERM):
-                break
-        for l in listeners:
-            trio.run(l.aclose)
-        for p in processes:
-            p.join()
-    else:
-        runworker()
+                p.join()
 
 
 async def runaccept(
     listeners,
-    master_pid,
     before_start,
     after_start,
     before_stop,
@@ -494,8 +491,6 @@ async def runaccept(
                 ) as sigiter:
                     s = await sigiter.__anext__()
                     logger.info(f"Received {Signals(s).name}")
-                    if s != SIGHUP:
-                        os.kill(master_pid, SIGTERM)
                     acceptor.cancel_scope.cancel()
             now = trio.current_time()
             for c in idle_connections:

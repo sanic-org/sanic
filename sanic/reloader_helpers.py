@@ -121,7 +121,7 @@ def kill_process_children(pid):
         pass  # should signal error here
 
 
-def kill_program_completly(proc):
+def kill_program_completely(proc):
     """Kill worker and it's child processes and exit.
 
     :param proc: worker process (process ID)
@@ -141,12 +141,14 @@ def watchdog(sleep_interval):
     mtimes = {}
     worker_process = restart_with_reloader()
     signal.signal(
-        signal.SIGTERM, lambda *args: kill_program_completly(worker_process)
+        signal.SIGTERM, lambda *args: kill_program_completely(worker_process)
     )
     signal.signal(
-        signal.SIGINT, lambda *args: kill_program_completly(worker_process)
+        signal.SIGINT, lambda *args: kill_program_completely(worker_process)
     )
     while True:
+        need_reload = False
+
         for filename in _iter_module_files():
             try:
                 mtime = os.stat(filename).st_mtime
@@ -156,12 +158,13 @@ def watchdog(sleep_interval):
             old_time = mtimes.get(filename)
             if old_time is None:
                 mtimes[filename] = mtime
-                continue
             elif mtime > old_time:
-                kill_process_children(worker_process.pid)
-                worker_process.terminate()
-                worker_process = restart_with_reloader()
                 mtimes[filename] = mtime
-                break
+                need_reload = True
+
+        if need_reload:
+            kill_process_children(worker_process.pid)
+            worker_process.terminate()
+            worker_process = restart_with_reloader()
 
         sleep(sleep_interval)

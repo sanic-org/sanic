@@ -77,38 +77,41 @@ def watchdog(sleep_interval):
     :param sleep_interval: interval in second.
     :return: Nothing
     """
-    mtimes = {}
-    worker_process = restart_with_reloader()
-    quit = False
-    def terminate(sig, frame):
-        nonlocal quit
-        quit = True
-        worker_process.terminate()
-    signal.signal(signal.SIGTERM, terminate)
-    signal.signal(signal.SIGINT, terminate)
-    while not quit:
-        need_reload = False
+    try:
+        mtimes = {}
+        worker_process = restart_with_reloader()
+        quit = False
+        def terminate(sig, frame):
+            nonlocal quit
+            quit = True
+            worker_process.terminate()
+        signal.signal(signal.SIGTERM, terminate)
+        signal.signal(signal.SIGINT, terminate)
+        while not quit:
+            for i in range(10):
+                sleep(sleep_interval / 10)
+                if quit or worker_process.poll():
+                    return
 
-        for filename in _iter_module_files():
-            try:
-                mtime = os.stat(filename).st_mtime
-            except OSError:
-                continue
+            need_reload = False
 
-            old_time = mtimes.get(filename)
-            if old_time is None:
-                mtimes[filename] = mtime
-            elif mtime > old_time:
-                mtimes[filename] = mtime
-                need_reload = True
+            for filename in _iter_module_files():
+                try:
+                    mtime = os.stat(filename).st_mtime
+                except OSError:
+                    continue
 
-        if worker_process.poll():
-            return
+                old_time = mtimes.get(filename)
+                if old_time is None:
+                    mtimes[filename] = mtime
+                elif mtime > old_time:
+                    mtimes[filename] = mtime
+                    need_reload = True
 
-        if need_reload:
-            join(worker_process)
-            worker_process = restart_with_reloader()
+            if need_reload:
+                worker_process.terminate()
+                sleep(0.1)
+                worker_process = restart_with_reloader()
 
-        sleep(sleep_interval)
-
-    join(worker_process)
+    finally:
+        join(worker_process)

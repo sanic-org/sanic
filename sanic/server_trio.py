@@ -460,7 +460,7 @@ async def runserver(acceptor, host, port, sock, backlog, workers):
                             break
                     processes = [p for p in processes if p.is_alive()]
         else:  # workers=0
-            logger.info("Worker starting")
+            logger.info("Server and worker started")
             await acceptor(listeners)
     finally:
         with trio.CancelScope() as cs:

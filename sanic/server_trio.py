@@ -5,6 +5,7 @@ import sys
 import time
 import traceback
 
+from enum import Enum
 from functools import partial
 from inspect import isawaitable
 from ipaddress import ip_address
@@ -48,6 +49,7 @@ except:
 class Signal:
     stopped = False
 
+SSL, H2 = Enum("Protocol", "SSL H2")
 
 h2config = H2Configuration(
     client_side=False,
@@ -61,7 +63,15 @@ h2config = H2Configuration(
 
 
 idle_connections = set()
+quit = trio.Event()
 
+def trigger_graceful_exit():
+    """Signals all running connections to terminate smoothly."""
+    # Disallow new requests
+    quit.set()
+    # Promptly terminate idle connections
+    for c in idle_connections:
+        c.cancel()
 
 def parse_h1_request(data: bytes) -> dict:
     try:
@@ -116,8 +126,7 @@ class HttpProtocol:
         self.alpn = self.stream.selected_alpn_protocol()
 
     async def sniff_protocol(self):
-        buffer = bytearray()
-        req = await self._receive_request_using(buffer)
+        req = await self.receive_request()
         if isinstance(req, bytearray):
             # HTTP1 but might be Upgrade to websocket or h2c
             headers = parse_h1_request(req)
@@ -126,10 +135,8 @@ class HttpProtocol:
                 return self.http2(settings_header=headers["http2-settings"])
             if upgrade == "websocket":
                 self.websocket = True
-            self.stream.push_back(buffer)
             return self.http1(headers=headers)
-        self.stream.push_back(buffer)
-        if req == "ssl":
+        if req is SSL:
             if not self.ssl:
                 raise RuntimeError("Only plain HTTP supported (not SSL).")
             await self.ssl_init()
@@ -139,7 +146,7 @@ class HttpProtocol:
                 return self.http2()
             raise RuntimeError(f"Unknown ALPN {self.alpn}")
         # HTTP2 (not Upgrade)
-        if req == "h2":
+        if req is H2:
             return self.http2()
 
     def set_timeout(self, timeout: str):
@@ -151,49 +158,51 @@ class HttpProtocol:
         assert not self.stream
         self.stream = stream
         self.stream.push_back = partial(push_back, stream)
-        try:
-            async with stream, trio.open_nursery() as self.nursery:
+        async with stream, trio.open_nursery() as self.nursery:
+            try:
                 self.set_timeout("request")
                 protocol_coroutine = await self.sniff_protocol()
                 if not protocol_coroutine:
                     return
                 await protocol_coroutine
                 self.nursery.cancel_scope.cancel()  # Terminate all connections
-        except trio.BrokenResourceError:
-            pass  # Connection reset by peer
-        except Exception:
-            logger.exception("Error in server")
-        finally:
-            idle_connections.discard(self.nursery.cancel_scope)
+            except trio.BrokenResourceError:
+                pass  # Connection reset by peer
+            except Exception:
+                logger.exception("Error in server")
+            finally:
+                idle_connections.discard(self.nursery.cancel_scope)
 
-    async def _receive_request_using(self, buffer: bytearray):
+    async def receive_request(self):
         idle_connections.add(self.nursery.cancel_scope)
         with trio.fail_after(self.request_timeout):
+            buffer = bytearray()
             async for data in self.stream:
                 idle_connections.discard(self.nursery.cancel_scope)
                 prevpos = max(0, len(buffer) - 3)
                 buffer += data
-                if buffer[0] < 0x20:
-                    return "ssl"
+                if buffer[0] == 0x16:
+                    self.stream.push_back(buffer)
+                    return SSL
                 if len(buffer) > self.request_max_size:
                     raise RuntimeError("Request larger than request_max_size")
                 pos = buffer.find(b"\r\n\r\n", prevpos)
                 if pos > 0:
                     req = buffer[:pos]
                     if req == b"PRI * HTTP/2.0":
-                        return "h2"
-                    del buffer[: pos + 4]
+                        self.stream.push_back(buffer)
+                        return H2
+                    self.stream.push_back(buffer[pos+4:])
                     return req
         if buffer:
-            raise RuntimeError(f"Peer disconnected after {buffer!r}")
+            raise RuntimeError(f"Peer disconnected after {buffer!r:.200}")
 
     async def http1(self, headers=None):
-        buffer = bytearray()
         _response = None
-        while True:
+        while not quit.is_set():
             # Process request
             if headers is None:
-                req = await self._receive_request_using(buffer)
+                req = await self.receive_request()
                 if not req:
                     return
                 headers = parse_h1_request(req)
@@ -209,15 +218,15 @@ class HttpProtocol:
 
             if "chunked" in headers.get("transfer-encoding", "").lower():
                 raise RuntimeError("Chunked requests not supported")  # FIXME
-            if "content-length" in headers:
-                push_back(self.stream, buffer)
-                del buffer[:]
             request.stream = H1Stream(
                 headers, self.stream, self.set_timeout, need_continue
             )
             headers = None
             try:
                 await self.request_handler(request)
+            except trio.BrokenResourceError:
+                logger.info(f"Client disconnected during {request.method} {request.path}")
+                return
             except Exception as e:
                 r = self.app.error_handler.default(request, e)
                 try:
@@ -474,7 +483,7 @@ async def runaccept(
         logger.info("Starting worker [%s]", pid)
         async with trio.open_nursery() as main_nursery:
             await trigger_events(before_start)
-            # Accept connections until a signal is received, then perform graceful exit
+            # Accept connections until a signal is received
             async with trio.open_nursery() as acceptor:
                 acceptor.start_soon(
                     partial(
@@ -492,12 +501,11 @@ async def runaccept(
                     s = await sigiter.__anext__()
                     logger.info(f"Received {Signals(s).name}")
                     acceptor.cancel_scope.cancel()
-            now = trio.current_time()
-            for c in idle_connections:
-                c.cancel()
+            # No longer accepting new connections. Attempt graceful exit.
             main_nursery.cancel_scope.deadline = (
-                now + graceful_shutdown_timeout
+                trio.current_time() + graceful_shutdown_timeout
             )
+            trigger_graceful_exit()
             await trigger_events(before_stop)
         await trigger_events(after_stop)
         logger.info(f"Gracefully finished worker [{pid}]")

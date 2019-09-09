@@ -57,6 +57,19 @@ def restart_with_reloader():
     new_environ["SANIC_SERVER_RUNNING"] = "true"
     return subprocess.Popen(args, cwd=cwd, env=new_environ)
 
+def join(worker_process):
+    try:
+        # Graceful
+        worker_process.terminate()
+        worker_process.wait(2)
+    except subprocess.TimeoutExpired:
+        # Not so graceful
+        try:
+            worker_process.terminate()
+            worker_process.wait(1)
+        except subprocess.TimeoutExpired:
+            worker_process.kill()
+            worker_process.wait()
 
 def watchdog(sleep_interval):
     """Watch project files, restart worker process if a change happened.
@@ -89,11 +102,13 @@ def watchdog(sleep_interval):
                 mtimes[filename] = mtime
                 need_reload = True
 
-        if quit or worker_process.poll():
+        if worker_process.poll():
             return
 
         if need_reload:
-            worker_process.terminate()
+            join(worker_process)
             worker_process = restart_with_reloader()
 
         sleep(sleep_interval)
+
+    join(worker_process)

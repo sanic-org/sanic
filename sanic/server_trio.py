@@ -472,7 +472,20 @@ async def runserver(acceptor, host, port, sock, backlog, workers):
                 p.join()
             logger.info("Server stopped")
 
-
+async def sighandler(scopes, task_status=trio.TASK_STATUS_IGNORED):
+    with trio.open_signal_receiver(SIGINT, SIGTERM, SIGHUP) as sigiter:
+        t = None
+        task_status.started()
+        async for s in sigiter:
+            # Ignore spuriously repeated signals
+            if t is not None and trio.current_time() - t < 0.5:
+                logger.debug(f"Ignored {Signals(s).name}")
+                continue
+            logger.info(f"Received {Signals(s).name}")
+            if not scopes:
+                raise trio.Cancelled("Signaled too many times")
+            scopes.pop().cancel()
+            t = trio.current_time()
 
 async def runaccept(
     listeners,
@@ -484,11 +497,15 @@ async def runaccept(
     graceful_shutdown_timeout,
 ):
     try:
-        async with trio.open_nursery() as main_nursery:
-            await trigger_events(before_start)
-            # Accept connections until a signal is received
-            with trio.open_signal_receiver(SIGINT, SIGTERM, SIGHUP) as sigiter:
+        async with trio.open_nursery() as signal_nursery:
+            cancel_scopes = [signal_nursery.cancel_scope]
+            sigscope = await signal_nursery.start(sighandler, cancel_scopes)
+            async with trio.open_nursery() as main_nursery:
+                cancel_scopes.append(main_nursery.cancel_scope)
+                await trigger_events(before_start)
+                # Accept connections until a signal is received
                 async with trio.open_nursery() as acceptor:
+                    cancel_scopes.append(acceptor.cancel_scope)
                     acceptor.start_soon(
                         partial(
                             trio.serve_listeners,
@@ -498,22 +515,14 @@ async def runaccept(
                         )
                     )
                     await trigger_events(after_start)
-                    # Wait for a signal and then exit gracefully
-                    s = await sigiter.__anext__()
-                    logger.info(f"Received {Signals(s).name}")
-                    acceptor.cancel_scope.cancel()
                 # No longer accepting new connections. Attempt graceful exit.
                 main_nursery.cancel_scope.deadline = (
                     trio.current_time() + graceful_shutdown_timeout
                 )
                 trigger_graceful_exit()
-                main_nursery.start_soon(trigger_events, before_stop)
-                # Eat any extra signals (if server and workers were signaled)
-                with trio.move_on_after(0.01):
-                    async for s in sigiter:
-                        pass
-            # Now any further signals will cause stacktraces
-        await trigger_events(after_stop)
+                await trigger_events(before_stop)
+            await trigger_events(after_stop)
+            signal_nursery.cancel_scope.cancel()  # Exit signal handler
         logger.info(f"Worker finished gracefully")
     except BaseException:
         logger.exception(f"Worker terminating")

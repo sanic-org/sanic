@@ -1116,6 +1116,9 @@ class Sanic:
                 "https://sanic.readthedocs.io/en/latest/sanic/deploying.html"
                 "#asynchronous-support"
             )
+        self.is_first_process = (
+            os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        )
 
         # Allow for overriding the default of following debug mode setting
         auto_reload = kwargs.get("auto_reload", debug)
@@ -1153,10 +1156,7 @@ class Sanic:
 
         try:
             self.is_running = True
-            if (
-                auto_reload
-                and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-            ):
+            if auto_reload and self.is_first_process:
                 reloader_helpers.watchdog(2)
             else:
                 serve(**server_settings, workers=workers)
@@ -1395,10 +1395,7 @@ class Sanic:
         if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
 
-        if (
-            self.config.LOGO
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
+        if self.config.LOGO and self.is_first_process:
             logger.debug(
                 self.config.LOGO
                 if isinstance(self.config.LOGO, str)
@@ -1409,7 +1406,7 @@ class Sanic:
             server_settings["run_async"] = True
 
         # Serve
-        if host and port and os.environ.get("SANIC_SERVER_RUNNING") != "true":
+        if host and port and self.is_first_process:
             proto = "http"
             if ssl is not None:
                 proto = "https"

@@ -440,6 +440,7 @@ async def runserver(acceptor, host, port, sock, backlog, workers):
             # method, can be used from within async functions (such as this one).
             mp.set_start_method("spawn")
             with trio.open_signal_receiver(SIGINT, SIGTERM, SIGHUP) as sigiter:
+                logger.info(f"Server starting, {workers} worker processes")
                 while True:
                     while len(processes) < workers:
                         p = mp.Process(
@@ -448,16 +449,18 @@ async def runserver(acceptor, host, port, sock, backlog, workers):
                         p.daemon = True
                         p.start()
                         processes.append(p)
+                        logger.info("Worker [%s]", p.pid)
                     # Wait for signals and periodically check processes
                     with trio.move_on_after(0.1):
                         s = await sigiter.__anext__()
-                        if s in (SIGTERM, SIGINT):
-                            break
-                        logger.info("SIGHUP: Restarting all workers!")
+                        logger.info(f"Server received {Signals(s).name}")
                         for p in processes:
                             p.terminate()
+                        if s in (SIGTERM, SIGINT):
+                            break
                     processes = [p for p in processes if p.is_alive()]
-        else:  # workers=0 single-process mode
+        else:  # workers=0
+            logger.info("Worker starting")
             await acceptor(listeners)
     finally:
         with trio.CancelScope() as cs:
@@ -467,6 +470,8 @@ async def runserver(acceptor, host, port, sock, backlog, workers):
                 await l.aclose()
             for p in processes:
                 p.join()
+            logger.info("Server stopped")
+
 
 
 async def runaccept(
@@ -479,35 +484,36 @@ async def runaccept(
     graceful_shutdown_timeout,
 ):
     try:
-        pid = os.getpid()
-        logger.info("Starting worker [%s]", pid)
         async with trio.open_nursery() as main_nursery:
             await trigger_events(before_start)
             # Accept connections until a signal is received
-            async with trio.open_nursery() as acceptor:
-                acceptor.start_soon(
-                    partial(
-                        trio.serve_listeners,
-                        handler=lambda stream: proto().run(stream),
-                        listeners=listeners,
-                        handler_nursery=main_nursery,
+            with trio.open_signal_receiver(SIGINT, SIGTERM, SIGHUP) as sigiter:
+                async with trio.open_nursery() as acceptor:
+                    acceptor.start_soon(
+                        partial(
+                            trio.serve_listeners,
+                            handler=lambda stream: proto().run(stream),
+                            listeners=listeners,
+                            handler_nursery=main_nursery,
+                        )
                     )
-                )
-                await trigger_events(after_start)
-                # Wait for a signal and then exit gracefully
-                with trio.open_signal_receiver(
-                    SIGINT, SIGTERM, SIGHUP
-                ) as sigiter:
+                    await trigger_events(after_start)
+                    # Wait for a signal and then exit gracefully
                     s = await sigiter.__anext__()
                     logger.info(f"Received {Signals(s).name}")
                     acceptor.cancel_scope.cancel()
-            # No longer accepting new connections. Attempt graceful exit.
-            main_nursery.cancel_scope.deadline = (
-                trio.current_time() + graceful_shutdown_timeout
-            )
-            trigger_graceful_exit()
-            await trigger_events(before_stop)
+                # No longer accepting new connections. Attempt graceful exit.
+                main_nursery.cancel_scope.deadline = (
+                    trio.current_time() + graceful_shutdown_timeout
+                )
+                trigger_graceful_exit()
+                main_nursery.start_soon(trigger_events, before_stop)
+                # Eat any extra signals (if server and workers were signaled)
+                with trio.move_on_after(0.01):
+                    async for s in sigiter:
+                        pass
+            # Now any further signals will cause stacktraces
         await trigger_events(after_stop)
-        logger.info(f"Gracefully finished worker [{pid}]")
-    except BaseException as e:
-        logger.exception(f"Stopped worker [{pid}]")
+        logger.info(f"Worker finished gracefully")
+    except BaseException:
+        logger.exception(f"Worker terminating")

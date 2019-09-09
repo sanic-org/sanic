@@ -1117,13 +1117,8 @@ class Sanic:
                 "#asynchronous-support"
             )
 
-        # Default auto_reload to false
-        auto_reload = False
-        # If debug is set, default it to true (unless on windows)
-        if debug and os.name == "posix":
-            auto_reload = True
-        # Allow for overriding either of the defaults
-        auto_reload = kwargs.get("auto_reload", auto_reload)
+        # Allow for overriding the default of following debug mode setting
+        auto_reload = kwargs.get("auto_reload", debug)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -1158,11 +1153,6 @@ class Sanic:
 
         try:
             self.is_running = True
-            if auto_reload and os.name != "posix":
-                # This condition must be removed after implementing
-                # auto reloader for other operating systems.
-                raise NotImplementedError
-
             if (
                 auto_reload
                 and os.environ.get("SANIC_SERVER_RUNNING") != "true"
@@ -1177,7 +1167,6 @@ class Sanic:
             raise
         finally:
             self.is_running = False
-        logger.info("Server Stopped")
 
     def stop(self):
         """This kills the Sanic"""

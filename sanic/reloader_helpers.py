@@ -3,7 +3,6 @@ import signal
 import subprocess
 import sys
 
-from multiprocessing import Process
 from time import sleep
 
 
@@ -56,80 +55,7 @@ def restart_with_reloader():
     args = _get_args_for_reloading()
     new_environ = os.environ.copy()
     new_environ["SANIC_SERVER_RUNNING"] = "true"
-    cmd = " ".join(args)
-    worker_process = Process(
-        target=subprocess.call,
-        args=(cmd,),
-        kwargs={"cwd": cwd, "shell": True, "env": new_environ},
-    )
-    worker_process.start()
-    return worker_process
-
-
-def kill_process_children_unix(pid):
-    """Find and kill child processes of a process (maximum two level).
-
-    :param pid: PID of parent process (process ID)
-    :return: Nothing
-    """
-    root_process_path = "/proc/{pid}/task/{pid}/children".format(pid=pid)
-    if not os.path.isfile(root_process_path):
-        return
-    with open(root_process_path) as children_list_file:
-        children_list_pid = children_list_file.read().split()
-
-    for child_pid in children_list_pid:
-        children_proc_path = "/proc/%s/task/%s/children" % (
-            child_pid,
-            child_pid,
-        )
-        if not os.path.isfile(children_proc_path):
-            continue
-        with open(children_proc_path) as children_list_file_2:
-            children_list_pid_2 = children_list_file_2.read().split()
-        for _pid in children_list_pid_2:
-            try:
-                os.kill(int(_pid), signal.SIGTERM)
-            except ProcessLookupError:
-                continue
-        try:
-            os.kill(int(child_pid), signal.SIGTERM)
-        except ProcessLookupError:
-            continue
-
-
-def kill_process_children_osx(pid):
-    """Find and kill child processes of a process.
-
-    :param pid: PID of parent process (process ID)
-    :return: Nothing
-    """
-    subprocess.run(["pkill", "-P", str(pid)])
-
-
-def kill_process_children(pid):
-    """Find and kill child processes of a process.
-
-    :param pid: PID of parent process (process ID)
-    :return: Nothing
-    """
-    if sys.platform == "darwin":
-        kill_process_children_osx(pid)
-    elif sys.platform == "linux":
-        kill_process_children_unix(pid)
-    else:
-        pass  # should signal error here
-
-
-def kill_program_completely(proc):
-    """Kill worker and it's child processes and exit.
-
-    :param proc: worker process (process ID)
-    :return: Nothing
-    """
-    kill_process_children(proc.pid)
-    proc.terminate()
-    os._exit(0)
+    return subprocess.Popen(args, cwd=cwd, env=new_environ)
 
 
 def watchdog(sleep_interval):
@@ -140,13 +66,14 @@ def watchdog(sleep_interval):
     """
     mtimes = {}
     worker_process = restart_with_reloader()
-    signal.signal(
-        signal.SIGTERM, lambda *args: kill_program_completely(worker_process)
-    )
-    signal.signal(
-        signal.SIGINT, lambda *args: kill_program_completely(worker_process)
-    )
-    while True:
+    quit = False
+    def terminate(sig, frame):
+        nonlocal quit
+        quit = True
+        worker_process.terminate()
+    signal.signal(signal.SIGTERM, terminate)
+    signal.signal(signal.SIGINT, terminate)
+    while not quit:
         need_reload = False
 
         for filename in _iter_module_files():
@@ -162,8 +89,10 @@ def watchdog(sleep_interval):
                 mtimes[filename] = mtime
                 need_reload = True
 
+        if quit or worker_process.poll():
+            return
+
         if need_reload:
-            kill_process_children(worker_process.pid)
             worker_process.terminate()
             worker_process = restart_with_reloader()
 

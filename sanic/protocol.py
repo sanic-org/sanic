@@ -12,15 +12,13 @@ if False:
 class H1Stream:
     __slots__ = ("stream", "length", "pos", "set_timeout", "response_state", "status", "headers", "bytes_left")
 
-    def __init__(self, headers, stream, set_timeout, need_continue):
+    def __init__(self, headers, stream, need_continue):
         self.length = int(headers.get("content-length", "0"))
         assert self.length >= 0
         self.pos = None if need_continue else 0
         self.stream = stream
         self.status = self.bytes_left = None
         self.response_state = 0
-        self.set_timeout = set_timeout
-        self.update_deadline()
 
     async def aclose(self):
         # Finish sending a response (if no error)
@@ -29,10 +27,6 @@ class H1Stream:
         # Response fully sent, request fully read?
         if self.pos != self.length or self.response_state != 2:
             await self.stream.aclose()  # If not, must disconnect :(
-
-    def update_deadline(self):
-        # Extend or switch deadline
-        self.set_timeout("request" if self.pos is not None and self.pos < self.length else "request")
 
     # Request methods
 
@@ -63,7 +57,6 @@ class H1Stream:
             self.stream.push_back(buf[self.length :])
             buf = buf[: self.length]
         self.pos += len(buf)
-        self.update_deadline()
         return buf
 
     # Response methods

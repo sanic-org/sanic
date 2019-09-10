@@ -83,16 +83,14 @@ def parse_h1_request(data: bytes) -> dict:
     if version != "HTTP/1.1":
         raise VersionNotSupported(f"Expected 'HTTP/1.1', got '{version}'")
     headers = {":method": method, ":path": path}
-    for name, value in (h.split(": ", 1) for h in hlines):
+    for name, val in (h.split(": ", 1) for h in hlines):
         name = name.lower()
-        old = headers.get(name)
-        headers[name] = value if old is None else f"{old}, {value}"
+        headers[name] = f"{headers[name]}, {val}" if name in headers else val
     return headers
 
 
 def push_back(stream, data):
-    if not data:
-        return
+    assert data, "Ensure that data is not empty before calling this function."
     stream_type = type(stream)
 
     class PushbackStream(stream_type):
@@ -127,15 +125,6 @@ class HttpProtocol:
 
     async def sniff_protocol(self):
         req = await self.receive_request()
-        if isinstance(req, bytearray):
-            # HTTP1 but might be Upgrade to websocket or h2c
-            headers = parse_h1_request(req)
-            upgrade = headers.get("upgrade")
-            if upgrade == "h2c":
-                return self.http2(settings_header=headers["http2-settings"])
-            if upgrade == "websocket":
-                self.websocket = True
-            return self.http1(headers=headers)
         if req is SSL:
             if not self.ssl:
                 raise RuntimeError("Only plain HTTP supported (not SSL).")
@@ -148,6 +137,14 @@ class HttpProtocol:
         # HTTP2 (not Upgrade)
         if req is H2:
             return self.http2()
+        # HTTP1 but might be Upgrade to websocket or h2c
+        headers = parse_h1_request(req)
+        upgrade = headers.get("upgrade")
+        if upgrade == "h2c":
+            return self.http2(settings_header=headers["http2-settings"])
+        if upgrade == "websocket":
+            self.websocket = True
+        return self.http1(headers=headers)
 
     def set_timeout(self, timeout: str):
         self.nursery.cancel_scope.deadline = trio.current_time() + getattr(
@@ -175,25 +172,32 @@ class HttpProtocol:
 
     async def receive_request(self):
         idle_connections.add(self.nursery.cancel_scope)
-        with trio.fail_after(self.request_timeout):
-            buffer = bytearray()
-            async for data in self.stream:
-                idle_connections.discard(self.nursery.cancel_scope)
-                prevpos = max(0, len(buffer) - 3)
+        buffer = None
+        prevpos = 0
+        async for data in self.stream:
+            idle_connections.discard(self.nursery.cancel_scope)
+            if buffer is None:
+                buffer = data
+            else:
+                # Headers normally come in one packet, so this may be slower
                 buffer += data
-                if buffer[0] == 0x16:
+            buflen = len(buffer)
+            if buffer[0] == 0x16:
+                self.stream.push_back(buffer)
+                return SSL
+            if buflen > self.request_max_size:
+                raise RuntimeError("Request larger than request_max_size")
+            pos = buffer.find(b"\r\n\r\n", prevpos)
+            if pos > 0:
+                req = buffer[:pos]
+                if req == b"PRI * HTTP/2.0":
                     self.stream.push_back(buffer)
-                    return SSL
-                if len(buffer) > self.request_max_size:
-                    raise RuntimeError("Request larger than request_max_size")
-                pos = buffer.find(b"\r\n\r\n", prevpos)
-                if pos > 0:
-                    req = buffer[:pos]
-                    if req == b"PRI * HTTP/2.0":
-                        self.stream.push_back(buffer)
-                        return H2
-                    self.stream.push_back(buffer[pos+4:])
-                    return req
+                    return H2
+                pos += 4  # Skip header and its trailing \r\n\r\n
+                if buflen > pos:
+                    self.stream.push_back(buffer[pos:])
+                return req
+            prevpos = buflen - 3  # \r\n\r\n may cross packet boundary
         if buffer:
             raise RuntimeError(f"Peer disconnected after {buffer!r:.200}")
 
@@ -206,6 +210,7 @@ class HttpProtocol:
                 if not req:
                     return
                 headers = parse_h1_request(req)
+
             request = self.request_class(
                 url_bytes=headers[":path"].encode(),
                 headers=Header(headers),
@@ -218,10 +223,12 @@ class HttpProtocol:
 
             if "chunked" in headers.get("transfer-encoding", "").lower():
                 raise RuntimeError("Chunked requests not supported")  # FIXME
-            request.stream = H1Stream(
-                headers, self.stream, self.set_timeout, need_continue
-            )
+
+            request.stream = H1Stream(headers, self.stream, need_continue)
             headers = None
+            # Timeout between consecutive requests, reset *here* to minimize
+            # chances of timeouting request handlers.
+            self.set_timeout("request")
             try:
                 await self.request_handler(request)
             except trio.BrokenResourceError:
@@ -238,7 +245,6 @@ class HttpProtocol:
                 raise
             finally:
                 await request.stream.aclose()
-            self.set_timeout("request")
 
     async def h2_sender(self):
         async for _ in self.can_send:
@@ -486,6 +492,11 @@ async def sighandler(scopes, task_status=trio.TASK_STATUS_IGNORED):
                 raise trio.Cancelled("Signaled too many times")
             scopes.pop().cancel()
             t = trio.current_time()
+
+async def runbench(stream):
+    async for d in stream:
+        if d[-4:] == b"\r\n\r\n":
+            await stream.send_all(b"HTTP/1.1 200 OK\r\ncontent-type: text/plain\r\ncontent-length: 13\r\n\r\nHello World!\n")
 
 async def runaccept(
     listeners,

@@ -136,7 +136,7 @@ class Request(dict):
         self.body = b"".join(self.body)
 
     async def receive_body(self):
-        if not self.stream.pos:
+        if self.stream.length and not self.stream.pos:
             max_size = self.app.config.REQUEST_MAX_SIZE
             body = []
             if self.stream.length > max_size:

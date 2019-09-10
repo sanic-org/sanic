@@ -137,6 +137,8 @@ class HttpProtocol:
         # HTTP2 (not Upgrade)
         if req is H2:
             return self.http2()
+        if req is None:
+            return None
         # HTTP1 but might be Upgrade to websocket or h2c
         headers = parse_h1_request(req)
         upgrade = headers.get("upgrade")
@@ -207,7 +209,7 @@ class HttpProtocol:
             # Process request
             if headers is None:
                 req = await self.receive_request()
-                if not req:
+                if not isinstance(req, (bytes, bytearray)):
                     return
                 headers = parse_h1_request(req)
 

@@ -51,7 +51,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         streaming_fn,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type="text/plain; charset=utf-8",
         chunked=True,
     ):
         self.content_type = content_type
@@ -120,7 +120,7 @@ class HTTPResponse(BaseHTTPResponse):
         body=None,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type="text/plain; charset=utf-8",
         body_bytes=b"",
     ):
         self.content_type = content_type
@@ -144,10 +144,6 @@ class HTTPResponse(BaseHTTPResponse):
             self.headers["Content-Length"] = self.headers.get(
                 "Content-Length", len(self.body)
             )
-
-        self.headers["Content-Type"] = self.headers.get(
-            "Content-Type", self.content_type
-        )
 
         if self.status in (304, 412):
             self.headers = remove_entity_headers(self.headers)

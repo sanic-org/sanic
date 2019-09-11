@@ -23,7 +23,18 @@ except ImportError:
 
 class BaseHTTPResponse:
     def _encode_body(self, data):
-        return f"{data}".encode()
+        # Replace the entire function with this once past deprecation:
+        # return data.encode() if hasattr(data, "encode") else data
+        # Deprecation fallbacks:
+        if hasattr(data, "encode"):
+            return data.encode()
+        try:
+            # Test if data is bytes-ish (implements the buffer protocol)
+            with memoryview(data):
+                return data
+        except TypeError:
+            # This is deprecated and quite b0rked (issue warning here?)
+            return f"{data}".encode()
 
     def _parse_headers(self):
         return format_http1(self.headers.items())
@@ -64,10 +75,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     async def write(self, data):
         """Writes a chunk of data to the streaming response.
 
-        :param data: bytes-ish data to be written.
+        :param data: str or bytes-ish data to be written.
         """
-        if type(data) != bytes:
-            data = self._encode_body(data)
+        data = self._encode_body(data)
 
         if self.chunked:
             await self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
@@ -124,12 +134,7 @@ class HTTPResponse(BaseHTTPResponse):
         body_bytes=b"",
     ):
         self.content_type = content_type
-
-        if body is not None:
-            self.body = self._encode_body(body)
-        else:
-            self.body = body_bytes
-
+        self.body = body_bytes if body is None else self._encode_body(body)
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
@@ -226,10 +231,14 @@ def html(body, status=200, headers=None):
     """
     Returns response object with body in html format.
 
-    :param body: Response data to be encoded.
+    :param body: str or bytes-ish, or an object with __html__ or _repr_html_.
     :param status: Response code.
     :param headers: Custom Headers.
     """
+    if hasattr(body, "__html__"):
+        body = body.__html__()
+    elif hasattr(body, "_repr_html_"):
+        body = body._repr_html_()
     return HTTPResponse(
         body,
         status=status,

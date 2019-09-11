@@ -7,7 +7,8 @@ from aiofiles import open as open_async
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar
-from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
+from sanic.headers import format_http1, format_http1_response
+from sanic.helpers import has_message_body, remove_entity_headers
 
 
 try:
@@ -22,28 +23,10 @@ except ImportError:
 
 class BaseHTTPResponse:
     def _encode_body(self, data):
-        try:
-            # Try to encode it regularly
-            return data.encode()
-        except AttributeError:
-            # Convert it to a str if you can't
-            return str(data).encode()
+        return f"{data}".encode()
 
     def _parse_headers(self):
-        headers = b""
-        for name, value in self.headers.items():
-            try:
-                headers += b"%b: %b\r\n" % (
-                    name.encode(),
-                    value.encode("utf-8"),
-                )
-            except AttributeError:
-                headers += b"%b: %b\r\n" % (
-                    str(name).encode(),
-                    str(value).encode("utf-8"),
-                )
-
-        return headers
+        return format_http1(self.headers.items())
 
     @property
     def cookies(self):
@@ -68,7 +51,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         streaming_fn,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type="text/plain; charset=utf-8",
         chunked=True,
     ):
         self.content_type = content_type
@@ -116,33 +99,17 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     def get_headers(
         self, version="1.1", keep_alive=False, keep_alive_timeout=None
     ):
-        # This is all returned in a kind-of funky way
-        # We tried to make this as fast as possible in pure python
-        timeout_header = b""
+        if "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
+
         if keep_alive and keep_alive_timeout is not None:
-            timeout_header = b"Keep-Alive: %d\r\n" % keep_alive_timeout
+            self.headers["Keep-Alive"] = keep_alive_timeout
 
         if self.chunked and version == "1.1":
             self.headers["Transfer-Encoding"] = "chunked"
             self.headers.pop("Content-Length", None)
-        self.headers["Content-Type"] = self.headers.get(
-            "Content-Type", self.content_type
-        )
 
-        headers = self._parse_headers()
-
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status)
-
-        return (b"HTTP/%b %d %b\r\n" b"%b" b"%b\r\n") % (
-            version.encode(),
-            self.status,
-            status,
-            timeout_header,
-            headers,
-        )
+        return format_http1_response(self.status, self.headers.items())
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -153,7 +120,7 @@ class HTTPResponse(BaseHTTPResponse):
         body=None,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type="text/plain; charset=utf-8",
         body_bytes=b"",
     ):
         self.content_type = content_type
@@ -168,11 +135,8 @@ class HTTPResponse(BaseHTTPResponse):
         self._cookies = None
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        # This is all returned in a kind-of funky way
-        # We tried to make this as fast as possible in pure python
-        timeout_header = b""
-        if keep_alive and keep_alive_timeout is not None:
-            timeout_header = b"Keep-Alive: %d\r\n" % keep_alive_timeout
+        if "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
 
         body = b""
         if has_message_body(self.status):
@@ -181,31 +145,16 @@ class HTTPResponse(BaseHTTPResponse):
                 "Content-Length", len(self.body)
             )
 
-        self.headers["Content-Type"] = self.headers.get(
-            "Content-Type", self.content_type
-        )
-
         if self.status in (304, 412):
             self.headers = remove_entity_headers(self.headers)
 
-        headers = self._parse_headers()
+        if keep_alive and keep_alive_timeout is not None:
+            self.headers["Connection"] = "keep-alive"
+            self.headers["Keep-Alive"] = keep_alive_timeout
+        elif not keep_alive:
+            self.headers["Connection"] = "close"
 
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
-
-        return (
-            b"HTTP/%b %d %b\r\n" b"Connection: %b\r\n" b"%b" b"%b\r\n" b"%b"
-        ) % (
-            version.encode(),
-            self.status,
-            status,
-            b"keep-alive" if keep_alive else b"close",
-            timeout_header,
-            headers,
-            body,
-        )
+        return format_http1_response(self.status, self.headers.items(), body)
 
     @property
     def cookies(self):
@@ -220,7 +169,7 @@ def json(
     headers=None,
     content_type="application/json",
     dumps=json_dumps,
-    **kwargs
+    **kwargs,
 ):
     """
     Returns response object with body in json format.

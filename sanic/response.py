@@ -23,18 +23,7 @@ except ImportError:
 
 class BaseHTTPResponse:
     def _encode_body(self, data):
-        # Replace the entire function with this once past deprecation:
-        # return data.encode() if hasattr(data, "encode") else data
-        # Deprecation fallbacks:
-        if hasattr(data, "encode"):
-            return data.encode()
-        try:
-            # Test if data is bytes-ish (implements the buffer protocol)
-            with memoryview(data):
-                return data
-        except TypeError:
-            # This is deprecated and quite b0rked (issue warning here?)
-            return f"{data}".encode()
+        return data.encode() if hasattr(data, "encode") else data
 
     def _parse_headers(self):
         return format_http1(self.headers.items())
@@ -203,6 +192,15 @@ def text(
     :param headers: Custom Headers.
     :param content_type: the content type (string) of the response
     """
+    # Type conversions are deprecated and quite b0rked but still supported for
+    # text() until applications get fixed. This try-except should be removed.
+    try:
+        # Avoid repr(body).encode() b0rkage for body that is already encoded.
+        # memoryview used only to test bytes-ishness.
+        with memoryview(body):
+            pass
+    except TypeError:
+        body = f"{body}"  # no-op if body is already str
     return HTTPResponse(
         body, status=status, headers=headers, content_type=content_type
     )

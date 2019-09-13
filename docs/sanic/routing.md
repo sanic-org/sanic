@@ -41,26 +41,74 @@ inside the quotes. If the parameter does not match the specified type, Sanic
 will throw a `NotFound` exception, resulting in a `404: Page not found` error
 on the URL.
 
+### Supported types
+
+* `string`
+    * "Bob"
+    * "Python 3"
+* `int`
+    * 10
+    * 20
+    * 30
+    * -10
+    * (No floats work here)
+* `number`
+    * 1
+    * 1.5
+    * 10
+    * -10
+* `alpha`
+    * "Bob"
+    * "Python"
+    * (If it contains a symbol or a non alphanumeric character it will fail)
+* `path`
+    * "hello"
+    * "hello.text"
+    * "hello world"
+* `uuid`
+    * 123a123a-a12a-1a1a-a1a1-1a12a1a12345 (UUIDv4 Support)
+* `regex expression`
+
+If no type is set then a string is expected. The argument given to the function will always be a string, independent of the type.
+
 ```python
 from sanic.response import text
 
-@app.route('/number/<integer_arg:int>')
+@app.route('/string/<string_arg:string>')
+async def string_handler(request, string_arg):
+    return text('String - {}'.format(string_arg))
+
+@app.route('/int/<integer_arg:int>')
 async def integer_handler(request, integer_arg):
-	return text('Integer - {}'.format(integer_arg))
+    return text('Integer - {}'.format(integer_arg))
 
 @app.route('/number/<number_arg:number>')
 async def number_handler(request, number_arg):
-	return text('Number - {}'.format(number_arg))
+    return text('Number - {}'.format(number_arg))
+
+@app.route('/alpha/<alpha_arg:alpha>')
+async def number_handler(request, alpha_arg):
+    return text('Alpha - {}'.format(alpha_arg))
+    
+@app.route('/path/<path_arg:path>')
+async def number_handler(request, path_arg):
+    return text('Path - {}'.format(path_arg))
+
+@app.route('/uuid/<uuid_arg:uuid>')
+async def number_handler(request, uuid_arg):
+    return text('Uuid - {}'.format(uuid_arg))
 
 @app.route('/person/<name:[A-z]+>')
 async def person_handler(request, name):
-	return text('Person - {}'.format(name))
+    return text('Person - {}'.format(name))
 
 @app.route('/folder/<folder_id:[A-z0-9]{0,4}>')
 async def folder_handler(request, folder_id):
-	return text('Folder - {}'.format(folder_id))
+    return text('Folder - {}'.format(folder_id))
 
 ```
+
+**Warning** `str` is not a valid type tag. If you want `str` recognition then you must use `string` 
 
 ## HTTP request types
 
@@ -155,16 +203,21 @@ async def post_handler(request, post_id):
 Other things to keep in mind when using `url_for`:
 
 - Keyword arguments passed to `url_for` that are not request parameters will be included in the URL's query string. For example:
+
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one='one', arg_two='two')
 # /posts/5?arg_one=one&arg_two=two
 ```
+
 - Multivalue argument can be passed to `url_for`. For example:
+
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'])
 # /posts/5?arg_one=one&arg_one=two
 ```
+
 - Also some special arguments (`_anchor`, `_external`, `_scheme`, `_method`, `_server`) passed to `url_for` will have special url building (`_method` is not supported now and will be ignored). For example:
+
 ```python
 url = app.url_for('post_handler', post_id=5, arg_one='one', _anchor='anchor')
 # /posts/5?arg_one=one#anchor
@@ -181,6 +234,7 @@ url = app.url_for('post_handler', post_id=5, arg_one='one', _scheme='http', _ext
 url = app.url_for('post_handler', post_id=5, arg_one=['one', 'two'], arg_two=2, _anchor='anchor', _scheme='http', _external=True, _server='another_server:8888')
 # http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor
 ```
+
 - All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be raised.
 
 ## WebSocket routes
@@ -239,6 +293,45 @@ def handler(request):
     return text('OK')
 
 app.blueprint(bp)
+```
+
+The behavior of how the `strict_slashes` flag follows a defined hierarchy which decides if a specific route
+falls under the `strict_slashes` behavior.
+
+```bash
+|___ Route
+     |___ Blueprint
+            |___ Application
+```
+
+Above hierarchy defines how the `strict_slashes` flag will behave. The first non `None` value of the `strict_slashes`
+found in the above order will be applied to the route in question.
+
+```python
+from sanic import Sanic, Blueprint
+from sanic.response import text
+
+app = Sanic("sample_strict_slashes", strict_slashes=True)
+
+@app.get("/r1")
+def r1(request):
+    return text("strict_slashes is applicable from App level")
+
+@app.get("/r2", strict_slashes=False)
+def r2(request):
+    return text("strict_slashes is not applicable due to  False value set in route level")
+
+bp = Blueprint("bp", strict_slashes=False)
+
+@bp.get("/r3", strict_slashes=True)
+def r3(request):
+    return text("strict_slashes applicable from blueprint route level")
+
+bp1 = Blueprint("bp1", strict_slashes=True)
+
+@bp.get("/r4")
+def r3(request):
+    return text("strict_slashes applicable from blueprint level")
 ```
 
 ## User defined route name

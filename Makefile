@@ -13,12 +13,28 @@ help:
 	@echo "docker-test"
 	@echo "		Run Sanic Unit Tests using Docker"
 	@echo "black"
-	@echo " 	Analyze and fix linting issues using Black"
+	@echo "		Analyze and fix linting issues using Black"
 	@echo "fix-import"
 	@echo "		Analyze and fix import order using isort"
 	@echo "beautify [sort_imports=1] [include_tests=1]"
-	@echo " 	Analyze and fix linting issue using black and optionally fix import sort using isort"
+	@echo "		Analyze and fix linting issue using black and optionally fix import sort using isort"
 	@echo ""
+	@echo "docs"
+	@echo "		Generate Sanic documentation"
+	@echo ""
+	@echo "clean-docs"
+	@echo "		Clean Sanic documentation"
+	@echo ""
+	@echo "docs-test"
+	@echo "		Test Sanic Documentation for errors"
+	@echo ""
+	@echo "changelog"
+	@echo "		Generate changelog for Sanic to prepare for new release"
+	@echo ""
+	@echo "release"
+	@echo "		Prepare Sanic for a new changes by version bump and changelog"
+	@echo ""
+
 
 clean:
 	find . ! -path "./.eggs/*" -name "*.pyc" -exec rm {} \;
@@ -47,12 +63,33 @@ ifdef include_tests
 	isort -rc sanic tests
 else
 	$(info Sorting Imports)
-	isort -rc sanic
+	isort -rc sanic tests
 endif
 endif
 
 black:
-	black --config ./pyproject.toml sanic tests
+	black --config ./.black.toml sanic tests
 
 fix-import: black
-	isort -rc sanic
+	isort -rc sanic tests
+
+
+docs-clean:
+	cd docs && make clean
+
+docs: docs-clean
+	cd docs && make html
+
+docs-test: docs-clean
+	cd docs && make dummy
+
+changelog:
+	python scripts/changelog.py
+
+release:
+ifdef version
+	python scripts/release.py --release-version ${version} --generate-changelog
+else
+	python scripts/release.py --generate-changelog
+endif
+

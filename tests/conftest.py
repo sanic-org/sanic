@@ -9,6 +9,7 @@ import pytest
 from sanic import Sanic
 from sanic.router import RouteExists, Router
 
+
 random.seed("Pack my box with five dozen liquor jugs.")
 
 if sys.platform in ["win32", "cygwin"]:

@@ -1,7 +1,8 @@
-import pytest
 from urllib.parse import quote
 
-from sanic.response import text, redirect
+import pytest
+
+from sanic.response import redirect, text
 
 
 @pytest.fixture
@@ -109,21 +110,19 @@ def test_redirect_with_header_injection(redirect_app):
 
 
 @pytest.mark.parametrize("test_str", ["sanic-test", "sanictest", "sanic test"])
-async def test_redirect_with_params(app, test_client, test_str):
+def test_redirect_with_params(app, test_str):
+    use_in_uri = quote(test_str)
+
     @app.route("/api/v1/test/<test>/")
     async def init_handler(request, test):
-        assert test == test_str
-        return redirect("/api/v2/test/{}/".format(quote(test)))
+        return redirect("/api/v2/test/{}/".format(use_in_uri))
 
     @app.route("/api/v2/test/<test>/")
     async def target_handler(request, test):
         assert test == test_str
         return text("OK")
 
-    test_cli = await test_client(app)
-
-    response = await test_cli.get("/api/v1/test/{}/".format(quote(test_str)))
+    _, response = app.test_client.get("/api/v1/test/{}/".format(use_in_uri))
     assert response.status == 200
 
-    txt = await response.text()
-    assert txt == "OK"
+    assert response.content == b"OK"

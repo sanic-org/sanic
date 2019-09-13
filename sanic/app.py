@@ -15,6 +15,7 @@ from typing import Any, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
+from sanic.asgi import ASGIApp
 from sanic.blueprint_group import BlueprintGroup
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
@@ -25,7 +26,7 @@ from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
 from sanic.server import HttpProtocol, Signal, serve, serve_multiple
 from sanic.static import register as static_register
-from sanic.testing import SanicTestClient
+from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -53,6 +54,7 @@ class Sanic:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
         self.name = name
+        self.asgi = False
         self.router = router or Router()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
@@ -80,7 +82,7 @@ class Sanic:
 
         Only supported when using the `app.run` method.
         """
-        if not self.is_running:
+        if not self.is_running and self.asgi is False:
             raise SanicException(
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
@@ -439,10 +441,16 @@ class Sanic:
     def websocket(
         self, uri, host=None, strict_slashes=None, subprotocols=None, name=None
     ):
-        """Decorate a function to be registered as a websocket route
+        """
+        Decorate a function to be registered as a websocket route
+
         :param uri: path of the URL
+        :param host: Host IP or FQDN details
+        :param strict_slashes: If the API endpoint needs to terminate
+                               with a "/" or not
         :param subprotocols: optional list of str with supported subprotocols
-        :param host:
+        :param name: A unique name assigned to the URL so that it can
+                     be used with :func:`url_for`
         :return: decorated function
         """
         self.enable_websocket()
@@ -465,13 +473,23 @@ class Sanic:
                         getattr(handler, "__blueprintname__", "")
                         + handler.__name__
                     )
-                try:
-                    protocol = request.transport.get_protocol()
-                except AttributeError:
-                    # On Python3.5 the Transport classes in asyncio do not
-                    # have a get_protocol() method as in uvloop
-                    protocol = request.transport._protocol
-                ws = await protocol.websocket_handshake(request, subprotocols)
+
+                    pass
+
+                if self.asgi:
+                    ws = request.transport.get_websocket_connection()
+                else:
+                    try:
+                        protocol = request.transport.get_protocol()
+                    except AttributeError:
+                        # On Python3.5 the Transport classes in asyncio do not
+                        # have a get_protocol() method as in uvloop
+                        protocol = request.transport._protocol
+                    protocol.app = self
+
+                    ws = await protocol.websocket_handshake(
+                        request, subprotocols
+                    )
 
                 # schedule the application handler
                 # its future is kept in self.websocket_tasks in case it
@@ -555,12 +573,22 @@ class Sanic:
         This method provides the app user a mechanism by which an already
         existing route can be removed from the :class:`Sanic` object
 
+        .. warning::
+            remove_route is deprecated in v19.06 and will be removed
+            from future versions.
+
         :param uri: URL Path to be removed from the app
         :param clean_cache: Instruct sanic if it needs to clean up the LRU
             route cache
         :param host: IP address or FQDN specific to the host
         :return: None
         """
+        warnings.warn(
+            "remove_route is deprecated and will be removed "
+            "from future versions.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.router.remove(uri, clean_cache, host)
 
     # Decorator
@@ -969,8 +997,16 @@ class Sanic:
                 raise CancelledError()
 
         # pass the response to the correct callback
-        if isinstance(response, StreamingHTTPResponse):
-            await stream_callback(response)
+        if write_callback is None or isinstance(
+            response, StreamingHTTPResponse
+        ):
+            if stream_callback:
+                await stream_callback(response)
+            else:
+                # Should only end here IF it is an ASGI websocket.
+                # TODO:
+                # - Add exception handling
+                pass
         else:
             write_callback(response)
 
@@ -981,6 +1017,10 @@ class Sanic:
     @property
     def test_client(self):
         return SanicTestClient(self)
+
+    @property
+    def asgi_client(self):
+        return SanicASGITestClient(self)
 
     # -------------------------------------------------------------------- #
     # Execution
@@ -1011,8 +1051,8 @@ class Sanic:
         :param debug: Enables debug output (slows server)
         :type debug: bool
         :param ssl: SSLContext, or location of certificate and key
-            for SSL encryption of worker(s)
-        :type ssl:SSLContext or dict
+                    for SSL encryption of worker(s)
+        :type ssl: SSLContext or dict
         :param sock: Socket for the server to accept connections from
         :type sock: socket
         :param workers: Number of processes received before it is respected
@@ -1020,10 +1060,10 @@ class Sanic:
         :param protocol: Subclass of asyncio Protocol class
         :type protocol: type[Protocol]
         :param backlog: a number of unaccepted connections that the system
-            will allow before refusing new connections
+                        will allow before refusing new connections
         :type backlog: int
         :param stop_event: event to be triggered
-            before stopping the app - deprecated
+                           before stopping the app - deprecated
         :type stop_event: None
         :param register_sys_signals: Register SIG* events
         :type register_sys_signals: bool
@@ -1108,10 +1148,6 @@ class Sanic:
         """This kills the Sanic"""
         get_event_loop().stop()
 
-    def __call__(self):
-        """gunicorn compatibility"""
-        return self
-
     async def create_server(
         self,
         host: Optional[str] = None,
@@ -1144,17 +1180,17 @@ class Sanic:
         :param debug: Enables debug output (slows server)
         :type debug: bool
         :param ssl: SSLContext, or location of certificate and key
-            for SSL encryption of worker(s)
-        :type ssl:SSLContext or dict
+                    for SSL encryption of worker(s)
+        :type ssl: SSLContext or dict
         :param sock: Socket for the server to accept connections from
         :type sock: socket
         :param protocol: Subclass of asyncio Protocol class
         :type protocol: type[Protocol]
         :param backlog: a number of unaccepted connections that the system
-            will allow before refusing new connections
+                        will allow before refusing new connections
         :type backlog: int
         :param stop_event: event to be triggered
-            before stopping the app - deprecated
+                           before stopping the app - deprecated
         :type stop_event: None
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool
@@ -1273,6 +1309,12 @@ class Sanic:
                 "stop_event will be removed from future versions.",
                 DeprecationWarning,
             )
+        if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
+            raise ValueError(
+                "PROXIES_COUNT cannot be negative. "
+                "https://sanic.readthedocs.io/en/latest/sanic/config.html"
+                "#proxy-configuration"
+            )
 
         self.error_handler.debug = debug
         self.debug = debug
@@ -1353,3 +1395,15 @@ class Sanic:
     def _build_endpoint_name(self, *parts):
         parts = [self.name, *parts]
         return ".".join(parts)
+
+    # -------------------------------------------------------------------- #
+    # ASGI
+    # -------------------------------------------------------------------- #
+
+    async def __call__(self, scope, receive, send):
+        """To be ASGI compliant, our instance must be a callable that accepts
+        three arguments: scope, receive, send. See the ASGI reference for more
+        details: https://asgi.readthedocs.io/en/latest/"""
+        self.asgi = True
+        asgi_app = await ASGIApp.create(self, scope, receive, send)
+        await asgi_app()

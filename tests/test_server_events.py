@@ -4,6 +4,7 @@ import pytest
 
 from sanic.testing import HOST, PORT
 
+
 AVAILABLE_LISTENERS = [
     "before_server_start",
     "after_server_start",
@@ -75,6 +76,7 @@ def test_all_listeners(app):
         assert app.name + listener_name == output.pop()
 
 
+@pytest.mark.asyncio
 async def test_trigger_before_events_create_server(app):
     class MySanicDb:
         pass
@@ -83,7 +85,7 @@ async def test_trigger_before_events_create_server(app):
     async def init_db(app, loop):
         app.db = MySanicDb()
 
-    await app.create_server(debug=True, return_asyncio_server=True)
+    await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
 
     assert hasattr(app, "db")
     assert isinstance(app.db, MySanicDb)

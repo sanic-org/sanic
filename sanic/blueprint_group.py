@@ -1,10 +1,11 @@
-from collections import MutableSequence
+from collections.abc import MutableSequence
 
 
 class BlueprintGroup(MutableSequence):
     """
     This class provides a mechanism to implement a Blueprint Group
-    using the `Blueprint.group` method. To avoid having to re-write
+    using the :meth:`~sanic.blueprints.Blueprint.group` method in
+    :class:`~sanic.blueprints.Blueprint`. To avoid having to re-write
     some of the existing implementation, this class provides a custom
     iterator implementation that will let you use the object of this
     class as a list/tuple inside the existing implementation.

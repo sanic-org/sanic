@@ -1,10 +1,17 @@
 import pytest
+
 from bs4 import BeautifulSoup
 
 from sanic import Sanic
+from sanic.exceptions import (
+    Forbidden,
+    InvalidUsage,
+    NotFound,
+    ServerError,
+    Unauthorized,
+    abort,
+)
 from sanic.response import text
-from sanic.exceptions import InvalidUsage, ServerError, NotFound, Unauthorized
-from sanic.exceptions import Forbidden, abort
 
 
 class SanicExceptionTestException(Exception):

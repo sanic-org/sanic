@@ -1,9 +1,12 @@
 # Run with: python3 -O simple_server.py
 import asyncio
-from kyoukai import Kyoukai, HTTPRequestContext
 import logging
+
 import ujson
 import uvloop
+
+from kyoukai import HTTPRequestContext, Kyoukai
+
 
 loop = uvloop.new_event_loop()
 asyncio.set_event_loop(loop)

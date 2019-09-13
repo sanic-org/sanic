@@ -1,9 +1,11 @@
 import logging
+
 from asyncio import CancelledError
 
 from sanic.exceptions import NotFound
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
+
 
 # ------------------------------------------------------------ #
 #  GET

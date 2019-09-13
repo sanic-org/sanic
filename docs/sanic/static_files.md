@@ -34,6 +34,10 @@ app.url_for('static', name='another', filename='any') == '/another.png'
 bp = Blueprint('bp', url_prefix='/bp')
 bp.static('/static', './static')
 
+# specify a different content_type for your files
+# such as adding 'charset'
+app.static('/', '/public/index.html', content_type="text/html; charset=utf-8")
+
 # servers the file directly
 bp.static('/the_best.png', '/home/ubuntu/test.png', name='best_png')
 app.blueprint(bp)

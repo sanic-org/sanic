@@ -3,6 +3,7 @@ import logging
 import sys
 
 from inspect import isawaitable
+
 import pytest
 
 from sanic.exceptions import SanicException
@@ -11,7 +12,7 @@ from sanic.response import text
 
 def uvloop_installed():
     try:
-        import uvloop
+        import uvloop  # noqa
 
         return True
     except ImportError:
@@ -56,7 +57,7 @@ def test_asyncio_server_start_serving(app):
 
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
-        _ = app.loop
+        app.loop
 
     assert str(excinfo.value) == (
         "Loop can only be retrieved after the app has started "

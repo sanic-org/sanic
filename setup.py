@@ -36,7 +36,7 @@ def open_local(paths, mode="r", encoding="utf8"):
     return codecs.open(path, mode, encoding)
 
 
-with open_local(["sanic", "__init__.py"], encoding="latin1") as fp:
+with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
         version = re.findall(
             r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M
@@ -50,12 +50,12 @@ with open_local(["README.rst"]) as rm:
 setup_kwargs = {
     "name": "sanic",
     "version": version,
-    "url": "http://github.com/channelcat/sanic/",
+    "url": "http://github.com/huge-success/sanic/",
     "license": "MIT",
-    "author": "Channel Cat",
-    "author_email": "channelcat@gmail.com",
+    "author": "Sanic Community",
+    "author_email": "admhpkns@gmail.com",
     "description": (
-        "A microframework based on uvloop, httptools, and learnings of flask"
+        "A web server and web framework that's written to go fast. Build fast. Run fast."
     ),
     "long_description": long_description,
     "packages": ["sanic"],
@@ -64,7 +64,6 @@ setup_kwargs = {
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
@@ -81,8 +80,9 @@ requirements = [
     uvloop,
     ujson,
     "aiofiles>=0.3.0",
-    "websockets>=6.0,<7.0",
+    "websockets>=7.0,<8.0",
     "multidict>=4.0,<5.0",
+    "requests-async==0.5.0",
 ]
 
 tests_require = [
@@ -90,13 +90,33 @@ tests_require = [
     "multidict>=4.0,<5.0",
     "gunicorn",
     "pytest-cov",
-    "aiohttp>=2.3.0,<=3.2.1",
+    "httpcore==0.3.0",
     "beautifulsoup4",
     uvloop,
     ujson,
     "pytest-sanic",
     "pytest-sugar",
+    "pytest-benchmark",
 ]
+
+docs_require = [
+    "sphinx>=2.1.2",
+    "sphinx_rtd_theme",
+    "recommonmark>=0.5.0",
+    "docutils",
+    "pygments",
+]
+
+dev_require = tests_require + [
+    "aiofiles",
+    "tox",
+    "black",
+    "flake8",
+    "bandit",
+    "towncrier",
+]
+
+all_require = dev_require + docs_require
 
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
@@ -111,15 +131,9 @@ if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
 
 extras_require = {
     "test": tests_require,
-    "dev": tests_require + ["aiofiles", "tox", "black", "flake8"],
-    "docs": [
-        "sphinx",
-        "sphinx_rtd_theme",
-        "recommonmark",
-        "sphinxcontrib-asyncio",
-        "docutils",
-        "pygments"
-    ],
+    "dev": dev_require,
+    "docs": docs_require,
+    "all": all_require,
 }
 
 setup_kwargs["install_requires"] = requirements

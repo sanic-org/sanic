@@ -1,15 +1,17 @@
-import sys
-import os
 import inspect
+import os
+import sys
+
+from sanic import Sanic
+from sanic.exceptions import ServerError
+from sanic.response import json, text
+
 
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe()))
 )
 sys.path.insert(0, currentdir + "/../../../")
 
-from sanic import Sanic
-from sanic.response import json, text
-from sanic.exceptions import ServerError
 
 app = Sanic("test")
 
@@ -55,8 +57,6 @@ def query_string(request):
         }
     )
 
-
-import sys
 
 app.run(host="0.0.0.0", port=sys.argv[1])
 

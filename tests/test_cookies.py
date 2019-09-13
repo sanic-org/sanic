@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
-from sanic.response import text
+
 import pytest
-from sanic.cookies import Cookie, DEFAULT_MAX_AGE
+
+from sanic.cookies import Cookie
+from sanic.response import text
+
 
 # ------------------------------------------------------------ #
 #  GET
@@ -19,6 +22,24 @@ def test_cookies(app):
     request, response = app.test_client.get("/", cookies={"test": "working!"})
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get("Set-Cookie", {}))
+
+    assert response.text == "Cookies are: working!"
+    assert response_cookies["right_back"].value == "at you"
+
+
+@pytest.mark.asyncio
+async def test_cookies_asgi(app):
+    @app.route("/")
+    def handler(request):
+        response = text("Cookies are: {}".format(request.cookies["test"]))
+        response.cookies["right_back"] = "at you"
+        return response
+
+    request, response = await app.asgi_client.get(
+        "/", cookies={"test": "working!"}
+    )
+    response_cookies = SimpleCookie()
+    response_cookies.load(response.headers.get("set-cookie", {}))
 
     assert response.text == "Cookies are: working!"
     assert response_cookies["right_back"].value == "at you"
@@ -100,7 +121,7 @@ def test_cookie_deletion(app):
 
     assert int(response_cookies["i_want_to_die"]["max-age"]) == 0
     with pytest.raises(KeyError):
-        _ = response.cookies["i_never_existed"]
+        response.cookies["i_never_existed"]
 
 
 def test_cookie_reserved_cookie():
@@ -135,7 +156,7 @@ def test_cookie_set_same_key(app):
 
     request, response = app.test_client.get("/", cookies=cookies)
     assert response.status == 200
-    assert response.cookies["test"].value == "pass"
+    assert response.cookies["test"] == "pass"
 
 
 @pytest.mark.parametrize("max_age", ["0", 30, 30.0, 30.1, "30", "test"])
@@ -149,19 +170,42 @@ def test_cookie_max_age(app, max_age):
         response.cookies["test"]["max-age"] = max_age
         return response
 
-    request, response = app.test_client.get("/", cookies=cookies)
+    request, response = app.test_client.get(
+        "/", cookies=cookies, raw_cookies=True
+    )
     assert response.status == 200
 
-    assert response.cookies["test"].value == "pass"
+    cookie = response.cookies.get("test")
+    if (
+        str(max_age).isdigit()
+        and int(max_age) == float(max_age)
+        and int(max_age) != 0
+    ):
+        cookie_expires = datetime.utcfromtimestamp(
+            response.raw_cookies["test"].expires
+        ).replace(microsecond=0)
 
-    if str(max_age).isdigit() and int(max_age) == float(max_age):
-        assert response.cookies["test"]["max-age"] == str(max_age)
+        # Grabbing utcnow after the response may lead to it being off slightly.
+        # Therefore, we 0 out the microseconds, and accept the test if there
+        # is a 1 second difference.
+        expires = datetime.utcnow().replace(microsecond=0) + timedelta(
+            seconds=int(max_age)
+        )
+
+        assert cookie == "pass"
+        assert (
+            cookie_expires == expires
+            or cookie_expires == expires + timedelta(seconds=-1)
+        )
     else:
-        assert response.cookies["test"]["max-age"] == str(DEFAULT_MAX_AGE)
+        assert cookie is None
 
 
-@pytest.mark.parametrize("expires", [datetime.now() + timedelta(seconds=60)])
+@pytest.mark.parametrize(
+    "expires", [datetime.utcnow() + timedelta(seconds=60)]
+)
 def test_cookie_expires(app, expires):
+    expires = expires.replace(microsecond=0)
     cookies = {"test": "wait"}
 
     @app.get("/")
@@ -171,15 +215,16 @@ def test_cookie_expires(app, expires):
         response.cookies["test"]["expires"] = expires
         return response
 
-    request, response = app.test_client.get("/", cookies=cookies)
+    request, response = app.test_client.get(
+        "/", cookies=cookies, raw_cookies=True
+    )
+    cookie_expires = datetime.utcfromtimestamp(
+        response.raw_cookies["test"].expires
+    ).replace(microsecond=0)
+
     assert response.status == 200
-
-    assert response.cookies["test"].value == "pass"
-
-    if isinstance(expires, datetime):
-        expires = expires.strftime("%a, %d-%b-%Y %T GMT")
-
-    assert response.cookies["test"]["expires"] == expires
+    assert response.cookies["test"] == "pass"
+    assert cookie_expires == expires
 
 
 @pytest.mark.parametrize("expires", ["Fri, 21-Dec-2018 15:30:00 GMT"])

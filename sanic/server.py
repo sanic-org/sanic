@@ -634,6 +634,67 @@ def trigger_events(events, loop):
             loop.run_until_complete(result)
 
 
+class AsyncServerCoro:
+    __slots__ = (
+        "loop",
+        "serve_coro",
+        "_after_start",
+        "_before_stop",
+        "_after_stop",
+        "server",
+        "connections",
+    )
+
+    def __init__(
+        self,
+        loop,
+        serve_coro,
+        connections,
+        after_start,
+        before_stop,
+        after_stop,
+    ):
+        self.loop = loop
+        self.serve_coro = serve_coro
+        self._after_start = after_start
+        self._before_stop = before_stop
+        self._after_stop = after_stop
+        self.server = None
+        self.connections = connections
+
+    def after_start(self):
+        """Trigger "after_server_start" events"""
+        trigger_events(self._after_start, self.loop)
+
+    def before_stop(self):
+        """Trigger "before_server_stop" events"""
+        trigger_events(self._before_stop, self.loop)
+
+    def after_stop(self):
+        """Trigger "after_server_stop" events"""
+        trigger_events(self._after_stop, self.loop)
+
+    def is_serving(self):
+        if self.server is None:
+            return False
+        return self.server.is_serving()
+
+    def close(self):
+        if self.server:
+            self.server.close()
+            coro = self.server.wait_closed()
+            task = asyncio.ensure_future(coro, loop=self.loop)
+            return task
+
+    def __await__(self):
+        """Starts the asyncio server, returns AsyncServerCoro"""
+        task = asyncio.ensure_future(self.serve_coro)
+        while not task.done():
+            yield
+        self.server = task.result()
+        return self
+
+
 def serve(
     host,
     port,
@@ -771,7 +832,14 @@ def serve(
     )
 
     if run_async:
-        return server_coroutine
+        return AsyncServerCoro(
+            loop,
+            server_coroutine,
+            connections,
+            after_start,
+            before_stop,
+            after_stop,
+        )
 
     trigger_events(before_start, loop)
 

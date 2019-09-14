@@ -132,6 +132,29 @@ def kill_program_completely(proc):
     os._exit(0)
 
 
+def poll_filesystem(mtimes):
+    """Polling the file system for changed modification time.
+
+    :param mtimes: shared dictionary for tracking modification time
+    :return: number of changed files (integer)
+    """
+    changes_detected = 0
+    for filename in _iter_module_files():
+        try:
+            mtime = os.stat(filename).st_mtime
+        except OSError:
+            continue
+
+        old_time = mtimes.get(filename)
+        if old_time is None:
+            mtimes[filename] = mtime
+        elif mtime > old_time:
+            mtimes[filename] = mtime
+            changes_detected += 1
+
+    return changes_detected
+
+
 def watchdog(sleep_interval):
     """Watch project files, restart worker process if a change happened.
 
@@ -146,25 +169,12 @@ def watchdog(sleep_interval):
     signal.signal(
         signal.SIGINT, lambda *args: kill_program_completely(worker_process)
     )
+
     while True:
-        need_reload = False
-
-        for filename in _iter_module_files():
-            try:
-                mtime = os.stat(filename).st_mtime
-            except OSError:
-                continue
-
-            old_time = mtimes.get(filename)
-            if old_time is None:
-                mtimes[filename] = mtime
-            elif mtime > old_time:
-                mtimes[filename] = mtime
-                need_reload = True
-
-        if need_reload:
+        # There is not likely any changes initially, just sleep.
+        sleep(sleep_interval)
+        if poll_filesystem(mtimes) > 0:
             kill_process_children(worker_process.pid)
             worker_process.terminate()
             worker_process = restart_with_reloader()
 
-        sleep(sleep_interval)

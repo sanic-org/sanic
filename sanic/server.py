@@ -634,7 +634,12 @@ def trigger_events(events, loop):
             loop.run_until_complete(result)
 
 
-class AsyncServerCoro:
+class AsyncioServer:
+    """
+    Wraps an asyncio server with functionality that might be useful to
+    a user who needs to manage the server lifecycle manually.
+    """
+
     __slots__ = (
         "loop",
         "serve_coro",
@@ -654,6 +659,8 @@ class AsyncServerCoro:
         before_stop,
         after_stop,
     ):
+        # Note, Sanic already called "before_server_start" events
+        # before this helper was even created. So we don't need it here.
         self.loop = loop
         self.serve_coro = serve_coro
         self._after_start = after_start
@@ -675,14 +682,18 @@ class AsyncServerCoro:
         trigger_events(self._after_stop, self.loop)
 
     def is_serving(self):
-        if self.server is None:
-            return False
-        return self.server.is_serving()
+        if self.server:
+            return self.server.is_serving()
+        return False
+
+    def wait_closed(self):
+        if self.server:
+            return self.server.wait_closed()
 
     def close(self):
         if self.server:
             self.server.close()
-            coro = self.server.wait_closed()
+            coro = self.wait_closed()
             task = asyncio.ensure_future(coro, loop=self.loop)
             return task
 
@@ -761,6 +772,8 @@ def serve(
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
     :param protocol: subclass of asyncio protocol class
+    :param run_async: bool: Do not create a new event loop for the server,
+                      and return an AsyncServer object rather than running it
     :param request_class: Request class to use
     :param access_log: disable/enable access log
     :param websocket_max_size: enforces the maximum size for
@@ -832,7 +845,7 @@ def serve(
     )
 
     if run_async:
-        return AsyncServerCoro(
+        return AsyncioServer(
             loop,
             server_coroutine,
             connections,

@@ -162,7 +162,7 @@ loop.run_forever()
 Caveat: using this method, calling `app.create_server()` will trigger "before_server_start" server events, but not
 "after_server_start", "before_server_stop", or "after_server_stop" server events.
 
-For more advanced use-cases, you can trigger these events using the AsyncServerCoro object, returned by awaiting
+For more advanced use-cases, you can trigger these events using the AsyncioServer object, returned by awaiting
 the server task.
 
 Here is an incomplete example (please see `run_async_advanced.py` in examples for something more complete):

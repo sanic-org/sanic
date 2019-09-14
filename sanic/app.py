@@ -1130,7 +1130,8 @@ class Sanic:
                     auto_reload
                     and os.environ.get("SANIC_SERVER_RUNNING") != "true"
                 ):
-                    reloader_helpers.watchdog(2)
+                    for current_worker in reloader_helpers.watchdog(2):
+                        pass
                 else:
                     serve(**server_settings)
             else:

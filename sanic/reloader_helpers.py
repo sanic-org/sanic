@@ -48,7 +48,7 @@ def _get_args_for_reloading():
     return rv
 
 
-def restart_with_reloader():
+def restart_with_reloader(reload_command=None):
     """Create a new process and a subprocess in it with the same arguments as
     this one.
     """
@@ -56,7 +56,7 @@ def restart_with_reloader():
     args = _get_args_for_reloading()
     new_environ = os.environ.copy()
     new_environ["SANIC_SERVER_RUNNING"] = "true"
-    cmd = " ".join(args)
+    cmd = " ".join(args) if reload_command is None else reload_command
     worker_process = Process(
         target=subprocess.call,
         args=(cmd,),
@@ -155,14 +155,16 @@ def poll_filesystem(mtimes):
     return changes_detected
 
 
-def watchdog(sleep_interval):
+def watchdog(sleep_interval, reload_command=None):
     """Watch project files, restart worker process if a change happened.
 
     :param sleep_interval: interval in second.
-    :return: Nothing
+    :param reload_command: command to open for the subprocess
+        (default: same command with current process)
+    :return Iterator[multiprocessing.Process]: Iterator of current worker process
     """
     mtimes = {}
-    worker_process = restart_with_reloader()
+    worker_process = restart_with_reloader(reload_command)
     signal.signal(
         signal.SIGTERM, lambda *args: kill_program_completely(worker_process)
     )
@@ -170,10 +172,14 @@ def watchdog(sleep_interval):
         signal.SIGINT, lambda *args: kill_program_completely(worker_process)
     )
 
+    poll_filesystem(mtimes)  # Collect initial mtimes
+    yield worker_process
+
     while True:
         # There is not likely any changes initially, just sleep.
         sleep(sleep_interval)
         if poll_filesystem(mtimes) > 0:
             kill_process_children(worker_process.pid)
             worker_process.terminate()
-            worker_process = restart_with_reloader()
+            worker_process = restart_with_reloader(reload_command)
+            yield worker_process

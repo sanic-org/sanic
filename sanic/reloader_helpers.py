@@ -161,7 +161,8 @@ def watchdog(sleep_interval, reload_command=None):
     :param sleep_interval: interval in second.
     :param reload_command: command to open for the subprocess
         (default: same command with current process)
-    :return Iterator[multiprocessing.Process]: Iterator of current worker process
+    :return Iterator[multiprocessing.Process]: Iterator of current
+        worker process
     """
     mtimes = {}
     worker_process = restart_with_reloader(reload_command)

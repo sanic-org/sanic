@@ -177,4 +177,3 @@ def watchdog(sleep_interval):
             kill_process_children(worker_process.pid)
             worker_process.terminate()
             worker_process = restart_with_reloader()
-

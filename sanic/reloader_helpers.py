@@ -159,8 +159,8 @@ def watchdog(sleep_interval, reload_command=None):
     """Watch project files, restart worker process if a change happened.
 
     :param sleep_interval: interval in second.
-    :param reload_command: command to open for the subprocess
-        (default: same command with current process)
+    :param reload_command: command line to open for the subprocess
+        (None: same command line with current process)
     :return Iterator[multiprocessing.Process]: Iterator of current
         worker process
     """

@@ -138,11 +138,10 @@ class Sanic:
         """
         Register the listener for a given event.
 
-        Args:
-            listener: callable i.e. setup_db(app, loop)
-            event: when to register listener i.e. 'before_server_start'
+        :param listener: callable i.e. setup_db(app, loop)
+        :param event: when to register listener i.e. 'before_server_start'
 
-        Returns: listener
+        :return: listener
         """
 
         return self.listener(event)(listener)

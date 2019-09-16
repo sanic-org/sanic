@@ -634,6 +634,78 @@ def trigger_events(events, loop):
             loop.run_until_complete(result)
 
 
+class AsyncioServer:
+    """
+    Wraps an asyncio server with functionality that might be useful to
+    a user who needs to manage the server lifecycle manually.
+    """
+
+    __slots__ = (
+        "loop",
+        "serve_coro",
+        "_after_start",
+        "_before_stop",
+        "_after_stop",
+        "server",
+        "connections",
+    )
+
+    def __init__(
+        self,
+        loop,
+        serve_coro,
+        connections,
+        after_start,
+        before_stop,
+        after_stop,
+    ):
+        # Note, Sanic already called "before_server_start" events
+        # before this helper was even created. So we don't need it here.
+        self.loop = loop
+        self.serve_coro = serve_coro
+        self._after_start = after_start
+        self._before_stop = before_stop
+        self._after_stop = after_stop
+        self.server = None
+        self.connections = connections
+
+    def after_start(self):
+        """Trigger "after_server_start" events"""
+        trigger_events(self._after_start, self.loop)
+
+    def before_stop(self):
+        """Trigger "before_server_stop" events"""
+        trigger_events(self._before_stop, self.loop)
+
+    def after_stop(self):
+        """Trigger "after_server_stop" events"""
+        trigger_events(self._after_stop, self.loop)
+
+    def is_serving(self):
+        if self.server:
+            return self.server.is_serving()
+        return False
+
+    def wait_closed(self):
+        if self.server:
+            return self.server.wait_closed()
+
+    def close(self):
+        if self.server:
+            self.server.close()
+            coro = self.wait_closed()
+            task = asyncio.ensure_future(coro, loop=self.loop)
+            return task
+
+    def __await__(self):
+        """Starts the asyncio server, returns AsyncServerCoro"""
+        task = asyncio.ensure_future(self.serve_coro)
+        while not task.done():
+            yield
+        self.server = task.result()
+        return self
+
+
 def serve(
     host,
     port,
@@ -700,6 +772,8 @@ def serve(
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
     :param protocol: subclass of asyncio protocol class
+    :param run_async: bool: Do not create a new event loop for the server,
+                      and return an AsyncServer object rather than running it
     :param request_class: Request class to use
     :param access_log: disable/enable access log
     :param websocket_max_size: enforces the maximum size for
@@ -771,7 +845,14 @@ def serve(
     )
 
     if run_async:
-        return server_coroutine
+        return AsyncioServer(
+            loop,
+            server_coroutine,
+            connections,
+            after_start,
+            before_stop,
+            after_stop,
+        )
 
     trigger_events(before_start, loop)
 

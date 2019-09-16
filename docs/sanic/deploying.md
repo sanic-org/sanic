@@ -158,3 +158,34 @@ loop = asyncio.get_event_loop()
 task = asyncio.ensure_future(server)
 loop.run_forever()
 ```
+
+Caveat: using this method, calling `app.create_server()` will trigger "before_server_start" server events, but not
+"after_server_start", "before_server_stop", or "after_server_stop" server events.
+
+For more advanced use-cases, you can trigger these events using the AsyncioServer object, returned by awaiting
+the server task.
+
+Here is an incomplete example (please see `run_async_advanced.py` in examples for something more complete):
+
+```python
+serv_coro = app.create_server(host="0.0.0.0", port=8000, return_asyncio_server=True)
+loop = asyncio.get_event_loop()
+serv_task = asyncio.ensure_future(serv_coro, loop=loop)
+server = loop.run_until_complete(serv_task)
+server.after_start()
+try:
+    loop.run_forever()
+except KeyboardInterrupt as e:
+    loop.stop()
+finally:
+    server.before_stop()
+
+    # Wait for server to close
+    close_task = server.close()
+    loop.run_until_complete(close_task)
+
+    # Complete all tasks on the loop
+    for connection in server.connections:
+        connection.close_if_idle()
+    server.after_stop()
+```

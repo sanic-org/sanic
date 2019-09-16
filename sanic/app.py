@@ -140,7 +140,6 @@ class Sanic:
 
         :param listener: callable i.e. setup_db(app, loop)
         :param event: when to register listener i.e. 'before_server_start'
-
         :return: listener
         """
 

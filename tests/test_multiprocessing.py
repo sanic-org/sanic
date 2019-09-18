@@ -5,6 +5,7 @@ import signal
 
 import pytest
 
+from sanic import Blueprint
 from sanic.response import text
 from sanic.testing import HOST, PORT
 
@@ -37,8 +38,6 @@ def test_multiprocessing(app):
     reason="SIGALRM is not implemented for this platform",
 )
 def test_multiprocessing_with_blueprint(app):
-    from sanic import Blueprint
-
     # Selects a number at random so we can spot check
     num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
     process_list = set()
@@ -64,27 +63,27 @@ def handler(request):
     return text("Hello")
 
 
-# Muliprocessing on Windows requires app to be able to be pickled
+# Multiprocessing on Windows requires app to be able to be pickled
 @pytest.mark.parametrize("protocol", [3, 4])
 def test_pickle_app(app, protocol):
     app.route("/")(handler)
     p_app = pickle.dumps(app, protocol=protocol)
+    del app
     up_p_app = pickle.loads(p_app)
     assert up_p_app
-    request, response = app.test_client.get("/")
+    request, response = up_p_app.test_client.get("/")
     assert response.text == "Hello"
 
 
 @pytest.mark.parametrize("protocol", [3, 4])
 def test_pickle_app_with_bp(app, protocol):
-    from sanic import Blueprint
-
     bp = Blueprint("test_text")
     bp.route("/")(handler)
     app.blueprint(bp)
     p_app = pickle.dumps(app, protocol=protocol)
+    del app
     up_p_app = pickle.loads(p_app)
     assert up_p_app
-    request, response = app.test_client.get("/")
-    assert app.is_request_stream is False
+    request, response = up_p_app.test_client.get("/")
+    assert up_p_app.is_request_stream is False
     assert response.text == "Hello"

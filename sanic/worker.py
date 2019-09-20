@@ -5,7 +5,7 @@ import signal
 import sys
 import traceback
 
-import gunicorn.workers.base as base
+import gunicorn.workers.base as base  # type: ignore
 
 from sanic.server import HttpProtocol, Signal, serve, trigger_events
 from sanic.websocket import WebSocketProtocol

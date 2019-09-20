@@ -310,8 +310,8 @@ class ASGIApp:
         """
         Write the response.
         """
-        headers = []
-        cookies = {}
+        headers: List[Tuple[bytes, bytes]] = []
+        cookies: Dict[str, str] = {}
         try:
             cookies = {
                 v.key: v

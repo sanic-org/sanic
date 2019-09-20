@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from importlib import import_module
+from typing import Any, Dict, Optional
 
 from sanic.app import Sanic
 from sanic.log import logger
@@ -35,7 +36,7 @@ if __name__ == "__main__":
                 )
             )
         if args.cert is not None or args.key is not None:
-            ssl = {"cert": args.cert, "key": args.key}
+            ssl = {"cert": args.cert, "key": args.key}  # type: Optional[Dict[str, Any]]
         else:
             ssl = None
 

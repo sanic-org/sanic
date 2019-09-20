@@ -179,6 +179,7 @@ class ASGIApp:
     sanic_app: Union[ASGISession, Sanic]
     request: Request
     transport: MockTransport
+    do_stream: bool
 
     def __init__(self) -> None:
         self.ws = None

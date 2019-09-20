@@ -10,8 +10,8 @@ from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
 from time import time
 
-from httptools import HttpRequestParser
-from httptools.parser.errors import HttpParserError
+from httptools import HttpRequestParser  # type: ignore
+from httptools.parser.errors import HttpParserError  # type: ignore
 
 from sanic.compat import Header
 from sanic.exceptions import (

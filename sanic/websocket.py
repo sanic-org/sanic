@@ -1,6 +1,6 @@
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 
-from httptools import HttpParserUpgrade
+from httptools import HttpParserUpgrade  # type: ignore
 from websockets import ConnectionClosed  # noqa
 from websockets import InvalidHandshake, WebSocketCommonProtocol, handshake
 

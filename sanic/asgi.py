@@ -5,6 +5,9 @@ from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Union
 from urllib.parse import quote
 
+from requests_async import ASGISession
+
+from sanic.app import Sanic
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
@@ -172,6 +175,10 @@ class Lifespan:
 
 
 class ASGIApp:
+    sanic_app: Union[ASGISession, Sanic]
+    request: Request
+    transport: MockTransport
+
     def __init__(self) -> None:
         self.ws = None
 

@@ -6,7 +6,7 @@ from json import JSONDecodeError
 from socket import socket
 from urllib.parse import unquote, urlsplit
 
-import httpcore
+import httpcore  # type: ignore
 import requests_async as requests  # type: ignore
 import websockets  # type: ignore
 

@@ -3,7 +3,7 @@ from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
 
-from aiofiles import open as open_async
+from aiofiles import open as open_async  # type: ignore
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar

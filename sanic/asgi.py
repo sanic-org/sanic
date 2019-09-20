@@ -57,9 +57,7 @@ class MockProtocol:
 
 
 class MockTransport:
-    def __init__(
-        self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
-    ) -> None:
+    def __init__(self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> None:
         self.scope = scope
         self._receive = receive
         self._send = send
@@ -176,7 +174,7 @@ class Lifespan:
 
 
 class ASGIApp:
-    sanic_app: Union[ASGISession, 'sanic.app.Sanic']
+    sanic_app: Union[ASGISession, "sanic.app.Sanic"]
     request: Request
     transport: MockTransport
     do_stream: bool

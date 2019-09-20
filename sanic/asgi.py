@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 from requests_async import ASGISession  # type: ignore
 
-from sanic.app import Sanic
+import sanic.app
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
@@ -176,7 +176,7 @@ class Lifespan:
 
 
 class ASGIApp:
-    sanic_app: Union[ASGISession, Sanic]
+    sanic_app: Union[ASGISession, 'sanic.app.Sanic']
     request: Request
     transport: MockTransport
     do_stream: bool

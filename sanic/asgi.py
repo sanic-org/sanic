@@ -57,7 +57,9 @@ class MockProtocol:
 
 
 class MockTransport:
-    def __init__(self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> None:
+    def __init__(
+        self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
+    ) -> None:
         self.scope = scope
         self._receive = receive
         self._send = send

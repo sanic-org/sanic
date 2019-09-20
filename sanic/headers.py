@@ -169,6 +169,4 @@ def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
     if not m:
         return None, None
     host, port = m.groups()
-    if port is None:
-        return host.lower(), port
-    return host.lower(), int(port)
+    return host.lower(), int(port) if port is not None else None

@@ -206,8 +206,8 @@ class ASGIApp:
         instance = cls()
         instance.sanic_app = sanic_app
         instance.transport = MockTransport(scope, receive, send)
-        instance.transport.add_task = sanic_app.loop.create_task
         instance.transport.loop = sanic_app.loop
+        setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
         headers = Header(
             [

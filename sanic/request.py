@@ -19,9 +19,9 @@ from sanic.log import error_logger, logger
 
 
 try:
-    from ujson import loads as json_loads
+    from ujson import loads as json_loads  # type: ignore
 except ImportError:
-    from json import loads as json_loads
+    from json import loads as json_loads  # type: ignore
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 EXPECT_HEADER = "EXPECT"

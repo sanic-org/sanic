@@ -36,7 +36,10 @@ if __name__ == "__main__":
                 )
             )
         if args.cert is not None or args.key is not None:
-            ssl = {"cert": args.cert, "key": args.key}  # type: Optional[Dict[str, Any]]
+            ssl = {
+                "cert": args.cert,
+                "key": args.key,
+            }  # type: Optional[Dict[str, Any]]
         else:
             ssl = None
 

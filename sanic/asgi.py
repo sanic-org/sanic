@@ -5,7 +5,7 @@ from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Union
 from urllib.parse import quote
 
-from requests_async import ASGISession
+from requests_async import ASGISession  # type: ignore
 
 from sanic.app import Sanic
 from sanic.compat import Header

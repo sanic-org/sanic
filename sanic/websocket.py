@@ -1,8 +1,8 @@
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 
 from httptools import HttpParserUpgrade  # type: ignore
-from websockets import ConnectionClosed  # noqa
-from websockets import InvalidHandshake, WebSocketCommonProtocol, handshake
+from websockets import ConnectionClosed  # type: ignore, noqa
+from websockets import InvalidHandshake, WebSocketCommonProtocol, handshake  # type: ignore
 
 from sanic.exceptions import InvalidUsage
 from sanic.server import HttpProtocol

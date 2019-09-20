@@ -7,8 +7,8 @@ from socket import socket
 from urllib.parse import unquote, urlsplit
 
 import httpcore
-import requests_async as requests
-import websockets
+import requests_async as requests  # type: ignore
+import websockets  # type: ignore
 
 from sanic.asgi import ASGIApp
 from sanic.exceptions import MethodNotSupported

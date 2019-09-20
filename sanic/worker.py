@@ -12,9 +12,9 @@ from sanic.websocket import WebSocketProtocol
 
 
 try:
-    import ssl
+    import ssl  # type: ignore
 except ImportError:
-    ssl = None
+    ssl = None  # type: ignore
 
 try:
     import uvloop  # type: ignore

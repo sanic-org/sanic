@@ -101,8 +101,13 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
         try:
             # Combine, split and filter multiple headers' entries
             forwarded_for = headers.getall(config.FORWARDED_FOR_HEADER)
-            proxies = (p.strip() for h in forwarded_for for p in h.split(","))
-            proxies = [p for p in proxies if p]
+            proxies = [
+                p
+                for p in (
+                    p.strip() for h in forwarded_for for p in h.split(",")
+                )
+                if p
+            ]
             addr = proxies[-proxies_count]
         except (KeyError, IndexError):
             pass

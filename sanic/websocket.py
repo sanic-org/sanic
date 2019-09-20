@@ -144,6 +144,8 @@ class WebSocketConnection:
         elif message["type"] == "websocket.disconnect":
             pass
 
+        return None
+
     receive = recv
 
     async def accept(self) -> None:

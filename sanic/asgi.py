@@ -71,11 +71,12 @@ class MockTransport:
             self._protocol = MockProtocol(self, self.loop)
         return self._protocol
 
-    def get_extra_info(self, info: str) -> Union[str, bool]:
+    def get_extra_info(self, info: str) -> Union[str, bool, None]:
         if info == "peername":
             return self.scope.get("server")
         elif info == "sslcontext":
             return self.scope.get("scheme") in ["https", "wss"]
+        return None
 
     def get_websocket_connection(self) -> WebSocketConnection:
         try:

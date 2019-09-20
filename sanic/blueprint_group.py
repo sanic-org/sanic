@@ -56,7 +56,7 @@ class BlueprintGroup(MutableSequence):
         """
         return self._blueprints[item]
 
-    def __setitem__(self, index: int, item: object) -> None:
+    def __setitem__(self, index, item) -> None:
         """
         Abstract method implemented to turn the `BlueprintGroup` class
         into a list like object to support all the existing behavior.
@@ -69,7 +69,7 @@ class BlueprintGroup(MutableSequence):
         """
         self._blueprints[index] = item
 
-    def __delitem__(self, index: int) -> None:
+    def __delitem__(self, index) -> None:
         """
         Abstract method implemented to turn the `BlueprintGroup` class
         into a list like object to support all the existing behavior.

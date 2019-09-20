@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 from requests_async import ASGISession  # type: ignore
 
-import sanic.app
+import sanic.app  # noqa
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger

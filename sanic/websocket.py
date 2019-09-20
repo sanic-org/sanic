@@ -1,12 +1,18 @@
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 
 from httptools import HttpParserUpgrade  # type: ignore
-from websockets import ConnectionClosed  # type: ignore, noqa
-from websockets import InvalidHandshake, WebSocketCommonProtocol, handshake  # type: ignore
+from websockets import (  # type: ignore
+    ConnectionClosed,
+    InvalidHandshake,
+    WebSocketCommonProtocol,
+    handshake,
+)
 
 from sanic.exceptions import InvalidUsage
 from sanic.server import HttpProtocol
 
+
+__all__ = ["ConnectionClosed", "WebSocketProtocol", "WebSocketConnection"]
 
 ASIMessage = MutableMapping[str, Any]
 

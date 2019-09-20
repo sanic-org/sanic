@@ -2,7 +2,17 @@ import asyncio
 import warnings
 
 from inspect import isawaitable
-from typing import Any, Awaitable, Callable, MutableMapping, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Union,
+)
 from urllib.parse import quote
 
 from requests_async import ASGISession  # type: ignore
@@ -58,6 +68,8 @@ class MockProtocol:
 
 
 class MockTransport:
+    _protocol: Optional[MockProtocol]
+
     def __init__(
         self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
     ) -> None:
@@ -182,6 +194,7 @@ class ASGIApp:
     transport: MockTransport
     do_stream: bool
     lifespan: Lifespan
+    ws: Optional[WebSocketConnection]
 
     def __init__(self) -> None:
         self.ws = None

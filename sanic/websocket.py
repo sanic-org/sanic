@@ -1,4 +1,12 @@
-from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    MutableMapping,
+    Optional,
+    Union,
+)
 
 from httptools import HttpParserUpgrade  # type: ignore
 from websockets import (  # type: ignore
@@ -131,14 +139,12 @@ class WebSocketConnection:
         self._receive = receive
 
     async def send(self, data: Union[str, bytes], *args, **kwargs) -> None:
-        message = {"type": "websocket.send"}
+        message: Dict[str, Union[str, bytes]] = {"type": "websocket.send"}
 
-        try:
-            data.decode()
-        except AttributeError:
-            message.update({"text": str(data)})
-        else:
+        if isinstance(data, bytes):
             message.update({"bytes": data})
+        else:
+            message.update({"text": str(data)})
 
         await self._send(message)
 

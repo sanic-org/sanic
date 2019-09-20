@@ -11,7 +11,7 @@ from inspect import getmodulename, isawaitable, signature, stack
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
@@ -768,7 +768,7 @@ class Sanic:
             URLBuildError
         """
         # find the route by the supplied view name
-        kw = {}
+        kw: Dict[str, str] = {}
         # special static files url_for
         if view_name == "static":
             kw.update(name=kwargs.pop("name", "static"))

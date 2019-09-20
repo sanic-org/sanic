@@ -23,7 +23,7 @@ matrix:
       name: "Python 3.7 without Extensions"
     - env: TOX_ENV=type-checking
       python: 3.6
-      name: "Python 3.7 Type checks"
+      name: "Python 3.6 Type checks"
     - env: TOX_ENV=type-checking
       python: 3.7
       name: "Python 3.7 Type checks"

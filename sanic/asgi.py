@@ -180,6 +180,7 @@ class ASGIApp:
     request: Request
     transport: MockTransport
     do_stream: bool
+    lifespan: Lifespan
 
     def __init__(self) -> None:
         self.ws = None

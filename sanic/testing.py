@@ -288,6 +288,14 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):  # noqa
             request_complete = True
             return {"type": "http.request", "body": body_bytes}
 
+        request_complete = False
+        response_started = False
+        response_complete = False
+        raw_kwargs = {"content": b""}  # type: typing.Dict[str, typing.Any]
+        template = None
+        context = None
+        return_value = None
+
         async def send(message) -> None:
             nonlocal raw_kwargs, response_started, response_complete, template, context  # noqa
 
@@ -315,14 +323,6 @@ class SanicASGIAdapter(requests.asgi.ASGIAdapter):  # noqa
             elif message["type"] == "http.response.template":
                 template = message["template"]
                 context = message["context"]
-
-        request_complete = False
-        response_started = False
-        response_complete = False
-        raw_kwargs = {"content": b""}  # type: typing.Dict[str, typing.Any]
-        template = None
-        context = None
-        return_value = None
 
         try:
             return_value = await self.app(scope, receive, send)

@@ -11,22 +11,22 @@ except ImportError:
 def test_custom_context(app):
     @app.middleware("request")
     def store(request):
-        request.custom_context.user = "sanic"
-        request.custom_context.session = None
+        request.ctx.user = "sanic"
+        request.ctx.session = None
 
     @app.route("/")
     def handler(request):
         # Accessing non-existant key should fail with AttributeError
         try:
-            invalid = request.custom_context.missing
+            invalid = request.ctx.missing
         except AttributeError as e:
             invalid = str(e)
         return json({
-            "user": request.custom_context.user,
-            "session": request.custom_context.session,
-            "has_user": hasattr(request.custom_context, "user"),
-            "has_session": hasattr(request.custom_context, "session"),
-            "has_missing": hasattr(request.custom_context, "missing"),
+            "user": request.ctx.user,
+            "session": request.ctx.session,
+            "has_user": hasattr(request.ctx, "user"),
+            "has_session": hasattr(request.ctx, "session"),
+            "has_missing": hasattr(request.ctx, "missing"),
             "invalid": invalid
         })
 

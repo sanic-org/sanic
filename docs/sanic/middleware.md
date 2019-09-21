@@ -39,8 +39,8 @@ app = Sanic(__name__)
 
 @app.middleware('request')
 async def add_key(request):
-    # Arbitrary data may be stored in custom_context:
-    request.custom_context.foo = 'bar'
+    # Arbitrary data may be stored in request context:
+    request.ctx.foo = 'bar'
 
 
 @app.middleware('response')
@@ -55,8 +55,7 @@ async def prevent_xss(request, response):
 
 @app.get("/")
 async def index(request):
-    foo = request.custom_context.foo or 'foo is not set'
-    return sanic.response.text(foo)
+    return sanic.response.text(request.ctx.foo)
 
 
 app.run(host="0.0.0.0", port=8000)
@@ -89,14 +88,10 @@ async def halt_response(request, response):
 
 ## Custom context
 
-Arbitrary data may be stored in request.custom_context. A typical use case
+Arbitrary data may be stored in `request.ctx`. A typical use case
 would be to store the user object acquired from database in an authentication
 middleware. Keys added are accessible to all later middleware as well as
 the handler over the duration of the request.
-
-Keys are accessed as if they were member variables (and in fact they are) but
-`None` is returned for keys that do not exist. Existence of a key may be tested:
-`'key' in request.custom_context`.
 
 Custom context is reserved for applications and extensions. Sanic itself makes
 no use of it.

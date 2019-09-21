@@ -85,7 +85,7 @@ class Request:
         "_socket",
         "app",
         "body",
-        "custom_context",
+        "ctx",
         "endpoint",
         "headers",
         "method",
@@ -115,7 +115,7 @@ class Request:
 
         # Init but do not inhale
         self.body_init()
-        self.custom_context = SimpleNamespace()
+        self.ctx = SimpleNamespace()
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -135,27 +135,27 @@ class Request:
     def get(self, key, default=None):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        return self.custom_context.__dict__.get(key, default)
+        return self.ctx.__dict__.get(key, default)
 
     def __contains__(self, key):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        return key in self.custom_context.__dict__
+        return key in self.ctx.__dict__
 
     def __getitem__(self, key):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        return self.custom_context.__dict__[key]
+        return self.ctx.__dict__[key]
 
     def __delitem__(self, key):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        del self.custom_context.__dict__[key]
+        del self.ctx.__dict__[key]
 
     def __setitem__(self, key, value):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        setattr(self.custom_context, key, value)
+        setattr(self.ctx, key, value)
 
     def body_init(self):
         self.body = []

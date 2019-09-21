@@ -7,6 +7,7 @@ import warnings
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
+from types import SimpleNamespace
 
 from httptools import parse_url
 
@@ -17,7 +18,6 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
-from sanic.helpers import ContextObject
 from sanic.log import error_logger, logger
 
 
@@ -115,7 +115,7 @@ class Request:
 
         # Init but do not inhale
         self.body_init()
-        self.custom_context = ContextObject()
+        self.custom_context = SimpleNamespace()
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -140,17 +140,17 @@ class Request:
     def __contains__(self, key):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        return key in self.custom_context
+        return key in self.custom_context.__dict__
 
     def __getitem__(self, key):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        return getattr(self.custom_context, key)
+        return self.custom_context.__dict__[key]
 
     def __delitem__(self, key):
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
-        delattr(self.custom_context, key)
+        del self.custom_context.__dict__[key]
 
     def __setitem__(self, key, value):
         """.. deprecated:: 19.9

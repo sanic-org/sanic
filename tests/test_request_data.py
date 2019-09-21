@@ -16,18 +16,17 @@ def test_custom_context(app):
 
     @app.route("/")
     def handler(request):
-        # Accessing non-existant underscored key should fail (not return None)
+        # Accessing non-existant key should fail with AttributeError
         try:
-            invalid = request.custom_context.__html__
+            invalid = request.custom_context.missing
         except AttributeError as e:
             invalid = str(e)
         return json({
             "user": request.custom_context.user,
             "session": request.custom_context.session,
-            "missing": request.custom_context.missing,
-            "has_user": "user" in request.custom_context,
-            "has_session": "session" in request.custom_context,
-            "has_missing": "missing" in request.custom_context,
+            "has_user": hasattr(request.custom_context, "user"),
+            "has_session": hasattr(request.custom_context, "session"),
+            "has_missing": hasattr(request.custom_context, "missing"),
             "invalid": invalid
         })
 
@@ -35,11 +34,10 @@ def test_custom_context(app):
     assert response.json == {
         "user": "sanic",
         "session": None,
-        "missing": None,
         "has_user": True,
         "has_session": True,
         "has_missing": False,
-        "invalid": "ContextObject has no attribute '__html__'",
+        "invalid": "'types.SimpleNamespace' object has no attribute 'missing'",
     }
 
 

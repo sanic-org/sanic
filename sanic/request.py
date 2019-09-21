@@ -6,8 +6,8 @@ import warnings
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
-from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from types import SimpleNamespace
+from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url
 

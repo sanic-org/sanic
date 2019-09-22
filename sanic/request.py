@@ -6,7 +6,7 @@ from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
-from httptools import parse_url
+from httptools import parse_url  # type: ignore
 
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
@@ -19,9 +19,9 @@ from sanic.log import error_logger, logger
 
 
 try:
-    from ujson import loads as json_loads
+    from ujson import loads as json_loads  # type: ignore
 except ImportError:
-    from json import loads as json_loads
+    from json import loads as json_loads  # type: ignore
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 EXPECT_HEADER = "EXPECT"

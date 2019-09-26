@@ -39,8 +39,8 @@ app = Sanic(__name__)
 
 @app.middleware('request')
 async def add_key(request):
-    # Add a key to request object like dict object
-    request['foo'] = 'bar'
+    # Arbitrary data may be stored in request context:
+    request.ctx.foo = 'bar'
 
 
 @app.middleware('response')
@@ -53,16 +53,21 @@ async def prevent_xss(request, response):
 	response.headers["x-xss-protection"] = "1; mode=block"
 
 
+@app.get("/")
+async def index(request):
+    return sanic.response.text(request.ctx.foo)
+
+
 app.run(host="0.0.0.0", port=8000)
 ```
 
-The above code will apply the three middleware in order. The first middleware
-**add_key** will add a new key `foo` into `request` object. This worked because
-`request` object can be manipulated like `dict` object. Then, the second middleware
-**custom_banner** will change the HTTP response header *Server* to
-*Fake-Server*, and the last middleware **prevent_xss** will add the HTTP
-header for preventing Cross-Site-Scripting (XSS) attacks. These two functions
-are invoked *after* a user function returns a response.
+The three middlewares are executed in order:
+
+1. The first request middleware **add_key** adds a new key `foo` into request context.
+2. Request is routed to handler **index**, which gets the key from context and returns a text response.
+3. The first response middleware **custom_banner** changes the HTTP response header *Server* to
+say *Fake-Server*
+4. The second response middleware **prevent_xss** adds the HTTP header for preventing Cross-Site-Scripting (XSS) attacks.
 
 ## Responding early
 
@@ -80,6 +85,16 @@ async def halt_request(request):
 async def halt_response(request, response):
 	return text('I halted the response')
 ```
+
+## Custom context
+
+Arbitrary data may be stored in `request.ctx`. A typical use case
+would be to store the user object acquired from database in an authentication
+middleware. Keys added are accessible to all later middleware as well as
+the handler over the duration of the request.
+
+Custom context is reserved for applications and extensions. Sanic itself makes
+no use of it.
 
 ## Listeners
 

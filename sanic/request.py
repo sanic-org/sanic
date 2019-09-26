@@ -4,6 +4,7 @@ import warnings
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
+from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
@@ -62,7 +63,7 @@ class StreamBuffer:
         return self._queue.full()
 
 
-class Request(dict):
+class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
 
     __slots__ = (
@@ -75,6 +76,7 @@ class Request(dict):
         "_socket",
         "app",
         "body",
+        "ctx",
         "endpoint",
         "headers",
         "method",
@@ -104,6 +106,7 @@ class Request(dict):
 
         # Init but do not inhale
         self.body_init()
+        self.ctx = SimpleNamespace()
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -120,10 +123,30 @@ class Request(dict):
             self.__class__.__name__, self.method, self.path
         )
 
-    def __bool__(self):
-        if self.transport:
-            return True
-        return False
+    def get(self, key, default=None):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return self.ctx.__dict__.get(key, default)
+
+    def __contains__(self, key):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return key in self.ctx.__dict__
+
+    def __getitem__(self, key):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return self.ctx.__dict__[key]
+
+    def __delitem__(self, key):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        del self.ctx.__dict__[key]
+
+    def __setitem__(self, key, value):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        setattr(self.ctx, key, value)
 
     def body_init(self):
         self.body = []

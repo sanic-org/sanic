@@ -119,6 +119,9 @@ class WebSocketProtocol(HttpProtocol):
             read_limit=self.websocket_read_limit,
             write_limit=self.websocket_write_limit,
         )
+        # Following two lines are required for websockets 8.x
+        self.websocket.is_client = False
+        self.websocket.side = "server"
         self.websocket.subprotocol = subprotocol
         self.websocket.connection_made(request.transport)
         self.websocket.connection_open()

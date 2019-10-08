@@ -1,10 +1,7 @@
 WebSocket
 =========
 
-Sanic provides an easy to use abstraction on top of `websockets`.
-Sanic Supports websocket versions 7 and 8.
-
-To setup a WebSocket:
+Sanic provides an easy to use abstraction on top of `websockets`. To setup a WebSocket:
 
 .. code:: python
 

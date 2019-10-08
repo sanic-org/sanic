@@ -8,6 +8,7 @@ STATUS_CODES = {
     100: b"Continue",
     101: b"Switching Protocols",
     102: b"Processing",
+    103: b"Early Hints",
     200: b"OK",
     201: b"Created",
     202: b"Accepted",

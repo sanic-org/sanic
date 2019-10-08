@@ -140,21 +140,22 @@ class Router:
             docs for further details.
         :return: Nothing
         """
+        routes = []
         if version is not None:
             version = re.escape(str(version).strip("/").lstrip("v"))
             uri = "/".join(["/v{}".format(version), uri.lstrip("/")])
         # add regular version
-        self._add(uri, methods, handler, host, name)
+        routes.append(self._add(uri, methods, handler, host, name))
 
         if strict_slashes:
-            return
+            return routes
 
         if not isinstance(host, str) and host is not None:
             # we have gotten back to the top of the recursion tree where the
             # host was originally a list. By now, we've processed the strict
             # slashes logic on the leaf nodes (the individual host strings in
             # the list of host)
-            return
+            return routes
 
         # Add versions with and without trailing /
         slashed_methods = self.routes_all.get(uri + "/", frozenset({}))
@@ -176,10 +177,12 @@ class Router:
         )
         # add version with trailing slash
         if slash_is_missing:
-            self._add(uri + "/", methods, handler, host, name)
+            routes.append(self._add(uri + "/", methods, handler, host, name))
         # add version without trailing slash
         elif without_slash_is_missing:
-            self._add(uri[:-1], methods, handler, host, name)
+            routes.append(self._add(uri[:-1], methods, handler, host, name))
+
+        return routes
 
     def _add(self, uri, methods, handler, host=None, name=None):
         """Add a handler to the route list
@@ -328,6 +331,7 @@ class Router:
             self.routes_dynamic[url_hash(uri)].append(route)
         else:
             self.routes_static[uri] = route
+        return route
 
     @staticmethod
     def check_dynamic_route_exists(pattern, routes_to_check, parameters):
@@ -442,6 +446,7 @@ class Router:
             method=method,
             allowed_methods=self.get_supported_methods(url),
         )
+
         if route:
             if route.methods and method not in route.methods:
                 raise method_not_supported
@@ -476,7 +481,7 @@ class Router:
         route_handler = route.handler
         if hasattr(route_handler, "handlers"):
             route_handler = route_handler.handlers[method]
-        return route_handler, [], kwargs, route.uri
+        return route_handler, [], kwargs, route.uri, route.name
 
     def is_stream_handler(self, request):
         """ Handler for request is stream or not.

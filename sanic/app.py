@@ -79,7 +79,8 @@ class Sanic:
         self.is_request_stream = False
         self.websocket_enabled = False
         self.websocket_tasks = set()
-
+        self.named_request_middleware = {}
+        self.named_response_middleware = {}
         # Register alternative method names
         self.go_fast = self.run
 
@@ -172,7 +173,7 @@ class Sanic:
         :param stream:
         :param version:
         :param name: user defined route name for url_for
-        :return: decorated function
+        :return: tuple of routes, decorated function
         """
 
         # Fix case where the user did not prefix the URL with a /
@@ -198,7 +199,7 @@ class Sanic:
             if stream:
                 handler.is_stream = stream
 
-            self.router.add(
+            routes = self.router.add(
                 uri=uri,
                 methods=methods,
                 handler=handler,
@@ -207,7 +208,7 @@ class Sanic:
                 version=version,
                 name=name,
             )
-            return handler
+            return routes, handler
 
         return response
 
@@ -456,7 +457,7 @@ class Sanic:
         :param subprotocols: optional list of str with supported subprotocols
         :param name: A unique name assigned to the URL so that it can
                      be used with :func:`url_for`
-        :return: decorated function
+        :return: tuple of routes, decorated function
         """
         self.enable_websocket()
 
@@ -509,7 +510,7 @@ class Sanic:
                     self.websocket_tasks.remove(fut)
                 await ws.close()
 
-            self.router.add(
+            routes = self.router.add(
                 uri=uri,
                 handler=websocket_handler,
                 methods=frozenset({"GET"}),
@@ -517,7 +518,7 @@ class Sanic:
                 strict_slashes=strict_slashes,
                 name=name,
             )
-            return handler
+            return routes, handler
 
         return response
 
@@ -537,6 +538,7 @@ class Sanic:
                         that can handle the websocket request
         :param host: Host IP or FQDN details
         :param uri: URL path that will be mapped to the websocket
+                    handler
                     handler
         :param strict_slashes: If the API endpoint needs to terminate
                 with a "/" or not
@@ -638,6 +640,22 @@ class Sanic:
             if middleware not in self.response_middleware:
                 self.response_middleware.appendleft(middleware)
         return middleware
+
+    def register_named_middleware(
+        self, middleware, route_names, attach_to="request"
+    ):
+        if attach_to == "request":
+            for _rn in route_names:
+                if _rn not in self.named_request_middleware:
+                    self.named_request_middleware[_rn] = deque()
+                if middleware not in self.named_request_middleware[_rn]:
+                    self.named_request_middleware[_rn].append(middleware)
+        if attach_to == "response":
+            for _rn in route_names:
+                if _rn not in self.named_response_middleware:
+                    self.named_response_middleware[_rn] = deque()
+                if middleware not in self.named_response_middleware[_rn]:
+                    self.named_response_middleware[_rn].append(middleware)
 
     # Decorator
     def middleware(self, middleware_or_request):
@@ -910,19 +928,22 @@ class Sanic:
         # allocation before assignment below.
         response = None
         cancelled = False
+        name = None
         try:
+            # Fetch handler from router
+            handler, args, kwargs, uri, name = self.router.get(request)
+
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
-            response = await self._run_request_middleware(request)
+            response = await self._run_request_middleware(
+                request, request_name=name
+            )
             # No middleware results
             if not response:
                 # -------------------------------------------- #
                 # Execute Handler
                 # -------------------------------------------- #
-
-                # Fetch handler from router
-                handler, args, kwargs, uri = self.router.get(request)
 
                 request.uri_template = uri
                 if handler is None:
@@ -987,7 +1008,7 @@ class Sanic:
             if response is not None:
                 try:
                     response = await self._run_response_middleware(
-                        request, response
+                        request, response, request_name=name
                     )
                 except CancelledError:
                     # Response middleware can timeout too, as above.
@@ -1259,10 +1280,14 @@ class Sanic:
             if isawaitable(result):
                 await result
 
-    async def _run_request_middleware(self, request):
+    async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why
-        if self.request_middleware:
-            for middleware in self.request_middleware:
+        named_middleware = self.named_request_middleware.get(
+            request_name, deque()
+        )
+        applicable_middleware = self.request_middleware + named_middleware
+        if applicable_middleware:
+            for middleware in applicable_middleware:
                 response = middleware(request)
                 if isawaitable(response):
                     response = await response
@@ -1270,9 +1295,15 @@ class Sanic:
                     return response
         return None
 
-    async def _run_response_middleware(self, request, response):
-        if self.response_middleware:
-            for middleware in self.response_middleware:
+    async def _run_response_middleware(
+        self, request, response, request_name=None
+    ):
+        named_middleware = self.named_response_middleware.get(
+            request_name, deque()
+        )
+        applicable_middleware = self.response_middleware + named_middleware
+        if applicable_middleware:
+            for middleware in applicable_middleware:
                 _response = middleware(request, response)
                 if isawaitable(_response):
                     _response = await _response

@@ -268,7 +268,7 @@ def test_bp_middleware(app):
     request, response = app.test_client.get("/")
 
     assert response.status == 200
-    assert response.text == "OK"
+    assert response.text == "FAIL"
 
 
 def test_bp_exception_handler(app):

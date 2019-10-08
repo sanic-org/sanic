@@ -1,0 +1,11 @@
+Fix blueprint middleware application
+
+Currently, any blueprint middleware registered, irrespective of which blueprint was used to do so, was
+being applied to all of the routes created by the :code:`@app` and :code:`@blueprint` alike.
+
+As part of this change, the blueprint based middleware application is enforced based on where they are
+registered.
+
+- If you register a middleware via :code:`@blueprint.middleware` then it will apply only to the routes defined by the blueprint.
+- If you register a middleware via :code:`@blueprint_group.middleware` then it will apply to all blueprint based routes that are part of the group.
+- If you define a middleware via :code:`@app.middleware` then it will be applied on all available routes

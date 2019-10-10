@@ -6,7 +6,7 @@ import warnings
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
-from functools import partial
+from functools import partial, wraps
 from inspect import getmodulename, isawaitable, signature, stack
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
@@ -462,6 +462,7 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            @wraps(handler)
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
                 if not getattr(handler, "__blueprintname__", False):

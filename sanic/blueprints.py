@@ -282,7 +282,13 @@ class Blueprint:
         return decorator
 
     def add_websocket_route(
-        self, handler, uri, host=None, version=None, name=None
+        self,
+        handler,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
     ):
         """Create a blueprint websocket route from a function.
 
@@ -294,7 +300,13 @@ class Blueprint:
         :param name: Unique name to identify the Websocket Route
         :return: function or class instance
         """
-        self.websocket(uri=uri, host=host, version=version, name=name)(handler)
+        self.websocket(
+            uri=uri,
+            host=host,
+            strict_slashes=strict_slashes,
+            version=version,
+            name=name,
+        )(handler)
         return handler
 
     def listener(self, event):

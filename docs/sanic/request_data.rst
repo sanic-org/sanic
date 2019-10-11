@@ -1,4 +1,5 @@
-# Request Data
+Request Data
+============
 
 When an endpoint receives a HTTP request, the route function is passed a
 `Request` object.
@@ -7,13 +8,14 @@ The following variables are accessible as properties on `Request` objects:
 
 - `json` (any) - JSON body
 
-  ```python
-  from sanic.response import json
+.. code-block:: python
 
-  @app.route("/json")
-  def post_json(request):
+    from sanic.response import json
+
+    @app.route("/json")
+    def post_json(request):
       return json({ "received": True, "message": request.json })
-  ```
+
 
 - `args` (dict) - Query string variables. A query string is the section of a
   URL that resembles `?key1=value1&key2=value2`. If that URL were to be parsed,
@@ -22,13 +24,13 @@ The following variables are accessible as properties on `Request` objects:
   Property is providing the default parsing strategy. If you would like to change it look to the section below
   (`Changing the default parsing rules of the queryset`).
 
-  ```python
-  from sanic.response import json
+.. code-block:: python
 
-  @app.route("/query_string")
-  def query_string(request):
+    from sanic.response import json
+
+    @app.route("/query_string")
+    def query_string(request):
       return json({ "parsed": True, "args": request.args, "url": request.url, "query_string": request.query_string })
-  ```
 
 - `query_args` (list) - On many cases you would need to access the url arguments in
   a less packed form. `query_args` is the list of `(key, value)` tuples.
@@ -42,15 +44,16 @@ The following variables are accessible as properties on `Request` objects:
   The difference between Request.args and Request.query_args
   for the queryset `?key1=value1&key2=value2&key1=value3`
 
-  ```python
-  from sanic import Sanic
-  from sanic.response import json
+.. code-block:: python
 
-  app = Sanic(__name__)
+    from sanic import Sanic
+    from sanic.response import json
+
+    app = Sanic(__name__)
 
 
-  @app.route("/test_request_args")
-  async def test_request_args(request):
+    @app.route("/test_request_args")
+    async def test_request_args(request):
       return json({
           "parsed": True,
           "url": request.url,
@@ -60,32 +63,32 @@ The following variables are accessible as properties on `Request` objects:
           "query_args": request.query_args,
       })
 
-  if __name__ == '__main__':
+    if __name__ == '__main__':
       app.run(host="0.0.0.0", port=8000)
-  ```
 
   Output
 
-  ```
-  {
-    "parsed":true,
-    "url":"http:\/\/0.0.0.0:8000\/test_request_args?key1=value1&key2=value2&key1=value3",
-    "query_string":"key1=value1&key2=value2&key1=value3",
-    "args":{"key1":["value1","value3"],"key2":["value2"]},
-    "raw_args":{"key1":"value1","key2":"value2"},
-    "query_args":[["key1","value1"],["key2","value2"],["key1","value3"]]
-  }
-  ```
+.. code-block:: JSON
+
+    {
+        "parsed":true,
+        "url":"http:\/\/0.0.0.0:8000\/test_request_args?key1=value1&key2=value2&key1=value3",
+        "query_string":"key1=value1&key2=value2&key1=value3",
+        "args":{"key1":["value1","value3"],"key2":["value2"]},
+        "raw_args":{"key1":"value1","key2":"value2"},
+        "query_args":[["key1","value1"],["key2","value2"],["key1","value3"]]
+    }
 
   `raw_args` contains only the first entry of `key1`. Will be deprecated in the future versions.
 
 - `files` (dictionary of `File` objects) - List of files that have a name, body, and type
 
-  ```python
-  from sanic.response import json
+.. code-block:: python
 
-  @app.route("/files")
-  def post_json(request):
+    from sanic.response import json
+
+    @app.route("/files")
+    def post_json(request):
       test_file = request.files.get('test')
 
       file_parameters = {
@@ -95,28 +98,28 @@ The following variables are accessible as properties on `Request` objects:
       }
 
       return json({ "received": True, "file_names": request.files.keys(), "test_file_parameters": file_parameters })
-  ```
 
 - `form` (dict) - Posted form variables.
 
-  ```python
-  from sanic.response import json
+.. code-block:: python
 
-  @app.route("/form")
-  def post_json(request):
+    from sanic.response import json
+
+    @app.route("/form")
+    def post_json(request):
       return json({ "received": True, "form_data": request.form, "test": request.form.get('test') })
-  ```
 
 - `body` (bytes) - Posted raw body. This property allows retrieval of the
   request's raw data, regardless of content type.
 
-  ```python
+.. code-block:: python
+
   from sanic.response import text
 
   @app.route("/users", methods=["POST",])
   def create_user(request):
       return text("You are trying to create a user with the following POST: %s" % request.body)
-  ```
+
 
 - `headers` (dict) - A case-insensitive dictionary that contains the request headers.
 
@@ -130,7 +133,8 @@ The following variables are accessible as properties on `Request` objects:
 
 - `app` - a reference to the Sanic application object that is handling this request. This is useful when inside blueprints or other handlers in modules that do not have access to the global `app` object.
 
-  ```python
+.. code-block:: python
+
   from sanic.response import json
   from sanic import Blueprint
 
@@ -143,7 +147,6 @@ The following variables are accessible as properties on `Request` objects:
       else:
           return json({'status': 'production'})
 
-  ```
 - `url`: The full URL of the request, ie: `http://localhost:8000/posts/1/?foo=bar`
 - `scheme`: The URL scheme associated with the request: 'http|https|ws|wss' or arbitrary value given by the headers.
 - `host`: The host associated with the request(which in the `Host` header): `localhost:8080`
@@ -157,7 +160,8 @@ The following variables are accessible as properties on `Request` objects:
 - `url_for`: Just like `sanic.Sanic.url_for`, but automatically determine `scheme` and `netloc` base on the request. Since this method is aiming to generate correct schema & netloc, `_external` is implied.
 
 
-## Changing the default parsing rules of the queryset
+Changing the default parsing rules of the queryset
+--------------------------------------------------
 
 The default parameters that are using internally in `args` and `query_args` properties to parse queryset:
 
@@ -177,32 +181,33 @@ with the new values.
 
 For the queryset `/?test1=value1&test2=&test3=value3`:
 
-```python
-from sanic.response import json
+.. code-block:: python
 
-@app.route("/query_string")
-def query_string(request):
-    args_with_blank_values = request.get_args(keep_blank_values=True)
-    return json({
-        "parsed": True,
-        "url": request.url,
-        "args_with_blank_values": args_with_blank_values,
-        "query_string": request.query_string
-    })
-```
+    from sanic.response import json
+
+    @app.route("/query_string")
+    def query_string(request):
+        args_with_blank_values = request.get_args(keep_blank_values=True)
+        return json({
+            "parsed": True,
+            "url": request.url,
+            "args_with_blank_values": args_with_blank_values,
+            "query_string": request.query_string
+        })
 
 The output will be:
 
-```
-{
-    "parsed": true,
-    "url": "http:\/\/0.0.0.0:8000\/query_string?test1=value1&test2=&test3=value3",
-    "args_with_blank_values": {"test1": ["value1"], "test2": "", "test3": ["value3"]},
-    "query_string": "test1=value1&test2=&test3=value3"
-}
-```
+.. code-block:: JSON
 
-## Accessing values using `get` and `getlist`
+    {
+        "parsed": true,
+        "url": "http:\/\/0.0.0.0:8000\/query_string?test1=value1&test2=&test3=value3",
+        "args_with_blank_values": {"test1": ["value1"], "test2": "", "test3": ["value3"]},
+        "query_string": "test1=value1&test2=&test3=value3"
+    }
+
+Accessing values using `get` and `getlist`
+------------------------------------------
 
 The request properties which return a dictionary actually return a subclass of
 `dict` called `RequestParameters`. The key difference when using this object is
@@ -212,50 +217,51 @@ the distinction between the `get` and `getlist` methods.
   the given key is a list, *only the first item is returned*.
 - `getlist(key, default=None)` operates as normal, *returning the entire list*.
 
-```python
-from sanic.request import RequestParameters
+.. code-block:: python
 
-args = RequestParameters()
-args['titles'] = ['Post 1', 'Post 2']
+    from sanic.request import RequestParameters
 
-args.get('titles') # => 'Post 1'
+    args = RequestParameters()
+    args['titles'] = ['Post 1', 'Post 2']
 
-args.getlist('titles') # => ['Post 1', 'Post 2']
-```
+    args.get('titles') # => 'Post 1'
 
-## Accessing the handler name with the request.endpoint attribute
+    args.getlist('titles') # => ['Post 1', 'Post 2']
+
+Accessing the handler name with the request.endpoint attribute
+--------------------------------------------------------------
 
 The `request.endpoint` attribute holds the handler's name. For instance, the below
 route will return "hello".
 
-```python
-from sanic.response import text
-from sanic import Sanic
+.. code-block:: python
 
-app = Sanic()
+    from sanic.response import text
+    from sanic import Sanic
 
-@app.get("/")
-def hello(request):
-    return text(request.endpoint)
-```
+    app = Sanic()
+
+    @app.get("/")
+    def hello(request):
+        return text(request.endpoint)
 
 Or, with a blueprint it will be include both, separated by a period. For example,
  the below route would return foo.bar:
 
-```python
-from sanic import Sanic
-from sanic import Blueprint
-from sanic.response import text
+.. code-block:: python
+
+    from sanic import Sanic
+    from sanic import Blueprint
+    from sanic.response import text
 
 
-app = Sanic(__name__)
-blueprint = Blueprint('foo')
+    app = Sanic(__name__)
+    blueprint = Blueprint('foo')
 
-@blueprint.get('/')
-async def bar(request):
-    return text(request.endpoint)
+    @blueprint.get('/')
+    async def bar(request):
+        return text(request.endpoint)
 
-app.blueprint(blueprint)
+    app.blueprint(blueprint)
 
-app.run(host="0.0.0.0", port=8000, debug=True)
-```
+    app.run(host="0.0.0.0", port=8000, debug=True)

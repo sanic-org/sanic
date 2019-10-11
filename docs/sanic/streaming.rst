@@ -7,6 +7,7 @@ Request Streaming
 Sanic allows you to get request data by stream, as below. When the request ends, `await request.stream.read()` returns `None`. Only post, put and patch decorator have stream argument.
 
 .. code-block:: python
+
     from sanic import Sanic
     from sanic.views import CompositionView
     from sanic.views import HTTPMethodView

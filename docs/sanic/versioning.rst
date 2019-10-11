@@ -46,7 +46,6 @@ You can also pass a version number to the blueprint, which will apply to all rou
     @bp.route('/html')
     def handle_request(request):
         return response.html('<p>Hello world!</p>')
-```
 
 Then with curl:
 

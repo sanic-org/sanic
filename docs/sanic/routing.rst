@@ -110,7 +110,9 @@ If no type is set then a string is expected. The argument given to the function 
     async def folder_handler(request, folder_id):
         return text('Folder - {}'.format(folder_id))
 
-**Warning** `str` is not a valid type tag. If you want `str` recognition then you must use `string`
+.. warning::
+
+    `str` is not a valid type tag. If you want `str` recognition then you must use `string`
 
 HTTP request types
 ------------------
@@ -166,6 +168,7 @@ However, this decorator is really just a wrapper for the `app.add_route`
 method, which is used as follows:
 
 .. code-block:: python
+
     from sanic.response import text
 
     # Define the handler functions
@@ -302,9 +305,9 @@ You can make `routes` strict to trailing slash or not, it's configurable.
 The behavior of how the `strict_slashes` flag follows a defined hierarchy which decides if a specific route
 falls under the `strict_slashes` behavior.
 
-|   |___ Route
-|        |___ Blueprint
-|               |___ Application
+|    Route/
+|    ├──Blueprint/
+|       ├──Application/
 
 Above hierarchy defines how the `strict_slashes` flag will behave. The first non `None` value of the `strict_slashes`
 found in the above order will be applied to the route in question.

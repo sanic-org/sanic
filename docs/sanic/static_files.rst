@@ -6,6 +6,7 @@ registered with the `app.static()` method. The method takes an endpoint URL and 
 filename. The file specified will then be accessible via the given endpoint.
 
 .. code-block:: python
+
     from sanic import Sanic
     from sanic.blueprints import Blueprint
 
@@ -70,6 +71,7 @@ Streaming Large File
 In some cases, you might server large file(ex: videos, images, etc.) with Sanic. You can choose to use **streaming file** rather than download directly.
 
 Here is an example:
+
 .. code-block:: python
 
     from sanic import Sanic
@@ -79,6 +81,7 @@ Here is an example:
     app.static('/large_video.mp4', '/home/ubuntu/large_video.mp4', stream_large_files=True)
 
 When `stream_large_files` is `True`, Sanic will use `file_stream()` instead of `file()` to serve static files. This will use **1KB** as the default chunk size. And, if needed, you can also use a custom chunk size. For example:
+
 .. code-block:: python
 
     from sanic import Sanic

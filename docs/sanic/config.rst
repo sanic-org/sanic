@@ -199,8 +199,8 @@ Forwarded header
 
 The secret is used to securely identify a specific proxy server. Given the above header, secret `Pr0xy` would use the
 information on the first line and secret `_1234proxy` would use the second line. The secret must exactly match the value
- of `secret` or `by`. A secret in `by` must begin with an underscore and use only characters specified in
- `RFC 7239 section 6.3 <https://tools.ietf.org/html/rfc7239#section-6.3>`_, while `secret` has no such restrictions.
+of `secret` or `by`. A secret in `by` must begin with an underscore and use only characters specified in
+`RFC 7239 section 6.3 <https://tools.ietf.org/html/rfc7239#section-6.3>`_, while `secret` has no such restrictions.
 
 Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
 

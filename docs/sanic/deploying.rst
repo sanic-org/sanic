@@ -17,11 +17,8 @@ keyword arguments:
 - `ssl` *(default `None`)*: `SSLContext` for SSL encryption of worker(s).
 - `sock` *(default `None`)*: Socket for the server to accept connections from.
 - `workers` *(default `1`)*: Number of worker processes to spawn.
-- `loop` *(default `None`)*: An `asyncio`-compatible event loop. If none is
-                             specified, Sanic creates its own event loop.
-- `protocol` *(default `HttpProtocol`)*: Subclass
-  of
-  `asyncio.protocol <https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes>`_.
+- `loop` *(default `None`)*: An `asyncio`-compatible event loop. If none is specified, Sanic creates its own event loop.
+- `protocol` *(default `HttpProtocol`)*: Subclass of `asyncio.protocol <https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes>`_.
 - `access_log` *(default `True`)*: Enables log on handling requests (significantly slows server).
 
 .. code-block:: python
@@ -50,7 +47,7 @@ If you like using command line arguments, you can launch a Sanic webserver by
 executing the module. For example, if you initialized Sanic as `app` in a file
 named `server.py`, you could run the server like so:
 
-:: python -m sanic server.app --host=0.0.0.0 --port=1337 --workers=4
+.. python -m sanic server.app --host=0.0.0.0 --port=1337 --workers=4
 
 With this way of running sanic, it is not necessary to invoke `app.run` in your
 Python file. If you do, make sure you wrap it so that it only executes when
@@ -72,7 +69,9 @@ and `Hypercorn <https://pgjones.gitlab.io/hypercorn/index.html>`_.
 Follow their documentation for the proper way to run them, but it should look
 something like:
 
-::  daphne myapp:app
+::
+
+    daphne myapp:app
     uvicorn myapp:app
     hypercorn myapp:app
 
@@ -97,7 +96,9 @@ It’s a pre-fork worker model ported from Ruby’s Unicorn project.
 In order to run Sanic application with Gunicorn, you need to use the special `sanic.worker.GunicornWorker`
 for Gunicorn `worker-class` argument:
 
-:: gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker
+::
+
+    gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker
 
 
 If your application suffers from memory leaks, you can configure Gunicorn to gracefully restart a worker
@@ -115,10 +116,11 @@ Running behind a reverse proxy
 Sanic can be used with a reverse proxy (e.g. nginx). There's a simple example of nginx configuration:
 
 
-::  server {
+::
+
+    server {
       listen 80;
       server_name example.org;
-
       location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
@@ -141,7 +143,9 @@ To improve the performance add `debug=False` and `access_log=False` in the `run`
 
 Running via Gunicorn you can set Environment variable `SANIC_ACCESS_LOG="False"`
 
-:: env SANIC_ACCESS_LOG="False" gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker --log-level warning
+::
+
+    env SANIC_ACCESS_LOG="False" gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class sanic.worker.GunicornWorker --log-level warning
 
 Or you can rewrite app config directly
 

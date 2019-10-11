@@ -66,7 +66,7 @@ Streaming
             await response.write('bar')
         return response.stream(streaming_fn, content_type='text/plain')
 
-See `Streaming <streaming.md>`_ for more information.
+See `Streaming <streaming.html>`_ for more information.
 
 File Streaming
 --------------
@@ -74,6 +74,7 @@ File Streaming
 For large files, a combination of File and Streaming above
 
 .. code-block:: python
+
     from sanic import response
 
     @app.route('/big_file.png')
@@ -84,6 +85,7 @@ Redirect
 --------
 
 .. code-block:: python
+
     from sanic import response
 
 

@@ -182,7 +182,9 @@ For reference:
 Proxy configuration
 ~~~~~~~~~~~~~~~~~~~
 
-When you use a reverse proxy server (e.g. nginx), the value of `request.ip` will contain ip of a proxy, typically `127.0.0.1`. Sanic may be configured to use proxy headers for determining the true client IP, available as `request.remote_addr`. The full external URL is also constructed from header fields if available.
+When you use a reverse proxy server (e.g. nginx), the value of `request.ip` will contain ip of a proxy,
+typically `127.0.0.1`. Sanic may be configured to use proxy headers for determining the true client IP,
+available as `request.remote_addr`. The full external URL is also constructed from header fields if available.
 
 Without proper precautions, a malicious client may use proxy headers to spoof its own IP. To avoid such issues, Sanic does not use any proxy headers unless explicitly enabled.
 
@@ -195,7 +197,10 @@ Forwarded header
 
 * Set `FORWARDED_SECRET` to an identifier used by the proxy of interest.
 
-The secret is used to securely identify a specific proxy server. Given the above header, secret `Pr0xy` would use the information on the first line and secret `_1234proxy` would use the second line. The secret must exactly match the value of `secret` or `by`. A secret in `by` must begin with an underscore and use only characters specified in [RFC 7239 section 6.3](https://tools.ietf.org/html/rfc7239#section-6.3), while `secret` has no such restrictions.
+The secret is used to securely identify a specific proxy server. Given the above header, secret `Pr0xy` would use the
+information on the first line and secret `_1234proxy` would use the second line. The secret must exactly match the value
+ of `secret` or `by`. A secret in `by` must begin with an underscore and use only characters specified in
+ `RFC 7239 section 6.3 <https://tools.ietf.org/html/rfc7239#section-6.3>`_, while `secret` has no such restrictions.
 
 Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
 
@@ -221,11 +226,11 @@ Proxy config if using ...
 #########################
 
 * a proxy that supports `forwarded`: set `FORWARDED_SECRET` to the value that the proxy inserts in the header
-  * Apache Traffic Server: `CONFIG proxy.config.http.insert_forwarded STRING for|proto|host|by=_secret`
-  * NGHTTPX: `nghttpx --add-forwarded=for,proto,host,by --forwarded-for=ip --forwarded-by=_secret`
-  * NGINX: after [the official instructions](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/), add anywhere in your config:
+    * Apache Traffic Server: `CONFIG proxy.config.http.insert_forwarded STRING for|proto|host|by=_secret`
+    * NGHTTPX: `nghttpx --add-forwarded=for,proto,host,by --forwarded-for=ip --forwarded-by=_secret`
+    * NGINX: after `the official instructions <https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/>`_, add anywhere in your config:
 
-        proxy_set_header Forwarded "$proxy_add_forwarded;by=\"_$server_name\";proto=$scheme;host=\"$http_host\";path=\"$request_uri\";secret=_secret";
+..        proxy_set_header Forwarded "$proxy_add_forwarded;by=\"_$server_name\";proto=$scheme;host=\"$http_host\";path=\"$request_uri\";secret=_secret";
 
 * a custom header with client IP: set `REAL_IP_HEADER` to the name of that header
 * `x-forwarded-for`: set `PROXIES_COUNT` to `1` for a single proxy, or a greater number to allow Sanic to select the correct IP

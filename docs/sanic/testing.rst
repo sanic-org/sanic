@@ -2,7 +2,7 @@ Testing
 =======
 
 Sanic endpoints can be tested locally using the `test_client` object, which
-depends on the additional [`requests-async`](https://github.com/encode/requests-async)
+depends on the additional `requests-async <https://github.com/encode/requests-async>`_
 library, which implements an API that mirrors the `requests` library.
 
 The `test_client` exposes `get`, `post`, `put`, `delete`, `patch`, `head` and `options` methods
@@ -56,7 +56,7 @@ And to supply data to a JSON POST request:
 
 More information about
 the available arguments to `requests-async` can be found
-[in the documentation for `requests`](https://2.python-requests.org/en/master/).
+[in the documentation for `requests <https://2.python-requests.org/en/master/>`_.
 
 
 Using a random port
@@ -79,7 +79,7 @@ instead of the default with `SanicTestClient`, you can do so by specifying
 pytest-sanic
 ------------
 
-[pytest-sanic](https://github.com/yunstanford/pytest-sanic) is a pytest plugin, it helps you to test your code asynchronously.
+`pytest-sanic <https://github.com/yunstanford/pytest-sanic>`_ is a pytest plugin, it helps you to test your code asynchronously.
 Just write tests like,
 
 .. code-block:: python
@@ -97,7 +97,7 @@ Just write tests like,
         assert doc.name == "Kobe Bryant"
         assert doc.team == "Lakers"
 
-[pytest-sanic](https://github.com/yunstanford/pytest-sanic) also provides some useful fixtures, like loop, unused_port,
+`pytest-sanic <https://github.com/yunstanford/pytest-sanic>`_ also provides some useful fixtures, like loop, unused_port,
 test_server, test_client.
 
 .. code-block:: python

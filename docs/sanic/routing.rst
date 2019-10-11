@@ -271,7 +271,7 @@ Handlers to a WebSocket route are invoked with the request as first argument, an
 WebSocket protocol object as second argument. The protocol object has `send`
 and `recv` methods to send and receive data respectively.
 
-WebSocket support requires the [websockets](https://github.com/aaugustin/websockets)
+WebSocket support requires the `websockets <https://github.com/aaugustin/websockets>`_
 package by Aymeric Augustin.
 
 

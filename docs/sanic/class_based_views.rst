@@ -122,15 +122,15 @@ that you will pass into `url_for`. For example:
 
 .. code-block:: python
 
-        @app.route('/')
-        def index(request):
-            url = app.url_for('SpecialClassView')
-            return redirect(url)
+    @app.route('/')
+    def index(request):
+        url = app.url_for('SpecialClassView')
+        return redirect(url)
 
 
-        class SpecialClassView(HTTPMethodView):
-            def get(self, request):
-                return text('Hello from the Special Class View!')
+    class SpecialClassView(HTTPMethodView):
+        def get(self, request):
+            return text('Hello from the Special Class View!')
 
 
     app.add_route(SpecialClassView.as_view(), '/special_class_view')

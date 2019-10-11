@@ -1,4 +1,4 @@
 Extensions
 ==========
 
-Moved to the [awesome-sanic](https://github.com/mekicha/awesome-sanic) list.
+Moved to the `awesome-sanic <https://github.com/mekicha/awesome-sanic>`_ list.

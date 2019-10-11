@@ -1,7 +1,7 @@
 Getting Started
 ===============
 
-Make sure you have both [pip](https://pip.pypa.io/en/stable/installing/) and at
+Make sure you have both `pip <https://pip.pypa.io/en/stable/installing/>`_ and at
 least version 3.6 of Python before starting. Sanic uses the new `async`/`await`
 syntax, so earlier versions of python won't work.
 
@@ -22,7 +22,7 @@ to true will stop that features installation.
 
     SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true pip3 install sanic
 
-You can also install Sanic from [`conda-forge`](https://anaconda.org/conda-forge/sanic)
+You can also install Sanic from `conda-forge <https://anaconda.org/conda-forge/sanic>`_
 
 .. code-block:: bash
 
@@ -56,7 +56,7 @@ You can also install Sanic from [`conda-forge`](https://anaconda.org/conda-forge
 4. Check your browser
 ---------------------
 
-Open the address `http://0.0.0.0:8000` in your web browser. You should see
+Open the address `http://0.0.0.0:8000 <http://0.0.0.0:8000>`_ in your web browser. You should see
 the message *Hello world!*.
 
 You now have a working Sanic server!

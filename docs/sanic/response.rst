@@ -66,7 +66,7 @@ Streaming
             await response.write('bar')
         return response.stream(streaming_fn, content_type='text/plain')
 
-See [Streaming](streaming.md) for more information.
+See `Streaming <streaming.md>`_ for more information.
 
 File Streaming
 --------------

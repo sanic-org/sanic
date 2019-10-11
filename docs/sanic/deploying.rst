@@ -2,7 +2,7 @@ Deploying
 =========
 
 Deploying Sanic is very simple using one of three options: the inbuilt webserver,
-an [ASGI webserver](https://asgi.readthedocs.io/en/latest/implementations.html), or `gunicorn`.
+an `ASGI webserver <https://asgi.readthedocs.io/en/latest/implementations.html>`_, or `gunicorn`.
 It is also very common to place Sanic behind a reverse proxy, like `nginx`.
 
 Running via Sanic webserver
@@ -21,7 +21,7 @@ keyword arguments:
                              specified, Sanic creates its own event loop.
 - `protocol` *(default `HttpProtocol`)*: Subclass
   of
-  [asyncio.protocol](https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes).
+  `asyncio.protocol <https://docs.python.org/3/library/asyncio-protocol.html#protocol-classes>`_.
 - `access_log` *(default `True`)*: Enables log on handling requests (significantly slows server).
 
 .. code-block:: python
@@ -66,8 +66,8 @@ Running via ASGI
 
 Sanic is also ASGI-compliant. This means you can use your preferred ASGI webserver
 to run Sanic. The three main implementations of ASGI are
-[Daphne](http://github.com/django/daphne), [Uvicorn](https://www.uvicorn.org/),
-and [Hypercorn](https://pgjones.gitlab.io/hypercorn/index.html).
+`Daphne <http://github.com/django/daphne>`_, `Uvicorn <https://www.uvicorn.org/>`_,
+and `Hypercorn <https://pgjones.gitlab.io/hypercorn/index.html>`_.
 
 Follow their documentation for the proper way to run them, but it should look
 something like:
@@ -78,8 +78,9 @@ something like:
 
 A couple things to note when using ASGI:
 
-1. When using the Sanic webserver, websockets will run using the [`websockets`](https://websockets.readthedocs.io/) package. In ASGI mode, there is no need for this package since websockets are managed in the ASGI server.
-2. The ASGI [lifespan protocol](https://asgi.readthedocs.io/en/latest/specs/lifespan.html) supports
+1. When using the Sanic webserver, websockets will run using the `websockets <https://websockets.readthedocs.io/>`_ package.
+In ASGI mode, there is no need for this package since websockets are managed in the ASGI server.
+2. The ASGI `lifespan protocol <https://asgi.readthedocs.io/en/latest/specs/lifespan.html>`, supports
 only two server events: startup and shutdown. Sanic has four: before startup, after startup,
 before shutdown, and after shutdown. Therefore, in ASGI mode, the startup and shutdown events will
 run consecutively and not actually around the server process beginning and ending (since that
@@ -90,7 +91,7 @@ is now controlled by the ASGI server). Therefore, it is best to use `after_serve
 Running via Gunicorn
 --------------------
 
-[Gunicorn](http://gunicorn.org/) ‘Green Unicorn’ is a WSGI HTTP Server for UNIX.
+`Gunicorn <http://gunicorn.org/>`_ ‘Green Unicorn’ is a WSGI HTTP Server for UNIX.
 It’s a pre-fork worker model ported from Ruby’s Unicorn project.
 
 In order to run Sanic application with Gunicorn, you need to use the special `sanic.worker.GunicornWorker`
@@ -103,7 +104,7 @@ If your application suffers from memory leaks, you can configure Gunicorn to gra
 after it has processed a given number of requests. This can be a convenient way to help limit the effects
 of the memory leak.
 
-See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
+See the `Gunicorn Docs <http://docs.gunicorn.org/en/latest/settings.html#max-requests>`_ for more information.
 
 Other deployment considerations
 -------------------------------

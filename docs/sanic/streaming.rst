@@ -120,7 +120,7 @@ This is useful in situations where you want to stream content to the client that
 
         return stream(stream_from_db)
 
-If a client supports HTTP/1.1, Sanic will use [chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding); you can explicitly enable or disable it using `chunked` option of the `stream` function.
+If a client supports HTTP/1.1, Sanic will use `chunked transfer encoding <https://en.wikipedia.org/wiki/Chunked_transfer_encoding>`_; you can explicitly enable or disable it using `chunked` option of the `stream` function.
 
 File Streaming
 --------------

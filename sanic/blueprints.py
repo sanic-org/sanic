@@ -296,6 +296,8 @@ class Blueprint:
                         or class instance with a view_class method.
         :param uri: endpoint at which the route will be accessible.
         :param host: IP Address of FQDN for the sanic server to use.
+        :param strict_slashes: Enforce the API urls are requested with a
+            trailing */*
         :param version: Blueprint Version
         :param name: Unique name to identify the Websocket Route
         :return: function or class instance

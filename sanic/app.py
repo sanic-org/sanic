@@ -51,7 +51,7 @@ class Sanic:
                 "for `name` will be removed in the next release. "
                 "Please use Sanic(name='your_application_name') instead.",
                 DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])

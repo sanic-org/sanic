@@ -91,6 +91,7 @@ async def test_trigger_before_events_create_server(app):
     assert hasattr(app, "db")
     assert isinstance(app.db, MySanicDb)
 
+
 def test_create_server_trigger_events(app):
     """Test if create_server can trigger server events"""
 

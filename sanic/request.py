@@ -519,8 +519,11 @@ class Request:
         :rtype: str
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
-        if "//" in self.app.config.SERVER_NAME:
-            return self.app.url_for(view_name, _external=True, **kwargs)
+        try:
+            if self.app.config.SERVER_NAME:
+                return self.app.url_for(view_name, _external=True, **kwargs)
+        except AttributeError:
+            pass
 
         scheme = self.scheme
         host = self.server_name

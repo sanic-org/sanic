@@ -520,7 +520,7 @@ class Request:
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
         try:
-            if self.app.config.SERVER_NAME:
+            if "//" in self.app.config.SERVER_NAME:
                 return self.app.url_for(view_name, _external=True, **kwargs)
         except AttributeError:
             pass

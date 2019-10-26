@@ -2103,3 +2103,19 @@ async def test_endpoint_blueprint_asgi():
     request, response = await app.asgi_client.get("/bp")
 
     assert request.endpoint == "named.my_blueprint.bp_root"
+
+
+def test_url_for_without_server_name(app):
+    @app.route("/sample")
+    def sample(request):
+        return json({"url": request.url_for("url_for")})
+
+    @app.route("/url-for")
+    def url_for(request):
+        return text("url-for")
+
+    request, response = app.test_client.get("/sample")
+    assert (
+        response.json["url"]
+        == f"http://127.0.0.1:{app.test_client.port}/url-for"
+    )

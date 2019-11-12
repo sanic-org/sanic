@@ -31,7 +31,7 @@ The `test_client` methods accept the following arguments and keyword arguments:
   original request will be returned by the function. If set to `True`, the
   return value is a tuple of `(request, response)`, if `False` only the
   response is returned.
-- `server_kwargs` *(default `{}`) a dict of additional arguments to pass into `app.run` before the test request is run.
+- `server_kwargs` *(default `{}`)* a dict of additional arguments to pass into `app.run` before the test request is run.
 - `debug` *(default `False`)* A boolean which determines whether to run the server in debug mode.
 
 The function further takes the `*request_args` and `**request_kwargs`, which are passed directly to the request.

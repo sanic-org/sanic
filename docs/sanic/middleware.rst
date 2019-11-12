@@ -68,8 +68,7 @@ The three middlewares are executed in order:
 
 1. The first request middleware **add_key** adds a new key `foo` into request context.
 2. Request is routed to handler **index**, which gets the key from context and returns a text response.
-3. The first response middleware **custom_banner** changes the HTTP response header *Server* to
-say *Fake-Server*
+3. The first response middleware **custom_banner** changes the HTTP response header *Server* to say *Fake-Server*
 4. The second response middleware **prevent_xss** adds the HTTP header for preventing Cross-Site-Scripting (XSS) attacks.
 
 Responding early
@@ -116,6 +115,7 @@ These listeners are implemented as decorators on functions which accept the app 
 For example:
 
 .. code-block:: python
+
     @app.listener('before_server_start')
     async def setup_db(app, loop):
         app.db = await db_setup()

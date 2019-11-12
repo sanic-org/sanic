@@ -22,7 +22,7 @@ Sanic handler functions must be defined using the `async def` syntax, as they
 are asynchronous functions.
 
 Request parameters
-------------------
+==================
 
 Sanic comes with a basic router that supports request parameters.
 
@@ -115,7 +115,7 @@ If no type is set then a string is expected. The argument given to the function 
     `str` is not a valid type tag. If you want `str` recognition then you must use `string`
 
 HTTP request types
-------------------
+==================
 
 By default, a route defined on a URL will be available for only GET requests to that URL.
 However, the `@app.route` decorator accepts an optional parameter, `methods`,
@@ -161,7 +161,7 @@ There are also shorthand method decorators:
         return text('GET request - {}'.format(request.args))
 
 The `add_route` method
-----------------------
+======================
 
 As we have seen, routes are often specified using the `@app.route` decorator.
 However, this decorator is really just a wrapper for the `app.add_route`
@@ -187,7 +187,7 @@ method, which is used as follows:
     app.add_route(person_handler2, '/person/<name:[A-z]>', methods=['GET'])
 
 URL building with `url_for`
----------------------------
+===========================
 
 Sanic provides a `url_for` method, to generate URLs based on the handler method name. This is useful if you want to avoid hardcoding url paths into your app; instead, you can just reference the handler name. For example:
 
@@ -244,7 +244,7 @@ Other things to keep in mind when using `url_for`:
 - All valid parameters must be passed to `url_for` to build a URL. If a parameter is not supplied, or if a parameter does not match the specified type, a `URLBuildError` will be raised.
 
 WebSocket routes
-----------------
+================
 
 Routes for the WebSocket protocol can be defined with the `@app.websocket`
 decorator:
@@ -279,7 +279,7 @@ package by Aymeric Augustin.
 
 
 About `strict_slashes`
-----------------------
+======================
 
 You can make `routes` strict to trailing slash or not, it's configurable.
 
@@ -340,7 +340,7 @@ found in the above order will be applied to the route in question.
         return text("strict_slashes applicable from blueprint level")
 
 User defined route name
------------------------
+=======================
 
 A custom route name can be used by passing a `name` argument while registering the route which will
 override the default route name generated using the `handler.__name__` attribute.
@@ -403,7 +403,7 @@ override the default route name generated using the `handler.__name__` attribute
     # app.url_for('post_handler') == '/post'
 
 Build URL for static files
---------------------------
+==========================
 
 Sanic supports using `url_for` method to build static file urls. In case if the static url
 is pointing to a directory, `filename` parameter to the `url_for` can be ignored.   q

@@ -18,11 +18,10 @@ The following variables are accessible as properties on `Request` objects:
 
 
 - `args` (dict) - Query string variables. A query string is the section of a
-  URL that resembles `?key1=value1&key2=value2`. If that URL were to be parsed,
-  the `args` dictionary would look like `{'key1': ['value1'], 'key2': ['value2']}`.
-  The request's `query_string` variable holds the unparsed string value.
-  Property is providing the default parsing strategy. If you would like to change it look to the section below
-  (`Changing the default parsing rules of the queryset`).
+  URL that resembles ``?key1=value1&key2=value2``.
+If that URL were to be parsed, the `args` dictionary would look like `{'key1': ['value1'], 'key2': ['value2']}`.
+The request's `query_string` variable holds the unparsed string value. Property is providing the default parsing
+strategy. If you would like to change it look to the section below (`Changing the default parsing rules of the queryset`).
 
 .. code-block:: python
 
@@ -34,15 +33,13 @@ The following variables are accessible as properties on `Request` objects:
 
 - `query_args` (list) - On many cases you would need to access the url arguments in
   a less packed form. `query_args` is the list of `(key, value)` tuples.
-  Property is providing the default parsing strategy. If you would like to change it look to the section below
-  (`Changing the default parsing rules of the queryset`).
-  For the same previous URL queryset `?key1=value1&key2=value2`, the
-  `query_args` list would look like `[('key1', 'value1'), ('key2', 'value2')]`.
-  And in case of the multiple params with the same key like `?key1=value1&key2=value2&key1=value3`
-  the `query_args` list would look like `[('key1', 'value1'), ('key2', 'value2'), ('key1', 'value3')]`.
+Property is providing the default parsing strategy. If you would like to change it look to the section below
+(`Changing the default parsing rules of the queryset`). For the same previous URL queryset `?key1=value1&key2=value2`,
+the `query_args` list would look like `[('key1', 'value1'), ('key2', 'value2')]`. And in case of the multiple params
+with the same key like `?key1=value1&key2=value2&key1=value3` the `query_args` list would look like
+`[('key1', 'value1'), ('key2', 'value2'), ('key1', 'value3')]`.
 
-  The difference between Request.args and Request.query_args
-  for the queryset `?key1=value1&key2=value2&key1=value3`
+The difference between Request.args and Request.query_args for the queryset `?key1=value1&key2=value2&key1=value3`
 
 .. code-block:: python
 
@@ -68,7 +65,7 @@ The following variables are accessible as properties on `Request` objects:
 
   Output
 
-.. code-block:: JSON
+.. code-block:: json
 
     {
         "parsed":true,
@@ -79,7 +76,7 @@ The following variables are accessible as properties on `Request` objects:
         "query_args":[["key1","value1"],["key2","value2"],["key1","value3"]]
     }
 
-  `raw_args` contains only the first entry of `key1`. Will be deprecated in the future versions.
+- `raw_args` contains only the first entry of `key1`. Will be deprecated in the future versions.
 
 - `files` (dictionary of `File` objects) - List of files that have a name, body, and type
 

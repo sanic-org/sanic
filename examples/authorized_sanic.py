@@ -13,7 +13,7 @@ def check_request_for_authorization_status(request):
     return flag
 
 
-def authorized():
+def authorized(f):
     @wraps(f)
     async def decorated_function(request, *args, **kwargs):
         # run some method that checks the request

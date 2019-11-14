@@ -26,4 +26,5 @@ Sanic aspires to be simple
 
 .. note::
 
-    Sanic does not support Python 3.5 from version 19.6 and forward. However, version 18.12LTS is supported thru December 2020. Official Python support for version 3.5 is set to expire in September 2020.
+    Sanic does not support Python 3.5 from version 19.6 and forward. However, version 18.12LTS is supported thru
+    December 2020. Official Python support for version 3.5 is set to expire in September 2020.

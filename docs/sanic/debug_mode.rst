@@ -13,7 +13,7 @@ and by default will enable the Auto Reload feature.
 Setting the debug mode
 ----------------------
 
-By setting the ``debug`` mode a more verbose output from Sanic will be outputed
+By setting the ``debug`` mode a more verbose output from Sanic will be output
 and the Automatic Reloader will be activated.
 
 .. code-block:: python

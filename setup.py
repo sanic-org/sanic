@@ -60,6 +60,7 @@ setup_kwargs = {
     "long_description": long_description,
     "packages": ["sanic"],
     "platforms": "any",
+    "python_requires": ">=3.6",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",

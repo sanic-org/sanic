@@ -354,6 +354,9 @@ class HttpProtocol(asyncio.Protocol):
             self.request.body_push(body)
 
     async def body_append(self, body):
+        if self._request_stream_task is None or self._request_stream_task.cancelled():
+            return
+
         if self.request.stream.is_full():
             self.transport.pause_reading()
             await self.request.stream.put(body)
@@ -598,8 +601,12 @@ class HttpProtocol(asyncio.Protocol):
         self.request = None
         self.url = None
         self.headers = None
-        self._request_handler_task = None
-        self._request_stream_task = None
+        if self._request_handler_task:
+            self._request_handler_task.cancel()
+            self._request_handler_task = None
+        if self._request_stream_task:
+            self._request_stream_task.cancel()
+            self._request_stream_task = None
         self._total_request_size = 0
         self._is_stream_handler = False
 

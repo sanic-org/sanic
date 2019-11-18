@@ -818,6 +818,7 @@ def serve(
         response_timeout=response_timeout,
         keep_alive_timeout=keep_alive_timeout,
         request_max_size=request_max_size,
+        request_buffer_queue_size=request_buffer_queue_size,
         request_class=request_class,
         access_log=access_log,
         keep_alive=keep_alive,

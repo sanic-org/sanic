@@ -2,6 +2,7 @@ import asyncio
 import os
 import traceback
 
+from collections import deque
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
@@ -148,6 +149,7 @@ class HttpProtocol(asyncio.Protocol):
             self.state["requests_count"] = 0
         self._debug = debug
         self._not_paused.set()
+        self._body_chunks = deque()
 
     @property
     def keep_alive(self):
@@ -347,19 +349,30 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:
-            self._request_stream_task = self.loop.create_task(
-                self.body_append(body)
-            )
+            # body chunks can be put into asyncio.Queue out of order if
+            # multiple tasks put concurrently and the queue is full in python
+            # 3.7. so we should not create more than one task putting into the
+            # queue simultaneously.
+            self._body_chunks.append(body)
+            if (
+                not self._request_stream_task
+                or self._request_stream_task.done()
+            ):
+                self._request_stream_task = self.loop.create_task(
+                    self.stream_append()
+                )
         else:
             self.request.body_push(body)
 
-    async def body_append(self, body):
-        if self.request.stream.is_full():
-            self.transport.pause_reading()
-            await self.request.stream.put(body)
-            self.transport.resume_reading()
-        else:
-            await self.request.stream.put(body)
+    async def stream_append(self):
+        while self._body_chunks:
+            body = self._body_chunks.popleft()
+            if self.request.stream.is_full():
+                self.transport.pause_reading()
+                await self.request.stream.put(body)
+                self.transport.resume_reading()
+            else:
+                await self.request.stream.put(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -368,9 +381,14 @@ class HttpProtocol(asyncio.Protocol):
             self._request_timeout_handler.cancel()
             self._request_timeout_handler = None
         if self.is_request_stream and self._is_stream_handler:
-            self._request_stream_task = self.loop.create_task(
-                self.request.stream.put(None)
-            )
+            self._body_chunks.append(None)
+            if (
+                not self._request_stream_task
+                or self._request_stream_task.done()
+            ):
+                self._request_stream_task = self.loop.create_task(
+                    self.stream_append()
+                )
             return
         self.request.body_finish()
         self.execute_request_handler()

@@ -62,6 +62,10 @@ class StreamBuffer:
     def is_full(self):
         return self._queue.full()
 
+    @property
+    def buffer_size(self):
+        return self._queue.maxsize
+
 
 class Request:
     """Properties of an HTTP request such as URL, headers, etc."""

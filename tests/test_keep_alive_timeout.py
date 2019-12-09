@@ -6,8 +6,8 @@ from asyncio import sleep as aio_sleep
 from http.client import _encode
 from json import JSONDecodeError
 
-import httpcore
-import requests_async as requests
+# import httpcore
+import httpx
 
 from httpcore import PoolTimeout
 
@@ -21,24 +21,53 @@ CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 old_conn = None
 
 
-class ReusableSanicConnectionPool(httpcore.ConnectionPool):
-    async def acquire_connection(self, origin):
+class ReusableSanicConnectionPool(
+    httpx.dispatch.connection_pool.ConnectionPool
+):
+    async def acquire_connection(self, origin, timeout):
         global old_conn
-        connection = self.active_connections.pop_by_origin(
-            origin, http2_only=True
-        )
-        if connection is None:
-            connection = self.keepalive_connections.pop_by_origin(origin)
+        # connection = self.active_connections.pop_by_origin(
+        #     origin, http2_only=True
+        # )
+        # if connection is None:
+        #     connection = self.keepalive_connections.pop_by_origin(origin)
+
+        # if connection is None:
+        #     await self.max_connections.acquire()
+        #     connection = httpcore.HTTPConnection(
+        #         origin,
+        #         ssl=self.ssl,
+        #         timeout=self.timeout,
+        #         backend=self.backend,
+        #         release_func=self.release_connection,
+        #     )
+        # self.active_connections.add(connection)
+
+        # if old_conn is not None:
+        #     if old_conn != connection:
+        #         raise RuntimeError(
+        #             "We got a new connection, wanted the same one!"
+        #         )
+        # old_conn = connection
+
+        # return connection
+        connection = self.pop_connection(origin)
 
         if connection is None:
-            await self.max_connections.acquire()
-            connection = httpcore.HTTPConnection(
+            pool_timeout = None if timeout is None else timeout.pool_timeout
+
+            await self.max_connections.acquire(timeout=pool_timeout)
+            connection = httpx.connection.HTTPConnection(
                 origin,
-                ssl=self.ssl,
-                timeout=self.timeout,
+                verify=self.verify,
+                cert=self.cert,
+                http2=self.http2,
                 backend=self.backend,
                 release_func=self.release_connection,
+                trust_env=self.trust_env,
+                uds=self.uds,
             )
+
         self.active_connections.add(connection)
 
         if old_conn is not None:
@@ -51,17 +80,10 @@ class ReusableSanicConnectionPool(httpcore.ConnectionPool):
         return connection
 
 
-class ReusableSanicAdapter(requests.adapters.HTTPAdapter):
-    def __init__(self):
-        self.pool = ReusableSanicConnectionPool()
-
-
-class ResusableSanicSession(requests.Session):
+class ResusableSanicSession(httpx.Client):
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        adapter = ReusableSanicAdapter()
-        self.mount("http://", adapter)
-        self.mount("https://", adapter)
+        dispatch = ReusableSanicConnectionPool()
+        super().__init__(dispatch=dispatch, *args, **kwargs)
 
 
 class ReuseableSanicTestClient(SanicTestClient):
@@ -73,6 +95,9 @@ class ReuseableSanicTestClient(SanicTestClient):
         self._server = None
         self._tcp_connector = None
         self._session = None
+
+    def get_new_session(self):
+        return ResusableSanicSession()
 
     # Copied from SanicTestClient, but with some changes to reuse the
     # same loop for the same app.
@@ -186,7 +211,7 @@ class ReuseableSanicTestClient(SanicTestClient):
             "request_keepalive", CONFIG_FOR_TESTS["KEEP_ALIVE_TIMEOUT"]
         )
         if not self._session:
-            self._session = ResusableSanicSession()
+            self._session = self.get_new_session()
         try:
             response = await getattr(self._session, method.lower())(
                 url, verify=False, timeout=request_keepalive, *args, **kwargs

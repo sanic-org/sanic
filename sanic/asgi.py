@@ -15,7 +15,8 @@ from typing import (
 )
 from urllib.parse import quote
 
-from requests_async import ASGISession  # type: ignore
+# from requests_async import ASGISession  # type: ignore
+from httpx import Client
 
 import sanic.app  # noqa
 
@@ -189,7 +190,7 @@ class Lifespan:
 
 
 class ASGIApp:
-    sanic_app: Union[ASGISession, "sanic.app.Sanic"]
+    sanic_app: Union[Client, "sanic.app.Sanic"]
     request: Request
     transport: MockTransport
     do_stream: bool

@@ -24,7 +24,13 @@ from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import HttpProtocol, Signal, serve, serve_multiple
+from sanic.server import (
+    AsyncioServer,
+    HttpProtocol,
+    Signal,
+    serve,
+    serve_multiple,
+)
 from sanic.static import register as static_register
 from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
@@ -1166,7 +1172,7 @@ class Sanic:
         access_log: Optional[bool] = None,
         return_asyncio_server=False,
         asyncio_server_kwargs=None,
-    ) -> None:
+    ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
 
@@ -1206,7 +1212,7 @@ class Sanic:
         :param asyncio_server_kwargs: key-value arguments for
                                       asyncio/uvloop create_server method
         :type asyncio_server_kwargs: dict
-        :return: Nothing
+        :return: AsyncioServer if return_asyncio_server is true, else Nothing
         """
 
         if sock is None:

@@ -224,20 +224,20 @@ The key difference when using this object is the distinction between the `get` a
 
     args.getlist('titles') # => ['Post 1', 'Post 2']
 
-```python
-from sanic import Sanic
-from sanic.response import json
+.. code-block:: python
+    from sanic import Sanic
+    from sanic.response import json
 
-app = Sanic(name="example")
+    app = Sanic(name="example")
 
-@app.route("/")
-def get_handler(request):
-    return json({
-        "p1": request.args.getlist("p1")
-    })
-```
-
-## Accessing the handler name with the request.endpoint attribute
+    @app.route("/")
+    def get_handler(request):
+        return json({
+            "p1": request.args.getlist("p1")
+        })
+        
+Accessing the handler name with the request.endpoint attribute
+--------------------------------------------------------------
 
 The `request.endpoint` attribute holds the handler's name. For instance, the below
 route will return "hello".
@@ -253,8 +253,7 @@ route will return "hello".
     def hello(request):
         return text(request.endpoint)
 
-Or, with a blueprint it will be include both, separated by a period. For example,
- the below route would return foo.bar:
+Or, with a blueprint it will be include both, separated by a period. For example, the below route would return foo.bar:
 
 .. code-block:: python
 

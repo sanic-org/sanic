@@ -478,7 +478,7 @@ class Request:
     @property
     def server_name(self) -> str:
         """The hostname the client connected to, by `request.host`."""
-        return parse_host(self.host)[0]
+        return parse_host(self.host)[0] or ""
 
     @property
     def server_port(self) -> int:

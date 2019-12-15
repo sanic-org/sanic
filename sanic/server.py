@@ -989,7 +989,7 @@ def serve(
         remove_unix_socket(unix)
 
 
-def bind_socket(host: str, port: int, *, backlog=100) -> socket:
+def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     """Create TCP server socket.
     :param host: IPv4, IPv6 or hostname may be specified
     :param port: TCP port number
@@ -1010,7 +1010,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket:
     return sock
 
 
-def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket:
+def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     """Create unix socket.
     :param path: filesystem path
     :param backlog: Maximum number of connections to queue

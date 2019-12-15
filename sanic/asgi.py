@@ -2,8 +2,22 @@ import asyncio
 import warnings
 
 from inspect import isawaitable
-from typing import Any, Awaitable, Callable, MutableMapping, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Union,
+)
 from urllib.parse import quote
+
+from requests_async import ASGISession  # type: ignore
+
+import sanic.app  # noqa
 
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
@@ -54,6 +68,8 @@ class MockProtocol:
 
 
 class MockTransport:
+    _protocol: Optional[MockProtocol]
+
     def __init__(
         self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
     ) -> None:
@@ -68,11 +84,12 @@ class MockTransport:
             self._protocol = MockProtocol(self, self.loop)
         return self._protocol
 
-    def get_extra_info(self, info: str) -> Union[str, bool]:
+    def get_extra_info(self, info: str) -> Union[str, bool, None]:
         if info == "peername":
             return self.scope.get("server")
         elif info == "sslcontext":
             return self.scope.get("scheme") in ["https", "wss"]
+        return None
 
     def get_websocket_connection(self) -> WebSocketConnection:
         try:
@@ -172,6 +189,13 @@ class Lifespan:
 
 
 class ASGIApp:
+    sanic_app: Union[ASGISession, "sanic.app.Sanic"]
+    request: Request
+    transport: MockTransport
+    do_stream: bool
+    lifespan: Lifespan
+    ws: Optional[WebSocketConnection]
+
     def __init__(self) -> None:
         self.ws = None
 
@@ -182,8 +206,8 @@ class ASGIApp:
         instance = cls()
         instance.sanic_app = sanic_app
         instance.transport = MockTransport(scope, receive, send)
-        instance.transport.add_task = sanic_app.loop.create_task
         instance.transport.loop = sanic_app.loop
+        setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
         headers = Header(
             [
@@ -287,8 +311,8 @@ class ASGIApp:
         """
         Write the response.
         """
-        headers = []
-        cookies = {}
+        headers: List[Tuple[bytes, bytes]] = []
+        cookies: Dict[str, str] = {}
         try:
             cookies = {
                 v.key: v

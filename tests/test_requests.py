@@ -413,8 +413,8 @@ def test_standard_forwarded(app):
         "Forwarded": (
             'for=1.1.1.1, for=injected;host="'
             ', for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret'
-            ',for=broken;;secret=b0rked'
-            ', for=127.0.0.3;scheme=http;port=1234'
+            ",for=broken;;secret=b0rked"
+            ", for=127.0.0.3;scheme=http;port=1234"
         ),
         "X-Real-IP": "127.0.0.2",
         "X-Forwarded-For": "127.0.1.1",
@@ -422,7 +422,7 @@ def test_standard_forwarded(app):
         "Host": "local.site",
     }
     request, response = app.test_client.get("/", headers=headers)
-    assert response.json == { "for": "127.0.0.2", "proto": "ws" }
+    assert response.json == {"for": "127.0.0.2", "proto": "ws"}
     assert request.remote_addr == "127.0.0.2"
     assert request.scheme == "ws"
     assert request.server_name == "local.site"
@@ -435,7 +435,7 @@ def test_standard_forwarded(app):
         "proto": "https",
         "host": "me.tld",
         "path": "/app/",
-        "secret": "mySecret"
+        "secret": "mySecret",
     }
     assert request.remote_addr == "[::2]"
     assert request.server_name == "me.tld"
@@ -445,7 +445,7 @@ def test_standard_forwarded(app):
     # Empty Forwarded header -> use X-headers
     headers["Forwarded"] = ""
     request, response = app.test_client.get("/", headers=headers)
-    assert response.json == { "for": "127.0.0.2", "proto": "ws" }
+    assert response.json == {"for": "127.0.0.2", "proto": "ws"}
 
     # Header present but not matching anything
     request, response = app.test_client.get("/", headers={"Forwarded": "."})
@@ -453,8 +453,8 @@ def test_standard_forwarded(app):
 
     # Forwarded header present but no matching secret -> use X-headers
     headers = {
-        "Forwarded": 'for=1.1.1.1;secret=x, for=127.0.0.1',
-        "X-Real-IP": "127.0.0.2"
+        "Forwarded": "for=1.1.1.1;secret=x, for=127.0.0.1",
+        "X-Real-IP": "127.0.0.2",
     }
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"for": "127.0.0.2"}
@@ -466,7 +466,7 @@ def test_standard_forwarded(app):
     assert response.json == {
         "for": "127.0.0.4",
         "port": 1234,
-        "secret": "mySecret"
+        "secret": "mySecret",
     }
 
     # Test escapes (modify this if you see anyone implementing quoted-pairs)
@@ -474,29 +474,29 @@ def test_standard_forwarded(app):
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {
         "for": "test",
-        "quoted": '\\,x=x;y=\\',
-        "secret": "mySecret"
+        "quoted": "\\,x=x;y=\\",
+        "secret": "mySecret",
     }
 
     # Secret insulated by malformed field #1
-    headers = {"Forwarded": 'for=test;secret=mySecret;b0rked;proto=wss;'}
+    headers = {"Forwarded": "for=test;secret=mySecret;b0rked;proto=wss;"}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"for": "test", "secret": "mySecret"}
 
     # Secret insulated by malformed field #2
-    headers = {"Forwarded": 'for=test;b0rked;secret=mySecret;proto=wss'}
+    headers = {"Forwarded": "for=test;b0rked;secret=mySecret;proto=wss"}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
 
     # Unexpected termination should not lose existing acceptable values
-    headers = {"Forwarded": 'b0rked;secret=mySecret;proto=wss'}
+    headers = {"Forwarded": "b0rked;secret=mySecret;proto=wss"}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"proto": "wss", "secret": "mySecret"}
 
     # Field normalization
     headers = {
         "Forwarded": 'PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";'
-          'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
+        'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
     }
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {
@@ -509,7 +509,7 @@ def test_standard_forwarded(app):
 
     # Using "by" field as secret
     app.config.FORWARDED_SECRET = "_proxySecret"
-    headers = {"Forwarded": 'for=1.2.3.4; by=_proxySecret'}
+    headers = {"Forwarded": "for=1.2.3.4; by=_proxySecret"}
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"for": "1.2.3.4", "by": "_proxySecret"}
 
@@ -527,15 +527,15 @@ async def test_standard_forwarded_asgi(app):
         "Forwarded": (
             'for=1.1.1.1, for=injected;host="'
             ', for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret'
-            ',for=broken;;secret=b0rked'
-            ', for=127.0.0.3;scheme=http;port=1234'
+            ",for=broken;;secret=b0rked"
+            ", for=127.0.0.3;scheme=http;port=1234"
         ),
         "X-Real-IP": "127.0.0.2",
         "X-Forwarded-For": "127.0.1.1",
         "X-Scheme": "ws",
     }
     request, response = await app.asgi_client.get("/", headers=headers)
-    assert response.json() == { "for": "127.0.0.2", "proto": "ws" }
+    assert response.json() == {"for": "127.0.0.2", "proto": "ws"}
     assert request.remote_addr == "127.0.0.2"
     assert request.scheme == "ws"
     assert request.server_port == 80
@@ -547,7 +547,7 @@ async def test_standard_forwarded_asgi(app):
         "proto": "https",
         "host": "me.tld",
         "path": "/app/",
-        "secret": "mySecret"
+        "secret": "mySecret",
     }
     assert request.remote_addr == "[::2]"
     assert request.server_name == "me.tld"
@@ -557,16 +557,18 @@ async def test_standard_forwarded_asgi(app):
     # Empty Forwarded header -> use X-headers
     headers["Forwarded"] = ""
     request, response = await app.asgi_client.get("/", headers=headers)
-    assert response.json() == { "for": "127.0.0.2", "proto": "ws" }
+    assert response.json() == {"for": "127.0.0.2", "proto": "ws"}
 
     # Header present but not matching anything
-    request, response = await app.asgi_client.get("/", headers={"Forwarded": "."})
+    request, response = await app.asgi_client.get(
+        "/", headers={"Forwarded": "."}
+    )
     assert response.json() == {}
 
     # Forwarded header present but no matching secret -> use X-headers
     headers = {
-        "Forwarded": 'for=1.1.1.1;secret=x, for=127.0.0.1',
-        "X-Real-IP": "127.0.0.2"
+        "Forwarded": "for=1.1.1.1;secret=x, for=127.0.0.1",
+        "X-Real-IP": "127.0.0.2",
     }
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json() == {"for": "127.0.0.2"}
@@ -578,7 +580,7 @@ async def test_standard_forwarded_asgi(app):
     assert response.json() == {
         "for": "127.0.0.4",
         "port": 1234,
-        "secret": "mySecret"
+        "secret": "mySecret",
     }
 
     # Test escapes (modify this if you see anyone implementing quoted-pairs)
@@ -586,29 +588,29 @@ async def test_standard_forwarded_asgi(app):
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json() == {
         "for": "test",
-        "quoted": '\\,x=x;y=\\',
-        "secret": "mySecret"
+        "quoted": "\\,x=x;y=\\",
+        "secret": "mySecret",
     }
 
     # Secret insulated by malformed field #1
-    headers = {"Forwarded": 'for=test;secret=mySecret;b0rked;proto=wss;'}
+    headers = {"Forwarded": "for=test;secret=mySecret;b0rked;proto=wss;"}
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json() == {"for": "test", "secret": "mySecret"}
 
     # Secret insulated by malformed field #2
-    headers = {"Forwarded": 'for=test;b0rked;secret=mySecret;proto=wss'}
+    headers = {"Forwarded": "for=test;b0rked;secret=mySecret;proto=wss"}
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json() == {"proto": "wss", "secret": "mySecret"}
 
     # Unexpected termination should not lose existing acceptable values
-    headers = {"Forwarded": 'b0rked;secret=mySecret;proto=wss'}
+    headers = {"Forwarded": "b0rked;secret=mySecret;proto=wss"}
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json() == {"proto": "wss", "secret": "mySecret"}
 
     # Field normalization
     headers = {
         "Forwarded": 'PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";'
-          'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
+        'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
     }
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json() == {
@@ -621,7 +623,7 @@ async def test_standard_forwarded_asgi(app):
 
     # Using "by" field as secret
     app.config.FORWARDED_SECRET = "_proxySecret"
-    headers = {"Forwarded": 'for=1.2.3.4; by=_proxySecret'}
+    headers = {"Forwarded": "for=1.2.3.4; by=_proxySecret"}
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json() == {"for": "1.2.3.4", "by": "_proxySecret"}
 
@@ -815,11 +817,14 @@ def test_forwarded_scheme(app):
     assert request.scheme == "http"
 
     request, response = app.test_client.get(
-        "/", headers={"X-Forwarded-For": "127.1.2.3", "X-Forwarded-Proto": "https"}
+        "/",
+        headers={"X-Forwarded-For": "127.1.2.3", "X-Forwarded-Proto": "https"},
     )
     assert request.scheme == "https"
 
-    request, response = app.test_client.get("/", headers={"X-Forwarded-For": "127.1.2.3", "X-Scheme": "https"})
+    request, response = app.test_client.get(
+        "/", headers={"X-Forwarded-For": "127.1.2.3", "X-Scheme": "https"}
+    )
     assert request.scheme == "https"
 
 
@@ -1501,9 +1506,6 @@ def test_request_bool(app):
     request, response = app.test_client.get("/")
     assert bool(request)
 
-    request.transport = False
-    assert not bool(request)
-
 
 def test_request_parsing_form_failed(app, caplog):
     @app.route("/", methods=["POST"])
@@ -1855,7 +1857,7 @@ def test_request_server_name_in_host_header(app):
     request, response = app.test_client.get(
         "/", headers={"Host": "mal_formed"}
     )
-    assert request.server_name == None   # For now (later maybe 127.0.0.1)
+    assert request.server_name == None  # For now (later maybe 127.0.0.1)
 
 
 def test_request_server_name_forwarded(app):
@@ -1866,7 +1868,11 @@ def test_request_server_name_forwarded(app):
     app.config.PROXIES_COUNT = 1
     request, response = app.test_client.get(
         "/",
-        headers={"Host": "my-server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Host": "your-server"},
+        headers={
+            "Host": "my-server:5555",
+            "X-Forwarded-For": "127.1.2.3",
+            "X-Forwarded-Host": "your-server",
+        },
     )
     assert request.server_name == "your-server"
 
@@ -1903,7 +1909,12 @@ def test_request_server_port_forwarded(app):
 
     app.config.PROXIES_COUNT = 1
     request, response = app.test_client.get(
-        "/", headers={"Host": "my-server:5555", "X-Forwarded-For": "127.1.2.3", "X-Forwarded-Port": "4444"}
+        "/",
+        headers={
+            "Host": "my-server:5555",
+            "X-Forwarded-For": "127.1.2.3",
+            "X-Forwarded-Port": "4444",
+        },
     )
     assert request.server_port == 4444
 
@@ -1926,7 +1937,10 @@ def test_server_name_and_url_for(app):
     app.config.SERVER_NAME = "my-server"  # This means default port
     assert app.url_for("handler", _external=True) == "http://my-server/foo"
     request, response = app.test_client.get("/foo")
-    assert request.url_for("handler") == f"http://my-server/foo"
+    assert (
+        request.url_for("handler")
+        == f"http://my-server:{app.test_client.port}/foo"
+    )
 
     app.config.SERVER_NAME = "https://my-server/path"
     request, response = app.test_client.get("/foo")
@@ -1947,7 +1961,12 @@ def test_url_for_with_forwarded_request(app):
     app.config.SERVER_NAME = "my-server"
     app.config.PROXIES_COUNT = 1
     request, response = app.test_client.get(
-        "/", headers={"X-Forwarded-For": "127.1.2.3", "X-Forwarded-Proto": "https", "X-Forwarded-Port": "6789"}
+        "/",
+        headers={
+            "X-Forwarded-For": "127.1.2.3",
+            "X-Forwarded-Proto": "https",
+            "X-Forwarded-Port": "6789",
+        },
     )
     assert app.url_for("view_name") == "/another_view"
     assert (
@@ -1959,7 +1978,12 @@ def test_url_for_with_forwarded_request(app):
     )
 
     request, response = app.test_client.get(
-        "/", headers={"X-Forwarded-For": "127.1.2.3", "X-Forwarded-Proto": "https", "X-Forwarded-Port": "443"}
+        "/",
+        headers={
+            "X-Forwarded-For": "127.1.2.3",
+            "X-Forwarded-Proto": "https",
+            "X-Forwarded-Port": "443",
+        },
     )
     assert request.url_for("view_name") == "https://my-server/another_view"
 
@@ -2054,3 +2078,19 @@ async def test_endpoint_blueprint_asgi():
     request, response = await app.asgi_client.get("/bp")
 
     assert request.endpoint == "named.my_blueprint.bp_root"
+
+
+def test_url_for_without_server_name(app):
+    @app.route("/sample")
+    def sample(request):
+        return json({"url": request.url_for("url_for")})
+
+    @app.route("/url-for")
+    def url_for(request):
+        return text("url-for")
+
+    request, response = app.test_client.get("/sample")
+    assert (
+        response.json["url"]
+        == f"http://127.0.0.1:{app.test_client.port}/url-for"
+    )

@@ -3,7 +3,7 @@ from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
 
-from aiofiles import open as open_async
+from aiofiles import open as open_async  # type: ignore
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar
@@ -12,7 +12,7 @@ from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 
 try:
     from ujson import dumps as json_dumps
-except BaseException:
+except ImportError:
     from json import dumps
 
     # This is done in order to ensure that the JSON response is

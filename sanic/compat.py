@@ -1,4 +1,4 @@
-from multidict import CIMultiDict
+from multidict import CIMultiDict  # type: ignore
 
 
 class Header(CIMultiDict):

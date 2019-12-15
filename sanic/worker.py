@@ -5,19 +5,19 @@ import signal
 import sys
 import traceback
 
-import gunicorn.workers.base as base
+import gunicorn.workers.base as base  # type: ignore
 
 from sanic.server import HttpProtocol, Signal, serve, trigger_events
 from sanic.websocket import WebSocketProtocol
 
 
 try:
-    import ssl
+    import ssl  # type: ignore
 except ImportError:
-    ssl = None
+    ssl = None  # type: ignore
 
 try:
-    import uvloop
+    import uvloop  # type: ignore
 
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:

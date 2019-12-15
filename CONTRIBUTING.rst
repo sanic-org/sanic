@@ -68,7 +68,7 @@ run all unittests, perform lint and other checks.
 Run unittests
 -------------
 
-``tox`` environment -> ``[testenv]`
+``tox`` environment -> ``[testenv]``
 
 To execute only unittests, run ``tox`` with environment like so:
 

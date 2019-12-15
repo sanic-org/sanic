@@ -1,14 +1,13 @@
 import asyncio
 import email.utils
-import json
-import sys
 import warnings
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
+from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
-from httptools import parse_url
+from httptools import parse_url  # type: ignore
 
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
@@ -21,16 +20,9 @@ from sanic.log import error_logger, logger
 
 
 try:
-    from ujson import loads as json_loads
+    from ujson import loads as json_loads  # type: ignore
 except ImportError:
-    if sys.version_info[:2] == (3, 5):
-
-        def json_loads(data):
-            # on Python 3.5 json.loads only supports str not bytes
-            return json.loads(data.decode())
-
-    else:
-        json_loads = json.loads
+    from json import loads as json_loads  # type: ignore
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 EXPECT_HEADER = "EXPECT"
@@ -70,8 +62,12 @@ class StreamBuffer:
     def is_full(self):
         return self._queue.full()
 
+    @property
+    def buffer_size(self):
+        return self._queue.maxsize
 
-class Request(dict):
+
+class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
 
     __slots__ = (
@@ -85,6 +81,7 @@ class Request(dict):
         "app",
         "body",
         "conn_info",
+        "ctx",
         "endpoint",
         "headers",
         "method",
@@ -115,6 +112,7 @@ class Request(dict):
         # Init but do not inhale
         self.body_init()
         self.conn_info = None
+        self.ctx = SimpleNamespace()
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -131,10 +129,30 @@ class Request(dict):
             self.__class__.__name__, self.method, self.path
         )
 
-    def __bool__(self):
-        if self.transport:
-            return True
-        return False
+    def get(self, key, default=None):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return self.ctx.__dict__.get(key, default)
+
+    def __contains__(self, key):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return key in self.ctx.__dict__
+
+    def __getitem__(self, key):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        return self.ctx.__dict__[key]
+
+    def __delitem__(self, key):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        del self.ctx.__dict__[key]
+
+    def __setitem__(self, key, value):
+        """.. deprecated:: 19.9
+           Custom context is now stored in `request.custom_context.yourkey`"""
+        setattr(self.ctx, key, value)
 
     def body_init(self):
         self.body = []
@@ -502,8 +520,11 @@ class Request(dict):
         :rtype: str
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
-        if "//" in self.app.config.SERVER_NAME:
-            return self.app.url_for(view_name, _external=True, **kwargs)
+        try:
+            if "//" in self.app.config.SERVER_NAME:
+                return self.app.url_for(view_name, _external=True, **kwargs)
+        except AttributeError:
+            pass
 
         scheme = self.scheme
         host = self.server_name

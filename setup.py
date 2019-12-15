@@ -60,6 +60,7 @@ setup_kwargs = {
     "long_description": long_description,
     "packages": ["sanic"],
     "platforms": "any",
+    "python_requires": ">=3.6",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
@@ -80,13 +81,13 @@ requirements = [
     uvloop,
     ujson,
     "aiofiles>=0.3.0",
-    "websockets>=7.0,<8.0",
+    "websockets>=7.0,<9.0",
     "multidict>=4.0,<5.0",
     "requests-async==0.5.0",
 ]
 
 tests_require = [
-    "pytest==4.1.0",
+    "pytest==5.2.1",
     "multidict>=4.0,<5.0",
     "gunicorn",
     "pytest-cov",

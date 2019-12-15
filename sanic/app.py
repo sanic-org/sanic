@@ -11,7 +11,7 @@ from inspect import getmodulename, isawaitable, signature, stack
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
@@ -50,6 +50,13 @@ class Sanic:
 
         # Get name from previous stack frame
         if name is None:
+            warnings.warn(
+                "Sanic(name=None) is deprecated and None value support "
+                "for `name` will be removed in the next release. "
+                "Please use Sanic(name='your_application_name') instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
 
@@ -142,11 +149,9 @@ class Sanic:
         """
         Register the listener for a given event.
 
-        Args:
-            listener: callable i.e. setup_db(app, loop)
-            event: when to register listener i.e. 'before_server_start'
-
-        Returns: listener
+        :param listener: callable i.e. setup_db(app, loop)
+        :param event: when to register listener i.e. 'before_server_start'
+        :return: listener
         """
 
         return self.listener(event)(listener)
@@ -774,7 +779,7 @@ class Sanic:
             URLBuildError
         """
         # find the route by the supplied view name
-        kw = {}
+        kw: Dict[str, str] = {}
         # special static files url_for
         if view_name == "static":
             kw.update(name=kwargs.pop("name", "static"))
@@ -1185,7 +1190,7 @@ class Sanic:
         access_log: Optional[bool] = None,
         return_asyncio_server=False,
         asyncio_server_kwargs=None,
-    ) -> None:
+    ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
 
@@ -1225,7 +1230,7 @@ class Sanic:
         :param asyncio_server_kwargs: key-value arguments for
                                       asyncio/uvloop create_server method
         :type asyncio_server_kwargs: dict
-        :return: Nothing
+        :return: AsyncioServer if return_asyncio_server is true, else Nothing
         """
 
         if sock is None:

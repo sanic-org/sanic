@@ -2,6 +2,7 @@ import asyncio
 import os
 import traceback
 
+from collections import deque
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
@@ -10,8 +11,8 @@ from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
 from time import time
 
-from httptools import HttpRequestParser
-from httptools.parser.errors import HttpParserError
+from httptools import HttpRequestParser  # type: ignore
+from httptools.parser.errors import HttpParserError  # type: ignore
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -28,7 +29,7 @@ from sanic.response import HTTPResponse
 
 
 try:
-    import uvloop
+    import uvloop  # type: ignore
 
     if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -148,6 +149,7 @@ class HttpProtocol(asyncio.Protocol):
             self.state["requests_count"] = 0
         self._debug = debug
         self._not_paused.set()
+        self._body_chunks = deque()
 
     @property
     def keep_alive(self):
@@ -347,19 +349,30 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:
-            self._request_stream_task = self.loop.create_task(
-                self.body_append(body)
-            )
+            # body chunks can be put into asyncio.Queue out of order if
+            # multiple tasks put concurrently and the queue is full in python
+            # 3.7. so we should not create more than one task putting into the
+            # queue simultaneously.
+            self._body_chunks.append(body)
+            if (
+                not self._request_stream_task
+                or self._request_stream_task.done()
+            ):
+                self._request_stream_task = self.loop.create_task(
+                    self.stream_append()
+                )
         else:
             self.request.body_push(body)
 
-    async def body_append(self, body):
-        if self.request.stream.is_full():
-            self.transport.pause_reading()
-            await self.request.stream.put(body)
-            self.transport.resume_reading()
-        else:
-            await self.request.stream.put(body)
+    async def stream_append(self):
+        while self._body_chunks:
+            body = self._body_chunks.popleft()
+            if self.request.stream.is_full():
+                self.transport.pause_reading()
+                await self.request.stream.put(body)
+                self.transport.resume_reading()
+            else:
+                await self.request.stream.put(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -368,9 +381,14 @@ class HttpProtocol(asyncio.Protocol):
             self._request_timeout_handler.cancel()
             self._request_timeout_handler = None
         if self.is_request_stream and self._is_stream_handler:
-            self._request_stream_task = self.loop.create_task(
-                self.request.stream.put(None)
-            )
+            self._body_chunks.append(None)
+            if (
+                not self._request_stream_task
+                or self._request_stream_task.done()
+            ):
+                self._request_stream_task = self.loop.create_task(
+                    self.stream_append()
+                )
             return
         self.request.body_finish()
         self.execute_request_handler()
@@ -634,6 +652,78 @@ def trigger_events(events, loop):
             loop.run_until_complete(result)
 
 
+class AsyncioServer:
+    """
+    Wraps an asyncio server with functionality that might be useful to
+    a user who needs to manage the server lifecycle manually.
+    """
+
+    __slots__ = (
+        "loop",
+        "serve_coro",
+        "_after_start",
+        "_before_stop",
+        "_after_stop",
+        "server",
+        "connections",
+    )
+
+    def __init__(
+        self,
+        loop,
+        serve_coro,
+        connections,
+        after_start,
+        before_stop,
+        after_stop,
+    ):
+        # Note, Sanic already called "before_server_start" events
+        # before this helper was even created. So we don't need it here.
+        self.loop = loop
+        self.serve_coro = serve_coro
+        self._after_start = after_start
+        self._before_stop = before_stop
+        self._after_stop = after_stop
+        self.server = None
+        self.connections = connections
+
+    def after_start(self):
+        """Trigger "after_server_start" events"""
+        trigger_events(self._after_start, self.loop)
+
+    def before_stop(self):
+        """Trigger "before_server_stop" events"""
+        trigger_events(self._before_stop, self.loop)
+
+    def after_stop(self):
+        """Trigger "after_server_stop" events"""
+        trigger_events(self._after_stop, self.loop)
+
+    def is_serving(self):
+        if self.server:
+            return self.server.is_serving()
+        return False
+
+    def wait_closed(self):
+        if self.server:
+            return self.server.wait_closed()
+
+    def close(self):
+        if self.server:
+            self.server.close()
+            coro = self.wait_closed()
+            task = asyncio.ensure_future(coro, loop=self.loop)
+            return task
+
+    def __await__(self):
+        """Starts the asyncio server, returns AsyncServerCoro"""
+        task = asyncio.ensure_future(self.serve_coro)
+        while not task.done():
+            yield
+        self.server = task.result()
+        return self
+
+
 def serve(
     host,
     port,
@@ -700,6 +790,8 @@ def serve(
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
     :param protocol: subclass of asyncio protocol class
+    :param run_async: bool: Do not create a new event loop for the server,
+                      and return an AsyncServer object rather than running it
     :param request_class: Request class to use
     :param access_log: disable/enable access log
     :param websocket_max_size: enforces the maximum size for
@@ -744,6 +836,7 @@ def serve(
         response_timeout=response_timeout,
         keep_alive_timeout=keep_alive_timeout,
         request_max_size=request_max_size,
+        request_buffer_queue_size=request_buffer_queue_size,
         request_class=request_class,
         access_log=access_log,
         keep_alive=keep_alive,
@@ -771,7 +864,14 @@ def serve(
     )
 
     if run_async:
-        return server_coroutine
+        return AsyncioServer(
+            loop,
+            server_coroutine,
+            connections,
+            after_start,
+            before_stop,
+            after_stop,
+        )
 
     trigger_events(before_start, loop)
 

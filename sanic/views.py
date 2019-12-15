@@ -1,3 +1,5 @@
+from typing import Any, Callable, List
+
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import InvalidUsage
 
@@ -37,7 +39,7 @@ class HTTPMethodView:
     To add any decorator you could set it into decorators variable
     """
 
-    decorators = []
+    decorators: List[Callable[[Callable[..., Any]], Callable[..., Any]]] = []
 
     def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)

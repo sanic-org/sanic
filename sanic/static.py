@@ -4,7 +4,7 @@ from re import sub
 from time import gmtime, strftime
 from urllib.parse import unquote
 
-from aiofiles.os import stat
+from aiofiles.os import stat  # type: ignore
 
 from sanic.exceptions import (
     ContentRangeError,

@@ -10,6 +10,7 @@ coverage
 settings.py
 .idea/*
 .cache/*
+.mypy_cache/
 .python-version
 docs/_build/
 docs/_api/

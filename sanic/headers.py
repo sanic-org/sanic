@@ -1,13 +1,12 @@
 import re
 
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import unquote
 
 from sanic.helpers import STATUS_CODES
 
-
 HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
-Options = Dict[str, str]  # key=value fields in various headers
+Options = Dict[str, Union[int, str]]  # key=value fields in various headers
 OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys
 
 _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
@@ -38,7 +37,7 @@ def parse_content_header(value: str) -> Tuple[str, Options]:
     value = _firefox_quote_escape.sub("%22", value)
     pos = value.find(";")
     if pos == -1:
-        options = {}
+        options: Dict[str, Union[int, str]] = {}
     else:
         options = {
             m.group(1).lower(): m.group(2) or m.group(3).replace("%22", '"')
@@ -70,7 +69,7 @@ def parse_forwarded(headers, config) -> Optional[Options]:
         return None
     # Loop over <separator><key>=<value> elements from right to left
     sep = pos = None
-    options = []
+    options: List[Tuple[str, str]] = []
     found = False
     for m in _rparam.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
@@ -104,8 +103,13 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
         try:
             # Combine, split and filter multiple headers' entries
             forwarded_for = headers.getall(config.FORWARDED_FOR_HEADER)
-            proxies = (p.strip() for h in forwarded_for for p in h.split(","))
-            proxies = [p for p in proxies if p]
+            proxies = [
+                p
+                for p in (
+                    p.strip() for h in forwarded_for for p in h.split(",")
+                )
+                if p
+            ]
             addr = proxies[-proxies_count]
         except (KeyError, IndexError):
             pass
@@ -129,7 +133,7 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
 
 def fwd_normalize(fwd: OptionsIterable) -> Options:
     """Normalize and convert values extracted from forwarded headers."""
-    ret = {}
+    ret: Dict[str, Union[int, str]] = {}
     for key, val in fwd:
         if val is not None:
             try:
@@ -167,7 +171,7 @@ def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
     if not m:
         return None, None
     host, port = m.groups()
-    return host.lower(), port and int(port)
+    return host.lower(), int(port) if port is not None else None
 
 
 def format_http1(headers: HeaderIterable) -> bytes:

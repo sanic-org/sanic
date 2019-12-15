@@ -11,7 +11,7 @@ import pytest
 from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
-from sanic.response import json, text
+from sanic.response import html, json, text
 from sanic.testing import ASGI_HOST, HOST, PORT
 
 
@@ -70,6 +70,41 @@ def test_text(app):
     request, response = app.test_client.get("/")
 
     assert response.text == "Hello"
+
+
+def test_html(app):
+    class Foo:
+        def __html__(self):
+            return "<h1>Foo</h1>"
+
+        def _repr_html_(self):
+            return "<h1>Foo object repr</h1>"
+
+    class Bar:
+        def _repr_html_(self):
+            return "<h1>Bar object repr</h1>"
+
+    @app.route("/")
+    async def handler(request):
+        return html("<h1>Hello</h1>")
+
+    @app.route("/foo")
+    async def handler(request):
+        return html(Foo())
+
+    @app.route("/bar")
+    async def handler(request):
+        return html(Bar())
+
+    request, response = app.test_client.get("/")
+    assert response.content_type == "text/html; charset=utf-8"
+    assert response.text == "<h1>Hello</h1>"
+
+    request, response = app.test_client.get("/foo")
+    assert response.text == "<h1>Foo</h1>"
+
+    request, response = app.test_client.get("/bar")
+    assert response.text == "<h1>Bar object repr</h1>"
 
 
 @pytest.mark.asyncio

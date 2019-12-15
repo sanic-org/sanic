@@ -190,12 +190,12 @@ def format_http1_response(
 
     - If `body` is included, content-length must be specified in headers.
     """
-    headers = format_http1(headers)
+    headerbytes = format_http1(headers)
     if status == 200:
-        return b"HTTP/1.1 200 OK\r\n%b\r\n%b" % (headers, body)
+        return b"HTTP/1.1 200 OK\r\n%b\r\n%b" % (headerbytes, body)
     return b"HTTP/1.1 %d %b\r\n%b\r\n%b" % (
         status,
         STATUS_CODES.get(status, b"UNKNOWN"),
-        headers,
+        headerbytes,
         body,
     )

@@ -131,7 +131,7 @@ Documentation
 Changelog
 ---------
 
-`Release Changelogs <https://github.com/huge-success/sanic/blob/master/CHANGELOG.md>`_.
+`Release Changelogs <https://github.com/huge-success/sanic/blob/master/CHANGELOG.rst>`_.
 
    
 Questions and Discussion

@@ -1857,7 +1857,7 @@ def test_request_server_name_in_host_header(app):
     request, response = app.test_client.get(
         "/", headers={"Host": "mal_formed"}
     )
-    assert request.server_name == None  # For now (later maybe 127.0.0.1)
+    assert request.server_name == ""
 
 
 def test_request_server_name_forwarded(app):
@@ -1939,7 +1939,7 @@ def test_server_name_and_url_for(app):
     request, response = app.test_client.get("/foo")
     assert (
         request.url_for("handler")
-        == f"http://my-server:{app.test_client.port}/foo"
+        == f"http://my-server/foo"
     )
 
     app.config.SERVER_NAME = "https://my-server/path"

@@ -1,6 +1,6 @@
 import re
 
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import unquote
 
 

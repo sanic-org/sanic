@@ -364,6 +364,21 @@ class HttpProtocol(asyncio.Protocol):
         else:
             self.request.body_push(body)
 
+    async def body_append(self, body):
+        if (
+            self.request is None
+            or self._request_stream_task is None
+            or self._request_stream_task.cancelled()
+        ):
+            return
+
+        if self.request.stream.is_full():
+            self.transport.pause_reading()
+            await self.request.stream.put(body)
+            self.transport.resume_reading()
+        else:
+            await self.request.stream.put(body)
+
     async def stream_append(self):
         while self._body_chunks:
             body = self._body_chunks.popleft()

@@ -37,14 +37,14 @@ def skip_test_utf8_route(app):
 
 
 def test_utf8_post_json(app):
-    @app.route("/")
+    @app.post("/")
     async def handler(request):
         return text("OK")
 
     payload = {"test": "✓"}
     headers = {"content-type": "application/json"}
 
-    request, response = app.test_client.get(
+    request, response = app.test_client.post(
         "/", data=json_dumps(payload), headers=headers
     )
 

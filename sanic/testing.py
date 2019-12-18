@@ -1,14 +1,8 @@
-import asyncio
-import types
-import typing
-
 from json import JSONDecodeError
 from socket import socket
-from urllib.parse import unquote, urlsplit
 
-import httpcore  # type: ignore
-import httpx  # type: ignore
-import websockets  # type: ignore
+import httpx
+import websockets
 
 from sanic.asgi import ASGIApp
 from sanic.exceptions import MethodNotSupported
@@ -59,7 +53,8 @@ class SanicTestClient:
 
                 if raw_cookies:
                     response.raw_cookies = {}
-                    for cookie in response.cookies:
+
+                    for cookie in response.cookies.jar:
                         response.raw_cookies[cookie.name] = cookie
 
                 return response
@@ -186,6 +181,10 @@ async def app_call_with_return(self, scope, receive, send):
     return await asgi_app()
 
 
+class SanicASGIDispatch(httpx.dispatch.ASGIDispatch):
+    pass
+
+
 class SanicASGITestClient(httpx.Client):
     def __init__(
         self,
@@ -196,10 +195,17 @@ class SanicASGITestClient(httpx.Client):
         app.__class__.__call__ = app_call_with_return
         app.asgi = True
 
-        dispatch = httpx.dispatch.ASGIDispatch(
-            app=app, client=(ASGI_HOST, None)
-        )
+        self.app = app
+
+        dispatch = SanicASGIDispatch(app=app, client=(ASGI_HOST, PORT))
         super().__init__(dispatch=dispatch, base_url=base_url)
+
+        self.last_request = None
+
+        def _collect_request(request):
+            self.last_request = request
+
+        app.request_middleware.appendleft(_collect_request)
 
     async def request(self, method, url, gather_request=True, *args, **kwargs):
 
@@ -209,23 +215,39 @@ class SanicASGITestClient(httpx.Client):
         response.body = response.content
         response.content_type = response.headers.get("content-type")
 
-        return response.request, response
+        return self.last_request, response
 
     async def websocket(self, uri, subprotocols=None, *args, **kwargs):
-        if uri.startswith(("ws:", "wss:")):
-            url = uri
-        else:
-            uri = uri if uri.startswith("/") else "/{uri}".format(uri=uri)
-            url = "ws://testserver{uri}".format(uri=uri)
+        scheme = "ws"
+        path = uri
+        root_path = "{}://{}".format(scheme, ASGI_HOST)
 
-            headers = kwargs.get("headers", {})
-            headers.setdefault("connection", "upgrade")
-            headers.setdefault("sec-websocket-key", "testserver==")
-            headers.setdefault("sec-websocket-version", "13")
-            if subprotocols is not None:
-                headers.setdefault(
-                    "sec-websocket-protocol", ", ".join(subprotocols)
-                )
-            kwargs["headers"] = headers
+        headers = kwargs.get("headers", {})
+        headers.setdefault("connection", "upgrade")
+        headers.setdefault("sec-websocket-key", "testserver==")
+        headers.setdefault("sec-websocket-version", "13")
+        if subprotocols is not None:
+            headers.setdefault(
+                "sec-websocket-protocol", ", ".join(subprotocols)
+            )
 
-            return await self.request("websocket", url, **kwargs)
+        scope = {
+            "type": "websocket",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "headers": [map(lambda y: y.encode(), x) for x in headers.items()],
+            "scheme": scheme,
+            "root_path": root_path,
+            "path": path,
+            "query_string": b"",
+        }
+
+        async def receive():
+            return {}
+
+        async def send(message):
+            pass
+
+        await self.app(scope, receive, send)
+
+        return None, {}

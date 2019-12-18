@@ -1,15 +1,10 @@
 import asyncio
-import functools
-import socket
 
 from asyncio import sleep as aio_sleep
-from http.client import _encode
 from json import JSONDecodeError
 
 # import httpcore
 import httpx
-
-from httpcore import PoolTimeout
 
 from sanic import Sanic, server
 from sanic.response import text
@@ -26,38 +21,13 @@ class ReusableSanicConnectionPool(
 ):
     async def acquire_connection(self, origin, timeout):
         global old_conn
-        # connection = self.active_connections.pop_by_origin(
-        #     origin, http2_only=True
-        # )
-        # if connection is None:
-        #     connection = self.keepalive_connections.pop_by_origin(origin)
-
-        # if connection is None:
-        #     await self.max_connections.acquire()
-        #     connection = httpcore.HTTPConnection(
-        #         origin,
-        #         ssl=self.ssl,
-        #         timeout=self.timeout,
-        #         backend=self.backend,
-        #         release_func=self.release_connection,
-        #     )
-        # self.active_connections.add(connection)
-
-        # if old_conn is not None:
-        #     if old_conn != connection:
-        #         raise RuntimeError(
-        #             "We got a new connection, wanted the same one!"
-        #         )
-        # old_conn = connection
-
-        # return connection
         connection = self.pop_connection(origin)
 
         if connection is None:
             pool_timeout = None if timeout is None else timeout.pool_timeout
 
             await self.max_connections.acquire(timeout=pool_timeout)
-            connection = httpx.connection.HTTPConnection(
+            connection = httpx.dispatch.connection.HTTPConnection(
                 origin,
                 verify=self.verify,
                 cert=self.cert,
@@ -192,7 +162,6 @@ class ReuseableSanicTestClient(SanicTestClient):
                 self._server.close()
                 self._loop.run_until_complete(self._server.wait_closed())
                 self._server = None
-                self.app.stop()
 
             if self._session:
                 self._loop.run_until_complete(self._session.close())

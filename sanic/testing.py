@@ -22,10 +22,11 @@ PORT = 42101
 
 
 class SanicTestClient:
-    def __init__(self, app, port=PORT):
+    def __init__(self, app, port=PORT, host=HOST):
         """Use port=None to bind to a random port"""
         self.app = app
         self.port = port
+        self.host = host
 
     def get_new_session(self):
         return requests.Session()
@@ -71,6 +72,7 @@ class SanicTestClient:
         gather_request=True,
         debug=False,
         server_kwargs={"auto_reload": False},
+        host=None,
         *request_args,
         **request_kwargs,
     ):
@@ -95,11 +97,13 @@ class SanicTestClient:
                 return self.app.error_handler.default(request, exception)
 
         if self.port:
-            server_kwargs = dict(host=HOST, port=self.port, **server_kwargs)
-            host, port = HOST, self.port
+            server_kwargs = dict(
+                host=host or self.host, port=self.port, **server_kwargs
+            )
+            host, port = host or self.host, self.port
         else:
             sock = socket()
-            sock.bind((HOST, 0))
+            sock.bind((host or self.host, 0))
             server_kwargs = dict(sock=sock, **server_kwargs)
             host, port = sock.getsockname()
 

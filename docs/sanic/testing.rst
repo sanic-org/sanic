@@ -2,7 +2,7 @@ Testing
 =======
 
 Sanic endpoints can be tested locally using the `test_client` object, which
-depends on the additional `requests-async <https://github.com/encode/requests-async>`_
+depends on an additional package: `httpx <https://www.encode.io/httpx/>`_
 library, which implements an API that mirrors the `requests` library.
 
 The `test_client` exposes `get`, `post`, `put`, `delete`, `patch`, `head` and `options` methods
@@ -22,7 +22,7 @@ for you to run against your application. A simple example (using pytest) is like
         assert response.status == 405
 
 Internally, each time you call one of the `test_client` methods, the Sanic app is run at `127.0.0.1:42101` and
-your test request is executed against your application, using `requests-async`.
+your test request is executed against your application, using `httpx`.
 
 The `test_client` methods accept the following arguments and keyword arguments:
 
@@ -55,8 +55,8 @@ And to supply data to a JSON POST request:
         assert request.json.get('key1') == 'value1'
 
 More information about
-the available arguments to `requests-async` can be found
-[in the documentation for `requests <https://2.python-requests.org/en/master/>`_.
+the available arguments to `httpx` can be found
+[in the documentation for `httpx <https://www.encode.io/httpx/>`_.
 
 
 Using a random port

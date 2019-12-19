@@ -3,7 +3,6 @@ import asyncio
 from asyncio import sleep as aio_sleep
 from json import JSONDecodeError
 
-# import httpcore
 import httpx
 
 from sanic import Sanic, server

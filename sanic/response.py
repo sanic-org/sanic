@@ -153,7 +153,7 @@ class HTTPResponse(BaseHTTPResponse):
         body=None,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type=None,
         body_bytes=b"",
     ):
         self.content_type = content_type
@@ -181,9 +181,9 @@ class HTTPResponse(BaseHTTPResponse):
                 "Content-Length", len(self.body)
             )
 
-        self.headers["Content-Type"] = self.headers.get(
-            "Content-Type", self.content_type
-        )
+        # self.headers get priority over content_type
+        if self.content_type and "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
 
         if self.status in (304, 412):
             self.headers = remove_entity_headers(self.headers)
@@ -212,6 +212,18 @@ class HTTPResponse(BaseHTTPResponse):
         if self._cookies is None:
             self._cookies = CookieJar(self.headers)
         return self._cookies
+
+
+def empty(
+    status=204, headers=None,
+):
+    """
+    Returns an empty response to the client.
+
+    :param status Response code.
+    :param headers Custom Headers.
+    """
+    return HTTPResponse(body_bytes=b"", status=status, headers=headers,)
 
 
 def json(

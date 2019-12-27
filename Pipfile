@@ -1,0 +1,26 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+towncrier = "*"
+requests = "*"
+jinja2-time = "*"
+multidict = "*"
+uvloop = "*"
+ujson = "*"
+aiofiles = "*"
+websockets = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
+recommonmark = "*"
+httpx = "*"
+docutils = "*"
+pygments = "*"
+httptools = "*"
+
+[requires]
+python_version = "3.7"

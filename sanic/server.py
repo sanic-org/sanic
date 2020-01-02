@@ -87,6 +87,7 @@ class HttpProtocol(asyncio.Protocol):
         "_header_fragment",
         "state",
         "_debug",
+        "_body_chunks",
     )
 
     def __init__(

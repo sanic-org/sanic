@@ -12,6 +12,11 @@ environment:
       PYTHON_VERSION: "3.7.x"
       PYTHON_ARCH: "64"
 
+    - TOXENV: py38-no-ext
+      PYTHON: "C:\\Python38-x64"
+      PYTHON_VERSION: "3.8.x"
+      PYTHON_ARCH: "64"
+
 init: SET "PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
 install:

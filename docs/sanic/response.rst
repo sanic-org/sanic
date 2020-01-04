@@ -110,7 +110,7 @@ Response without encoding the body
 Empty
 --------------
 
-For responding with a empty message as defined by `RFC 2616 <https://tools.ietf.org/search/rfc2616#section-7.2.1>`_
+For responding with an empty message as defined by `RFC 2616 <https://tools.ietf.org/search/rfc2616#section-7.2.1>`_
 
 .. code-block:: python
 

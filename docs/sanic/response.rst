@@ -107,6 +107,19 @@ Response without encoding the body
     def handle_request(request):
         return response.raw(b'raw data')
 
+Empty
+--------------
+
+For responding with an empty message as defined by `RFC 2616 <https://tools.ietf.org/search/rfc2616#section-7.2.1>`_
+
+.. code-block:: python
+
+    from sanic import response
+
+    @app.route('/empty')
+    async def handle_request(request):
+        return response.empty()
+
 Modify headers or status
 ------------------------
 

@@ -202,9 +202,7 @@ class HTTPResponse(BaseHTTPResponse):
         return self._cookies
 
 
-def empty(
-    status=204, headers=None,
-):
+def empty(status=204, headers=None):
     """
     Returns an empty response to the client.
 

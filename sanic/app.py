@@ -194,6 +194,10 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            if isinstance(handler, (tuple, list)):
+                routes, handler = handler
+            else:
+                routes = []
             args = list(signature(handler).parameters.keys())
 
             if not args:
@@ -205,7 +209,7 @@ class Sanic:
             if stream:
                 handler.is_stream = stream
 
-            routes = self.router.add(
+            new_routes = self.router.add(
                 uri=uri,
                 methods=methods,
                 handler=handler,
@@ -214,6 +218,7 @@ class Sanic:
                 version=version,
                 name=name,
             )
+            routes.extend(new_routes)
             return routes, handler
 
         return response

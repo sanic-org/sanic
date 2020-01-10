@@ -551,6 +551,18 @@ def test_route_duplicate(app):
             pass
 
 
+def test_double_stack_route(app):
+    @app.route("/test/1")
+    @app.route("/test/2")
+    async def handler1(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/test/1")
+    assert response.status == 200
+    request, response = app.test_client.get("/test/2")
+    assert response.status == 200
+
+
 def test_method_not_allowed(app):
     @app.route("/test", methods=["GET"])
     async def handler(request):

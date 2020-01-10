@@ -211,7 +211,7 @@ def empty(
     :param status Response code.
     :param headers Custom Headers.
     """
-    return HTTPResponse(body_bytes=b"", status=status, headers=headers,)
+    return HTTPResponse(body_bytes=b"", status=status, headers=headers)
 
 
 def json(

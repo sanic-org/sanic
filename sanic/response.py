@@ -118,12 +118,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         )
 
         headers = self._parse_headers()
-
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status)
-
+        status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
         return (b"HTTP/%b %d %b\r\n" b"%b" b"%b\r\n") % (
             version.encode(),
             self.status,
@@ -177,12 +172,7 @@ class HTTPResponse(BaseHTTPResponse):
             self.headers = remove_entity_headers(self.headers)
 
         headers = self._parse_headers()
-
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
-
+        status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
         return (
             b"HTTP/%b %d %b\r\n" b"Connection: %b\r\n" b"%b" b"%b\r\n" b"%b"
         ) % (
@@ -202,16 +192,14 @@ class HTTPResponse(BaseHTTPResponse):
         return self._cookies
 
 
-def empty(
-    status=204, headers=None,
-):
+def empty(status=204, headers=None):
     """
     Returns an empty response to the client.
 
     :param status Response code.
     :param headers Custom Headers.
     """
-    return HTTPResponse(body_bytes=b"", status=status, headers=headers,)
+    return HTTPResponse(body_bytes=b"", status=status, headers=headers)
 
 
 def json(

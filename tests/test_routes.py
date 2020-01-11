@@ -563,6 +563,23 @@ def test_double_stack_route(app):
     assert response.status == 200
 
 
+@pytest.mark.asyncio
+async def test_websocket_route_asgi(app):
+    ev = asyncio.Event()
+
+    @app.websocket("/test/1")
+    @app.websocket("/test/2")
+    async def handler(request, ws):
+        ev.set()
+
+    request, response = await app.asgi_client.websocket("/test/1")
+    first_set = ev.is_set()
+    ev.clear()
+    request, response = await app.asgi_client.websocket("/test/1")
+    second_set = ev.is_set()
+    assert(first_set and second_set)
+
+
 def test_method_not_allowed(app):
     @app.route("/test", methods=["GET"])
     async def handler(request):

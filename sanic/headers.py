@@ -5,6 +5,7 @@ from urllib.parse import unquote
 
 from sanic.helpers import STATUS_CODES
 
+
 HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
 Options = Dict[str, Union[int, str]]  # key=value fields in various headers
 OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys

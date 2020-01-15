@@ -1,3 +1,5 @@
+import warnings
+
 from functools import partial
 from mimetypes import guess_type
 from os import path
@@ -98,7 +100,11 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     def get_headers(
         self, version="1.1", keep_alive=False, keep_alive_timeout=None
     ):
-        assert version == "1.1", "No other versions are currently supported"
+        if version != "1.1":
+            warnings.warn(
+                "Only HTTP/1.1 is currently supported (got {version})",
+                DeprecationWarning,
+            )
 
         # self.headers get priority over content_type
         if self.content_type and "Content-Type" not in self.headers:
@@ -132,7 +138,11 @@ class HTTPResponse(BaseHTTPResponse):
         self._cookies = None
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        assert version == "1.1", "No other versions are currently supported"
+        if version != "1.1":
+            warnings.warn(
+                "Only HTTP/1.1 is currently supported (got {version})",
+                DeprecationWarning,
+            )
 
         body = b""
         if has_message_body(self.status):
@@ -205,6 +215,12 @@ def text(
     :param headers: Custom Headers.
     :param content_type: the content type (string) of the response
     """
+    if not isinstance(body, str):
+        warnings.warn(
+            "Types other than str will be deprecated in future versions for"
+            f" response.text, got type {type(body).__name__})",
+            DeprecationWarning,
+        )
     # Type conversions are deprecated and quite b0rked but still supported for
     # text() until applications get fixed. This try-except should be removed.
     try:

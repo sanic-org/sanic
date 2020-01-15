@@ -61,22 +61,22 @@ class ConnInfo:
     def __init__(self, transport):
         self.ssl = bool(transport.get_extra_info("sslcontext"))
         self.sockname = a = transport.get_extra_info("sockname")
+        self.server = self.client = ""
+        self.server_port = self.client_port = 0
         if isinstance(a, str):  # UNIX socket
             self.server = self.client = a
-            self.server_port = self.client_port = 0
             return
-        if a is None:  # ASGI doesn't have sockname
-            self.server, self.server_port = "", 0
-        else:
-            self.server = f"{a[0]}" if len(a) == 2 else f"[{a[0]}]"
+        # IPv4 (ip, port) or IPv6 (ip, port, flowinfo, scopeid)
+        if isinstance(a, tuple):
+            self.server = a[0] if len(a) == 2 else f"[{a[0]}]"
             self.server_port = a[1]
             # self.server gets non-standard port appended
             if a[1] != (443 if self.ssl else 80):
                 self.server = f"{self.server}:{a[1]}"
         self.peername = a = transport.get_extra_info("peername")
-        self.client = f"{a[0]}" if len(a) == 2 else f"[{a[0]}]"
-        self.client_port = a[1]
-
+        if isinstance(a, tuple):
+            self.client = a[0] if len(a) == 2 else f"[{a[0]}]"
+            self.client_port = a[1]
 
 class HttpProtocol(asyncio.Protocol):
     """

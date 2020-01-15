@@ -78,6 +78,7 @@ class ConnInfo:
             self.client = a[0] if len(a) == 2 else f"[{a[0]}]"
             self.client_port = a[1]
 
+
 class HttpProtocol(asyncio.Protocol):
     """
     This class provides a basic HTTP implementation of the sanic framework.

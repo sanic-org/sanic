@@ -80,38 +80,28 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         """Streams headers, runs the `streaming_fn` callback that writes
         content to the response body, then finalizes the response body.
         """
-        if version != "1.1":
-            self.chunked = False
-        headers = self.get_headers(
-            version,
-            keep_alive=keep_alive,
-            keep_alive_timeout=keep_alive_timeout,
+        assert version == "1.1", "No other versions are currently supported"
+
+        if keep_alive and keep_alive_timeout:
+            self.headers["Keep-Alive"] = keep_alive_timeout
+
+        # self.headers get priority over content_type
+        if self.content_type and "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
+
+        if self.chunked:
+            self.headers["Transfer-Encoding"] = "chunked"
+            self.headers.pop("Content-Length", None)
+
+        await self.protocol.push_data(
+            format_http1_response(self.status, self.headers.items())
         )
-        await self.protocol.push_data(headers)
         await self.protocol.drain()
         await self.streaming_fn(self)
         if self.chunked:
             await self.protocol.push_data(b"0\r\n\r\n")
         # no need to await drain here after this write, because it is the
         # very last thing we write and nothing needs to wait for it.
-
-    def get_headers(
-        self, version="1.1", keep_alive=False, keep_alive_timeout=None
-    ):
-        assert version == "1.1", "No other versions are currently supported"
-
-        # self.headers get priority over content_type
-        if self.content_type and "Content-Type" not in self.headers:
-            self.headers["Content-Type"] = self.content_type
-
-        if keep_alive and keep_alive_timeout is not None:
-            self.headers["Keep-Alive"] = keep_alive_timeout
-
-        if self.chunked and version == "1.1":
-            self.headers["Transfer-Encoding"] = "chunked"
-            self.headers.pop("Content-Length", None)
-
-        return format_http1_response(self.status, self.headers.items())
 
 
 class HTTPResponse(BaseHTTPResponse):

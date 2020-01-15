@@ -10,7 +10,7 @@ import pytest
 
 from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import html, json, text
 from sanic.testing import ASGI_HOST, HOST, PORT
 

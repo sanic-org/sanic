@@ -36,6 +36,33 @@ class BaseHTTPResponse:
             self._cookies = CookieJar(self.headers)
         return self._cookies
 
+    def get_headers(
+        self, version="1.1", keep_alive=False, keep_alive_timeout=None, body=b""
+    ):
+        """.. deprecated:: 20.3:
+           This function is not public API and will be removed."""
+        if version != "1.1":
+            warnings.warn(
+                "Only HTTP/1.1 is currently supported (got {version})",
+                DeprecationWarning,
+            )
+
+        # self.headers get priority over content_type
+        if self.content_type and "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
+
+        if keep_alive:
+            self.headers["Connection"] = "keep-alive"
+            if keep_alive_timeout is not None:
+                self.headers["Keep-Alive"] = keep_alive_timeout
+        else:
+            self.headers["Connection"] = "close"
+
+        if self.status in (304, 412):
+            self.headers = remove_entity_headers(self.headers)
+
+        return format_http1_response(self.status, self.headers.items(), body)
+
 
 class StreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
@@ -100,25 +127,11 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     def get_headers(
         self, version="1.1", keep_alive=False, keep_alive_timeout=None
     ):
-        if version != "1.1":
-            warnings.warn(
-                "Only HTTP/1.1 is currently supported (got {version})",
-                DeprecationWarning,
-            )
-
-        # self.headers get priority over content_type
-        if self.content_type and "Content-Type" not in self.headers:
-            self.headers["Content-Type"] = self.content_type
-
-        if keep_alive and keep_alive_timeout is not None:
-            self.headers["Keep-Alive"] = keep_alive_timeout
-
         if self.chunked and version == "1.1":
             self.headers["Transfer-Encoding"] = "chunked"
             self.headers.pop("Content-Length", None)
 
-        return format_http1_response(self.status, self.headers.items())
-
+        return super().get_headers(version, keep_alive, keep_alive_timeout)
 
 class HTTPResponse(BaseHTTPResponse):
     __slots__ = ("body", "status", "content_type", "headers", "_cookies")
@@ -138,12 +151,6 @@ class HTTPResponse(BaseHTTPResponse):
         self._cookies = None
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        if version != "1.1":
-            warnings.warn(
-                "Only HTTP/1.1 is currently supported (got {version})",
-                DeprecationWarning,
-            )
-
         body = b""
         if has_message_body(self.status):
             body = self.body
@@ -151,17 +158,7 @@ class HTTPResponse(BaseHTTPResponse):
                 "Content-Length", len(self.body)
             )
 
-        if keep_alive and keep_alive_timeout:
-            self.headers["Keep-Alive"] = keep_alive_timeout
-
-        # self.headers get priority over content_type
-        if self.content_type and "Content-Type" not in self.headers:
-            self.headers["Content-Type"] = self.content_type
-
-        if self.status in (304, 412):
-            self.headers = remove_entity_headers(self.headers)
-
-        return format_http1_response(self.status, self.headers.items(), body)
+        return self.get_headers(version, keep_alive, keep_alive_timeout, body)
 
     @property
     def cookies(self):

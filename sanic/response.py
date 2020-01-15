@@ -37,7 +37,11 @@ class BaseHTTPResponse:
         return self._cookies
 
     def get_headers(
-        self, version="1.1", keep_alive=False, keep_alive_timeout=None, body=b""
+        self,
+        version="1.1",
+        keep_alive=False,
+        keep_alive_timeout=None,
+        body=b"",
     ):
         """.. deprecated:: 20.3:
            This function is not public API and will be removed."""
@@ -132,6 +136,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             self.headers.pop("Content-Length", None)
 
         return super().get_headers(version, keep_alive, keep_alive_timeout)
+
 
 class HTTPResponse(BaseHTTPResponse):
     __slots__ = ("body", "status", "content_type", "headers", "_cookies")

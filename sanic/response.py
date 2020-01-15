@@ -123,12 +123,16 @@ class HTTPResponse(BaseHTTPResponse):
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         assert version == "1.1", "No other versions are currently supported"
+
         body = b""
         if has_message_body(self.status):
             body = self.body
             self.headers["Content-Length"] = self.headers.get(
                 "Content-Length", len(self.body)
             )
+
+        if keep_alive and keep_alive_timeout:
+            self.headers["Keep-Alive"] = keep_alive_timeout
 
         # self.headers get priority over content_type
         if self.content_type and "Content-Type" not in self.headers:

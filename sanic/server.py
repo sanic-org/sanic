@@ -2,6 +2,7 @@ import asyncio
 import os
 import socket
 import stat
+import sys
 import traceback
 
 from collections import deque
@@ -124,6 +125,7 @@ class HttpProtocol(asyncio.Protocol):
         "_header_fragment",
         "state",
         "_debug",
+        "_body_chunks",
     )
 
     def __init__(
@@ -171,7 +173,10 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
         self._is_stream_handler = False
-        self._not_paused = asyncio.Event(loop=loop)
+        if sys.version_info.minor >= 8:
+            self._not_paused = asyncio.Event()
+        else:
+            self._not_paused = asyncio.Event(loop=loop)
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None
@@ -403,6 +408,21 @@ class HttpProtocol(asyncio.Protocol):
                 )
         else:
             self.request.body_push(body)
+
+    async def body_append(self, body):
+        if (
+            self.request is None
+            or self._request_stream_task is None
+            or self._request_stream_task.cancelled()
+        ):
+            return
+
+        if self.request.stream.is_full():
+            self.transport.pause_reading()
+            await self.request.stream.put(body)
+            self.transport.resume_reading()
+        else:
+            await self.request.stream.put(body)
 
     async def stream_append(self):
         while self._body_chunks:
@@ -980,7 +1000,10 @@ def serve(
             else:
                 conn.close()
 
-        _shutdown = asyncio.gather(*coros, loop=loop)
+        if sys.version_info.minor >= 8:
+            _shutdown = asyncio.gather(*coros, loop=loop)
+        else:
+            _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)

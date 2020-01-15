@@ -1,9 +1,10 @@
 import re
 
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import unquote
 
 
+HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
 Options = Dict[str, Union[int, str]]  # key=value fields in various headers
 OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys
 
@@ -170,3 +171,12 @@ def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
         return None, None
     host, port = m.groups()
     return host.lower(), int(port) if port is not None else None
+
+
+def format_http1(headers: HeaderIterable) -> bytes:
+    """Convert a headers iterable into HTTP/1 header format.
+
+    - Outputs UTF-8 bytes where each header line ends with \\r\\n.
+    - Values are converted into strings if necessary.
+    """
+    return "".join(f"{name}: {val}\r\n" for name, val in headers).encode()

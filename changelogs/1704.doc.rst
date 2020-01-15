@@ -1,3 +1,0 @@
-Fix documentation for `get` and `getlist` of the `request.args`
-
-Add additional example for showing the usage of `getlist` and fix the documentation string for `request.args` behavior

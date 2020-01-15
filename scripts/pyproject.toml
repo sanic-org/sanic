@@ -1,6 +1,6 @@
 [tool.towncrier]
 package = "sanic"
-package_dir = "."
+package_dir = ".."
 filename = "../CHANGELOG.rst"
 directory = "./changelogs"
 underlines = ["=", "*", "~"]

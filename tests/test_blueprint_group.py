@@ -83,7 +83,7 @@ def test_bp_group_with_additional_route_params(app: Sanic):
     _, response = app.test_client.patch("/api/bp2/route/bp2", headers=header)
     assert response.text == "PATCH_bp2"
 
-    _, response = app.test_client.get("/v2/api/bp1/request_path")
+    _, response = app.test_client.put("/v2/api/bp1/request_path")
     assert response.status == 401
 
 
@@ -141,8 +141,8 @@ def test_bp_group(app: Sanic):
     _, response = app.test_client.get("/api/bp3")
     assert response.text == "BP3_OK"
 
-    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 4
-    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 4
+    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 3
+    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 2
 
 
 def test_bp_group_list_operations(app: Sanic):

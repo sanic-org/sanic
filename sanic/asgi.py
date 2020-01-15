@@ -15,8 +15,6 @@ from typing import (
 )
 from urllib.parse import quote
 
-from requests_async import ASGISession  # type: ignore
-
 import sanic.app  # noqa
 
 from sanic.compat import Header
@@ -189,7 +187,7 @@ class Lifespan:
 
 
 class ASGIApp:
-    sanic_app: Union[ASGISession, "sanic.app.Sanic"]
+    sanic_app: "sanic.app.Sanic"
     request: Request
     transport: MockTransport
     do_stream: bool
@@ -223,8 +221,13 @@ class ASGIApp:
         if scope["type"] == "lifespan":
             await instance.lifespan(scope, receive, send)
         else:
-            url_bytes = scope.get("root_path", "") + quote(scope["path"])
-            url_bytes = url_bytes.encode("latin-1")
+            path = (
+                scope["path"][1:]
+                if scope["path"].startswith("/")
+                else scope["path"]
+            )
+            url = "/".join([scope.get("root_path", ""), quote(path)])
+            url_bytes = url.encode("latin-1")
             url_bytes += b"?" + scope["query_string"]
 
             if scope["type"] == "http":

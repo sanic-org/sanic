@@ -1,6 +1,6 @@
 import asyncio
 
-from collections import deque
+from collections import deque, namedtuple
 
 import pytest
 import uvicorn
@@ -245,17 +245,26 @@ async def test_cookie_customization(app):
         return response
 
     _, response = await app.asgi_client.get("/cookie")
+
+    CookieDef = namedtuple("CookieDef", ("value", "httponly"))
+    Cookie = namedtuple("Cookie", ("domain", "path", "value", "httponly"))
     cookie_map = {
-        "test": {"value": "Cookie1", "HttpOnly": True},
-        "c2": {"value": "Cookie2", "HttpOnly": False},
+        "test": CookieDef("Cookie1", True),
+        "c2": CookieDef("Cookie2", False),
     }
 
-    for k, v in (
-        response.cookies._cookies.get("mockserver.local").get("/").items()
-    ):
-        assert cookie_map.get(k).get("value") == v.value
-        if cookie_map.get(k).get("HttpOnly"):
-            assert "HttpOnly" in v._rest.keys()
+    cookies = {
+        c.name: Cookie(c.domain, c.path, c.value, "HttpOnly" in c._rest.keys())
+        for c in response.cookies.jar
+    }
+
+    for name, definition in cookie_map.items():
+        cookie = cookies.get(name)
+        assert cookie
+        assert cookie.value == definition.value
+        assert cookie.domain == "mockserver.local"
+        assert cookie.path == "/"
+        assert cookie.httponly == definition.httponly
 
 
 @pytest.mark.asyncio

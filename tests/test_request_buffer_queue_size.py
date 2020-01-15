@@ -2,6 +2,7 @@ import io
 
 from sanic.response import text
 
+
 data = "abc" * 10_000_000
 
 

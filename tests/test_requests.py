@@ -10,7 +10,7 @@ import pytest
 
 from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import json, text
 from sanic.testing import ASGI_HOST, HOST, PORT
 
@@ -55,11 +55,11 @@ def test_ip(app):
 async def test_ip_asgi(app):
     @app.route("/")
     def handler(request):
-        return text("{}".format(request.ip))
+        return text("{}".format(request.url))
 
     request, response = await app.asgi_client.get("/")
 
-    assert response.text == "mockserver"
+    assert response.text == "http://mockserver/"
 
 
 def test_text(app):
@@ -207,24 +207,24 @@ async def test_empty_json_asgi(app):
 
 
 def test_invalid_json(app):
-    @app.route("/")
+    @app.post("/")
     async def handler(request):
         return json(request.json)
 
     data = "I am not json"
-    request, response = app.test_client.get("/", data=data)
+    request, response = app.test_client.post("/", data=data)
 
     assert response.status == 400
 
 
 @pytest.mark.asyncio
 async def test_invalid_json_asgi(app):
-    @app.route("/")
+    @app.post("/")
     async def handler(request):
         return json(request.json)
 
     data = "I am not json"
-    request, response = await app.asgi_client.get("/", data=data)
+    request, response = await app.asgi_client.post("/", data=data)
 
     assert response.status == 400
 

@@ -7,6 +7,7 @@ from aiofiles import open as open_async  # type: ignore
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar
+from sanic.headers import format_http1
 from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
 
 
@@ -30,20 +31,7 @@ class BaseHTTPResponse:
             return str(data).encode()
 
     def _parse_headers(self):
-        headers = b""
-        for name, value in self.headers.items():
-            try:
-                headers += b"%b: %b\r\n" % (
-                    name.encode(),
-                    value.encode("utf-8"),
-                )
-            except AttributeError:
-                headers += b"%b: %b\r\n" % (
-                    str(name).encode(),
-                    str(value).encode("utf-8"),
-                )
-
-        return headers
+        return format_http1(self.headers.items())
 
     @property
     def cookies(self):
@@ -130,12 +118,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         )
 
         headers = self._parse_headers()
-
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status)
-
+        status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
         return (b"HTTP/%b %d %b\r\n" b"%b" b"%b\r\n") % (
             version.encode(),
             self.status,
@@ -153,7 +136,7 @@ class HTTPResponse(BaseHTTPResponse):
         body=None,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type=None,
         body_bytes=b"",
     ):
         self.content_type = content_type
@@ -181,20 +164,15 @@ class HTTPResponse(BaseHTTPResponse):
                 "Content-Length", len(self.body)
             )
 
-        self.headers["Content-Type"] = self.headers.get(
-            "Content-Type", self.content_type
-        )
+        # self.headers get priority over content_type
+        if self.content_type and "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
 
         if self.status in (304, 412):
             self.headers = remove_entity_headers(self.headers)
 
         headers = self._parse_headers()
-
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
-
+        status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
         return (
             b"HTTP/%b %d %b\r\n" b"Connection: %b\r\n" b"%b" b"%b\r\n" b"%b"
         ) % (
@@ -212,6 +190,16 @@ class HTTPResponse(BaseHTTPResponse):
         if self._cookies is None:
             self._cookies = CookieJar(self.headers)
         return self._cookies
+
+
+def empty(status=204, headers=None):
+    """
+    Returns an empty response to the client.
+
+    :param status Response code.
+    :param headers Custom Headers.
+    """
+    return HTTPResponse(body_bytes=b"", status=status, headers=headers)
 
 
 def json(

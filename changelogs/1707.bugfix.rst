@@ -1,4 +1,0 @@
-Fix `url_for` behavior with missing SERVER_NAME
-
-If the `SERVER_NAME` was missing in the `app.config` entity, the `url_for` on the `request` and  `app` were failing
-due to an `AttributeError`. This fix makes the availability of `SERVER_NAME` on our `app.config` an optional behavior.

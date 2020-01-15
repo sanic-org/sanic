@@ -1,4 +1,0 @@
-Move docs from RST to MD
-
-Moved all docs from markdown to restructured text like the rest of the docs to unify the scheme and make it easier in
-the future to update documentation.

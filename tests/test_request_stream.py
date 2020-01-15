@@ -332,7 +332,7 @@ def test_request_stream_handle_exception(app):
     assert response.text == "Error: Requested URL /in_valid_post not found"
 
     # 405
-    request, response = app.test_client.get("/post/random_id", data=data)
+    request, response = app.test_client.get("/post/random_id")
     assert response.status == 405
     assert (
         response.text == "Error: Method GET not allowed for URL"

@@ -98,7 +98,10 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     def get_headers(
         self, version="1.1", keep_alive=False, keep_alive_timeout=None
     ):
-        if "Content-Type" not in self.headers:
+        assert version == "1.1", "No other versions are currently supported"
+
+        # self.headers get priority over content_type
+        if self.content_type and "Content-Type" not in self.headers:
             self.headers["Content-Type"] = self.content_type
 
         if keep_alive and keep_alive_timeout is not None:
@@ -119,7 +122,7 @@ class HTTPResponse(BaseHTTPResponse):
         body=None,
         status=200,
         headers=None,
-        content_type="text/plain; charset=utf-8",
+        content_type=None,
         body_bytes=b"",
     ):
         self.content_type = content_type
@@ -129,9 +132,7 @@ class HTTPResponse(BaseHTTPResponse):
         self._cookies = None
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        if "Content-Type" not in self.headers:
-            self.headers["Content-Type"] = self.content_type
-
+        assert version == "1.1", "No other versions are currently supported"
         body = b""
         if has_message_body(self.status):
             body = self.body
@@ -139,14 +140,12 @@ class HTTPResponse(BaseHTTPResponse):
                 "Content-Length", len(self.body)
             )
 
+        # self.headers get priority over content_type
+        if self.content_type and "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
+
         if self.status in (304, 412):
             self.headers = remove_entity_headers(self.headers)
-
-        if keep_alive and keep_alive_timeout is not None:
-            self.headers["Connection"] = "keep-alive"
-            self.headers["Keep-Alive"] = keep_alive_timeout
-        elif not keep_alive:
-            self.headers["Connection"] = "close"
 
         return format_http1_response(self.status, self.headers.items(), body)
 
@@ -155,6 +154,16 @@ class HTTPResponse(BaseHTTPResponse):
         if self._cookies is None:
             self._cookies = CookieJar(self.headers)
         return self._cookies
+
+
+def empty(status=204, headers=None):
+    """
+    Returns an empty response to the client.
+
+    :param status Response code.
+    :param headers Custom Headers.
+    """
+    return HTTPResponse(body_bytes=b"", status=status, headers=headers)
 
 
 def json(

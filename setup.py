@@ -5,6 +5,7 @@ import codecs
 import os
 import re
 import sys
+
 from distutils.util import strtobool
 
 from setuptools import setup
@@ -83,7 +84,7 @@ requirements = [
     "aiofiles>=0.3.0",
     "websockets>=7.0,<9.0",
     "multidict>=4.0,<5.0",
-    "requests-async==0.5.0",
+    "httpx==0.9.3",
 ]
 
 tests_require = [

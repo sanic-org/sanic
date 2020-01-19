@@ -4,7 +4,10 @@ from re import sub
 from time import gmtime, strftime
 from urllib.parse import unquote
 
-from aiofiles.os import stat  # type: ignore
+#from aiofiles.os import stat  # type: ignore
+from trio import Path
+def stat(path):
+    return Path(path).stat()
 
 from sanic.exceptions import (
     ContentRangeError,

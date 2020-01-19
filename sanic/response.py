@@ -3,7 +3,8 @@ from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
 
-from aiofiles import open as open_async  # type: ignore
+#from aiofiles import open as open_async  # type: ignore
+from trio import open_file as open_async
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar
@@ -300,7 +301,7 @@ async def file(
         )
     filename = filename or path.split(location)[-1]
 
-    async with open_async(location, mode="rb") as _file:
+    async with await open_async(location, mode="rb") as _file:
         if _range:
             await _file.seek(_range.start)
             out_stream = await _file.read(_range.size)

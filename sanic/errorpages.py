@@ -30,15 +30,24 @@ def exception_response(request, exception, debug):
     elif debug:
         text = f"{exception}"
 
-    if debug:
-        return html(_render_traceback_html(exception, request), status=status)
-
-    # Keeping it minimal with trailing newline for pretty curl/console output
     status_text = STATUS_CODES.get(status).decode() or "Error Occurred"
     title = escape(f"{status} — {status_text}")
     text = escape(text)
+
+    if debug and not getattr(exception, "quiet", False):
+        return html(
+            f"<!DOCTYPE html><meta charset=UTF-8><title>{title}</title>"
+            f"<style>{TRACEBACK_STYLE}</style>\n"
+            f"<h1>⚠️ {title}</h1><p>{text}\n"
+            f"{_render_traceback_html(request, exception)}",
+            status=status
+        )
+
+    # Keeping it minimal with trailing newline for pretty curl/console output
     return html(
-        f"<!DOCTYPE html><title>{title}</title><h1>⚠️ {title}</h1><p>{text}\n",
+        f"<!DOCTYPE html><meta charset=UTF-8><title>{title}</title>"
+        "<style>html { font-family: sans-serif }</style>\n"
+        f"<h1>⚠️ {title}</h1><p>{text}\n",
         status=status,
         headers=headers,
     )
@@ -46,139 +55,63 @@ def exception_response(request, exception, debug):
 
 def _render_exception(exception):
     frames = extract_tb(exception.__traceback__)
-
-    frame_html = []
-    for frame in frames:
-        frame_html.append(TRACEBACK_LINE_HTML.format(frame))
-
-    return TRACEBACK_WRAPPER_INNER_HTML.format(
+    frame_html = "".join(TRACEBACK_LINE_HTML.format(frame) for frame in frames)
+    return TRACEBACK_WRAPPER_HTML.format(
         exc_name=escape(exception.__class__.__name__),
         exc_value=escape(exception),
-        frame_html="".join(frame_html),
+        frame_html=frame_html,
     )
 
 
-def _render_traceback_html(exception, request):
+def _render_traceback_html(request, exception):
     exc_type, exc_value, tb = sys.exc_info()
     exceptions = []
-
     while exc_value:
         exceptions.append(_render_exception(exc_value))
         exc_value = exc_value.__cause__
 
-    return TRACEBACK_WRAPPER_HTML.format(
-        style=TRACEBACK_STYLE,
-        exc_name=escape(exception.__class__.__name__),
-        exc_value=escape(exception),
-        inner_html=TRACEBACK_BORDER.join(reversed(exceptions)),
-        path=escape(request.path),
+    traceback_html = TRACEBACK_BORDER.join(reversed(exceptions))
+    appname = escape(request.app.name)
+    name = escape(exception.__class__.__name__)
+    value = escape(exception)
+    path = escape(request.path)
+    return (
+        f"<h2>Traceback of {appname} (most recent call last):</h2>"
+        f"{traceback_html}"
+        "<div class=summary><p>"
+        f"<b>{name}: {value}</b> while handling path <code>{path}</code>"
     )
 
 
 TRACEBACK_STYLE = """
-    <style>
-        body {
-            padding: 20px;
-            font-family: Arial, sans-serif;
-        }
-
-        p {
-            margin: 0;
-        }
-
-        .summary {
-            padding: 10px;
-        }
-
-        h1 {
-            margin-bottom: 0;
-        }
-
-        h3 {
-            margin-top: 10px;
-        }
-
-        h3 code {
-            font-size: 24px;
-        }
-
-        .frame-line > * {
-            padding: 5px 10px;
-        }
-
-        .frame-line {
-            margin-bottom: 5px;
-        }
-
-        .frame-code {
-            font-size: 16px;
-            padding-left: 30px;
-        }
-
-        .tb-wrapper {
-            border: 1px solid #f3f3f3;
-        }
-
-        .tb-header {
-            background-color: #f3f3f3;
-            padding: 5px 10px;
-        }
-
-        .tb-border {
-            padding-top: 20px;
-        }
-
-        .frame-descriptor {
-            background-color: #e2eafb;
-        }
-
-        .frame-descriptor {
-            font-size: 14px;
-        }
-    </style>
+    html { font-family: sans-serif }
+    h2 { color: #888; }
+    .tb-wrapper p { margin: 0 }
+    .frame-border { margin: 1rem }
+    .frame-line > * { padding: 0.3rem 0.6rem }
+    .frame-line { margin-bottom: 0.3rem }
+    .frame-code { font-size: 16px; padding-left: 4ch }
+    .tb-wrapper { border: 1px solid #eee }
+    .tb-header { background: #eee; padding: 0.3rem; font-weight: bold }
+    .frame-descriptor { background: #e2eafb; font-size: 14px }
 """
 
-TRACEBACK_WRAPPER_HTML = """
-    <html>
-        <head>
-            {style}
-        </head>
-        <body>
-            {inner_html}
-            <div class="summary">
-                <p>
-                <b>{exc_name}: {exc_value}</b>
-                    while handling path <code>{path}</code>
-                </p>
-            </div>
-        </body>
-    </html>
-"""
+TRACEBACK_WRAPPER_HTML = (
+    "<div class=tb-header>{exc_name}: {exc_value}</div>"
+    "<div class=tb-wrapper>{frame_html}</div>"
+)
 
-TRACEBACK_WRAPPER_INNER_HTML = """
-    <h1>{exc_name}</h1>
-    <h3><code>{exc_value}</code></h3>
-    <div class="tb-wrapper">
-        <p class="tb-header">Traceback (most recent call last):</p>
-        {frame_html}
-    </div>
-"""
+TRACEBACK_BORDER = (
+    "<div class=frame-border>"
+    "The above exception was the direct cause of the following exception:"
+    "</div>"
+)
 
-TRACEBACK_BORDER = """
-    <div class="tb-border">
-        <b><i>
-            The above exception was the direct cause of the
-            following exception:
-        </i></b>
-    </div>
-"""
-
-TRACEBACK_LINE_HTML = """
-    <div class="frame-line">
-        <p class="frame-descriptor">
-            File {0.filename}, line <i>{0.lineno}</i>,
-            in <code><b>{0.name}</b></code>
-        </p>
-        <p class="frame-code"><code>{0.line}</code></p>
-    </div>
-"""
+TRACEBACK_LINE_HTML = (
+    "<div class=frame-line>"
+    "<p class=frame-descriptor>"
+    "File {0.filename}, line <i>{0.lineno}</i>, "
+    "in <code><b>{0.name}</b></code>"
+    "<p class=frame-code><code>{0.line}</code>"
+    "</div>"
+)

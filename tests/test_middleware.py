@@ -89,12 +89,11 @@ def test_middleware_response_raise_cancelled_error(app, caplog):
         reqrequest, response = app.test_client.get("/")
 
         assert response.status == 503
-        # Only 500 errors get logged
         assert (
             "sanic.root",
             logging.ERROR,
             "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
-        ) not in caplog.record_tuples
+        ) in caplog.record_tuples
 
 
 def test_middleware_response_raise_exception(app, caplog):

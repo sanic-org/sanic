@@ -169,6 +169,7 @@ class ErrorHandler:
         status = 500
         text = "The server encountered an internal error and cannot complete your request."
         headers = {}
+        quiet = getattr(exception, "quiet", False)
         if isinstance(exception, SanicException):
             text = f"{exception}"
             status = getattr(exception, "status_code", status)
@@ -176,7 +177,7 @@ class ErrorHandler:
         elif self.debug:
             text = f"{exception}"
 
-        if status == 500:
+        if quiet is False:
             try:
                 url = repr(request.url)
             except AttributeError:
@@ -185,6 +186,7 @@ class ErrorHandler:
             self.log(format_exc())
             logger.exception("Exception occurred while handling uri: %s", url)
 
+            # Debug traceback returned here!
             if self.debug:
                 html_output = self._render_traceback_html(exception, request)
                 return html(html_output, status=status)

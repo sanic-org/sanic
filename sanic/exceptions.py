@@ -127,11 +127,15 @@ def add_status_code(code):
 
 
 class SanicException(Exception):
-    def __init__(self, message, status_code=None):
+    def __init__(self, message, status_code=None, quiet=None):
         super().__init__(message)
 
         if status_code is not None:
             self.status_code = status_code
+
+        # quiet=None/False/True with None meaning choose by status
+        if quiet or quiet is None and status_code not in (None, 500):
+            self.quiet = True
 
 
 @add_status_code(404)

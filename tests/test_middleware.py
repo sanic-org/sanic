@@ -93,7 +93,7 @@ def test_middleware_response_raise_cancelled_error(app, caplog):
             "sanic.root",
             logging.ERROR,
             "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
-        ) in caplog.record_tuples
+        ) not in caplog.record_tuples
 
 
 def test_middleware_response_raise_exception(app, caplog):

@@ -30,7 +30,7 @@ def exception_response(request, exception, debug):
     elif debug:
         text = f"{exception}"
 
-    status_text = STATUS_CODES.get(status).decode() or "Error Occurred"
+    status_text = STATUS_CODES.get(status, b"Error Occurred").decode()
     title = escape(f"{status} — {status_text}")
     text = escape(text)
 

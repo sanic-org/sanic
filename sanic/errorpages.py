@@ -40,7 +40,7 @@ def exception_response(request, exception, debug):
             f"<style>{TRACEBACK_STYLE}</style>\n"
             f"<h1>⚠️ {title}</h1><p>{text}\n"
             f"{_render_traceback_html(request, exception)}",
-            status=status
+            status=status,
         )
 
     # Keeping it minimal with trailing newline for pretty curl/console output

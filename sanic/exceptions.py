@@ -4,13 +4,15 @@ from sanic.helpers import STATUS_CODES
 _sanic_exceptions = {}
 
 
-def add_status_code(code):
+def add_status_code(code, quiet=None):
     """
     Decorator used for adding exceptions to :class:`SanicException`.
     """
 
     def class_decorator(cls):
         cls.status_code = code
+        if quiet or quiet is None and code != 500:
+            cls.quiet = True
         _sanic_exceptions[code] = cls
         return cls
 

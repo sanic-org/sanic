@@ -109,14 +109,6 @@ TRACEBACK_LINE_HTML = """
     </div>
 """
 
-INTERNAL_SERVER_ERROR_HTML = """
-    <h1>Internal Server Error</h1>
-    <p>
-        The server encountered an internal error and cannot complete
-        your request.
-    </p>
-"""
-
 
 _sanic_exceptions = {}
 

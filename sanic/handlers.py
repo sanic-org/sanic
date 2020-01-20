@@ -1,9 +1,9 @@
 import sys
 
+from html import escape
 from traceback import extract_tb, format_exc
 
 from sanic.exceptions import (
-    INTERNAL_SERVER_ERROR_HTML,
     TRACEBACK_BORDER,
     TRACEBACK_LINE_HTML,
     TRACEBACK_STYLE,
@@ -14,6 +14,7 @@ from sanic.exceptions import (
     InvalidRangeType,
     SanicException,
 )
+from sanic.helpers import STATUS_CODES
 from sanic.log import logger
 from sanic.response import html, text
 
@@ -166,27 +167,38 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
-        self.log(format_exc())
-        try:
-            url = repr(request.url)
-        except AttributeError:
-            url = "unknown"
-
-        response_message = "Exception occurred while handling uri: %s"
-        logger.exception(response_message, url)
-
-        if issubclass(type(exception), SanicException):
-            return text(
-                "Error: {}".format(exception),
-                status=getattr(exception, "status_code", 500),
-                headers=getattr(exception, "headers", dict()),
-            )
+        status, text = 500, "Internal Server Error"
+        headers = {}
+        if isinstance(exception, SanicException):
+            text = f"{exception}"
+            status = getattr(exception, "status_code", status)
+            headers = getattr(exception, "headers", headers)
         elif self.debug:
-            html_output = self._render_traceback_html(exception, request)
+            text = f"{exception}"
 
-            return html(html_output, status=500)
-        else:
-            return html(INTERNAL_SERVER_ERROR_HTML, status=500)
+        if status == 500:
+            try:
+                url = repr(request.url)
+            except AttributeError:
+                url = "unknown"
+
+            self.log(format_exc())
+            response_message = "Exception occurred while handling uri: %s"
+            logger.exception(response_message, url)
+
+            if self.debug:
+                html_output = self._render_traceback_html(exception, request)
+                return html(html_output, status=status)
+
+        status_text = STATUS_CODES.get(status, b"UNKNOWN").decode()
+        title = escape(f"{status} — {status_text}")
+        text = escape(text)
+
+        return html(
+            f"<!DOCTYPE html><title>{title}</title><h1>⚠️ {title}</h1><p>{text}\n",
+            status=status,
+            headers=headers,
+        )
 
 
 class ContentRangeHandler:

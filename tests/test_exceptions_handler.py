@@ -86,7 +86,7 @@ def test_html_traceback_output_in_debug_mode():
 
     summary_text = " ".join(soup.select(".summary")[0].text.split())
     assert (
-        "NameError: name 'bar' " "is not defined while handling path /4"
+        "NameError: name 'bar' is not defined while handling path /4"
     ) == summary_text
 
 
@@ -112,7 +112,7 @@ def test_chained_exception_handler():
 
     summary_text = " ".join(soup.select(".summary")[0].text.split())
     assert (
-        "ZeroDivisionError: division by zero " "while handling path /6/0"
+        "ZeroDivisionError: division by zero while handling path /6/0"
     ) == summary_text
 
 

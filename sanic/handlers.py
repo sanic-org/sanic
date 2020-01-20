@@ -1,13 +1,9 @@
 import sys
 
-from traceback import extract_tb, format_exc
+from traceback import format_exc
 
+from sanic.errorpages import exception_response
 from sanic.exceptions import (
-    TRACEBACK_BORDER,
-    TRACEBACK_LINE_HTML,
-    TRACEBACK_STYLE,
-    TRACEBACK_WRAPPER_HTML,
-    TRACEBACK_WRAPPER_INNER_HTML,
     ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
@@ -39,35 +35,6 @@ class ErrorHandler:
         self.handlers = []
         self.cached_handlers = {}
         self.debug = False
-
-    def _render_exception(self, exception):
-        frames = extract_tb(exception.__traceback__)
-
-        frame_html = []
-        for frame in frames:
-            frame_html.append(TRACEBACK_LINE_HTML.format(frame))
-
-        return TRACEBACK_WRAPPER_INNER_HTML.format(
-            exc_name=exception.__class__.__name__,
-            exc_value=exception,
-            frame_html="".join(frame_html),
-        )
-
-    def _render_traceback_html(self, exception, request):
-        exc_type, exc_value, tb = sys.exc_info()
-        exceptions = []
-
-        while exc_value:
-            exceptions.append(self._render_exception(exc_value))
-            exc_value = exc_value.__cause__
-
-        return TRACEBACK_WRAPPER_HTML.format(
-            style=TRACEBACK_STYLE,
-            exc_name=exception.__class__.__name__,
-            exc_value=exception,
-            inner_html=TRACEBACK_BORDER.join(reversed(exceptions)),
-            path=request.path,
-        )
 
     def add(self, exception, handler):
         """
@@ -166,17 +133,7 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
-        status = 500
-        text = "The server encountered an internal error and cannot complete your request."
-        headers = {}
         quiet = getattr(exception, "quiet", False)
-        if isinstance(exception, SanicException):
-            text = f"{exception}"
-            status = getattr(exception, "status_code", status)
-            headers = getattr(exception, "headers", headers)
-        elif self.debug:
-            text = f"{exception}"
-
         if quiet is False:
             try:
                 url = repr(request.url)
@@ -186,21 +143,7 @@ class ErrorHandler:
             self.log(format_exc())
             logger.exception("Exception occurred while handling uri: %s", url)
 
-            # Debug traceback returned here!
-            if self.debug:
-                html_output = self._render_traceback_html(exception, request)
-                return html(html_output, status=status)
-
-        status_text = STATUS_CODES.get(status, b"UNKNOWN").decode()
-        escape = lambda text: text.replace("&", "&amp;").replace("<", "&lt;")
-        title = escape(f"{status} — {status_text}")
-        text = escape(text)
-
-        return html(
-            f"<!DOCTYPE html><title>{title}</title><h1>⚠️ {title}</h1><p>{text}\n",
-            status=status,
-            headers=headers,
-        )
+        return exception_response(request, exception, self.debug)
 
 
 class ContentRangeHandler:

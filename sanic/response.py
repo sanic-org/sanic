@@ -3,10 +3,7 @@ from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
 
-#from aiofiles import open as open_async  # type: ignore
-from trio import open_file as open_async
-
-from sanic.compat import Header
+from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
 from sanic.headers import format_http1
 from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
@@ -350,7 +347,8 @@ async def file_stream(
         )
     filename = filename or path.split(location)[-1]
 
-    _file = await open_async(location, mode="rb")
+    _filectx = await open_async(location, mode="rb")
+    _file = await _filectx.__aenter__()  # Will be exited by _streaming_fn
 
     async def _streaming_fn(response):
         nonlocal _file, chunk_size
@@ -372,7 +370,7 @@ async def file_stream(
                         break
                     await response.write(content)
         finally:
-            await _file.close()
+            await _filectx.__aexit__(None, None, None)
         return  # Returning from this fn closes the stream
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"

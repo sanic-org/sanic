@@ -735,6 +735,26 @@ class AsyncioServer:
             task = asyncio.ensure_future(coro, loop=self.loop)
             return task
 
+    def start_serving(self):
+        if self.server:
+            try:
+                return self.server.start_serving()
+            except AttributeError:
+                raise NotImplementedError(
+                    "server.start_serving not available in this version "
+                    "of asyncio or uvloop."
+                )
+
+    def serve_forever(self):
+        if self.server:
+            try:
+                return self.server.serve_forever()
+            except AttributeError:
+                raise NotImplementedError(
+                    "server.serve_forever not available in this version "
+                    "of asyncio or uvloop."
+                )
+
     def __await__(self):
         """Starts the asyncio server, returns AsyncServerCoro"""
         task = asyncio.ensure_future(self.serve_coro)

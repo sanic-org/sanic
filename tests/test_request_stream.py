@@ -329,15 +329,12 @@ def test_request_stream_handle_exception(app):
     # 404
     request, response = app.test_client.post("/in_valid_post", data=data)
     assert response.status == 404
-    assert response.text == "Error: Requested URL /in_valid_post not found"
+    assert "Requested URL /in_valid_post not found" in response.text
 
     # 405
     request, response = app.test_client.get("/post/random_id")
     assert response.status == 405
-    assert (
-        response.text == "Error: Method GET not allowed for URL"
-        " /post/random_id"
-    )
+    assert "Method GET not allowed for URL /post/random_id" in response.text
 
 
 def test_request_stream_blueprint(app):

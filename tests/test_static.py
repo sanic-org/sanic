@@ -238,7 +238,7 @@ def test_static_content_range_invalid_unit(
     request, response = app.test_client.get("/testing.file", headers=headers)
 
     assert response.status == 416
-    assert response.text == "Error: {} is not a valid Range Type".format(unit)
+    assert f"{unit} is not a valid Range Type" in response.text
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -256,9 +256,7 @@ def test_static_content_range_invalid_start(
     request, response = app.test_client.get("/testing.file", headers=headers)
 
     assert response.status == 416
-    assert response.text == "Error: '{}' is invalid for Content Range".format(
-        start
-    )
+    assert f"'{start}' is invalid for Content Range" in response.text
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -276,9 +274,7 @@ def test_static_content_range_invalid_end(
     request, response = app.test_client.get("/testing.file", headers=headers)
 
     assert response.status == 416
-    assert response.text == "Error: '{}' is invalid for Content Range".format(
-        end
-    )
+    assert f"'{end}' is invalid for Content Range" in response.text
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -295,7 +291,7 @@ def test_static_content_range_invalid_parameters(
     request, response = app.test_client.get("/testing.file", headers=headers)
 
     assert response.status == 416
-    assert response.text == "Error: Invalid for Content Range parameters"
+    assert "Invalid for Content Range parameters" in response.text
 
 
 @pytest.mark.parametrize(
@@ -369,7 +365,7 @@ def test_file_not_found(app, static_file_directory):
     request, response = app.test_client.get("/static/not_found")
 
     assert response.status == 404
-    assert response.text == "Error: File not found"
+    assert "File not found" in response.text
 
 
 @pytest.mark.parametrize("static_name", ["_static_name", "static"])

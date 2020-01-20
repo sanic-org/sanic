@@ -105,10 +105,7 @@ def test_app_handle_request_handler_is_none(app, monkeypatch):
 
     request, response = app.test_client.get("/test")
 
-    assert (
-        response.text
-        == "Error: 'None' was returned while requesting a handler from the router"
-    )
+    assert "'None' was returned while requesting a handler from the router" in response.text
 
 
 @pytest.mark.parametrize("websocket_enabled", [True, False])
@@ -189,7 +186,7 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
     with caplog.at_level(logging.ERROR):
         request, response = app.test_client.get("/")
     assert response.status == 500
-    assert response.text == "Error: Mock SanicException"
+    assert "Mock SanicException" in response.text
     assert (
         "sanic.root",
         logging.ERROR,

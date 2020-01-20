@@ -1,21 +1,13 @@
-import sys
+from traceback import format_exc
 
-from traceback import extract_tb, format_exc
-
+from sanic.errorpages import exception_response
 from sanic.exceptions import (
-    INTERNAL_SERVER_ERROR_HTML,
-    TRACEBACK_BORDER,
-    TRACEBACK_LINE_HTML,
-    TRACEBACK_STYLE,
-    TRACEBACK_WRAPPER_HTML,
-    TRACEBACK_WRAPPER_INNER_HTML,
     ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
-    SanicException,
 )
 from sanic.log import logger
-from sanic.response import html, text
+from sanic.response import text
 
 
 class ErrorHandler:
@@ -39,35 +31,6 @@ class ErrorHandler:
         self.handlers = []
         self.cached_handlers = {}
         self.debug = False
-
-    def _render_exception(self, exception):
-        frames = extract_tb(exception.__traceback__)
-
-        frame_html = []
-        for frame in frames:
-            frame_html.append(TRACEBACK_LINE_HTML.format(frame))
-
-        return TRACEBACK_WRAPPER_INNER_HTML.format(
-            exc_name=exception.__class__.__name__,
-            exc_value=exception,
-            frame_html="".join(frame_html),
-        )
-
-    def _render_traceback_html(self, exception, request):
-        exc_type, exc_value, tb = sys.exc_info()
-        exceptions = []
-
-        while exc_value:
-            exceptions.append(self._render_exception(exc_value))
-            exc_value = exc_value.__cause__
-
-        return TRACEBACK_WRAPPER_HTML.format(
-            style=TRACEBACK_STYLE,
-            exc_name=exception.__class__.__name__,
-            exc_value=exception,
-            inner_html=TRACEBACK_BORDER.join(reversed(exceptions)),
-            path=request.path,
-        )
 
     def add(self, exception, handler):
         """
@@ -166,27 +129,17 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
-        self.log(format_exc())
-        try:
-            url = repr(request.url)
-        except AttributeError:
-            url = "unknown"
+        quiet = getattr(exception, "quiet", False)
+        if quiet is False:
+            try:
+                url = repr(request.url)
+            except AttributeError:
+                url = "unknown"
 
-        response_message = "Exception occurred while handling uri: %s"
-        logger.exception(response_message, url)
+            self.log(format_exc())
+            logger.exception("Exception occurred while handling uri: %s", url)
 
-        if issubclass(type(exception), SanicException):
-            return text(
-                "Error: {}".format(exception),
-                status=getattr(exception, "status_code", 500),
-                headers=getattr(exception, "headers", dict()),
-            )
-        elif self.debug:
-            html_output = self._render_traceback_html(exception, request)
-
-            return html(html_output, status=500)
-        else:
-            return html(INTERNAL_SERVER_ERROR_HTML, status=500)
+        return exception_response(request, exception, self.debug)
 
 
 class ContentRangeHandler:

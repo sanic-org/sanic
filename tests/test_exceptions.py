@@ -172,7 +172,7 @@ def test_handled_unhandled_exception(exception_app):
     request, response = exception_app.test_client.get("/divide_by_zero")
     assert response.status == 500
     soup = BeautifulSoup(response.body, "html.parser")
-    assert soup.h1.text == "Internal Server Error"
+    assert "Internal Server Error" in soup.h1.text
 
     message = " ".join(soup.p.text.split())
     assert message == (
@@ -218,4 +218,4 @@ def test_abort(exception_app):
 
     request, response = exception_app.test_client.get("/abort/message")
     assert response.status == 500
-    assert response.text == "Error: Abort"
+    assert "Abort" in response.text

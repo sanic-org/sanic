@@ -1,5 +1,3 @@
-import sys
-
 from traceback import format_exc
 
 from sanic.errorpages import exception_response
@@ -7,11 +5,9 @@ from sanic.exceptions import (
     ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
-    SanicException,
 )
-from sanic.helpers import STATUS_CODES
 from sanic.log import logger
-from sanic.response import html, text
+from sanic.response import text
 
 
 class ErrorHandler:

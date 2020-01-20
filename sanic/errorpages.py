@@ -1,6 +1,6 @@
 import sys
 
-from traceback import extract_tb, format_exc
+from traceback import extract_tb
 
 from sanic.exceptions import SanicException
 from sanic.helpers import STATUS_CODES

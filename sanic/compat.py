@@ -10,14 +10,14 @@ class Header(CIMultiDict):
 use_trio = argv[0].endswith("hypercorn") and "trio" in argv
 
 if use_trio:
-    from trio import open_file as open_async, Path
+    from trio import open_file as open_async, Path  # type: ignore
 
     def stat_async(path):
         return Path(path).stat()
 
 
 else:
-    from aiofiles import open as aio_open
+    from aiofiles import open as aio_open  # type: ignore
     from aiofiles.os import stat as stat_async  # type: ignore
 
     async def open_async(file, mode="r", **kwargs):

@@ -1,6 +1,5 @@
 import sys
 
-from html import escape
 from traceback import extract_tb, format_exc
 
 from sanic.exceptions import (
@@ -167,7 +166,8 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
-        status, text = 500, "Internal Server Error"
+        status = 500
+        text = "The server encountered an internal error and cannot complete your request."
         headers = {}
         if isinstance(exception, SanicException):
             text = f"{exception}"
@@ -183,14 +183,14 @@ class ErrorHandler:
                 url = "unknown"
 
             self.log(format_exc())
-            response_message = "Exception occurred while handling uri: %s"
-            logger.exception(response_message, url)
+            logger.exception("Exception occurred while handling uri: %s", url)
 
             if self.debug:
                 html_output = self._render_traceback_html(exception, request)
                 return html(html_output, status=status)
 
         status_text = STATUS_CODES.get(status, b"UNKNOWN").decode()
+        escape = lambda text: text.replace("&", "&amp;").replace("<", "&lt;")
         title = escape(f"{status} — {status_text}")
         text = escape(text)
 

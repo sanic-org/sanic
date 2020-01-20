@@ -49,7 +49,7 @@ def test_unexisting_methods(app):
     request, response = app.test_client.get("/")
     assert response.text == "I am get method"
     request, response = app.test_client.post("/")
-    assert response.text == "Error: Method POST not allowed for URL /"
+    assert "Method POST not allowed for URL /" in response.text
 
 
 def test_argument_methods(app):

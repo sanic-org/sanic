@@ -102,7 +102,7 @@ def test_default_server_error_request_timeout():
     client = DelayableSanicTestClient(request_timeout_default_app, 2)
     request, response = client.get("/1")
     assert response.status == 408
-    assert response.text == "Error: Request Timeout"
+    assert "Request Timeout" in response.text
 
 
 def test_default_server_error_request_dont_timeout():
@@ -125,4 +125,4 @@ def test_default_server_error_websocket_request_timeout():
     request, response = client.get("/ws1", headers=headers)
 
     assert response.status == 408
-    assert response.text == "Error: Request Timeout"
+    assert "Request Timeout" in response.text

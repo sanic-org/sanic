@@ -292,13 +292,7 @@ class Blueprint:
         return decorator
 
     def add_websocket_route(
-        self,
-        handler,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
+        self, handler, uri, host=None, version=None, name=None
     ):
         """Create a blueprint websocket route from a function.
 
@@ -306,19 +300,11 @@ class Blueprint:
                         or class instance with a view_class method.
         :param uri: endpoint at which the route will be accessible.
         :param host: IP Address of FQDN for the sanic server to use.
-        :param strict_slashes: Enforce the API urls are requested with a
-            trailing */*
         :param version: Blueprint Version
         :param name: Unique name to identify the Websocket Route
         :return: function or class instance
         """
-        self.websocket(
-            uri=uri,
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-        )(handler)
+        self.websocket(uri=uri, host=host, version=version, name=name)(handler)
         return handler
 
     def listener(self, event):

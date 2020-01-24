@@ -1,13 +1,14 @@
+import warnings
+
 from functools import partial
 from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
 
-from aiofiles import open as open_async  # type: ignore
-
-from sanic.compat import Header
+from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
-from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
+from sanic.headers import format_http1, format_http1_response
+from sanic.helpers import has_message_body, remove_entity_headers
 
 
 try:
@@ -22,34 +23,47 @@ except ImportError:
 
 class BaseHTTPResponse:
     def _encode_body(self, data):
-        try:
-            # Try to encode it regularly
-            return data.encode()
-        except AttributeError:
-            # Convert it to a str if you can't
-            return str(data).encode()
+        return data.encode() if hasattr(data, "encode") else data
 
     def _parse_headers(self):
-        headers = b""
-        for name, value in self.headers.items():
-            try:
-                headers += b"%b: %b\r\n" % (
-                    name.encode(),
-                    value.encode("utf-8"),
-                )
-            except AttributeError:
-                headers += b"%b: %b\r\n" % (
-                    str(name).encode(),
-                    str(value).encode("utf-8"),
-                )
-
-        return headers
+        return format_http1(self.headers.items())
 
     @property
     def cookies(self):
         if self._cookies is None:
             self._cookies = CookieJar(self.headers)
         return self._cookies
+
+    def get_headers(
+        self,
+        version="1.1",
+        keep_alive=False,
+        keep_alive_timeout=None,
+        body=b"",
+    ):
+        """.. deprecated:: 20.3:
+           This function is not public API and will be removed."""
+        if version != "1.1":
+            warnings.warn(
+                "Only HTTP/1.1 is currently supported (got {version})",
+                DeprecationWarning,
+            )
+
+        # self.headers get priority over content_type
+        if self.content_type and "Content-Type" not in self.headers:
+            self.headers["Content-Type"] = self.content_type
+
+        if keep_alive:
+            self.headers["Connection"] = "keep-alive"
+            if keep_alive_timeout is not None:
+                self.headers["Keep-Alive"] = keep_alive_timeout
+        else:
+            self.headers["Connection"] = "close"
+
+        if self.status in (304, 412):
+            self.headers = remove_entity_headers(self.headers)
+
+        return format_http1_response(self.status, self.headers.items(), body)
 
 
 class StreamingHTTPResponse(BaseHTTPResponse):
@@ -68,7 +82,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         streaming_fn,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type="text/plain; charset=utf-8",
         chunked=True,
     ):
         self.content_type = content_type
@@ -81,10 +95,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     async def write(self, data):
         """Writes a chunk of data to the streaming response.
 
-        :param data: bytes-ish data to be written.
+        :param data: str or bytes-ish data to be written.
         """
-        if type(data) != bytes:
-            data = self._encode_body(data)
+        data = self._encode_body(data)
 
         if self.chunked:
             await self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
@@ -116,33 +129,11 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     def get_headers(
         self, version="1.1", keep_alive=False, keep_alive_timeout=None
     ):
-        # This is all returned in a kind-of funky way
-        # We tried to make this as fast as possible in pure python
-        timeout_header = b""
-        if keep_alive and keep_alive_timeout is not None:
-            timeout_header = b"Keep-Alive: %d\r\n" % keep_alive_timeout
-
         if self.chunked and version == "1.1":
             self.headers["Transfer-Encoding"] = "chunked"
             self.headers.pop("Content-Length", None)
-        self.headers["Content-Type"] = self.headers.get(
-            "Content-Type", self.content_type
-        )
 
-        headers = self._parse_headers()
-
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status)
-
-        return (b"HTTP/%b %d %b\r\n" b"%b" b"%b\r\n") % (
-            version.encode(),
-            self.status,
-            status,
-            timeout_header,
-            headers,
-        )
+        return super().get_headers(version, keep_alive, keep_alive_timeout)
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -153,27 +144,16 @@ class HTTPResponse(BaseHTTPResponse):
         body=None,
         status=200,
         headers=None,
-        content_type="text/plain",
+        content_type=None,
         body_bytes=b"",
     ):
         self.content_type = content_type
-
-        if body is not None:
-            self.body = self._encode_body(body)
-        else:
-            self.body = body_bytes
-
+        self.body = body_bytes if body is None else self._encode_body(body)
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        # This is all returned in a kind-of funky way
-        # We tried to make this as fast as possible in pure python
-        timeout_header = b""
-        if keep_alive and keep_alive_timeout is not None:
-            timeout_header = b"Keep-Alive: %d\r\n" % keep_alive_timeout
-
         body = b""
         if has_message_body(self.status):
             body = self.body
@@ -181,31 +161,7 @@ class HTTPResponse(BaseHTTPResponse):
                 "Content-Length", len(self.body)
             )
 
-        self.headers["Content-Type"] = self.headers.get(
-            "Content-Type", self.content_type
-        )
-
-        if self.status in (304, 412):
-            self.headers = remove_entity_headers(self.headers)
-
-        headers = self._parse_headers()
-
-        if self.status == 200:
-            status = b"OK"
-        else:
-            status = STATUS_CODES.get(self.status, b"UNKNOWN RESPONSE")
-
-        return (
-            b"HTTP/%b %d %b\r\n" b"Connection: %b\r\n" b"%b" b"%b\r\n" b"%b"
-        ) % (
-            version.encode(),
-            self.status,
-            status,
-            b"keep-alive" if keep_alive else b"close",
-            timeout_header,
-            headers,
-            body,
-        )
+        return self.get_headers(version, keep_alive, keep_alive_timeout, body)
 
     @property
     def cookies(self):
@@ -214,13 +170,23 @@ class HTTPResponse(BaseHTTPResponse):
         return self._cookies
 
 
+def empty(status=204, headers=None):
+    """
+    Returns an empty response to the client.
+
+    :param status Response code.
+    :param headers Custom Headers.
+    """
+    return HTTPResponse(body_bytes=b"", status=status, headers=headers)
+
+
 def json(
     body,
     status=200,
     headers=None,
     content_type="application/json",
     dumps=json_dumps,
-    **kwargs
+    **kwargs,
 ):
     """
     Returns response object with body in json format.
@@ -249,6 +215,21 @@ def text(
     :param headers: Custom Headers.
     :param content_type: the content type (string) of the response
     """
+    if not isinstance(body, str):
+        warnings.warn(
+            "Types other than str will be deprecated in future versions for"
+            f" response.text, got type {type(body).__name__})",
+            DeprecationWarning,
+        )
+    # Type conversions are deprecated and quite b0rked but still supported for
+    # text() until applications get fixed. This try-except should be removed.
+    try:
+        # Avoid repr(body).encode() b0rkage for body that is already encoded.
+        # memoryview used only to test bytes-ishness.
+        with memoryview(body):
+            pass
+    except TypeError:
+        body = f"{body}"  # no-op if body is already str
     return HTTPResponse(
         body, status=status, headers=headers, content_type=content_type
     )
@@ -277,10 +258,14 @@ def html(body, status=200, headers=None):
     """
     Returns response object with body in html format.
 
-    :param body: Response data to be encoded.
+    :param body: str or bytes-ish, or an object with __html__ or _repr_html_.
     :param status: Response code.
     :param headers: Custom Headers.
     """
+    if hasattr(body, "__html__"):
+        body = body.__html__()
+    elif hasattr(body, "_repr_html_"):
+        body = body._repr_html_()
     return HTTPResponse(
         body,
         status=status,
@@ -312,7 +297,7 @@ async def file(
         )
     filename = filename or path.split(location)[-1]
 
-    async with open_async(location, mode="rb") as _file:
+    async with await open_async(location, mode="rb") as _file:
         if _range:
             await _file.seek(_range.start)
             out_stream = await _file.read(_range.size)
@@ -361,7 +346,8 @@ async def file_stream(
         )
     filename = filename or path.split(location)[-1]
 
-    _file = await open_async(location, mode="rb")
+    _filectx = await open_async(location, mode="rb")
+    _file = await _filectx.__aenter__()  # Will be exited by _streaming_fn
 
     async def _streaming_fn(response):
         nonlocal _file, chunk_size
@@ -383,7 +369,7 @@ async def file_stream(
                         break
                     await response.write(content)
         finally:
-            await _file.close()
+            await _filectx.__aexit__(None, None, None)
         return  # Returning from this fn closes the stream
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"

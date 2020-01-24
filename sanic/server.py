@@ -1,7 +1,9 @@
 import asyncio
 import os
+import sys
 import traceback
 
+from collections import deque
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
@@ -86,6 +88,7 @@ class HttpProtocol(asyncio.Protocol):
         "_header_fragment",
         "state",
         "_debug",
+        "_body_chunks",
     )
 
     def __init__(
@@ -132,7 +135,10 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = request_class or Request
         self.is_request_stream = is_request_stream
         self._is_stream_handler = False
-        self._not_paused = asyncio.Event(loop=loop)
+        if sys.version_info.minor >= 8:
+            self._not_paused = asyncio.Event()
+        else:
+            self._not_paused = asyncio.Event(loop=loop)
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None
@@ -148,6 +154,7 @@ class HttpProtocol(asyncio.Protocol):
             self.state["requests_count"] = 0
         self._debug = debug
         self._not_paused.set()
+        self._body_chunks = deque()
 
     @property
     def keep_alive(self):
@@ -347,19 +354,45 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_body(self, body):
         if self.is_request_stream and self._is_stream_handler:
-            self._request_stream_task = self.loop.create_task(
-                self.body_append(body)
-            )
+            # body chunks can be put into asyncio.Queue out of order if
+            # multiple tasks put concurrently and the queue is full in python
+            # 3.7. so we should not create more than one task putting into the
+            # queue simultaneously.
+            self._body_chunks.append(body)
+            if (
+                not self._request_stream_task
+                or self._request_stream_task.done()
+            ):
+                self._request_stream_task = self.loop.create_task(
+                    self.stream_append()
+                )
         else:
             self.request.body_push(body)
 
     async def body_append(self, body):
+        if (
+            self.request is None
+            or self._request_stream_task is None
+            or self._request_stream_task.cancelled()
+        ):
+            return
+
         if self.request.stream.is_full():
             self.transport.pause_reading()
             await self.request.stream.put(body)
             self.transport.resume_reading()
         else:
             await self.request.stream.put(body)
+
+    async def stream_append(self):
+        while self._body_chunks:
+            body = self._body_chunks.popleft()
+            if self.request.stream.is_full():
+                self.transport.pause_reading()
+                await self.request.stream.put(body)
+                self.transport.resume_reading()
+            else:
+                await self.request.stream.put(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -368,9 +401,14 @@ class HttpProtocol(asyncio.Protocol):
             self._request_timeout_handler.cancel()
             self._request_timeout_handler = None
         if self.is_request_stream and self._is_stream_handler:
-            self._request_stream_task = self.loop.create_task(
-                self.request.stream.put(None)
-            )
+            self._body_chunks.append(None)
+            if (
+                not self._request_stream_task
+                or self._request_stream_task.done()
+            ):
+                self._request_stream_task = self.loop.create_task(
+                    self.stream_append()
+                )
             return
         self.request.body_finish()
         self.execute_request_handler()
@@ -697,6 +735,26 @@ class AsyncioServer:
             task = asyncio.ensure_future(coro, loop=self.loop)
             return task
 
+    def start_serving(self):
+        if self.server:
+            try:
+                return self.server.start_serving()
+            except AttributeError:
+                raise NotImplementedError(
+                    "server.start_serving not available in this version "
+                    "of asyncio or uvloop."
+                )
+
+    def serve_forever(self):
+        if self.server:
+            try:
+                return self.server.serve_forever()
+            except AttributeError:
+                raise NotImplementedError(
+                    "server.serve_forever not available in this version "
+                    "of asyncio or uvloop."
+                )
+
     def __await__(self):
         """Starts the asyncio server, returns AsyncServerCoro"""
         task = asyncio.ensure_future(self.serve_coro)
@@ -818,6 +876,7 @@ def serve(
         response_timeout=response_timeout,
         keep_alive_timeout=keep_alive_timeout,
         request_max_size=request_max_size,
+        request_buffer_queue_size=request_buffer_queue_size,
         request_class=request_class,
         access_log=access_log,
         keep_alive=keep_alive,
@@ -916,7 +975,10 @@ def serve(
             else:
                 conn.close()
 
-        _shutdown = asyncio.gather(*coros, loop=loop)
+        if sys.version_info.minor >= 8:
+            _shutdown = asyncio.gather(*coros, loop=loop)
+        else:
+            _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)

@@ -62,6 +62,10 @@ class StreamBuffer:
     def is_full(self):
         return self._queue.full()
 
+    @property
+    def buffer_size(self):
+        return self._queue.maxsize
+
 
 class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
@@ -519,8 +523,11 @@ class Request:
         :rtype: str
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
-        if "//" in self.app.config.SERVER_NAME:
-            return self.app.url_for(view_name, _external=True, **kwargs)
+        try:
+            if "//" in self.app.config.SERVER_NAME:
+                return self.app.url_for(view_name, _external=True, **kwargs)
+        except AttributeError:
+            pass
 
         scheme = self.scheme
         host = self.server_name

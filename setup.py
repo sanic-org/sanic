@@ -5,6 +5,7 @@ import codecs
 import os
 import re
 import sys
+
 from distutils.util import strtobool
 
 from setuptools import setup
@@ -60,6 +61,7 @@ setup_kwargs = {
     "long_description": long_description,
     "packages": ["sanic"],
     "platforms": "any",
+    "python_requires": ">=3.6",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
@@ -82,7 +84,7 @@ requirements = [
     "aiofiles>=0.3.0",
     "websockets>=7.0,<9.0",
     "multidict>=4.0,<5.0",
-    "requests-async==0.5.0",
+    "httpx==0.9.3",
 ]
 
 tests_require = [

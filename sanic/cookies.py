@@ -130,6 +130,10 @@ class Cookie(dict):
         :return: Cookie encoded in a codec of choosing.
         :except: UnicodeEncodeError
         """
+        return str(self).encode(encoding)
+
+    def __str__(self):
+        """Format as a Set-Cookie header value."""
         output = ["%s=%s" % (self.key, _quote(self.value))]
         for key, value in self.items():
             if key == "max-age":
@@ -147,4 +151,4 @@ class Cookie(dict):
             else:
                 output.append("%s=%s" % (self._keys[key], value))
 
-        return "; ".join(output).encode(encoding)
+        return "; ".join(output)

@@ -8,6 +8,7 @@ try:
 except ImportError:
     from json import loads
 
+
 def test_custom_context(app):
     @app.middleware("request")
     def store(request):
@@ -21,14 +22,16 @@ def test_custom_context(app):
             invalid = request.ctx.missing
         except AttributeError as e:
             invalid = str(e)
-        return json({
-            "user": request.ctx.user,
-            "session": request.ctx.session,
-            "has_user": hasattr(request.ctx, "user"),
-            "has_session": hasattr(request.ctx, "session"),
-            "has_missing": hasattr(request.ctx, "missing"),
-            "invalid": invalid
-        })
+        return json(
+            {
+                "user": request.ctx.user,
+                "session": request.ctx.session,
+                "has_user": hasattr(request.ctx, "user"),
+                "has_session": hasattr(request.ctx, "session"),
+                "has_missing": hasattr(request.ctx, "missing"),
+                "invalid": invalid,
+            }
+        )
 
     request, response = app.test_client.get("/")
     assert response.json == {

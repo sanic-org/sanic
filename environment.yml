@@ -13,7 +13,7 @@ dependencies:
   - sphinx==1.8.3
   - sphinx_rtd_theme==0.4.2
   - recommonmark==0.5.0
-  - requests-async==0.5.0
+  - httpx==0.9.3
   - sphinxcontrib-asyncio>=0.2.0
   - docutils==0.14
   - pygments==2.3.1

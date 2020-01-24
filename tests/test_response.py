@@ -20,7 +20,9 @@ from sanic.response import (
     json,
     raw,
     stream,
+    text,
 )
+from sanic.response import empty
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 
@@ -34,7 +36,7 @@ def test_response_body_not_a_string(app):
 
     @app.route("/hello")
     async def hello_route(request):
-        return HTTPResponse(body=random_num)
+        return text(random_num)
 
     request, response = app.test_client.get("/hello")
     assert response.text == str(random_num)
@@ -591,3 +593,13 @@ def test_raw_response(app):
     request, response = app.test_client.get("/test")
     assert response.content_type == "application/octet-stream"
     assert response.body == b"raw_response"
+
+
+def test_empty_response(app):
+    @app.get("/test")
+    def handler(request):
+        return empty()
+
+    request, response = app.test_client.get("/test")
+    assert response.content_type is None
+    assert response.body == b""

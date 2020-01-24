@@ -104,6 +104,8 @@ class Blueprint:
 
         url_prefix = options.get("url_prefix", self.url_prefix)
 
+        routes = []
+
         # Routes
         for future in self.routes:
             # attach the blueprint name to the handler so that it can be
@@ -114,7 +116,7 @@ class Blueprint:
 
             version = future.version or self.version
 
-            app.route(
+            _routes, _ = app.route(
                 uri=uri[1:] if uri.startswith("//") else uri,
                 methods=future.methods,
                 host=future.host or self.host,
@@ -123,6 +125,8 @@ class Blueprint:
                 version=version,
                 name=future.name,
             )(future.handler)
+            if _routes:
+                routes += _routes
 
         for future in self.websocket_routes:
             # attach the blueprint name to the handler so that it can be
@@ -130,21 +134,27 @@ class Blueprint:
             future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
-            app.websocket(
+            _routes, _ = app.websocket(
                 uri=uri,
                 host=future.host or self.host,
                 strict_slashes=future.strict_slashes,
                 name=future.name,
             )(future.handler)
+            if _routes:
+                routes += _routes
 
+        route_names = [route.name for route in routes]
         # Middleware
         for future in self.middlewares:
             if future.args or future.kwargs:
-                app.register_middleware(
-                    future.middleware, *future.args, **future.kwargs
+                app.register_named_middleware(
+                    future.middleware,
+                    route_names,
+                    *future.args,
+                    **future.kwargs
                 )
             else:
-                app.register_middleware(future.middleware)
+                app.register_named_middleware(future.middleware, route_names)
 
         # Exceptions
         for future in self.exceptions:

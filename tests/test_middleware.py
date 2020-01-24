@@ -2,7 +2,7 @@ import logging
 
 from asyncio import CancelledError
 
-from sanic.exceptions import NotFound
+from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
 
@@ -93,7 +93,7 @@ def test_middleware_response_raise_cancelled_error(app, caplog):
             "sanic.root",
             logging.ERROR,
             "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
-        ) in caplog.record_tuples
+        ) not in caplog.record_tuples
 
 
 def test_middleware_response_raise_exception(app, caplog):
@@ -102,14 +102,16 @@ def test_middleware_response_raise_exception(app, caplog):
         raise Exception("Exception at response middleware")
 
     with caplog.at_level(logging.ERROR):
-        reqrequest, response = app.test_client.get("/")
+        reqrequest, response = app.test_client.get("/fail")
 
     assert response.status == 404
+    # 404 errors are not logged
     assert (
         "sanic.root",
         logging.ERROR,
         "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
-    ) in caplog.record_tuples
+    ) not in caplog.record_tuples
+    # Middleware exception ignored but logged
     assert (
         "sanic.error",
         logging.ERROR,

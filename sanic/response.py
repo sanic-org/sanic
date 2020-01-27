@@ -293,22 +293,20 @@ async def file(
     headers = headers or {}
     if filename:
         headers.setdefault(
-            "Content-Disposition", 'attachment; filename="{}"'.format(filename)
+            "Content-Disposition", f'attachment; filename="{filename}"'
         )
     filename = filename or path.split(location)[-1]
 
-    async with await open_async(location, mode="rb") as _file:
+    async with await open_async(location, mode="rb") as f:
         if _range:
-            await _file.seek(_range.start)
-            out_stream = await _file.read(_range.size)
-            headers["Content-Range"] = "bytes %s-%s/%s" % (
-                _range.start,
-                _range.end,
-                _range.total,
-            )
+            await f.seek(_range.start)
+            out_stream = await f.read(_range.size)
+            headers[
+                "Content-Range"
+            ] = "bytes {0.start}-{0.end}/{0.total}".format(_range)
             status = 206
         else:
-            out_stream = await _file.read()
+            out_stream = await f.read()
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     return HTTPResponse(
@@ -342,44 +340,34 @@ async def file_stream(
     headers = headers or {}
     if filename:
         headers.setdefault(
-            "Content-Disposition", 'attachment; filename="{}"'.format(filename)
+            "Content-Disposition", f'attachment; filename="{filename}"'
         )
     filename = filename or path.split(location)[-1]
-
-    _filectx = await open_async(location, mode="rb")
-    _file = await _filectx.__aenter__()  # Will be exited by _streaming_fn
+    mime_type = mime_type or guess_type(filename)[0] or "text/plain"
+    if _range:
+        headers["Content-Range"] = "bytes {0.start}-{0.end}/{0.total}".format(
+            _range
+        )
+        status = 206
 
     async def _streaming_fn(response):
-        nonlocal _file, chunk_size
-        try:
+        async with await open_async(location, mode="rb") as f:
             if _range:
-                chunk_size = min((_range.size, chunk_size))
-                await _file.seek(_range.start)
+                await f.seek(_range.start)
                 to_send = _range.size
                 while to_send > 0:
-                    content = await _file.read(chunk_size)
+                    content = await f.read(min((_range.size, chunk_size)))
                     if len(content) < 1:
                         break
                     to_send -= len(content)
                     await response.write(content)
             else:
                 while True:
-                    content = await _file.read(chunk_size)
+                    content = await f.read(chunk_size)
                     if len(content) < 1:
                         break
                     await response.write(content)
-        finally:
-            await _filectx.__aexit__(None, None, None)
-        return  # Returning from this fn closes the stream
 
-    mime_type = mime_type or guess_type(filename)[0] or "text/plain"
-    if _range:
-        headers["Content-Range"] = "bytes %s-%s/%s" % (
-            _range.start,
-            _range.end,
-            _range.total,
-        )
-        status = 206
     return StreamingHTTPResponse(
         streaming_fn=_streaming_fn,
         status=status,

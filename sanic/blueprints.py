@@ -143,7 +143,7 @@ class Blueprint:
             if _routes:
                 routes += _routes
 
-        route_names = [route.name for route in routes]
+        route_names = [route.name for route in routes if route]
         # Middleware
         for future in self.middlewares:
             if future.args or future.kwargs:

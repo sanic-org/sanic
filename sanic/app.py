@@ -457,6 +457,49 @@ class Sanic:
         )(handler)
         return handler
 
+    def make_websocket_handler(self,handler,subprotocols=None):
+        self.enable_websocket()
+        async def websocket_handler(request, *args, **kwargs):
+            request.app = self
+            if not getattr(handler, "__blueprintname__", False):
+                request.endpoint = handler.__name__
+            else:
+                request.endpoint = (
+                    getattr(handler, "__blueprintname__", "")
+                    + handler.__name__
+                )
+
+                pass
+
+            if self.asgi:
+                ws = request.transport.get_websocket_connection()
+            else:
+                try:
+                    protocol = request.transport.get_protocol()
+                except AttributeError:
+                    # On Python3.5 the Transport classes in asyncio do not
+                    # have a get_protocol() method as in uvloop
+                    protocol = request.transport._protocol
+                protocol.app = self
+
+                ws = await protocol.websocket_handshake(
+                    request, subprotocols
+                )
+
+            # schedule the application handler
+            # its future is kept in self.websocket_tasks in case it
+            # needs to be cancelled due to the server being stopped
+            fut = ensure_future(handler(request, ws, *args, **kwargs))
+            self.websocket_tasks.add(fut)
+            try:
+                await fut
+            except (CancelledError, ConnectionClosed):
+                pass
+            finally:
+                self.websocket_tasks.remove(fut)
+            await ws.close()
+        return websocket_handler
+
     # Decorator
     def websocket(
         self, uri, host=None, strict_slashes=None, subprotocols=None, name=None
@@ -473,8 +516,6 @@ class Sanic:
                      be used with :func:`url_for`
         :return: tuple of routes, decorated function
         """
-        self.enable_websocket()
-
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
         if not uri.startswith("/"):
@@ -491,45 +532,7 @@ class Sanic:
             else:
                 routes = []
 
-            async def websocket_handler(request, *args, **kwargs):
-                request.app = self
-                if not getattr(handler, "__blueprintname__", False):
-                    request.endpoint = handler.__name__
-                else:
-                    request.endpoint = (
-                        getattr(handler, "__blueprintname__", "")
-                        + handler.__name__
-                    )
-
-                    pass
-
-                if self.asgi:
-                    ws = request.transport.get_websocket_connection()
-                else:
-                    try:
-                        protocol = request.transport.get_protocol()
-                    except AttributeError:
-                        # On Python3.5 the Transport classes in asyncio do not
-                        # have a get_protocol() method as in uvloop
-                        protocol = request.transport._protocol
-                    protocol.app = self
-
-                    ws = await protocol.websocket_handshake(
-                        request, subprotocols
-                    )
-
-                # schedule the application handler
-                # its future is kept in self.websocket_tasks in case it
-                # needs to be cancelled due to the server being stopped
-                fut = ensure_future(handler(request, ws, *args, **kwargs))
-                self.websocket_tasks.add(fut)
-                try:
-                    await fut
-                except (CancelledError, ConnectionClosed):
-                    pass
-                finally:
-                    self.websocket_tasks.remove(fut)
-                await ws.close()
+            websocket_handler = self.make_websocket_handler(handler,subprotocols=subprotocols) 
 
             routes.extend(
                 self.router.add(

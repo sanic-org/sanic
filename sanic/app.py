@@ -35,6 +35,8 @@ from sanic.static import register as static_register
 from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
+from sanic.signals import Namespace
+from sanic.helpers import subscribe
 
 
 class Sanic:
@@ -90,6 +92,18 @@ class Sanic:
         # Register alternative method names
         self.go_fast = self.run
 
+        # Signal Handlers and Registry
+        self._signals = {
+            "server": Namespace(namespace="server", owner=self),
+            "request": Namespace(namespace="request", owner=self),
+            "response": Namespace(namespace="response", owner=self),
+            "middleware": Namespace(namespace="middleware", owner=self),
+        }
+
+    @property
+    def signals(self) -> Dict[str, Namespace]:
+        return self._signals
+
     @property
     def loop(self):
         """Synonymous with asyncio.get_event_loop().
@@ -143,6 +157,7 @@ class Sanic:
         """
 
         def decorator(listener):
+            subscribe(event, self.signals, listener)
             self.listeners[event].append(listener)
             return listener
 

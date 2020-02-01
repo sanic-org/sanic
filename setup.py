@@ -85,6 +85,7 @@ requirements = [
     "websockets>=7.0,<9.0",
     "multidict>=4.0,<5.0",
     "httpx==0.9.3",
+    "aiosignal==1.0.0",
 ]
 
 tests_require = [

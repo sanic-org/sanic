@@ -1,8 +1,5 @@
 from aiosignal import Signal
 from typing import Dict, List
-from sanic.request import Request
-from sanic.response import HTTPResponse
-
 
 class SignalData:
     __slots__ = (
@@ -13,31 +10,43 @@ class SignalData:
         self.context: str = context
         self.exception: Exception = exception
         self.additional_info: dict = additional_info
-        self.request: Request = request
-        self.response: HTTPResponse = response
+        self.request = request
+        self.response = response
 
 
 class Namespace:
-    def __init__(self, namespace):
+    def __init__(self, namespace, owner):
         self._namespace = namespace  # type: str
-        self._signals: Dict[str, Signal] = {}
+        self._owner = owner
+        self._signals: Dict[str, Dict[str, Signal]] = {}
 
-    def signal(self, name, owner):
+    def signal(self, context, action):
         try:
-            self._signals[name].append(Signal(owner=owner))
+            self._signals[context]
         except KeyError:
-            self._signals[name] = Signal(owner=owner)
+            self._signals[context] = {}
 
-    def register(self, name, callback):
-        self._signals[name].append(callback)
+        try:
+            self._signals[context][action].append(Signal(owner=self._owner))
+        except KeyError:
+            self._signals[context][action] = Signal(owner=self._owner)
 
-    async def publish(self, name, data: SignalData = None):
+    def subscribe(self, context, action, callback):
+        try:
+            self._signals[context][action].append(callback)
+        except KeyError:
+            self.signal(context, action)
+            self._signals[context][action].append(callback)
+
+    async def publish(self, context, action, data: SignalData = None):
         if not data:
             data = {}
         data.namespace = self._namespace
-        data.name = name
-        await self._signals[name].send(data=data)
+        data.context = context
+        data.action = action
+        await self._signals[context][action].send(data=data)
 
     def freeze(self):
-        for key, signal in self._signals.items():
-            signal.freeze()
+        for _, context_map in self._signals.items():
+            for _, signal in context_map.items():
+                signal.freeze()

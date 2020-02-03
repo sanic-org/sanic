@@ -457,8 +457,15 @@ class Sanic:
         )(handler)
         return handler
 
-    def make_websocket_handler(self,handler,subprotocols=None):
+    def make_websocket_handler(self, handler, **wrapper_kwargs):
+        """
+        Decorator to turn a request handler into a websocket handler
+
+        :param handler: normal request handler
+        :return: decorated function
+        """
         self.enable_websocket()
+
         async def websocket_handler(request, *args, **kwargs):
             request.app = self
             if not getattr(handler, "__blueprintname__", False):
@@ -483,7 +490,7 @@ class Sanic:
                 protocol.app = self
 
                 ws = await protocol.websocket_handshake(
-                    request, subprotocols
+                    request, **wrapper_kwargs
                 )
 
             # schedule the application handler
@@ -498,6 +505,7 @@ class Sanic:
             finally:
                 self.websocket_tasks.remove(fut)
             await ws.close()
+
         return websocket_handler
 
     # Decorator
@@ -532,7 +540,9 @@ class Sanic:
             else:
                 routes = []
 
-            websocket_handler = self.make_websocket_handler(handler,subprotocols=subprotocols) 
+            websocket_handler = self.make_websocket_handler(
+                handler, subprotocols=subprotocols,
+            )
 
             routes.extend(
                 self.router.add(

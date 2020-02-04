@@ -36,7 +36,7 @@ from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 from sanic.signals import Namespace
-from sanic.helpers import subscribe
+from sanic.helpers import subscribe, publish
 
 
 class Sanic:
@@ -94,7 +94,11 @@ class Sanic:
 
         # Signal Handlers and Registry
         self._signals = {
-            "server": Namespace(namespace="server", owner=self),
+            "server": Namespace(
+                namespace="server",
+                owner=self,
+                classic_event=True,
+            ),
             "request": Namespace(namespace="request", owner=self),
             "response": Namespace(namespace="response", owner=self),
             "middleware": Namespace(namespace="middleware", owner=self),
@@ -171,7 +175,7 @@ class Sanic:
         :param event: when to register listener i.e. 'before_server_start'
         :return: listener
         """
-
+        subscribe(event_name=event, callback=listener, signals=self.signals)
         return self.listener(event)(listener)
 
     # Decorator
@@ -1184,6 +1188,7 @@ class Sanic:
 
         try:
             self.is_running = True
+            self._signals.get("server").loop = self.loop
             if workers == 1:
                 if auto_reload and os.name != "posix":
                     # This condition must be removed after implementing
@@ -1317,6 +1322,7 @@ class Sanic:
             result = event(loop)
             if isawaitable(result):
                 await result
+            await publish(event_name=event, signals=self.signals)
 
     async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why

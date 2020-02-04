@@ -84,13 +84,20 @@ _EVENT_MAPPING = {
     "before_server_stop": {
         "namespace": "server",
         "context": "before",
-        "action": "stop"
+        "action": "stop",
     },
     "after_server_stop": {
         "namespace": "server",
         "context": "after",
-        "action": "stop"
-    }
+        "action": "stop",
+    },
+}
+
+_CLASSIC_EVENT_ALIAS = {
+    "before_start": "before_server_start",
+    "after_start": "after_server_start",
+    "before_stop": "before_server_stop",
+    "after_stop": "after_server_stop",
 }
 
 
@@ -183,10 +190,42 @@ def import_string(module_name, package=None):
     return obj()
 
 
-def subscribe(event_name: str, signals: Dict[str, Namespace], callback: Callable):
+def _extract_signal_namespace(event_name, signals):
+    global _CLASSIC_EVENT_ALIAS
+    if not signals:
+        return
+    if _CLASSIC_EVENT_ALIAS.get(event_name) is not None:
+        event_name = _CLASSIC_EVENT_ALIAS.get(event_name)
     _mapped_context = _EVENT_MAPPING.get(event_name)
-    _namespace = signals.get(_mapped_context.get("namespace"))  # type: Namespace
+    if _mapped_context:
+        _namespace = signals.get(
+            _mapped_context.get("namespace")
+        )  # type: Namespace
+        return _mapped_context, _namespace
+    else:
+        return None, None
+
+
+def subscribe(
+    event_name: str, signals: Dict[str, Namespace], callback: Callable
+):
+    _mapped_context, _namespace = _extract_signal_namespace(
+        event_name, signals
+    )
     if _namespace:
         _namespace.subscribe(
-            context=_mapped_context.get("context"), action=_mapped_context.get("action"), callback=callback
+            context=_mapped_context.get("context"),
+            action=_mapped_context.get("action"),
+            callback=callback,
+        )
+
+
+async def publish(event_name: str, signals: Dict[str, Namespace]):
+    _mapped_context, _namespace = _extract_signal_namespace(
+        event_name, signals
+    )
+    if _namespace:
+        await _namespace.publish(
+            context=_mapped_context.get("context"),
+            action=_mapped_context.get("action"),
         )

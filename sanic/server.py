@@ -27,7 +27,6 @@ from sanic.exceptions import (
 from sanic.log import access_logger, logger
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
-from sanic.helpers import publish
 
 try:
     import uvloop  # type: ignore

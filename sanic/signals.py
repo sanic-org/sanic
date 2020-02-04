@@ -1,5 +1,5 @@
 from aiosignal import Signal
-from typing import Dict, List
+from typing import Dict
 
 
 class SignalData:

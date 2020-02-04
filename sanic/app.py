@@ -95,9 +95,7 @@ class Sanic:
         # Signal Handlers and Registry
         self._signals = {
             "server": Namespace(
-                namespace="server",
-                owner=self,
-                classic_event=True,
+                namespace="server", owner=self, classic_event=True,
             ),
             "request": Namespace(namespace="request", owner=self),
             "response": Namespace(namespace="response", owner=self),

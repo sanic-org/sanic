@@ -60,23 +60,23 @@ class ConnInfo:
 
     def __init__(self, transport):
         self.ssl = bool(transport.get_extra_info("sslcontext"))
-        self.sockname = a = transport.get_extra_info("sockname")
         self.server = self.client = ""
         self.server_port = self.client_port = 0
-        if isinstance(a, str):  # UNIX socket
-            self.server = self.client = a
+        self.sockname = addr = transport.get_extra_info("sockname")
+        if isinstance(addr, str):  # UNIX socket
+            self.server = addr
             return
         # IPv4 (ip, port) or IPv6 (ip, port, flowinfo, scopeid)
-        if isinstance(a, tuple):
-            self.server = a[0] if len(a) == 2 else f"[{a[0]}]"
-            self.server_port = a[1]
+        if isinstance(addr, tuple):
+            self.server = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.server_port = addr[1]
             # self.server gets non-standard port appended
-            if a[1] != (443 if self.ssl else 80):
-                self.server = f"{self.server}:{a[1]}"
-        self.peername = a = transport.get_extra_info("peername")
-        if isinstance(a, tuple):
-            self.client = a[0] if len(a) == 2 else f"[{a[0]}]"
-            self.client_port = a[1]
+            if addr[1] != (443 if self.ssl else 80):
+                self.server = f"{self.server}:{addr[1]}"
+        self.peername = addr = transport.get_extra_info("peername")
+        if isinstance(addr, tuple):
+            self.client = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.client_port = addr[1]
 
 
 class HttpProtocol(asyncio.Protocol):

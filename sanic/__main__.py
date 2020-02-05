@@ -10,6 +10,7 @@ if __name__ == "__main__":
     parser = ArgumentParser(prog="sanic")
     parser.add_argument("--host", dest="host", type=str, default="127.0.0.1")
     parser.add_argument("--port", dest="port", type=int, default=8000)
+    parser.add_argument("--unix", dest="unix", type=str, default="")
     parser.add_argument(
         "--cert", dest="cert", type=str, help="location of certificate for SSL"
     )
@@ -46,6 +47,7 @@ if __name__ == "__main__":
         app.run(
             host=args.host,
             port=args.port,
+            unix=args.unix,
             workers=args.workers,
             debug=args.debug,
             ssl=ssl,

@@ -832,7 +832,7 @@ class Sanic:
 
         # If the route has host defined, split that off
         # TODO: Retain netloc and path separately in Route objects
-        host = uri.find('/')
+        host = uri.find("/")
         if host > 0:
             host, uri = uri[:host], uri[host:]
         else:

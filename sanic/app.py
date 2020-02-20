@@ -929,7 +929,7 @@ class Sanic:
         query_string = urlencode(kwargs, doseq=True) if kwargs else ""
         # scheme://netloc/path;parameters?query#fragment
         out = urlunparse((scheme, netloc, out, "", query_string, anchor))
-        print(out)
+
         return out
 
     # -------------------------------------------------------------------- #

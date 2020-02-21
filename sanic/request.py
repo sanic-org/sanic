@@ -47,11 +47,14 @@ class RequestParameters(dict):
 
 
 class StreamBuffer:
-    def __init__(self, buffer_size=100):
+    def __init__(self, buffer_size=100, protocol=None):
         self._queue = asyncio.Queue(buffer_size)
+        self._protocol = protocol
 
     async def read(self):
         """ Stop reading when gets None """
+        if self._protocol:
+            self._protocol.flow_control()
         payload = await self._queue.get()
         self._queue.task_done()
         return payload

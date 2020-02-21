@@ -73,7 +73,6 @@ class SanicTestClient:
     ):
         results = [None, None]
         exceptions = []
-
         if gather_request:
 
             def _collect_request(request):

@@ -567,6 +567,9 @@ class HttpProtocol(asyncio.Protocol):
                 self.cleanup()
 
     def write_error(self, exception):
+        asyncio.create_task(self.write_error_async(exception))
+
+    async def write_error_async(self, exception):
         # An error _is_ a response.
         # Don't throw a response timeout, when a response _is_ given.
         if self._response_timeout_handler:
@@ -575,6 +578,8 @@ class HttpProtocol(asyncio.Protocol):
         response = None
         try:
             response = self.error_handler.response(self.request, exception)
+            if isawaitable(response):
+                response = await response
             version = self.request.version if self.request else "1.1"
             self.transport.write(response.output(version))
         except RuntimeError:

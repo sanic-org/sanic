@@ -56,6 +56,13 @@ class StreamBuffer:
         self._queue.task_done()
         return payload
 
+    async def __aiter__(self):
+        while True:
+            data = await self.read()
+            if not data:
+                return
+            yield data
+
     async def put(self, payload):
         await self._queue.put(payload)
 
@@ -160,6 +167,10 @@ class Request:
 
     def body_finish(self):
         self.body = b"".join(self.body)
+
+    async def receive_body(self):
+        assert self.body == []
+        self.body = b"".join([data async for data in self.stream])
 
     @property
     def json(self):

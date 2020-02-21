@@ -66,15 +66,11 @@ def test_shorthand_routes_multiple(app):
 def test_route_strict_slash(app):
     @app.get("/get", strict_slashes=True)
     def handler1(request):
-        assert request.stream is None
         return text("OK")
 
     @app.post("/post/", strict_slashes=True)
     def handler2(request):
-        assert request.stream is None
         return text("OK")
-
-    assert app.is_request_stream is False
 
     request, response = app.test_client.get("/get")
     assert response.text == "OK"
@@ -214,10 +210,7 @@ def test_shorthand_routes_post(app):
 def test_shorthand_routes_put(app):
     @app.put("/put")
     def handler(request):
-        assert request.stream is None
         return text("OK")
-
-    assert app.is_request_stream is False
 
     request, response = app.test_client.put("/put")
     assert response.text == "OK"
@@ -229,10 +222,7 @@ def test_shorthand_routes_put(app):
 def test_shorthand_routes_delete(app):
     @app.delete("/delete")
     def handler(request):
-        assert request.stream is None
         return text("OK")
-
-    assert app.is_request_stream is False
 
     request, response = app.test_client.delete("/delete")
     assert response.text == "OK"
@@ -244,10 +234,7 @@ def test_shorthand_routes_delete(app):
 def test_shorthand_routes_patch(app):
     @app.patch("/patch")
     def handler(request):
-        assert request.stream is None
         return text("OK")
-
-    assert app.is_request_stream is False
 
     request, response = app.test_client.patch("/patch")
     assert response.text == "OK"
@@ -259,10 +246,7 @@ def test_shorthand_routes_patch(app):
 def test_shorthand_routes_head(app):
     @app.head("/head")
     def handler(request):
-        assert request.stream is None
         return text("OK")
-
-    assert app.is_request_stream is False
 
     request, response = app.test_client.head("/head")
     assert response.status == 200
@@ -274,10 +258,7 @@ def test_shorthand_routes_head(app):
 def test_shorthand_routes_options(app):
     @app.options("/options")
     def handler(request):
-        assert request.stream is None
         return text("OK")
-
-    assert app.is_request_stream is False
 
     request, response = app.test_client.options("/options")
     assert response.status == 200

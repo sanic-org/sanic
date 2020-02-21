@@ -116,7 +116,7 @@ class Request:
         self.transport = transport
 
         # Init but do not inhale
-        self.body_init()
+        self.body = None
         self.ctx = SimpleNamespace()
         self.parsed_forwarded = None
         self.parsed_json = None
@@ -159,17 +159,7 @@ class Request:
            Custom context is now stored in `request.custom_context.yourkey`"""
         setattr(self.ctx, key, value)
 
-    def body_init(self):
-        self.body = []
-
-    def body_push(self, data):
-        self.body.append(data)
-
-    def body_finish(self):
-        self.body = b"".join(self.body)
-
     async def receive_body(self):
-        assert self.body == []
         self.body = b"".join([data async for data in self.stream])
 
     @property

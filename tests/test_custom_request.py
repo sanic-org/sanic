@@ -37,8 +37,6 @@ def test_custom_request():
         "/post", data=json_dumps(payload), headers=headers
     )
 
-    assert isinstance(request.body_buffer, BytesIO)
-    assert request.body_buffer.closed
     assert request.body == b'{"test":"OK"}'
     assert request.json.get("test") == "OK"
     assert response.text == "OK"
@@ -46,8 +44,6 @@ def test_custom_request():
 
     request, response = app.test_client.get("/get")
 
-    assert isinstance(request.body_buffer, BytesIO)
-    assert request.body_buffer.closed
     assert request.body == b""
     assert response.text == "OK"
     assert response.status == 200

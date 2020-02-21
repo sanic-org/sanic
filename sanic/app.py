@@ -82,7 +82,6 @@ class Sanic:
         self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
         self.is_running = False
-        self.is_request_stream = False
         self.websocket_enabled = False
         self.websocket_tasks = set()
         self.named_request_middleware = {}
@@ -186,9 +185,6 @@ class Sanic:
         # and will probably get confused as to why it's not working
         if not uri.startswith("/"):
             uri = "/" + uri
-
-        if stream:
-            self.is_request_stream = True
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
@@ -956,6 +952,10 @@ class Sanic:
             # Fetch handler from router
             handler, args, kwargs, uri, name = self.router.get(request)
 
+            # Non-streaming handlers have their body preloaded
+            if not self.router.is_stream_handler(request):
+                await request.receive_body()
+
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
@@ -1381,7 +1381,7 @@ class Sanic:
         server_settings = {
             "protocol": protocol,
             "request_class": self.request_class,
-            "is_request_stream": self.is_request_stream,
+            "is_request_stream": True,
             "router": self.router,
             "host": host,
             "port": port,

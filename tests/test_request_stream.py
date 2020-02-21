@@ -12,27 +12,22 @@ data = "abc" * 10000000
 
 
 def test_request_stream_method_view(app):
-    """for self.is_request_stream = True"""
-
     class SimpleView(HTTPMethodView):
         def get(self, request):
-            assert request.stream is None
             return text("OK")
 
         @stream_decorator
         async def post(self, request):
             assert isinstance(request.stream, StreamBuffer)
-            result = ""
+            result = b""
             while True:
                 body = await request.stream.read()
                 if body is None:
                     break
-                result += body.decode("utf-8")
-            return text(result)
+                result += body
+            return text(result.decode())
 
     app.add_route(SimpleView.as_view(), "/method_view")
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/method_view")
     assert response.status == 200
@@ -65,8 +60,6 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
 
     app.add_route(SimpleView.as_view(), "/method_view")
 
-    assert app.is_request_stream is True
-
     if not expect_raise_exception:
         request, response = app.test_client.post(
             "/method_view", data=data, headers={"EXPECT": "100-continue"}
@@ -84,31 +77,24 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
 
 
 def test_request_stream_app(app):
-    """for self.is_request_stream = True and decorators"""
-
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("GET")
 
     @app.head("/head")
     async def head(request):
-        assert request.stream is None
         return text("HEAD")
 
     @app.delete("/delete")
     async def delete(request):
-        assert request.stream is None
         return text("DELETE")
 
     @app.options("/options")
     async def options(request):
-        assert request.stream is None
         return text("OPTIONS")
 
     @app.post("/_post/<id>")
     async def _post(request, id):
-        assert request.stream is None
         return text("_POST")
 
     @app.post("/post/<id>", stream=True)
@@ -124,7 +110,6 @@ def test_request_stream_app(app):
 
     @app.put("/_put")
     async def _put(request):
-        assert request.stream is None
         return text("_PUT")
 
     @app.put("/put", stream=True)
@@ -140,7 +125,6 @@ def test_request_stream_app(app):
 
     @app.patch("/_patch")
     async def _patch(request):
-        assert request.stream is None
         return text("_PATCH")
 
     @app.patch("/patch", stream=True)
@@ -153,8 +137,6 @@ def test_request_stream_app(app):
                 break
             result += body.decode("utf-8")
         return text(result)
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/get")
     assert response.status == 200
@@ -199,31 +181,24 @@ def test_request_stream_app(app):
 
 @pytest.mark.asyncio
 async def test_request_stream_app_asgi(app):
-    """for self.is_request_stream = True and decorators"""
-
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("GET")
 
     @app.head("/head")
     async def head(request):
-        assert request.stream is None
         return text("HEAD")
 
     @app.delete("/delete")
     async def delete(request):
-        assert request.stream is None
         return text("DELETE")
 
     @app.options("/options")
     async def options(request):
-        assert request.stream is None
         return text("OPTIONS")
 
     @app.post("/_post/<id>")
     async def _post(request, id):
-        assert request.stream is None
         return text("_POST")
 
     @app.post("/post/<id>", stream=True)
@@ -239,7 +214,6 @@ async def test_request_stream_app_asgi(app):
 
     @app.put("/_put")
     async def _put(request):
-        assert request.stream is None
         return text("_PUT")
 
     @app.put("/put", stream=True)
@@ -255,7 +229,6 @@ async def test_request_stream_app_asgi(app):
 
     @app.patch("/_patch")
     async def _patch(request):
-        assert request.stream is None
         return text("_PATCH")
 
     @app.patch("/patch", stream=True)
@@ -268,8 +241,6 @@ async def test_request_stream_app_asgi(app):
                 break
             result += body.decode("utf-8")
         return text(result)
-
-    assert app.is_request_stream is True
 
     request, response = await app.asgi_client.get("/get")
     assert response.status == 200
@@ -318,13 +289,13 @@ def test_request_stream_handle_exception(app):
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
         assert isinstance(request.stream, StreamBuffer)
-        result = ""
+        result = b""
         while True:
             body = await request.stream.read()
             if body is None:
                 break
-            result += body.decode("utf-8")
-        return text(result)
+            result += body
+        return text(result.decode())
 
     # 404
     request, response = app.test_client.post("/in_valid_post", data=data)
@@ -338,32 +309,26 @@ def test_request_stream_handle_exception(app):
 
 
 def test_request_stream_blueprint(app):
-    """for self.is_request_stream = True"""
     bp = Blueprint("test_blueprint_request_stream_blueprint")
 
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("GET")
 
     @bp.head("/head")
     async def head(request):
-        assert request.stream is None
         return text("HEAD")
 
     @bp.delete("/delete")
     async def delete(request):
-        assert request.stream is None
         return text("DELETE")
 
     @bp.options("/options")
     async def options(request):
-        assert request.stream is None
         return text("OPTIONS")
 
     @bp.post("/_post/<id>")
     async def _post(request, id):
-        assert request.stream is None
         return text("_POST")
 
     @bp.post("/post/<id>", stream=True)
@@ -379,7 +344,6 @@ def test_request_stream_blueprint(app):
 
     @bp.put("/_put")
     async def _put(request):
-        assert request.stream is None
         return text("_PUT")
 
     @bp.put("/put", stream=True)
@@ -395,7 +359,6 @@ def test_request_stream_blueprint(app):
 
     @bp.patch("/_patch")
     async def _patch(request):
-        assert request.stream is None
         return text("_PATCH")
 
     @bp.patch("/patch", stream=True)
@@ -423,8 +386,6 @@ def test_request_stream_blueprint(app):
         post_add_route, "/post/add_route", methods=["POST"], stream=True
     )
     app.blueprint(bp)
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/get")
     assert response.status == 200
@@ -472,10 +433,7 @@ def test_request_stream_blueprint(app):
 
 
 def test_request_stream_composition_view(app):
-    """for self.is_request_stream = True"""
-
     def get_handler(request):
-        assert request.stream is None
         return text("OK")
 
     async def post_handler(request):
@@ -493,8 +451,6 @@ def test_request_stream_composition_view(app):
     view.add(["POST"], post_handler, stream=True)
     app.add_route(view, "/composition_view")
 
-    assert app.is_request_stream is True
-
     request, response = app.test_client.get("/composition_view")
     assert response.status == 200
     assert response.text == "OK"
@@ -510,7 +466,6 @@ def test_request_stream(app):
 
     class SimpleView(HTTPMethodView):
         def get(self, request):
-            assert request.stream is None
             return text("OK")
 
         @stream_decorator
@@ -537,7 +492,6 @@ def test_request_stream(app):
 
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("OK")
 
     @bp.post("/bp_stream", stream=True)
@@ -553,11 +507,9 @@ def test_request_stream(app):
 
     @bp.get("/bp_get")
     async def bp_get(request):
-        assert request.stream is None
         return text("OK")
 
     def get_handler(request):
-        assert request.stream is None
         return text("OK")
 
     async def post_handler(request):
@@ -579,8 +531,6 @@ def test_request_stream(app):
     app.blueprint(bp)
 
     app.add_route(view, "/composition_view")
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/method_view")
     assert response.status == 200

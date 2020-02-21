@@ -328,14 +328,8 @@ class HttpProtocol(asyncio.Protocol):
             self.expect_handler()
 
         if self.is_request_stream:
-            self._is_stream_handler = self.router.is_stream_handler(
-                self.request
-            )
-            if self._is_stream_handler:
-                self.request.stream = StreamBuffer(
-                    self.request_buffer_queue_size
-                )
-                self.execute_request_handler()
+            self.request.stream = StreamBuffer(self.request_buffer_queue_size)
+            self.execute_request_handler()
 
     def expect_handler(self):
         """
@@ -353,21 +347,18 @@ class HttpProtocol(asyncio.Protocol):
                 )
 
     def on_body(self, body):
-        if self.is_request_stream and self._is_stream_handler:
-            # body chunks can be put into asyncio.Queue out of order if
-            # multiple tasks put concurrently and the queue is full in python
-            # 3.7. so we should not create more than one task putting into the
-            # queue simultaneously.
-            self._body_chunks.append(body)
-            if (
-                not self._request_stream_task
-                or self._request_stream_task.done()
-            ):
-                self._request_stream_task = self.loop.create_task(
-                    self.stream_append()
-                )
-        else:
-            self.request.body_push(body)
+        # body chunks can be put into asyncio.Queue out of order if
+        # multiple tasks put concurrently and the queue is full in python
+        # 3.7. so we should not create more than one task putting into the
+        # queue simultaneously.
+        self._body_chunks.append(body)
+        if (
+            not self._request_stream_task
+            or self._request_stream_task.done()
+        ):
+            self._request_stream_task = self.loop.create_task(
+                self.stream_append()
+            )
 
     async def body_append(self, body):
         if (
@@ -385,7 +376,7 @@ class HttpProtocol(asyncio.Protocol):
             await self.request.stream.put(body)
 
     async def stream_append(self):
-        while self._body_chunks:
+        while self._body_chunks and self.request:
             body = self._body_chunks.popleft()
             if self.request.stream.is_full():
                 self.transport.pause_reading()
@@ -393,6 +384,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.transport.resume_reading()
             else:
                 await self.request.stream.put(body)
+        self._body_chunks.clear()
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -400,18 +392,15 @@ class HttpProtocol(asyncio.Protocol):
         if self._request_timeout_handler:
             self._request_timeout_handler.cancel()
             self._request_timeout_handler = None
-        if self.is_request_stream and self._is_stream_handler:
-            self._body_chunks.append(None)
-            if (
-                not self._request_stream_task
-                or self._request_stream_task.done()
-            ):
-                self._request_stream_task = self.loop.create_task(
-                    self.stream_append()
-                )
-            return
-        self.request.body_finish()
-        self.execute_request_handler()
+
+        self._body_chunks.append(None)
+        if (
+            not self._request_stream_task
+            or self._request_stream_task.done()
+        ):
+            self._request_stream_task = self.loop.create_task(
+                self.stream_append()
+            )
 
     def execute_request_handler(self):
         """
@@ -639,7 +628,6 @@ class HttpProtocol(asyncio.Protocol):
         self._request_handler_task = None
         self._request_stream_task = None
         self._total_request_size = 0
-        self._is_stream_handler = False
 
     def close_if_idle(self):
         """Close the connection if a request is not being sent or received

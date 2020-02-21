@@ -107,10 +107,8 @@ def test_shorthand_named_routes_post(app):
 def test_shorthand_named_routes_put(app):
     @app.put("/put", name="route_put")
     def handler(request):
-        assert request.stream is None
         return text("OK")
 
-    assert app.is_request_stream is False
     assert app.router.routes_all["/put"].name == "route_put"
     assert app.url_for("route_put") == "/put"
     with pytest.raises(URLBuildError):
@@ -120,10 +118,8 @@ def test_shorthand_named_routes_put(app):
 def test_shorthand_named_routes_delete(app):
     @app.delete("/delete", name="route_delete")
     def handler(request):
-        assert request.stream is None
         return text("OK")
 
-    assert app.is_request_stream is False
     assert app.router.routes_all["/delete"].name == "route_delete"
     assert app.url_for("route_delete") == "/delete"
     with pytest.raises(URLBuildError):
@@ -133,10 +129,8 @@ def test_shorthand_named_routes_delete(app):
 def test_shorthand_named_routes_patch(app):
     @app.patch("/patch", name="route_patch")
     def handler(request):
-        assert request.stream is None
         return text("OK")
 
-    assert app.is_request_stream is False
     assert app.router.routes_all["/patch"].name == "route_patch"
     assert app.url_for("route_patch") == "/patch"
     with pytest.raises(URLBuildError):
@@ -146,10 +140,8 @@ def test_shorthand_named_routes_patch(app):
 def test_shorthand_named_routes_head(app):
     @app.head("/head", name="route_head")
     def handler(request):
-        assert request.stream is None
         return text("OK")
 
-    assert app.is_request_stream is False
     assert app.router.routes_all["/head"].name == "route_head"
     assert app.url_for("route_head") == "/head"
     with pytest.raises(URLBuildError):
@@ -159,10 +151,8 @@ def test_shorthand_named_routes_head(app):
 def test_shorthand_named_routes_options(app):
     @app.options("/options", name="route_options")
     def handler(request):
-        assert request.stream is None
         return text("OK")
 
-    assert app.is_request_stream is False
     assert app.router.routes_all["/options"].name == "route_options"
     assert app.url_for("route_options") == "/options"
     with pytest.raises(URLBuildError):

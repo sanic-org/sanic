@@ -190,7 +190,6 @@ class ASGIApp:
     sanic_app: "sanic.app.Sanic"
     request: Request
     transport: MockTransport
-    do_stream: bool
     lifespan: Lifespan
     ws: Optional[WebSocketConnection]
 
@@ -212,9 +211,6 @@ class ASGIApp:
                 (key.decode("latin-1"), value.decode("latin-1"))
                 for key, value in scope.get("headers", [])
             ]
-        )
-        instance.do_stream = (
-            True if headers.get("expect") == "100-continue" else False
         )
         instance.lifespan = Lifespan(instance)
 
@@ -256,15 +252,9 @@ class ASGIApp:
                 sanic_app,
             )
 
-            if sanic_app.is_request_stream:
-                is_stream_handler = sanic_app.router.is_stream_handler(
-                    instance.request
-                )
-                if is_stream_handler:
-                    instance.request.stream = StreamBuffer(
-                        sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE
-                    )
-                    instance.do_stream = True
+            instance.request.stream = StreamBuffer(
+                sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE
+            )
 
         return instance
 
@@ -300,10 +290,7 @@ class ASGIApp:
         """
         Handle the incoming request.
         """
-        if not self.do_stream:
-            self.request.body = await self.read_body()
-        else:
-            self.sanic_app.loop.create_task(self.stream_body())
+        self.sanic_app.loop.create_task(self.stream_body())
 
         handler = self.sanic_app.handle_request
         callback = None if self.ws else self.stream_callback

@@ -567,7 +567,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.cleanup()
 
     def write_error(self, exception):
-        asyncio.create_task(self.write_error_async(exception))
+        self.loop.create_task(self.write_error_async(exception))
 
     async def write_error_async(self, exception):
         # An error _is_ a response.

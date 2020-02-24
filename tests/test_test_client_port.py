@@ -1,5 +1,3 @@
-import socket
-
 from sanic.response import json, text
 from sanic.testing import PORT, SanicTestClient
 

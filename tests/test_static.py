@@ -98,7 +98,7 @@ def test_static_directory(app, file_name, base_uri, static_file_directory):
     app.static(base_uri, static_file_directory)
 
     request, response = app.test_client.get(
-        uri="{}/{}".format(base_uri, file_name)
+        uri=f"{base_uri}/{file_name}"
     )
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
@@ -234,7 +234,7 @@ def test_static_content_range_invalid_unit(
     )
 
     unit = "bit"
-    headers = {"Range": "{}=1-0".format(unit)}
+    headers = {"Range": f"{unit}=1-0"}
     request, response = app.test_client.get("/testing.file", headers=headers)
 
     assert response.status == 416
@@ -252,7 +252,7 @@ def test_static_content_range_invalid_start(
     )
 
     start = "start"
-    headers = {"Range": "bytes={}-0".format(start)}
+    headers = {"Range": f"bytes={start}-0"}
     request, response = app.test_client.get("/testing.file", headers=headers)
 
     assert response.status == 416
@@ -270,7 +270,7 @@ def test_static_content_range_invalid_end(
     )
 
     end = "end"
-    headers = {"Range": "bytes=1-{}".format(end)}
+    headers = {"Range": f"bytes=1-{end}"}
     request, response = app.test_client.get("/testing.file", headers=headers)
 
     assert response.status == 416
@@ -373,7 +373,7 @@ def test_file_not_found(app, static_file_directory):
 def test_static_name(app, static_file_directory, static_name, file_name):
     app.static("/static", static_file_directory, name=static_name)
 
-    request, response = app.test_client.get("/static/{}".format(file_name))
+    request, response = app.test_client.get(f"/static/{file_name}")
 
     assert response.status == 200
 

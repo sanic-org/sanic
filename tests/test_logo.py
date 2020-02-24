@@ -52,7 +52,7 @@ def test_logo_false(app, caplog):
     assert caplog.record_tuples[ROW][1] == logging.INFO
     assert caplog.record_tuples[ROW][
         2
-    ] == "Goin' Fast @ http://127.0.0.1:{}".format(PORT)
+    ] == f"Goin' Fast @ http://127.0.0.1:{PORT}"
 
 
 def test_logo_true(app, caplog):

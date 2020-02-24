@@ -953,8 +953,8 @@ class Sanic:
             handler, args, kwargs, uri, name = self.router.get(request)
 
             # Non-streaming handlers have their body preloaded
-            #if not self.router.is_stream_handler(request):
-            #    await request.receive_body()
+            if request.stream and not self.router.is_stream_handler(request):
+                await request.receive_body()
 
             # -------------------------------------------- #
             # Request Middleware

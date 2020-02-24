@@ -225,14 +225,17 @@ class HttpProtocol(asyncio.Protocol):
                     raise PayloadTooLarge("Payload Too Large")
 
                 self._total_request_size = pos + 4
-                reqline, *headers = buf[:pos].decode().split("\r\n")
-                method, self.url, protocol = reqline.split(" ")
-                assert protocol in ("HTTP/1.0", "HTTP/1.1")
+                try:
+                    reqline, *headers = buf[:pos].decode().split("\r\n")
+                    method, self.url, protocol = reqline.split(" ")
+                    assert protocol in ("HTTP/1.0", "HTTP/1.1")
+                    headers = Header(
+                        (name.lower(), value.lstrip())
+                        for name, value in (h.split(":", 1) for h in headers)
+                    )
+                except:
+                    raise InvalidUsage("Bad Request")
                 del buf[:pos + 4]
-                headers = Header(
-                    (name.lower(), value.lstrip())
-                    for name, value in (h.split(":", 1) for h in headers)
-                )
                 if headers.get(EXPECT_HEADER):
                     self._status = Status.EXPECT
                     self.expect_handler()
@@ -246,7 +249,7 @@ class HttpProtocol(asyncio.Protocol):
                     transport=self.transport,
                     app=self.app,
                 )
-                request_body = (
+                self.state["request_body"] = request_body = (
                     int(headers.get("content-length", 0)) or
                     headers.get("transfer-encoding") == "chunked"
                 )
@@ -254,8 +257,6 @@ class HttpProtocol(asyncio.Protocol):
                     self.request.stream = StreamBuffer(
                         self.request_buffer_queue_size, protocol=self,
                     )
-                    self.request.stream._queue.put_nowait(None)
-
                 self._status, self._time = Status.HANDLER, current_time()
                 await self.request_handler(
                     self.request, self.write_response, self.stream_response
@@ -267,6 +268,40 @@ class HttpProtocol(asyncio.Protocol):
             print(repr(e))
         finally:
             self.close()
+
+    async def request_body(self):
+        rb = self.state["request_body"]
+        if rb is True:
+            # This code is crap and needs rewriting
+            while b"\r\n" not in self._buffer:
+                await self.receive_more()
+            pos = self._buffer.find(b"\r\n")
+            size = int(self._buffer[:pos])
+            if self._total_request_size + size > self.request_max_size:
+                self.keep_alive = False
+                raise PayloadTooLarge("Payload Too Large")
+            self._total_request_size += pos + 4 + size
+            if size == 0:
+                self.state["request_body"] = 0
+                return None
+            while len(self._buffer) < pos + 4 + size:
+                await self.receive_more()
+            body = self._buffer[pos + 2: pos + 2 + size]
+            del body[:pos + 4 + size]
+            return body
+        elif rb > 0:
+            if not self._buffer:
+                await self.receive_more()
+            body = self._buffer[:rb]
+            size = len(body)
+            del self._buffer[:rb]
+            self.state["request_body"] -= size
+            self._total_request_size += size
+            if self._total_request_size > self.request_max_size:
+                self.keep_alive = False
+                raise PayloadTooLarge("Payload Too Large")
+            return body
+        return None
 
     def expect_handler(self):
         """

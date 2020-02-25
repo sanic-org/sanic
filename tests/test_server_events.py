@@ -22,7 +22,7 @@ skipif_no_alarm = pytest.mark.skipif(
 
 def create_listener(listener_name, in_list):
     async def _listener(app, loop):
-        print("DEBUG MESSAGE FOR PYTEST for {}".format(listener_name))
+        print(f"DEBUG MESSAGE FOR PYTEST for {listener_name}")
         in_list.insert(0, app.name + listener_name)
 
     return _listener

@@ -21,13 +21,13 @@ def test_versioned_named_routes_get(app, method):
     bp = Blueprint("test_bp", url_prefix="/bp")
 
     method = method.lower()
-    route_name = "route_{}".format(method)
-    route_name2 = "route2_{}".format(method)
+    route_name = f"route_{method}"
+    route_name2 = f"route2_{method}"
 
     func = getattr(app, method)
     if callable(func):
 
-        @func("/{}".format(method), version=1, name=route_name)
+        @func(f"/{method}", version=1, name=route_name)
         def handler(request):
             return text("OK")
 
@@ -38,7 +38,7 @@ def test_versioned_named_routes_get(app, method):
     func = getattr(bp, method)
     if callable(func):
 
-        @func("/{}".format(method), version=1, name=route_name2)
+        @func(f"/{method}", version=1, name=route_name2)
         def handler2(request):
             return text("OK")
 
@@ -48,14 +48,14 @@ def test_versioned_named_routes_get(app, method):
 
     app.blueprint(bp)
 
-    assert app.router.routes_all["/v1/{}".format(method)].name == route_name
+    assert app.router.routes_all[f"/v1/{method}"].name == route_name
 
-    route = app.router.routes_all["/v1/bp/{}".format(method)]
-    assert route.name == "test_bp.{}".format(route_name2)
+    route = app.router.routes_all[f"/v1/bp/{method}"]
+    assert route.name == f"test_bp.{route_name2}"
 
-    assert app.url_for(route_name) == "/v1/{}".format(method)
-    url = app.url_for("test_bp.{}".format(route_name2))
-    assert url == "/v1/bp/{}".format(method)
+    assert app.url_for(route_name) == f"/v1/{method}"
+    url = app.url_for(f"test_bp.{route_name2}")
+    assert url == f"/v1/bp/{method}"
     with pytest.raises(URLBuildError):
         app.url_for("handler")
 

@@ -179,9 +179,7 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
     request, response = app.test_client.get("/", debug=True)
     assert response.status == 500
     assert response.text.startswith(
-        "Error while handling error: {}\nStack: Traceback (most recent call last):\n".format(
-            err_msg
-        )
+        f"Error while handling error: {err_msg}\nStack: Traceback (most recent call last):\n"
     )
 
 

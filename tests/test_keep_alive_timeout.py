@@ -97,11 +97,9 @@ class ReuseableSanicTestClient(SanicTestClient):
         ):
             url = uri
         else:
-            uri = uri if uri.startswith("/") else "/{uri}".format(uri=uri)
+            uri = uri if uri.startswith("/") else f"/{uri}"
             scheme = "http"
-            url = "{scheme}://{host}:{port}{uri}".format(
-                scheme=scheme, host=HOST, port=PORT, uri=uri
-            )
+            url = f"{scheme}://{HOST}:{PORT}{uri}"
 
         @self.app.listener("after_server_start")
         async def _collect_response(loop):
@@ -134,7 +132,7 @@ class ReuseableSanicTestClient(SanicTestClient):
         self.app.listeners["after_server_start"].pop()
 
         if exceptions:
-            raise ValueError("Exception during request: {}".format(exceptions))
+            raise ValueError(f"Exception during request: {exceptions}")
 
         if gather_request:
             self.app.request_middleware.pop()
@@ -143,16 +141,14 @@ class ReuseableSanicTestClient(SanicTestClient):
                 return request, response
             except Exception:
                 raise ValueError(
-                    "Request and response object expected, got ({})".format(
-                        results
-                    )
+                    f"Request and response object expected, got ({results})"
                 )
         else:
             try:
                 return results[-1]
             except Exception:
                 raise ValueError(
-                    "Request object expected, got ({})".format(results)
+                    f"Request object expected, got ({results})"
                 )
 
     def kill_server(self):

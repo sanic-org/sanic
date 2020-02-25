@@ -103,7 +103,7 @@ def sanic_router():
         for method, route in route_details:
             try:
                 router._add(
-                    uri="/{}".format(route),
+                    uri=f"/{route}",
                     methods=frozenset({method}),
                     host="localhost",
                     handler=_handler,

@@ -266,9 +266,7 @@ class HttpProtocol(asyncio.Protocol):
                     if headers.get(EXPECT_HEADER):
                         self._status = Status.EXPECT
                         self.expect_handler()
-                    self.request.stream = StreamBuffer(
-                        self.request_buffer_queue_size, protocol=self,
-                    )
+                    self.request.stream = StreamBuffer(protocol=self)
                     if body is True:
                         self._request_chunked = True
                         pos -= 2  # One CRLF stays in buffer

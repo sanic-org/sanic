@@ -251,11 +251,7 @@ class ASGIApp:
                 instance.transport,
                 sanic_app,
             )
-
-            instance.request.stream = StreamBuffer(
-                sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE,
-                protocol=instance
-            )
+            instance.request.stream = StreamBuffer(protocol=instance)
 
         return instance
 

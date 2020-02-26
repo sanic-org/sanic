@@ -81,6 +81,7 @@ class HttpProtocol(asyncio.Protocol):
         "access_log",
         # connection management
         "_total_request_size",
+        "_request_bytes_left",
         "_status",
         "_time",
         "_last_response_time",
@@ -235,28 +236,39 @@ class HttpProtocol(asyncio.Protocol):
                     )
                 except:
                     raise InvalidUsage("Bad Request")
-                del buf[:pos + 4]
+
                 if headers.get(EXPECT_HEADER):
                     self._status = Status.EXPECT
                     self.expect_handler()
                 self.state["requests_count"] += 1
-                # Run handler
+                # Prepare a request object from the header received
                 self.request = self.request_class(
                     url_bytes=self.url.encode(),
                     headers=headers,
-                    version="1.1",
+                    version=protocol[-3:],
                     method=method,
                     transport=self.transport,
                     app=self.app,
                 )
-                self.state["request_body"] = request_body = (
-                    int(headers.get("content-length", 0)) or
+                # Prepare for request body
+                body = (
                     headers.get("transfer-encoding") == "chunked"
+                    or int(headers.get("content-length", 0))
                 )
-                if request_body:
+                if body:
                     self.request.stream = StreamBuffer(
                         self.request_buffer_queue_size, protocol=self,
                     )
+                    if body is True:
+                        self._request_chunked = True
+                        self._request_bytes_left = 0
+                        pos -= 2  # One CRLF stays in buffer
+                    else:
+                        self._request_chunked = False
+                        self._request_bytes_left = body
+                # Remove header and its trailing CRLF
+                del buf[:pos + 4]
+                # Run handler
                 self._status, self._time = Status.HANDLER, current_time()
                 await self.request_handler(
                     self.request, self.write_response, self.stream_response
@@ -270,37 +282,41 @@ class HttpProtocol(asyncio.Protocol):
             self.close()
 
     async def request_body(self):
-        rb = self.state["request_body"]
-        if rb is True:
-            # This code is crap and needs rewriting
-            while b"\r\n" not in self._buffer:
+        buf = self._buffer
+        if self._request_chunked and self._request_bytes_left == 0:
+            # Process a chunk header: \r\n<size>[;<chunk extensions>]\r\n
+            while True:
+                pos = buf.find(b"\r\n", 3)
+                if pos != -1:
+                    break
+                if len(buf) > 64:
+                    self.keep_alive = False
+                    raise InvalidUsage("Bad chunked encoding")
                 await self.receive_more()
-            pos = self._buffer.find(b"\r\n")
-            size = int(self._buffer[:pos])
-            if self._total_request_size + size > self.request_max_size:
+            try:
+                size = int(buf[2:pos].split(b";", 1)[0].decode(), 16)
+            except:
                 self.keep_alive = False
-                raise PayloadTooLarge("Payload Too Large")
-            self._total_request_size += pos + 4 + size
-            if size == 0:
-                self.state["request_body"] = 0
+                raise InvalidUsage("Bad chunked encoding")
+            self._request_bytes_left = size
+            self._total_request_size += pos + 2
+            del buf[:pos + 2]
+            if self._request_bytes_left <= 0:
+                self._request_chunked = False
                 return None
-            while len(self._buffer) < pos + 4 + size:
+        # At this point we are good to read/return _request_bytes_left
+        if self._request_bytes_left:
+            if not buf:
                 await self.receive_more()
-            body = self._buffer[pos + 2: pos + 2 + size]
-            del body[:pos + 4 + size]
-            return body
-        elif rb > 0:
-            if not self._buffer:
-                await self.receive_more()
-            body = self._buffer[:rb]
-            size = len(body)
-            del self._buffer[:rb]
-            self.state["request_body"] -= size
+            data = bytes(buf[:self._request_bytes_left])
+            size = len(data)
+            del buf[:size]
+            self._request_bytes_left -= size
             self._total_request_size += size
             if self._total_request_size > self.request_max_size:
                 self.keep_alive = False
                 raise PayloadTooLarge("Payload Too Large")
-            return body
+            return data
         return None
 
     def expect_handler(self):

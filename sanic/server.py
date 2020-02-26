@@ -46,11 +46,12 @@ class Signal:
 
 
 class Status(enum.Enum):
-    IDLE = 0     # Waiting for request
+    IDLE = 0  # Waiting for request
     REQUEST = 1  # Request headers being received
-    EXPECT = 2   # Sender wants 100-continue
+    EXPECT = 2  # Sender wants 100-continue
     HANDLER = 3  # Headers done, handler running
-    RESPONSE = 4 # Response headers sent
+    RESPONSE = 4  # Response headers sent
+
 
 class HttpProtocol(asyncio.Protocol):
     """
@@ -195,17 +196,19 @@ class HttpProtocol(asyncio.Protocol):
         """Runs itself once a second to enforce any expired timeouts."""
         duration = current_time() - self._time
         status = self._status
-        if (status == Status.IDLE and duration > self.keep_alive_timeout):
+        if status == Status.IDLE and duration > self.keep_alive_timeout:
             logger.debug("KeepAlive Timeout. Closing connection.")
-        elif (status == Status.REQUEST and duration > self.request_timeout):
+        elif status == Status.REQUEST and duration > self.request_timeout:
             self._exception = RequestTimeout("Request Timeout")
-        elif (status.value > Status.REQUEST.value and duration > self.response_timeout):
+        elif (
+            status.value > Status.REQUEST.value
+            and duration > self.response_timeout
+        ):
             self._exception = ServiceUnavailable("Response Timeout")
         else:
-            self.loop.call_later(.1, self.check_timeouts)
+            self.loop.call_later(0.1, self.check_timeouts)
             return
         self._task.cancel()
-
 
     async def http1(self):
         """HTTP 1.1 connection handler"""
@@ -256,9 +259,8 @@ class HttpProtocol(asyncio.Protocol):
                 if headers.get("connection", "").lower() == "close":
                     self.keep_alive = False
                 # Prepare for request body
-                body = (
-                    headers.get("transfer-encoding") == "chunked"
-                    or int(headers.get("content-length", 0))
+                body = headers.get("transfer-encoding") == "chunked" or int(
+                    headers.get("content-length", 0)
                 )
                 self._request_chunked = False
                 self._request_bytes_left = 0
@@ -273,7 +275,7 @@ class HttpProtocol(asyncio.Protocol):
                     else:
                         self._request_bytes_left = body
                 # Remove header and its trailing CRLF
-                del buf[:pos + 4]
+                del buf[: pos + 4]
                 # Run handler
                 self._status, self._time = Status.HANDLER, current_time()
                 await self.request_handler(
@@ -281,13 +283,16 @@ class HttpProtocol(asyncio.Protocol):
                 )
                 # Consume any remaining request body
                 if self._request_bytes_left or self._request_chunked:
-                    logger.error(f"Handler of {method} {self.url} did not consume request body.")
-                    while await self.stream_body(): pass
+                    logger.error(
+                        f"Handler of {method} {self.url} did not consume request body."
+                    )
+                    while await self.stream_body():
+                        pass
                 self._status, self._time = Status.IDLE, current_time()
         except asyncio.CancelledError:
             self.write_error(
-                self._exception or
-                ServiceUnavailable("Request handler cancelled")
+                self._exception
+                or ServiceUnavailable("Request handler cancelled")
             )
         except SanicException as e:
             self.write_error(e)
@@ -315,7 +320,7 @@ class HttpProtocol(asyncio.Protocol):
                 raise InvalidUsage("Bad chunked encoding")
             self._request_bytes_left = size
             self._total_request_size += pos + 2
-            del buf[:pos + 2]
+            del buf[: pos + 2]
             if self._request_bytes_left <= 0:
                 self._request_chunked = False
                 return None
@@ -323,7 +328,7 @@ class HttpProtocol(asyncio.Protocol):
         if self._request_bytes_left:
             if not buf:
                 await self.receive_more()
-            data = bytes(buf[:self._request_bytes_left])
+            data = bytes(buf[: self._request_bytes_left])
             size = len(data)
             del buf[:size]
             self._request_bytes_left -= size
@@ -391,7 +396,9 @@ class HttpProtocol(asyncio.Protocol):
             self._status, self._time = Status.RESPONSE, current_time()
             self._last_response_time = self._time
             self.transport.write(
-                response.output("1.1", self.keep_alive, self.keep_alive_timeout)
+                response.output(
+                    "1.1", self.keep_alive, self.keep_alive_timeout
+                )
             )
             self.log_response(response)
         except AttributeError:
@@ -436,7 +443,9 @@ class HttpProtocol(asyncio.Protocol):
         try:
             self._status, self._time = Status.RESPONSE, current_time()
             response.protocol = self
-            await response.stream("1.1", self.keep_alive, self.keep_alive_timeout)
+            await response.stream(
+                "1.1", self.keep_alive, self.keep_alive_timeout
+            )
             self.log_response(response)
         except AttributeError:
             logger.error(

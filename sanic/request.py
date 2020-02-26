@@ -54,7 +54,7 @@ class StreamBuffer:
     async def read(self):
         """ Stop reading when gets None """
         if self._protocol:
-            return await self._protocol.request_body()
+            return await self._protocol.stream_body()
         payload = await self._queue.get()
         self._queue.task_done()
         return payload

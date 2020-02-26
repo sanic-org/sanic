@@ -94,6 +94,7 @@ class HttpProtocol(asyncio.Protocol):
         "_can_write",
         "_data_received",
         "_task",
+        "_exception",
     )
 
     def __init__(
@@ -197,19 +198,23 @@ class HttpProtocol(asyncio.Protocol):
         if (status == Status.IDLE and duration > self.keep_alive_timeout):
             logger.debug("KeepAlive Timeout. Closing connection.")
         elif (status == Status.REQUEST and duration > self.request_timeout):
-            self.write_error(RequestTimeout("Request Timeout"))
+            self._exception = RequestTimeout("Request Timeout")
         elif (status.value > Status.REQUEST.value and duration > self.response_timeout):
-            self.write_error(ServiceUnavailable("Response Timeout"))
+            self._exception = ServiceUnavailable("Response Timeout")
         else:
             self.loop.call_later(.1, self.check_timeouts)
             return
-        self.close()
+        self._task.cancel()
 
 
     async def http1(self):
         """HTTP 1.1 connection handler"""
         try:
+            self._exception = None
             buf = self._buffer
+            # Note: connections are initially in request mode and do not obey
+            # keep-alive timeout like with some other servers.
+            self._status = Status.REQUEST
             while self.keep_alive:
                 # Read request header
                 pos = 0
@@ -248,6 +253,8 @@ class HttpProtocol(asyncio.Protocol):
                     transport=self.transport,
                     app=self.app,
                 )
+                if headers.get("connection", "").lower() == "close":
+                    self.keep_alive = False
                 # Prepare for request body
                 body = (
                     headers.get("transfer-encoding") == "chunked"
@@ -277,8 +284,13 @@ class HttpProtocol(asyncio.Protocol):
                 # Consume any remaining request body
                 if self._request_bytes_left or self._request_chunked:
                     logger.error(f"Handler of {method} {self.url} did not consume request body.")
-                    while await self.request_body(): pass
+                    while await self.stream_body(): pass
                 self._status, self._time = Status.IDLE, current_time()
+        except asyncio.CancelledError:
+            self.write_error(
+                self._exception or
+                ServiceUnavailable("Request handler cancelled")
+            )
         except SanicException as e:
             self.write_error(e)
         except Exception as e:
@@ -286,7 +298,7 @@ class HttpProtocol(asyncio.Protocol):
         finally:
             self.close()
 
-    async def request_body(self):
+    async def stream_body(self):
         buf = self._buffer
         if self._request_chunked and self._request_bytes_left == 0:
             # Process a chunk header: \r\n<size>[;<chunk extensions>]\r\n

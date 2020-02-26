@@ -253,7 +253,8 @@ class ASGIApp:
             )
 
             instance.request.stream = StreamBuffer(
-                sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE
+                sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE,
+                protocol=instance
             )
 
         return instance
@@ -275,23 +276,15 @@ class ASGIApp:
         """
         Read and stream the body in chunks from an incoming ASGI message.
         """
-        more_body = True
-
-        while more_body:
-            message = await self.transport.receive()
-            chunk = message.get("body", b"")
-            await self.request.stream.put(chunk)
-
-            more_body = message.get("more_body", False)
-
-        await self.request.stream.put(None)
+        message = await self.transport.receive()
+        if not message.get("more_body", False):
+            return None
+        return message.get("body", b"")
 
     async def __call__(self) -> None:
         """
         Handle the incoming request.
         """
-        self.sanic_app.loop.create_task(self.stream_body())
-
         handler = self.sanic_app.handle_request
         callback = None if self.ws else self.stream_callback
         await handler(self.request, None, callback)

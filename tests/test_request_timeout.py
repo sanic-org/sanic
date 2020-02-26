@@ -73,8 +73,8 @@ class DelayableSanicTestClient(SanicTestClient):
         self._request_delay = request_delay
         self._loop = None
 
-    def get_new_session(self):
-        return DelayableSanicSession(request_delay=self._request_delay)
+    def get_new_session(self, verify=True):
+        return DelayableSanicSession(request_delay=self._request_delay, verify=verify)
 
 
 request_timeout_default_app = Sanic("test_request_timeout_default")

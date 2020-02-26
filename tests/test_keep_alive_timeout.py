@@ -65,8 +65,8 @@ class ReuseableSanicTestClient(SanicTestClient):
         self._tcp_connector = None
         self._session = None
 
-    def get_new_session(self):
-        return ResusableSanicSession()
+    def get_new_session(self, verify=True):
+        return ResusableSanicSession(verify=verify)
 
     # Copied from SanicTestClient, but with some changes to reuse the
     # same loop for the same app.

@@ -113,6 +113,7 @@ docs_require = [
 dev_require = tests_require + [
     "aiofiles",
     "tox",
+    "tox-run-before",
     "black",
     "flake8",
     "bandit",

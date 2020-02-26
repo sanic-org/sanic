@@ -1,5 +1,6 @@
 from json import JSONDecodeError
 from socket import socket
+from ssl import SSLContext
 
 import httpx
 import websockets
@@ -22,23 +23,25 @@ class SanicTestClient:
         self.port = port
         self.host = host
 
-    def get_new_session(self):
-        return httpx.Client()
+    def get_new_session(self, verify=True):
+        return httpx.Client(verify=verify)
 
-    async def _local_request(self, method, url, *args, **kwargs):
+    async def _local_request(self, method, url, *args, verify=True, **kwargs):
         logger.info(url)
         raw_cookies = kwargs.pop("raw_cookies", None)
 
         if method == "websocket":
+            if verify is True or isinstance(verify, (str, SSLContext)):
+                if url.startswith('wss:'):
+                    kwargs['ssl'] = verify
             async with websockets.connect(url, *args, **kwargs) as websocket:
                 websocket.opened = websocket.open
                 return websocket
         else:
-            async with self.get_new_session() as session:
-
+            async with self.get_new_session(verify=verify) as session:
                 try:
                     response = await getattr(session, method.lower())(
-                        url, verify=False, *args, **kwargs
+                        url, *args, **kwargs
                     )
                 except NameError:
                     raise Exception(response.status_code)
@@ -101,6 +104,16 @@ class SanicTestClient:
             sock.bind((host or self.host, 0))
             server_kwargs = dict(sock=sock, **server_kwargs)
             host, port = sock.getsockname()
+
+        # Set "verify" request parameter based on server_kwargs if supplied
+        ssl = server_kwargs.get('ssl')
+        if ssl:
+            verify = True
+            if isinstance(ssl, dict):
+                verify = ssl.get('cert')
+            elif isinstance(ssl, SSLContext):
+                verify = ssl.get_ca_certs()
+            request_kwargs.setdefault('verify', verify)
 
         if uri.startswith(
             ("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")

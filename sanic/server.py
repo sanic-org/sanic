@@ -201,7 +201,7 @@ class HttpProtocol(asyncio.Protocol):
         elif (status.value > Status.REQUEST.value and duration > self.response_timeout):
             self.write_error(ServiceUnavailable("Response Timeout"))
         else:
-            self.loop.call_later(1, self.check_timeouts)
+            self.loop.call_later(.1, self.check_timeouts)
             return
         self.close()
 
@@ -229,7 +229,8 @@ class HttpProtocol(asyncio.Protocol):
                 try:
                     reqline, *headers = buf[:pos].decode().split("\r\n")
                     method, self.url, protocol = reqline.split(" ")
-                    assert protocol in ("HTTP/1.0", "HTTP/1.1")
+                    if protocol not in ("HTTP/1.0", "HTTP/1.1"):
+                        raise Exception
                     headers = Header(
                         (name.lower(), value.lstrip())
                         for name, value in (h.split(":", 1) for h in headers)
@@ -237,9 +238,6 @@ class HttpProtocol(asyncio.Protocol):
                 except:
                     raise InvalidUsage("Bad Request")
 
-                if headers.get(EXPECT_HEADER):
-                    self._status = Status.EXPECT
-                    self.expect_handler()
                 self.state["requests_count"] += 1
                 # Prepare a request object from the header received
                 self.request = self.request_class(
@@ -255,16 +253,19 @@ class HttpProtocol(asyncio.Protocol):
                     headers.get("transfer-encoding") == "chunked"
                     or int(headers.get("content-length", 0))
                 )
+                self._request_chunked = False
+                self._request_bytes_left = 0
                 if body:
+                    if headers.get(EXPECT_HEADER):
+                        self._status = Status.EXPECT
+                        self.expect_handler()
                     self.request.stream = StreamBuffer(
                         self.request_buffer_queue_size, protocol=self,
                     )
                     if body is True:
                         self._request_chunked = True
-                        self._request_bytes_left = 0
                         pos -= 2  # One CRLF stays in buffer
                     else:
-                        self._request_chunked = False
                         self._request_bytes_left = body
                 # Remove header and its trailing CRLF
                 del buf[:pos + 4]
@@ -273,11 +274,15 @@ class HttpProtocol(asyncio.Protocol):
                 await self.request_handler(
                     self.request, self.write_response, self.stream_response
                 )
+                # Consume any remaining request body
+                if self._request_bytes_left or self._request_chunked:
+                    logger.error(f"Handler of {method} {self.url} did not consume request body.")
+                    while await self.request_body(): pass
                 self._status, self._time = Status.IDLE, current_time()
         except SanicException as e:
             self.write_error(e)
         except Exception as e:
-            print(repr(e))
+            logger.error(f"Uncaught {e!r} handling URL {self.url}")
         finally:
             self.close()
 
@@ -328,11 +333,7 @@ class HttpProtocol(asyncio.Protocol):
             if expect.lower() == "100-continue":
                 self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
             else:
-                self.write_error(
-                    HeaderExpectationFailed(
-                        "Unknown Expect: {expect}".format(expect=expect)
-                    )
-                )
+                raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
 
     # -------------------------------------------- #
     # Responding
@@ -386,10 +387,9 @@ class HttpProtocol(asyncio.Protocol):
         except AttributeError:
             if isinstance(response, HTTPResponse):
                 raise
-            url = self.url.decode()
             res_type = type(response).__name__
             logger.error(
-                f"Invalid response object for url {url!r}, "
+                f"Invalid response object for url {self.url!r}, "
                 f"Expected Type: HTTPResponse, Actual Type: {res_type}"
             )
             self.write_error(ServerError("Invalid response type"))
@@ -469,7 +469,7 @@ class HttpProtocol(asyncio.Protocol):
         finally:
             if self.keep_alive or getattr(response, "status") == 408:
                 self.log_response(response)
-            self.close()
+            self.keep_alive = False
 
     def bail_out(self, message, from_error=False):
         """

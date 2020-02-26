@@ -18,7 +18,7 @@ build/*
 .DS_Store
 dist/*
 pip-wheel-metadata/
-env/
+env*/
 
 # CSR and CERT auto-generated during tests
 /tests/certs/selfsigned.csr

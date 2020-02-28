@@ -20,9 +20,8 @@ import sanic.app  # noqa
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
-from sanic.request import Request
+from sanic.request import Request, StreamBuffer
 from sanic.response import HTTPResponse, StreamingHTTPResponse
-from sanic.server import StreamBuffer
 from sanic.websocket import WebSocketConnection
 
 
@@ -255,19 +254,6 @@ class ASGIApp:
 
         return instance
 
-    async def read_body(self) -> bytes:
-        """
-        Read and return the entire body from an incoming ASGI message.
-        """
-        body = b""
-        more_body = True
-        while more_body:
-            message = await self.transport.receive()
-            body += message.get("body", b"")
-            more_body = message.get("more_body", False)
-
-        return body
-
     async def stream_body(self) -> None:
         """
         Read and stream the body in chunks from an incoming ASGI message.
@@ -277,13 +263,94 @@ class ASGIApp:
             return None
         return message.get("body", b"")
 
+    def respond(self, response):
+        headers: List[Tuple[bytes, bytes]] = []
+        cookies: Dict[str, str] = {}
+        try:
+            cookies = {
+                v.key: v
+                for _, v in list(
+                    filter(
+                        lambda item: item[0].lower() == "set-cookie",
+                        response.headers.items(),
+                    )
+                )
+            }
+            headers += [
+                (str(name).encode("latin-1"), str(value).encode("latin-1"))
+                for name, value in response.headers.items()
+                if name.lower() not in ["set-cookie"]
+            ]
+        except AttributeError:
+            logger.error(
+                "Invalid response object for url %s, "
+                "Expected Type: HTTPResponse, Actual Type: %s",
+                self.request.url,
+                type(response),
+            )
+            exception = ServerError("Invalid response type")
+            response = self.sanic_app.error_handler.response(
+                self.request, exception
+            )
+            headers = [
+                (str(name).encode("latin-1"), str(value).encode("latin-1"))
+                for name, value in response.headers.items()
+                if name not in (b"Set-Cookie",)
+            ]
+
+        if "content-length" not in response.headers and not isinstance(
+            response, StreamingHTTPResponse
+        ):
+            headers += [
+                (b"content-length", str(len(response.body)).encode("latin-1"))
+            ]
+
+        if "content-type" not in response.headers:
+            headers += [
+                (b"content-type", str(response.content_type).encode("latin-1"))
+            ]
+
+        if response.cookies:
+            cookies.update(
+                {
+                    v.key: v
+                    for _, v in response.cookies.items()
+                    if v.key not in cookies.keys()
+                }
+            )
+
+        headers += [
+            (b"set-cookie", cookie.encode("utf-8"))
+            for k, cookie in cookies.items()
+        ]
+        self.response_start = {
+            "type": "http.response.start",
+            "status": response.status,
+            "headers": headers,
+        }
+        self.response_body = response.body
+        return self
+
+    async def send(self, data=None, end_stream=None):
+        if data is None is end_stream:
+            end_stream = True
+        if self.response_start:
+            await self.transport.send(self.response_start)
+            self.response_start = None
+            if self.response_body:
+                data = self.response_body + data if data else self.response_body
+                self.response_body = None
+        await self.transport.send({
+            "type": "http.response.body",
+            "body": data.encode() if hasattr(data, "encode") else data,
+            "more_body": not end_stream,
+        })
+
     async def __call__(self) -> None:
         """
         Handle the incoming request.
         """
-        handler = self.sanic_app.handle_request
-        callback = None if self.ws else self.stream_callback
-        await handler(self.request, None, callback)
+        await self.sanic_app.handle_request(self.request)
 
     async def stream_callback(self, response: HTTPResponse) -> None:
         """

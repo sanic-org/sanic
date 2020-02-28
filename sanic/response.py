@@ -34,37 +34,6 @@ class BaseHTTPResponse:
             self._cookies = CookieJar(self.headers)
         return self._cookies
 
-    def get_headers(
-        self,
-        version="1.1",
-        keep_alive=False,
-        keep_alive_timeout=None,
-        body=b"",
-    ):
-        """.. deprecated:: 20.3:
-           This function is not public API and will be removed."""
-        if version != "1.1":
-            warnings.warn(
-                "Only HTTP/1.1 is currently supported (got {version})",
-                DeprecationWarning,
-            )
-
-        # self.headers get priority over content_type
-        if self.content_type and "Content-Type" not in self.headers:
-            self.headers["Content-Type"] = self.content_type
-
-        if keep_alive:
-            self.headers["Connection"] = "keep-alive"
-            if keep_alive_timeout is not None:
-                self.headers["Keep-Alive"] = keep_alive_timeout
-        else:
-            self.headers["Connection"] = "close"
-
-        if self.status in (304, 412):
-            self.headers = remove_entity_headers(self.headers)
-
-        return format_http1_response(self.status, self.headers.items(), body)
-
 
 class StreamingHTTPResponse(BaseHTTPResponse):
     __slots__ = (
@@ -75,6 +44,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         "headers",
         "chunked",
         "_cookies",
+        "send",
     )
 
     def __init__(
@@ -97,44 +67,15 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
         :param data: str or bytes-ish data to be written.
         """
-        data = self._encode_body(data)
+        await self.send(self._encode_body(data))
 
-        if self.chunked:
-            await self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
-        else:
-            await self.protocol.push_data(data)
-        await self.protocol.drain()
-
-    async def stream(
-        self, version="1.1", keep_alive=False, keep_alive_timeout=None
-    ):
-        """Streams headers, runs the `streaming_fn` callback that writes
-        content to the response body, then finalizes the response body.
-        """
-        if version != "1.1":
-            self.chunked = False
-        headers = self.get_headers(
-            version,
-            keep_alive=keep_alive,
-            keep_alive_timeout=keep_alive_timeout,
-        )
-        await self.protocol.push_data(headers)
-        await self.protocol.drain()
+    async def stream(self, request):
+        self.send = request.respond(
+            self.status,
+            self.headers,
+            self.content_type,
+        ).send
         await self.streaming_fn(self)
-        if self.chunked:
-            await self.protocol.push_data(b"0\r\n\r\n")
-        # no need to await drain here after this write, because it is the
-        # very last thing we write and nothing needs to wait for it.
-
-    def get_headers(
-        self, version="1.1", keep_alive=False, keep_alive_timeout=None
-    ):
-        if self.chunked and version == "1.1":
-            self.headers["Transfer-Encoding"] = "chunked"
-            self.headers.pop("Content-Length", None)
-
-        return super().get_headers(version, keep_alive, keep_alive_timeout)
-
 
 class HTTPResponse(BaseHTTPResponse):
     __slots__ = ("body", "status", "content_type", "headers", "_cookies")

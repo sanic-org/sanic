@@ -930,7 +930,7 @@ class Sanic:
         """
         pass
 
-    async def handle_request(self, request, write_callback, stream_callback):
+    async def handle_request(self, request):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
@@ -998,6 +998,7 @@ class Sanic:
             # issue a response.
             response = None
             cancelled = True
+            raise
         except Exception as e:
             # -------------------------------------------- #
             # Response Generation Failed
@@ -1045,19 +1046,52 @@ class Sanic:
             if cancelled:
                 raise CancelledError()
 
-        # pass the response to the correct callback
-        if write_callback is None or isinstance(
-            response, StreamingHTTPResponse
-        ):
-            if stream_callback:
-                await stream_callback(response)
-            else:
-                # Should only end here IF it is an ASGI websocket.
-                # TODO:
-                # - Add exception handling
+        try:
+            # pass the response to the correct callback
+            if response is None:
                 pass
-        else:
-            write_callback(response)
+            elif isinstance(response, StreamingHTTPResponse):
+                await response.stream(request)
+            elif isinstance(response, HTTPResponse):
+                await request.respond(response).send(end_stream=True)
+            else:
+                raise ServerError(f"Invalid response type {response} (need HTTPResponse)")
+        except Exception as e:
+            # -------------------------------------------- #
+            # Response Generation Failed
+            # -------------------------------------------- #
+
+            try:
+                response = self.error_handler.response(request, e)
+                if isawaitable(response):
+                    response = await response
+            except Exception as e:
+                if isinstance(e, SanicException):
+                    response = self.error_handler.default(
+                        request=request, exception=e
+                    )
+                elif self.debug:
+                    response = HTTPResponse(
+                        "Error while handling error: {}\nStack: {}".format(
+                            e, format_exc()
+                        ),
+                        status=500,
+                    )
+                else:
+                    response = HTTPResponse(
+                        "An error occurred while handling an error", status=500
+                    )
+
+            # pass the response to the correct callback
+            if response is None:
+                pass
+            elif isinstance(response, StreamingHTTPResponse):
+                await response.stream(request)
+            elif isinstance(response, HTTPResponse):
+                await request.respond(response).send(end_stream=True)
+            else:
+                raise ServerError(
+                    f"Invalid response type {response} (need HTTPResponse)")
 
     # -------------------------------------------------------------------- #
     # Testing

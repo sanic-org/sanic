@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
 
+from sanic.compat import Header
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
     parse_content_header,
@@ -16,6 +17,7 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
+from sanic.response import HTTPResponse
 from sanic.log import error_logger, logger
 
 
@@ -25,7 +27,6 @@ except ImportError:
     from json import loads as json_loads  # type: ignore
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
-EXPECT_HEADER = "EXPECT"
 
 # HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
 # > If the media type remains unknown, the recipient SHOULD treat it
@@ -47,12 +48,9 @@ class RequestParameters(dict):
 
 
 class StreamBuffer:
-    def __init__(self, protocol=None):
-        self._protocol = protocol
-
-    async def read(self):
-        """ Stop reading when gets None """
-        return await self._protocol.stream_body()
+    def __init__(self, protocol):
+        self.read = protocol.stream_body
+        self.respond = protocol.respond
 
     async def __aiter__(self):
         while True:
@@ -146,6 +144,15 @@ class Request:
         """.. deprecated:: 19.9
            Custom context is now stored in `request.custom_context.yourkey`"""
         setattr(self.ctx, key, value)
+
+    def respond(self, status=200, headers=None, content_type=DEFAULT_HTTP_CONTENT_TYPE):
+        return self.stream.respond(
+            status if isinstance(status, HTTPResponse) else HTTPResponse(
+                status=status,
+                headers=headers,
+                content_type=content_type,
+            )
+        )
 
     async def receive_body(self):
         self.body = b"".join([data async for data in self.stream])

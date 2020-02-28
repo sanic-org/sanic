@@ -2,7 +2,6 @@ import pytest
 
 from sanic.blueprints import Blueprint
 from sanic.exceptions import HeaderExpectationFailed
-from sanic.request import StreamBuffer
 from sanic.response import stream, text
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
@@ -18,7 +17,6 @@ def test_request_stream_method_view(app):
 
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, StreamBuffer)
             result = b""
             while True:
                 body = await request.stream.read()
@@ -49,7 +47,6 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
     class SimpleView(HTTPMethodView):
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, StreamBuffer)
             result = ""
             while True:
                 body = await request.stream.read()
@@ -99,7 +96,6 @@ def test_request_stream_app(app):
 
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -114,7 +110,6 @@ def test_request_stream_app(app):
 
     @app.put("/put", stream=True)
     async def put(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -129,7 +124,6 @@ def test_request_stream_app(app):
 
     @app.patch("/patch", stream=True)
     async def patch(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -203,7 +197,6 @@ async def test_request_stream_app_asgi(app):
 
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -218,7 +211,6 @@ async def test_request_stream_app_asgi(app):
 
     @app.put("/put", stream=True)
     async def put(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -233,7 +225,6 @@ async def test_request_stream_app_asgi(app):
 
     @app.patch("/patch", stream=True)
     async def patch(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -288,7 +279,6 @@ def test_request_stream_handle_exception(app):
 
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
         result = b""
         while True:
             body = await request.stream.read()
@@ -333,7 +323,6 @@ def test_request_stream_blueprint(app):
 
     @bp.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -348,7 +337,6 @@ def test_request_stream_blueprint(app):
 
     @bp.put("/put", stream=True)
     async def put(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -363,7 +351,6 @@ def test_request_stream_blueprint(app):
 
     @bp.patch("/patch", stream=True)
     async def patch(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -373,7 +360,6 @@ def test_request_stream_blueprint(app):
         return text(result)
 
     async def post_add_route(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -437,7 +423,6 @@ def test_request_stream_composition_view(app):
         return text("OK")
 
     async def post_handler(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -470,7 +455,6 @@ def test_request_stream(app):
 
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, StreamBuffer)
             result = ""
             while True:
                 body = await request.stream.read()
@@ -481,7 +465,6 @@ def test_request_stream(app):
 
     @app.post("/stream", stream=True)
     async def handler(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -496,7 +479,6 @@ def test_request_stream(app):
 
     @bp.post("/bp_stream", stream=True)
     async def bp_stream(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -513,7 +495,6 @@ def test_request_stream(app):
         return text("OK")
 
     async def post_handler(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()

@@ -202,6 +202,8 @@ class HttpProtocol(asyncio.Protocol):
 
     def check_timeouts(self):
         """Runs itself once a second to enforce any expired timeouts."""
+        if not self._task:
+            return
         duration = current_time() - self._time
         lifespan = self._http.lifespan
         if lifespan == Lifespan.IDLE and duration > self.keep_alive_timeout:

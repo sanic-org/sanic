@@ -54,7 +54,7 @@ def test_middleware_response(app):
 
 
 def test_middleware_response_exception(app):
-    result = {"status_code": None}
+    result = {"status_code": "middleware not run"}
 
     @app.middleware("response")
     async def process_response(request, response):

@@ -469,6 +469,7 @@ def test_file_stream_response_range(
         )
 
     request, response = app.test_client.get("/files/{}".format(file_name))
+    print(response.body)
     assert response.status == 206
     assert "Content-Range" in response.headers
     assert response.headers["Content-Range"] == "bytes {}-{}/{}".format(

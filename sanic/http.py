@@ -128,13 +128,13 @@ class Http:
                     logger.error(f"{self.request} body not consumed.")
                     async for _ in self:
                         pass
-            except Exception as e:
-                self.exception = e
-            except BaseException:
+            except CancelledError:
                 # Exit after trying to finish a response
                 self.keep_alive = False
                 if self.exception is None:
                     self.exception = ServiceUnavailable(f"Cancelled")
+            except Exception as e:
+                self.exception = e
             if self.exception:
                 e, self.exception = self.exception, None
                 # Exception while idle? Probably best to close connection

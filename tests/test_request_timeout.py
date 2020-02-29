@@ -79,8 +79,12 @@ class DelayableSanicTestClient(SanicTestClient):
 
 request_timeout_default_app = Sanic("test_request_timeout_default")
 request_no_timeout_app = Sanic("test_request_no_timeout")
-request_timeout_default_app.config.REQUEST_TIMEOUT = 0.6
-request_no_timeout_app.config.REQUEST_TIMEOUT = 0.6
+
+# Note: The delayed client pauses before making a request, so technically
+# it is in keep alive duration. Earlier Sanic versions entered a new connection
+# in request mode even if no bytes of request were received.
+request_timeout_default_app.config.KEEP_ALIVE_TIMEOUT = 0.6
+request_no_timeout_app.config.KEEP_ALIVE_TIMEOUT = 0.6
 
 
 @request_timeout_default_app.route("/1")

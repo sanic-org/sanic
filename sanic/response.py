@@ -76,6 +76,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             self.content_type,
         ).send
         await self.streaming_fn(self)
+        await self.send(end_stream=True)
 
 class HTTPResponse(BaseHTTPResponse):
     __slots__ = ("body", "status", "content_type", "headers", "_cookies")

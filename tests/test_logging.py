@@ -109,12 +109,11 @@ def test_log_connection_lost(app, debug, monkeypatch):
     @app.route("/conn_lost")
     async def conn_lost(request):
         response = text("Ok")
-        response.output = Mock(side_effect=RuntimeError)
+        request.transport.close()
         return response
 
-    with pytest.raises(ValueError):
-        # catch ValueError: Exception during request
-        app.test_client.get("/conn_lost", debug=debug)
+    req, res = app.test_client.get("/conn_lost", debug=debug)
+    assert res is None
 
     log = stream.getvalue()
 

@@ -167,24 +167,28 @@ class HttpProtocol(asyncio.Protocol):
         await self._data_received.wait()
 
     def check_timeouts(self):
-        """Runs itself once a second to enforce any expired timeouts."""
-        if not self._task:
-            return
-        duration = current_time() - self._time
-        stage = self._http.stage
-        if stage is Stage.IDLE and duration > self.keep_alive_timeout:
-            logger.debug("KeepAlive Timeout. Closing connection.")
-        elif stage is Stage.REQUEST and duration > self.request_timeout:
-            self._http.exception = RequestTimeout("Request Timeout")
-        elif (
-            stage in (Stage.REQUEST, Stage.FAILED)
-            and duration > self.response_timeout
-        ):
-            self._http.exception = ServiceUnavailable("Response Timeout")
-        else:
-            self.loop.call_later(1.0, self.check_timeouts)
-            return
-        self._task.cancel()
+        """Runs itself periodically to enforce any expired timeouts."""
+        try:
+            if not self._task:
+                return
+            duration = current_time() - self._time
+            stage = self._http.stage
+            if stage is Stage.IDLE and duration > self.keep_alive_timeout:
+                logger.debug("KeepAlive Timeout. Closing connection.")
+            elif stage is Stage.REQUEST and duration > self.request_timeout:
+                self._http.exception = RequestTimeout("Request Timeout")
+            elif (
+                stage in (Stage.HANDLER, Stage.RESPONSE, Stage.FAILED)
+                and duration > self.response_timeout
+            ):
+                self._http.exception = RequestTimeout("Response Timeout")
+            else:
+                interval = min(self.keep_alive_timeout, self.request_timeout, self.response_timeout) / 2
+                self.loop.call_later(max(0.1, interval), self.check_timeouts)
+                return
+            self._task.cancel()
+        except:
+            logger.exception("protocol.check_timeouts")
 
     async def send(self, data):
         """Writes data with backpressure control."""
@@ -232,6 +236,10 @@ class HttpProtocol(asyncio.Protocol):
             self.resume_writing()
             if self._task:
                 self._task.cancel()
+            if self._debug and self._http and self._http.request:
+                logger.error(
+                    f"Connection lost before response written @ {self._http.request.ip}",
+                )
         except:
             logger.exception("protocol.connection_lost")
 

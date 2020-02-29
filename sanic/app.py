@@ -930,7 +930,7 @@ class Sanic:
         """
         pass
 
-    async def handle_exception(self, request, exception):
+    async def handle_exception(self, request, exception, name=""):
         try:
             response = self.error_handler.response(request, exception)
             if isawaitable(response):
@@ -946,6 +946,17 @@ class Sanic:
             else:
                 response = HTTPResponse(
                     "An error occurred while handling an error", status=500
+                )
+        # Run response middleware
+        if response is not None:
+            try:
+                response = await self._run_response_middleware(
+                    request, response, request_name=name
+                )
+            except Exception:
+                error_logger.exception(
+                    "Exception occurred in one of response "
+                    "middleware handlers"
                 )
         return response
 
@@ -1011,62 +1022,34 @@ class Sanic:
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response
-        except CancelledError:
-            # If response handler times out, the server handles the error
-            # and cancels the handle_request job.
-            # In this case, the transport is already closed and we cannot
-            # issue a response.
-            response = None
-            cancelled = True
-            raise
-        except Exception as e:
-            # -------------------------------------------- #
-            # Response Generation Failed
-            # -------------------------------------------- #
-            response = await self.handle_exception(request, e)
-        finally:
-            # -------------------------------------------- #
-            # Response Middleware
-            # -------------------------------------------- #
-            # Don't run response middleware if response is None
+            # Run response middleware
             if response is not None:
                 try:
                     response = await self._run_response_middleware(
                         request, response, request_name=name
                     )
-                except CancelledError:
-                    # Response middleware can timeout too, as above.
-                    response = None
-                    cancelled = True
-                except BaseException:
+                except Exception:
                     error_logger.exception(
                         "Exception occurred in one of response "
                         "middleware handlers"
                     )
-            if cancelled:
-                raise CancelledError()
-
-        try:
-            # pass the response to the correct callback
+            # Stream response
             if isinstance(response, StreamingHTTPResponse):
                 await response.stream(request)
             elif isinstance(response, HTTPResponse):
                 await request.respond(response).send(end_stream=True)
             else:
-                raise ServerError(f"Invalid response type {response} (need HTTPResponse)")
-        except Exception as e:
-            response = await self.handle_exception(request, e)
-
-            # pass the response to the correct callback
-            if response is None:
-                pass
-            elif isinstance(response, StreamingHTTPResponse):
-                await response.stream(request)
-            elif isinstance(response, HTTPResponse):
-                await request.respond(response).send(end_stream=True)
-            else:
                 raise ServerError(
-                    f"Invalid response type {response} (need HTTPResponse)")
+                    f"Invalid response type {response!r} (need HTTPResponse)"
+                )
+
+        except Exception as e:
+            # -------------------------------------------- #
+            # Response Generation Failed
+            # -------------------------------------------- #
+            response = await self.handle_exception(request, e, name)
+            await request.respond(response).send(end_stream=True)
+
 
     # -------------------------------------------------------------------- #
     # Testing

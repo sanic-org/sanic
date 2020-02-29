@@ -1,5 +1,7 @@
+from asyncio import CancelledError
 from enum import Enum
 
+from sanic.compat import Header
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -14,7 +16,6 @@ from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.log import access_logger, logger
 from sanic.request import Request
 from sanic.response import HTTPResponse
-from sanic.compat import Header
 
 
 class Stage(Enum):
@@ -34,119 +35,121 @@ class Http:
         self.recv_buffer = protocol.recv_buffer
         self.protocol = protocol
         self.expecting_continue = False
-        # Note: connections are initially in request mode and do not obey
-        # keep-alive timeout like with some other servers.
-        self.stage = Stage.REQUEST
+        self.stage = Stage.IDLE
         self.keep_alive = True
         self.head_only = None
+        self.request = None
+        self.exception = None
+
+    async def http1_receive_request(self):
+        buf = self.recv_buffer
+        pos = 0
+        while len(buf) < self.protocol.request_max_size:
+            if buf:
+                pos = buf.find(b"\r\n\r\n", pos)
+                if pos >= 0:
+                    break
+                pos = max(0, len(buf) - 3)
+            await self._receive_more()
+            if self.stage is Stage.IDLE:
+                self.stage = Stage.REQUEST
+        else:
+            raise PayloadTooLarge("Payload Too Large")
+
+        self.protocol._total_request_size = pos + 4
+
+        try:
+            reqline, *headers = buf[:pos].decode().split("\r\n")
+            method, self.url, protocol = reqline.split(" ")
+            if protocol not in ("HTTP/1.0", "HTTP/1.1"):
+                raise Exception
+            self.head_only = method.upper() == "HEAD"
+            headers = Header(
+                (name.lower(), value.lstrip())
+                for name, value in (h.split(":", 1) for h in headers)
+            )
+        except:
+            raise InvalidUsage("Bad Request")
+        request = self.protocol.request_class(
+            url_bytes=self.url.encode(),
+            headers=headers,
+            version=protocol[-3:],
+            method=method,
+            transport=self.protocol.transport,
+            app=self.protocol.app,
+        )
+
+        # Prepare a request object from the header received
+        request.stream = self
+        self.protocol.state["requests_count"] += 1
+        self.keep_alive = (
+            protocol == "HTTP/1.1"
+            or headers.get("connection", "").lower() == "keep-alive"
+        )
+        # Prepare for request body
+        body = headers.get("transfer-encoding") == "chunked" or int(
+            headers.get("content-length", 0)
+        )
+        self.request_chunked = False
+        self.request_bytes_left = 0
+        if body:
+            expect = headers.get("expect")
+            if expect:
+                if expect.lower() == "100-continue":
+                    self.expecting_continue = True
+                else:
+                    raise HeaderExpectationFailed(
+                        f"Unknown Expect: {expect}")
+            request.stream = self
+            if body is True:
+                self.request_chunked = True
+                pos -= 2  # One CRLF stays in buffer
+            else:
+                self.request_bytes_left = body
+        # Remove header and its trailing CRLF
+        del buf[: pos + 4]
+        self.stage = Stage.HANDLER
+        self.request = request
 
     async def http1(self):
         """HTTP 1.1 connection handler"""
-        buf = self.recv_buffer
-        self.url = None
-        while self.keep_alive:
-            # Read request header
-            pos = 0
-            while len(buf) < self.protocol.request_max_size:
-                if buf:
-                    pos = buf.find(b"\r\n\r\n", pos)
-                    if pos >= 0:
-                        break
-                    pos = max(0, len(buf) - 3)
-                await self._receive_more()
+        while self.stage is Stage.IDLE and self.keep_alive:
+            try:
+                # Receive request header and call handler
+                await self.http1_receive_request()
+                await self.protocol.request_handler(self.request)
+                if self.stage is Stage.HANDLER:
+                    raise ServerError("Handler produced no response")
+                # Finish sending a response (if no error)
+                if self.stage is Stage.RESPONSE:
+                    await self.send(end_stream=True)
+                # Consume any remaining request body
+                if self.request_bytes_left or self.request_chunked:
+                    logger.error(f"{self.request} body not consumed.")
+                    async for _ in self:
+                        pass
+            except Exception as e:
+                self.exception = e
+            except BaseException:
+                # Exit after trying to finish a response
+                self.keep_alive = False
+                if self.exception is None:
+                    self.exception = ServiceUnavailable(f"Cancelled")
+            if self.exception:
+                e, self.exception = self.exception, None
+                # Exception while idle? Probably best to close connection
                 if self.stage is Stage.IDLE:
-                    self.stage = Stage.REQUEST
-            else:
-                self.stage = Stage.HANDLER
-                raise PayloadTooLarge("Payload Too Large")
+                    return
+                # Request failure? Try to respond but then disconnect
+                if self.stage is Stage.REQUEST:
+                    self.keep_alive = False
+                    self.stage = Stage.HANDLER
+                # Return an error page if possible
+                if self.stage is Stage.HANDLER:
+                    app = self.protocol.app
+                    response = await app.handle_exception(self.request, e)
+                    await self.respond(response).send(end_stream=True)
 
-            self.protocol._total_request_size = pos + 4
-
-            try:
-                reqline, *headers = buf[:pos].decode().split("\r\n")
-                method, self.url, protocol = reqline.split(" ")
-                if protocol not in ("HTTP/1.0", "HTTP/1.1"):
-                    raise Exception
-                self.head_only = method.upper() == "HEAD"
-                headers = Header(
-                    (name.lower(), value.lstrip())
-                    for name, value in (h.split(":", 1) for h in headers)
-                )
-            except:
-                self.stage = Stage.HANDLER
-                raise InvalidUsage("Bad Request")
-
-            # Prepare a request object from the header received
-            request = self.protocol.request_class(
-                url_bytes=self.url.encode(),
-                headers=headers,
-                version=protocol[-3:],
-                method=method,
-                transport=self.protocol.transport,
-                app=self.protocol.app,
-            )
-            request.stream = self
-            self.protocol.state["requests_count"] += 1
-            self.keep_alive = (
-                protocol == "HTTP/1.1"
-                or headers.get("connection", "").lower() == "keep-alive"
-            )
-            # Prepare for request body
-            body = headers.get("transfer-encoding") == "chunked" or int(
-                headers.get("content-length", 0)
-            )
-            self.request_chunked = False
-            self.request_bytes_left = 0
-            self.stage = Stage.HANDLER
-            if body:
-                expect = headers.get("expect")
-                if expect:
-                    if expect.lower() == "100-continue":
-                        self.expecting_continue = True
-                    else:
-                        raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
-                request.stream = self
-                if body is True:
-                    self.request_chunked = True
-                    pos -= 2  # One CRLF stays in buffer
-                else:
-                    self.request_bytes_left = body
-            # Remove header and its trailing CRLF
-            del buf[: pos + 4]
-
-            # Run handler
-            try:
-                await self.protocol.request_handler(request)
-            except Exception:
-                logger.exception("Uncaught from app/handler")
-                await self.write_error(ServerError("Internal Server Error"))
-                if self.stage is Stage.IDLE:
-                    continue
-
-            if self.stage is Stage.HANDLER:
-                await self.respond(HTTPResponse(status=204)).send(end_stream=True)
-
-            # Finish sending a response (if no error)
-            elif self.stage is Stage.RESPONSE:
-                await self.send(end_stream=True)
-
-            # Consume any remaining request body
-            if self.request_bytes_left or self.request_chunked:
-                logger.error(
-                    f"Handler of {method} {url} did not consume request body."
-                )
-                while await self.read():
-                    pass
-
-            self.stage = Stage.IDLE
-
-    async def write_error(self, e):
-        if self.stage is Stage.HANDLER:
-            try:
-                response = HTTPResponse(f"{e}", e.status_code, content_type="text/plain")
-                await self.respond(response).send(end_stream=True)
-            except:
-                logger.exception("Error sending error")
 
     # Request methods
 

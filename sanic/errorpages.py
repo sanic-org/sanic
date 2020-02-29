@@ -71,10 +71,14 @@ def _render_traceback_html(request, exception):
         exc_value = exc_value.__cause__
 
     traceback_html = TRACEBACK_BORDER.join(reversed(exceptions))
-    appname = escape(request.app.name)
+    if request is not None:
+        appname = escape(request.app.name)
+        path = escape(request.path)
+    else:
+        appname = "<no request received>"
+        path = "unknown"
     name = escape(exception.__class__.__name__)
     value = escape(exception)
-    path = escape(request.path)
     return (
         f"<h2>Traceback of {appname} (most recent call last):</h2>"
         f"{traceback_html}"

@@ -930,6 +930,26 @@ class Sanic:
         """
         pass
 
+    async def handle_exception(self, request, exception):
+        try:
+            response = self.error_handler.response(request, exception)
+            if isawaitable(response):
+                response = await response
+        except Exception as e:
+            if isinstance(e, SanicException):
+                response = self.error_handler.default(request, e)
+            elif self.debug:
+                response = HTTPResponse(
+                    f"Error while handling error: {e}\nStack: {format_exc()}",
+                    status=500,
+                )
+            else:
+                response = HTTPResponse(
+                    "An error occurred while handling an error", status=500
+                )
+        return response
+
+
     async def handle_request(self, request):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
@@ -1003,27 +1023,7 @@ class Sanic:
             # -------------------------------------------- #
             # Response Generation Failed
             # -------------------------------------------- #
-
-            try:
-                response = self.error_handler.response(request, e)
-                if isawaitable(response):
-                    response = await response
-            except Exception as e:
-                if isinstance(e, SanicException):
-                    response = self.error_handler.default(
-                        request=request, exception=e
-                    )
-                elif self.debug:
-                    response = HTTPResponse(
-                        "Error while handling error: {}\nStack: {}".format(
-                            e, format_exc()
-                        ),
-                        status=500,
-                    )
-                else:
-                    response = HTTPResponse(
-                        "An error occurred while handling an error", status=500
-                    )
+            response = await self.handle_exception(request, e)
         finally:
             # -------------------------------------------- #
             # Response Middleware
@@ -1048,39 +1048,14 @@ class Sanic:
 
         try:
             # pass the response to the correct callback
-            if response is None:
-                pass
-            elif isinstance(response, StreamingHTTPResponse):
+            if isinstance(response, StreamingHTTPResponse):
                 await response.stream(request)
             elif isinstance(response, HTTPResponse):
                 await request.respond(response).send(end_stream=True)
             else:
                 raise ServerError(f"Invalid response type {response} (need HTTPResponse)")
         except Exception as e:
-            # -------------------------------------------- #
-            # Response Generation Failed
-            # -------------------------------------------- #
-
-            try:
-                response = self.error_handler.response(request, e)
-                if isawaitable(response):
-                    response = await response
-            except Exception as e:
-                if isinstance(e, SanicException):
-                    response = self.error_handler.default(
-                        request=request, exception=e
-                    )
-                elif self.debug:
-                    response = HTTPResponse(
-                        "Error while handling error: {}\nStack: {}".format(
-                            e, format_exc()
-                        ),
-                        status=500,
-                    )
-                else:
-                    response = HTTPResponse(
-                        "An error occurred while handling an error", status=500
-                    )
+            response = await self.handle_exception(request, e)
 
             # pass the response to the correct callback
             if response is None:

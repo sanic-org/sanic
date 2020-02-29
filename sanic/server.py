@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 
+from asyncio import CancelledError
 from collections import deque
 from functools import partial
 from inspect import isawaitable
@@ -11,7 +12,8 @@ from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
-from time import time, monotonic as current_time
+from time import monotonic as current_time
+from time import time
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -145,20 +147,8 @@ class HttpProtocol(asyncio.Protocol):
             self._http = Http(self)
             self._time = current_time()
             self.check_timeouts()
-            try:
-                await self._http.http1()
-            except asyncio.CancelledError:
-                await self._http.write_error(
-                    self._exception
-                    or ServiceUnavailable("Request handler cancelled")
-                )
-            except SanicException as e:
-                await self._http.write_error(e)
-            except BaseException as e:
-                logger.exception(
-                    f"Uncaught exception while handling URL {self._http.url}"
-                )
-        except asyncio.CancelledError:
+            await self._http.http1()
+        except CancelledError:
             pass
         except:
             logger.exception("protocol.connection_task uncaught")
@@ -185,12 +175,12 @@ class HttpProtocol(asyncio.Protocol):
         if stage is Stage.IDLE and duration > self.keep_alive_timeout:
             logger.debug("KeepAlive Timeout. Closing connection.")
         elif stage is Stage.REQUEST and duration > self.request_timeout:
-            self._exception = RequestTimeout("Request Timeout")
+            self._http.exception = RequestTimeout("Request Timeout")
         elif (
             stage in (Stage.REQUEST, Stage.FAILED)
             and duration > self.response_timeout
         ):
-            self._exception = ServiceUnavailable("Response Timeout")
+            self._http.exception = ServiceUnavailable("Response Timeout")
         else:
             self.loop.call_later(1.0, self.check_timeouts)
             return

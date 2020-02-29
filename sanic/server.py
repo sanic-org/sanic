@@ -23,7 +23,7 @@ from sanic.exceptions import (
     ServerError,
     ServiceUnavailable,
 )
-from sanic.http import Http, Lifespan
+from sanic.http import Http, Stage
 from sanic.log import access_logger, logger
 from sanic.request import Request
 
@@ -71,7 +71,6 @@ class HttpProtocol(asyncio.Protocol):
         # connection management
         "_total_request_size",
         "_last_response_time",
-        "keep_alive",
         "state",
         "url",
         "_debug",
@@ -82,6 +81,7 @@ class HttpProtocol(asyncio.Protocol):
         "_task",
         "_http",
         "_exception",
+        "recv_buffer",
     )
 
     def __init__(
@@ -126,7 +126,6 @@ class HttpProtocol(asyncio.Protocol):
         self.request_max_size = request_max_size
         self.request_class = request_class or Request
         self._total_request_size = 0
-        self.keep_alive = keep_alive
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
@@ -136,30 +135,40 @@ class HttpProtocol(asyncio.Protocol):
         self._can_write.set()
         self._exception = None
 
-    # -------------------------------------------- #
-    # Connection
-    # -------------------------------------------- #
+    async def connection_task(self):
+        """Run a HTTP connection.
 
-    def connection_made(self, transport):
-        self.connections.add(self)
-        self.transport = transport
-        #self.check_timeouts()
-        self._http = Http(self)
-        self._task = self.loop.create_task(self.connection_task())
-        self._time = current_time()
-        self.check_timeouts()
-
-    def connection_lost(self, exc):
-        self.connections.discard(self)
-        if self._task:
-            self._task.cancel()
+        Timeouts and some additional error handling occur here, while most of
+        everything else happens in class Http or in code called from there.
+        """
+        try:
+            self._http = Http(self)
+            self._time = current_time()
+            self.check_timeouts()
+            try:
+                await self._http.http1()
+            except asyncio.CancelledError:
+                await self._http.write_error(
+                    self._exception
+                    or ServiceUnavailable("Request handler cancelled")
+                )
+            except SanicException as e:
+                await self._http.write_error(e)
+            except BaseException as e:
+                logger.exception(
+                    f"Uncaught exception while handling URL {self._http.url}"
+                )
+        except asyncio.CancelledError:
+            pass
+        except:
+            logger.exception("protocol.connection_task uncaught")
+        finally:
+            self._http = None
             self._task = None
-
-    def pause_writing(self):
-        self._can_write.clear()
-
-    def resume_writing(self):
-        self._can_write.set()
+            try:
+                self.close()
+            except:
+                logger.exception("Closing failed")
 
     async def receive_more(self):
         """Wait until more data is received into self._buffer."""
@@ -167,51 +176,18 @@ class HttpProtocol(asyncio.Protocol):
         self._data_received.clear()
         await self._data_received.wait()
 
-    # -------------------------------------------- #
-    # Parsing
-    # -------------------------------------------- #
-
-    def data_received(self, data):
-        self._time = current_time()
-        if not data:
-            return self.close()
-        self._http.recv_buffer += data
-        if len(self._http.recv_buffer) > self.request_max_size:
-            self.transport.pause_reading()
-
-        if self._data_received:
-            self._data_received.set()
-
-    async def connection_task(self):
-        try:
-            await self._http.http1()
-        except asyncio.CancelledError:
-            await self._http.write_error(
-                self._exception
-                or ServiceUnavailable("Request handler cancelled")
-            )
-        except SanicException as e:
-            await self._http.write_error(e)
-        except BaseException as e:
-            logger.exception(f"Uncaught exception while handling URL {url}")
-        finally:
-            try:
-                self.close()
-            except:
-                logger.exception("Closing failed")
-
     def check_timeouts(self):
         """Runs itself once a second to enforce any expired timeouts."""
         if not self._task:
             return
         duration = current_time() - self._time
-        lifespan = self._http.lifespan
-        if lifespan == Lifespan.IDLE and duration > self.keep_alive_timeout:
+        stage = self._http.stage
+        if stage is Stage.IDLE and duration > self.keep_alive_timeout:
             logger.debug("KeepAlive Timeout. Closing connection.")
-        elif lifespan == Lifespan.REQUEST and duration > self.request_timeout:
+        elif stage is Stage.REQUEST and duration > self.request_timeout:
             self._exception = RequestTimeout("Request Timeout")
         elif (
-            lifespan.value > Lifespan.REQUEST.value
+            stage in (Stage.REQUEST, Stage.FAILED)
             and duration > self.response_timeout
         ):
             self._exception = ServiceUnavailable("Response Timeout")
@@ -220,20 +196,18 @@ class HttpProtocol(asyncio.Protocol):
             return
         self._task.cancel()
 
-    async def drain(self):
+    async def send(self, data):
+        """Writes data with backpressure control."""
         await self._can_write.wait()
-
-    async def push_data(self, data):
-        self._time = current_time()
-        await self.drain()
         self.transport.write(data)
+        self._time = current_time()
 
     def close_if_idle(self):
         """Close the connection if a request is not being sent or received
 
         :return: boolean - True if closed, false if staying open
         """
-        if self._http.lifespan == Lifespan.IDLE:
+        if self._http.stage is Stage.IDLE:
             self.close()
             return True
         return False
@@ -242,16 +216,56 @@ class HttpProtocol(asyncio.Protocol):
         """
         Force close the connection.
         """
-        if self.transport is not None:
-            try:
-                if self._task:
-                    self._task.cancel()
-                    self._task = None
-                self.transport.close()
-                self.resume_writing()
-            finally:
-                self.transport = None
+        # Cause a call to connection_lost where further cleanup occurs
+        if self.transport:
+            self.transport.close()
+            self.transport = None
 
+    # -------------------------------------------- #
+    # Only asyncio.Protocol callbacks below this
+    # -------------------------------------------- #
+
+    def connection_made(self, transport):
+        try:
+            # TODO: Benchmark to find suitable write buffer limits
+            transport.set_write_buffer_limits(low=16384, high=65536)
+            self.connections.add(self)
+            self.transport = transport
+            self._task = self.loop.create_task(self.connection_task())
+            self.recv_buffer = bytearray()
+        except:
+            logger.exception("protocol.connect_made")
+
+    def connection_lost(self, exc):
+        try:
+            self.connections.discard(self)
+            self.resume_writing()
+            if self._task:
+                self._task.cancel()
+        except:
+            logger.exception("protocol.connection_lost")
+
+    def pause_writing(self):
+        self._can_write.clear()
+
+    def resume_writing(self):
+        self._can_write.set()
+
+    def data_received(self, data):
+        try:
+            self._time = current_time()
+            if not data:
+                return self.close()
+            self.recv_buffer += data
+
+            # Buffer up to request max size
+            if len(self.recv_buffer) > self.request_max_size:
+                self.transport.pause_reading()
+
+            if self._data_received:
+                self._data_received.set()
+        except:
+            logger.exception("protocol.data_received")
 
 def trigger_events(events, loop):
     """Trigger event callbacks (functions or async)

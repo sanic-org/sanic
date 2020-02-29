@@ -20,7 +20,7 @@ import sanic.app  # noqa
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
-from sanic.request import Request, StreamBuffer
+from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.websocket import WebSocketConnection
 
@@ -250,11 +250,11 @@ class ASGIApp:
                 instance.transport,
                 sanic_app,
             )
-            instance.request.stream = StreamBuffer(protocol=instance)
+            instance.request.stream = instance
 
         return instance
 
-    async def stream_body(self) -> None:
+    async def read(self) -> None:
         """
         Read and stream the body in chunks from an incoming ASGI message.
         """
@@ -262,6 +262,13 @@ class ASGIApp:
         if not message.get("more_body", False):
             return None
         return message.get("body", b"")
+
+    async def __aiter__(self):
+        while True:
+            data = await self.read()
+            if not data:
+                return
+            yield data
 
     def respond(self, response):
         headers: List[Tuple[bytes, bytes]] = []

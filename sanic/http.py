@@ -17,7 +17,7 @@ from sanic.response import HTTPResponse
 from sanic.compat import Header
 
 
-class Lifespan(Enum):
+class Stage(Enum):
     IDLE = 0  # Waiting for request
     REQUEST = 1  # Request headers being received
     HANDLER = 3  # Headers done, handler running
@@ -29,20 +29,21 @@ HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 class Http:
     def __init__(self, protocol):
-        self._send = protocol.push_data
+        self._send = protocol.send
         self._receive_more = protocol.receive_more
+        self.recv_buffer = protocol.recv_buffer
         self.protocol = protocol
-        self.recv_buffer = bytearray()
         self.expecting_continue = False
         # Note: connections are initially in request mode and do not obey
         # keep-alive timeout like with some other servers.
-        self.lifespan = Lifespan.REQUEST
+        self.stage = Stage.REQUEST
+        self.keep_alive = True
+        self.head_only = None
 
     async def http1(self):
         """HTTP 1.1 connection handler"""
         buf = self.recv_buffer
-        self.keep_alive = True
-        url = None
+        self.url = None
         while self.keep_alive:
             # Read request header
             pos = 0
@@ -53,17 +54,17 @@ class Http:
                         break
                     pos = max(0, len(buf) - 3)
                 await self._receive_more()
-                if self.lifespan is Lifespan.IDLE:
-                    self.lifespan = Lifespan.REQUEST
+                if self.stage is Stage.IDLE:
+                    self.stage = Stage.REQUEST
             else:
-                self.lifespan = Lifespan.HANDLER
+                self.stage = Stage.HANDLER
                 raise PayloadTooLarge("Payload Too Large")
 
             self.protocol._total_request_size = pos + 4
 
             try:
                 reqline, *headers = buf[:pos].decode().split("\r\n")
-                method, url, protocol = reqline.split(" ")
+                method, self.url, protocol = reqline.split(" ")
                 if protocol not in ("HTTP/1.0", "HTTP/1.1"):
                     raise Exception
                 self.head_only = method.upper() == "HEAD"
@@ -72,12 +73,12 @@ class Http:
                     for name, value in (h.split(":", 1) for h in headers)
                 )
             except:
-                self.lifespan = Lifespan.HANDLER
+                self.stage = Stage.HANDLER
                 raise InvalidUsage("Bad Request")
 
             # Prepare a request object from the header received
             request = self.protocol.request_class(
-                url_bytes=url.encode(),
+                url_bytes=self.url.encode(),
                 headers=headers,
                 version=protocol[-3:],
                 method=method,
@@ -86,8 +87,6 @@ class Http:
             )
             request.stream = self
             self.protocol.state["requests_count"] += 1
-            self.protocol.url = url
-            self.protocol.request = request
             self.keep_alive = (
                 protocol == "HTTP/1.1"
                 or headers.get("connection", "").lower() == "keep-alive"
@@ -98,7 +97,7 @@ class Http:
             )
             self.request_chunked = False
             self.request_bytes_left = 0
-            self.lifespan = Lifespan.HANDLER
+            self.stage = Stage.HANDLER
             if body:
                 expect = headers.get("expect")
                 if expect:
@@ -121,14 +120,14 @@ class Http:
             except Exception:
                 logger.exception("Uncaught from app/handler")
                 await self.write_error(ServerError("Internal Server Error"))
-                if self.lifespan is Lifespan.IDLE:
+                if self.stage is Stage.IDLE:
                     continue
 
-            if self.lifespan is Lifespan.HANDLER:
+            if self.stage is Stage.HANDLER:
                 await self.respond(HTTPResponse(status=204)).send(end_stream=True)
 
             # Finish sending a response (if no error)
-            elif self.lifespan is Lifespan.RESPONSE:
+            elif self.stage is Stage.RESPONSE:
                 await self.send(end_stream=True)
 
             # Consume any remaining request body
@@ -139,10 +138,10 @@ class Http:
                 while await self.read():
                     pass
 
-            self.lifespan = Lifespan.IDLE
+            self.stage = Stage.IDLE
 
     async def write_error(self, e):
-        if self.lifespan is Lifespan.HANDLER:
+        if self.stage is Stage.HANDLER:
             try:
                 response = HTTPResponse(f"{e}", e.status_code, content_type="text/plain")
                 await self.respond(response).send(end_stream=True)
@@ -210,8 +209,8 @@ class Http:
         Nothing is sent until the first send() call on the returned object, and
         calling this function multiple times will just alter the response to be
         given."""
-        if self.lifespan is not Lifespan.HANDLER:
-            self.lifespan = Lifespan.FAILED
+        if self.stage is not Stage.HANDLER:
+            self.stage = Stage.FAILED
             raise RuntimeError("Response already started")
         if not isinstance(response.status, int) or response.status < 200:
             raise RuntimeError(f"Invalid response status {response.status!r}")
@@ -240,7 +239,7 @@ class Http:
         size = len(data) if data is not None else 0
 
         # Headers not yet sent?
-        if self.lifespan is Lifespan.HANDLER:
+        if self.stage is Stage.HANDLER:
             if self.response.body:
                 data = self.response.body + data if data else self.response.body
                 size = len(data)
@@ -297,14 +296,14 @@ class Http:
                 if status != 417:
                     ret = HTTP_CONTINUE + ret
             # Send response
-            self.lifespan = Lifespan.IDLE if end_stream else Lifespan.RESPONSE
+            self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
             return ret
 
         # HEAD request: don't send body
         if self.head_only:
             return None
 
-        if self.lifespan is not Lifespan.RESPONSE:
+        if self.stage is not Stage.RESPONSE:
             if size:
                 raise RuntimeError("Cannot send data to a closed stream")
             return
@@ -313,7 +312,7 @@ class Http:
         if self.response_bytes_left is True:
             if end_stream:
                 self.response_bytes_left = None
-                self.lifespan = Lifespan.IDLE
+                self.stage = Stage.IDLE
                 if size:
                     return b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
                 return b"0\r\n\r\n"
@@ -325,5 +324,5 @@ class Http:
             if self.response_bytes_left <= 0:
                 if self.response_bytes_left < 0:
                     raise ServerError("Response was bigger than content-length")
-                self.lifespan = Lifespan.IDLE
+                self.stage = Stage.IDLE
             return data if size else None

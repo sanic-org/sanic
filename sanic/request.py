@@ -47,19 +47,6 @@ class RequestParameters(dict):
         return super().get(name, default)
 
 
-class StreamBuffer:
-    def __init__(self, protocol):
-        self.read = protocol.stream_body
-        self.respond = protocol.respond
-
-    async def __aiter__(self):
-        while True:
-            data = await self.read()
-            if not data:
-                return
-            yield data
-
-
 class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
 

@@ -23,7 +23,7 @@ class SanicTestClient:
         self.host = host
 
     def get_new_session(self):
-        return httpx.Client()
+        return httpx.AsyncClient(verify=False)
 
     async def _local_request(self, method, url, *args, **kwargs):
         logger.info(url)
@@ -38,19 +38,21 @@ class SanicTestClient:
 
                 try:
                     response = await getattr(session, method.lower())(
-                        url, verify=False, *args, **kwargs
+                        url, *args, **kwargs
                     )
                 except NameError:
                     raise Exception(response.status_code)
 
+                response.body = await response.aread()
+                response.status = response.status_code
+                response.content_type = response.headers.get("content-type")
+
+                # response can be decoded as json after response._content
+                # is set by response.aread()
                 try:
                     response.json = response.json()
                 except (JSONDecodeError, UnicodeDecodeError):
                     response.json = None
-
-                response.body = await response.read()
-                response.status = response.status_code
-                response.content_type = response.headers.get("content-type")
 
                 if raw_cookies:
                     response.raw_cookies = {}
@@ -185,11 +187,11 @@ async def app_call_with_return(self, scope, receive, send):
     return await asgi_app()
 
 
-class SanicASGIDispatch(httpx.dispatch.ASGIDispatch):
+class SanicASGIDispatch(httpx.dispatch.asgi.ASGIDispatch):
     pass
 
 
-class SanicASGITestClient(httpx.Client):
+class SanicASGITestClient(httpx.AsyncClient):
     def __init__(
         self,
         app,

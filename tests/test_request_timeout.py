@@ -14,18 +14,15 @@ class DelayableHTTPConnection(httpx.dispatch.connection.HTTPConnection):
             self._request_delay = kwargs.pop("request_delay")
         super().__init__(*args, **kwargs)
 
-    async def send(self, request, verify=None, cert=None, timeout=None):
-        if self.h11_connection is None and self.h2_connection is None:
-            await self.connect(verify=verify, cert=cert, timeout=timeout)
+    async def send(self, request, timeout=None):
+
+        if self.connection is None:
+            self.connection = (await self.connect(timeout=timeout))
 
         if self._request_delay:
             await asyncio.sleep(self._request_delay)
 
-        if self.h2_connection is not None:
-            response = await self.h2_connection.send(request, timeout=timeout)
-        else:
-            assert self.h11_connection is not None
-            response = await self.h11_connection.send(request, timeout=timeout)
+        response = await self.connection.send(request, timeout=timeout)
 
         return response
 
@@ -46,12 +43,9 @@ class DelayableSanicConnectionPool(
             await self.max_connections.acquire(timeout=pool_timeout)
             connection = DelayableHTTPConnection(
                 origin,
-                verify=self.verify,
-                cert=self.cert,
-                http2=self.http2,
+                ssl=self.ssl,
                 backend=self.backend,
                 release_func=self.release_connection,
-                trust_env=self.trust_env,
                 uds=self.uds,
                 request_delay=self._request_delay,
             )
@@ -61,7 +55,7 @@ class DelayableSanicConnectionPool(
         return connection
 
 
-class DelayableSanicSession(httpx.Client):
+class DelayableSanicSession(httpx.AsyncClient):
     def __init__(self, request_delay=None, *args, **kwargs) -> None:
         dispatch = DelayableSanicConnectionPool(request_delay=request_delay)
         super().__init__(dispatch=dispatch, *args, **kwargs)

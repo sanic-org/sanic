@@ -826,6 +826,14 @@ class Sanic:
                 "Endpoint with name `{}` was not found".format(view_name)
             )
 
+        # If the route has host defined, split that off
+        # TODO: Retain netloc and path separately in Route objects
+        host = uri.find("/")
+        if host > 0:
+            host, uri = uri[:host], uri[host:]
+        else:
+            host = None
+
         if view_name == "static" or view_name.endswith(".static"):
             filename = kwargs.pop("filename", None)
             # it's static folder
@@ -858,7 +866,7 @@ class Sanic:
 
         netloc = kwargs.pop("_server", None)
         if netloc is None and external:
-            netloc = self.config.get("SERVER_NAME", "")
+            netloc = host or self.config.get("SERVER_NAME", "")
 
         if external:
             if not scheme:

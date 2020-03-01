@@ -44,7 +44,7 @@ async def test_sync_asgi(app):
 def test_ip(app):
     @app.route("/")
     def handler(request):
-        return text("{}".format(request.ip))
+        return text(f"{request.ip}")
 
     request, response = app.test_client.get("/")
 
@@ -55,7 +55,7 @@ def test_ip(app):
 async def test_ip_asgi(app):
     @app.route("/")
     def handler(request):
-        return text("{}".format(request.url))
+        return text(f"{request.url}")
 
     request, response = await app.asgi_client.get("/")
 
@@ -325,7 +325,7 @@ def test_token(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "{}".format(token),
+        "Authorization": f"{token}",
     }
 
     request, response = app.test_client.get("/", headers=headers)
@@ -335,7 +335,7 @@ def test_token(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Token {}".format(token),
+        "Authorization": f"Token {token}",
     }
 
     request, response = app.test_client.get("/", headers=headers)
@@ -345,7 +345,7 @@ def test_token(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Bearer {}".format(token),
+        "Authorization": f"Bearer {token}",
     }
 
     request, response = app.test_client.get("/", headers=headers)
@@ -370,7 +370,7 @@ async def test_token_asgi(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "{}".format(token),
+        "Authorization": f"{token}",
     }
 
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -380,7 +380,7 @@ async def test_token_asgi(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Token {}".format(token),
+        "Authorization": f"Token {token}",
     }
 
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -390,7 +390,7 @@ async def test_token_asgi(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Bearer {}".format(token),
+        "Authorization": f"Bearer {token}",
     }
 
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -1028,7 +1028,7 @@ def test_url_attributes_no_ssl(app, path, query, expected_url):
 
     app.add_route(handler, path)
 
-    request, response = app.test_client.get(path + "?{}".format(query))
+    request, response = app.test_client.get(path + f"?{query}")
     assert request.url == expected_url.format(HOST, PORT)
 
     parsed = urlparse(request.url)
@@ -1054,7 +1054,7 @@ async def test_url_attributes_no_ssl_asgi(app, path, query, expected_url):
 
     app.add_route(handler, path)
 
-    request, response = await app.asgi_client.get(path + "?{}".format(query))
+    request, response = await app.asgi_client.get(path + f"?{query}")
     assert request.url == expected_url.format(ASGI_HOST)
 
     parsed = urlparse(request.url)
@@ -1087,7 +1087,7 @@ def test_url_attributes_with_ssl_context(app, path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = app.test_client.get(
-        "https://{}:{}".format(HOST, PORT) + path + "?{}".format(query),
+        f"https://{HOST}:{PORT}" + path + f"?{query}",
         server_kwargs={"ssl": context},
     )
     assert request.url == expected_url.format(HOST, PORT)
@@ -1122,7 +1122,7 @@ def test_url_attributes_with_ssl_dict(app, path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = app.test_client.get(
-        "https://{}:{}".format(HOST, PORT) + path + "?{}".format(query),
+        f"https://{HOST}:{PORT}" + path + f"?{query}",
         server_kwargs={"ssl": ssl_dict},
     )
     assert request.url == expected_url.format(HOST, PORT)

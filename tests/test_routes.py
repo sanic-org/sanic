@@ -20,17 +20,17 @@ def test_versioned_routes_get(app, method):
     func = getattr(app, method)
     if callable(func):
 
-        @func("/{}".format(method), version=1)
+        @func(f"/{method}", version=1)
         def handler(request):
             return text("OK")
 
     else:
         print(func)
-        raise Exception("Method: {} is not callable".format(method))
+        raise Exception(f"Method: {method} is not callable")
 
     client_method = getattr(app.test_client, method)
 
-    request, response = client_method("/v1/{}".format(method))
+    request, response = client_method(f"/v1/{method}")
     assert response.status == 200
 
 
@@ -163,7 +163,7 @@ def test_route_optional_slash(app):
 def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     # Part of regression test for issue #1120
 
-    site1 = "127.0.0.1:{}".format(app.test_client.port)
+    site1 = f"127.0.0.1:{app.test_client.port}"
 
     # before fix, this raises a RouteExists error
     @app.get("/get", host=[site1, "site2.com"], strict_slashes=False)
@@ -393,7 +393,8 @@ def test_dynamic_route_uuid(app):
     assert response.text == "OK"
     assert type(results[0]) is uuid.UUID
 
-    request, response = app.test_client.get("/quirky/{}".format(uuid.uuid4()))
+    generated_uuid = uuid.uuid4()
+    request, response = app.test_client.get(f"/quirky/{generated_uuid}")
     assert response.status == 200
 
     request, response = app.test_client.get("/quirky/non-existing")
@@ -794,7 +795,7 @@ def test_remove_inexistent_route(app):
     with pytest.raises(RouteDoesNotExist) as excinfo:
         app.remove_route(uri)
 
-    assert str(excinfo.value) == "Route was not registered: {}".format(uri)
+    assert str(excinfo.value) == f"Route was not registered: {uri}"
 
 
 def test_removing_slash(app):

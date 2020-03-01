@@ -43,7 +43,9 @@ class Http:
         "exception",
         "url",
         "request_body",
+        "request_bytes",
         "request_bytes_left",
+        "request_max_size",
         "response",
         "response_func",
         "response_bytes_left",
@@ -57,6 +59,8 @@ class Http:
         self.expecting_continue = False
         self.stage = Stage.IDLE
         self.request_body = None
+        self.request_bytes = None
+        self.request_max_size = protocol.request_max_size
         self.keep_alive = True
         self.head_only = None
         self.request = None
@@ -69,7 +73,7 @@ class Http:
             try:
                 # Receive and handle a request
                 self.stage = Stage.REQUEST
-                self.response_func = self.http1_response_start
+                self.response_func = self.http1_response_header
                 await self.http1_request_header()
                 await self.protocol.request_handler(self.request)
                 # Handler finished, response should've been sent
@@ -162,13 +166,13 @@ class Http:
                 self.request_bytes_left = 0
                 pos -= 2  # One CRLF stays in buffer
             else:
-                self.request_bytes_left = int(headers["content-length"])
+                self.request_bytes_left = self.request_bytes = int(headers["content-length"])
         # Remove header and its trailing CRLF
         del buf[: pos + 4]
         self.stage = Stage.HANDLER
         self.request = request
 
-    def http1_response_start(self, data, end_stream) -> bytes:
+    def http1_response_header(self, data, end_stream) -> bytes:
         res = self.response
         # Compatibility with simple response body
         if not data and res.body:
@@ -315,7 +319,7 @@ class Http:
             await self._send(HTTP_CONTINUE)
         # Receive request body chunk
         buf = self.recv_buffer
-        if self.request_body == "chunked" and self.request_bytes_left == 0:
+        if self.request_bytes_left == 0 and self.request_body == "chunked":
             # Process a chunk header: \r\n<size>[;<chunk extensions>]\r\n
             while True:
                 pos = buf.find(b"\r\n", 3)
@@ -330,29 +334,31 @@ class Http:
             except:
                 self.keep_alive = False
                 raise InvalidUsage("Bad chunked encoding")
-            self.request_bytes_left = size
-            self.protocol._total_request_size += pos + 2
             del buf[: pos + 2]
-            if self.request_bytes_left <= 0:
-                self.request_chunked = False
+            if size <= 0:
+                self.request_body = None
+                if size < 0:
+                    self.keep_alive = False
+                    raise InvalidUsage("Bad chunked encoding")
                 return None
-        # At this point we are good to read/return _request_bytes_left
-        if self.request_bytes_left:
-            if not buf:
-                await self._receive_more()
-            data = bytes(buf[: self.request_bytes_left])
-            size = len(data)
-            del buf[:size]
-            self.request_bytes_left -= size
-            self.protocol._total_request_size += size
-            if (
-                self.protocol._total_request_size
-                > self.protocol.request_max_size
-            ):
-                self.keep_alive = False
-                raise PayloadTooLarge("Payload Too Large")
-            return data
-        return None
+            self.request_bytes_left = size
+            self.request_bytes += size
+        # Request size limit
+        if (self.request_bytes > self.request_max_size):
+            self.keep_alive = False
+            raise PayloadTooLarge("Payload Too Large")
+        # End of request body?
+        if not self.request_bytes_left:
+            self.request_body = None
+            return
+        # At this point we are good to read/return up to request_bytes_left
+        if not buf:
+            await self._receive_more()
+        data = bytes(buf[: self.request_bytes_left])
+        size = len(data)
+        del buf[:size]
+        self.request_bytes_left -= size
+        return data
 
     # Response methods
 

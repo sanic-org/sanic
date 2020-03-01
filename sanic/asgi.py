@@ -251,6 +251,7 @@ class ASGIApp:
                 sanic_app,
             )
             instance.request.stream = instance
+            instance.request_body = True  # FIXME: Use more_body?
 
         return instance
 
@@ -260,15 +261,15 @@ class ASGIApp:
         """
         message = await self.transport.receive()
         if not message.get("more_body", False):
+            self.request_body = False
             return None
         return message.get("body", b"")
 
     async def __aiter__(self):
-        while True:
+        while self.request_body:
             data = await self.read()
-            if not data:
-                return
-            yield data
+            if data:
+                yield data
 
     def respond(self, response):
         headers: List[Tuple[bytes, bytes]] = []

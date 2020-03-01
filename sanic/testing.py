@@ -42,7 +42,7 @@ class SanicTestClient:
                     )
                 except httpx.exceptions.ConnectionClosed:
                     logger.error(
-                        f"{method.upper()} {url} broken HTTP, response is None!"
+                        f"{method.upper()} {url} received no response!"
                     )
                     return None
                 except NameError:

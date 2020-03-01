@@ -7,8 +7,8 @@ from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
-from sanic.headers import format_http1, format_http1_response
-from sanic.helpers import has_message_body, remove_entity_headers
+from sanic.headers import format_http1
+from sanic.helpers import has_message_body
 
 
 try:

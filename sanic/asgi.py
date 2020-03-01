@@ -21,7 +21,7 @@ from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
 from sanic.request import Request
-from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.response import StreamingHTTPResponse
 from sanic.websocket import WebSocketConnection
 
 

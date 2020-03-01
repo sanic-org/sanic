@@ -1,4 +1,3 @@
-import asyncio
 import email.utils
 import warnings
 
@@ -9,7 +8,6 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
 
-from sanic.compat import Header
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
     parse_content_header,

@@ -988,14 +988,16 @@ class Sanic:
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
         response = None
-        cancelled = False
         name = None
         try:
             # Fetch handler from router
             handler, args, kwargs, uri, name = self.router.get(request)
 
             # Non-streaming handlers have their body preloaded
-            if request.stream.request_body and not self.router.is_stream_handler(request):
+            if (
+                request.stream.request_body
+                and not self.router.is_stream_handler(request)
+            ):
                 await request.receive_body()
 
             # -------------------------------------------- #

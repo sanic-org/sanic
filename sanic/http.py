@@ -6,16 +6,12 @@ from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
     PayloadTooLarge,
-    RequestTimeout,
-    SanicException,
     ServerError,
     ServiceUnavailable,
 )
-from sanic.headers import format_http1, format_http1_response
+from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.log import access_logger, logger
-from sanic.request import Request
-from sanic.response import HTTPResponse
 
 
 class Stage(Enum):
@@ -138,7 +134,7 @@ class Http:
                 elif name == "connection":
                     self.keep_alive = value.lower() == "keep-alive"
                 headers.append(h)
-        except:
+        except Exception:
             raise InvalidUsage("Bad Request")
         # Prepare a Request object
         request = self.protocol.request_class(
@@ -166,7 +162,9 @@ class Http:
                 self.request_bytes_left = 0
                 pos -= 2  # One CRLF stays in buffer
             else:
-                self.request_bytes_left = self.request_bytes = int(headers["content-length"])
+                self.request_bytes_left = self.request_bytes = int(
+                    headers["content-length"]
+                )
         # Remove header and its trailing CRLF
         del buf[: pos + 4]
         self.stage = Stage.HANDLER
@@ -331,7 +329,7 @@ class Http:
                 await self._receive_more()
             try:
                 size = int(buf[2:pos].split(b";", 1)[0].decode(), 16)
-            except:
+            except Exception:
                 self.keep_alive = False
                 raise InvalidUsage("Bad chunked encoding")
             del buf[: pos + 2]
@@ -344,7 +342,7 @@ class Http:
             self.request_bytes_left = size
             self.request_bytes += size
         # Request size limit
-        if (self.request_bytes > self.request_max_size):
+        if self.request_bytes > self.request_max_size:
             self.keep_alive = False
             raise PayloadTooLarge("Payload Too Large")
         # End of request body?

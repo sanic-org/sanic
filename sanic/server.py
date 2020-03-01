@@ -1,11 +1,8 @@
 import asyncio
-import enum
 import os
 import sys
-import traceback
 
 from asyncio import CancelledError
-from collections import deque
 from functools import partial
 from inspect import isawaitable
 from multiprocessing import Process
@@ -13,18 +10,8 @@ from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
 from time import monotonic as current_time
-from time import time
 
-from sanic.compat import Header
-from sanic.exceptions import (
-    HeaderExpectationFailed,
-    InvalidUsage,
-    PayloadTooLarge,
-    RequestTimeout,
-    SanicException,
-    ServerError,
-    ServiceUnavailable,
-)
+from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import logger
 from sanic.request import Request
@@ -147,14 +134,14 @@ class HttpProtocol(asyncio.Protocol):
             await self._http.http1()
         except CancelledError:
             pass
-        except:
+        except Exception:
             logger.exception("protocol.connection_task uncaught")
         finally:
             self._http = None
             self._task = None
             try:
                 self.close()
-            except:
+            except BaseException:
                 logger.exception("Closing failed")
 
     async def receive_more(self):
@@ -191,7 +178,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.loop.call_later(max(0.1, interval), self.check_timeouts)
                 return
             self._task.cancel()
-        except:
+        except Exception:
             logger.exception("protocol.check_timeouts")
 
     async def send(self, data):
@@ -231,7 +218,7 @@ class HttpProtocol(asyncio.Protocol):
             self.transport = transport
             self._task = self.loop.create_task(self.connection_task())
             self.recv_buffer = bytearray()
-        except:
+        except Exception:
             logger.exception("protocol.connect_made")
 
     def connection_lost(self, exc):
@@ -240,11 +227,10 @@ class HttpProtocol(asyncio.Protocol):
             self.resume_writing()
             if self._task:
                 self._task.cancel()
-            if self._debug and self._http and self._http.request:
-                logger.error(
-                    f"Connection lost before response written @ {self._http.request.ip}",
-                )
-        except:
+            if self._debug and self._http and self._http.response:
+                ip = self._http.request.ip
+                logger.error(f"Connection lost before response written @ {ip}")
+        except Exception:
             logger.exception("protocol.connection_lost")
 
     def pause_writing(self):
@@ -266,7 +252,7 @@ class HttpProtocol(asyncio.Protocol):
 
             if self._data_received:
                 self._data_received.set()
-        except:
+        except Exception:
             logger.exception("protocol.data_received")
 
 

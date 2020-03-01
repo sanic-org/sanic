@@ -1,4 +1,5 @@
 import asyncio
+import multiprocessing
 import os
 import sys
 import traceback
@@ -6,7 +7,6 @@ import traceback
 from collections import deque
 from functools import partial
 from inspect import isawaitable
-from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
@@ -1017,9 +1017,10 @@ def serve_multiple(server_settings, workers):
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
+    mp = multiprocessing.get_context("fork")
 
     for _ in range(workers):
-        process = Process(target=serve, kwargs=server_settings)
+        process = mp.Process(target=serve, kwargs=server_settings)
         process.daemon = True
         process.start()
         processes.append(process)

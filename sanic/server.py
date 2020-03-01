@@ -585,7 +585,7 @@ def serve(
             else:
                 conn.close()
 
-        if sys.version_info.minor >= 8:
+        if sys.version_info < (3, 8):
             _shutdown = asyncio.gather(*coros, loop=loop)
         else:
             _shutdown = asyncio.gather(*coros)

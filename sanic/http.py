@@ -248,7 +248,7 @@ class Http:
             if size:
                 return b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
             return b"0\r\n\r\n"
-        return b"%x\r\n%b\r\n" % (size, data) if size else None
+        return b"%x\r\n%b\r\n" % (size, data) if size else b""
 
     def http1_response_normal(self, data: bytes, end_stream: bool) -> bytes:
         """Format / keep track of non-chunked response."""

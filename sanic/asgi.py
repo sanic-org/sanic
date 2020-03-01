@@ -255,7 +255,7 @@ class ASGIApp:
 
         return instance
 
-    async def read(self) -> None:
+    async def read(self) -> Optional[bytes]:
         """
         Read and stream the body in chunks from an incoming ASGI message.
         """

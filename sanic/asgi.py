@@ -345,13 +345,17 @@ class ASGIApp:
             await self.transport.send(self.response_start)
             self.response_start = None
             if self.response_body:
-                data = self.response_body + data if data else self.response_body
+                data = (
+                    self.response_body + data if data else self.response_body
+                )
                 self.response_body = None
-        await self.transport.send({
-            "type": "http.response.body",
-            "body": data.encode() if hasattr(data, "encode") else data,
-            "more_body": not end_stream,
-        })
+        await self.transport.send(
+            {
+                "type": "http.response.body",
+                "body": data.encode() if hasattr(data, "encode") else data,
+                "more_body": not end_stream,
+            }
+        )
 
     async def __call__(self) -> None:
         """

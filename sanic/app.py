@@ -968,7 +968,6 @@ class Sanic:
                 )
         return response
 
-
     async def handle_request(self, request):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
@@ -1062,7 +1061,6 @@ class Sanic:
             response = await self.handle_exception(request, e, name)
             await request.respond(response).send(end_stream=True)
 
-
     # -------------------------------------------------------------------- #
     # Testing
     # -------------------------------------------------------------------- #
@@ -1092,7 +1090,7 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.

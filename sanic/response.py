@@ -71,12 +71,11 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
     async def stream(self, request):
         self.send = request.respond(
-            self.status,
-            self.headers,
-            self.content_type,
+            self.status, self.headers, self.content_type,
         ).send
         await self.streaming_fn(self)
         await self.send(end_stream=True)
+
 
 class HTTPResponse(BaseHTTPResponse):
     __slots__ = ("body", "status", "content_type", "headers", "_cookies")

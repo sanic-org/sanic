@@ -183,7 +183,14 @@ class HttpProtocol(asyncio.Protocol):
             ):
                 self._http.exception = ServiceUnavailable("Response Timeout")
             else:
-                interval = min(self.keep_alive_timeout, self.request_timeout, self.response_timeout) / 2
+                interval = (
+                    min(
+                        self.keep_alive_timeout,
+                        self.request_timeout,
+                        self.response_timeout,
+                    )
+                    / 2
+                )
                 self.loop.call_later(max(0.1, interval), self.check_timeouts)
                 return
             self._task.cancel()
@@ -264,6 +271,7 @@ class HttpProtocol(asyncio.Protocol):
                 self._data_received.set()
         except:
             logger.exception("protocol.data_received")
+
 
 def trigger_events(events, loop):
     """Trigger event callbacks (functions or async)

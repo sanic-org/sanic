@@ -28,6 +28,7 @@ class Stage(Enum):
 
 HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
+
 class Http:
     __slots__ = [
         "_send",
@@ -47,6 +48,7 @@ class Http:
         "response_func",
         "response_bytes_left",
     ]
+
     def __init__(self, protocol):
         self._send = protocol.send
         self._receive_more = protocol.receive_more
@@ -111,7 +113,7 @@ class Http:
                 self.stage = Stage.REQUEST
         else:
             raise PayloadTooLarge("Payload Too Large")
-       # Parse header content
+        # Parse header content
         try:
             reqline, *raw_headers = buf[:pos].decode().split("\r\n")
             method, self.url, protocol = reqline.split(" ")
@@ -193,9 +195,9 @@ class Http:
                 data, size, end_stream = b"", 0, True
                 headers.pop("content-length", None)
                 headers.pop("transfer-encoding", None)
-                #raise ServerError(
+                # raise ServerError(
                 #    f"A {status} response may only have headers, no body."
-                #)
+                # )
         elif self.head_only and "content-length" in headers:
             self.response_func = None
         elif end_stream:
@@ -344,12 +346,14 @@ class Http:
             del buf[:size]
             self.request_bytes_left -= size
             self.protocol._total_request_size += size
-            if self.protocol._total_request_size > self.protocol.request_max_size:
+            if (
+                self.protocol._total_request_size
+                > self.protocol.request_max_size
+            ):
                 self.keep_alive = False
                 raise PayloadTooLarge("Payload Too Large")
             return data
         return None
-
 
     # Response methods
 

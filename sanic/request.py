@@ -17,8 +17,8 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
-from sanic.response import HTTPResponse
 from sanic.log import error_logger, logger
+from sanic.response import HTTPResponse
 
 
 try:
@@ -132,12 +132,14 @@ class Request:
            Custom context is now stored in `request.custom_context.yourkey`"""
         setattr(self.ctx, key, value)
 
-    def respond(self, status=200, headers=None, content_type=DEFAULT_HTTP_CONTENT_TYPE):
+    def respond(
+        self, status=200, headers=None, content_type=DEFAULT_HTTP_CONTENT_TYPE
+    ):
         return self.stream.respond(
-            status if isinstance(status, HTTPResponse) else HTTPResponse(
-                status=status,
-                headers=headers,
-                content_type=content_type,
+            status
+            if isinstance(status, HTTPResponse)
+            else HTTPResponse(
+                status=status, headers=headers, content_type=content_type,
             )
         )
 

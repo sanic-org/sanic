@@ -82,7 +82,6 @@ def test_response_header(app):
     request, response = app.test_client.get("/")
     assert dict(response.headers) == {
         "connection": "keep-alive",
-        "keep-alive": str(app.config.KEEP_ALIVE_TIMEOUT),
         "content-length": "11",
         "content-type": "application/json",
     }

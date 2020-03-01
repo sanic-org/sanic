@@ -1096,7 +1096,7 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -1177,6 +1177,12 @@ class Sanic:
 
         try:
             self.is_running = True
+            if workers > 1 and os.name != "posix":
+                logger.warn(
+                    f"Multiprocessing is currently not supported on {os.name},"
+                    " using workers=1 instead"
+                )
+                workers = 1
             if workers == 1:
                 if auto_reload and os.name != "posix":
                     # This condition must be removed after implementing

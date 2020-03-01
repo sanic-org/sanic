@@ -961,6 +961,10 @@ class Sanic:
                 response = await self._run_response_middleware(
                     request, response, request_name=name
                 )
+            except CancelledError:
+                # FIXME: Ensure exiting in a clean manner instead of this
+                # and verify py37 and py38 test_middleware.py separately
+                request.stream.keep_alive = False
             except Exception:
                 error_logger.exception(
                     "Exception occurred in one of response "

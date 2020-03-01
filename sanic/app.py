@@ -1028,6 +1028,8 @@ class Sanic:
                     response = await self._run_response_middleware(
                         request, response, request_name=name
                     )
+                except CancelledError:
+                    raise
                 except Exception:
                     error_logger.exception(
                         "Exception occurred in one of response "
@@ -1043,6 +1045,8 @@ class Sanic:
                     f"Invalid response type {response!r} (need HTTPResponse)"
                 )
 
+        except CancelledError:
+            raise
         except Exception as e:
             # -------------------------------------------- #
             # Response Generation Failed

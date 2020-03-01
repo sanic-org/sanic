@@ -26,7 +26,7 @@ from sanic.exceptions import (
     ServiceUnavailable,
 )
 from sanic.http import Http, Stage
-from sanic.log import access_logger, logger
+from sanic.log import logger
 from sanic.request import Request
 
 
@@ -181,7 +181,7 @@ class HttpProtocol(asyncio.Protocol):
                 stage in (Stage.HANDLER, Stage.RESPONSE, Stage.FAILED)
                 and duration > self.response_timeout
             ):
-                self._http.exception = RequestTimeout("Response Timeout")
+                self._http.exception = ServiceUnavailable("Response Timeout")
             else:
                 interval = min(self.keep_alive_timeout, self.request_timeout, self.response_timeout) / 2
                 self.loop.call_later(max(0.1, interval), self.check_timeouts)

@@ -71,8 +71,6 @@ class HttpProtocol(asyncio.Protocol):
         # enable or disable access log purpose
         "access_log",
         # connection management
-        "_total_request_size",
-        "_last_response_time",
         "state",
         "url",
         "_debug",
@@ -127,7 +125,6 @@ class HttpProtocol(asyncio.Protocol):
         self.keep_alive_timeout = keep_alive_timeout
         self.request_max_size = request_max_size
         self.request_class = request_class or Request
-        self._total_request_size = 0
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0

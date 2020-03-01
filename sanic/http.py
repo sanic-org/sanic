@@ -42,7 +42,7 @@ class Http:
         "request",
         "exception",
         "url",
-        "request_chunked",
+        "request_body",
         "request_bytes_left",
         "response",
         "response_func",
@@ -56,6 +56,7 @@ class Http:
         self.protocol = protocol
         self.expecting_continue = False
         self.stage = Stage.IDLE
+        self.request_body = None
         self.keep_alive = True
         self.head_only = None
         self.request = None
@@ -77,7 +78,7 @@ class Http:
                 if self.stage is Stage.RESPONSE:
                     await self.send(end_stream=True)
                 # Consume any remaining request body (TODO: or disconnect?)
-                if self.request_bytes_left or self.request_chunked:
+                if self.request_body:
                     logger.error(f"{self.request} body not consumed.")
                     async for _ in self:
                         pass
@@ -124,12 +125,12 @@ class Http:
             else:
                 raise Exception
             self.head_only = method.upper() == "HEAD"
-            body = False
+            self.request_body = False
             headers = []
             for name, value in (h.split(":", 1) for h in raw_headers):
                 name, value = h = name.lower(), value.lstrip()
                 if name in ("content-length", "transfer-encoding"):
-                    body = True
+                    self.request_body = True
                 elif name == "connection":
                     self.keep_alive = value.lower() == "keep-alive"
                 headers.append(h)
@@ -147,9 +148,7 @@ class Http:
         request.stream = self
         self.protocol.state["requests_count"] += 1
         # Prepare for request body
-        self.request_chunked = False
-        self.request_bytes_left = 0
-        if body:
+        if self.request_body:
             headers = request.headers
             expect = headers.get("expect")
             if expect is not None:
@@ -159,7 +158,8 @@ class Http:
                     raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
             request.stream = self
             if headers.get("transfer-encoding") == "chunked":
-                self.request_chunked = True
+                self.request_body = "chunked"
+                self.request_bytes_left = 0
                 pos -= 2  # One CRLF stays in buffer
             else:
                 self.request_bytes_left = int(headers["content-length"])
@@ -225,7 +225,8 @@ class Http:
             if status != 417:
                 ret = HTTP_CONTINUE + ret
         # Send response
-        self.log_response()
+        if self.protocol.access_log:
+            self.log_response()
         self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
         return ret
 
@@ -284,29 +285,27 @@ class Http:
 
         :return: None
         """
-        if self.protocol.access_log:
-            req, res = self.request, self.response
-            extra = {
-                "status": getattr(res, "status", 0),
-                "byte": getattr(self, "response_bytes_left", -1),
-                "host": "UNKNOWN",
-                "request": "nil",
-            }
-            if req is not None:
-                if req.ip:
-                    extra["host"] = f"{req.ip}:{req.port}"
-                extra["request"] = f"{req.method} {req.url}"
-            access_logger.info("", extra=extra)
+        req, res = self.request, self.response
+        extra = {
+            "status": getattr(res, "status", 0),
+            "byte": getattr(self, "response_bytes_left", -1),
+            "host": "UNKNOWN",
+            "request": "nil",
+        }
+        if req is not None:
+            if req.ip:
+                extra["host"] = f"{req.ip}:{req.port}"
+            extra["request"] = f"{req.method} {req.url}"
+        access_logger.info("", extra=extra)
 
     # Request methods
 
     async def __aiter__(self):
         """Async iterate over request body."""
-        while True:
+        while self.request_body:
             data = await self.read()
-            if not data:
-                return
-            yield data
+            if data:
+                yield data
 
     async def read(self):
         """Read some bytes of request body."""
@@ -316,7 +315,7 @@ class Http:
             await self._send(HTTP_CONTINUE)
         # Receive request body chunk
         buf = self.recv_buffer
-        if self.request_chunked and self.request_bytes_left == 0:
+        if self.request_body == "chunked" and self.request_bytes_left == 0:
             # Process a chunk header: \r\n<size>[;<chunk extensions>]\r\n
             while True:
                 pos = buf.find(b"\r\n", 3)

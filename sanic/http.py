@@ -116,7 +116,7 @@ class Http:
                 break
             await self._receive_more()
         if pos >= self.request_max_size:
-            raise PayloadTooLarge("Payload Too Large")
+            raise PayloadTooLarge("Request header too large")
         # Parse header content
         try:
             reqline, *raw_headers = buf[:pos].decode().split("\r\n")
@@ -347,7 +347,7 @@ class Http:
         # Request size limit
         if self.request_bytes > self.request_max_size:
             self.keep_alive = False
-            raise PayloadTooLarge("Payload Too Large")
+            raise PayloadTooLarge("Request body too large")
         # End of request body?
         if not self.request_bytes_left:
             self.request_body = None

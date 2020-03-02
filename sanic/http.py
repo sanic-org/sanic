@@ -60,6 +60,7 @@ class Http:
         self.keep_alive = True
         self.head_only = None
         self.request = None
+        self.response = None
         self.exception = None
         self.url = None
 

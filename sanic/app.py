@@ -1177,6 +1177,12 @@ class Sanic:
 
         try:
             self.is_running = True
+            if workers > 1 and os.name != "posix":
+                logger.warn(
+                    f"Multiprocessing is currently not supported on {os.name},"
+                    " using workers=1 instead"
+                )
+                workers = 1
             if workers == 1:
                 if auto_reload and os.name != "posix":
                     # This condition must be removed after implementing

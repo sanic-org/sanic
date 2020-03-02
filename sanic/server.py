@@ -192,7 +192,7 @@ class HttpProtocol(asyncio.Protocol):
 
         :return: boolean - True if closed, false if staying open
         """
-        if self._http.stage is Stage.IDLE:
+        if self._http is None or self._http.stage is Stage.IDLE:
             self.close()
             return True
         return False

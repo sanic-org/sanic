@@ -91,8 +91,12 @@ class Http:
             except Exception as e:
                 # Write an error response
                 await self.error_response(e)
-            # Exit and disconnect if finished
-            if self.stage is not Stage.IDLE or not self.keep_alive:
+            # Exit and disconnect if no more requests can be taken
+            if (
+                self.stage is not Stage.IDLE
+                or self.request_body
+                or not self.keep_alive
+            ):
                 break
             # Wait for next request
             if not self.recv_buffer:
@@ -103,16 +107,15 @@ class Http:
         # Receive until full header is in buffer
         buf = self.recv_buffer
         pos = 0
-        while len(buf) < self.protocol.request_max_size:
-            if buf:
-                pos = buf.find(b"\r\n\r\n", pos)
-                if pos >= 0:
-                    break
-                pos = max(0, len(buf) - 3)
+        while True:
+            pos = buf.find(b"\r\n\r\n", pos)
+            if pos != -1:
+                break
+            pos = max(0, len(buf) - 3)
+            if pos >= self.request_max_size:
+                break
             await self._receive_more()
-            if self.stage is Stage.IDLE:
-                self.stage = Stage.REQUEST
-        else:
+        if pos >= self.request_max_size:
             raise PayloadTooLarge("Payload Too Large")
         # Parse header content
         try:

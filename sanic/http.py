@@ -91,8 +91,11 @@ class Http:
             if self.request_body:
                 if self.response and 200 <= self.response.status < 300:
                     logger.error(f"{self.request} body not consumed.")
-                async for _ in self:
-                    pass
+                try:
+                    async for _ in self:
+                        pass
+                except PayloadTooLarge:
+                    self.keep_alive = False
             # Exit and disconnect if no more requests can be taken
             if self.stage is not Stage.IDLE or not self.keep_alive:
                 break

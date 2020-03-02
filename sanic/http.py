@@ -78,11 +78,6 @@ class Http:
                     raise ServerError("Handler produced no response")
                 if self.stage is Stage.RESPONSE:
                     await self.send(end_stream=True)
-                # Consume any remaining request body (TODO: or disconnect?)
-                if self.request_body:
-                    logger.error(f"{self.request} body not consumed.")
-                    async for _ in self:
-                        pass
             except CancelledError:
                 # Write an appropriate response before exiting
                 e = self.exception or ServiceUnavailable(f"Cancelled")
@@ -92,12 +87,14 @@ class Http:
             except Exception as e:
                 # Write an error response
                 await self.error_response(e)
+            # Try to consume any remaining request body
+            if self.request_body:
+                if self.response and 200 <= self.response.status < 300:
+                    logger.error(f"{self.request} body not consumed.")
+                async for _ in self:
+                    pass
             # Exit and disconnect if no more requests can be taken
-            if (
-                self.stage is not Stage.IDLE
-                or self.request_body
-                or not self.keep_alive
-            ):
+            if self.stage is not Stage.IDLE or not self.keep_alive:
                 break
             # Wait for next request
             if not self.recv_buffer:

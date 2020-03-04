@@ -560,7 +560,7 @@ def test_streaming_new_api(app):
             # We should have no b"" or None, just proper chunks
             assert data
             assert isinstance(data, bytes)
-            ret.append(data)
+            ret.append(data.decode("ASCII"))
         return json(ret)
 
     request, response = app.test_client.post("/1", data="TEST data")

@@ -3,7 +3,7 @@ import pytest
 from sanic.blueprints import Blueprint
 from sanic.exceptions import HeaderExpectationFailed
 from sanic.request import StreamBuffer
-from sanic.response import stream, text, json
+from sanic.response import json, stream, text
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
 

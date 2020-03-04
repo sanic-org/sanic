@@ -993,12 +993,13 @@ class Sanic:
             # Fetch handler from router
             handler, args, kwargs, uri, name = self.router.get(request)
 
-            # Non-streaming handlers have their body preloaded
-            if (
-                request.stream.request_body
-                and not self.router.is_stream_handler(request)
-            ):
-                await request.receive_body()
+            if request.stream.request_body:
+                if self.router.is_stream_handler(request):
+                    # Streaming handler: lift the size limit
+                    request.stream.request_max_size = float("inf")
+                else:
+                    # Non-streaming handler: preload body
+                    await request.receive_body()
 
             # -------------------------------------------- #
             # Request Middleware

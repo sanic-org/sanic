@@ -105,31 +105,6 @@ class Request:
             self.__class__.__name__, self.method, self.path
         )
 
-    def get(self, key, default=None):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        return self.ctx.__dict__.get(key, default)
-
-    def __contains__(self, key):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        return key in self.ctx.__dict__
-
-    def __getitem__(self, key):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        return self.ctx.__dict__[key]
-
-    def __delitem__(self, key):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        del self.ctx.__dict__[key]
-
-    def __setitem__(self, key, value):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        setattr(self.ctx, key, value)
-
     def respond(
         self, status=200, headers=None, content_type=DEFAULT_HTTP_CONTENT_TYPE
     ):

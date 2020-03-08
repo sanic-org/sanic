@@ -120,7 +120,8 @@ class Http:
             raise PayloadTooLarge("Request header exceeds the size limit")
         # Parse header content
         try:
-            reqline, *raw_headers = buf[:pos].decode().split("\r\n")
+            raw_headers = buf[:pos].decode(errors="surrogateescape")
+            reqline, *raw_headers = raw_headers.split("\r\n")
             method, self.url, protocol = reqline.split(" ")
             if protocol == "HTTP/1.1":
                 self.keep_alive = True

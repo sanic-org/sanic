@@ -163,7 +163,7 @@ class Http:
             request.stream = self
             if headers.get("transfer-encoding") == "chunked":
                 self.request_body = "chunked"
-                self.request_bytes_left = 0
+                self.request_bytes_left = self.request_bytes = 0
                 pos -= 2  # One CRLF stays in buffer
             else:
                 self.request_bytes_left = self.request_bytes = int(

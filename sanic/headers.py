@@ -7,6 +7,7 @@ from sanic.helpers import STATUS_CODES
 
 
 HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
+HeaderBytesIterable = Iterable[Tuple[bytes, bytes]]
 Options = Dict[str, Union[int, str]]  # key=value fields in various headers
 OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys
 
@@ -175,26 +176,13 @@ def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
     return host.lower(), int(port) if port is not None else None
 
 
-def format_http1(headers: HeaderIterable) -> bytes:
-    """Convert a headers iterable into HTTP/1 header format.
-
-    - Outputs UTF-8 bytes where each header line ends with \\r\\n.
-    - Values are converted into strings if necessary.
-    """
-    return "".join(f"{name}: {val}\r\n" for name, val in headers).encode()
-
-
 def format_http1_response(
-    status: int, headers: HeaderIterable, body=b""
+    status: int, headers: HeaderBytesIterable, body=b""
 ) -> bytes:
-    """Format a full HTTP/1.1 response.
-
-    - If `body` is included, content-length must be specified in headers.
-    """
-    headerbytes = format_http1(headers)
+    """Format a full HTTP/1.1 response."""
     return b"HTTP/1.1 %d %b\r\n%b\r\n%b" % (
         status,
         STATUS_CODES.get(status, b"UNKNOWN"),
-        headerbytes,
+        b"".join(b"%b: %b\r\n" % h for h in headers),
         body,
     )

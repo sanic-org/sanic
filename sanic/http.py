@@ -10,7 +10,7 @@ from sanic.exceptions import (
     ServiceUnavailable,
 )
 from sanic.headers import format_http1_response
-from sanic.helpers import has_message_body, remove_entity_headers
+from sanic.helpers import has_message_body
 from sanic.log import access_logger, logger
 
 
@@ -182,14 +182,9 @@ class Http:
             data, end_stream = res.body, True
         size = len(data)
         headers = res.headers
-        if res.content_type and "content-type" not in headers:
-            headers["content-type"] = res.content_type
         status = res.status
         if not isinstance(status, int) or status < 200:
             raise RuntimeError(f"Invalid response status {status!r}")
-        # Not Modified, Precondition Failed
-        if status in (304, 412):
-            headers = remove_entity_headers(headers)
         if not has_message_body(status):
             # Header-only response status
             self.response_func = None
@@ -227,7 +222,7 @@ class Http:
             data = b""
             self.response_func = self.head_response_ignored
         headers["connection"] = "keep-alive" if self.keep_alive else "close"
-        ret = format_http1_response(status, headers.items(), data)
+        ret = format_http1_response(status, res.processed_headers, data)
         # Send a 100-continue if expected and not Expectation Failed
         if self.expecting_continue:
             self.expecting_continue = False

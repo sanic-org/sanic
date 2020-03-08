@@ -281,7 +281,7 @@ class ASGIApp:
             await self.transport.send({
                 "type": "http.response.start",
                 "status": response.status,
-                "headers": response.full_headers,
+                "headers": response.processed_headers,
             })
             response_body = getattr(response, "body", None)
             if response_body:

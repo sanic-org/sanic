@@ -7,8 +7,7 @@ from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
-from sanic.headers import format_http1
-from sanic.helpers import has_message_body
+from sanic.helpers import has_message_body, remove_entity_headers
 
 
 try:
@@ -25,9 +24,6 @@ class BaseHTTPResponse:
     def _encode_body(self, data):
         return data.encode() if hasattr(data, "encode") else data
 
-    def _parse_headers(self):
-        return format_http1(self.full_headers)
-
     @property
     def cookies(self):
         if self._cookies is None:
@@ -35,14 +31,22 @@ class BaseHTTPResponse:
         return self._cookies
 
     @property
-    def full_headers(self):
-        """Obtain an encoded tuple of headers for a response to be sent."""
+    def processed_headers(self):
+        """Obtain a list of header tuples encoded in bytes for sending.
+
+        Add and remove headers based on status and content_type.
+        """
         headers = []
         cookies = {}
-        if self.content_type and not "content-type" in self.headers:
-            headers += (b"content-type", self.content_type.encode()),
+        status = self.status
+        # TODO: Make a blacklist set of header names and then filter with that
+        if status in (304, 412):  # Not Modified, Precondition Failed
+            self.headers = remove_entity_headers(self.headers)
+        if has_message_body(status):
+            if self.content_type and not "content-type" in self.headers:
+                headers += (b"content-type", self.content_type.encode()),
         for name, value in self.headers.items():
-            name = f"{name}"
+            name = f"{name}".lower()
             if name.lower() == "set-cookie":
                 cookies[value.key] = value
             else:
@@ -125,12 +129,6 @@ class HTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
-
-    @property
-    def cookies(self):
-        if self._cookies is None:
-            self._cookies = CookieJar(self.headers)
-        return self._cookies
 
 
 def empty(status=204, headers=None):

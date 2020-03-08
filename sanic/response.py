@@ -26,13 +26,50 @@ class BaseHTTPResponse:
         return data.encode() if hasattr(data, "encode") else data
 
     def _parse_headers(self):
-        return format_http1(self.headers.items())
+        return format_http1(self.full_headers)
 
     @property
     def cookies(self):
         if self._cookies is None:
             self._cookies = CookieJar(self.headers)
         return self._cookies
+
+    @property
+    def full_headers(self):
+        """Obtain an encoded tuple of headers for a response to be sent."""
+        headers = []
+        cookies = {}
+        if self.content_type and not "content-type" in self.headers:
+            headers += (b"content-type", self.content_type.encode()),
+        for name, value in self.headers.items():
+            name = f"{name}"
+            if name.lower() == "set-cookie":
+                cookies[value.key] = value
+            else:
+                headers += (name.encode("ascii"), f"{value}".encode()),
+
+        if self.cookies:
+            cookies.update(
+                (v.key, v)
+                for v in self.cookies.values()
+                if v.key not in cookies
+            )
+
+        headers += [
+            (b"set-cookie", cookie.encode("utf-8"))
+            for k, cookie in cookies.items()
+        ]
+        return headers
+
+    async def send(self, data=None, end_stream=None):
+        """Send any pending response headers and the given data as body.
+         :param data: str or bytes to be written
+         :end_stream: whether to close the stream after this block
+        """
+        if data is None and end_stream is None:
+            end_stream = True
+        data = data.encode() if hasattr(data, "encode") else data or b""
+        await self.stream.send(data, end_stream=end_stream)
 
 
 class StreamingHTTPResponse(BaseHTTPResponse):
@@ -42,9 +79,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         "status",
         "content_type",
         "headers",
-        "chunked",
         "_cookies",
-        "send",
     )
 
     def __init__(
@@ -53,13 +88,12 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         status=200,
         headers=None,
         content_type="text/plain; charset=utf-8",
-        chunked=True,
+        chunked="deprecated",
     ):
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
         self.headers = Header(headers or {})
-        self.chunked = chunked
         self._cookies = None
 
     async def write(self, data):
@@ -70,9 +104,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         await self.send(self._encode_body(data))
 
     async def stream(self, request):
-        self.send = request.respond(
-            self.status, self.headers, self.content_type,
-        ).send
+        request.respond(self)
         await self.streaming_fn(self)
         await self.send(end_stream=True)
 
@@ -93,16 +125,6 @@ class HTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
-
-    def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        body = b""
-        if has_message_body(self.status):
-            body = self.body
-            self.headers["Content-Length"] = self.headers.get(
-                "Content-Length", len(self.body)
-            )
-
-        return self.get_headers(version, keep_alive, keep_alive_timeout, body)
 
     @property
     def cookies(self):
@@ -265,7 +287,7 @@ async def file_stream(
     mime_type=None,
     headers=None,
     filename=None,
-    chunked=True,
+    chunked="deprecated",
     _range=None,
 ):
     """Return a streaming response object with file data.
@@ -314,7 +336,6 @@ async def file_stream(
         status=status,
         headers=headers,
         content_type=mime_type,
-        chunked=chunked,
     )
 
 
@@ -323,7 +344,7 @@ def stream(
     status=200,
     headers=None,
     content_type="text/plain; charset=utf-8",
-    chunked=True,
+    chunked="deprecated",
 ):
     """Accepts an coroutine `streaming_fn` which can be used to
     write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
@@ -349,7 +370,6 @@ def stream(
         headers=headers,
         content_type=content_type,
         status=status,
-        chunked=chunked,
     )
 
 

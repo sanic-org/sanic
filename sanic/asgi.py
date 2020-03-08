@@ -272,84 +272,20 @@ class ASGIApp:
                 yield data
 
     def respond(self, response):
-        headers: List[Tuple[bytes, bytes]] = []
-        cookies: Dict[str, str] = {}
-        try:
-            cookies = {
-                v.key: v
-                for _, v in list(
-                    filter(
-                        lambda item: item[0].lower() == "set-cookie",
-                        response.headers.items(),
-                    )
-                )
-            }
-            headers += [
-                (str(name).encode("latin-1"), str(value).encode("latin-1"))
-                for name, value in response.headers.items()
-                if name.lower() not in ["set-cookie"]
-            ]
-        except AttributeError:
-            logger.error(
-                "Invalid response object for url %s, "
-                "Expected Type: HTTPResponse, Actual Type: %s",
-                self.request.url,
-                type(response),
-            )
-            exception = ServerError("Invalid response type")
-            response = self.sanic_app.error_handler.response(
-                self.request, exception
-            )
-            headers = [
-                (str(name).encode("latin-1"), str(value).encode("latin-1"))
-                for name, value in response.headers.items()
-                if name not in (b"Set-Cookie",)
-            ]
+        response.stream, self.response = self, response
+        return response
 
-        if "content-length" not in response.headers and not isinstance(
-            response, StreamingHTTPResponse
-        ):
-            headers += [
-                (b"content-length", str(len(response.body)).encode("latin-1"))
-            ]
-
-        if "content-type" not in response.headers:
-            headers += [
-                (b"content-type", str(response.content_type).encode("latin-1"))
-            ]
-
-        if response.cookies:
-            cookies.update(
-                {
-                    v.key: v
-                    for _, v in response.cookies.items()
-                    if v.key not in cookies.keys()
-                }
-            )
-
-        headers += [
-            (b"set-cookie", cookie.encode("utf-8"))
-            for k, cookie in cookies.items()
-        ]
-        self.response_start = {
-            "type": "http.response.start",
-            "status": response.status,
-            "headers": headers,
-        }
-        self.response_body = response.body
-        return self
-
-    async def send(self, data=None, end_stream=None):
-        if data is None is end_stream:
-            end_stream = True
-        if self.response_start:
-            await self.transport.send(self.response_start)
-            self.response_start = None
-            if self.response_body:
-                data = (
-                    self.response_body + data if data else self.response_body
-                )
-                self.response_body = None
+    async def send(self, data, end_stream):
+        if self.response:
+            response, self.response = self.response, None
+            await self.transport.send({
+                "type": "http.response.start",
+                "status": response.status,
+                "headers": response.full_headers,
+            })
+            response_body = getattr(response, "body", None)
+            if response_body:
+                data = response_body + data if data else response_body
         await self.transport.send(
             {
                 "type": "http.response.body",

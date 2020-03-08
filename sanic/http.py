@@ -77,7 +77,7 @@ class Http:
                 if self.stage is Stage.HANDLER:
                     raise ServerError("Handler produced no response")
                 if self.stage is Stage.RESPONSE:
-                    await self.send(end_stream=True)
+                    await self.response.send(end_stream=True)
             except CancelledError:
                 # Write an appropriate response before exiting
                 e = self.exception or ServiceUnavailable(f"Cancelled")
@@ -178,13 +178,15 @@ class Http:
     def http1_response_header(self, data, end_stream) -> bytes:
         res = self.response
         # Compatibility with simple response body
-        if not data and res.body:
+        if not data and getattr(res, "body", None):
             data, end_stream = res.body, True
         size = len(data)
-        status = res.status
         headers = res.headers
         if res.content_type and "content-type" not in headers:
             headers["content-type"] = res.content_type
+        status = res.status
+        if not isinstance(status, int) or status < 200:
+            raise RuntimeError(f"Invalid response status {status!r}")
         # Not Modified, Precondition Failed
         if status in (304, 412):
             headers = remove_entity_headers(headers)
@@ -374,19 +376,10 @@ class Http:
         if self.stage is not Stage.HANDLER:
             self.stage = Stage.FAILED
             raise RuntimeError("Response already started")
-        if not isinstance(response.status, int) or response.status < 200:
-            raise RuntimeError(f"Invalid response status {response.status!r}")
-        self.response = response
-        return self
+        self.response, response.stream = response, self
+        return response
 
-    async def send(self, data=None, end_stream=None):
-        """Send any pending response headers and the given data as body.
-         :param data: str or bytes to be written
-         :end_stream: whether to close the stream after this block
-        """
-        if data is None and end_stream is None:
-            end_stream = True
-        data = data.encode() if hasattr(data, "encode") else data or b""
+    async def send(self, data, end_stream):
         data = self.response_func(data, end_stream)
         if not data:
             return

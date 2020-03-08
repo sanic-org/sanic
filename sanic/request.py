@@ -106,15 +106,17 @@ class Request:
         )
 
     def respond(
-        self, status=200, headers=None, content_type=DEFAULT_HTTP_CONTENT_TYPE
+        self, response=None, *, status=200, headers=None, content_type=None
     ):
-        return self.stream.respond(
-            status
-            if isinstance(status, HTTPResponse)
-            else HTTPResponse(
-                status=status, headers=headers, content_type=content_type,
+        # This logic of determining which response to use is subject to change
+        if response is None:
+            response = self.stream.response or HTTPResponse(
+                status=status,
+                headers=headers,
+                content_type=content_type,
             )
-        )
+        # Connect the response and return it
+        return self.stream.respond(response)
 
     async def receive_body(self):
         self.body = b"".join([data async for data in self.stream])

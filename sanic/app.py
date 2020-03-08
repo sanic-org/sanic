@@ -22,7 +22,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
-from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
 from sanic.server import (
     AsyncioServer,
@@ -1049,10 +1049,8 @@ class Sanic:
                         "Exception occurred in one of response "
                         "middleware handlers"
                     )
-            # Stream response
-            if isinstance(response, StreamingHTTPResponse):
-                await response.stream(request)
-            elif isinstance(response, HTTPResponse):
+            # Make sure that response is finished / run StreamingHTTP callback
+            if isinstance(response, BaseHTTPResponse):
                 await request.respond(response).send(end_stream=True)
             else:
                 raise ServerError(

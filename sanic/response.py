@@ -77,6 +77,8 @@ class BaseHTTPResponse:
 
 
 class StreamingHTTPResponse(BaseHTTPResponse):
+    """Old style streaming response. Use `request.respond()` instead of this in
+    new code to avoid the callback."""
     __slots__ = (
         "protocol",
         "streaming_fn",
@@ -105,12 +107,14 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
         :param data: str or bytes-ish data to be written.
         """
-        await self.send(self._encode_body(data))
+        await super().send(self._encode_body(data))
 
-    async def stream(self, request):
-        request.respond(self)
-        await self.streaming_fn(self)
-        await self.send(end_stream=True)
+    async def send(self, *args, **kwargs):
+        if self.streaming_fn is not None:
+            await self.streaming_fn(self)
+            self.streaming_fn = None
+        await super().send(*args, **kwargs)
+
 
 
 class HTTPResponse(BaseHTTPResponse):

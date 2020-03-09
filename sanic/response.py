@@ -47,7 +47,7 @@ class BaseHTTPResponse:
                 headers += (b"content-type", self.content_type.encode()),
         for name, value in self.headers.items():
             name = f"{name}".lower()
-            if name.lower() == "set-cookie":
+            if name == "set-cookie":
                 cookies[value.key] = value
             else:
                 headers += (name.encode("ascii"), f"{value}".encode()),

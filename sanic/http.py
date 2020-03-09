@@ -222,7 +222,7 @@ class Http:
             data = b""
             self.response_func = self.head_response_ignored
         headers["connection"] = "keep-alive" if self.keep_alive else "close"
-        ret = format_http1_response(status, res.processed_headers, data)
+        ret = format_http1_response(status, res.processed_headers) + data
         # Send a 100-continue if expected and not Expectation Failed
         if self.expecting_continue:
             self.expecting_continue = False

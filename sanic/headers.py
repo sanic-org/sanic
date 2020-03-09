@@ -175,14 +175,17 @@ def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
     host, port = m.groups()
     return host.lower(), int(port) if port is not None else None
 
+_HTTP1_STATUSLINES = [
+    b"HTTP/1.1 %d %b\r\n" % (status, STATUS_CODES.get(status, b"UNKNOWN"))
+    for status in range(1000)
+]
 
-def format_http1_response(
-    status: int, headers: HeaderBytesIterable, body=b""
-) -> bytes:
-    """Format a full HTTP/1.1 response."""
-    return b"HTTP/1.1 %d %b\r\n%b\r\n%b" % (
-        status,
-        STATUS_CODES.get(status, b"UNKNOWN"),
-        b"".join(b"%b: %b\r\n" % h for h in headers),
-        body,
-    )
+def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
+    """Format a HTTP/1.1 response header."""
+    # Note: benchmarks show that here bytes concat is faster than bytearray,
+    # b"".join() or %-formatting. %timeit any changes you make.
+    ret = _HTTP1_STATUSLINES[status]
+    for h in headers:
+        ret += b"%b: %b\r\n" % h
+    ret += b"\r\n"
+    return ret

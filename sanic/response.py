@@ -36,19 +36,19 @@ class BaseHTTPResponse:
 
         Add and remove headers based on status and content_type.
         """
-        status = self.status
-        headers = []
         # TODO: Make a blacklist set of header names and then filter with that
-        if status in (304, 412):  # Not Modified, Precondition Failed
+        if self.status in (304, 412):  # Not Modified, Precondition Failed
             self.headers = remove_entity_headers(self.headers)
-        if has_message_body(status):
-            if self.content_type and not "content-type" in self.headers:
-                headers += (b"content-type", self.content_type.encode()),
+        if has_message_body(self.status):
+            self.headers.setdefault("content-type", self.content_type)
         # Encode headers into bytes
-        for name, value in self.headers.items():
-            name = name.encode("ascii").lower()
-            headers += (name, f"{value}".encode("utf-8")),
-        return headers
+        return (
+            (
+                name.encode("ascii"),
+                f"{value}".encode("utf-8", errors="surrogateescape")
+            )
+            for name, value in self.headers.items()
+        )
 
     async def send(self, data=None, end_stream=None):
         """Send any pending response headers and the given data as body.

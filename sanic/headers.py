@@ -175,10 +175,12 @@ def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
     host, port = m.groups()
     return host.lower(), int(port) if port is not None else None
 
+
 _HTTP1_STATUSLINES = [
     b"HTTP/1.1 %d %b\r\n" % (status, STATUS_CODES.get(status, b"UNKNOWN"))
     for status in range(1000)
 ]
+
 
 def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
     """Format a HTTP/1.1 response header."""

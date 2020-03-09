@@ -15,6 +15,7 @@ from aiofiles import os as async_os
 from sanic.response import (
     HTTPResponse,
     StreamingHTTPResponse,
+    empty,
     file,
     file_stream,
     json,
@@ -22,7 +23,6 @@ from sanic.response import (
     stream,
     text,
 )
-from sanic.response import empty
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 

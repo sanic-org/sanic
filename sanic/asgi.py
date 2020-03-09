@@ -6,11 +6,8 @@ from typing import (
     Any,
     Awaitable,
     Callable,
-    Dict,
-    List,
     MutableMapping,
     Optional,
-    Tuple,
     Union,
 )
 from urllib.parse import quote
@@ -18,10 +15,8 @@ from urllib.parse import quote
 import sanic.app  # noqa
 
 from sanic.compat import Header
-from sanic.exceptions import InvalidUsage, ServerError
-from sanic.log import logger
+from sanic.exceptions import InvalidUsage
 from sanic.request import Request
-from sanic.response import StreamingHTTPResponse
 from sanic.websocket import WebSocketConnection
 
 
@@ -278,11 +273,13 @@ class ASGIApp:
     async def send(self, data, end_stream):
         if self.response:
             response, self.response = self.response, None
-            await self.transport.send({
-                "type": "http.response.start",
-                "status": response.status,
-                "headers": response.processed_headers,
-            })
+            await self.transport.send(
+                {
+                    "type": "http.response.start",
+                    "status": response.status,
+                    "headers": response.processed_headers,
+                }
+            )
             response_body = getattr(response, "body", None)
             if response_body:
                 data = response_body + data if data else response_body

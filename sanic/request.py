@@ -111,9 +111,7 @@ class Request:
         # This logic of determining which response to use is subject to change
         if response is None:
             response = self.stream.response or HTTPResponse(
-                status=status,
-                headers=headers,
-                content_type=content_type,
+                status=status, headers=headers, content_type=content_type,
             )
         # Connect the response and return it
         return self.stream.respond(response)

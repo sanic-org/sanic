@@ -43,10 +43,7 @@ class BaseHTTPResponse:
             self.headers.setdefault("content-type", self.content_type)
         # Encode headers into bytes
         return (
-            (
-                name.encode("ascii"),
-                f"{value}".encode("utf-8", errors="surrogateescape")
-            )
+            (name.encode("ascii"), f"{value}".encode(errors="surrogateescape"))
             for name, value in self.headers.items()
         )
 
@@ -64,6 +61,7 @@ class BaseHTTPResponse:
 class StreamingHTTPResponse(BaseHTTPResponse):
     """Old style streaming response. Use `request.respond()` instead of this in
     new code to avoid the callback."""
+
     __slots__ = (
         "protocol",
         "streaming_fn",
@@ -99,7 +97,6 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             await self.streaming_fn(self)
             self.streaming_fn = None
         await super().send(*args, **kwargs)
-
 
 
 class HTTPResponse(BaseHTTPResponse):

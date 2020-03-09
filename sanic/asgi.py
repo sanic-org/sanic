@@ -2,14 +2,7 @@ import asyncio
 import warnings
 
 from inspect import isawaitable
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    MutableMapping,
-    Optional,
-    Union,
-)
+from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 from urllib.parse import quote
 
 import sanic.app  # noqa

@@ -36,33 +36,18 @@ class BaseHTTPResponse:
 
         Add and remove headers based on status and content_type.
         """
-        headers = []
-        cookies = {}
         status = self.status
+        headers = []
         # TODO: Make a blacklist set of header names and then filter with that
         if status in (304, 412):  # Not Modified, Precondition Failed
             self.headers = remove_entity_headers(self.headers)
         if has_message_body(status):
             if self.content_type and not "content-type" in self.headers:
                 headers += (b"content-type", self.content_type.encode()),
+        # Encode headers into bytes
         for name, value in self.headers.items():
-            name = f"{name}".lower()
-            if name == "set-cookie":
-                cookies[value.key] = value
-            else:
-                headers += (name.encode("ascii"), f"{value}".encode()),
-
-        if self.cookies:
-            cookies.update(
-                (v.key, v)
-                for v in self.cookies.values()
-                if v.key not in cookies
-            )
-
-        headers += [
-            (b"set-cookie", cookie.encode("utf-8"))
-            for k, cookie in cookies.items()
-        ]
+            name = name.encode("ascii").lower()
+            headers += (name, f"{value}".encode("utf-8")),
         return headers
 
     async def send(self, data=None, end_stream=None):

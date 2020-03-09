@@ -938,7 +938,7 @@ class Sanic:
         """
         pass
 
-    async def handle_exception(self, request, exception, name=""):
+    async def handle_exception(self, request, exception):
         try:
             response = self.error_handler.response(request, exception)
             if isawaitable(response):
@@ -959,7 +959,7 @@ class Sanic:
         if response is not None:
             try:
                 response = await self._run_response_middleware(
-                    request, response, request_name=name
+                    request, response, request_name=request.name
                 )
             except CancelledError:
                 # FIXME: Ensure exiting in a clean manner instead of this
@@ -992,6 +992,7 @@ class Sanic:
         try:
             # Fetch handler from router
             handler, args, kwargs, uri, name = self.router.get(request)
+            request.name = name
 
             if request.stream.request_body:
                 if self.router.is_stream_handler(request):
@@ -1036,22 +1037,11 @@ class Sanic:
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response
-            # Run response middleware
-            if response is not None:
-                try:
-                    response = await self._run_response_middleware(
-                        request, response, request_name=name
-                    )
-                except CancelledError:
-                    raise
-                except Exception:
-                    error_logger.exception(
-                        "Exception occurred in one of response "
-                        "middleware handlers"
-                    )
+            if response:
+                response = await request.respond(response)
             # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
-                await request.respond(response).send(end_stream=True)
+                await response.send(end_stream=True)
             else:
                 raise ServerError(
                     f"Invalid response type {response!r} (need HTTPResponse)"
@@ -1063,8 +1053,9 @@ class Sanic:
             # -------------------------------------------- #
             # Response Generation Failed
             # -------------------------------------------- #
-            response = await self.handle_exception(request, e, name)
-            await request.respond(response).send(end_stream=True)
+            response = await self.handle_exception(request, e)
+            response = await request.respond(response)
+            await response.send(end_stream=True)
 
     # -------------------------------------------------------------------- #
     # Testing
@@ -1345,6 +1336,8 @@ class Sanic:
                     _response = await _response
                 if _response:
                     response = _response
+                    if isinstance(response, BaseHTTPResponse):
+                        response = request.stream.respond(response)
                     break
         return response
 

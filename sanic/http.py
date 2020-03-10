@@ -274,8 +274,25 @@ class Http:
         # From request and handler states we can respond, otherwise be silent
         if self.stage is Stage.HANDLER:
             app = self.protocol.app
+            if self.request is None:
+                self.create_empty_request()
             response = await app.handle_exception(self.request, exception)
             await self.respond(response).send(end_stream=True)
+
+    def create_empty_request(self):
+        """Current error handling code needs a request object that won't exist
+        if an error occurred during before a request was received. Create a
+        bogus response for error handling use."""
+        # FIXME: Avoid this by refactoring error handling and response code
+        self.request = self.protocol.request_class(
+            url_bytes=self.url.encode() if self.url else b"*",
+            headers=Header({}),
+            version="1.1",
+            method="NONE",
+            transport=self.protocol.transport,
+            app=self.protocol.app,
+        )
+        self.request.stream = self
 
     def log_response(self):
         """

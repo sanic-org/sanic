@@ -955,22 +955,22 @@ class Sanic:
                 response = HTTPResponse(
                     "An error occurred while handling an error", status=500
                 )
-        # Run response middleware
         if response is not None:
             try:
-                response = await self._run_response_middleware(
-                    request, response, request_name=request.name
-                )
-            except CancelledError:
-                # FIXME: Ensure exiting in a clean manner instead of this
-                # and verify py37 and py38 test_middleware.py separately
-                request.stream.keep_alive = False
-            except Exception:
-                error_logger.exception(
-                    "Exception occurred in one of response "
-                    "middleware handlers"
-                )
-        return response
+                response = await request.respond(response)
+            except:
+                # Skip response middleware
+                request.stream.respond(response)
+                await response.send(end_stream=True)
+                raise
+        else:
+            response = request.stream.response
+        if isinstance(response, BaseHTTPResponse):
+            await response.send(end_stream=True)
+        else:
+            raise ServerError(
+                f"Invalid response type {response!r} (need HTTPResponse)"
+            )
 
     async def handle_request(self, request):
         """Take a request from the HTTP Server and return a response object
@@ -1039,6 +1039,8 @@ class Sanic:
                     response = await response
             if response:
                 response = await request.respond(response)
+            else:
+                response = request.stream.response
             # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
                 await response.send(end_stream=True)
@@ -1053,9 +1055,7 @@ class Sanic:
             # -------------------------------------------- #
             # Response Generation Failed
             # -------------------------------------------- #
-            response = await self.handle_exception(request, e)
-            response = await request.respond(response)
-            await response.send(end_stream=True)
+            await self.handle_exception(request, e)
 
     # -------------------------------------------------------------------- #
     # Testing

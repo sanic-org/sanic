@@ -137,6 +137,12 @@ class HttpProtocol(asyncio.Protocol):
         except Exception:
             logger.exception("protocol.connection_task uncaught")
         finally:
+            if self._debug and self._http and self._http.request:
+                ip = self.transport.get_extra_info("peername")
+                logger.error(
+                    "Connection lost before response written"
+                    f" @ {ip} {self._http.request}"
+                )
             self._http = None
             self._task = None
             try:
@@ -229,9 +235,6 @@ class HttpProtocol(asyncio.Protocol):
             self.resume_writing()
             if self._task:
                 self._task.cancel()
-            if self._debug and self._http and self._http.response:
-                ip = self.transport.get_extra_info("peername")
-                logger.error(f"Connection lost before response written @ {ip}")
         except Exception:
             logger.exception("protocol.connection_lost")
 

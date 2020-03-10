@@ -1,13 +1,16 @@
+from asyncio import CancelledError
 from sys import argv
 
 from multidict import CIMultiDict  # type: ignore
-from asyncio import CancelledError
+
 
 try:
     from trio import Cancelled
+
     CancelledErrors = CancelledError, Cancelled
 except ImportError:
-    CancelledErrors = CancelledError,
+    CancelledErrors = (CancelledError,)
+
 
 class Header(CIMultiDict):
     def get_all(self, key):

@@ -958,7 +958,7 @@ class Sanic:
         if response is not None:
             try:
                 response = await request.respond(response)
-            except:
+            except BaseException:
                 # Skip response middleware
                 request.stream.respond(response)
                 await response.send(end_stream=True)

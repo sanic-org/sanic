@@ -8,8 +8,8 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
 
-from sanic.exceptions import InvalidUsage
 from sanic.compat import CancelledErrors
+from sanic.exceptions import InvalidUsage
 from sanic.headers import (
     parse_content_header,
     parse_forwarded,
@@ -17,7 +17,7 @@ from sanic.headers import (
     parse_xforwarded,
 )
 from sanic.log import error_logger, logger
-from sanic.response import HTTPResponse, BaseHTTPResponse
+from sanic.response import BaseHTTPResponse, HTTPResponse
 
 
 try:
@@ -128,8 +128,7 @@ class Request:
             raise
         except Exception:
             error_logger.exception(
-                "Exception occurred in one of response "
-                "middleware handlers"
+                "Exception occurred in one of response middleware handlers"
             )
         return response
 

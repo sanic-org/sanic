@@ -145,7 +145,7 @@ class Http:
         request = self.protocol.request_class(
             url_bytes=self.url.encode(),
             headers=Header(headers),
-            version=protocol[-3:],
+            version=protocol[5:],
             method=method,
             transport=self.protocol.transport,
             app=self.protocol.app,

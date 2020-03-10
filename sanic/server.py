@@ -184,6 +184,8 @@ class HttpProtocol(asyncio.Protocol):
     async def send(self, data):
         """Writes data with backpressure control."""
         await self._can_write.wait()
+        if self.transport.is_closing():
+            raise CancelledError
         self.transport.write(data)
         self._time = current_time()
 

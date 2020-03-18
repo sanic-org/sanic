@@ -1,4 +1,6 @@
 import asyncio
+import os
+import signal
 
 from queue import Queue
 from unittest.mock import MagicMock
@@ -16,11 +18,16 @@ calledq = Queue()
 
 
 def set_loop(app, loop):
-    loop.add_signal_handler = MagicMock()
+    global mock
+    mock = MagicMock()
+    if os.name == "nt":
+        signal.signal = mock
+    else:
+        loop.add_signal_handler = mock
 
 
 def after(app, loop):
-    calledq.put(loop.add_signal_handler.called)
+    calledq.put(mock.called)
 
 
 def test_register_system_signals(app):

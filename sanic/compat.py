@@ -1,3 +1,6 @@
+import asyncio
+import signal
+
 from sys import argv
 
 from multidict import CIMultiDict  # type: ignore
@@ -23,3 +26,25 @@ else:
 
     async def open_async(file, mode="r", **kwargs):
         return aio_open(file, mode, **kwargs)
+
+
+def ctrlc_workaround_for_windows(app):
+    async def stay_active(app):
+        """Frequently poll asyncio to allow *receiving* any signals in Python"""
+        while not die:
+            # If someone else stopped the app, just exit
+            if asyncio.get_running_loop()._stopping:
+                return
+            await asyncio.sleep(0.1)
+        # Can't be called from signal handler, so call it from here
+        app.stop()
+
+    def ctrlc_handler(sig, frame):
+        nonlocal die
+        if die:
+            raise KeyboardInterrupt("Non-graceful Ctrl+C")
+        die = True
+
+    die = False
+    signal.signal(signal.SIGINT, ctrlc_handler)
+    app.add_task(stay_active)

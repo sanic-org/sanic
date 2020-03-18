@@ -15,7 +15,7 @@ from time import time
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
 
-from sanic.compat import Header
+from sanic.compat import Header, ctrlc_workaround_for_windows
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -929,15 +929,11 @@ def serve(
 
     # Register signals for graceful termination
     if register_sys_signals:
-        _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
-        for _signal in _singals:
-            try:
-                loop.add_signal_handler(_signal, loop.stop)
-            except NotImplementedError:
-                logger.warning(
-                    "Sanic tried to use loop.add_signal_handler "
-                    "but it is not implemented on this platform."
-                )
+        if os.name == "nt":
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
     pid = os.getpid()
     try:
         logger.info("Starting worker [%s]", pid)

@@ -112,7 +112,7 @@ class Cookie(dict):
                     or (isinstance(value, float) and value.is_integer())
                 )
                 if not is_integer:
-                    raise TypeError(
+                    raise ValueError(
                         "Cookie 'max-age' property must be a integer value"
                     )
             elif key.lower() == "expires":

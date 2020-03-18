@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
+from contextlib import ExitStack as does_not_raise
 
 import pytest
 
@@ -162,15 +163,18 @@ def test_cookie_set_same_key(app):
     assert response.cookies["test"] == "pass"
 
 
-@pytest.mark.parametrize("max_age", ["0", 30, 30.0, 30.1, "30", "test"])
-def test_cookie_max_age(app, max_age):
+@pytest.mark.parametrize("max_age,valid", [("0", True), (30, True), (30.0, True), (30.1, False), ("30", True), ("test", False)])
+def test_cookie_max_age(app, max_age, valid):
     cookies = {"test": "wait"}
+
+    correct_raise = does_not_raise() if valid else pytest.raises(TypeError)
 
     @app.get("/")
     def handler(request):
         response = text("pass")
         response.cookies["test"] = "pass"
-        response.cookies["test"]["max-age"] = max_age
+        with correct_raise:
+            response.cookies["test"]["max-age"] = max_age
         return response
 
     request, response = app.test_client.get(
@@ -179,11 +183,10 @@ def test_cookie_max_age(app, max_age):
     assert response.status == 200
 
     cookie = response.cookies.get("test")
-    if (
-        str(max_age).isdigit()
-        and int(max_age) == float(max_age)
-        and int(max_age) != 0
-    ):
+    if valid and cookie is None:
+        # max-age=0
+        assert int(max_age) == 0
+    elif valid:
         cookie_expires = datetime.utcfromtimestamp(
             response.raw_cookies["test"].expires
         ).replace(microsecond=0)
@@ -200,8 +203,6 @@ def test_cookie_max_age(app, max_age):
             cookie_expires == expires
             or cookie_expires == expires + timedelta(seconds=-1)
         )
-    else:
-        assert cookie is None
 
 
 @pytest.mark.parametrize(

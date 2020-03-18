@@ -167,7 +167,7 @@ def test_cookie_set_same_key(app):
 def test_cookie_max_age(app, max_age, valid):
     cookies = {"test": "wait"}
 
-    correct_raise = does_not_raise() if valid else pytest.raises(TypeError)
+    correct_raise = does_not_raise() if valid else pytest.raises(ValueError)
 
     @app.get("/")
     def handler(request):

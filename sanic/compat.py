@@ -31,9 +31,10 @@ else:
 def ctrlc_workaround_for_windows(app):
     async def stay_active(app):
         """Frequently poll asyncio to allow *receiving* any signals in Python"""
+        loop = asyncio.get_running_loop()
         while not die:
             # If someone else stopped the app, just exit
-            if asyncio.get_running_loop()._stopping:
+            if getattr(loop, "_stopping", False):
                 return
             await asyncio.sleep(0.1)
         # Can't be called from signal handler, so call it from here

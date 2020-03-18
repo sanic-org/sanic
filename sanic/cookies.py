@@ -4,8 +4,6 @@ import string
 from datetime import datetime
 
 
-DEFAULT_MAX_AGE = 0
-
 # ------------------------------------------------------------ #
 #  SimpleCookie
 # ------------------------------------------------------------ #
@@ -108,8 +106,17 @@ class Cookie(dict):
             raise KeyError("Unknown cookie property")
         if value is not False:
             if key.lower() == "max-age":
-                if not str(value).isdigit():
-                    value = DEFAULT_MAX_AGE
+                is_integer = (
+                    isinstance(value, int)
+                    or (isinstance(value, str) and value.isdigit())
+                    or (isinstance(value, float) and value.is_integer())
+                )
+                if not is_integer:
+                    raise TypeError(
+                        "Cookie 'max-age' property must be a integer value"
+                    )
+                else:
+                    value = int(value)
             elif key.lower() == "expires":
                 if not isinstance(value, datetime):
                     raise TypeError(

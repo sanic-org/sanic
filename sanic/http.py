@@ -64,6 +64,10 @@ class Http:
         self.exception = None
         self.url = None
 
+    def __bool__(self):
+        """Test if request handling is in progress"""
+        return self.stage in (Stage.HANDLER, Stage.RESPONSE)
+
     async def http1(self):
         """HTTP 1.1 connection handler"""
         while True:  # As long as connection stays keep-alive
@@ -175,7 +179,7 @@ class Http:
         self.stage = Stage.HANDLER
         self.request = request
 
-    def http1_response_header(self, data, end_stream) -> bytes:
+    async def http1_response_header(self, data, end_stream) -> bytes:
         res = self.response
         # Compatibility with simple response body
         if not data and getattr(res, "body", None):
@@ -231,8 +235,8 @@ class Http:
         # Send response
         if self.protocol.access_log:
             self.log_response()
+        await self._send(ret)
         self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
-        return ret
 
     def head_response_ignored(self, data, end_stream):
         """HEAD response: body data silently ignored."""
@@ -240,29 +244,35 @@ class Http:
             self.response_func = None
             self.stage = Stage.IDLE
 
-    def http1_response_chunked(self, data, end_stream) -> bytes:
+    async def http1_response_chunked(self, data, end_stream) -> bytes:
         """Format a part of response body in chunked encoding."""
         # Chunked encoding
         size = len(data)
         if end_stream:
+            await self._send(
+                b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
+                if size else
+                b"0\r\n\r\n"
+            )
             self.response_func = None
             self.stage = Stage.IDLE
-            if size:
-                return b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
-            return b"0\r\n\r\n"
-        return b"%x\r\n%b\r\n" % (size, data) if size else b""
+        elif size:
+            await self._send(b"%x\r\n%b\r\n" % (size, data))
 
-    def http1_response_normal(self, data: bytes, end_stream: bool) -> bytes:
+    async def http1_response_normal(self, data: bytes, end_stream: bool) -> bytes:
         """Format / keep track of non-chunked response."""
-        self.response_bytes_left -= len(data)
-        if self.response_bytes_left <= 0:
-            if self.response_bytes_left < 0:
+        bytes_left = self.response_bytes_left - len(data)
+        if bytes_left <= 0:
+            if bytes_left < 0:
                 raise ServerError("Response was bigger than content-length")
+            await self._send(data)
             self.response_func = None
             self.stage = Stage.IDLE
-        elif end_stream:
-            raise ServerError("Response was smaller than content-length")
-        return data
+        else:
+            if end_stream:
+                raise ServerError("Response was smaller than content-length")
+            await self._send(data)
+        self.response_bytes_left = bytes_left
 
     async def error_response(self, exception):
         # Disconnect after an error if in any other state than handler
@@ -391,8 +401,6 @@ class Http:
         self.response, response.stream = response, self
         return response
 
-    async def send(self, data, end_stream):
-        data = self.response_func(data, end_stream)
-        if not data:
-            return
-        await self._send(data)
+    @property
+    def send(self):
+        return self.response_func

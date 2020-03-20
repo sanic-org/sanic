@@ -288,8 +288,7 @@ class Http:
             app = self.protocol.app
             if self.request is None:
                 self.create_empty_request()
-            response = await app.handle_exception(self.request, exception)
-            await self.respond(response).send(end_stream=True)
+            await app.handle_exception(self.request, exception)
 
     def create_empty_request(self):
         """Current error handling code needs a request object that won't exist

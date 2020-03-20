@@ -20,7 +20,9 @@ to true will stop that features installation.
 
 .. code-block:: bash
 
-    SANIC_NO_UVLOOP=true SANIC_NO_UJSON=true pip3 install sanic
+    $ export SANIC_NO_UVLOOP=true
+    $ export SANIC_NO_UJSON=true
+    $ pip3 install --no-binary :all: sanic
 
 You can also install Sanic from `conda-forge <https://anaconda.org/conda-forge/sanic>`_
 

@@ -56,6 +56,7 @@ class Http:
         self.stage = Stage.IDLE
         self.request_body = None
         self.request_bytes = None
+        self.request_bytes_left = None
         self.request_max_size = protocol.request_max_size
         self.keep_alive = True
         self.head_only = None
@@ -134,12 +135,12 @@ class Http:
             else:
                 raise Exception  # Raise a Bad Request on try-except
             self.head_only = method.upper() == "HEAD"
-            self.request_body = False
+            request_body = False
             headers = []
             for name, value in (h.split(":", 1) for h in raw_headers):
                 name, value = h = name.lower(), value.lstrip()
                 if name in ("content-length", "transfer-encoding"):
-                    self.request_body = True
+                    request_body = True
                 elif name == "connection":
                     self.keep_alive = value.lower() == "keep-alive"
                 headers.append(h)
@@ -154,10 +155,9 @@ class Http:
             transport=self.protocol.transport,
             app=self.protocol.app,
         )
-        request.stream = self
-        self.protocol.state["requests_count"] += 1
         # Prepare for request body
-        if self.request_body:
+        self.request_bytes_left = self.request_bytes = 0
+        if request_body:
             headers = request.headers
             expect = headers.get("expect")
             if expect is not None:
@@ -165,19 +165,19 @@ class Http:
                     self.expecting_continue = True
                 else:
                     raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
-            request.stream = self
             if headers.get("transfer-encoding") == "chunked":
                 self.request_body = "chunked"
-                self.request_bytes_left = self.request_bytes = 0
                 pos -= 2  # One CRLF stays in buffer
             else:
+                self.request_body = True
                 self.request_bytes_left = self.request_bytes = int(
                     headers["content-length"]
                 )
         # Remove header and its trailing CRLF
         del buf[: pos + 4]
         self.stage = Stage.HANDLER
-        self.request = request
+        self.request, request.stream = request, self
+        self.protocol.state["requests_count"] += 1
 
     async def http1_response_header(self, data, end_stream):
         res = self.response

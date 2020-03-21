@@ -48,6 +48,7 @@ def test_asyncio_server_no_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
+            port=43123,
             return_asyncio_server=True,
             asyncio_server_kwargs=dict(start_serving=False),
         )
@@ -61,6 +62,7 @@ def test_asyncio_server_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
+            port=43124,
             return_asyncio_server=True,
             asyncio_server_kwargs=dict(start_serving=False),
         )

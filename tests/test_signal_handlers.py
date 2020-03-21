@@ -5,6 +5,8 @@ import signal
 from queue import Queue
 from unittest.mock import MagicMock
 
+import pytest
+
 from sanic.compat import ctrlc_workaround_for_windows
 from sanic.response import HTTPResponse
 from sanic.testing import HOST, PORT
@@ -61,8 +63,13 @@ def test_dont_register_system_signals(app):
     assert calledq.get() is False
 
 
+@pytest.mark.skipif(
+    os.name == "nt", reason="windows cannot SIGINT processes"
+)
 def test_windows_workaround(app):
-    """Test Windows workaround (on any OS)"""
+    """Test Windows workaround (on any other OS)"""
+    # At least some code coverage, even though this test doesn't work on
+    # Windows...
     too_slow = False
 
     @app.add_task

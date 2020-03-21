@@ -33,6 +33,9 @@ def after(app, loop):
     calledq.put(mock.called)
 
 
+@pytest.mark.skipif(
+    os.name == "nt", reason="May hang CI on py38/windows"
+)
 def test_register_system_signals(app):
     """Test if sanic register system signals"""
 
@@ -48,6 +51,9 @@ def test_register_system_signals(app):
     assert calledq.get() is True
 
 
+@pytest.mark.skipif(
+    os.name == "nt", reason="May hang CI on py38/windows"
+)
 def test_dont_register_system_signals(app):
     """Test if sanic don't register system signals"""
 

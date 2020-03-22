@@ -97,7 +97,7 @@ class SanicTestClient:
             server_kwargs = dict(
                 host=host or self.host,
                 port=self.port,
-                asyncio_server_kwargs=dict(reuse_address=True),
+                reuse_port=True,  # Try to avoid test failures on Windows
                 **server_kwargs,
             )
             host, port = host or self.host, self.port

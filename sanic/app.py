@@ -1096,8 +1096,6 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
-        auto_reload = None,
-        asyncio_server_kwargs = None,
         **kwargs: Any,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
@@ -1128,9 +1126,6 @@ class Sanic:
         :type register_sys_signals: bool
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool
-        :param asyncio_server_kwargs: key-value arguments for
-                                      asyncio/uvloop create_server method
-        :type asyncio_server_kwargs: dict
         :return: Nothing
         """
         if "loop" in kwargs:
@@ -1140,14 +1135,14 @@ class Sanic:
                 "https://sanic.readthedocs.io/en/latest/sanic/deploying.html"
                 "#asynchronous-support"
             )
-        if kwargs:
-            logger.warning(f"Sanic.run ignored arguments {kwargs.keys()}")
-        if auto_reload is None:
-            # Default auto_reload to false
-            auto_reload = False
-            # If debug is set, default it to true (unless on windows)
-            if debug and os.name == "posix":
-                auto_reload = True
+
+        # Default auto_reload to false
+        auto_reload = False
+        # If debug is set, default it to true (unless on windows)
+        if debug and os.name == "posix":
+            auto_reload = True
+        # Allow for overriding either of the defaults
+        auto_reload = kwargs.get("auto_reload", auto_reload)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -1179,8 +1174,6 @@ class Sanic:
             register_sys_signals=register_sys_signals,
             auto_reload=auto_reload,
         )
-        if asyncio_server_kwargs:
-            server_settings["asyncio_server_kwargs"] = asyncio_server_kwargs
 
         try:
             self.is_running = True

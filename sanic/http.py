@@ -132,7 +132,7 @@ class Http:
             elif protocol == "HTTP/1.0":
                 self.keep_alive = False
             else:
-                raise Exception
+                raise Exception  # Raise a Bad Request on try-except
             self.head_only = method.upper() == "HEAD"
             self.request_body = False
             headers = []

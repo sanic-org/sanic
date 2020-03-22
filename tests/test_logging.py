@@ -127,7 +127,7 @@ def test_log_connection_lost(app, debug, monkeypatch):
 def test_logger(caplog):
     rand_string = str(uuid.uuid4())
 
-    app = Sanic()
+    app = Sanic(name=__name__)
 
     @app.get("/")
     def log_info(request):

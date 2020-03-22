@@ -221,7 +221,7 @@ async def test_request_class_custom():
     class MyCustomRequest(Request):
         pass
 
-    app = Sanic(request_class=MyCustomRequest)
+    app = Sanic(name=__name__, request_class=MyCustomRequest)
 
     @app.get("/custom")
     def custom_request(request):

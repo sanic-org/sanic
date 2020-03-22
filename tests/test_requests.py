@@ -2045,7 +2045,7 @@ async def test_request_form_invalid_content_type_asgi(app):
 
 
 def test_endpoint_basic():
-    app = Sanic()
+    app = Sanic(name=__name__)
 
     @app.route("/")
     def my_unique_handler(request):
@@ -2058,7 +2058,7 @@ def test_endpoint_basic():
 
 @pytest.mark.asyncio
 async def test_endpoint_basic_asgi():
-    app = Sanic()
+    app = Sanic(name=__name__)
 
     @app.route("/")
     def my_unique_handler(request):

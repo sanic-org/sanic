@@ -72,24 +72,38 @@ def test_dont_register_system_signals(app):
 @pytest.mark.skipif(
     os.name == "nt", reason="windows cannot SIGINT processes"
 )
-def test_windows_workaround(app):
+
+def test_windows_workaround():
     """Test Windows workaround (on any other OS)"""
     # At least some code coverage, even though this test doesn't work on
     # Windows...
-    too_slow = False
+    class MockApp:
+        def __init__(self):
+            self.stopped = False
 
-    @app.add_task
-    async def signaler(app):
+        def stop(self):
+            self.stopped = True
+
+        def add_task(self, func):
+            loop = asyncio.get_running_loop()
+            self.stay_active_task = loop.create_task(func(self))
+
+    async def atest():
+        app = MockApp()
         ctrlc_workaround_for_windows(app)
         await asyncio.sleep(0.1)
+        assert not app.stopped
+        # First Ctrl+C: set flags, don't actually terminate anything
         os.kill(os.getpid(), signal.SIGINT)
+        assert not app.stay_active_task.done()
+        await asyncio.sleep(0.2)
+        assert app.stopped
+        assert app.stay_active_task.result() == None
+        # Second Ctrl+C should raise
+        with pytest.raises(KeyboardInterrupt):
+            os.kill(os.getpid(), signal.SIGINT)
+        return "OK"
 
-    @app.add_task
-    async def timeout(app):
-        nonlocal too_slow
-        await asyncio.sleep(1)
-        too_slow = True
-        app.stop()
-
-    app.run(HOST, PORT)
-    assert not too_slow
+    # Run in our private loop
+    loop = asyncio.new_event_loop()
+    assert loop.run_until_complete(atest()) == "OK"

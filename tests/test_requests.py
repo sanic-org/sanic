@@ -12,7 +12,7 @@ from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import html, json, text
-from sanic.testing import ASGI_HOST, HOST, PORT
+from sanic.testing import ASGI_HOST, HOST, PORT, SanicTestClient
 
 
 # ------------------------------------------------------------ #
@@ -1029,7 +1029,7 @@ def test_url_attributes_no_ssl(app, path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = app.test_client.get(path + f"?{query}")
-    assert request.url == expected_url.format(HOST, PORT)
+    assert request.url == expected_url.format(HOST, request.server_port)
 
     parsed = urlparse(request.url)
 
@@ -1086,11 +1086,12 @@ def test_url_attributes_with_ssl_context(app, path, query, expected_url):
 
     app.add_route(handler, path)
 
+    port = app.test_client.port
     request, response = app.test_client.get(
         f"https://{HOST}:{PORT}" + path + f"?{query}",
         server_kwargs={"ssl": context},
     )
-    assert request.url == expected_url.format(HOST, PORT)
+    assert request.url == expected_url.format(HOST, request.server_port)
 
     parsed = urlparse(request.url)
 
@@ -1125,7 +1126,7 @@ def test_url_attributes_with_ssl_dict(app, path, query, expected_url):
         f"https://{HOST}:{PORT}" + path + f"?{query}",
         server_kwargs={"ssl": ssl_dict},
     )
-    assert request.url == expected_url.format(HOST, PORT)
+    assert request.url == expected_url.format(HOST, request.server_port)
 
     parsed = urlparse(request.url)
 
@@ -1917,8 +1918,9 @@ def test_request_server_port(app):
     def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get("/", headers={"Host": "my-server"})
-    assert request.server_port == app.test_client.port
+    test_client = SanicTestClient(app)
+    request, response = test_client.get("/", headers={"Host": "my-server"})
+    assert request.server_port == test_client.port
 
 
 def test_request_server_port_in_host_header(app):
@@ -1939,7 +1941,10 @@ def test_request_server_port_in_host_header(app):
     request, response = app.test_client.get(
         "/", headers={"Host": "mal_formed:5555"}
     )
-    assert request.server_port == app.test_client.port
+    if PORT is None:
+        assert request.server_port != 5555
+    else:
+        assert request.server_port == app.test_client.port
 
 
 def test_request_server_port_forwarded(app):
@@ -1979,7 +1984,7 @@ def test_server_name_and_url_for(app):
     request, response = app.test_client.get("/foo")
     assert (
         request.url_for("handler")
-        == f"http://my-server:{app.test_client.port}/foo"
+        == f"http://my-server:{request.server_port}/foo"
     )
 
     app.config.SERVER_NAME = "https://my-server/path"
@@ -2132,5 +2137,5 @@ def test_url_for_without_server_name(app):
     request, response = app.test_client.get("/sample")
     assert (
         response.json["url"]
-        == f"http://127.0.0.1:{app.test_client.port}/url-for"
+        == f"http://127.0.0.1:{request.server_port}/url-for"
     )

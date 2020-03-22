@@ -12,8 +12,7 @@ from sanic.response import text
 
 ASGI_HOST = "mockserver"
 HOST = "127.0.0.1"
-PORT = 42101
-
+PORT = None
 
 class SanicTestClient:
     def __init__(self, app, port=PORT, host=HOST):
@@ -97,7 +96,6 @@ class SanicTestClient:
             server_kwargs = dict(
                 host=host or self.host,
                 port=self.port,
-                reuse_port=True,  # Try to avoid test failures on Windows
                 **server_kwargs,
             )
             host, port = host or self.host, self.port
@@ -106,6 +104,7 @@ class SanicTestClient:
             sock.bind((host or self.host, 0))
             server_kwargs = dict(sock=sock, **server_kwargs)
             host, port = sock.getsockname()
+            self.port = port
 
         if uri.startswith(
             ("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")
@@ -117,6 +116,10 @@ class SanicTestClient:
             url = "{scheme}://{host}:{port}{uri}".format(
                 scheme=scheme, host=host, port=port, uri=uri
             )
+        # Tests construct URLs using PORT = None, which means random port not
+        # known until this function is called, so fix that here
+        url = url.replace(":None/", f":{port}/")
+
 
         @self.app.listener("after_server_start")
         async def _collect_response(sanic, loop):

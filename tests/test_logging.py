@@ -137,17 +137,23 @@ def test_logger(caplog):
     with caplog.at_level(logging.INFO):
         request, response = app.test_client.get("/")
 
+    port = request.server_port
+
+    # Note: testing with random port doesn't show the banner because it doesn't
+    # define host and port. This test supports both modes.
+    if caplog.record_tuples[0] == (
+        "sanic.root",
+        logging.INFO,
+        f"Goin' Fast @ http://127.0.0.1:{port}",
+    ):
+        caplog.record_tuples.pop(0)
+
     assert caplog.record_tuples[0] == (
         "sanic.root",
         logging.INFO,
-        "Goin' Fast @ http://127.0.0.1:42101",
+        f"http://127.0.0.1:{port}/",
     )
-    assert caplog.record_tuples[1] == (
-        "sanic.root",
-        logging.INFO,
-        "http://127.0.0.1:42101/",
-    )
-    assert caplog.record_tuples[2] == ("sanic.root", logging.INFO, rand_string)
+    assert caplog.record_tuples[1] == ("sanic.root", logging.INFO, rand_string)
     assert caplog.record_tuples[-1] == (
         "sanic.root",
         logging.INFO,

@@ -6,6 +6,7 @@ from inspect import isawaitable
 
 import pytest
 
+from sanic import Sanic
 from sanic.exceptions import SanicException
 from sanic.response import text
 
@@ -210,3 +211,8 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
         logging.ERROR,
         f"Exception occurred while handling uri: 'http://127.0.0.1:{port}/'",
     ) in caplog.record_tuples
+
+
+def test_app_name_required():
+    with pytest.deprecated_call():
+        Sanic()

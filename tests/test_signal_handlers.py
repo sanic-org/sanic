@@ -85,7 +85,7 @@ def test_windows_workaround():
             self.stopped = True
 
         def add_task(self, func):
-            loop = asyncio.get_running_loop()
+            loop = asyncio.get_event_loop()
             self.stay_active_task = loop.create_task(func(self))
 
     async def atest():
@@ -106,4 +106,5 @@ def test_windows_workaround():
 
     # Run in our private loop
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     assert loop.run_until_complete(atest()) == "OK"

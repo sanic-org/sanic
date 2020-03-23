@@ -163,11 +163,11 @@ def test_cookie_set_same_key(app):
     assert response.cookies["test"] == "pass"
 
 
-@pytest.mark.parametrize("max_age,valid", [("0", True), (30, True), (30.0, True), (30.1, False), ("30", True), ("test", False)])
-def test_cookie_max_age(app, max_age, valid):
+@pytest.mark.parametrize("max_age,should_raise", [("0", True), (30, True), (30.0, False), (30.1, False), ("30", True), ("test", False)])
+def test_cookie_max_age(app, max_age, should_raise):
     cookies = {"test": "wait"}
 
-    correct_raise = does_not_raise() if valid else pytest.raises(ValueError)
+    correct_raise = does_not_raise() if should_raise else pytest.raises(ValueError)
 
     @app.get("/")
     def handler(request):
@@ -183,10 +183,10 @@ def test_cookie_max_age(app, max_age, valid):
     assert response.status == 200
 
     cookie = response.cookies.get("test")
-    if valid and cookie is None:
+    if should_raise and cookie is None:
         # max-age=0
         assert int(max_age) == 0
-    elif valid:
+    elif should_raise:
         cookie_expires = datetime.utcfromtimestamp(
             response.raw_cookies["test"].expires
         ).replace(microsecond=0)

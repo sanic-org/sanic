@@ -106,14 +106,11 @@ class Cookie(dict):
             raise KeyError("Unknown cookie property")
         if value is not False:
             if key.lower() == "max-age":
-                is_integer = (
-                    isinstance(value, int)
-                    or (isinstance(value, str) and value.isdigit())
-                    or (isinstance(value, float) and value.is_integer())
-                )
+                is_str_int = isinstance(value, str) and value.isdigit()
+                is_integer = isinstance(value, int) or is_str_int
                 if not is_integer:
-                    raise ValueError(
-                        "Cookie 'max-age' property must be a integer value"
+                    raise TypeError(
+                        "Cookie 'max-age' property must be a int"
                     )
             elif key.lower() == "expires":
                 if not isinstance(value, datetime):

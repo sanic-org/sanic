@@ -1178,6 +1178,7 @@ class Sanic:
 
         try:
             self.is_running = True
+            self.is_stopping = False
             if workers > 1 and os.name != "posix":
                 logger.warn(
                     f"Multiprocessing is currently not supported on {os.name},"

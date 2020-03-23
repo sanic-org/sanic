@@ -1,4 +1,5 @@
 import re
+import math
 import string
 
 from datetime import datetime
@@ -106,12 +107,25 @@ class Cookie(dict):
             raise KeyError("Unknown cookie property")
         if value is not False:
             if key.lower() == "max-age":
-                is_str_int = isinstance(value, str) and value.isdigit()
-                is_integer = isinstance(value, int) or is_str_int
-                if not is_integer:
+                if not isinstance(value, (str, int, float)):
                     raise TypeError(
-                        "Cookie 'max-age' property must be a int"
+                        "Cookie 'max-age' property must be a str, int, or float"
                     )
+
+                try:
+                    value = float(value)
+                except ValueError:
+                    raise ValueError(
+                        "Cookie 'max-age' property must be a number. "
+                        "Got: {}".format(value)
+                    )
+
+                if value < 0 or value == float("inf"):
+                    raise ValueError(
+                        "Cookie 'max-age' property must be >= 0 and not infinate"
+                    )
+
+                value = math.floor(value)
             elif key.lower() == "expires":
                 if not isinstance(value, datetime):
                     raise TypeError(

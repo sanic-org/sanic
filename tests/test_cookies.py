@@ -1,3 +1,5 @@
+import math
+
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
 from contextlib import ExitStack as does_not_raise
@@ -163,11 +165,11 @@ def test_cookie_set_same_key(app):
     assert response.cookies["test"] == "pass"
 
 
-@pytest.mark.parametrize("max_age,should_raise", [("0", True), (30, True), (30.0, False), (30.1, False), ("30", True), ("test", False)])
-def test_cookie_max_age(app, max_age, should_raise):
+@pytest.mark.parametrize("max_age,error", [("0", None), (30, None), (30.0, None), (30.1, None), ("30", None), ("test", ValueError), (object(), TypeError)])
+def test_cookie_max_age(app, max_age, error):
     cookies = {"test": "wait"}
 
-    correct_raise = does_not_raise() if should_raise else pytest.raises(ValueError)
+    correct_raise = pytest.raises(error) if error else does_not_raise()
 
     @app.get("/")
     def handler(request):
@@ -183,10 +185,10 @@ def test_cookie_max_age(app, max_age, should_raise):
     assert response.status == 200
 
     cookie = response.cookies.get("test")
-    if should_raise and cookie is None:
+    if not error and cookie is None:
         # max-age=0
         assert int(max_age) == 0
-    elif should_raise:
+    elif not error:
         cookie_expires = datetime.utcfromtimestamp(
             response.raw_cookies["test"].expires
         ).replace(microsecond=0)

@@ -34,7 +34,7 @@ def ctrlc_workaround_for_windows(app):
         loop = asyncio.get_running_loop()
         while not die:
             # If someone else stopped the app, just exit
-            if getattr(loop, "_stopping", False):
+            if app.is_stopping:
                 return
             # Windows Python blocks signal handlers while the event loop is
             # waiting for I/O. Frequent wakeups keep interrupts flowing.

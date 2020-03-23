@@ -81,6 +81,7 @@ class Sanic:
         self.sock = None
         self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
+        self.is_stopping = False
         self.is_running = False
         self.is_request_stream = False
         self.websocket_enabled = False
@@ -1209,7 +1210,9 @@ class Sanic:
 
     def stop(self):
         """This kills the Sanic"""
-        get_event_loop().stop()
+        if not self.is_stopping:
+            self.is_stopping = True
+            get_event_loop().stop()
 
     async def create_server(
         self,

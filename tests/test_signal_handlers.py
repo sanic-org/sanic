@@ -79,24 +79,28 @@ def test_windows_workaround():
     # Windows...
     class MockApp:
         def __init__(self):
-            self.stopped = False
+            self.is_stopping = False
 
         def stop(self):
-            self.stopped = True
+            assert not self.is_stopping
+            self.is_stopping = True
 
         def add_task(self, func):
             loop = asyncio.get_event_loop()
             self.stay_active_task = loop.create_task(func(self))
 
-    async def atest():
+    async def atest(stop_first):
         app = MockApp()
         ctrlc_workaround_for_windows(app)
-        await asyncio.sleep(0.1)
-        assert not app.stopped
+        await asyncio.sleep(0.05)
+        if stop_first:
+            app.stop()
+            await asyncio.sleep(0.2)
+        assert app.is_stopping == stop_first
         # First Ctrl+C: should call app.stop() within 0.1 seconds
         os.kill(os.getpid(), signal.SIGINT)
         await asyncio.sleep(0.2)
-        assert app.stopped
+        assert app.is_stopping
         assert app.stay_active_task.result() == None
         # Second Ctrl+C should raise
         with pytest.raises(KeyboardInterrupt):
@@ -105,4 +109,5 @@ def test_windows_workaround():
     # Run in our private loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(atest())
+    loop.run_until_complete(atest(False))
+    loop.run_until_complete(atest(True))

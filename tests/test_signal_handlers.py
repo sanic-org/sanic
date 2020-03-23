@@ -101,9 +101,8 @@ def test_windows_workaround():
         # Second Ctrl+C should raise
         with pytest.raises(KeyboardInterrupt):
             os.kill(os.getpid(), signal.SIGINT)
-        return "OK"
 
     # Run in our private loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    assert loop.run_until_complete(atest()) == "OK"
+    loop.run_until_complete(atest())

@@ -93,9 +93,8 @@ def test_windows_workaround():
         ctrlc_workaround_for_windows(app)
         await asyncio.sleep(0.1)
         assert not app.stopped
-        # First Ctrl+C: set flags, don't actually terminate anything
+        # First Ctrl+C: should call app.stop() within 0.1 seconds
         os.kill(os.getpid(), signal.SIGINT)
-        assert not app.stay_active_task.done()
         await asyncio.sleep(0.2)
         assert app.stopped
         assert app.stay_active_task.result() == None

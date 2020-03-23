@@ -72,7 +72,6 @@ def test_dont_register_system_signals(app):
 @pytest.mark.skipif(
     os.name == "nt", reason="windows cannot SIGINT processes"
 )
-
 def test_windows_workaround():
     """Test Windows workaround (on any other OS)"""
     # At least some code coverage, even though this test doesn't work on
@@ -105,9 +104,12 @@ def test_windows_workaround():
         # Second Ctrl+C should raise
         with pytest.raises(KeyboardInterrupt):
             os.kill(os.getpid(), signal.SIGINT)
+        return "OK"
 
     # Run in our private loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(atest(False))
-    loop.run_until_complete(atest(True))
+    res = loop.run_until_complete(atest(False))
+    assert res == "OK"
+    res = loop.run_until_complete(atest(True))
+    assert res == "OK"

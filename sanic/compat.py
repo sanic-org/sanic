@@ -31,7 +31,6 @@ else:
 def ctrlc_workaround_for_windows(app):
     async def stay_active(app):
         """Asyncio wakeups to allow receiving SIGINT in Python"""
-        loop = asyncio.get_event_loop()
         while not die:
             # If someone else stopped the app, just exit
             if app.is_stopping:

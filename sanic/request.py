@@ -56,6 +56,14 @@ class StreamBuffer:
         self._queue.task_done()
         return payload
 
+    async def __aiter__(self):
+        """Support `async for data in request.stream`"""
+        while True:
+            data = await self.read()
+            if not data:
+                break
+            yield data
+
     async def put(self, payload):
         await self._queue.put(payload)
 
@@ -128,13 +136,32 @@ class Request:
         )
 
     def body_init(self):
+        """.. deprecated:: 20.3"""
         self.body = []
 
     def body_push(self, data):
+        """.. deprecated:: 20.3"""
         self.body.append(data)
 
     def body_finish(self):
+        """.. deprecated:: 20.3"""
         self.body = b"".join(self.body)
+
+    async def receive_body(self):
+        """Receive request.body, if not already received.
+
+        Streaming handlers may call this to receive the full body.
+
+        This is added as a compatibility shim in Sanic 20.3 because future
+        versions of Sanic will make all requests streaming and will use this
+        function instead of the non-async body_init/push/finish functions.
+
+        Please make an issue if your code depends on the old functionality and
+        cannot be upgraded to the new API.
+        """
+        if not self.stream:
+            return
+        self.body = b"".join([data async for data in self.stream])
 
     @property
     def json(self):

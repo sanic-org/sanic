@@ -3,7 +3,7 @@ import pytest
 from sanic.blueprints import Blueprint
 from sanic.exceptions import HeaderExpectationFailed
 from sanic.request import StreamBuffer
-from sanic.response import stream, text
+from sanic.response import json, stream, text
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
 
@@ -613,3 +613,43 @@ def test_request_stream(app):
     request, response = app.test_client.post("/bp_stream", data=data)
     assert response.status == 200
     assert response.text == data
+
+def test_streaming_new_api(app):
+    @app.post("/non-stream")
+    async def handler(request):
+        assert request.body == b"x"
+        await request.receive_body()  # This should do nothing
+        assert request.body == b"x"
+        return text("OK")
+
+    @app.post("/1", stream=True)
+    async def handler(request):
+        assert request.stream
+        assert not request.body
+        await request.receive_body()
+        return text(request.body.decode().upper())
+
+    @app.post("/2", stream=True)
+    async def handler(request):
+        ret = []
+        async for data in request.stream:
+            # We should have no b"" or None, just proper chunks
+            assert data
+            assert isinstance(data, bytes)
+            ret.append(data.decode("ASCII"))
+        return json(ret)
+
+    request, response = app.test_client.post("/non-stream", data="x")
+    assert response.status == 200
+
+    request, response = app.test_client.post("/1", data="TEST data")
+    assert request.body == b"TEST data"
+    assert response.status == 200
+    assert response.text == "TEST DATA"
+
+    request, response = app.test_client.post("/2", data=data)
+    assert response.status == 200
+    res = response.json
+    assert isinstance(res, list)
+    assert len(res) > 1
+    assert "".join(res) == data

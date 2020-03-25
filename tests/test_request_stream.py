@@ -546,6 +546,13 @@ def test_request_stream(app):
     assert response.text == data
 
 def test_streaming_new_api(app):
+    @app.post("/non-stream")
+    async def handler(request):
+        assert request.body == b"x"
+        await request.receive_body()  # This should do nothing
+        assert request.body == b"x"
+        return text("OK")
+
     @app.post("/1", stream=True)
     async def handler(request):
         assert request.stream
@@ -562,6 +569,9 @@ def test_streaming_new_api(app):
             assert isinstance(data, bytes)
             ret.append(data.decode("ASCII"))
         return json(ret)
+
+    request, response = app.test_client.post("/non-stream", data="x")
+    assert response.status == 200
 
     request, response = app.test_client.post("/1", data="TEST data")
     assert request.body == b"TEST data"

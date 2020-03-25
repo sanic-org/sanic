@@ -135,6 +135,22 @@ class Request:
     async def receive_body(self):
         self.body = b"".join([data async for data in self.stream])
 
+    async def receive_body(self):
+        """Receive request.body, if not already received.
+
+        Streaming handlers may call this to receive the full body.
+
+        This is added as a compatibility shim in Sanic 20.3 because future
+        versions of Sanic will make all requests streaming and will use this
+        function instead of the non-async body_init/push/finish functions.
+
+        Please make an issue if your code depends on the old functionality and
+        cannot be upgraded to the new API.
+        """
+        if not self.stream:
+            return
+        self.body = b"".join([data async for data in self.stream])
+
     @property
     def json(self):
         if self.parsed_json is None:

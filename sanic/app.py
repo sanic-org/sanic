@@ -22,6 +22,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
 from sanic.server import (
@@ -61,7 +62,15 @@ class Sanic:
             )
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
-
+        # Check for unsupported function on custom request objects
+        if request_class and any(hasattr(request_class, m) for m in (
+            "body_init", "body_push", "body_finish"
+        )) and request_class.receive_body is Request.receive_body:
+            raise NotImplementedError(
+                "Request methods body_init, body_push and body_finish "
+                f"are no longer supported. {request_class!r} should "
+                "implement receive_body. It is okay to implement both APIs.",
+            )
         # logging
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)

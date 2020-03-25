@@ -7,9 +7,9 @@ from multidict import CIMultiDict  # type: ignore
 try:
     from trio import Cancelled  # type: ignore
 
-    CancelledErrors = [CancelledError, Cancelled]
+    CancelledErrors = tuple([CancelledError, Cancelled])
 except ImportError:
-    CancelledErrors = [CancelledError]
+    CancelledErrors = tuple([CancelledError])
 
 
 class Header(CIMultiDict):

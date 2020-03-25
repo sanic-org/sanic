@@ -179,7 +179,7 @@ class Http:
         self.stage = Stage.HANDLER
         self.request = request
 
-    async def http1_response_header(self, data, end_stream) -> bytes:
+    async def http1_response_header(self, data, end_stream):
         res = self.response
         # Compatibility with simple response body
         if not data and getattr(res, "body", None):
@@ -244,22 +244,22 @@ class Http:
             self.response_func = None
             self.stage = Stage.IDLE
 
-    async def http1_response_chunked(self, data, end_stream) -> bytes:
+    async def http1_response_chunked(self, data, end_stream):
         """Format a part of response body in chunked encoding."""
         # Chunked encoding
         size = len(data)
         if end_stream:
             await self._send(
                 b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
-                if size else
-                b"0\r\n\r\n"
+                if size
+                else b"0\r\n\r\n"
             )
             self.response_func = None
             self.stage = Stage.IDLE
         elif size:
             await self._send(b"%x\r\n%b\r\n" % (size, data))
 
-    async def http1_response_normal(self, data: bytes, end_stream: bool) -> bytes:
+    async def http1_response_normal(self, data: bytes, end_stream: bool):
         """Format / keep track of non-chunked response."""
         bytes_left = self.response_bytes_left - len(data)
         if bytes_left <= 0:

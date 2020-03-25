@@ -5,11 +5,11 @@ from multidict import CIMultiDict  # type: ignore
 
 
 try:
-    from trio import Cancelled
+    from trio import Cancelled  # type: ignore
 
-    CancelledErrors = CancelledError, Cancelled
+    CancelledErrors = [CancelledError, Cancelled]
 except ImportError:
-    CancelledErrors = (CancelledError,)
+    CancelledErrors = [CancelledError]
 
 
 class Header(CIMultiDict):

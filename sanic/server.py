@@ -37,6 +37,8 @@ try:
 except ImportError:
     pass
 
+OS_IS_WINDOWS = os.name == "nt"
+
 
 class Signal:
     stopped = False
@@ -929,7 +931,7 @@ def serve(
 
     # Register signals for graceful termination
     if register_sys_signals:
-        if os.name == "nt":
+        if OS_IS_WINDOWS:
             ctrlc_workaround_for_windows(app)
         else:
             for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:

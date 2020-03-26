@@ -254,8 +254,8 @@ class HttpProtocol(asyncio.Protocol):
                 return self.close()
             self.recv_buffer += data
 
-            # Buffer up to request max size
-            if len(self.recv_buffer) > self.request_max_size:
+            # Buffer up to 64 KiB (TODO: configurable?)
+            if len(self.recv_buffer) > 65536:
                 self.transport.pause_reading()
 
             if self._data_received:

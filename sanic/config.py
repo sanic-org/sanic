@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
     "KEEP_ALIVE": True,
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
-    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabytes
+    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_MAX_QUEUE": 32,
     "WEBSOCKET_READ_LIMIT": 2 ** 16,
     "WEBSOCKET_WRITE_LIMIT": 2 ** 16,

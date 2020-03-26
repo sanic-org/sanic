@@ -15,13 +15,14 @@ from aiofiles import os as async_os
 from sanic.response import (
     HTTPResponse,
     StreamingHTTPResponse,
+    empty,
     file,
     file_stream,
     json,
     raw,
     stream,
+    text,
 )
-from sanic.response import empty
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 
@@ -35,7 +36,7 @@ def test_response_body_not_a_string(app):
 
     @app.route("/hello")
     async def hello_route(request):
-        return HTTPResponse(body=random_num)
+        return text(random_num)
 
     request, response = app.test_client.get("/hello")
     assert response.text == str(random_num)
@@ -406,7 +407,7 @@ def test_file_response(app, file_name, static_file_directory, status):
             mime_type=guess_type(file_path)[0] or "text/plain",
         )
 
-    request, response = app.test_client.get("/files/{}".format(file_name))
+    request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == status
     assert response.body == get_file_content(static_file_directory, file_name)
     assert "Content-Disposition" not in response.headers
@@ -429,12 +430,12 @@ def test_file_response_custom_filename(
         file_path = os.path.abspath(unquote(file_path))
         return file(file_path, filename=dest)
 
-    request, response = app.test_client.get("/files/{}".format(source))
+    request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
     assert response.headers[
         "Content-Disposition"
-    ] == 'attachment; filename="{}"'.format(dest)
+    ] == f'attachment; filename="{dest}"'
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -459,7 +460,7 @@ def test_file_head_response(app, file_name, static_file_directory):
                 mime_type=guess_type(file_path)[0] or "text/plain",
             )
 
-    request, response = app.test_client.head("/files/{}".format(file_name))
+    request, response = app.test_client.head(f"/files/{file_name}")
     assert response.status == 200
     assert "Accept-Ranges" in response.headers
     assert "Content-Length" in response.headers
@@ -482,7 +483,7 @@ def test_file_stream_response(app, file_name, static_file_directory):
             mime_type=guess_type(file_path)[0] or "text/plain",
         )
 
-    request, response = app.test_client.get("/files/{}".format(file_name))
+    request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
     assert "Content-Disposition" not in response.headers
@@ -505,12 +506,12 @@ def test_file_stream_response_custom_filename(
         file_path = os.path.abspath(unquote(file_path))
         return file_stream(file_path, chunk_size=32, filename=dest)
 
-    request, response = app.test_client.get("/files/{}".format(source))
+    request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
     assert response.headers[
         "Content-Disposition"
-    ] == 'attachment; filename="{}"'.format(dest)
+    ] == f'attachment; filename="{dest}"'
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -538,7 +539,7 @@ def test_file_stream_head_response(app, file_name, static_file_directory):
                 mime_type=guess_type(file_path)[0] or "text/plain",
             )
 
-    request, response = app.test_client.head("/files/{}".format(file_name))
+    request, response = app.test_client.head(f"/files/{file_name}")
     assert response.status == 200
     # A HEAD request should never be streamed/chunked.
     if "Transfer-Encoding" in response.headers:
@@ -576,12 +577,10 @@ def test_file_stream_response_range(
             _range=range,
         )
 
-    request, response = app.test_client.get("/files/{}".format(file_name))
+    request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 206
     assert "Content-Range" in response.headers
-    assert response.headers["Content-Range"] == "bytes {}-{}/{}".format(
-        range.start, range.end, range.total
-    )
+    assert response.headers["Content-Range"] == f"bytes {range.start}-{range.end}/{range.total}"
 
 
 def test_raw_response(app):

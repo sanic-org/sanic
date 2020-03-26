@@ -1,4 +1,5 @@
 import asyncio
+import multiprocessing
 import os
 import socket
 import stat
@@ -18,7 +19,7 @@ from uuid import uuid4
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
 
-from sanic.compat import Header
+from sanic.compat import Header, ctrlc_workaround_for_windows
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -39,6 +40,8 @@ try:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
+
+OS_IS_WINDOWS = os.name == "nt"
 
 
 class Signal:
@@ -776,6 +779,26 @@ class AsyncioServer:
             task = asyncio.ensure_future(coro, loop=self.loop)
             return task
 
+    def start_serving(self):
+        if self.server:
+            try:
+                return self.server.start_serving()
+            except AttributeError:
+                raise NotImplementedError(
+                    "server.start_serving not available in this version "
+                    "of asyncio or uvloop."
+                )
+
+    def serve_forever(self):
+        if self.server:
+            try:
+                return self.server.serve_forever()
+            except AttributeError:
+                raise NotImplementedError(
+                    "server.serve_forever not available in this version "
+                    "of asyncio or uvloop."
+                )
+
     def __await__(self):
         """Starts the asyncio server, returns AsyncServerCoro"""
         task = asyncio.ensure_future(self.serve_coro)
@@ -955,15 +978,11 @@ def serve(
 
     # Register signals for graceful termination
     if register_sys_signals:
-        _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
-        for _signal in _singals:
-            try:
-                loop.add_signal_handler(_signal, loop.stop)
-            except NotImplementedError:
-                logger.warning(
-                    "Sanic tried to use loop.add_signal_handler "
-                    "but it is not implemented on this platform."
-                )
+        if OS_IS_WINDOWS:
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
     pid = os.getpid()
     try:
         logger.info("Starting worker [%s]", pid)
@@ -1112,9 +1131,10 @@ def serve_multiple(server_settings, workers):
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
+    mp = multiprocessing.get_context("fork")
 
     for _ in range(workers):
-        process = Process(target=serve, kwargs=server_settings)
+        process = mp.Process(target=serve, kwargs=server_settings)
         process.daemon = True
         process.start()
         processes.append(process)

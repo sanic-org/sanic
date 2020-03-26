@@ -352,37 +352,6 @@ class Router:
         else:
             return -1, None
 
-    def remove(self, uri, clean_cache=True, host=None):
-        if host is not None:
-            uri = host + uri
-        try:
-            route = self.routes_all.pop(uri)
-            for handler_name, pairs in self.routes_names.items():
-                if pairs[0] == uri:
-                    self.routes_names.pop(handler_name)
-                    break
-
-            for handler_name, pairs in self.routes_static_files.items():
-                if pairs[0] == uri:
-                    self.routes_static_files.pop(handler_name)
-                    break
-
-        except KeyError:
-            raise RouteDoesNotExist("Route was not registered: {}".format(uri))
-
-        if route in self.routes_always_check:
-            self.routes_always_check.remove(route)
-        elif (
-            url_hash(uri) in self.routes_dynamic
-            and route in self.routes_dynamic[url_hash(uri)]
-        ):
-            self.routes_dynamic[url_hash(uri)].remove(route)
-        else:
-            self.routes_static.pop(uri)
-
-        if clean_cache:
-            self._get.cache_clear()
-
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name, name=None):
         """Find a route in the router based on the specified view name.

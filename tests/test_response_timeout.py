@@ -40,7 +40,7 @@ async def handler_2(request):
 def test_default_server_error_response_timeout():
     request, response = response_timeout_default_app.test_client.get("/1")
     assert response.status == 503
-    assert response.text == "Error: Response Timeout"
+    assert "Response Timeout" in response.text
 
 
 response_handler_cancelled_app.flag = False
@@ -65,5 +65,5 @@ async def handler_3(request):
 def test_response_handler_cancelled():
     request, response = response_handler_cancelled_app.test_client.get("/1")
     assert response.status == 503
-    assert response.text == "Error: Response Timeout"
+    assert "Response Timeout" in response.text
     assert response_handler_cancelled_app.flag is False

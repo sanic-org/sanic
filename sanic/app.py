@@ -81,6 +81,7 @@ class Sanic:
         self.sock = None
         self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
+        self.is_stopping = False
         self.is_running = False
         self.is_request_stream = False
         self.websocket_enabled = False
@@ -598,29 +599,6 @@ class Sanic:
 
         self.websocket_enabled = enable
 
-    def remove_route(self, uri, clean_cache=True, host=None):
-        """
-        This method provides the app user a mechanism by which an already
-        existing route can be removed from the :class:`Sanic` object
-
-        .. warning::
-            remove_route is deprecated in v19.06 and will be removed
-            from future versions.
-
-        :param uri: URL Path to be removed from the app
-        :param clean_cache: Instruct sanic if it needs to clean up the LRU
-            route cache
-        :param host: IP address or FQDN specific to the host
-        :return: None
-        """
-        warnings.warn(
-            "remove_route is deprecated and will be removed "
-            "from future versions.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.router.remove(uri, clean_cache, host)
-
     # Decorator
     def exception(self, *exceptions):
         """Decorate a function to be registered as a handler for exceptions
@@ -830,6 +808,14 @@ class Sanic:
                 "Endpoint with name `{}` was not found".format(view_name)
             )
 
+        # If the route has host defined, split that off
+        # TODO: Retain netloc and path separately in Route objects
+        host = uri.find("/")
+        if host > 0:
+            host, uri = uri[:host], uri[host:]
+        else:
+            host = None
+
         if view_name == "static" or view_name.endswith(".static"):
             filename = kwargs.pop("filename", None)
             # it's static folder
@@ -862,7 +848,7 @@ class Sanic:
 
         netloc = kwargs.pop("_server", None)
         if netloc is None and external:
-            netloc = self.config.get("SERVER_NAME", "")
+            netloc = host or self.config.get("SERVER_NAME", "")
 
         if external:
             if not scheme:
@@ -1173,6 +1159,13 @@ class Sanic:
 
         try:
             self.is_running = True
+            self.is_stopping = False
+            if workers > 1 and os.name != "posix":
+                logger.warn(
+                    f"Multiprocessing is currently not supported on {os.name},"
+                    " using workers=1 instead"
+                )
+                workers = 1
             if workers == 1:
                 if auto_reload and os.name != "posix":
                     # This condition must be removed after implementing
@@ -1199,7 +1192,9 @@ class Sanic:
 
     def stop(self):
         """This kills the Sanic"""
-        get_event_loop().stop()
+        if not self.is_stopping:
+            self.is_stopping = True
+            get_event_loop().stop()
 
     async def create_server(
         self,

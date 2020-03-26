@@ -49,7 +49,7 @@ def test_unexisting_methods(app):
     request, response = app.test_client.get("/")
     assert response.text == "I am get method"
     request, response = app.test_client.post("/")
-    assert response.text == "Error: Method POST not allowed for URL /"
+    assert "Method POST not allowed for URL /" in response.text
 
 
 def test_argument_methods(app):
@@ -151,8 +151,8 @@ def test_with_custom_class_methods(app):
         def get(self, request):
             self._iternal_method()
             return text(
-                "I am get method and global var "
-                "is {}".format(self.global_var)
+                f"I am get method and global var "
+                f"is {self.global_var}"
             )
 
     app.add_route(DummyView.as_view(), "/")

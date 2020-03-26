@@ -40,9 +40,9 @@ def test_bp_group_with_additional_route_params(app: Sanic):
     )
     def blueprint_2_named_method(request: Request, param):
         if request.method == "DELETE":
-            return text("DELETE_{}".format(param))
+            return text(f"DELETE_{param}")
         elif request.method == "PATCH":
-            return text("PATCH_{}".format(param))
+            return text(f"PATCH_{param}")
 
     blueprint_group = Blueprint.group(
         blueprint_1, blueprint_2, url_prefix="/api"

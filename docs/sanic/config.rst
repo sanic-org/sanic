@@ -115,15 +115,25 @@ Out of the box there are just a few predefined values which can be overwritten w
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | KEEP_ALIVE_TIMEOUT        | 5                 | How long to hold a TCP connection open (sec)                                |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_MAX_SIZE        | 2^20              | Maximum size for incoming messages (bytes)                                  |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_MAX_QUEUE       | 32                | Maximum length of the queue that holds incoming messages                    |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_READ_LIMIT      | 2^16              | High-water limit of the buffer for incoming bytes                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_WRITE_LIMIT     | 2^16              | High-water limit of the buffer for outgoing bytes                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
 | GRACEFUL_SHUTDOWN_TIMEOUT | 15.0              | How long to wait to force close non-idle connection (sec)                   |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | ACCESS_LOG                | True              | Disable or enable access log                                                |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
-| PROXIES_COUNT             | -1                | The number of proxy servers in front of the app (e.g. nginx; see below)     |
+| FORWARDED_SECRET          | None              | Used to securely identify a specific proxy server (see below)               |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| PROXIES_COUNT             | None              | The number of proxy servers in front of the app (e.g. nginx; see below)     |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | FORWARDED_FOR_HEADER      | "X-Forwarded-For" | The name of "X-Forwarded-For" HTTP header that contains client and proxy ip |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
-| REAL_IP_HEADER            | "X-Real-IP"       | The name of "X-Real-IP" HTTP header that contains real client ip            |
+| REAL_IP_HEADER            |  None             | The name of "X-Real-IP" HTTP header that contains real client ip            |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 
 The different Timeout variables:

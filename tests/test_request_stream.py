@@ -7,7 +7,7 @@ from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
 
 
-data = "abc" * 10000000
+data = "abc" * 1_000_000
 
 
 def test_request_stream_method_view(app):

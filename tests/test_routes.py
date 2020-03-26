@@ -6,6 +6,7 @@ from sanic import Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.response import json, text
 from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
+from sanic.testing import SanicTestClient
 
 
 # ------------------------------------------------------------ #
@@ -163,35 +164,36 @@ def test_route_optional_slash(app):
 def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     # Part of regression test for issue #1120
 
-    site1 = f"127.0.0.1:{app.test_client.port}"
+    test_client = SanicTestClient(app, port=42101)
+    site1 = f"127.0.0.1:{test_client.port}"
 
     # before fix, this raises a RouteExists error
     @app.get("/get", host=[site1, "site2.com"], strict_slashes=False)
     def get_handler(request):
         return text("OK")
 
-    request, response = app.test_client.get("http://" + site1 + "/get")
+    request, response = test_client.get("http://" + site1 + "/get")
     assert response.text == "OK"
 
     @app.post("/post", host=[site1, "site2.com"], strict_slashes=False)
     def post_handler(request):
         return text("OK")
 
-    request, response = app.test_client.post("http://" + site1 + "/post")
+    request, response = test_client.post("http://" + site1 + "/post")
     assert response.text == "OK"
 
     @app.put("/put", host=[site1, "site2.com"], strict_slashes=False)
     def put_handler(request):
         return text("OK")
 
-    request, response = app.test_client.put("http://" + site1 + "/put")
+    request, response = test_client.put("http://" + site1 + "/put")
     assert response.text == "OK"
 
     @app.delete("/delete", host=[site1, "site2.com"], strict_slashes=False)
     def delete_handler(request):
         return text("OK")
 
-    request, response = app.test_client.delete("http://" + site1 + "/delete")
+    request, response = test_client.delete("http://" + site1 + "/delete")
     assert response.text == "OK"
 
 

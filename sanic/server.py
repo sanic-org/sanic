@@ -11,6 +11,7 @@ from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
 from time import monotonic as current_time
 
+from sanic.compat import ctrlc_workaround_for_windows
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import logger
@@ -24,6 +25,8 @@ try:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
+
+OS_IS_WINDOWS = os.name == "nt"
 
 
 class Signal:
@@ -530,15 +533,11 @@ def serve(
 
     # Register signals for graceful termination
     if register_sys_signals:
-        _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
-        for _signal in _singals:
-            try:
-                loop.add_signal_handler(_signal, loop.stop)
-            except NotImplementedError:
-                logger.warning(
-                    "Sanic tried to use loop.add_signal_handler "
-                    "but it is not implemented on this platform."
-                )
+        if OS_IS_WINDOWS:
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
     pid = os.getpid()
     try:
         logger.info("Starting worker [%s]", pid)

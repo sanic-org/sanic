@@ -27,7 +27,8 @@ def test_test_client_port_default(app):
         return json(request.transport.get_extra_info("sockname")[1])
 
     test_client = SanicTestClient(app)
-    assert test_client.port == PORT
+    assert test_client.port == PORT  # Can be None before request
 
     request, response = test_client.get("/get")
-    assert response.json == PORT
+    assert test_client.port > 0
+    assert response.json == test_client.port

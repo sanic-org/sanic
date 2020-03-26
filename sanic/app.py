@@ -95,6 +95,7 @@ class Sanic:
         self.sock = None
         self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
+        self.is_stopping = False
         self.is_running = False
         self.websocket_enabled = False
         self.websocket_tasks = set()
@@ -1181,6 +1182,7 @@ class Sanic:
 
         try:
             self.is_running = True
+            self.is_stopping = False
             if workers > 1 and os.name != "posix":
                 logger.warn(
                     f"Multiprocessing is currently not supported on {os.name},"
@@ -1213,7 +1215,9 @@ class Sanic:
 
     def stop(self):
         """This kills the Sanic"""
-        get_event_loop().stop()
+        if not self.is_stopping:
+            self.is_stopping = True
+            get_event_loop().stop()
 
     async def create_server(
         self,

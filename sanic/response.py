@@ -84,6 +84,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
+        self.protocol = None
 
     async def write(self, data):
         """Writes a chunk of data to the streaming response.

@@ -1,6 +1,5 @@
 import asyncio
 import email.utils
-import warnings
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie

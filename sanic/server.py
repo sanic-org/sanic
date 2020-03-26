@@ -224,7 +224,7 @@ class HttpProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         try:
             # TODO: Benchmark to find suitable write buffer limits
-            transport.set_write_buffer_limits(low=16384, high=65536)
+            transport.set_write_buffer_limits(low=16384, high=262144)
             self.connections.add(self)
             self.transport = transport
             self._task = self.loop.create_task(self.connection_task())
@@ -254,8 +254,8 @@ class HttpProtocol(asyncio.Protocol):
                 return self.close()
             self.recv_buffer += data
 
-            # Buffer up to 64 KiB (TODO: configurable?)
-            if len(self.recv_buffer) > 65536:
+            # Buffer up to 256 KiB (TODO: configurable?)
+            if len(self.recv_buffer) > 262144:
                 self.transport.pause_reading()
 
             if self._data_received:

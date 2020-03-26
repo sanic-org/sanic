@@ -1,4 +1,4 @@
-from asyncio import CancelledError
+from asyncio import CancelledError, sleep
 from enum import Enum
 
 from sanic.compat import Header
@@ -100,6 +100,11 @@ class Http:
                     async for _ in self:
                         pass
                 except PayloadTooLarge:
+                    # We won't read the body and that may cause httpx and
+                    # tests to fail. This little delay allows clients to push
+                    # a small request into network buffers before we close the
+                    # socket, so that they are then able to read the response.
+                    await sleep(0.001)
                     self.keep_alive = False
             # Exit and disconnect if no more requests can be taken
             if self.stage is not Stage.IDLE or not self.keep_alive:

@@ -1,6 +1,7 @@
 import asyncio
 import multiprocessing
 import os
+import secrets
 import socket
 import stat
 import sys
@@ -10,11 +11,9 @@ from collections import deque
 from functools import partial
 from inspect import isawaitable
 from ipaddress import ip_address
-from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import time
-from uuid import uuid4
 
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
@@ -1059,26 +1058,35 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     :param backlog: Maximum number of connections to queue
     :return: socket.socket object
     """
+    """Open or atomically replace existing socket with zero downtime."""
+    # Sanitise and pre-verify socket path
+    path = os.path.abspath(path)
+    folder = os.path.dirname(path)
+    if not os.path.isdir(folder):
+        raise FileNotFoundError(f"Socket folder does not exist: {folder}")
     if os.path.exists(path) and not stat.S_ISSOCK(os.stat(path).st_mode):
         raise FileExistsError(f"Existing file is not a socket: {path}")
+    # Create new socket with a random temporary name
+    tmp_path = f"{path}.{secrets.token_urlsafe()}"
     sock = socket.socket(socket.AF_UNIX)
     try:
-        # Atomic zero-downtime socket replace
-        tmp_path = f"{path}.{uuid4().hex[:8]}"
-        old_mask = os.umask(~mode & 0o777)
+        # Critical section begins (filename races)
+        sock.bind(tmp_path)
         try:
-            sock.bind(tmp_path)
-        finally:
-            os.umask(old_mask)
-        try:
+            os.chmod(tmp_path, mode)
+            # Start listening before rename to avoid connection failures
             sock.listen(backlog)
             os.rename(tmp_path, path)
-        except BaseException:
-            os.unlink(tmp_path)
+        except:  # noqa: E722
+            try:
+                os.unlink(tmp_path)
+            finally:
+                raise
+    except:  # noqa: E722
+        try:
+            sock.close()
+        finally:
             raise
-    except BaseException:
-        sock.close()
-        raise
     return sock
 
 

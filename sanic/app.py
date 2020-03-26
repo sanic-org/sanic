@@ -507,12 +507,7 @@ class Sanic:
                 if self.asgi:
                     ws = request.transport.get_websocket_connection()
                 else:
-                    try:
-                        protocol = request.transport.get_protocol()
-                    except AttributeError:
-                        # On Python3.5 the Transport classes in asyncio do not
-                        # have a get_protocol() method as in uvloop
-                        protocol = request.transport._protocol
+                    protocol = request.transport.get_protocol()
                     protocol.app = self
 
                     ws = await protocol.websocket_handshake(

@@ -12,7 +12,7 @@ from sanic.response import text
 
 ASGI_HOST = "mockserver"
 HOST = "127.0.0.1"
-PORT = 42101
+PORT = None
 
 
 class SanicTestClient:
@@ -95,7 +95,7 @@ class SanicTestClient:
 
         if self.port:
             server_kwargs = dict(
-                host=host or self.host, port=self.port, **server_kwargs
+                host=host or self.host, port=self.port, **server_kwargs,
             )
             host, port = host or self.host, self.port
         else:
@@ -103,6 +103,7 @@ class SanicTestClient:
             sock.bind((host or self.host, 0))
             server_kwargs = dict(sock=sock, **server_kwargs)
             host, port = sock.getsockname()
+            self.port = port
 
         if uri.startswith(
             ("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")
@@ -114,6 +115,9 @@ class SanicTestClient:
             url = "{scheme}://{host}:{port}{uri}".format(
                 scheme=scheme, host=host, port=port, uri=uri
             )
+        # Tests construct URLs using PORT = None, which means random port not
+        # known until this function is called, so fix that here
+        url = url.replace(":None/", f":{port}/")
 
         @self.app.listener("after_server_start")
         async def _collect_response(sanic, loop):
@@ -203,7 +207,7 @@ class SanicASGITestClient(httpx.AsyncClient):
 
         self.app = app
 
-        dispatch = SanicASGIDispatch(app=app, client=(ASGI_HOST, PORT))
+        dispatch = SanicASGIDispatch(app=app, client=(ASGI_HOST, PORT or 0))
         super().__init__(dispatch=dispatch, base_url=base_url)
 
         self.last_request = None

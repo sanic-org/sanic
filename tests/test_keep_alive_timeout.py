@@ -7,12 +7,12 @@ import httpx
 
 from sanic import Sanic, server
 from sanic.response import text
-from sanic.testing import HOST, PORT, SanicTestClient
-
+from sanic.testing import HOST, SanicTestClient
 
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
 old_conn = None
+PORT = 42101  # test_keep_alive_timeout_reuse doesn't work with random port
 
 
 class ReusableSanicConnectionPool(

@@ -54,6 +54,8 @@ class BaseHTTPResponse:
         """
         if data is None and end_stream is None:
             end_stream = True
+        if end_stream and not data and self.stream.send is None:
+            return
         data = data.encode() if hasattr(data, "encode") else data or b""
         await self.stream.send(data, end_stream=end_stream)
 

@@ -54,7 +54,7 @@ def test_false_cookies_encoded(app, httponly, expected):
         response = text("hello cookies")
         response.cookies["hello"] = "world"
         response.cookies["hello"]["httponly"] = httponly
-        return text(response.cookies["hello"].encode("utf8"))
+        return text(response.cookies["hello"].encode("utf8").decode())
 
     request, response = app.test_client.get("/")
 

@@ -60,13 +60,14 @@ class ConnInfo:
         "ssl",
     )
 
-    def __init__(self, transport):
+    def __init__(self, transport, unix=None):
         self.ssl = bool(transport.get_extra_info("sslcontext"))
         self.server = self.client = ""
         self.server_port = self.client_port = 0
+        self.peername = None
         self.sockname = addr = transport.get_extra_info("sockname")
         if isinstance(addr, str):  # UNIX socket
-            self.server = addr
+            self.server = unix or addr
             return
         # IPv4 (ip, port) or IPv6 (ip, port, flowinfo, scopeid)
         if isinstance(addr, tuple):
@@ -128,6 +129,7 @@ class HttpProtocol(asyncio.Protocol):
         "_header_fragment",
         "state",
         "_debug",
+        "_unix",
         "_body_chunks",
     )
 
@@ -152,6 +154,7 @@ class HttpProtocol(asyncio.Protocol):
         router=None,
         state=None,
         debug=False,
+        unix=None,
         **kwargs,
     ):
         self.loop = loop
@@ -194,6 +197,7 @@ class HttpProtocol(asyncio.Protocol):
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
         self._debug = debug
+        self._unix = unix
         self._not_paused.set()
         self._body_chunks = deque()
 
@@ -222,7 +226,7 @@ class HttpProtocol(asyncio.Protocol):
             self.request_timeout, self.request_timeout_callback
         )
         self.transport = transport
-        self.conn_info = ConnInfo(transport)
+        self.conn_info = ConnInfo(transport, unix=self._unix)
         self._last_request_time = time()
 
     def connection_lost(self, exc):
@@ -933,6 +937,7 @@ def serve(
         websocket_write_limit=websocket_write_limit,
         state=state,
         debug=debug,
+        unix=unix,
     )
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
@@ -1064,8 +1069,11 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     folder = os.path.dirname(path)
     if not os.path.isdir(folder):
         raise FileNotFoundError(f"Socket folder does not exist: {folder}")
-    if os.path.exists(path) and not stat.S_ISSOCK(os.stat(path).st_mode):
-        raise FileExistsError(f"Existing file is not a socket: {path}")
+    try:
+        if not stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
+            raise FileExistsError(f"Existing file is not a socket: {path}")
+    except FileNotFoundError:
+        pass
     # Create new socket with a random temporary name
     tmp_path = f"{path}.{secrets.token_urlsafe()}"
     sock = socket.socket(socket.AF_UNIX)
@@ -1092,15 +1100,18 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
 
 def remove_unix_socket(path: str) -> None:
     """Remove dead unix socket during server exit."""
-    if path and os.path.exists(path) and stat.S_ISSOCK(os.stat(path).st_mode):
-        # Is it actually dead (doesn't belong to a new server instance)?
-        testsock = socket.socket(socket.AF_UNIX)
-        try:
-            testsock.connect(path)
-        except ConnectionRefusedError:
-            os.unlink(path)
-        finally:
-            testsock.close()
+    if not path:
+        return
+    try:
+        if stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
+            # Is it actually dead (doesn't belong to a new server instance)?
+            with socket.socket(socket.AF_UNIX) as testsock:
+                try:
+                    testsock.connect(path)
+                except ConnectionRefusedError:
+                    os.unlink(path)
+    except FileNotFoundError:
+        pass
 
 
 def serve_multiple(server_settings, workers):
@@ -1121,6 +1132,7 @@ def serve_multiple(server_settings, workers):
     backlog = server_settings["backlog"]
     if unix:
         sock = bind_unix_socket(unix, backlog=backlog)
+        server_settings["unix"] = unix
     if sock is None:
         sock = bind_socket(
             server_settings["host"], server_settings["port"], backlog=backlog

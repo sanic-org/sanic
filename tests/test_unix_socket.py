@@ -4,10 +4,6 @@ import os
 import subprocess
 import sys
 
-from signal import SIGINT
-from socket import AF_UNIX, socket
-from time import monotonic as current_time
-
 import httpx
 import pytest
 
@@ -43,6 +39,8 @@ def socket_cleanup():
 
 
 def test_unix_socket_creation(caplog):
+    from socket import AF_UNIX, socket
+
     with socket(AF_UNIX) as sock:
         sock.bind(SOCKPATH)
     assert os.path.exists(SOCKPATH)
@@ -92,6 +90,8 @@ def test_dont_replace_file():
 
 
 def test_dont_follow_symlink():
+    from socket import AF_UNIX, socket
+
     with socket(AF_UNIX) as sock:
         sock.bind(SOCKPATH2)
     os.symlink(SOCKPATH2, SOCKPATH)
@@ -172,6 +172,9 @@ def test_unix_connection_multiple_workers():
 
 async def test_zero_downtime():
     """Graceful server termination and socket replacement on restarts"""
+    from signal import SIGINT
+    from time import monotonic as current_time
+
     async def client():
         for _ in range(40):
             async with httpx.AsyncClient(uds=SOCKPATH) as client:

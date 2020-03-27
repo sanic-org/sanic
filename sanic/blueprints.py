@@ -151,7 +151,7 @@ class Blueprint:
                     future.middleware,
                     route_names,
                     *future.args,
-                    **future.kwargs
+                    **future.kwargs,
                 )
             else:
                 app.register_named_middleware(future.middleware, route_names)

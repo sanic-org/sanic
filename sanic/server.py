@@ -114,7 +114,7 @@ class HttpProtocol(asyncio.Protocol):
         router=None,
         state=None,
         debug=False,
-        **kwargs
+        **kwargs,
     ):
         self.loop = loop
         self.app = app
@@ -349,9 +349,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
             else:
                 self.write_error(
-                    HeaderExpectationFailed(
-                        f"Unknown Expect: {expect}"
-                    )
+                    HeaderExpectationFailed(f"Unknown Expect: {expect}")
                 )
 
     def on_body(self, body):
@@ -497,9 +495,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                f"Writing response failed, connection closed {e!r}"
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -550,9 +546,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                f"Writing response failed, connection closed {e!r}"
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -898,7 +892,7 @@ def serve(
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog,
-        **asyncio_server_kwargs
+        **asyncio_server_kwargs,
     )
 
     if run_async:

@@ -147,9 +147,7 @@ class SanicTestClient:
             try:
                 return results[-1]
             except BaseException:  # noqa
-                raise ValueError(
-                    f"Request object expected, got ({results})"
-                )
+                raise ValueError(f"Request object expected, got ({results})")
 
     def get(self, *args, **kwargs):
         return self._sanic_endpoint_test("get", *args, **kwargs)

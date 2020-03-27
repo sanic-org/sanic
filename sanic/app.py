@@ -910,7 +910,7 @@ class Sanic:
 
                     msg = (
                         f'Value "{supplied_param}" '
-                        f'for parameter `{name}` does not '
+                        f"for parameter `{name}` does not "
                         f"match pattern for type `{type_name}`: {pattern}"
                     )
                 else:

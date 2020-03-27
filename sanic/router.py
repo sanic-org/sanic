@@ -225,8 +225,7 @@ class Router:
 
             if name in parameter_names:
                 raise ParameterNameConflicts(
-                    f"Multiple parameter named <{name}> "
-                    f"in route uri {uri}"
+                    f"Multiple parameter named <{name}> " f"in route uri {uri}"
                 )
             parameter_names.add(name)
 

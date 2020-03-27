@@ -110,11 +110,9 @@ class SanicTestClient:
         ):
             url = uri
         else:
-            uri = uri if uri.startswith("/") else "/{uri}".format(uri=uri)
+            uri = uri if uri.startswith("/") else f"/{uri}"
             scheme = "ws" if method == "websocket" else "http"
-            url = "{scheme}://{host}:{port}{uri}".format(
-                scheme=scheme, host=host, port=port, uri=uri
-            )
+            url = f"{scheme}://{host}:{port}{uri}"
         # Tests construct URLs using PORT = None, which means random port not
         # known until this function is called, so fix that here
         url = url.replace(":None/", f":{port}/")
@@ -135,7 +133,7 @@ class SanicTestClient:
         self.app.listeners["after_server_start"].pop()
 
         if exceptions:
-            raise ValueError("Exception during request: {}".format(exceptions))
+            raise ValueError(f"Exception during request: {exceptions}")
 
         if gather_request:
             try:
@@ -143,16 +141,14 @@ class SanicTestClient:
                 return request, response
             except BaseException:  # noqa
                 raise ValueError(
-                    "Request and response object expected, got ({})".format(
-                        results
-                    )
+                    f"Request and response object expected, got ({results})"
                 )
         else:
             try:
                 return results[-1]
             except BaseException:  # noqa
                 raise ValueError(
-                    "Request object expected, got ({})".format(results)
+                    f"Request object expected, got ({results})"
                 )
 
     def get(self, *args, **kwargs):
@@ -199,7 +195,7 @@ class SanicASGITestClient(httpx.AsyncClient):
     def __init__(
         self,
         app,
-        base_url: str = "http://{}".format(ASGI_HOST),
+        base_url: str = f"http://{ASGI_HOST}",
         suppress_exceptions: bool = False,
     ) -> None:
         app.__class__.__call__ = app_call_with_return
@@ -230,7 +226,7 @@ class SanicASGITestClient(httpx.AsyncClient):
     async def websocket(self, uri, subprotocols=None, *args, **kwargs):
         scheme = "ws"
         path = uri
-        root_path = "{}://{}".format(scheme, ASGI_HOST)
+        root_path = f"{scheme}://{ASGI_HOST}"
 
         headers = kwargs.get("headers", {})
         headers.setdefault("connection", "upgrade")

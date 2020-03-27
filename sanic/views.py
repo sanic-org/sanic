@@ -97,12 +97,12 @@ class CompositionView:
         for method in methods:
             if method not in HTTP_METHODS:
                 raise InvalidUsage(
-                    "{} is not a valid HTTP method.".format(method)
+                    f"{method} is not a valid HTTP method."
                 )
 
             if method in self.handlers:
                 raise InvalidUsage(
-                    "Method {} is already registered.".format(method)
+                    f"Method {method} is already registered."
                 )
             self.handlers[method] = handler
 

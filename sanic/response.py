@@ -304,7 +304,7 @@ async def file(
             out_stream = await f.read(_range.size)
             headers[
                 "Content-Range"
-            ] = "bytes {0.start}-{0.end}/{0.total}".format(_range)
+            ] = f"bytes {_range.start}-{_range.end}/{_range.total}"
             status = 206
         else:
             out_stream = await f.read()
@@ -346,9 +346,11 @@ async def file_stream(
     filename = filename or path.split(location)[-1]
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     if _range:
-        headers["Content-Range"] = "bytes {0.start}-{0.end}/{0.total}".format(
-            _range
-        )
+        start = _range.start
+        end = _range.end
+        total = _range.total
+
+        headers["Content-Range"] = f"bytes {start}-{end}/{total}"
         status = 206
 
     async def _streaming_fn(response):

@@ -13,6 +13,7 @@ keyword arguments:
 
 - `host` *(default `"127.0.0.1"`)*: Address to host the server on.
 - `port` *(default `8000`)*: Port to host the server on.
+- `unix` *(default `None`)*: Unix socket name to host the server on (instead of TCP).
 - `debug` *(default `False`)*: Enables debug output (slows server).
 - `ssl` *(default `None`)*: `SSLContext` for SSL encryption of worker(s).
 - `sock` *(default `None`)*: Socket for the server to accept connections from.

@@ -45,10 +45,7 @@ class InvalidUsage(SanicException):
 class MethodNotSupported(SanicException):
     def __init__(self, message, method, allowed_methods):
         super().__init__(message)
-        self.headers = dict()
-        self.headers["Allow"] = ", ".join(allowed_methods)
-        if method in ["HEAD", "PATCH", "PUT", "DELETE"]:
-            self.headers["Content-Length"] = 0
+        self.headers = {"Allow": ", ".join(allowed_methods)}
 
 
 @add_status_code(500)
@@ -101,10 +98,7 @@ class HeaderNotFound(InvalidUsage):
 class ContentRangeError(SanicException):
     def __init__(self, message, content_range):
         super().__init__(message)
-        self.headers = {
-            "Content-Type": "text/plain",
-            "Content-Range": "bytes */%s" % (content_range.total,),
-        }
+        self.headers = {"Content-Range": f"bytes */{content_range.total}"}
 
 
 @add_status_code(417)

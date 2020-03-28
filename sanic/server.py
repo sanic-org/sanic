@@ -973,10 +973,7 @@ def serve(
             else:
                 conn.close()
 
-        if sys.version_info.minor >= 8:
-            _shutdown = asyncio.gather(*coros, loop=loop)
-        else:
-            _shutdown = asyncio.gather(*coros)
+        _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)

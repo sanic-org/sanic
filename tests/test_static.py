@@ -376,17 +376,3 @@ def test_static_name(app, static_file_directory, static_name, file_name):
     request, response = app.test_client.get(f"/static/{file_name}")
 
     assert response.status == 200
-
-
-@pytest.mark.parametrize("file_name", ["test.file"])
-def test_static_remove_route(app, static_file_directory, file_name):
-    app.static(
-        "/testing.file", get_file_path(static_file_directory, file_name)
-    )
-
-    request, response = app.test_client.get("/testing.file")
-    assert response.status == 200
-
-    app.remove_route("/testing.file")
-    request, response = app.test_client.get("/testing.file")
-    assert response.status == 404

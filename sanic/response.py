@@ -43,11 +43,6 @@ class BaseHTTPResponse:
     ):
         """.. deprecated:: 20.3:
            This function is not public API and will be removed."""
-        if version != "1.1":
-            warnings.warn(
-                "Only HTTP/1.1 is currently supported (got {version})",
-                DeprecationWarning,
-            )
 
         # self.headers get priority over content_type
         if self.content_type and "Content-Type" not in self.headers:

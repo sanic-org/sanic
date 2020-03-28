@@ -17,12 +17,12 @@ def test_create_task(app):
 
     @app.route("/early")
     def not_set(request):
-        return text(e.is_set())
+        return text(str(e.is_set()))
 
     @app.route("/late")
     async def set(request):
         await asyncio.sleep(0.1)
-        return text(e.is_set())
+        return text(str(e.is_set()))
 
     request, response = app.test_client.get("/early")
     assert response.body == b"False"

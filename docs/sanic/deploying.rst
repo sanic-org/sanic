@@ -1,9 +1,12 @@
 Deploying
 =========
 
-Deploying Sanic is very simple using one of three options: the inbuilt webserver,
+Sanic has three serving options: the inbuilt webserver,
 an `ASGI webserver <https://asgi.readthedocs.io/en/latest/implementations.html>`_, or `gunicorn`.
-It is also very common to place Sanic behind a reverse proxy, like `nginx`.
+
+Sanic's own webserver is the fastest option, and it can be securely run on
+the Internet. Still, it is also very common to place Sanic behind a reverse
+proxy, as shown in :ref:`nginx`.
 
 Running via Sanic webserver
 ---------------------------
@@ -113,12 +116,6 @@ See the `Gunicorn Docs <http://docs.gunicorn.org/en/latest/settings.html#max-req
 
 Other deployment considerations
 -------------------------------
-
-Running behind a reverse proxy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Sanic can be used with a reverse proxy. See :ref:`nginx`.
-
 
 Disable debug logging for performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -85,7 +85,11 @@ before shutdown, and after shutdown. Therefore, in ASGI mode, the startup and sh
 run consecutively and not actually around the server process beginning and ending (since that
 is now controlled by the ASGI server). Therefore, it is best to use `after_server_start` and
 `before_server_stop`.
-3. ASGI mode is still in "beta" as of Sanic v19.6.
+
+Sanic has experimental support for running on `Trio <https://trio.readthedocs.io/en/stable/>`_ with::
+
+    hypercorn -k trio myapp:app
+
 
 Running via Gunicorn
 --------------------
@@ -113,24 +117,8 @@ Other deployment considerations
 Running behind a reverse proxy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sanic can be used with a reverse proxy (e.g. nginx). There's a simple example of nginx configuration:
+Sanic can be used with a reverse proxy. See :ref:`nginx`.
 
-
-::
-
-    server {
-      listen 80;
-      server_name example.org;
-      location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      }
-    }
-
-
-If you want to get real client ip, you should configure `X-Real-IP` and `X-Forwarded-For` HTTP headers and set `app.config.PROXIES_COUNT` to `1`; see the configuration page for more information.
 
 Disable debug logging for performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

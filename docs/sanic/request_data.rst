@@ -224,7 +224,7 @@ The key difference when using this object is the distinction between the `get` a
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic(name="example")
+    app = Sanic(__name__)
 
     @app.route("/")
     def get_handler(request):
@@ -243,7 +243,7 @@ route will return "hello".
     from sanic.response import text
     from sanic import Sanic
 
-    app = Sanic()
+    app = Sanic(__name__)
 
     @app.get("/")
     def hello(request):

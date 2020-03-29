@@ -28,14 +28,15 @@ using all these methods would look like the following.
     from sanic.views import HTTPMethodView
     from sanic.response import text
 
-    app = Sanic('some_name')
+    app = Sanic("class_views_example")
 
     class SimpleView(HTTPMethodView):
 
       def get(self, request):
           return text('I am get method')
 
-      def post(self, request):
+      # You can also use async syntax
+      async def post(self, request):
           return text('I am post method')
 
       def put(self, request):
@@ -49,22 +50,6 @@ using all these methods would look like the following.
 
     app.add_route(SimpleView.as_view(), '/')
 
-You can also use `async` syntax.
-
-.. code-block:: python
-
-    from sanic import Sanic
-    from sanic.views import HTTPMethodView
-    from sanic.response import text
-
-    app = Sanic('some_name')
-
-    class SimpleAsyncView(HTTPMethodView):
-
-      async def get(self, request):
-          return text('I am async get method')
-
-    app.add_route(SimpleAsyncView.as_view(), '/')
 
 URL parameters
 --------------
@@ -154,7 +139,7 @@ lambda:
     from sanic.views import CompositionView
     from sanic.response import text
 
-    app = Sanic(__name__)
+    app = Sanic("composition_example")
 
     def get_handler(request):
         return text('I am a get method')

@@ -30,6 +30,7 @@ from sanic.testing import HOST, PORT
 JSON_DATA = {"ok": True}
 
 
+@pytest.mark.filterwarnings("ignore:Types other than str will be")
 def test_response_body_not_a_string(app):
     """Test when a response body sent from the application is not a string"""
     random_num = choice(range(1000))

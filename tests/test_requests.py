@@ -1607,33 +1607,6 @@ async def test_request_args_no_query_string_await(app):
     assert request.args == {}
 
 
-def test_request_raw_args(app):
-
-    params = {"test": "OK"}
-
-    @app.get("/")
-    def handler(request):
-        return text("pass")
-
-    request, response = app.test_client.get("/", params=params)
-
-    assert request.raw_args == params
-
-
-@pytest.mark.asyncio
-async def test_request_raw_args_asgi(app):
-
-    params = {"test": "OK"}
-
-    @app.get("/")
-    def handler(request):
-        return text("pass")
-
-    request, response = await app.asgi_client.get("/", params=params)
-
-    assert request.raw_args == params
-
-
 def test_request_query_args(app):
     # test multiple params with the same key
     params = [("test", "value1"), ("test", "value2")]

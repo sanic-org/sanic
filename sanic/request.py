@@ -1,6 +1,5 @@
 import asyncio
 import email.utils
-import warnings
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
@@ -282,18 +281,6 @@ class Request:
         ]
 
     args = property(get_args)
-
-    @property
-    def raw_args(self) -> dict:
-        if self.app.debug:  # pragma: no cover
-            warnings.simplefilter("default")
-        warnings.warn(
-            "Use of raw_args will be deprecated in "
-            "the future versions. Please use args or query_args "
-            "properties instead",
-            DeprecationWarning,
-        )
-        return {k: v[0] for k, v in self.args.items()}
 
     def get_query_args(
         self,

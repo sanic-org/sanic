@@ -509,12 +509,7 @@ class Sanic:
                 if self.asgi:
                     ws = request.transport.get_websocket_connection()
                 else:
-                    try:
-                        protocol = request.transport.get_protocol()
-                    except AttributeError:
-                        # On Python3.5 the Transport classes in asyncio do not
-                        # have a get_protocol() method as in uvloop
-                        protocol = request.transport._protocol
+                    protocol = request.transport.get_protocol()
                     protocol.app = self
 
                     ws = await protocol.websocket_handshake(
@@ -600,29 +595,6 @@ class Sanic:
                     task.cancel()
 
         self.websocket_enabled = enable
-
-    def remove_route(self, uri, clean_cache=True, host=None):
-        """
-        This method provides the app user a mechanism by which an already
-        existing route can be removed from the :class:`Sanic` object
-
-        .. warning::
-            remove_route is deprecated in v19.06 and will be removed
-            from future versions.
-
-        :param uri: URL Path to be removed from the app
-        :param clean_cache: Instruct sanic if it needs to clean up the LRU
-            route cache
-        :param host: IP address or FQDN specific to the host
-        :return: None
-        """
-        warnings.warn(
-            "remove_route is deprecated and will be removed "
-            "from future versions.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.router.remove(uri, clean_cache, host)
 
     # Decorator
     def exception(self, *exceptions):

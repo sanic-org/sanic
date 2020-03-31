@@ -1117,6 +1117,15 @@ class Sanic:
         # Allow for overriding either of the defaults
         auto_reload = kwargs.get("auto_reload", auto_reload)
 
+        if auto_reload:
+            if os.name != "posix":
+                # This condition must be removed after implementing
+                # auto reloader for other operating systems.
+                raise NotImplementedError
+
+            if os.environ.get("SANIC_SERVER_RUNNING") != "true":
+                return reloader_helpers.watchdog(2)
+
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
 
@@ -1158,18 +1167,7 @@ class Sanic:
                 )
                 workers = 1
             if workers == 1:
-                if auto_reload and os.name != "posix":
-                    # This condition must be removed after implementing
-                    # auto reloader for other operating systems.
-                    raise NotImplementedError
-
-                if (
-                    auto_reload
-                    and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-                ):
-                    reloader_helpers.watchdog(2)
-                else:
-                    serve(**server_settings)
+                serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:

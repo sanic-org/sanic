@@ -16,7 +16,7 @@ IPv6 example:
     sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     sock.bind(('::', 7777))
 
-    app = Sanic()
+    app = Sanic("ipv6_example")
 
 
     @app.route("/")
@@ -46,7 +46,7 @@ UNIX socket example:
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.bind(server_socket)
 
-    app = Sanic()
+    app = Sanic("unix_socket_example")
 
 
     @app.route("/")

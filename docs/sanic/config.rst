@@ -39,13 +39,13 @@ Any variables defined with the `SANIC_` prefix will be applied to the sanic conf
 
 .. code-block:: python
 
-    app = Sanic(load_env='MYAPP_')
+    app = Sanic(__name__, load_env='MYAPP_')
 
 Then the above variable would be `MYAPP_REQUEST_TIMEOUT`. If you want to disable loading from environment variables you can set it to `False` instead:
 
 .. code-block:: python
 
-    app = Sanic(load_env=False)
+    app = Sanic(__name__, load_env=False)
 
 From an Object
 ~~~~~~~~~~~~~~

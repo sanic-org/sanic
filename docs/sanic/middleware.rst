@@ -138,7 +138,7 @@ the one you instantiate your app in.
 
 .. code-block:: python
 
-    app = Sanic()
+    app = Sanic(__name__)
 
     async def setup_db(app, loop):
         app.db = await db_setup()

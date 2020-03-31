@@ -17,7 +17,7 @@ A simple example using default settings would be like this:
    from sanic.log import logger
    from sanic.response import text
 
-   app = Sanic('test')
+   app = Sanic('logging_example')
 
    @app.route('/')
    async def test(request):
@@ -47,7 +47,7 @@ initialize ``Sanic`` app:
 
 .. code:: python
 
-   app = Sanic('test', log_config=LOGGING_CONFIG)
+   app = Sanic('logging_example', log_config=LOGGING_CONFIG)
 
 And to close logging, simply assign access_log=False:
 

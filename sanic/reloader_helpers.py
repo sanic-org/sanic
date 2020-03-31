@@ -56,105 +56,45 @@ def restart_with_reloader():
     )
 
 
-def kill_process_children_unix(pid):
-    """Find and kill child processes of a process (maximum two level).
-
-    :param pid: PID of parent process (process ID)
-    :return: Nothing
-    """
-    root_process_path = "/proc/{pid}/task/{pid}/children".format(pid=pid)
-    if not os.path.isfile(root_process_path):
-        return
-    with open(root_process_path) as children_list_file:
-        children_list_pid = children_list_file.read().split()
-
-    for child_pid in children_list_pid:
-        children_proc_path = "/proc/%s/task/%s/children" % (
-            child_pid,
-            child_pid,
-        )
-        if not os.path.isfile(children_proc_path):
-            continue
-        with open(children_proc_path) as children_list_file_2:
-            children_list_pid_2 = children_list_file_2.read().split()
-        for _pid in children_list_pid_2:
-            try:
-                os.kill(int(_pid), signal.SIGTERM)
-            except ProcessLookupError:
-                continue
-        try:
-            os.kill(int(child_pid), signal.SIGTERM)
-        except ProcessLookupError:
-            continue
-
-
-def kill_process_children_osx(pid):
-    """Find and kill child processes of a process.
-
-    :param pid: PID of parent process (process ID)
-    :return: Nothing
-    """
-    subprocess.run(["pkill", "-P", str(pid)])
-
-
-def kill_process_children(pid):
-    """Find and kill child processes of a process.
-
-    :param pid: PID of parent process (process ID)
-    :return: Nothing
-    """
-    if sys.platform == "darwin":
-        kill_process_children_osx(pid)
-    elif sys.platform == "linux":
-        kill_process_children_unix(pid)
-    else:
-        pass  # should signal error here
-
-
-def kill_program_completely(proc):
-    """Kill worker and it's child processes and exit.
-
-    :param proc: worker process (process ID)
-    :return: Nothing
-    """
-    kill_process_children(proc.pid)
-    proc.terminate()
-    os._exit(0)
-
-
 def watchdog(sleep_interval):
     """Watch project files, restart worker process if a change happened.
 
     :param sleep_interval: interval in second.
     :return: Nothing
     """
+
+    def interrupt_self(*args):
+        raise KeyboardInterrupt
+
     mtimes = {}
+    signal.signal(signal.SIGTERM, interrupt_self)
     worker_process = restart_with_reloader()
-    signal.signal(
-        signal.SIGTERM, lambda *args: kill_program_completely(worker_process)
-    )
-    signal.signal(
-        signal.SIGINT, lambda *args: kill_program_completely(worker_process)
-    )
-    while True:
-        need_reload = False
 
-        for filename in _iter_module_files():
-            try:
-                mtime = os.stat(filename).st_mtime
-            except OSError:
-                continue
+    try:
+        while True:
+            need_reload = False
 
-            old_time = mtimes.get(filename)
-            if old_time is None:
-                mtimes[filename] = mtime
-            elif mtime > old_time:
-                mtimes[filename] = mtime
-                need_reload = True
+            for filename in _iter_module_files():
+                try:
+                    mtime = os.stat(filename).st_mtime
+                except OSError:
+                    continue
 
-        if need_reload:
-            kill_process_children(worker_process.pid)
-            worker_process.terminate()
-            worker_process = restart_with_reloader()
+                old_time = mtimes.get(filename)
+                if old_time is None:
+                    mtimes[filename] = mtime
+                elif mtime > old_time:
+                    mtimes[filename] = mtime
+                    need_reload = True
 
-        sleep(sleep_interval)
+            if need_reload:
+                worker_process.terminate()
+                worker_process.wait()
+                worker_process = restart_with_reloader()
+
+            sleep(sleep_interval)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        worker_process.terminate()
+        worker_process.wait()

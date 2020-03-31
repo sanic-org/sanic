@@ -1116,7 +1116,7 @@ class Sanic:
 
         if auto_reload or auto_reload is None and debug:
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return reloader_helpers.watchdog(2)
+                return reloader_helpers.watchdog(1.0)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000

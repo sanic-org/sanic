@@ -1118,11 +1118,6 @@ class Sanic:
         auto_reload = kwargs.get("auto_reload", auto_reload)
 
         if auto_reload:
-            if os.name != "posix":
-                # This condition must be removed after implementing
-                # auto reloader for other operating systems.
-                raise NotImplementedError
-
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
                 return reloader_helpers.watchdog(2)
 

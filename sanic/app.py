@@ -1060,7 +1060,9 @@ class Sanic:
         self,
         host: Optional[str] = None,
         port: Optional[int] = None,
+        *,
         debug: bool = False,
+        auto_reload: Optional[bool] = None,
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
@@ -1069,7 +1071,7 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
-        **kwargs: Any,
+        loop: None = None,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -1080,6 +1082,9 @@ class Sanic:
         :type port: int
         :param debug: Enables debug output (slows server)
         :type debug: bool
+        :param auto_reload: Reload app whenever its source code is changed.
+                            Enabled by default in debug mode.
+        :type auto_relaod: bool
         :param ssl: SSLContext, or location of certificate and key
                     for SSL encryption of worker(s)
         :type ssl: SSLContext or dict
@@ -1101,7 +1106,7 @@ class Sanic:
         :type access_log: bool
         :return: Nothing
         """
-        if "loop" in kwargs:
+        if loop is not None:
             raise TypeError(
                 "loop is not a valid argument. To use an existing loop, "
                 "change to create_server().\nSee more: "
@@ -1109,15 +1114,7 @@ class Sanic:
                 "#asynchronous-support"
             )
 
-        # Default auto_reload to false
-        auto_reload = False
-        # If debug is set, default it to true (unless on windows)
-        if debug and os.name == "posix":
-            auto_reload = True
-        # Allow for overriding either of the defaults
-        auto_reload = kwargs.get("auto_reload", auto_reload)
-
-        if auto_reload:
+        if auto_reload or auto_reload is None and debug:
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
                 return reloader_helpers.watchdog(2)
 
@@ -1184,6 +1181,7 @@ class Sanic:
         self,
         host: Optional[str] = None,
         port: Optional[int] = None,
+        *,
         debug: bool = False,
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,

@@ -36,11 +36,11 @@ async def test_reloader_live(runargs):
         filename = os.path.join(tmpdir, "reloaderapp.py")
         text = write_app(filename, **runargs)
         with subprocess.Popen([sys.executable, filename], stdout=subprocess.PIPE) as proc:
-            line = (l.decode() for l in proc.stdout if l.startswith(b"complete"))
+            line = (l.decode().strip() for l in proc.stdout if l.startswith(b"complete"))
             try:
-                assert next(line) == f"complete {text}\n"
+                assert next(line) == f"complete {text}"
                 # Edit source code and try again
                 text = write_app(filename)
-                assert next(line) == f"complete {text}\n"
+                assert next(line) == f"complete {text}"
             finally:
                 proc.terminate()

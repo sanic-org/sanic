@@ -16,13 +16,22 @@ def write_app(filename, **runargs):
             from sanic.response import text
 
             app = Sanic(__name__)
+            started = False
 
             @app.listener("after_server_start")
             def complete(*args):
+                global started
+                started = True
                 print("complete", {text!r})
 
             kwargs = {runargs!r}
-            app.run(port=42101, **kwargs)
+            try:
+                app.run(port=42101, **kwargs)
+            except Exception as e:
+                print("complete", repr(e))
+            else:
+                if not started:
+                    print("complete SERVER DID NOT START")
             """
         ))
     return text

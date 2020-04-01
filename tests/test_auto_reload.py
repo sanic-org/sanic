@@ -36,12 +36,9 @@ def write_app(filename, **runargs):
             from sanic import Sanic
 
             app = Sanic(__name__)
-            started = False
 
             @app.listener("after_server_start")
             def complete(*args):
-                global started
-                started = True
                 print("complete", os.getpid(), {text!r})
 
             if __name__ == "__main__":

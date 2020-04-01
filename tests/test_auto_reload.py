@@ -55,21 +55,19 @@ async def test_reloader_live(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")
         text = write_app(filename, **runargs)
-        with Popen(argv[mode], cwd=tmpdir, stdout=PIPE) as proc:
+        proc = Popen(argv[mode], cwd=tmpdir, stdout=PIPE)
+        try:
             timeout = Timer(5, lambda: proc.terminate())
             timeout.start()
-            try:
-                # Python apparently keeps using the old source sometimes if
-                # we don't sleep before rewrite (pycache timestamp problem?)
-                sleep(1)
-                line = scanner(proc)
-                assert text in next(line)
-                # Edit source code and try again
-                text = write_app(filename, **runargs)
-                assert text in next(line)
-            finally:
-                timeout.cancel()
-                proc.terminate()
-        # Wait a while so that no-one is using tmpdir, to allow deleting it
-        if os.name == "nt":
+            # Python apparently keeps using the old source sometimes if
+            # we don't sleep before rewrite (pycache timestamp problem?)
             sleep(1)
+            line = scanner(proc)
+            assert text in next(line)
+            # Edit source code and try again
+            text = write_app(filename, **runargs)
+            assert text in next(line)
+        finally:
+            timeout.cancel()
+            proc.terminate()
+            proc.wait(timeout=1)

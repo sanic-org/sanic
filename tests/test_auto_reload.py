@@ -24,21 +24,20 @@ def write_app(filename, **runargs):
                 started = True
                 print("complete", {text!r})
 
-            kwargs = {runargs!r}
             try:
-                app.run(port=42101, **kwargs)
+                app.run(**{runargs!r})
             except Exception as e:
                 print("complete", repr(e))
             else:
                 if not started:
-                    print("complete SERVER DID NOT START")
+                    print("complete DID NOT START")
             """
         ))
     return text
 
-@pytest.mark.parametrize("runargs", [
-    dict(auto_reload=True),
-    dict(debug=True),
+@pytest.mark.parametrize("runargs,port", [
+    dict(port=42102, auto_reload=True),
+    dict(port=42103, debug=True),
 ])
 async def test_reloader_live(runargs):
     with TemporaryDirectory() as tmpdir:

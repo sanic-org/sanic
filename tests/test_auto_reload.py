@@ -35,7 +35,7 @@ def write_app(filename, **runargs):
         ))
     return text
 
-@pytest.mark.parametrize("runargs,port", [
+@pytest.mark.parametrize("runargs", [
     dict(port=42102, auto_reload=True),
     dict(port=42103, debug=True),
 ])

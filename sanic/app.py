@@ -1424,7 +1424,7 @@ class Sanic:
             server_settings["run_async"] = True
 
         # Serve
-        if host and port and os.environ.get("SANIC_SERVER_RUNNING") != "true":
+        if host and port:
             proto = "http"
             if ssl is not None:
                 proto = "https"

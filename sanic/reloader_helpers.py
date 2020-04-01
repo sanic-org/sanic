@@ -68,6 +68,9 @@ def watchdog(sleep_interval):
 
     mtimes = {}
     signal.signal(signal.SIGTERM, interrupt_self)
+    if os.name == "nt":
+        signal.signal(signal.SIGBREAK, interrupt_self)
+
     worker_process = restart_with_reloader()
 
     try:

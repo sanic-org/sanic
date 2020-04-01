@@ -11,6 +11,23 @@ from time import sleep
 import pytest
 
 
+# We need to interrupt the autoreloader without killing it, so that the server gets terminated
+# https://stefan.sofa-rockers.org/2013/08/15/handling-sub-process-hierarchies-python-linux-os-x/
+
+try:
+    from signal import CTRL_BREAK_EVENT
+    from subprocess import CREATE_NEW_PROCESS_GROUP
+
+    flags = CREATE_NEW_PROCESS_GROUP
+except ImportError:
+    flags = 0
+
+def terminate(proc):
+    if flags:
+        proc.send_signal(CTRL_BREAK_EVENT)
+    else:
+        proc.terminate()
+
 def write_app(filename, **runargs):
     text = secrets.token_urlsafe()
     with open(filename, "w") as f:
@@ -40,6 +57,7 @@ def scanner(proc):
         if line.startswith("complete"):
             yield line
 
+
 argv = dict(
     script=[sys.executable, "reloader.py"],
     module=[sys.executable, "-m", "reloader"],
@@ -55,9 +73,9 @@ async def test_reloader_live(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")
         text = write_app(filename, **runargs)
-        proc = Popen(argv[mode], cwd=tmpdir, stdout=PIPE)
+        proc = Popen(argv[mode], cwd=tmpdir, stdout=PIPE, creationflags=flags)
         try:
-            timeout = Timer(5, lambda: proc.terminate())
+            timeout = Timer(5, terminate, [proc])
             timeout.start()
             # Python apparently keeps using the old source sometimes if
             # we don't sleep before rewrite (pycache timestamp problem?)
@@ -69,5 +87,5 @@ async def test_reloader_live(runargs, mode):
             assert text in next(line)
         finally:
             timeout.cancel()
-            proc.terminate()
+            terminate(proc)
             proc.wait(timeout=1)

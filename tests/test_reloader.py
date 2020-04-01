@@ -85,4 +85,4 @@ async def test_reloader_live(runargs, mode):
         finally:
             timeout.cancel()
             terminate(proc)
-            proc.wait(timeout=1)
+            proc.wait(timeout=3)

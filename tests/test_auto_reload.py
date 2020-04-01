@@ -70,3 +70,6 @@ async def test_reloader_live(runargs, mode):
             finally:
                 timeout.cancel()
                 proc.terminate()
+        # Wait a while so that no-one is using tmpdir, to allow deleting it
+        if os.name == "nt":
+            sleep(1)

@@ -13,7 +13,6 @@ def write_app(filename, **runargs):
     with open(filename, "w") as f:
         f.write(dedent(f"""\
             from sanic import Sanic
-            from sanic.response import text
 
             app = Sanic(__name__)
             started = False
@@ -48,7 +47,7 @@ async def test_reloader_live(runargs):
             try:
                 assert next(line) == f"complete {text}"
                 # Edit source code and try again
-                text = write_app(filename)
+                text = write_app(filename, **runargs)
                 assert next(line) == f"complete {text}"
             finally:
                 proc.terminate()

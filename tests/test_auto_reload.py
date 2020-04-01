@@ -5,6 +5,7 @@ import sys
 from subprocess import PIPE, Popen
 from tempfile import TemporaryDirectory
 from textwrap import dedent
+from threading import Timer
 from time import sleep
 
 import pytest
@@ -55,6 +56,8 @@ async def test_reloader_live(runargs, mode):
         filename = os.path.join(tmpdir, "reloader.py")
         text = write_app(filename, **runargs)
         with Popen(argv[mode], cwd=tmpdir, stdout=PIPE) as proc:
+            timeout = Timer(5, lambda: proc.terminate())
+            timeout.start()
             try:
                 # Python apparently keeps using the old source sometimes if
                 # we don't sleep before rewrite (pycache timestamp problem?)
@@ -63,7 +66,7 @@ async def test_reloader_live(runargs, mode):
                 assert text in next(line)
                 # Edit source code and try again
                 text = write_app(filename, **runargs)
-                #print(f"Replaced reloader {text}")
                 assert text in next(line)
             finally:
+                timeout.cancel()
                 proc.terminate()

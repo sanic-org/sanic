@@ -51,7 +51,7 @@ class Config(dict):
         try:
             return self[attr]
         except KeyError as ke:
-            raise AttributeError("Config has no '{}'".format(ke.args[0]))
+            raise AttributeError(f"Config has no '{ke.args[0]}'")
 
     def __setattr__(self, attr, value):
         self[attr] = value

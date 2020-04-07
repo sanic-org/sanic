@@ -39,13 +39,13 @@ Any variables defined with the `SANIC_` prefix will be applied to the sanic conf
 
 .. code-block:: python
 
-    app = Sanic(load_env='MYAPP_')
+    app = Sanic(__name__, load_env='MYAPP_')
 
 Then the above variable would be `MYAPP_REQUEST_TIMEOUT`. If you want to disable loading from environment variables you can set it to `False` instead:
 
 .. code-block:: python
 
-    app = Sanic(load_env=False)
+    app = Sanic(__name__, load_env=False)
 
 From an Object
 ~~~~~~~~~~~~~~
@@ -238,9 +238,7 @@ Proxy config if using ...
 * a proxy that supports `forwarded`: set `FORWARDED_SECRET` to the value that the proxy inserts in the header
     * Apache Traffic Server: `CONFIG proxy.config.http.insert_forwarded STRING for|proto|host|by=_secret`
     * NGHTTPX: `nghttpx --add-forwarded=for,proto,host,by --forwarded-for=ip --forwarded-by=_secret`
-    * NGINX: after `the official instructions <https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/>`_, add anywhere in your config:
-
-..        proxy_set_header Forwarded "$proxy_add_forwarded;by=\"_$server_name\";proto=$scheme;host=\"$http_host\";path=\"$request_uri\";secret=_secret";
+    * NGINX: :ref:`nginx`.
 
 * a custom header with client IP: set `REAL_IP_HEADER` to the name of that header
 * `x-forwarded-for`: set `PROXIES_COUNT` to `1` for a single proxy, or a greater number to allow Sanic to select the correct IP

@@ -71,7 +71,8 @@ def test_asyncio_server_start_serving(app):
         assert srv.is_serving() is False
         loop.run_until_complete(srv.start_serving())
         assert srv.is_serving() is True
-        srv.close()
+        wait_close = srv.close()
+        loop.run_until_complete(wait_close)
         # Looks like we can't easily test `serve_forever()`
 
 def test_app_loop_not_running(app):

@@ -15,7 +15,7 @@ Sanic aspires to be simple
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic()
+    app = Sanic("App Name")
 
     @app.route("/")
     async def test(request):

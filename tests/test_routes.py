@@ -770,55 +770,6 @@ def test_add_route_method_not_allowed(app):
     assert response.status == 405
 
 
-def test_remove_static_route(app):
-    async def handler1(request):
-        return text("OK1")
-
-    async def handler2(request):
-        return text("OK2")
-
-    app.add_route(handler1, "/test")
-    app.add_route(handler2, "/test2")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
-
-    request, response = app.test_client.get("/test2")
-    assert response.status == 200
-
-    app.remove_route("/test")
-    app.remove_route("/test2")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 404
-
-    request, response = app.test_client.get("/test2")
-    assert response.status == 404
-
-
-def test_remove_dynamic_route(app):
-    async def handler(request, name):
-        return text("OK")
-
-    app.add_route(handler, "/folder/<name>")
-
-    request, response = app.test_client.get("/folder/test123")
-    assert response.status == 200
-
-    app.remove_route("/folder/<name>")
-    request, response = app.test_client.get("/folder/test123")
-    assert response.status == 404
-
-
-def test_remove_inexistent_route(app):
-
-    uri = "/test"
-    with pytest.raises(RouteDoesNotExist) as excinfo:
-        app.remove_route(uri)
-
-    assert str(excinfo.value) == f"Route was not registered: {uri}"
-
-
 def test_removing_slash(app):
     @app.get("/rest/<resource>")
     def get(_):
@@ -829,59 +780,6 @@ def test_removing_slash(app):
         pass
 
     assert len(app.router.routes_all.keys()) == 2
-
-
-def test_remove_unhashable_route(app):
-    async def handler(request, unhashable):
-        return text("OK")
-
-    app.add_route(handler, "/folder/<unhashable:[A-Za-z0-9/]+>/end/")
-
-    request, response = app.test_client.get("/folder/test/asdf/end/")
-    assert response.status == 200
-
-    request, response = app.test_client.get("/folder/test///////end/")
-    assert response.status == 200
-
-    request, response = app.test_client.get("/folder/test/end/")
-    assert response.status == 200
-
-    app.remove_route("/folder/<unhashable:[A-Za-z0-9/]+>/end/")
-
-    request, response = app.test_client.get("/folder/test/asdf/end/")
-    assert response.status == 404
-
-    request, response = app.test_client.get("/folder/test///////end/")
-    assert response.status == 404
-
-    request, response = app.test_client.get("/folder/test/end/")
-    assert response.status == 404
-
-
-def test_remove_route_without_clean_cache(app):
-    async def handler(request):
-        return text("OK")
-
-    app.add_route(handler, "/test")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
-
-    app.remove_route("/test", clean_cache=True)
-    app.remove_route("/test/", clean_cache=True)
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 404
-
-    app.add_route(handler, "/test")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
-
-    app.remove_route("/test", clean_cache=False)
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
 
 
 def test_overload_routes(app):

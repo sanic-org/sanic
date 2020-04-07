@@ -171,7 +171,7 @@ class Unauthorized(SanicException):
             challenge = ", ".join(values)
 
             self.headers = {
-                "WWW-Authenticate": "{} {}".format(scheme, challenge).rstrip()
+                "WWW-Authenticate": f"{scheme} {challenge}".rstrip()
             }
 
 

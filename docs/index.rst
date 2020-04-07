@@ -28,6 +28,7 @@ Guides
    sanic/debug_mode
    sanic/testing
    sanic/deploying
+   sanic/nginx
    sanic/extensions
    sanic/examples
    sanic/changelog

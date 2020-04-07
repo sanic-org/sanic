@@ -96,14 +96,10 @@ class CompositionView:
             handler.is_stream = stream
         for method in methods:
             if method not in HTTP_METHODS:
-                raise InvalidUsage(
-                    "{} is not a valid HTTP method.".format(method)
-                )
+                raise InvalidUsage(f"{method} is not a valid HTTP method.")
 
             if method in self.handlers:
-                raise InvalidUsage(
-                    "Method {} is already registered.".format(method)
-                )
+                raise InvalidUsage(f"Method {method} is already registered.")
             self.handlers[method] = handler
 
     def __call__(self, request, *args, **kwargs):

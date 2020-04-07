@@ -394,9 +394,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
             else:
                 self.write_error(
-                    HeaderExpectationFailed(
-                        "Unknown Expect: {expect}".format(expect=expect)
-                    )
+                    HeaderExpectationFailed(f"Unknown Expect: {expect}")
                 )
 
     def on_body(self, body):
@@ -503,13 +501,9 @@ class HttpProtocol(asyncio.Protocol):
             extra["host"] = "UNKNOWN"
             if self.request is not None:
                 if self.request.ip:
-                    extra["host"] = "{0}:{1}".format(
-                        self.request.ip, self.request.port
-                    )
+                    extra["host"] = f"{self.request.ip}:{self.request.port}"
 
-                extra["request"] = "{0} {1}".format(
-                    self.request.method, self.request.url
-                )
+                extra["request"] = f"{self.request.method} {self.request.url}"
             else:
                 extra["request"] = "nil"
 
@@ -546,9 +540,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(repr(e))
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -599,9 +591,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(repr(e))
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -632,7 +622,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
         except Exception as e:
             self.bail_out(
-                "Writing error failed, connection closed {}".format(repr(e)),
+                f"Writing error failed, connection closed {e!r}",
                 from_error=True,
             )
         finally:
@@ -1024,10 +1014,7 @@ def serve(
             else:
                 conn.close()
 
-        if sys.version_info.minor >= 8:
-            _shutdown = asyncio.gather(*coros, loop=loop)
-        else:
-            _shutdown = asyncio.gather(*coros)
+        _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)

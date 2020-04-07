@@ -56,7 +56,6 @@ The difference between Request.args and Request.query_args for the queryset `?ke
           "url": request.url,
           "query_string": request.query_string,
           "args": request.args,
-          "raw_args": request.raw_args,
           "query_args": request.query_args,
       })
 
@@ -72,11 +71,8 @@ The difference between Request.args and Request.query_args for the queryset `?ke
         "url":"http:\/\/0.0.0.0:8000\/test_request_args?key1=value1&key2=value2&key1=value3",
         "query_string":"key1=value1&key2=value2&key1=value3",
         "args":{"key1":["value1","value3"],"key2":["value2"]},
-        "raw_args":{"key1":"value1","key2":"value2"},
         "query_args":[["key1","value1"],["key2","value2"],["key1","value3"]]
     }
-
-- `raw_args` contains only the first entry of `key1`. Will be deprecated in the future versions.
 
 - `files` (dictionary of `File` objects) - List of files that have a name, body, and type
 
@@ -206,7 +202,7 @@ The output will be:
 Accessing values using `get` and `getlist`
 ------------------------------------------
 
-The `request.args` returns a subclass of `dict` called `RequestParameters`. 
+The `request.args` returns a subclass of `dict` called `RequestParameters`.
 The key difference when using this object is the distinction between the `get` and `getlist` methods.
 
 - `get(key, default=None)` operates as normal, except that when the value of
@@ -228,14 +224,14 @@ The key difference when using this object is the distinction between the `get` a
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic(name="example")
+    app = Sanic(__name__)
 
     @app.route("/")
     def get_handler(request):
         return json({
             "p1": request.args.getlist("p1")
         })
-        
+
 Accessing the handler name with the request.endpoint attribute
 --------------------------------------------------------------
 
@@ -247,7 +243,7 @@ route will return "hello".
     from sanic.response import text
     from sanic import Sanic
 
-    app = Sanic()
+    app = Sanic(__name__)
 
     @app.get("/")
     def hello(request):

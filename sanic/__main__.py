@@ -29,12 +29,12 @@ if __name__ == "__main__":
 
         module = import_module(module_name)
         app = getattr(module, app_name, None)
+        app_name = type(app).__name__
+
         if not isinstance(app, Sanic):
             raise ValueError(
-                "Module is not a Sanic app, it is a {}.  "
-                "Perhaps you meant {}.app?".format(
-                    type(app).__name__, args.module
-                )
+                f"Module is not a Sanic app, it is a {app_name}.  "
+                f"Perhaps you meant {args.module}.app?"
             )
         if args.cert is not None or args.key is not None:
             ssl = {
@@ -54,9 +54,9 @@ if __name__ == "__main__":
         )
     except ImportError as e:
         logger.error(
-            "No module named {} found.\n"
-            "  Example File: project/sanic_server.py -> app\n"
-            "  Example Module: project.sanic_server.app".format(e.name)
+            f"No module named {e.name} found.\n"
+            f"  Example File: project/sanic_server.py -> app\n"
+            f"  Example Module: project.sanic_server.app"
         )
     except ValueError:
         logger.exception("Failed to run app")

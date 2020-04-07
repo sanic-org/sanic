@@ -103,9 +103,8 @@ class Request:
         self.endpoint = None
 
     def __repr__(self):
-        return "<{0}: {1} {2}>".format(
-            self.__class__.__name__, self.method, self.path
-        )
+        class_name = self.__class__.__name__
+        return f"<{class_name}: {self.method} {self.path}>"
 
     async def respond(
         self, response=None, *, status=200, headers=None, content_type=None
@@ -508,7 +507,7 @@ class Request:
         ):
             netloc = host
         else:
-            netloc = "{}:{}".format(host, port)
+            netloc = f"{host}:{port}"
 
         return self.app.url_for(
             view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs

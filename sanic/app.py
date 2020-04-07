@@ -214,9 +214,11 @@ class Sanic:
             args = list(signature(handler).parameters.keys())
 
             if not args:
+                handler_name = handler.__name__
+
                 raise ValueError(
-                    "Required parameter `request` missing "
-                    "in the {0}() route?".format(handler.__name__)
+                    f"Required parameter `request` missing "
+                    f"in the {handler_name}() route?"
                 )
 
             if stream:
@@ -810,7 +812,7 @@ class Sanic:
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
         if not (uri and route):
             raise URLBuildError(
-                "Endpoint with name `{}` was not found".format(view_name)
+                f"Endpoint with name `{view_name}` was not found"
             )
 
         # If the route has host defined, split that off
@@ -832,7 +834,7 @@ class Sanic:
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                uri = "{}/{}".format(folder_, filename)
+                uri = f"{folder_}/{filename}"
 
         if uri != "/" and uri.endswith("/"):
             uri = uri[:-1]
@@ -868,7 +870,7 @@ class Sanic:
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(match)
             # we only want to match against each individual parameter
-            specific_pattern = "^{}$".format(pattern)
+            specific_pattern = f"^{pattern}$"
             supplied_param = None
 
             if name in kwargs:
@@ -876,9 +878,7 @@ class Sanic:
                 del kwargs[name]
             else:
                 raise URLBuildError(
-                    "Required parameter `{}` was not passed to url_for".format(
-                        name
-                    )
+                    f"Required parameter `{name}` was not passed to url_for"
                 )
 
             supplied_param = str(supplied_param)
@@ -888,23 +888,22 @@ class Sanic:
 
             if not passes_pattern:
                 if _type != str:
+                    type_name = _type.__name__
+
                     msg = (
-                        'Value "{}" for parameter `{}` does not '
-                        "match pattern for type `{}`: {}".format(
-                            supplied_param, name, _type.__name__, pattern
-                        )
+                        f'Value "{supplied_param}" '
+                        f"for parameter `{name}` does not "
+                        f"match pattern for type `{type_name}`: {pattern}"
                     )
                 else:
                     msg = (
-                        'Value "{}" for parameter `{}` '
-                        "does not satisfy pattern {}".format(
-                            supplied_param, name, pattern
-                        )
+                        f'Value "{supplied_param}" for parameter `{name}` '
+                        f"does not satisfy pattern {pattern}"
                     )
                 raise URLBuildError(msg)
 
             # replace the parameter in the URL with the supplied value
-            replacement_regex = "(<{}.*?>)".format(name)
+            replacement_regex = f"(<{name}.*?>)"
 
             out = re.sub(replacement_regex, supplied_param, out)
 
@@ -1443,7 +1442,7 @@ class Sanic:
             proto = "http"
             if ssl is not None:
                 proto = "https"
-            logger.info("Goin' Fast @ {}://{}:{}".format(proto, host, port))
+            logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
         return server_settings
 

@@ -59,7 +59,7 @@ You can also add an exception handler as such:
     async def server_error_handler(request, exception):
         return text("Oops, server error", status=500)
 
-    app = Sanic()
+    app = Sanic("error_handler_example")
     app.error_handler.add(Exception, server_error_handler)
 
 In some cases, you might want to add some more error handling
@@ -77,7 +77,7 @@ can subclass Sanic's default error handler as such:
             # You custom error handling logic...
             return super().default(request, exception)
 
-    app = Sanic()
+    app = Sanic("custom_error_handler_example")
     app.error_handler = CustomErrorHandler()
 
 Useful exceptions

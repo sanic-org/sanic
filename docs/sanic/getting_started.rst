@@ -37,7 +37,7 @@ You can also install Sanic from `conda-forge <https://anaconda.org/conda-forge/s
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic()
+    app = Sanic("hello_example")
 
     @app.route("/")
     async def test(request):

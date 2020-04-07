@@ -32,7 +32,7 @@ and in Nginx config.
     from sanic import Sanic
     from sanic.response import text
 
-    app = Sanic("Sanic Example")
+    app = Sanic("proxied_example")
     app.config.FORWARDED_SECRET = "YOUR SECRET"
 
     @app.get("/")

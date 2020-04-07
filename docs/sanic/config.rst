@@ -39,13 +39,13 @@ Any variables defined with the `SANIC_` prefix will be applied to the sanic conf
 
 .. code-block:: python
 
-    app = Sanic(load_env='MYAPP_')
+    app = Sanic(__name__, load_env='MYAPP_')
 
 Then the above variable would be `MYAPP_REQUEST_TIMEOUT`. If you want to disable loading from environment variables you can set it to `False` instead:
 
 .. code-block:: python
 
-    app = Sanic(load_env=False)
+    app = Sanic(__name__, load_env=False)
 
 From an Object
 ~~~~~~~~~~~~~~
@@ -115,15 +115,25 @@ Out of the box there are just a few predefined values which can be overwritten w
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | KEEP_ALIVE_TIMEOUT        | 5                 | How long to hold a TCP connection open (sec)                                |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_MAX_SIZE        | 2^20              | Maximum size for incoming messages (bytes)                                  |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_MAX_QUEUE       | 32                | Maximum length of the queue that holds incoming messages                    |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_READ_LIMIT      | 2^16              | High-water limit of the buffer for incoming bytes                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_WRITE_LIMIT     | 2^16              | High-water limit of the buffer for outgoing bytes                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
 | GRACEFUL_SHUTDOWN_TIMEOUT | 15.0              | How long to wait to force close non-idle connection (sec)                   |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | ACCESS_LOG                | True              | Disable or enable access log                                                |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
-| PROXIES_COUNT             | -1                | The number of proxy servers in front of the app (e.g. nginx; see below)     |
+| FORWARDED_SECRET          | None              | Used to securely identify a specific proxy server (see below)               |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| PROXIES_COUNT             | None              | The number of proxy servers in front of the app (e.g. nginx; see below)     |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | FORWARDED_FOR_HEADER      | "X-Forwarded-For" | The name of "X-Forwarded-For" HTTP header that contains client and proxy ip |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
-| REAL_IP_HEADER            | "X-Real-IP"       | The name of "X-Real-IP" HTTP header that contains real client ip            |
+| REAL_IP_HEADER            |  None             | The name of "X-Real-IP" HTTP header that contains real client ip            |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 
 The different Timeout variables:
@@ -228,9 +238,7 @@ Proxy config if using ...
 * a proxy that supports `forwarded`: set `FORWARDED_SECRET` to the value that the proxy inserts in the header
     * Apache Traffic Server: `CONFIG proxy.config.http.insert_forwarded STRING for|proto|host|by=_secret`
     * NGHTTPX: `nghttpx --add-forwarded=for,proto,host,by --forwarded-for=ip --forwarded-by=_secret`
-    * NGINX: after `the official instructions <https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/>`_, add anywhere in your config:
-
-..        proxy_set_header Forwarded "$proxy_add_forwarded;by=\"_$server_name\";proto=$scheme;host=\"$http_host\";path=\"$request_uri\";secret=_secret";
+    * NGINX: :ref:`nginx`.
 
 * a custom header with client IP: set `REAL_IP_HEADER` to the name of that header
 * `x-forwarded-for`: set `PROXIES_COUNT` to `1` for a single proxy, or a greater number to allow Sanic to select the correct IP

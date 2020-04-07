@@ -15,6 +15,7 @@ from aiofiles import os as async_os
 from sanic.response import (
     HTTPResponse,
     StreamingHTTPResponse,
+    empty,
     file,
     file_stream,
     json,
@@ -22,7 +23,6 @@ from sanic.response import (
     stream,
     text,
 )
-from sanic.response import empty
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 
@@ -30,6 +30,7 @@ from sanic.testing import HOST, PORT
 JSON_DATA = {"ok": True}
 
 
+@pytest.mark.filterwarnings("ignore:Types other than str will be")
 def test_response_body_not_a_string(app):
     """Test when a response body sent from the application is not a string"""
     random_num = choice(range(1000))

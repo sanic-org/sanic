@@ -151,7 +151,7 @@ class Blueprint:
                     future.middleware,
                     route_names,
                     *future.args,
-                    **future.kwargs
+                    **future.kwargs,
                 )
             else:
                 app.register_named_middleware(future.middleware, route_names)
@@ -376,7 +376,7 @@ class Blueprint:
         """
         name = kwargs.pop("name", "static")
         if not name.startswith(self.name + "."):
-            name = "{}.{}".format(self.name, name)
+            name = f"{self.name}.{name}"
         kwargs.update(name=name)
 
         strict_slashes = kwargs.get("strict_slashes")

@@ -7,17 +7,33 @@ import httpx
 
 from sanic import Sanic, server
 from sanic.response import text
-from sanic.testing import HOST, PORT, SanicTestClient
-
+from sanic.testing import HOST, SanicTestClient
 
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
 old_conn = None
+PORT = 42101  # test_keep_alive_timeout_reuse doesn't work with random port
 
 
 class ReusableSanicConnectionPool(
     httpx.dispatch.connection_pool.ConnectionPool
 ):
+    @property
+    def cert(self):
+        return self.ssl.cert
+
+    @property
+    def verify(self):
+        return self.ssl.verify
+
+    @property
+    def trust_env(self):
+        return self.ssl.trust_env
+
+    @property
+    def http2(self):
+        return self.ssl.http2
+
     async def acquire_connection(self, origin, timeout):
         global old_conn
         connection = self.pop_connection(origin)
@@ -26,14 +42,17 @@ class ReusableSanicConnectionPool(
             pool_timeout = None if timeout is None else timeout.pool_timeout
 
             await self.max_connections.acquire(timeout=pool_timeout)
+            ssl_config = httpx.config.SSLConfig(
+                cert=self.cert,
+                verify=self.verify,
+                trust_env=self.trust_env,
+                http2=self.http2
+            )
             connection = httpx.dispatch.connection.HTTPConnection(
                 origin,
-                verify=self.verify,
-                cert=self.cert,
-                http2=self.http2,
+                ssl=ssl_config,
                 backend=self.backend,
                 release_func=self.release_connection,
-                trust_env=self.trust_env,
                 uds=self.uds,
             )
 
@@ -49,7 +68,7 @@ class ReusableSanicConnectionPool(
         return connection
 
 
-class ResusableSanicSession(httpx.Client):
+class ResusableSanicSession(httpx.AsyncClient):
     def __init__(self, *args, **kwargs) -> None:
         dispatch = ReusableSanicConnectionPool()
         super().__init__(dispatch=dispatch, *args, **kwargs)
@@ -159,7 +178,7 @@ class ReuseableSanicTestClient(SanicTestClient):
                 self._server = None
 
             if self._session:
-                self._loop.run_until_complete(self._session.close())
+                self._loop.run_until_complete(self._session.aclose())
                 self._session = None
 
         except Exception as e3:
@@ -178,7 +197,7 @@ class ReuseableSanicTestClient(SanicTestClient):
             self._session = self.get_new_session()
         try:
             response = await getattr(self._session, method.lower())(
-                url, verify=False, timeout=request_keepalive, *args, **kwargs
+                url, timeout=request_keepalive, *args, **kwargs
             )
         except NameError:
             raise Exception(response.status_code)
@@ -188,7 +207,7 @@ class ReuseableSanicTestClient(SanicTestClient):
         except (JSONDecodeError, UnicodeDecodeError):
             response.json = None
 
-        response.body = await response.read()
+        response.body = await response.aread()
         response.status = response.status_code
         response.content_type = response.headers.get("content-type")
 

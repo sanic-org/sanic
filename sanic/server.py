@@ -1,4 +1,5 @@
 import asyncio
+import multiprocessing
 import os
 import sys
 import traceback
@@ -6,7 +7,6 @@ import traceback
 from collections import deque
 from functools import partial
 from inspect import isawaitable
-from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
@@ -15,7 +15,7 @@ from time import time
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
 
-from sanic.compat import Header
+from sanic.compat import Header, ctrlc_workaround_for_windows
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -36,6 +36,8 @@ try:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
+
+OS_IS_WINDOWS = os.name == "nt"
 
 
 class Signal:
@@ -112,7 +114,7 @@ class HttpProtocol(asyncio.Protocol):
         router=None,
         state=None,
         debug=False,
-        **kwargs
+        **kwargs,
     ):
         self.loop = loop
         self.app = app
@@ -347,9 +349,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
             else:
                 self.write_error(
-                    HeaderExpectationFailed(
-                        "Unknown Expect: {expect}".format(expect=expect)
-                    )
+                    HeaderExpectationFailed(f"Unknown Expect: {expect}")
                 )
 
     def on_body(self, body):
@@ -456,13 +456,9 @@ class HttpProtocol(asyncio.Protocol):
             extra["host"] = "UNKNOWN"
             if self.request is not None:
                 if self.request.ip:
-                    extra["host"] = "{0}:{1}".format(
-                        self.request.ip, self.request.port
-                    )
+                    extra["host"] = f"{self.request.ip}:{self.request.port}"
 
-                extra["request"] = "{0} {1}".format(
-                    self.request.method, self.request.url
-                )
+                extra["request"] = f"{self.request.method} {self.request.url}"
             else:
                 extra["request"] = "nil"
 
@@ -499,9 +495,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(repr(e))
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -552,9 +546,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(repr(e))
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -585,7 +577,7 @@ class HttpProtocol(asyncio.Protocol):
                 )
         except Exception as e:
             self.bail_out(
-                "Writing error failed, connection closed {}".format(repr(e)),
+                f"Writing error failed, connection closed {e!r}",
                 from_error=True,
             )
         finally:
@@ -900,7 +892,7 @@ def serve(
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog,
-        **asyncio_server_kwargs
+        **asyncio_server_kwargs,
     )
 
     if run_async:
@@ -929,15 +921,11 @@ def serve(
 
     # Register signals for graceful termination
     if register_sys_signals:
-        _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
-        for _signal in _singals:
-            try:
-                loop.add_signal_handler(_signal, loop.stop)
-            except NotImplementedError:
-                logger.warning(
-                    "Sanic tried to use loop.add_signal_handler "
-                    "but it is not implemented on this platform."
-                )
+        if OS_IS_WINDOWS:
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
     pid = os.getpid()
     try:
         logger.info("Starting worker [%s]", pid)
@@ -975,10 +963,7 @@ def serve(
             else:
                 conn.close()
 
-        if sys.version_info.minor >= 8:
-            _shutdown = asyncio.gather(*coros, loop=loop)
-        else:
-            _shutdown = asyncio.gather(*coros)
+        _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)
@@ -1017,9 +1002,10 @@ def serve_multiple(server_settings, workers):
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
+    mp = multiprocessing.get_context("fork")
 
     for _ in range(workers):
-        process = Process(target=serve, kwargs=server_settings)
+        process = mp.Process(target=serve, kwargs=server_settings)
         process.daemon = True
         process.start()
         processes.append(process)

@@ -134,7 +134,7 @@ def register(
 
     # special prefix for static files
     if not name.startswith("_static_"):
-        name = "_static_{}".format(name)
+        name = f"_static_{name}"
 
     app.route(
         uri,

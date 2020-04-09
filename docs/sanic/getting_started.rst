@@ -8,14 +8,14 @@ syntax, so earlier versions of python won't work.
 1. Install Sanic
 ----------------
 
->   If you are running on a clean install of Fedora 28 or above, please make sure you have the ``redhat-rpm-config`` package installed in case if you want to use ``sanic`` with ``ujson`` dependency.
+If you are running on a clean install of Fedora 28 or above, please make sure you have the ``redhat-rpm-config`` package installed in case if you want to use ``sanic`` with ``ujson`` dependency.
 
 .. code-block:: bash
 
     pip3 install sanic
 
 To install sanic without `uvloop` or `ujson` using bash, you can provide either or both of these environmental variables
-using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the `SANIC_NO_X` (`X` = `UVLOOP`/`UJSON`)
+using any truthy string like `'y', 'yes', 't', 'true', 'on', '1'` and setting the `SANIC_NO_X` ( with`X` = `UVLOOP`/`UJSON`)
 to true will stop that features installation.
 
 .. code-block:: bash

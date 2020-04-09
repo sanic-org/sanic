@@ -1375,33 +1375,15 @@ class Sanic:
 
         server_settings = {
             "protocol": protocol,
-            "request_class": self.request_class,
-            "is_request_stream": True,
-            "router": self.router,
             "host": host,
             "port": port,
             "sock": sock,
             "ssl": ssl,
             "app": self,
             "signal": Signal(),
-            "debug": debug,
-            "request_handler": self.handle_request,
-            "error_handler": self.error_handler,
-            "request_timeout": self.config.REQUEST_TIMEOUT,
-            "response_timeout": self.config.RESPONSE_TIMEOUT,
-            "keep_alive_timeout": self.config.KEEP_ALIVE_TIMEOUT,
-            "request_max_size": self.config.REQUEST_MAX_SIZE,
-            "request_buffer_queue_size": self.config.REQUEST_BUFFER_QUEUE_SIZE,
-            "keep_alive": self.config.KEEP_ALIVE,
             "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
-            "access_log": self.config.ACCESS_LOG,
-            "websocket_max_size": self.config.WEBSOCKET_MAX_SIZE,
-            "websocket_max_queue": self.config.WEBSOCKET_MAX_QUEUE,
-            "websocket_read_limit": self.config.WEBSOCKET_READ_LIMIT,
-            "websocket_write_limit": self.config.WEBSOCKET_WRITE_LIMIT,
-            "graceful_shutdown_timeout": self.config.GRACEFUL_SHUTDOWN_TIMEOUT,
         }
 
         # -------------------------------------------- #

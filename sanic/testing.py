@@ -185,7 +185,7 @@ async def app_call_with_return(self, scope, receive, send):
     return await asgi_app()
 
 
-class SanicASGIDispatch(httpx.dispatch.asgi.ASGIDispatch):
+class SanicASGIDispatch(httpx.ASGIDispatch):
     pass
 
 

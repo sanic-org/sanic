@@ -49,10 +49,10 @@ def test_logo_false(app, caplog):
     loop.run_until_complete(_server.wait_closed())
     app.stop()
 
+    banner, port = caplog.record_tuples[ROW][2].rsplit(":", 1)
     assert caplog.record_tuples[ROW][1] == logging.INFO
-    assert caplog.record_tuples[ROW][
-        2
-    ] == "Goin' Fast @ http://127.0.0.1:{}".format(PORT)
+    assert banner == "Goin' Fast @ http://127.0.0.1"
+    assert int(port) > 0
 
 
 def test_logo_true(app, caplog):

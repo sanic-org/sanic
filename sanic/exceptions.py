@@ -1,133 +1,18 @@
 from sanic.helpers import STATUS_CODES
 
 
-TRACEBACK_STYLE = """
-    <style>
-        body {
-            padding: 20px;
-            font-family: Arial, sans-serif;
-        }
-
-        p {
-            margin: 0;
-        }
-
-        .summary {
-            padding: 10px;
-        }
-
-        h1 {
-            margin-bottom: 0;
-        }
-
-        h3 {
-            margin-top: 10px;
-        }
-
-        h3 code {
-            font-size: 24px;
-        }
-
-        .frame-line > * {
-            padding: 5px 10px;
-        }
-
-        .frame-line {
-            margin-bottom: 5px;
-        }
-
-        .frame-code {
-            font-size: 16px;
-            padding-left: 30px;
-        }
-
-        .tb-wrapper {
-            border: 1px solid #f3f3f3;
-        }
-
-        .tb-header {
-            background-color: #f3f3f3;
-            padding: 5px 10px;
-        }
-
-        .tb-border {
-            padding-top: 20px;
-        }
-
-        .frame-descriptor {
-            background-color: #e2eafb;
-        }
-
-        .frame-descriptor {
-            font-size: 14px;
-        }
-    </style>
-"""
-
-TRACEBACK_WRAPPER_HTML = """
-    <html>
-        <head>
-            {style}
-        </head>
-        <body>
-            {inner_html}
-            <div class="summary">
-                <p>
-                <b>{exc_name}: {exc_value}</b>
-                    while handling path <code>{path}</code>
-                </p>
-            </div>
-        </body>
-    </html>
-"""
-
-TRACEBACK_WRAPPER_INNER_HTML = """
-    <h1>{exc_name}</h1>
-    <h3><code>{exc_value}</code></h3>
-    <div class="tb-wrapper">
-        <p class="tb-header">Traceback (most recent call last):</p>
-        {frame_html}
-    </div>
-"""
-
-TRACEBACK_BORDER = """
-    <div class="tb-border">
-        <b><i>
-            The above exception was the direct cause of the
-            following exception:
-        </i></b>
-    </div>
-"""
-
-TRACEBACK_LINE_HTML = """
-    <div class="frame-line">
-        <p class="frame-descriptor">
-            File {0.filename}, line <i>{0.lineno}</i>,
-            in <code><b>{0.name}</b></code>
-        </p>
-        <p class="frame-code"><code>{0.line}</code></p>
-    </div>
-"""
-
-INTERNAL_SERVER_ERROR_HTML = """
-    <h1>Internal Server Error</h1>
-    <p>
-        The server encountered an internal error and cannot complete
-        your request.
-    </p>
-"""
-
-
 _sanic_exceptions = {}
 
 
-def add_status_code(code):
+def add_status_code(code, quiet=None):
     """
     Decorator used for adding exceptions to :class:`SanicException`.
     """
 
     def class_decorator(cls):
         cls.status_code = code
+        if quiet or quiet is None and code != 500:
+            cls.quiet = True
         _sanic_exceptions[code] = cls
         return cls
 
@@ -135,11 +20,15 @@ def add_status_code(code):
 
 
 class SanicException(Exception):
-    def __init__(self, message, status_code=None):
+    def __init__(self, message, status_code=None, quiet=None):
         super().__init__(message)
 
         if status_code is not None:
             self.status_code = status_code
+
+        # quiet=None/False/True with None meaning choose by status
+        if quiet or quiet is None and status_code not in (None, 500):
+            self.quiet = True
 
 
 @add_status_code(404)
@@ -282,7 +171,7 @@ class Unauthorized(SanicException):
             challenge = ", ".join(values)
 
             self.headers = {
-                "WWW-Authenticate": "{} {}".format(scheme, challenge).rstrip()
+                "WWW-Authenticate": f"{scheme} {challenge}".rstrip()
             }
 
 

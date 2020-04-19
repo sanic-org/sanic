@@ -6,6 +6,7 @@ from sanic import Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.response import json, text
 from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
+from sanic.testing import SanicTestClient
 
 
 # ------------------------------------------------------------ #
@@ -20,17 +21,17 @@ def test_versioned_routes_get(app, method):
     func = getattr(app, method)
     if callable(func):
 
-        @func("/{}".format(method), version=1)
+        @func(f"/{method}", version=1)
         def handler(request):
             return text("OK")
 
     else:
         print(func)
-        raise Exception("Method: {} is not callable".format(method))
+        raise Exception(f"Method: {method} is not callable")
 
     client_method = getattr(app.test_client, method)
 
-    request, response = client_method("/v1/{}".format(method))
+    request, response = client_method(f"/v1/{method}")
     assert response.status == 200
 
 
@@ -167,35 +168,36 @@ def test_route_optional_slash(app):
 def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     # Part of regression test for issue #1120
 
-    site1 = "127.0.0.1:{}".format(app.test_client.port)
+    test_client = SanicTestClient(app, port=42101)
+    site1 = f"127.0.0.1:{test_client.port}"
 
     # before fix, this raises a RouteExists error
     @app.get("/get", host=[site1, "site2.com"], strict_slashes=False)
     def get_handler(request):
         return text("OK")
 
-    request, response = app.test_client.get("http://" + site1 + "/get")
+    request, response = test_client.get("http://" + site1 + "/get")
     assert response.text == "OK"
 
     @app.post("/post", host=[site1, "site2.com"], strict_slashes=False)
     def post_handler(request):
         return text("OK")
 
-    request, response = app.test_client.post("http://" + site1 + "/post")
+    request, response = test_client.post("http://" + site1 + "/post")
     assert response.text == "OK"
 
     @app.put("/put", host=[site1, "site2.com"], strict_slashes=False)
     def put_handler(request):
         return text("OK")
 
-    request, response = app.test_client.put("http://" + site1 + "/put")
+    request, response = test_client.put("http://" + site1 + "/put")
     assert response.text == "OK"
 
     @app.delete("/delete", host=[site1, "site2.com"], strict_slashes=False)
     def delete_handler(request):
         return text("OK")
 
-    request, response = app.test_client.delete("http://" + site1 + "/delete")
+    request, response = test_client.delete("http://" + site1 + "/delete")
     assert response.text == "OK"
 
 
@@ -412,7 +414,8 @@ def test_dynamic_route_uuid(app):
     assert response.text == "OK"
     assert type(results[0]) is uuid.UUID
 
-    request, response = app.test_client.get("/quirky/{}".format(uuid.uuid4()))
+    generated_uuid = uuid.uuid4()
+    request, response = app.test_client.get(f"/quirky/{generated_uuid}")
     assert response.status == 200
 
     request, response = app.test_client.get("/quirky/non-existing")
@@ -562,6 +565,35 @@ def test_route_duplicate(app):
         @app.route("/test/<dynamic>/")
         async def handler4(request, dynamic):
             pass
+
+
+def test_double_stack_route(app):
+    @app.route("/test/1")
+    @app.route("/test/2")
+    async def handler1(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/test/1")
+    assert response.status == 200
+    request, response = app.test_client.get("/test/2")
+    assert response.status == 200
+
+
+@pytest.mark.asyncio
+async def test_websocket_route_asgi(app):
+    ev = asyncio.Event()
+
+    @app.websocket("/test/1")
+    @app.websocket("/test/2")
+    async def handler(request, ws):
+        ev.set()
+
+    request, response = await app.asgi_client.websocket("/test/1")
+    first_set = ev.is_set()
+    ev.clear()
+    request, response = await app.asgi_client.websocket("/test/1")
+    second_set = ev.is_set()
+    assert(first_set and second_set)
 
 
 def test_method_not_allowed(app):
@@ -751,55 +783,6 @@ def test_add_route_method_not_allowed(app):
     assert response.status == 405
 
 
-def test_remove_static_route(app):
-    async def handler1(request):
-        return text("OK1")
-
-    async def handler2(request):
-        return text("OK2")
-
-    app.add_route(handler1, "/test")
-    app.add_route(handler2, "/test2")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
-
-    request, response = app.test_client.get("/test2")
-    assert response.status == 200
-
-    app.remove_route("/test")
-    app.remove_route("/test2")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 404
-
-    request, response = app.test_client.get("/test2")
-    assert response.status == 404
-
-
-def test_remove_dynamic_route(app):
-    async def handler(request, name):
-        return text("OK")
-
-    app.add_route(handler, "/folder/<name>")
-
-    request, response = app.test_client.get("/folder/test123")
-    assert response.status == 200
-
-    app.remove_route("/folder/<name>")
-    request, response = app.test_client.get("/folder/test123")
-    assert response.status == 404
-
-
-def test_remove_inexistent_route(app):
-
-    uri = "/test"
-    with pytest.raises(RouteDoesNotExist) as excinfo:
-        app.remove_route(uri)
-
-    assert str(excinfo.value) == "Route was not registered: {}".format(uri)
-
-
 def test_removing_slash(app):
     @app.get("/rest/<resource>")
     def get(_):
@@ -810,59 +793,6 @@ def test_removing_slash(app):
         pass
 
     assert len(app.router.routes_all.keys()) == 2
-
-
-def test_remove_unhashable_route(app):
-    async def handler(request, unhashable):
-        return text("OK")
-
-    app.add_route(handler, "/folder/<unhashable:[A-Za-z0-9/]+>/end/")
-
-    request, response = app.test_client.get("/folder/test/asdf/end/")
-    assert response.status == 200
-
-    request, response = app.test_client.get("/folder/test///////end/")
-    assert response.status == 200
-
-    request, response = app.test_client.get("/folder/test/end/")
-    assert response.status == 200
-
-    app.remove_route("/folder/<unhashable:[A-Za-z0-9/]+>/end/")
-
-    request, response = app.test_client.get("/folder/test/asdf/end/")
-    assert response.status == 404
-
-    request, response = app.test_client.get("/folder/test///////end/")
-    assert response.status == 404
-
-    request, response = app.test_client.get("/folder/test/end/")
-    assert response.status == 404
-
-
-def test_remove_route_without_clean_cache(app):
-    async def handler(request):
-        return text("OK")
-
-    app.add_route(handler, "/test")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
-
-    app.remove_route("/test", clean_cache=True)
-    app.remove_route("/test/", clean_cache=True)
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 404
-
-    app.add_route(handler, "/test")
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
-
-    app.remove_route("/test", clean_cache=False)
-
-    request, response = app.test_client.get("/test")
-    assert response.status == 200
 
 
 def test_overload_routes(app):

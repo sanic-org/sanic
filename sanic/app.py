@@ -81,6 +81,7 @@ class Sanic:
         self.sock = None
         self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
+        self.is_stopping = False
         self.is_running = False
         self.is_request_stream = False
         self.websocket_enabled = False
@@ -194,25 +195,35 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            if isinstance(handler, tuple):
+                # if a handler fn is already wrapped in a route, the handler
+                # variable will be a tuple of (existing routes, handler fn)
+                routes, handler = handler
+            else:
+                routes = []
             args = list(signature(handler).parameters.keys())
 
             if not args:
+                handler_name = handler.__name__
+
                 raise ValueError(
-                    "Required parameter `request` missing "
-                    "in the {0}() route?".format(handler.__name__)
+                    f"Required parameter `request` missing "
+                    f"in the {handler_name}() route?"
                 )
 
             if stream:
                 handler.is_stream = stream
 
-            routes = self.router.add(
-                uri=uri,
-                methods=methods,
-                handler=handler,
-                host=host,
-                strict_slashes=strict_slashes,
-                version=version,
-                name=name,
+            routes.extend(
+                self.router.add(
+                    uri=uri,
+                    methods=methods,
+                    handler=handler,
+                    host=host,
+                    strict_slashes=strict_slashes,
+                    version=version,
+                    name=name,
+                )
             )
             return routes, handler
 
@@ -482,6 +493,13 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            if isinstance(handler, tuple):
+                # if a handler fn is already wrapped in a route, the handler
+                # variable will be a tuple of (existing routes, handler fn)
+                routes, handler = handler
+            else:
+                routes = []
+
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
                 if not getattr(handler, "__blueprintname__", False):
@@ -497,12 +515,7 @@ class Sanic:
                 if self.asgi:
                     ws = request.transport.get_websocket_connection()
                 else:
-                    try:
-                        protocol = request.transport.get_protocol()
-                    except AttributeError:
-                        # On Python3.5 the Transport classes in asyncio do not
-                        # have a get_protocol() method as in uvloop
-                        protocol = request.transport._protocol
+                    protocol = request.transport.get_protocol()
                     protocol.app = self
 
                     ws = await protocol.websocket_handshake(
@@ -522,14 +535,16 @@ class Sanic:
                     self.websocket_tasks.remove(fut)
                 await ws.close()
 
-            routes = self.router.add(
-                uri=uri,
-                handler=websocket_handler,
-                methods=frozenset({"GET"}),
-                host=host,
-                strict_slashes=strict_slashes,
-                version=version,
-                name=name,
+            routes.extend(
+                self.router.add(
+                    uri=uri,
+                    handler=websocket_handler,
+                    methods=frozenset({"GET"}),
+                    host=host,
+                    strict_slashes=strict_slashes,
+                    version=version,
+                    name=name,
+                )
             )
             return routes, handler
 
@@ -589,29 +604,6 @@ class Sanic:
                     task.cancel()
 
         self.websocket_enabled = enable
-
-    def remove_route(self, uri, clean_cache=True, host=None):
-        """
-        This method provides the app user a mechanism by which an already
-        existing route can be removed from the :class:`Sanic` object
-
-        .. warning::
-            remove_route is deprecated in v19.06 and will be removed
-            from future versions.
-
-        :param uri: URL Path to be removed from the app
-        :param clean_cache: Instruct sanic if it needs to clean up the LRU
-            route cache
-        :param host: IP address or FQDN specific to the host
-        :return: None
-        """
-        warnings.warn(
-            "remove_route is deprecated and will be removed "
-            "from future versions.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.router.remove(uri, clean_cache, host)
 
     # Decorator
     def exception(self, *exceptions):
@@ -819,8 +811,16 @@ class Sanic:
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
         if not (uri and route):
             raise URLBuildError(
-                "Endpoint with name `{}` was not found".format(view_name)
+                f"Endpoint with name `{view_name}` was not found"
             )
+
+        # If the route has host defined, split that off
+        # TODO: Retain netloc and path separately in Route objects
+        host = uri.find("/")
+        if host > 0:
+            host, uri = uri[:host], uri[host:]
+        else:
+            host = None
 
         if view_name == "static" or view_name.endswith(".static"):
             filename = kwargs.pop("filename", None)
@@ -833,7 +833,7 @@ class Sanic:
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                uri = "{}/{}".format(folder_, filename)
+                uri = f"{folder_}/{filename}"
 
         if uri != "/" and uri.endswith("/"):
             uri = uri[:-1]
@@ -854,7 +854,7 @@ class Sanic:
 
         netloc = kwargs.pop("_server", None)
         if netloc is None and external:
-            netloc = self.config.get("SERVER_NAME", "")
+            netloc = host or self.config.get("SERVER_NAME", "")
 
         if external:
             if not scheme:
@@ -869,7 +869,7 @@ class Sanic:
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(match)
             # we only want to match against each individual parameter
-            specific_pattern = "^{}$".format(pattern)
+            specific_pattern = f"^{pattern}$"
             supplied_param = None
 
             if name in kwargs:
@@ -877,9 +877,7 @@ class Sanic:
                 del kwargs[name]
             else:
                 raise URLBuildError(
-                    "Required parameter `{}` was not passed to url_for".format(
-                        name
-                    )
+                    f"Required parameter `{name}` was not passed to url_for"
                 )
 
             supplied_param = str(supplied_param)
@@ -889,23 +887,22 @@ class Sanic:
 
             if not passes_pattern:
                 if _type != str:
+                    type_name = _type.__name__
+
                     msg = (
-                        'Value "{}" for parameter `{}` does not '
-                        "match pattern for type `{}`: {}".format(
-                            supplied_param, name, _type.__name__, pattern
-                        )
+                        f'Value "{supplied_param}" '
+                        f"for parameter `{name}` does not "
+                        f"match pattern for type `{type_name}`: {pattern}"
                     )
                 else:
                     msg = (
-                        'Value "{}" for parameter `{}` '
-                        "does not satisfy pattern {}".format(
-                            supplied_param, name, pattern
-                        )
+                        f'Value "{supplied_param}" for parameter `{name}` '
+                        f"does not satisfy pattern {pattern}"
                     )
                 raise URLBuildError(msg)
 
             # replace the parameter in the URL with the supplied value
-            replacement_regex = "(<{}.*?>)".format(name)
+            replacement_regex = f"(<{name}.*?>)"
 
             out = re.sub(replacement_regex, supplied_param, out)
 
@@ -1006,9 +1003,8 @@ class Sanic:
                     )
                 elif self.debug:
                     response = HTTPResponse(
-                        "Error while handling error: {}\nStack: {}".format(
-                            e, format_exc()
-                        ),
+                        f"Error while "
+                        f"handling error: {e}\nStack: {format_exc()}",
                         status=500,
                     )
                 else:
@@ -1080,7 +1076,7 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -1161,6 +1157,13 @@ class Sanic:
 
         try:
             self.is_running = True
+            self.is_stopping = False
+            if workers > 1 and os.name != "posix":
+                logger.warn(
+                    f"Multiprocessing is currently not supported on {os.name},"
+                    " using workers=1 instead"
+                )
+                workers = 1
             if workers == 1:
                 if auto_reload and os.name != "posix":
                     # This condition must be removed after implementing
@@ -1187,7 +1190,9 @@ class Sanic:
 
     def stop(self):
         """This kills the Sanic"""
-        get_event_loop().stop()
+        if not self.is_stopping:
+            self.is_stopping = True
+            get_event_loop().stop()
 
     async def create_server(
         self,
@@ -1372,33 +1377,15 @@ class Sanic:
 
         server_settings = {
             "protocol": protocol,
-            "request_class": self.request_class,
-            "is_request_stream": self.is_request_stream,
-            "router": self.router,
             "host": host,
             "port": port,
             "sock": sock,
             "ssl": ssl,
             "app": self,
             "signal": Signal(),
-            "debug": debug,
-            "request_handler": self.handle_request,
-            "error_handler": self.error_handler,
-            "request_timeout": self.config.REQUEST_TIMEOUT,
-            "response_timeout": self.config.RESPONSE_TIMEOUT,
-            "keep_alive_timeout": self.config.KEEP_ALIVE_TIMEOUT,
-            "request_max_size": self.config.REQUEST_MAX_SIZE,
-            "request_buffer_queue_size": self.config.REQUEST_BUFFER_QUEUE_SIZE,
-            "keep_alive": self.config.KEEP_ALIVE,
             "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
-            "access_log": self.config.ACCESS_LOG,
-            "websocket_max_size": self.config.WEBSOCKET_MAX_SIZE,
-            "websocket_max_queue": self.config.WEBSOCKET_MAX_QUEUE,
-            "websocket_read_limit": self.config.WEBSOCKET_READ_LIMIT,
-            "websocket_write_limit": self.config.WEBSOCKET_WRITE_LIMIT,
-            "graceful_shutdown_timeout": self.config.GRACEFUL_SHUTDOWN_TIMEOUT,
         }
 
         # -------------------------------------------- #
@@ -1439,7 +1426,7 @@ class Sanic:
             proto = "http"
             if ssl is not None:
                 proto = "https"
-            logger.info("Goin' Fast @ {}://{}:{}".format(proto, host, port))
+            logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
         return server_settings
 

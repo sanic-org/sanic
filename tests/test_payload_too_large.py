@@ -27,7 +27,7 @@ def test_payload_too_large_at_data_received_default(app):
 
     response = app.test_client.get("/1", gather_request=False)
     assert response.status == 413
-    assert response.text == "Error: Payload Too Large"
+    assert "Payload Too Large" in response.text
 
 
 def test_payload_too_large_at_on_header_default(app):
@@ -40,4 +40,4 @@ def test_payload_too_large_at_on_header_default(app):
     data = "a" * 1000
     response = app.test_client.post("/1", gather_request=False, data=data)
     assert response.status == 413
-    assert response.text == "Error: Payload Too Large"
+    assert "Payload Too Large" in response.text

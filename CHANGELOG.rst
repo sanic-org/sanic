@@ -24,7 +24,7 @@ Bugfixes
 Improved Documentation
 **********************
 
-- Move docs from RST to MD
+- Move docs from MD to RST
 
   Moved all docs from markdown to restructured text like the rest of the docs to unify the scheme and make it easier in
   the future to update documentation. (`#1691 <https://github.com/huge-success/sanic/issues/1691>`__)

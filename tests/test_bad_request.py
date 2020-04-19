@@ -18,4 +18,4 @@ def test_bad_request_response(app):
 
     app.run(host="127.0.0.1", port=42101, debug=False)
     assert lines[0] == b"HTTP/1.1 400 Bad Request\r\n"
-    assert lines[-1] == b"Error: Bad Request"
+    assert b"Bad Request" in lines[-1]

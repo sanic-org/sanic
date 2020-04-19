@@ -46,19 +46,19 @@ def test_versioned_routes_get(app, method):
     func = getattr(bp, method)
     if callable(func):
 
-        @func("/{}".format(method), version=1)
+        @func(f"/{method}", version=1)
         def handler(request):
             return text("OK")
 
     else:
         print(func)
-        raise Exception("{} is not callable".format(func))
+        raise Exception(f"{func} is not callable")
 
     app.blueprint(bp)
 
     client_method = getattr(app.test_client, method)
 
-    request, response = client_method("/v1/{}".format(method))
+    request, response = client_method(f"/v1/{method}")
     assert response.status == 200
 
 
@@ -554,7 +554,7 @@ def test_bp_group_with_default_url_prefix(app):
 
     resource_id = str(uuid4())
     request, response = app.test_client.get(
-        "/api/v1/resources/{0}".format(resource_id)
+        f"/api/v1/resources/{resource_id}"
     )
     assert response.json == {"resource_id": resource_id}
 
@@ -669,9 +669,9 @@ def test_duplicate_blueprint(app):
         app.blueprint(bp1)
 
     assert str(excinfo.value) == (
-        'A blueprint with the name "{}" is already registered.  '
+        f'A blueprint with the name "{bp_name}" is already registered.  '
         "Blueprint names must be unique."
-    ).format(bp_name)
+    )
 
 
 @pytest.mark.parametrize("debug", [True, False, None])

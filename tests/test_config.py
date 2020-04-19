@@ -44,42 +44,42 @@ def test_load_from_object_string_exception(app):
 
 def test_auto_load_env():
     environ["SANIC_TEST_ANSWER"] = "42"
-    app = Sanic()
+    app = Sanic(name=__name__)
     assert app.config.TEST_ANSWER == 42
     del environ["SANIC_TEST_ANSWER"]
 
 
 def test_auto_load_bool_env():
     environ["SANIC_TEST_ANSWER"] = "True"
-    app = Sanic()
+    app = Sanic(name=__name__)
     assert app.config.TEST_ANSWER == True
     del environ["SANIC_TEST_ANSWER"]
 
 
 def test_dont_load_env():
     environ["SANIC_TEST_ANSWER"] = "42"
-    app = Sanic(load_env=False)
+    app = Sanic(name=__name__, load_env=False)
     assert getattr(app.config, "TEST_ANSWER", None) is None
     del environ["SANIC_TEST_ANSWER"]
 
 
 def test_load_env_prefix():
     environ["MYAPP_TEST_ANSWER"] = "42"
-    app = Sanic(load_env="MYAPP_")
+    app = Sanic(name=__name__, load_env="MYAPP_")
     assert app.config.TEST_ANSWER == 42
     del environ["MYAPP_TEST_ANSWER"]
 
 
 def test_load_env_prefix_float_values():
     environ["MYAPP_TEST_ROI"] = "2.3"
-    app = Sanic(load_env="MYAPP_")
+    app = Sanic(name=__name__, load_env="MYAPP_")
     assert app.config.TEST_ROI == 2.3
     del environ["MYAPP_TEST_ROI"]
 
 
 def test_load_env_prefix_string_value():
     environ["MYAPP_TEST_TOKEN"] = "somerandomtesttoken"
-    app = Sanic(load_env="MYAPP_")
+    app = Sanic(name=__name__, load_env="MYAPP_")
     assert app.config.TEST_TOKEN == "somerandomtesttoken"
     del environ["MYAPP_TEST_TOKEN"]
 

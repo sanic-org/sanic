@@ -11,8 +11,8 @@ import pytest
 from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
-from sanic.response import json, text
-from sanic.testing import ASGI_HOST, HOST, PORT
+from sanic.response import html, json, text
+from sanic.testing import ASGI_HOST, HOST, PORT, SanicTestClient
 
 
 # ------------------------------------------------------------ #
@@ -44,7 +44,7 @@ async def test_sync_asgi(app):
 def test_ip(app):
     @app.route("/")
     def handler(request):
-        return text("{}".format(request.ip))
+        return text(f"{request.ip}")
 
     request, response = app.test_client.get("/")
 
@@ -55,7 +55,7 @@ def test_ip(app):
 async def test_ip_asgi(app):
     @app.route("/")
     def handler(request):
-        return text("{}".format(request.url))
+        return text(f"{request.url}")
 
     request, response = await app.asgi_client.get("/")
 
@@ -70,6 +70,41 @@ def test_text(app):
     request, response = app.test_client.get("/")
 
     assert response.text == "Hello"
+
+
+def test_html(app):
+    class Foo:
+        def __html__(self):
+            return "<h1>Foo</h1>"
+
+        def _repr_html_(self):
+            return "<h1>Foo object repr</h1>"
+
+    class Bar:
+        def _repr_html_(self):
+            return "<h1>Bar object repr</h1>"
+
+    @app.route("/")
+    async def handler(request):
+        return html("<h1>Hello</h1>")
+
+    @app.route("/foo")
+    async def handler(request):
+        return html(Foo())
+
+    @app.route("/bar")
+    async def handler(request):
+        return html(Bar())
+
+    request, response = app.test_client.get("/")
+    assert response.content_type == "text/html; charset=utf-8"
+    assert response.text == "<h1>Hello</h1>"
+
+    request, response = app.test_client.get("/foo")
+    assert response.text == "<h1>Foo</h1>"
+
+    request, response = app.test_client.get("/bar")
+    assert response.text == "<h1>Bar object repr</h1>"
 
 
 @pytest.mark.asyncio
@@ -290,7 +325,7 @@ def test_token(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "{}".format(token),
+        "Authorization": f"{token}",
     }
 
     request, response = app.test_client.get("/", headers=headers)
@@ -300,7 +335,7 @@ def test_token(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Token {}".format(token),
+        "Authorization": f"Token {token}",
     }
 
     request, response = app.test_client.get("/", headers=headers)
@@ -310,7 +345,7 @@ def test_token(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Bearer {}".format(token),
+        "Authorization": f"Bearer {token}",
     }
 
     request, response = app.test_client.get("/", headers=headers)
@@ -335,7 +370,7 @@ async def test_token_asgi(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "{}".format(token),
+        "Authorization": f"{token}",
     }
 
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -345,7 +380,7 @@ async def test_token_asgi(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Token {}".format(token),
+        "Authorization": f"Token {token}",
     }
 
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -355,7 +390,7 @@ async def test_token_asgi(app):
     token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
     headers = {
         "content-type": "application/json",
-        "Authorization": "Bearer {}".format(token),
+        "Authorization": f"Bearer {token}",
     }
 
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -993,8 +1028,8 @@ def test_url_attributes_no_ssl(app, path, query, expected_url):
 
     app.add_route(handler, path)
 
-    request, response = app.test_client.get(path + "?{}".format(query))
-    assert request.url == expected_url.format(HOST, PORT)
+    request, response = app.test_client.get(path + f"?{query}")
+    assert request.url == expected_url.format(HOST, request.server_port)
 
     parsed = urlparse(request.url)
 
@@ -1019,7 +1054,7 @@ async def test_url_attributes_no_ssl_asgi(app, path, query, expected_url):
 
     app.add_route(handler, path)
 
-    request, response = await app.asgi_client.get(path + "?{}".format(query))
+    request, response = await app.asgi_client.get(path + f"?{query}")
     assert request.url == expected_url.format(ASGI_HOST)
 
     parsed = urlparse(request.url)
@@ -1051,11 +1086,12 @@ def test_url_attributes_with_ssl_context(app, path, query, expected_url):
 
     app.add_route(handler, path)
 
+    port = app.test_client.port
     request, response = app.test_client.get(
-        "https://{}:{}".format(HOST, PORT) + path + "?{}".format(query),
+        f"https://{HOST}:{PORT}" + path + f"?{query}",
         server_kwargs={"ssl": context},
     )
-    assert request.url == expected_url.format(HOST, PORT)
+    assert request.url == expected_url.format(HOST, request.server_port)
 
     parsed = urlparse(request.url)
 
@@ -1087,10 +1123,10 @@ def test_url_attributes_with_ssl_dict(app, path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = app.test_client.get(
-        "https://{}:{}".format(HOST, PORT) + path + "?{}".format(query),
+        f"https://{HOST}:{PORT}" + path + f"?{query}",
         server_kwargs={"ssl": ssl_dict},
     )
-    assert request.url == expected_url.format(HOST, PORT)
+    assert request.url == expected_url.format(HOST, request.server_port)
 
     parsed = urlparse(request.url)
 
@@ -1571,33 +1607,6 @@ async def test_request_args_no_query_string_await(app):
     assert request.args == {}
 
 
-def test_request_raw_args(app):
-
-    params = {"test": "OK"}
-
-    @app.get("/")
-    def handler(request):
-        return text("pass")
-
-    request, response = app.test_client.get("/", params=params)
-
-    assert request.raw_args == params
-
-
-@pytest.mark.asyncio
-async def test_request_raw_args_asgi(app):
-
-    params = {"test": "OK"}
-
-    @app.get("/")
-    def handler(request):
-        return text("pass")
-
-    request, response = await app.asgi_client.get("/", params=params)
-
-    assert request.raw_args == params
-
-
 def test_request_query_args(app):
     # test multiple params with the same key
     params = [("test", "value1"), ("test", "value2")]
@@ -1882,8 +1891,9 @@ def test_request_server_port(app):
     def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get("/", headers={"Host": "my-server"})
-    assert request.server_port == app.test_client.port
+    test_client = SanicTestClient(app)
+    request, response = test_client.get("/", headers={"Host": "my-server"})
+    assert request.server_port == test_client.port
 
 
 def test_request_server_port_in_host_header(app):
@@ -1904,7 +1914,10 @@ def test_request_server_port_in_host_header(app):
     request, response = app.test_client.get(
         "/", headers={"Host": "mal_formed:5555"}
     )
-    assert request.server_port == app.test_client.port
+    if PORT is None:
+        assert request.server_port != 5555
+    else:
+        assert request.server_port == app.test_client.port
 
 
 def test_request_server_port_forwarded(app):
@@ -1944,7 +1957,7 @@ def test_server_name_and_url_for(app):
     request, response = app.test_client.get("/foo")
     assert (
         request.url_for("handler")
-        == f"http://my-server:{app.test_client.port}/foo"
+        == f"http://my-server:{request.server_port}/foo"
     )
 
     app.config.SERVER_NAME = "https://my-server/path"
@@ -2005,7 +2018,7 @@ async def test_request_form_invalid_content_type_asgi(app):
 
 
 def test_endpoint_basic():
-    app = Sanic()
+    app = Sanic(name=__name__)
 
     @app.route("/")
     def my_unique_handler(request):
@@ -2018,7 +2031,7 @@ def test_endpoint_basic():
 
 @pytest.mark.asyncio
 async def test_endpoint_basic_asgi():
-    app = Sanic()
+    app = Sanic(name=__name__)
 
     @app.route("/")
     def my_unique_handler(request):
@@ -2097,5 +2110,5 @@ def test_url_for_without_server_name(app):
     request, response = app.test_client.get("/sample")
     assert (
         response.json["url"]
-        == f"http://127.0.0.1:{app.test_client.port}/url-for"
+        == f"http://127.0.0.1:{request.server_port}/url-for"
     )

@@ -48,17 +48,3 @@ def test_vhosts_with_defaults(app):
 
     request, response = app.test_client.get("/")
     assert response.text == "default"
-
-
-def test_remove_vhost_route(app):
-    @app.route("/", host="example.com")
-    async def handler1(request):
-        return text("You're at example.com!")
-
-    headers = {"Host": "example.com"}
-    request, response = app.test_client.get("/", headers=headers)
-    assert response.status == 200
-
-    app.remove_route("/", host="example.com")
-    request, response = app.test_client.get("/", headers=headers)
-    assert response.status == 404

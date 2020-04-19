@@ -25,7 +25,7 @@ A simple sanic application with a single ``async`` method with ``text`` and ``js
 Simple App with ``Sanic Views``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Showcasing the simple mechanism of using :class:`sanic.viewes.HTTPMethodView` as well as a way to extend the same
+Showcasing the simple mechanism of using :class:`sanic.views.HTTPMethodView` as well as a way to extend the same
 into providing a custom ``async`` behavior for ``view``.
 
 .. literalinclude:: ../../examples/simple_async_view.py

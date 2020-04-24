@@ -1,3 +1,4 @@
+import asyncio
 from json import JSONDecodeError
 from socket import socket
 
@@ -127,6 +128,11 @@ class SanicTestClient:
             except Exception as e:
                 logger.exception("Exception")
                 exceptions.append(e)
+
+            our = asyncio.current_task()
+            their = filter(lambda elem: elem is not our, asyncio.all_tasks())
+            # Wait all other pending tasks before stopping the event loop.
+            await asyncio.gather(*their)
             self.app.stop()
 
         self.app.run(debug=debug, **server_kwargs)

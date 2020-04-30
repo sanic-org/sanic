@@ -406,7 +406,7 @@ Build URL for static files
 ==========================
 
 Sanic supports using `url_for` method to build static file urls. In case if the static url
-is pointing to a directory, `filename` parameter to the `url_for` can be ignored.   q
+is pointing to a directory, `filename` parameter to the `url_for` can be ignored.
 
 .. code-block:: python
 

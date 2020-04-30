@@ -227,7 +227,7 @@ class ASGIApp:
                 else scope["path"]
             )
             url = "/".join([scope.get("root_path", ""), quote(path)])
-            url_bytes = url.encode("latin-1")
+            url_bytes = url.encode("utf-8")
             url_bytes += b"?" + scope["query_string"]
 
             if scope["type"] == "http":

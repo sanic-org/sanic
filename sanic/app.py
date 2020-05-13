@@ -653,7 +653,7 @@ class Sanic:
                 if _rn not in self.named_response_middleware:
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
-                    self.named_response_middleware[_rn].append(middleware)
+                    self.named_response_middleware[_rn].appendleft(middleware)
 
     # Decorator
     def middleware(self, middleware_or_request):

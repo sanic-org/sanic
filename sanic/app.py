@@ -3,7 +3,6 @@ import logging.config
 import os
 import re
 import warnings
-
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
@@ -24,15 +23,9 @@ from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import (
-    AsyncioServer,
-    HttpProtocol,
-    Signal,
-    serve,
-    serve_multiple,
-)
+from sanic.server import (AsyncioServer, HttpProtocol, Signal, serve,
+                          serve_multiple)
 from sanic.static import register as static_register
-from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -1041,18 +1034,6 @@ class Sanic:
                 pass
         else:
             write_callback(response)
-
-    # -------------------------------------------------------------------- #
-    # Testing
-    # -------------------------------------------------------------------- #
-
-    @property
-    def test_client(self):
-        return SanicTestClient(self)
-
-    @property
-    def asgi_client(self):
-        return SanicASGITestClient(self)
 
     # -------------------------------------------------------------------- #
     # Execution

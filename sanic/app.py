@@ -194,6 +194,12 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            if isinstance(handler, tuple):
+                # if a handler fn is already wrapped in a route, the handler
+                # variable will be a tuple of (existing routes, handler fn)
+                routes, handler = handler
+            else:
+                routes = []
             args = list(signature(handler).parameters.keys())
 
             if not args:
@@ -205,14 +211,16 @@ class Sanic:
             if stream:
                 handler.is_stream = stream
 
-            routes = self.router.add(
-                uri=uri,
-                methods=methods,
-                handler=handler,
-                host=host,
-                strict_slashes=strict_slashes,
-                version=version,
-                name=name,
+            routes.extend(
+                self.router.add(
+                    uri=uri,
+                    methods=methods,
+                    handler=handler,
+                    host=host,
+                    strict_slashes=strict_slashes,
+                    version=version,
+                    name=name,
+                )
             )
             return routes, handler
 
@@ -476,6 +484,13 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            if isinstance(handler, tuple):
+                # if a handler fn is already wrapped in a route, the handler
+                # variable will be a tuple of (existing routes, handler fn)
+                routes, handler = handler
+            else:
+                routes = []
+
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
                 if not getattr(handler, "__blueprintname__", False):
@@ -516,13 +531,15 @@ class Sanic:
                     self.websocket_tasks.remove(fut)
                 await ws.close()
 
-            routes = self.router.add(
-                uri=uri,
-                handler=websocket_handler,
-                methods=frozenset({"GET"}),
-                host=host,
-                strict_slashes=strict_slashes,
-                name=name,
+            routes.extend(
+                self.router.add(
+                    uri=uri,
+                    handler=websocket_handler,
+                    methods=frozenset({"GET"}),
+                    host=host,
+                    strict_slashes=strict_slashes,
+                    name=name,
+                )
             )
             return routes, handler
 
@@ -813,6 +830,14 @@ class Sanic:
                 "Endpoint with name `{}` was not found".format(view_name)
             )
 
+        # If the route has host defined, split that off
+        # TODO: Retain netloc and path separately in Route objects
+        host = uri.find("/")
+        if host > 0:
+            host, uri = uri[:host], uri[host:]
+        else:
+            host = None
+
         if view_name == "static" or view_name.endswith(".static"):
             filename = kwargs.pop("filename", None)
             # it's static folder
@@ -845,7 +870,7 @@ class Sanic:
 
         netloc = kwargs.pop("_server", None)
         if netloc is None and external:
-            netloc = self.config.get("SERVER_NAME", "")
+            netloc = host or self.config.get("SERVER_NAME", "")
 
         if external:
             if not scheme:

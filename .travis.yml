@@ -78,7 +78,7 @@ matrix:
       name: "Python nightly with Extensions"
     - env: TOX_ENV=pyNightly-no-ext
       python: 'nightly'
-      name: "Python nightly Extensions"
+      name: "Python nightly without Extensions"
 install:
   - pip install -U tox
   - pip install codecov

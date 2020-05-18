@@ -1,7 +1,6 @@
 import asyncio
 import inspect
 import os
-
 from collections import namedtuple
 from mimetypes import guess_type
 from random import choice
@@ -11,20 +10,10 @@ from urllib.parse import unquote
 import pytest
 
 from aiofiles import os as async_os
-
-from sanic.response import (
-    HTTPResponse,
-    StreamingHTTPResponse,
-    file,
-    file_stream,
-    json,
-    raw,
-    stream,
-)
-from sanic.response import empty
+from sanic.response import (HTTPResponse, StreamingHTTPResponse, empty, file,
+                            file_stream, json, raw, stream)
 from sanic.server import HttpProtocol
-from sanic.testing import HOST, PORT
-
+from sanic_testing.testing import HOST, PORT
 
 JSON_DATA = {"ok": True}
 

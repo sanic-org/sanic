@@ -1,22 +1,11 @@
 import asyncio
 import warnings
-
 from inspect import isawaitable
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import (Any, Awaitable, Callable, Dict, List, MutableMapping,
+                    Optional, Tuple, Union)
 from urllib.parse import quote
 
 import sanic.app  # noqa
-
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
@@ -24,7 +13,6 @@ from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.server import StreamBuffer
 from sanic.websocket import WebSocketConnection
-
 
 ASGIScope = MutableMapping[str, Any]
 ASGIMessage = MutableMapping[str, Any]

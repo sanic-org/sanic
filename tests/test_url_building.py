@@ -1,5 +1,4 @@
 import string
-
 from urllib.parse import parse_qsl, urlsplit
 
 import pytest as pytest
@@ -7,10 +6,9 @@ import pytest as pytest
 from sanic.blueprints import Blueprint
 from sanic.exceptions import URLBuildError
 from sanic.response import text
-from sanic.testing import HOST as test_host
-from sanic.testing import PORT as test_port
 from sanic.views import HTTPMethodView
-
+from sanic_testing.testing import HOST as test_host
+from sanic_testing.testing import PORT as test_port
 
 URL_FOR_ARGS1 = dict(arg1=["v1", "v2"])
 URL_FOR_VALUE1 = "/myurl?arg1=v1&arg1=v2"

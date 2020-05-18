@@ -7,7 +7,7 @@ import pytest
 
 from sanic import Blueprint
 from sanic.response import text
-from sanic.testing import HOST, PORT
+from sanic_testing.testing import HOST, PORT
 
 
 @pytest.mark.skipif(

@@ -1,4 +1,4 @@
-from sanic.testing import SanicASGITestClient
+from sanic_testing.testing import SanicASGITestClient
 
 
 def test_asgi_client_instantiation(app):

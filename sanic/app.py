@@ -82,6 +82,7 @@ class Sanic:
         self.named_response_middleware = {}
         # Register alternative method names
         self.go_fast = self.run
+        self._test_manager = None
 
     @property
     def loop(self):
@@ -1034,6 +1035,26 @@ class Sanic:
                 pass
         else:
             write_callback(response)
+
+    # -------------------------------------------------------------------- #
+    # Testing
+    # -------------------------------------------------------------------- #
+
+    @property
+    def test_client(self):
+        if self._test_manager:
+            return self._test_manager.test_client
+        from sanic_testing import TestManager
+        manager = TestManager(self)
+        return manager.test_client
+
+    @property
+    def asgi_client(self):
+        if self._test_manager:
+            return self._test_manager.asgi_client
+        from sanic_testing import TestManager
+        manager = TestManager(self)
+        return manager.asgi_client
 
     # -------------------------------------------------------------------- #
     # Execution

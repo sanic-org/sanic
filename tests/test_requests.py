@@ -1,7 +1,6 @@
 import logging
 import os
 import ssl
-
 from json import dumps as json_dumps
 from json import loads as json_loads
 from urllib.parse import urlparse
@@ -12,8 +11,7 @@ from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import json, text
-from sanic.testing import ASGI_HOST, HOST, PORT
-
+from sanic_testing.testing import ASGI_HOST, HOST, PORT
 
 # ------------------------------------------------------------ #
 #  GET

@@ -4,12 +4,10 @@ from os import path
 from urllib.parse import quote_plus
 
 from aiofiles import open as open_async  # type: ignore
-
 from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.headers import format_http1
 from sanic.helpers import STATUS_CODES, has_message_body, remove_entity_headers
-
 
 try:
     from ujson import dumps as json_dumps

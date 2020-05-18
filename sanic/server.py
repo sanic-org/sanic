@@ -2,7 +2,6 @@ import asyncio
 import os
 import sys
 import traceback
-
 from collections import deque
 from functools import partial
 from inspect import isawaitable
@@ -14,20 +13,13 @@ from time import time
 
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
-
 from sanic.compat import Header
-from sanic.exceptions import (
-    HeaderExpectationFailed,
-    InvalidUsage,
-    PayloadTooLarge,
-    RequestTimeout,
-    ServerError,
-    ServiceUnavailable,
-)
+from sanic.exceptions import (HeaderExpectationFailed, InvalidUsage,
+                              PayloadTooLarge, RequestTimeout, ServerError,
+                              ServiceUnavailable)
 from sanic.log import access_logger, logger
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
-
 
 try:
     import uvloop  # type: ignore

@@ -2,8 +2,7 @@ import asyncio
 import logging
 
 from sanic.config import BASE_LOGO
-from sanic.testing import PORT
-
+from sanic_testing.testing import PORT
 
 try:
     import uvloop  # noqa

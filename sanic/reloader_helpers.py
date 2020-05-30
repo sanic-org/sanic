@@ -2,7 +2,6 @@ import os
 import signal
 import subprocess
 import sys
-
 from multiprocessing import Process
 from time import sleep
 
@@ -74,7 +73,15 @@ def kill_process_children_unix(pid):
     """
     root_process_path = f"/proc/{pid}/task/{pid}/children"
     if not os.path.isfile(root_process_path):
+        # Fall back to psutils
+        # Ubuntu 18.04 WSL2 doesn't have .../task/pid/children
+        import psutil
+
+        ppid = psutil.Process(pid)
+        for children in ppid.children(recursive=True):
+            os.kill(int(children.pid), signal.SIGTERM)
         return
+
     with open(root_process_path) as children_list_file:
         children_list_pid = children_list_file.read().split()
 

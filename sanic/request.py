@@ -1,12 +1,12 @@
 import asyncio
 import email.utils
-import warnings
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
+from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
-from httptools import parse_url
+from httptools import parse_url  # type: ignore
 
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
@@ -19,9 +19,9 @@ from sanic.log import error_logger, logger
 
 
 try:
-    from ujson import loads as json_loads
+    from ujson import loads as json_loads  # type: ignore
 except ImportError:
-    from json import loads as json_loads
+    from json import loads as json_loads  # type: ignore
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 EXPECT_HEADER = "EXPECT"
@@ -55,14 +55,26 @@ class StreamBuffer:
         self._queue.task_done()
         return payload
 
+    async def __aiter__(self):
+        """Support `async for data in request.stream`"""
+        while True:
+            data = await self.read()
+            if not data:
+                break
+            yield data
+
     async def put(self, payload):
         await self._queue.put(payload)
 
     def is_full(self):
         return self._queue.full()
 
+    @property
+    def buffer_size(self):
+        return self._queue.maxsize
 
-class Request(dict):
+
+class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
 
     __slots__ = (
@@ -75,6 +87,7 @@ class Request(dict):
         "_socket",
         "app",
         "body",
+        "ctx",
         "endpoint",
         "headers",
         "method",
@@ -104,6 +117,7 @@ class Request(dict):
 
         # Init but do not inhale
         self.body_init()
+        self.ctx = SimpleNamespace()
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -116,23 +130,36 @@ class Request(dict):
         self.endpoint = None
 
     def __repr__(self):
-        return "<{0}: {1} {2}>".format(
-            self.__class__.__name__, self.method, self.path
-        )
-
-    def __bool__(self):
-        if self.transport:
-            return True
-        return False
+        class_name = self.__class__.__name__
+        return f"<{class_name}: {self.method} {self.path}>"
 
     def body_init(self):
+        """.. deprecated:: 20.3"""
         self.body = []
 
     def body_push(self, data):
+        """.. deprecated:: 20.3"""
         self.body.append(data)
 
     def body_finish(self):
+        """.. deprecated:: 20.3"""
         self.body = b"".join(self.body)
+
+    async def receive_body(self):
+        """Receive request.body, if not already received.
+
+        Streaming handlers may call this to receive the full body.
+
+        This is added as a compatibility shim in Sanic 20.3 because future
+        versions of Sanic will make all requests streaming and will use this
+        function instead of the non-async body_init/push/finish functions.
+
+        Please make an issue if your code depends on the old functionality and
+        cannot be upgraded to the new API.
+        """
+        if not self.stream:
+            return
+        self.body = b"".join([data async for data in self.stream])
 
     @property
     def json(self):
@@ -254,18 +281,6 @@ class Request(dict):
         ]
 
     args = property(get_args)
-
-    @property
-    def raw_args(self) -> dict:
-        if self.app.debug:  # pragma: no cover
-            warnings.simplefilter("default")
-        warnings.warn(
-            "Use of raw_args will be deprecated in "
-            "the future versions. Please use args or query_args "
-            "properties instead",
-            DeprecationWarning,
-        )
-        return {k: v[0] for k, v in self.args.items()}
 
     def get_query_args(
         self,
@@ -496,8 +511,11 @@ class Request(dict):
         :rtype: str
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
-        if "//" in self.app.config.SERVER_NAME:
-            return self.app.url_for(view_name, _external=True, **kwargs)
+        try:
+            if "//" in self.app.config.SERVER_NAME:
+                return self.app.url_for(view_name, _external=True, **kwargs)
+        except AttributeError:
+            pass
 
         scheme = self.scheme
         host = self.server_name
@@ -508,7 +526,7 @@ class Request(dict):
         ):
             netloc = host
         else:
-            netloc = "{}:{}".format(host, port)
+            netloc = f"{host}:{port}"
 
         return self.app.url_for(
             view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs

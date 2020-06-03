@@ -15,7 +15,8 @@ from sanic.response import text
 def test_cookies(app):
     @app.route("/")
     def handler(request):
-        response = text("Cookies are: {}".format(request.cookies["test"]))
+        cookie_value = request.cookies["test"]
+        response = text(f"Cookies are: {cookie_value}")
         response.cookies["right_back"] = "at you"
         return response
 
@@ -31,7 +32,8 @@ def test_cookies(app):
 async def test_cookies_asgi(app):
     @app.route("/")
     def handler(request):
-        response = text("Cookies are: {}".format(request.cookies["test"]))
+        cookie_value = request.cookies["test"]
+        response = text(f"Cookies are: {cookie_value}")
         response.cookies["right_back"] = "at you"
         return response
 
@@ -52,7 +54,7 @@ def test_false_cookies_encoded(app, httponly, expected):
         response = text("hello cookies")
         response.cookies["hello"] = "world"
         response.cookies["hello"]["httponly"] = httponly
-        return text(response.cookies["hello"].encode("utf8"))
+        return text(response.cookies["hello"].encode("utf8").decode())
 
     request, response = app.test_client.get("/")
 
@@ -78,7 +80,8 @@ def test_false_cookies(app, httponly, expected):
 def test_http2_cookies(app):
     @app.route("/")
     async def handler(request):
-        response = text("Cookies are: {}".format(request.cookies["test"]))
+        cookie_value = request.cookies["test"]
+        response = text(f"Cookies are: {cookie_value}")
         return response
 
     headers = {"cookie": "test=working!"}

@@ -115,14 +115,14 @@ def test_redirect_with_params(app, test_str):
 
     @app.route("/api/v1/test/<test>/")
     async def init_handler(request, test):
-        return redirect("/api/v2/test/{}/".format(use_in_uri))
+        return redirect(f"/api/v2/test/{use_in_uri}/")
 
     @app.route("/api/v2/test/<test>/")
     async def target_handler(request, test):
         assert test == test_str
         return text("OK")
 
-    _, response = app.test_client.get("/api/v1/test/{}/".format(use_in_uri))
+    _, response = app.test_client.get(f"/api/v1/test/{use_in_uri}/")
     assert response.status == 200
 
     assert response.content == b"OK"

@@ -1,6 +1,7 @@
 import asyncio
+import sys
 
-from collections import deque
+from collections import deque, namedtuple
 
 import pytest
 import uvicorn
@@ -81,7 +82,12 @@ def test_listeners_triggered(app):
     with pytest.warns(UserWarning):
         server.run()
 
-    for task in asyncio.Task.all_tasks():
+    all_tasks = (
+        asyncio.Task.all_tasks()
+        if sys.version_info < (3, 7) else
+        asyncio.all_tasks(asyncio.get_event_loop())
+    )
+    for task in all_tasks:
         task.cancel()
 
     assert before_server_start
@@ -126,7 +132,12 @@ def test_listeners_triggered_async(app):
     with pytest.warns(UserWarning):
         server.run()
 
-    for task in asyncio.Task.all_tasks():
+    all_tasks = (
+        asyncio.Task.all_tasks()
+        if sys.version_info < (3, 7) else
+        asyncio.all_tasks(asyncio.get_event_loop())
+    )
+    for task in all_tasks:
         task.cancel()
 
     assert before_server_start
@@ -221,7 +232,7 @@ async def test_request_class_custom():
     class MyCustomRequest(Request):
         pass
 
-    app = Sanic(request_class=MyCustomRequest)
+    app = Sanic(name=__name__, request_class=MyCustomRequest)
 
     @app.get("/custom")
     def custom_request(request):
@@ -245,17 +256,26 @@ async def test_cookie_customization(app):
         return response
 
     _, response = await app.asgi_client.get("/cookie")
+
+    CookieDef = namedtuple("CookieDef", ("value", "httponly"))
+    Cookie = namedtuple("Cookie", ("domain", "path", "value", "httponly"))
     cookie_map = {
-        "test": {"value": "Cookie1", "HttpOnly": True},
-        "c2": {"value": "Cookie2", "HttpOnly": False},
+        "test": CookieDef("Cookie1", True),
+        "c2": CookieDef("Cookie2", False),
     }
 
-    for k, v in (
-        response.cookies._cookies.get("mockserver.local").get("/").items()
-    ):
-        assert cookie_map.get(k).get("value") == v.value
-        if cookie_map.get(k).get("HttpOnly"):
-            assert "HttpOnly" in v._rest.keys()
+    cookies = {
+        c.name: Cookie(c.domain, c.path, c.value, "HttpOnly" in c._rest.keys())
+        for c in response.cookies.jar
+    }
+
+    for name, definition in cookie_map.items():
+        cookie = cookies.get(name)
+        assert cookie
+        assert cookie.value == definition.value
+        assert cookie.domain == "mockserver.local"
+        assert cookie.path == "/"
+        assert cookie.httponly == definition.httponly
 
 
 @pytest.mark.asyncio

@@ -1,49 +1,64 @@
 import asyncio
 
-import httpcore
-import requests_async as requests
+import httpx
 
 from sanic import Sanic
 from sanic.response import text
 from sanic.testing import SanicTestClient
 
 
-class DelayableSanicConnectionPool(httpcore.ConnectionPool):
+class DelayableHTTPConnection(httpx.dispatch.connection.HTTPConnection):
+    def __init__(self, *args, **kwargs):
+        self._request_delay = None
+        if "request_delay" in kwargs:
+            self._request_delay = kwargs.pop("request_delay")
+        super().__init__(*args, **kwargs)
+
+    async def send(self, request, timeout=None):
+
+        if self.connection is None:
+            self.connection = (await self.connect(timeout=timeout))
+
+        if self._request_delay:
+            await asyncio.sleep(self._request_delay)
+
+        response = await self.connection.send(request, timeout=timeout)
+
+        return response
+
+
+class DelayableSanicConnectionPool(
+    httpx.dispatch.connection_pool.ConnectionPool
+):
     def __init__(self, request_delay=None, *args, **kwargs):
         self._request_delay = request_delay
         super().__init__(*args, **kwargs)
 
-    async def send(self, request, stream=False, ssl=None, timeout=None):
-        connection = await self.acquire_connection(request.url.origin)
-        if (
-            connection.h11_connection is None
-            and connection.h2_connection is None
-        ):
-            await connection.connect(ssl=ssl, timeout=timeout)
-        if self._request_delay:
-            await asyncio.sleep(self._request_delay)
-        try:
-            response = await connection.send(
-                request, stream=stream, ssl=ssl, timeout=timeout
+    async def acquire_connection(self, origin, timeout=None):
+        connection = self.pop_connection(origin)
+
+        if connection is None:
+            pool_timeout = None if timeout is None else timeout.pool_timeout
+
+            await self.max_connections.acquire(timeout=pool_timeout)
+            connection = DelayableHTTPConnection(
+                origin,
+                ssl=self.ssl,
+                backend=self.backend,
+                release_func=self.release_connection,
+                uds=self.uds,
+                request_delay=self._request_delay,
             )
-        except BaseException as exc:
-            self.active_connections.remove(connection)
-            self.max_connections.release()
-            raise exc
-        return response
+
+        self.active_connections.add(connection)
+
+        return connection
 
 
-class DelayableSanicAdapter(requests.adapters.HTTPAdapter):
-    def __init__(self, request_delay=None):
-        self.pool = DelayableSanicConnectionPool(request_delay=request_delay)
-
-
-class DelayableSanicSession(requests.Session):
+class DelayableSanicSession(httpx.AsyncClient):
     def __init__(self, request_delay=None, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        adapter = DelayableSanicAdapter(request_delay=request_delay)
-        self.mount("http://", adapter)
-        self.mount("https://", adapter)
+        dispatch = DelayableSanicConnectionPool(request_delay=request_delay)
+        super().__init__(dispatch=dispatch, *args, **kwargs)
 
 
 class DelayableSanicTestClient(SanicTestClient):
@@ -81,7 +96,7 @@ def test_default_server_error_request_timeout():
     client = DelayableSanicTestClient(request_timeout_default_app, 2)
     request, response = client.get("/1")
     assert response.status == 408
-    assert response.text == "Error: Request Timeout"
+    assert "Request Timeout" in response.text
 
 
 def test_default_server_error_request_dont_timeout():
@@ -104,4 +119,4 @@ def test_default_server_error_websocket_request_timeout():
     request, response = client.get("/ws1", headers=headers)
 
     assert response.status == 408
-    assert response.text == "Error: Request Timeout"
+    assert "Request Timeout" in response.text

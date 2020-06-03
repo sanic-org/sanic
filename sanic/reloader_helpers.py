@@ -72,7 +72,7 @@ def kill_process_children_unix(pid):
     :param pid: PID of parent process (process ID)
     :return: Nothing
     """
-    root_process_path = "/proc/{pid}/task/{pid}/children".format(pid=pid)
+    root_process_path = f"/proc/{pid}/task/{pid}/children"
     if not os.path.isfile(root_process_path):
         return
     with open(root_process_path) as children_list_file:

@@ -21,6 +21,25 @@ matrix:
       dist: xenial
       sudo: true
       name: "Python 3.7 without Extensions"
+    - env: TOX_ENV=py38
+      python: 3.8
+      dist: xenial
+      sudo: true
+      name: "Python 3.8 with Extensions"
+    - env: TOX_ENV=py38-no-ext
+      python: 3.8
+      dist: xenial
+      sudo: true
+      name: "Python 3.8 without Extensions"
+    - env: TOX_ENV=type-checking
+      python: 3.6
+      name: "Python 3.6 Type checks"
+    - env: TOX_ENV=type-checking
+      python: 3.7
+      name: "Python 3.7 Type checks"
+    - env: TOX_ENV=type-checking
+      python: 3.8
+      name: "Python 3.8 Type checks"
     - env: TOX_ENV=lint
       python: 3.6
       name: "Python 3.6 Linter checks"
@@ -28,15 +47,38 @@ matrix:
       python: 3.6
       name: "Python 3.6 Package checks"
     - env: TOX_ENV=security
+      python: 3.6
+      dist: xenial
+      sudo: true
+      name: "Python 3.6 Bandit security scan"
+    - env: TOX_ENV=security
       python: 3.7
       dist: xenial
       sudo: true
       name: "Python 3.7 Bandit security scan"
+    - env: TOX_ENV=security
+      python: 3.8
+      dist: xenial
+      sudo: true
+      name: "Python 3.8 Bandit security scan"
     - env: TOX_ENV=docs
       python: 3.7
       dist: xenial
       sudo: true
       name: "Python 3.7 Documentation tests"
+    - env: TOX_ENV=pyNightly
+      python: 'nightly'
+      name: "Python nightly with Extensions"
+    - env: TOX_ENV=pyNightly-no-ext
+      python: 'nightly'
+      name: "Python nightly Extensions"
+  allow_failures:
+    - env: TOX_ENV=pyNightly
+      python: 'nightly'
+      name: "Python nightly with Extensions"
+    - env: TOX_ENV=pyNightly-no-ext
+      python: 'nightly'
+      name: "Python nightly Extensions"
 install:
   - pip install -U tox
   - pip install codecov

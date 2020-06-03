@@ -1,7 +1,10 @@
 WebSocket
 =========
 
-Sanic provides an easy to use abstraction on top of `websockets`. To setup a WebSocket:
+Sanic provides an easy to use abstraction on top of `websockets`.
+Sanic Supports websocket versions 7 and 8.
+
+To setup a WebSocket:
 
 .. code:: python
 
@@ -9,7 +12,7 @@ Sanic provides an easy to use abstraction on top of `websockets`. To setup a Web
     from sanic.response import json
     from sanic.websocket import WebSocketProtocol
 
-    app = Sanic()
+    app = Sanic("websocket_example")
 
     @app.websocket('/feed')
     async def feed(request, ws):

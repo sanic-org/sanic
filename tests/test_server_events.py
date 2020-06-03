@@ -1,4 +1,8 @@
+import asyncio
 import signal
+
+from contextlib import closing
+from socket import socket
 
 import pytest
 
@@ -21,7 +25,7 @@ skipif_no_alarm = pytest.mark.skipif(
 
 def create_listener(listener_name, in_list):
     async def _listener(app, loop):
-        print("DEBUG MESSAGE FOR PYTEST for {}".format(listener_name))
+        print(f"DEBUG MESSAGE FOR PYTEST for {listener_name}")
         in_list.insert(0, app.name + listener_name)
 
     return _listener
@@ -89,3 +93,58 @@ async def test_trigger_before_events_create_server(app):
 
     assert hasattr(app, "db")
     assert isinstance(app.db, MySanicDb)
+
+
+def test_create_server_trigger_events(app):
+    """Test if create_server can trigger server events"""
+
+    flag1 = False
+    flag2 = False
+    flag3 = False
+
+    async def stop(app, loop):
+        nonlocal flag1
+        flag1 = True
+        await asyncio.sleep(0.1)
+        app.stop()
+
+    async def before_stop(app, loop):
+        nonlocal flag2
+        flag2 = True
+
+    async def after_stop(app, loop):
+        nonlocal flag3
+        flag3 = True
+
+    app.listener("after_server_start")(stop)
+    app.listener("before_server_stop")(before_stop)
+    app.listener("after_server_stop")(after_stop)
+
+    loop = asyncio.get_event_loop()
+
+    # Use random port for tests
+    with closing(socket()) as sock:
+        sock.bind(("127.0.0.1", 0))
+
+        serv_coro = app.create_server(return_asyncio_server=True, sock=sock)
+        serv_task = asyncio.ensure_future(serv_coro, loop=loop)
+        server = loop.run_until_complete(serv_task)
+        server.after_start()
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt as e:
+            loop.stop()
+        finally:
+            # Run the on_stop function if provided
+            server.before_stop()
+
+            # Wait for server to close
+            close_task = server.close()
+            loop.run_until_complete(close_task)
+
+            # Complete all tasks on the loop
+            signal.stopped = True
+            for connection in server.connections:
+                connection.close_if_idle()
+            server.after_stop()
+        assert flag1 and flag2 and flag3

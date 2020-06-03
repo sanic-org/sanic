@@ -5,6 +5,7 @@ import codecs
 import os
 import re
 import sys
+
 from distutils.util import strtobool
 
 from setuptools import setup
@@ -60,12 +61,14 @@ setup_kwargs = {
     "long_description": long_description,
     "packages": ["sanic"],
     "platforms": "any",
+    "python_requires": ">=3.6",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 }
 
@@ -80,13 +83,13 @@ requirements = [
     uvloop,
     ujson,
     "aiofiles>=0.3.0",
-    "websockets>=7.0,<8.0",
+    "websockets>=7.0,<9.0",
     "multidict>=4.0,<5.0",
-    "requests-async==0.5.0",
+    "httpx==0.11.1",
 ]
 
 tests_require = [
-    "pytest==4.1.0",
+    "pytest==5.2.1",
     "multidict>=4.0,<5.0",
     "gunicorn",
     "pytest-cov",

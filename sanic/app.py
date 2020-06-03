@@ -11,7 +11,7 @@ from inspect import getmodulename, isawaitable, signature, stack
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
@@ -24,7 +24,13 @@ from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import HttpProtocol, Signal, serve, serve_multiple
+from sanic.server import (
+    AsyncioServer,
+    HttpProtocol,
+    Signal,
+    serve,
+    serve_multiple,
+)
 from sanic.static import register as static_register
 from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
@@ -46,6 +52,13 @@ class Sanic:
 
         # Get name from previous stack frame
         if name is None:
+            warnings.warn(
+                "Sanic(name=None) is deprecated and None value support "
+                "for `name` will be removed in the next release. "
+                "Please use Sanic(name='your_application_name') instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             frame_records = stack()[1]
             name = getmodulename(frame_records[1])
 
@@ -68,11 +81,13 @@ class Sanic:
         self.sock = None
         self.strict_slashes = strict_slashes
         self.listeners = defaultdict(list)
+        self.is_stopping = False
         self.is_running = False
         self.is_request_stream = False
         self.websocket_enabled = False
         self.websocket_tasks = set()
-
+        self.named_request_middleware = {}
+        self.named_response_middleware = {}
         # Register alternative method names
         self.go_fast = self.run
 
@@ -138,11 +153,9 @@ class Sanic:
         """
         Register the listener for a given event.
 
-        Args:
-            listener: callable i.e. setup_db(app, loop)
-            event: when to register listener i.e. 'before_server_start'
-
-        Returns: listener
+        :param listener: callable i.e. setup_db(app, loop)
+        :param event: when to register listener i.e. 'before_server_start'
+        :return: listener
         """
 
         return self.listener(event)(listener)
@@ -167,7 +180,7 @@ class Sanic:
         :param stream:
         :param version:
         :param name: user defined route name for url_for
-        :return: decorated function
+        :return: tuple of routes, decorated function
         """
 
         # Fix case where the user did not prefix the URL with a /
@@ -182,27 +195,37 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            if isinstance(handler, tuple):
+                # if a handler fn is already wrapped in a route, the handler
+                # variable will be a tuple of (existing routes, handler fn)
+                routes, handler = handler
+            else:
+                routes = []
             args = list(signature(handler).parameters.keys())
 
             if not args:
+                handler_name = handler.__name__
+
                 raise ValueError(
-                    "Required parameter `request` missing "
-                    "in the {0}() route?".format(handler.__name__)
+                    f"Required parameter `request` missing "
+                    f"in the {handler_name}() route?"
                 )
 
             if stream:
                 handler.is_stream = stream
 
-            self.router.add(
-                uri=uri,
-                methods=methods,
-                handler=handler,
-                host=host,
-                strict_slashes=strict_slashes,
-                version=version,
-                name=name,
+            routes.extend(
+                self.router.add(
+                    uri=uri,
+                    methods=methods,
+                    handler=handler,
+                    host=host,
+                    strict_slashes=strict_slashes,
+                    version=version,
+                    name=name,
+                )
             )
-            return handler
+            return routes, handler
 
         return response
 
@@ -451,7 +474,7 @@ class Sanic:
         :param subprotocols: optional list of str with supported subprotocols
         :param name: A unique name assigned to the URL so that it can
                      be used with :func:`url_for`
-        :return: decorated function
+        :return: tuple of routes, decorated function
         """
         self.enable_websocket()
 
@@ -464,6 +487,13 @@ class Sanic:
             strict_slashes = self.strict_slashes
 
         def response(handler):
+            if isinstance(handler, tuple):
+                # if a handler fn is already wrapped in a route, the handler
+                # variable will be a tuple of (existing routes, handler fn)
+                routes, handler = handler
+            else:
+                routes = []
+
             async def websocket_handler(request, *args, **kwargs):
                 request.app = self
                 if not getattr(handler, "__blueprintname__", False):
@@ -479,12 +509,7 @@ class Sanic:
                 if self.asgi:
                     ws = request.transport.get_websocket_connection()
                 else:
-                    try:
-                        protocol = request.transport.get_protocol()
-                    except AttributeError:
-                        # On Python3.5 the Transport classes in asyncio do not
-                        # have a get_protocol() method as in uvloop
-                        protocol = request.transport._protocol
+                    protocol = request.transport.get_protocol()
                     protocol.app = self
 
                     ws = await protocol.websocket_handshake(
@@ -504,15 +529,17 @@ class Sanic:
                     self.websocket_tasks.remove(fut)
                 await ws.close()
 
-            self.router.add(
-                uri=uri,
-                handler=websocket_handler,
-                methods=frozenset({"GET"}),
-                host=host,
-                strict_slashes=strict_slashes,
-                name=name,
+            routes.extend(
+                self.router.add(
+                    uri=uri,
+                    handler=websocket_handler,
+                    methods=frozenset({"GET"}),
+                    host=host,
+                    strict_slashes=strict_slashes,
+                    name=name,
+                )
             )
-            return handler
+            return routes, handler
 
         return response
 
@@ -532,6 +559,7 @@ class Sanic:
                         that can handle the websocket request
         :param host: Host IP or FQDN details
         :param uri: URL path that will be mapped to the websocket
+                    handler
                     handler
         :param strict_slashes: If the API endpoint needs to terminate
                 with a "/" or not
@@ -567,29 +595,6 @@ class Sanic:
                     task.cancel()
 
         self.websocket_enabled = enable
-
-    def remove_route(self, uri, clean_cache=True, host=None):
-        """
-        This method provides the app user a mechanism by which an already
-        existing route can be removed from the :class:`Sanic` object
-
-        .. warning::
-            remove_route is deprecated in v19.06 and will be removed
-            from future versions.
-
-        :param uri: URL Path to be removed from the app
-        :param clean_cache: Instruct sanic if it needs to clean up the LRU
-            route cache
-        :param host: IP address or FQDN specific to the host
-        :return: None
-        """
-        warnings.warn(
-            "remove_route is deprecated and will be removed "
-            "from future versions.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.router.remove(uri, clean_cache, host)
 
     # Decorator
     def exception(self, *exceptions):
@@ -633,6 +638,22 @@ class Sanic:
             if middleware not in self.response_middleware:
                 self.response_middleware.appendleft(middleware)
         return middleware
+
+    def register_named_middleware(
+        self, middleware, route_names, attach_to="request"
+    ):
+        if attach_to == "request":
+            for _rn in route_names:
+                if _rn not in self.named_request_middleware:
+                    self.named_request_middleware[_rn] = deque()
+                if middleware not in self.named_request_middleware[_rn]:
+                    self.named_request_middleware[_rn].append(middleware)
+        if attach_to == "response":
+            for _rn in route_names:
+                if _rn not in self.named_response_middleware:
+                    self.named_response_middleware[_rn] = deque()
+                if middleware not in self.named_response_middleware[_rn]:
+                    self.named_response_middleware[_rn].appendleft(middleware)
 
     # Decorator
     def middleware(self, middleware_or_request):
@@ -770,7 +791,7 @@ class Sanic:
             URLBuildError
         """
         # find the route by the supplied view name
-        kw = {}
+        kw: Dict[str, str] = {}
         # special static files url_for
         if view_name == "static":
             kw.update(name=kwargs.pop("name", "static"))
@@ -781,8 +802,16 @@ class Sanic:
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
         if not (uri and route):
             raise URLBuildError(
-                "Endpoint with name `{}` was not found".format(view_name)
+                f"Endpoint with name `{view_name}` was not found"
             )
+
+        # If the route has host defined, split that off
+        # TODO: Retain netloc and path separately in Route objects
+        host = uri.find("/")
+        if host > 0:
+            host, uri = uri[:host], uri[host:]
+        else:
+            host = None
 
         if view_name == "static" or view_name.endswith(".static"):
             filename = kwargs.pop("filename", None)
@@ -795,7 +824,7 @@ class Sanic:
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                uri = "{}/{}".format(folder_, filename)
+                uri = f"{folder_}/{filename}"
 
         if uri != "/" and uri.endswith("/"):
             uri = uri[:-1]
@@ -816,7 +845,7 @@ class Sanic:
 
         netloc = kwargs.pop("_server", None)
         if netloc is None and external:
-            netloc = self.config.get("SERVER_NAME", "")
+            netloc = host or self.config.get("SERVER_NAME", "")
 
         if external:
             if not scheme:
@@ -831,7 +860,7 @@ class Sanic:
         for match in matched_params:
             name, _type, pattern = self.router.parse_parameter_string(match)
             # we only want to match against each individual parameter
-            specific_pattern = "^{}$".format(pattern)
+            specific_pattern = f"^{pattern}$"
             supplied_param = None
 
             if name in kwargs:
@@ -839,9 +868,7 @@ class Sanic:
                 del kwargs[name]
             else:
                 raise URLBuildError(
-                    "Required parameter `{}` was not passed to url_for".format(
-                        name
-                    )
+                    f"Required parameter `{name}` was not passed to url_for"
                 )
 
             supplied_param = str(supplied_param)
@@ -851,23 +878,22 @@ class Sanic:
 
             if not passes_pattern:
                 if _type != str:
+                    type_name = _type.__name__
+
                     msg = (
-                        'Value "{}" for parameter `{}` does not '
-                        "match pattern for type `{}`: {}".format(
-                            supplied_param, name, _type.__name__, pattern
-                        )
+                        f'Value "{supplied_param}" '
+                        f"for parameter `{name}` does not "
+                        f"match pattern for type `{type_name}`: {pattern}"
                     )
                 else:
                     msg = (
-                        'Value "{}" for parameter `{}` '
-                        "does not satisfy pattern {}".format(
-                            supplied_param, name, pattern
-                        )
+                        f'Value "{supplied_param}" for parameter `{name}` '
+                        f"does not satisfy pattern {pattern}"
                     )
                 raise URLBuildError(msg)
 
             # replace the parameter in the URL with the supplied value
-            replacement_regex = "(<{}.*?>)".format(name)
+            replacement_regex = f"(<{name}.*?>)"
 
             out = re.sub(replacement_regex, supplied_param, out)
 
@@ -905,19 +931,22 @@ class Sanic:
         # allocation before assignment below.
         response = None
         cancelled = False
+        name = None
         try:
+            # Fetch handler from router
+            handler, args, kwargs, uri, name = self.router.get(request)
+
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
-            response = await self._run_request_middleware(request)
+            response = await self._run_request_middleware(
+                request, request_name=name
+            )
             # No middleware results
             if not response:
                 # -------------------------------------------- #
                 # Execute Handler
                 # -------------------------------------------- #
-
-                # Fetch handler from router
-                handler, args, kwargs, uri = self.router.get(request)
 
                 request.uri_template = uri
                 if handler is None:
@@ -965,9 +994,8 @@ class Sanic:
                     )
                 elif self.debug:
                     response = HTTPResponse(
-                        "Error while handling error: {}\nStack: {}".format(
-                            e, format_exc()
-                        ),
+                        f"Error while "
+                        f"handling error: {e}\nStack: {format_exc()}",
                         status=500,
                     )
                 else:
@@ -982,7 +1010,7 @@ class Sanic:
             if response is not None:
                 try:
                     response = await self._run_response_middleware(
-                        request, response
+                        request, response, request_name=name
                     )
                 except CancelledError:
                     # Response middleware can timeout too, as above.
@@ -1039,7 +1067,7 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -1120,6 +1148,13 @@ class Sanic:
 
         try:
             self.is_running = True
+            self.is_stopping = False
+            if workers > 1 and os.name != "posix":
+                logger.warn(
+                    f"Multiprocessing is currently not supported on {os.name},"
+                    " using workers=1 instead"
+                )
+                workers = 1
             if workers == 1:
                 if auto_reload and os.name != "posix":
                     # This condition must be removed after implementing
@@ -1147,7 +1182,9 @@ class Sanic:
 
     def stop(self):
         """This kills the Sanic"""
-        get_event_loop().stop()
+        if not self.is_stopping:
+            self.is_stopping = True
+            get_event_loop().stop()
 
     async def create_server(
         self,
@@ -1162,7 +1199,7 @@ class Sanic:
         access_log: Optional[bool] = None,
         return_asyncio_server=False,
         asyncio_server_kwargs=None,
-    ) -> None:
+    ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
 
@@ -1202,7 +1239,7 @@ class Sanic:
         :param asyncio_server_kwargs: key-value arguments for
                                       asyncio/uvloop create_server method
         :type asyncio_server_kwargs: dict
-        :return: Nothing
+        :return: AsyncioServer if return_asyncio_server is true, else Nothing
         """
 
         if sock is None:
@@ -1255,10 +1292,14 @@ class Sanic:
             if isawaitable(result):
                 await result
 
-    async def _run_request_middleware(self, request):
+    async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why
-        if self.request_middleware:
-            for middleware in self.request_middleware:
+        named_middleware = self.named_request_middleware.get(
+            request_name, deque()
+        )
+        applicable_middleware = self.request_middleware + named_middleware
+        if applicable_middleware:
+            for middleware in applicable_middleware:
                 response = middleware(request)
                 if isawaitable(response):
                     response = await response
@@ -1266,9 +1307,15 @@ class Sanic:
                     return response
         return None
 
-    async def _run_response_middleware(self, request, response):
-        if self.response_middleware:
-            for middleware in self.response_middleware:
+    async def _run_response_middleware(
+        self, request, response, request_name=None
+    ):
+        named_middleware = self.named_response_middleware.get(
+            request_name, deque()
+        )
+        applicable_middleware = self.response_middleware + named_middleware
+        if applicable_middleware:
+            for middleware in applicable_middleware:
                 _response = middleware(request, response)
                 if isawaitable(_response):
                     _response = await _response
@@ -1322,33 +1369,15 @@ class Sanic:
 
         server_settings = {
             "protocol": protocol,
-            "request_class": self.request_class,
-            "is_request_stream": self.is_request_stream,
-            "router": self.router,
             "host": host,
             "port": port,
             "sock": sock,
             "ssl": ssl,
             "app": self,
             "signal": Signal(),
-            "debug": debug,
-            "request_handler": self.handle_request,
-            "error_handler": self.error_handler,
-            "request_timeout": self.config.REQUEST_TIMEOUT,
-            "response_timeout": self.config.RESPONSE_TIMEOUT,
-            "keep_alive_timeout": self.config.KEEP_ALIVE_TIMEOUT,
-            "request_max_size": self.config.REQUEST_MAX_SIZE,
-            "request_buffer_queue_size": self.config.REQUEST_BUFFER_QUEUE_SIZE,
-            "keep_alive": self.config.KEEP_ALIVE,
             "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
-            "access_log": self.config.ACCESS_LOG,
-            "websocket_max_size": self.config.WEBSOCKET_MAX_SIZE,
-            "websocket_max_queue": self.config.WEBSOCKET_MAX_QUEUE,
-            "websocket_read_limit": self.config.WEBSOCKET_READ_LIMIT,
-            "websocket_write_limit": self.config.WEBSOCKET_WRITE_LIMIT,
-            "graceful_shutdown_timeout": self.config.GRACEFUL_SHUTDOWN_TIMEOUT,
         }
 
         # -------------------------------------------- #
@@ -1389,7 +1418,7 @@ class Sanic:
             proto = "http"
             if ssl is not None:
                 proto = "https"
-            logger.info("Goin' Fast @ {}://{}:{}".format(proto, host, port))
+            logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
         return server_settings
 

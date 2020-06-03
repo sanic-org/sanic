@@ -13,7 +13,7 @@ and by default will enable the Auto Reload feature.
 Setting the debug mode
 ----------------------
 
-By setting the ``debug`` mode a more verbose output from Sanic will be outputed
+By setting the ``debug`` mode a more verbose output from Sanic will be output
 and the Automatic Reloader will be activated.
 
 .. code-block:: python
@@ -21,7 +21,7 @@ and the Automatic Reloader will be activated.
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic()
+    app = Sanic(__name__)
 
     @app.route('/')
     async def hello_world(request):
@@ -43,7 +43,7 @@ the ``auto_reload`` argument will activate or deactivate the Automatic Reloader.
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic()
+    app = Sanic(__name__)
 
     @app.route('/')
     async def hello_world(request):

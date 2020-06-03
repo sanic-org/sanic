@@ -1,3 +1,5 @@
+from typing import Any, Callable, List
+
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import InvalidUsage
 
@@ -37,7 +39,7 @@ class HTTPMethodView:
     To add any decorator you could set it into decorators variable
     """
 
-    decorators = []
+    decorators: List[Callable[[Callable[..., Any]], Callable[..., Any]]] = []
 
     def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)
@@ -94,14 +96,10 @@ class CompositionView:
             handler.is_stream = stream
         for method in methods:
             if method not in HTTP_METHODS:
-                raise InvalidUsage(
-                    "{} is not a valid HTTP method.".format(method)
-                )
+                raise InvalidUsage(f"{method} is not a valid HTTP method.")
 
             if method in self.handlers:
-                raise InvalidUsage(
-                    "Method {} is already registered.".format(method)
-                )
+                raise InvalidUsage(f"Method {method} is already registered.")
             self.handlers[method] = handler
 
     def __call__(self, request, *args, **kwargs):

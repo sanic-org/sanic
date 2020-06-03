@@ -4,8 +4,7 @@ from re import sub
 from time import gmtime, strftime
 from urllib.parse import unquote
 
-from aiofiles.os import stat
-
+from sanic.compat import stat_async
 from sanic.exceptions import (
     ContentRangeError,
     FileNotFound,
@@ -84,7 +83,7 @@ def register(
             # and it has not been modified since
             stats = None
             if use_modified_since:
-                stats = await stat(file_path)
+                stats = await stat_async(file_path)
                 modified_since = strftime(
                     "%a, %d %b %Y %H:%M:%S GMT", gmtime(stats.st_mtime)
                 )
@@ -95,7 +94,7 @@ def register(
             if use_content_range:
                 _range = None
                 if not stats:
-                    stats = await stat(file_path)
+                    stats = await stat_async(file_path)
                 headers["Accept-Ranges"] = "bytes"
                 headers["Content-Length"] = str(stats.st_size)
                 if request.method != "HEAD":
@@ -120,7 +119,7 @@ def register(
                         threshold = 1024 * 1024
 
                     if not stats:
-                        stats = await stat(file_path)
+                        stats = await stat_async(file_path)
                     if stats.st_size >= threshold:
                         return await file_stream(
                             file_path, headers=headers, _range=_range
@@ -135,7 +134,7 @@ def register(
 
     # special prefix for static files
     if not name.startswith("_static_"):
-        name = "_static_{}".format(name)
+        name = f"_static_{name}"
 
     app.route(
         uri,

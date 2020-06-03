@@ -109,7 +109,7 @@ class Router:
             name, pattern = parameter_string.split(":", 1)
             if not name:
                 raise ValueError(
-                    "Invalid parameter syntax: {}".format(parameter_string)
+                    f"Invalid parameter syntax: {parameter_string}"
                 )
 
         default = (str, pattern)
@@ -140,21 +140,22 @@ class Router:
             docs for further details.
         :return: Nothing
         """
+        routes = []
         if version is not None:
             version = re.escape(str(version).strip("/").lstrip("v"))
-            uri = "/".join(["/v{}".format(version), uri.lstrip("/")])
+            uri = "/".join([f"/v{version}", uri.lstrip("/")])
         # add regular version
-        self._add(uri, methods, handler, host, name)
+        routes.append(self._add(uri, methods, handler, host, name))
 
         if strict_slashes:
-            return
+            return routes
 
         if not isinstance(host, str) and host is not None:
             # we have gotten back to the top of the recursion tree where the
             # host was originally a list. By now, we've processed the strict
             # slashes logic on the leaf nodes (the individual host strings in
             # the list of host)
-            return
+            return routes
 
         # Add versions with and without trailing /
         slashed_methods = self.routes_all.get(uri + "/", frozenset({}))
@@ -176,10 +177,12 @@ class Router:
         )
         # add version with trailing slash
         if slash_is_missing:
-            self._add(uri + "/", methods, handler, host, name)
+            routes.append(self._add(uri + "/", methods, handler, host, name))
         # add version without trailing slash
         elif without_slash_is_missing:
-            self._add(uri[:-1], methods, handler, host, name)
+            routes.append(self._add(uri[:-1], methods, handler, host, name))
+
+        return routes
 
     def _add(self, uri, methods, handler, host=None, name=None):
         """Add a handler to the route list
@@ -200,8 +203,8 @@ class Router:
             else:
                 if not isinstance(host, Iterable):
                     raise ValueError(
-                        "Expected either string or Iterable of "
-                        "host strings, not {!r}".format(host)
+                        f"Expected either string or Iterable of "
+                        f"host strings, not {host!r}"
                     )
 
                 for host_ in host:
@@ -222,8 +225,7 @@ class Router:
 
             if name in parameter_names:
                 raise ParameterNameConflicts(
-                    "Multiple parameter named <{name}> "
-                    "in route uri {uri}".format(name=name, uri=uri)
+                    f"Multiple parameter named <{name}> " f"in route uri {uri}"
                 )
             parameter_names.add(name)
 
@@ -237,23 +239,23 @@ class Router:
             elif re.search(r"/", pattern):
                 properties["unhashable"] = True
 
-            return "({})".format(pattern)
+            return f"({pattern})"
 
         pattern_string = re.sub(self.parameter_pattern, add_parameter, uri)
-        pattern = re.compile(r"^{}$".format(pattern_string))
+        pattern = re.compile(fr"^{pattern_string}$")
 
         def merge_route(route, methods, handler):
             # merge to the existing route when possible.
             if not route.methods or not methods:
                 # method-unspecified routes are not mergeable.
-                raise RouteExists("Route already registered: {}".format(uri))
+                raise RouteExists(f"Route already registered: {uri}")
             elif route.methods.intersection(methods):
                 # already existing method is not overloadable.
                 duplicated = methods.intersection(route.methods)
+                duplicated_methods = ",".join(list(duplicated))
+
                 raise RouteExists(
-                    "Route already registered: {} [{}]".format(
-                        uri, ",".join(list(duplicated))
-                    )
+                    f"Route already registered: {uri} [{duplicated_methods}]"
                 )
             if isinstance(route.handler, CompositionView):
                 view = route.handler
@@ -293,9 +295,9 @@ class Router:
             name = name.split("_static_", 1)[-1]
 
         if hasattr(handler, "__blueprintname__"):
-            handler_name = "{}.{}".format(
-                handler.__blueprintname__, name or handler.__name__
-            )
+            bp_name = handler.__blueprintname__
+
+            handler_name = f"{bp_name}.{name or handler.__name__}"
         else:
             handler_name = name or getattr(handler, "__name__", None)
 
@@ -328,6 +330,7 @@ class Router:
             self.routes_dynamic[url_hash(uri)].append(route)
         else:
             self.routes_static[uri] = route
+        return route
 
     @staticmethod
     def check_dynamic_route_exists(pattern, routes_to_check, parameters):
@@ -347,37 +350,6 @@ class Router:
                 return ndx, route
         else:
             return -1, None
-
-    def remove(self, uri, clean_cache=True, host=None):
-        if host is not None:
-            uri = host + uri
-        try:
-            route = self.routes_all.pop(uri)
-            for handler_name, pairs in self.routes_names.items():
-                if pairs[0] == uri:
-                    self.routes_names.pop(handler_name)
-                    break
-
-            for handler_name, pairs in self.routes_static_files.items():
-                if pairs[0] == uri:
-                    self.routes_static_files.pop(handler_name)
-                    break
-
-        except KeyError:
-            raise RouteDoesNotExist("Route was not registered: {}".format(uri))
-
-        if route in self.routes_always_check:
-            self.routes_always_check.remove(route)
-        elif (
-            url_hash(uri) in self.routes_dynamic
-            and route in self.routes_dynamic[url_hash(uri)]
-        ):
-            self.routes_dynamic[url_hash(uri)].remove(route)
-        else:
-            self.routes_static.pop(uri)
-
-        if clean_cache:
-            self._get.cache_clear()
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name, name=None):
@@ -438,10 +410,11 @@ class Router:
         # Check against known static routes
         route = self.routes_static.get(url)
         method_not_supported = MethodNotSupported(
-            "Method {} not allowed for URL {}".format(method, url),
+            f"Method {method} not allowed for URL {url}",
             method=method,
             allowed_methods=self.get_supported_methods(url),
         )
+
         if route:
             if route.methods and method not in route.methods:
                 raise method_not_supported
@@ -467,7 +440,7 @@ class Router:
                     # Route was found but the methods didn't match
                     if route_found:
                         raise method_not_supported
-                    raise NotFound("Requested URL {} not found".format(url))
+                    raise NotFound(f"Requested URL {url} not found")
 
         kwargs = {
             p.name: p.cast(value)
@@ -476,7 +449,7 @@ class Router:
         route_handler = route.handler
         if hasattr(route_handler, "handlers"):
             route_handler = route_handler.handlers[method]
-        return route_handler, [], kwargs, route.uri
+        return route_handler, [], kwargs, route.uri, route.name
 
     def is_stream_handler(self, request):
         """ Handler for request is stream or not.

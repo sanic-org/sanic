@@ -1,3 +1,38 @@
+Version 19.12.0
+===============
+
+Bugfixes
+********
+
+- Fix blueprint middleware application
+
+  Currently, any blueprint middleware registered, irrespective of which blueprint was used to do so, was
+  being applied to all of the routes created by the :code:`@app` and :code:`@blueprint` alike.
+
+  As part of this change, the blueprint based middleware application is enforced based on where they are
+  registered.
+
+  - If you register a middleware via :code:`@blueprint.middleware` then it will apply only to the routes defined by the blueprint.
+  - If you register a middleware via :code:`@blueprint_group.middleware` then it will apply to all blueprint based routes that are part of the group.
+  - If you define a middleware via :code:`@app.middleware` then it will be applied on all available routes (`#37 <https://github.com/huge-success/sanic/issues/37>`__)
+- Fix `url_for` behavior with missing SERVER_NAME
+
+  If the `SERVER_NAME` was missing in the `app.config` entity, the `url_for` on the `request` and  `app` were failing
+  due to an `AttributeError`. This fix makes the availability of `SERVER_NAME` on our `app.config` an optional behavior. (`#1707 <https://github.com/huge-success/sanic/issues/1707>`__)
+
+
+Improved Documentation
+**********************
+
+- Move docs from MD to RST
+
+  Moved all docs from markdown to restructured text like the rest of the docs to unify the scheme and make it easier in
+  the future to update documentation. (`#1691 <https://github.com/huge-success/sanic/issues/1691>`__)
+- Fix documentation for `get` and `getlist` of the `request.args`
+
+  Add additional example for showing the usage of `getlist` and fix the documentation string for `request.args` behavior (`#1704 <https://github.com/huge-success/sanic/issues/1704>`__)
+
+
 Version 19.6.3
 ==============
 

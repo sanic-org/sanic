@@ -252,7 +252,7 @@ def test_several_bp_with_host(app):
 
 
 def test_bp_middleware(app):
-    blueprint = Blueprint("test_middleware")
+    blueprint = Blueprint("test_bp_middleware")
 
     @blueprint.middleware("response")
     async def process_response(request, response):
@@ -269,6 +269,38 @@ def test_bp_middleware(app):
     assert response.status == 200
     assert response.text == "FAIL"
 
+def test_bp_middleware_order(app):
+    blueprint = Blueprint("test_bp_middleware_order")
+    order = list()
+    @blueprint.middleware("request")
+    def mw_1(request):
+        order.append(1)
+    @blueprint.middleware("request")
+    def mw_2(request):
+        order.append(2)
+    @blueprint.middleware("request")
+    def mw_3(request):
+        order.append(3)
+    @blueprint.middleware("response")
+    def mw_4(request, response):
+        order.append(6)
+    @blueprint.middleware("response")
+    def mw_5(request, response):
+        order.append(5)
+    @blueprint.middleware("response")
+    def mw_6(request, response):
+        order.append(4)
+
+    @blueprint.route("/")
+    def process_response(request):
+        return text("OK")
+
+    app.blueprint(blueprint)
+    order.clear()
+    request, response = app.test_client.get("/")
+
+    assert response.status == 200
+    assert order == [1, 2, 3, 4, 5, 6]
 
 def test_bp_exception_handler(app):
     blueprint = Blueprint("test_middleware")

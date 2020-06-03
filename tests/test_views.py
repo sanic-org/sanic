@@ -151,8 +151,7 @@ def test_with_custom_class_methods(app):
         def get(self, request):
             self._iternal_method()
             return text(
-                f"I am get method and global var "
-                f"is {self.global_var}"
+                f"I am get method and global var " f"is {self.global_var}"
             )
 
     app.add_route(DummyView.as_view(), "/")

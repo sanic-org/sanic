@@ -46,19 +46,19 @@ def test_versioned_routes_get(app, method):
     func = getattr(bp, method)
     if callable(func):
 
-        @func("/{}".format(method), version=1)
+        @func(f"/{method}", version=1)
         def handler(request):
             return text("OK")
 
     else:
         print(func)
-        raise Exception("{} is not callable".format(func))
+        raise Exception(f"{func} is not callable")
 
     app.blueprint(bp)
 
     client_method = getattr(app.test_client, method)
 
-    request, response = client_method("/v1/{}".format(method))
+    request, response = client_method(f"/v1/{method}")
     assert response.status == 200
 
 
@@ -253,7 +253,7 @@ def test_several_bp_with_host(app):
 
 
 def test_bp_middleware(app):
-    blueprint = Blueprint("test_middleware")
+    blueprint = Blueprint("test_bp_middleware")
 
     @blueprint.middleware("response")
     async def process_response(request, response):
@@ -270,6 +270,38 @@ def test_bp_middleware(app):
     assert response.status == 200
     assert response.text == "FAIL"
 
+def test_bp_middleware_order(app):
+    blueprint = Blueprint("test_bp_middleware_order")
+    order = list()
+    @blueprint.middleware("request")
+    def mw_1(request):
+        order.append(1)
+    @blueprint.middleware("request")
+    def mw_2(request):
+        order.append(2)
+    @blueprint.middleware("request")
+    def mw_3(request):
+        order.append(3)
+    @blueprint.middleware("response")
+    def mw_4(request, response):
+        order.append(6)
+    @blueprint.middleware("response")
+    def mw_5(request, response):
+        order.append(5)
+    @blueprint.middleware("response")
+    def mw_6(request, response):
+        order.append(4)
+
+    @blueprint.route("/")
+    def process_response(request):
+        return text("OK")
+
+    app.blueprint(blueprint)
+    order.clear()
+    request, response = app.test_client.get("/")
+
+    assert response.status == 200
+    assert order == [1, 2, 3, 4, 5, 6]
 
 def test_bp_exception_handler(app):
     blueprint = Blueprint("test_middleware")
@@ -554,7 +586,7 @@ def test_bp_group_with_default_url_prefix(app):
 
     resource_id = str(uuid4())
     request, response = app.test_client.get(
-        "/api/v1/resources/{0}".format(resource_id)
+        f"/api/v1/resources/{resource_id}"
     )
     assert response.json == {"resource_id": resource_id}
 
@@ -669,9 +701,9 @@ def test_duplicate_blueprint(app):
         app.blueprint(bp1)
 
     assert str(excinfo.value) == (
-        'A blueprint with the name "{}" is already registered.  '
+        f'A blueprint with the name "{bp_name}" is already registered.  '
         "Blueprint names must be unique."
-    ).format(bp_name)
+    )
 
 
 @pytest.mark.parametrize("debug", [True, False, None])

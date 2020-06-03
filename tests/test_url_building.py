@@ -20,30 +20,24 @@ URL_FOR_ARGS3 = dict(
     arg1="v1",
     _anchor="anchor",
     _scheme="http",
-    _server="{}:{}".format(test_host, test_port),
+    _server=f"{test_host}:{test_port}",
     _external=True,
 )
-URL_FOR_VALUE3 = "http://{}:{}/myurl?arg1=v1#anchor".format(
-    test_host, test_port
-)
+URL_FOR_VALUE3 = f"http://{test_host}:{test_port}/myurl?arg1=v1#anchor"
 URL_FOR_ARGS4 = dict(
     arg1="v1",
     _anchor="anchor",
     _external=True,
-    _server="http://{}:{}".format(test_host, test_port),
+    _server=f"http://{test_host}:{test_port}",
 )
-URL_FOR_VALUE4 = "http://{}:{}/myurl?arg1=v1#anchor".format(
-    test_host, test_port
-)
+URL_FOR_VALUE4 = f"http://{test_host}:{test_port}/myurl?arg1=v1#anchor"
 
 
 def _generate_handlers_from_names(app, l):
     for name in l:
         # this is the easiest way to generate functions with dynamic names
         exec(
-            '@app.route(name)\ndef {}(request):\n\treturn text("{}")'.format(
-                name, name
-            )
+            f'@app.route(name)\ndef {name}(request):\n\treturn text("{name}")'
         )
 
 
@@ -60,7 +54,7 @@ def test_simple_url_for_getting(simple_app):
     for letter in string.ascii_letters:
         url = simple_app.url_for(letter)
 
-        assert url == "/{}".format(letter)
+        assert url == f"/{letter}"
         request, response = simple_app.test_client.get(url)
         assert response.status == 200
         assert response.text == letter
@@ -88,7 +82,7 @@ def test_simple_url_for_getting_with_more_params(app, args, url):
 
 def test_url_for_with_server_name(app):
 
-    server_name = "{}:{}".format(test_host, test_port)
+    server_name = f"{test_host}:{test_port}"
     app.config.update({"SERVER_NAME": server_name})
     path = "/myurl"
 
@@ -96,7 +90,7 @@ def test_url_for_with_server_name(app):
     def passes(request):
         return text("this should pass")
 
-    url = "http://{}{}".format(server_name, path)
+    url = f"http://{server_name}{path}"
     assert url == app.url_for("passes", _server=None, _external=True)
     request, response = app.test_client.get(url)
     assert response.status == 200
@@ -118,7 +112,7 @@ def test_fails_url_build_if_param_not_passed(app):
     url = "/"
 
     for letter in string.ascii_letters:
-        url += "<{}>/".format(letter)
+        url += f"<{letter}>/"
 
     @app.route(url)
     def fail(request):
@@ -182,7 +176,7 @@ def test_passes_with_negative_int_message(app):
     @app.route("path/<possibly_neg:int>/another-word")
     def good(request, possibly_neg):
         assert isinstance(possibly_neg, int)
-        return text("this should pass with `{}`".format(possibly_neg))
+        return text(f"this should pass with `{possibly_neg}`")
 
     u_plus_3 = app.url_for("good", possibly_neg=3)
     assert u_plus_3 == "/path/3/another-word", u_plus_3
@@ -237,13 +231,13 @@ def test_passes_with_negative_number_message(app, number):
     @app.route("path/<possibly_neg:number>/another-word")
     def good(request, possibly_neg):
         assert isinstance(possibly_neg, (int, float))
-        return text("this should pass with `{}`".format(possibly_neg))
+        return text(f"this should pass with `{possibly_neg}`")
 
     u = app.url_for("good", possibly_neg=number)
-    assert u == "/path/{}/another-word".format(number), u
+    assert u == f"/path/{number}/another-word", u
     request, response = app.test_client.get(u)
     # For ``number``, it has been cast to a float - so a ``3`` becomes a ``3.0``
-    assert response.text == "this should pass with `{}`".format(float(number))
+    assert response.text == f"this should pass with `{float(number)}`"
 
 
 def test_adds_other_supplied_values_as_query_string(app):
@@ -275,7 +269,7 @@ def blueprint_app(app):
 
     @first_print.route("/foo/<param>")
     def foo_with_param(request, param):
-        return text("foo from first : {}".format(param))
+        return text(f"foo from first : {param}")
 
     @second_print.route("/foo")  # noqa
     def foo(request):
@@ -283,7 +277,7 @@ def blueprint_app(app):
 
     @second_print.route("/foo/<param>")  # noqa
     def foo_with_param(request, param):
-        return text("foo from second : {}".format(param))
+        return text(f"foo from second : {param}")
 
     app.blueprint(first_print)
     app.blueprint(second_print)

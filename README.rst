@@ -83,6 +83,9 @@ Installation
   If you are running on a clean install of Fedora 28 or above, please make sure you have the ``redhat-rpm-config`` package installed in case if you want to
   use ``sanic`` with ``ujson`` dependency.
 
+.. note::
+
+  Windows support is currently "experimental" and on a best-effort basis. Multiple workers are also not currently supported on Windows (see `Issue #1517 <https://github.com/huge-success/sanic/issues/1517>`_), but setting ``workers=1`` should launch the server successfully.
 
 Hello World Example
 -------------------

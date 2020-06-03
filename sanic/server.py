@@ -1,4 +1,5 @@
 import asyncio
+import multiprocessing
 import os
 import sys
 import traceback
@@ -6,7 +7,6 @@ import traceback
 from collections import deque
 from functools import partial
 from inspect import isawaitable
-from multiprocessing import Process
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from socket import SO_REUSEADDR, SOL_SOCKET, socket
@@ -15,7 +15,7 @@ from time import time
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
 
-from sanic.compat import Header
+from sanic.compat import Header, ctrlc_workaround_for_windows
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -36,6 +36,8 @@ try:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
+
+OS_IS_WINDOWS = os.name == "nt"
 
 
 class Signal:
@@ -69,7 +71,6 @@ class HttpProtocol(asyncio.Protocol):
         "request_buffer_queue_size",
         "request_class",
         "is_request_stream",
-        "router",
         "error_handler",
         # enable or disable access log purpose
         "access_log",
@@ -87,7 +88,6 @@ class HttpProtocol(asyncio.Protocol):
         "_keep_alive",
         "_header_fragment",
         "state",
-        "_debug",
         "_body_chunks",
     )
 
@@ -96,49 +96,36 @@ class HttpProtocol(asyncio.Protocol):
         *,
         loop,
         app,
-        request_handler,
-        error_handler,
         signal=Signal(),
         connections=None,
-        request_timeout=60,
-        response_timeout=60,
-        keep_alive_timeout=5,
-        request_max_size=None,
-        request_buffer_queue_size=100,
-        request_class=None,
-        access_log=True,
-        keep_alive=True,
-        is_request_stream=False,
-        router=None,
         state=None,
-        debug=False,
-        **kwargs
+        **kwargs,
     ):
+        asyncio.set_event_loop(loop)
         self.loop = loop
+        deprecated_loop = self.loop if sys.version_info < (3, 7) else None
         self.app = app
         self.transport = None
         self.request = None
         self.parser = None
         self.url = None
         self.headers = None
-        self.router = router
         self.signal = signal
-        self.access_log = access_log
+        self.access_log = self.app.config.ACCESS_LOG
         self.connections = connections if connections is not None else set()
-        self.request_handler = request_handler
-        self.error_handler = error_handler
-        self.request_timeout = request_timeout
-        self.request_buffer_queue_size = request_buffer_queue_size
-        self.response_timeout = response_timeout
-        self.keep_alive_timeout = keep_alive_timeout
-        self.request_max_size = request_max_size
-        self.request_class = request_class or Request
-        self.is_request_stream = is_request_stream
+        self.request_handler = self.app.handle_request
+        self.error_handler = self.app.error_handler
+        self.request_timeout = self.app.config.REQUEST_TIMEOUT
+        self.request_buffer_queue_size = (
+            self.app.config.REQUEST_BUFFER_QUEUE_SIZE
+        )
+        self.response_timeout = self.app.config.RESPONSE_TIMEOUT
+        self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
+        self.request_max_size = self.app.config.REQUEST_MAX_SIZE
+        self.request_class = self.app.request_class or Request
+        self.is_request_stream = self.app.is_request_stream
         self._is_stream_handler = False
-        if sys.version_info.minor >= 8:
-            self._not_paused = asyncio.Event()
-        else:
-            self._not_paused = asyncio.Event(loop=loop)
+        self._not_paused = asyncio.Event(loop=deprecated_loop)
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None
@@ -147,12 +134,11 @@ class HttpProtocol(asyncio.Protocol):
         self._last_response_time = None
         self._request_handler_task = None
         self._request_stream_task = None
-        self._keep_alive = keep_alive
+        self._keep_alive = self.app.config.KEEP_ALIVE
         self._header_fragment = b""
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
-        self._debug = debug
         self._not_paused.set()
         self._body_chunks = deque()
 
@@ -280,7 +266,7 @@ class HttpProtocol(asyncio.Protocol):
             self.parser.feed_data(data)
         except HttpParserError:
             message = "Bad Request"
-            if self._debug:
+            if self.app.debug:
                 message += "\n" + traceback.format_exc()
             self.write_error(InvalidUsage(message))
 
@@ -328,7 +314,7 @@ class HttpProtocol(asyncio.Protocol):
             self.expect_handler()
 
         if self.is_request_stream:
-            self._is_stream_handler = self.router.is_stream_handler(
+            self._is_stream_handler = self.app.router.is_stream_handler(
                 self.request
             )
             if self._is_stream_handler:
@@ -347,9 +333,7 @@ class HttpProtocol(asyncio.Protocol):
                 self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
             else:
                 self.write_error(
-                    HeaderExpectationFailed(
-                        "Unknown Expect: {expect}".format(expect=expect)
-                    )
+                    HeaderExpectationFailed(f"Unknown Expect: {expect}")
                 )
 
     def on_body(self, body):
@@ -456,13 +440,9 @@ class HttpProtocol(asyncio.Protocol):
             extra["host"] = "UNKNOWN"
             if self.request is not None:
                 if self.request.ip:
-                    extra["host"] = "{0}:{1}".format(
-                        self.request.ip, self.request.port
-                    )
+                    extra["host"] = f"{self.request.ip}:{self.request.port}"
 
-                extra["request"] = "{0} {1}".format(
-                    self.request.method, self.request.url
-                )
+                extra["request"] = f"{self.request.method} {self.request.url}"
             else:
                 extra["request"] = "nil"
 
@@ -492,16 +472,14 @@ class HttpProtocol(asyncio.Protocol):
             )
             self.write_error(ServerError("Invalid response type"))
         except RuntimeError:
-            if self._debug:
+            if self.app.debug:
                 logger.error(
                     "Connection lost before response written @ %s",
                     self.request.ip,
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(repr(e))
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -545,16 +523,14 @@ class HttpProtocol(asyncio.Protocol):
             )
             self.write_error(ServerError("Invalid response type"))
         except RuntimeError:
-            if self._debug:
+            if self.app.debug:
                 logger.error(
                     "Connection lost before response written @ %s",
                     self.request.ip,
                 )
             keep_alive = False
         except Exception as e:
-            self.bail_out(
-                "Writing response failed, connection closed {}".format(repr(e))
-            )
+            self.bail_out(f"Writing response failed, connection closed {e!r}")
         finally:
             if not keep_alive:
                 self.transport.close()
@@ -578,14 +554,14 @@ class HttpProtocol(asyncio.Protocol):
             version = self.request.version if self.request else "1.1"
             self.transport.write(response.output(version))
         except RuntimeError:
-            if self._debug:
+            if self.app.debug:
                 logger.error(
                     "Connection lost before error written @ %s",
                     self.request.ip if self.request else "Unknown",
                 )
         except Exception as e:
             self.bail_out(
-                "Writing error failed, connection closed {}".format(repr(e)),
+                f"Writing error failed, connection closed {e!r}",
                 from_error=True,
             )
         finally:
@@ -646,7 +622,7 @@ class HttpProtocol(asyncio.Protocol):
 
         :return: boolean - True if closed, false if staying open
         """
-        if not self.parser:
+        if not self.parser and self.transport is not None:
             self.transport.close()
             return True
         return False
@@ -768,20 +744,12 @@ def serve(
     host,
     port,
     app,
-    request_handler,
-    error_handler,
     before_start=None,
     after_start=None,
     before_stop=None,
     after_stop=None,
-    debug=False,
-    request_timeout=60,
-    response_timeout=60,
-    keep_alive_timeout=5,
     ssl=None,
     sock=None,
-    request_max_size=None,
-    request_buffer_queue_size=100,
     reuse_port=False,
     loop=None,
     protocol=HttpProtocol,
@@ -791,25 +759,13 @@ def serve(
     run_async=False,
     connections=None,
     signal=Signal(),
-    request_class=None,
-    access_log=True,
-    keep_alive=True,
-    is_request_stream=False,
-    router=None,
-    websocket_max_size=None,
-    websocket_max_queue=None,
-    websocket_read_limit=2 ** 16,
-    websocket_write_limit=2 ** 16,
     state=None,
-    graceful_shutdown_timeout=15.0,
     asyncio_server_kwargs=None,
 ):
     """Start asynchronous HTTP Server on an individual process.
 
     :param host: Address to host on
     :param port: Port to host on
-    :param request_handler: Sanic request handler with middleware
-    :param error_handler: Sanic error handler with middleware
     :param before_start: function to be executed before the server starts
                          listening. Takes arguments `app` instance and `loop`
     :param after_start: function to be executed after the server starts
@@ -820,35 +776,12 @@ def serve(
     :param after_stop: function to be executed when a stop signal is
                        received after it is respected. Takes arguments
                        `app` instance and `loop`
-    :param debug: enables debug output (slows server)
-    :param request_timeout: time in seconds
-    :param response_timeout: time in seconds
-    :param keep_alive_timeout: time in seconds
     :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
-    :param request_max_size: size in bytes, `None` for no limit
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
-    :param protocol: subclass of asyncio protocol class
     :param run_async: bool: Do not create a new event loop for the server,
                       and return an AsyncServer object rather than running it
-    :param request_class: Request class to use
-    :param access_log: disable/enable access log
-    :param websocket_max_size: enforces the maximum size for
-                               incoming messages in bytes.
-    :param websocket_max_queue: sets the maximum length of the queue
-                                that holds incoming messages.
-    :param websocket_read_limit: sets the high-water limit of the buffer for
-                                 incoming bytes, the low-water limit is half
-                                 the high-water limit.
-    :param websocket_write_limit: sets the high-water limit of the buffer for
-                                  outgoing bytes, the low-water limit is a
-                                  quarter of the high-water limit.
-    :param is_request_stream: disable/enable Request.stream
-    :param request_buffer_queue_size: streaming request buffer queue size
-    :param router: Router object
-    :param graceful_shutdown_timeout: How long take to Force close non-idle
-                                      connection
     :param asyncio_server_kwargs: key-value args for asyncio/uvloop
                                   create_server method
     :return: Nothing
@@ -858,8 +791,8 @@ def serve(
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    if debug:
-        loop.set_debug(debug)
+    if app.debug:
+        loop.set_debug(app.debug)
 
     app.asgi = False
 
@@ -870,24 +803,7 @@ def serve(
         connections=connections,
         signal=signal,
         app=app,
-        request_handler=request_handler,
-        error_handler=error_handler,
-        request_timeout=request_timeout,
-        response_timeout=response_timeout,
-        keep_alive_timeout=keep_alive_timeout,
-        request_max_size=request_max_size,
-        request_buffer_queue_size=request_buffer_queue_size,
-        request_class=request_class,
-        access_log=access_log,
-        keep_alive=keep_alive,
-        is_request_stream=is_request_stream,
-        router=router,
-        websocket_max_size=websocket_max_size,
-        websocket_max_queue=websocket_max_queue,
-        websocket_read_limit=websocket_read_limit,
-        websocket_write_limit=websocket_write_limit,
         state=state,
-        debug=debug,
     )
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
@@ -900,17 +816,17 @@ def serve(
         reuse_port=reuse_port,
         sock=sock,
         backlog=backlog,
-        **asyncio_server_kwargs
+        **asyncio_server_kwargs,
     )
 
     if run_async:
         return AsyncioServer(
-            loop,
-            server_coroutine,
-            connections,
-            after_start,
-            before_stop,
-            after_stop,
+            loop=loop,
+            serve_coro=server_coroutine,
+            connections=connections,
+            after_start=after_start,
+            before_stop=before_stop,
+            after_stop=after_stop,
         )
 
     trigger_events(before_start, loop)
@@ -929,15 +845,11 @@ def serve(
 
     # Register signals for graceful termination
     if register_sys_signals:
-        _singals = (SIGTERM,) if run_multiple else (SIGINT, SIGTERM)
-        for _signal in _singals:
-            try:
-                loop.add_signal_handler(_signal, loop.stop)
-            except NotImplementedError:
-                logger.warning(
-                    "Sanic tried to use loop.add_signal_handler "
-                    "but it is not implemented on this platform."
-                )
+        if OS_IS_WINDOWS:
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
     pid = os.getpid()
     try:
         logger.info("Starting worker [%s]", pid)
@@ -961,8 +873,9 @@ def serve(
         # We should provide graceful_shutdown_timeout,
         # instead of letting connection hangs forever.
         # Let's roughly calcucate time.
+        graceful = app.config.GRACEFUL_SHUTDOWN_TIMEOUT
         start_shutdown = 0
-        while connections and (start_shutdown < graceful_shutdown_timeout):
+        while connections and (start_shutdown < graceful):
             loop.run_until_complete(asyncio.sleep(0.1))
             start_shutdown = start_shutdown + 0.1
 
@@ -975,10 +888,7 @@ def serve(
             else:
                 conn.close()
 
-        if sys.version_info.minor >= 8:
-            _shutdown = asyncio.gather(*coros, loop=loop)
-        else:
-            _shutdown = asyncio.gather(*coros)
+        _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
 
         trigger_events(after_stop, loop)
@@ -1017,9 +927,10 @@ def serve_multiple(server_settings, workers):
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
+    mp = multiprocessing.get_context("fork")
 
     for _ in range(workers):
-        process = Process(target=serve, kwargs=server_settings)
+        process = mp.Process(target=serve, kwargs=server_settings)
         process.daemon = True
         process.start()
         processes.append(process)

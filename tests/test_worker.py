@@ -128,6 +128,8 @@ def test_handle_quit(worker):
     assert not worker.alive
     assert worker.exit_code == 0
 
+async def _a_noop(*a, **kw):
+    pass
 
 def test_run_max_requests_exceeded(worker):
     loop = asyncio.new_event_loop()
@@ -145,7 +147,7 @@ def test_run_max_requests_exceeded(worker):
         "server2": {"requests_count": 15},
     }
     worker.max_requests = 10
-    worker._run = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
+    worker._run = mock.Mock(wraps=_a_noop)
 
     # exceeding request count
     _runner = asyncio.ensure_future(worker._check_alive(), loop=loop)
@@ -160,7 +162,7 @@ def test_run_max_requests_exceeded(worker):
 
 def test_worker_close(worker):
     loop = asyncio.new_event_loop()
-    asyncio.sleep = mock.Mock(wraps=asyncio.coroutine(lambda *a, **kw: None))
+    asyncio.sleep = mock.Mock(wraps=_a_noop)
     worker.ppid = 1
     worker.pid = 2
     worker.cfg.graceful_timeout = 1.0
@@ -169,17 +171,13 @@ def test_worker_close(worker):
     worker.wsgi = mock.Mock()
     conn = mock.Mock()
     conn.websocket = mock.Mock()
-    conn.websocket.close_connection = mock.Mock(
-        wraps=asyncio.coroutine(lambda *a, **kw: None)
-    )
+    conn.websocket.close_connection = mock.Mock(wraps=_a_noop)
     worker.connections = set([conn])
     worker.log = mock.Mock()
     worker.loop = loop
     server = mock.Mock()
     server.close = mock.Mock(wraps=lambda *a, **kw: None)
-    server.wait_closed = mock.Mock(
-        wraps=asyncio.coroutine(lambda *a, **kw: None)
-    )
+    server.wait_closed = mock.Mock(wraps=_a_noop)
     worker.servers = {server: {"requests_count": 14}}
     worker.max_requests = 10
 

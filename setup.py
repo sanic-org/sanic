@@ -68,6 +68,7 @@ setup_kwargs = {
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 }
 
@@ -84,7 +85,7 @@ requirements = [
     "aiofiles>=0.3.0",
     "websockets>=7.0,<9.0",
     "multidict>=4.0,<5.0",
-    "httpx==0.9.3",
+    "httpx==0.11.1",
 ]
 
 tests_require = [

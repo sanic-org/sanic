@@ -12,7 +12,7 @@ To setup a WebSocket:
     from sanic.response import json
     from sanic.websocket import WebSocketProtocol
 
-    app = Sanic()
+    app = Sanic("websocket_example")
 
     @app.websocket('/feed')
     async def feed(request, ws):

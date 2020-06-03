@@ -6,6 +6,7 @@ from inspect import isawaitable
 
 import pytest
 
+from sanic import Sanic
 from sanic.exceptions import SanicException
 from sanic.response import text
 
@@ -48,6 +49,7 @@ def test_asyncio_server_no_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
+            port=43123,
             return_asyncio_server=True,
             asyncio_server_kwargs=dict(start_serving=False),
         )
@@ -61,6 +63,7 @@ def test_asyncio_server_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
+            port=43124,
             return_asyncio_server=True,
             asyncio_server_kwargs=dict(start_serving=False),
         )
@@ -68,7 +71,8 @@ def test_asyncio_server_start_serving(app):
         assert srv.is_serving() is False
         loop.run_until_complete(srv.start_serving())
         assert srv.is_serving() is True
-        srv.close()
+        wait_close = srv.close()
+        loop.run_until_complete(wait_close)
         # Looks like we can't easily test `serve_forever()`
 
 def test_app_loop_not_running(app):
@@ -179,9 +183,7 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
     request, response = app.test_client.get("/", debug=True)
     assert response.status == 500
     assert response.text.startswith(
-        "Error while handling error: {}\nStack: Traceback (most recent call last):\n".format(
-            err_msg
-        )
+        f"Error while handling error: {err_msg}\nStack: Traceback (most recent call last):\n"
     )
 
 
@@ -201,10 +203,17 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
 
     with caplog.at_level(logging.ERROR):
         request, response = app.test_client.get("/")
+    port = request.server_port
+    assert port > 0
     assert response.status == 500
     assert "Mock SanicException" in response.text
     assert (
         "sanic.root",
         logging.ERROR,
-        "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
+        f"Exception occurred while handling uri: 'http://127.0.0.1:{port}/'",
     ) in caplog.record_tuples
+
+
+def test_app_name_required():
+    with pytest.deprecated_call():
+        Sanic()

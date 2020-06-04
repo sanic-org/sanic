@@ -115,6 +115,7 @@ class Http:
 
     async def http1_request_header(self):
         """Receive and parse request header into self.request."""
+        HEADER_MAX_SIZE = min(8192, self.request_max_size)
         # Receive until full header is in buffer
         buf = self.recv_buffer
         pos = 0
@@ -123,10 +124,10 @@ class Http:
             if pos != -1:
                 break
             pos = max(0, len(buf) - 3)
-            if pos >= self.request_max_size:
+            if pos >= HEADER_MAX_SIZE:
                 break
             await self._receive_more()
-        if pos >= self.request_max_size:
+        if pos >= HEADER_MAX_SIZE:
             raise PayloadTooLarge("Request header exceeds the size limit")
         # Parse header content
         try:

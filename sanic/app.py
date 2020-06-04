@@ -653,7 +653,7 @@ class Sanic:
                 if _rn not in self.named_response_middleware:
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
-                    self.named_response_middleware[_rn].append(middleware)
+                    self.named_response_middleware[_rn].appendleft(middleware)
 
     # Decorator
     def middleware(self, middleware_or_request):
@@ -1058,7 +1058,9 @@ class Sanic:
         self,
         host: Optional[str] = None,
         port: Optional[int] = None,
+        *,
         debug: bool = False,
+        auto_reload: Optional[bool] = None,
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
@@ -1068,7 +1070,6 @@ class Sanic:
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        **kwargs: Any,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
@@ -1079,6 +1080,9 @@ class Sanic:
         :type port: int
         :param debug: Enables debug output (slows server)
         :type debug: bool
+        :param auto_reload: Reload app whenever its source code is changed.
+                            Enabled by default in debug mode.
+        :type auto_relaod: bool
         :param ssl: SSLContext, or location of certificate and key
                     for SSL encryption of worker(s)
         :type ssl: SSLContext or dict
@@ -1102,7 +1106,7 @@ class Sanic:
         :type unix: str
         :return: Nothing
         """
-        if "loop" in kwargs:
+        if loop is not None:
             raise TypeError(
                 "loop is not a valid argument. To use an existing loop, "
                 "change to create_server().\nSee more: "
@@ -1110,13 +1114,9 @@ class Sanic:
                 "#asynchronous-support"
             )
 
-        # Default auto_reload to false
-        auto_reload = False
-        # If debug is set, default it to true (unless on windows)
-        if debug and os.name == "posix":
-            auto_reload = True
-        # Allow for overriding either of the defaults
-        auto_reload = kwargs.get("auto_reload", auto_reload)
+        if auto_reload or auto_reload is None and debug:
+            if os.environ.get("SANIC_SERVER_RUNNING") != "true":
+                return reloader_helpers.watchdog(1.0)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -1160,18 +1160,7 @@ class Sanic:
                 )
                 workers = 1
             if workers == 1:
-                if auto_reload and os.name != "posix":
-                    # This condition must be removed after implementing
-                    # auto reloader for other operating systems.
-                    raise NotImplementedError
-
-                if (
-                    auto_reload
-                    and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-                ):
-                    reloader_helpers.watchdog(2)
-                else:
-                    serve(**server_settings)
+                serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
@@ -1193,6 +1182,7 @@ class Sanic:
         self,
         host: Optional[str] = None,
         port: Optional[int] = None,
+        *,
         debug: bool = False,
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
@@ -1421,7 +1411,7 @@ class Sanic:
             server_settings["run_async"] = True
 
         # Serve
-        if host and port and os.environ.get("SANIC_SERVER_RUNNING") != "true":
+        if host and port:
             proto = "http"
             if ssl is not None:
                 proto = "https"

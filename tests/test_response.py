@@ -242,7 +242,7 @@ def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
 
 
 def test_non_chunked_streaming_returns_correct_content(
-    non_chunked_streaming_app
+    non_chunked_streaming_app,
 ):
     request, response = non_chunked_streaming_app.test_client.get("/")
     assert response.text == "foo,bar"
@@ -257,7 +257,7 @@ def test_stream_response_status_returns_correct_headers(status):
 
 @pytest.mark.parametrize("keep_alive_timeout", [10, 20, 30])
 def test_stream_response_keep_alive_returns_correct_headers(
-    keep_alive_timeout
+    keep_alive_timeout,
 ):
     response = StreamingHTTPResponse(sample_streaming_fn)
     headers = response.get_headers(
@@ -286,7 +286,7 @@ def test_stream_response_does_not_include_chunked_header_if_disabled():
 
 
 def test_stream_response_writes_correct_content_to_transport_when_chunked(
-    streaming_app
+    streaming_app,
 ):
     response = StreamingHTTPResponse(sample_streaming_fn)
     response.protocol = MagicMock(HttpProtocol)
@@ -434,9 +434,10 @@ def test_file_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == f'attachment; filename="{dest}"'
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -510,9 +511,10 @@ def test_file_stream_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == f'attachment; filename="{dest}"'
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -581,7 +583,10 @@ def test_file_stream_response_range(
     request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 206
     assert "Content-Range" in response.headers
-    assert response.headers["Content-Range"] == f"bytes {range.start}-{range.end}/{range.total}"
+    assert (
+        response.headers["Content-Range"]
+        == f"bytes {range.start}-{range.end}/{range.total}"
+    )
 
 
 def test_raw_response(app):

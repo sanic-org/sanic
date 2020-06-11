@@ -1064,7 +1064,7 @@ class Sanic:
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
-        protocol: Type[Protocol] = None,
+        protocol: Optional[Type[Protocol]] = None,
         backlog: int = 100,
         stop_event: Any = None,
         register_sys_signals: bool = True,

@@ -9,6 +9,7 @@ from sanic import Sanic, server
 from sanic.response import text
 from sanic.testing import HOST, SanicTestClient
 
+
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
 old_conn = None
@@ -46,7 +47,7 @@ class ReusableSanicConnectionPool(
                 cert=self.cert,
                 verify=self.verify,
                 trust_env=self.trust_env,
-                http2=self.http2
+                http2=self.http2,
             )
             connection = httpx.dispatch.connection.HTTPConnection(
                 origin,
@@ -166,9 +167,7 @@ class ReuseableSanicTestClient(SanicTestClient):
             try:
                 return results[-1]
             except Exception:
-                raise ValueError(
-                    f"Request object expected, got ({results})"
-                )
+                raise ValueError(f"Request object expected, got ({results})")
 
     def kill_server(self):
         try:

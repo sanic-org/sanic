@@ -84,8 +84,8 @@ def test_listeners_triggered(app):
 
     all_tasks = (
         asyncio.Task.all_tasks()
-        if sys.version_info < (3, 7) else
-        asyncio.all_tasks(asyncio.get_event_loop())
+        if sys.version_info < (3, 7)
+        else asyncio.all_tasks(asyncio.get_event_loop())
     )
     for task in all_tasks:
         task.cancel()
@@ -134,8 +134,8 @@ def test_listeners_triggered_async(app):
 
     all_tasks = (
         asyncio.Task.all_tasks()
-        if sys.version_info < (3, 7) else
-        asyncio.all_tasks(asyncio.get_event_loop())
+        if sys.version_info < (3, 7)
+        else asyncio.all_tasks(asyncio.get_event_loop())
     )
     for task in all_tasks:
         task.cancel()

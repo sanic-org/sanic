@@ -240,11 +240,10 @@ def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
 
 
 def test_non_chunked_streaming_returns_correct_content(
-    non_chunked_streaming_app
+    non_chunked_streaming_app,
 ):
     request, response = non_chunked_streaming_app.test_client.get("/")
     assert response.text == "foo,bar"
-
 
 
 def test_stream_response_with_cookies(app):
@@ -324,9 +323,10 @@ def test_file_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == f'attachment; filename="{dest}"'
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -400,9 +400,10 @@ def test_file_stream_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == f'attachment; filename="{dest}"'
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -471,7 +472,10 @@ def test_file_stream_response_range(
     request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 206
     assert "Content-Range" in response.headers
-    assert response.headers["Content-Range"] == f"bytes {range.start}-{range.end}/{range.total}"
+    assert (
+        response.headers["Content-Range"]
+        == f"bytes {range.start}-{range.end}/{range.total}"
+    )
 
 
 def test_raw_response(app):

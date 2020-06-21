@@ -128,8 +128,10 @@ def test_handle_quit(worker):
     assert not worker.alive
     assert worker.exit_code == 0
 
+
 async def _a_noop(*a, **kw):
     pass
+
 
 def test_run_max_requests_exceeded(worker):
     loop = asyncio.new_event_loop()

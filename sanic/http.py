@@ -85,7 +85,7 @@ class Http:
                     await self.response.send(end_stream=True)
             except CancelledError:
                 # Write an appropriate response before exiting
-                e = self.exception or ServiceUnavailable(f"Cancelled")
+                e = self.exception or ServiceUnavailable("Cancelled")
                 self.exception = None
                 self.keep_alive = False
                 await self.error_response(e)

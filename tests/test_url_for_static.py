@@ -118,7 +118,7 @@ def test_static_directory(app, file_name, base_uri, static_file_directory):
     app.static(base_uri2, static_file_directory, name="uploads")
 
     uri = app.url_for("static", name="static", filename=file_name)
-    assert uri == "{}/{}".format(base_uri, file_name)
+    assert uri == f"{base_uri}/{file_name}"
 
     request, response = app.test_client.get(uri)
     assert response.status == 200
@@ -134,7 +134,7 @@ def test_static_directory(app, file_name, base_uri, static_file_directory):
     assert uri2 == uri3
     assert uri3 == uri4
 
-    assert uri5 == "{}/{}".format(base_uri2, file_name)
+    assert uri5 == f"{base_uri2}/{file_name}"
     assert uri5 == uri6
 
     bp = Blueprint("test_bp_static", url_prefix="/bp")
@@ -157,10 +157,10 @@ def test_static_directory(app, file_name, base_uri, static_file_directory):
         "static", name="test_bp_static.uploads", filename="/" + file_name
     )
 
-    assert uri == "/bp{}/{}".format(base_uri, file_name)
+    assert uri == f"/bp{base_uri}/{file_name}"
     assert uri == uri2
 
-    assert uri4 == "/bp{}/{}".format(base_uri2, file_name)
+    assert uri4 == f"/bp{base_uri2}/{file_name}"
     assert uri4 == uri5
 
     request, response = app.test_client.get(uri)

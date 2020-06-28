@@ -16,7 +16,7 @@ Sanic allows you to get request data by stream, as below. When the request ends,
     from sanic.response import stream, text
 
     bp = Blueprint('blueprint_request_stream')
-    app = Sanic('request_stream')
+    app = Sanic(__name__)
 
 
     class SimpleView(HTTPMethodView):

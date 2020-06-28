@@ -1,6 +1,5 @@
 import asyncio
 import email.utils
-import warnings
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
@@ -55,6 +54,14 @@ class StreamBuffer:
         payload = await self._queue.get()
         self._queue.task_done()
         return payload
+
+    async def __aiter__(self):
+        """Support `async for data in request.stream`"""
+        while True:
+            data = await self.read()
+            if not data:
+                break
+            yield data
 
     async def put(self, payload):
         await self._queue.put(payload)
@@ -123,43 +130,36 @@ class Request:
         self.endpoint = None
 
     def __repr__(self):
-        return "<{0}: {1} {2}>".format(
-            self.__class__.__name__, self.method, self.path
-        )
-
-    def get(self, key, default=None):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        return self.ctx.__dict__.get(key, default)
-
-    def __contains__(self, key):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        return key in self.ctx.__dict__
-
-    def __getitem__(self, key):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        return self.ctx.__dict__[key]
-
-    def __delitem__(self, key):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        del self.ctx.__dict__[key]
-
-    def __setitem__(self, key, value):
-        """.. deprecated:: 19.9
-           Custom context is now stored in `request.custom_context.yourkey`"""
-        setattr(self.ctx, key, value)
+        class_name = self.__class__.__name__
+        return f"<{class_name}: {self.method} {self.path}>"
 
     def body_init(self):
+        """.. deprecated:: 20.3"""
         self.body = []
 
     def body_push(self, data):
+        """.. deprecated:: 20.3"""
         self.body.append(data)
 
     def body_finish(self):
+        """.. deprecated:: 20.3"""
         self.body = b"".join(self.body)
+
+    async def receive_body(self):
+        """Receive request.body, if not already received.
+
+        Streaming handlers may call this to receive the full body.
+
+        This is added as a compatibility shim in Sanic 20.3 because future
+        versions of Sanic will make all requests streaming and will use this
+        function instead of the non-async body_init/push/finish functions.
+
+        Please make an issue if your code depends on the old functionality and
+        cannot be upgraded to the new API.
+        """
+        if not self.stream:
+            return
+        self.body = b"".join([data async for data in self.stream])
 
     @property
     def json(self):
@@ -281,18 +281,6 @@ class Request:
         ]
 
     args = property(get_args)
-
-    @property
-    def raw_args(self) -> dict:
-        if self.app.debug:  # pragma: no cover
-            warnings.simplefilter("default")
-        warnings.warn(
-            "Use of raw_args will be deprecated in "
-            "the future versions. Please use args or query_args "
-            "properties instead",
-            DeprecationWarning,
-        )
-        return {k: v[0] for k, v in self.args.items()}
 
     def get_query_args(
         self,
@@ -538,7 +526,7 @@ class Request:
         ):
             netloc = host
         else:
-            netloc = "{}:{}".format(host, port)
+            netloc = f"{host}:{port}"
 
         return self.app.url_for(
             view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs

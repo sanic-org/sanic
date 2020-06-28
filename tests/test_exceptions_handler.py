@@ -43,7 +43,7 @@ def handler_6(request, arg):
     try:
         foo = 1 / arg
     except Exception as e:
-        raise e from ValueError("{}".format(arg))
+        raise e from ValueError(f"{arg}")
     return text(foo)
 
 

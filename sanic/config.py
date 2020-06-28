@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
     "KEEP_ALIVE": True,
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
-    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabytes
+    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_MAX_QUEUE": 32,
     "WEBSOCKET_READ_LIMIT": 2 ** 16,
     "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
@@ -51,7 +51,7 @@ class Config(dict):
         try:
             return self[attr]
         except KeyError as ke:
-            raise AttributeError("Config has no '{}'".format(ke.args[0]))
+            raise AttributeError(f"Config has no '{ke.args[0]}'")
 
     def __setattr__(self, attr, value):
         self[attr] = value

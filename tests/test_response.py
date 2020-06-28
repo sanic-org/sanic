@@ -15,6 +15,7 @@ from aiofiles import os as async_os
 from sanic.response import (
     HTTPResponse,
     StreamingHTTPResponse,
+    empty,
     file,
     file_stream,
     json,
@@ -22,7 +23,6 @@ from sanic.response import (
     stream,
     text,
 )
-from sanic.response import empty
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 
@@ -30,6 +30,7 @@ from sanic.testing import HOST, PORT
 JSON_DATA = {"ok": True}
 
 
+@pytest.mark.filterwarnings("ignore:Types other than str will be")
 def test_response_body_not_a_string(app):
     """Test when a response body sent from the application is not a string"""
     random_num = choice(range(1000))
@@ -241,7 +242,7 @@ def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
 
 
 def test_non_chunked_streaming_returns_correct_content(
-    non_chunked_streaming_app
+    non_chunked_streaming_app,
 ):
     request, response = non_chunked_streaming_app.test_client.get("/")
     assert response.text == "foo,bar"
@@ -256,7 +257,7 @@ def test_stream_response_status_returns_correct_headers(status):
 
 @pytest.mark.parametrize("keep_alive_timeout", [10, 20, 30])
 def test_stream_response_keep_alive_returns_correct_headers(
-    keep_alive_timeout
+    keep_alive_timeout,
 ):
     response = StreamingHTTPResponse(sample_streaming_fn)
     headers = response.get_headers(
@@ -285,7 +286,7 @@ def test_stream_response_does_not_include_chunked_header_if_disabled():
 
 
 def test_stream_response_writes_correct_content_to_transport_when_chunked(
-    streaming_app
+    streaming_app,
 ):
     response = StreamingHTTPResponse(sample_streaming_fn)
     response.protocol = MagicMock(HttpProtocol)
@@ -407,7 +408,7 @@ def test_file_response(app, file_name, static_file_directory, status):
             mime_type=guess_type(file_path)[0] or "text/plain",
         )
 
-    request, response = app.test_client.get("/files/{}".format(file_name))
+    request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == status
     assert response.body == get_file_content(static_file_directory, file_name)
     assert "Content-Disposition" not in response.headers
@@ -430,12 +431,13 @@ def test_file_response_custom_filename(
         file_path = os.path.abspath(unquote(file_path))
         return file(file_path, filename=dest)
 
-    request, response = app.test_client.get("/files/{}".format(source))
+    request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == 'attachment; filename="{}"'.format(dest)
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -460,7 +462,7 @@ def test_file_head_response(app, file_name, static_file_directory):
                 mime_type=guess_type(file_path)[0] or "text/plain",
             )
 
-    request, response = app.test_client.head("/files/{}".format(file_name))
+    request, response = app.test_client.head(f"/files/{file_name}")
     assert response.status == 200
     assert "Accept-Ranges" in response.headers
     assert "Content-Length" in response.headers
@@ -483,7 +485,7 @@ def test_file_stream_response(app, file_name, static_file_directory):
             mime_type=guess_type(file_path)[0] or "text/plain",
         )
 
-    request, response = app.test_client.get("/files/{}".format(file_name))
+    request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
     assert "Content-Disposition" not in response.headers
@@ -506,12 +508,13 @@ def test_file_stream_response_custom_filename(
         file_path = os.path.abspath(unquote(file_path))
         return file_stream(file_path, chunk_size=32, filename=dest)
 
-    request, response = app.test_client.get("/files/{}".format(source))
+    request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == 'attachment; filename="{}"'.format(dest)
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -539,7 +542,7 @@ def test_file_stream_head_response(app, file_name, static_file_directory):
                 mime_type=guess_type(file_path)[0] or "text/plain",
             )
 
-    request, response = app.test_client.head("/files/{}".format(file_name))
+    request, response = app.test_client.head(f"/files/{file_name}")
     assert response.status == 200
     # A HEAD request should never be streamed/chunked.
     if "Transfer-Encoding" in response.headers:
@@ -577,11 +580,12 @@ def test_file_stream_response_range(
             _range=range,
         )
 
-    request, response = app.test_client.get("/files/{}".format(file_name))
+    request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 206
     assert "Content-Range" in response.headers
-    assert response.headers["Content-Range"] == "bytes {}-{}/{}".format(
-        range.start, range.end, range.total
+    assert (
+        response.headers["Content-Range"]
+        == f"bytes {range.start}-{range.end}/{range.total}"
     )
 
 

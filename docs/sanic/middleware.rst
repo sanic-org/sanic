@@ -132,13 +132,24 @@ For example:
     async def close_db(app, loop):
         await app.db.close()
 
+Note:
+
+The listeners are deconstructed in the reverse order of being constructed.
+
+For example:
+
+If the first listener in before_server_start handler setups a database connection,
+ones registered after it can rely on that connection being alive both when they are started
+and stopped, because stopping is done in reverse order, and the database connection is
+torn down last.
+
 It's also possible to register a listener using the `register_listener` method.
 This may be useful if you define your listeners in another module besides
 the one you instantiate your app in.
 
 .. code-block:: python
 
-    app = Sanic()
+    app = Sanic(__name__)
 
     async def setup_db(app, loop):
         app.db = await db_setup()

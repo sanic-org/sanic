@@ -1,8 +1,9 @@
 import os
 import secrets
 import sys
+from contextlib import suppress
 
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen, TimeoutExpired
 from tempfile import TemporaryDirectory
 from textwrap import dedent
 from threading import Timer
@@ -85,4 +86,5 @@ async def test_reloader_live(runargs, mode):
         finally:
             timeout.cancel()
             terminate(proc)
-            proc.wait(timeout=3)
+            with suppress(TimeoutExpired):
+                proc.wait(timeout=3)

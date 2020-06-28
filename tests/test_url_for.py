@@ -9,4 +9,7 @@ def test_routes_with_host(app):
     assert app.url_for("hostindex") == "/"
     assert app.url_for("hostpath") == "/path"
     assert app.url_for("hostindex", _external=True) == "http://example.com/"
-    assert app.url_for("hostpath", _external=True) == "http://path.example.com/path"
+    assert (
+        app.url_for("hostpath", _external=True)
+        == "http://path.example.com/path"
+    )

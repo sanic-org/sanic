@@ -614,6 +614,7 @@ def test_request_stream(app):
     assert response.status == 200
     assert response.text == data
 
+
 def test_streaming_new_api(app):
     @app.post("/non-stream")
     async def handler(request):

@@ -33,9 +33,7 @@ def after(app, loop):
     calledq.put(mock.called)
 
 
-@pytest.mark.skipif(
-    os.name == "nt", reason="May hang CI on py38/windows"
-)
+@pytest.mark.skipif(os.name == "nt", reason="May hang CI on py38/windows")
 def test_register_system_signals(app):
     """Test if sanic register system signals"""
 
@@ -51,9 +49,7 @@ def test_register_system_signals(app):
     assert calledq.get() is True
 
 
-@pytest.mark.skipif(
-    os.name == "nt", reason="May hang CI on py38/windows"
-)
+@pytest.mark.skipif(os.name == "nt", reason="May hang CI on py38/windows")
 def test_dont_register_system_signals(app):
     """Test if sanic don't register system signals"""
 
@@ -69,9 +65,7 @@ def test_dont_register_system_signals(app):
     assert calledq.get() is False
 
 
-@pytest.mark.skipif(
-    os.name == "nt", reason="windows cannot SIGINT processes"
-)
+@pytest.mark.skipif(os.name == "nt", reason="windows cannot SIGINT processes")
 def test_windows_workaround():
     """Test Windows workaround (on any other OS)"""
     # At least some code coverage, even though this test doesn't work on

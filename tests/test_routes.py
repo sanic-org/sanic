@@ -593,7 +593,7 @@ async def test_websocket_route_asgi(app):
     ev.clear()
     request, response = await app.asgi_client.websocket("/test/1")
     second_set = ev.is_set()
-    assert(first_set and second_set)
+    assert first_set and second_set
 
 
 def test_method_not_allowed(app):

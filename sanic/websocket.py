@@ -113,7 +113,7 @@ class WebSocketProtocol(HttpProtocol):
 
         # hook up the websocket protocol
         self.websocket = WebSocketCommonProtocol(
-            timeout=self.websocket_timeout,
+            close_timeout=self.websocket_timeout,
             max_size=self.websocket_max_size,
             max_queue=self.websocket_max_queue,
             read_limit=self.websocket_read_limit,

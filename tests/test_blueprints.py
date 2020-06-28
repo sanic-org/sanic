@@ -270,24 +270,31 @@ def test_bp_middleware(app):
     assert response.status == 200
     assert response.text == "FAIL"
 
+
 def test_bp_middleware_order(app):
     blueprint = Blueprint("test_bp_middleware_order")
     order = list()
+
     @blueprint.middleware("request")
     def mw_1(request):
         order.append(1)
+
     @blueprint.middleware("request")
     def mw_2(request):
         order.append(2)
+
     @blueprint.middleware("request")
     def mw_3(request):
         order.append(3)
+
     @blueprint.middleware("response")
     def mw_4(request, response):
         order.append(6)
+
     @blueprint.middleware("response")
     def mw_5(request, response):
         order.append(5)
+
     @blueprint.middleware("response")
     def mw_6(request, response):
         order.append(4)
@@ -302,6 +309,7 @@ def test_bp_middleware_order(app):
 
     assert response.status == 200
     assert order == [1, 2, 3, 4, 5, 6]
+
 
 def test_bp_exception_handler(app):
     blueprint = Blueprint("test_middleware")
@@ -585,9 +593,7 @@ def test_bp_group_with_default_url_prefix(app):
     from uuid import uuid4
 
     resource_id = str(uuid4())
-    request, response = app.test_client.get(
-        f"/api/v1/resources/{resource_id}"
-    )
+    request, response = app.test_client.get(f"/api/v1/resources/{resource_id}")
     assert response.json == {"resource_id": resource_id}
 
 

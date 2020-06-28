@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import os
+import warnings
 
 from collections import namedtuple
 from mimetypes import guess_type
@@ -434,9 +435,10 @@ def test_file_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == f'attachment; filename="{dest}"'
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -510,9 +512,10 @@ def test_file_stream_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert response.headers[
-        "Content-Disposition"
-    ] == f'attachment; filename="{dest}"'
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{dest}"'
+    )
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -581,7 +584,10 @@ def test_file_stream_response_range(
     request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 206
     assert "Content-Range" in response.headers
-    assert response.headers["Content-Range"] == f"bytes {range.start}-{range.end}/{range.total}"
+    assert (
+        response.headers["Content-Range"]
+        == f"bytes {range.start}-{range.end}/{range.total}"
+    )
 
 
 def test_raw_response(app):
@@ -602,3 +608,17 @@ def test_empty_response(app):
     request, response = app.test_client.get("/test")
     assert response.content_type is None
     assert response.body == b""
+
+
+def test_response_body_bytes_deprecated(app):
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+
+        HTTPResponse(body_bytes=b'bytes')
+
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert (
+            "Parameter `body_bytes` is deprecated, use `body` instead"
+            in str(w[0].message)
+        )

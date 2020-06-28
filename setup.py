@@ -5,7 +5,6 @@ import codecs
 import os
 import re
 import sys
-
 from distutils.util import strtobool
 
 from setuptools import setup
@@ -39,9 +38,7 @@ def open_local(paths, mode="r", encoding="utf8"):
 
 with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
-        version = re.findall(
-            r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M
-        )[0]
+        version = re.findall(r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M)[0]
     except IndexError:
         raise RuntimeError("Unable to determine version.")
 
@@ -70,11 +67,10 @@ setup_kwargs = {
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
+    "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }
 
-env_dependency = (
-    '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
-)
+env_dependency = '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
 ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.5.3" + env_dependency
 
@@ -83,7 +79,7 @@ requirements = [
     uvloop,
     ujson,
     "aiofiles>=0.3.0",
-    "websockets>=7.0,<9.0",
+    "websockets>=8.1,<9.0",
     "multidict>=4.0,<5.0",
     "httpx==0.11.1",
 ]

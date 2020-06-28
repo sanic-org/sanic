@@ -150,24 +150,27 @@ def test_unix_connection():
     app.run(host="myhost.invalid", unix=SOCKPATH)
 
 
+app_multi = Sanic(name=__name__)
+
+
+def handler(request):
+    return text(f"{request.conn_info.server}")
+
+
+async def client(app, loop):
+    try:
+        async with httpx.AsyncClient(uds=SOCKPATH) as client:
+            r = await client.get("http://myhost.invalid/")
+            assert r.status_code == 200
+            assert r.text == os.path.abspath(SOCKPATH)
+    finally:
+        app.stop()
+
+
 def test_unix_connection_multiple_workers():
-    app = Sanic(name=__name__)
-
-    @app.get("/")
-    def handler(request):
-        return text(f"{request.conn_info.server}")
-
-    @app.listener("after_server_start")
-    async def client(app, loop):
-        try:
-            async with httpx.AsyncClient(uds=SOCKPATH) as client:
-                r = await client.get("http://myhost.invalid/")
-                assert r.status_code == 200
-                assert r.text == os.path.abspath(SOCKPATH)
-        finally:
-            app.stop()
-
-    app.run(host="myhost.invalid", unix=SOCKPATH, workers=2)
+    app_multi.get("/")(handler)
+    app_multi.listener("after_server_start")(client)
+    app_multi.run(host="myhost.invalid", unix=SOCKPATH, workers=2)
 
 
 async def test_zero_downtime():
@@ -185,12 +188,16 @@ async def test_zero_downtime():
     def spawn():
         command = [
             sys.executable,
-            "-m", "sanic",
-            "--unix", SOCKPATH,
-            "examples.delayed_response.app"
+            "-m",
+            "sanic",
+            "--unix",
+            SOCKPATH,
+            "examples.delayed_response.app",
         ]
         DN = subprocess.DEVNULL
-        return subprocess.Popen(command, stdin=DN, stdout=DN, stderr=subprocess.PIPE)
+        return subprocess.Popen(
+            command, stdin=DN, stdout=DN, stderr=subprocess.PIPE
+        )
 
     try:
         processes = [spawn()]
@@ -216,7 +223,9 @@ async def test_zero_downtime():
             try:
                 worker.wait(1.0)
             except subprocess.TimeoutExpired:
-                raise Exception(f"Worker would not terminate:\n{worker.stderr}")
+                raise Exception(
+                    f"Worker would not terminate:\n{worker.stderr}"
+                )
     finally:
         for worker in processes:
             worker.kill()

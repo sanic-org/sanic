@@ -1,3 +1,78 @@
+Version 20.6.0
+===============
+
+Features
+********
+  
+  *
+    `#1760 <https://github.com/huge-success/sanic/pull/1760>`_
+    Add version parameter to websocket routes
+
+  *
+    `#1866 <https://github.com/huge-success/sanic/pull/1866>`_
+    Add ``sanic`` as an entry point command
+
+  *
+    `#1880 <https://github.com/huge-success/sanic/pull/1880>`_
+    Add handler names for websockets for url_for usage 
+
+Bugfixes
+********
+
+  *
+    `#1776 <https://github.com/huge-success/sanic/pull/1776>`_
+    Bug fix for host parameter issue with lists
+
+  *
+    `#1842 <https://github.com/huge-success/sanic/pull/1842>`_
+    Fix static _handler pickling error
+
+  *
+    `#1827 <https://github.com/huge-success/sanic/pull/1827>`_
+    Fix reloader on OSX py38 and Windows
+
+  *
+    `#1848 <https://github.com/huge-success/sanic/pull/1848>`_
+    Reverse named_response_middlware execution order, to match normal response middleware execution order
+  
+  *
+    `#1853 <https://github.com/huge-success/sanic/pull/1853>`_
+    Fix pickle error when attempting to pickle an application which contains websocket routes
+
+Deprecations and Removals
+*************************
+
+  *
+    `#1739 <https://github.com/huge-success/sanic/pull/1739>`_
+    Deprecate body_bytes to merge into body
+
+Developer infrastructure
+************************
+
+  *
+    `#1852 <https://github.com/huge-success/sanic/pull/1852>`_
+    Fix naming of CI test env on Python nightlies
+
+  *
+    `#1857 <https://github.com/huge-success/sanic/pull/1857>`_
+    Adjust websockets version to setup.py
+
+  *
+    `#1869 <https://github.com/huge-success/sanic/pull/1869>`_
+    Wrap run()'s "protocol" type annotation in Optional[]
+
+
+Improved Documentation
+**********************
+
+  *
+    `#1846 <https://github.com/huge-success/sanic/pull/1846>`_
+    Update docs to clarify response middleware execution order
+
+  *
+    `#1865 <https://github.com/huge-success/sanic/pull/1865>`_
+    Fixing rst format issue that was hiding documentation
+
 Version 20.3.0
 ===============
 

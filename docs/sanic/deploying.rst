@@ -52,6 +52,12 @@ named `server.py`, you could run the server like so:
 
 ::
 
+    sanic server.app --host=0.0.0.0 --port=1337 --workers=4
+
+It can also be called directly as a module.
+
+::
+
     python -m sanic server.app --host=0.0.0.0 --port=1337 --workers=4
 
 With this way of running sanic, it is not necessary to invoke `app.run` in your

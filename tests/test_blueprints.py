@@ -253,7 +253,11 @@ def test_several_bp_with_host(app):
 
 
 def test_bp_with_host_list(app):
-    bp = Blueprint("test_bp_host", url_prefix="/test1", host=["example.com", "sub.example.com"])
+    bp = Blueprint(
+        "test_bp_host",
+        url_prefix="/test1",
+        host=["example.com", "sub.example.com"],
+    )
 
     @bp.route("/")
     def handler1(request):
@@ -279,8 +283,16 @@ def test_bp_with_host_list(app):
 
 
 def test_several_bp_with_host_list(app):
-    bp = Blueprint("test_text", url_prefix="/test", host=["example.com", "sub.example.com"])
-    bp2 = Blueprint("test_text2", url_prefix="/test", host=["sub1.example.com", "sub2.example.com"])
+    bp = Blueprint(
+        "test_text",
+        url_prefix="/test",
+        host=["example.com", "sub.example.com"],
+    )
+    bp2 = Blueprint(
+        "test_text2",
+        url_prefix="/test",
+        host=["sub1.example.com", "sub2.example.com"],
+    )
 
     @bp.route("/")
     def handler(request):

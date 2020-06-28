@@ -251,6 +251,76 @@ def test_several_bp_with_host(app):
     assert response.text == "Hello3"
 
 
+def test_bp_with_host_list(app):
+    bp = Blueprint("test_bp_host", url_prefix="/test1", host=["example.com", "sub.example.com"])
+
+    @bp.route("/")
+    def handler1(request):
+        return text("Hello")
+
+    @bp.route("/", host=["sub1.example.com"])
+    def handler2(request):
+        return text("Hello subdomain!")
+
+    app.blueprint(bp)
+    headers = {"Host": "example.com"}
+    request, response = app.test_client.get("/test1/", headers=headers)
+    assert response.text == "Hello"
+
+    headers = {"Host": "sub.example.com"}
+    request, response = app.test_client.get("/test1/", headers=headers)
+    assert response.text == "Hello"
+
+    headers = {"Host": "sub1.example.com"}
+    request, response = app.test_client.get("/test1/", headers=headers)
+
+    assert response.text == "Hello subdomain!"
+
+
+def test_several_bp_with_host_list(app):
+    bp = Blueprint("test_text", url_prefix="/test", host=["example.com", "sub.example.com"])
+    bp2 = Blueprint("test_text2", url_prefix="/test", host=["sub1.example.com", "sub2.example.com"])
+
+    @bp.route("/")
+    def handler(request):
+        return text("Hello")
+
+    @bp2.route("/")
+    def handler1(request):
+        return text("Hello2")
+
+    @bp2.route("/other/")
+    def handler2(request):
+        return text("Hello3")
+
+    app.blueprint(bp)
+    app.blueprint(bp2)
+
+    assert bp.host == ["example.com", "sub.example.com"]
+    headers = {"Host": "example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello"
+
+    assert bp.host == ["example.com", "sub.example.com"]
+    headers = {"Host": "sub.example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello"
+
+    assert bp2.host == ["sub1.example.com", "sub2.example.com"]
+    headers = {"Host": "sub1.example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello2"
+    request, response = app.test_client.get("/test/other/", headers=headers)
+    assert response.text == "Hello3"
+
+    assert bp2.host == ["sub1.example.com", "sub2.example.com"]
+    headers = {"Host": "sub2.example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello2"
+    request, response = app.test_client.get("/test/other/", headers=headers)
+    assert response.text == "Hello3"
+
+
 def test_bp_middleware(app):
     blueprint = Blueprint("test_bp_middleware")
 

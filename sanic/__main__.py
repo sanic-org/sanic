@@ -1,3 +1,6 @@
+import os
+import sys
+
 from argparse import ArgumentParser
 from importlib import import_module
 from typing import Any, Dict, Optional
@@ -6,7 +9,7 @@ from sanic.app import Sanic
 from sanic.log import logger
 
 
-if __name__ == "__main__":
+def main():
     parser = ArgumentParser(prog="sanic")
     parser.add_argument("--host", dest="host", type=str, default="127.0.0.1")
     parser.add_argument("--port", dest="port", type=int, default=8000)
@@ -23,6 +26,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
+        module_path = os.path.abspath(os.getcwd())
+        if module_path not in sys.path:
+            sys.path.append(module_path)
+
         module_parts = args.module.split(".")
         module_name = ".".join(module_parts[:-1])
         app_name = module_parts[-1]
@@ -60,3 +67,7 @@ if __name__ == "__main__":
         )
     except ValueError:
         logger.exception("Failed to run app")
+
+
+if __name__ == "__main__":
+    main()

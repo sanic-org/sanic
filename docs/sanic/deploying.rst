@@ -51,7 +51,9 @@ If you like using command line arguments, you can launch a Sanic webserver by
 executing the module. For example, if you initialized Sanic as `app` in a file
 named `server.py`, you could run the server like so:
 
-.. python -m sanic server.app --host=0.0.0.0 --port=1337 --workers=4
+::
+
+    python -m sanic server.app --host=0.0.0.0 --port=1337 --workers=4
 
 With this way of running sanic, it is not necessary to invoke `app.run` in your
 Python file. If you do, make sure you wrap it so that it only executes when

@@ -531,6 +531,19 @@ def test_add_webscoket_route(app, strict_slashes):
     assert ev.is_set()
 
 
+def test_add_webscoket_route_with_version(app):
+    ev = asyncio.Event()
+
+    async def handler(request, ws):
+        assert ws.subprotocol is None
+        ev.set()
+
+    app.add_websocket_route(handler, "/ws", version=1)
+    request, response = app.test_client.websocket("/v1/ws")
+    assert response.opened is True
+    assert ev.is_set()
+
+
 def test_route_duplicate(app):
 
     with pytest.raises(RouteExists):
@@ -580,7 +593,7 @@ async def test_websocket_route_asgi(app):
     ev.clear()
     request, response = await app.asgi_client.websocket("/test/1")
     second_set = ev.is_set()
-    assert(first_set and second_set)
+    assert first_set and second_set
 
 
 def test_method_not_allowed(app):

@@ -462,7 +462,13 @@ class Sanic:
 
     # Decorator
     def websocket(
-        self, uri, host=None, strict_slashes=None, subprotocols=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        subprotocols=None,
+        version=None,
+        name=None,
     ):
         """
         Decorate a function to be registered as a websocket route
@@ -536,6 +542,7 @@ class Sanic:
                     methods=frozenset({"GET"}),
                     host=host,
                     strict_slashes=strict_slashes,
+                    version=version,
                     name=name,
                 )
             )
@@ -550,6 +557,7 @@ class Sanic:
         host=None,
         strict_slashes=None,
         subprotocols=None,
+        version=None,
         name=None,
     ):
         """
@@ -577,6 +585,7 @@ class Sanic:
             host=host,
             strict_slashes=strict_slashes,
             subprotocols=subprotocols,
+            version=version,
             name=name,
         )(handler)
 
@@ -1064,7 +1073,7 @@ class Sanic:
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
-        protocol: Type[Protocol] = None,
+        protocol: Optional[Type[Protocol]] = None,
         backlog: int = 100,
         stop_event: Any = None,
         register_sys_signals: bool = True,

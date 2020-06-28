@@ -14,8 +14,8 @@ There are two types of middleware: request and response. Both are declared
 using the `@app.middleware` decorator, with the decorator's parameter being a
 string representing its type: `'request'` or `'response'`.
 
-* Request middleware receives only the `request` as argument.
-* Response middleware receives both the `request` and `response`.
+* Request middleware receives only the `request` as an argument and are executed in the order they were added.
+* Response middleware receives both the `request` and `response` and are executed in *reverse* order.
 
 The simplest middleware doesn't modify the request or response at all:
 
@@ -64,12 +64,12 @@ this.
 
     app.run(host="0.0.0.0", port=8000)
 
-The three middlewares are executed in order:
+The three middlewares are executed in the following order:
 
 1. The first request middleware **add_key** adds a new key `foo` into request context.
 2. Request is routed to handler **index**, which gets the key from context and returns a text response.
-3. The first response middleware **custom_banner** changes the HTTP response header *Server* to say *Fake-Server*
-4. The second response middleware **prevent_xss** adds the HTTP header for preventing Cross-Site-Scripting (XSS) attacks.
+3. The second response middleware **prevent_xss** adds the HTTP header for preventing Cross-Site-Scripting (XSS) attacks.
+4. The first response middleware **custom_banner** changes the HTTP response header *Server* to say *Fake-Server*
 
 Responding early
 ----------------

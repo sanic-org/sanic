@@ -149,6 +149,12 @@ class HTTPResponse(BaseHTTPResponse):
         self.headers = Header(headers or {})
         self._cookies = None
 
+        if body_bytes:
+            warnings.warn(
+                "Parameter `body_bytes` is deprecated, use `body` instead",
+                DeprecationWarning,
+            )
+
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         body = b""
         if has_message_body(self.status):
@@ -173,7 +179,7 @@ def empty(status=204, headers=None):
     :param status Response code.
     :param headers Custom Headers.
     """
-    return HTTPResponse(body_bytes=b"", status=status, headers=headers)
+    return HTTPResponse(body=b"", status=status, headers=headers)
 
 
 def json(
@@ -243,10 +249,7 @@ def raw(
     :param content_type: the content type (string) of the response.
     """
     return HTTPResponse(
-        body_bytes=body,
-        status=status,
-        headers=headers,
-        content_type=content_type,
+        body=body, status=status, headers=headers, content_type=content_type,
     )
 
 
@@ -306,10 +309,10 @@ async def file(
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     return HTTPResponse(
+        body=out_stream,
         status=status,
         headers=headers,
         content_type=mime_type,
-        body_bytes=out_stream,
     )
 
 

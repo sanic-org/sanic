@@ -283,6 +283,13 @@ class Blueprint:
             strict_slashes = self.strict_slashes
 
         def decorator(handler):
+            nonlocal uri
+            nonlocal host
+            nonlocal strict_slashes
+            nonlocal version
+            nonlocal name
+
+            name = f"{self.name}.{name or handler.__name__}"
             route = FutureRoute(
                 handler, uri, [], host, strict_slashes, False, version, name
             )

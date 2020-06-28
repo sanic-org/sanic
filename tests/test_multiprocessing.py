@@ -88,10 +88,11 @@ def test_pickle_app_with_bp(app, protocol):
     assert up_p_app.is_request_stream is False
     assert response.text == "Hello"
 
+
 @pytest.mark.parametrize("protocol", [3, 4])
 def test_pickle_app_with_static(app, protocol):
     app.route("/")(handler)
-    app.static('/static', "/tmp/static")
+    app.static("/static", "/tmp/static")
     p_app = pickle.dumps(app, protocol=protocol)
     del app
     up_p_app = pickle.loads(p_app)

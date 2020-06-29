@@ -1033,6 +1033,7 @@ class Sanic:
         stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
+        unix: Optional[str] = None,
         loop: None = None,
     ) -> None:
         """Run the HTTP Server and listen until keyboard interrupt or term
@@ -1066,6 +1067,8 @@ class Sanic:
         :type register_sys_signals: bool
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool
+        :param unix: Unix socket to listen on instead of TCP port
+        :type unix: str
         :return: Nothing
         """
         if loop is not None:
@@ -1104,6 +1107,7 @@ class Sanic:
             debug=debug,
             ssl=ssl,
             sock=sock,
+            unix=unix,
             workers=workers,
             protocol=protocol,
             backlog=backlog,
@@ -1151,6 +1155,7 @@ class Sanic:
         backlog: int = 100,
         stop_event: Any = None,
         access_log: Optional[bool] = None,
+        unix: Optional[str] = None,
         return_asyncio_server=False,
         asyncio_server_kwargs=None,
     ) -> Optional[AsyncioServer]:
@@ -1220,6 +1225,7 @@ class Sanic:
             debug=debug,
             ssl=ssl,
             sock=sock,
+            unix=unix,
             loop=get_event_loop(),
             protocol=protocol,
             backlog=backlog,
@@ -1285,6 +1291,7 @@ class Sanic:
         debug=False,
         ssl=None,
         sock=None,
+        unix=None,
         workers=1,
         loop=None,
         protocol=HttpProtocol,
@@ -1326,6 +1333,7 @@ class Sanic:
             "host": host,
             "port": port,
             "sock": sock,
+            "unix": unix,
             "ssl": ssl,
             "app": self,
             "signal": Signal(),
@@ -1372,7 +1380,10 @@ class Sanic:
             proto = "http"
             if ssl is not None:
                 proto = "https"
-            logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
+            if unix:
+                logger.info(f"Goin' Fast @ {unix} {proto}://...")
+            else:
+                logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
         return server_settings
 

@@ -22,7 +22,7 @@ from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
 from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
-from sanic.server import StreamBuffer
+from sanic.server import ConnInfo, StreamBuffer
 from sanic.websocket import WebSocketConnection
 
 
@@ -255,6 +255,7 @@ class ASGIApp:
                 instance.transport,
                 sanic_app,
             )
+            instance.request.conn_info = ConnInfo(instance.transport)
 
             if sanic_app.is_request_stream:
                 is_stream_handler = sanic_app.router.is_stream_handler(

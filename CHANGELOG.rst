@@ -1,3 +1,14 @@
+Version 20.6.3
+===============
+
+Bugfixes
+********
+  
+  *
+    `#1884 <https://github.com/huge-success/sanic/pull/1884>`_
+    Revert change to multiprocessing mode
+
+
 Version 20.6.2
 ===============
 

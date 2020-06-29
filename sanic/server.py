@@ -1063,7 +1063,7 @@ def serve_multiple(server_settings, workers):
 
     signal_func(SIGINT, lambda s, f: sig_handler(s, f))
     signal_func(SIGTERM, lambda s, f: sig_handler(s, f))
-    mp = multiprocessing.get_context("spawn")
+    mp = multiprocessing.get_context("fork")
 
     for _ in range(workers):
         process = mp.Process(target=serve, kwargs=server_settings)

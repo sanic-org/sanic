@@ -1,3 +1,14 @@
+Version 20.6.2
+===============
+
+Features
+********
+  
+  *
+    `#1641 <https://github.com/huge-success/sanic/pull/1641>`_
+    Socket binding implemented properly for IPv6 and UNIX sockets
+
+
 Version 20.6.1
 ===============
 
@@ -72,6 +83,13 @@ Improved Documentation
   *
     `#1865 <https://github.com/huge-success/sanic/pull/1865>`_
     Fixing rst format issue that was hiding documentation
+
+
+Version 20.6.0
+===============
+
+*Released, but unintentionally ommitting PR #1880, so was replaced by 20.6.1*
+
 
 Version 20.3.0
 ===============

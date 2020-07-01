@@ -98,7 +98,9 @@ class MockTransport:
     def create_websocket_connection(
         self, send: ASGISend, receive: ASGIReceive
     ) -> WebSocketConnection:
-        self._websocket_connection = WebSocketConnection(send, receive, self.scope.get('subprotocols', []))
+        self._websocket_connection = WebSocketConnection(
+            send, receive, self.scope.get("subprotocols", [])
+        )
         return self._websocket_connection
 
     def add_task(self) -> None:

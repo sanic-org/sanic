@@ -5,7 +5,8 @@ from typing import (
     Dict,
     MutableMapping,
     Optional,
-    Union, List,
+    Union,
+    List,
 )
 
 from httptools import HttpParserUpgrade  # type: ignore
@@ -137,11 +138,11 @@ class WebSocketConnection:
         self,
         send: Callable[[ASIMessage], Awaitable[None]],
         receive: Callable[[], Awaitable[ASIMessage]],
-        subprotocols: List[str]=[],
+        subprotocols: Optional[List[str]] = None,
     ) -> None:
         self._send = send
         self._receive = receive
-        self.subprotocols = subprotocols
+        self.subprotocols = subprotocols or []
 
     async def send(self, data: Union[str, bytes], *args, **kwargs) -> None:
         message: Dict[str, Union[str, bytes]] = {"type": "websocket.send"}
@@ -166,8 +167,14 @@ class WebSocketConnection:
     receive = recv
 
     async def accept(self) -> None:
-        await self._send({"type": "websocket.accept",
-                          "subprotocol": ",".join([subprotocol for subprotocol in self.subprotocols])})
+        await self._send(
+            {
+                "type": "websocket.accept",
+                "subprotocol": ",".join(
+                    [subprotocol for subprotocol in self.subprotocols]
+                ),
+            }
+        )
 
     async def close(self) -> None:
         pass

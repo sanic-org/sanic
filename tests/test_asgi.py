@@ -208,6 +208,21 @@ async def test_websocket_receive(send, receive, message_stack):
     assert text == msg["text"]
 
 
+@pytest.mark.asyncio
+async def test_websocket_connection_with_subprotocols_communication(send, receive, message_stack):
+    subprotocols = ['graphql-ws', 'test']
+
+    ws = WebSocketConnection(send, receive, subprotocols)
+    await ws.accept()
+
+    assert len(message_stack) == 1
+
+    message = message_stack.popleft()
+    assert message["type"] == "websocket.accept"
+    assert message['subprotocol'] == "graphql-ws,test"
+    assert "bytes" not in message
+
+
 def test_improper_websocket_connection(transport, send, receive):
     with pytest.raises(InvalidUsage):
         transport.get_websocket_connection()

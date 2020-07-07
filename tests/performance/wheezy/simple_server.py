@@ -1,7 +1,6 @@
 # Run with: gunicorn --workers=1 --worker-class=meinheld.gmeinheld.MeinheldWorker simple_server:main
 """ Minimal helloworld application.
 """
-
 import ujson
 
 from wheezy.http import HTTPResponse, WSGIApplication
@@ -39,6 +38,7 @@ main = WSGIApplication(
 
 if __name__ == "__main__":
     import sys
+
     from wsgiref.simple_server import make_server
 
     try:

@@ -58,6 +58,22 @@ More information about
 the available arguments to `httpx` can be found
 [in the documentation for `httpx <https://www.encode.io/httpx/>`_.
 
+Additionally, Sanic has an asynchronous testing client. The difference is that the async client will not stand up an
+instance of your application, but will instead reach inside it using ASGI. All listeners and middleware are still
+executed.
+
+.. code-block:: python
+
+    @pytest.mark.asyncio
+    async def test_index_returns_200():
+        request, response = await app.asgi_client.put('/')
+        assert response.status == 200
+
+.. note::
+
+    Whenever one of the test clients run, you can test your app instance to determine if it is in testing mode:
+    `app.test_mode`.
+
 
 Using a random port
 -------------------

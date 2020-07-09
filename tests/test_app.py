@@ -222,3 +222,24 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
 def test_app_name_required():
     with pytest.deprecated_call():
         Sanic()
+
+
+def test_app_has_test_mode_sync(app):
+    @app.get("/")
+    def handler(request):
+        assert request.app.test_mode
+        return text("test")
+
+    _, response = app.test_client.get("/")
+    assert response.status == 200
+
+
+@pytest.mark.asyncio
+async def test_app_has_test_mode_async(app):
+    @app.get("/")
+    async def handler(request):
+        assert request.app.test_mode
+        return text("test")
+
+    _, response = await app.asgi_client.get("/")
+    assert response.status == 200

@@ -21,6 +21,7 @@ class SanicTestClient:
         self.app = app
         self.port = port
         self.host = host
+        self.app.test_mode = True
 
     def get_new_session(self):
         return httpx.AsyncClient(verify=False)
@@ -200,6 +201,7 @@ class SanicASGITestClient(httpx.AsyncClient):
         app.asgi = True
 
         self.app = app
+        self.app.test_mode = True
 
         dispatch = SanicASGIDispatch(app=app, client=(ASGI_HOST, PORT or 0))
         super().__init__(dispatch=dispatch, base_url=base_url)

@@ -1,11 +1,10 @@
 import asyncio
 import sys
-
 from collections import deque, namedtuple
 
 import pytest
-import uvicorn
 
+import uvicorn
 from sanic import Sanic
 from sanic.asgi import MockTransport
 from sanic.exceptions import InvalidUsage

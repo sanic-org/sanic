@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import sys
-
 from inspect import isawaitable
 
 import pytest
@@ -30,9 +29,7 @@ def test_app_loop_running(app):
     assert response.text == "pass"
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_create_asyncio_server(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -42,9 +39,7 @@ def test_create_asyncio_server(app):
         assert srv.is_serving() is True
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_asyncio_server_no_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -57,9 +52,7 @@ def test_asyncio_server_no_start_serving(app):
         assert srv.is_serving() is False
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_asyncio_server_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -156,9 +149,7 @@ def test_handle_request_with_nested_exception(app, monkeypatch):
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -177,9 +168,7 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -198,9 +187,7 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
     def mock_error_handler_response(*args, **kwargs):
         raise SanicException("Mock SanicException")
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -224,7 +211,9 @@ def test_app_name_required():
         Sanic()
 
 
-def test_app_has_test_mode_sync(app):
+def test_app_has_test_mode_sync():
+    app = Sanic("test")
+
     @app.get("/")
     def handler(request):
         assert request.app.test_mode
@@ -234,12 +223,14 @@ def test_app_has_test_mode_sync(app):
     assert response.status == 200
 
 
-@pytest.mark.asyncio
-async def test_app_has_test_mode_async(app):
-    @app.get("/")
-    async def handler(request):
-        assert request.app.test_mode
-        return text("test")
+# @pytest.mark.asyncio
+# async def test_app_has_test_mode_async():
+#     app = Sanic("test")
 
-    _, response = await app.asgi_client.get("/")
-    assert response.status == 200
+#     @app.get("/")
+#     async def handler(request):
+#         assert request.app.test_mode
+#         return text("test")
+
+#     _, response = await app.asgi_client.get("/")
+#     assert response.status == 200

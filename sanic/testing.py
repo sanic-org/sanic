@@ -9,7 +9,6 @@ from sanic.exceptions import MethodNotSupported
 from sanic.log import logger
 from sanic.response import text
 
-
 ASGI_HOST = "mockserver"
 HOST = "127.0.0.1"
 PORT = None
@@ -95,9 +94,7 @@ class SanicTestClient:
         @self.app.exception(MethodNotSupported)
         async def error_handler(request, exception):
             if request.method in ["HEAD", "PATCH", "PUT", "DELETE"]:
-                return text(
-                    "", exception.status_code, headers=exception.headers
-                )
+                return text("", exception.status_code, headers=exception.headers)
             else:
                 return self.app.error_handler.default(request, exception)
 
@@ -113,9 +110,7 @@ class SanicTestClient:
             host, port = sock.getsockname()
             self.port = port
 
-        if uri.startswith(
-            ("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")
-        ):
+        if uri.startswith(("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")):
             url = uri
         else:
             uri = uri if uri.startswith("/") else f"/{uri}"
@@ -218,11 +213,11 @@ class SanicASGITestClient(httpx.AsyncClient):
             self.last_request = request
 
         @app.listener("after_server_start")
-        def _start_test_mode(sanic, loop):
+        def _start_test_mode(sanic, *args, **kwargs):
             sanic.test_mode = True
 
         @app.listener("before_server_end")
-        def _end_test_mode(sanic, loop):
+        def _end_test_mode(sanic, *args, **kwargs):
             sanic.test_mode = False
 
         app.request_middleware.appendleft(_collect_request)
@@ -247,9 +242,7 @@ class SanicASGITestClient(httpx.AsyncClient):
         headers.setdefault("sec-websocket-key", "testserver==")
         headers.setdefault("sec-websocket-version", "13")
         if subprotocols is not None:
-            headers.setdefault(
-                "sec-websocket-protocol", ", ".join(subprotocols)
-            )
+            headers.setdefault("sec-websocket-protocol", ", ".join(subprotocols))
 
         scope = {
             "type": "websocket",

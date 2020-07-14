@@ -9,6 +9,7 @@ from sanic.exceptions import MethodNotSupported
 from sanic.log import logger
 from sanic.response import text
 
+
 ASGI_HOST = "mockserver"
 HOST = "127.0.0.1"
 PORT = None
@@ -20,7 +21,14 @@ class SanicTestClient:
         self.app = app
         self.port = port
         self.host = host
-        self.app.test_mode = True
+
+        @app.listener("after_server_start")
+        def _start_test_mode(sanic, loop):
+            sanic.test_mode = True
+
+        @app.listener("before_server_end")
+        def _end_test_mode(sanic, loop):
+            sanic.test_mode = False
 
     def get_new_session(self):
         return httpx.AsyncClient(verify=False)

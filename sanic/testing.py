@@ -205,11 +205,8 @@ class SanicASGITestClient(httpx.AsyncClient):
         def _collect_request(request):
             self.last_request = request
 
-        def _start_test_mode(request):
-            self.app.test_mode = True
-
         @app.listener("after_server_start")
-        def _end_test_mode(sanic, loop):
+        def _start_test_mode(sanic, loop):
             sanic.test_mode = True
 
         @app.listener("before_server_end")

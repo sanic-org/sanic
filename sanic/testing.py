@@ -95,7 +95,9 @@ class SanicTestClient:
         @self.app.exception(MethodNotSupported)
         async def error_handler(request, exception):
             if request.method in ["HEAD", "PATCH", "PUT", "DELETE"]:
-                return text("", exception.status_code, headers=exception.headers)
+                return text(
+                    "", exception.status_code, headers=exception.headers
+                )
             else:
                 return self.app.error_handler.default(request, exception)
 
@@ -111,7 +113,9 @@ class SanicTestClient:
             host, port = sock.getsockname()
             self.port = port
 
-        if uri.startswith(("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")):
+        if uri.startswith(
+            ("http:", "https:", "ftp:", "ftps://", "//", "ws:", "wss:")
+        ):
             url = uri
         else:
             uri = uri if uri.startswith("/") else f"/{uri}"
@@ -243,7 +247,9 @@ class SanicASGITestClient(httpx.AsyncClient):
         headers.setdefault("sec-websocket-key", "testserver==")
         headers.setdefault("sec-websocket-version", "13")
         if subprotocols is not None:
-            headers.setdefault("sec-websocket-protocol", ", ".join(subprotocols))
+            headers.setdefault(
+                "sec-websocket-protocol", ", ".join(subprotocols)
+            )
 
         scope = {
             "type": "websocket",

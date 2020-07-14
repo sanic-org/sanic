@@ -112,8 +112,6 @@ class Lifespan:
     def __init__(self, asgi_app: "ASGIApp") -> None:
         self.asgi_app = asgi_app
 
-        print(self.asgi_app.sanic_app.listeners)
-
         if "before_server_start" in self.asgi_app.sanic_app.listeners:
             warnings.warn(
                 'You have set a listener for "before_server_start" '

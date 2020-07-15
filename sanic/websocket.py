@@ -3,10 +3,10 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    List,
     MutableMapping,
     Optional,
     Union,
-    List,
 )
 
 from httptools import HttpParserUpgrade  # type: ignore

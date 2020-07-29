@@ -208,6 +208,53 @@ async def test_websocket_receive(send, receive, message_stack):
     assert text == msg["text"]
 
 
+@pytest.mark.asyncio
+async def test_websocket_accept_with_no_subprotocols(
+    send, receive, message_stack
+):
+    ws = WebSocketConnection(send, receive)
+    await ws.accept()
+
+    assert len(message_stack) == 1
+
+    message = message_stack.popleft()
+    assert message["type"] == "websocket.accept"
+    assert message["subprotocol"] == ""
+    assert "bytes" not in message
+
+
+@pytest.mark.asyncio
+async def test_websocket_accept_with_subprotocol(send, receive, message_stack):
+    subprotocols = ["graphql-ws"]
+
+    ws = WebSocketConnection(send, receive, subprotocols)
+    await ws.accept()
+
+    assert len(message_stack) == 1
+
+    message = message_stack.popleft()
+    assert message["type"] == "websocket.accept"
+    assert message["subprotocol"] == "graphql-ws"
+    assert "bytes" not in message
+
+
+@pytest.mark.asyncio
+async def test_websocket_accept_with_multiple_subprotocols(
+    send, receive, message_stack
+):
+    subprotocols = ["graphql-ws", "hello", "world"]
+
+    ws = WebSocketConnection(send, receive, subprotocols)
+    await ws.accept()
+
+    assert len(message_stack) == 1
+
+    message = message_stack.popleft()
+    assert message["type"] == "websocket.accept"
+    assert message["subprotocol"] == "graphql-ws,hello,world"
+    assert "bytes" not in message
+
+
 def test_improper_websocket_connection(transport, send, receive):
     with pytest.raises(InvalidUsage):
         transport.get_websocket_connection()

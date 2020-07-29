@@ -90,6 +90,7 @@ class Sanic:
         self.named_response_middleware = {}
         # Register alternative method names
         self.go_fast = self.run
+        self.test_mode = False
 
     @property
     def loop(self):

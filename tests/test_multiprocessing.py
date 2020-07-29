@@ -87,3 +87,15 @@ def test_pickle_app_with_bp(app, protocol):
     request, response = up_p_app.test_client.get("/")
     assert up_p_app.is_request_stream is False
     assert response.text == "Hello"
+
+
+@pytest.mark.parametrize("protocol", [3, 4])
+def test_pickle_app_with_static(app, protocol):
+    app.route("/")(handler)
+    app.static("/static", "/tmp/static")
+    p_app = pickle.dumps(app, protocol=protocol)
+    del app
+    up_p_app = pickle.loads(p_app)
+    assert up_p_app
+    request, response = up_p_app.test_client.get("/static/missing.txt")
+    assert response.status == 404

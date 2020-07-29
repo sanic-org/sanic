@@ -143,7 +143,7 @@ class Blueprint:
             if _routes:
                 routes += _routes
 
-        route_names = [route.name for route in routes]
+        route_names = [route.name for route in routes if route]
         # Middleware
         for future in self.middlewares:
             if future.args or future.kwargs:
@@ -283,6 +283,13 @@ class Blueprint:
             strict_slashes = self.strict_slashes
 
         def decorator(handler):
+            nonlocal uri
+            nonlocal host
+            nonlocal strict_slashes
+            nonlocal version
+            nonlocal name
+
+            name = f"{self.name}.{name or handler.__name__}"
             route = FutureRoute(
                 handler, uri, [], host, strict_slashes, False, version, name
             )

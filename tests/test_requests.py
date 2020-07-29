@@ -454,11 +454,13 @@ def test_standard_forwarded(app):
         "X-Real-IP": "127.0.0.2",
         "X-Forwarded-For": "127.0.1.1",
         "X-Scheme": "ws",
+        "Host": "local.site",
     }
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"for": "127.0.0.2", "proto": "ws"}
     assert request.remote_addr == "127.0.0.2"
     assert request.scheme == "ws"
+    assert request.server_name == "local.site"
     assert request.server_port == 80
 
     app.config.FORWARDED_SECRET = "mySecret"
@@ -1807,13 +1809,17 @@ def test_request_port(app):
     port = request.port
     assert isinstance(port, int)
 
-    delattr(request, "_socket")
-    delattr(request, "_port")
+
+@pytest.mark.asyncio
+async def test_request_port_asgi(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = await app.asgi_client.get("/")
 
     port = request.port
     assert isinstance(port, int)
-    assert hasattr(request, "_socket")
-    assert hasattr(request, "_port")
 
 
 def test_request_socket(app):
@@ -1831,12 +1837,6 @@ def test_request_socket(app):
 
     assert ip == request.ip
     assert port == request.port
-
-    delattr(request, "_socket")
-
-    socket = request.socket
-    assert isinstance(socket, tuple)
-    assert hasattr(request, "_socket")
 
 
 def test_request_server_name(app):
@@ -1866,7 +1866,7 @@ def test_request_server_name_in_host_header(app):
     request, response = app.test_client.get(
         "/", headers={"Host": "mal_formed"}
     )
-    assert request.server_name == None  # For now (later maybe 127.0.0.1)
+    assert request.server_name == ""
 
 
 def test_request_server_name_forwarded(app):
@@ -1893,7 +1893,7 @@ def test_request_server_port(app):
 
     test_client = SanicTestClient(app)
     request, response = test_client.get("/", headers={"Host": "my-server"})
-    assert request.server_port == test_client.port
+    assert request.server_port == 80
 
 
 def test_request_server_port_in_host_header(app):
@@ -1952,13 +1952,10 @@ def test_server_name_and_url_for(app):
     def handler(request):
         return text("ok")
 
-    app.config.SERVER_NAME = "my-server"
+    app.config.SERVER_NAME = "my-server"  # This means default port
     assert app.url_for("handler", _external=True) == "http://my-server/foo"
     request, response = app.test_client.get("/foo")
-    assert (
-        request.url_for("handler")
-        == f"http://my-server:{request.server_port}/foo"
-    )
+    assert request.url_for("handler") == f"http://my-server/foo"
 
     app.config.SERVER_NAME = "https://my-server/path"
     request, response = app.test_client.get("/foo")

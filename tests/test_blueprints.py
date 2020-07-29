@@ -252,6 +252,88 @@ def test_several_bp_with_host(app):
     assert response.text == "Hello3"
 
 
+def test_bp_with_host_list(app):
+    bp = Blueprint(
+        "test_bp_host",
+        url_prefix="/test1",
+        host=["example.com", "sub.example.com"],
+    )
+
+    @bp.route("/")
+    def handler1(request):
+        return text("Hello")
+
+    @bp.route("/", host=["sub1.example.com"])
+    def handler2(request):
+        return text("Hello subdomain!")
+
+    app.blueprint(bp)
+    headers = {"Host": "example.com"}
+    request, response = app.test_client.get("/test1/", headers=headers)
+    assert response.text == "Hello"
+
+    headers = {"Host": "sub.example.com"}
+    request, response = app.test_client.get("/test1/", headers=headers)
+    assert response.text == "Hello"
+
+    headers = {"Host": "sub1.example.com"}
+    request, response = app.test_client.get("/test1/", headers=headers)
+
+    assert response.text == "Hello subdomain!"
+
+
+def test_several_bp_with_host_list(app):
+    bp = Blueprint(
+        "test_text",
+        url_prefix="/test",
+        host=["example.com", "sub.example.com"],
+    )
+    bp2 = Blueprint(
+        "test_text2",
+        url_prefix="/test",
+        host=["sub1.example.com", "sub2.example.com"],
+    )
+
+    @bp.route("/")
+    def handler(request):
+        return text("Hello")
+
+    @bp2.route("/")
+    def handler1(request):
+        return text("Hello2")
+
+    @bp2.route("/other/")
+    def handler2(request):
+        return text("Hello3")
+
+    app.blueprint(bp)
+    app.blueprint(bp2)
+
+    assert bp.host == ["example.com", "sub.example.com"]
+    headers = {"Host": "example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello"
+
+    assert bp.host == ["example.com", "sub.example.com"]
+    headers = {"Host": "sub.example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello"
+
+    assert bp2.host == ["sub1.example.com", "sub2.example.com"]
+    headers = {"Host": "sub1.example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello2"
+    request, response = app.test_client.get("/test/other/", headers=headers)
+    assert response.text == "Hello3"
+
+    assert bp2.host == ["sub1.example.com", "sub2.example.com"]
+    headers = {"Host": "sub2.example.com"}
+    request, response = app.test_client.get("/test/", headers=headers)
+    assert response.text == "Hello2"
+    request, response = app.test_client.get("/test/other/", headers=headers)
+    assert response.text == "Hello3"
+
+
 def test_bp_middleware(app):
     blueprint = Blueprint("test_bp_middleware")
 
@@ -270,24 +352,31 @@ def test_bp_middleware(app):
     assert response.status == 200
     assert response.text == "FAIL"
 
+
 def test_bp_middleware_order(app):
     blueprint = Blueprint("test_bp_middleware_order")
     order = list()
+
     @blueprint.middleware("request")
     def mw_1(request):
         order.append(1)
+
     @blueprint.middleware("request")
     def mw_2(request):
         order.append(2)
+
     @blueprint.middleware("request")
     def mw_3(request):
         order.append(3)
+
     @blueprint.middleware("response")
     def mw_4(request, response):
         order.append(6)
+
     @blueprint.middleware("response")
     def mw_5(request, response):
         order.append(5)
+
     @blueprint.middleware("response")
     def mw_6(request, response):
         order.append(4)
@@ -302,6 +391,7 @@ def test_bp_middleware_order(app):
 
     assert response.status == 200
     assert order == [1, 2, 3, 4, 5, 6]
+
 
 def test_bp_exception_handler(app):
     blueprint = Blueprint("test_middleware")
@@ -585,9 +675,7 @@ def test_bp_group_with_default_url_prefix(app):
     from uuid import uuid4
 
     resource_id = str(uuid4())
-    request, response = app.test_client.get(
-        f"/api/v1/resources/{resource_id}"
-    )
+    request, response = app.test_client.get(f"/api/v1/resources/{resource_id}")
     assert response.json == {"resource_id": resource_id}
 
 

@@ -17,7 +17,7 @@ class DelayableHTTPConnection(httpx.dispatch.connection.HTTPConnection):
     async def send(self, request, timeout=None):
 
         if self.connection is None:
-            self.connection = (await self.connect(timeout=timeout))
+            self.connection = await self.connect(timeout=timeout)
 
         if self._request_delay:
             await asyncio.sleep(self._request_delay)

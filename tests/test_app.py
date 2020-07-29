@@ -56,6 +56,7 @@ def test_asyncio_server_no_start_serving(app):
         srv = loop.run_until_complete(asyncio_srv_coro)
         assert srv.is_serving() is False
 
+
 @pytest.mark.skipif(
     sys.version_info < (3, 7), reason="requires python3.7 or higher"
 )
@@ -74,6 +75,7 @@ def test_asyncio_server_start_serving(app):
         wait_close = srv.close()
         loop.run_until_complete(wait_close)
         # Looks like we can't easily test `serve_forever()`
+
 
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
@@ -125,7 +127,10 @@ def test_app_handle_request_handler_is_none(app, monkeypatch):
 
     request, response = app.test_client.get("/test")
 
-    assert "'None' was returned while requesting a handler from the router" in response.text
+    assert (
+        "'None' was returned while requesting a handler from the router"
+        in response.text
+    )
 
 
 @pytest.mark.parametrize("websocket_enabled", [True, False])
@@ -217,3 +222,28 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
 def test_app_name_required():
     with pytest.deprecated_call():
         Sanic()
+
+
+def test_app_has_test_mode_sync():
+    app = Sanic("test")
+
+    @app.get("/")
+    def handler(request):
+        assert request.app.test_mode
+        return text("test")
+
+    _, response = app.test_client.get("/")
+    assert response.status == 200
+
+
+# @pytest.mark.asyncio
+# async def test_app_has_test_mode_async():
+#     app = Sanic("test")
+
+#     @app.get("/")
+#     async def handler(request):
+#         assert request.app.test_mode
+#         return text("test")
+
+#     _, response = await app.asgi_client.get("/")
+#     assert response.status == 200

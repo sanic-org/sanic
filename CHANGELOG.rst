@@ -1,3 +1,238 @@
+Version 20.6.3
+===============
+
+Bugfixes
+********
+  
+  *
+    `#1884 <https://github.com/huge-success/sanic/pull/1884>`_
+    Revert change to multiprocessing mode
+
+
+Version 20.6.2
+===============
+
+Features
+********
+  
+  *
+    `#1641 <https://github.com/huge-success/sanic/pull/1641>`_
+    Socket binding implemented properly for IPv6 and UNIX sockets
+
+
+Version 20.6.1
+===============
+
+Features
+********
+  
+  *
+    `#1760 <https://github.com/huge-success/sanic/pull/1760>`_
+    Add version parameter to websocket routes
+
+  *
+    `#1866 <https://github.com/huge-success/sanic/pull/1866>`_
+    Add ``sanic`` as an entry point command
+
+  *
+    `#1880 <https://github.com/huge-success/sanic/pull/1880>`_
+    Add handler names for websockets for url_for usage 
+
+Bugfixes
+********
+
+  *
+    `#1776 <https://github.com/huge-success/sanic/pull/1776>`_
+    Bug fix for host parameter issue with lists
+
+  *
+    `#1842 <https://github.com/huge-success/sanic/pull/1842>`_
+    Fix static _handler pickling error
+
+  *
+    `#1827 <https://github.com/huge-success/sanic/pull/1827>`_
+    Fix reloader on OSX py38 and Windows
+
+  *
+    `#1848 <https://github.com/huge-success/sanic/pull/1848>`_
+    Reverse named_response_middlware execution order, to match normal response middleware execution order
+  
+  *
+    `#1853 <https://github.com/huge-success/sanic/pull/1853>`_
+    Fix pickle error when attempting to pickle an application which contains websocket routes
+
+Deprecations and Removals
+*************************
+
+  *
+    `#1739 <https://github.com/huge-success/sanic/pull/1739>`_
+    Deprecate body_bytes to merge into body
+
+Developer infrastructure
+************************
+
+  *
+    `#1852 <https://github.com/huge-success/sanic/pull/1852>`_
+    Fix naming of CI test env on Python nightlies
+
+  *
+    `#1857 <https://github.com/huge-success/sanic/pull/1857>`_
+    Adjust websockets version to setup.py
+
+  *
+    `#1869 <https://github.com/huge-success/sanic/pull/1869>`_
+    Wrap run()'s "protocol" type annotation in Optional[]
+
+
+Improved Documentation
+**********************
+
+  *
+    `#1846 <https://github.com/huge-success/sanic/pull/1846>`_
+    Update docs to clarify response middleware execution order
+
+  *
+    `#1865 <https://github.com/huge-success/sanic/pull/1865>`_
+    Fixing rst format issue that was hiding documentation
+
+
+Version 20.6.0
+===============
+
+*Released, but unintentionally ommitting PR #1880, so was replaced by 20.6.1*
+
+
+Version 20.3.0
+===============
+
+Features
+********
+
+  * 
+    `#1762 <https://github.com/huge-success/sanic/pull/1762>`_
+    Add ``srv.start_serving()`` and ``srv.serve_forever()`` to ``AsyncioServer``
+
+  * 
+    `#1767 <https://github.com/huge-success/sanic/pull/1767>`_
+    Make Sanic usable on ``hypercorn -k trio myweb.app``
+
+  * 
+    `#1768 <https://github.com/huge-success/sanic/pull/1768>`_
+    No tracebacks on normal errors and prettier error pages
+
+  * 
+    `#1769 <https://github.com/huge-success/sanic/pull/1769>`_
+    Code cleanup in file responses
+
+  * 
+    `#1793 <https://github.com/huge-success/sanic/pull/1793>`_ and
+    `#1819 <https://github.com/huge-success/sanic/pull/1819>`_ 
+    Upgrade ``str.format()`` to f-strings
+
+  * 
+    `#1798 <https://github.com/huge-success/sanic/pull/1798>`_
+    Allow multiple workers on MacOS with Python 3.8
+
+  *
+    `#1820 <https://github.com/huge-success/sanic/pull/1820>`_
+    Do not set content-type and content-length headers in exceptions
+
+Bugfixes
+********
+
+  * 
+    `#1748 <https://github.com/huge-success/sanic/pull/1748>`_
+    Remove loop argument in ``asyncio.Event`` in Python 3.8
+
+  * 
+    `#1764 <https://github.com/huge-success/sanic/pull/1764>`_
+    Allow route decorators to stack up again
+
+  * 
+    `#1789 <https://github.com/huge-success/sanic/pull/1789>`_
+    Fix tests using hosts yielding incorrect ``url_for``
+
+  * 
+    `#1808 <https://github.com/huge-success/sanic/pull/1808>`_
+     Fix Ctrl+C and tests on Windows
+
+Deprecations and Removals
+*************************
+
+  *
+    `#1800 <https://github.com/huge-success/sanic/pull/1800>`_
+    Begin deprecation in way of first-class streaming, removal of ``body_init``, ``body_push``, and ``body_finish``
+
+  *
+    `#1801 <https://github.com/huge-success/sanic/pull/1801>`_
+    Complete deprecation from `#1666 <https://github.com/huge-success/sanic/pull/1666>`_ of dictionary context on ``request`` objects.
+    
+  *
+    `#1807 <https://github.com/huge-success/sanic/pull/1807>`_
+    Remove server config args that can be read directly from app
+
+  *
+    `#1818 <https://github.com/huge-success/sanic/pull/1818>`_
+    Complete deprecation of ``app.remove_route`` and ``request.raw_args``
+
+Dependencies
+************
+
+  *
+    `#1794 <https://github.com/huge-success/sanic/pull/1794>`_
+    Bump ``httpx`` to 0.11.1
+
+  *
+    `#1806 <https://github.com/huge-success/sanic/pull/1806>`_
+    Import ``ASGIDispatch`` from top-level ``httpx`` (from third-party deprecation)
+
+Developer infrastructure
+************************
+
+  * 
+    `#1833 <https://github.com/huge-success/sanic/pull/1833>`_
+    Resolve broken documentation builds
+
+Improved Documentation
+**********************
+
+  * 
+    `#1755 <https://github.com/huge-success/sanic/pull/1755>`_
+    Usage of ``response.empty()``
+
+  * 
+    `#1778 <https://github.com/huge-success/sanic/pull/1778>`_
+    Update README
+
+  * 
+    `#1783 <https://github.com/huge-success/sanic/pull/1783>`_
+    Fix typo
+
+  *
+    `#1784 <https://github.com/huge-success/sanic/pull/1784>`_
+    Corrected changelog for docs move of MD to RST (`#1691 <https://github.com/huge-success/sanic/pull/1691>`_)
+
+  *
+    `#1803 <https://github.com/huge-success/sanic/pull/1803>`_
+    Update config docs to match DEFAULT_CONFIG
+
+  *
+    `#1814 <https://github.com/huge-success/sanic/pull/1814>`_
+    Update getting_started.rst
+
+  *
+    `#1821 <https://github.com/huge-success/sanic/pull/1821>`_
+    Update to deployment
+
+  *
+    `#1822 <https://github.com/huge-success/sanic/pull/1822>`_
+    Update docs with changes done in 20.3
+
+  *
+    `#1834 <https://github.com/huge-success/sanic/pull/1834>`_
+    Order of listeners
+    
+
 Version 19.12.0
 ===============
 

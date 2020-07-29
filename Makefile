@@ -71,7 +71,7 @@ black:
 	black --config ./.black.toml sanic tests
 
 fix-import: black
-	isort -rc sanic tests
+	isort -sanic tests
 
 
 docs-clean:

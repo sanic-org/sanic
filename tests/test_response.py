@@ -15,13 +15,13 @@ from aiofiles import os as async_os
 from sanic.response import (
     HTTPResponse,
     StreamingHTTPResponse,
+    empty,
     file,
     file_stream,
     json,
     raw,
     stream,
 )
-from sanic.response import empty
 from sanic.server import HttpProtocol
 from sanic.testing import HOST, PORT
 
@@ -240,7 +240,7 @@ def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
 
 
 def test_non_chunked_streaming_returns_correct_content(
-    non_chunked_streaming_app
+    non_chunked_streaming_app,
 ):
     request, response = non_chunked_streaming_app.test_client.get("/")
     assert response.text == "foo,bar"
@@ -255,7 +255,7 @@ def test_stream_response_status_returns_correct_headers(status):
 
 @pytest.mark.parametrize("keep_alive_timeout", [10, 20, 30])
 def test_stream_response_keep_alive_returns_correct_headers(
-    keep_alive_timeout
+    keep_alive_timeout,
 ):
     response = StreamingHTTPResponse(sample_streaming_fn)
     headers = response.get_headers(
@@ -284,7 +284,7 @@ def test_stream_response_does_not_include_chunked_header_if_disabled():
 
 
 def test_stream_response_writes_correct_content_to_transport_when_chunked(
-    streaming_app
+    streaming_app,
 ):
     response = StreamingHTTPResponse(sample_streaming_fn)
     response.protocol = MagicMock(HttpProtocol)

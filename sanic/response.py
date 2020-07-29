@@ -65,6 +65,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.headers = Header(headers or {})
         self.chunked = chunked
         self._cookies = None
+        self.protocol = None
 
     async def write(self, data):
         """Writes a chunk of data to the streaming response.
@@ -202,16 +203,14 @@ class HTTPResponse(BaseHTTPResponse):
         return self._cookies
 
 
-def empty(
-    status=204, headers=None,
-):
+def empty(status=204, headers=None):
     """
     Returns an empty response to the client.
 
     :param status Response code.
     :param headers Custom Headers.
     """
-    return HTTPResponse(body_bytes=b"", status=status, headers=headers,)
+    return HTTPResponse(body_bytes=b"", status=status, headers=headers)
 
 
 def json(

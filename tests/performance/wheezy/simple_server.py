@@ -39,6 +39,7 @@ main = WSGIApplication(
 
 if __name__ == "__main__":
     import sys
+
     from wsgiref.simple_server import make_server
 
     try:

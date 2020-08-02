@@ -3,7 +3,6 @@ import logging.config
 import os
 import re
 import warnings
-
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
@@ -21,16 +20,12 @@ from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
+from sanic.helpers import publish, subscribe
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.router import Router
-from sanic.server import (
-    AsyncioServer,
-    HttpProtocol,
-    Signal,
-    serve,
-    serve_multiple,
-)
+from sanic.server import AsyncioServer, HttpProtocol, Signal, serve, serve_multiple
+from sanic.signals import Namespace
 from sanic.static import register as static_register
 from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
@@ -92,6 +87,18 @@ class Sanic:
         self.go_fast = self.run
         self.test_mode = False
 
+        # Signal Handlers and Registry
+        self._signals = {
+            "server": Namespace(namespace="server", owner=self, classic_event=True,),
+            "request": Namespace(namespace="request", owner=self),
+            "response": Namespace(namespace="response", owner=self),
+            "middleware": Namespace(namespace="middleware", owner=self),
+        }
+
+    @property
+    def signals(self) -> Dict[str, Namespace]:
+        return self._signals
+
     @property
     def loop(self):
         """Synonymous with asyncio.get_event_loop().
@@ -121,9 +128,7 @@ class Sanic:
             loop = self.loop  # Will raise SanicError if loop is not started
             self._loop_add_task(task, self, loop)
         except SanicException:
-            self.listener("before_server_start")(
-                partial(self._loop_add_task, task)
-            )
+            self.listener("before_server_start")(partial(self._loop_add_task, task))
 
     # Decorator
     def listener(self, event):
@@ -133,6 +138,7 @@ class Sanic:
         """
 
         def decorator(listener):
+            subscribe(event, self.signals, listener)
             self.listeners[event].append(listener)
             return listener
 
@@ -146,7 +152,7 @@ class Sanic:
         :param event: when to register listener i.e. 'before_server_start'
         :return: listener
         """
-
+        subscribe(event_name=event, callback=listener, signals=self.signals)
         return self.listener(event)(listener)
 
     # Decorator
@@ -219,9 +225,7 @@ class Sanic:
         return response
 
     # Shorthand method decorators
-    def get(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
-    ):
+    def get(self, uri, host=None, strict_slashes=None, version=None, name=None):
         """
         Add an API URL under the **GET** *HTTP* method
 
@@ -302,9 +306,7 @@ class Sanic:
             name=name,
         )
 
-    def head(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
-    ):
+    def head(self, uri, host=None, strict_slashes=None, version=None, name=None):
         return self.route(
             uri,
             methods=frozenset({"HEAD"}),
@@ -314,9 +316,7 @@ class Sanic:
             name=name,
         )
 
-    def options(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
-    ):
+    def options(self, uri, host=None, strict_slashes=None, version=None, name=None):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
 
@@ -367,9 +367,7 @@ class Sanic:
             name=name,
         )
 
-    def delete(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
-    ):
+    def delete(self, uri, host=None, strict_slashes=None, version=None, name=None):
         """
         Add an API URL under the **DELETE** *HTTP* method
 
@@ -491,9 +489,7 @@ class Sanic:
             websocket_handler = partial(
                 self._websocket_handler, handler, subprotocols=subprotocols
             )
-            websocket_handler.__name__ = (
-                "websocket_handler_" + handler.__name__
-            )
+            websocket_handler.__name__ = "websocket_handler_" + handler.__name__
             routes.extend(
                 self.router.add(
                     uri=uri,
@@ -604,9 +600,7 @@ class Sanic:
                 self.response_middleware.appendleft(middleware)
         return middleware
 
-    def register_named_middleware(
-        self, middleware, route_names, attach_to="request"
-    ):
+    def register_named_middleware(self, middleware, route_names, attach_to="request"):
         if attach_to == "request":
             for _rn in route_names:
                 if _rn not in self.named_request_middleware:
@@ -635,9 +629,7 @@ class Sanic:
             return self.register_middleware(middleware_or_request)
 
         else:
-            return partial(
-                self.register_middleware, attach_to=middleware_or_request
-            )
+            return partial(self.register_middleware, attach_to=middleware_or_request)
 
     # Static Files
     def static(
@@ -766,9 +758,7 @@ class Sanic:
 
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
         if not (uri and route):
-            raise URLBuildError(
-                f"Endpoint with name `{view_name}` was not found"
-            )
+            raise URLBuildError(f"Endpoint with name `{view_name}` was not found")
 
         # If the route has host defined, split that off
         # TODO: Retain netloc and path separately in Route objects
@@ -904,9 +894,7 @@ class Sanic:
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
-            response = await self._run_request_middleware(
-                request, request_name=name
-            )
+            response = await self._run_request_middleware(request, request_name=name)
             # No middleware results
             if not response:
                 # -------------------------------------------- #
@@ -923,13 +911,10 @@ class Sanic:
                     )
                 else:
                     if not getattr(handler, "__blueprintname__", False):
-                        request.endpoint = self._build_endpoint_name(
-                            handler.__name__
-                        )
+                        request.endpoint = self._build_endpoint_name(handler.__name__)
                     else:
                         request.endpoint = self._build_endpoint_name(
-                            getattr(handler, "__blueprintname__", ""),
-                            handler.__name__,
+                            getattr(handler, "__blueprintname__", ""), handler.__name__,
                         )
 
                 # Run response handler
@@ -954,13 +939,10 @@ class Sanic:
                     response = await response
             except Exception as e:
                 if isinstance(e, SanicException):
-                    response = self.error_handler.default(
-                        request=request, exception=e
-                    )
+                    response = self.error_handler.default(request=request, exception=e)
                 elif self.debug:
                     response = HTTPResponse(
-                        f"Error while "
-                        f"handling error: {e}\nStack: {format_exc()}",
+                        f"Error while " f"handling error: {e}\nStack: {format_exc()}",
                         status=500,
                     )
                 else:
@@ -983,16 +965,13 @@ class Sanic:
                     cancelled = True
                 except BaseException:
                     error_logger.exception(
-                        "Exception occurred in one of response "
-                        "middleware handlers"
+                        "Exception occurred in one of response " "middleware handlers"
                     )
             if cancelled:
                 raise CancelledError()
 
         # pass the response to the correct callback
-        if write_callback is None or isinstance(
-            response, StreamingHTTPResponse
-        ):
+        if write_callback is None or isinstance(response, StreamingHTTPResponse):
             if stream_callback:
                 await stream_callback(response)
             else:
@@ -1088,15 +1067,12 @@ class Sanic:
             host, port = host or "127.0.0.1", port or 8000
 
         if protocol is None:
-            protocol = (
-                WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
+            protocol = WebSocketProtocol if self.websocket_enabled else HttpProtocol
         if stop_event is not None:
             if debug:
                 warnings.simplefilter("default")
             warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
+                "stop_event will be removed from future versions.", DeprecationWarning,
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
@@ -1125,14 +1101,13 @@ class Sanic:
                     " using workers=1 instead"
                 )
                 workers = 1
+            self._signals.get("server").loop = self.loop
             if workers == 1:
                 serve(**server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
-            error_logger.exception(
-                "Experienced exception while trying to serve"
-            )
+            error_logger.exception("Experienced exception while trying to serve")
             raise
         finally:
             self.is_running = False
@@ -1206,15 +1181,12 @@ class Sanic:
             host, port = host or "127.0.0.1", port or 8000
 
         if protocol is None:
-            protocol = (
-                WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
+            protocol = WebSocketProtocol if self.websocket_enabled else HttpProtocol
         if stop_event is not None:
             if debug:
                 warnings.simplefilter("default")
             warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
+                "stop_event will be removed from future versions.", DeprecationWarning,
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
@@ -1235,8 +1207,7 @@ class Sanic:
 
         # Trigger before_start events
         await self.trigger_events(
-            server_settings.get("before_start", []),
-            server_settings.get("loop"),
+            server_settings.get("before_start", []), server_settings.get("loop"),
         )
 
         return await serve(
@@ -1252,12 +1223,11 @@ class Sanic:
             result = event(loop)
             if isawaitable(result):
                 await result
+            await publish(event_name=event, signals=self.signals)
 
     async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why
-        named_middleware = self.named_request_middleware.get(
-            request_name, deque()
-        )
+        named_middleware = self.named_request_middleware.get(request_name, deque())
         applicable_middleware = self.request_middleware + named_middleware
         if applicable_middleware:
             for middleware in applicable_middleware:
@@ -1268,12 +1238,8 @@ class Sanic:
                     return response
         return None
 
-    async def _run_response_middleware(
-        self, request, response, request_name=None
-    ):
-        named_middleware = self.named_response_middleware.get(
-            request_name, deque()
-        )
+    async def _run_response_middleware(self, request, response, request_name=None):
+        named_middleware = self.named_response_middleware.get(request_name, deque())
         applicable_middleware = self.response_middleware + named_middleware
         if applicable_middleware:
             for middleware in applicable_middleware:
@@ -1316,8 +1282,7 @@ class Sanic:
             if debug:
                 warnings.simplefilter("default")
             warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
+                "stop_event will be removed from future versions.", DeprecationWarning,
             )
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
@@ -1363,14 +1328,9 @@ class Sanic:
         if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
 
-        if (
-            self.config.LOGO
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
+        if self.config.LOGO and os.environ.get("SANIC_SERVER_RUNNING") != "true":
             logger.debug(
-                self.config.LOGO
-                if isinstance(self.config.LOGO, str)
-                else BASE_LOGO
+                self.config.LOGO if isinstance(self.config.LOGO, str) else BASE_LOGO
             )
 
         if run_async:

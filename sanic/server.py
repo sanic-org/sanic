@@ -31,7 +31,6 @@ from sanic.log import access_logger, logger
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
 
-
 try:
     import uvloop  # type: ignore
 

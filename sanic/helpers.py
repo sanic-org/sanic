@@ -3,6 +3,9 @@
 from importlib import import_module
 from inspect import ismodule
 
+from sanic.signals import Namespace
+from typing import Dict, Callable
+
 
 STATUS_CODES = {
     100: b"Continue",
@@ -66,6 +69,37 @@ STATUS_CODES = {
     510: b"Not Extended",
     511: b"Network Authentication Required",
 }
+
+_EVENT_MAPPING = {
+    "before_server_start": {
+        "namespace": "server",
+        "context": "before",
+        "action": "init",
+    },
+    "after_server_start": {
+        "namespace": "server",
+        "context": "after",
+        "action": "init",
+    },
+    "before_server_stop": {
+        "namespace": "server",
+        "context": "before",
+        "action": "stop",
+    },
+    "after_server_stop": {
+        "namespace": "server",
+        "context": "after",
+        "action": "stop",
+    },
+}
+
+_CLASSIC_EVENT_ALIAS = {
+    "before_start": "before_server_start",
+    "after_start": "after_server_start",
+    "before_stop": "before_server_stop",
+    "after_stop": "after_server_stop",
+}
+
 
 # According to https://tools.ietf.org/html/rfc2616#section-7.1
 _ENTITY_HEADERS = frozenset(
@@ -154,3 +188,44 @@ def import_string(module_name, package=None):
     if ismodule(obj):
         return obj
     return obj()
+
+
+def _extract_signal_namespace(event_name, signals):
+    global _CLASSIC_EVENT_ALIAS
+    if not signals:
+        return
+    if _CLASSIC_EVENT_ALIAS.get(event_name) is not None:
+        event_name = _CLASSIC_EVENT_ALIAS.get(event_name)
+    _mapped_context = _EVENT_MAPPING.get(event_name)
+    if _mapped_context:
+        _namespace = signals.get(
+            _mapped_context.get("namespace")
+        )  # type: Namespace
+        return _mapped_context, _namespace
+    else:
+        return None, None
+
+
+def subscribe(
+    event_name: str, signals: Dict[str, Namespace], callback: Callable
+):
+    _mapped_context, _namespace = _extract_signal_namespace(
+        event_name, signals
+    )
+    if _namespace:
+        _namespace.subscribe(
+            context=_mapped_context.get("context"),
+            action=_mapped_context.get("action"),
+            callback=callback,
+        )
+
+
+async def publish(event_name: str, signals: Dict[str, Namespace]):
+    _mapped_context, _namespace = _extract_signal_namespace(
+        event_name, signals
+    )
+    if _namespace:
+        await _namespace.publish(
+            context=_mapped_context.get("context"),
+            action=_mapped_context.get("action"),
+        )

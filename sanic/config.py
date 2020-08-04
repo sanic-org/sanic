@@ -108,15 +108,15 @@ class Config(dict):
             B = 2  
         config.update_config(c)"""
     
-    if isinstance(config, (bytes, str)):
-        config = load_module_from_file_location("config", location=config)
+        if isinstance(config, (bytes, str)):
+            config = load_module_from_file_location("config", location=config)
     
-    if not isinstance(config, dict):
-        config = config.__dict__
+        if not isinstance(config, dict):
+            config = config.__dict__
     
-    config = dict(filter(lambda i: i[0].isupper(), config.items()))
+        config = dict(filter(lambda i: i[0].isupper(), config.items()))
     
-    self.update(config)
+        self.update(config)
 
 
 # Is in Sanic any better place where to keep this ???

@@ -1487,4 +1487,4 @@ class Sanic:
             B = 2  
         app.update_config(c)"""
 
-    self.config.update_config(config)
+        self.config.update_config(config)

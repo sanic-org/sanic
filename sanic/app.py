@@ -1452,3 +1452,36 @@ class Sanic:
         self.asgi = True
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()
+
+
+
+    # -------------------------------------------------------------------- #
+    # Configuration
+    # -------------------------------------------------------------------- #
+    def update_config(self, config: Union[bytes, str, dict, Any]):
+    """Update app.config.  
+
+    Note:: only upper case settings are considered.  
+
+    You can upload app config by providing path to py file holding settings.  
+
+        # /some/py/file  
+        A = 1  
+        B = 2  
+
+        app.update_config("/some/py/file")  
+
+    You can upload app config by providing dict holding settings.  
+
+        d = {"A": 1, "B": 2}  
+        app.update_config(d)  
+
+    You can upload app config by providing any object holding settings,  
+    but in such case config.__dict__ will be used as dict holding settings.  
+
+        class C:  
+            A = 1  
+            B = 2  
+        app.update_config(c)"""
+
+    self.config.update_config(config)

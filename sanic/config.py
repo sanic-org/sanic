@@ -161,7 +161,8 @@ def load_module_from_file_location(*args, **kwargs):
         location = args[1]
         _l = "args"
     else:
-        raise Exception("Provided arguments must conform to importlib.util.spec_from_file_location arguments")
+        raise Exception("Provided arguments must conform to importlib.util.spec_from_file_location arguments, \
+                         nonetheless location parameter has to be provided.")
     
     # 2) Parse location.
     if isinstance(location, bytes):

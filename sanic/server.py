@@ -14,11 +14,13 @@ from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import time
+from typing import Type
 
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
 
 from sanic.compat import Header, ctrlc_workaround_for_windows
+from sanic.config import Config
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -30,7 +32,6 @@ from sanic.exceptions import (
 from sanic.log import access_logger, logger
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
-
 
 try:
     import uvloop  # type: ignore
@@ -844,6 +845,7 @@ def serve(
     app.asgi = False
 
     connections = connections if connections is not None else set()
+    protocol_kwargs = _build_protocol_parameters(protocol, app.config)
     server = partial(
         protocol,
         loop=loop,
@@ -852,6 +854,7 @@ def serve(
         app=app,
         state=state,
         unix=unix,
+        **protocol_kwargs
     )
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
@@ -946,6 +949,19 @@ def serve(
 
         loop.close()
         remove_unix_socket(unix)
+
+
+def _build_protocol_parameters(protocol: Type[HttpProtocol], config: Config) -> dict:
+    if hasattr(protocol, "websocket_timeout"):
+        return {
+            "max_size": config.WEBSOCKET_MAX_SIZE,
+            "max_queue": config.WEBSOCKET_MAX_QUEUE,
+            "read_limit": config.WEBSOCKET_READ_LIMIT,
+            "write_limit": config.WEBSOCKET_WRITE_LIMIT,
+            "ping_timeout": config.WEBSOCKET_PING_TIMEOUT,
+            "ping_interval": config.WEBSOCKET_PING_INTERVAL,
+        }
+    return {}
 
 
 def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:

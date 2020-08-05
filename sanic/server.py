@@ -33,6 +33,7 @@ from sanic.log import access_logger, logger
 from sanic.request import EXPECT_HEADER, Request, StreamBuffer
 from sanic.response import HTTPResponse
 
+
 try:
     import uvloop  # type: ignore
 
@@ -845,7 +846,7 @@ def serve(
     app.asgi = False
 
     connections = connections if connections is not None else set()
-    protocol_kwargs = _build_protocol_parameters(protocol, app.config)
+    protocol_kwargs = _build_protocol_kwargs(protocol, app.config)
     server = partial(
         protocol,
         loop=loop,
@@ -854,7 +855,7 @@ def serve(
         app=app,
         state=state,
         unix=unix,
-        **protocol_kwargs
+        **protocol_kwargs,
     )
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
@@ -951,7 +952,9 @@ def serve(
         remove_unix_socket(unix)
 
 
-def _build_protocol_parameters(protocol: Type[HttpProtocol], config: Config) -> dict:
+def _build_protocol_kwargs(
+    protocol: Type[HttpProtocol], config: Config
+) -> dict:
     if hasattr(protocol, "websocket_timeout"):
         return {
             "max_size": config.WEBSOCKET_MAX_SIZE,

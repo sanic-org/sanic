@@ -253,18 +253,24 @@ def raw(
     )
 
 
-def html(body, status=200, headers=None):
+def html(body, status=200, headers=None, formatting=None):
     """
     Returns response object with body in html format.
 
     :param body: str or bytes-ish, or an object with __html__ or _repr_html_.
     :param status: Response code.
     :param headers: Custom Headers.
+    :param formatting: Custom formatting (string) containing {body} for insertion point
     """
     if hasattr(body, "__html__"):
         body = body.__html__()
     elif hasattr(body, "_repr_html_"):
         body = body._repr_html_()
+
+    if formatting:
+        if "{body}" in body:
+            body = body.format(**{'body': body})
+
     return HTTPResponse(
         body,
         status=status,

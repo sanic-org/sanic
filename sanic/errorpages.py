@@ -35,22 +35,9 @@ def exception_response(request, exception, debug):
     text = escape(text)
 
     if debug and not getattr(exception, "quiet", False):
-        return html(
-            f"<!DOCTYPE html><meta charset=UTF-8><title>{title}</title>"
-            f"<style>{TRACEBACK_STYLE}</style>\n"
-            f"<h1>⚠️ {title}</h1><p>{text}\n"
-            f"{_render_traceback_html(request, exception)}",
-            status=status,
-        )
+        return html(f"{text}", status=status)
 
-    # Keeping it minimal with trailing newline for pretty curl/console output
-    return html(
-        f"<!DOCTYPE html><meta charset=UTF-8><title>{title}</title>"
-        "<style>html { font-family: sans-serif }</style>\n"
-        f"<h1>⚠️ {title}</h1><p>{text}\n",
-        status=status,
-        headers=headers,
-    )
+    return html(f"{text}", status=status, headers=headers)
 
 
 def _render_exception(exception):

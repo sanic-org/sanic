@@ -98,7 +98,7 @@ The config files are regular Python files which are executed in order to load th
 Builtin Configuration Values
 ----------------------------
 
-Out of the box there are just a few predefined values which can be overwritten when creating the application.
+Out of the box there are just a few predefined values which can be overwritten when creating the application. Note that websocket configuration values will have no impact if running in ASGI mode.
 
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | Variable                  | Default           | Description                                                                 |

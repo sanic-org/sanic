@@ -98,7 +98,7 @@ The config files are regular Python files which are executed in order to load th
 Builtin Configuration Values
 ----------------------------
 
-Out of the box there are just a few predefined values which can be overwritten when creating the application.
+Out of the box there are just a few predefined values which can be overwritten when creating the application. Note that websocket configuration values will have no impact if running in ASGI mode.
 
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | Variable                  | Default           | Description                                                                 |
@@ -122,6 +122,10 @@ Out of the box there are just a few predefined values which can be overwritten w
 | WEBSOCKET_READ_LIMIT      | 2^16              | High-water limit of the buffer for incoming bytes                           |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | WEBSOCKET_WRITE_LIMIT     | 2^16              | High-water limit of the buffer for outgoing bytes                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_PING_INTERVAL   | 20                | A Ping frame is sent every ping_interval seconds.                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_PING_TIMEOUT    | 20                | Connection is closed when Pong is not received after ping_timeout seconds   |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | GRACEFUL_SHUTDOWN_TIMEOUT | 15.0              | How long to wait to force close non-idle connection (sec)                   |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+

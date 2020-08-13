@@ -55,7 +55,7 @@ def load_module_from_file_location(name: str, location: Union[bytes, str], enc: 
     # B) Check these variables exists in environment.
     not_defined_env_vars = env_vars_in_location.difference(os_environ.keys())
     if not_defined_env_vars:
-        raise Exception("There are no following environment variables: " + ", ".join(not_defined_env_vars))  # TO ASK: Can we raise better exception type here ???
+        raise Exception("The following environment variables are not set: " + ", ".join(not_defined_env_vars))
     
     # C) Substitute them in location.
     for env_var in env_vars_in_location:

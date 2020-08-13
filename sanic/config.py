@@ -1,10 +1,17 @@
 from os import environ as os_environ
-from re import findall as re_findall
-from importlib.util import spec_from_file_location, \
-                           module_from_spec
 
 from typing import Union, \
                    Any
+
+from .utils import str_to_bool, \
+                   load_module_from_file_location
+
+# TODO: remove in version: 21.3
+import types
+from sanic.exceptions import PyFileError
+from sanic.helpers import import_string
+from warnings import warn
+
 
 
 SANIC_PREFIX = "SANIC_"
@@ -35,6 +42,7 @@ DEFAULT_CONFIG = {
 }
 
 
+
 class Config(dict):
     def __init__(self, defaults=None, load_env=True, keep_alive=None):
         defaults = defaults or {}
@@ -58,6 +66,84 @@ class Config(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
+    def from_envvar(self, variable_name):
+        """Load a configuration from an environment variable pointing to
+        a configuration file.
+
+        :param variable_name: name of the environment variable
+        :return: bool. ``True`` if able to load config, ``False`` otherwise.
+        """
+
+        warn("Using `from_envvar` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+             DeprecationWarning,
+             stacklevel=2)
+
+        config_file = os_environ.get(variable_name)
+        if not config_file:
+            raise RuntimeError(
+                "The environment variable %r is not set and "
+                "thus configuration could not be loaded." % variable_name
+            )
+        return self.from_pyfile(config_file)
+
+    def from_pyfile(self, filename):
+        """Update the values in the config from a Python file.
+        Only the uppercase variables in that module are stored in the config.
+
+        :param filename: an absolute path to the config file
+        """
+
+        warn("Using `from_pyfile` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+             DeprecationWarning,
+             stacklevel=2)
+
+        module = types.ModuleType("config")
+        module.__file__ = filename
+        try:
+            with open(filename) as config_file:
+                exec(  # nosec
+                    compile(config_file.read(), filename, "exec"),
+                    module.__dict__,
+                )
+        except IOError as e:
+            e.strerror = "Unable to load configuration file (%s)" % e.strerror
+            raise
+        except Exception as e:
+            raise PyFileError(filename) from e
+
+        self.from_object(module)
+        return True
+
+    def from_object(self, obj):
+        """Update the values from the given object.
+        Objects are usually either modules or classes.
+
+        Just the uppercase variables in that object are stored in the config.
+        Example usage::
+
+            from yourapplication import default_config
+            app.config.from_object(default_config)
+
+            or also:
+            app.config.from_object('myproject.config.MyConfigClass')
+
+        You should not use this function to load the actual configuration but
+        rather configuration defaults. The actual config should be loaded
+        with :meth:`from_pyfile` and ideally from a location not within the
+        package because the package might be installed system wide.
+
+        :param obj: an object holding the configuration
+        """
+
+        warn("Using `from_object` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+             DeprecationWarning,
+             stacklevel=2)
+
+        if isinstance(obj, str):
+            obj = import_string(obj)
+        for key in dir(obj):
+            if key.isupper():
+                self[key] = getattr(obj, key)
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
@@ -74,7 +160,7 @@ class Config(dict):
                         self[config_key] = float(v)
                     except ValueError:
                         try:
-                            self[config_key] = strtobool(v)
+                            self[config_key] = str_to_bool(v)
                         except ValueError:
                             self[config_key] = v
 
@@ -82,7 +168,7 @@ class Config(dict):
     def update_config(self, config: Union[bytes, str, dict, Any]):
     """Update app.config.  
     
-    Note only upper case settings are considered.  
+    Note:: only upper case settings are considered.  
     
     You can upload app config by providing path to py file holding settings.  
     
@@ -117,80 +203,3 @@ class Config(dict):
         config = dict(filter(lambda i: i[0].isupper(), config.items()))
     
         self.update(config)
-
-
-# Is in Sanic any better place where to keep this ???
-
-def strtobool(val):
-    """
-    This function was borrowed from distutils.utils. While distutils
-    is part of stdlib, it feels odd to use distutils in main application code.
-
-    The function was modified to walk its talk and actually return bool
-    and not int.
-    """
-    val = val.lower()
-    if val in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    elif val in ("n", "no", "f", "false", "off", "0"):
-        return False
-    else:
-        raise ValueError("invalid truth value %r" % (val,))
-
-
-# Is in Sanic any better place where to keep this ???
-
-def load_module_from_file_location(*args, **kwargs):
-    """Returns loaded module provided as a file path.  
-    
-    :param args: look for importlib.util.spec_from_file_location parameters specification  
-    :param kwargs: look for importlib.util.spec_from_file_location parameters specification  
-    
-    So for example You can:  
-    
-        some_module = load_module_from_file_location("some_module_name", "/some/path/${some_env_var})  
-    
-    Yes you can put environment variable here, but they must be provided in format: ${some_env_var},  
-    and mark that $some_env_var is treated as plain string."""
-    
-    # 1) Get location parameter.
-    if "location" in kwargs:
-        location = kwargs["location"]
-        _l = "kwargs"
-    elif len(args) >= 2:
-        location = args[1]
-        _l = "args"
-    else:
-        raise Exception("Provided arguments must conform to importlib.util.spec_from_file_location arguments, \
-                         nonetheless location parameter has to be provided.")
-    
-    # 2) Parse location.
-    if isinstance(location, bytes):
-        location = location.decode()
-    
-    # A) Check if location contains any environment variables in format ${some_env_var}.
-    env_vars_in_location = set(re_findall("\${(.+?)}", location))
-    
-    # B) Check these variables exists in environment.
-    not_defined_env_vars = env_vars_in_location.difference(os_environ.keys())
-    if not_defined_env_vars:
-        raise Exception("There are no following environment variables: " + ", ".join(not_defined_env_vars))
-    
-    # C) Substitute them in location.
-    for env_var in env_vars_in_location:
-        location = location.replace("${" + env_var + "}", os_environ[env_var])
-    
-    # 3) Put back parsed location pareameter.
-    if _l == "kwargs":
-        kwargs["location"] = location
-    else:
-        _args = list(args)
-        _args[1] = location
-        args = tuple(_args)
-    
-    # 4) Load and return module.
-    _mod_spec = spec_from_file_location(*args, **kwargs)
-    module = module_from_spec(_mod_spec)
-    _mod_spec.loader.exec_module(module)
-    
-    return module

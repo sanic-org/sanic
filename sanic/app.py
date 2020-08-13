@@ -1461,30 +1461,6 @@ class Sanic:
     def update_config(self, config: Union[bytes, str, dict, Any]):
     """Update app.config.  
     
-    Note:: only upper case settings are considered.  
-    
-    You can upload app config by providing path to py file holding settings.  
-    
-        # /some/py/file  
-        A = 1  
-        B = 2  
-    
-        app.update_config("${some}/py/file")  
-    
-    Yes you can put environment variable here, but they must be provided in format: ${some_env_var},  
-    and mark that $some_env_var is treated as plain string.  
-    
-    You can upload app config by providing dict holding settings.  
-    
-        d = {"A": 1, "B": 2}  
-        app.update_config(d)  
-    
-    You can upload app config by providing any object holding settings,  
-    but in such case config.__dict__ will be used as dict holding settings.  
-    
-        class C:  
-            A = 1  
-            B = 2  
-        app.update_config(c)"""
+    Please refer to config.py: Config class: update_config method for documentation."""
 
         self.config.update_config(config)

@@ -2,6 +2,7 @@ from os import environ as os_environ
 from re import findall as re_findall
 from importlib.util import spec_from_file_location, \
                            module_from_spec
+from .exceptions import LoadModuleFromFileLocationException
 from typing import Union
 
 
@@ -14,12 +15,12 @@ def str_to_bool(val):
     Else Raise ValueError."""
 
     val = val.lower()
-    if val in ("y", "yes", "yep", "yup", "t", "true", "on", "enable", "enabled", "1"):
+    if val in {"y", "yes", "yep", "yup", "t", "true", "on", "enable", "enabled", "1"}:
         return True
-    elif val in ("n", "no", "f", "false", "off", "disable", "disabled", "0"):
+    elif val in {"n", "no", "f", "false", "off", "disable", "disabled", "0"}:
         return False
     else:
-        raise ValueError("Invalid truth value %r" % (val,))
+        raise ValueError(f"Invalid truth value {val}")
 
 
 
@@ -55,7 +56,7 @@ def load_module_from_file_location(name: str, location: Union[bytes, str], enc: 
     # B) Check these variables exists in environment.
     not_defined_env_vars = env_vars_in_location.difference(os_environ.keys())
     if not_defined_env_vars:
-        raise Exception("The following environment variables are not set: " + ", ".join(not_defined_env_vars))
+        raise LoadModuleFromFileLocationException(f"The following environment variables are not set: {', '.join(not_defined_env_vars)}")
     
     # C) Substitute them in location.
     for env_var in env_vars_in_location:

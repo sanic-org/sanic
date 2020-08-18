@@ -6,11 +6,13 @@ from typing import Union, \
 from .utils import str_to_bool, \
                    load_module_from_file_location
 
+# \/ \/ \/ \/
 # TODO: remove in version: 21.3
 import types
 from sanic.exceptions import PyFileError
 from sanic.helpers import import_string
 from warnings import warn
+# /\ /\ /\ /\ 
 
 
 
@@ -66,6 +68,8 @@ class Config(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
+    # \/ \/ \/ \/
+    # TODO: remove in version: 21.3
     def from_envvar(self, variable_name):
         """Load a configuration from an environment variable pointing to
         a configuration file.
@@ -85,7 +89,10 @@ class Config(dict):
                 "thus configuration could not be loaded." % variable_name
             )
         return self.from_pyfile(config_file)
+    # /\ /\ /\ /\ 
 
+    # \/ \/ \/ \/
+    # TODO: remove in version: 21.3
     def from_pyfile(self, filename):
         """Update the values in the config from a Python file.
         Only the uppercase variables in that module are stored in the config.
@@ -113,7 +120,10 @@ class Config(dict):
 
         self.from_object(module)
         return True
+    # /\ /\ /\ /\ 
 
+    # \/ \/ \/ \/
+    # TODO: remove in version: 21.3
     def from_object(self, obj):
         """Update the values from the given object.
         Objects are usually either modules or classes.
@@ -144,6 +154,7 @@ class Config(dict):
         for key in dir(obj):
             if key.isupper():
                 self[key] = getattr(obj, key)
+    # /\ /\ /\ /\ 
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
@@ -192,7 +203,7 @@ class Config(dict):
         class C:  
             A = 1  
             B = 2  
-        config.update_config(c)"""
+        config.update_config(C)"""
     
         if isinstance(config, (bytes, str)):
             config = load_module_from_file_location("config", location=config)

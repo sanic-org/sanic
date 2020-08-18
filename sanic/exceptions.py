@@ -169,6 +169,11 @@ class Unauthorized(SanicException):
             }
 
 
+class LoadModuleFromFileLocationException(ImportError):
+    """Raised from within utils.py: load_module_from_file_location() function."""
+    pass
+
+
 def abort(status_code, message=None):
     """
     Raise an exception based on SanicException. Returns the HTTP response

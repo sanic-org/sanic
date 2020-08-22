@@ -38,7 +38,11 @@ async def _static_request_handler(
 
     # URL decode the path sent by the browser otherwise we won't be able to
     # match filenames which got encoded (filenames with spaces etc)
+    if path.isdir(file_path):
+        file_path = path.join(file_path, 'index.html')
+    
     file_path = path.abspath(unquote(file_path))
+
     if not file_path.startswith(path.abspath(unquote(root_path))):
         raise FileNotFound(
             "File not found", path=file_or_directory, relative_url=file_uri

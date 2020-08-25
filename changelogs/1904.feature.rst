@@ -1,0 +1,3 @@
+Adds WEBSOCKET_PING_TIMEOUT and WEBSOCKET_PING_INTERVAL configuration values
+
+Allows setting the ping_interval and ping_timeout arguments when initializing `WebSocketCommonProtocol`.

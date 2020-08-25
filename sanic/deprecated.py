@@ -1,13 +1,16 @@
-# NOTE (tomaszdrozdz): remove in version: 21.3
+# NOTE(tomaszdrozdz): remove in version: 21.3
+# We replace from_envvar(), from_object(), from_pyfile() config object methods
+# with one simpler update_config() method.
+# We also replace "loading module from file code" in from_pyfile()
+# in a favour of load_module_from_file_location().
+# Please see pull request: 1903
+# and issue: 1895
 import types
 from sanic.exceptions import PyFileError
 from sanic.helpers import import_string
 from warnings import warn
-# END remove in version: 21.3
 
 
-
-# NOTE (tomaszdrozdz): remove in version: 21.3
 
 def from_envvar(self, variable_name):
     """Load a configuration from an environment variable pointing to
@@ -87,5 +90,3 @@ def from_object(self, obj):
     for key in dir(obj):
         if key.isupper():
             self[key] = getattr(obj, key)
-
-# END remove in version: 21.3

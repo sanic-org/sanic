@@ -2,7 +2,7 @@ from os import environ as os_environ
 from re import findall as re_findall
 from importlib.util import spec_from_file_location, \
                            module_from_spec
-from .exceptions import LoadModuleFromFileLocationException
+from .exceptions import LoadFileException
 from typing import Union
 
 
@@ -56,7 +56,7 @@ def load_module_from_file_location(name: str, location: Union[bytes, str], enc: 
     # B) Check these variables exists in environment.
     not_defined_env_vars = env_vars_in_location.difference(os_environ.keys())
     if not_defined_env_vars:
-        raise LoadModuleFromFileLocationException(f"The following environment variables are not set: {', '.join(not_defined_env_vars)}")
+        raise LoadFileException(f"The following environment variables are not set: {', '.join(not_defined_env_vars)}")
     
     # C) Substitute them in location.
     for env_var in env_vars_in_location:

@@ -6,13 +6,16 @@ from typing import Union, \
 from .utils import str_to_bool, \
                    load_module_from_file_location
 
-
-
-# NOTE (tomaszdrozdz): remove in version: 21.3
+# NOTE(tomaszdrozdz): remove in version: 21.3
+# We replace from_envvar(), from_object(), from_pyfile() config object methods
+# with one simpler update_config() method.
+# We also replace "loading module from file code" in from_pyfile()
+# in a favour of load_module_from_file_location().
+# Please see pull request: 1903
+# and issue: 1895
 from deprecated import  from_envvar, \
                         from_pyfile, \
                         from_object
-# END remove in version: 21.3
 
 
 
@@ -72,11 +75,16 @@ class Config(dict):
         self[attr] = value
 
 
-    # NOTE (tomaszdrozdz): remove in version: 21.3
+    # NOTE(tomaszdrozdz): remove in version: 21.3
+    # We replace from_envvar(), from_object(), from_pyfile() config object methods
+    # with one simpler update_config() method.
+    # We also replace "loading module from file code" in from_pyfile()
+    # in a favour of load_module_from_file_location().
+    # Please see pull request: 1903
+    # and issue: 1895
     from_envvar = from_envvar
     from_pyfile = from_pyfile
     from_object = from_object
-    # END remove in version: 21.3
 
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):

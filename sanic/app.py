@@ -1453,14 +1453,12 @@ class Sanic:
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()
 
-
-
     # -------------------------------------------------------------------- #
     # Configuration
     # -------------------------------------------------------------------- #
     def update_config(self, config: Union[bytes, str, dict, Any]):
-    """Update app.config.  
-    
-    Please refer to config.py: Config class: update_config method for documentation."""
+        """Update app.config.  
+        
+        Please refer to config.py: Config class: update_config method for documentation."""
 
         self.config.update_config(config)

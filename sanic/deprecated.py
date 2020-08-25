@@ -11,7 +11,6 @@ from sanic.helpers import import_string
 from warnings import warn
 
 
-
 def from_envvar(self, variable_name):
     """Load a configuration from an environment variable pointing to
     a configuration file.
@@ -20,9 +19,11 @@ def from_envvar(self, variable_name):
     :return: bool. ``True`` if able to load config, ``False`` otherwise.
     """
 
-    warn("Using `from_envvar` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
-         DeprecationWarning,
-         stacklevel=2)
+    warn(
+        "Using `from_envvar` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     config_file = os_environ.get(variable_name)
     if not config_file:
@@ -32,6 +33,7 @@ def from_envvar(self, variable_name):
         )
         return self.from_pyfile(config_file)
 
+
 def from_pyfile(self, filename):
     """Update the values in the config from a Python file.
     Only the uppercase variables in that module are stored in the config.
@@ -39,17 +41,18 @@ def from_pyfile(self, filename):
     :param filename: an absolute path to the config file
     """
 
-    warn("Using `from_pyfile` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
-         DeprecationWarning,
-         stacklevel=2)
+    warn(
+        "Using `from_pyfile` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     module = types.ModuleType("config")
     module.__file__ = filename
     try:
         with open(filename) as config_file:
             exec(  # nosec
-                compile(config_file.read(), filename, "exec"),
-                module.__dict__,
+                compile(config_file.read(), filename, "exec"), module.__dict__,
             )
     except IOError as e:
         e.strerror = "Unable to load configuration file (%s)" % e.strerror
@@ -59,6 +62,7 @@ def from_pyfile(self, filename):
 
     self.from_object(module)
     return True
+
 
 def from_object(self, obj):
     """Update the values from the given object.
@@ -81,9 +85,11 @@ def from_object(self, obj):
     :param obj: an object holding the configuration
     """
 
-    warn("Using `from_object` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
-         DeprecationWarning,
-         stacklevel=2)
+    warn(
+        "Using `from_object` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     if isinstance(obj, str):
         obj = import_string(obj)

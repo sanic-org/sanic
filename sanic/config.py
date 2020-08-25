@@ -1,10 +1,8 @@
 from os import environ as os_environ
 
-from typing import Union, \
-                   Any
+from typing import Union, Any
 
-from .utils import str_to_bool, \
-                   load_module_from_file_location
+from .utils import str_to_bool, load_module_from_file_location
 
 # NOTE(tomaszdrozdz): remove in version: 21.3
 # We replace from_envvar(), from_object(), from_pyfile() config object methods
@@ -13,10 +11,7 @@ from .utils import str_to_bool, \
 # in a favour of load_module_from_file_location().
 # Please see pull request: 1903
 # and issue: 1895
-from deprecated import  from_envvar, \
-                        from_pyfile, \
-                        from_object
-
+from deprecated import from_envvar, from_pyfile, from_object
 
 
 SANIC_PREFIX = "SANIC_"
@@ -47,9 +42,7 @@ DEFAULT_CONFIG = {
 }
 
 
-
 class Config(dict):
-
     def __init__(self, defaults=None, load_env=True, keep_alive=None):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
@@ -63,17 +56,14 @@ class Config(dict):
             prefix = SANIC_PREFIX if load_env is True else load_env
             self.load_environment_vars(prefix=prefix)
 
-
     def __getattr__(self, attr):
         try:
             return self[attr]
         except KeyError as ke:
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
-
     def __setattr__(self, attr, value):
         self[attr] = value
-
 
     # NOTE(tomaszdrozdz): remove in version: 21.3
     # We replace from_envvar(), from_object(), from_pyfile() config object methods
@@ -85,7 +75,6 @@ class Config(dict):
     from_envvar = from_envvar
     from_pyfile = from_pyfile
     from_object = from_object
-
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
@@ -106,42 +95,41 @@ class Config(dict):
                         except ValueError:
                             self[config_key] = v
 
-
     def update_config(self, config: Union[bytes, str, dict, Any]):
-    """Update app.config.  
-    
-    Note:: only upper case settings are considered.  
-    
-    You can upload app config by providing path to py file holding settings.  
-    
-        # /some/py/file  
-        A = 1  
-        B = 2  
-    
-        config.update_config("${some}/py/file")  
-    
-    Yes you can put environment variable here, but they must be provided in format: ${some_env_var},  
-    and mark that $some_env_var is treated as plain string.  
-    
-    You can upload app config by providing dict holding settings.  
-    
-        d = {"A": 1, "B": 2}  
-        config.update_config(d)  
-    
-    You can upload app config by providing any object holding settings,  
-    but in such case config.__dict__ will be used as dict holding settings.  
-    
-        class C:  
+        """Update app.config.  
+        
+        Note:: only upper case settings are considered.  
+        
+        You can upload app config by providing path to py file holding settings.  
+        
+            # /some/py/file  
             A = 1  
             B = 2  
-        config.update_config(C)"""
-    
+        
+        config.update_config("${some}/py/file")  
+        
+        Yes you can put environment variable here, but they must be provided in format: ${some_env_var},  
+        and mark that $some_env_var is treated as plain string.  
+        
+        You can upload app config by providing dict holding settings.  
+        
+            d = {"A": 1, "B": 2}  
+            config.update_config(d)  
+        
+        You can upload app config by providing any object holding settings,  
+        but in such case config.__dict__ will be used as dict holding settings.  
+        
+            class C:  
+                A = 1  
+                B = 2  
+            config.update_config(C)"""
+
         if isinstance(config, (bytes, str)):
             config = load_module_from_file_location("config", location=config)
-    
+
         if not isinstance(config, dict):
             config = config.__dict__
-    
+
         config = dict(filter(lambda i: i[0].isupper(), config.items()))
-    
+
         self.update(config)

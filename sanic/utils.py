@@ -1,10 +1,8 @@
 from os import environ as os_environ
 from re import findall as re_findall
-from importlib.util import spec_from_file_location, \
-                           module_from_spec
+from importlib.util import spec_from_file_location, module_from_spec
 from .exceptions import LoadFileException
 from typing import Union
-
 
 
 def str_to_bool(val):
@@ -15,7 +13,18 @@ def str_to_bool(val):
     Else Raise ValueError."""
 
     val = val.lower()
-    if val in {"y", "yes", "yep", "yup", "t", "true", "on", "enable", "enabled", "1"}:
+    if val in {
+        "y",
+        "yes",
+        "yep",
+        "yup",
+        "t",
+        "true",
+        "on",
+        "enable",
+        "enabled",
+        "1",
+    }:
         return True
     elif val in {"n", "no", "f", "false", "off", "disable", "disabled", "0"}:
         return False
@@ -23,8 +32,9 @@ def str_to_bool(val):
         raise ValueError(f"Invalid truth value {val}")
 
 
-
-def load_module_from_file_location(name: str, location: Union[bytes, str], enc: str = "utf8", *args, **kwargs):
+def load_module_from_file_location(
+    name: str, location: Union[bytes, str], enc: str = "utf8", *args, **kwargs
+):
     """Returns loaded module provided as a file path.  
     
     :param name:  
@@ -45,26 +55,28 @@ def load_module_from_file_location(name: str, location: Union[bytes, str], enc: 
     For example You can:  
     
         some_module = load_module_from_file_location("some_module_name", "/some/path/${some_env_var})"""
-    
+
     # 1) Parse location.
     if isinstance(location, bytes):
         location = location.decode(enc)
-    
+
     # A) Check if location contains any environment variables in format ${some_env_var}.
     env_vars_in_location = set(re_findall("\${(.+?)}", location))
-    
+
     # B) Check these variables exists in environment.
     not_defined_env_vars = env_vars_in_location.difference(os_environ.keys())
     if not_defined_env_vars:
-        raise LoadFileException(f"The following environment variables are not set: {', '.join(not_defined_env_vars)}")
-    
+        raise LoadFileException(
+            f"The following environment variables are not set: {', '.join(not_defined_env_vars)}"
+        )
+
     # C) Substitute them in location.
     for env_var in env_vars_in_location:
         location = location.replace("${" + env_var + "}", os_environ[env_var])
-    
+
     # 2) Load and return module.
     _mod_spec = spec_from_file_location(name, location, *args, **kwargs)
     module = module_from_spec(_mod_spec)
     _mod_spec.loader.exec_module(module)
-    
+
     return module

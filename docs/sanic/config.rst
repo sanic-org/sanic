@@ -117,7 +117,7 @@ or
 
     c = C()
     
-    app.update_config(C)
+    app.update_config(c)
     
 etc.
 

@@ -51,5 +51,9 @@ You could setup your own WebSocket configuration through ``app.config``, like
     app.config.WEBSOCKET_MAX_QUEUE = 32
     app.config.WEBSOCKET_READ_LIMIT = 2 ** 16
     app.config.WEBSOCKET_WRITE_LIMIT = 2 ** 16
+    app.config.WEBSOCKET_PING_INTERVAL = 20
+    app.config.WEBSOCKET_PING_TIMEOUT = 20
+
+These settings will have no impact if running in ASGI mode.
 
 Find more in ``Configuration`` section.

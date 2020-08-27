@@ -3,6 +3,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    List,
     MutableMapping,
     Optional,
     Union,
@@ -34,6 +35,8 @@ class WebSocketProtocol(HttpProtocol):
         websocket_max_queue=None,
         websocket_read_limit=2 ** 16,
         websocket_write_limit=2 ** 16,
+        websocket_ping_interval=20,
+        websocket_ping_timeout=20,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -44,6 +47,8 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_queue = websocket_max_queue
         self.websocket_read_limit = websocket_read_limit
         self.websocket_write_limit = websocket_write_limit
+        self.websocket_ping_interval = websocket_ping_interval
+        self.websocket_ping_timeout = websocket_ping_timeout
 
     # timeouts make no sense for websocket routes
     def request_timeout_callback(self):
@@ -118,6 +123,8 @@ class WebSocketProtocol(HttpProtocol):
             max_queue=self.websocket_max_queue,
             read_limit=self.websocket_read_limit,
             write_limit=self.websocket_write_limit,
+            ping_interval=self.websocket_ping_interval,
+            ping_timeout=self.websocket_ping_timeout,
         )
         # Following two lines are required for websockets 8.x
         self.websocket.is_client = False
@@ -137,9 +144,11 @@ class WebSocketConnection:
         self,
         send: Callable[[ASIMessage], Awaitable[None]],
         receive: Callable[[], Awaitable[ASIMessage]],
+        subprotocols: Optional[List[str]] = None,
     ) -> None:
         self._send = send
         self._receive = receive
+        self.subprotocols = subprotocols or []
 
     async def send(self, data: Union[str, bytes], *args, **kwargs) -> None:
         message: Dict[str, Union[str, bytes]] = {"type": "websocket.send"}
@@ -164,7 +173,14 @@ class WebSocketConnection:
     receive = recv
 
     async def accept(self) -> None:
-        await self._send({"type": "websocket.accept", "subprotocol": ""})
+        await self._send(
+            {
+                "type": "websocket.accept",
+                "subprotocol": ",".join(
+                    [subprotocol for subprotocol in self.subprotocols]
+                ),
+            }
+        )
 
     async def close(self) -> None:
         pass

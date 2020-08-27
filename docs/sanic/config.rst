@@ -12,9 +12,9 @@ Sanic holds the configuration in the `config` attribute of the application objec
 
     app = Sanic('myapp')
     app.config.DB_NAME = 'appdb'
-    app.config.DB_USER = 'appuser'
+    app.config['DB_USER'] = 'appuser'
 
-Since the config object actually is a dictionary, you can use its `update` method in order to set several values at once:
+Since the config object actually is a object of class inheriting from dictionary, you can use its `update` method in order to set several values at once:
 
 .. code-block:: python
 
@@ -47,8 +47,85 @@ Then the above variable would be `MYAPP_REQUEST_TIMEOUT`. If you want to disable
 
     app = Sanic(__name__, load_env=False)
 
-From an Object
-~~~~~~~~~~~~~~
+From file, dict, any object (having __dict__ attribute).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You may wish to keep Your app configurations somewhere in a python file, or in some dictoionary, or even parhaps in some other object.
+In order to load configuration from those You can use app.upload_config() method.
+
+
+- From file
+So lets say You have my_config.py file like:
+
+.. code-block:: python
+
+    # my_config.py
+    A = 1
+    B = 2
+
+Loading this config from this file is as easy as:
+
+.. code-block:: python
+
+    app.update_config("/path/to/my_config.py")
+ 
+You can also use environment variables here.
+
+Lets say you have environment variable like:
+
+.. code-block:: shell
+
+    > my_path="/path/to"
+    
+So then to make use of it just:  
+
+.. code-block:: python
+
+    app.update_config("${my_path}/my_config.py")
+
+Just remember you have to provide environment variables in format ${environment_variable}
+and that $environment_variable is not expanded (is treated as "plain" text).
+ 
+- From dict
+
+You can upload app config by providing dict holding settings:
+
+.. code-block:: python
+
+    d = {"A": 1, "B": 2}
+    
+    app.update_config(d)
+
+- From an object (having __dict__ attribute)
+
+You can upload app config by providing any object holding settings,
+but in such case __dict__ attribute of this object will be used as dict holding settings.
+
+For example:
+
+.. code-block:: python
+
+    class C:
+        A = 1
+        B = 2
+        
+    app.update_config(C)
+
+or
+
+.. code-block:: python
+
+    c = C()
+    
+    app.update_config(C)
+    
+etc.
+
+(If You are not shure just see e.g. what C.__dict__ contains)
+
+
+From an Object (Deprecated, will be removed in version 21.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If there are a lot of configuration values and they have sensible defaults it might be helpful to put them into a module:
 
@@ -68,8 +145,8 @@ or also by path to config:
 
 You could use a class or any other object as well.
 
-From a File
-~~~~~~~~~~~
+From a File (Deprecated, will be removed in version 21.3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Usually you will want to load configuration from a file that is not part of the distributed application. You can load configuration from a file using `from_pyfile(/path/to/config_file)`. However, that requires the program to know the path to the config file. So instead you can specify the location of the config file in an environment variable and tell Sanic to use that to find the config file:
 

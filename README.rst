@@ -104,7 +104,7 @@ Hello World Example
     if __name__ == '__main__':
         app.run(host='0.0.0.0', port=8000)
         
-Sanic can now be easily run using ``python3 hello.py``.
+Sanic can now be easily run using ``sanic hello.app``.
 
 .. code::
 

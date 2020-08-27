@@ -338,6 +338,7 @@ def test_request_stream_handle_exception(app):
     assert response.status == 405
     assert "Method GET not allowed for URL /post/random_id" in response.text
 
+
 @pytest.mark.asyncio
 async def test_request_stream_unread(app):
     """ensure no error is raised when leaving unread bytes in byte-buffer"""
@@ -346,12 +347,13 @@ async def test_request_stream_unread(app):
     protocol = HttpProtocol(loop=asyncio.get_event_loop(), app=app)
     try:
         protocol.request = None
-        protocol._body_chunks.append('this is a test')
+        protocol._body_chunks.append("this is a test")
         await protocol.stream_append()
     except AttributeError as e:
         err = e
 
     assert err is None and not protocol._body_chunks
+
 
 def test_request_stream_blueprint(app):
     """for self.is_request_stream = True"""

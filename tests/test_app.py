@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+from unittest.mock import patch
 
 from inspect import isawaitable
 
@@ -146,6 +147,35 @@ def test_app_enable_websocket(app, websocket_enabled, enable):
         await ws.send("test")
 
     assert app.websocket_enabled == True
+
+
+@patch("sanic.app.WebSocketProtocol")
+def test_app_websocket_parameters(websocket_protocol_mock, app):
+    app.config.WEBSOCKET_MAX_SIZE = 44
+    app.config.WEBSOCKET_MAX_QUEUE = 45
+    app.config.WEBSOCKET_READ_LIMIT = 46
+    app.config.WEBSOCKET_WRITE_LIMIT = 47
+    app.config.WEBSOCKET_PING_TIMEOUT = 48
+    app.config.WEBSOCKET_PING_INTERVAL = 50
+
+    @app.websocket("/ws")
+    async def handler(request, ws):
+        await ws.send("test")
+
+    try:
+        # This will fail because WebSocketProtocol is mocked and only the call kwargs matter
+        app.test_client.get("/ws")
+    except:
+        pass
+
+    websocket_protocol_call_args = websocket_protocol_mock.call_args
+    ws_kwargs = websocket_protocol_call_args[1]
+    assert ws_kwargs["max_size"] == app.config.WEBSOCKET_MAX_SIZE
+    assert ws_kwargs["max_queue"] == app.config.WEBSOCKET_MAX_QUEUE
+    assert ws_kwargs["read_limit"] == app.config.WEBSOCKET_READ_LIMIT
+    assert ws_kwargs["write_limit"] == app.config.WEBSOCKET_WRITE_LIMIT
+    assert ws_kwargs["ping_timeout"] == app.config.WEBSOCKET_PING_TIMEOUT
+    assert ws_kwargs["ping_interval"] == app.config.WEBSOCKET_PING_INTERVAL
 
 
 def test_handle_request_with_nested_exception(app, monkeypatch):

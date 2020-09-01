@@ -6,9 +6,11 @@
 # Please see pull request: 1903
 # and issue: 1895
 import types
+
+from warnings import warn
+
 from sanic.exceptions import PyFileError
 from sanic.helpers import import_string
-from warnings import warn
 
 
 def from_envvar(self, variable_name):

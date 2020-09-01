@@ -1,8 +1,9 @@
+from importlib.util import module_from_spec, spec_from_file_location
 from os import environ as os_environ
 from re import findall as re_findall
-from importlib.util import spec_from_file_location, module_from_spec
-from .exceptions import LoadFileException
 from typing import Union
+
+from .exceptions import LoadFileException
 
 
 def str_to_bool(val):

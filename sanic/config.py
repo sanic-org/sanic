@@ -1,8 +1,7 @@
 from os import environ as os_environ
+from typing import Any, Union
 
-from typing import Union, Any
-
-from .utils import str_to_bool, load_module_from_file_location
+from .utils import load_module_from_file_location, str_to_bool
 
 # NOTE(tomaszdrozdz): remove in version: 21.3
 # We replace from_envvar(), from_object(), from_pyfile() config object methods
@@ -11,7 +10,7 @@ from .utils import str_to_bool, load_module_from_file_location
 # in a favour of load_module_from_file_location().
 # Please see pull request: 1903
 # and issue: 1895
-from deprecated import from_envvar, from_pyfile, from_object
+from .deprecated import from_envvar, from_object, from_pyfile  # noqa
 
 
 SANIC_PREFIX = "SANIC_"

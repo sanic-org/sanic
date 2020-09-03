@@ -126,7 +126,7 @@ class Config(dict):
             config.update_config(C)"""
 
         if isinstance(config, (bytes, str)):
-            config = load_module_from_file_location("config", location=config)
+            config = load_module_from_file_location(location=config)
 
         if not isinstance(config, dict):
             config = config.__dict__

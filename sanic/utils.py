@@ -33,13 +33,10 @@ def str_to_bool(val):
         raise ValueError(f"Invalid truth value {val}")
 
 
-def load_module_from_file_location(
-    name: str, location: Union[bytes, str], enc: str = "utf8", *args, **kwargs
+def load_module_from_file_location(location: Union[bytes, str], enc: str = "utf8", *args, **kwargs
 ):
     """Returns loaded module provided as a file path.  
     
-    :param name:  
-        The same as importlib.util.spec_from_file_location name param.  
     :param args:  
         Coresponds to importlib.util.spec_from_file_location location parameters,  
         but with this differences:  
@@ -55,7 +52,7 @@ def load_module_from_file_location(
     
     For example You can:  
     
-        some_module = load_module_from_file_location("some_module_name", "/some/path/${some_env_var})"""
+        some_module = load_module_from_file_location("some_module_name", "/some/path/${some_env_var}")"""
 
     # 1) Parse location.
     if isinstance(location, bytes):
@@ -76,6 +73,7 @@ def load_module_from_file_location(
         location = location.replace("${" + env_var + "}", os_environ[env_var])
 
     # 2) Load and return module.
+    name = location.split("/")[-1].split(".")[0]
     _mod_spec = spec_from_file_location(name, location, *args, **kwargs)
     module = module_from_spec(_mod_spec)
     _mod_spec.loader.exec_module(module)

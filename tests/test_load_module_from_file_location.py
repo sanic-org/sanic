@@ -1,22 +1,34 @@
 from pathlib import Path
 from types import ModuleType
 
-from pytest import raises as pytest_raises
+import pytest
 
 from sanic.exceptions import LoadFileException
 from sanic.utils import load_module_from_file_location
 
 
-def test_load_module_from_file_location():
-    assert isinstance(
-        load_module_from_file_location(
-            Path(__file__).parent / "static/app_conf.py"),
-        ModuleType)
+
+@pytest.fixture
+def loaded_module_from_file_location():
+    return load_module_from_file_location(str(Path(__file__).parent / "static/app_conf.py"))
+
+
+
+@pytest.mark.dependency(name="test_load_module_from_file_location")
+def test_load_module_from_file_location(loaded_module_from_file_location):
+    assert isinstance(loaded_module_from_file_location, ModuleType)
+
+
+
+@pytest.mark.dependency(depends=["test_load_module_from_file_location"])
+def test_loaded_module_from_file_location_name(loaded_module_from_file_location):
+    assert loaded_module_from_file_location.__name__ == "app_conf"
+
 
 
 def test_load_module_from_file_location_with_non_existing_env_variable():
-    with pytest_raises(
+    with pytest.raises(
         LoadFileException,
-        match="The following environment variables are not set: {MuuMilk}"):
+        match="The following environment variables are not set: MuuMilk"):
 
         load_module_from_file_location("${MuuMilk}")

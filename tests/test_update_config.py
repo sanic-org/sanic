@@ -22,6 +22,13 @@ def conf_object(request):
     return request.param
 
 
+# test_load_module_from_file_location
+# scope="session"
+@pytest.mark.parametrize("sanic_app,conf_object",
+                         [(Sanic(), {"A": 1},),
+                          (Sanic(), type("C", (), {"A": 1})),
+                          (Sanic(), Path(__file__).parent / "static/app_conf.py")],
+                         ids=["from_dict", "from_class", "from_file"])
 def test_update(sanic_app, conf_object):
     sanic_app.update_config(conf_object)
     assert sanic_app.config["A"] == 1

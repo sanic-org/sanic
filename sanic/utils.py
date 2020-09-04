@@ -73,7 +73,7 @@ def load_module_from_file_location(location: Union[bytes, str], enc: str = "utf8
         location = location.replace("${" + env_var + "}", os_environ[env_var])
 
     # 2) Load and return module.
-    name = location.split("/")[-1].split(".")[0]
+    name = location.split("/")[-1].split(".")[0]    # get just the file name without path and .py extension
     _mod_spec = spec_from_file_location(name, location, *args, **kwargs)
     module = module_from_spec(_mod_spec)
     _mod_spec.loader.exec_module(module)

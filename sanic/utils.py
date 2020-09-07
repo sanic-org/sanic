@@ -6,7 +6,7 @@ from typing import Union
 from .exceptions import LoadFileException
 
 
-def str_to_bool(val):
+def str_to_bool(val: str) -> bool:
     """Takes string and tries to turn it into bool as human would do.  
 
     If val is in case insensitive ("y", "yes", "yep", "yup", "t", "true", "on", "enable", "enabled", "1") returns True.  

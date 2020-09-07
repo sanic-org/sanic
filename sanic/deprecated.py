@@ -12,8 +12,10 @@ from warnings import warn
 from sanic.exceptions import PyFileError
 from sanic.helpers import import_string
 
+from typing import Any
 
-def from_envvar(self, variable_name):
+
+def from_envvar(self, variable_name: str) -> bool:
     """Load a configuration from an environment variable pointing to
     a configuration file.
 
@@ -30,13 +32,13 @@ def from_envvar(self, variable_name):
     config_file = os_environ.get(variable_name)
     if not config_file:
         raise RuntimeError(
-            "The environment variable %r is not set and "
-            "thus configuration could not be loaded." % variable_name
+            f"The environment variable {variable_name} is not set and "
+            f"thus configuration could not be loaded."
         )
         return self.from_pyfile(config_file)
 
 
-def from_pyfile(self, filename):
+def from_pyfile(self, filename: str) -> True:
     """Update the values in the config from a Python file.
     Only the uppercase variables in that module are stored in the config.
 
@@ -57,7 +59,7 @@ def from_pyfile(self, filename):
                 compile(config_file.read(), filename, "exec"), module.__dict__,
             )
     except IOError as e:
-        e.strerror = "Unable to load configuration file (%s)" % e.strerror
+        e.strerror = f"Unable to load configuration file (e.strerror)"
         raise
     except Exception as e:
         raise PyFileError(filename) from e
@@ -66,7 +68,7 @@ def from_pyfile(self, filename):
     return True
 
 
-def from_object(self, obj):
+def from_object(self, obj: Any) -> None:
     """Update the values from the given object.
     Objects are usually either modules or classes.
 

@@ -10,7 +10,7 @@ from sanic.utils import load_module_from_file_location
 
 @pytest.fixture
 def loaded_module_from_file_location():
-    return load_module_from_file_location(str(Path(__file__).parent / "static/app_conf.py"))
+    return load_module_from_file_location(str(Path(__file__).parent / "static/app_test_config.py"))
 
 
 
@@ -22,7 +22,7 @@ def test_load_module_from_file_location(loaded_module_from_file_location):
 
 @pytest.mark.dependency(depends=["test_load_module_from_file_location"])
 def test_loaded_module_from_file_location_name(loaded_module_from_file_location):
-    assert loaded_module_from_file_location.__name__ == "app_conf"
+    assert loaded_module_from_file_location.__name__ == "app_test_config"
 
 
 

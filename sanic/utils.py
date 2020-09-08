@@ -33,7 +33,7 @@ def str_to_bool(val: str) -> bool:
         raise ValueError(f"Invalid truth value {val}")
 
 
-def load_module_from_file_location(location: Union[bytes, str], enc: str = "utf8", *args, **kwargs
+def load_module_from_file_location(location: Union[bytes, str], encoding: str = "utf8", *args, **kwargs
 ):
     """Returns loaded module provided as a file path.  
     
@@ -43,7 +43,7 @@ def load_module_from_file_location(location: Union[bytes, str], enc: str = "utf8
         - It has to be of a string or bytes type.  
         - You can also use here environment variables in format ${some_env_var}.  
           Mark that $some_env_var will not be resolved as environment variable.  
-    :enc:  
+    :encoding:  
         If location parameter is of a bytes type, then use this encoding to decode it into string.  
     :param args:  
         Coresponds to the rest of importlib.util.spec_from_file_location parameters.  
@@ -56,7 +56,7 @@ def load_module_from_file_location(location: Union[bytes, str], enc: str = "utf8
 
     # 1) Parse location.
     if isinstance(location, bytes):
-        location = location.decode(enc)
+        location = location.decode(encoding)
 
     # A) Check if location contains any environment variables in format ${some_env_var}.
     env_vars_in_location = set(re_findall("\${(.+?)}", location))

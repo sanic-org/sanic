@@ -6,7 +6,7 @@ and by default will enable the Auto Reload feature.
 
 .. warning::
 
-    Sanic's debug more will slow down the server's performance
+    Sanic's debug mode will slow down the server's performance
     and is therefore advised to enable it only in development environments.
 
 

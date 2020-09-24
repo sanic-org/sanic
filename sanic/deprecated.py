@@ -7,6 +7,7 @@
 # and issue: 1895
 import types
 
+from os import environ as os_environ
 from warnings import warn
 
 from sanic.exceptions import PyFileError
@@ -35,7 +36,7 @@ def from_envvar(self, variable_name: str) -> bool:
             f"The environment variable {variable_name} is not set and "
             f"thus configuration could not be loaded."
         )
-        return self.from_pyfile(config_file)
+    return self.from_pyfile(config_file)
 
 
 def from_pyfile(self, filename: str) -> True:

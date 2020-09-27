@@ -1,9 +1,9 @@
 import asyncio
 import logging
 import sys
-from unittest.mock import patch
 
 from inspect import isawaitable
+from unittest.mock import patch
 
 import pytest
 

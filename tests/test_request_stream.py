@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 
 from sanic.blueprints import Blueprint
 from sanic.exceptions import HeaderExpectationFailed
@@ -6,6 +7,7 @@ from sanic.request import StreamBuffer
 from sanic.response import json, stream, text
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
+from sanic.server import HttpProtocol
 
 
 data = "abc" * 1_000_000
@@ -335,6 +337,22 @@ def test_request_stream_handle_exception(app):
     request, response = app.test_client.get("/post/random_id")
     assert response.status == 405
     assert "Method GET not allowed for URL /post/random_id" in response.text
+
+
+@pytest.mark.asyncio
+async def test_request_stream_unread(app):
+    """ensure no error is raised when leaving unread bytes in byte-buffer"""
+
+    err = None
+    protocol = HttpProtocol(loop=asyncio.get_event_loop(), app=app)
+    try:
+        protocol.request = None
+        protocol._body_chunks.append("this is a test")
+        await protocol.stream_append()
+    except AttributeError as e:
+        err = e
+
+    assert err is None and not protocol._body_chunks
 
 
 def test_request_stream_blueprint(app):

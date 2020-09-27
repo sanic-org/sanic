@@ -452,7 +452,7 @@ class Router:
         return route_handler, [], kwargs, route.uri, route.name
 
     def is_stream_handler(self, request):
-        """ Handler for request is stream or not.
+        """Handler for request is stream or not.
         :param request: Request object
         :return: bool
         """

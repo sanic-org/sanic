@@ -105,7 +105,9 @@ class SanicTestClient:
 
         if self.port:
             server_kwargs = dict(
-                host=host or self.host, port=self.port, **server_kwargs,
+                host=host or self.host,
+                port=self.port,
+                **server_kwargs,
             )
             host, port = host or self.host, self.port
         else:

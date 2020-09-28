@@ -244,8 +244,8 @@ async def handler3(request):
 
 def test_keep_alive_timeout_reuse():
     """If the server keep-alive timeout and client keep-alive timeout are
-     both longer than the delay, the client _and_ server will successfully
-     reuse the existing connection."""
+    both longer than the delay, the client _and_ server will successfully
+    reuse the existing connection."""
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

@@ -7,7 +7,7 @@
 # and issue: 1895
 import types
 
-from os import environ as os_environ
+from os import environ
 from warnings import warn
 
 from sanic.exceptions import PyFileError
@@ -30,7 +30,7 @@ def from_envvar(self, variable_name: str) -> bool:
         stacklevel=2,
     )
 
-    config_file = os_environ.get(variable_name)
+    config_file = environ.get(variable_name)
     if not config_file:
         raise RuntimeError(
             f"The environment variable {variable_name} is not set and "

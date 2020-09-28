@@ -1,4 +1,4 @@
-from os import environ as os_environ
+from os import environ
 from typing import Any, Union
 
 from .utils import load_module_from_file_location, str_to_bool
@@ -82,7 +82,7 @@ class Config(dict):
         Looks for prefixed environment variables and applies
         them to the configuration if present.
         """
-        for k, v in os_environ.items():
+        for k, v in environ.items():
             if k.startswith(prefix):
                 _, config_key = k.split(prefix, 1)
                 try:

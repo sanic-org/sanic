@@ -170,12 +170,20 @@ def test_app_websocket_parameters(websocket_protocol_mock, app):
 
     websocket_protocol_call_args = websocket_protocol_mock.call_args
     ws_kwargs = websocket_protocol_call_args[1]
-    assert ws_kwargs["max_size"] == app.config.WEBSOCKET_MAX_SIZE
-    assert ws_kwargs["max_queue"] == app.config.WEBSOCKET_MAX_QUEUE
-    assert ws_kwargs["read_limit"] == app.config.WEBSOCKET_READ_LIMIT
-    assert ws_kwargs["write_limit"] == app.config.WEBSOCKET_WRITE_LIMIT
-    assert ws_kwargs["ping_timeout"] == app.config.WEBSOCKET_PING_TIMEOUT
-    assert ws_kwargs["ping_interval"] == app.config.WEBSOCKET_PING_INTERVAL
+    assert ws_kwargs["websocket_max_size"] == app.config.WEBSOCKET_MAX_SIZE
+    assert ws_kwargs["websocket_max_queue"] == app.config.WEBSOCKET_MAX_QUEUE
+    assert ws_kwargs["websocket_read_limit"] == app.config.WEBSOCKET_READ_LIMIT
+    assert (
+        ws_kwargs["websocket_write_limit"] == app.config.WEBSOCKET_WRITE_LIMIT
+    )
+    assert (
+        ws_kwargs["websocket_ping_timeout"]
+        == app.config.WEBSOCKET_PING_TIMEOUT
+    )
+    assert (
+        ws_kwargs["websocket_ping_interval"]
+        == app.config.WEBSOCKET_PING_INTERVAL
+    )
 
 
 def test_handle_request_with_nested_exception(app, monkeypatch):

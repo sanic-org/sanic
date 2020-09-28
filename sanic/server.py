@@ -418,12 +418,13 @@ class HttpProtocol(asyncio.Protocol):
     async def stream_append(self):
         while self._body_chunks:
             body = self._body_chunks.popleft()
-            if self.request.stream.is_full():
-                self.transport.pause_reading()
-                await self.request.stream.put(body)
-                self.transport.resume_reading()
-            else:
-                await self.request.stream.put(body)
+            if self.request:
+                if self.request.stream.is_full():
+                    self.transport.pause_reading()
+                    await self.request.stream.put(body)
+                    self.transport.resume_reading()
+                else:
+                    await self.request.stream.put(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.

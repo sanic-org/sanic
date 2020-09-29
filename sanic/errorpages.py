@@ -12,6 +12,8 @@ from sanic.response import HTTPResponse, html, json, text
 
 try:
     from ujson import dumps
+
+    dumps = partial(dumps, escape_forward_slashes=False)
 except ImportError:  # noqa
     from json import dumps
 
@@ -230,15 +232,13 @@ class TextRenderer(BaseRenderer):
 
 
 class JSONRenderer(BaseRenderer):
-    dumps = partial(dumps, escape_forward_slashes=False)
-
     def full(self):
         output = self._generate_output(full=True)
-        return json(output, status=self.status, dumps=self.dumps)
+        return json(output, status=self.status, dumps=dumps)
 
     def minimal(self):
         output = self._generate_output(full=False)
-        return json(output, status=self.status, dumps=self.dumps)
+        return json(output, status=self.status, dumps=dumps)
 
     def _generate_output(self, *, full):
         output = {

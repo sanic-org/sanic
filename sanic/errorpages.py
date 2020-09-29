@@ -261,6 +261,10 @@ class JSONRenderer(BaseRenderer):
 
         return output
 
+    @property
+    def title(self):
+        return STATUS_CODES.get(self.status, b"Error Occurred").decode()
+
 
 def escape(text):
     """Minimal HTML escaping, not for attribute values (unlike html.escape)."""

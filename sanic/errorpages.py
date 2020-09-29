@@ -1,13 +1,25 @@
 import sys
+import typing as t
 
+from functools import partial
 from traceback import extract_tb
 
-from sanic.exceptions import SanicException
+from sanic.exceptions import InvalidUsage, SanicException
 from sanic.helpers import STATUS_CODES
-from sanic.response import html, json, text
+from sanic.request import Request
+from sanic.response import HTTPResponse, html, json, text
 
 
-FALLBACK_TEXT = "The server encountered an internal error and cannot complete your request."
+try:
+    from ujson import dumps
+except ImportError:  # noqa
+    from json import dumps
+
+
+FALLBACK_TEXT = (
+    "The server encountered an internal error and "
+    "cannot complete your request."
+)
 FALLBACK_STATUS = 500
 
 
@@ -48,10 +60,10 @@ class BaseRenderer:
         )
         return output()
 
-    def minimal(self):
+    def minimal(self):  # noqa
         raise NotImplementedError
 
-    def full(self):
+    def full(self):  # noqa
         raise NotImplementedError
 
 
@@ -82,16 +94,15 @@ class HTMLRenderer(BaseRenderer):
         "<p class=frame-descriptor>"
         "File {0.filename}, line <i>{0.lineno}</i>, "
         "in <code><b>{0.name}</b></code>"
-        "<p class=frame-code><code>{0.line}</code></p>"
-        "</p></div>"
+        "<p class=frame-code><code>{0.line}</code>"
+        "</div>"
     )
     OUTPUT_HTML = (
-        "<!DOCTYPE html><html><head><meta charset=UTF-8><title>{title}</title>\n"
+        "<!DOCTYPE html><html lang=en>"
+        "<meta charset=UTF-8><title>{title}</title>\n"
         "<style>{style}</style>\n"
-        "</head><body>"
-        "<h1>{title}</h1><div>{text}</div>\n"
+        "<h1>{title}</h1><p>{text}\n"
         "{body}"
-        "</body></html>"
     )
 
     def full(self):
@@ -142,7 +153,7 @@ class HTMLRenderer(BaseRenderer):
             f"{traceback_html}",
             "<div class=summary><p>",
             f"<b>{name}: {value}</b> while handling path <code>{path}</code>",
-            "</p></div>",
+            "</div>",
         ]
         return "\n".join(lines)
 
@@ -209,7 +220,8 @@ class TextRenderer(BaseRenderer):
     def _format_exc(self, exc):
         frames = "\n\n".join(
             [
-                f"{self.SPACER * 2}File {frame.filename}, line {frame.lineno}, in "
+                f"{self.SPACER * 2}File {frame.filename}, "
+                f"line {frame.lineno}, in "
                 f"{frame.name}\n{self.SPACER * 2}{frame.line}"
                 for frame in extract_tb(exc.__traceback__)
             ]
@@ -218,13 +230,15 @@ class TextRenderer(BaseRenderer):
 
 
 class JSONRenderer(BaseRenderer):
+    dumps = partial(dumps, escape_forward_slashes=False)
+
     def full(self):
         output = self._generate_output(full=True)
-        return json(output, status=self.status)
+        return json(output, status=self.status, dumps=self.dumps)
 
     def minimal(self):
         output = self._generate_output(full=False)
-        return json(output, status=self.status)
+        return json(output, status=self.status, dumps=self.dumps)
 
     def _generate_output(self, *, full):
         output = {
@@ -271,13 +285,45 @@ def escape(text):
     return f"{text}".replace("&", "&amp;").replace("<", "&lt;")
 
 
-def exception_response(request, exception, debug, renderer=None):
+RENDERERS_BY_CONFIG = {
+    "html": HTMLRenderer,
+    "json": JSONRenderer,
+    "text": TextRenderer,
+}
+
+RENDERERS_BY_CONTENT_TYPE = {
+    "multipart/form-data": HTMLRenderer,
+    "application/json": JSONRenderer,
+    "text/plain": TextRenderer,
+}
+
+
+def exception_response(
+    request: Request,
+    exception: Exception,
+    debug: bool,
+    renderer: t.Optional[BaseRenderer] = None,
+) -> HTTPResponse:
+    """Render a response for the default FALLBACK exception handler"""
+
     if not renderer:
-        if request.app.config.FALLBACK_ERROR_FORMAT == "text":
-            renderer = TextRenderer
-        elif request.app.config.FALLBACK_ERROR_FORMAT == "json":
-            renderer = JSONRenderer
-        else:
-            renderer = HTMLRenderer
+        renderer = HTMLRenderer
+
+        if request:
+            if request.app.config.FALLBACK_ERROR_FORMAT == "auto":
+                try:
+                    renderer = JSONRenderer if request.json else HTMLRenderer
+                except InvalidUsage:
+                    renderer = HTMLRenderer
+
+                content_type, *_ = request.headers.get(
+                    "content-type", ""
+                ).split(";")
+                renderer = RENDERERS_BY_CONTENT_TYPE.get(
+                    content_type, renderer
+                )
+            else:
+                render_format = request.app.config.FALLBACK_ERROR_FORMAT
+                renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
 
     return renderer(request, exception, debug).render()

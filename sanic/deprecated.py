@@ -6,6 +6,7 @@
 # Please see pull request: 1903
 # and issue: 1895
 import types
+
 from os import environ
 from typing import Any
 from warnings import warn
@@ -57,7 +58,8 @@ def from_pyfile(self, filename: str) -> bool:
     try:
         with open(filename) as config_file:
             exec(  # nosec
-                compile(config_file.read(), filename, "exec"), module.__dict__,
+                compile(config_file.read(), filename, "exec"),
+                module.__dict__,
             )
     except IOError as e:
         e.strerror = "Unable to load configuration file (e.strerror)"

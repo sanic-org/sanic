@@ -1,3 +1,73 @@
+Version 20.9.0
+===============
+
+
+Features
+********
+
+  *
+    `#1887 <https://github.com/huge-success/sanic/pull/1887>`_
+    Pass subprotocols in websockets (both sanic server and ASGI)
+
+  *
+    `#1894 <https://github.com/huge-success/sanic/pull/1894>`_
+    Automatically set ``test_mode`` flag on app instance
+  
+  *
+    `#1903 <https://github.com/huge-success/sanic/pull/1903>`_ 
+    Add new unified method for updating app values
+  
+  *
+    `#1906 <https://github.com/huge-success/sanic/pull/1906>`_,
+    `#1909 <https://github.com/huge-success/sanic/pull/1909>`_
+    Adds WEBSOCKET_PING_TIMEOUT and WEBSOCKET_PING_INTERVAL configuration values
+  
+  *
+    `#1935 <https://github.com/huge-success/sanic/pull/1935>`_
+    httpx version dependency updated, it is slated for removal as a dependency in v20.12
+
+  *
+    `#1937 <https://github.com/huge-success/sanic/pull/1937>`_ 
+    Added auto, text, and json fallback error handlers (in v21.3, the default will change form html to auto)
+
+Bugfixes
+********
+  
+  *
+    `#1897 <https://github.com/huge-success/sanic/pull/1897>`_
+    Resolves exception from unread bytes in stream
+
+Deprecations and Removals
+*************************
+
+  *
+    `#1903 <https://github.com/huge-success/sanic/pull/1903>`_
+    config.from_envar, config.from_pyfile, and config.from_object are deprecated and set to be removed in v21.3
+
+Developer infrastructure
+************************
+
+  *
+    `#1890 <https://github.com/huge-success/sanic/pull/1890>`_,
+    `#1891 <https://github.com/huge-success/sanic/pull/1891>`_
+    Update isort calls to be compatible with new API
+
+  *
+    `#1893 <https://github.com/huge-success/sanic/pull/1893>`_
+    Remove version section from setup.cfg
+
+  *
+    `#1924 <https://github.com/huge-success/sanic/pull/1924>`_
+    Adding --strict-markers for pytest
+
+Improved Documentation
+**********************
+
+  *
+    `#1922 <https://github.com/huge-success/sanic/pull/1922>`_
+    Add explicit ASGI compliance to the README
+
+
 Version 20.6.3
 ===============
 
@@ -299,7 +369,7 @@ Features
 
   * 
     `#1562 <https://github.com/huge-success/sanic/pull/1562>`_
-    Remove ``aiohttp`` dependencey and create new ``SanicTestClient`` based upon
+    Remove ``aiohttp`` dependency and create new ``SanicTestClient`` based upon
     `requests-async <https://github.com/encode/requests-async>`_
 
   * 

@@ -126,7 +126,7 @@ def test_app_handle_request_handler_is_none(app, monkeypatch):
     def handler(request):
         return text("test")
 
-    request, response = app.test_client.get("/test")
+    _, response = app.test_client.get("/test")
 
     assert (
         "'None' was returned while requesting a handler from the router"

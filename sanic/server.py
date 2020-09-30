@@ -14,7 +14,7 @@ from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import time
-from typing import Type
+from typing import Dict, Type, Union
 
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
@@ -955,15 +955,15 @@ def serve(
 
 def _build_protocol_kwargs(
     protocol: Type[HttpProtocol], config: Config
-) -> dict:
-    if hasattr(protocol, "websocket_timeout"):
+) -> Dict[str, Union[int, float]]:
+    if hasattr(protocol, "websocket_handshake"):
         return {
-            "max_size": config.WEBSOCKET_MAX_SIZE,
-            "max_queue": config.WEBSOCKET_MAX_QUEUE,
-            "read_limit": config.WEBSOCKET_READ_LIMIT,
-            "write_limit": config.WEBSOCKET_WRITE_LIMIT,
-            "ping_timeout": config.WEBSOCKET_PING_TIMEOUT,
-            "ping_interval": config.WEBSOCKET_PING_INTERVAL,
+            "websocket_max_size": config.WEBSOCKET_MAX_SIZE,
+            "websocket_max_queue": config.WEBSOCKET_MAX_QUEUE,
+            "websocket_read_limit": config.WEBSOCKET_READ_LIMIT,
+            "websocket_write_limit": config.WEBSOCKET_WRITE_LIMIT,
+            "websocket_ping_timeout": config.WEBSOCKET_PING_TIMEOUT,
+            "websocket_ping_interval": config.WEBSOCKET_PING_INTERVAL,
         }
     return {}
 

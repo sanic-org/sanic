@@ -15,7 +15,7 @@ try:
 
     dumps = partial(dumps, escape_forward_slashes=False)
 except ImportError:  # noqa
-    from json import dumps
+    from json import dumps  # type: ignore
 
 
 FALLBACK_TEXT = (
@@ -302,7 +302,7 @@ def exception_response(
     request: Request,
     exception: Exception,
     debug: bool,
-    renderer: t.Optional[BaseRenderer] = None,
+    renderer: t.Type[t.Optional[BaseRenderer]] = None,
 ) -> HTTPResponse:
     """Render a response for the default FALLBACK exception handler"""
 
@@ -326,4 +326,5 @@ def exception_response(
                 render_format = request.app.config.FALLBACK_ERROR_FORMAT
                 renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
 
+    renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()

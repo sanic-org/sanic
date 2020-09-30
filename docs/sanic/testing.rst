@@ -33,6 +33,7 @@ The `test_client` methods accept the following arguments and keyword arguments:
   response is returned.
 - `server_kwargs` *(default `{}`)* a dict of additional arguments to pass into `app.run` before the test request is run.
 - `debug` *(default `False`)* A boolean which determines whether to run the server in debug mode.
+- `allow_redirects` *(default `True`)* A boolean which indicates whether the test client should follow redirections before returning a response (`True`) or return the redirect response as-is (`False`).
 
 The function further takes the `*request_args` and `**request_kwargs`, which are passed directly to the request.
 

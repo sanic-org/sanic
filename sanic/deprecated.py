@@ -6,7 +6,6 @@
 # Please see pull request: 1903
 # and issue: 1895
 import types
-
 from os import environ
 from typing import Any
 from warnings import warn
@@ -39,7 +38,7 @@ def from_envvar(self, variable_name: str) -> bool:
     return self.from_pyfile(config_file)
 
 
-def from_pyfile(self, filename: str) -> True:
+def from_pyfile(self, filename: str) -> bool:
     """Update the values in the config from a Python file.
     Only the uppercase variables in that module are stored in the config.
 
@@ -58,8 +57,7 @@ def from_pyfile(self, filename: str) -> True:
     try:
         with open(filename) as config_file:
             exec(  # nosec
-                compile(config_file.read(), filename, "exec"),
-                module.__dict__,
+                compile(config_file.read(), filename, "exec"), module.__dict__,
             )
     except IOError as e:
         e.strerror = "Unable to load configuration file (e.strerror)"

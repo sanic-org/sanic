@@ -94,6 +94,6 @@ def load_module_from_file_location(
     ]  # get just the file name without path and .py extension
     _mod_spec = spec_from_file_location(name, location, *args, **kwargs)
     module = module_from_spec(_mod_spec)
-    _mod_spec.loader.exec_module(module)
+    _mod_spec.loader.exec_module(module)  # type: ignore
 
     return module

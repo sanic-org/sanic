@@ -8,12 +8,11 @@
 import types
 
 from os import environ
+from typing import Any
 from warnings import warn
 
 from sanic.exceptions import PyFileError
 from sanic.helpers import import_string
-
-from typing import Any
 
 
 def from_envvar(self, variable_name: str) -> bool:
@@ -25,7 +24,8 @@ def from_envvar(self, variable_name: str) -> bool:
     """
 
     warn(
-        "Using `from_envvar` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+        "Using `from_envvar` method is deprecated and will be removed in "
+        "v21.3, use `app.update_config` method instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -47,7 +47,8 @@ def from_pyfile(self, filename: str) -> True:
     """
 
     warn(
-        "Using `from_pyfile` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+        "Using `from_pyfile` method is deprecated and will be removed in "
+        "v21.3, use `app.update_config` method instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -57,10 +58,11 @@ def from_pyfile(self, filename: str) -> True:
     try:
         with open(filename) as config_file:
             exec(  # nosec
-                compile(config_file.read(), filename, "exec"), module.__dict__,
+                compile(config_file.read(), filename, "exec"),
+                module.__dict__,
             )
     except IOError as e:
-        e.strerror = f"Unable to load configuration file (e.strerror)"
+        e.strerror = "Unable to load configuration file (e.strerror)"
         raise
     except Exception as e:
         raise PyFileError(filename) from e
@@ -91,7 +93,8 @@ def from_object(self, obj: Any) -> None:
     """
 
     warn(
-        "Using `from_object` method is deprecated and will be removed in v21.3, use `app.update_config` method instead.",
+        "Using `from_object` method is deprecated and will be removed in "
+        "v21.3, use `app.update_config` method instead.",
         DeprecationWarning,
         stacklevel=2,
     )

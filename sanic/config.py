@@ -1,8 +1,6 @@
 from os import environ
 from typing import Any, Union
 
-from .utils import load_module_from_file_location, str_to_bool
-
 # NOTE(tomaszdrozdz): remove in version: 21.3
 # We replace from_envvar(), from_object(), from_pyfile() config object methods
 # with one simpler update_config() method.
@@ -11,6 +9,7 @@ from .utils import load_module_from_file_location, str_to_bool
 # Please see pull request: 1903
 # and issue: 1895
 from .deprecated import from_envvar, from_object, from_pyfile  # noqa
+from .utils import load_module_from_file_location, str_to_bool
 
 
 SANIC_PREFIX = "SANIC_"
@@ -68,8 +67,8 @@ class Config(dict):
         self[attr] = value
 
     # NOTE(tomaszdrozdz): remove in version: 21.3
-    # We replace from_envvar(), from_object(), from_pyfile() config object methods
-    # with one simpler update_config() method.
+    # We replace from_envvar(), from_object(), from_pyfile() config object
+    # methods with one simpler update_config() method.
     # We also replace "loading module from file code" in from_pyfile()
     # in a favour of load_module_from_file_location().
     # Please see pull request: 1903
@@ -98,32 +97,34 @@ class Config(dict):
                             self[config_key] = v
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """Update app.config.  
-        
-        Note:: only upper case settings are considered.  
-        
-        You can upload app config by providing path to py file holding settings.  
-        
-            # /some/py/file  
-            A = 1  
-            B = 2  
-        
-        config.update_config("${some}/py/file")  
-        
-        Yes you can put environment variable here, but they must be provided in format: ${some_env_var},  
-        and mark that $some_env_var is treated as plain string.  
-        
-        You can upload app config by providing dict holding settings.  
-        
-            d = {"A": 1, "B": 2}  
-            config.update_config(d)  
-        
-        You can upload app config by providing any object holding settings,  
-        but in such case config.__dict__ will be used as dict holding settings.  
-        
-            class C:  
-                A = 1  
-                B = 2  
+        """Update app.config.
+
+        Note:: only upper case settings are considered.
+
+        You can upload app config by providing path to py file
+        holding settings.
+
+            # /some/py/file
+            A = 1
+            B = 2
+
+        config.update_config("${some}/py/file")
+
+        Yes you can put environment variable here, but they must be provided
+        in format: ${some_env_var}, and mark that $some_env_var is treated
+        as plain string.
+
+        You can upload app config by providing dict holding settings.
+
+            d = {"A": 1, "B": 2}
+            config.update_config(d)
+
+        You can upload app config by providing any object holding settings,
+        but in such case config.__dict__ will be used as dict holding settings.
+
+            class C:
+                A = 1
+                B = 2
             config.update_config(C)"""
 
         if isinstance(config, (bytes, str)):

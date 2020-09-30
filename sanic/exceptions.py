@@ -170,8 +170,6 @@ class Unauthorized(SanicException):
 
 
 class LoadFileException(SanicException):
-    """Raised from within utils.py: load_module_from_file_location() function."""
-
     pass
 
 

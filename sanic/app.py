@@ -1457,8 +1457,8 @@ class Sanic:
     # Configuration
     # -------------------------------------------------------------------- #
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """Update app.config.  
-        
-        Please refer to config.py: Config class: update_config method for documentation."""
+        """Update app.config.
+
+        Please refer to config.py::Config.update_config for documentation."""
 
         self.config.update_config(config)

@@ -108,9 +108,6 @@ class Blueprint:
 
         # Routes
         for future in self.routes:
-            # attach the blueprint name to the handler so that it can be
-            # prefixed properly in the router
-            future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
 
@@ -123,22 +120,19 @@ class Blueprint:
                 strict_slashes=future.strict_slashes,
                 stream=future.stream,
                 version=version,
-                name=future.name,
+                name=f"{self.name}.{future.name or future.handler.__name__}",
             )(future.handler)
             if _routes:
                 routes += _routes
 
         for future in self.websocket_routes:
-            # attach the blueprint name to the handler so that it can be
-            # prefixed properly in the router
-            future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
             _routes, _ = app.websocket(
                 uri=uri,
                 host=future.host or self.host,
                 strict_slashes=future.strict_slashes,
-                name=future.name,
+                name=f"{self.name}.{future.name or future.handler.__name__}",
             )(future.handler)
             if _routes:
                 routes += _routes
@@ -289,7 +283,6 @@ class Blueprint:
             nonlocal version
             nonlocal name
 
-            name = f"{self.name}.{name or handler.__name__}"
             route = FutureRoute(
                 handler, uri, [], host, strict_slashes, False, version, name
             )

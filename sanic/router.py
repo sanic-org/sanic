@@ -294,12 +294,15 @@ class Router:
             is_static = True
             name = name.split("_static_", 1)[-1]
 
-        if hasattr(handler, "__blueprintname__"):
-            bp_name = handler.__blueprintname__
+        if not name:
+            if hasattr(handler, "__blueprintname__"):
+                bp_name = handler.__blueprintname__
 
-            handler_name = f"{bp_name}.{name or handler.__name__}"
+                handler_name = f"{bp_name}.{handler.__name__}"
+            else:
+                handler_name = getattr(handler, "__name__", None)
         else:
-            handler_name = name or getattr(handler, "__name__", None)
+            handler_name = name
 
         if route:
             route = merge_route(route, methods, handler)

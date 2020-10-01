@@ -924,12 +924,12 @@ class Sanic:
                 else:
                     if not getattr(handler, "__blueprintname__", False):
                         request.endpoint = self._build_endpoint_name(
-                            handler.__name__
+                            name or handler.__name__
                         )
                     else:
                         request.endpoint = self._build_endpoint_name(
                             getattr(handler, "__blueprintname__", ""),
-                            handler.__name__,
+                            name or handler.__name__,
                         )
 
                 # Run response handler

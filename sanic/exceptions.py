@@ -67,7 +67,9 @@ class URLBuildError(ServerError):
 
 class FileNotFound(NotFound):
     def __init__(self, message, path, relative_url):
-        super().__init__(f"{message: path={path}, relative_url={relative_url}")
+        super().__init__(message)
+        self.path = path
+        self.relative_url = relative_url
 
 
 @add_status_code(408)

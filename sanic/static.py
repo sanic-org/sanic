@@ -1,8 +1,10 @@
 from functools import partial, wraps
 from mimetypes import guess_type
 from os import path
+from sys import stderr
 from re import sub
 from time import gmtime, strftime
+from termcolor import cprint
 from urllib.parse import unquote
 
 from sanic.compat import stat_async
@@ -40,6 +42,8 @@ async def _static_request_handler(
     # match filenames which got encoded (filenames with spaces etc)
     file_path = path.abspath(unquote(file_path))
     if not file_path.startswith(path.abspath(unquote(root_path))):
+        if request.app.debug:
+            cprint(f"File not found: path={file_or_directory}, relative_url={file_uri}", "red", file=stderr)
         raise FileNotFound(
             "File not found", path=file_or_directory, relative_url=file_uri
         )
@@ -94,6 +98,8 @@ async def _static_request_handler(
     except ContentRangeError:
         raise
     except Exception:
+        if request.app.debug:
+            cprint(f"File not found: path={file_or_directory}, relative_url={file_uri}", "red", file=stderr)
         raise FileNotFound(
             "File not found", path=file_or_directory, relative_url=file_uri
         )

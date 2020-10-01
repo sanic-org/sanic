@@ -59,8 +59,7 @@ def test_custom_context(app):
         "has_missing": False,
         "invalid": "'types.SimpleNamespace' object has no attribute 'missing'",
         "response_mw_valid": "sanic",
-        "response_mw_invalid":
-            "'types.SimpleNamespace' object has no attribute 'missing'"
+        "response_mw_invalid": "'types.SimpleNamespace' object has no attribute 'missing'",
     }
 
 

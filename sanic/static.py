@@ -2,7 +2,6 @@ from functools import partial, wraps
 from mimetypes import guess_type
 from os import path
 from re import sub
-from sys import stderr
 from time import gmtime, strftime
 from urllib.parse import unquote
 

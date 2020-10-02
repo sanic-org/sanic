@@ -6,8 +6,6 @@ from sys import stderr
 from time import gmtime, strftime
 from urllib.parse import unquote
 
-from termcolor import cprint
-
 from sanic.compat import stat_async
 from sanic.exceptions import (
     ContentRangeError,
@@ -16,6 +14,7 @@ from sanic.exceptions import (
     InvalidUsage,
 )
 from sanic.handlers import ContentRangeHandler
+from sanic.log import error_logger
 from sanic.response import HTTPResponse, file, file_stream
 
 
@@ -43,12 +42,9 @@ async def _static_request_handler(
     # match filenames which got encoded (filenames with spaces etc)
     file_path = path.abspath(unquote(file_path))
     if not file_path.startswith(path.abspath(unquote(root_path))):
-        if request.app.debug:
-            cprint(
-                f"File not found: path={file_or_directory}, relative_url={file_uri}",
-                "red",
-                file=stderr,
-            )
+        error_logger.exception(
+            f"File not found: path={file_or_directory}, relative_url={file_uri}"
+        )
         raise FileNotFound(
             "File not found", path=file_or_directory, relative_url=file_uri
         )
@@ -103,12 +99,9 @@ async def _static_request_handler(
     except ContentRangeError:
         raise
     except Exception:
-        if request.app.debug:
-            cprint(
-                f"File not found: path={file_or_directory}, relative_url={file_uri}",
-                "red",
-                file=stderr,
-            )
+        error_logger.exception(
+            f"File not found: path={file_or_directory}, relative_url={file_uri}"
+        )
         raise FileNotFound(
             "File not found", path=file_or_directory, relative_url=file_uri
         )

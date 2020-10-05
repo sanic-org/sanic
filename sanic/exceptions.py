@@ -11,9 +11,16 @@ def add_status_code(code, quiet=None):
 
     def class_decorator(cls):
         cls.status_code = code
-        if quiet or quiet is None and code != 500:
+
+        if quiet is not None:
+            cls.quiet = quiet
+        elif code == 500:
+            cls.quiet = False
+        else:
             cls.quiet = True
+
         _sanic_exceptions[code] = cls
+
         return cls
 
     return class_decorator
@@ -27,8 +34,14 @@ class SanicException(Exception):
             self.status_code = status_code
 
         # quiet=None/False/True with None meaning choose by status
-        if quiet or quiet is None and status_code not in (None, 500):
+        if quiet is not None:
+            self.quiet = quiet
+        elif hasattr(type(self), "quiet"):
+            pass
+        elif status_code not in (None, 500):
             self.quiet = True
+        else
+            self.quiet = False
 
 
 @add_status_code(404)

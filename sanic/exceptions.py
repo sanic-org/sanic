@@ -38,10 +38,10 @@ class SanicException(Exception):
             self.quiet = quiet
         elif hasattr(type(self), "quiet"):
             pass
-        elif status_code not in (None, 500):
-            self.quiet = True
-        else
+        elif status_code in (None, 500):
             self.quiet = False
+        else
+            self.quiet = True
 
 
 @add_status_code(404)

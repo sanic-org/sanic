@@ -14,10 +14,8 @@ def add_status_code(code, quiet=None):
 
         if quiet is not None:
             cls.quiet = quiet
-        elif code == 500:
-            cls.quiet = False
-        else:
-            cls.quiet = True
+        else
+            cls.quiet = code != 500
 
         _sanic_exceptions[code] = cls
 
@@ -38,10 +36,8 @@ class SanicException(Exception):
             self.quiet = quiet
         elif hasattr(type(self), "quiet"):
             pass
-        elif status_code in (None, 500):
-            self.quiet = False
         else
-            self.quiet = True
+            self.quiet = status_code not in (None, 500)
 
 
 @add_status_code(404)

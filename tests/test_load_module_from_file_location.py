@@ -21,7 +21,10 @@ def test_load_module_from_file_location(loaded_module_from_file_location):
 
 @pytest.mark.dependency(depends=["test_load_module_from_file_location"])
 def test_loaded_module_from_file_location_name(loaded_module_from_file_location,):
-    assert loaded_module_from_file_location.__name__ == "app_test_config"
+    name = loaded_module_from_file_location.__name__
+    if "C:\\" in name:
+        name = name.split("\\")[-1]
+    assert name == "app_test_config"
 
 
 def test_load_module_from_file_location_with_non_existing_env_variable():

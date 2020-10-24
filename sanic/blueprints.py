@@ -143,7 +143,18 @@ class Blueprint:
             if _routes:
                 routes += _routes
 
+        # Static Files
+        for future in self.statics:
+            # Prepend the blueprint URI prefix if available
+            uri = url_prefix + future.uri if url_prefix else future.uri
+            _routes = app.static(
+                uri, future.file_or_directory, *future.args, **future.kwargs
+            )
+            if _routes:
+                routes += _routes
+
         route_names = [route.name for route in routes if route]
+
         # Middleware
         for future in self.middlewares:
             if future.args or future.kwargs:
@@ -159,14 +170,6 @@ class Blueprint:
         # Exceptions
         for future in self.exceptions:
             app.exception(*future.args, **future.kwargs)(future.handler)
-
-        # Static Files
-        for future in self.statics:
-            # Prepend the blueprint URI prefix if available
-            uri = url_prefix + future.uri if url_prefix else future.uri
-            app.static(
-                uri, future.file_or_directory, *future.args, **future.kwargs
-            )
 
         # Event listeners
         for event, listeners in self.listeners.items():

@@ -1,8 +1,15 @@
-import os
-import types
+from os import environ
+from typing import Any, Union
 
-from sanic.exceptions import PyFileError
-from sanic.helpers import import_string
+# NOTE(tomaszdrozdz): remove in version: 21.3
+# We replace from_envvar(), from_object(), from_pyfile() config object methods
+# with one simpler update_config() method.
+# We also replace "loading module from file code" in from_pyfile()
+# in a favour of load_module_from_file_location().
+# Please see pull request: 1903
+# and issue: 1895
+from .deprecated import from_envvar, from_object, from_pyfile  # noqa
+from .utils import load_module_from_file_location, str_to_bool
 
 
 SANIC_PREFIX = "SANIC_"
@@ -24,12 +31,15 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_MAX_QUEUE": 32,
     "WEBSOCKET_READ_LIMIT": 2 ** 16,
     "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
+    "WEBSOCKET_PING_TIMEOUT": 20,
+    "WEBSOCKET_PING_INTERVAL": 20,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "ACCESS_LOG": True,
     "FORWARDED_SECRET": None,
     "REAL_IP_HEADER": None,
     "PROXIES_COUNT": None,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
+    "FALLBACK_ERROR_FORMAT": "html",
 }
 
 
@@ -56,76 +66,23 @@ class Config(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
-    def from_envvar(self, variable_name):
-        """Load a configuration from an environment variable pointing to
-        a configuration file.
-
-        :param variable_name: name of the environment variable
-        :return: bool. ``True`` if able to load config, ``False`` otherwise.
-        """
-        config_file = os.environ.get(variable_name)
-        if not config_file:
-            raise RuntimeError(
-                "The environment variable %r is not set and "
-                "thus configuration could not be loaded." % variable_name
-            )
-        return self.from_pyfile(config_file)
-
-    def from_pyfile(self, filename):
-        """Update the values in the config from a Python file.
-        Only the uppercase variables in that module are stored in the config.
-
-        :param filename: an absolute path to the config file
-        """
-        module = types.ModuleType("config")
-        module.__file__ = filename
-        try:
-            with open(filename) as config_file:
-                exec(  # nosec
-                    compile(config_file.read(), filename, "exec"),
-                    module.__dict__,
-                )
-        except IOError as e:
-            e.strerror = "Unable to load configuration file (%s)" % e.strerror
-            raise
-        except Exception as e:
-            raise PyFileError(filename) from e
-
-        self.from_object(module)
-        return True
-
-    def from_object(self, obj):
-        """Update the values from the given object.
-        Objects are usually either modules or classes.
-
-        Just the uppercase variables in that object are stored in the config.
-        Example usage::
-
-            from yourapplication import default_config
-            app.config.from_object(default_config)
-
-            or also:
-            app.config.from_object('myproject.config.MyConfigClass')
-
-        You should not use this function to load the actual configuration but
-        rather configuration defaults. The actual config should be loaded
-        with :meth:`from_pyfile` and ideally from a location not within the
-        package because the package might be installed system wide.
-
-        :param obj: an object holding the configuration
-        """
-        if isinstance(obj, str):
-            obj = import_string(obj)
-        for key in dir(obj):
-            if key.isupper():
-                self[key] = getattr(obj, key)
+    # NOTE(tomaszdrozdz): remove in version: 21.3
+    # We replace from_envvar(), from_object(), from_pyfile() config object
+    # methods with one simpler update_config() method.
+    # We also replace "loading module from file code" in from_pyfile()
+    # in a favour of load_module_from_file_location().
+    # Please see pull request: 1903
+    # and issue: 1895
+    from_envvar = from_envvar
+    from_pyfile = from_pyfile
+    from_object = from_object
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
         Looks for prefixed environment variables and applies
         them to the configuration if present.
         """
-        for k, v in os.environ.items():
+        for k, v in environ.items():
             if k.startswith(prefix):
                 _, config_key = k.split(prefix, 1)
                 try:
@@ -135,23 +92,47 @@ class Config(dict):
                         self[config_key] = float(v)
                     except ValueError:
                         try:
-                            self[config_key] = strtobool(v)
+                            self[config_key] = str_to_bool(v)
                         except ValueError:
                             self[config_key] = v
 
+    def update_config(self, config: Union[bytes, str, dict, Any]):
+        """Update app.config.
 
-def strtobool(val):
-    """
-    This function was borrowed from distutils.utils. While distutils
-    is part of stdlib, it feels odd to use distutils in main application code.
+        Note:: only upper case settings are considered.
 
-    The function was modified to walk its talk and actually return bool
-    and not int.
-    """
-    val = val.lower()
-    if val in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    elif val in ("n", "no", "f", "false", "off", "0"):
-        return False
-    else:
-        raise ValueError("invalid truth value %r" % (val,))
+        You can upload app config by providing path to py file
+        holding settings.
+
+            # /some/py/file
+            A = 1
+            B = 2
+
+        config.update_config("${some}/py/file")
+
+        Yes you can put environment variable here, but they must be provided
+        in format: ${some_env_var}, and mark that $some_env_var is treated
+        as plain string.
+
+        You can upload app config by providing dict holding settings.
+
+            d = {"A": 1, "B": 2}
+            config.update_config(d)
+
+        You can upload app config by providing any object holding settings,
+        but in such case config.__dict__ will be used as dict holding settings.
+
+            class C:
+                A = 1
+                B = 2
+            config.update_config(C)"""
+
+        if isinstance(config, (bytes, str)):
+            config = load_module_from_file_location(location=config)
+
+        if not isinstance(config, dict):
+            config = config.__dict__
+
+        config = dict(filter(lambda i: i[0].isupper(), config.items()))
+
+        self.update(config)

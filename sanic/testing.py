@@ -11,6 +11,8 @@ from sanic.response import text
 
 
 ASGI_HOST = "mockserver"
+ASGI_PORT = 1234
+ASGI_BASE_URL = f"http://{ASGI_HOST}:{ASGI_PORT}"
 HOST = "127.0.0.1"
 PORT = None
 
@@ -103,7 +105,9 @@ class SanicTestClient:
 
         if self.port:
             server_kwargs = dict(
-                host=host or self.host, port=self.port, **server_kwargs,
+                host=host or self.host,
+                port=self.port,
+                **server_kwargs,
             )
             host, port = host or self.host, self.port
         else:
@@ -193,24 +197,19 @@ async def app_call_with_return(self, scope, receive, send):
     return await asgi_app()
 
 
-class SanicASGIDispatch(httpx.ASGIDispatch):
-    pass
-
-
 class SanicASGITestClient(httpx.AsyncClient):
     def __init__(
         self,
         app,
-        base_url: str = f"http://{ASGI_HOST}",
+        base_url: str = ASGI_BASE_URL,
         suppress_exceptions: bool = False,
     ) -> None:
         app.__class__.__call__ = app_call_with_return
         app.asgi = True
 
         self.app = app
-
-        dispatch = SanicASGIDispatch(app=app, client=(ASGI_HOST, PORT or 0))
-        super().__init__(dispatch=dispatch, base_url=base_url)
+        transport = httpx.ASGITransport(app=app, client=(ASGI_HOST, ASGI_PORT))
+        super().__init__(transport=transport, base_url=base_url)
 
         self.last_request = None
 

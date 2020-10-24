@@ -42,7 +42,7 @@ class BaseHTTPResponse:
         body=b"",
     ):
         """.. deprecated:: 20.3:
-           This function is not public API and will be removed."""
+        This function is not public API and will be removed."""
 
         # self.headers get priority over content_type
         if self.content_type and "Content-Type" not in self.headers:
@@ -249,7 +249,10 @@ def raw(
     :param content_type: the content type (string) of the response.
     """
     return HTTPResponse(
-        body=body, status=status, headers=headers, content_type=content_type,
+        body=body,
+        status=status,
+        headers=headers,
+        content_type=content_type,
     )
 
 

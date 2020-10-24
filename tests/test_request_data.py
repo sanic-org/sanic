@@ -46,8 +46,8 @@ def test_custom_context(app):
             invalid = str(e)
 
         j = loads(response.body)
-        j['response_mw_valid'] = user
-        j['response_mw_invalid'] = invalid
+        j["response_mw_valid"] = user
+        j["response_mw_invalid"] = invalid
         return json(j)
 
     request, response = app.test_client.get("/")

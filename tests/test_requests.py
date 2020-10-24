@@ -12,7 +12,14 @@ from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import html, json, text
-from sanic.testing import ASGI_HOST, HOST, PORT, SanicTestClient
+from sanic.testing import (
+    ASGI_BASE_URL,
+    ASGI_HOST,
+    ASGI_PORT,
+    HOST,
+    PORT,
+    SanicTestClient,
+)
 
 
 # ------------------------------------------------------------ #
@@ -59,7 +66,10 @@ async def test_ip_asgi(app):
 
     request, response = await app.asgi_client.get("/")
 
-    assert response.text == "http://mockserver/"
+    if response.text.endswith("/") and not ASGI_BASE_URL.endswith("/"):
+        response.text[:-1] == ASGI_BASE_URL
+    else:
+        assert response.text == ASGI_BASE_URL
 
 
 def test_text(app):
@@ -573,7 +583,7 @@ async def test_standard_forwarded_asgi(app):
     assert response.json() == {"for": "127.0.0.2", "proto": "ws"}
     assert request.remote_addr == "127.0.0.2"
     assert request.scheme == "ws"
-    assert request.server_port == 80
+    assert request.server_port == ASGI_PORT
 
     app.config.FORWARDED_SECRET = "mySecret"
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -1044,9 +1054,9 @@ def test_url_attributes_no_ssl(app, path, query, expected_url):
 @pytest.mark.parametrize(
     "path,query,expected_url",
     [
-        ("/foo", "", "http://{}/foo"),
-        ("/bar/baz", "", "http://{}/bar/baz"),
-        ("/moo/boo", "arg1=val1", "http://{}/moo/boo?arg1=val1"),
+        ("/foo", "", "{}/foo"),
+        ("/bar/baz", "", "{}/bar/baz"),
+        ("/moo/boo", "arg1=val1", "{}/moo/boo?arg1=val1"),
     ],
 )
 @pytest.mark.asyncio
@@ -1057,7 +1067,7 @@ async def test_url_attributes_no_ssl_asgi(app, path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = await app.asgi_client.get(path + f"?{query}")
-    assert request.url == expected_url.format(ASGI_HOST)
+    assert request.url == expected_url.format(ASGI_BASE_URL)
 
     parsed = urlparse(request.url)
 

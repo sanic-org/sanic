@@ -503,7 +503,7 @@ def test_response_body_bytes_deprecated(app):
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        HTTPResponse(body_bytes=b'bytes')
+        HTTPResponse(body_bytes=b"bytes")
 
         assert len(w) == 1
         assert issubclass(w[0].category, DeprecationWarning)

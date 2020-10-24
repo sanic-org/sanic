@@ -12,7 +12,14 @@ from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import html, json, text
-from sanic.testing import ASGI_HOST, HOST, PORT, SanicTestClient
+from sanic.testing import (
+    ASGI_BASE_URL,
+    ASGI_HOST,
+    ASGI_PORT,
+    HOST,
+    PORT,
+    SanicTestClient,
+)
 
 
 # ------------------------------------------------------------ #
@@ -59,7 +66,10 @@ async def test_ip_asgi(app):
 
     request, response = await app.asgi_client.get("/")
 
-    assert response.text == "http://mockserver/"
+    if response.text.endswith("/") and not ASGI_BASE_URL.endswith("/"):
+        response.text[:-1] == ASGI_BASE_URL
+    else:
+        assert response.text == ASGI_BASE_URL
 
 
 def test_text(app):
@@ -454,11 +464,13 @@ def test_standard_forwarded(app):
         "X-Real-IP": "127.0.0.2",
         "X-Forwarded-For": "127.0.1.1",
         "X-Scheme": "ws",
+        "Host": "local.site",
     }
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"for": "127.0.0.2", "proto": "ws"}
     assert request.remote_addr == "127.0.0.2"
     assert request.scheme == "ws"
+    assert request.server_name == "local.site"
     assert request.server_port == 80
 
     app.config.FORWARDED_SECRET = "mySecret"
@@ -571,7 +583,7 @@ async def test_standard_forwarded_asgi(app):
     assert response.json() == {"for": "127.0.0.2", "proto": "ws"}
     assert request.remote_addr == "127.0.0.2"
     assert request.scheme == "ws"
-    assert request.server_port == 80
+    assert request.server_port == ASGI_PORT
 
     app.config.FORWARDED_SECRET = "mySecret"
     request, response = await app.asgi_client.get("/", headers=headers)
@@ -1042,9 +1054,9 @@ def test_url_attributes_no_ssl(app, path, query, expected_url):
 @pytest.mark.parametrize(
     "path,query,expected_url",
     [
-        ("/foo", "", "http://{}/foo"),
-        ("/bar/baz", "", "http://{}/bar/baz"),
-        ("/moo/boo", "arg1=val1", "http://{}/moo/boo?arg1=val1"),
+        ("/foo", "", "{}/foo"),
+        ("/bar/baz", "", "{}/bar/baz"),
+        ("/moo/boo", "arg1=val1", "{}/moo/boo?arg1=val1"),
     ],
 )
 @pytest.mark.asyncio
@@ -1055,7 +1067,7 @@ async def test_url_attributes_no_ssl_asgi(app, path, query, expected_url):
     app.add_route(handler, path)
 
     request, response = await app.asgi_client.get(path + f"?{query}")
-    assert request.url == expected_url.format(ASGI_HOST)
+    assert request.url == expected_url.format(ASGI_BASE_URL)
 
     parsed = urlparse(request.url)
 
@@ -1807,13 +1819,17 @@ def test_request_port(app):
     port = request.port
     assert isinstance(port, int)
 
-    delattr(request, "_socket")
-    delattr(request, "_port")
+
+@pytest.mark.asyncio
+async def test_request_port_asgi(app):
+    @app.get("/")
+    def handler(request):
+        return text("OK")
+
+    request, response = await app.asgi_client.get("/")
 
     port = request.port
     assert isinstance(port, int)
-    assert hasattr(request, "_socket")
-    assert hasattr(request, "_port")
 
 
 def test_request_socket(app):
@@ -1831,12 +1847,6 @@ def test_request_socket(app):
 
     assert ip == request.ip
     assert port == request.port
-
-    delattr(request, "_socket")
-
-    socket = request.socket
-    assert isinstance(socket, tuple)
-    assert hasattr(request, "_socket")
 
 
 def test_request_server_name(app):
@@ -1866,7 +1876,7 @@ def test_request_server_name_in_host_header(app):
     request, response = app.test_client.get(
         "/", headers={"Host": "mal_formed"}
     )
-    assert request.server_name == None  # For now (later maybe 127.0.0.1)
+    assert request.server_name == ""
 
 
 def test_request_server_name_forwarded(app):
@@ -1893,7 +1903,7 @@ def test_request_server_port(app):
 
     test_client = SanicTestClient(app)
     request, response = test_client.get("/", headers={"Host": "my-server"})
-    assert request.server_port == test_client.port
+    assert request.server_port == 80
 
 
 def test_request_server_port_in_host_header(app):
@@ -1952,13 +1962,10 @@ def test_server_name_and_url_for(app):
     def handler(request):
         return text("ok")
 
-    app.config.SERVER_NAME = "my-server"
+    app.config.SERVER_NAME = "my-server"  # This means default port
     assert app.url_for("handler", _external=True) == "http://my-server/foo"
     request, response = app.test_client.get("/foo")
-    assert (
-        request.url_for("handler")
-        == f"http://my-server:{request.server_port}/foo"
-    )
+    assert request.url_for("handler") == f"http://my-server/foo"
 
     app.config.SERVER_NAME = "https://my-server/path"
     request, response = app.test_client.get("/foo")

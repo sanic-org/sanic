@@ -5,7 +5,7 @@ import signal
 import sys
 import traceback
 
-import gunicorn.workers.base as base  # type: ignore
+from gunicorn.workers import base as base  # type: ignore
 
 from sanic.server import HttpProtocol, Signal, serve, trigger_events
 from sanic.websocket import WebSocketProtocol
@@ -174,7 +174,7 @@ class GunicornWorker(base.Worker):
 
     @staticmethod
     def _create_ssl_context(cfg):
-        """ Creates SSLContext instance for usage in asyncio.create_server.
+        """Creates SSLContext instance for usage in asyncio.create_server.
         See ssl.SSLSocket.__init__ for more details.
         """
         ctx = ssl.SSLContext(cfg.ssl_version)

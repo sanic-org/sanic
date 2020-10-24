@@ -1,22 +1,37 @@
 import asyncio
 import multiprocessing
 import os
+import secrets
+import socket
+import stat
 import sys
-
 from asyncio import CancelledError
 from functools import partial
 from inspect import isawaitable
+from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from socket import SO_REUSEADDR, SOL_SOCKET, socket
 from time import monotonic as current_time
+from time import time
+from typing import Dict, Type, Union
 
-from sanic.compat import ctrlc_workaround_for_windows
-from sanic.exceptions import RequestTimeout, ServiceUnavailable
+from httptools import HttpRequestParser  # type: ignore
+from httptools.parser.errors import HttpParserError  # type: ignore
+
+from sanic.compat import Header, ctrlc_workaround_for_windows
+from sanic.config import Config
+from sanic.exceptions import (
+    HeaderExpectationFailed,
+    InvalidUsage,
+    PayloadTooLarge,
+    RequestTimeout,
+    ServerError,
+    ServiceUnavailable,
+)
 from sanic.http import Http, Stage
-from sanic.log import logger
+from sanic.log import access_logger, logger
 from sanic.request import Request
-
+from sanic.response import HTTPResponse
 
 try:
     import uvloop  # type: ignore
@@ -33,6 +48,41 @@ class Signal:
     stopped = False
 
 
+class ConnInfo:
+    """Local and remote addresses and SSL status info."""
+
+    __slots__ = (
+        "sockname",
+        "peername",
+        "server",
+        "server_port",
+        "client",
+        "client_port",
+        "ssl",
+    )
+
+    def __init__(self, transport, unix=None):
+        self.ssl = bool(transport.get_extra_info("sslcontext"))
+        self.server = self.client = ""
+        self.server_port = self.client_port = 0
+        self.peername = None
+        self.sockname = addr = transport.get_extra_info("sockname")
+        if isinstance(addr, str):  # UNIX socket
+            self.server = unix or addr
+            return
+        # IPv4 (ip, port) or IPv6 (ip, port, flowinfo, scopeid)
+        if isinstance(addr, tuple):
+            self.server = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.server_port = addr[1]
+            # self.server gets non-standard port appended
+            if addr[1] != (443 if self.ssl else 80):
+                self.server = f"{self.server}:{addr[1]}"
+        self.peername = addr = transport.get_extra_info("peername")
+        if isinstance(addr, tuple):
+            self.client = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.client_port = addr[1]
+
+
 class HttpProtocol(asyncio.Protocol):
     """
     This class provides a basic HTTP implementation of the sanic framework.
@@ -46,6 +96,7 @@ class HttpProtocol(asyncio.Protocol):
         "transport",
         "connections",
         "signal",
+        "conn_info",
         # request params
         "request",
         # request config
@@ -70,6 +121,7 @@ class HttpProtocol(asyncio.Protocol):
         "_http",
         "_exception",
         "recv_buffer",
+        "_unix",
     )
 
     def __init__(
@@ -80,6 +132,7 @@ class HttpProtocol(asyncio.Protocol):
         signal=Signal(),
         connections=None,
         state=None,
+        unix=None,
         **kwargs,
     ):
         asyncio.set_event_loop(loop)
@@ -88,6 +141,7 @@ class HttpProtocol(asyncio.Protocol):
         self.app = app
         self.url = None
         self.transport = None
+        self.conn_info = None
         self.request = None
         self.signal = signal
         self.access_log = self.app.config.ACCESS_LOG
@@ -95,9 +149,7 @@ class HttpProtocol(asyncio.Protocol):
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
-        self.request_buffer_queue_size = (
-            self.app.config.REQUEST_BUFFER_QUEUE_SIZE
-        )
+        self.request_buffer_queue_size = self.app.config.REQUEST_BUFFER_QUEUE_SIZE
         self.response_timeout = self.app.config.RESPONSE_TIMEOUT
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE
@@ -109,6 +161,7 @@ class HttpProtocol(asyncio.Protocol):
         self._can_write = asyncio.Event(loop=deprecated_loop)
         self._can_write.set()
         self._exception = None
+        self._unix = unix
 
     async def connection_task(self):
         """Run a HTTP connection.
@@ -279,13 +332,7 @@ class AsyncioServer:
     )
 
     def __init__(
-        self,
-        loop,
-        serve_coro,
-        connections,
-        after_start,
-        before_stop,
-        after_stop,
+        self, loop, serve_coro, connections, after_start, before_stop, after_stop,
     ):
         # Note, Sanic already called "before_server_start" events
         # before this helper was even created. So we don't need it here.
@@ -364,6 +411,7 @@ def serve(
     after_stop=None,
     ssl=None,
     sock=None,
+    unix=None,
     reuse_port=False,
     loop=None,
     protocol=HttpProtocol,
@@ -392,6 +440,7 @@ def serve(
                        `app` instance and `loop`
     :param ssl: SSLContext
     :param sock: Socket for the server to accept connections from
+    :param unix: Unix socket to listen on instead of TCP port
     :param reuse_port: `True` for multiple workers
     :param loop: asyncio compatible event loop
     :param run_async: bool: Do not create a new event loop for the server,
@@ -411,6 +460,7 @@ def serve(
     app.asgi = False
 
     connections = connections if connections is not None else set()
+    protocol_kwargs = _build_protocol_kwargs(protocol, app.config)
     server = partial(
         protocol,
         loop=loop,
@@ -418,14 +468,17 @@ def serve(
         signal=signal,
         app=app,
         state=state,
+        unix=unix,
+        **protocol_kwargs,
     )
-    asyncio_server_kwargs = (
-        asyncio_server_kwargs if asyncio_server_kwargs else {}
-    )
+    asyncio_server_kwargs = asyncio_server_kwargs if asyncio_server_kwargs else {}
+    # UNIX sockets are always bound by us (to preserve semantics between modes)
+    if unix:
+        sock = bind_unix_socket(unix, backlog=backlog)
     server_coroutine = loop.create_server(
         server,
-        host,
-        port,
+        None if sock else host,
+        None if sock else port,
         ssl=ssl,
         reuse_port=reuse_port,
         sock=sock,
@@ -508,6 +561,98 @@ def serve(
         trigger_events(after_stop, loop)
 
         loop.close()
+        remove_unix_socket(unix)
+
+
+def _build_protocol_kwargs(
+    protocol: Type[HttpProtocol], config: Config
+) -> Dict[str, Union[int, float]]:
+    if hasattr(protocol, "websocket_handshake"):
+        return {
+            "websocket_max_size": config.WEBSOCKET_MAX_SIZE,
+            "websocket_max_queue": config.WEBSOCKET_MAX_QUEUE,
+            "websocket_read_limit": config.WEBSOCKET_READ_LIMIT,
+            "websocket_write_limit": config.WEBSOCKET_WRITE_LIMIT,
+            "websocket_ping_timeout": config.WEBSOCKET_PING_TIMEOUT,
+            "websocket_ping_interval": config.WEBSOCKET_PING_INTERVAL,
+        }
+    return {}
+
+
+def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
+    """Create TCP server socket.
+    :param host: IPv4, IPv6 or hostname may be specified
+    :param port: TCP port number
+    :param backlog: Maximum number of connections to queue
+    :return: socket.socket object
+    """
+    try:  # IP address: family must be specified for IPv6 at least
+        ip = ip_address(host)
+        host = str(ip)
+        sock = socket.socket(socket.AF_INET6 if ip.version == 6 else socket.AF_INET)
+    except ValueError:  # Hostname, may become AF_INET or AF_INET6
+        sock = socket.socket()
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind((host, port))
+    sock.listen(backlog)
+    return sock
+
+
+def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
+    """Create unix socket.
+    :param path: filesystem path
+    :param backlog: Maximum number of connections to queue
+    :return: socket.socket object
+    """
+    """Open or atomically replace existing socket with zero downtime."""
+    # Sanitise and pre-verify socket path
+    path = os.path.abspath(path)
+    folder = os.path.dirname(path)
+    if not os.path.isdir(folder):
+        raise FileNotFoundError(f"Socket folder does not exist: {folder}")
+    try:
+        if not stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
+            raise FileExistsError(f"Existing file is not a socket: {path}")
+    except FileNotFoundError:
+        pass
+    # Create new socket with a random temporary name
+    tmp_path = f"{path}.{secrets.token_urlsafe()}"
+    sock = socket.socket(socket.AF_UNIX)
+    try:
+        # Critical section begins (filename races)
+        sock.bind(tmp_path)
+        try:
+            os.chmod(tmp_path, mode)
+            # Start listening before rename to avoid connection failures
+            sock.listen(backlog)
+            os.rename(tmp_path, path)
+        except:  # noqa: E722
+            try:
+                os.unlink(tmp_path)
+            finally:
+                raise
+    except:  # noqa: E722
+        try:
+            sock.close()
+        finally:
+            raise
+    return sock
+
+
+def remove_unix_socket(path: str) -> None:
+    """Remove dead unix socket during server exit."""
+    if not path:
+        return
+    try:
+        if stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
+            # Is it actually dead (doesn't belong to a new server instance)?
+            with socket.socket(socket.AF_UNIX) as testsock:
+                try:
+                    testsock.connect(path)
+                except ConnectionRefusedError:
+                    os.unlink(path)
+    except FileNotFoundError:
+        pass
 
 
 def serve_multiple(server_settings, workers):
@@ -522,11 +667,17 @@ def serve_multiple(server_settings, workers):
     server_settings["reuse_port"] = True
     server_settings["run_multiple"] = True
 
-    # Handling when custom socket is not provided.
-    if server_settings.get("sock") is None:
-        sock = socket()
-        sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        sock.bind((server_settings["host"], server_settings["port"]))
+    # Create a listening socket or use the one in settings
+    sock = server_settings.get("sock")
+    unix = server_settings["unix"]
+    backlog = server_settings["backlog"]
+    if unix:
+        sock = bind_unix_socket(unix, backlog=backlog)
+        server_settings["unix"] = unix
+    if sock is None:
+        sock = bind_socket(
+            server_settings["host"], server_settings["port"], backlog=backlog
+        )
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None
@@ -555,4 +706,6 @@ def serve_multiple(server_settings, workers):
     # the above processes will block this until they're stopped
     for process in processes:
         process.terminate()
-    server_settings.get("sock").close()
+
+    sock.close()
+    remove_unix_socket(unix)

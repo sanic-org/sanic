@@ -58,6 +58,7 @@ class Request:
         "_socket",
         "app",
         "body",
+        "conn_info",
         "ctx",
         "endpoint",
         "headers",
@@ -89,6 +90,7 @@ class Request:
 
         # Init but do not inhale
         self.body = b""
+        self.conn_info = None
         self.ctx = SimpleNamespace()
         self.name = None
         self.parsed_forwarded = None
@@ -180,9 +182,7 @@ class Request:
         if self.parsed_form is None:
             self.parsed_form = RequestParameters()
             self.parsed_files = RequestParameters()
-            content_type = self.headers.get(
-                "Content-Type", DEFAULT_HTTP_CONTENT_TYPE
-            )
+            content_type = self.headers.get("Content-Type", DEFAULT_HTTP_CONTENT_TYPE)
             content_type, parameters = parse_content_header(content_type)
             try:
                 if content_type == "application/x-www-form-urlencoded":
@@ -241,9 +241,7 @@ class Request:
         :type errors: str
         :return: RequestParameters
         """
-        if not self.parsed_args[
-            (keep_blank_values, strict_parsing, encoding, errors)
-        ]:
+        if not self.parsed_args[(keep_blank_values, strict_parsing, encoding, errors)]:
             if self.query_string:
                 self.parsed_args[
                     (keep_blank_values, strict_parsing, encoding, errors)
@@ -257,9 +255,7 @@ class Request:
                     )
                 )
 
-        return self.parsed_args[
-            (keep_blank_values, strict_parsing, encoding, errors)
-        ]
+        return self.parsed_args[(keep_blank_values, strict_parsing, encoding, errors)]
 
     args = property(get_args)
 
@@ -323,137 +319,10 @@ class Request:
             if cookie is not None:
                 cookies = SimpleCookie()
                 cookies.load(cookie)
-                self._cookies = {
-                    name: cookie.value for name, cookie in cookies.items()
-                }
+                self._cookies = {name: cookie.value for name, cookie in cookies.items()}
             else:
                 self._cookies = {}
         return self._cookies
-
-    @property
-    def ip(self):
-        """
-        :return: peer ip of the socket
-        """
-        if not hasattr(self, "_socket"):
-            self._get_address()
-        return self._ip
-
-    @property
-    def port(self):
-        """
-        :return: peer port of the socket
-        """
-        if not hasattr(self, "_socket"):
-            self._get_address()
-        return self._port
-
-    @property
-    def socket(self):
-        if not hasattr(self, "_socket"):
-            self._get_address()
-        return self._socket
-
-    def _get_address(self):
-        self._socket = self.transport.get_extra_info("peername") or (
-            None,
-            None,
-        )
-        self._ip = self._socket[0]
-        self._port = self._socket[1]
-
-    @property
-    def server_name(self):
-        """
-        Attempt to get the server's external hostname in this order:
-        `config.SERVER_NAME`, proxied or direct Host headers
-        :func:`Request.host`
-
-        :return: the server name without port number
-        :rtype: str
-        """
-        server_name = self.app.config.get("SERVER_NAME")
-        if server_name:
-            host = server_name.split("//", 1)[-1].split("/", 1)[0]
-            return parse_host(host)[0]
-        return parse_host(self.host)[0]
-
-    @property
-    def forwarded(self):
-        if self.parsed_forwarded is None:
-            self.parsed_forwarded = (
-                parse_forwarded(self.headers, self.app.config)
-                or parse_xforwarded(self.headers, self.app.config)
-                or {}
-            )
-        return self.parsed_forwarded
-
-    @property
-    def server_port(self):
-        """
-        Attempt to get the server's external port number in this order:
-        `config.SERVER_NAME`, proxied or direct Host headers
-        :func:`Request.host`,
-        actual port used by the transport layer socket.
-        :return: server port
-        :rtype: int
-        """
-        if self.forwarded:
-            return self.forwarded.get("port") or (
-                80 if self.scheme in ("http", "ws") else 443
-            )
-        return (
-            parse_host(self.host)[1]
-            or self.transport.get_extra_info("sockname")[1]
-        )
-
-    @property
-    def remote_addr(self):
-        """Attempt to return the original client ip based on `forwarded`,
-        `x-forwarded-for` or `x-real-ip`. If HTTP headers are unavailable or
-        untrusted, returns an empty string.
-
-        :return: original client ip.
-        """
-        if not hasattr(self, "_remote_addr"):
-            self._remote_addr = self.forwarded.get("for", "")
-        return self._remote_addr
-
-    @property
-    def scheme(self):
-        """
-        Attempt to get the request scheme.
-        Seeking the value in this order:
-        `forwarded` header, `x-forwarded-proto` header,
-        `x-scheme` header, the sanic app itself.
-
-        :return: http|https|ws|wss or arbitrary value given by the headers.
-        :rtype: str
-        """
-        forwarded_proto = self.forwarded.get("proto")
-        if forwarded_proto:
-            return forwarded_proto
-
-        if (
-            self.app.websocket_enabled
-            and self.headers.get("upgrade") == "websocket"
-        ):
-            scheme = "ws"
-        else:
-            scheme = "http"
-
-        if self.transport.get_extra_info("sslcontext"):
-            scheme += "s"
-
-        return scheme
-
-    @property
-    def host(self):
-        """
-        :return: proxied or direct Host header. Hostname and port number may be
-          separated by sanic.headers.parse_host(request.host).
-        """
-        return self.forwarded.get("host", self.headers.get("Host", ""))
 
     @property
     def content_type(self):
@@ -464,9 +333,126 @@ class Request:
         """return matched info after resolving route"""
         return self.app.router.get(self)[2]
 
+    # Transport properties (obtained from local interface only)
+
     @property
-    def path(self):
+    def ip(self):
+        """
+        :return: peer ip of the socket
+        """
+        return self.conn_info.client if self.conn_info else ""
+
+    @property
+    def port(self):
+        """
+        :return: peer port of the socket
+        """
+        return self.conn_info.client_port if self.conn_info else 0
+
+    @property
+    def socket(self):
+        return self.conn_info.peername if self.conn_info else (None, None)
+
+    @property
+    def path(self) -> str:
+        """Path of the local HTTP request."""
         return self._parsed_url.path.decode("utf-8")
+
+    # Proxy properties (using SERVER_NAME/forwarded/request/transport info)
+
+    @property
+    def forwarded(self):
+        """
+        Active proxy information obtained from request headers, as specified in
+        Sanic configuration.
+
+        Field names by, for, proto, host, port and path are normalized.
+        - for and by IPv6 addresses are bracketed
+        - port (int) is only set by port headers, not from host.
+        - path is url-unencoded
+
+        Additional values may be available from new style Forwarded headers.
+        """
+        if self.parsed_forwarded is None:
+            self.parsed_forwarded = (
+                parse_forwarded(self.headers, self.app.config)
+                or parse_xforwarded(self.headers, self.app.config)
+                or {}
+            )
+        return self.parsed_forwarded
+
+    @property
+    def remote_addr(self) -> str:
+        """
+        Client IP address, if available.
+        1. proxied remote address `self.forwarded['for']`
+        2. local remote address `self.ip`
+        :return: IPv4, bracketed IPv6, UNIX socket name or arbitrary string
+        """
+        if not hasattr(self, "_remote_addr"):
+            self._remote_addr = self.forwarded.get("for", "")  # or self.ip
+        return self._remote_addr
+
+    @property
+    def scheme(self) -> str:
+        """
+        Determine request scheme.
+        1. `config.SERVER_NAME` if in full URL format
+        2. proxied proto/scheme
+        3. local connection protocol
+        :return: http|https|ws|wss or arbitrary value given by the headers.
+        """
+        if "//" in self.app.config.get("SERVER_NAME", ""):
+            return self.app.config.SERVER_NAME.split("//")[0]
+        if "proto" in self.forwarded:
+            return self.forwarded["proto"]
+
+        if self.app.websocket_enabled and self.headers.get("upgrade") == "websocket":
+            scheme = "ws"
+        else:
+            scheme = "http"
+
+        if self.transport.get_extra_info("sslcontext"):
+            scheme += "s"
+
+        return scheme
+
+    @property
+    def host(self) -> str:
+        """
+        The currently effective server 'host' (hostname or hostname:port).
+        1. `config.SERVER_NAME` overrides any client headers
+        2. proxied host of original request
+        3. request host header
+        hostname and port may be separated by
+        `sanic.headers.parse_host(request.host)`.
+        :return: the first matching host found, or empty string
+        """
+        server_name = self.app.config.get("SERVER_NAME")
+        if server_name:
+            return server_name.split("//", 1)[-1].split("/", 1)[0]
+        return self.forwarded.get("host") or self.headers.get("host", "")
+
+    @property
+    def server_name(self) -> str:
+        """The hostname the client connected to, by `request.host`."""
+        return parse_host(self.host)[0] or ""
+
+    @property
+    def server_port(self) -> int:
+        """
+        The port the client connected to, by forwarded `port` or
+        `request.host`.
+
+        Default port is returned as 80 and 443 based on `request.scheme`.
+        """
+        port = self.forwarded.get("port") or parse_host(self.host)[1]
+        return port or (80 if self.scheme in ("http", "ws") else 443)
+
+    @property
+    def server_path(self) -> str:
+        """Full path of current URL. Uses proxied or local path."""
+        return self.forwarded.get("path") or self.path
 
     @property
     def query_string(self):
@@ -572,9 +558,7 @@ def parse_multipart_form(body, boundary):
                 else:
                     fields[field_name] = [value]
             else:
-                form_file = File(
-                    type=content_type, name=file_name, body=post_data
-                )
+                form_file = File(type=content_type, name=file_name, body=post_data)
                 if field_name in files:
                     files[field_name].append(form_file)
                 else:

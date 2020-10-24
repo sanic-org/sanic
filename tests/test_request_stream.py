@@ -1,5 +1,4 @@
 import asyncio
-
 from contextlib import closing
 from socket import socket
 
@@ -9,9 +8,9 @@ from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.exceptions import HeaderExpectationFailed
 from sanic.response import json, stream, text
+from sanic.server import HttpProtocol
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
-
 
 data = "abc" * 1_000_000
 
@@ -44,10 +43,7 @@ def test_request_stream_method_view(app):
 
 @pytest.mark.parametrize(
     "headers, expect_raise_exception",
-    [
-        ({"EXPECT": "100-continue"}, False),
-        ({"EXPECT": "100-continue-extra"}, True),
-    ],
+    [({"EXPECT": "100-continue"}, False), ({"EXPECT": "100-continue-extra"}, True),],
 )
 def test_request_stream_100_continue(app, headers, expect_raise_exception):
     class SimpleView(HTTPMethodView):
@@ -72,9 +68,7 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
     else:
         with pytest.raises(ValueError) as e:
             app.test_client.post(
-                "/method_view",
-                data=data,
-                headers={"EXPECT": "100-continue-extra"},
+                "/method_view", data=data, headers={"EXPECT": "100-continue-extra"},
             )
             assert "Unknown Expect: 100-continue-extra" in str(e)
 
@@ -304,6 +298,22 @@ def test_request_stream_handle_exception(app):
     assert "Method GET not allowed for URL /post/random_id" in response.text
 
 
+@pytest.mark.asyncio
+async def test_request_stream_unread(app):
+    """ensure no error is raised when leaving unread bytes in byte-buffer"""
+
+    err = None
+    protocol = HttpProtocol(loop=asyncio.get_event_loop(), app=app)
+    try:
+        protocol.request = None
+        protocol._body_chunks.append("this is a test")
+        await protocol.stream_append()
+    except AttributeError as e:
+        err = e
+
+    assert err is None and not protocol._body_chunks
+
+
 def test_request_stream_blueprint(app):
     bp = Blueprint("test_blueprint_request_stream_blueprint")
 
@@ -374,9 +384,7 @@ def test_request_stream_blueprint(app):
             result += body.decode("utf-8")
         return text(result)
 
-    bp.add_route(
-        post_add_route, "/post/add_route", methods=["POST"], stream=True
-    )
+    bp.add_route(post_add_route, "/post/add_route", methods=["POST"], stream=True)
     app.blueprint(bp)
 
     request, response = app.test_client.get("/get")
@@ -590,6 +598,7 @@ def test_streaming_new_api(app):
     res = response.json
     assert isinstance(res, list)
     assert "".join(res) == data
+
 
 def test_streaming_echo():
     """2-way streaming chat between server and client."""

@@ -1,8 +1,8 @@
 import os
 import secrets
 import sys
-from contextlib import suppress
 
+from contextlib import suppress
 from subprocess import PIPE, Popen, TimeoutExpired
 from tempfile import TemporaryDirectory
 from textwrap import dedent
@@ -23,16 +23,20 @@ try:
 except ImportError:
     flags = 0
 
+
 def terminate(proc):
     if flags:
         proc.send_signal(CTRL_BREAK_EVENT)
     else:
         proc.terminate()
 
+
 def write_app(filename, **runargs):
     text = secrets.token_urlsafe()
     with open(filename, "w") as f:
-        f.write(dedent(f"""\
+        f.write(
+            dedent(
+                f"""\
             import os
             from sanic import Sanic
 
@@ -45,8 +49,10 @@ def write_app(filename, **runargs):
             if __name__ == "__main__":
                 app.run(**{runargs!r})
             """
-        ))
+            )
+        )
     return text
+
 
 def scanner(proc):
     for line in proc.stdout:
@@ -59,14 +65,26 @@ def scanner(proc):
 argv = dict(
     script=[sys.executable, "reloader.py"],
     module=[sys.executable, "-m", "reloader"],
-    sanic=[sys.executable, "-m", "sanic", "--port", "42104", "--debug", "reloader.app"],
+    sanic=[
+        sys.executable,
+        "-m",
+        "sanic",
+        "--port",
+        "42104",
+        "--debug",
+        "reloader.app",
+    ],
 )
 
-@pytest.mark.parametrize("runargs, mode", [
-    (dict(port=42102, auto_reload=True), "script"),
-    (dict(port=42103, debug=True), "module"),
-    (dict(), "sanic"),
-])
+
+@pytest.mark.parametrize(
+    "runargs, mode",
+    [
+        (dict(port=42102, auto_reload=True), "script"),
+        (dict(port=42103, debug=True), "module"),
+        (dict(), "sanic"),
+    ],
+)
 async def test_reloader_live(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")

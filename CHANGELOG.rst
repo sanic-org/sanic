@@ -1,3 +1,177 @@
+Version 20.9.0
+===============
+
+
+Features
+********
+
+  *
+    `#1887 <https://github.com/huge-success/sanic/pull/1887>`_
+    Pass subprotocols in websockets (both sanic server and ASGI)
+
+  *
+    `#1894 <https://github.com/huge-success/sanic/pull/1894>`_
+    Automatically set ``test_mode`` flag on app instance
+  
+  *
+    `#1903 <https://github.com/huge-success/sanic/pull/1903>`_ 
+    Add new unified method for updating app values
+  
+  *
+    `#1906 <https://github.com/huge-success/sanic/pull/1906>`_,
+    `#1909 <https://github.com/huge-success/sanic/pull/1909>`_
+    Adds WEBSOCKET_PING_TIMEOUT and WEBSOCKET_PING_INTERVAL configuration values
+  
+  *
+    `#1935 <https://github.com/huge-success/sanic/pull/1935>`_
+    httpx version dependency updated, it is slated for removal as a dependency in v20.12
+
+  *
+    `#1937 <https://github.com/huge-success/sanic/pull/1937>`_ 
+    Added auto, text, and json fallback error handlers (in v21.3, the default will change form html to auto)
+
+Bugfixes
+********
+  
+  *
+    `#1897 <https://github.com/huge-success/sanic/pull/1897>`_
+    Resolves exception from unread bytes in stream
+
+Deprecations and Removals
+*************************
+
+  *
+    `#1903 <https://github.com/huge-success/sanic/pull/1903>`_
+    config.from_envar, config.from_pyfile, and config.from_object are deprecated and set to be removed in v21.3
+
+Developer infrastructure
+************************
+
+  *
+    `#1890 <https://github.com/huge-success/sanic/pull/1890>`_,
+    `#1891 <https://github.com/huge-success/sanic/pull/1891>`_
+    Update isort calls to be compatible with new API
+
+  *
+    `#1893 <https://github.com/huge-success/sanic/pull/1893>`_
+    Remove version section from setup.cfg
+
+  *
+    `#1924 <https://github.com/huge-success/sanic/pull/1924>`_
+    Adding --strict-markers for pytest
+
+Improved Documentation
+**********************
+
+  *
+    `#1922 <https://github.com/huge-success/sanic/pull/1922>`_
+    Add explicit ASGI compliance to the README
+
+
+Version 20.6.3
+===============
+
+Bugfixes
+********
+  
+  *
+    `#1884 <https://github.com/huge-success/sanic/pull/1884>`_
+    Revert change to multiprocessing mode
+
+
+Version 20.6.2
+===============
+
+Features
+********
+  
+  *
+    `#1641 <https://github.com/huge-success/sanic/pull/1641>`_
+    Socket binding implemented properly for IPv6 and UNIX sockets
+
+
+Version 20.6.1
+===============
+
+Features
+********
+  
+  *
+    `#1760 <https://github.com/huge-success/sanic/pull/1760>`_
+    Add version parameter to websocket routes
+
+  *
+    `#1866 <https://github.com/huge-success/sanic/pull/1866>`_
+    Add ``sanic`` as an entry point command
+
+  *
+    `#1880 <https://github.com/huge-success/sanic/pull/1880>`_
+    Add handler names for websockets for url_for usage 
+
+Bugfixes
+********
+
+  *
+    `#1776 <https://github.com/huge-success/sanic/pull/1776>`_
+    Bug fix for host parameter issue with lists
+
+  *
+    `#1842 <https://github.com/huge-success/sanic/pull/1842>`_
+    Fix static _handler pickling error
+
+  *
+    `#1827 <https://github.com/huge-success/sanic/pull/1827>`_
+    Fix reloader on OSX py38 and Windows
+
+  *
+    `#1848 <https://github.com/huge-success/sanic/pull/1848>`_
+    Reverse named_response_middlware execution order, to match normal response middleware execution order
+  
+  *
+    `#1853 <https://github.com/huge-success/sanic/pull/1853>`_
+    Fix pickle error when attempting to pickle an application which contains websocket routes
+
+Deprecations and Removals
+*************************
+
+  *
+    `#1739 <https://github.com/huge-success/sanic/pull/1739>`_
+    Deprecate body_bytes to merge into body
+
+Developer infrastructure
+************************
+
+  *
+    `#1852 <https://github.com/huge-success/sanic/pull/1852>`_
+    Fix naming of CI test env on Python nightlies
+
+  *
+    `#1857 <https://github.com/huge-success/sanic/pull/1857>`_
+    Adjust websockets version to setup.py
+
+  *
+    `#1869 <https://github.com/huge-success/sanic/pull/1869>`_
+    Wrap run()'s "protocol" type annotation in Optional[]
+
+
+Improved Documentation
+**********************
+
+  *
+    `#1846 <https://github.com/huge-success/sanic/pull/1846>`_
+    Update docs to clarify response middleware execution order
+
+  *
+    `#1865 <https://github.com/huge-success/sanic/pull/1865>`_
+    Fixing rst format issue that was hiding documentation
+
+
+Version 20.6.0
+===============
+
+*Released, but unintentionally ommitting PR #1880, so was replaced by 20.6.1*
+
+
 Version 20.3.0
 ===============
 
@@ -195,7 +369,7 @@ Features
 
   * 
     `#1562 <https://github.com/huge-success/sanic/pull/1562>`_
-    Remove ``aiohttp`` dependencey and create new ``SanicTestClient`` based upon
+    Remove ``aiohttp`` dependency and create new ``SanicTestClient`` based upon
     `requests-async <https://github.com/encode/requests-async>`_
 
   * 

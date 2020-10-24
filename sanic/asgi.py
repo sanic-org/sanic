@@ -1,17 +1,16 @@
 import asyncio
 import warnings
-
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 from urllib.parse import quote
 
 import sanic.app  # noqa
-
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage
 from sanic.request import Request
+from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.server import ConnInfo
 from sanic.websocket import WebSocketConnection
-
 
 ASGIScope = MutableMapping[str, Any]
 ASGIMessage = MutableMapping[str, Any]
@@ -55,9 +54,7 @@ class MockProtocol:
 class MockTransport:
     _protocol: Optional[MockProtocol]
 
-    def __init__(
-        self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
-    ) -> None:
+    def __init__(self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> None:
         self.scope = scope
         self._receive = receive
         self._send = send
@@ -85,7 +82,9 @@ class MockTransport:
     def create_websocket_connection(
         self, send: ASGISend, receive: ASGIReceive
     ) -> WebSocketConnection:
-        self._websocket_connection = WebSocketConnection(send, receive)
+        self._websocket_connection = WebSocketConnection(
+            send, receive, self.scope.get("subprotocols", [])
+        )
         return self._websocket_connection
 
     def add_task(self) -> None:
@@ -133,9 +132,7 @@ class Lifespan:
         ) + self.asgi_app.sanic_app.listeners.get("after_server_start", [])
 
         for handler in listeners:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
+            response = handler(self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop)
             if isawaitable(response):
                 await response
 
@@ -153,9 +150,7 @@ class Lifespan:
         ) + self.asgi_app.sanic_app.listeners.get("after_server_stop", [])
 
         for handler in listeners:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
+            response = handler(self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop)
             if isawaitable(response):
                 await response
 
@@ -204,11 +199,7 @@ class ASGIApp:
         if scope["type"] == "lifespan":
             await instance.lifespan(scope, receive, send)
         else:
-            path = (
-                scope["path"][1:]
-                if scope["path"].startswith("/")
-                else scope["path"]
-            )
+            path = scope["path"][1:] if scope["path"].startswith("/") else scope["path"]
             url = "/".join([scope.get("root_path", ""), quote(path)])
             url_bytes = url.encode("latin-1")
             url_bytes += b"?" + scope["query_string"]
@@ -231,15 +222,11 @@ class ASGIApp:
 
             request_class = sanic_app.request_class or Request
             instance.request = request_class(
-                url_bytes,
-                headers,
-                version,
-                method,
-                instance.transport,
-                sanic_app,
+                url_bytes, headers, version, method, instance.transport, sanic_app,
             )
             instance.request.stream = instance
             instance.request_body = True  # FIXME: Use more_body?
+            instance.request.conn_info = ConnInfo(instance.transport)
 
         return instance
 

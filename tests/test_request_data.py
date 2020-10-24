@@ -33,6 +33,23 @@ def test_custom_context(app):
             }
         )
 
+    @app.middleware("response")
+    def modify(request, response):
+        # Using response-middleware to access request ctx
+        try:
+            user = request.ctx.user
+        except AttributeError as e:
+            user = str(e)
+        try:
+            invalid = request.ctx.missing
+        except AttributeError as e:
+            invalid = str(e)
+
+        j = loads(response.body)
+        j["response_mw_valid"] = user
+        j["response_mw_invalid"] = invalid
+        return json(j)
+
     request, response = app.test_client.get("/")
     assert response.json == {
         "user": "sanic",
@@ -41,6 +58,8 @@ def test_custom_context(app):
         "has_session": True,
         "has_missing": False,
         "invalid": "'types.SimpleNamespace' object has no attribute 'missing'",
+        "response_mw_valid": "sanic",
+        "response_mw_invalid": "'types.SimpleNamespace' object has no attribute 'missing'",
     }
 
 

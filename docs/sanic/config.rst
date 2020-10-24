@@ -12,9 +12,9 @@ Sanic holds the configuration in the `config` attribute of the application objec
 
     app = Sanic('myapp')
     app.config.DB_NAME = 'appdb'
-    app.config.DB_USER = 'appuser'
+    app.config['DB_USER'] = 'appuser'
 
-Since the config object actually is a dictionary, you can use its `update` method in order to set several values at once:
+Since the config object has a type that inherits from dictionary, you can use its ``update`` method in order to set several values at once:
 
 .. code-block:: python
 
@@ -45,10 +45,91 @@ Then the above variable would be `MYAPP_REQUEST_TIMEOUT`. If you want to disable
 
 .. code-block:: python
 
-    app = Sanic(__name__, load_env=False)
+    app = Sanic(__name__, load_env=False)   
+
+From file, dict, or any object (having __dict__ attribute).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can store app configurations in: (1) a Python file, (2) a dictionary, or (3) in some other type of custom object.
+
+In order to load configuration from ove of those, you can use ``app.upload_config()``.
+
+**1) From file**
+
+
+Let's say you have ``my_config.py`` file that looks like this:
+
+.. code-block:: python
+
+    # my_config.py
+    A = 1
+    B = 2
+
+Loading config from this file is as easy as:
+
+.. code-block:: python
+
+    app.update_config("/path/to/my_config.py")
+ 
+You can also use environment variables in the path name here.
+
+Let's say you have an environment variable like this:
+
+.. code-block:: shell
+
+    $ export my_path="/path/to"
+    
+Then you can use it like this:
+
+.. code-block:: python
+
+    app.update_config("${my_path}/my_config.py")
+
+.. note::
+
+    Just remember that you have to provide environment variables in the format ${environment_variable} and that $environment_variable is not expanded (is treated as "plain" text).
+
+**2) From dict**
+
+You can also set your app config by providing a ``dict``:
+
+.. code-block:: python
+
+    d = {"A": 1, "B": 2}
+    
+    app.update_config(d)
+ 
+**3) From _any_ object**
+
+App config can be taken from an object. Internally, it uses ``__dict__`` to retrieve keys and values.
+
+For example, pass the class:
+
+.. code-block:: python
+
+    class C:
+        A = 1
+        B = 2
+        
+    app.update_config(C)
+
+or, it can be instantiated:
+
+.. code-block:: python
+
+    c = C()
+    
+    app.update_config(c)
+    
+- From an object (having __dict__ attribute)
+
 
 From an Object
 ~~~~~~~~~~~~~~
+
+.. note::
+
+     Deprecated, will be removed in version 21.3.
 
 If there are a lot of configuration values and they have sensible defaults it might be helpful to put them into a module:
 
@@ -70,6 +151,10 @@ You could use a class or any other object as well.
 
 From a File
 ~~~~~~~~~~~
+
+.. note::
+
+     Deprecated, will be removed in version 21.3.
 
 Usually you will want to load configuration from a file that is not part of the distributed application. You can load configuration from a file using `from_pyfile(/path/to/config_file)`. However, that requires the program to know the path to the config file. So instead you can specify the location of the config file in an environment variable and tell Sanic to use that to find the config file:
 
@@ -98,7 +183,7 @@ The config files are regular Python files which are executed in order to load th
 Builtin Configuration Values
 ----------------------------
 
-Out of the box there are just a few predefined values which can be overwritten when creating the application.
+Out of the box there are just a few predefined values which can be overwritten when creating the application. Note that websocket configuration values will have no impact if running in ASGI mode.
 
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | Variable                  | Default           | Description                                                                 |
@@ -122,6 +207,10 @@ Out of the box there are just a few predefined values which can be overwritten w
 | WEBSOCKET_READ_LIMIT      | 2^16              | High-water limit of the buffer for incoming bytes                           |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | WEBSOCKET_WRITE_LIMIT     | 2^16              | High-water limit of the buffer for outgoing bytes                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_PING_INTERVAL   | 20                | A Ping frame is sent every ping_interval seconds.                           |
++---------------------------+-------------------+-----------------------------------------------------------------------------+
+| WEBSOCKET_PING_TIMEOUT    | 20                | Connection is closed when Pong is not received after ping_timeout seconds   |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+
 | GRACEFUL_SHUTDOWN_TIMEOUT | 15.0              | How long to wait to force close non-idle connection (sec)                   |
 +---------------------------+-------------------+-----------------------------------------------------------------------------+

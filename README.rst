@@ -58,6 +58,8 @@ Sanic | Build fast. Run fast.
 
 Sanic is a **Python 3.6+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
+Sanic is also ASGI compliant, so you can deploy it with an `alternative ASGI webserver <https://sanic.readthedocs.io/en/latest/sanic/deploying.html#running-via-asgi>`_.
+
 `Source code on GitHub <https://github.com/huge-success/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_. 
 
 The project is maintained by the community, for the community. **Contributions are welcome!**
@@ -104,7 +106,7 @@ Hello World Example
     if __name__ == '__main__':
         app.run(host='0.0.0.0', port=8000)
         
-Sanic can now be easily run using ``python3 hello.py``.
+Sanic can now be easily run using ``sanic hello.app``.
 
 .. code::
 

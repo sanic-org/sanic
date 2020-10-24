@@ -14,11 +14,13 @@ from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import time
+from typing import Dict, Type, Union
 
 from httptools import HttpRequestParser  # type: ignore
 from httptools.parser.errors import HttpParserError  # type: ignore
 
 from sanic.compat import Header, ctrlc_workaround_for_windows
+from sanic.config import Config
 from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
@@ -416,12 +418,13 @@ class HttpProtocol(asyncio.Protocol):
     async def stream_append(self):
         while self._body_chunks:
             body = self._body_chunks.popleft()
-            if self.request.stream.is_full():
-                self.transport.pause_reading()
-                await self.request.stream.put(body)
-                self.transport.resume_reading()
-            else:
-                await self.request.stream.put(body)
+            if self.request:
+                if self.request.stream.is_full():
+                    self.transport.pause_reading()
+                    await self.request.stream.put(body)
+                    self.transport.resume_reading()
+                else:
+                    await self.request.stream.put(body)
 
     def on_message_complete(self):
         # Entire request (headers and whole body) is received.
@@ -844,6 +847,7 @@ def serve(
     app.asgi = False
 
     connections = connections if connections is not None else set()
+    protocol_kwargs = _build_protocol_kwargs(protocol, app.config)
     server = partial(
         protocol,
         loop=loop,
@@ -852,6 +856,7 @@ def serve(
         app=app,
         state=state,
         unix=unix,
+        **protocol_kwargs,
     )
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
@@ -946,6 +951,21 @@ def serve(
 
         loop.close()
         remove_unix_socket(unix)
+
+
+def _build_protocol_kwargs(
+    protocol: Type[HttpProtocol], config: Config
+) -> Dict[str, Union[int, float]]:
+    if hasattr(protocol, "websocket_handshake"):
+        return {
+            "websocket_max_size": config.WEBSOCKET_MAX_SIZE,
+            "websocket_max_queue": config.WEBSOCKET_MAX_QUEUE,
+            "websocket_read_limit": config.WEBSOCKET_READ_LIMIT,
+            "websocket_write_limit": config.WEBSOCKET_WRITE_LIMIT,
+            "websocket_ping_timeout": config.WEBSOCKET_PING_TIMEOUT,
+            "websocket_ping_interval": config.WEBSOCKET_PING_INTERVAL,
+        }
+    return {}
 
 
 def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:

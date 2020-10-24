@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and Help
+    url: https://community.sanicframework.org/c/questions-and-help
+    about: Do you need help with Sanic? Ask your questions here.

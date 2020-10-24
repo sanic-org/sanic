@@ -169,6 +169,10 @@ class Unauthorized(SanicException):
             }
 
 
+class LoadFileException(SanicException):
+    pass
+
+
 def abort(status_code, message=None):
     """
     Raise an exception based on SanicException. Returns the HTTP response

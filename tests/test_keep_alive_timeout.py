@@ -3,6 +3,7 @@ import asyncio
 from asyncio import sleep as aio_sleep
 from json import JSONDecodeError
 
+import httpcore
 import httpx
 
 from sanic import Sanic, server
@@ -12,67 +13,26 @@ from sanic.testing import HOST, SanicTestClient
 
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
-old_conn = None
 PORT = 42101  # test_keep_alive_timeout_reuse doesn't work with random port
 
+from httpcore._async.base import ConnectionState
+from httpcore._async.connection import AsyncHTTPConnection
+from httpcore._types import Origin
 
-class ReusableSanicConnectionPool(
-    httpx.dispatch.connection_pool.ConnectionPool
-):
-    @property
-    def cert(self):
-        return self.ssl.cert
 
-    @property
-    def verify(self):
-        return self.ssl.verify
+class ReusableSanicConnectionPool(httpcore.AsyncConnectionPool):
+    last_reused_connection = None
 
-    @property
-    def trust_env(self):
-        return self.ssl.trust_env
-
-    @property
-    def http2(self):
-        return self.ssl.http2
-
-    async def acquire_connection(self, origin, timeout):
-        global old_conn
-        connection = self.pop_connection(origin)
-
-        if connection is None:
-            pool_timeout = None if timeout is None else timeout.pool_timeout
-
-            await self.max_connections.acquire(timeout=pool_timeout)
-            ssl_config = httpx.config.SSLConfig(
-                cert=self.cert,
-                verify=self.verify,
-                trust_env=self.trust_env,
-                http2=self.http2,
-            )
-            connection = httpx.dispatch.connection.HTTPConnection(
-                origin,
-                ssl=ssl_config,
-                backend=self.backend,
-                release_func=self.release_connection,
-                uds=self.uds,
-            )
-
-        self.active_connections.add(connection)
-
-        if old_conn is not None:
-            if old_conn != connection:
-                raise RuntimeError(
-                    "We got a new connection, wanted the same one!"
-                )
-        old_conn = connection
-
-        return connection
+    async def _get_connection_from_pool(self, *args, **kwargs):
+        conn = await super()._get_connection_from_pool(*args, **kwargs)
+        self.__class__.last_reused_connection = conn
+        return conn
 
 
 class ResusableSanicSession(httpx.AsyncClient):
     def __init__(self, *args, **kwargs) -> None:
-        dispatch = ReusableSanicConnectionPool()
-        super().__init__(dispatch=dispatch, *args, **kwargs)
+        transport = ReusableSanicConnectionPool()
+        super().__init__(transport=transport, *args, **kwargs)
 
 
 class ReuseableSanicTestClient(SanicTestClient):
@@ -244,8 +204,8 @@ async def handler3(request):
 
 def test_keep_alive_timeout_reuse():
     """If the server keep-alive timeout and client keep-alive timeout are
-     both longer than the delay, the client _and_ server will successfully
-     reuse the existing connection."""
+    both longer than the delay, the client _and_ server will successfully
+    reuse the existing connection."""
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -258,6 +218,7 @@ def test_keep_alive_timeout_reuse():
         request, response = client.get("/1")
         assert response.status == 200
         assert response.text == "OK"
+        assert ReusableSanicConnectionPool.last_reused_connection
     finally:
         client.kill_server()
 
@@ -270,20 +231,15 @@ def test_keep_alive_client_timeout():
         asyncio.set_event_loop(loop)
         client = ReuseableSanicTestClient(keep_alive_app_client_timeout, loop)
         headers = {"Connection": "keep-alive"}
-        try:
-            request, response = client.get(
-                "/1", headers=headers, request_keepalive=1
-            )
-            assert response.status == 200
-            assert response.text == "OK"
-            loop.run_until_complete(aio_sleep(2))
-            exception = None
-            request, response = client.get("/1", request_keepalive=1)
-        except ValueError as e:
-            exception = e
-        assert exception is not None
-        assert isinstance(exception, ValueError)
-        assert "got a new connection" in exception.args[0]
+        request, response = client.get(
+            "/1", headers=headers, request_keepalive=1
+        )
+        assert response.status == 200
+        assert response.text == "OK"
+        loop.run_until_complete(aio_sleep(2))
+        exception = None
+        request, response = client.get("/1", request_keepalive=1)
+        assert ReusableSanicConnectionPool.last_reused_connection is None
     finally:
         client.kill_server()
 
@@ -298,22 +254,14 @@ def test_keep_alive_server_timeout():
         asyncio.set_event_loop(loop)
         client = ReuseableSanicTestClient(keep_alive_app_server_timeout, loop)
         headers = {"Connection": "keep-alive"}
-        try:
-            request, response = client.get(
-                "/1", headers=headers, request_keepalive=60
-            )
-            assert response.status == 200
-            assert response.text == "OK"
-            loop.run_until_complete(aio_sleep(3))
-            exception = None
-            request, response = client.get("/1", request_keepalive=60)
-        except ValueError as e:
-            exception = e
-        assert exception is not None
-        assert isinstance(exception, ValueError)
-        assert (
-            "Connection reset" in exception.args[0]
-            or "got a new connection" in exception.args[0]
+        request, response = client.get(
+            "/1", headers=headers, request_keepalive=60
         )
+        assert response.status == 200
+        assert response.text == "OK"
+        loop.run_until_complete(aio_sleep(3))
+        exception = None
+        request, response = client.get("/1", request_keepalive=60)
+        assert ReusableSanicConnectionPool.last_reused_connection is None
     finally:
         client.kill_server()

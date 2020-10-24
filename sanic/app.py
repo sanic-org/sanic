@@ -676,9 +676,10 @@ class Sanic:
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
         :param content_type: user defined content type for header
-        :return: None
+        :return: routes registered on the router
+        :rtype: List[sanic.router.Route]
         """
-        static_register(
+        return static_register(
             self,
             uri,
             file_or_directory,
@@ -1452,3 +1453,13 @@ class Sanic:
         self.asgi = True
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()
+
+    # -------------------------------------------------------------------- #
+    # Configuration
+    # -------------------------------------------------------------------- #
+    def update_config(self, config: Union[bytes, str, dict, Any]):
+        """Update app.config.
+
+        Please refer to config.py::Config.update_config for documentation."""
+
+        self.config.update_config(config)

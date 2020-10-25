@@ -1,6 +1,5 @@
 import asyncio
 import warnings
-
 from inspect import isawaitable
 from typing import (
     Any,
@@ -16,7 +15,6 @@ from typing import (
 from urllib.parse import quote
 
 import sanic.app  # noqa
-
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
 from sanic.log import logger
@@ -24,7 +22,6 @@ from sanic.request import Request
 from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.server import ConnInfo, StreamBuffer
 from sanic.websocket import WebSocketConnection
-
 
 ASGIScope = MutableMapping[str, Any]
 ASGIMessage = MutableMapping[str, Any]
@@ -68,9 +65,7 @@ class MockProtocol:
 class MockTransport:
     _protocol: Optional[MockProtocol]
 
-    def __init__(
-        self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
-    ) -> None:
+    def __init__(self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> None:
         self.scope = scope
         self._receive = receive
         self._send = send
@@ -148,9 +143,7 @@ class Lifespan:
         ) + self.asgi_app.sanic_app.listeners.get("after_server_start", [])
 
         for handler in listeners:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
+            response = handler(self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop)
             if isawaitable(response):
                 await response
 
@@ -168,9 +161,7 @@ class Lifespan:
         ) + self.asgi_app.sanic_app.listeners.get("after_server_stop", [])
 
         for handler in listeners:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
+            response = handler(self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop)
             if isawaitable(response):
                 await response
 
@@ -215,19 +206,13 @@ class ASGIApp:
                 for key, value in scope.get("headers", [])
             ]
         )
-        instance.do_stream = (
-            True if headers.get("expect") == "100-continue" else False
-        )
+        instance.do_stream = True if headers.get("expect") == "100-continue" else False
         instance.lifespan = Lifespan(instance)
 
         if scope["type"] == "lifespan":
             await instance.lifespan(scope, receive, send)
         else:
-            path = (
-                scope["path"][1:]
-                if scope["path"].startswith("/")
-                else scope["path"]
-            )
+            path = scope["path"][1:] if scope["path"].startswith("/") else scope["path"]
             url = "/".join([scope.get("root_path", ""), quote(path)])
             url_bytes = url.encode("latin-1")
             url_bytes += b"?" + scope["query_string"]
@@ -250,19 +235,12 @@ class ASGIApp:
 
             request_class = sanic_app.request_class or Request
             instance.request = request_class(
-                url_bytes,
-                headers,
-                version,
-                method,
-                instance.transport,
-                sanic_app,
+                url_bytes, headers, version, method, instance.transport, sanic_app,
             )
             instance.request.conn_info = ConnInfo(instance.transport)
 
             if sanic_app.is_request_stream:
-                is_stream_handler = sanic_app.router.is_stream_handler(
-                    instance.request
-                )
+                is_stream_handler = sanic_app.router.is_stream_handler(instance.request)
                 if is_stream_handler:
                     instance.request.stream = StreamBuffer(
                         sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE
@@ -316,6 +294,7 @@ class ASGIApp:
         """
         Write the response.
         """
+        response.asgi = True
         headers: List[Tuple[bytes, bytes]] = []
         cookies: Dict[str, str] = {}
         try:
@@ -341,9 +320,7 @@ class ASGIApp:
                 type(response),
             )
             exception = ServerError("Invalid response type")
-            response = self.sanic_app.error_handler.response(
-                self.request, exception
-            )
+            response = self.sanic_app.error_handler.response(self.request, exception)
             headers = [
                 (str(name).encode("latin-1"), str(value).encode("latin-1"))
                 for name, value in response.headers.items()
@@ -353,14 +330,10 @@ class ASGIApp:
         if "content-length" not in response.headers and not isinstance(
             response, StreamingHTTPResponse
         ):
-            headers += [
-                (b"content-length", str(len(response.body)).encode("latin-1"))
-            ]
+            headers += [(b"content-length", str(len(response.body)).encode("latin-1"))]
 
         if "content-type" not in response.headers:
-            headers += [
-                (b"content-type", str(response.content_type).encode("latin-1"))
-            ]
+            headers += [(b"content-type", str(response.content_type).encode("latin-1"))]
 
         if response.cookies:
             cookies.update(
@@ -372,8 +345,7 @@ class ASGIApp:
             )
 
         headers += [
-            (b"set-cookie", cookie.encode("utf-8"))
-            for k, cookie in cookies.items()
+            (b"set-cookie", cookie.encode("utf-8")) for k, cookie in cookies.items()
         ]
 
         await self.transport.send(

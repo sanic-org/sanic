@@ -7,8 +7,8 @@
 """
 
 from pathlib import Path
-from sanic import Sanic, response
 
+from sanic import Sanic, response
 
 app = Sanic(__name__)
 
@@ -43,7 +43,7 @@ async def handler_file(request):
 @app.route("/file_stream")
 async def handler_file_stream(request):
     return await response.file_stream(
-        Path("../") / "setup.py", chunk_size=1024
+        Path("../") / "setup.py", chunk_size=1024, headers={"foo": "bar"}
     )
 
 

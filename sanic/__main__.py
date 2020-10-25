@@ -11,21 +11,51 @@ from sanic.log import logger
 
 def main():
     parser = ArgumentParser(prog="sanic")
-    parser.add_argument("--host", dest="host", type=str, default="127.0.0.1")
-    parser.add_argument("--port", dest="port", type=int, default=8000)
-    parser.add_argument("--unix", dest="unix", type=str, default="")
     parser.add_argument(
-        "--cert", dest="cert", type=str, help="location of certificate for SSL"
+        "-H",
+        "--host",
+        dest="host",
+        type=str,
+        default="127.0.0.1",
+        help="Host address [default 127.0.0.1]",
     )
     parser.add_argument(
-        "--key", dest="key", type=str, help="location of keyfile for SSL."
+        "-p",
+        "--port",
+        dest="port",
+        type=int,
+        default=8000,
+        help="Port to serve on [default 8000]",
     )
-    parser.add_argument("--workers", dest="workers", type=int, default=1)
+    parser.add_argument(
+        "-u",
+        "--unix",
+        dest="unix",
+        type=str,
+        default="",
+        help="Location of unix socket",
+    )
+    parser.add_argument(
+        "--cert", dest="cert", type=str, help="Location of certificate for SSL"
+    )
+    parser.add_argument(
+        "--key", dest="key", type=str, help="Location of keyfile for SSL."
+    )
+    parser.add_argument(
+        "-w",
+        "--workers",
+        dest="workers",
+        type=int,
+        default=1,
+        help="Number of worker processes [default 1]",
+    )
     parser.add_argument("--debug", dest="debug", action="store_true")
     parser.add_argument(
-        "--version", action="version", version=f"Sanic {__version__}",
+        "-v", "--version", action="version", version=f"Sanic {__version__}",
     )
-    parser.add_argument("module")
+    parser.add_argument(
+        "module", help="Path to your Sanic app. Example: path.to.server:app"
+    )
     args = parser.parse_args()
 
     try:

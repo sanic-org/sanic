@@ -88,5 +88,5 @@ When `stream_large_files` is `True`, Sanic will use `file_stream()` instead of `
 
     app = Sanic(__name__)
 
-    chunk_size = 1024 * 1024 * 8 # Set chunk size to 8KB
+    chunk_size = 1024 * 1024 * 8 # Set chunk size to 8MiB
     app.static('/large_video.mp4', '/home/ubuntu/large_video.mp4', stream_large_files=chunk_size)

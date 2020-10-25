@@ -9,15 +9,25 @@ from sanic.app import Sanic
 from sanic.log import logger
 
 
+class SanicArgumentParser(ArgumentParser):
+    def add_bool_arguments(self, *args, **kwargs):
+        group = self.add_mutually_exclusive_group()
+        group.add_argument(*args, action="store_true", **kwargs)
+        kwargs["help"] = "no " + kwargs["help"]
+        group.add_argument(
+            "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
+        )
+
+
 def main():
-    parser = ArgumentParser(prog="sanic")
+    parser = SanicArgumentParser(prog="sanic")
     parser.add_argument(
         "-H",
         "--host",
         dest="host",
         type=str,
         default="127.0.0.1",
-        help="Host address [default 127.0.0.1]",
+        help="host address [default 127.0.0.1]",
     )
     parser.add_argument(
         "-p",
@@ -25,7 +35,7 @@ def main():
         dest="port",
         type=int,
         default=8000,
-        help="Port to serve on [default 8000]",
+        help="port to serve on [default 8000]",
     )
     parser.add_argument(
         "-u",
@@ -33,13 +43,13 @@ def main():
         dest="unix",
         type=str,
         default="",
-        help="Location of unix socket",
+        help="location of unix socket",
     )
     parser.add_argument(
-        "--cert", dest="cert", type=str, help="Location of certificate for SSL"
+        "--cert", dest="cert", type=str, help="location of certificate for SSL"
     )
     parser.add_argument(
-        "--key", dest="key", type=str, help="Location of keyfile for SSL."
+        "--key", dest="key", type=str, help="location of keyfile for SSL."
     )
     parser.add_argument(
         "-w",
@@ -47,14 +57,17 @@ def main():
         dest="workers",
         type=int,
         default=1,
-        help="Number of worker processes [default 1]",
+        help="number of worker processes [default 1]",
     )
     parser.add_argument("--debug", dest="debug", action="store_true")
+    parser.add_bool_arguments(
+        "--access-logs", dest="access_log", help="display access logs"
+    )
     parser.add_argument(
         "-v", "--version", action="version", version=f"Sanic {__version__}",
     )
     parser.add_argument(
-        "module", help="Path to your Sanic app. Example: path.to.server:app"
+        "module", help="path to your Sanic app. Example: path.to.server:app"
     )
     args = parser.parse_args()
 
@@ -93,6 +106,7 @@ def main():
             unix=args.unix,
             workers=args.workers,
             debug=args.debug,
+            access_log=args.access_log,
             ssl=ssl,
         )
     except ImportError as e:

@@ -1,10 +1,10 @@
 import os
 import sys
-
 from argparse import ArgumentParser
 from importlib import import_module
 from typing import Any, Dict, Optional
 
+from sanic import __version__
 from sanic.app import Sanic
 from sanic.log import logger
 
@@ -22,6 +22,9 @@ def main():
     )
     parser.add_argument("--workers", dest="workers", type=int, default=1)
     parser.add_argument("--debug", dest="debug", action="store_true")
+    parser.add_argument(
+        "--version", action="version", version=f"Sanic {__version__}",
+    )
     parser.add_argument("module")
     args = parser.parse_args()
 
@@ -30,9 +33,12 @@ def main():
         if module_path not in sys.path:
             sys.path.append(module_path)
 
-        module_parts = args.module.split(".")
-        module_name = ".".join(module_parts[:-1])
-        app_name = module_parts[-1]
+        if ":" in args.module:
+            module_name, app_name = args.module.rsplit(":", 1)
+        else:
+            module_parts = args.module.split(".")
+            module_name = ".".join(module_parts[:-1])
+            app_name = module_parts[-1]
 
         module = import_module(module_name)
         app = getattr(module, app_name, None)

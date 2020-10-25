@@ -22,6 +22,9 @@ except ImportError:
 
 
 class BaseHTTPResponse:
+    def __init__(self):
+        self.asgi = False
+
     def _encode_body(self, data):
         try:
             # Try to encode it regularly
@@ -59,6 +62,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         content_type="text/plain",
         chunked=True,
     ):
+        super().__init__()
+
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
@@ -146,6 +151,8 @@ class HTTPResponse(BaseHTTPResponse):
         content_type=None,
         body_bytes=b"",
     ):
+        super().__init__()
+
         self.content_type = content_type
 
         if body is not None:

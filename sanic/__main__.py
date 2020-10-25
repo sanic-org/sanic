@@ -1,11 +1,12 @@
 import os
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from importlib import import_module
 from typing import Any, Dict, Optional
 
 from sanic import __version__
 from sanic.app import Sanic
+from sanic.config import BASE_LOGO
 from sanic.log import logger
 
 
@@ -20,7 +21,9 @@ class SanicArgumentParser(ArgumentParser):
 
 
 def main():
-    parser = SanicArgumentParser(prog="sanic")
+    parser = SanicArgumentParser(
+        prog="sanic", description=BASE_LOGO, formatter_class=RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "-H",
         "--host",

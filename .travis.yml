@@ -33,12 +33,12 @@ matrix:
       name: "Python 3.8 without Extensions"
     - env: TOX_ENV=py39
       python: 3.9
-      dist: xenial
+      dist: bionic
       sudo: true
       name: "Python 3.9 with Extensions"
     - env: TOX_ENV=py39-no-ext
       python: 3.9
-      dist: xenial
+      dist: bionic
       sudo: true
       name: "Python 3.9 without Extensions"
     - env: TOX_ENV=type-checking
@@ -52,6 +52,7 @@ matrix:
       name: "Python 3.8 Type checks"
     - env: TOX_ENV=type-checking
       python: 3.9
+      dist: bionic
       name: "Python 3.9 Type checks"
     - env: TOX_ENV=lint
       python: 3.6
@@ -76,7 +77,7 @@ matrix:
       name: "Python 3.8 Bandit security scan"
     - env: TOX_ENV=security
       python: 3.9
-      dist: xenial
+      dist: bionic
       sudo: true
       name: "Python 3.9 Bandit security scan"
     - env: TOX_ENV=docs

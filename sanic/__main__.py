@@ -1,5 +1,6 @@
 import os
 import sys
+
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from importlib import import_module
 from typing import Any, Dict, Optional
@@ -22,7 +23,9 @@ class SanicArgumentParser(ArgumentParser):
 
 def main():
     parser = SanicArgumentParser(
-        prog="sanic", description=BASE_LOGO, formatter_class=RawDescriptionHelpFormatter
+        prog="sanic",
+        description=BASE_LOGO,
+        formatter_class=RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "-H",
@@ -67,7 +70,10 @@ def main():
         "--access-logs", dest="access_log", help="display access logs"
     )
     parser.add_argument(
-        "-v", "--version", action="version", version=f"Sanic {__version__}",
+        "-v",
+        "--version",
+        action="version",
+        version=f"Sanic {__version__}",
     )
     parser.add_argument(
         "module", help="path to your Sanic app. Example: path.to.server:app"

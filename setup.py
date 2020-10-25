@@ -80,13 +80,13 @@ requirements = [
     ujson,
     "aiofiles>=0.3.0",
     "websockets>=8.1,<9.0",
-    "multidict>=4.0,<5.0",
+    "multidict==5.0.0",
     "httpx==0.15.4",
 ]
 
 tests_require = [
     "pytest==5.2.1",
-    "multidict>=4.0,<5.0",
+    "multidict==5.0.0",
     "gunicorn",
     "pytest-cov",
     "httpcore==0.3.0",

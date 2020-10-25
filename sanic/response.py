@@ -22,6 +22,9 @@ except ImportError:
 
 
 class BaseHTTPResponse:
+    def __init__(self):
+        self.asgi = False
+
     def _encode_body(self, data):
         return data.encode() if hasattr(data, "encode") else data
 
@@ -80,6 +83,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         content_type="text/plain; charset=utf-8",
         chunked=True,
     ):
+        super().__init__()
+
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
@@ -87,7 +92,6 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.chunked = chunked
         self._cookies = None
         self.protocol = None
-        self.asgi = False
 
     async def write(self, data):
         """Writes a chunk of data to the streaming response.
@@ -145,6 +149,8 @@ class HTTPResponse(BaseHTTPResponse):
         content_type=None,
         body_bytes=b"",
     ):
+        super().__init__()
+
         self.content_type = content_type
         self.body = body_bytes if body is None else self._encode_body(body)
         self.status = status

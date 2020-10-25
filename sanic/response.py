@@ -66,6 +66,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.chunked = chunked
         self._cookies = None
         self.protocol = None
+        self.asgi = False
 
     async def write(self, data):
         """Writes a chunk of data to the streaming response.

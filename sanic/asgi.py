@@ -291,7 +291,6 @@ class ASGIApp:
         """
         Write the response.
         """
-        response.asgi = True
         headers: List[Tuple[bytes, bytes]] = []
         cookies: Dict[str, str] = {}
         try:
@@ -323,6 +322,8 @@ class ASGIApp:
                 for name, value in response.headers.items()
                 if name not in (b"Set-Cookie",)
             ]
+
+        response.asgi = True
 
         if "content-length" not in response.headers and not isinstance(
             response, StreamingHTTPResponse

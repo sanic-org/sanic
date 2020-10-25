@@ -1,4 +1,5 @@
 import warnings
+
 from functools import partial
 from mimetypes import guess_type
 from os import path
@@ -8,6 +9,7 @@ from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
 from sanic.headers import format_http1, format_http1_response
 from sanic.helpers import has_message_body, remove_entity_headers
+
 
 try:
     from ujson import dumps as json_dumps
@@ -33,7 +35,11 @@ class BaseHTTPResponse:
         return self._cookies
 
     def get_headers(
-        self, version="1.1", keep_alive=False, keep_alive_timeout=None, body=b"",
+        self,
+        version="1.1",
+        keep_alive=False,
+        keep_alive_timeout=None,
+        body=b"",
     ):
         """.. deprecated:: 20.3:
         This function is not public API and will be removed."""
@@ -96,7 +102,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             await self.protocol.push_data(data)
         await self.protocol.drain()
 
-    async def stream(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
+    async def stream(
+        self, version="1.1", keep_alive=False, keep_alive_timeout=None
+    ):
         """Streams headers, runs the `streaming_fn` callback that writes
         content to the response body, then finalizes the response body.
         """
@@ -104,7 +112,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             self.chunked = False
         if not getattr(self, "asgi", False):
             headers = self.get_headers(
-                version, keep_alive=keep_alive, keep_alive_timeout=keep_alive_timeout,
+                version,
+                keep_alive=keep_alive,
+                keep_alive_timeout=keep_alive_timeout,
             )
             await self.protocol.push_data(headers)
             await self.protocol.drain()
@@ -114,7 +124,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         # no need to await drain here after this write, because it is the
         # very last thing we write and nothing needs to wait for it.
 
-    def get_headers(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
+    def get_headers(
+        self, version="1.1", keep_alive=False, keep_alive_timeout=None
+    ):
         if self.chunked and version == "1.1":
             self.headers["Transfer-Encoding"] = "chunked"
             self.headers.pop("Content-Length", None)
@@ -126,7 +138,12 @@ class HTTPResponse(BaseHTTPResponse):
     __slots__ = ("body", "status", "content_type", "headers", "_cookies")
 
     def __init__(
-        self, body=None, status=200, headers=None, content_type=None, body_bytes=b"",
+        self,
+        body=None,
+        status=200,
+        headers=None,
+        content_type=None,
+        body_bytes=b"",
     ):
         self.content_type = content_type
         self.body = body_bytes if body is None else self._encode_body(body)
@@ -191,7 +208,9 @@ def json(
     )
 
 
-def text(body, status=200, headers=None, content_type="text/plain; charset=utf-8"):
+def text(
+    body, status=200, headers=None, content_type="text/plain; charset=utf-8"
+):
     """
     Returns response object with body in text format.
 
@@ -215,10 +234,14 @@ def text(body, status=200, headers=None, content_type="text/plain; charset=utf-8
             pass
     except TypeError:
         body = f"{body}"  # no-op if body is already str
-    return HTTPResponse(body, status=status, headers=headers, content_type=content_type)
+    return HTTPResponse(
+        body, status=status, headers=headers, content_type=content_type
+    )
 
 
-def raw(body, status=200, headers=None, content_type="application/octet-stream"):
+def raw(
+    body, status=200, headers=None, content_type="application/octet-stream"
+):
     """
     Returns response object without encoding the body.
 
@@ -228,7 +251,10 @@ def raw(body, status=200, headers=None, content_type="application/octet-stream")
     :param content_type: the content type (string) of the response.
     """
     return HTTPResponse(
-        body=body, status=status, headers=headers, content_type=content_type,
+        body=body,
+        status=status,
+        headers=headers,
+        content_type=content_type,
     )
 
 
@@ -245,12 +271,20 @@ def html(body, status=200, headers=None):
     elif hasattr(body, "_repr_html_"):
         body = body._repr_html_()
     return HTTPResponse(
-        body, status=status, headers=headers, content_type="text/html; charset=utf-8",
+        body,
+        status=status,
+        headers=headers,
+        content_type="text/html; charset=utf-8",
     )
 
 
 async def file(
-    location, status=200, mime_type=None, headers=None, filename=None, _range=None,
+    location,
+    status=200,
+    mime_type=None,
+    headers=None,
+    filename=None,
+    _range=None,
 ):
     """Return a response object with file data.
 
@@ -262,7 +296,9 @@ async def file(
     """
     headers = headers or {}
     if filename:
-        headers.setdefault("Content-Disposition", f'attachment; filename="{filename}"')
+        headers.setdefault(
+            "Content-Disposition", f'attachment; filename="{filename}"'
+        )
     filename = filename or path.split(location)[-1]
 
     async with await open_async(location, mode="rb") as f:
@@ -278,7 +314,10 @@ async def file(
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     return HTTPResponse(
-        body=out_stream, status=status, headers=headers, content_type=mime_type,
+        body=out_stream,
+        status=status,
+        headers=headers,
+        content_type=mime_type,
     )
 
 
@@ -304,7 +343,9 @@ async def file_stream(
     """
     headers = headers or {}
     if filename:
-        headers.setdefault("Content-Disposition", f'attachment; filename="{filename}"')
+        headers.setdefault(
+            "Content-Disposition", f'attachment; filename="{filename}"'
+        )
     filename = filename or path.split(location)[-1]
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     if _range:
@@ -377,7 +418,9 @@ def stream(
     )
 
 
-def redirect(to, headers=None, status=302, content_type="text/html; charset=utf-8"):
+def redirect(
+    to, headers=None, status=302, content_type="text/html; charset=utf-8"
+):
     """Abort execution and cause a 302 redirect (by default).
 
     :param to: path or fully qualified URL to redirect to
@@ -394,5 +437,6 @@ def redirect(to, headers=None, status=302, content_type="text/html; charset=utf-
     # According to RFC 7231, a relative URI is now permitted.
     headers["Location"] = safe_to
 
-    return HTTPResponse(status=status, headers=headers, content_type=content_type)
-
+    return HTTPResponse(
+        status=status, headers=headers, content_type=content_type
+    )

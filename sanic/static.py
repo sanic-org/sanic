@@ -141,6 +141,8 @@ def register(
                               threshold size to switch to file_stream()
     :param name: user defined name used for url_for
     :param content_type: user defined content type for header
+    :return: registered static routes
+    :rtype: List[sanic.router.Route]
     """
     # If we're not trying to match a file directly,
     # serve from the folder
@@ -162,10 +164,11 @@ def register(
         )
     )
 
-    app.route(
+    _routes, _ = app.route(
         uri,
         methods=["GET", "HEAD"],
         name=name,
         host=host,
         strict_slashes=strict_slashes,
     )(_handler)
+    return _routes

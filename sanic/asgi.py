@@ -350,6 +350,8 @@ class ASGIApp:
                 if name not in (b"Set-Cookie",)
             ]
 
+        response.asgi = True
+
         if "content-length" not in response.headers and not isinstance(
             response, StreamingHTTPResponse
         ):

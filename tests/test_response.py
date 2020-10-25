@@ -235,8 +235,24 @@ def test_chunked_streaming_returns_correct_content(streaming_app):
     assert response.text == "foo,bar"
 
 
+@pytest.mark.asyncio
+async def test_chunked_streaming_returns_correct_content_asgi(streaming_app):
+    request, response = await streaming_app.asgi_client.get("/")
+    assert response.text == "4\r\nfoo,\r\n3\r\nbar\r\n0\r\n\r\n"
+
+
 def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
     request, response = non_chunked_streaming_app.test_client.get("/")
+    assert "Transfer-Encoding" not in response.headers
+    assert response.headers["Content-Type"] == "text/csv"
+    assert response.headers["Content-Length"] == "7"
+
+
+@pytest.mark.asyncio
+async def test_non_chunked_streaming_adds_correct_headers_asgi(
+    non_chunked_streaming_app,
+):
+    request, response = await non_chunked_streaming_app.asgi_client.get("/")
     assert "Transfer-Encoding" not in response.headers
     assert response.headers["Content-Type"] == "text/csv"
     assert response.headers["Content-Length"] == "7"

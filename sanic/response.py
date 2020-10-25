@@ -22,6 +22,9 @@ except ImportError:
 
 
 class BaseHTTPResponse:
+    def __init__(self):
+        self.asgi = False
+
     def _encode_body(self, data):
         return data.encode() if hasattr(data, "encode") else data
 
@@ -80,6 +83,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         content_type="text/plain; charset=utf-8",
         chunked=True,
     ):
+        super().__init__()
+
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
@@ -109,13 +114,14 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         """
         if version != "1.1":
             self.chunked = False
-        headers = self.get_headers(
-            version,
-            keep_alive=keep_alive,
-            keep_alive_timeout=keep_alive_timeout,
-        )
-        await self.protocol.push_data(headers)
-        await self.protocol.drain()
+        if not getattr(self, "asgi", False):
+            headers = self.get_headers(
+                version,
+                keep_alive=keep_alive,
+                keep_alive_timeout=keep_alive_timeout,
+            )
+            await self.protocol.push_data(headers)
+            await self.protocol.drain()
         await self.streaming_fn(self)
         if self.chunked:
             await self.protocol.push_data(b"0\r\n\r\n")
@@ -143,6 +149,8 @@ class HTTPResponse(BaseHTTPResponse):
         content_type=None,
         body_bytes=b"",
     ):
+        super().__init__()
+
         self.content_type = content_type
         self.body = body_bytes if body is None else self._encode_body(body)
         self.status = status

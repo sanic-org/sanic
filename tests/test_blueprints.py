@@ -735,6 +735,36 @@ def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
     _, response = app.test_client.get("/static/test.file/")
     assert response.status == 200
 
+@pytest.mark.parametrize("file_name", ["test.file"])
+def test_static_blueprintp_mw(app: Sanic, static_file_directory, file_name):
+    current_file = inspect.getfile(inspect.currentframe())
+    with open(current_file, "rb") as file:
+        file.read()
+
+    triggered = False
+
+    bp = Blueprint(name="test_mw", url_prefix="")
+
+    @bp.middleware('request')
+    def bp_mw1(request):
+        nonlocal triggered
+        triggered = True
+
+    bp.static(
+        "/test.file",
+        get_file_path(static_file_directory, file_name),
+        strict_slashes=True,
+        name="static"
+    )
+
+    app.blueprint(bp)
+
+    uri = app.url_for("test_mw.static")
+    assert uri == "/test.file"
+
+    _, response = app.test_client.get("/test.file")
+    assert triggered is True
+
 
 def test_route_handler_add(app: Sanic):
     view = CompositionView()

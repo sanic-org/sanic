@@ -309,13 +309,17 @@ class ASGIApp:
         callback = None if self.ws else self.stream_callback
         await handler(self.request, None, callback)
 
+    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
+
     async def stream_callback(self, response: HTTPResponse) -> None:
         """
         Write the response.
         """
         headers: List[Tuple[bytes, bytes]] = []
         cookies: Dict[str, str] = {}
+        content_length: List[str] = []
         try:
+            content_length = response.headers.popall("content-length", [])
             cookies = {
                 v.key: v
                 for _, v in list(
@@ -348,12 +352,22 @@ class ASGIApp:
             ]
 
         response.asgi = True
-
-        if "content-length" not in response.headers and not isinstance(
-            response, StreamingHTTPResponse
-        ):
+        is_streaming = isinstance(response, StreamingHTTPResponse)
+        if is_streaming and getattr(response, "chunked", False):
+            # disable sanic chunking, this is done at the ASGI-server level
+            setattr(response, "chunked", False)
+            # content-length header is removed to signal to the ASGI-server
+            # to use automatic-chunking if it supports it
+        elif len(content_length) > 0:
             headers += [
-                (b"content-length", str(len(response.body)).encode("latin-1"))
+                (b"content-length", str(content_length[0]).encode("latin-1"))
+            ]
+        elif not is_streaming:
+            headers += [
+                (
+                    b"content-length",
+                    str(len(getattr(response, "body", b""))).encode("latin-1"),
+                )
             ]
 
         if "content-type" not in response.headers:

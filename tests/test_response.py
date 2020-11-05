@@ -235,7 +235,7 @@ def test_chunked_streaming_returns_correct_content(streaming_app):
 @pytest.mark.asyncio
 async def test_chunked_streaming_returns_correct_content_asgi(streaming_app):
     request, response = await streaming_app.asgi_client.get("/")
-    assert response.text == "4\r\nfoo,\r\n3\r\nbar\r\n0\r\n\r\n"
+    assert response.text == "foo,bar"
 
 
 def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):

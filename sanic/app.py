@@ -1454,6 +1454,8 @@ class Sanic:
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()
 
+    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
+
     # -------------------------------------------------------------------- #
     # Configuration
     # -------------------------------------------------------------------- #

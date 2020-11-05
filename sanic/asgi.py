@@ -314,7 +314,9 @@ class ASGIApp:
 
     _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
 
-    async def stream_callback(self, response: HTTPResponse) -> None:
+    async def stream_callback(
+        self, response: Union[HTTPResponse, StreamingHTTPResponse]
+    ) -> None:
         """
         Write the response.
         """
@@ -358,7 +360,7 @@ class ASGIApp:
         is_streaming = isinstance(response, StreamingHTTPResponse)
         if is_streaming and getattr(response, "chunked", False):
             # disable sanic chunking, this is done at the ASGI-server level
-            response.chunked = False
+            setattr(response, "chunked", False)
             # content-length header is removed to signal to the ASGI-server
             # to use automatic-chunking if it supports it
         elif len(content_length) > 0:
@@ -367,7 +369,10 @@ class ASGIApp:
             ]
         elif not is_streaming:
             headers += [
-                (b"content-length", str(len(response.body)).encode("latin-1"))
+                (
+                    b"content-length",
+                    str(len(getattr(response, "body", b""))).encode("latin-1"),
+                )
             ]
 
         if "content-type" not in response.headers:

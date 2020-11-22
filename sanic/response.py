@@ -259,7 +259,10 @@ def raw(
     :param content_type: the content type (string) of the response.
     """
     return HTTPResponse(
-        body=body, status=status, headers=headers, content_type=content_type,
+        body=body,
+        status=status,
+        headers=headers,
+        content_type=content_type,
     )
 
 

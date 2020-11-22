@@ -70,7 +70,10 @@ def main():
         "--access-logs", dest="access_log", help="display access logs"
     )
     parser.add_argument(
-        "-v", "--version", action="version", version=f"Sanic {__version__}",
+        "-v",
+        "--version",
+        action="version",
+        version=f"Sanic {__version__}",
     )
     parser.add_argument(
         "module", help="path to your Sanic app. Example: path.to.server:app"

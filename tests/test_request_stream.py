@@ -438,9 +438,7 @@ def test_request_stream_blueprint(app):
             result += body.decode("utf-8")
         return text(result)
 
-    bp.add_route(
-        post_add_route, "/post/add_route", methods=["POST"], stream=True
-    )
+    bp.add_route(post_add_route, "/post/add_route", methods=["POST"], stream=True)
     app.blueprint(bp)
 
     assert app.is_request_stream is True

@@ -90,6 +90,7 @@ class CompositionView:
 
     def __init__(self):
         self.handlers = {}
+        self.name = self.__class__.__name__
 
     def add(self, methods, handler, stream=False):
         if stream:

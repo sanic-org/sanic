@@ -11,7 +11,16 @@ from sanic.views import CompositionView
 
 
 Route = namedtuple(
-    "Route", ["handler", "methods", "pattern", "parameters", "name", "uri"]
+    "Route",
+    [
+        "handler",
+        "methods",
+        "pattern",
+        "parameters",
+        "name",
+        "uri",
+        "endpoint",
+    ],
 )
 Parameter = namedtuple("Parameter", ["name", "cast"])
 
@@ -79,7 +88,8 @@ class Router:
     routes_always_check = None
     parameter_pattern = re.compile(r"<(.+?)>")
 
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.routes_all = {}
         self.routes_names = {}
         self.routes_static_files = {}
@@ -108,9 +118,7 @@ class Router:
         if ":" in parameter_string:
             name, pattern = parameter_string.split(":", 1)
             if not name:
-                raise ValueError(
-                    f"Invalid parameter syntax: {parameter_string}"
-                )
+                raise ValueError(f"Invalid parameter syntax: {parameter_string}")
 
         default = (str, pattern)
         # Pull from pre-configured types
@@ -161,9 +169,7 @@ class Router:
         slashed_methods = self.routes_all.get(uri + "/", frozenset({}))
         unslashed_methods = self.routes_all.get(uri[:-1], frozenset({}))
         if isinstance(methods, Iterable):
-            _slash_is_missing = all(
-                method in slashed_methods for method in methods
-            )
+            _slash_is_missing = all(method in slashed_methods for method in methods)
             _without_slash_is_missing = all(
                 method in unslashed_methods for method in methods
             )
@@ -263,9 +269,7 @@ class Router:
                 view = CompositionView()
                 view.add(route.methods, route.handler)
             view.add(methods, handler)
-            route = route._replace(
-                handler=view, methods=methods.union(route.methods)
-            )
+            route = route._replace(handler=view, methods=methods.union(route.methods))
             return route
 
         if parameters:
@@ -299,11 +303,15 @@ class Router:
 
             handler_name = f"{bp_name}.{name or handler.__name__}"
         else:
-            handler_name = name or getattr(handler, "__name__", None)
+            handler_name = name or getattr(
+                handler, "__name__", handler.__class__.__name__
+            )
 
         if route:
             route = merge_route(route, methods, handler)
         else:
+            endpoint = self.app._build_endpoint_name(handler_name)
+
             route = Route(
                 handler=handler,
                 methods=methods,
@@ -311,6 +319,7 @@ class Router:
                 parameters=parameters,
                 name=handler_name,
                 uri=uri,
+                endpoint=endpoint,
             )
 
         self.routes_all[uri] = route
@@ -443,13 +452,13 @@ class Router:
                     raise NotFound(f"Requested URL {url} not found")
 
         kwargs = {
-            p.name: p.cast(value)
-            for value, p in zip(match.groups(1), route.parameters)
+            p.name: p.cast(value) for value, p in zip(match.groups(1), route.parameters)
         }
         route_handler = route.handler
         if hasattr(route_handler, "handlers"):
             route_handler = route_handler.handlers[method]
-        return route_handler, [], kwargs, route.uri, route.name
+
+        return route_handler, [], kwargs, route.uri, route.name, route.endpoint
 
     def is_stream_handler(self, request):
         """Handler for request is stream or not.

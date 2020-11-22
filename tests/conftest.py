@@ -34,9 +34,7 @@ TYPE_TO_GENERATOR_MAP = {
     ),
     "int": lambda: random.choice(range(1000000)),
     "number": lambda: random.random(),
-    "alpha": lambda: "".join(
-        [random.choice(string.ascii_letters) for _ in range(4)]
-    ),
+    "alpha": lambda: "".join([random.choice(string.ascii_letters) for _ in range(4)]),
     "uuid": lambda: str(uuid.uuid1()),
 }
 
@@ -52,10 +50,7 @@ class RouteStringGenerator:
         for depth in range(1, max_route_depth + 1):
             for _ in range(self.ROUTE_COUNT_PER_DEPTH):
                 route = "/".join(
-                    [
-                        TYPE_TO_GENERATOR_MAP.get("string")()
-                        for _ in range(depth)
-                    ]
+                    [TYPE_TO_GENERATOR_MAP.get("string")() for _ in range(depth)]
                 )
                 route = route.replace(".", "", -1)
                 route_detail = (random.choice(self.HTTP_METHODS), route)
@@ -95,10 +90,10 @@ class RouteStringGenerator:
 
 
 @pytest.fixture(scope="function")
-def sanic_router():
+def sanic_router(app):
     # noinspection PyProtectedMember
     def _setup(route_details: tuple) -> (Router, tuple):
-        router = Router()
+        router = Router(app)
         added_router = []
         for method, route in route_details:
             try:

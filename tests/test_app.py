@@ -31,9 +31,7 @@ def test_app_loop_running(app):
     assert response.text == "pass"
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_create_asyncio_server(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -43,9 +41,7 @@ def test_create_asyncio_server(app):
         assert srv.is_serving() is True
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_asyncio_server_no_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -58,9 +54,7 @@ def test_asyncio_server_no_start_serving(app):
         assert srv.is_serving() is False
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_asyncio_server_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -117,7 +111,7 @@ def test_app_route_raise_value_error(app):
 
 def test_app_handle_request_handler_is_none(app, monkeypatch):
     def mockreturn(*args, **kwargs):
-        return None, [], {}, "", ""
+        return None, [], {}, "", "", None
 
     # Not sure how to make app.router.get() return None, so use mock here.
     monkeypatch.setattr(app.router, "get", mockreturn)
@@ -173,17 +167,9 @@ def test_app_websocket_parameters(websocket_protocol_mock, app):
     assert ws_kwargs["websocket_max_size"] == app.config.WEBSOCKET_MAX_SIZE
     assert ws_kwargs["websocket_max_queue"] == app.config.WEBSOCKET_MAX_QUEUE
     assert ws_kwargs["websocket_read_limit"] == app.config.WEBSOCKET_READ_LIMIT
-    assert (
-        ws_kwargs["websocket_write_limit"] == app.config.WEBSOCKET_WRITE_LIMIT
-    )
-    assert (
-        ws_kwargs["websocket_ping_timeout"]
-        == app.config.WEBSOCKET_PING_TIMEOUT
-    )
-    assert (
-        ws_kwargs["websocket_ping_interval"]
-        == app.config.WEBSOCKET_PING_INTERVAL
-    )
+    assert ws_kwargs["websocket_write_limit"] == app.config.WEBSOCKET_WRITE_LIMIT
+    assert ws_kwargs["websocket_ping_timeout"] == app.config.WEBSOCKET_PING_TIMEOUT
+    assert ws_kwargs["websocket_ping_interval"] == app.config.WEBSOCKET_PING_INTERVAL
 
 
 def test_handle_request_with_nested_exception(app, monkeypatch):
@@ -194,9 +180,7 @@ def test_handle_request_with_nested_exception(app, monkeypatch):
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -215,9 +199,7 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -236,9 +218,7 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
     def mock_error_handler_response(*args, **kwargs):
         raise SanicException("Mock SanicException")
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):

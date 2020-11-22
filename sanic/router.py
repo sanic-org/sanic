@@ -118,7 +118,9 @@ class Router:
         if ":" in parameter_string:
             name, pattern = parameter_string.split(":", 1)
             if not name:
-                raise ValueError(f"Invalid parameter syntax: {parameter_string}")
+                raise ValueError(
+                    f"Invalid parameter syntax: {parameter_string}"
+                )
 
         default = (str, pattern)
         # Pull from pre-configured types
@@ -169,7 +171,9 @@ class Router:
         slashed_methods = self.routes_all.get(uri + "/", frozenset({}))
         unslashed_methods = self.routes_all.get(uri[:-1], frozenset({}))
         if isinstance(methods, Iterable):
-            _slash_is_missing = all(method in slashed_methods for method in methods)
+            _slash_is_missing = all(
+                method in slashed_methods for method in methods
+            )
             _without_slash_is_missing = all(
                 method in unslashed_methods for method in methods
             )
@@ -269,7 +273,9 @@ class Router:
                 view = CompositionView()
                 view.add(route.methods, route.handler)
             view.add(methods, handler)
-            route = route._replace(handler=view, methods=methods.union(route.methods))
+            route = route._replace(
+                handler=view, methods=methods.union(route.methods)
+            )
             return route
 
         if parameters:
@@ -452,7 +458,8 @@ class Router:
                     raise NotFound(f"Requested URL {url} not found")
 
         kwargs = {
-            p.name: p.cast(value) for value, p in zip(match.groups(1), route.parameters)
+            p.name: p.cast(value)
+            for value, p in zip(match.groups(1), route.parameters)
         }
         route_handler = route.handler
         if hasattr(route_handler, "handlers"):

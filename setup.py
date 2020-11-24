@@ -82,7 +82,7 @@ requirements = [
     "aiofiles>=0.6.0",
     "websockets>=8.1,<9.0",
     "multidict>=5.0,<6.0",
-    "httpx==0.15.4",
+    "httpx==0.16.1",
 ]
 
 tests_require = [
@@ -90,7 +90,7 @@ tests_require = [
     "multidict>=5.0,<6.0",
     "gunicorn",
     "pytest-cov",
-    "httpcore==0.3.0",
+    "httpcore==0.12.2",
     "beautifulsoup4",
     uvloop,
     ujson,

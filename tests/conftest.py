@@ -95,10 +95,10 @@ class RouteStringGenerator:
 
 
 @pytest.fixture(scope="function")
-def sanic_router():
+def sanic_router(app):
     # noinspection PyProtectedMember
     def _setup(route_details: tuple) -> (Router, tuple):
-        router = Router()
+        router = Router(app)
         added_router = []
         for method, route in route_details:
             try:

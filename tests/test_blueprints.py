@@ -735,6 +735,7 @@ def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
     _, response = app.test_client.get("/static/test.file/")
     assert response.status == 200
 
+
 @pytest.mark.parametrize("file_name", ["test.file"])
 def test_static_blueprintp_mw(app: Sanic, static_file_directory, file_name):
     current_file = inspect.getfile(inspect.currentframe())
@@ -745,7 +746,7 @@ def test_static_blueprintp_mw(app: Sanic, static_file_directory, file_name):
 
     bp = Blueprint(name="test_mw", url_prefix="")
 
-    @bp.middleware('request')
+    @bp.middleware("request")
     def bp_mw1(request):
         nonlocal triggered
         triggered = True
@@ -754,7 +755,7 @@ def test_static_blueprintp_mw(app: Sanic, static_file_directory, file_name):
         "/test.file",
         get_file_path(static_file_directory, file_name),
         strict_slashes=True,
-        name="static"
+        name="static",
     )
 
     app.blueprint(bp)

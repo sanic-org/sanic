@@ -68,7 +68,7 @@ class Sanic:
 
         self.name = name
         self.asgi = False
-        self.router = router or Router()
+        self.router = router or Router(self)
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
@@ -900,7 +900,9 @@ class Sanic:
         name = None
         try:
             # Fetch handler from router
-            handler, args, kwargs, uri, name = self.router.get(request)
+            handler, args, kwargs, uri, name, endpoint = self.router.get(
+                request
+            )
 
             # -------------------------------------------- #
             # Request Middleware
@@ -922,16 +924,8 @@ class Sanic:
                             "handler from the router"
                         )
                     )
-                else:
-                    if not getattr(handler, "__blueprintname__", False):
-                        request.endpoint = self._build_endpoint_name(
-                            handler.__name__
-                        )
-                    else:
-                        request.endpoint = self._build_endpoint_name(
-                            getattr(handler, "__blueprintname__", ""),
-                            handler.__name__,
-                        )
+
+                request.endpoint = endpoint
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)

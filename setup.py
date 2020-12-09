@@ -57,6 +57,7 @@ setup_kwargs = {
     ),
     "long_description": long_description,
     "packages": ["sanic"],
+    "package_data": {"sanic": ["py.typed"]},
     "platforms": "any",
     "python_requires": ">=3.6",
     "classifiers": [
@@ -79,15 +80,15 @@ requirements = [
     "httptools>=0.0.10",
     uvloop,
     ujson,
-    "aiofiles>=0.3.0",
+    "aiofiles>=0.6.0",
     "websockets>=8.1,<9.0",
-    "multidict==5.0.0",
+    "multidict>=5.0,<6.0",
     "httpx==0.15.4",
 ]
 
 tests_require = [
     "pytest==5.2.1",
-    "multidict==5.0.0",
+    "multidict>=5.0,<6.0",
     "gunicorn",
     "pytest-cov",
     "httpcore==0.3.0",
@@ -97,6 +98,7 @@ tests_require = [
     "pytest-sanic",
     "pytest-sugar",
     "pytest-benchmark",
+    "pytest-dependency",
 ]
 
 docs_require = [

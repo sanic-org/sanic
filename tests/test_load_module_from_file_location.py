@@ -20,7 +20,9 @@ def test_load_module_from_file_location(loaded_module_from_file_location):
 
 
 @pytest.mark.dependency(depends=["test_load_module_from_file_location"])
-def test_loaded_module_from_file_location_name(loaded_module_from_file_location,):
+def test_loaded_module_from_file_location_name(
+    loaded_module_from_file_location,
+):
     name = loaded_module_from_file_location.__name__
     if "C:\\" in name:
         name = name.split("\\")[-1]

@@ -179,8 +179,8 @@ def abort(status_code, message=None):
     message appropriate for the given status code, unless provided.
 
     :param status_code: The HTTP status code to return.
-    :param message: The HTTP response body. Defaults to the messages
-                    in response.py for the given status code.
+    :param message: The HTTP response body. Defaults to the messages in
+    STATUS_CODES from sanic.helpers for the given status code.
     """
     if message is None:
         message = STATUS_CODES.get(status_code)

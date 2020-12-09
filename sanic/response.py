@@ -100,6 +100,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         """
         data = self._encode_body(data)
 
+        # `chunked` will always be False in ASGI-mode, even if the underlying
+        # ASGI Transport implements Chunked transport. That does it itself.
         if self.chunked:
             await self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
         else:

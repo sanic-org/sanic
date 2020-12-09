@@ -1,3 +1,28 @@
+Version 20.9.1
+===============
+
+Bugfixes
+********
+  
+  *
+    `#1954 <https://github.com/huge-success/sanic/pull/1954>`_
+    Fix static route registration on blueprints
+  *
+    `#1957 <https://github.com/huge-success/sanic/pull/1957>`_
+    Removes duplicate headers in ASGI streaming body
+
+
+Version 19.12.3
+===============
+
+Bugfixes
+********
+  
+  *
+    `#1959 <https://github.com/huge-success/sanic/pull/1959>`_
+    Removes duplicate headers in ASGI streaming body
+
+
 Version 20.9.0
 ===============
 

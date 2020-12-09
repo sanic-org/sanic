@@ -26,8 +26,8 @@ Sanic | Build fast. Run fast.
    :target: https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 .. |Codecov| image:: https://codecov.io/gh/huge-success/sanic/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/huge-success/sanic
-.. |Build Status| image:: https://travis-ci.org/huge-success/sanic.svg?branch=master
-   :target: https://travis-ci.org/huge-success/sanic
+.. |Build Status| image:: https://travis-ci.com/huge-success/sanic.svg?branch=master
+   :target: https://travis-ci.com/huge-success/sanic
 .. |AppVeyor Build Status| image:: https://ci.appveyor.com/api/projects/status/d8pt3ids0ynexi8c/branch/master?svg=true
    :target: https://ci.appveyor.com/project/huge-success/sanic
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest

@@ -60,3 +60,21 @@ Open the address `http://0.0.0.0:8000 <http://0.0.0.0:8000>`_ in your web browse
 the message *Hello world!*.
 
 You now have a working Sanic server!
+
+5. Application registry
+-----------------------
+
+When you instantiate a Sanic instance, that can be retrieved at a later time from the Sanic app registry. This can be useful, for example, if you need to access your Sanic instance from a location where it is not otherwise accessible.
+
+.. code-block:: python
+
+    # ./path/to/server.py
+    from sanic import Sanic
+
+    app = Sanic("my_awesome_server")
+
+    # ./path/to/somewhere_else.py
+    from sanic import Sanic
+
+    app = Sanic.get_app("my_awesome_server")
+

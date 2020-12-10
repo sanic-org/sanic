@@ -7,7 +7,7 @@ import warnings
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
-from inspect import getmodulename, isawaitable, signature, stack
+from inspect import isawaitable, signature
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -38,6 +38,9 @@ from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic:
+    _app_registry: Dict[str, "Sanic"] = {}
+    test_mode = False
+
     def __init__(
         self,
         name=None,
@@ -52,15 +55,10 @@ class Sanic:
 
         # Get name from previous stack frame
         if name is None:
-            warnings.warn(
-                "Sanic(name=None) is deprecated and None value support "
-                "for `name` will be removed in the next release. "
+            raise SanicException(
+                "Sanic instance cannot be unnamed. "
                 "Please use Sanic(name='your_application_name') instead.",
-                DeprecationWarning,
-                stacklevel=2,
             )
-            frame_records = stack()[1]
-            name = getmodulename(frame_records[1])
 
         # logging
         if configure_logging:
@@ -90,7 +88,8 @@ class Sanic:
         self.named_response_middleware = {}
         # Register alternative method names
         self.go_fast = self.run
-        self.test_mode = False
+
+        self.__class__.register_app(self)
 
     @property
     def loop(self):
@@ -1453,9 +1452,34 @@ class Sanic:
     # -------------------------------------------------------------------- #
     # Configuration
     # -------------------------------------------------------------------- #
+
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """Update app.config.
 
         Please refer to config.py::Config.update_config for documentation."""
 
         self.config.update_config(config)
+
+    # -------------------------------------------------------------------- #
+    # Class methods
+    # -------------------------------------------------------------------- #
+
+    @classmethod
+    def register_app(cls, app: "Sanic") -> None:
+        """Register a Sanic instance"""
+        if not isinstance(app, cls):
+            raise SanicException("Registered app must be an instance of Sanic")
+
+        name = app.name
+        if name in cls._app_registry and not cls.test_mode:
+            raise SanicException(f'Sanic app name "{name}" already in use.')
+
+        cls._app_registry[name] = app
+
+    @classmethod
+    def get_app(cls, name: str) -> "Sanic":
+        """Retrieve an instantiated Sanic instance"""
+        try:
+            return cls._app_registry[name]
+        except KeyError:
+            raise SanicException(f'Sanic app name "{name}" not found.')

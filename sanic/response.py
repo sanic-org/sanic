@@ -1,5 +1,3 @@
-import warnings
-
 from functools import partial
 from mimetypes import guess_type
 from os import path
@@ -26,6 +24,8 @@ class BaseHTTPResponse:
         self.asgi = False
 
     def _encode_body(self, data):
+        if data is None:
+            return b""
         return data.encode() if hasattr(data, "encode") else data
 
     def _parse_headers(self):
@@ -45,7 +45,7 @@ class BaseHTTPResponse:
         body=b"",
     ):
         """.. deprecated:: 20.3:
-        This function is not public API and will be removed."""
+        This function is not public API and will be removed in 21.3."""
 
         # self.headers get priority over content_type
         if self.content_type and "Content-Type" not in self.headers:
@@ -149,21 +149,14 @@ class HTTPResponse(BaseHTTPResponse):
         status=200,
         headers=None,
         content_type=None,
-        body_bytes=b"",
     ):
         super().__init__()
 
         self.content_type = content_type
-        self.body = body_bytes if body is None else self._encode_body(body)
+        self.body = self._encode_body(body)
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
-
-        if body_bytes:
-            warnings.warn(
-                "Parameter `body_bytes` is deprecated, use `body` instead",
-                DeprecationWarning,
-            )
 
     def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         body = b""
@@ -228,20 +221,10 @@ def text(
     :param content_type: the content type (string) of the response
     """
     if not isinstance(body, str):
-        warnings.warn(
-            "Types other than str will be deprecated in future versions for"
-            f" response.text, got type {type(body).__name__})",
-            DeprecationWarning,
+        raise TypeError(
+            f"Bad body type. Expected str, got {type(body).__name__})"
         )
-    # Type conversions are deprecated and quite b0rked but still supported for
-    # text() until applications get fixed. This try-except should be removed.
-    try:
-        # Avoid repr(body).encode() b0rkage for body that is already encoded.
-        # memoryview used only to test bytes-ishness.
-        with memoryview(body):
-            pass
-    except TypeError:
-        body = f"{body}"  # no-op if body is already str
+
     return HTTPResponse(
         body, status=status, headers=headers, content_type=content_type
     )

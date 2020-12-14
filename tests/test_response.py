@@ -41,7 +41,8 @@ def test_response_body_not_a_string(app):
         return text(random_num)
 
     request, response = app.test_client.get("/hello")
-    assert response.text == str(random_num)
+    assert response.status == 500
+    assert b"Internal Server Error" in response.body
 
 
 async def sample_streaming_fn(response):
@@ -624,17 +625,3 @@ def test_empty_response(app):
     request, response = app.test_client.get("/test")
     assert response.content_type is None
     assert response.body == b""
-
-
-def test_response_body_bytes_deprecated(app):
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        HTTPResponse(body_bytes=b"bytes")
-
-        assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
-        assert (
-            "Parameter `body_bytes` is deprecated, use `body` instead"
-            in str(w[0].message)
-        )

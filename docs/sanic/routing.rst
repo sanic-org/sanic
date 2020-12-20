@@ -133,7 +133,7 @@ which allows the handler function to work with any of the HTTP methods in the li
     async def get_handler(request):
         return text('GET request - {}'.format(request.args))
 
-There is also an optional `host` argument (which can be a list or a string). This restricts a route to the host or hosts provided. If there is a also a route with no host, it will be the default.
+There is also an optional `host` argument (which can be a list or a string). This restricts a route to the host or hosts provided. If there is also a route with no host, it will be the default.
 
 .. code-block:: python
 

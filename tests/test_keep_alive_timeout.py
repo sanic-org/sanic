@@ -102,11 +102,8 @@ class ReuseableSanicTestClient(SanicTestClient):
                 self.app.listeners["before_server_start"], loop
             )
 
-            try:
-                loop._stopping = False
-                _server = loop.run_until_complete(_server_co)
-            except Exception as e1:
-                raise e1
+            loop._stopping = False
+            _server = loop.run_until_complete(_server_co)
             self._server = _server
         server.trigger_events(self.app.listeners["after_server_start"], loop)
         self.app.listeners["after_server_start"].pop()
@@ -130,18 +127,14 @@ class ReuseableSanicTestClient(SanicTestClient):
                 raise ValueError(f"Request object expected, got ({results})")
 
     def kill_server(self):
-        try:
-            if self._server:
-                self._server.close()
-                self._loop.run_until_complete(self._server.wait_closed())
-                self._server = None
+        if self._server:
+            self._server.close()
+            self._loop.run_until_complete(self._server.wait_closed())
+            self._server = None
 
-            if self._session:
-                self._loop.run_until_complete(self._session.aclose())
-                self._session = None
-
-        except Exception as e3:
-            raise e3
+        if self._session:
+            self._loop.run_until_complete(self._session.aclose())
+            self._session = None
 
     # Copied from SanicTestClient, but with some changes to reuse the
     # same TCPConnection and the sane ClientSession more than once.

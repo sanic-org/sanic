@@ -825,21 +825,6 @@ def test_duplicate_blueprint(app):
     )
 
 
-@pytest.mark.parametrize("debug", [True, False, None])
-def test_register_blueprint(app, debug):
-    bp = Blueprint("bp")
-
-    app.debug = debug
-    with pytest.warns(DeprecationWarning) as record:
-        app.register_blueprint(bp)
-
-    assert record[0].message.args[0] == (
-        "Use of register_blueprint will be deprecated in "
-        "version 1.0.  Please use the blueprint method"
-        " instead"
-    )
-
-
 def test_strict_slashes_behavior_adoption(app):
     app.strict_slashes = True
 

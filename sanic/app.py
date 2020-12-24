@@ -714,28 +714,6 @@ class Sanic:
             self._blueprint_order.append(blueprint)
         blueprint.register(self, options)
 
-    def register_blueprint(self, *args, **kwargs):
-        """
-        Proxy method provided for invoking the :func:`blueprint` method
-
-        .. note::
-            To be deprecated in 1.0. Use :func:`blueprint` instead.
-
-        :param args: Blueprint object or (list, tuple) thereof
-        :param kwargs: option dictionary with blueprint defaults
-        :return: None
-        """
-
-        if self.debug:
-            warnings.simplefilter("default")
-        warnings.warn(
-            "Use of register_blueprint will be deprecated in "
-            "version 1.0.  Please use the blueprint method"
-            " instead",
-            DeprecationWarning,
-        )
-        return self.blueprint(*args, **kwargs)
-
     def url_for(self, view_name: str, **kwargs):
         r"""Build a URL based on a view name and the values provided.
 
@@ -1026,7 +1004,6 @@ class Sanic:
         workers: int = 1,
         protocol: Optional[Type[Protocol]] = None,
         backlog: int = 100,
-        stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
@@ -1056,9 +1033,6 @@ class Sanic:
         :param backlog: a number of unaccepted connections that the system
                         will allow before refusing new connections
         :type backlog: int
-        :param stop_event: event to be triggered
-                           before stopping the app - deprecated
-        :type stop_event: None
         :param register_sys_signals: Register SIG* events
         :type register_sys_signals: bool
         :param access_log: Enables writing access logs (slows server)
@@ -1085,13 +1059,6 @@ class Sanic:
         if protocol is None:
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
-        if stop_event is not None:
-            if debug:
-                warnings.simplefilter("default")
-            warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
@@ -1149,7 +1116,6 @@ class Sanic:
         sock: Optional[socket] = None,
         protocol: Type[Protocol] = None,
         backlog: int = 100,
-        stop_event: Any = None,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         return_asyncio_server=False,
@@ -1182,9 +1148,6 @@ class Sanic:
         :param backlog: a number of unaccepted connections that the system
                         will allow before refusing new connections
         :type backlog: int
-        :param stop_event: event to be triggered
-                           before stopping the app - deprecated
-        :type stop_event: None
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool
         :param return_asyncio_server: flag that defines whether there's a need
@@ -1203,13 +1166,6 @@ class Sanic:
         if protocol is None:
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
-        if stop_event is not None:
-            if debug:
-                warnings.simplefilter("default")
-            warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
@@ -1292,7 +1248,6 @@ class Sanic:
         loop=None,
         protocol=HttpProtocol,
         backlog=100,
-        stop_event=None,
         register_sys_signals=True,
         run_async=False,
         auto_reload=False,
@@ -1307,13 +1262,6 @@ class Sanic:
             context = create_default_context(purpose=Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
             ssl = context
-        if stop_event is not None:
-            if debug:
-                warnings.simplefilter("default")
-            warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
-            )
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
                 "PROXIES_COUNT cannot be negative. "

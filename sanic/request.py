@@ -136,15 +136,18 @@ class Request:
         return f"<{class_name}: {self.method} {self.path}>"
 
     def body_init(self):
-        """.. deprecated:: 20.3"""
+        """.. deprecated:: 20.3
+        To be removed in 21.3"""
         self.body = []
 
     def body_push(self, data):
-        """.. deprecated:: 20.3"""
+        """.. deprecated:: 20.3
+        To be removed in 21.3"""
         self.body.append(data)
 
     def body_finish(self):
-        """.. deprecated:: 20.3"""
+        """.. deprecated:: 20.3
+        To be removed in 21.3"""
         self.body = b"".join(self.body)
 
     async def receive_body(self):

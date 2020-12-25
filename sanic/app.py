@@ -2,7 +2,6 @@ import logging
 import logging.config
 import os
 import re
-import warnings
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque

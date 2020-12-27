@@ -11,7 +11,16 @@ from sanic.views import CompositionView
 
 
 Route = namedtuple(
-    "Route", ["handler", "methods", "pattern", "parameters", "name", "uri"]
+    "Route",
+    [
+        "handler",
+        "methods",
+        "pattern",
+        "parameters",
+        "name",
+        "uri",
+        "endpoint",
+    ],
 )
 Parameter = namedtuple("Parameter", ["name", "cast"])
 
@@ -79,7 +88,8 @@ class Router:
     routes_always_check = None
     parameter_pattern = re.compile(r"<(.+?)>")
 
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.routes_all = {}
         self.routes_names = {}
         self.routes_static_files = {}
@@ -299,11 +309,15 @@ class Router:
 
             handler_name = f"{bp_name}.{name or handler.__name__}"
         else:
-            handler_name = name or getattr(handler, "__name__", None)
+            handler_name = name or getattr(
+                handler, "__name__", handler.__class__.__name__
+            )
 
         if route:
             route = merge_route(route, methods, handler)
         else:
+            endpoint = self.app._build_endpoint_name(handler_name)
+
             route = Route(
                 handler=handler,
                 methods=methods,
@@ -311,6 +325,7 @@ class Router:
                 parameters=parameters,
                 name=handler_name,
                 uri=uri,
+                endpoint=endpoint,
             )
 
         self.routes_all[uri] = route
@@ -449,7 +464,8 @@ class Router:
         route_handler = route.handler
         if hasattr(route_handler, "handlers"):
             route_handler = route_handler.handlers[method]
-        return route_handler, [], kwargs, route.uri, route.name
+
+        return route_handler, [], kwargs, route.uri, route.name, route.endpoint
 
     def is_stream_handler(self, request):
         """Handler for request is stream or not.

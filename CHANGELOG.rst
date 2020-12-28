@@ -5,6 +5,10 @@ Features
 ********
 
   *
+    `#1945 <https://github.com/huge-success/sanic/pull/1945>`_
+    Static route more verbose if file not found
+
+  *
     `#1954 <https://github.com/huge-success/sanic/pull/1954>`_
     Fix static routes registration on a blueprint
 

@@ -11,6 +11,7 @@ from sanic.router import RouteExists, Router
 
 
 random.seed("Pack my box with five dozen liquor jugs.")
+Sanic.test_mode = True
 
 if sys.platform in ["win32", "cygwin"]:
     collect_ignore = ["test_worker.py"]

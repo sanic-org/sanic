@@ -42,7 +42,8 @@ async def _static_request_handler(
     file_path = path.abspath(unquote(file_path))
     if not file_path.startswith(path.abspath(unquote(root_path))):
         error_logger.exception(
-            f"File not found: path={file_or_directory}, relative_url={file_uri}"
+            f"File not found: path={file_or_directory}, "
+            f"relative_url={file_uri}"
         )
         raise FileNotFound(
             "File not found", path=file_or_directory, relative_url=file_uri
@@ -99,7 +100,8 @@ async def _static_request_handler(
         raise
     except Exception:
         error_logger.exception(
-            f"File not found: path={file_or_directory}, relative_url={file_uri}"
+            f"File not found: path={file_or_directory}, "
+            f"relative_url={file_uri}"
         )
         raise FileNotFound(
             "File not found", path=file_or_directory, relative_url=file_uri

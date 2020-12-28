@@ -295,3 +295,14 @@ def test_app_registry_name_reuse():
 def test_app_registry_retrieval():
     instance = Sanic("test")
     assert Sanic.get_app("test") is instance
+
+
+def test_get_app_does_not_exist():
+    with pytest.raises(SanicException):
+        Sanic.get_app("does-not-exist")
+
+
+def test_get_app_does_not_exist_force_create():
+    assert isinstance(
+        Sanic.get_app("does-not-exist", force_create=True), Sanic
+    )

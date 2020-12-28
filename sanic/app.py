@@ -1424,9 +1424,11 @@ class Sanic:
         cls._app_registry[name] = app
 
     @classmethod
-    def get_app(cls, name: str) -> "Sanic":
+    def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
         """Retrieve an instantiated Sanic instance"""
         try:
             return cls._app_registry[name]
         except KeyError:
+            if force_create:
+                return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')

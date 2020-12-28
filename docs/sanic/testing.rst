@@ -58,10 +58,6 @@ More information about
 the available arguments to `httpx` can be found
 [in the documentation for `httpx <https://www.encode.io/httpx/>`_.
 
-Additionally, Sanic has an asynchronous testing client. The difference is that the async client will not stand up an
-instance of your application, but will instead reach inside it using ASGI. All listeners and middleware are still
-executed.
-
 .. code-block:: python
     @pytest.mark.asyncio
     async def test_index_returns_200():

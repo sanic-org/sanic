@@ -78,3 +78,8 @@ When you instantiate a Sanic instance, that can be retrieved at a later time fro
 
     app = Sanic.get_app("my_awesome_server")
 
+If you call ``Sanic.get_app("non-existing")`` on an app that does not exist, it will raise ``SanicException`` by default. You can, instead, force the method to return a new instance of ``Sanic`` with that name:
+
+.. code-block:: python
+
+    app = Sanic.get_app("my_awesome_server", force_create=True)

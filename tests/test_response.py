@@ -41,7 +41,8 @@ def test_response_body_not_a_string(app):
         return text(random_num)
 
     request, response = app.test_client.get("/hello")
-    assert response.text == str(random_num)
+    assert response.status == 500
+    assert b"Internal Server Error" in response.body
 
 
 async def sample_streaming_fn(response):
@@ -233,8 +234,24 @@ def test_chunked_streaming_returns_correct_content(streaming_app):
     assert response.text == "foo,bar"
 
 
+@pytest.mark.asyncio
+async def test_chunked_streaming_returns_correct_content_asgi(streaming_app):
+    request, response = await streaming_app.asgi_client.get("/")
+    assert response.text == "foo,bar"
+
+
 def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
     request, response = non_chunked_streaming_app.test_client.get("/")
+    assert "Transfer-Encoding" not in response.headers
+    assert response.headers["Content-Type"] == "text/csv"
+    assert response.headers["Content-Length"] == "7"
+
+
+@pytest.mark.asyncio
+async def test_non_chunked_streaming_adds_correct_headers_asgi(
+    non_chunked_streaming_app,
+):
+    request, response = await non_chunked_streaming_app.asgi_client.get("/")
     assert "Transfer-Encoding" not in response.headers
     assert response.headers["Content-Type"] == "text/csv"
     assert response.headers["Content-Length"] == "7"
@@ -497,17 +514,3 @@ def test_empty_response(app):
     request, response = app.test_client.get("/test")
     assert response.content_type is None
     assert response.body == b""
-
-
-def test_response_body_bytes_deprecated(app):
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        HTTPResponse(body_bytes=b"bytes")
-
-        assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
-        assert (
-            "Parameter `body_bytes` is deprecated, use `body` instead"
-            in str(w[0].message)
-        )

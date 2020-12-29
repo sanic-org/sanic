@@ -725,6 +725,37 @@ def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
     assert response.status == 200
 
 
+@pytest.mark.parametrize("file_name", ["test.file"])
+def test_static_blueprintp_mw(app: Sanic, static_file_directory, file_name):
+    current_file = inspect.getfile(inspect.currentframe())
+    with open(current_file, "rb") as file:
+        file.read()
+
+    triggered = False
+
+    bp = Blueprint(name="test_mw", url_prefix="")
+
+    @bp.middleware("request")
+    def bp_mw1(request):
+        nonlocal triggered
+        triggered = True
+
+    bp.static(
+        "/test.file",
+        get_file_path(static_file_directory, file_name),
+        strict_slashes=True,
+        name="static",
+    )
+
+    app.blueprint(bp)
+
+    uri = app.url_for("test_mw.static")
+    assert uri == "/test.file"
+
+    _, response = app.test_client.get("/test.file")
+    assert triggered is True
+
+
 def test_route_handler_add(app: Sanic):
     view = CompositionView()
 
@@ -780,21 +811,6 @@ def test_duplicate_blueprint(app):
     assert str(excinfo.value) == (
         f'A blueprint with the name "{bp_name}" is already registered.  '
         "Blueprint names must be unique."
-    )
-
-
-@pytest.mark.parametrize("debug", [True, False, None])
-def test_register_blueprint(app, debug):
-    bp = Blueprint("bp")
-
-    app.debug = debug
-    with pytest.warns(DeprecationWarning) as record:
-        app.register_blueprint(bp)
-
-    assert record[0].message.args[0] == (
-        "Use of register_blueprint will be deprecated in "
-        "version 1.0.  Please use the blueprint method"
-        " instead"
     )
 
 

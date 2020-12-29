@@ -11,6 +11,7 @@ from sanic.router import RouteExists, Router
 
 
 random.seed("Pack my box with five dozen liquor jugs.")
+Sanic.test_mode = True
 
 if sys.platform in ["win32", "cygwin"]:
     collect_ignore = ["test_worker.py"]
@@ -95,10 +96,10 @@ class RouteStringGenerator:
 
 
 @pytest.fixture(scope="function")
-def sanic_router():
+def sanic_router(app):
     # noinspection PyProtectedMember
     def _setup(route_details: tuple) -> (Router, tuple):
-        router = Router()
+        router = Router(app)
         added_router = []
         for method, route in route_details:
             try:

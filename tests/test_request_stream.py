@@ -1,4 +1,5 @@
 import asyncio
+
 from contextlib import closing
 from socket import socket
 
@@ -6,11 +7,11 @@ import pytest
 
 from sanic import Sanic
 from sanic.blueprints import Blueprint
-from sanic.exceptions import HeaderExpectationFailed
-from sanic.response import json, stream, text
+from sanic.response import json, text
 from sanic.server import HttpProtocol
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
+
 
 data = "abc" * 1_000_000
 
@@ -43,7 +44,10 @@ def test_request_stream_method_view(app):
 
 @pytest.mark.parametrize(
     "headers, expect_raise_exception",
-    [({"EXPECT": "100-continue"}, False), ({"EXPECT": "100-continue-extra"}, True),],
+    [
+        ({"EXPECT": "100-continue"}, False),
+        ({"EXPECT": "100-continue-extra"}, True),
+    ],
 )
 def test_request_stream_100_continue(app, headers, expect_raise_exception):
     class SimpleView(HTTPMethodView):
@@ -68,7 +72,9 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
     else:
         with pytest.raises(ValueError) as e:
             app.test_client.post(
-                "/method_view", data=data, headers={"EXPECT": "100-continue-extra"},
+                "/method_view",
+                data=data,
+                headers={"EXPECT": "100-continue-extra"},
             )
             assert "Unknown Expect: 100-continue-extra" in str(e)
 
@@ -384,7 +390,9 @@ def test_request_stream_blueprint(app):
             result += body.decode("utf-8")
         return text(result)
 
-    bp.add_route(post_add_route, "/post/add_route", methods=["POST"], stream=True)
+    bp.add_route(
+        post_add_route, "/post/add_route", methods=["POST"], stream=True
+    )
     app.blueprint(bp)
 
     request, response = app.test_client.get("/get")
@@ -562,14 +570,14 @@ def test_request_stream(app):
 
 def test_streaming_new_api(app):
     @app.post("/non-stream")
-    async def handler(request):
+    async def handler1(request):
         assert request.body == b"x"
         await request.receive_body()  # This should do nothing
         assert request.body == b"x"
         return text("OK")
 
     @app.post("/1", stream=True)
-    async def handler(request):
+    async def handler2(request):
         assert request.stream
         assert not request.body
         await request.receive_body()

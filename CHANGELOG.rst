@@ -1,3 +1,115 @@
+Version 20.12.0
+===============
+
+Features
+********
+
+  *
+    `#1945 <https://github.com/huge-success/sanic/pull/1945>`_
+    Static route more verbose if file not found
+
+  *
+    `#1954 <https://github.com/huge-success/sanic/pull/1954>`_
+    Fix static routes registration on a blueprint
+
+  *
+    `#1961 <https://github.com/huge-success/sanic/pull/1961>`_
+    Add Python 3.9 support
+
+  *
+    `#1962 <https://github.com/huge-success/sanic/pull/1962>`_
+    Sanic CLI upgrade
+
+  *
+    `#1967 <https://github.com/huge-success/sanic/pull/1967>`_
+    Update aiofile version requirements
+
+  *
+    `#1969 <https://github.com/huge-success/sanic/pull/1969>`_
+    Update multidict version requirements
+
+  *
+    `#1970 <https://github.com/huge-success/sanic/pull/1970>`_
+    Add py.typed file
+
+  *
+    `#1972 <https://github.com/huge-success/sanic/pull/1972>`_
+    Speed optimization in request handler
+
+  *
+    `#1979 <https://github.com/huge-success/sanic/pull/1979>`_
+    Add app registry and Sanic class level app retrieval
+
+Bugfixes
+********
+
+  *
+    `#1965 <https://github.com/huge-success/sanic/pull/1965>`_
+    Fix Chunked Transport-Encoding in ASGI streaming response
+
+Deprecations and Removals
+*************************
+
+  *
+    `#1981 <https://github.com/huge-success/sanic/pull/1981>`_
+    Cleanup and remove deprecated code
+
+Developer infrastructure
+************************
+
+  *
+    `#1956 <https://github.com/huge-success/sanic/pull/1956>`_
+    Fix load module test
+
+  *
+    `#1973 <https://github.com/huge-success/sanic/pull/1973>`_
+    Transition Travis from .org to .com
+
+  *
+    `#1986 <https://github.com/huge-success/sanic/pull/1986>`_
+    Update tox requirements
+
+Improved Documentation
+**********************
+
+  *
+    `#1951 <https://github.com/huge-success/sanic/pull/1951>`_
+    Documentation improvements
+
+  *
+    `#1983 <https://github.com/huge-success/sanic/pull/1983>`_
+    Remove duplicate contents in testing.rst
+
+  *
+    `#1984 <https://github.com/huge-success/sanic/pull/1984>`_
+    Fix typo in routing.rst
+
+
+Version 20.9.1
+===============
+
+Bugfixes
+********
+
+  *
+    `#1954 <https://github.com/huge-success/sanic/pull/1954>`_
+    Fix static route registration on blueprints
+  *
+    `#1957 <https://github.com/huge-success/sanic/pull/1957>`_
+    Removes duplicate headers in ASGI streaming body
+
+
+Version 19.12.3
+===============
+
+Bugfixes
+********
+
+  *
+    `#1959 <https://github.com/huge-success/sanic/pull/1959>`_
+    Removes duplicate headers in ASGI streaming body
+
+
 Version 20.9.0
 ===============
 
@@ -12,27 +124,27 @@ Features
   *
     `#1894 <https://github.com/huge-success/sanic/pull/1894>`_
     Automatically set ``test_mode`` flag on app instance
-  
+
   *
-    `#1903 <https://github.com/huge-success/sanic/pull/1903>`_ 
+    `#1903 <https://github.com/huge-success/sanic/pull/1903>`_
     Add new unified method for updating app values
-  
+
   *
     `#1906 <https://github.com/huge-success/sanic/pull/1906>`_,
     `#1909 <https://github.com/huge-success/sanic/pull/1909>`_
     Adds WEBSOCKET_PING_TIMEOUT and WEBSOCKET_PING_INTERVAL configuration values
-  
+
   *
     `#1935 <https://github.com/huge-success/sanic/pull/1935>`_
     httpx version dependency updated, it is slated for removal as a dependency in v20.12
 
   *
-    `#1937 <https://github.com/huge-success/sanic/pull/1937>`_ 
+    `#1937 <https://github.com/huge-success/sanic/pull/1937>`_
     Added auto, text, and json fallback error handlers (in v21.3, the default will change form html to auto)
 
 Bugfixes
 ********
-  
+
   *
     `#1897 <https://github.com/huge-success/sanic/pull/1897>`_
     Resolves exception from unread bytes in stream
@@ -73,7 +185,7 @@ Version 20.6.3
 
 Bugfixes
 ********
-  
+
   *
     `#1884 <https://github.com/huge-success/sanic/pull/1884>`_
     Revert change to multiprocessing mode
@@ -84,7 +196,7 @@ Version 20.6.2
 
 Features
 ********
-  
+
   *
     `#1641 <https://github.com/huge-success/sanic/pull/1641>`_
     Socket binding implemented properly for IPv6 and UNIX sockets
@@ -95,7 +207,7 @@ Version 20.6.1
 
 Features
 ********
-  
+
   *
     `#1760 <https://github.com/huge-success/sanic/pull/1760>`_
     Add version parameter to websocket routes
@@ -106,7 +218,7 @@ Features
 
   *
     `#1880 <https://github.com/huge-success/sanic/pull/1880>`_
-    Add handler names for websockets for url_for usage 
+    Add handler names for websockets for url_for usage
 
 Bugfixes
 ********
@@ -126,7 +238,7 @@ Bugfixes
   *
     `#1848 <https://github.com/huge-success/sanic/pull/1848>`_
     Reverse named_response_middlware execution order, to match normal response middleware execution order
-  
+
   *
     `#1853 <https://github.com/huge-success/sanic/pull/1853>`_
     Fix pickle error when attempting to pickle an application which contains websocket routes
@@ -178,28 +290,28 @@ Version 20.3.0
 Features
 ********
 
-  * 
+  *
     `#1762 <https://github.com/huge-success/sanic/pull/1762>`_
     Add ``srv.start_serving()`` and ``srv.serve_forever()`` to ``AsyncioServer``
 
-  * 
+  *
     `#1767 <https://github.com/huge-success/sanic/pull/1767>`_
     Make Sanic usable on ``hypercorn -k trio myweb.app``
 
-  * 
+  *
     `#1768 <https://github.com/huge-success/sanic/pull/1768>`_
     No tracebacks on normal errors and prettier error pages
 
-  * 
+  *
     `#1769 <https://github.com/huge-success/sanic/pull/1769>`_
     Code cleanup in file responses
 
-  * 
+  *
     `#1793 <https://github.com/huge-success/sanic/pull/1793>`_ and
-    `#1819 <https://github.com/huge-success/sanic/pull/1819>`_ 
+    `#1819 <https://github.com/huge-success/sanic/pull/1819>`_
     Upgrade ``str.format()`` to f-strings
 
-  * 
+  *
     `#1798 <https://github.com/huge-success/sanic/pull/1798>`_
     Allow multiple workers on MacOS with Python 3.8
 
@@ -210,19 +322,19 @@ Features
 Bugfixes
 ********
 
-  * 
+  *
     `#1748 <https://github.com/huge-success/sanic/pull/1748>`_
     Remove loop argument in ``asyncio.Event`` in Python 3.8
 
-  * 
+  *
     `#1764 <https://github.com/huge-success/sanic/pull/1764>`_
     Allow route decorators to stack up again
 
-  * 
+  *
     `#1789 <https://github.com/huge-success/sanic/pull/1789>`_
     Fix tests using hosts yielding incorrect ``url_for``
 
-  * 
+  *
     `#1808 <https://github.com/huge-success/sanic/pull/1808>`_
      Fix Ctrl+C and tests on Windows
 
@@ -236,7 +348,7 @@ Deprecations and Removals
   *
     `#1801 <https://github.com/huge-success/sanic/pull/1801>`_
     Complete deprecation from `#1666 <https://github.com/huge-success/sanic/pull/1666>`_ of dictionary context on ``request`` objects.
-    
+
   *
     `#1807 <https://github.com/huge-success/sanic/pull/1807>`_
     Remove server config args that can be read directly from app
@@ -259,22 +371,22 @@ Dependencies
 Developer infrastructure
 ************************
 
-  * 
+  *
     `#1833 <https://github.com/huge-success/sanic/pull/1833>`_
     Resolve broken documentation builds
 
 Improved Documentation
 **********************
 
-  * 
+  *
     `#1755 <https://github.com/huge-success/sanic/pull/1755>`_
     Usage of ``response.empty()``
 
-  * 
+  *
     `#1778 <https://github.com/huge-success/sanic/pull/1778>`_
     Update README
 
-  * 
+  *
     `#1783 <https://github.com/huge-success/sanic/pull/1783>`_
     Fix typo
 
@@ -301,7 +413,7 @@ Improved Documentation
   *
     `#1834 <https://github.com/huge-success/sanic/pull/1834>`_
     Order of listeners
-    
+
 
 Version 19.12.0
 ===============
@@ -367,16 +479,16 @@ Version 19.6.2
 Features
 ********
 
-  * 
+  *
     `#1562 <https://github.com/huge-success/sanic/pull/1562>`_
     Remove ``aiohttp`` dependency and create new ``SanicTestClient`` based upon
     `requests-async <https://github.com/encode/requests-async>`_
 
-  * 
+  *
     `#1475 <https://github.com/huge-success/sanic/pull/1475>`_
     Added ASGI support (Beta)
 
-  * 
+  *
     `#1436 <https://github.com/huge-success/sanic/pull/1436>`_
     Add Configure support from object string
 
@@ -384,19 +496,19 @@ Features
 Bugfixes
 ********
 
-  * 
+  *
     `#1587 <https://github.com/huge-success/sanic/pull/1587>`_
     Add missing handle for Expect header.
 
-  * 
+  *
     `#1560 <https://github.com/huge-success/sanic/pull/1560>`_
     Allow to disable Transfer-Encoding: chunked.
 
-  * 
+  *
     `#1558 <https://github.com/huge-success/sanic/pull/1558>`_
     Fix graceful shutdown.
 
-  * 
+  *
     `#1594 <https://github.com/huge-success/sanic/pull/1594>`_
     Strict Slashes behavior fix
 
@@ -407,11 +519,11 @@ Deprecations and Removals
     `#1544 <https://github.com/huge-success/sanic/pull/1544>`_
     Drop dependency on distutil
 
-  * 
+  *
     `#1562 <https://github.com/huge-success/sanic/pull/1562>`_
     Drop support for Python 3.5
 
-  * 
+  *
     `#1568 <https://github.com/huge-success/sanic/pull/1568>`_
     Deprecate route removal.
 
@@ -428,39 +540,39 @@ Version 19.3
 Features
 ********
 
-  * 
+  *
     `#1497 <https://github.com/huge-success/sanic/pull/1497>`_
     Add support for zero-length and RFC 5987 encoded filename for
     multipart/form-data requests.
 
-  * 
+  *
     `#1484 <https://github.com/huge-success/sanic/pull/1484>`_
     The type of ``expires`` attribute of ``sanic.cookies.Cookie`` is now
     enforced to be of type ``datetime``.
 
-  * 
+  *
     `#1482 <https://github.com/huge-success/sanic/pull/1482>`_
     Add support for the ``stream`` parameter of ``sanic.Sanic.add_route()``
     available to ``sanic.Blueprint.add_route()``.
 
-  * 
+  *
     `#1481 <https://github.com/huge-success/sanic/pull/1481>`_
     Accept negative values for route parameters with type ``int`` or ``number``.
 
-  * 
+  *
     `#1476 <https://github.com/huge-success/sanic/pull/1476>`_
     Deprecated the use of ``sanic.request.Request.raw_args`` - it has a
     fundamental flaw in which is drops repeated query string parameters.
     Added ``sanic.request.Request.query_args`` as a replacement for the
     original use-case.
 
-  * 
+  *
     `#1472 <https://github.com/huge-success/sanic/pull/1472>`_
     Remove an unwanted ``None`` check in Request class ``repr`` implementation.
     This changes the default ``repr`` of a Request from ``<Request>`` to
     ``<Request: None />``
 
-  * 
+  *
     `#1470 <https://github.com/huge-success/sanic/pull/1470>`_
     Added 2 new parameters to ``sanic.app.Sanic.create_server``\ :
 
@@ -471,21 +583,21 @@ Features
 
     This is a breaking change.
 
-  * 
+  *
     `#1499 <https://github.com/huge-success/sanic/pull/1499>`_
     Added a set of test cases that test and benchmark route resolution.
 
-  * 
+  *
     `#1457 <https://github.com/huge-success/sanic/pull/1457>`_
     The type of the ``"max-age"`` value in a ``sanic.cookies.Cookie`` is now
     enforced to be an integer. Non-integer values are replaced with ``0``.
 
-  * 
+  *
     `#1445 <https://github.com/huge-success/sanic/pull/1445>`_
     Added the ``endpoint`` attribute to an incoming ``request``\ , containing the
     name of the handler function.
 
-  * 
+  *
     `#1423 <https://github.com/huge-success/sanic/pull/1423>`_
     Improved request streaming. ``request.stream`` is now a bounded-size buffer
     instead of an unbounded queue. Callers must now call
@@ -498,7 +610,7 @@ Bugfixes
 ********
 
 
-  * 
+  *
     `#1502 <https://github.com/huge-success/sanic/pull/1502>`_
     Sanic was prefetching ``time.time()`` and updating it once per second to
     avoid excessive ``time.time()`` calls. The implementation was observed to
@@ -506,25 +618,25 @@ Bugfixes
     to negligible, so this has been removed. Fixes
     `#1500 <https://github.com/huge-success/sanic/pull/1500>`_
 
-  * 
+  *
     `#1501 <https://github.com/huge-success/sanic/pull/1501>`_
     Fix a bug in the auto-reloader when the process was launched as a module
     i.e. ``python -m init0.mod1`` where the sanic server is started
     in ``init0/mod1.py`` with ``debug`` enabled and imports another module in
     ``init0``.
 
-  * 
+  *
     `#1376 <https://github.com/huge-success/sanic/pull/1376>`_
     Allow sanic test client to bind to a random port by specifying
     ``port=None`` when constructing a ``SanicTestClient``
 
-  * 
+  *
     `#1399 <https://github.com/huge-success/sanic/pull/1399>`_
     Added the ability to specify middleware on a blueprint group, so that all
     routes produced from the blueprints in the group have the middleware
     applied.
 
-  * 
+  *
     `#1442 <https://github.com/huge-success/sanic/pull/1442>`_
     Allow the the use the ``SANIC_ACCESS_LOG`` environment variable to
     enable/disable the access log when not explicitly passed to ``app.run()``.
@@ -566,7 +678,7 @@ Version 18.12
 18.12.0
 *******
 
-* 
+*
   Changes:
 
 
@@ -584,7 +696,7 @@ Version 18.12
   * Deprecate Handler.log
   * Pinned httptools requirement to version 0.0.10+
 
-* 
+*
   Fixes:
 
 

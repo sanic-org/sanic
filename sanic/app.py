@@ -2,12 +2,11 @@ import logging
 import logging.config
 import os
 import re
-import warnings
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
 from functools import partial
-from inspect import getmodulename, isawaitable, signature, stack
+from inspect import isawaitable, signature
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -39,42 +38,26 @@ from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic:
+    _app_registry: Dict[str, "Sanic"] = {}
+    test_mode = False
+
     def __init__(
         self,
-        name=None,
-        router=None,
-        error_handler=None,
-        load_env=True,
-        request_class=None,
-        strict_slashes=False,
-        log_config=None,
-        configure_logging=True,
-    ):
+        name: str = None,
+        router: Router = None,
+        error_handler: ErrorHandler = None,
+        load_env: bool = True,
+        request_class: Request = None,
+        strict_slashes: bool = False,
+        log_config: Optional[Dict[str, Any]] = None,
+        configure_logging: bool = True,
+    ) -> None:
 
         # Get name from previous stack frame
         if name is None:
-            warnings.warn(
-                "Sanic(name=None) is deprecated and None value support "
-                "for `name` will be removed in the next release. "
+            raise SanicException(
+                "Sanic instance cannot be unnamed. "
                 "Please use Sanic(name='your_application_name') instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            frame_records = stack()[1]
-            name = getmodulename(frame_records[1])
-        # Check for unsupported function on custom request objects
-        if (
-            request_class
-            and any(
-                hasattr(request_class, m)
-                for m in ("body_init", "body_push", "body_finish")
-            )
-            and request_class.receive_body is Request.receive_body
-        ):
-            raise NotImplementedError(
-                "Request methods body_init, body_push and body_finish "
-                f"are no longer supported. {request_class!r} should "
-                "implement receive_body. It is okay to implement both APIs.",
             )
         # logging
         if configure_logging:
@@ -82,7 +65,7 @@ class Sanic:
 
         self.name = name
         self.asgi = False
-        self.router = router or Router()
+        self.router = router or Router(self)
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
@@ -103,7 +86,8 @@ class Sanic:
         self.named_response_middleware = {}
         # Register alternative method names
         self.go_fast = self.run
-        self.test_mode = False
+
+        self.__class__.register_app(self)
 
     @property
     def loop(self):
@@ -686,9 +670,10 @@ class Sanic:
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
         :param content_type: user defined content type for header
-        :return: None
+        :return: routes registered on the router
+        :rtype: List[sanic.router.Route]
         """
-        static_register(
+        return static_register(
             self,
             uri,
             file_or_directory,
@@ -722,28 +707,6 @@ class Sanic:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)
         blueprint.register(self, options)
-
-    def register_blueprint(self, *args, **kwargs):
-        """
-        Proxy method provided for invoking the :func:`blueprint` method
-
-        .. note::
-            To be deprecated in 1.0. Use :func:`blueprint` instead.
-
-        :param args: Blueprint object or (list, tuple) thereof
-        :param kwargs: option dictionary with blueprint defaults
-        :return: None
-        """
-
-        if self.debug:
-            warnings.simplefilter("default")
-        warnings.warn(
-            "Use of register_blueprint will be deprecated in "
-            "version 1.0.  Please use the blueprint method"
-            " instead",
-            DeprecationWarning,
-        )
-        return self.blueprint(*args, **kwargs)
 
     def url_for(self, view_name: str, **kwargs):
         r"""Build a URL based on a view name and the values provided.
@@ -942,7 +905,9 @@ class Sanic:
         name = None
         try:
             # Fetch handler from router
-            handler, args, kwargs, uri, name = self.router.get(request)
+            handler, args, kwargs, uri, name, endpoint = self.router.get(
+                request
+            )
             request.name = name
 
             if request.stream.request_body:
@@ -973,16 +938,8 @@ class Sanic:
                             "handler from the router"
                         )
                     )
-                else:
-                    if not getattr(handler, "__blueprintname__", False):
-                        request.endpoint = self._build_endpoint_name(
-                            handler.__name__
-                        )
-                    else:
-                        request.endpoint = self._build_endpoint_name(
-                            getattr(handler, "__blueprintname__", ""),
-                            handler.__name__,
-                        )
+
+                request.endpoint = endpoint
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)
@@ -993,6 +950,7 @@ class Sanic:
             else:
                 response = request.stream.response
             # Make sure that response is finished / run StreamingHTTP callback
+
             if isinstance(response, BaseHTTPResponse):
                 await response.send(end_stream=True)
             else:
@@ -1036,7 +994,6 @@ class Sanic:
         workers: int = 1,
         protocol: Optional[Type[Protocol]] = None,
         backlog: int = 100,
-        stop_event: Any = None,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
@@ -1066,9 +1023,6 @@ class Sanic:
         :param backlog: a number of unaccepted connections that the system
                         will allow before refusing new connections
         :type backlog: int
-        :param stop_event: event to be triggered
-                           before stopping the app - deprecated
-        :type stop_event: None
         :param register_sys_signals: Register SIG* events
         :type register_sys_signals: bool
         :param access_log: Enables writing access logs (slows server)
@@ -1095,13 +1049,6 @@ class Sanic:
         if protocol is None:
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
-        if stop_event is not None:
-            if debug:
-                warnings.simplefilter("default")
-            warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
@@ -1159,7 +1106,6 @@ class Sanic:
         sock: Optional[socket] = None,
         protocol: Type[Protocol] = None,
         backlog: int = 100,
-        stop_event: Any = None,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         return_asyncio_server=False,
@@ -1192,9 +1138,6 @@ class Sanic:
         :param backlog: a number of unaccepted connections that the system
                         will allow before refusing new connections
         :type backlog: int
-        :param stop_event: event to be triggered
-                           before stopping the app - deprecated
-        :type stop_event: None
         :param access_log: Enables writing access logs (slows server)
         :type access_log: bool
         :param return_asyncio_server: flag that defines whether there's a need
@@ -1213,13 +1156,6 @@ class Sanic:
         if protocol is None:
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
-        if stop_event is not None:
-            if debug:
-                warnings.simplefilter("default")
-            warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
             )
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
@@ -1304,7 +1240,6 @@ class Sanic:
         loop=None,
         protocol=HttpProtocol,
         backlog=100,
-        stop_event=None,
         register_sys_signals=True,
         run_async=False,
         auto_reload=False,
@@ -1319,13 +1254,6 @@ class Sanic:
             context = create_default_context(purpose=Purpose.CLIENT_AUTH)
             context.load_cert_chain(cert, keyfile=key)
             ssl = context
-        if stop_event is not None:
-            if debug:
-                warnings.simplefilter("default")
-            warnings.warn(
-                "stop_event will be removed from future versions.",
-                DeprecationWarning,
-            )
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
                 "PROXIES_COUNT cannot be negative. "
@@ -1460,12 +1388,41 @@ class Sanic:
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()
 
+    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
+
     # -------------------------------------------------------------------- #
     # Configuration
     # -------------------------------------------------------------------- #
+
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """Update app.config.
 
         Please refer to config.py::Config.update_config for documentation."""
 
         self.config.update_config(config)
+
+    # -------------------------------------------------------------------- #
+    # Class methods
+    # -------------------------------------------------------------------- #
+
+    @classmethod
+    def register_app(cls, app: "Sanic") -> None:
+        """Register a Sanic instance"""
+        if not isinstance(app, cls):
+            raise SanicException("Registered app must be an instance of Sanic")
+
+        name = app.name
+        if name in cls._app_registry and not cls.test_mode:
+            raise SanicException(f'Sanic app name "{name}" already in use.')
+
+        cls._app_registry[name] = app
+
+    @classmethod
+    def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
+        """Retrieve an instantiated Sanic instance"""
+        try:
+            return cls._app_registry[name]
+        except KeyError:
+            if force_create:
+                return cls(name)
+            raise SanicException(f'Sanic app name "{name}" not found.')

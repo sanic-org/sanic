@@ -1,4 +1,3 @@
-import warnings
 from functools import partial
 from mimetypes import guess_type
 from os import path
@@ -7,6 +6,7 @@ from urllib.parse import quote_plus
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
 from sanic.helpers import has_message_body, remove_entity_headers
+
 
 try:
     from ujson import dumps as json_dumps
@@ -19,7 +19,12 @@ except ImportError:
 
 
 class BaseHTTPResponse:
+    def __init__(self):
+        self.asgi = False
+
     def _encode_body(self, data):
+        if data is None:
+            return b""
         return data.encode() if hasattr(data, "encode") else data
 
     @property
@@ -47,8 +52,8 @@ class BaseHTTPResponse:
 
     async def send(self, data=None, end_stream=None):
         """Send any pending response headers and the given data as body.
-         :param data: str or bytes to be written
-         :end_stream: whether to close the stream after this block
+        :param data: str or bytes to be written
+        :end_stream: whether to close the stream after this block
         """
         if data is None and end_stream is None:
             end_stream = True
@@ -79,6 +84,8 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         content_type="text/plain; charset=utf-8",
         chunked="deprecated",
     ):
+        super().__init__()
+
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
@@ -104,19 +111,19 @@ class HTTPResponse(BaseHTTPResponse):
     __slots__ = ("body", "status", "content_type", "headers", "_cookies")
 
     def __init__(
-        self, body=None, status=200, headers=None, content_type=None, body_bytes=b"",
+        self,
+        body=None,
+        status=200,
+        headers=None,
+        content_type=None,
     ):
+        super().__init__()
+
         self.content_type = content_type
-        self.body = body_bytes if body is None else self._encode_body(body)
+        self.body = self._encode_body(body)
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
-
-        if body_bytes:
-            warnings.warn(
-                "Parameter `body_bytes` is deprecated, use `body` instead",
-                DeprecationWarning,
-            )
 
 
 def empty(status=204, headers=None):
@@ -153,7 +160,9 @@ def json(
     )
 
 
-def text(body, status=200, headers=None, content_type="text/plain; charset=utf-8"):
+def text(
+    body, status=200, headers=None, content_type="text/plain; charset=utf-8"
+):
     """
     Returns response object with body in text format.
 
@@ -163,10 +172,8 @@ def text(body, status=200, headers=None, content_type="text/plain; charset=utf-8
     :param content_type: the content type (string) of the response
     """
     if not isinstance(body, str):
-        warnings.warn(
-            "Types other than str will be deprecated in future versions for"
-            f" response.text, got type {type(body).__name__})",
-            DeprecationWarning,
+        raise TypeError(
+            f"Bad body type. Expected str, got {type(body).__name__})"
         )
     # Type conversions are deprecated and quite b0rked but still supported for
     # text() until applications get fixed. This try-except should be removed.
@@ -177,10 +184,14 @@ def text(body, status=200, headers=None, content_type="text/plain; charset=utf-8
             pass
     except TypeError:
         body = f"{body}"  # no-op if body is already str
-    return HTTPResponse(body, status=status, headers=headers, content_type=content_type)
+    return HTTPResponse(
+        body, status=status, headers=headers, content_type=content_type
+    )
 
 
-def raw(body, status=200, headers=None, content_type="application/octet-stream"):
+def raw(
+    body, status=200, headers=None, content_type="application/octet-stream"
+):
     """
     Returns response object without encoding the body.
 
@@ -190,7 +201,10 @@ def raw(body, status=200, headers=None, content_type="application/octet-stream")
     :param content_type: the content type (string) of the response.
     """
     return HTTPResponse(
-        body=body, status=status, headers=headers, content_type=content_type,
+        body=body,
+        status=status,
+        headers=headers,
+        content_type=content_type,
     )
 
 
@@ -207,12 +221,20 @@ def html(body, status=200, headers=None):
     elif hasattr(body, "_repr_html_"):
         body = body._repr_html_()
     return HTTPResponse(
-        body, status=status, headers=headers, content_type="text/html; charset=utf-8",
+        body,
+        status=status,
+        headers=headers,
+        content_type="text/html; charset=utf-8",
     )
 
 
 async def file(
-    location, status=200, mime_type=None, headers=None, filename=None, _range=None,
+    location,
+    status=200,
+    mime_type=None,
+    headers=None,
+    filename=None,
+    _range=None,
 ):
     """Return a response object with file data.
 
@@ -224,7 +246,9 @@ async def file(
     """
     headers = headers or {}
     if filename:
-        headers.setdefault("Content-Disposition", f'attachment; filename="{filename}"')
+        headers.setdefault(
+            "Content-Disposition", f'attachment; filename="{filename}"'
+        )
     filename = filename or path.split(location)[-1]
 
     async with await open_async(location, mode="rb") as f:
@@ -240,7 +264,10 @@ async def file(
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     return HTTPResponse(
-        body=out_stream, status=status, headers=headers, content_type=mime_type,
+        body=out_stream,
+        status=status,
+        headers=headers,
+        content_type=mime_type,
     )
 
 
@@ -266,7 +293,9 @@ async def file_stream(
     """
     headers = headers or {}
     if filename:
-        headers.setdefault("Content-Disposition", f'attachment; filename="{filename}"')
+        headers.setdefault(
+            "Content-Disposition", f'attachment; filename="{filename}"'
+        )
     filename = filename or path.split(location)[-1]
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     if _range:
@@ -330,11 +359,16 @@ def stream(
     :param chunked: Enable or disable chunked transfer-encoding
     """
     return StreamingHTTPResponse(
-        streaming_fn, headers=headers, content_type=content_type, status=status,
+        streaming_fn,
+        headers=headers,
+        content_type=content_type,
+        status=status,
     )
 
 
-def redirect(to, headers=None, status=302, content_type="text/html; charset=utf-8"):
+def redirect(
+    to, headers=None, status=302, content_type="text/html; charset=utf-8"
+):
     """Abort execution and cause a 302 redirect (by default).
 
     :param to: path or fully qualified URL to redirect to
@@ -351,5 +385,6 @@ def redirect(to, headers=None, status=302, content_type="text/html; charset=utf-
     # According to RFC 7231, a relative URI is now permitted.
     headers["Location"] = safe_to
 
-    return HTTPResponse(status=status, headers=headers, content_type=content_type)
-
+    return HTTPResponse(
+        status=status, headers=headers, content_type=content_type
+    )

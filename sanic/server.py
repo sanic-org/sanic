@@ -5,6 +5,7 @@ import secrets
 import socket
 import stat
 import sys
+
 from asyncio import CancelledError
 from functools import partial
 from inspect import isawaitable
@@ -12,26 +13,15 @@ from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import monotonic as current_time
-from time import time
 from typing import Dict, Type, Union
 
-from httptools import HttpRequestParser  # type: ignore
-from httptools.parser.errors import HttpParserError  # type: ignore
-
-from sanic.compat import Header, ctrlc_workaround_for_windows
+from sanic.compat import ctrlc_workaround_for_windows
 from sanic.config import Config
-from sanic.exceptions import (
-    HeaderExpectationFailed,
-    InvalidUsage,
-    PayloadTooLarge,
-    RequestTimeout,
-    ServerError,
-    ServiceUnavailable,
-)
+from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
-from sanic.log import access_logger, logger
+from sanic.log import logger
 from sanic.request import Request
-from sanic.response import HTTPResponse
+
 
 try:
     import uvloop  # type: ignore
@@ -149,7 +139,9 @@ class HttpProtocol(asyncio.Protocol):
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
-        self.request_buffer_queue_size = self.app.config.REQUEST_BUFFER_QUEUE_SIZE
+        self.request_buffer_queue_size = (
+            self.app.config.REQUEST_BUFFER_QUEUE_SIZE
+        )
         self.response_timeout = self.app.config.RESPONSE_TIMEOUT
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE
@@ -332,7 +324,13 @@ class AsyncioServer:
     )
 
     def __init__(
-        self, loop, serve_coro, connections, after_start, before_stop, after_stop,
+        self,
+        loop,
+        serve_coro,
+        connections,
+        after_start,
+        before_stop,
+        after_stop,
     ):
         # Note, Sanic already called "before_server_start" events
         # before this helper was even created. So we don't need it here.
@@ -471,7 +469,9 @@ def serve(
         unix=unix,
         **protocol_kwargs,
     )
-    asyncio_server_kwargs = asyncio_server_kwargs if asyncio_server_kwargs else {}
+    asyncio_server_kwargs = (
+        asyncio_server_kwargs if asyncio_server_kwargs else {}
+    )
     # UNIX sockets are always bound by us (to preserve semantics between modes)
     if unix:
         sock = bind_unix_socket(unix, backlog=backlog)
@@ -589,7 +589,9 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     try:  # IP address: family must be specified for IPv6 at least
         ip = ip_address(host)
         host = str(ip)
-        sock = socket.socket(socket.AF_INET6 if ip.version == 6 else socket.AF_INET)
+        sock = socket.socket(
+            socket.AF_INET6 if ip.version == 6 else socket.AF_INET
+        )
     except ValueError:  # Hostname, may become AF_INET or AF_INET6
         sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

@@ -9,17 +9,21 @@ from sanic.response import json_dumps, text
 
 class DeprecCustomRequest(Request):
     """Using old API should fail when receive_body is not implemented"""
+
     def body_push(self, data):
         pass
 
+
 class CustomRequest(Request):
     """Alternative implementation for loading body (non-streaming handlers)"""
+
     async def receive_body(self):
         buffer = BytesIO()
         async for data in self.stream:
             buffer.write(data)
         self.body = buffer.getvalue().upper()
         buffer.close()
+
     # Old API may be implemented but won't be used here
     def body_push(self, data):
         assert False
@@ -28,6 +32,7 @@ class CustomRequest(Request):
 def test_deprecated_custom_request():
     with pytest.raises(NotImplementedError):
         Sanic(request_class=DeprecCustomRequest)
+
 
 def test_custom_request():
     app = Sanic(name=__name__, request_class=CustomRequest)

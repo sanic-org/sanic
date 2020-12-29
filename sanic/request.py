@@ -114,7 +114,9 @@ class Request:
         # This logic of determining which response to use is subject to change
         if response is None:
             response = self.stream.response or HTTPResponse(
-                status=status, headers=headers, content_type=content_type,
+                status=status,
+                headers=headers,
+                content_type=content_type,
             )
         # Connect the response
         if isinstance(response, BaseHTTPResponse):
@@ -182,7 +184,9 @@ class Request:
         if self.parsed_form is None:
             self.parsed_form = RequestParameters()
             self.parsed_files = RequestParameters()
-            content_type = self.headers.get("Content-Type", DEFAULT_HTTP_CONTENT_TYPE)
+            content_type = self.headers.get(
+                "Content-Type", DEFAULT_HTTP_CONTENT_TYPE
+            )
             content_type, parameters = parse_content_header(content_type)
             try:
                 if content_type == "application/x-www-form-urlencoded":
@@ -241,7 +245,9 @@ class Request:
         :type errors: str
         :return: RequestParameters
         """
-        if not self.parsed_args[(keep_blank_values, strict_parsing, encoding, errors)]:
+        if not self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]:
             if self.query_string:
                 self.parsed_args[
                     (keep_blank_values, strict_parsing, encoding, errors)
@@ -255,7 +261,9 @@ class Request:
                     )
                 )
 
-        return self.parsed_args[(keep_blank_values, strict_parsing, encoding, errors)]
+        return self.parsed_args[
+            (keep_blank_values, strict_parsing, encoding, errors)
+        ]
 
     args = property(get_args)
 
@@ -319,7 +327,9 @@ class Request:
             if cookie is not None:
                 cookies = SimpleCookie()
                 cookies.load(cookie)
-                self._cookies = {name: cookie.value for name, cookie in cookies.items()}
+                self._cookies = {
+                    name: cookie.value for name, cookie in cookies.items()
+                }
             else:
                 self._cookies = {}
         return self._cookies
@@ -407,7 +417,10 @@ class Request:
         if "proto" in self.forwarded:
             return self.forwarded["proto"]
 
-        if self.app.websocket_enabled and self.headers.get("upgrade") == "websocket":
+        if (
+            self.app.websocket_enabled
+            and self.headers.get("upgrade") == "websocket"
+        ):
             scheme = "ws"
         else:
             scheme = "http"
@@ -558,7 +571,9 @@ def parse_multipart_form(body, boundary):
                 else:
                     fields[field_name] = [value]
             else:
-                form_file = File(type=content_type, name=file_name, body=post_data)
+                form_file = File(
+                    type=content_type, name=file_name, body=post_data
+                )
                 if field_name in files:
                     files[field_name].append(form_file)
                 else:

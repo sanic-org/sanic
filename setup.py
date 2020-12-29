@@ -5,6 +5,7 @@ import codecs
 import os
 import re
 import sys
+
 from distutils.util import strtobool
 
 from setuptools import setup
@@ -24,6 +25,7 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import shlex
+
         import pytest
 
         errno = pytest.main(shlex.split(self.pytest_args))
@@ -38,7 +40,9 @@ def open_local(paths, mode="r", encoding="utf8"):
 
 with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
-        version = re.findall(r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M)[0]
+        version = re.findall(
+            r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M
+        )[0]
     except IndexError:
         raise RuntimeError("Unable to determine version.")
 
@@ -57,6 +61,7 @@ setup_kwargs = {
     ),
     "long_description": long_description,
     "packages": ["sanic"],
+    "package_data": {"sanic": ["py.typed"]},
     "platforms": "any",
     "python_requires": ">=3.6",
     "classifiers": [
@@ -66,11 +71,14 @@ setup_kwargs = {
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }
 
-env_dependency = '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
+env_dependency = (
+    '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
+)
 ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.5.3" + env_dependency
 
@@ -78,24 +86,25 @@ requirements = [
     "httptools>=0.0.10",
     uvloop,
     ujson,
-    "aiofiles>=0.3.0",
+    "aiofiles>=0.6.0",
     "websockets>=8.1,<9.0",
-    "multidict>=4.0,<5.0",
+    "multidict>=5.0,<6.0",
     "httpx==0.15.4",
 ]
 
 tests_require = [
     "pytest==5.2.1",
-    "multidict>=4.0,<5.0",
-    "gunicorn",
+    "multidict>=5.0,<6.0",
+    "gunicorn==20.0.4",
     "pytest-cov",
-    "httpcore==0.3.0",
+    "httpcore==0.11.*",
     "beautifulsoup4",
     uvloop,
     ujson,
     "pytest-sanic",
     "pytest-sugar",
     "pytest-benchmark",
+    "pytest-dependency",
 ]
 
 docs_require = [

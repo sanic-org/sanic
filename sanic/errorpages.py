@@ -1,5 +1,6 @@
 import sys
 import typing as t
+
 from functools import partial
 from traceback import extract_tb
 
@@ -7,6 +8,7 @@ from sanic.exceptions import InvalidUsage, SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
+
 
 try:
     from ujson import dumps
@@ -17,7 +19,8 @@ except ImportError:  # noqa
 
 
 FALLBACK_TEXT = (
-    "The server encountered an internal error and " "cannot complete your request."
+    "The server encountered an internal error and "
+    "cannot complete your request."
 )
 FALLBACK_STATUS = 500
 
@@ -118,7 +121,10 @@ class HTMLRenderer(BaseRenderer):
     def minimal(self):
         return html(
             self.OUTPUT_HTML.format(
-                title=self.title, text=self.text, style=self.TRACEBACK_STYLE, body="",
+                title=self.title,
+                text=self.text,
+                style=self.TRACEBACK_STYLE,
+                body="",
             ),
             status=self.status,
             headers=self.headers,
@@ -140,14 +146,10 @@ class HTMLRenderer(BaseRenderer):
             exc_value = exc_value.__cause__
 
         traceback_html = self.TRACEBACK_BORDER.join(reversed(exceptions))
-        if request is not None:
-            appname = escape(request.app.name)
-            path = escape(request.path)
-        else:
-            appname = "<no request received>"
-            path = "unknown"
+        appname = escape(self.request.app.name)
         name = escape(self.exception.__class__.__name__)
         value = escape(self.exception)
+        path = escape(self.request.path)
         lines = [
             f"<h2>Traceback of {appname} (most recent call last):</h2>",
             f"{traceback_html}",
@@ -159,7 +161,9 @@ class HTMLRenderer(BaseRenderer):
 
     def _format_exc(self, exc):
         frames = extract_tb(exc.__traceback__)
-        frame_html = "".join(self.TRACEBACK_LINE_HTML.format(frame) for frame in frames)
+        frame_html = "".join(
+            self.TRACEBACK_LINE_HTML.format(frame) for frame in frames
+        )
         return self.TRACEBACK_WRAPPER_HTML.format(
             exc_name=escape(exc.__class__.__name__),
             exc_value=escape(exc),
@@ -185,7 +189,10 @@ class TextRenderer(BaseRenderer):
     def minimal(self):
         return text(
             self.OUTPUT_TEXT.format(
-                title=self.title, text=self.text, bar=("=" * len(self.title)), body="",
+                title=self.title,
+                text=self.text,
+                bar=("=" * len(self.title)),
+                body="",
             ),
             status=self.status,
             headers=self.headers,
@@ -199,7 +206,6 @@ class TextRenderer(BaseRenderer):
         _, exc_value, __ = sys.exc_info()
         exceptions = []
 
-        # traceback_html = self.TRACEBACK_BORDER.join(reversed(exceptions))
         lines = [
             f"{self.exception.__class__.__name__}: {self.exception} while "
             f"handling path {self.request.path}",
@@ -309,8 +315,12 @@ def exception_response(
                 except InvalidUsage:
                     renderer = HTMLRenderer
 
-                content_type, *_ = request.headers.get("content-type", "").split(";")
-                renderer = RENDERERS_BY_CONTENT_TYPE.get(content_type, renderer)
+                content_type, *_ = request.headers.get(
+                    "content-type", ""
+                ).split(";")
+                renderer = RENDERERS_BY_CONTENT_TYPE.get(
+                    content_type, renderer
+                )
             else:
                 render_format = request.app.config.FALLBACK_ERROR_FORMAT
                 renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)

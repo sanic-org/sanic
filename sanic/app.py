@@ -490,6 +490,7 @@ class Sanic:
             websocket_handler.__name__ = (
                 "websocket_handler_" + handler.__name__
             )
+            websocket_handler.is_websocket = True
             routes.extend(
                 self.router.add(
                     uri=uri,
@@ -953,12 +954,17 @@ class Sanic:
                 response = request.stream.response
             # Make sure that response is finished / run StreamingHTTP callback
 
-            if isinstance(response, BaseHTTPResponse):
-                await response.send(end_stream=True)
-            else:
-                raise ServerError(
-                    f"Invalid response type {response!r} (need HTTPResponse)"
-                )
+            try:
+                # Fastest method for checking if the property exists
+                handler.is_websocket
+            except AttributeError:
+                if isinstance(response, BaseHTTPResponse):
+                    await response.send(end_stream=True)
+                else:
+                    raise ServerError(
+                        f"Invalid response type {response!r} "
+                        "(need HTTPResponse)"
+                    )
 
         except CancelledError:
             raise

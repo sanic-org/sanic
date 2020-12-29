@@ -68,7 +68,6 @@ class StreamingHTTPResponse(BaseHTTPResponse):
     new code to avoid the callback."""
 
     __slots__ = (
-        "protocol",
         "streaming_fn",
         "status",
         "content_type",
@@ -91,7 +90,6 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
-        self.protocol = None
 
     async def write(self, data):
         """Writes a chunk of data to the streaming response.

@@ -45,6 +45,7 @@ class Http:
         "response",
         "response_func",
         "response_bytes_left",
+        "upgrade_websocket",
     ]
 
     def __init__(self, protocol):
@@ -64,6 +65,7 @@ class Http:
         self.response = None
         self.exception = None
         self.url = None
+        self.upgrade_websocket = False
 
     def __bool__(self):
         """Test if request handling is in progress"""
@@ -80,7 +82,7 @@ class Http:
                 self.request.conn_info = self.protocol.conn_info
                 await self.protocol.request_handler(self.request)
                 # Handler finished, response should've been sent
-                if self.stage is Stage.HANDLER:
+                if self.stage is Stage.HANDLER and not self.upgrade_websocket:
                     raise ServerError("Handler produced no response")
                 if self.stage is Stage.RESPONSE:
                     await self.response.send(end_stream=True)
@@ -153,10 +155,13 @@ class Http:
                 headers.append(h)
         except Exception:
             raise InvalidUsage("Bad Request")
+
+        headers_instance = Header(headers)
+        self.upgrade_websocket = headers_instance.get("upgrade") == "websocket"
         # Prepare a Request object
         request = self.protocol.request_class(
             url_bytes=self.url.encode(),
-            headers=Header(headers),
+            headers=headers_instance,
             version=protocol[5:],
             method=method,
             transport=self.protocol.transport,

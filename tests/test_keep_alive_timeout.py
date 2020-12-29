@@ -2,9 +2,11 @@ import asyncio
 
 from asyncio import sleep as aio_sleep
 from json import JSONDecodeError
+from os import environ
 
 import httpcore
 import httpx
+import pytest
 
 from sanic import Sanic, server
 from sanic.response import text
@@ -223,6 +225,10 @@ def test_keep_alive_timeout_reuse():
         client.kill_server()
 
 
+@pytest.mark.skipif(
+    bool(environ.get("SANIC_NO_UVLOOP")),
+    reason="Not testable with current client without uvloop",
+)
 def test_keep_alive_client_timeout():
     """If the server keep-alive timeout is longer than the client
     keep-alive timeout, client will try to create a new connection here."""

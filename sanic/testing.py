@@ -55,7 +55,8 @@ class SanicTestClient:
                         response = e.response
                     else:
                         logger.error(
-                            f"{method.upper()} {url} received no response!"
+                            f"{method.upper()} {url} received no response!",
+                            exc_info=True,
                         )
                         return None
 

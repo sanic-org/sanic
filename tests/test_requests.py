@@ -59,7 +59,7 @@ def test_ip(app):
 
 
 @pytest.mark.asyncio
-async def test_ip_asgi(app):
+async def test_url_asgi(app):
     @app.route("/")
     def handler(request):
         return text(f"{request.url}")

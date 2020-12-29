@@ -10,7 +10,6 @@ import sanic.app  # noqa
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage
 from sanic.request import Request
-from sanic.response import HTTPResponse, StreamingHTTPResponse
 from sanic.server import ConnInfo
 from sanic.websocket import WebSocketConnection
 
@@ -73,7 +72,7 @@ class MockTransport:
 
     def get_extra_info(self, info: str) -> Union[str, bool, None]:
         if info == "peername":
-            return self.scope.get("server")
+            return self.scope.get("client")
         elif info == "sslcontext":
             return self.scope.get("scheme") in ["https", "wss"]
         return None

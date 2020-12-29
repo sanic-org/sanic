@@ -77,6 +77,7 @@ class Http:
                 self.stage = Stage.REQUEST
                 self.response_func = self.http1_response_header
                 await self.http1_request_header()
+                self.request.conn_info = self.protocol.conn_info
                 await self.protocol.request_handler(self.request)
                 # Handler finished, response should've been sent
                 if self.stage is Stage.HANDLER:

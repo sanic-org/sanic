@@ -44,19 +44,22 @@ class SanicTestClient:
                 websocket.opened = websocket.open
                 return websocket
         else:
+            print("getting session")
             async with self.get_new_session() as session:
+                print(f"{session=}")
 
                 try:
                     response = await getattr(session, method.lower())(
                         url, *args, **kwargs
                     )
-                except httpx.exceptions.ConnectionClosed:
-                    logger.error(
-                        f"{method.upper()} {url} received no response!"
-                    )
-                    return None
-                except NameError:
-                    raise Exception(response.status_code)
+                except httpx.HTTPError as e:
+                    if hasattr(e, "response"):
+                        response = e.response
+                    else:
+                        logger.error(
+                            f"{method.upper()} {url} received no response!"
+                        )
+                        return None
 
                 response.body = await response.aread()
                 response.status = response.status_code

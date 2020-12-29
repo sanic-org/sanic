@@ -260,6 +260,7 @@ class HttpProtocol(asyncio.Protocol):
             self.transport = transport
             self._task = self.loop.create_task(self.connection_task())
             self.recv_buffer = bytearray()
+            self.conn_info = ConnInfo(self.transport, unix=self._unix)
         except Exception:
             logger.exception("protocol.connect_made")
 

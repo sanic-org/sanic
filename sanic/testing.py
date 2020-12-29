@@ -44,9 +44,7 @@ class SanicTestClient:
                 websocket.opened = websocket.open
                 return websocket
         else:
-            print("getting session")
             async with self.get_new_session() as session:
-                print(f"{session=}")
 
                 try:
                     response = await getattr(session, method.lower())(

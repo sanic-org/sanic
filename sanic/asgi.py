@@ -139,7 +139,7 @@ class Lifespan:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
-            if isawaitable(response):
+            if response and isawaitable(response):
                 await response
 
     async def shutdown(self) -> None:
@@ -159,7 +159,7 @@ class Lifespan:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
-            if isawaitable(response):
+            if response and isawaitable(response):
                 await response
 
     async def __call__(

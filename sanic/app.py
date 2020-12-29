@@ -4,22 +4,24 @@ import os
 import re
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
+from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
 from inspect import isawaitable, signature
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
 from sanic.asgi import ASGIApp
 from sanic.blueprint_group import BlueprintGroup
+from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
-from sanic.handlers import ErrorHandler
+from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
@@ -69,21 +71,21 @@ class Sanic:
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
-        self.request_middleware = deque()
-        self.response_middleware = deque()
-        self.blueprints = {}
-        self._blueprint_order = []
+        self.request_middleware: Iterable[MiddlewareType] = deque()
+        self.response_middleware: Iterable[MiddlewareType] = deque()
+        self.blueprints: Dict[str, Blueprint] = {}
+        self._blueprint_order: List[Blueprint] = []
         self.configure_logging = configure_logging
         self.debug = None
         self.sock = None
         self.strict_slashes = strict_slashes
-        self.listeners = defaultdict(list)
+        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
         self.is_stopping = False
         self.is_running = False
         self.websocket_enabled = False
-        self.websocket_tasks = set()
-        self.named_request_middleware = {}
-        self.named_response_middleware = {}
+        self.websocket_tasks: Set[Future] = set()
+        self.named_request_middleware: Dict[str, MiddlewareType] = {}
+        self.named_response_middleware: Dict[str, MiddlewareType] = {}
         # Register alternative method names
         self.go_fast = self.run
 

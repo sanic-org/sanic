@@ -158,6 +158,7 @@ class Sanic:
         stream=False,
         version=None,
         name=None,
+        ignore_body=False,
     ):
         """Decorate a function to be registered as a route
 
@@ -208,6 +209,7 @@ class Sanic:
                     strict_slashes=strict_slashes,
                     version=version,
                     name=name,
+                    ignore_body=ignore_body,
                 )
             )
             return routes, handler
@@ -216,7 +218,13 @@ class Sanic:
 
     # Shorthand method decorators
     def get(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -236,6 +244,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def post(
@@ -299,7 +308,13 @@ class Sanic:
         )
 
     def head(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         return self.route(
             uri,
@@ -308,10 +323,17 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def options(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
@@ -331,6 +353,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def patch(
@@ -364,7 +387,13 @@ class Sanic:
         )
 
     def delete(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -384,6 +413,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def add_route(
@@ -908,12 +938,18 @@ class Sanic:
         name = None
         try:
             # Fetch handler from router
-            handler, args, kwargs, uri, name, endpoint = self.router.get(
-                request
-            )
+            (
+                handler,
+                args,
+                kwargs,
+                uri,
+                name,
+                endpoint,
+                ignore_body,
+            ) = self.router.get(request)
             request.name = name
 
-            if request.stream.request_body:
+            if request.stream.request_body and not ignore_body:
                 if self.router.is_stream_handler(request):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
@@ -954,13 +990,13 @@ class Sanic:
                 response = request.stream.response
             # Make sure that response is finished / run StreamingHTTP callback
 
-            try:
-                # Fastest method for checking if the property exists
-                handler.is_websocket
-            except AttributeError:
-                if isinstance(response, BaseHTTPResponse):
-                    await response.send(end_stream=True)
-                else:
+            if isinstance(response, BaseHTTPResponse):
+                await response.send(end_stream=True)
+            else:
+                try:
+                    # Fastest method for checking if the property exists
+                    handler.is_websocket
+                except AttributeError:
                     raise ServerError(
                         f"Invalid response type {response!r} "
                         "(need HTTPResponse)"

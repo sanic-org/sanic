@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import uuid
 
 from importlib import reload
@@ -10,6 +11,7 @@ import pytest
 import sanic
 
 from sanic import Sanic
+from sanic.compat import OS_IS_WINDOWS
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
 from sanic.response import text
 from sanic.testing import SanicTestClient
@@ -142,6 +144,10 @@ async def test_logger(caplog):
     assert record in caplog.record_tuples
 
 
+@pytest.mark.skipif(
+    OS_IS_WINDOWS and sys.version_info >= (3, 8),
+    reason="Not testable with current client",
+)
 def test_logger_static_and_secure(caplog):
     # Same as test_logger, except for more coverage:
     # - test_client initialised separately for static port

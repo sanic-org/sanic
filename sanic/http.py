@@ -210,14 +210,13 @@ class Http:
                 or "content-length" in headers
                 or "transfer-encoding" in headers
             ):
-                # TODO: This matches old Sanic operation but possibly
-                # an exception would be more appropriate?
                 data, size, end_stream = b"", 0, True
                 headers.pop("content-length", None)
                 headers.pop("transfer-encoding", None)
-                # raise ServerError(
-                #    f"A {status} response may only have headers, no body."
-                # )
+                logger.warning(
+                    f"Message body set in response on {self.request.path}. "
+                    f"A {status} response may only have headers, no body."
+                )
         elif self.head_only and "content-length" in headers:
             self.response_func = None
         elif end_stream:

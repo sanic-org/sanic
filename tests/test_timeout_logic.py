@@ -1,7 +1,7 @@
 import asyncio
 
 from time import monotonic as current_time
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -18,7 +18,7 @@ def app():
 
 @pytest.fixture
 def mock_transport():
-    return AsyncMock()
+    return Mock()
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def protocol(app, mock_transport):
     protocol = HttpProtocol(loop=loop, app=app)
     protocol.connection_made(mock_transport)
     protocol._setup_connection()
-    protocol._task = AsyncMock(spec=asyncio.Task)
+    protocol._task = Mock(spec=asyncio.Task)
     protocol._task.cancel = Mock()
     return protocol
 

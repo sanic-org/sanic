@@ -1,7 +1,5 @@
 from io import BytesIO
 
-import pytest
-
 from sanic import Sanic
 from sanic.request import Request
 from sanic.response import json_dumps, text

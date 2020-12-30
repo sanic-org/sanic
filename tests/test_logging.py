@@ -4,7 +4,6 @@ import uuid
 
 from importlib import reload
 from io import StringIO
-from unittest.mock import Mock
 
 import pytest
 
@@ -125,7 +124,8 @@ def test_log_connection_lost(app, debug, monkeypatch):
         assert "Connection lost before response written @" not in log
 
 
-def test_logger(caplog):
+@pytest.mark.asyncio
+async def test_logger(caplog):
     rand_string = str(uuid.uuid4())
 
     app = Sanic(name=__name__)
@@ -136,33 +136,10 @@ def test_logger(caplog):
         return text("hello")
 
     with caplog.at_level(logging.INFO):
-        request, response = app.test_client.get("/")
+        _ = await app.asgi_client.get("/")
 
-    port = request.server_port
-
-    if caplog.record_tuples[0][0] == "asyncio":
-        caplog.record_tuples.pop(0)
-
-    # Note: testing with random port doesn't show the banner because it doesn't
-    # define host and port. This test supports both modes.
-    if caplog.record_tuples[0] == (
-        "sanic.root",
-        logging.INFO,
-        f"Goin' Fast @ http://127.0.0.1:{port}",
-    ):
-        caplog.record_tuples.pop(0)
-
-    assert caplog.record_tuples[0] == (
-        "sanic.root",
-        logging.INFO,
-        f"http://127.0.0.1:{port}/",
-    )
-    assert caplog.record_tuples[1] == ("sanic.root", logging.INFO, rand_string)
-    assert caplog.record_tuples[-1] == (
-        "sanic.root",
-        logging.INFO,
-        "Server Stopped",
-    )
+    record = ("sanic.root", logging.INFO, rand_string)
+    assert record in caplog.record_tuples
 
 
 def test_logger_static_and_secure(caplog):

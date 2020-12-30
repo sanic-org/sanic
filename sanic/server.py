@@ -599,6 +599,8 @@ class HttpProtocol(asyncio.Protocol):
         response = None
         try:
             response = self.error_handler.response(self.request, exception)
+            if isawaitable(response):
+                response = await response
             version = self.request.version if self.request else "1.1"
             self.transport.write(response.output(version))
         except RuntimeError:

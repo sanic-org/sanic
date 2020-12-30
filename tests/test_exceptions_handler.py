@@ -1,12 +1,20 @@
+import asyncio
+
 from bs4 import BeautifulSoup
 
 from sanic import Sanic
-from sanic.exceptions import InvalidUsage, NotFound, ServerError
+from sanic.exceptions import Forbidden, InvalidUsage, NotFound, ServerError
 from sanic.handlers import ErrorHandler
-from sanic.response import text
+from sanic.response import stream, text
 
 
 exception_handler_app = Sanic("test_exception_handler")
+
+
+async def sample_streaming_fn(response):
+    await response.write("foo,")
+    await asyncio.sleep(0.001)
+    await response.write("bar")
 
 
 @exception_handler_app.route("/1")
@@ -47,9 +55,22 @@ def handler_6(request, arg):
     return text(foo)
 
 
+@exception_handler_app.route("/7")
+def handler_7(request):
+    raise Forbidden("go away!")
+
+
 @exception_handler_app.exception(NotFound, ServerError)
 def handler_exception(request, exception):
     return text("OK")
+
+
+@exception_handler_app.exception(Forbidden)
+async def async_handler_exception(request, exception):
+    return stream(
+        sample_streaming_fn,
+        content_type="text/csv",
+    )
 
 
 def test_invalid_usage_exception_handler():
@@ -72,6 +93,12 @@ def test_text_exception__handler():
     request, response = exception_handler_app.test_client.get("/random")
     assert response.status == 200
     assert response.text == "OK"
+
+
+def test_async_exception_handler():
+    request, response = exception_handler_app.test_client.get("/7")
+    assert response.status == 200
+    assert response.text == "foo,bar"
 
 
 def test_html_traceback_output_in_debug_mode():

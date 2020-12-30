@@ -9,6 +9,7 @@ import httpx
 import pytest
 
 from sanic import Sanic, server
+from sanic.compat import OS_IS_WINDOWS
 from sanic.response import text
 from sanic.testing import HOST, SanicTestClient
 
@@ -204,6 +205,10 @@ async def handler3(request):
     return text("OK")
 
 
+@pytest.mark.skipif(
+    bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
+    reason="Not testable with current client",
+)
 def test_keep_alive_timeout_reuse():
     """If the server keep-alive timeout and client keep-alive timeout are
     both longer than the delay, the client _and_ server will successfully
@@ -226,8 +231,8 @@ def test_keep_alive_timeout_reuse():
 
 
 @pytest.mark.skipif(
-    bool(environ.get("SANIC_NO_UVLOOP")),
-    reason="Not testable with current client without uvloop",
+    bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
+    reason="Not testable with current client",
 )
 def test_keep_alive_client_timeout():
     """If the server keep-alive timeout is longer than the client
@@ -250,6 +255,10 @@ def test_keep_alive_client_timeout():
         client.kill_server()
 
 
+@pytest.mark.skipif(
+    bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
+    reason="Not testable with current client",
+)
 def test_keep_alive_server_timeout():
     """If the client keep-alive timeout is longer than the server
     keep-alive timeout, the client will either a 'Connection reset' error

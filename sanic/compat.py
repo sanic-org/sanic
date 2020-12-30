@@ -1,9 +1,13 @@
 import asyncio
+import os
 import signal
 
 from sys import argv
 
 from multidict import CIMultiDict  # type: ignore
+
+
+OS_IS_WINDOWS = os.name == "nt"
 
 
 class Header(CIMultiDict):

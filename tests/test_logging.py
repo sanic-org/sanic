@@ -140,6 +140,9 @@ def test_logger(caplog):
 
     port = request.server_port
 
+    if caplog.record_tuples[0][0] == "asyncio":
+        caplog.record_tuples.pop(0)
+
     # Note: testing with random port doesn't show the banner because it doesn't
     # define host and port. This test supports both modes.
     if caplog.record_tuples[0] == (

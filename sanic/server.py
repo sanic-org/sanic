@@ -15,7 +15,7 @@ from signal import signal as signal_func
 from time import monotonic as current_time
 from typing import Dict, Type, Union
 
-from sanic.compat import ctrlc_workaround_for_windows
+from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
@@ -30,8 +30,6 @@ try:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
-
-OS_IS_WINDOWS = os.name == "nt"
 
 
 class Signal:
@@ -155,6 +153,11 @@ class HttpProtocol(asyncio.Protocol):
         self._exception = None
         self._unix = unix
 
+    def _setup_connection(self):
+        self._http = Http(self)
+        self._time = current_time()
+        self.check_timeouts()
+
     async def connection_task(self):
         """Run a HTTP connection.
 
@@ -162,9 +165,7 @@ class HttpProtocol(asyncio.Protocol):
         everything else happens in class Http or in code called from there.
         """
         try:
-            self._http = Http(self)
-            self._time = current_time()
-            self.check_timeouts()
+            self._setup_connection()
             await self._http.http1()
         except CancelledError:
             pass

@@ -50,6 +50,7 @@ class Sanic:
         strict_slashes=False,
         log_config=None,
         configure_logging=True,
+        register=None,
     ):
 
         # Get name from previous stack frame
@@ -88,7 +89,11 @@ class Sanic:
         # Register alternative method names
         self.go_fast = self.run
 
-        self.__class__.register_app(self)
+        if register is not None:
+            self.config.REGISTER = register
+
+        if self.config.REGISTER:
+            self.__class__.register_app(self)
 
     @property
     def loop(self):

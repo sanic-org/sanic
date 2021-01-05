@@ -3,6 +3,7 @@ import logging
 import sys
 
 from inspect import isawaitable
+from os import environ
 from unittest.mock import patch
 
 import pytest
@@ -290,6 +291,7 @@ def test_app_registry_name_reuse():
     with pytest.raises(SanicException):
         Sanic("test")
     Sanic.test_mode = True
+    Sanic("test")
 
 
 def test_app_registry_retrieval():
@@ -306,3 +308,17 @@ def test_get_app_does_not_exist_force_create():
     assert isinstance(
         Sanic.get_app("does-not-exist", force_create=True), Sanic
     )
+
+
+def test_app_no_registry():
+    Sanic("no-register", register=False)
+    with pytest.raises(SanicException):
+        Sanic.get_app("no-register")
+
+
+def test_app_no_registry_env():
+    environ["SANIC_REGISTER"] = "False"
+    Sanic("no-register")
+    with pytest.raises(SanicException):
+        Sanic.get_app("no-register")
+    del environ["SANIC_REGISTER"]

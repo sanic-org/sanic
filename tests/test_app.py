@@ -321,3 +321,4 @@ def test_app_no_registry_env():
     Sanic("no-register")
     with pytest.raises(SanicException):
         Sanic.get_app("no-register")
+    del environ["SANIC_REGISTER"]

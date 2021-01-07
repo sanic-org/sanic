@@ -41,6 +41,7 @@ DEFAULT_CONFIG = {
     "PROXIES_COUNT": None,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FALLBACK_ERROR_FORMAT": "html",
+    "REGISTER": True,
 }
 
 

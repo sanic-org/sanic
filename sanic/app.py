@@ -1257,7 +1257,12 @@ class Sanic:
             request_name, deque()
         )
         applicable_middleware = self.request_middleware + named_middleware
-        if applicable_middleware:
+
+        # request.request_middleware_started is meant as a stop-gap solution
+        # until RFC 1630 is adopted
+        if applicable_middleware and not request.request_middleware_started:
+            request.request_middleware_started = True
+
             for middleware in applicable_middleware:
                 response = middleware(request)
                 if isawaitable(response):

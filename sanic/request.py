@@ -1,3 +1,4 @@
+import asyncio
 import email.utils
 
 from collections import defaultdict, namedtuple
@@ -71,6 +72,7 @@ class Request:
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
+        "request_middleware_executed",
         "stream",
         "transport",
         "uri_template",
@@ -100,6 +102,7 @@ class Request:
         self.parsed_args = defaultdict(RequestParameters)
         self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
+        self.request_middleware_started = False
         self._cookies = None
         self.stream = None
         self.endpoint = None

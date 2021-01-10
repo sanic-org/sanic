@@ -1,6 +1,7 @@
 import logging
 
 from asyncio import CancelledError
+from itertools import count
 
 from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request
@@ -184,3 +185,23 @@ def test_middleware_order(app):
 
     assert response.status == 200
     assert order == [1, 2, 3, 4, 5, 6]
+
+
+def test_request_middleware_executes_once(app):
+    i = count()
+
+    @app.middleware("request")
+    async def inc(request):
+        nonlocal i
+        next(i)
+
+    @app.route("/")
+    async def handler(request):
+        await request.app._run_request_middleware(request)
+        return text("OK")
+
+    request, response = app.test_client.get("/")
+    assert next(i) == 1
+
+    request, response = app.test_client.get("/")
+    assert next(i) == 3

@@ -1,14 +1,8 @@
+from inspect import isclass
 from os import environ
+from pathlib import Path
 from typing import Any, Union
 
-# NOTE(tomaszdrozdz): remove in version: 21.3
-# We replace from_envvar(), from_object(), from_pyfile() config object methods
-# with one simpler update_config() method.
-# We also replace "loading module from file code" in from_pyfile()
-# in a favour of load_module_from_file_location().
-# Please see pull request: 1903
-# and issue: 1895
-from .deprecated import from_envvar, from_object, from_pyfile  # noqa
 from .utils import load_module_from_file_location, str_to_bool
 
 
@@ -68,17 +62,6 @@ class Config(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
-    # NOTE(tomaszdrozdz): remove in version: 21.3
-    # We replace from_envvar(), from_object(), from_pyfile() config object
-    # methods with one simpler update_config() method.
-    # We also replace "loading module from file code" in from_pyfile()
-    # in a favour of load_module_from_file_location().
-    # Please see pull request: 1903
-    # and issue: 1895
-    from_envvar = from_envvar
-    from_pyfile = from_pyfile
-    from_object = from_object
-
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
         Looks for prefixed environment variables and applies
@@ -129,12 +112,24 @@ class Config(dict):
                 B = 2
             config.update_config(C)"""
 
-        if isinstance(config, (bytes, str)):
+        if isinstance(config, (bytes, str, Path)):
             config = load_module_from_file_location(location=config)
 
         if not isinstance(config, dict):
-            config = config.__dict__
+            cfg = {}
+            if not isclass(config):
+                cfg.update(
+                    {
+                        key: getattr(config, key)
+                        for key in config.__class__.__dict__.keys()
+                    }
+                )
+
+            config = dict(config.__dict__)
+            config.update(cfg)
 
         config = dict(filter(lambda i: i[0].isupper(), config.items()))
 
         self.update(config)
+
+    load = update_config

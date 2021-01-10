@@ -45,7 +45,6 @@ class Sanic:
 
     def __init__(
         self,
-<<<<<<< HEAD
         name: str = None,
         router: Router = None,
         error_handler: ErrorHandler = None,
@@ -54,19 +53,8 @@ class Sanic:
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
+        register: Optional[bool] = None,
     ) -> None:
-=======
-        name=None,
-        router=None,
-        error_handler=None,
-        load_env=True,
-        request_class=None,
-        strict_slashes=False,
-        log_config=None,
-        configure_logging=True,
-        register=None,
-    ):
->>>>>>> 206992fe40e27e30ab3ba0bf9f77f6a70ff11f4d
 
         # Get name from previous stack frame
         if name is None:

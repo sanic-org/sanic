@@ -1,4 +1,3 @@
-import asyncio
 import email.utils
 
 from collections import defaultdict, namedtuple
@@ -8,6 +7,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
 
+from sanic.compat import CancelledErrors
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
     parse_content_header,
@@ -16,6 +16,7 @@ from sanic.headers import (
     parse_xforwarded,
 )
 from sanic.log import error_logger, logger
+from sanic.response import BaseHTTPResponse, HTTPResponse
 
 
 try:
@@ -24,7 +25,6 @@ except ImportError:
     from json import loads as json_loads  # type: ignore
 
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
-EXPECT_HEADER = "EXPECT"
 
 # HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
 # > If the media type remains unknown, the recipient SHOULD treat it
@@ -45,35 +45,6 @@ class RequestParameters(dict):
         return super().get(name, default)
 
 
-class StreamBuffer:
-    def __init__(self, buffer_size=100):
-        self._queue = asyncio.Queue(buffer_size)
-
-    async def read(self):
-        """ Stop reading when gets None """
-        payload = await self._queue.get()
-        self._queue.task_done()
-        return payload
-
-    async def __aiter__(self):
-        """Support `async for data in request.stream`"""
-        while True:
-            data = await self.read()
-            if not data:
-                break
-            yield data
-
-    async def put(self, payload):
-        await self._queue.put(payload)
-
-    def is_full(self):
-        return self._queue.full()
-
-    @property
-    def buffer_size(self):
-        return self._queue.maxsize
-
-
 class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
 
@@ -92,6 +63,7 @@ class Request:
         "endpoint",
         "headers",
         "method",
+        "name",
         "parsed_args",
         "parsed_not_grouped_args",
         "parsed_files",
@@ -99,6 +71,7 @@ class Request:
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
+        "request_middleware_started",
         "stream",
         "transport",
         "uri_template",
@@ -117,9 +90,10 @@ class Request:
         self.transport = transport
 
         # Init but do not inhale
-        self.body_init()
+        self.body = b""
         self.conn_info = None
         self.ctx = SimpleNamespace()
+        self.name = None
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
@@ -127,6 +101,7 @@ class Request:
         self.parsed_args = defaultdict(RequestParameters)
         self.parsed_not_grouped_args = defaultdict(list)
         self.uri_template = None
+        self.request_middleware_started = False
         self._cookies = None
         self.stream = None
         self.endpoint = None
@@ -135,36 +110,43 @@ class Request:
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.method} {self.path}>"
 
-    def body_init(self):
-        """.. deprecated:: 20.3
-        To be removed in 21.3"""
-        self.body = []
-
-    def body_push(self, data):
-        """.. deprecated:: 20.3
-        To be removed in 21.3"""
-        self.body.append(data)
-
-    def body_finish(self):
-        """.. deprecated:: 20.3
-        To be removed in 21.3"""
-        self.body = b"".join(self.body)
+    async def respond(
+        self, response=None, *, status=200, headers=None, content_type=None
+    ):
+        # This logic of determining which response to use is subject to change
+        if response is None:
+            response = self.stream.response or HTTPResponse(
+                status=status,
+                headers=headers,
+                content_type=content_type,
+            )
+        # Connect the response
+        if isinstance(response, BaseHTTPResponse):
+            response = self.stream.respond(response)
+        # Run response middleware
+        try:
+            response = await self.app._run_response_middleware(
+                self, response, request_name=self.name
+            )
+        except CancelledErrors:
+            raise
+        except Exception:
+            error_logger.exception(
+                "Exception occurred in one of response middleware handlers"
+            )
+        return response
 
     async def receive_body(self):
         """Receive request.body, if not already received.
 
-        Streaming handlers may call this to receive the full body.
+        Streaming handlers may call this to receive the full body. Sanic calls
+        this function before running any handlers of non-streaming routes.
 
-        This is added as a compatibility shim in Sanic 20.3 because future
-        versions of Sanic will make all requests streaming and will use this
-        function instead of the non-async body_init/push/finish functions.
-
-        Please make an issue if your code depends on the old functionality and
-        cannot be upgraded to the new API.
+        Custom request classes can override this for custom handling of both
+        streaming and non-streaming routes.
         """
-        if not self.stream:
-            return
-        self.body = b"".join([data async for data in self.stream])
+        if not self.body:
+            self.body = b"".join([data async for data in self.stream])
 
     @property
     def json(self):

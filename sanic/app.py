@@ -4,24 +4,27 @@ import os
 import re
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
+from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
 from inspect import isawaitable, signature
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
 from sanic.asgi import ASGIApp
 from sanic.blueprint_group import BlueprintGroup
+from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import SanicException, ServerError, URLBuildError
-from sanic.handlers import ErrorHandler
+from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
-from sanic.response import HTTPResponse, StreamingHTTPResponse
+from sanic.request import Request
+from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
 from sanic.server import (
     AsyncioServer,
@@ -42,16 +45,16 @@ class Sanic:
 
     def __init__(
         self,
-        name=None,
-        router=None,
-        error_handler=None,
-        load_env=True,
-        request_class=None,
-        strict_slashes=False,
-        log_config=None,
-        configure_logging=True,
-        register=None,
-    ):
+        name: str = None,
+        router: Router = None,
+        error_handler: ErrorHandler = None,
+        load_env: bool = True,
+        request_class: Request = None,
+        strict_slashes: bool = False,
+        log_config: Optional[Dict[str, Any]] = None,
+        configure_logging: bool = True,
+        register: Optional[bool] = None,
+    ) -> None:
 
         # Get name from previous stack frame
         if name is None:
@@ -59,7 +62,6 @@ class Sanic:
                 "Sanic instance cannot be unnamed. "
                 "Please use Sanic(name='your_application_name') instead.",
             )
-
         # logging
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
@@ -70,22 +72,21 @@ class Sanic:
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
-        self.request_middleware = deque()
-        self.response_middleware = deque()
-        self.blueprints = {}
-        self._blueprint_order = []
+        self.request_middleware: Iterable[MiddlewareType] = deque()
+        self.response_middleware: Iterable[MiddlewareType] = deque()
+        self.blueprints: Dict[str, Blueprint] = {}
+        self._blueprint_order: List[Blueprint] = []
         self.configure_logging = configure_logging
         self.debug = None
         self.sock = None
         self.strict_slashes = strict_slashes
-        self.listeners = defaultdict(list)
+        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
         self.is_stopping = False
         self.is_running = False
-        self.is_request_stream = False
         self.websocket_enabled = False
-        self.websocket_tasks = set()
-        self.named_request_middleware = {}
-        self.named_response_middleware = {}
+        self.websocket_tasks: Set[Future] = set()
+        self.named_request_middleware: Dict[str, MiddlewareType] = {}
+        self.named_response_middleware: Dict[str, MiddlewareType] = {}
         # Register alternative method names
         self.go_fast = self.run
 
@@ -162,6 +163,7 @@ class Sanic:
         stream=False,
         version=None,
         name=None,
+        ignore_body=False,
     ):
         """Decorate a function to be registered as a route
 
@@ -179,9 +181,6 @@ class Sanic:
         # and will probably get confused as to why it's not working
         if not uri.startswith("/"):
             uri = "/" + uri
-
-        if stream:
-            self.is_request_stream = True
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
@@ -215,6 +214,7 @@ class Sanic:
                     strict_slashes=strict_slashes,
                     version=version,
                     name=name,
+                    ignore_body=ignore_body,
                 )
             )
             return routes, handler
@@ -223,7 +223,13 @@ class Sanic:
 
     # Shorthand method decorators
     def get(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -243,6 +249,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def post(
@@ -306,7 +313,13 @@ class Sanic:
         )
 
     def head(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         return self.route(
             uri,
@@ -315,10 +328,17 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def options(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
@@ -338,6 +358,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def patch(
@@ -371,7 +392,13 @@ class Sanic:
         )
 
     def delete(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri,
+        host=None,
+        strict_slashes=None,
+        version=None,
+        name=None,
+        ignore_body=True,
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -391,6 +418,7 @@ class Sanic:
             strict_slashes=strict_slashes,
             version=version,
             name=name,
+            ignore_body=ignore_body,
         )
 
     def add_route(
@@ -497,6 +525,7 @@ class Sanic:
             websocket_handler.__name__ = (
                 "websocket_handler_" + handler.__name__
             )
+            websocket_handler.is_websocket = True
             routes.extend(
                 self.router.add(
                     uri=uri,
@@ -861,7 +890,52 @@ class Sanic:
         """
         pass
 
-    async def handle_request(self, request, write_callback, stream_callback):
+    async def handle_exception(self, request, exception):
+        # -------------------------------------------- #
+        # Request Middleware
+        # -------------------------------------------- #
+        response = await self._run_request_middleware(
+            request, request_name=None
+        )
+        # No middleware results
+        if not response:
+            try:
+                response = self.error_handler.response(request, exception)
+                if isawaitable(response):
+                    response = await response
+            except Exception as e:
+                if isinstance(e, SanicException):
+                    response = self.error_handler.default(request, e)
+                elif self.debug:
+                    response = HTTPResponse(
+                        (
+                            f"Error while handling error: {e}\n"
+                            f"Stack: {format_exc()}"
+                        ),
+                        status=500,
+                    )
+                else:
+                    response = HTTPResponse(
+                        "An error occurred while handling an error", status=500
+                    )
+        if response is not None:
+            try:
+                response = await request.respond(response)
+            except BaseException:
+                # Skip response middleware
+                request.stream.respond(response)
+                await response.send(end_stream=True)
+                raise
+        else:
+            response = request.stream.response
+        if isinstance(response, BaseHTTPResponse):
+            await response.send(end_stream=True)
+        else:
+            raise ServerError(
+                f"Invalid response type {response!r} (need HTTPResponse)"
+            )
+
+    async def handle_request(self, request):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
@@ -877,13 +951,27 @@ class Sanic:
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
         response = None
-        cancelled = False
         name = None
         try:
             # Fetch handler from router
-            handler, args, kwargs, uri, name, endpoint = self.router.get(
-                request
-            )
+            (
+                handler,
+                args,
+                kwargs,
+                uri,
+                name,
+                endpoint,
+                ignore_body,
+            ) = self.router.get(request)
+            request.name = name
+
+            if request.stream.request_body and not ignore_body:
+                if self.router.is_stream_handler(request):
+                    # Streaming handler: lift the size limit
+                    request.stream.request_max_size = float("inf")
+                else:
+                    # Non-streaming handler: preload body
+                    await request.receive_body()
 
             # -------------------------------------------- #
             # Request Middleware
@@ -912,72 +1000,31 @@ class Sanic:
                 response = handler(request, *args, **kwargs)
                 if isawaitable(response):
                     response = await response
+            if response:
+                response = await request.respond(response)
+            else:
+                response = request.stream.response
+            # Make sure that response is finished / run StreamingHTTP callback
+
+            if isinstance(response, BaseHTTPResponse):
+                await response.send(end_stream=True)
+            else:
+                try:
+                    # Fastest method for checking if the property exists
+                    handler.is_websocket
+                except AttributeError:
+                    raise ServerError(
+                        f"Invalid response type {response!r} "
+                        "(need HTTPResponse)"
+                    )
+
         except CancelledError:
-            # If response handler times out, the server handles the error
-            # and cancels the handle_request job.
-            # In this case, the transport is already closed and we cannot
-            # issue a response.
-            response = None
-            cancelled = True
+            raise
         except Exception as e:
             # -------------------------------------------- #
             # Response Generation Failed
             # -------------------------------------------- #
-
-            try:
-                response = self.error_handler.response(request, e)
-                if isawaitable(response):
-                    response = await response
-            except Exception as e:
-                if isinstance(e, SanicException):
-                    response = self.error_handler.default(
-                        request=request, exception=e
-                    )
-                elif self.debug:
-                    response = HTTPResponse(
-                        f"Error while "
-                        f"handling error: {e}\nStack: {format_exc()}",
-                        status=500,
-                    )
-                else:
-                    response = HTTPResponse(
-                        "An error occurred while handling an error", status=500
-                    )
-        finally:
-            # -------------------------------------------- #
-            # Response Middleware
-            # -------------------------------------------- #
-            # Don't run response middleware if response is None
-            if response is not None:
-                try:
-                    response = await self._run_response_middleware(
-                        request, response, request_name=name
-                    )
-                except CancelledError:
-                    # Response middleware can timeout too, as above.
-                    response = None
-                    cancelled = True
-                except BaseException:
-                    error_logger.exception(
-                        "Exception occurred in one of response "
-                        "middleware handlers"
-                    )
-            if cancelled:
-                raise CancelledError()
-
-        # pass the response to the correct callback
-        if write_callback is None or isinstance(
-            response, StreamingHTTPResponse
-        ):
-            if stream_callback:
-                await stream_callback(response)
-            else:
-                # Should only end here IF it is an ASGI websocket.
-                # TODO:
-                # - Add exception handling
-                pass
-        else:
-            write_callback(response)
+            await self.handle_exception(request, e)
 
     # -------------------------------------------------------------------- #
     # Testing
@@ -1213,7 +1260,12 @@ class Sanic:
             request_name, deque()
         )
         applicable_middleware = self.request_middleware + named_middleware
-        if applicable_middleware:
+
+        # request.request_middleware_started is meant as a stop-gap solution
+        # until RFC 1630 is adopted
+        if applicable_middleware and not request.request_middleware_started:
+            request.request_middleware_started = True
+
             for middleware in applicable_middleware:
                 response = middleware(request)
                 if isawaitable(response):
@@ -1236,6 +1288,8 @@ class Sanic:
                     _response = await _response
                 if _response:
                     response = _response
+                    if isinstance(response, BaseHTTPResponse):
+                        response = request.stream.respond(response)
                     break
         return response
 

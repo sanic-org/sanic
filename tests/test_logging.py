@@ -1,16 +1,17 @@
 import logging
 import os
+import sys
 import uuid
 
 from importlib import reload
 from io import StringIO
-from unittest.mock import Mock
 
 import pytest
 
 import sanic
 
 from sanic import Sanic
+from sanic.compat import OS_IS_WINDOWS
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
 from sanic.response import text
 from sanic.testing import SanicTestClient
@@ -111,12 +112,11 @@ def test_log_connection_lost(app, debug, monkeypatch):
     @app.route("/conn_lost")
     async def conn_lost(request):
         response = text("Ok")
-        response.output = Mock(side_effect=RuntimeError)
+        request.transport.close()
         return response
 
-    with pytest.raises(ValueError):
-        # catch ValueError: Exception during request
-        app.test_client.get("/conn_lost", debug=debug)
+    req, res = app.test_client.get("/conn_lost", debug=debug)
+    assert res is None
 
     log = stream.getvalue()
 
@@ -126,7 +126,8 @@ def test_log_connection_lost(app, debug, monkeypatch):
         assert "Connection lost before response written @" not in log
 
 
-def test_logger(caplog):
+@pytest.mark.asyncio
+async def test_logger(caplog):
     rand_string = str(uuid.uuid4())
 
     app = Sanic(name=__name__)
@@ -137,32 +138,16 @@ def test_logger(caplog):
         return text("hello")
 
     with caplog.at_level(logging.INFO):
-        request, response = app.test_client.get("/")
+        _ = await app.asgi_client.get("/")
 
-    port = request.server_port
-
-    # Note: testing with random port doesn't show the banner because it doesn't
-    # define host and port. This test supports both modes.
-    if caplog.record_tuples[0] == (
-        "sanic.root",
-        logging.INFO,
-        f"Goin' Fast @ http://127.0.0.1:{port}",
-    ):
-        caplog.record_tuples.pop(0)
-
-    assert caplog.record_tuples[0] == (
-        "sanic.root",
-        logging.INFO,
-        f"http://127.0.0.1:{port}/",
-    )
-    assert caplog.record_tuples[1] == ("sanic.root", logging.INFO, rand_string)
-    assert caplog.record_tuples[-1] == (
-        "sanic.root",
-        logging.INFO,
-        "Server Stopped",
-    )
+    record = ("sanic.root", logging.INFO, rand_string)
+    assert record in caplog.record_tuples
 
 
+@pytest.mark.skipif(
+    OS_IS_WINDOWS and sys.version_info >= (3, 8),
+    reason="Not testable with current client",
+)
 def test_logger_static_and_secure(caplog):
     # Same as test_logger, except for more coverage:
     # - test_client initialised separately for static port

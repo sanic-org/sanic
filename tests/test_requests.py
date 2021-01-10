@@ -59,7 +59,7 @@ def test_ip(app):
 
 
 @pytest.mark.asyncio
-async def test_ip_asgi(app):
+async def test_url_asgi(app):
     @app.route("/")
     def handler(request):
         return text(f"{request.url}")
@@ -2119,3 +2119,37 @@ def test_url_for_without_server_name(app):
         response.json["url"]
         == f"http://127.0.0.1:{request.server_port}/url-for"
     )
+
+
+def test_safe_method_with_body_ignored(app):
+    @app.get("/")
+    async def handler(request):
+        return text("OK")
+
+    payload = {"test": "OK"}
+    headers = {"content-type": "application/json"}
+
+    request, response = app.test_client.request(
+        "/", http_method="get", data=json_dumps(payload), headers=headers
+    )
+
+    assert request.body == b""
+    assert request.json == None
+    assert response.text == "OK"
+
+
+def test_safe_method_with_body(app):
+    @app.get("/", ignore_body=False)
+    async def handler(request):
+        return text("OK")
+
+    payload = {"test": "OK"}
+    headers = {"content-type": "application/json"}
+    data = json_dumps(payload)
+    request, response = app.test_client.request(
+        "/", http_method="get", data=data, headers=headers
+    )
+
+    assert request.body == data.encode("utf-8")
+    assert request.json.get("test") == "OK"
+    assert response.text == "OK"

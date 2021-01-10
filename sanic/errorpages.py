@@ -206,7 +206,6 @@ class TextRenderer(BaseRenderer):
         _, exc_value, __ = sys.exc_info()
         exceptions = []
 
-        # traceback_html = self.TRACEBACK_BORDER.join(reversed(exceptions))
         lines = [
             f"{self.exception.__class__.__name__}: {self.exception} while "
             f"handling path {self.request.path}",

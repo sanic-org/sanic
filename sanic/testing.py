@@ -47,11 +47,21 @@ class SanicTestClient:
             async with self.get_new_session() as session:
 
                 try:
+                    if method == "request":
+                        args = [url] + list(args)
+                        url = kwargs.pop("http_method", "GET").upper()
                     response = await getattr(session, method.lower())(
                         url, *args, **kwargs
                     )
-                except NameError:
-                    raise Exception(response.status_code)
+                except httpx.HTTPError as e:
+                    if hasattr(e, "response"):
+                        response = e.response
+                    else:
+                        logger.error(
+                            f"{method.upper()} {url} received no response!",
+                            exc_info=True,
+                        )
+                        return None
 
                 response.body = await response.aread()
                 response.status = response.status_code
@@ -85,7 +95,6 @@ class SanicTestClient:
     ):
         results = [None, None]
         exceptions = []
-
         if gather_request:
 
             def _collect_request(request):
@@ -160,6 +169,9 @@ class SanicTestClient:
                 return results[-1]
             except BaseException:  # noqa
                 raise ValueError(f"Request object expected, got ({results})")
+
+    def request(self, *args, **kwargs):
+        return self._sanic_endpoint_test("request", *args, **kwargs)
 
     def get(self, *args, **kwargs):
         return self._sanic_endpoint_test("get", *args, **kwargs)

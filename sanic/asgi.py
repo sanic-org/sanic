@@ -2,27 +2,15 @@ import asyncio
 import warnings
 
 from inspect import isawaitable
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 from urllib.parse import quote
 
 import sanic.app  # noqa
 
 from sanic.compat import Header
 from sanic.exceptions import InvalidUsage, ServerError
-from sanic.log import logger
 from sanic.request import Request
-from sanic.response import HTTPResponse, StreamingHTTPResponse
-from sanic.server import ConnInfo, StreamBuffer
+from sanic.server import ConnInfo
 from sanic.websocket import WebSocketConnection
 
 
@@ -84,7 +72,7 @@ class MockTransport:
 
     def get_extra_info(self, info: str) -> Union[str, bool, None]:
         if info == "peername":
-            return self.scope.get("server")
+            return self.scope.get("client")
         elif info == "sslcontext":
             return self.scope.get("scheme") in ["https", "wss"]
         return None
@@ -151,7 +139,7 @@ class Lifespan:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
-            if isawaitable(response):
+            if response and isawaitable(response):
                 await response
 
     async def shutdown(self) -> None:
@@ -171,7 +159,7 @@ class Lifespan:
             response = handler(
                 self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
             )
-            if isawaitable(response):
+            if response and isawaitable(response):
                 await response
 
     async def __call__(
@@ -192,7 +180,6 @@ class ASGIApp:
     sanic_app: "sanic.app.Sanic"
     request: Request
     transport: MockTransport
-    do_stream: bool
     lifespan: Lifespan
     ws: Optional[WebSocketConnection]
 
@@ -214,9 +201,6 @@ class ASGIApp:
                 (key.decode("latin-1"), value.decode("latin-1"))
                 for key, value in scope.get("headers", [])
             ]
-        )
-        instance.do_stream = (
-            True if headers.get("expect") == "100-continue" else False
         )
         instance.lifespan = Lifespan(instance)
 
@@ -244,9 +228,7 @@ class ASGIApp:
                 )
                 await instance.ws.accept()
             else:
-                pass
-                # TODO:
-                # - close connection
+                raise ServerError("Received unknown ASGI scope")
 
             request_class = sanic_app.request_class or Request
             instance.request = request_class(
@@ -257,161 +239,57 @@ class ASGIApp:
                 instance.transport,
                 sanic_app,
             )
+            instance.request.stream = instance
+            instance.request_body = True
             instance.request.conn_info = ConnInfo(instance.transport)
-
-            if sanic_app.is_request_stream:
-                is_stream_handler = sanic_app.router.is_stream_handler(
-                    instance.request
-                )
-                if is_stream_handler:
-                    instance.request.stream = StreamBuffer(
-                        sanic_app.config.REQUEST_BUFFER_QUEUE_SIZE
-                    )
-                    instance.do_stream = True
 
         return instance
 
-    async def read_body(self) -> bytes:
-        """
-        Read and return the entire body from an incoming ASGI message.
-        """
-        body = b""
-        more_body = True
-        while more_body:
-            message = await self.transport.receive()
-            body += message.get("body", b"")
-            more_body = message.get("more_body", False)
-
-        return body
-
-    async def stream_body(self) -> None:
+    async def read(self) -> Optional[bytes]:
         """
         Read and stream the body in chunks from an incoming ASGI message.
         """
-        more_body = True
+        message = await self.transport.receive()
+        if not message.get("more_body", False):
+            self.request_body = False
+            return None
+        return message.get("body", b"")
 
-        while more_body:
-            message = await self.transport.receive()
-            chunk = message.get("body", b"")
-            await self.request.stream.put(chunk)
+    async def __aiter__(self):
+        while self.request_body:
+            data = await self.read()
+            if data:
+                yield data
 
-            more_body = message.get("more_body", False)
+    def respond(self, response):
+        response.stream, self.response = self, response
+        return response
 
-        await self.request.stream.put(None)
+    async def send(self, data, end_stream):
+        if self.response:
+            response, self.response = self.response, None
+            await self.transport.send(
+                {
+                    "type": "http.response.start",
+                    "status": response.status,
+                    "headers": response.processed_headers,
+                }
+            )
+            response_body = getattr(response, "body", None)
+            if response_body:
+                data = response_body + data if data else response_body
+        await self.transport.send(
+            {
+                "type": "http.response.body",
+                "body": data.encode() if hasattr(data, "encode") else data,
+                "more_body": not end_stream,
+            }
+        )
+
+    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
 
     async def __call__(self) -> None:
         """
         Handle the incoming request.
         """
-        if not self.do_stream:
-            self.request.body = await self.read_body()
-        else:
-            self.sanic_app.loop.create_task(self.stream_body())
-
-        handler = self.sanic_app.handle_request
-        callback = None if self.ws else self.stream_callback
-        await handler(self.request, None, callback)
-
-    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
-
-    async def stream_callback(
-        self, response: Union[HTTPResponse, StreamingHTTPResponse]
-    ) -> None:
-        """
-        Write the response.
-        """
-        headers: List[Tuple[bytes, bytes]] = []
-        cookies: Dict[str, str] = {}
-        content_length: List[str] = []
-        try:
-            content_length = response.headers.popall("content-length", [])
-            cookies = {
-                v.key: v
-                for _, v in list(
-                    filter(
-                        lambda item: item[0].lower() == "set-cookie",
-                        response.headers.items(),
-                    )
-                )
-            }
-            headers += [
-                (str(name).encode("latin-1"), str(value).encode("latin-1"))
-                for name, value in response.headers.items()
-                if name.lower() not in ["set-cookie"]
-            ]
-        except AttributeError:
-            logger.error(
-                "Invalid response object for url %s, "
-                "Expected Type: HTTPResponse, Actual Type: %s",
-                self.request.url,
-                type(response),
-            )
-            exception = ServerError("Invalid response type")
-            response = self.sanic_app.error_handler.response(
-                self.request, exception
-            )
-            headers = [
-                (str(name).encode("latin-1"), str(value).encode("latin-1"))
-                for name, value in response.headers.items()
-                if name not in (b"Set-Cookie",)
-            ]
-
-        response.asgi = True
-        is_streaming = isinstance(response, StreamingHTTPResponse)
-        if is_streaming and getattr(response, "chunked", False):
-            # disable sanic chunking, this is done at the ASGI-server level
-            setattr(response, "chunked", False)
-            # content-length header is removed to signal to the ASGI-server
-            # to use automatic-chunking if it supports it
-        elif len(content_length) > 0:
-            headers += [
-                (b"content-length", str(content_length[0]).encode("latin-1"))
-            ]
-        elif not is_streaming:
-            headers += [
-                (
-                    b"content-length",
-                    str(len(getattr(response, "body", b""))).encode("latin-1"),
-                )
-            ]
-
-        if "content-type" not in response.headers:
-            headers += [
-                (b"content-type", str(response.content_type).encode("latin-1"))
-            ]
-
-        if response.cookies:
-            cookies.update(
-                {
-                    v.key: v
-                    for _, v in response.cookies.items()
-                    if v.key not in cookies.keys()
-                }
-            )
-
-        headers += [
-            (b"set-cookie", cookie.encode("utf-8"))
-            for k, cookie in cookies.items()
-        ]
-
-        await self.transport.send(
-            {
-                "type": "http.response.start",
-                "status": response.status,
-                "headers": headers,
-            }
-        )
-
-        if isinstance(response, StreamingHTTPResponse):
-            response.protocol = self.transport.get_protocol()
-            await response.stream()
-            await response.protocol.complete()
-
-        else:
-            await self.transport.send(
-                {
-                    "type": "http.response.body",
-                    "body": response.body,
-                    "more_body": False,
-                }
-            )
+        await self.sanic_app.handle_request(self.request)

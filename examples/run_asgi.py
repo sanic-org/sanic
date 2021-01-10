@@ -48,14 +48,14 @@ async def handler_file_stream(request):
     )
 
 
-@app.route("/stream", stream=True)
+@app.post("/stream", stream=True)
 async def handler_stream(request):
     while True:
         body = await request.stream.read()
         if body is None:
             break
         body = body.decode("utf-8").replace("1", "A")
-        # await response.write(body)
+        await response.write(body)
     return response.stream(body)
 
 

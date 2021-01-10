@@ -20,6 +20,7 @@ Route = namedtuple(
         "name",
         "uri",
         "endpoint",
+        "ignore_body",
     ],
 )
 Parameter = namedtuple("Parameter", ["name", "cast"])
@@ -135,6 +136,7 @@ class Router:
         handler,
         host=None,
         strict_slashes=False,
+        ignore_body=False,
         version=None,
         name=None,
     ):
@@ -146,6 +148,7 @@ class Router:
         :param handler: request handler function.
             When executed, it should provide a response object.
         :param strict_slashes: strict to trailing slash
+        :param ignore_body: Handler should not read the body, if any
         :param version: current version of the route or blueprint. See
             docs for further details.
         :return: Nothing
@@ -155,7 +158,9 @@ class Router:
             version = re.escape(str(version).strip("/").lstrip("v"))
             uri = "/".join([f"/v{version}", uri.lstrip("/")])
         # add regular version
-        routes.append(self._add(uri, methods, handler, host, name))
+        routes.append(
+            self._add(uri, methods, handler, host, name, ignore_body)
+        )
 
         if strict_slashes:
             return routes
@@ -187,14 +192,20 @@ class Router:
         )
         # add version with trailing slash
         if slash_is_missing:
-            routes.append(self._add(uri + "/", methods, handler, host, name))
+            routes.append(
+                self._add(uri + "/", methods, handler, host, name, ignore_body)
+            )
         # add version without trailing slash
         elif without_slash_is_missing:
-            routes.append(self._add(uri[:-1], methods, handler, host, name))
+            routes.append(
+                self._add(uri[:-1], methods, handler, host, name, ignore_body)
+            )
 
         return routes
 
-    def _add(self, uri, methods, handler, host=None, name=None):
+    def _add(
+        self, uri, methods, handler, host=None, name=None, ignore_body=False
+    ):
         """Add a handler to the route list
 
         :param uri: path to match
@@ -326,6 +337,7 @@ class Router:
                 name=handler_name,
                 uri=uri,
                 endpoint=endpoint,
+                ignore_body=ignore_body,
             )
 
         self.routes_all[uri] = route
@@ -465,7 +477,15 @@ class Router:
         if hasattr(route_handler, "handlers"):
             route_handler = route_handler.handlers[method]
 
-        return route_handler, [], kwargs, route.uri, route.name, route.endpoint
+        return (
+            route_handler,
+            [],
+            kwargs,
+            route.uri,
+            route.name,
+            route.endpoint,
+            route.ignore_body,
+        )
 
     def is_stream_handler(self, request):
         """Handler for request is stream or not.

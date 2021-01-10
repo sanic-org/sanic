@@ -891,22 +891,30 @@ class Sanic:
         pass
 
     async def handle_exception(self, request, exception):
-        try:
-            response = self.error_handler.response(request, exception)
-            if isawaitable(response):
-                response = await response
-        except Exception as e:
-            if isinstance(e, SanicException):
-                response = self.error_handler.default(request, e)
-            elif self.debug:
-                response = HTTPResponse(
-                    f"Error while handling error: {e}\nStack: {format_exc()}",
-                    status=500,
-                )
-            else:
-                response = HTTPResponse(
-                    "An error occurred while handling an error", status=500
-                )
+        # -------------------------------------------- #
+        # Request Middleware
+        # -------------------------------------------- #
+        response = await self._run_request_middleware(
+            request, request_name=None
+        )
+        # No middleware results
+        if not response:
+            try:
+                response = self.error_handler.response(request, exception)
+                if isawaitable(response):
+                    response = await response
+            except Exception as e:
+                if isinstance(e, SanicException):
+                    response = self.error_handler.default(request, e)
+                elif self.debug:
+                    response = HTTPResponse(
+                        f"Error while handling error: {e}\nStack: {format_exc()}",
+                        status=500,
+                    )
+                else:
+                    response = HTTPResponse(
+                        "An error occurred while handling an error", status=500
+                    )
         if response is not None:
             try:
                 response = await request.respond(response)

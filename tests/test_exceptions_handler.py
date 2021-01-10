@@ -17,6 +17,10 @@ async def sample_streaming_fn(response):
     await response.write("bar")
 
 
+class ErrorWithRequestCtx(ServerError):
+    pass
+
+
 @exception_handler_app.route("/1")
 def handler_1(request):
     raise InvalidUsage("OK")
@@ -60,7 +64,18 @@ def handler_7(request):
     raise Forbidden("go away!")
 
 
-@exception_handler_app.exception(NotFound, ServerError)
+@exception_handler_app.route("/8")
+def handler_8(request):
+
+    raise ErrorWithRequestCtx("OK")
+
+
+@exception_handler_app.exception(ErrorWithRequestCtx, NotFound)
+def handler_exception_with_ctx(request, exception):
+    return text(request.ctx.middleware_ran)
+
+
+@exception_handler_app.exception(ServerError)
 def handler_exception(request, exception):
     return text("OK")
 
@@ -71,6 +86,11 @@ async def async_handler_exception(request, exception):
         sample_streaming_fn,
         content_type="text/csv",
     )
+
+
+@exception_handler_app.middleware
+async def some_request_middleware(request):
+    request.ctx.middleware_ran = "Done."
 
 
 def test_invalid_usage_exception_handler():
@@ -92,7 +112,7 @@ def test_not_found_exception_handler():
 def test_text_exception__handler():
     request, response = exception_handler_app.test_client.get("/random")
     assert response.status == 200
-    assert response.text == "OK"
+    assert response.text == "Done."
 
 
 def test_async_exception_handler():
@@ -183,3 +203,9 @@ def test_exception_handler_lookup():
     assert handler.lookup(CustomError()) == custom_error_handler
     assert handler.lookup(ServerError("Error")) == server_error_handler
     assert handler.lookup(CustomServerError("Error")) == server_error_handler
+
+
+def test_exception_handler_processed_request_middleware():
+    request, response = exception_handler_app.test_client.get("/8")
+    assert response.status == 200
+    assert response.text == "Done."

@@ -2,6 +2,7 @@ from functools import partial
 from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
+from warnings import warn
 
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
@@ -83,6 +84,12 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         content_type="text/plain; charset=utf-8",
         chunked="deprecated",
     ):
+        if chunked != "deprecated":
+            warn(
+                "The chunked argument has been deprecated and will be "
+                "removed in v21.6"
+            )
+
         super().__init__()
 
         self.content_type = content_type
@@ -173,15 +180,7 @@ def text(
         raise TypeError(
             f"Bad body type. Expected str, got {type(body).__name__})"
         )
-    # Type conversions are deprecated and quite b0rked but still supported for
-    # text() until applications get fixed. This try-except should be removed.
-    try:
-        # Avoid repr(body).encode() b0rkage for body that is already encoded.
-        # memoryview used only to test bytes-ishness.
-        with memoryview(body):
-            pass
-    except TypeError:
-        body = f"{body}"  # no-op if body is already str
+
     return HTTPResponse(
         body, status=status, headers=headers, content_type=content_type
     )
@@ -286,9 +285,15 @@ async def file_stream(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
-    :param chunked: Enable or disable chunked transfer-encoding
+    :param chunked: Deprecated
     :param _range:
     """
+    if chunked != "deprecated":
+        warn(
+            "The chunked argument has been deprecated and will be "
+            "removed in v21.6"
+        )
+
     headers = headers or {}
     if filename:
         headers.setdefault(
@@ -354,8 +359,14 @@ def stream(
         writes content to that response.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
-    :param chunked: Enable or disable chunked transfer-encoding
+    :param chunked: Deprecated
     """
+    if chunked != "deprecated":
+        warn(
+            "The chunked argument has been deprecated and will be "
+            "removed in v21.6"
+        )
+
     return StreamingHTTPResponse(
         streaming_fn,
         headers=headers,

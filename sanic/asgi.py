@@ -8,7 +8,7 @@ from urllib.parse import quote
 import sanic.app  # noqa
 
 from sanic.compat import Header
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import InvalidUsage, ServerError
 from sanic.request import Request
 from sanic.server import ConnInfo
 from sanic.websocket import WebSocketConnection
@@ -228,9 +228,7 @@ class ASGIApp:
                 )
                 await instance.ws.accept()
             else:
-                pass
-                # TODO:
-                # - close connection
+                raise ServerError("Received unknown ASGI scope")
 
             request_class = sanic_app.request_class or Request
             instance.request = request_class(
@@ -242,7 +240,7 @@ class ASGIApp:
                 sanic_app,
             )
             instance.request.stream = instance
-            instance.request_body = True  # FIXME: Use more_body?
+            instance.request_body = True
             instance.request.conn_info = ConnInfo(instance.transport)
 
         return instance

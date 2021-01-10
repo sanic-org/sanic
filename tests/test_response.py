@@ -241,7 +241,12 @@ async def test_chunked_streaming_returns_correct_content_asgi(streaming_app):
 
 
 def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
-    request, response = non_chunked_streaming_app.test_client.get("/")
+    with pytest.warns(UserWarning) as record:
+        request, response = non_chunked_streaming_app.test_client.get("/")
+
+    assert len(record) == 1
+    assert "removed in v21.6" in record[0].message.args[0]
+
     assert "Transfer-Encoding" not in response.headers
     assert response.headers["Content-Type"] == "text/csv"
     assert response.headers["Content-Length"] == "7"

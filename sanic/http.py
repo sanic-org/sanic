@@ -78,12 +78,16 @@ class Http:
                 # Receive and handle a request
                 self.stage = Stage.REQUEST
                 self.response_func = self.http1_response_header
+
                 await self.http1_request_header()
+
                 self.request.conn_info = self.protocol.conn_info
                 await self.protocol.request_handler(self.request)
+
                 # Handler finished, response should've been sent
                 if self.stage is Stage.HANDLER and not self.upgrade_websocket:
                     raise ServerError("Handler produced no response")
+
                 if self.stage is Stage.RESPONSE:
                     await self.response.send(end_stream=True)
             except CancelledError:
@@ -95,10 +99,12 @@ class Http:
             except Exception as e:
                 # Write an error response
                 await self.error_response(e)
+
             # Try to consume any remaining request body
             if self.request_body:
                 if self.response and 200 <= self.response.status < 300:
                     logger.error(f"{self.request} body not consumed.")
+
                 try:
                     async for _ in self:
                         pass
@@ -109,9 +115,11 @@ class Http:
                     # socket, so that they are then able to read the response.
                     await sleep(0.001)
                     self.keep_alive = False
+
             # Exit and disconnect if no more requests can be taken
             if self.stage is not Stage.IDLE or not self.keep_alive:
                 break
+
             # Wait for next request
             if not self.recv_buffer:
                 await self._receive_more()
@@ -122,42 +130,53 @@ class Http:
         # Receive until full header is in buffer
         buf = self.recv_buffer
         pos = 0
+
         while True:
             pos = buf.find(b"\r\n\r\n", pos)
             if pos != -1:
                 break
+
             pos = max(0, len(buf) - 3)
             if pos >= HEADER_MAX_SIZE:
                 break
+
             await self._receive_more()
+
         if pos >= HEADER_MAX_SIZE:
             raise PayloadTooLarge("Request header exceeds the size limit")
+
         # Parse header content
         try:
             raw_headers = buf[:pos].decode(errors="surrogateescape")
             reqline, *raw_headers = raw_headers.split("\r\n")
             method, self.url, protocol = reqline.split(" ")
+
             if protocol == "HTTP/1.1":
                 self.keep_alive = True
             elif protocol == "HTTP/1.0":
                 self.keep_alive = False
             else:
                 raise Exception  # Raise a Bad Request on try-except
+
             self.head_only = method.upper() == "HEAD"
             request_body = False
             headers = []
+
             for name, value in (h.split(":", 1) for h in raw_headers):
                 name, value = h = name.lower(), value.lstrip()
+
                 if name in ("content-length", "transfer-encoding"):
                     request_body = True
                 elif name == "connection":
                     self.keep_alive = value.lower() == "keep-alive"
+
                 headers.append(h)
         except Exception:
             raise InvalidUsage("Bad Request")
 
         headers_instance = Header(headers)
         self.upgrade_websocket = headers_instance.get("upgrade") == "websocket"
+
         # Prepare a Request object
         request = self.protocol.request_class(
             url_bytes=self.url.encode(),
@@ -167,16 +186,19 @@ class Http:
             transport=self.protocol.transport,
             app=self.protocol.app,
         )
+
         # Prepare for request body
         self.request_bytes_left = self.request_bytes = 0
         if request_body:
             headers = request.headers
             expect = headers.get("expect")
+
             if expect is not None:
                 if expect.lower() == "100-continue":
                     self.expecting_continue = True
                 else:
                     raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
+
             if headers.get("transfer-encoding") == "chunked":
                 self.request_body = "chunked"
                 pos -= 2  # One CRLF stays in buffer
@@ -185,6 +207,7 @@ class Http:
                 self.request_bytes_left = self.request_bytes = int(
                     headers["content-length"]
                 )
+
         # Remove header and its trailing CRLF
         del buf[: pos + 4]
         self.stage = Stage.HANDLER
@@ -193,14 +216,18 @@ class Http:
 
     async def http1_response_header(self, data, end_stream):
         res = self.response
+
         # Compatibility with simple response body
         if not data and getattr(res, "body", None):
             data, end_stream = res.body, True
+
         size = len(data)
         headers = res.headers
         status = res.status
+
         if not isinstance(status, int) or status < 200:
             raise RuntimeError(f"Invalid response status {status!r}")
+
         if not has_message_body(status):
             # Header-only response status
             self.response_func = None
@@ -232,22 +259,27 @@ class Http:
             headers["transfer-encoding"] = "chunked"
             data = b"%x\r\n%b\r\n" % (size, data) if size else None
             self.response_func = self.http1_response_chunked
+
         if self.head_only:
             # Head request: don't send body
             data = b""
             self.response_func = self.head_response_ignored
+
         headers["connection"] = "keep-alive" if self.keep_alive else "close"
         ret = format_http1_response(status, res.processed_headers)
         if data:
             ret += data
+
         # Send a 100-continue if expected and not Expectation Failed
         if self.expecting_continue:
             self.expecting_continue = False
             if status != 417:
                 ret = HTTP_CONTINUE + ret
+
         # Send response
         if self.protocol.access_log:
             self.log_response()
+
         await self._send(ret)
         self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
 
@@ -278,12 +310,14 @@ class Http:
         if bytes_left <= 0:
             if bytes_left < 0:
                 raise ServerError("Response was bigger than content-length")
+
             await self._send(data)
             self.response_func = None
             self.stage = Stage.IDLE
         else:
             if end_stream:
                 raise ServerError("Response was smaller than content-length")
+
             await self._send(data)
         self.response_bytes_left = bytes_left
 
@@ -291,14 +325,18 @@ class Http:
         # Disconnect after an error if in any other state than handler
         if self.stage is not Stage.HANDLER:
             self.keep_alive = False
+
         # Request failure? Respond but then disconnect
         if self.stage is Stage.REQUEST:
             self.stage = Stage.HANDLER
+
         # From request and handler states we can respond, otherwise be silent
         if self.stage is Stage.HANDLER:
             app = self.protocol.app
+
             if self.request is None:
                 self.create_empty_request()
+
             await app.handle_exception(self.request, exception)
 
     def create_empty_request(self):
@@ -347,6 +385,7 @@ class Http:
         """Async iterate over request body."""
         while self.request_body:
             data = await self.read()
+
             if data:
                 yield data
 
@@ -356,47 +395,64 @@ class Http:
         if self.expecting_continue:
             self.expecting_continue = False
             await self._send(HTTP_CONTINUE)
+
         # Receive request body chunk
         buf = self.recv_buffer
         if self.request_bytes_left == 0 and self.request_body == "chunked":
             # Process a chunk header: \r\n<size>[;<chunk extensions>]\r\n
             while True:
                 pos = buf.find(b"\r\n", 3)
+
                 if pos != -1:
                     break
+
                 if len(buf) > 64:
                     self.keep_alive = False
                     raise InvalidUsage("Bad chunked encoding")
+
                 await self._receive_more()
+
             try:
                 size = int(buf[2:pos].split(b";", 1)[0].decode(), 16)
             except Exception:
                 self.keep_alive = False
                 raise InvalidUsage("Bad chunked encoding")
+
             del buf[: pos + 2]
+
             if size <= 0:
                 self.request_body = None
+
                 if size < 0:
                     self.keep_alive = False
                     raise InvalidUsage("Bad chunked encoding")
+
                 return None
+
             self.request_bytes_left = size
             self.request_bytes += size
+
         # Request size limit
         if self.request_bytes > self.request_max_size:
             self.keep_alive = False
             raise PayloadTooLarge("Request body exceeds the size limit")
+
         # End of request body?
         if not self.request_bytes_left:
             self.request_body = None
             return
+
         # At this point we are good to read/return up to request_bytes_left
         if not buf:
             await self._receive_more()
+
         data = bytes(buf[: self.request_bytes_left])
         size = len(data)
+
         del buf[:size]
+
         self.request_bytes_left -= size
+
         return data
 
     # Response methods
@@ -410,6 +466,7 @@ class Http:
         if self.stage is not Stage.HANDLER:
             self.stage = Stage.FAILED
             raise RuntimeError("Response already started")
+
         self.response, response.stream = response, self
         return response
 

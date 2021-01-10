@@ -1,4 +1,3 @@
-import asyncio
 import email.utils
 
 from collections import defaultdict, namedtuple

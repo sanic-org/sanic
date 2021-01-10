@@ -908,7 +908,10 @@ class Sanic:
                     response = self.error_handler.default(request, e)
                 elif self.debug:
                     response = HTTPResponse(
-                        f"Error while handling error: {e}\nStack: {format_exc()}",
+                        (
+                            f"Error while handling error: {e}\n"
+                            f"Stack: {format_exc()}"
+                        ),
                         status=500,
                     )
                 else:

@@ -166,7 +166,7 @@ def test_json_response(json_app):
 
     request, response = json_app.test_client.get("/")
     assert response.status == 200
-    assert response.text == json_dumps(JSON_DATA)
+    assert response.text == json_dumps(JSON_DATA).decode()
     assert response.json == JSON_DATA
 
 

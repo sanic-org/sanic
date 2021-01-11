@@ -19,21 +19,34 @@ def handler_text(request):
     return response.text("Hello")
 
 
+@app.route("/cookie")
+def handler_cookie(request):
+    resp = response.text("Hello")
+
+    resp.cookies["my-cookie"] = "foo"
+    resp.cookies["my-cookie"]["max-age"] = 10.0  # max-age is set to 10
+    # resp.cookies["my-cookie"]["max-age"] = 10.5  # raise ValueError
+    # resp.cookies["my-cookie"]["max-age"] = "ten"  # raise ValueError
+    # resp.cookies["my-cookie"]["max-age"] = "10"  # max-age is set to 10
+    # resp.cookies["my-cookie"]["max-age"] = 10  # max-age is set to 10
+    return resp
+
+
 @app.route("/json")
 def handler_json(request):
     return response.json({"foo": "bar"})
 
 
-@app.websocket("/ws")
-async def handler_ws(request, ws):
-    name = "<someone>"
-    while True:
-        data = f"Hello {name}"
-        await ws.send(data)
-        name = await ws.recv()
+# @app.websocket("/ws")
+# async def handler_ws(request, ws):
+#     name = "<someone>"
+#     while True:
+#         data = f"Hello {name}"
+#         await ws.send(data)
+#         name = await ws.recv()
 
-        if not name:
-            break
+#         if not name:
+#             break
 
 
 @app.route("/file")

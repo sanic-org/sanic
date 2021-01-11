@@ -2,7 +2,6 @@ import re
 import string
 
 from datetime import datetime
-from multiprocessing import Value
 
 
 DEFAULT_MAX_AGE = 0

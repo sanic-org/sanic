@@ -1,6 +1,12 @@
+from unittest.mock import Mock
+
 import pytest
 
-from sanic import headers
+from sanic import Sanic, headers
+from sanic.compat import Header
+from sanic.exceptions import PayloadTooLarge
+from sanic.http import Http
+from sanic.request import Request
 
 
 @pytest.mark.parametrize(
@@ -61,3 +67,21 @@ from sanic import headers
 )
 def test_parse_headers(input, expected):
     assert headers.parse_content_header(input) == expected
+
+
+@pytest.mark.asyncio
+async def test_header_size_exceeded():
+    recv_buffer = bytearray()
+
+    async def _receive_more():
+        nonlocal recv_buffer
+        recv_buffer += b"123"
+
+    protocol = Mock()
+    http = Http(protocol)
+    http._receive_more = _receive_more
+    http.request_max_size = 1
+    http.recv_buffer = recv_buffer
+
+    with pytest.raises(PayloadTooLarge):
+        await http.http1_request_header()

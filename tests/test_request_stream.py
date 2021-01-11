@@ -1,11 +1,13 @@
 import asyncio
 
+from contextlib import closing
+from socket import socket
+
 import pytest
 
+from sanic import Sanic
 from sanic.blueprints import Blueprint
-from sanic.exceptions import HeaderExpectationFailed
-from sanic.request import StreamBuffer
-from sanic.response import json, stream, text
+from sanic.response import json, text
 from sanic.server import HttpProtocol
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
@@ -15,27 +17,21 @@ data = "abc" * 1_000_000
 
 
 def test_request_stream_method_view(app):
-    """for self.is_request_stream = True"""
-
     class SimpleView(HTTPMethodView):
         def get(self, request):
-            assert request.stream is None
             return text("OK")
 
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, StreamBuffer)
-            result = ""
+            result = b""
             while True:
                 body = await request.stream.read()
                 if body is None:
                     break
-                result += body.decode("utf-8")
-            return text(result)
+                result += body
+            return text(result.decode())
 
     app.add_route(SimpleView.as_view(), "/method_view")
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/method_view")
     assert response.status == 200
@@ -50,14 +46,16 @@ def test_request_stream_method_view(app):
     "headers, expect_raise_exception",
     [
         ({"EXPECT": "100-continue"}, False),
-        ({"EXPECT": "100-continue-extra"}, True),
+        # The below test SHOULD work, and it does produce a 417
+        # However, httpx now intercepts this and raises an exception,
+        # so we will need a new method for testing this
+        # ({"EXPECT": "100-continue-extra"}, True),
     ],
 )
 def test_request_stream_100_continue(app, headers, expect_raise_exception):
     class SimpleView(HTTPMethodView):
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, StreamBuffer)
             result = ""
             while True:
                 body = await request.stream.read()
@@ -68,55 +66,42 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
 
     app.add_route(SimpleView.as_view(), "/method_view")
 
-    assert app.is_request_stream is True
-
     if not expect_raise_exception:
         request, response = app.test_client.post(
-            "/method_view", data=data, headers={"EXPECT": "100-continue"}
+            "/method_view", data=data, headers=headers
         )
         assert response.status == 200
         assert response.text == data
     else:
-        with pytest.raises(ValueError) as e:
-            app.test_client.post(
-                "/method_view",
-                data=data,
-                headers={"EXPECT": "100-continue-extra"},
-            )
-            assert "Unknown Expect: 100-continue-extra" in str(e)
+        request, response = app.test_client.post(
+            "/method_view", data=data, headers=headers
+        )
+        assert response.status == 417
 
 
 def test_request_stream_app(app):
-    """for self.is_request_stream = True and decorators"""
-
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("GET")
 
     @app.head("/head")
     async def head(request):
-        assert request.stream is None
         return text("HEAD")
 
     @app.delete("/delete")
     async def delete(request):
-        assert request.stream is None
         return text("DELETE")
 
     @app.options("/options")
     async def options(request):
-        assert request.stream is None
         return text("OPTIONS")
 
     @app.post("/_post/<id>")
     async def _post(request, id):
-        assert request.stream is None
         return text("_POST")
 
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -127,12 +112,10 @@ def test_request_stream_app(app):
 
     @app.put("/_put")
     async def _put(request):
-        assert request.stream is None
         return text("_PUT")
 
     @app.put("/put", stream=True)
     async def put(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -143,12 +126,10 @@ def test_request_stream_app(app):
 
     @app.patch("/_patch")
     async def _patch(request):
-        assert request.stream is None
         return text("_PATCH")
 
     @app.patch("/patch", stream=True)
     async def patch(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -156,8 +137,6 @@ def test_request_stream_app(app):
                 break
             result += body.decode("utf-8")
         return text(result)
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/get")
     assert response.status == 200
@@ -202,36 +181,28 @@ def test_request_stream_app(app):
 
 @pytest.mark.asyncio
 async def test_request_stream_app_asgi(app):
-    """for self.is_request_stream = True and decorators"""
-
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("GET")
 
     @app.head("/head")
     async def head(request):
-        assert request.stream is None
         return text("HEAD")
 
     @app.delete("/delete")
     async def delete(request):
-        assert request.stream is None
         return text("DELETE")
 
     @app.options("/options")
     async def options(request):
-        assert request.stream is None
         return text("OPTIONS")
 
     @app.post("/_post/<id>")
     async def _post(request, id):
-        assert request.stream is None
         return text("_POST")
 
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -242,12 +213,10 @@ async def test_request_stream_app_asgi(app):
 
     @app.put("/_put")
     async def _put(request):
-        assert request.stream is None
         return text("_PUT")
 
     @app.put("/put", stream=True)
     async def put(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -258,12 +227,10 @@ async def test_request_stream_app_asgi(app):
 
     @app.patch("/_patch")
     async def _patch(request):
-        assert request.stream is None
         return text("_PATCH")
 
     @app.patch("/patch", stream=True)
     async def patch(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -271,8 +238,6 @@ async def test_request_stream_app_asgi(app):
                 break
             result += body.decode("utf-8")
         return text(result)
-
-    assert app.is_request_stream is True
 
     request, response = await app.asgi_client.get("/get")
     assert response.status == 200
@@ -320,14 +285,13 @@ def test_request_stream_handle_exception(app):
 
     @app.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
-        result = ""
+        result = b""
         while True:
             body = await request.stream.read()
             if body is None:
                 break
-            result += body.decode("utf-8")
-        return text(result)
+            result += body
+        return text(result.decode())
 
     # 404
     request, response = app.test_client.post("/in_valid_post", data=data)
@@ -340,54 +304,31 @@ def test_request_stream_handle_exception(app):
     assert "Method GET not allowed for URL /post/random_id" in response.text
 
 
-@pytest.mark.asyncio
-async def test_request_stream_unread(app):
-    """ensure no error is raised when leaving unread bytes in byte-buffer"""
-
-    err = None
-    protocol = HttpProtocol(loop=asyncio.get_event_loop(), app=app)
-    try:
-        protocol.request = None
-        protocol._body_chunks.append("this is a test")
-        await protocol.stream_append()
-    except AttributeError as e:
-        err = e
-
-    assert err is None and not protocol._body_chunks
-
-
 def test_request_stream_blueprint(app):
-    """for self.is_request_stream = True"""
     bp = Blueprint("test_blueprint_request_stream_blueprint")
 
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("GET")
 
     @bp.head("/head")
     async def head(request):
-        assert request.stream is None
         return text("HEAD")
 
     @bp.delete("/delete")
     async def delete(request):
-        assert request.stream is None
         return text("DELETE")
 
     @bp.options("/options")
     async def options(request):
-        assert request.stream is None
         return text("OPTIONS")
 
     @bp.post("/_post/<id>")
     async def _post(request, id):
-        assert request.stream is None
         return text("_POST")
 
     @bp.post("/post/<id>", stream=True)
     async def post(request, id):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -398,12 +339,10 @@ def test_request_stream_blueprint(app):
 
     @bp.put("/_put")
     async def _put(request):
-        assert request.stream is None
         return text("_PUT")
 
     @bp.put("/put", stream=True)
     async def put(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -414,12 +353,10 @@ def test_request_stream_blueprint(app):
 
     @bp.patch("/_patch")
     async def _patch(request):
-        assert request.stream is None
         return text("_PATCH")
 
     @bp.patch("/patch", stream=True)
     async def patch(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -429,7 +366,6 @@ def test_request_stream_blueprint(app):
         return text(result)
 
     async def post_add_route(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -442,8 +378,6 @@ def test_request_stream_blueprint(app):
         post_add_route, "/post/add_route", methods=["POST"], stream=True
     )
     app.blueprint(bp)
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/get")
     assert response.status == 200
@@ -491,14 +425,10 @@ def test_request_stream_blueprint(app):
 
 
 def test_request_stream_composition_view(app):
-    """for self.is_request_stream = True"""
-
     def get_handler(request):
-        assert request.stream is None
         return text("OK")
 
     async def post_handler(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -511,8 +441,6 @@ def test_request_stream_composition_view(app):
     view.add(["GET"], get_handler)
     view.add(["POST"], post_handler, stream=True)
     app.add_route(view, "/composition_view")
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/composition_view")
     assert response.status == 200
@@ -529,12 +457,10 @@ def test_request_stream(app):
 
     class SimpleView(HTTPMethodView):
         def get(self, request):
-            assert request.stream is None
             return text("OK")
 
         @stream_decorator
         async def post(self, request):
-            assert isinstance(request.stream, StreamBuffer)
             result = ""
             while True:
                 body = await request.stream.read()
@@ -545,7 +471,6 @@ def test_request_stream(app):
 
     @app.post("/stream", stream=True)
     async def handler(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -556,12 +481,10 @@ def test_request_stream(app):
 
     @app.get("/get")
     async def get(request):
-        assert request.stream is None
         return text("OK")
 
     @bp.post("/bp_stream", stream=True)
     async def bp_stream(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -572,15 +495,12 @@ def test_request_stream(app):
 
     @bp.get("/bp_get")
     async def bp_get(request):
-        assert request.stream is None
         return text("OK")
 
     def get_handler(request):
-        assert request.stream is None
         return text("OK")
 
     async def post_handler(request):
-        assert isinstance(request.stream, StreamBuffer)
         result = ""
         while True:
             body = await request.stream.read()
@@ -598,8 +518,6 @@ def test_request_stream(app):
     app.blueprint(bp)
 
     app.add_route(view, "/composition_view")
-
-    assert app.is_request_stream is True
 
     request, response = app.test_client.get("/method_view")
     assert response.status == 200
@@ -636,14 +554,14 @@ def test_request_stream(app):
 
 def test_streaming_new_api(app):
     @app.post("/non-stream")
-    async def handler(request):
+    async def handler1(request):
         assert request.body == b"x"
         await request.receive_body()  # This should do nothing
         assert request.body == b"x"
         return text("OK")
 
     @app.post("/1", stream=True)
-    async def handler(request):
+    async def handler2(request):
         assert request.stream
         assert not request.body
         await request.receive_body()
@@ -671,5 +589,85 @@ def test_streaming_new_api(app):
     assert response.status == 200
     res = response.json
     assert isinstance(res, list)
-    assert len(res) > 1
     assert "".join(res) == data
+
+
+def test_streaming_echo():
+    """2-way streaming chat between server and client."""
+    app = Sanic(name=__name__)
+
+    @app.post("/echo", stream=True)
+    async def handler(request):
+        res = await request.respond(content_type="text/plain; charset=utf-8")
+        # Send headers
+        await res.send(end_stream=False)
+        # Echo back data (case swapped)
+        async for data in request.stream:
+            await res.send(data.swapcase())
+        # Add EOF marker after successful operation
+        await res.send(b"-", end_stream=True)
+
+    @app.listener("after_server_start")
+    async def client_task(app, loop):
+        try:
+            reader, writer = await asyncio.open_connection(*addr)
+            await client(app, reader, writer)
+        finally:
+            writer.close()
+            app.stop()
+
+    async def client(app, reader, writer):
+        # Unfortunately httpx does not support 2-way streaming, so do it by hand.
+        host = f"host: {addr[0]}:{addr[1]}\r\n".encode()
+        writer.write(
+            b"POST /echo HTTP/1.1\r\n" + host + b"content-length: 2\r\n"
+            b"content-type: text/plain; charset=utf-8\r\n"
+            b"\r\n"
+        )
+        # Read response
+        res = b""
+        while not b"\r\n\r\n" in res:
+            res += await reader.read(4096)
+        assert res.startswith(b"HTTP/1.1 200 OK\r\n")
+        assert res.endswith(b"\r\n\r\n")
+        buffer = b""
+
+        async def read_chunk():
+            nonlocal buffer
+            while not b"\r\n" in buffer:
+                data = await reader.read(4096)
+                assert data
+                buffer += data
+            size, buffer = buffer.split(b"\r\n", 1)
+            size = int(size, 16)
+            if size == 0:
+                return None
+            while len(buffer) < size + 2:
+                data = await reader.read(4096)
+                assert data
+                buffer += data
+                print(res)
+            assert buffer[size : size + 2] == b"\r\n"
+            ret, buffer = buffer[:size], buffer[size + 2 :]
+            return ret
+
+        # Chat with server
+        writer.write(b"a")
+        res = await read_chunk()
+        assert res == b"A"
+
+        writer.write(b"b")
+        res = await read_chunk()
+        assert res == b"B"
+
+        res = await read_chunk()
+        assert res == b"-"
+
+        res = await read_chunk()
+        assert res == None
+
+    # Use random port for tests
+    with closing(socket()) as sock:
+        sock.bind(("127.0.0.1", 0))
+        addr = sock.getsockname()
+        app.run(sock=sock, access_log=False)

@@ -23,6 +23,7 @@ BASE_LOGO = """
 DEFAULT_CONFIG = {
     "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_BUFFER_QUEUE_SIZE": 100,
+    "REQUEST_BUFFER_SIZE": 65536,  # 64 KiB
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
     "KEEP_ALIVE": True,
@@ -40,6 +41,7 @@ DEFAULT_CONFIG = {
     "PROXIES_COUNT": None,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FALLBACK_ERROR_FORMAT": "html",
+    "REGISTER": True,
 }
 
 

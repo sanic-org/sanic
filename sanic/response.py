@@ -2,10 +2,10 @@ from functools import partial
 from mimetypes import guess_type
 from os import path
 from urllib.parse import quote_plus
+from warnings import warn
 
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
-from sanic.headers import format_http1, format_http1_response
 from sanic.helpers import has_message_body, remove_entity_headers
 
 
@@ -28,50 +28,51 @@ class BaseHTTPResponse:
             return b""
         return data.encode() if hasattr(data, "encode") else data
 
-    def _parse_headers(self):
-        return format_http1(self.headers.items())
-
     @property
     def cookies(self):
         if self._cookies is None:
             self._cookies = CookieJar(self.headers)
         return self._cookies
 
-    def get_headers(
-        self,
-        version="1.1",
-        keep_alive=False,
-        keep_alive_timeout=None,
-        body=b"",
-    ):
-        """.. deprecated:: 20.3:
-        This function is not public API and will be removed in 21.3."""
+    @property
+    def processed_headers(self):
+        """Obtain a list of header tuples encoded in bytes for sending.
 
-        # self.headers get priority over content_type
-        if self.content_type and "Content-Type" not in self.headers:
-            self.headers["Content-Type"] = self.content_type
-
-        if keep_alive:
-            self.headers["Connection"] = "keep-alive"
-            if keep_alive_timeout is not None:
-                self.headers["Keep-Alive"] = keep_alive_timeout
-        else:
-            self.headers["Connection"] = "close"
-
-        if self.status in (304, 412):
+        Add and remove headers based on status and content_type.
+        """
+        # TODO: Make a blacklist set of header names and then filter with that
+        if self.status in (304, 412):  # Not Modified, Precondition Failed
             self.headers = remove_entity_headers(self.headers)
+        if has_message_body(self.status):
+            self.headers.setdefault("content-type", self.content_type)
+        # Encode headers into bytes
+        return (
+            (name.encode("ascii"), f"{value}".encode(errors="surrogateescape"))
+            for name, value in self.headers.items()
+        )
 
-        return format_http1_response(self.status, self.headers.items(), body)
+    async def send(self, data=None, end_stream=None):
+        """Send any pending response headers and the given data as body.
+        :param data: str or bytes to be written
+        :end_stream: whether to close the stream after this block
+        """
+        if data is None and end_stream is None:
+            end_stream = True
+        if end_stream and not data and self.stream.send is None:
+            return
+        data = data.encode() if hasattr(data, "encode") else data or b""
+        await self.stream.send(data, end_stream=end_stream)
 
 
 class StreamingHTTPResponse(BaseHTTPResponse):
+    """Old style streaming response. Use `request.respond()` instead of this in
+    new code to avoid the callback."""
+
     __slots__ = (
-        "protocol",
         "streaming_fn",
         "status",
         "content_type",
         "headers",
-        "chunked",
         "_cookies",
     )
 
@@ -81,63 +82,34 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         status=200,
         headers=None,
         content_type="text/plain; charset=utf-8",
-        chunked=True,
+        chunked="deprecated",
     ):
+        if chunked != "deprecated":
+            warn(
+                "The chunked argument has been deprecated and will be "
+                "removed in v21.6"
+            )
+
         super().__init__()
 
         self.content_type = content_type
         self.streaming_fn = streaming_fn
         self.status = status
         self.headers = Header(headers or {})
-        self.chunked = chunked
         self._cookies = None
-        self.protocol = None
 
     async def write(self, data):
         """Writes a chunk of data to the streaming response.
 
         :param data: str or bytes-ish data to be written.
         """
-        data = self._encode_body(data)
+        await super().send(self._encode_body(data))
 
-        # `chunked` will always be False in ASGI-mode, even if the underlying
-        # ASGI Transport implements Chunked transport. That does it itself.
-        if self.chunked:
-            await self.protocol.push_data(b"%x\r\n%b\r\n" % (len(data), data))
-        else:
-            await self.protocol.push_data(data)
-        await self.protocol.drain()
-
-    async def stream(
-        self, version="1.1", keep_alive=False, keep_alive_timeout=None
-    ):
-        """Streams headers, runs the `streaming_fn` callback that writes
-        content to the response body, then finalizes the response body.
-        """
-        if version != "1.1":
-            self.chunked = False
-        if not getattr(self, "asgi", False):
-            headers = self.get_headers(
-                version,
-                keep_alive=keep_alive,
-                keep_alive_timeout=keep_alive_timeout,
-            )
-            await self.protocol.push_data(headers)
-            await self.protocol.drain()
-        await self.streaming_fn(self)
-        if self.chunked:
-            await self.protocol.push_data(b"0\r\n\r\n")
-        # no need to await drain here after this write, because it is the
-        # very last thing we write and nothing needs to wait for it.
-
-    def get_headers(
-        self, version="1.1", keep_alive=False, keep_alive_timeout=None
-    ):
-        if self.chunked and version == "1.1":
-            self.headers["Transfer-Encoding"] = "chunked"
-            self.headers.pop("Content-Length", None)
-
-        return super().get_headers(version, keep_alive, keep_alive_timeout)
+    async def send(self, *args, **kwargs):
+        if self.streaming_fn is not None:
+            await self.streaming_fn(self)
+            self.streaming_fn = None
+        await super().send(*args, **kwargs)
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -157,22 +129,6 @@ class HTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
-
-    def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
-        body = b""
-        if has_message_body(self.status):
-            body = self.body
-            self.headers["Content-Length"] = self.headers.get(
-                "Content-Length", len(self.body)
-            )
-
-        return self.get_headers(version, keep_alive, keep_alive_timeout, body)
-
-    @property
-    def cookies(self):
-        if self._cookies is None:
-            self._cookies = CookieJar(self.headers)
-        return self._cookies
 
 
 def empty(status=204, headers=None):
@@ -319,7 +275,7 @@ async def file_stream(
     mime_type=None,
     headers=None,
     filename=None,
-    chunked=True,
+    chunked="deprecated",
     _range=None,
 ):
     """Return a streaming response object with file data.
@@ -329,9 +285,15 @@ async def file_stream(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
-    :param chunked: Enable or disable chunked transfer-encoding
+    :param chunked: Deprecated
     :param _range:
     """
+    if chunked != "deprecated":
+        warn(
+            "The chunked argument has been deprecated and will be "
+            "removed in v21.6"
+        )
+
     headers = headers or {}
     if filename:
         headers.setdefault(
@@ -370,7 +332,6 @@ async def file_stream(
         status=status,
         headers=headers,
         content_type=mime_type,
-        chunked=chunked,
     )
 
 
@@ -379,7 +340,7 @@ def stream(
     status=200,
     headers=None,
     content_type="text/plain; charset=utf-8",
-    chunked=True,
+    chunked="deprecated",
 ):
     """Accepts an coroutine `streaming_fn` which can be used to
     write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
@@ -398,14 +359,19 @@ def stream(
         writes content to that response.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
-    :param chunked: Enable or disable chunked transfer-encoding
+    :param chunked: Deprecated
     """
+    if chunked != "deprecated":
+        warn(
+            "The chunked argument has been deprecated and will be "
+            "removed in v21.6"
+        )
+
     return StreamingHTTPResponse(
         streaming_fn,
         headers=headers,
         content_type=content_type,
         status=status,
-        chunked=chunked,
     )
 
 

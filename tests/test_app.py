@@ -3,6 +3,7 @@ import logging
 import sys
 
 from inspect import isawaitable
+from os import environ
 from unittest.mock import patch
 
 import pytest
@@ -117,7 +118,7 @@ def test_app_route_raise_value_error(app):
 
 def test_app_handle_request_handler_is_none(app, monkeypatch):
     def mockreturn(*args, **kwargs):
-        return None, [], {}, "", "", None
+        return None, [], {}, "", "", None, False
 
     # Not sure how to make app.router.get() return None, so use mock here.
     monkeypatch.setattr(app.router, "get", mockreturn)
@@ -258,7 +259,7 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
 
 
 def test_app_name_required():
-    with pytest.deprecated_call():
+    with pytest.raises(SanicException):
         Sanic()
 
 
@@ -274,14 +275,50 @@ def test_app_has_test_mode_sync():
     assert response.status == 200
 
 
-# @pytest.mark.asyncio
-# async def test_app_has_test_mode_async():
-#     app = Sanic("test")
+def test_app_registry():
+    instance = Sanic("test")
+    assert Sanic._app_registry["test"] is instance
 
-#     @app.get("/")
-#     async def handler(request):
-#         assert request.app.test_mode
-#         return text("test")
 
-#     _, response = await app.asgi_client.get("/")
-#     assert response.status == 200
+def test_app_registry_wrong_type():
+    with pytest.raises(SanicException):
+        Sanic.register_app(1)
+
+
+def test_app_registry_name_reuse():
+    Sanic("test")
+    Sanic.test_mode = False
+    with pytest.raises(SanicException):
+        Sanic("test")
+    Sanic.test_mode = True
+    Sanic("test")
+
+
+def test_app_registry_retrieval():
+    instance = Sanic("test")
+    assert Sanic.get_app("test") is instance
+
+
+def test_get_app_does_not_exist():
+    with pytest.raises(SanicException):
+        Sanic.get_app("does-not-exist")
+
+
+def test_get_app_does_not_exist_force_create():
+    assert isinstance(
+        Sanic.get_app("does-not-exist", force_create=True), Sanic
+    )
+
+
+def test_app_no_registry():
+    Sanic("no-register", register=False)
+    with pytest.raises(SanicException):
+        Sanic.get_app("no-register")
+
+
+def test_app_no_registry_env():
+    environ["SANIC_REGISTER"] = "False"
+    Sanic("no-register")
+    with pytest.raises(SanicException):
+        Sanic.get_app("no-register")
+    del environ["SANIC_REGISTER"]

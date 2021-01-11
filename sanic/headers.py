@@ -7,6 +7,7 @@ from sanic.helpers import STATUS_CODES
 
 
 HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
+HeaderBytesIterable = Iterable[Tuple[bytes, bytes]]
 Options = Dict[str, Union[int, str]]  # key=value fields in various headers
 OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys
 
@@ -175,26 +176,18 @@ def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
     return host.lower(), int(port) if port is not None else None
 
 
-def format_http1(headers: HeaderIterable) -> bytes:
-    """Convert a headers iterable into HTTP/1 header format.
-
-    - Outputs UTF-8 bytes where each header line ends with \\r\\n.
-    - Values are converted into strings if necessary.
-    """
-    return "".join(f"{name}: {val}\r\n" for name, val in headers).encode()
+_HTTP1_STATUSLINES = [
+    b"HTTP/1.1 %d %b\r\n" % (status, STATUS_CODES.get(status, b"UNKNOWN"))
+    for status in range(1000)
+]
 
 
-def format_http1_response(
-    status: int, headers: HeaderIterable, body=b""
-) -> bytes:
-    """Format a full HTTP/1.1 response.
-
-    - If `body` is included, content-length must be specified in headers.
-    """
-    headerbytes = format_http1(headers)
-    return b"HTTP/1.1 %d %b\r\n%b\r\n%b" % (
-        status,
-        STATUS_CODES.get(status, b"UNKNOWN"),
-        headerbytes,
-        body,
-    )
+def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
+    """Format a HTTP/1.1 response header."""
+    # Note: benchmarks show that here bytes concat is faster than bytearray,
+    # b"".join() or %-formatting. %timeit any changes you make.
+    ret = _HTTP1_STATUSLINES[status]
+    for h in headers:
+        ret += b"%b: %b\r\n" % h
+    ret += b"\r\n"
+    return ret

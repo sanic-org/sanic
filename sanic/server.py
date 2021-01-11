@@ -5,33 +5,22 @@ import secrets
 import socket
 import stat
 import sys
-import traceback
 
-from collections import deque
+from asyncio import CancelledError
 from functools import partial
 from inspect import isawaitable
 from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from time import time
+from time import monotonic as current_time
 from typing import Dict, Type, Union
 
-from httptools import HttpRequestParser  # type: ignore
-from httptools.parser.errors import HttpParserError  # type: ignore
-
-from sanic.compat import Header, ctrlc_workaround_for_windows
+from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
-from sanic.exceptions import (
-    HeaderExpectationFailed,
-    InvalidUsage,
-    PayloadTooLarge,
-    RequestTimeout,
-    ServerError,
-    ServiceUnavailable,
-)
-from sanic.log import access_logger, logger
-from sanic.request import EXPECT_HEADER, Request, StreamBuffer
-from sanic.response import HTTPResponse
+from sanic.exceptions import RequestTimeout, ServiceUnavailable
+from sanic.http import Http, Stage
+from sanic.log import logger
+from sanic.request import Request
 
 
 try:
@@ -41,8 +30,6 @@ try:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
     pass
-
-OS_IS_WINDOWS = os.name == "nt"
 
 
 class Signal:
@@ -99,10 +86,7 @@ class HttpProtocol(asyncio.Protocol):
         "signal",
         "conn_info",
         # request params
-        "parser",
         "request",
-        "url",
-        "headers",
         # request config
         "request_handler",
         "request_timeout",
@@ -111,26 +95,21 @@ class HttpProtocol(asyncio.Protocol):
         "request_max_size",
         "request_buffer_queue_size",
         "request_class",
-        "is_request_stream",
         "error_handler",
         # enable or disable access log purpose
         "access_log",
         # connection management
-        "_total_request_size",
-        "_request_timeout_handler",
-        "_response_timeout_handler",
-        "_keep_alive_timeout_handler",
-        "_last_request_time",
-        "_last_response_time",
-        "_is_stream_handler",
-        "_not_paused",
-        "_request_handler_task",
-        "_request_stream_task",
-        "_keep_alive",
-        "_header_fragment",
         "state",
+        "url",
+        "_handler_task",
+        "_can_write",
+        "_data_received",
+        "_time",
+        "_task",
+        "_http",
+        "_exception",
+        "recv_buffer",
         "_unix",
-        "_body_chunks",
     )
 
     def __init__(
@@ -148,12 +127,10 @@ class HttpProtocol(asyncio.Protocol):
         self.loop = loop
         deprecated_loop = self.loop if sys.version_info < (3, 7) else None
         self.app = app
+        self.url = None
         self.transport = None
         self.conn_info = None
         self.request = None
-        self.parser = None
-        self.url = None
-        self.headers = None
         self.signal = signal
         self.access_log = self.app.config.ACCESS_LOG
         self.connections = connections if connections is not None else set()
@@ -167,511 +144,99 @@ class HttpProtocol(asyncio.Protocol):
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE
         self.request_class = self.app.request_class or Request
-        self.is_request_stream = self.app.is_request_stream
-        self._is_stream_handler = False
-        self._not_paused = asyncio.Event(loop=deprecated_loop)
-        self._total_request_size = 0
-        self._request_timeout_handler = None
-        self._response_timeout_handler = None
-        self._keep_alive_timeout_handler = None
-        self._last_request_time = None
-        self._last_response_time = None
-        self._request_handler_task = None
-        self._request_stream_task = None
-        self._keep_alive = self.app.config.KEEP_ALIVE
-        self._header_fragment = b""
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
+        self._data_received = asyncio.Event(loop=deprecated_loop)
+        self._can_write = asyncio.Event(loop=deprecated_loop)
+        self._can_write.set()
+        self._exception = None
         self._unix = unix
-        self._not_paused.set()
-        self._body_chunks = deque()
 
-    @property
-    def keep_alive(self):
+    def _setup_connection(self):
+        self._http = Http(self)
+        self._time = current_time()
+        self.check_timeouts()
+
+    async def connection_task(self):
+        """Run a HTTP connection.
+
+        Timeouts and some additional error handling occur here, while most of
+        everything else happens in class Http or in code called from there.
         """
-        Check if the connection needs to be kept alive based on the params
-        attached to the `_keep_alive` attribute, :attr:`Signal.stopped`
-        and :func:`HttpProtocol.parser.should_keep_alive`
-
-        :return: ``True`` if connection is to be kept alive ``False`` else
-        """
-        return (
-            self._keep_alive
-            and not self.signal.stopped
-            and self.parser.should_keep_alive()
-        )
-
-    # -------------------------------------------- #
-    # Connection
-    # -------------------------------------------- #
-
-    def connection_made(self, transport):
-        self.connections.add(self)
-        self._request_timeout_handler = self.loop.call_later(
-            self.request_timeout, self.request_timeout_callback
-        )
-        self.transport = transport
-        self.conn_info = ConnInfo(transport, unix=self._unix)
-        self._last_request_time = time()
-
-    def connection_lost(self, exc):
-        self.connections.discard(self)
-        if self._request_handler_task:
-            self._request_handler_task.cancel()
-        if self._request_stream_task:
-            self._request_stream_task.cancel()
-        if self._request_timeout_handler:
-            self._request_timeout_handler.cancel()
-        if self._response_timeout_handler:
-            self._response_timeout_handler.cancel()
-        if self._keep_alive_timeout_handler:
-            self._keep_alive_timeout_handler.cancel()
-
-    def pause_writing(self):
-        self._not_paused.clear()
-
-    def resume_writing(self):
-        self._not_paused.set()
-
-    def request_timeout_callback(self):
-        # See the docstring in the RequestTimeout exception, to see
-        # exactly what this timeout is checking for.
-        # Check if elapsed time since request initiated exceeds our
-        # configured maximum request timeout value
-        time_elapsed = time() - self._last_request_time
-        if time_elapsed < self.request_timeout:
-            time_left = self.request_timeout - time_elapsed
-            self._request_timeout_handler = self.loop.call_later(
-                time_left, self.request_timeout_callback
-            )
-        else:
-            if self._request_stream_task:
-                self._request_stream_task.cancel()
-            if self._request_handler_task:
-                self._request_handler_task.cancel()
-            self.write_error(RequestTimeout("Request Timeout"))
-
-    def response_timeout_callback(self):
-        # Check if elapsed time since response was initiated exceeds our
-        # configured maximum request timeout value
-        time_elapsed = time() - self._last_request_time
-        if time_elapsed < self.response_timeout:
-            time_left = self.response_timeout - time_elapsed
-            self._response_timeout_handler = self.loop.call_later(
-                time_left, self.response_timeout_callback
-            )
-        else:
-            if self._request_stream_task:
-                self._request_stream_task.cancel()
-            if self._request_handler_task:
-                self._request_handler_task.cancel()
-            self.write_error(ServiceUnavailable("Response Timeout"))
-
-    def keep_alive_timeout_callback(self):
-        """
-        Check if elapsed time since last response exceeds our configured
-        maximum keep alive timeout value and if so, close the transport
-        pipe and let the response writer handle the error.
-
-        :return: None
-        """
-        time_elapsed = time() - self._last_response_time
-        if time_elapsed < self.keep_alive_timeout:
-            time_left = self.keep_alive_timeout - time_elapsed
-            self._keep_alive_timeout_handler = self.loop.call_later(
-                time_left, self.keep_alive_timeout_callback
-            )
-        else:
-            logger.debug("KeepAlive Timeout. Closing connection.")
-            self.transport.close()
-            self.transport = None
-
-    # -------------------------------------------- #
-    # Parsing
-    # -------------------------------------------- #
-
-    def data_received(self, data):
-        # Check for the request itself getting too large and exceeding
-        # memory limits
-        self._total_request_size += len(data)
-        if self._total_request_size > self.request_max_size:
-            self.write_error(PayloadTooLarge("Payload Too Large"))
-
-        # Create parser if this is the first time we're receiving data
-        if self.parser is None:
-            assert self.request is None
-            self.headers = []
-            self.parser = HttpRequestParser(self)
-
-        # requests count
-        self.state["requests_count"] = self.state["requests_count"] + 1
-
-        # Parse request chunk or close connection
         try:
-            self.parser.feed_data(data)
-        except HttpParserError:
-            message = "Bad Request"
-            if self.app.debug:
-                message += "\n" + traceback.format_exc()
-            self.write_error(InvalidUsage(message))
-
-    def on_url(self, url):
-        if not self.url:
-            self.url = url
-        else:
-            self.url += url
-
-    def on_header(self, name, value):
-        self._header_fragment += name
-
-        if value is not None:
-            if (
-                self._header_fragment == b"Content-Length"
-                and int(value) > self.request_max_size
-            ):
-                self.write_error(PayloadTooLarge("Payload Too Large"))
-            try:
-                value = value.decode()
-            except UnicodeDecodeError:
-                value = value.decode("latin_1")
-            self.headers.append(
-                (self._header_fragment.decode().casefold(), value)
-            )
-
-            self._header_fragment = b""
-
-    def on_headers_complete(self):
-        self.request = self.request_class(
-            url_bytes=self.url,
-            headers=Header(self.headers),
-            version=self.parser.get_http_version(),
-            method=self.parser.get_method().decode(),
-            transport=self.transport,
-            app=self.app,
-        )
-        self.request.conn_info = self.conn_info
-        # Remove any existing KeepAlive handler here,
-        # It will be recreated if required on the new request.
-        if self._keep_alive_timeout_handler:
-            self._keep_alive_timeout_handler.cancel()
-            self._keep_alive_timeout_handler = None
-
-        if self.request.headers.get(EXPECT_HEADER):
-            self.expect_handler()
-
-        if self.is_request_stream:
-            self._is_stream_handler = self.app.router.is_stream_handler(
-                self.request
-            )
-            if self._is_stream_handler:
-                self.request.stream = StreamBuffer(
-                    self.request_buffer_queue_size
-                )
-                self.execute_request_handler()
-
-    def expect_handler(self):
-        """
-        Handler for Expect Header.
-        """
-        expect = self.request.headers.get(EXPECT_HEADER)
-        if self.request.version == "1.1":
-            if expect.lower() == "100-continue":
-                self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
-            else:
-                self.write_error(
-                    HeaderExpectationFailed(f"Unknown Expect: {expect}")
-                )
-
-    def on_body(self, body):
-        if self.is_request_stream and self._is_stream_handler:
-            # body chunks can be put into asyncio.Queue out of order if
-            # multiple tasks put concurrently and the queue is full in python
-            # 3.7. so we should not create more than one task putting into the
-            # queue simultaneously.
-            self._body_chunks.append(body)
-            if (
-                not self._request_stream_task
-                or self._request_stream_task.done()
-            ):
-                self._request_stream_task = self.loop.create_task(
-                    self.stream_append()
-                )
-        else:
-            self.request.body_push(body)
-
-    async def body_append(self, body):
-        if (
-            self.request is None
-            or self._request_stream_task is None
-            or self._request_stream_task.cancelled()
-        ):
-            return
-
-        if self.request.stream.is_full():
-            self.transport.pause_reading()
-            await self.request.stream.put(body)
-            self.transport.resume_reading()
-        else:
-            await self.request.stream.put(body)
-
-    async def stream_append(self):
-        while self._body_chunks:
-            body = self._body_chunks.popleft()
-            if self.request:
-                if self.request.stream.is_full():
-                    self.transport.pause_reading()
-                    await self.request.stream.put(body)
-                    self.transport.resume_reading()
-                else:
-                    await self.request.stream.put(body)
-
-    def on_message_complete(self):
-        # Entire request (headers and whole body) is received.
-        # We can cancel and remove the request timeout handler now.
-        if self._request_timeout_handler:
-            self._request_timeout_handler.cancel()
-            self._request_timeout_handler = None
-        if self.is_request_stream and self._is_stream_handler:
-            self._body_chunks.append(None)
-            if (
-                not self._request_stream_task
-                or self._request_stream_task.done()
-            ):
-                self._request_stream_task = self.loop.create_task(
-                    self.stream_append()
-                )
-            return
-        self.request.body_finish()
-        self.execute_request_handler()
-
-    def execute_request_handler(self):
-        """
-        Invoke the request handler defined by the
-        :func:`sanic.app.Sanic.handle_request` method
-
-        :return: None
-        """
-        self._response_timeout_handler = self.loop.call_later(
-            self.response_timeout, self.response_timeout_callback
-        )
-        self._last_request_time = time()
-        self._request_handler_task = self.loop.create_task(
-            self.request_handler(
-                self.request, self.write_response, self.stream_response
-            )
-        )
-
-    # -------------------------------------------- #
-    # Responding
-    # -------------------------------------------- #
-    def log_response(self, response):
-        """
-        Helper method provided to enable the logging of responses in case if
-        the :attr:`HttpProtocol.access_log` is enabled.
-
-        :param response: Response generated for the current request
-
-        :type response: :class:`sanic.response.HTTPResponse` or
-            :class:`sanic.response.StreamingHTTPResponse`
-
-        :return: None
-        """
-        if self.access_log:
-            extra = {"status": getattr(response, "status", 0)}
-
-            if isinstance(response, HTTPResponse):
-                extra["byte"] = len(response.body)
-            else:
-                extra["byte"] = -1
-
-            extra["host"] = "UNKNOWN"
-            if self.request is not None:
-                if self.request.ip:
-                    extra["host"] = f"{self.request.ip}:{self.request.port}"
-
-                extra["request"] = f"{self.request.method} {self.request.url}"
-            else:
-                extra["request"] = "nil"
-
-            access_logger.info("", extra=extra)
-
-    def write_response(self, response):
-        """
-        Writes response content synchronously to the transport.
-        """
-        if self._response_timeout_handler:
-            self._response_timeout_handler.cancel()
-            self._response_timeout_handler = None
-        try:
-            keep_alive = self.keep_alive
-            self.transport.write(
-                response.output(
-                    self.request.version, keep_alive, self.keep_alive_timeout
-                )
-            )
-            self.log_response(response)
-        except AttributeError:
-            logger.error(
-                "Invalid response object for url %s, "
-                "Expected Type: HTTPResponse, Actual Type: %s",
-                self.url,
-                type(response),
-            )
-            self.write_error(ServerError("Invalid response type"))
-        except RuntimeError:
-            if self.app.debug:
-                logger.error(
-                    "Connection lost before response written @ %s",
-                    self.request.ip,
-                )
-            keep_alive = False
-        except Exception as e:
-            self.bail_out(f"Writing response failed, connection closed {e!r}")
+            self._setup_connection()
+            await self._http.http1()
+        except CancelledError:
+            pass
+        except Exception:
+            logger.exception("protocol.connection_task uncaught")
         finally:
-            if not keep_alive:
-                self.transport.close()
-                self.transport = None
-            else:
-                self._keep_alive_timeout_handler = self.loop.call_later(
-                    self.keep_alive_timeout, self.keep_alive_timeout_callback
+            if self.app.debug and self._http:
+                ip = self.transport.get_extra_info("peername")
+                logger.error(
+                    "Connection lost before response written"
+                    f" @ {ip} {self._http.request}"
                 )
-                self._last_response_time = time()
-                self.cleanup()
+            self._http = None
+            self._task = None
+            try:
+                self.close()
+            except BaseException:
+                logger.exception("Closing failed")
 
-    async def drain(self):
-        await self._not_paused.wait()
+    async def receive_more(self):
+        """Wait until more data is received into self._buffer."""
+        self.transport.resume_reading()
+        self._data_received.clear()
+        await self._data_received.wait()
 
-    async def push_data(self, data):
+    def check_timeouts(self):
+        """Runs itself periodically to enforce any expired timeouts."""
+        try:
+            if not self._task:
+                return
+            duration = current_time() - self._time
+            stage = self._http.stage
+            if stage is Stage.IDLE and duration > self.keep_alive_timeout:
+                logger.debug("KeepAlive Timeout. Closing connection.")
+            elif stage is Stage.REQUEST and duration > self.request_timeout:
+                self._http.exception = RequestTimeout("Request Timeout")
+            elif (
+                stage in (Stage.HANDLER, Stage.RESPONSE, Stage.FAILED)
+                and duration > self.response_timeout
+            ):
+                self._http.exception = ServiceUnavailable("Response Timeout")
+            else:
+                interval = (
+                    min(
+                        self.keep_alive_timeout,
+                        self.request_timeout,
+                        self.response_timeout,
+                    )
+                    / 2
+                )
+                self.loop.call_later(max(0.1, interval), self.check_timeouts)
+                return
+            self._task.cancel()
+        except Exception:
+            logger.exception("protocol.check_timeouts")
+
+    async def send(self, data):
+        """Writes data with backpressure control."""
+        await self._can_write.wait()
+        if self.transport.is_closing():
+            raise CancelledError
         self.transport.write(data)
-
-    async def stream_response(self, response):
-        """
-        Streams a response to the client asynchronously. Attaches
-        the transport to the response so the response consumer can
-        write to the response as needed.
-        """
-        if self._response_timeout_handler:
-            self._response_timeout_handler.cancel()
-            self._response_timeout_handler = None
-
-        try:
-            keep_alive = self.keep_alive
-            response.protocol = self
-            await response.stream(
-                self.request.version, keep_alive, self.keep_alive_timeout
-            )
-            self.log_response(response)
-        except AttributeError:
-            logger.error(
-                "Invalid response object for url %s, "
-                "Expected Type: HTTPResponse, Actual Type: %s",
-                self.url,
-                type(response),
-            )
-            self.write_error(ServerError("Invalid response type"))
-        except RuntimeError:
-            if self.app.debug:
-                logger.error(
-                    "Connection lost before response written @ %s",
-                    self.request.ip,
-                )
-            keep_alive = False
-        except Exception as e:
-            self.bail_out(f"Writing response failed, connection closed {e!r}")
-        finally:
-            if not keep_alive:
-                self.transport.close()
-                self.transport = None
-            else:
-                self._keep_alive_timeout_handler = self.loop.call_later(
-                    self.keep_alive_timeout, self.keep_alive_timeout_callback
-                )
-                self._last_response_time = time()
-                self.cleanup()
-
-    def write_error(self, exception):
-        # An error _is_ a response.
-        # Don't throw a response timeout, when a response _is_ given.
-        if self._response_timeout_handler:
-            self._response_timeout_handler.cancel()
-            self._response_timeout_handler = None
-        response = None
-        try:
-            response = self.error_handler.response(self.request, exception)
-            version = self.request.version if self.request else "1.1"
-            self.transport.write(response.output(version))
-        except RuntimeError:
-            if self.app.debug:
-                logger.error(
-                    "Connection lost before error written @ %s",
-                    self.request.ip if self.request else "Unknown",
-                )
-        except Exception as e:
-            self.bail_out(
-                f"Writing error failed, connection closed {e!r}",
-                from_error=True,
-            )
-        finally:
-            if self.parser and (
-                self.keep_alive or getattr(response, "status", 0) == 408
-            ):
-                self.log_response(response)
-            try:
-                self.transport.close()
-            except AttributeError:
-                logger.debug("Connection lost before server could close it.")
-
-    def bail_out(self, message, from_error=False):
-        """
-        In case if the transport pipes are closed and the sanic app encounters
-        an error while writing data to the transport pipe, we log the error
-        with proper details.
-
-        :param message: Error message to display
-        :param from_error: If the bail out was invoked while handling an
-            exception scenario.
-
-        :type message: str
-        :type from_error: bool
-
-        :return: None
-        """
-        if from_error or self.transport is None or self.transport.is_closing():
-            logger.error(
-                "Transport closed @ %s and exception "
-                "experienced during error handling",
-                (
-                    self.transport.get_extra_info("peername")
-                    if self.transport is not None
-                    else "N/A"
-                ),
-            )
-            logger.debug("Exception:", exc_info=True)
-        else:
-            self.write_error(ServerError(message))
-            logger.error(message)
-
-    def cleanup(self):
-        """This is called when KeepAlive feature is used,
-        it resets the connection in order for it to be able
-        to handle receiving another request on the same connection."""
-        self.parser = None
-        self.request = None
-        self.url = None
-        self.headers = None
-        self._request_handler_task = None
-        self._request_stream_task = None
-        self._total_request_size = 0
-        self._is_stream_handler = False
+        self._time = current_time()
 
     def close_if_idle(self):
         """Close the connection if a request is not being sent or received
 
         :return: boolean - True if closed, false if staying open
         """
-        if not self.parser and self.transport is not None:
-            self.transport.close()
+        if self._http is None or self._http.stage is Stage.IDLE:
+            self.close()
             return True
         return False
 
@@ -679,9 +244,56 @@ class HttpProtocol(asyncio.Protocol):
         """
         Force close the connection.
         """
-        if self.transport is not None:
+        # Cause a call to connection_lost where further cleanup occurs
+        if self.transport:
             self.transport.close()
             self.transport = None
+
+    # -------------------------------------------- #
+    # Only asyncio.Protocol callbacks below this
+    # -------------------------------------------- #
+
+    def connection_made(self, transport):
+        try:
+            # TODO: Benchmark to find suitable write buffer limits
+            transport.set_write_buffer_limits(low=16384, high=65536)
+            self.connections.add(self)
+            self.transport = transport
+            self._task = self.loop.create_task(self.connection_task())
+            self.recv_buffer = bytearray()
+            self.conn_info = ConnInfo(self.transport, unix=self._unix)
+        except Exception:
+            logger.exception("protocol.connect_made")
+
+    def connection_lost(self, exc):
+        try:
+            self.connections.discard(self)
+            self.resume_writing()
+            if self._task:
+                self._task.cancel()
+        except Exception:
+            logger.exception("protocol.connection_lost")
+
+    def pause_writing(self):
+        self._can_write.clear()
+
+    def resume_writing(self):
+        self._can_write.set()
+
+    def data_received(self, data):
+        try:
+            self._time = current_time()
+            if not data:
+                return self.close()
+            self.recv_buffer += data
+
+            if len(self.recv_buffer) > self.app.config.REQUEST_BUFFER_SIZE:
+                self.transport.pause_reading()
+
+            if self._data_received:
+                self._data_received.set()
+        except Exception:
+            logger.exception("protocol.data_received")
 
 
 def trigger_events(events, loop):

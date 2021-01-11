@@ -6,17 +6,14 @@ from sanic.response import json_dumps, text
 
 
 class CustomRequest(Request):
-    __slots__ = ("body_buffer",)
+    """Alternative implementation for loading body (non-streaming handlers)"""
 
-    def body_init(self):
-        self.body_buffer = BytesIO()
-
-    def body_push(self, data):
-        self.body_buffer.write(data)
-
-    def body_finish(self):
-        self.body = self.body_buffer.getvalue()
-        self.body_buffer.close()
+    async def receive_body(self):
+        buffer = BytesIO()
+        async for data in self.stream:
+            buffer.write(data)
+        self.body = buffer.getvalue().upper()
+        buffer.close()
 
 
 def test_custom_request():
@@ -37,17 +34,13 @@ def test_custom_request():
         "/post", data=json_dumps(payload), headers=headers
     )
 
-    assert isinstance(request.body_buffer, BytesIO)
-    assert request.body_buffer.closed
-    assert request.body == b'{"test":"OK"}'
-    assert request.json.get("test") == "OK"
+    assert request.body == b'{"TEST":"OK"}'
+    assert request.json.get("TEST") == "OK"
     assert response.text == "OK"
     assert response.status == 200
 
     request, response = app.test_client.get("/get")
 
-    assert isinstance(request.body_buffer, BytesIO)
-    assert request.body_buffer.closed
     assert request.body == b""
     assert response.text == "OK"
     assert response.status == 200

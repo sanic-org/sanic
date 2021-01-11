@@ -85,7 +85,6 @@ def test_pickle_app_with_bp(app, protocol):
     up_p_app = pickle.loads(p_app)
     assert up_p_app
     request, response = up_p_app.test_client.get("/")
-    assert up_p_app.is_request_stream is False
     assert response.text == "Hello"
 
 

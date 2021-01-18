@@ -101,10 +101,12 @@ class Config(dict):
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """Update app.config.
 
-        Note:: only upper case settings are considered.
+        ..note:: only upper case settings are considered.
 
         You can upload app config by providing path to py file
         holding settings.
+
+        ..code-block::
 
             # /some/py/file
             A = 1
@@ -118,11 +120,15 @@ class Config(dict):
 
         You can upload app config by providing dict holding settings.
 
+        ..code-block::
+
             d = {"A": 1, "B": 2}
             config.update_config(d)
 
         You can upload app config by providing any object holding settings,
         but in such case config.__dict__ will be used as dict holding settings.
+
+        ..code-block::
 
             class C:
                 A = 1

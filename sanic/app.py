@@ -11,7 +11,18 @@ from inspect import isawaitable, signature
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Type,
+    Union,
+)
 from urllib.parse import urlencode, urlunparse
 
 from sanic import reloader_helpers
@@ -25,7 +36,7 @@ from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
-from sanic.router import Router
+from sanic.router import Route, Router
 from sanic.server import (
     AsyncioServer,
     HttpProtocol,
@@ -40,6 +51,10 @@ from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic:
+    """
+    The main application instance
+    """
+
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
@@ -98,9 +113,12 @@ class Sanic:
 
     @property
     def loop(self):
-        """Synonymous with asyncio.get_event_loop().
+        """
+        Synonymous with asyncio.get_event_loop().
 
-        Only supported when using the `app.run` method.
+        .. note::
+
+            Only supported when using the `app.run` method.
         """
         if not self.is_running and self.asgi is False:
             raise SanicException(
@@ -113,8 +131,9 @@ class Sanic:
     # Registration
     # -------------------------------------------------------------------- #
 
-    def add_task(self, task):
-        """Schedule a task to run later, after the loop has started.
+    def add_task(self, task) -> None:
+        """
+        Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
         also return a future, and the actual ensure_future call
         is delayed until before server start.
@@ -130,19 +149,28 @@ class Sanic:
             )
 
     # Decorator
-    def listener(self, event):
-        """Create a listener from a decorated function.
+    def listener(self, event: str):
+        """
+        Create a listener from a decorated function.
+
+        To be used as a deocrator:
+
+        .. code-block:: python
+
+            @bp.listener("before_server_start")
+            async def before_server_start(app, loop):
+                ...
 
         :param event: event to listen to
         """
 
-        def decorator(listener):
+        def decorator(listener: Callable):
             self.listeners[event].append(listener)
             return listener
 
         return decorator
 
-    def register_listener(self, listener, event):
+    def register_listener(self, listener: Callable, event: str) -> Any:
         """
         Register the listener for a given event.
 
@@ -156,24 +184,27 @@ class Sanic:
     # Decorator
     def route(
         self,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-        ignore_body=False,
+        uri: str,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = False,
     ):
-        """Decorate a function to be registered as a route
+        """
+        Decorate a function to be registered as a route
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
-        :param host:
-        :param strict_slashes:
-        :param stream:
-        :param version:
+        :param host: the host, if required
+        :param strict_slashes: whether to apply strict slashes to the route
+        :param stream: whether to allow the request to stream its body
+        :param version: route specific versioning
         :param name: user defined route name for url_for
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests)
         :return: tuple of routes, decorated function
         """
 
@@ -224,12 +255,12 @@ class Sanic:
     # Shorthand method decorators
     def get(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -254,12 +285,12 @@ class Sanic:
 
     def post(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **POST** *HTTP* method
@@ -284,13 +315,13 @@ class Sanic:
 
     def put(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-    ):
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
+    ) -> HTTPResponse:
         """
         Add an API URL under the **PUT** *HTTP* method
 
@@ -314,13 +345,32 @@ class Sanic:
 
     def head(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
+        """
+        Add an API URL under the **HEAD** *HTTP* method
+
+        :param uri: URL to be tagged to **HEAD** method of *HTTP*
+        :type uri: str
+        :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
+        :param version: API Version
+        :type version: Optional[str], optional
+        :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"HEAD"}),
@@ -333,22 +383,30 @@ class Sanic:
 
     def options(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
 
         :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
+        :type uri: str
         :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
         :param version: API Version
+        :type version: Optional[str], optional
         :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -363,22 +421,32 @@ class Sanic:
 
     def patch(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         stream=False,
-        version=None,
-        name=None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **PATCH** *HTTP* method
 
         :param uri: URL to be tagged to **PATCH** method of *HTTP*
+        :type uri: str
         :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
+        :param stream: whether to allow the request to stream its body
+        :type stream: Optional[bool], optional
         :param version: API Version
+        :type version: Optional[str], optional
         :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -393,12 +461,12 @@ class Sanic:
 
     def delete(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -424,12 +492,12 @@ class Sanic:
     def add_route(
         self,
         handler,
-        uri,
+        uri: str,
         methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
         stream=False,
     ):
         """A helper method to register class instance or
@@ -483,12 +551,12 @@ class Sanic:
     # Decorator
     def websocket(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version=None,
-        name=None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
     ):
         """
         Decorate a function to be registered as a websocket route
@@ -544,12 +612,12 @@ class Sanic:
     def add_websocket_route(
         self,
         handler,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version=None,
-        name=None,
+        version: Optional[str] = None,
+        name: Optional[str] = None,
     ):
         """
         A helper method to register a function as a websocket route.
@@ -682,7 +750,7 @@ class Sanic:
         stream_large_files=False,
         name="static",
         host=None,
-        strict_slashes=None,
+        strict_slashes: Optional[bool] = None,
         content_type=None,
     ):
         """
@@ -747,7 +815,7 @@ class Sanic:
         blueprint.register(self, options)
 
     def url_for(self, view_name: str, **kwargs):
-        r"""Build a URL based on a view name and the values provided.
+        """Build a URL based on a view name and the values provided.
 
         In order to build a URL, all request parameters must be supplied as
         keyword arguments, and each parameter must pass the test for the
@@ -891,6 +959,15 @@ class Sanic:
         pass
 
     async def handle_exception(self, request, exception):
+        """
+        [summary]
+
+        :param request: [description]
+        :type request: [type]
+        :param exception: [description]
+        :type exception: [type]
+        :raises ServerError: [description]
+        """
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
@@ -1036,6 +1113,13 @@ class Sanic:
 
     @property
     def asgi_client(self):
+        """
+        A testing client that uses ASGI to reach into the application to
+        execute hanlers.
+
+        :return: testing client
+        :rtype: :class:`SanicASGITestClient`
+        """
         return SanicASGITestClient(self)
 
     # -------------------------------------------------------------------- #

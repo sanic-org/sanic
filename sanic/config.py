@@ -82,18 +82,23 @@ class Config(dict):
                             self[config_key] = v
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """Update app.config.
+        """
+        Update app.config.
 
         Note:: only upper case settings are considered.
 
         You can upload app config by providing path to py file
         holding settings.
 
+        .. code-block:: python
+
             # /some/py/file
             A = 1
             B = 2
 
-        config.update_config("${some}/py/file")
+        .. code-block:: python
+
+            config.update_config("${some}/py/file")
 
         Yes you can put environment variable here, but they must be provided
         in format: ${some_env_var}, and mark that $some_env_var is treated
@@ -101,16 +106,22 @@ class Config(dict):
 
         You can upload app config by providing dict holding settings.
 
+        .. code-block:: python
+
             d = {"A": 1, "B": 2}
             config.update_config(d)
 
         You can upload app config by providing any object holding settings,
         but in such case config.__dict__ will be used as dict holding settings.
 
+        .. code-block:: python
+
             class C:
                 A = 1
                 B = 2
-            config.update_config(C)"""
+
+            config.update_config(C)
+        """
 
         if isinstance(config, (bytes, str, Path)):
             config = load_module_from_file_location(location=config)

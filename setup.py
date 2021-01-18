@@ -104,7 +104,6 @@ tests_require = [
     "pytest-sanic",
     "pytest-sugar",
     "pytest-benchmark",
-    "pytest-dependency",
 ]
 
 docs_require = [

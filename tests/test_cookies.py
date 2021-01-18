@@ -162,7 +162,7 @@ def test_cookie_set_same_key(app):
     assert response.cookies["test"] == "pass"
 
 
-@pytest.mark.parametrize("max_age", ["0", 30, 30.0, 30.1, "30", "test"])
+@pytest.mark.parametrize("max_age", ["0", 30, "30"])
 def test_cookie_max_age(app, max_age):
     cookies = {"test": "wait"}
 
@@ -202,6 +202,23 @@ def test_cookie_max_age(app, max_age):
         )
     else:
         assert cookie is None
+
+
+@pytest.mark.parametrize("max_age", [30.0, 30.1, "test"])
+def test_cookie_bad_max_age(app, max_age):
+    cookies = {"test": "wait"}
+
+    @app.get("/")
+    def handler(request):
+        response = text("pass")
+        response.cookies["test"] = "pass"
+        response.cookies["test"]["max-age"] = max_age
+        return response
+
+    request, response = app.test_client.get(
+        "/", cookies=cookies, raw_cookies=True
+    )
+    assert response.status == 500
 
 
 @pytest.mark.parametrize(

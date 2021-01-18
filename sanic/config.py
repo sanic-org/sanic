@@ -1,14 +1,8 @@
+from inspect import isclass
 from os import environ
+from pathlib import Path
 from typing import Any, Union
 
-# NOTE(tomaszdrozdz): remove in version: 21.3
-# We replace from_envvar(), from_object(), from_pyfile() config object methods
-# with one simpler update_config() method.
-# We also replace "loading module from file code" in from_pyfile()
-# in a favour of load_module_from_file_location().
-# Please see pull request: 1903
-# and issue: 1895
-from .deprecated import from_envvar, from_object, from_pyfile  # noqa
 from .utils import load_module_from_file_location, str_to_bool
 
 
@@ -69,17 +63,6 @@ class Config(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
-    # NOTE(tomaszdrozdz): remove in version: 21.3
-    # We replace from_envvar(), from_object(), from_pyfile() config object
-    # methods with one simpler update_config() method.
-    # We also replace "loading module from file code" in from_pyfile()
-    # in a favour of load_module_from_file_location().
-    # Please see pull request: 1903
-    # and issue: 1895
-    from_envvar = from_envvar
-    from_pyfile = from_pyfile
-    from_object = from_object
-
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
         Looks for prefixed environment variables and applies
@@ -100,18 +83,23 @@ class Config(dict):
                             self[config_key] = v
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """Update app.config.
+        """
+        Update app.config.
 
         Note:: only upper case settings are considered.
 
         You can upload app config by providing path to py file
         holding settings.
 
+        .. code-block:: python
+
             # /some/py/file
             A = 1
             B = 2
 
-        config.update_config("${some}/py/file")
+        .. code-block:: python
+
+            config.update_config("${some}/py/file")
 
         Yes you can put environment variable here, but they must be provided
         in format: ${some_env_var}, and mark that $some_env_var is treated
@@ -119,23 +107,41 @@ class Config(dict):
 
         You can upload app config by providing dict holding settings.
 
+        .. code-block:: python
+
             d = {"A": 1, "B": 2}
             config.update_config(d)
 
         You can upload app config by providing any object holding settings,
         but in such case config.__dict__ will be used as dict holding settings.
 
+        .. code-block:: python
+
             class C:
                 A = 1
                 B = 2
-            config.update_config(C)"""
 
-        if isinstance(config, (bytes, str)):
+            config.update_config(C)
+        """
+
+        if isinstance(config, (bytes, str, Path)):
             config = load_module_from_file_location(location=config)
 
         if not isinstance(config, dict):
-            config = config.__dict__
+            cfg = {}
+            if not isclass(config):
+                cfg.update(
+                    {
+                        key: getattr(config, key)
+                        for key in config.__class__.__dict__.keys()
+                    }
+                )
+
+            config = dict(config.__dict__)
+            config.update(cfg)
 
         config = dict(filter(lambda i: i[0].isupper(), config.items()))
 
         self.update(config)
+
+    load = update_config

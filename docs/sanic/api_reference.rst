@@ -12,14 +12,20 @@ sanic.blueprints
 
 .. automodule:: sanic.blueprints
     :members:
-    :undoc-members:
 
 sanic.blueprint_group
 ---------------------
 
 .. automodule:: sanic.blueprint_group
     :members:
-    :undoc-members:
+    :special-members:
+
+
+sanic.compat
+------------
+
+.. automodule:: sanic.compat
+    :members:
 
 
 sanic.config

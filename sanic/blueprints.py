@@ -1,56 +1,38 @@
 from collections import defaultdict, namedtuple
+from typing import Iterable, Optional
 
 from sanic.blueprint_group import BlueprintGroup
 from sanic.constants import HTTP_METHODS
 from sanic.views import CompositionView
 
 
-FutureRoute = namedtuple(
-    "FutureRoute",
-    [
-        "handler",
-        "uri",
-        "methods",
-        "host",
-        "strict_slashes",
-        "stream",
-        "version",
-        "name",
-    ],
-)
-FutureListener = namedtuple(
-    "FutureListener", ["handler", "uri", "methods", "host"]
-)
-FutureMiddleware = namedtuple(
-    "FutureMiddleware", ["middleware", "args", "kwargs"]
-)
-FutureException = namedtuple("FutureException", ["handler", "args", "kwargs"])
-FutureStatic = namedtuple(
-    "FutureStatic", ["uri", "file_or_directory", "args", "kwargs"]
-)
-
-
 class Blueprint:
+    """
+    In *Sanic* terminology, a **Blueprint** is a logical collection of
+    URLs that perform a specific set of tasks which can be identified by
+    a unique name.
+
+    It is the main tool for grouping functionality and similar endpoints.
+
+    `See user guide
+    <https://sanicframework.org/guide/best-practices/blueprints.html>`__
+
+    :param name: unique name of the blueprint
+    :param url_prefix: URL to be prefixed before all route URLs
+    :param host: IP Address of FQDN for the sanic server to use.
+    :param version: Blueprint Version
+    :param strict_slashes: Enforce the API urls are requested with a
+        training */*
+    """
+
     def __init__(
         self,
-        name,
-        url_prefix=None,
-        host=None,
-        version=None,
-        strict_slashes=None,
+        name: str,
+        url_prefix: Optional[str] = None,
+        host: Optional[str] = None,
+        version: Optional[int] = None,
+        strict_slashes: Optional[bool] = None,
     ):
-        """
-        In *Sanic* terminology, a **Blueprint** is a logical collection of
-        URLs that perform a specific set of tasks which can be identified by
-        a unique name.
-
-        :param name: unique name of the blueprint
-        :param url_prefix: URL to be prefixed before all route URLs
-        :param host: IP Address of FQDN for the sanic server to use.
-        :param version: Blueprint Version
-        :param strict_slashes: Enforce the API urls are requested with a
-            training */*
-        """
         self.name = name
         self.url_prefix = url_prefix
         self.host = host
@@ -178,15 +160,16 @@ class Blueprint:
 
     def route(
         self,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
-        """Create a blueprint route from a decorated function.
+        """
+        Create a blueprint route from a decorated function.
 
         :param uri: endpoint at which the route will be accessible.
         :param methods: list of acceptable HTTP methods.
@@ -222,15 +205,16 @@ class Blueprint:
     def add_route(
         self,
         handler,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        stream=False,
+        uri: str,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        stream: bool = False,
     ):
-        """Create a blueprint route from a function.
+        """
+        Create a blueprint route from a function.
 
         :param handler: function for handling uri requests. Accepts function,
                         or class instance with a view_class method.
@@ -271,9 +255,15 @@ class Blueprint:
         return handler
 
     def websocket(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
-        """Create a blueprint websocket route from a decorated function.
+        """
+        Create a blueprint websocket route from a decorated function.
 
         :param uri: endpoint at which the route will be accessible.
         :param host: IP Address of FQDN for the sanic server to use.
@@ -302,7 +292,12 @@ class Blueprint:
         return decorator
 
     def add_websocket_route(
-        self, handler, uri, host=None, version=None, name=None
+        self,
+        handler,
+        uri: str,
+        host: Optional[str] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """Create a blueprint websocket route from a function.
 
@@ -378,7 +373,7 @@ class Blueprint:
 
         return decorator
 
-    def static(self, uri, file_or_directory, *args, **kwargs):
+    def static(self, uri: str, file_or_directory: str, *args, **kwargs):
         """Create a blueprint static route from a decorated function.
 
         :param uri: endpoint at which the route will be accessible.
@@ -398,7 +393,12 @@ class Blueprint:
 
     # Shorthand method decorators
     def get(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -422,12 +422,12 @@ class Blueprint:
 
     def post(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **POST** *HTTP* method
@@ -452,12 +452,12 @@ class Blueprint:
 
     def put(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **PUT** *HTTP* method
@@ -481,7 +481,12 @@ class Blueprint:
         )
 
     def head(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **HEAD** *HTTP* method
@@ -504,7 +509,12 @@ class Blueprint:
         )
 
     def options(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
@@ -528,12 +538,12 @@ class Blueprint:
 
     def patch(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         stream=False,
-        version=None,
-        name=None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **PATCH** *HTTP* method
@@ -557,7 +567,12 @@ class Blueprint:
         )
 
     def delete(
-        self, uri, host=None, strict_slashes=None, version=None, name=None
+        self,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -578,3 +593,28 @@ class Blueprint:
             version=version,
             name=name,
         )
+
+
+FutureRoute = namedtuple(
+    "FutureRoute",
+    [
+        "handler",
+        "uri",
+        "methods",
+        "host",
+        "strict_slashes",
+        "stream",
+        "version",
+        "name",
+    ],
+)
+FutureListener = namedtuple(
+    "FutureListener", ["handler", "uri", "methods", "host"]
+)
+FutureMiddleware = namedtuple(
+    "FutureMiddleware", ["middleware", "args", "kwargs"]
+)
+FutureException = namedtuple("FutureException", ["handler", "args", "kwargs"])
+FutureStatic = namedtuple(
+    "FutureStatic", ["uri", "file_or_directory", "args", "kwargs"]
+)

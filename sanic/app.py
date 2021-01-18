@@ -36,7 +36,7 @@ from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
-from sanic.router import Route, Router
+from sanic.router import Router
 from sanic.server import (
     AsyncioServer,
     HttpProtocol,
@@ -138,6 +138,8 @@ class Sanic:
         also return a future, and the actual ensure_future call
         is delayed until before server start.
 
+        `See user guide <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
+
         :param task: future, couroutine or awaitable
         """
         try:
@@ -160,6 +162,8 @@ class Sanic:
             @bp.listener("before_server_start")
             async def before_server_start(app, loop):
                 ...
+
+        `See user guide <https://sanicframework.org/guide/basics/listeners.html#listeners>`__
 
         :param event: event to listen to
         """
@@ -189,7 +193,7 @@ class Sanic:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = False,
     ):
@@ -258,7 +262,7 @@ class Sanic:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
     ):
@@ -289,7 +293,7 @@ class Sanic:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
     ):
         """
@@ -319,9 +323,9 @@ class Sanic:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
-    ) -> HTTPResponse:
+    ):
         """
         Add an API URL under the **PUT** *HTTP* method
 
@@ -348,7 +352,7 @@ class Sanic:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
     ):
@@ -386,7 +390,7 @@ class Sanic:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
     ):
@@ -425,7 +429,7 @@ class Sanic:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream=False,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
     ):
         """
@@ -464,7 +468,7 @@ class Sanic:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
     ):
@@ -493,12 +497,12 @@ class Sanic:
         self,
         handler,
         uri: str,
-        methods=frozenset({"GET"}),
+        methods: Iterable[str] = frozenset({"GET"}),
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
-        stream=False,
+        stream: bool = False,
     ):
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -548,14 +552,13 @@ class Sanic:
         )(handler)
         return handler
 
-    # Decorator
     def websocket(
         self,
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
     ):
         """
@@ -616,7 +619,7 @@ class Sanic:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         name: Optional[str] = None,
     ):
         """
@@ -648,8 +651,9 @@ class Sanic:
             name=name,
         )(handler)
 
-    def enable_websocket(self, enable=True):
-        """Enable or disable the support for websocket.
+    def enable_websocket(self, enable: bool = True):
+        """
+        Enable or disable the support for websocket.
 
         Websocket is enabled automatically if websocket routes are
         added to the application.
@@ -661,9 +665,9 @@ class Sanic:
 
         self.websocket_enabled = enable
 
-    # Decorator
     def exception(self, *exceptions):
-        """Decorate a function to be registered as a handler for exceptions
+        """
+        Decorate a function to be registered as a handler for exceptions
 
         :param exceptions: exceptions
         :return: decorated function
@@ -680,7 +684,7 @@ class Sanic:
 
         return response
 
-    def register_middleware(self, middleware, attach_to="request"):
+    def register_middleware(self, middleware, attach_to: str = "request"):
         """
         Register an application level middleware that will be attached
         to all the API URLs registered under this application.
@@ -705,8 +709,22 @@ class Sanic:
         return middleware
 
     def register_named_middleware(
-        self, middleware, route_names, attach_to="request"
+        self,
+        middleware,
+        route_names: Iterable[str],
+        attach_to: str = "request",
     ):
+        """
+        Method for attaching middleware to specific routes. This is mainly an
+        internal tool for use by Blueprints to attach middleware to only its
+        specfic routes. But, it could be used in a more generalized fashion.
+
+        :param middleware: the middleware to execute
+        :param route_names: a list of the names of the endpoints
+        :type route_names: Iterable[str]
+        :param attach_to: whether to attach to request or response, defaults to "request"
+        :type attach_to: str, optional
+        """
         if attach_to == "request":
             for _rn in route_names:
                 if _rn not in self.named_request_middleware:
@@ -720,12 +738,13 @@ class Sanic:
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
 
-    # Decorator
     def middleware(self, middleware_or_request):
         """
         Decorate and register middleware to be called before a request.
         Can either be called as *@app.middleware* or
         *@app.middleware('request')*
+
+        `See user guide <https://sanicframework.org/guide/basics/middleware.html>`__
 
         :param: middleware_or_request: Optional parameter to use for
             identifying which type of middleware is being registered.
@@ -739,19 +758,18 @@ class Sanic:
                 self.register_middleware, attach_to=middleware_or_request
             )
 
-    # Static Files
     def static(
         self,
-        uri,
-        file_or_directory,
+        uri: str,
+        file_or_directory: str,
         pattern=r"/?.+",
-        use_modified_since=True,
-        use_content_range=False,
-        stream_large_files=False,
-        name="static",
-        host=None,
+        use_modified_since: bool = True,
+        use_content_range: bool = False,
+        stream_large_files: bool = False,
+        name: str = "static",
+        host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        content_type=None,
+        content_type: str = None,
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -824,6 +842,8 @@ class Sanic:
 
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
+
+        `See user guide <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
 
         :param view_name: string referencing the view name
         :param \**kwargs: keys and values that are used to build request
@@ -952,21 +972,17 @@ class Sanic:
     # Request Handling
     # -------------------------------------------------------------------- #
 
-    def converted_response_type(self, response):
+    async def handle_exception(
+        self, request: Request, exception: BaseException
+    ):
         """
-        No implementation provided.
-        """
-        pass
+        A handler that catches specific exceptions and outputs a response.
 
-    async def handle_exception(self, request, exception):
-        """
-        [summary]
-
-        :param request: [description]
-        :type request: [type]
-        :param exception: [description]
-        :type exception: [type]
-        :raises ServerError: [description]
+        :param request: The current request object
+        :type request: :class:`SanicASGITestClient`
+        :param exception: The exception that was raised
+        :type exception: BaseException
+        :raises ServerError: response 500
         """
         # -------------------------------------------- #
         # Request Middleware
@@ -1012,7 +1028,7 @@ class Sanic:
                 f"Invalid response type {response!r} (need HTTPResponse)"
             )
 
-    async def handle_request(self, request):
+    async def handle_request(self, request: Request):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
@@ -1143,7 +1159,8 @@ class Sanic:
         unix: Optional[str] = None,
         loop: None = None,
     ) -> None:
-        """Run the HTTP Server and listen until keyboard interrupt or term
+        """
+        Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
         :param host: Address to host on
@@ -1235,7 +1252,9 @@ class Sanic:
         logger.info("Server Stopped")
 
     def stop(self):
-        """This kills the Sanic"""
+        """
+        This kills the Sanic
+        """
         if not self.is_stopping:
             self.is_stopping = True
             get_event_loop().stop()
@@ -1252,8 +1271,8 @@ class Sanic:
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        return_asyncio_server=False,
-        asyncio_server_kwargs=None,
+        return_asyncio_server: bool = False,
+        asyncio_server_kwargs: Dict[str, Any] = None,
     ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
@@ -1329,7 +1348,8 @@ class Sanic:
         )
 
     async def trigger_events(self, events, loop):
-        """Trigger events (functions or async)
+        """
+        Trigger events (functions or async)
         :param events: one or more sync or async functions to execute
         :param loop: event loop
         """
@@ -1530,9 +1550,11 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     async def __call__(self, scope, receive, send):
-        """To be ASGI compliant, our instance must be a callable that accepts
+        """
+        To be ASGI compliant, our instance must be a callable that accepts
         three arguments: scope, receive, send. See the ASGI reference for more
-        details: https://asgi.readthedocs.io/en/latest/"""
+        details: https://asgi.readthedocs.io/en/latest
+        /"""
         self.asgi = True
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()
@@ -1544,9 +1566,11 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """Update app.config.
+        """
+        Update app.config. Full implementation can be found in the user guide.
 
-        Please refer to config.py::Config.update_config for documentation."""
+        `See user guide <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
+        """
 
         self.config.update_config(config)
 
@@ -1556,7 +1580,9 @@ class Sanic:
 
     @classmethod
     def register_app(cls, app: "Sanic") -> None:
-        """Register a Sanic instance"""
+        """
+        Register a Sanic instance
+        """
         if not isinstance(app, cls):
             raise SanicException("Registered app must be an instance of Sanic")
 
@@ -1568,7 +1594,9 @@ class Sanic:
 
     @classmethod
     def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
-        """Retrieve an instantiated Sanic instance"""
+        """
+        Retrieve an instantiated Sanic instance
+        """
         try:
             return cls._app_registry[name]
         except KeyError:

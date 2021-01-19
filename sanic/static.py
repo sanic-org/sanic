@@ -1,11 +1,11 @@
-from typing import Union
 from functools import partial, wraps
 from mimetypes import guess_type
 from os import path
+from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
+from typing import Union
 from urllib.parse import unquote
-from pathlib import PurePath
 
 from sanic.compat import stat_async
 from sanic.exceptions import (

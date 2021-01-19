@@ -34,6 +34,7 @@ DEFAULT_CONFIG = {
     "REAL_IP_HEADER": None,
     "PROXIES_COUNT": None,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
+    "REQUEST_ID_HEADER": "X-Request-ID",
     "FALLBACK_ERROR_FORMAT": "html",
     "REGISTER": True,
 }

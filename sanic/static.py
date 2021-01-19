@@ -1,9 +1,11 @@
+from typing import Union
 from functools import partial, wraps
 from mimetypes import guess_type
 from os import path
 from re import sub
 from time import gmtime, strftime
 from urllib.parse import unquote
+from pathlib import PurePath
 
 from sanic.compat import stat_async
 from sanic.exceptions import (
@@ -110,13 +112,13 @@ async def _static_request_handler(
 
 def register(
     app,
-    uri,
-    file_or_directory,
+    uri: str,
+    file_or_directory: Union[str, bytes, PurePath],
     pattern,
     use_modified_since,
     use_content_range,
     stream_large_files,
-    name="static",
+    name: str = "static",
     host=None,
     strict_slashes=None,
     content_type=None,
@@ -130,7 +132,9 @@ def register(
 
     :param app: Sanic
     :param file_or_directory: File or directory path to serve from
+    :type file_or_directory: Union[str,bytes,Path]
     :param uri: URL to serve from
+    :type uri: str
     :param pattern: regular expression used to match files in the URL
     :param use_modified_since: If true, send file modified time, and return
                                not modified if the browser's matches the
@@ -142,10 +146,17 @@ def register(
                               If this is an integer, this represents the
                               threshold size to switch to file_stream()
     :param name: user defined name used for url_for
+    :type name: str
     :param content_type: user defined content type for header
     :return: registered static routes
     :rtype: List[sanic.router.Route]
     """
+
+    if isinstance(file_or_directory, bytes):
+        file_or_directory = file_or_directory.decode("utf-8")
+    elif isinstance(file_or_directory, PurePath):
+        file_or_directory = str(file_or_directory)
+
     # If we're not trying to match a file directly,
     # serve from the folder
     if not path.isfile(file_or_directory):

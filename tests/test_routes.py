@@ -2,11 +2,12 @@ import asyncio
 
 import pytest
 
+from sanic_testing.testing import SanicTestClient
+
 from sanic import Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.response import json, text
 from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
-from sanic.testing import SanicTestClient
 
 
 # ------------------------------------------------------------ #

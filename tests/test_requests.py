@@ -8,11 +8,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from sanic import Blueprint, Sanic
-from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
-from sanic.response import html, json, text
-from sanic.testing import (
+from sanic_testing.testing import (
     ASGI_BASE_URL,
     ASGI_HOST,
     ASGI_PORT,
@@ -20,6 +16,11 @@ from sanic.testing import (
     PORT,
     SanicTestClient,
 )
+
+from sanic import Blueprint, Sanic
+from sanic.exceptions import ServerError
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
+from sanic.response import html, json, text
 
 
 # ------------------------------------------------------------ #

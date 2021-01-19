@@ -8,13 +8,14 @@ from io import StringIO
 
 import pytest
 
+from sanic_testing.testing import SanicTestClient
+
 import sanic
 
 from sanic import Sanic
 from sanic.compat import OS_IS_WINDOWS
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
 from sanic.response import text
-from sanic.testing import SanicTestClient
 
 
 logging_format = """module: %(module)s; \

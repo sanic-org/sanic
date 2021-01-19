@@ -1,8 +1,9 @@
 import asyncio
 import logging
 
+from sanic_testing.testing import PORT
+
 from sanic.config import BASE_LOGO
-from sanic.testing import PORT
 
 
 try:

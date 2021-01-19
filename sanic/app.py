@@ -34,7 +34,6 @@ from sanic.server import (
     serve_multiple,
 )
 from sanic.static import register as static_register
-from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -87,6 +86,7 @@ class Sanic:
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, MiddlewareType] = {}
         self.named_response_middleware: Dict[str, MiddlewareType] = {}
+        self._test_manager = None
         # Register alternative method names
         self.go_fast = self.run
 
@@ -1032,11 +1032,21 @@ class Sanic:
 
     @property
     def test_client(self):
-        return SanicTestClient(self)
+        if self._test_manager:
+            return self._test_manager.test_client
+        from sanic_testing import TestManager
+
+        manager = TestManager(self)
+        return manager.test_client
 
     @property
     def asgi_client(self):
-        return SanicASGITestClient(self)
+        if self._test_manager:
+            return self._test_manager.asgi_client
+        from sanic_testing import TestManager
+
+        manager = TestManager(self)
+        return manager.asgi_client
 
     # -------------------------------------------------------------------- #
     # Execution

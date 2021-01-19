@@ -6,7 +6,7 @@ from socket import socket
 
 import pytest
 
-from sanic.testing import HOST, PORT
+from sanic_testing.testing import HOST, PORT
 
 
 AVAILABLE_LISTENERS = [

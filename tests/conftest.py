@@ -127,6 +127,6 @@ def url_param_generator():
     return TYPE_TO_GENERATOR_MAP
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def app(request):
     return Sanic(request.node.name)

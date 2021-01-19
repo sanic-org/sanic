@@ -6,6 +6,8 @@ import uuid
 
 import pytest
 
+from sanic_testing import TestManager
+
 from sanic import Sanic
 from sanic.router import RouteExists, Router
 
@@ -129,4 +131,6 @@ def url_param_generator():
 
 @pytest.fixture(scope="function")
 def app(request):
-    return Sanic(request.node.name)
+    app = Sanic(request.node.name)
+    # TestManager(app)
+    return app

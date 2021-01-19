@@ -86,7 +86,8 @@ class Sanic:
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, MiddlewareType] = {}
         self.named_response_middleware: Dict[str, MiddlewareType] = {}
-        self._test_manager = None
+        self._test_client = None
+        self._asgi_client = None
         # Register alternative method names
         self.go_fast = self.run
 
@@ -1032,21 +1033,21 @@ class Sanic:
 
     @property
     def test_client(self):
-        if self._test_manager:
-            return self._test_manager.test_client
-        from sanic_testing import TestManager
+        if self._test_client:
+            return self._test_client
+        from sanic_testing.testing import SanicTestClient
 
-        manager = TestManager(self)
-        return manager.test_client
+        self._test_client = SanicTestClient(self)
+        return self._test_client
 
     @property
     def asgi_client(self):
-        if self._test_manager:
-            return self._test_manager.asgi_client
-        from sanic_testing import TestManager
+        if self._asgi_client:
+            return self._asgi_client
+        from sanic_testing.testing import SanicASGITestClient
 
-        manager = TestManager(self)
-        return manager.asgi_client
+        self._asgi_client = SanicASGITestClient(self)
+        return self._asgi_client
 
     # -------------------------------------------------------------------- #
     # Execution

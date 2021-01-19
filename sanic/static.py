@@ -156,6 +156,8 @@ def register(
         file_or_directory = file_or_directory.decode("utf-8")
     elif isinstance(file_or_directory, PurePath):
         file_or_directory = str(file_or_directory)
+    elif not isinstance(file_or_directory, str):
+        raise ValueError("Invalid file path string.")
 
     # If we're not trying to match a file directly,
     # serve from the folder

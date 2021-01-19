@@ -88,6 +88,29 @@ def test_static_file_pathlib(app, static_file_directory, file_name):
     assert response.body == get_file_content(static_file_directory, file_name)
 
 
+@pytest.mark.parametrize(
+    "file_name",
+    [b"test.file", b"decode me.txt", b"python.png"],
+)
+def test_static_file_bytes(app, static_file_directory, file_name):
+    bsep = os.path.sep.encode('utf-8')
+    file_path = static_file_directory.encode('utf-8') + bsep + file_name
+    app.static("/testing.file", file_path)
+    request, response = app.test_client.get("/testing.file")
+    assert response.status == 200
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [dict(), list(), object()],
+)
+def test_static_file_invalid_path(app, static_file_directory, file_name):
+    with pytest.raises(ValueError):
+        app.static("/testing.file", file_name)
+    request, response = app.test_client.get("/testing.file")
+    assert response.status == 404
+
+
 @pytest.mark.parametrize("file_name", ["test.html"])
 def test_static_file_content_type(app, static_file_directory, file_name):
     app.static(

@@ -1450,7 +1450,7 @@ class Sanic:
             pass
         finally:
             self.websocket_tasks.remove(fut)
-        await ws.close()
+            await ws.close()
 
     # -------------------------------------------------------------------- #
     # ASGI

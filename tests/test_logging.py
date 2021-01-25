@@ -35,6 +35,7 @@ def test_log(app):
     logging.basicConfig(
         format=logging_format, level=logging.DEBUG, stream=log_stream
     )
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
     log = logging.getLogger()
     rand_string = str(uuid.uuid4())
 

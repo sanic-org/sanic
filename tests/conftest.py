@@ -19,6 +19,11 @@ if sys.platform in ["win32", "cygwin"]:
     collect_ignore = ["test_worker.py"]
 
 
+@pytest.fixture
+def caplog(caplog):
+    yield caplog
+
+
 async def _handler(request):
     """
     Dummy placeholder method used for route resolver when creating a new

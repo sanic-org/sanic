@@ -1035,7 +1035,7 @@ class Sanic:
     def test_client(self):
         if self._test_client:
             return self._test_client
-        from sanic_testing.testing import SanicTestClient
+        from sanic_testing.testing import SanicTestClient  # type: ignore
 
         self._test_client = SanicTestClient(self)
         return self._test_client
@@ -1044,7 +1044,7 @@ class Sanic:
     def asgi_client(self):
         if self._asgi_client:
             return self._asgi_client
-        from sanic_testing.testing import SanicASGITestClient
+        from sanic_testing.testing import SanicASGITestClient  # type: ignore
 
         self._asgi_client = SanicASGITestClient(self)
         return self._asgi_client

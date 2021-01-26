@@ -20,7 +20,12 @@ from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import SanicException, ServerError, URLBuildError
+from sanic.exceptions import (
+    NotFound,
+    SanicException,
+    ServerError,
+    URLBuildError,
+)
 from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.request import Request
@@ -67,7 +72,9 @@ class Sanic:
 
         self.name = name
         self.asgi = False
-        self.router = router or Router(self)
+        self.router = router or Router(
+            exception=NotFound, method_handler_exception=NotFound
+        )
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
@@ -206,17 +213,15 @@ class Sanic:
             if stream:
                 handler.is_stream = stream
 
-            routes.extend(
-                self.router.add(
-                    uri=uri,
-                    methods=methods,
-                    handler=handler,
-                    host=host,
-                    strict_slashes=strict_slashes,
-                    version=version,
-                    name=name,
-                    ignore_body=ignore_body,
-                )
+            self.router.add(
+                uri=uri,
+                methods=methods,
+                handler=handler,
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+                ignore_body=ignore_body,
             )
             return routes, handler
 
@@ -1321,6 +1326,9 @@ class Sanic:
         auto_reload=False,
     ):
         """Helper function used by `run` and `create_server`."""
+
+        self.router.finalize()
+
         if isinstance(ssl, dict):
             # try common aliaseses
             cert = ssl.get("cert") or ssl.get("certificate")

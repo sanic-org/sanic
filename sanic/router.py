@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from sanic_routing import BaseRouter
+from sanic_routing.route import Route
 
 from sanic.constants import HTTP_METHODS
 from sanic.log import logger
@@ -21,9 +22,16 @@ class Router(BaseRouter):
         # TODO: Implement response
         # - args,
         # - endpoint,
-        # - ignore_body,
 
-        return handler, (), params, route.path, route.name, None, False
+        return (
+            handler,
+            (),
+            params,
+            route.path,
+            route.name,
+            None,
+            route.ctx.ignore_body,
+        )
 
     def add(
         self,
@@ -35,10 +43,18 @@ class Router(BaseRouter):
         ignore_body=False,
         version=None,
         name=None,
-    ):
+    ) -> Route:
         # TODO: Implement
         # - host
         # - strict_slashes
-        # - version
         # - ignore_body
-        super().add(path=uri, handler=handler, methods=methods, name=name)
+        if version is not None:
+            version = str(version).strip("/").lstrip("v")
+            uri = "/".join([f"/v{version}", uri.lstrip("/")])
+
+        route = super().add(
+            path=uri, handler=handler, methods=methods, name=name
+        )
+        route.ctx.ignore_body = ignore_body
+
+        return route

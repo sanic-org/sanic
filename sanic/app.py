@@ -14,6 +14,8 @@ from traceback import format_exc
 from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
 from urllib.parse import urlencode, urlunparse
 
+from sanic_routing.route import Route
+
 from sanic import reloader_helpers
 from sanic.asgi import ASGIApp
 from sanic.blueprint_group import BlueprintGroup
@@ -28,6 +30,8 @@ from sanic.exceptions import (
 )
 from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.mixins.routes import RouteMixin
+from sanic.models.futures import FutureRoute
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
@@ -43,7 +47,7 @@ from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
-class Sanic:
+class Sanic(RouteMixin):
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
@@ -59,6 +63,7 @@ class Sanic:
         configure_logging: bool = True,
         register: Optional[bool] = None,
     ) -> None:
+        super().__init__()
 
         # Get name from previous stack frame
         if name is None:
@@ -161,391 +166,8 @@ class Sanic:
 
         return self.listener(event)(listener)
 
-    # Decorator
-    def route(
-        self,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-        ignore_body=False,
-    ):
-        """Decorate a function to be registered as a route
-
-        :param uri: path of the URL
-        :param methods: list or tuple of methods allowed
-        :param host:
-        :param strict_slashes:
-        :param stream:
-        :param version:
-        :param name: user defined route name for url_for
-        :return: tuple of routes, decorated function
-        """
-
-        # Fix case where the user did not prefix the URL with a /
-        # and will probably get confused as to why it's not working
-        if not uri.startswith("/"):
-            uri = "/" + uri
-
-        if strict_slashes is None:
-            strict_slashes = self.strict_slashes
-
-        def response(handler):
-            if isinstance(handler, tuple):
-                # if a handler fn is already wrapped in a route, the handler
-                # variable will be a tuple of (existing routes, handler fn)
-                routes, handler = handler
-            else:
-                routes = []
-            args = list(signature(handler).parameters.keys())
-
-            if not args:
-                handler_name = handler.__name__
-
-                raise ValueError(
-                    f"Required parameter `request` missing "
-                    f"in the {handler_name}() route?"
-                )
-
-            if stream:
-                handler.is_stream = stream
-
-            self.router.add(
-                uri=uri,
-                methods=methods,
-                handler=handler,
-                host=host,
-                strict_slashes=strict_slashes,
-                version=version,
-                name=name,
-                ignore_body=ignore_body,
-            )
-            return routes, handler
-
-        return response
-
-    # Shorthand method decorators
-    def get(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
-    ):
-        """
-        Add an API URL under the **GET** *HTTP* method
-
-        :param uri: URL to be tagged to **GET** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :return: Object decorated with :func:`route` method
-        """
-        return self.route(
-            uri,
-            methods=frozenset({"GET"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-        )
-
-    def post(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-    ):
-        """
-        Add an API URL under the **POST** *HTTP* method
-
-        :param uri: URL to be tagged to **POST** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :return: Object decorated with :func:`route` method
-        """
-        return self.route(
-            uri,
-            methods=frozenset({"POST"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-        )
-
-    def put(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-    ):
-        """
-        Add an API URL under the **PUT** *HTTP* method
-
-        :param uri: URL to be tagged to **PUT** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :return: Object decorated with :func:`route` method
-        """
-        return self.route(
-            uri,
-            methods=frozenset({"PUT"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-        )
-
-    def head(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
-    ):
-        return self.route(
-            uri,
-            methods=frozenset({"HEAD"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-        )
-
-    def options(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
-    ):
-        """
-        Add an API URL under the **OPTIONS** *HTTP* method
-
-        :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :return: Object decorated with :func:`route` method
-        """
-        return self.route(
-            uri,
-            methods=frozenset({"OPTIONS"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-        )
-
-    def patch(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-    ):
-        """
-        Add an API URL under the **PATCH** *HTTP* method
-
-        :param uri: URL to be tagged to **PATCH** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :return: Object decorated with :func:`route` method
-        """
-        return self.route(
-            uri,
-            methods=frozenset({"PATCH"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-        )
-
-    def delete(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
-    ):
-        """
-        Add an API URL under the **DELETE** *HTTP* method
-
-        :param uri: URL to be tagged to **DELETE** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :return: Object decorated with :func:`route` method
-        """
-        return self.route(
-            uri,
-            methods=frozenset({"DELETE"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-        )
-
-    def add_route(
-        self,
-        handler,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        stream=False,
-    ):
-        """A helper method to register class instance or
-        functions as a handler to the application url
-        routes.
-
-        :param handler: function or class instance
-        :param uri: path of the URL
-        :param methods: list or tuple of methods allowed, these are overridden
-                        if using a HTTPMethodView
-        :param host:
-        :param strict_slashes:
-        :param version:
-        :param name: user defined route name for url_for
-        :param stream: boolean specifying if the handler is a stream handler
-        :return: function or class instance
-        """
-        # Handle HTTPMethodView differently
-        if hasattr(handler, "view_class"):
-            methods = set()
-
-            for method in HTTP_METHODS:
-                _handler = getattr(handler.view_class, method.lower(), None)
-                if _handler:
-                    methods.add(method)
-                    if hasattr(_handler, "is_stream"):
-                        stream = True
-
-        # handle composition view differently
-        if isinstance(handler, CompositionView):
-            methods = handler.handlers.keys()
-            for _handler in handler.handlers.values():
-                if hasattr(_handler, "is_stream"):
-                    stream = True
-                    break
-
-        if strict_slashes is None:
-            strict_slashes = self.strict_slashes
-
-        self.route(
-            uri=uri,
-            methods=methods,
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-        )(handler)
-        return handler
-
-    # Decorator
-    def websocket(
-        self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        subprotocols=None,
-        version=None,
-        name=None,
-    ):
-        """
-        Decorate a function to be registered as a websocket route
-
-        :param uri: path of the URL
-        :param host: Host IP or FQDN details
-        :param strict_slashes: If the API endpoint needs to terminate
-                               with a "/" or not
-        :param subprotocols: optional list of str with supported subprotocols
-        :param name: A unique name assigned to the URL so that it can
-                     be used with :func:`url_for`
-        :return: tuple of routes, decorated function
-        """
-        self.enable_websocket()
-
-        # Fix case where the user did not prefix the URL with a /
-        # and will probably get confused as to why it's not working
-        if not uri.startswith("/"):
-            uri = "/" + uri
-
-        if strict_slashes is None:
-            strict_slashes = self.strict_slashes
-
-        def response(handler):
-            if isinstance(handler, tuple):
-                # if a handler fn is already wrapped in a route, the handler
-                # variable will be a tuple of (existing routes, handler fn)
-                routes, handler = handler
-            else:
-                routes = []
-            websocket_handler = partial(
-                self._websocket_handler, handler, subprotocols=subprotocols
-            )
-            websocket_handler.__name__ = (
-                "websocket_handler_" + handler.__name__
-            )
-            websocket_handler.is_websocket = True
-            routes.extend(
-                self.router.add(
-                    uri=uri,
-                    handler=websocket_handler,
-                    methods=frozenset({"GET"}),
-                    host=host,
-                    strict_slashes=strict_slashes,
-                    version=version,
-                    name=name,
-                )
-            )
-            return routes, handler
-
-        return response
+    def _apply_route(self, route: FutureRoute) -> Route:
+        return self.router.add(**route._asdict())
 
     def add_websocket_route(
         self,

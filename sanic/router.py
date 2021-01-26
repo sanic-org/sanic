@@ -40,6 +40,7 @@ class Router(BaseRouter):
         handler,
         host=None,
         strict_slashes=False,
+        stream=False,
         ignore_body=False,
         version=None,
         name=None,
@@ -48,6 +49,7 @@ class Router(BaseRouter):
         # - host
         # - strict_slashes
         # - ignore_body
+        # - stream
         if version is not None:
             version = str(version).strip("/").lstrip("v")
             uri = "/".join([f"/v{version}", uri.lstrip("/")])
@@ -56,5 +58,6 @@ class Router(BaseRouter):
             path=uri, handler=handler, methods=methods, name=name
         )
         route.ctx.ignore_body = ignore_body
+        route.ctx.stream = stream
 
         return route

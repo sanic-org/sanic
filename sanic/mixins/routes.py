@@ -1,25 +1,31 @@
 from functools import partial
 from inspect import signature
-from typing import List, Set
+from pathlib import PurePath
+from typing import List, Set, Union
 
 import websockets
 
 from sanic_routing.route import Route
 
 from sanic.constants import HTTP_METHODS
-from sanic.models.futures import FutureRoute
+from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.views import CompositionView
 
 
 class RouteMixin:
-    def __init__(self) -> None:
-        self._future_routes: Set[Route] = set()
-        self._future_websocket_routes: Set[Route] = set()
+    def __init__(self, *args, **kwargs) -> None:
+        self._future_routes: Set[FutureRoute] = set()
+        self._future_statics: Set[FutureStatic] = set()
+        self.name = ""
+        self.strict_slashes = False
 
     def _apply_route(self, route: FutureRoute) -> Route:
         raise NotImplementedError
 
-    def _route(
+    def _apply_static(self, static: FutureStatic) -> Route:
+        raise NotImplementedError
+
+    def route(
         self,
         uri,
         methods=frozenset({"GET"}),
@@ -132,30 +138,6 @@ class RouteMixin:
             return route, handler
 
         return decorator
-
-    def route(
-        self,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-        ignore_body=False,
-        apply=True,
-    ):
-        return self._route(
-            uri=uri,
-            methods=methods,
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-            apply=apply,
-        )
 
     def add_route(
         self,
@@ -435,7 +417,7 @@ class RouteMixin:
         :param version: Blueprint Version
         :param name: Unique name to identify the Websocket Route
         """
-        return self._route(
+        return self.route(
             uri=uri,
             host=host,
             methods=None,
@@ -474,17 +456,78 @@ class RouteMixin:
                 be used with :func:`url_for`
         :return: Objected decorated by :func:`websocket`
         """
-        if strict_slashes is None:
-            strict_slashes = self.strict_slashes
-
         return self.websocket(
-            uri,
+            uri=uri,
             host=host,
             strict_slashes=strict_slashes,
             subprotocols=subprotocols,
             version=version,
             name=name,
         )(handler)
+
+    def static(
+        self,
+        uri,
+        file_or_directory: Union[str, bytes, PurePath],
+        pattern=r"/?.+",
+        use_modified_since=True,
+        use_content_range=False,
+        stream_large_files=False,
+        name="static",
+        host=None,
+        strict_slashes=None,
+        content_type=None,
+        apply=True,
+    ):
+        """
+        Register a root to serve files from. The input can either be a
+        file or a directory. This method will enable an easy and simple way
+        to setup the :class:`Route` necessary to serve the static files.
+
+        :param uri: URL path to be used for serving static content
+        :param file_or_directory: Path for the Static file/directory with
+            static files
+        :param pattern: Regex Pattern identifying the valid static files
+        :param use_modified_since: If true, send file modified time, and return
+            not modified if the browser's matches the server's
+        :param use_content_range: If true, process header for range requests
+            and sends the file part that is requested
+        :param stream_large_files: If true, use the
+            :func:`StreamingHTTPResponse.file_stream` handler rather
+            than the :func:`HTTPResponse.file` handler to send the file.
+            If this is an integer, this represents the threshold size to
+            switch to :func:`StreamingHTTPResponse.file_stream`
+        :param name: user defined name used for url_for
+        :param host: Host IP or FQDN for the service to use
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :param content_type: user defined content type for header
+        :return: routes registered on the router
+        :rtype: List[sanic.router.Route]
+        """
+
+        if not name.startswith(self.name + "."):
+            name = f"{self.name}.{name}"
+
+        if strict_slashes is None and self.strict_slashes is not None:
+            strict_slashes = self.strict_slashes
+
+        static = FutureStatic(
+            uri,
+            file_or_directory,
+            pattern,
+            use_modified_since,
+            use_content_range,
+            stream_large_files,
+            name,
+            host,
+            strict_slashes,
+            content_type,
+        )
+        self._future_statics.add(static)
+
+        if apply:
+            self._apply_static(static)
 
     def _generate_name(self, handler, name: str) -> str:
         return name or handler.__name__

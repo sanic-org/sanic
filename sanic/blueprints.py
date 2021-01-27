@@ -2,6 +2,8 @@ from collections import defaultdict, namedtuple
 
 from sanic.blueprint_group import BlueprintGroup
 from sanic.constants import HTTP_METHODS
+from sanic.mixins.base import BaseMixin
+from sanic.mixins.middleware import MiddlewareMixin
 from sanic.mixins.routes import RouteMixin
 from sanic.models.futures import (
     FutureException,
@@ -13,7 +15,7 @@ from sanic.models.futures import (
 from sanic.views import CompositionView
 
 
-class Blueprint(RouteMixin):
+class Blueprint(BaseMixin, RouteMixin, MiddlewareMixin):
     def __init__(
         self,
         name,
@@ -34,8 +36,6 @@ class Blueprint(RouteMixin):
         :param strict_slashes: Enforce the API urls are requested with a
             training */*
         """
-        super().__init__()
-
         self.name = name
         self.url_prefix = url_prefix
         self.host = host
@@ -52,6 +52,14 @@ class Blueprint(RouteMixin):
     def route(self, *args, **kwargs):
         kwargs["apply"] = False
         return super().route(*args, **kwargs)
+
+    def static(self, *args, **kwargs):
+        kwargs["apply"] = False
+        return super().static(*args, **kwargs)
+
+    def middleware(self, *args, **kwargs):
+        kwargs["apply"] = False
+        return super().middleware(*args, **kwargs)
 
     @staticmethod
     def group(*blueprints, url_prefix=""):
@@ -118,51 +126,26 @@ class Blueprint(RouteMixin):
                 future.ignore_body,
             )
 
-            _route = app._apply_route(apply_route)
+            route = app._apply_route(apply_route)
+            routes.append(route)
 
-        # TODO:
-        # for future in self.websocket_routes:
-        #     # attach the blueprint name to the handler so that it can be
-        #     # prefixed properly in the router
-        #     future.handler.__blueprintname__ = self.name
-        #     # Prepend the blueprint URI prefix if available
-        #     uri = url_prefix + future.uri if url_prefix else future.uri
-        #     _routes, _ = app.websocket(
-        #         uri=uri,
-        #         host=future.host or self.host,
-        #         strict_slashes=future.strict_slashes,
-        #         name=future.name,
-        #     )(future.handler)
-        #     if _routes:
-        #         routes += _routes
+        # Static Files
+        for future in self._future_statics:
+            # Prepend the blueprint URI prefix if available
+            uri = url_prefix + future.uri if url_prefix else future.uri
+            apply_route = FutureStatic(uri, *future[1:])
+            route = app._apply_static(apply_route)
+            routes.append(route)
 
-        # # Static Files
-        # for future in self.statics:
-        #     # Prepend the blueprint URI prefix if available
-        #     uri = url_prefix + future.uri if url_prefix else future.uri
-        #     _routes = app.static(
-        #         uri, future.file_or_directory, *future.args, **future.kwargs
-        #     )
-        #     if _routes:
-        #         routes += _routes
+        route_names = [route.name for route in routes if route]
 
-        # route_names = [route.name for route in routes if route]
+        # Middleware
+        for future in self._future_middleware:
+            app._apply_middleware(future, route_names)
 
-        # # Middleware
-        # for future in self.middlewares:
-        #     if future.args or future.kwargs:
-        #         app.register_named_middleware(
-        #             future.middleware,
-        #             route_names,
-        #             *future.args,
-        #             **future.kwargs,
-        #         )
-        #     else:
-        #         app.register_named_middleware(future.middleware, route_names)
-
-        # # Exceptions
-        # for future in self.exceptions:
-        #     app.exception(*future.args, **future.kwargs)(future.handler)
+        # Exceptions
+        for future in self.exceptions:
+            app.exception(*future.args, **future.kwargs)(future.handler)
 
         # Event listeners
         for event, listeners in self.listeners.items():
@@ -180,35 +163,6 @@ class Blueprint(RouteMixin):
             return listener
 
         return decorator
-
-    def middleware(self, *args, **kwargs):
-        """
-        Create a blueprint middleware from a decorated function.
-
-        :param args: Positional arguments to be used while invoking the
-            middleware
-        :param kwargs: optional keyword args that can be used with the
-            middleware.
-        """
-
-        def register_middleware(_middleware):
-            future_middleware = FutureMiddleware(_middleware, args, kwargs)
-            self.middlewares.append(future_middleware)
-            return _middleware
-
-        # Detect which way this was called, @middleware or @middleware('AT')
-        if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
-            middleware = args[0]
-            args = []
-            return register_middleware(middleware)
-        else:
-            if kwargs.get("bp_group") and callable(args[0]):
-                middleware = args[0]
-                args = args[1:]
-                kwargs.pop("bp_group")
-                return register_middleware(middleware)
-            else:
-                return register_middleware
 
     def exception(self, *args, **kwargs):
         """
@@ -230,20 +184,5 @@ class Blueprint(RouteMixin):
 
         return decorator
 
-    def static(self, uri, file_or_directory, *args, **kwargs):
-        """Create a blueprint static route from a decorated function.
-
-        :param uri: endpoint at which the route will be accessible.
-        :param file_or_directory: Static asset.
-        """
-        name = kwargs.pop("name", "static")
-        if not name.startswith(self.name + "."):
-            name = f"{self.name}.{name}"
-        kwargs.update(name=name)
-
-        strict_slashes = kwargs.get("strict_slashes")
-        if strict_slashes is None and self.strict_slashes is not None:
-            kwargs.update(strict_slashes=self.strict_slashes)
-
-        static = FutureStatic(uri, file_or_directory, args, kwargs)
-        self.statics.append(static)
+    def _generate_name(self, handler, name: str) -> str:
+        return f"{self.name}.{name or handler.__name__}"

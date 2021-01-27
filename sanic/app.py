@@ -30,8 +30,10 @@ from sanic.exceptions import (
 )
 from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.mixins.base import BaseMixin
+from sanic.mixins.middleware import MiddlewareMixin
 from sanic.mixins.routes import RouteMixin
-from sanic.models.futures import FutureRoute
+from sanic.models.futures import FutureMiddleware, FutureRoute, FutureStatic
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
@@ -47,7 +49,7 @@ from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
-class Sanic(RouteMixin):
+class Sanic(BaseMixin, RouteMixin, MiddlewareMixin):
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
@@ -65,7 +67,6 @@ class Sanic(RouteMixin):
     ) -> None:
         super().__init__()
 
-        # Get name from previous stack frame
         if name is None:
             raise SanicException(
                 "Sanic instance cannot be unnamed. "
@@ -169,44 +170,8 @@ class Sanic(RouteMixin):
     def _apply_route(self, route: FutureRoute) -> Route:
         return self.router.add(**route._asdict())
 
-    def add_websocket_route(
-        self,
-        handler,
-        uri,
-        host=None,
-        strict_slashes=None,
-        subprotocols=None,
-        version=None,
-        name=None,
-    ):
-        """
-        A helper method to register a function as a websocket route.
-
-        :param handler: a callable function or instance of a class
-                        that can handle the websocket request
-        :param host: Host IP or FQDN details
-        :param uri: URL path that will be mapped to the websocket
-                    handler
-                    handler
-        :param strict_slashes: If the API endpoint needs to terminate
-                with a "/" or not
-        :param subprotocols: Subprotocols to be used with websocket
-                handshake
-        :param name: A unique name assigned to the URL so that it can
-                be used with :func:`url_for`
-        :return: Objected decorated by :func:`websocket`
-        """
-        if strict_slashes is None:
-            strict_slashes = self.strict_slashes
-
-        return self.websocket(
-            uri,
-            host=host,
-            strict_slashes=strict_slashes,
-            subprotocols=subprotocols,
-            version=version,
-            name=name,
-        )(handler)
+    def _apply_static(self, static: FutureStatic) -> Route:
+        return static_register(self, static)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -281,77 +246,20 @@ class Sanic(RouteMixin):
                     self.named_response_middleware[_rn].appendleft(middleware)
 
     # Decorator
-    def middleware(self, middleware_or_request):
-        """
-        Decorate and register middleware to be called before a request.
-        Can either be called as *@app.middleware* or
-        *@app.middleware('request')*
-
-        :param: middleware_or_request: Optional parameter to use for
-            identifying which type of middleware is being registered.
-        """
-        # Detect which way this was called, @middleware or @middleware('AT')
-        if callable(middleware_or_request):
-            return self.register_middleware(middleware_or_request)
-
-        else:
-            return partial(
-                self.register_middleware, attach_to=middleware_or_request
-            )
-
-    # Static Files
-    def static(
+    def _apply_middleware(
         self,
-        uri,
-        file_or_directory,
-        pattern=r"/?.+",
-        use_modified_since=True,
-        use_content_range=False,
-        stream_large_files=False,
-        name="static",
-        host=None,
-        strict_slashes=None,
-        content_type=None,
+        middleware: FutureMiddleware,
+        route_names: Optional[List[str]] = None,
     ):
-        """
-        Register a root to serve files from. The input can either be a
-        file or a directory. This method will enable an easy and simple way
-        to setup the :class:`Route` necessary to serve the static files.
-
-        :param uri: URL path to be used for serving static content
-        :param file_or_directory: Path for the Static file/directory with
-            static files
-        :param pattern: Regex Pattern identifying the valid static files
-        :param use_modified_since: If true, send file modified time, and return
-            not modified if the browser's matches the server's
-        :param use_content_range: If true, process header for range requests
-            and sends the file part that is requested
-        :param stream_large_files: If true, use the
-            :func:`StreamingHTTPResponse.file_stream` handler rather
-            than the :func:`HTTPResponse.file` handler to send the file.
-            If this is an integer, this represents the threshold size to
-            switch to :func:`StreamingHTTPResponse.file_stream`
-        :param name: user defined name used for url_for
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param content_type: user defined content type for header
-        :return: routes registered on the router
-        :rtype: List[sanic.router.Route]
-        """
-        return static_register(
-            self,
-            uri,
-            file_or_directory,
-            pattern,
-            use_modified_since,
-            use_content_range,
-            stream_large_files,
-            name,
-            host,
-            strict_slashes,
-            content_type,
-        )
+        print(f"{middleware=}")
+        if route_names:
+            return self.register_named_middleware(
+                middleware.middleware, route_names, middleware.attach_to
+            )
+        else:
+            return self.register_middleware(
+                middleware.middleware, middleware.attach_to
+            )
 
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.

@@ -4,7 +4,6 @@ from sanic_routing import BaseRouter
 from sanic_routing.route import Route
 
 from sanic.constants import HTTP_METHODS
-from sanic.log import logger
 from sanic.request import Request
 
 

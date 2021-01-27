@@ -1,21 +1,17 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from sanic.blueprint_group import BlueprintGroup
-from sanic.constants import HTTP_METHODS
 from sanic.mixins.base import BaseMixin
+from sanic.mixins.exceptions import ExceptionMixin
+from sanic.mixins.listeners import ListenerMixin
 from sanic.mixins.middleware import MiddlewareMixin
 from sanic.mixins.routes import RouteMixin
-from sanic.models.futures import (
-    FutureException,
-    FutureListener,
-    FutureMiddleware,
-    FutureRoute,
-    FutureStatic,
-)
-from sanic.views import CompositionView
+from sanic.models.futures import FutureRoute, FutureStatic
 
 
-class Blueprint(BaseMixin, RouteMixin, MiddlewareMixin):
+class Blueprint(
+    BaseMixin, RouteMixin, MiddlewareMixin, ListenerMixin, ExceptionMixin
+):
     def __init__(
         self,
         name,
@@ -61,6 +57,14 @@ class Blueprint(BaseMixin, RouteMixin, MiddlewareMixin):
         kwargs["apply"] = False
         return super().middleware(*args, **kwargs)
 
+    def listener(self, *args, **kwargs):
+        kwargs["apply"] = False
+        return super().listener(*args, **kwargs)
+
+    def exception(self, *args, **kwargs):
+        kwargs["apply"] = False
+        return super().exception(*args, **kwargs)
+
     @staticmethod
     def group(*blueprints, url_prefix=""):
         """
@@ -103,9 +107,6 @@ class Blueprint(BaseMixin, RouteMixin, MiddlewareMixin):
 
         routes = []
 
-        # TODO:
-        # - Add BP name to handler name for all routes
-
         # Routes
         for future in self._future_routes:
             # attach the blueprint name to the handler so that it can be
@@ -144,45 +145,12 @@ class Blueprint(BaseMixin, RouteMixin, MiddlewareMixin):
             app._apply_middleware(future, route_names)
 
         # Exceptions
-        for future in self.exceptions:
-            app.exception(*future.args, **future.kwargs)(future.handler)
+        for future in self._future_exceptions:
+            app._apply_exception_handler(future)
 
         # Event listeners
-        for event, listeners in self.listeners.items():
-            for listener in listeners:
-                app.listener(event)(listener)
-
-    def listener(self, event):
-        """Create a listener from a decorated function.
-
-        :param event: Event to listen to.
-        """
-
-        def decorator(listener):
-            self.listeners[event].append(listener)
-            return listener
-
-        return decorator
-
-    def exception(self, *args, **kwargs):
-        """
-        This method enables the process of creating a global exception
-        handler for the current blueprint under question.
-
-        :param args: List of Python exceptions to be caught by the handler
-        :param kwargs: Additional optional arguments to be passed to the
-            exception handler
-
-        :return a decorated method to handle global exceptions for any
-            route registered under this blueprint.
-        """
-
-        def decorator(handler):
-            exception = FutureException(handler, args, kwargs)
-            self.exceptions.append(exception)
-            return handler
-
-        return decorator
+        for listener in self._future_listeners:
+            app._apply_listener(listener)
 
     def _generate_name(self, handler, name: str) -> str:
         return f"{self.name}.{name or handler.__name__}"

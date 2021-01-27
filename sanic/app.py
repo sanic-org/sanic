@@ -23,6 +23,7 @@ from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import (
+    InvalidUsage,
     NotFound,
     SanicException,
     ServerError,
@@ -31,9 +32,17 @@ from sanic.exceptions import (
 from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.mixins.base import BaseMixin
+from sanic.mixins.exceptions import ExceptionMixin
+from sanic.mixins.listeners import ListenerEvent, ListenerMixin
 from sanic.mixins.middleware import MiddlewareMixin
 from sanic.mixins.routes import RouteMixin
-from sanic.models.futures import FutureMiddleware, FutureRoute, FutureStatic
+from sanic.models.futures import (
+    FutureException,
+    FutureListener,
+    FutureMiddleware,
+    FutureRoute,
+    FutureStatic,
+)
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
@@ -49,7 +58,9 @@ from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
-class Sanic(BaseMixin, RouteMixin, MiddlewareMixin):
+class Sanic(
+    BaseMixin, RouteMixin, MiddlewareMixin, ListenerMixin, ExceptionMixin
+):
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
@@ -144,17 +155,8 @@ class Sanic(BaseMixin, RouteMixin, MiddlewareMixin):
             )
 
     # Decorator
-    def listener(self, event):
-        """Create a listener from a decorated function.
-
-        :param event: event to listen to
-        """
-
-        def decorator(listener):
-            self.listeners[event].append(listener)
-            return listener
-
-        return decorator
+    def _apply_listener(self, listener: FutureListener):
+        return self.register_listener(listener.listener, listener.event)
 
     def register_listener(self, listener, event):
         """
@@ -165,7 +167,14 @@ class Sanic(BaseMixin, RouteMixin, MiddlewareMixin):
         :return: listener
         """
 
-        return self.listener(event)(listener)
+        try:
+            _event = ListenerEvent(event)
+        except ValueError:
+            valid = ", ".join(ListenerEvent.__members__.values())
+            raise InvalidUsage(f"Invalid event: {event}. Use one of: {valid}")
+
+        self.listeners[_event].append(listener)
+        return listener
 
     def _apply_route(self, route: FutureRoute) -> Route:
         return self.router.add(**route._asdict())
@@ -187,23 +196,20 @@ class Sanic(BaseMixin, RouteMixin, MiddlewareMixin):
         self.websocket_enabled = enable
 
     # Decorator
-    def exception(self, *exceptions):
+    def _apply_exception_handler(self, handler: FutureException):
         """Decorate a function to be registered as a handler for exceptions
 
         :param exceptions: exceptions
         :return: decorated function
         """
 
-        def response(handler):
-            for exception in exceptions:
-                if isinstance(exception, (tuple, list)):
-                    for e in exception:
-                        self.error_handler.add(e, handler)
-                else:
-                    self.error_handler.add(exception, handler)
-            return handler
-
-        return response
+        for exception in handler.exceptions:
+            if isinstance(exception, (tuple, list)):
+                for e in exception:
+                    self.error_handler.add(e, handler.handler)
+            else:
+                self.error_handler.add(exception, handler.handler)
+        return handler
 
     def register_middleware(self, middleware, attach_to="request"):
         """

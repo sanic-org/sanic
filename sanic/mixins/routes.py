@@ -1,9 +1,7 @@
 from functools import partial
 from inspect import signature
 from pathlib import PurePath
-from typing import List, Set, Union
-
-import websockets
+from typing import Set, Union
 
 from sanic_routing.route import Route
 

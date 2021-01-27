@@ -15,11 +15,9 @@ FutureRoute = namedtuple(
         "ignore_body",
     ],
 )
-FutureListener = namedtuple(
-    "FutureListener", ["handler", "uri", "methods", "host"]
-)
+FutureListener = namedtuple("FutureListener", ["listener", "event"])
 FutureMiddleware = namedtuple("FutureMiddleware", ["middleware", "attach_to"])
-FutureException = namedtuple("FutureException", ["handler", "args", "kwargs"])
+FutureException = namedtuple("FutureException", ["handler", "exceptions"])
 FutureStatic = namedtuple(
     "FutureStatic",
     [

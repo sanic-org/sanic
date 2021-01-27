@@ -23,12 +23,14 @@ class MiddlewareMixin:
             identifying which type of middleware is being registered.
         """
 
-        def register_middleware(_middleware, attach_to="request"):
-            future_middleware = FutureMiddleware(_middleware, attach_to)
+        def register_middleware(middleware, attach_to="request"):
+            nonlocal apply
+
+            future_middleware = FutureMiddleware(middleware, attach_to)
             self._future_middleware.add(future_middleware)
             if apply:
                 self._apply_middleware(future_middleware)
-            return _middleware
+            return middleware
 
         # Detect which way this was called, @middleware or @middleware('AT')
         if callable(middleware_or_request):
@@ -39,3 +41,9 @@ class MiddlewareMixin:
             return partial(
                 register_middleware, attach_to=middleware_or_request
             )
+
+    def on_request(self, middleware):
+        return self.middleware(middleware, "request")
+
+    def on_response(self, middleware):
+        return self.middleware(middleware, "response")

@@ -4,7 +4,6 @@ from os import path
 from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
-from typing import Union
 from urllib.parse import unquote
 
 from sanic.compat import stat_async

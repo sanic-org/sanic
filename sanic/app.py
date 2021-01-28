@@ -86,6 +86,7 @@ class Sanic:
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, MiddlewareType] = {}
         self.named_response_middleware: Dict[str, MiddlewareType] = {}
+        self._test_manager = None
         self._test_client = None
         self._asgi_client = None
         # Register alternative method names
@@ -1035,6 +1036,8 @@ class Sanic:
     def test_client(self):
         if self._test_client:
             return self._test_client
+        elif self._test_manager:
+            return self._test_manager.test_client
         from sanic_testing.testing import SanicTestClient  # type: ignore
 
         self._test_client = SanicTestClient(self)
@@ -1044,6 +1047,8 @@ class Sanic:
     def asgi_client(self):
         if self._asgi_client:
             return self._asgi_client
+        elif self._test_manager:
+            return self._test_manager.test_client
         from sanic_testing.testing import SanicASGITestClient  # type: ignore
 
         self._asgi_client = SanicASGITestClient(self)

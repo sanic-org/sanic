@@ -7,7 +7,7 @@ from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
-from inspect import isawaitable, signature
+from inspect import isawaitable
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -18,10 +18,10 @@ from sanic_routing.route import Route
 
 from sanic import reloader_helpers
 from sanic.asgi import ASGIApp
+from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
-from sanic.constants import HTTP_METHODS
 from sanic.exceptions import (
     InvalidUsage,
     NotFound,
@@ -31,11 +31,7 @@ from sanic.exceptions import (
 )
 from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
-from sanic.mixins.base import BaseMixin
-from sanic.mixins.exceptions import ExceptionMixin
-from sanic.mixins.listeners import ListenerEvent, ListenerMixin
-from sanic.mixins.middleware import MiddlewareMixin
-from sanic.mixins.routes import RouteMixin
+from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -54,13 +50,10 @@ from sanic.server import (
     serve_multiple,
 )
 from sanic.static import register as static_register
-from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
-class Sanic(
-    BaseMixin, RouteMixin, MiddlewareMixin, ListenerMixin, ExceptionMixin
-):
+class Sanic(BaseSanic):
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
@@ -154,10 +147,6 @@ class Sanic(
                 partial(self._loop_add_task, task)
             )
 
-    # Decorator
-    def _apply_listener(self, listener: FutureListener):
-        return self.register_listener(listener.listener, listener.event)
-
     def register_listener(self, listener, event):
         """
         Register the listener for a given event.
@@ -175,41 +164,6 @@ class Sanic(
 
         self.listeners[_event].append(listener)
         return listener
-
-    def _apply_route(self, route: FutureRoute) -> Route:
-        return self.router.add(**route._asdict())
-
-    def _apply_static(self, static: FutureStatic) -> Route:
-        return static_register(self, static)
-
-    def enable_websocket(self, enable=True):
-        """Enable or disable the support for websocket.
-
-        Websocket is enabled automatically if websocket routes are
-        added to the application.
-        """
-        if not self.websocket_enabled:
-            # if the server is stopped, we want to cancel any ongoing
-            # websocket tasks, to allow the server to exit promptly
-            self.listener("before_server_stop")(self._cancel_websocket_tasks)
-
-        self.websocket_enabled = enable
-
-    # Decorator
-    def _apply_exception_handler(self, handler: FutureException):
-        """Decorate a function to be registered as a handler for exceptions
-
-        :param exceptions: exceptions
-        :return: decorated function
-        """
-
-        for exception in handler.exceptions:
-            if isinstance(exception, (tuple, list)):
-                for e in exception:
-                    self.error_handler.add(e, handler.handler)
-            else:
-                self.error_handler.add(exception, handler.handler)
-        return handler
 
     def register_middleware(self, middleware, attach_to="request"):
         """
@@ -251,7 +205,30 @@ class Sanic(
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
 
-    # Decorator
+    def _apply_exception_handler(self, handler: FutureException):
+        """Decorate a function to be registered as a handler for exceptions
+
+        :param exceptions: exceptions
+        :return: decorated function
+        """
+
+        for exception in handler.exceptions:
+            if isinstance(exception, (tuple, list)):
+                for e in exception:
+                    self.error_handler.add(e, handler.handler)
+            else:
+                self.error_handler.add(exception, handler.handler)
+        return handler
+
+    def _apply_listener(self, listener: FutureListener):
+        return self.register_listener(listener.listener, listener.event)
+
+    def _apply_route(self, route: FutureRoute) -> Route:
+        return self.router.add(**route._asdict())
+
+    def _apply_static(self, static: FutureStatic) -> Route:
+        return static_register(self, static)
+
     def _apply_middleware(
         self,
         middleware: FutureMiddleware,
@@ -266,6 +243,19 @@ class Sanic(
             return self.register_middleware(
                 middleware.middleware, middleware.attach_to
             )
+
+    def enable_websocket(self, enable=True):
+        """Enable or disable the support for websocket.
+
+        Websocket is enabled automatically if websocket routes are
+        added to the application.
+        """
+        if not self.websocket_enabled:
+            # if the server is stopped, we want to cancel any ongoing
+            # websocket tasks, to allow the server to exit promptly
+            self.listener("before_server_stop")(self._cancel_websocket_tasks)
+
+        self.websocket_enabled = enable
 
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.
@@ -426,12 +416,6 @@ class Sanic(
     # Request Handling
     # -------------------------------------------------------------------- #
 
-    def converted_response_type(self, response):
-        """
-        No implementation provided.
-        """
-        pass
-
     async def handle_exception(self, request, exception):
         # -------------------------------------------- #
         # Request Middleware
@@ -563,10 +547,42 @@ class Sanic(
         except CancelledError:
             raise
         except Exception as e:
-            # -------------------------------------------- #
             # Response Generation Failed
-            # -------------------------------------------- #
             await self.handle_exception(request, e)
+
+    async def _websocket_handler(
+        self, handler, request, *args, subprotocols=None, **kwargs
+    ):
+        request.app = self
+        if not getattr(handler, "__blueprintname__", False):
+            request.endpoint = handler.__name__
+        else:
+            request.endpoint = (
+                getattr(handler, "__blueprintname__", "") + handler.__name__
+            )
+
+            pass
+
+        if self.asgi:
+            ws = request.transport.get_websocket_connection()
+        else:
+            protocol = request.transport.get_protocol()
+            protocol.app = self
+
+            ws = await protocol.websocket_handshake(request, subprotocols)
+
+        # schedule the application handler
+        # its future is kept in self.websocket_tasks in case it
+        # needs to be cancelled due to the server being stopped
+        fut = ensure_future(handler(request, ws, *args, **kwargs))
+        self.websocket_tasks.add(fut)
+        try:
+            await fut
+        except (CancelledError, ConnectionClosed):
+            pass
+        finally:
+            self.websocket_tasks.remove(fut)
+            await ws.close()
 
     # -------------------------------------------------------------------- #
     # Testing
@@ -898,9 +914,7 @@ class Sanic(
             "backlog": backlog,
         }
 
-        # -------------------------------------------- #
         # Register start/stop events
-        # -------------------------------------------- #
 
         for event_name, settings_name, reverse in (
             ("before_server_start", "before_start", False),
@@ -961,40 +975,6 @@ class Sanic(
     def _cancel_websocket_tasks(cls, app, loop):
         for task in app.websocket_tasks:
             task.cancel()
-
-    async def _websocket_handler(
-        self, handler, request, *args, subprotocols=None, **kwargs
-    ):
-        request.app = self
-        if not getattr(handler, "__blueprintname__", False):
-            request.endpoint = handler.__name__
-        else:
-            request.endpoint = (
-                getattr(handler, "__blueprintname__", "") + handler.__name__
-            )
-
-            pass
-
-        if self.asgi:
-            ws = request.transport.get_websocket_connection()
-        else:
-            protocol = request.transport.get_protocol()
-            protocol.app = self
-
-            ws = await protocol.websocket_handshake(request, subprotocols)
-
-        # schedule the application handler
-        # its future is kept in self.websocket_tasks in case it
-        # needs to be cancelled due to the server being stopped
-        fut = ensure_future(handler(request, ws, *args, **kwargs))
-        self.websocket_tasks.add(fut)
-        try:
-            await fut
-        except (CancelledError, ConnectionClosed):
-            pass
-        finally:
-            self.websocket_tasks.remove(fut)
-            await ws.close()
 
     # -------------------------------------------------------------------- #
     # ASGI

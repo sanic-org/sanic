@@ -9,7 +9,9 @@ import pytest
 from sanic_testing import TestManager
 
 from sanic import Sanic
-from sanic.router import RouteExists, Router
+
+
+# from sanic.router import RouteExists, Router
 
 
 random.seed("Pack my box with five dozen liquor jugs.")
@@ -104,24 +106,25 @@ class RouteStringGenerator:
 
 @pytest.fixture(scope="function")
 def sanic_router(app):
-    # noinspection PyProtectedMember
-    def _setup(route_details: tuple) -> (Router, tuple):
-        router = Router(app)
-        added_router = []
-        for method, route in route_details:
-            try:
-                router._add(
-                    uri=f"/{route}",
-                    methods=frozenset({method}),
-                    host="localhost",
-                    handler=_handler,
-                )
-                added_router.append((method, route))
-            except RouteExists:
-                pass
-        return router, added_router
+    ...
+    # # noinspection PyProtectedMember
+    # def _setup(route_details: tuple) -> (Router, tuple):
+    #     router = Router(app)
+    #     added_router = []
+    #     for method, route in route_details:
+    #         try:
+    #             router._add(
+    #                 uri=f"/{route}",
+    #                 methods=frozenset({method}),
+    #                 host="localhost",
+    #                 handler=_handler,
+    #             )
+    #             added_router.append((method, route))
+    #         except RouteExists:
+    #             pass
+    #     return router, added_router
 
-    return _setup
+    # return _setup
 
 
 @pytest.fixture(scope="function")

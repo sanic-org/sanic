@@ -1,17 +1,11 @@
 from collections import defaultdict
 
+from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
-from sanic.mixins.base import BaseMixin
-from sanic.mixins.exceptions import ExceptionMixin
-from sanic.mixins.listeners import ListenerMixin
-from sanic.mixins.middleware import MiddlewareMixin
-from sanic.mixins.routes import RouteMixin
 from sanic.models.futures import FutureRoute, FutureStatic
 
 
-class Blueprint(
-    BaseMixin, RouteMixin, MiddlewareMixin, ListenerMixin, ExceptionMixin
-):
+class Blueprint(BaseSanic):
     def __init__(
         self,
         name,

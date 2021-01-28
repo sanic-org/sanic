@@ -41,8 +41,7 @@ def transport(message_stack, receive, send):
 
 
 @pytest.fixture
-# @pytest.mark.asyncio
-def protocol(transport, loop):
+def protocol(transport):
     return transport.get_protocol()
 
 

@@ -8,10 +8,11 @@ import httpcore
 import httpx
 import pytest
 
+from sanic_testing.testing import HOST, SanicTestClient
+
 from sanic import Sanic, server
 from sanic.compat import OS_IS_WINDOWS
 from sanic.response import text
-from sanic.testing import HOST, SanicTestClient
 
 
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}

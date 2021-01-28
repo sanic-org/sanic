@@ -16,10 +16,10 @@ from httpcore._async.connection_pool import ResponseByteStream
 from httpcore._exceptions import LocalProtocolError, UnsupportedProtocol
 from httpcore._types import TimeoutDict
 from httpcore._utils import url_to_origin
+from sanic_testing.testing import SanicTestClient
 
 from sanic import Sanic
 from sanic.response import text
-from sanic.testing import SanicTestClient
 
 
 class DelayableHTTPConnection(httpcore._async.connection.AsyncHTTPConnection):

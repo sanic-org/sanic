@@ -1033,7 +1033,7 @@ class Sanic:
     # -------------------------------------------------------------------- #
 
     @property
-    def test_client(self):
+    def test_client(self):  # noqa
         if self._test_client:
             return self._test_client
         elif self._test_manager:
@@ -1044,7 +1044,7 @@ class Sanic:
         return self._test_client
 
     @property
-    def asgi_client(self):
+    def asgi_client(self):  # noqa
         if self._asgi_client:
             return self._asgi_client
         elif self._test_manager:

@@ -1,6 +1,7 @@
 from functools import partial, wraps
 from mimetypes import guess_type
 from os import path
+from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
 from urllib.parse import unquote
@@ -14,6 +15,7 @@ from sanic.exceptions import (
 )
 from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
+from sanic.models.futures import FutureStatic
 from sanic.response import HTTPResponse, file, file_stream
 
 
@@ -110,16 +112,7 @@ async def _static_request_handler(
 
 def register(
     app,
-    uri,
-    file_or_directory,
-    pattern,
-    use_modified_since,
-    use_content_range,
-    stream_large_files,
-    name="static",
-    host=None,
-    strict_slashes=None,
-    content_type=None,
+    static: FutureStatic,
 ):
     # TODO: Though sanic is not a file server, I feel like we should at least
     #       make a good effort here.  Modified-since is nice, but we could
@@ -130,7 +123,9 @@ def register(
 
     :param app: Sanic
     :param file_or_directory: File or directory path to serve from
+    :type file_or_directory: Union[str,bytes,Path]
     :param uri: URL to serve from
+    :type uri: str
     :param pattern: regular expression used to match files in the URL
     :param use_modified_since: If true, send file modified time, and return
                                not modified if the browser's matches the
@@ -142,35 +137,48 @@ def register(
                               If this is an integer, this represents the
                               threshold size to switch to file_stream()
     :param name: user defined name used for url_for
+    :type name: str
     :param content_type: user defined content type for header
     :return: registered static routes
     :rtype: List[sanic.router.Route]
     """
+
+    if isinstance(static.file_or_directory, bytes):
+        file_or_directory = static.file_or_directory.decode("utf-8")
+    elif isinstance(static.file_or_directory, PurePath):
+        file_or_directory = str(static.file_or_directory)
+    elif not isinstance(static.file_or_directory, str):
+        raise ValueError("Invalid file path string.")
+    else:
+        file_or_directory = static.file_or_directory
+
+    uri = static.uri
+    name = static.name
     # If we're not trying to match a file directly,
     # serve from the folder
     if not path.isfile(file_or_directory):
-        uri += "<file_uri:" + pattern + ">"
+        uri += "<file_uri:" + static.pattern + ">"
 
     # special prefix for static files
-    if not name.startswith("_static_"):
-        name = f"_static_{name}"
+    if not static.name.startswith("_static_"):
+        name = f"_static_{static.name}"
 
     _handler = wraps(_static_request_handler)(
         partial(
             _static_request_handler,
             file_or_directory,
-            use_modified_since,
-            use_content_range,
-            stream_large_files,
-            content_type=content_type,
+            static.use_modified_since,
+            static.use_content_range,
+            static.stream_large_files,
+            content_type=static.content_type,
         )
     )
 
     _routes, _ = app.route(
-        uri,
+        uri=uri,
         methods=["GET", "HEAD"],
         name=name,
-        host=host,
-        strict_slashes=strict_slashes,
+        host=static.host,
+        strict_slashes=static.strict_slashes,
     )(_handler)
     return _routes

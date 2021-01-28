@@ -7,9 +7,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from sanic_testing.testing import HOST, PORT
+
 from sanic.compat import ctrlc_workaround_for_windows
 from sanic.response import HTTPResponse
-from sanic.testing import HOST, PORT
 
 
 async def stop(app, loop):

@@ -1,4 +1,5 @@
 import email.utils
+import uuid
 
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
@@ -51,6 +52,7 @@ class Request:
     __slots__ = (
         "__weakref__",
         "_cookies",
+        "_id",
         "_ip",
         "_parsed_url",
         "_port",
@@ -82,6 +84,7 @@ class Request:
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
+        self._id = None
         self.app = app
 
         self.headers = headers
@@ -109,6 +112,10 @@ class Request:
     def __repr__(self):
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.method} {self.path}>"
+
+    @classmethod
+    def generate_id(*_):
+        return uuid.uuid4()
 
     async def respond(
         self, response=None, *, status=200, headers=None, content_type=None
@@ -147,6 +154,26 @@ class Request:
         """
         if not self.body:
             self.body = b"".join([data async for data in self.stream])
+
+    @property
+    def id(self):
+        if not self._id:
+            self._id = self.headers.get(
+                self.app.config.REQUEST_ID_HEADER,
+                self.__class__.generate_id(self),
+            )
+
+            # Try casting to a UUID or an integer
+            if isinstance(self._id, str):
+                try:
+                    self._id = uuid.UUID(self._id)
+                except ValueError:
+                    try:
+                        self._id = int(self._id)
+                    except ValueError:
+                        ...
+
+        return self._id
 
     @property
     def json(self):

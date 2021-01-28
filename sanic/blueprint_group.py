@@ -144,10 +144,13 @@ class BlueprintGroup(MutableSequence):
         :param kwargs: Optional Keyword arg to use with Middleware
         :return: Partial function to apply the middleware
         """
-        kwargs["bp_group"] = True
 
         def register_middleware_for_blueprints(fn):
             for blueprint in self.blueprints:
                 blueprint.middleware(fn, *args, **kwargs)
 
+        if args and callable(args[0]):
+            fn = args[0]
+            args = list(args)[1:]
+            return register_middleware_for_blueprints(fn)
         return register_middleware_for_blueprints

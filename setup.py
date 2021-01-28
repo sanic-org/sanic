@@ -89,22 +89,20 @@ requirements = [
     "aiofiles>=0.6.0",
     "websockets>=8.1,<9.0",
     "multidict>=5.0,<6.0",
-    "httpx==0.15.4",
 ]
 
 tests_require = [
+    "sanic-testing",
     "pytest==5.2.1",
     "multidict>=5.0,<6.0",
     "gunicorn==20.0.4",
     "pytest-cov",
-    "httpcore==0.11.*",
     "beautifulsoup4",
     uvloop,
     ujson,
     "pytest-sanic",
     "pytest-sugar",
     "pytest-benchmark",
-    "pytest-dependency",
 ]
 
 docs_require = [

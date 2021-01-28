@@ -2,11 +2,12 @@ import asyncio
 
 import pytest
 
+from sanic_testing.testing import SanicTestClient
+
 from sanic import Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.response import json, text
 from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
-from sanic.testing import SanicTestClient
 
 
 # ------------------------------------------------------------ #
@@ -479,21 +480,21 @@ def test_websocket_route_with_subprotocols(app):
         results.append(ws.subprotocol)
         assert ws.subprotocol is not None
 
-    request, response = app.test_client.websocket("/ws", subprotocols=["bar"])
+    _, response = SanicTestClient(app).websocket("/ws", subprotocols=["bar"])
     assert response.opened is True
     assert results == ["bar"]
 
-    request, response = app.test_client.websocket(
+    _, response = SanicTestClient(app).websocket(
         "/ws", subprotocols=["bar", "foo"]
     )
     assert response.opened is True
     assert results == ["bar", "bar"]
 
-    request, response = app.test_client.websocket("/ws", subprotocols=["baz"])
+    _, response = SanicTestClient(app).websocket("/ws", subprotocols=["baz"])
     assert response.opened is True
     assert results == ["bar", "bar", None]
 
-    request, response = app.test_client.websocket("/ws")
+    _, response = SanicTestClient(app).websocket("/ws")
     assert response.opened is True
     assert results == ["bar", "bar", None, None]
 

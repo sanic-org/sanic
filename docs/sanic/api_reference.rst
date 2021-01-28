@@ -6,12 +6,16 @@ sanic.app
 
 .. automodule:: sanic.app
     :members:
+    :show-inheritance:
+    :inherited-members:
 
 sanic.blueprints
 ----------------
 
 .. automodule:: sanic.blueprints
     :members:
+    :show-inheritance:
+    :inherited-members:
 
 sanic.blueprint_group
 ---------------------
@@ -102,13 +106,6 @@ sanic.static
 ------------
 
 .. automodule:: sanic.static
-    :members:
-    :undoc-members:
-
-sanic.testing
--------------
-
-.. automodule:: sanic.testing
     :members:
     :undoc-members:
 

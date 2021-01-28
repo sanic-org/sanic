@@ -1,16 +1,9 @@
 import asyncio
 import logging
 
+from sanic_testing.testing import PORT
+
 from sanic.config import BASE_LOGO
-from sanic.testing import PORT
-
-
-try:
-    import uvloop  # noqa
-
-    ROW = 0
-except BaseException:
-    ROW = 1
 
 
 def test_logo_base(app, caplog):
@@ -28,8 +21,8 @@ def test_logo_base(app, caplog):
     loop.run_until_complete(_server.wait_closed())
     app.stop()
 
-    assert caplog.record_tuples[ROW][1] == logging.DEBUG
-    assert caplog.record_tuples[ROW][2] == BASE_LOGO
+    assert caplog.record_tuples[0][1] == logging.DEBUG
+    assert caplog.record_tuples[0][2] == BASE_LOGO
 
 
 def test_logo_false(app, caplog):
@@ -49,8 +42,8 @@ def test_logo_false(app, caplog):
     loop.run_until_complete(_server.wait_closed())
     app.stop()
 
-    banner, port = caplog.record_tuples[ROW][2].rsplit(":", 1)
-    assert caplog.record_tuples[ROW][1] == logging.INFO
+    banner, port = caplog.record_tuples[0][2].rsplit(":", 1)
+    assert caplog.record_tuples[0][1] == logging.INFO
     assert banner == "Goin' Fast @ http://127.0.0.1"
     assert int(port) > 0
 
@@ -72,8 +65,8 @@ def test_logo_true(app, caplog):
     loop.run_until_complete(_server.wait_closed())
     app.stop()
 
-    assert caplog.record_tuples[ROW][1] == logging.DEBUG
-    assert caplog.record_tuples[ROW][2] == BASE_LOGO
+    assert caplog.record_tuples[0][1] == logging.DEBUG
+    assert caplog.record_tuples[0][2] == BASE_LOGO
 
 
 def test_logo_custom(app, caplog):
@@ -93,5 +86,5 @@ def test_logo_custom(app, caplog):
     loop.run_until_complete(_server.wait_closed())
     app.stop()
 
-    assert caplog.record_tuples[ROW][1] == logging.DEBUG
-    assert caplog.record_tuples[ROW][2] == "My Custom Logo"
+    assert caplog.record_tuples[0][1] == logging.DEBUG
+    assert caplog.record_tuples[0][2] == "My Custom Logo"

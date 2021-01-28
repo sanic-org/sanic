@@ -12,6 +12,7 @@ from urllib.parse import unquote
 import pytest
 
 from aiofiles import os as async_os
+from sanic_testing.testing import HOST, PORT
 
 from sanic.response import (
     HTTPResponse,
@@ -25,7 +26,6 @@ from sanic.response import (
     text,
 )
 from sanic.server import HttpProtocol
-from sanic.testing import HOST, PORT
 
 
 JSON_DATA = {"ok": True}

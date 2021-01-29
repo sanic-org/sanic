@@ -1,12 +1,14 @@
 from functools import partial
 from mimetypes import guess_type
 from os import path
+from typing import Optional
 from urllib.parse import quote_plus
 from warnings import warn
 
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
 from sanic.helpers import has_message_body, remove_entity_headers
+from sanic.http import Http
 
 
 try:
@@ -21,7 +23,10 @@ except ImportError:
 
 class BaseHTTPResponse:
     def __init__(self):
-        self.asgi = False
+        self.asgi: bool = False
+        self.body: Optional[bytes] = None
+        self.stream: Http = None
+        self.status: int = None
 
     def _encode_body(self, data):
         if data is None:

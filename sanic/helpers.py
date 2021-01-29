@@ -2,9 +2,10 @@
 
 from importlib import import_module
 from inspect import ismodule
+from typing import Dict
 
 
-STATUS_CODES = {
+STATUS_CODES: Dict[int, bytes] = {
     100: b"Continue",
     101: b"Switching Protocols",
     102: b"Processing",

@@ -156,7 +156,12 @@ epub_exclude_files = ["search.html"]
 
 suppress_warnings = ["image.nonlocal_uri"]
 
-autodoc_member_order = "bysource"
+
+autodoc_typehints = "description"
+autodoc_default_options = {
+    "member-order": "groupwise",
+}
+
 
 # app setup hook
 def setup(app):

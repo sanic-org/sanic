@@ -1,3 +1,17 @@
+"""
+Sanic `provides a pattern <https://sanicframework.org/guide/best-practices/exceptions.html#using-sanic-exceptions>`_
+for providing a response when an exception occurs. However, if you do no handle
+an exception, it will provide a fallback. There are three fallback types:
+
+- HTML - *default*
+- Text
+- JSON
+
+Setting ``app.config.FALLBACK_ERROR_FORMAT = "auto"`` will enable a switch that
+will attempt to provide an appropriate response format based upon the
+request type.
+"""
+
 import sys
 import typing as t
 
@@ -26,6 +40,10 @@ FALLBACK_STATUS = 500
 
 
 class BaseRenderer:
+    """
+    Base class that all renderers must inherit from.
+    """
+
     def __init__(self, request, exception, debug):
         self.request = request
         self.exception = exception
@@ -54,7 +72,13 @@ class BaseRenderer:
         status_text = STATUS_CODES.get(self.status, b"Error Occurred").decode()
         return f"{self.status} — {status_text}"
 
-    def render(self):
+    def render(self) -> str:
+        """
+        Outputs the exception as a ``str`` for response.
+
+        :return: The formatted exception
+        :rtype: str
+        """
         output = (
             self.full
             if self.debug and not getattr(self.exception, "quiet", False)
@@ -62,14 +86,28 @@ class BaseRenderer:
         )
         return output()
 
-    def minimal(self):  # noqa
+    def minimal(self) -> str:  # noqa
+        """
+        Provide a formatted message that is meant to not show any sensitive
+        data or details.
+        """
         raise NotImplementedError
 
-    def full(self):  # noqa
+    def full(self) -> str:  # noqa
+        """
+        Provide a formatted message that has all details and is mean to be used
+        primarily for debugging and non-production environments.
+        """
         raise NotImplementedError
 
 
 class HTMLRenderer(BaseRenderer):
+    """
+    Render an exception as HTML.
+
+    The default fallback type.
+    """
+
     TRACEBACK_STYLE = """
         html { font-family: sans-serif }
         h2 { color: #888; }
@@ -172,6 +210,10 @@ class HTMLRenderer(BaseRenderer):
 
 
 class TextRenderer(BaseRenderer):
+    """
+    Render an exception as plain text.
+    """
+
     OUTPUT_TEXT = "{title}\n{bar}\n{text}\n\n{body}"
     SPACER = "  "
 
@@ -231,6 +273,10 @@ class TextRenderer(BaseRenderer):
 
 
 class JSONRenderer(BaseRenderer):
+    """
+    Render an exception as JSON.
+    """
+
     def full(self):
         output = self._generate_output(full=True)
         return json(output, status=self.status, dumps=dumps)
@@ -280,7 +326,9 @@ class JSONRenderer(BaseRenderer):
 
 
 def escape(text):
-    """Minimal HTML escaping, not for attribute values (unlike html.escape)."""
+    """
+    Minimal HTML escaping, not for attribute values (unlike html.escape).
+    """
     return f"{text}".replace("&", "&amp;").replace("<", "&lt;")
 
 
@@ -303,7 +351,9 @@ def exception_response(
     debug: bool,
     renderer: t.Type[t.Optional[BaseRenderer]] = None,
 ) -> HTTPResponse:
-    """Render a response for the default FALLBACK exception handler"""
+    """
+    Render a response for the default FALLBACK exception handler.
+    """
 
     if not renderer:
         renderer = HTMLRenderer

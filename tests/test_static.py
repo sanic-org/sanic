@@ -1,5 +1,6 @@
 import inspect
 import os
+
 from pathlib import Path
 from time import gmtime, strftime
 
@@ -93,8 +94,8 @@ def test_static_file_pathlib(app, static_file_directory, file_name):
     [b"test.file", b"decode me.txt", b"python.png"],
 )
 def test_static_file_bytes(app, static_file_directory, file_name):
-    bsep = os.path.sep.encode('utf-8')
-    file_path = static_file_directory.encode('utf-8') + bsep + file_name
+    bsep = os.path.sep.encode("utf-8")
+    file_path = static_file_directory.encode("utf-8") + bsep + file_name
     app.static("/testing.file", file_path)
     request, response = app.test_client.get("/testing.file")
     assert response.status == 200

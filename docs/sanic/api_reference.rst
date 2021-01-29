@@ -31,109 +31,92 @@ sanic.compat
 .. automodule:: sanic.compat
     :members:
 
-
 sanic.config
 ------------
 
 .. automodule:: sanic.config
     :members:
-    :undoc-members:
-
-sanic.constants
----------------
-
-.. automodule:: sanic.constants
-    :members:
-    :undoc-members:
 
 sanic.cookies
 -------------
 
 .. automodule:: sanic.cookies
     :members:
-    :undoc-members:
+
+sanic.errorpages
+----------------
+
+.. automodule:: sanic.errorpages
+    :members:
 
 sanic.exceptions
 ----------------
 
 .. automodule:: sanic.exceptions
     :members:
-    :undoc-members:
 
 sanic.handlers
 --------------
 
 .. automodule:: sanic.handlers
     :members:
-    :undoc-members:
+
+sanic.http
+----------
+
+.. automodule:: sanic.http
+    :members:
 
 sanic.log
 ---------
 
 .. automodule:: sanic.log
     :members:
-    :undoc-members:
 
 sanic.request
 -------------
 
 .. automodule:: sanic.request
     :members:
-    :undoc-members:
 
 sanic.response
 --------------
 
 .. automodule:: sanic.response
     :members:
-    :undoc-members:
 
 sanic.router
 ------------
 
 .. automodule:: sanic.router
     :members:
-    :undoc-members:
 
 sanic.server
 ------------
 
 .. automodule:: sanic.server
     :members:
-    :undoc-members:
 
 sanic.static
 ------------
 
 .. automodule:: sanic.static
     :members:
-    :undoc-members:
 
 sanic.views
 -----------
 
 .. automodule:: sanic.views
     :members:
-    :undoc-members:
 
 sanic.websocket
 ---------------
 
 .. automodule:: sanic.websocket
     :members:
-    :undoc-members:
 
 sanic.worker
 ------------
 
 .. automodule:: sanic.worker
     :members:
-    :undoc-members:
-
-
-Module contents
----------------
-
-.. automodule:: sanic
-    :members:
-    :undoc-members:

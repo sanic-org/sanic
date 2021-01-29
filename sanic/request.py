@@ -1,14 +1,30 @@
+from __future__ import annotations
+from typing import (
+    Optional,
+    TYPE_CHECKING,
+    DefaultDict,
+    Dict,
+    List,
+    NamedTuple,
+    Tuple,
+)
+
+if TYPE_CHECKING:
+    from sanic.server import ConnInfo
+    from sanic.app import Sanic
+
+from asyncio.transports import BaseTransport
 import email.utils
 import uuid
 
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from http.cookies import SimpleCookie
 from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
 
-from sanic.compat import CancelledErrors
+from sanic.compat import CancelledErrors, Header
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
     parse_content_header,
@@ -47,7 +63,9 @@ class RequestParameters(dict):
 
 
 class Request:
-    """Properties of an HTTP request such as URL, headers, etc."""
+    """
+    Properties of an HTTP request such as URL, headers, etc.
+    """
 
     __slots__ = (
         "__weakref__",
@@ -80,7 +98,15 @@ class Request:
         "version",
     )
 
-    def __init__(self, url_bytes, headers, version, method, transport, app):
+    def __init__(
+        self,
+        url_bytes: bytes,
+        headers: Header,
+        version: str,
+        method: str,
+        transport: BaseTransport,
+        app: Sanic,
+    ):
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
@@ -94,18 +120,22 @@ class Request:
 
         # Init but do not inhale
         self.body = b""
-        self.conn_info = None
+        self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
-        self.name = None
+        self.name: Optional[str] = None
         self.parsed_forwarded = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
-        self.parsed_args = defaultdict(RequestParameters)
-        self.parsed_not_grouped_args = defaultdict(list)
+        self.parsed_args: DefaultDict[
+            Tuple[bool, bool, str, str], RequestParameters
+        ] = defaultdict(RequestParameters)
+        self.parsed_not_grouped_args: DefaultDict[
+            Tuple[bool, bool, str, str], List[Tuple[str, str]]
+        ] = defaultdict(list)
         self.uri_template = None
         self.request_middleware_started = False
-        self._cookies = None
+        self._cookies: Dict[str, str] = {}
         self.stream = None
         self.endpoint = None
 
@@ -350,11 +380,11 @@ class Request:
     query_args = property(get_query_args)
 
     @property
-    def cookies(self):
+    def cookies(self) -> Dict[str, str]:
         if self._cookies is None:
             cookie = self.headers.get("Cookie")
             if cookie is not None:
-                cookies = SimpleCookie()
+                cookies: SimpleCookie = SimpleCookie()
                 cookies.load(cookie)
                 self._cookies = {
                     name: cookie.value for name, cookie in cookies.items()
@@ -364,27 +394,35 @@ class Request:
         return self._cookies
 
     @property
-    def content_type(self):
+    def content_type(self) -> str:
+        """
+        :return: Content-Type header form the request
+        :rtype: str
+        """
         return self.headers.get("Content-Type", DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
     def match_info(self):
-        """return matched info after resolving route"""
+        """
+        :return: matched info after resolving route
+        """
         return self.app.router.get(self)[2]
 
     # Transport properties (obtained from local interface only)
 
     @property
-    def ip(self):
+    def ip(self) -> str:
         """
         :return: peer ip of the socket
+        :rtype: str
         """
         return self.conn_info.client if self.conn_info else ""
 
     @property
-    def port(self):
+    def port(self) -> int:
         """
         :return: peer port of the socket
+        :rtype: int
         """
         return self.conn_info.client_port if self.conn_info else 0
 
@@ -477,39 +515,49 @@ class Request:
 
     @property
     def server_name(self) -> str:
-        """The hostname the client connected to, by `request.host`."""
+        """
+        The hostname the client connected to, by ``request.host``.
+        """
         return parse_host(self.host)[0] or ""
 
     @property
     def server_port(self) -> int:
         """
-        The port the client connected to, by forwarded `port` or
-        `request.host`.
+        The port the client connected to, by forwarded ``port`` or
+        ``request.host``.
 
-        Default port is returned as 80 and 443 based on `request.scheme`.
+        Default port is returned as 80 and 443 based on ``request.scheme``.
         """
         port = self.forwarded.get("port") or parse_host(self.host)[1]
         return port or (80 if self.scheme in ("http", "ws") else 443)
 
     @property
     def server_path(self) -> str:
-        """Full path of current URL. Uses proxied or local path."""
+        """
+        Full path of current URL. Uses proxied or local path.
+        """
         return self.forwarded.get("path") or self.path
 
     @property
-    def query_string(self):
+    def query_string(self) -> str:
+        """
+        Representation of the requested query
+        """
         if self._parsed_url.query:
             return self._parsed_url.query.decode("utf-8")
         else:
             return ""
 
     @property
-    def url(self):
+    def url(self) -> str:
+        """
+        The URL
+        """
         return urlunparse(
             (self.scheme, self.host, self.path, None, self.query_string, None)
         )
 
-    def url_for(self, view_name, **kwargs):
+    def url_for(self, view_name: str, **kwargs) -> str:
         """
         Same as :func:`sanic.Sanic.url_for`, but automatically determine
         `scheme` and `netloc` base on the request. Since this method is aiming
@@ -542,11 +590,23 @@ class Request:
         )
 
 
-File = namedtuple("File", ["type", "body", "name"])
+class File(NamedTuple):
+    """
+    Model for defining a file
+
+    :param type: The mimetype, defaults to text/plain
+    :param body: Bytes of the file
+    :param name: The filename
+    """
+
+    type: str
+    body: bytes
+    name: str
 
 
 def parse_multipart_form(body, boundary):
-    """Parse a request body and returns fields and files
+    """
+    Parse a request body and returns fields and files
 
     :param body: bytes request body
     :param boundary: bytes multipart boundary

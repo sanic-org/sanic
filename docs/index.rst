@@ -4,7 +4,7 @@ Guides
 ======
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
    sanic/api_reference
 

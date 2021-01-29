@@ -1,3 +1,21 @@
+from __future__ import annotations
+from typing import (
+    Optional,
+    TYPE_CHECKING,
+    DefaultDict,
+    Dict,
+    List,
+    NamedTuple,
+    Tuple,
+    Dict,
+    Type,
+    Union,
+)
+
+if TYPE_CHECKING:
+    from sanic.http import Http
+    from sanic.app import Sanic
+
 import asyncio
 import multiprocessing
 import os
@@ -6,6 +24,7 @@ import socket
 import stat
 import sys
 
+from sanic.http import Stage
 from asyncio import CancelledError
 from functools import partial
 from inspect import isawaitable
@@ -13,15 +32,13 @@ from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import monotonic as current_time
-from typing import Dict, Type, Union
+from sanic.request import Request
 
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
-from sanic.http import Http, Stage
 from sanic.log import logger
-from sanic.request import Request
-
+from asyncio.transports import BaseTransport
 
 try:
     import uvloop  # type: ignore
@@ -49,7 +66,7 @@ class ConnInfo:
         "ssl",
     )
 
-    def __init__(self, transport, unix=None):
+    def __init__(self, transport: BaseTransport, unix=None):
         self.ssl = bool(transport.get_extra_info("sslcontext"))
         self.server = self.client = ""
         self.server_port = self.client_port = 0
@@ -126,7 +143,7 @@ class HttpProtocol(asyncio.Protocol):
         asyncio.set_event_loop(loop)
         self.loop = loop
         deprecated_loop = self.loop if sys.version_info < (3, 7) else None
-        self.app = app
+        self.app: Sanic = app
         self.url = None
         self.transport = None
         self.conn_info = None

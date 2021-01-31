@@ -21,6 +21,7 @@ from typing import (
     Optional,
     Set,
     Type,
+    TypeVar,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
@@ -85,7 +86,7 @@ class Sanic(
         router: Router = None,
         error_handler: ErrorHandler = None,
         load_env: bool = True,
-        request_class: Request = None,
+        request_class: Type[Request] = None,
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
@@ -163,7 +164,7 @@ class Sanic(
         also return a future, and the actual ensure_future call
         is delayed until before server start.
 
-        `See user guide <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
+        `See user guide <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`_
 
         :param task: future, couroutine or awaitable
         """

@@ -1,22 +1,27 @@
 from __future__ import annotations
+
 from typing import (
-    Optional,
     TYPE_CHECKING,
+    Any,
     DefaultDict,
     Dict,
     List,
     NamedTuple,
+    Optional,
     Tuple,
+    Union,
 )
+
 
 if TYPE_CHECKING:
     from sanic.server import ConnInfo
     from sanic.app import Sanic
+    from sanic.http import Http
 
-from asyncio.transports import BaseTransport
 import email.utils
 import uuid
 
+from asyncio.transports import BaseTransport
 from collections import defaultdict
 from http.cookies import SimpleCookie
 from types import SimpleNamespace
@@ -27,6 +32,7 @@ from httptools import parse_url  # type: ignore
 from sanic.compat import CancelledErrors, Header
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
+    Options,
     parse_content_header,
     parse_forwarded,
     parse_host,
@@ -49,16 +55,21 @@ DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 
 
 class RequestParameters(dict):
-    """Hosts a dict with lists as values where get returns the first
+    """
+    Hosts a dict with lists as values where get returns the first
     value of the list and getlist returns the whole shebang
     """
 
-    def get(self, name, default=None):
+    def get(self, name: str, default: Optional[Any] = None) -> Optional[Any]:
         """Return the first value, either the default or actual"""
         return super().get(name, [default])[0]
 
-    def getlist(self, name, default=None):
-        """Return the entire list"""
+    def getlist(
+        self, name: str, default: Optional[Any] = None
+    ) -> Optional[Any]:
+        """
+        Return the entire list
+        """
         return super().get(name, default)
 
 
@@ -110,7 +121,7 @@ class Request:
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
-        self._id = None
+        self._id: Optional[Union[uuid.UUID, str, int]] = None
         self.app = app
 
         self.headers = headers
@@ -123,7 +134,7 @@ class Request:
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
         self.name: Optional[str] = None
-        self.parsed_forwarded = None
+        self.parsed_forwarded: Optional[Options] = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -136,7 +147,7 @@ class Request:
         self.uri_template = None
         self.request_middleware_started = False
         self._cookies: Dict[str, str] = {}
-        self.stream = None
+        self.stream: Optional[Http] = None
         self.endpoint = None
 
     def __repr__(self):
@@ -148,24 +159,30 @@ class Request:
         return uuid.uuid4()
 
     async def respond(
-        self, response=None, *, status=200, headers=None, content_type=None
+        self,
+        response: Optional[BaseHTTPResponse] = None,
+        *,
+        status: int = 200,
+        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        content_type: Optional[str] = None,
     ):
         # This logic of determining which response to use is subject to change
         if response is None:
-            response = self.stream.response or HTTPResponse(
+            response = (self.stream and self.stream.response) or HTTPResponse(
                 status=status,
                 headers=headers,
                 content_type=content_type,
             )
         # Connect the response
-        if isinstance(response, BaseHTTPResponse):
+        if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)
         # Run response middleware
         try:
             response = await self.app._run_response_middleware(
                 self, response, request_name=self.name
             )
-        except CancelledErrors:
+        # Redefining this as a tuple here satisfies mypy
+        except tuple(CancelledErrors):
             raise
         except Exception:
             error_logger.exception(
@@ -186,11 +203,35 @@ class Request:
             self.body = b"".join([data async for data in self.stream])
 
     @property
-    def id(self):
+    def id(self) -> Optional[Union[uuid.UUID, str, int]]:
+        """
+        A request ID passed from the client, or generated from the backend.
+
+        By default, this will look in a request header defined at:
+        ``self.app.config.REQUEST_ID_HEADER``. It defaults to
+        ``X-Request-ID``. Sanic will try to cast the ID into a ``UUID`` or an
+        ``int``. If there is not a UUID from the client, then Sanic will try
+        to generate an ID by calling ``Request.generate_id()``. The default
+        behavior is to generate a ``UUID``. You can customize this behavior
+        by subclassing ``Request``.
+
+        .. code-block:: python
+
+            from sanic import Request, Sanic
+            from itertools import count
+
+            class IntRequest(Request):
+                counter = count()
+
+                def generate_id(self):
+                    return next(self.counter)
+
+            app = Sanic("MyApp", request_class=IntRequest)
+        """
         if not self._id:
             self._id = self.headers.get(
                 self.app.config.REQUEST_ID_HEADER,
-                self.__class__.generate_id(self),
+                self.__class__.generate_id(self),  # type: ignore
             )
 
             # Try casting to a UUID or an integer
@@ -199,11 +240,11 @@ class Request:
                     self._id = uuid.UUID(self._id)
                 except ValueError:
                     try:
-                        self._id = int(self._id)
+                        self._id = int(self._id)  # type: ignore
                     except ValueError:
                         ...
 
-        return self._id
+        return self._id  # type: ignore
 
     @property
     def json(self):
@@ -378,9 +419,17 @@ class Request:
         ]
 
     query_args = property(get_query_args)
+    """
+    Convenience property to access :meth:`Request.get_query_args` with
+    default values.
+    """
 
     @property
     def cookies(self) -> Dict[str, str]:
+        """
+        :return: Incoming cookies on the request
+        :rtype: Dict[str, str]
+        """
         if self._cookies is None:
             cookie = self.headers.get("Cookie")
             if cookie is not None:
@@ -432,13 +481,16 @@ class Request:
 
     @property
     def path(self) -> str:
-        """Path of the local HTTP request."""
+        """
+        :return: path of the local HTTP request
+        :rtype: str
+        """
         return self._parsed_url.path.decode("utf-8")
 
     # Proxy properties (using SERVER_NAME/forwarded/request/transport info)
 
     @property
-    def forwarded(self):
+    def forwarded(self) -> Options:
         """
         Active proxy information obtained from request headers, as specified in
         Sanic configuration.
@@ -449,6 +501,9 @@ class Request:
         - path is url-unencoded
 
         Additional values may be available from new style Forwarded headers.
+
+        :return: forwarded address info
+        :rtype: Dict[str, str]
         """
         if self.parsed_forwarded is None:
             self.parsed_forwarded = (
@@ -464,10 +519,14 @@ class Request:
         Client IP address, if available.
         1. proxied remote address `self.forwarded['for']`
         2. local remote address `self.ip`
+
         :return: IPv4, bracketed IPv6, UNIX socket name or arbitrary string
+        :rtype: str
         """
         if not hasattr(self, "_remote_addr"):
-            self._remote_addr = self.forwarded.get("for", "")  # or self.ip
+            self._remote_addr = str(
+                self.forwarded.get("for", "")
+            )  # or self.ip
         return self._remote_addr
 
     @property
@@ -477,12 +536,14 @@ class Request:
         1. `config.SERVER_NAME` if in full URL format
         2. proxied proto/scheme
         3. local connection protocol
+
         :return: http|https|ws|wss or arbitrary value given by the headers.
+        :rtype: str
         """
         if "//" in self.app.config.get("SERVER_NAME", ""):
             return self.app.config.SERVER_NAME.split("//")[0]
         if "proto" in self.forwarded:
-            return self.forwarded["proto"]
+            return str(self.forwarded["proto"])
 
         if (
             self.app.websocket_enabled
@@ -506,17 +567,20 @@ class Request:
         3. request host header
         hostname and port may be separated by
         `sanic.headers.parse_host(request.host)`.
+
         :return: the first matching host found, or empty string
+        :rtype: str
         """
         server_name = self.app.config.get("SERVER_NAME")
         if server_name:
             return server_name.split("//", 1)[-1].split("/", 1)[0]
-        return self.forwarded.get("host") or self.headers.get("host", "")
+        return str(self.forwarded.get("host") or self.headers.get("host", ""))
 
     @property
     def server_name(self) -> str:
         """
-        The hostname the client connected to, by ``request.host``.
+        :return: hostname the client connected to, by ``request.host``
+        :rtype: str
         """
         return parse_host(self.host)[0] or ""
 
@@ -527,21 +591,26 @@ class Request:
         ``request.host``.
 
         Default port is returned as 80 and 443 based on ``request.scheme``.
+
+        :return: port number
+        :rtype: int
         """
         port = self.forwarded.get("port") or parse_host(self.host)[1]
-        return port or (80 if self.scheme in ("http", "ws") else 443)
+        return int(port or (80 if self.scheme in ("http", "ws") else 443))
 
     @property
     def server_path(self) -> str:
         """
-        Full path of current URL. Uses proxied or local path.
+        :return: full path of current URL; uses proxied or local path
+        :rtype: str
         """
-        return self.forwarded.get("path") or self.path
+        return str(self.forwarded.get("path") or self.path)
 
     @property
     def query_string(self) -> str:
         """
-        Representation of the requested query
+        :return: representation of the requested query
+        :rtype: str
         """
         if self._parsed_url.query:
             return self._parsed_url.query.decode("utf-8")
@@ -551,7 +620,8 @@ class Request:
     @property
     def url(self) -> str:
         """
-        The URL
+        :return: the URL
+        :rtype: str
         """
         return urlunparse(
             (self.scheme, self.host, self.path, None, self.query_string, None)
@@ -592,7 +662,8 @@ class Request:
 
 class File(NamedTuple):
     """
-    Model for defining a file
+    Model for defining a file. It is a ``namedtuple``, therefore you can
+    iterate over the object, or access the parameters by name.
 
     :param type: The mimetype, defaults to text/plain
     :param body: Bytes of the file

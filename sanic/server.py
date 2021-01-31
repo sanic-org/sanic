@@ -1,19 +1,19 @@
 from __future__ import annotations
+
 from typing import (
-    Optional,
     TYPE_CHECKING,
     DefaultDict,
     Dict,
     List,
     NamedTuple,
+    Optional,
     Tuple,
-    Dict,
     Type,
     Union,
 )
 
+
 if TYPE_CHECKING:
-    from sanic.http import Http
     from sanic.app import Sanic
 
 import asyncio
@@ -24,21 +24,22 @@ import socket
 import stat
 import sys
 
-from sanic.http import Stage
 from asyncio import CancelledError
+from asyncio.transports import BaseTransport
 from functools import partial
 from inspect import isawaitable
 from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import monotonic as current_time
-from sanic.request import Request
 
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
+from sanic.http import Http, Stage
 from sanic.log import logger
-from asyncio.transports import BaseTransport
+from sanic.request import Request
+
 
 try:
     import uvloop  # type: ignore

@@ -1048,7 +1048,7 @@ class Sanic:
         if self._asgi_client:
             return self._asgi_client
         elif self._test_manager:
-            return self._test_manager.test_client
+            return self._test_manager.asgi_client
         from sanic_testing.testing import SanicASGITestClient  # type: ignore
 
         self._asgi_client = SanicASGITestClient(self)

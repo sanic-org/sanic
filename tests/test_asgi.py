@@ -325,7 +325,7 @@ async def test_cookie_customization(app):
 
 
 @pytest.mark.asyncio
-async def test_json_content_type(app):
+async def test_content_type(app):
     @app.get("/json")
     def send_json(request):
         return json({"foo": "bar"})

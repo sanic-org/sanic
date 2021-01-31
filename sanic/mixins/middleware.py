@@ -19,7 +19,8 @@ class MiddlewareMixin:
         Can either be called as *@app.middleware* or
         *@app.middleware('request')*
 
-        `See user guide <https://sanicframework.org/guide/basics/middleware.html>`__
+        `See user guide
+        <https://sanicframework.org/guide/basics/middleware.html>`_
 
         :param: middleware_or_request: Optional parameter to use for
             identifying which type of middleware is being registered.

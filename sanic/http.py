@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import (
-    Optional,
-    TYPE_CHECKING,
-)
+
+from typing import TYPE_CHECKING, Optional
+
 
 if TYPE_CHECKING:
     from sanic.request import Request
@@ -264,7 +263,7 @@ class Http:
 
         # Compatibility with simple response body
         if not data and getattr(res, "body", None):
-            data, end_stream = res.body, True
+            data, end_stream = res.body, True  # type: ignore
 
         size = len(data)
         headers = res.headers

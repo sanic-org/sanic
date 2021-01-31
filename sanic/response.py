@@ -192,7 +192,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         self,
         streaming_fn: StreamingFunction,
         status: int = 200,
-        headers: Optional[Dict[str, str]] = None,
+        headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: str = "text/plain; charset=utf-8",
         chunked="deprecated",
     ):
@@ -244,7 +244,7 @@ class HTTPResponse(BaseHTTPResponse):
         self,
         body: Optional[AnyStr] = None,
         status: int = 200,
-        headers: Optional[Dict[str, str]] = None,
+        headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
         super().__init__()

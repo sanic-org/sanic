@@ -24,7 +24,9 @@ class ListenerMixin:
 
     def listener(
         self,
-        listener_or_event: Union[Callable[..., Coroutine[Any, Any, None]]],
+        listener_or_event: Union[
+            Callable[..., Coroutine[Any, Any, None]], str
+        ],
         event_or_none: Optional[str] = None,
         apply: bool = True,
     ):
@@ -39,7 +41,8 @@ class ListenerMixin:
             async def before_server_start(app, loop):
                 ...
 
-        `See user guide <https://sanicframework.org/guide/basics/listeners.html#listeners>`__
+        `See user guide
+        <https://sanicframework.org/guide/basics/listeners.html#listeners>`_
 
         :param event: event to listen to
         """

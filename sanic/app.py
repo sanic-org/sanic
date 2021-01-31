@@ -7,21 +7,20 @@ from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
-from inspect import isawaitable, signature
+from inspect import isawaitable
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
 from typing import (
     Any,
     Callable,
-    Coroutine,
+    Deque,
     Dict,
     Iterable,
     List,
     Optional,
     Set,
     Type,
-    TypeVar,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
@@ -33,7 +32,6 @@ from sanic.asgi import ASGIApp
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
-from sanic.constants import HTTP_METHODS
 from sanic.exceptions import (
     InvalidUsage,
     NotFound,
@@ -64,9 +62,9 @@ from sanic.server import (
     Signal,
     serve,
     serve_multiple,
+    trigger_events,
 )
 from sanic.static import register as static_register
-from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
@@ -111,8 +109,8 @@ class Sanic(
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
-        self.request_middleware: Iterable[MiddlewareType] = deque()
-        self.response_middleware: Iterable[MiddlewareType] = deque()
+        self.request_middleware: Deque[MiddlewareType] = deque()
+        self.response_middleware: Deque[MiddlewareType] = deque()
         self.blueprints: Dict[str, Blueprint] = {}
         self._blueprint_order: List[Blueprint] = []
         self.configure_logging = configure_logging
@@ -124,8 +122,8 @@ class Sanic(
         self.is_running = False
         self.websocket_enabled = False
         self.websocket_tasks: Set[Future] = set()
-        self.named_request_middleware: Dict[str, MiddlewareType] = {}
-        self.named_response_middleware: Dict[str, MiddlewareType] = {}
+        self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self._test_client = None
         self._asgi_client = None
         # Register alternative method names
@@ -164,7 +162,8 @@ class Sanic(
         also return a future, and the actual ensure_future call
         is delayed until before server start.
 
-        `See user guide <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`_
+        `See user guide
+        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`_
 
         :param task: future, couroutine or awaitable
         """
@@ -272,7 +271,8 @@ class Sanic(
         :param middleware: the middleware to execute
         :param route_names: a list of the names of the endpoints
         :type route_names: Iterable[str]
-        :param attach_to: whether to attach to request or response, defaults to "request"
+        :param attach_to: whether to attach to request or response,
+            defaults to "request"
         :type attach_to: str, optional
         """
         if attach_to == "request":
@@ -336,10 +336,11 @@ class Sanic(
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
-        `See user guide <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
+        `See user guide
+        <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`_
 
         :param view_name: string referencing the view name
-        :param \**kwargs: keys and values that are used to build request
+        :param kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL
@@ -509,11 +510,13 @@ class Sanic(
                 response = await request.respond(response)
             except BaseException:
                 # Skip response middleware
-                request.stream.respond(response)
+                if request.stream:
+                    request.stream.respond(response)
                 await response.send(end_stream=True)
                 raise
         else:
-            response = request.stream.response
+            if request.stream:
+                response = request.stream.response
         if isinstance(response, BaseHTTPResponse):
             await response.send(end_stream=True)
         else:
@@ -551,7 +554,11 @@ class Sanic(
             ) = self.router.get(request)
             request.name = name
 
-            if request.stream.request_body and not ignore_body:
+            if (
+                request.stream
+                and request.stream.request_body
+                and not ignore_body
+            ):
                 if self.router.is_stream_handler(request):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
@@ -589,7 +596,8 @@ class Sanic(
             if response:
                 response = await request.respond(response)
             else:
-                response = request.stream.response
+                if request.stream:
+                    response = request.stream.response
             # Make sure that response is finished / run StreamingHTTP callback
 
             if isinstance(response, BaseHTTPResponse):
@@ -597,7 +605,7 @@ class Sanic(
             else:
                 try:
                     # Fastest method for checking if the property exists
-                    handler.is_websocket
+                    handler.is_websocket  # type: ignore
                 except AttributeError:
                     raise ServerError(
                         f"Invalid response type {response!r} "
@@ -841,7 +849,7 @@ class Sanic(
         )
 
         # Trigger before_start events
-        await self.trigger_events(
+        await trigger_events(
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
@@ -849,17 +857,6 @@ class Sanic(
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
-
-    async def trigger_events(self, events, loop):
-        """
-        Trigger events (functions or async)
-        :param events: one or more sync or async functions to execute
-        :param loop: event loop
-        """
-        for event in events:
-            result = event(loop)
-            if isawaitable(result):
-                await result
 
     async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why
@@ -1075,7 +1072,8 @@ class Sanic(
         """
         Update app.config. Full implementation can be found in the user guide.
 
-        `See user guide <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
+        `See user guide
+        <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
         """
 
         self.config.update_config(config)

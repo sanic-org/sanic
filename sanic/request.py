@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 import email.utils
 import uuid
 
-from asyncio.transports import BaseTransport
+from asyncio.transports import Transport
 from collections import defaultdict
 from http.cookies import SimpleCookie
 from types import SimpleNamespace
@@ -115,7 +115,7 @@ class Request:
         headers: Header,
         version: str,
         method: str,
-        transport: BaseTransport,
+        transport: Transport,
         app: Sanic,
     ):
         self.raw_url = url_bytes
@@ -144,11 +144,11 @@ class Request:
         self.parsed_not_grouped_args: DefaultDict[
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
-        self.uri_template = None
+        self.uri_template: Optional[str] = None
         self.request_middleware_started = False
         self._cookies: Dict[str, str] = {}
         self.stream: Optional[Http] = None
-        self.endpoint = None
+        self.endpoint: Optional[str] = None
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -182,7 +182,7 @@ class Request:
                 self, response, request_name=self.name
             )
         # Redefining this as a tuple here satisfies mypy
-        except tuple(CancelledErrors):
+        except tuple(*CancelledErrors):
             raise
         except Exception:
             error_logger.exception(

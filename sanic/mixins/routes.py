@@ -100,7 +100,7 @@ class RouteMixin:
             route = FutureRoute(
                 handler,
                 uri,
-                methods,
+                frozenset(methods),
                 host,
                 strict_slashes,
                 stream,

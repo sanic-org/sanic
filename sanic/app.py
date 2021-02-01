@@ -32,6 +32,7 @@ from sanic.server import (
     Signal,
     serve,
     serve_multiple,
+    serve_single,
 )
 from sanic.static import register as static_register
 from sanic.views import CompositionView
@@ -1154,7 +1155,7 @@ class Sanic:
                 )
                 workers = 1
             if workers == 1:
-                serve(**server_settings)
+                serve_single(server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
@@ -1368,6 +1369,8 @@ class Sanic:
             ("after_server_start", "after_start", False),
             ("before_server_stop", "before_stop", True),
             ("after_server_stop", "after_stop", True),
+            ("main_process_start", "main_start", False),
+            ("main_process_stop", "main_stop", True),
         ):
             listeners = self.listeners[event_name].copy()
             if reverse:

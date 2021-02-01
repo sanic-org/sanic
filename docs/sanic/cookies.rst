@@ -83,5 +83,6 @@ parameters available:
 - ``max-age`` (number): Number of seconds the cookie should live for.
 - ``secure`` (boolean): Specifies whether the cookie will only be sent via HTTPS.
 - ``httponly`` (boolean): Specifies whether the cookie cannot be read by Javascript.
+- ``samesite`` (string): Default is browser dependent, specification states (Lax, Strict, and None) are valid values.
 
 .. _itsdangerous: https://pythonhosted.org/itsdangerous/

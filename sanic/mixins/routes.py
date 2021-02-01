@@ -26,7 +26,7 @@ class RouteMixin:
     def route(
         self,
         uri,
-        methods=frozenset({"GET"}),
+        methods=None,
         host=None,
         strict_slashes=None,
         stream=False,
@@ -62,6 +62,9 @@ class RouteMixin:
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
+
+        if not methods and not websocket:
+            methods = frozenset({"GET"})
 
         def decorator(handler):
             nonlocal uri
@@ -100,7 +103,7 @@ class RouteMixin:
             route = FutureRoute(
                 handler,
                 uri,
-                frozenset([x.upper() for x in methods]),
+                None if websocket else frozenset([x.upper() for x in methods]),
                 host,
                 strict_slashes,
                 stream,

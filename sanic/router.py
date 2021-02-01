@@ -2,9 +2,12 @@ from functools import lru_cache
 from typing import Iterable, Optional, Union
 
 from sanic_routing import BaseRouter
+from sanic_routing.exceptions import NoMethod
+from sanic_routing.exceptions import NotFound as RoutingNotFound
 from sanic_routing.route import Route
 
 from sanic.constants import HTTP_METHODS
+from sanic.exceptions import MethodNotSupported, NotFound
 from sanic.request import Request
 
 
@@ -17,7 +20,7 @@ class Router(BaseRouter):
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
 
-    @lru_cache
+    # @lru_cache
     def get(self, request: Request):
         """
         Retrieve a `Route` object containg the details about how to handle
@@ -30,10 +33,21 @@ class Router(BaseRouter):
         :rtype: Tuple[ RouteHandler, Tuple[Any, ...], Dict[str, Any], str, str,
             Optional[str], bool, ]
         """
-        route, handler, params = self.resolve(
-            path=request.path,
-            method=request.method,
-        )
+        try:
+            route, handler, params = self.resolve(
+                path=request.path,
+                method=request.method,
+            )
+        except RoutingNotFound as e:
+            raise NotFound("Requested URL {} not found".format(e.path))
+        except NoMethod as e:
+            raise MethodNotSupported(
+                "Method {} not allowed for URL {}".format(
+                    request.method, request.url
+                ),
+                method=request.method,
+                allowed_methods=e.allowed_methods,
+            )
 
         # TODO: Implement response
         # - args,
@@ -98,9 +112,30 @@ class Router(BaseRouter):
             uri = "/".join([f"/v{version}", uri.lstrip("/")])
 
         route = super().add(
-            path=uri, handler=handler, methods=methods, name=name
+            path=uri,
+            handler=handler,
+            methods=methods,
+            name=name,
+            strict=strict_slashes,
         )
         route.ctx.ignore_body = ignore_body
         route.ctx.stream = stream
 
         return route
+
+    def is_stream_handler(self, request) -> bool:
+        """
+        Handler for request is stream or not.
+
+        :param request: Request object
+        :return: bool
+        """
+        try:
+            handler = self.get(request)[0]
+        except (NotFound, MethodNotSupported):
+            return False
+        if hasattr(handler, "view_class") and hasattr(
+            handler.view_class, request.method.lower()
+        ):
+            handler = getattr(handler.view_class, request.method.lower())
+        return hasattr(handler, "is_stream")

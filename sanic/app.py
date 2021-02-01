@@ -24,6 +24,7 @@ from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
 from sanic.exceptions import (
     InvalidUsage,
+    MethodNotSupported,
     NotFound,
     SanicException,
     ServerError,
@@ -82,9 +83,7 @@ class Sanic(BaseSanic):
 
         self.name = name
         self.asgi = False
-        self.router = router or Router(
-            exception=NotFound, method_handler_exception=NotFound
-        )
+        self.router = router or Router()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
@@ -103,6 +102,7 @@ class Sanic(BaseSanic):
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, MiddlewareType] = {}
         self.named_response_middleware: Dict[str, MiddlewareType] = {}
+        self._test_manager = None
         self._test_client = None
         self._asgi_client = None
         # Register alternative method names
@@ -234,7 +234,6 @@ class Sanic(BaseSanic):
         middleware: FutureMiddleware,
         route_names: Optional[List[str]] = None,
     ):
-        print(f"{middleware=}")
         if route_names:
             return self.register_named_middleware(
                 middleware.middleware, route_names, middleware.attach_to
@@ -589,18 +588,22 @@ class Sanic(BaseSanic):
     # -------------------------------------------------------------------- #
 
     @property
-    def test_client(self):
+    def test_client(self):  # noqa
         if self._test_client:
             return self._test_client
+        elif self._test_manager:
+            return self._test_manager.test_client
         from sanic_testing.testing import SanicTestClient  # type: ignore
 
         self._test_client = SanicTestClient(self)
         return self._test_client
 
     @property
-    def asgi_client(self):
+    def asgi_client(self):  # noqa
         if self._asgi_client:
             return self._asgi_client
+        elif self._test_manager:
+            return self._test_manager.asgi_client
         from sanic_testing.testing import SanicASGITestClient  # type: ignore
 
         self._asgi_client = SanicASGITestClient(self)
@@ -879,7 +882,13 @@ class Sanic(BaseSanic):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        self.router.finalize()
+        # TODO:
+        # - Catch proper exception
+        try:
+            self.router.finalize()
+        except Exception as e:
+            if not Sanic.test_mode:
+                raise e
 
         if isinstance(ssl, dict):
             # try common aliaseses

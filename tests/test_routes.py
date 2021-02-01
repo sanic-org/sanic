@@ -2,7 +2,13 @@
 
 # import pytest
 
-# from sanic_testing.testing import SanicTestClient
+from sanic_testing.testing import SanicTestClient
+
+from sanic import Sanic
+from sanic.constants import HTTP_METHODS
+from sanic.response import json, text
+from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
+
 
 # from sanic import Sanic
 # from sanic.constants import HTTP_METHODS
@@ -475,24 +481,23 @@
 # def test_websocket_route_with_subprotocols(app):
 #     results = []
 
-#     @app.websocket("/ws", subprotocols=["foo", "bar"])
-#     async def handler(request, ws):
-#         results.append(ws.subprotocol)
-#         assert ws.subprotocol is not None
+# _, response = SanicTestClient(app).websocket("/ws", subprotocols=["bar"])
+# assert response.opened is True
+# assert results == ["bar"]
 
-#     _, response = SanicTestClient(app).websocket("/ws", subprotocols=["bar"])
-#     assert response.opened is True
-#     assert results == ["bar"]
+# _, response = SanicTestClient(app).websocket(
+#     "/ws", subprotocols=["bar", "foo"]
+# )
+# assert response.opened is True
+# assert results == ["bar", "bar"]
 
-#     _, response = SanicTestClient(app).websocket(
-#         "/ws", subprotocols=["bar", "foo"]
-#     )
-#     assert response.opened is True
-#     assert results == ["bar", "bar"]
+# _, response = SanicTestClient(app).websocket("/ws", subprotocols=["baz"])
+# assert response.opened is True
+# assert results == ["bar", "bar", None]
 
-#     _, response = SanicTestClient(app).websocket("/ws", subprotocols=["baz"])
-#     assert response.opened is True
-#     assert results == ["bar", "bar", None]
+# _, response = SanicTestClient(app).websocket("/ws")
+# assert response.opened is True
+# assert results == ["bar", "bar", None, None]
 
 #     _, response = SanicTestClient(app).websocket("/ws")
 #     assert response.opened is True

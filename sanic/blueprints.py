@@ -122,7 +122,8 @@ class Blueprint(BaseSanic):
             )
 
             route = app._apply_route(apply_route)
-            routes.append(route)
+            operation = routes.extend if isinstance(route, list) else routes.append
+            operation(route)
 
         # Static Files
         for future in self._future_statics:

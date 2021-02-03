@@ -43,7 +43,7 @@ async def test_cookies_asgi(app):
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get("set-cookie", {}))
 
-    assert response.text == "Cookies are: working!"
+    assert response.body == b"Cookies are: working!"
     assert response_cookies["right_back"].value == "at you"
 
 

@@ -92,6 +92,9 @@ class CompositionView:
         self.handlers = {}
         self.name = self.__class__.__name__
 
+    def __name__(self):
+        return self.name
+
     def add(self, methods, handler, stream=False):
         if stream:
             handler.is_stream = stream

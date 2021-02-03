@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Iterable, Optional, Union
+from typing import FrozenSet, Iterable, List, Optional, Union
 
 from sanic_routing import BaseRouter
 from sanic_routing.exceptions import NoMethod
@@ -37,13 +37,14 @@ class Router(BaseRouter):
             route, handler, params = self.resolve(
                 path=request.path,
                 method=request.method,
+                extra={"host": request.headers.get("host")}
             )
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
         except NoMethod as e:
             raise MethodNotSupported(
                 "Method {} not allowed for URL {}".format(
-                    request.method, request.url
+                    request.method, request.path
                 ),
                 method=request.method,
                 allowed_methods=e.allowed_methods,
@@ -68,13 +69,13 @@ class Router(BaseRouter):
         uri: str,
         methods: Iterable[str],
         handler,
-        host: Optional[str] = None,
+        host: Optional[Union[str, FrozenSet[str]]] = None,
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
         version: Union[str, float, int] = None,
         name: Optional[str] = None,
-    ) -> Route:
+    ) -> Union[Route, List[Route]]:
         """
         Add a handler to the router
 
@@ -111,17 +112,34 @@ class Router(BaseRouter):
             version = str(version).strip("/").lstrip("v")
             uri = "/".join([f"/v{version}", uri.lstrip("/")])
 
-        route = super().add(
+        params = dict(
             path=uri,
             handler=handler,
             methods=methods,
             name=name,
             strict=strict_slashes,
         )
-        route.ctx.ignore_body = ignore_body
-        route.ctx.stream = stream
 
-        return route
+        if isinstance(host, str):
+            hosts = [host]
+        else:
+            hosts = host or [None]
+
+        routes = []
+
+        for host in hosts:
+            if host:
+                params.update({"requirements": {"host": host}})
+
+            route = super().add(**params)
+            route.ctx.ignore_body = ignore_body
+            route.ctx.stream = stream
+
+            routes.append(route)
+
+        if len(routes) == 1:
+            return routes[0]
+        return routes
 
     def is_stream_handler(self, request) -> bool:
         """

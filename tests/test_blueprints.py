@@ -210,12 +210,12 @@ def test_bp_with_host(app):
     app.blueprint(bp)
     headers = {"Host": "example.com"}
     request, response = app.test_client.get("/test1/", headers=headers)
-    assert response.text == "Hello"
+    assert response.body == b"Hello"
 
     headers = {"Host": "sub.example.com"}
     request, response = app.test_client.get("/test1/", headers=headers)
-
-    assert response.text == "Hello subdomain!"
+    print(app.router.find_route_src)
+    assert response.body == b"Hello subdomain!"
 
 
 def test_several_bp_with_host(app):
@@ -240,6 +240,7 @@ def test_several_bp_with_host(app):
     assert bp.host == "example.com"
     headers = {"Host": "example.com"}
     request, response = app.test_client.get("/test/", headers=headers)
+
     assert response.text == "Hello"
 
     assert bp2.host == "sub.example.com"
@@ -537,19 +538,19 @@ def test_bp_shorthand(app):
     app.blueprint(blueprint)
 
     request, response = app.test_client.get("/get")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.post("/get")
     assert response.status == 405
 
     request, response = app.test_client.put("/put")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/post")
     assert response.status == 405
 
     request, response = app.test_client.post("/post")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/post")
     assert response.status == 405
@@ -561,19 +562,19 @@ def test_bp_shorthand(app):
     assert response.status == 405
 
     request, response = app.test_client.options("/options")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/options")
     assert response.status == 405
 
     request, response = app.test_client.patch("/patch")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/patch")
     assert response.status == 405
 
     request, response = app.test_client.delete("/delete")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/delete")
     assert response.status == 405

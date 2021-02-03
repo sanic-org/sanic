@@ -52,6 +52,8 @@ class RouteMixin:
             of type :class:`FutureRoute`
         """
 
+        # TODO:
+        # - run when applying future, not here
         if websocket:
             self.enable_websocket()
 
@@ -83,6 +85,8 @@ class RouteMixin:
                 # variable will be a tuple of (existing routes, handler fn)
                 _, handler = handler
 
+            # TODO:
+            # - move websocket handler out and attach it when applying
             if websocket:
                 websocket_handler = partial(
                     self._websocket_handler,
@@ -99,6 +103,11 @@ class RouteMixin:
             # - THink this thru.... do we want all routes namespaced?
             # -
             name = self._generate_name(handler, name)
+
+            if isinstance(host, str):
+                host = frozenset([host])
+            elif host and not isinstance(host, frozenset):
+                host = frozenset(host)
 
             route = FutureRoute(
                 handler,

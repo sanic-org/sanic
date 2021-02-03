@@ -826,9 +826,6 @@ class Sanic(BaseSanic):
                 await result
 
     async def _run_request_middleware(self, request, request_name=None):
-        print(self.request_middleware)
-        print(self.named_request_middleware)
-        print(request_name)
         # The if improves speed.  I don't know why
         named_middleware = self.named_request_middleware.get(
             request_name, deque()

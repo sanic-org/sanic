@@ -353,6 +353,29 @@ def test_bp_middleware(app):
     assert response.text == "FAIL"
 
 
+def test_bp_middleware_with_route(app):
+    blueprint = Blueprint("test_bp_middleware")
+
+    @blueprint.middleware("response")
+    async def process_response(request, response):
+        return text("OK")
+
+    @app.route("/")
+    async def handler(request):
+        return text("FAIL")
+
+    @blueprint.route("/bp")
+    async def bp_handler(request):
+        return text("FAIL")
+
+    app.blueprint(blueprint)
+
+    request, response = app.test_client.get("/bp")
+
+    assert response.status == 200
+    assert response.text == "OK"
+
+
 def test_bp_middleware_order(app):
     blueprint = Blueprint("test_bp_middleware_order")
     order = list()
@@ -715,6 +738,9 @@ def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
     )
 
     app.blueprint(bp)
+    print(app.router.name_index)
+    print(app.router.static_routes)
+    print(app.router.dynamic_routes)
 
     uri = app.url_for("static", name="static.testing")
     assert uri == "/static/test.file"
@@ -825,6 +851,7 @@ def test_strict_slashes_behavior_adoption(app):
     assert app.test_client.get("/test")[1].status == 200
     assert app.test_client.get("/test/")[1].status == 404
 
+    app.router.finalized = False
     bp = Blueprint("bp")
 
     @bp.get("/one", strict_slashes=False)

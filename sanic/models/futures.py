@@ -13,6 +13,8 @@ FutureRoute = namedtuple(
         "version",
         "name",
         "ignore_body",
+        "websocket",
+        "subprotocols",
     ],
 )
 FutureListener = namedtuple("FutureListener", ["listener", "event"])

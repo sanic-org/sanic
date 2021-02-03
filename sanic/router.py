@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import FrozenSet, Iterable, List, Optional, Union
 
-from sanic_routing import BaseRouter
+from sanic_routing import BaseRouter, route
 from sanic_routing.exceptions import NoMethod
 from sanic_routing.exceptions import NotFound as RoutingNotFound
 from sanic_routing.route import Route
@@ -157,3 +157,26 @@ class Router(BaseRouter):
         ):
             handler = getattr(handler.view_class, request.method.lower())
         return hasattr(handler, "is_stream")
+
+    # @lru_cache(maxsize=ROUTER_CACHE_SIZE)
+    def find_route_by_view_name(self, view_name, name=None):
+        """
+        Find a route in the router based on the specified view name.
+
+        :param view_name: string of view name to search by
+        :param kwargs: additional params, usually for static files
+        :return: tuple containing (uri, Route)
+        """
+        if not view_name:
+            return None, None
+
+        if view_name == "static" or view_name.endswith(".static"):
+            looking_for = f"_static_{name}"
+            route = self.name_index.get(looking_for)
+        else:
+            route = self.name_index.get(view_name)
+
+        if not route:
+            return None, None
+
+        return route.path, route

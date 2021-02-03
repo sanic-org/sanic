@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from functools import partial
-from typing import Set
+from typing import List
 
 from sanic.models.futures import FutureListener
 
@@ -17,7 +17,7 @@ class ListenerEvent(str, Enum):
 
 class ListenerMixin:
     def __init__(self, *args, **kwargs) -> None:
-        self._future_listeners: Set[FutureListener] = set()
+        self._future_listeners: List[FutureListener] = list()
 
     def _apply_listener(self, listener: FutureListener):
         raise NotImplementedError
@@ -32,7 +32,7 @@ class ListenerMixin:
             nonlocal apply
 
             future_listener = FutureListener(listener, event)
-            self._future_listeners.add(future_listener)
+            self._future_listeners.append(future_listener)
             if apply:
                 self._apply_listener(future_listener)
             return listener

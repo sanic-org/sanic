@@ -119,6 +119,8 @@ class Blueprint(BaseSanic):
                 future.version or self.version,
                 future.name,
                 future.ignore_body,
+                future.websocket,
+                future.subprotocols,
             )
 
             route = app._apply_route(apply_route)
@@ -136,8 +138,9 @@ class Blueprint(BaseSanic):
         route_names = [route.name for route in routes if route]
 
         # Middleware
-        for future in self._future_middleware:
-            app._apply_middleware(future, route_names)
+        if route_names:
+            for future in self._future_middleware:
+                app._apply_middleware(future, route_names)
 
         # Exceptions
         for future in self._future_exceptions:

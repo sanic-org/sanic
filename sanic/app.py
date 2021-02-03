@@ -16,7 +16,7 @@ from urllib.parse import urlencode, urlunparse
 
 from sanic_routing.route import Route
 
-from sanic import reloader_helpers
+from sanic import reloader_helpers, websocket
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -224,7 +224,26 @@ class Sanic(BaseSanic):
         return self.register_listener(listener.listener, listener.event)
 
     def _apply_route(self, route: FutureRoute) -> Route:
-        return self.router.add(**route._asdict())
+        # TODO:
+        # - move websocket handler out and attach it when applying
+        params = route._asdict()
+        websocket = params.pop("websocket", False)
+        subprotocols = params.pop("subprotocols", None)
+
+
+        if websocket:
+            self.enable_websocket()
+            websocket_handler = partial(
+                self._websocket_handler,
+                route.handler,
+                subprotocols=subprotocols,
+            )
+            websocket_handler.__name__ = (
+                "websocket_handler_" + route.handler.__name__
+            )
+            websocket_handler.is_websocket = True
+            params["handler"] = websocket_handler
+        return self.router.add(**params)
 
     def _apply_static(self, static: FutureStatic) -> Route:
         return static_register(self, static)
@@ -339,7 +358,7 @@ class Sanic(BaseSanic):
         out = uri
 
         # find all the parameters we will need to build in the URL
-        matched_params = re.findall(self.router.parameter_pattern, uri)
+        # matched_params = re.findall(self.router.parameter_pattern, uri)
 
         # _method is only a placeholder now, don't know how to support it
         kwargs.pop("_method", None)
@@ -364,45 +383,45 @@ class Sanic(BaseSanic):
             if "://" in netloc[:8]:
                 netloc = netloc.split("://", 1)[-1]
 
-        for match in matched_params:
-            name, _type, pattern = self.router.parse_parameter_string(match)
-            # we only want to match against each individual parameter
-            specific_pattern = f"^{pattern}$"
-            supplied_param = None
+        # for match in matched_params:
+        #     name, _type, pattern = self.router.parse_parameter_string(match)
+        #     # we only want to match against each individual parameter
+        #     specific_pattern = f"^{pattern}$"
+        #     supplied_param = None
 
-            if name in kwargs:
-                supplied_param = kwargs.get(name)
-                del kwargs[name]
-            else:
-                raise URLBuildError(
-                    f"Required parameter `{name}` was not passed to url_for"
-                )
+        #     if name in kwargs:
+        #         supplied_param = kwargs.get(name)
+        #         del kwargs[name]
+        #     else:
+        #         raise URLBuildError(
+        #             f"Required parameter `{name}` was not passed to url_for"
+        #         )
 
-            supplied_param = str(supplied_param)
-            # determine if the parameter supplied by the caller passes the test
-            # in the URL
-            passes_pattern = re.match(specific_pattern, supplied_param)
+        #     supplied_param = str(supplied_param)
+        #     # determine if the parameter supplied by the caller passes the test
+        #     # in the URL
+        #     passes_pattern = re.match(specific_pattern, supplied_param)
 
-            if not passes_pattern:
-                if _type != str:
-                    type_name = _type.__name__
+        #     if not passes_pattern:
+        #         if _type != str:
+        #             type_name = _type.__name__
 
-                    msg = (
-                        f'Value "{supplied_param}" '
-                        f"for parameter `{name}` does not "
-                        f"match pattern for type `{type_name}`: {pattern}"
-                    )
-                else:
-                    msg = (
-                        f'Value "{supplied_param}" for parameter `{name}` '
-                        f"does not satisfy pattern {pattern}"
-                    )
-                raise URLBuildError(msg)
+        #             msg = (
+        #                 f'Value "{supplied_param}" '
+        #                 f"for parameter `{name}` does not "
+        #                 f"match pattern for type `{type_name}`: {pattern}"
+        #             )
+        #         else:
+        #             msg = (
+        #                 f'Value "{supplied_param}" for parameter `{name}` '
+        #                 f"does not satisfy pattern {pattern}"
+        #             )
+        #         raise URLBuildError(msg)
 
-            # replace the parameter in the URL with the supplied value
-            replacement_regex = f"(<{name}.*?>)"
+        #     # replace the parameter in the URL with the supplied value
+        #     replacement_regex = f"(<{name}.*?>)"
 
-            out = re.sub(replacement_regex, supplied_param, out)
+        #     out = re.sub(replacement_regex, supplied_param, out)
 
         # parse the remainder of the keyword arguments into a querystring
         query_string = urlencode(kwargs, doseq=True) if kwargs else ""
@@ -826,6 +845,9 @@ class Sanic(BaseSanic):
                 await result
 
     async def _run_request_middleware(self, request, request_name=None):
+        print(self.request_middleware)
+        print(self.named_request_middleware)
+        print(request_name)
         # The if improves speed.  I don't know why
         named_middleware = self.named_request_middleware.get(
             request_name, deque()

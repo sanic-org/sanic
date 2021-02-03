@@ -52,11 +52,6 @@ class RouteMixin:
             of type :class:`FutureRoute`
         """
 
-        # TODO:
-        # - run when applying future, not here
-        if websocket:
-            self.enable_websocket()
-
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
         if not uri.startswith("/"):
@@ -86,20 +81,6 @@ class RouteMixin:
                 _, handler = handler
 
             # TODO:
-            # - move websocket handler out and attach it when applying
-            if websocket:
-                websocket_handler = partial(
-                    self._websocket_handler,
-                    handler,
-                    subprotocols=subprotocols,
-                )
-                websocket_handler.__name__ = (
-                    "websocket_handler_" + handler.__name__
-                )
-                websocket_handler.is_websocket = True
-                handler = websocket_handler
-
-            # TODO:
             # - THink this thru.... do we want all routes namespaced?
             # -
             name = self._generate_name(handler, name)
@@ -119,6 +100,8 @@ class RouteMixin:
                 version,
                 name,
                 ignore_body,
+                websocket,
+                subprotocols,
             )
 
             self._future_routes.add(route)

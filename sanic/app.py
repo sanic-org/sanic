@@ -524,9 +524,7 @@ class Sanic:
             websocket_handler = partial(
                 self._websocket_handler, handler, subprotocols=subprotocols
             )
-            websocket_handler.__name__ = (
-                "websocket_handler_" + handler.__name__
-            )
+            websocket_handler.__name__ = handler.__name__
             websocket_handler.is_websocket = True
             routes.extend(
                 self.router.add(

@@ -348,3 +348,13 @@ def test_methodview_naming(methodview_app):
 
     assert viewone_url == "/view_one"
     assert viewtwo_url == "/view_two"
+
+
+def test_url_for_with_websocket_handlers(app):
+    # Test for a specific bugfix in GH-2021
+    @app.websocket("/ws")
+    async def my_handler(request, ws):
+        pass
+
+    assert app.url_for("my_handler") == "/ws"
+    assert app.url_for("websocket_handler_my_handler") == "/ws"

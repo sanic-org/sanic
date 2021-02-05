@@ -12,6 +12,7 @@ from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
 from typing import Any, Dict, Optional, Type, Union
 from urllib.parse import urlencode, urlunparse
+from warnings import warn
 
 from sanic import reloader_helpers
 from sanic.asgi import ASGIApp
@@ -494,9 +495,7 @@ class Sanic:
             websocket_handler = partial(
                 self._websocket_handler, handler, subprotocols=subprotocols
             )
-            websocket_handler.__name__ = (
-                "websocket_handler_" + handler.__name__
-            )
+            websocket_handler.__name__ = handler.__name__
             routes.extend(
                 self.router.add(
                     uri=uri,
@@ -747,6 +746,24 @@ class Sanic:
             kw.update(name=view_name)
 
         uri, route = self.router.find_route_by_view_name(view_name, **kw)
+
+        # TODO(laggardkernel): this fix should be removed in v21.3.
+        # Try again without the unnecessary prefix "websocket_handler_",
+        # which was added by accident on non-blueprint handlers. GH-2021
+        if not (uri and route) and view_name.startswith("websocket_handler_"):
+            view_name = view_name[18:]
+            uri, route = self.router.find_route_by_view_name(view_name, **kw)
+            if uri and route:
+                warn(
+                    "The bug of adding unnecessary `websocket_handler_` "
+                    "prefix in param `view_name` for non-blueprint handlers "
+                    "is fixed. This backward support will be removed in "
+                    "v21.3. Please update `Sanic.url_for()` callings in your "
+                    "code soon.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
         if not (uri and route):
             raise URLBuildError(
                 f"Endpoint with name `{view_name}` was not found"

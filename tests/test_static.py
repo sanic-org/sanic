@@ -106,6 +106,7 @@ def test_static_file_bytes(app, static_file_directory, file_name):
     [dict(), list(), object()],
 )
 def test_static_file_invalid_path(app, static_file_directory, file_name):
+    app.route("/")(lambda x: x)
     with pytest.raises(ValueError):
         app.static("/testing.file", file_name)
     request, response = app.test_client.get("/testing.file")

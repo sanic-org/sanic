@@ -16,7 +16,7 @@ from urllib.parse import urlencode, urlunparse
 
 from sanic_routing.route import Route
 
-from sanic import reloader_helpers, websocket
+from sanic import reloader_helpers
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -113,6 +113,8 @@ class Sanic(BaseSanic):
 
         if self.config.REGISTER:
             self.__class__.register_app(self)
+
+        self.router.ctx.app = self
 
     @property
     def loop(self):
@@ -230,7 +232,6 @@ class Sanic(BaseSanic):
         websocket = params.pop("websocket", False)
         subprotocols = params.pop("subprotocols", None)
 
-
         if websocket:
             self.enable_websocket()
             websocket_handler = partial(
@@ -294,6 +295,12 @@ class Sanic(BaseSanic):
         else:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)
+
+        if (
+            self.strict_slashes is not None
+            and blueprint.strict_slashes is None
+        ):
+            blueprint.strict_slashes = self.strict_slashes
         blueprint.register(self, options)
 
     def url_for(self, view_name: str, **kwargs):
@@ -319,30 +326,28 @@ class Sanic(BaseSanic):
         # find the route by the supplied view name
         kw: Dict[str, str] = {}
         # special static files url_for
-        if view_name == "static":
-            kw.update(name=kwargs.pop("name", "static"))
-        elif view_name.endswith(".static"):  # blueprint.static
-            kwargs.pop("name", None)
+
+        if "." not in view_name:
+            view_name = f"{self.name}.{view_name}"
+
+        if view_name.endswith(".static"):
+            name = kwargs.pop("name", None)
+            if name:
+                view_name = view_name.replace("static", name)
             kw.update(name=view_name)
 
-        uri, route = self.router.find_route_by_view_name(view_name, **kw)
-        if not (uri and route):
+        route = self.router.find_route_by_view_name(view_name, **kw)
+        if not route:
             raise URLBuildError(
                 f"Endpoint with name `{view_name}` was not found"
             )
 
-        # If the route has host defined, split that off
-        # TODO: Retain netloc and path separately in Route objects
-        host = uri.find("/")
-        if host > 0:
-            host, uri = uri[:host], uri[host:]
-        else:
-            host = None
+        uri = route.path
 
-        if view_name == "static" or view_name.endswith(".static"):
-            filename = kwargs.pop("filename", None)
+        if getattr(route.ctx, "static", None):
+            filename = kwargs.pop("filename", "")
             # it's static folder
-            if "<file_uri:" in uri:
+            if "file_uri" in uri:
                 folder_ = uri.split("<file_uri:", 1)[0]
                 if folder_.endswith("/"):
                     folder_ = folder_[:-1]
@@ -350,22 +355,36 @@ class Sanic(BaseSanic):
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                uri = f"{folder_}/{filename}"
+                kwargs["file_uri"] = filename
 
         if uri != "/" and uri.endswith("/"):
             uri = uri[:-1]
 
-        out = uri
+        if not uri.startswith("/"):
+            uri = f"/{uri}"
 
-        # find all the parameters we will need to build in the URL
-        # matched_params = re.findall(self.router.parameter_pattern, uri)
+        out = uri
 
         # _method is only a placeholder now, don't know how to support it
         kwargs.pop("_method", None)
         anchor = kwargs.pop("_anchor", "")
         # _external need SERVER_NAME in config or pass _server arg
-        external = kwargs.pop("_external", False)
+        host = kwargs.pop("_host", None)
+        external = kwargs.pop("_external", False) or bool(host)
         scheme = kwargs.pop("_scheme", "")
+        if route.ctx.hosts and external:
+            if not host and len(route.ctx.hosts) > 1:
+                raise ValueError(
+                    f"Host is ambiguous: {', '.join(route.ctx.hosts)}"
+                )
+            elif host and host not in route.ctx.hosts:
+                raise ValueError(
+                    f"Requested host ({host}) is not available for this "
+                    f"route: {route.ctx.hosts}"
+                )
+            elif not host:
+                host = list(route.ctx.hosts)[0]
+
         if scheme and not external:
             raise ValueError("When specifying _scheme, _external must be True")
 
@@ -383,45 +402,49 @@ class Sanic(BaseSanic):
             if "://" in netloc[:8]:
                 netloc = netloc.split("://", 1)[-1]
 
-        # for match in matched_params:
-        #     name, _type, pattern = self.router.parse_parameter_string(match)
-        #     # we only want to match against each individual parameter
-        #     specific_pattern = f"^{pattern}$"
-        #     supplied_param = None
+        # find all the parameters we will need to build in the URL
+        # matched_params = re.findall(self.router.parameter_pattern, uri)
+        route.finalize_params()
+        for params in route.params.values():
+            # name, _type, pattern = self.router.parse_parameter_string(match)
+            # we only want to match against each individual parameter
 
-        #     if name in kwargs:
-        #         supplied_param = kwargs.get(name)
-        #         del kwargs[name]
-        #     else:
-        #         raise URLBuildError(
-        #             f"Required parameter `{name}` was not passed to url_for"
-        #         )
+            for idx, param_info in enumerate(params):
+                try:
+                    supplied_param = str(kwargs.pop(param_info.name))
+                except KeyError:
+                    raise URLBuildError(
+                        f"Required parameter `{param_info.name}` was not "
+                        "passed to url_for"
+                    )
 
-        #     supplied_param = str(supplied_param)
-        #     # determine if the parameter supplied by the caller passes the test
-        #     # in the URL
-        #     passes_pattern = re.match(specific_pattern, supplied_param)
+                # determine if the parameter supplied by the caller
+                # passes the test in the URL
+                if param_info.pattern:
+                    passes_pattern = param_info.pattern.match(supplied_param)
+                    if not passes_pattern:
+                        if idx + 1 == len(params):
+                            if param_info.cast != str:
+                                msg = (
+                                    f'Value "{supplied_param}" '
+                                    f"for parameter `{param_info.name}` does "
+                                    "not match pattern for type "
+                                    f"`{param_info.cast.__name__}`: "
+                                    f"{param_info.pattern.pattern}"
+                                )
+                            else:
+                                msg = (
+                                    f'Value "{supplied_param}" for parameter '
+                                    f"`{param_info.name}` does not satisfy "
+                                    f"pattern {param_info.pattern.pattern}"
+                                )
+                            raise URLBuildError(msg)
+                        else:
+                            continue
 
-        #     if not passes_pattern:
-        #         if _type != str:
-        #             type_name = _type.__name__
-
-        #             msg = (
-        #                 f'Value "{supplied_param}" '
-        #                 f"for parameter `{name}` does not "
-        #                 f"match pattern for type `{type_name}`: {pattern}"
-        #             )
-        #         else:
-        #             msg = (
-        #                 f'Value "{supplied_param}" for parameter `{name}` '
-        #                 f"does not satisfy pattern {pattern}"
-        #             )
-        #         raise URLBuildError(msg)
-
-        #     # replace the parameter in the URL with the supplied value
-        #     replacement_regex = f"(<{name}.*?>)"
-
-        #     out = re.sub(replacement_regex, supplied_param, out)
+                # replace the parameter in the URL with the supplied value
+                replacement_regex = f"(<{param_info.name}.*?>)"
+                out = re.sub(replacement_regex, supplied_param, out)
 
         # parse the remainder of the keyword arguments into a querystring
         query_string = urlencode(kwargs, doseq=True) if kwargs else ""
@@ -845,9 +868,6 @@ class Sanic(BaseSanic):
                 await result
 
     async def _run_request_middleware(self, request, request_name=None):
-        print(self.request_middleware)
-        print(self.named_request_middleware)
-        print(request_name)
         # The if improves speed.  I don't know why
         named_middleware = self.named_request_middleware.get(
             request_name, deque()

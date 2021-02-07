@@ -197,7 +197,12 @@ def test_several_bp_with_url_prefix(app):
 
 
 def test_bp_with_host(app):
-    bp = Blueprint("test_bp_host", url_prefix="/test1", host="example.com")
+    bp = Blueprint(
+        "test_bp_host",
+        url_prefix="/test1",
+        host="example.com",
+        strict_slashes=True,
+    )
 
     @bp.route("/")
     def handler1(request):
@@ -209,18 +214,29 @@ def test_bp_with_host(app):
 
     app.blueprint(bp)
     headers = {"Host": "example.com"}
+    app.router.finalize()
+
     request, response = app.test_client.get("/test1/", headers=headers)
     assert response.body == b"Hello"
 
     headers = {"Host": "sub.example.com"}
     request, response = app.test_client.get("/test1/", headers=headers)
-    print(app.router.find_route_src)
     assert response.body == b"Hello subdomain!"
 
 
 def test_several_bp_with_host(app):
-    bp = Blueprint("test_text", url_prefix="/test", host="example.com")
-    bp2 = Blueprint("test_text2", url_prefix="/test", host="sub.example.com")
+    bp = Blueprint(
+        "test_text",
+        url_prefix="/test",
+        host="example.com",
+        strict_slashes=True,
+    )
+    bp2 = Blueprint(
+        "test_text2",
+        url_prefix="/test",
+        host="sub.example.com",
+        strict_slashes=True,
+    )
 
     @bp.route("/")
     def handler(request):
@@ -449,6 +465,7 @@ def test_bp_exception_handler(app):
 
 
 def test_bp_listeners(app):
+    app.route("/")(lambda x: x)
     blueprint = Blueprint("test_middleware")
 
     order = []
@@ -723,7 +740,8 @@ def test_blueprint_middleware_with_args(app: Sanic):
 
 
 @pytest.mark.parametrize("file_name", ["test.file"])
-def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
+def test_static_blueprint_name(static_file_directory, file_name):
+    app = Sanic("app")
     current_file = inspect.getfile(inspect.currentframe())
     with open(current_file, "rb") as file:
         file.read()
@@ -738,9 +756,6 @@ def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
     )
 
     app.blueprint(bp)
-    print(app.router.name_index)
-    print(app.router.static_routes)
-    print(app.router.dynamic_routes)
 
     uri = app.url_for("static", name="static.testing")
     assert uri == "/static/test.file"
@@ -841,18 +856,19 @@ def test_duplicate_blueprint(app):
     )
 
 
-def test_strict_slashes_behavior_adoption(app):
+def test_strict_slashes_behavior_adoption():
+    app = Sanic("app")
     app.strict_slashes = True
+    bp = Blueprint("bp")
+    bp2 = Blueprint("bp2", strict_slashes=False)
 
     @app.get("/test")
     def handler_test(request):
         return text("Test")
 
-    assert app.test_client.get("/test")[1].status == 200
-    assert app.test_client.get("/test/")[1].status == 404
-
-    app.router.finalized = False
-    bp = Blueprint("bp")
+    @app.get("/f1", strict_slashes=False)
+    def f1(request):
+        return text("f1")
 
     @bp.get("/one", strict_slashes=False)
     def one(request):
@@ -862,7 +878,15 @@ def test_strict_slashes_behavior_adoption(app):
     def second(request):
         return text("second")
 
+    @bp2.get("/third")
+    def third(request):
+        return text("third")
+
     app.blueprint(bp)
+    app.blueprint(bp2)
+
+    assert app.test_client.get("/test")[1].status == 200
+    assert app.test_client.get("/test/")[1].status == 404
 
     assert app.test_client.get("/one")[1].status == 200
     assert app.test_client.get("/one/")[1].status == 200
@@ -870,19 +894,8 @@ def test_strict_slashes_behavior_adoption(app):
     assert app.test_client.get("/second")[1].status == 200
     assert app.test_client.get("/second/")[1].status == 404
 
-    bp2 = Blueprint("bp2", strict_slashes=False)
-
-    @bp2.get("/third")
-    def third(request):
-        return text("third")
-
-    app.blueprint(bp2)
     assert app.test_client.get("/third")[1].status == 200
     assert app.test_client.get("/third/")[1].status == 200
-
-    @app.get("/f1", strict_slashes=False)
-    def f1(request):
-        return text("f1")
 
     assert app.test_client.get("/f1")[1].status == 200
     assert app.test_client.get("/f1/")[1].status == 200

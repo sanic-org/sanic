@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import FrozenSet, Iterable, List, Optional, Union
 
-from sanic_routing import BaseRouter, route
+from sanic_routing import BaseRouter
 from sanic_routing.exceptions import NoMethod
 from sanic_routing.exceptions import NotFound as RoutingNotFound
 from sanic_routing.route import Route
@@ -37,7 +37,7 @@ class Router(BaseRouter):
             route, handler, params = self.resolve(
                 path=request.path,
                 method=request.method,
-                extra={"host": request.headers.get("host")}
+                extra={"host": request.headers.get("host")},
             )
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
@@ -75,6 +75,8 @@ class Router(BaseRouter):
         ignore_body: bool = False,
         version: Union[str, float, int] = None,
         name: Optional[str] = None,
+        unquote: bool = False,
+        static: bool = False,
     ) -> Union[Route, List[Route]]:
         """
         Add a handler to the router
@@ -118,6 +120,7 @@ class Router(BaseRouter):
             methods=methods,
             name=name,
             strict=strict_slashes,
+            unquote=unquote,
         )
 
         if isinstance(host, str):
@@ -134,6 +137,8 @@ class Router(BaseRouter):
             route = super().add(**params)
             route.ctx.ignore_body = ignore_body
             route.ctx.stream = stream
+            route.ctx.hosts = hosts
+            route.ctx.static = static
 
             routes.append(route)
 
@@ -168,15 +173,19 @@ class Router(BaseRouter):
         :return: tuple containing (uri, Route)
         """
         if not view_name:
-            return None, None
+            return None
 
-        if view_name == "static" or view_name.endswith(".static"):
-            looking_for = f"_static_{name}"
-            route = self.name_index.get(looking_for)
-        else:
-            route = self.name_index.get(view_name)
+        name = self.ctx.app._generate_name(view_name)
+        route = self.name_index.get(name)
 
         if not route:
-            return None, None
+            return None
 
-        return route.path, route
+        return route
+
+    @property
+    def routes_all(self):
+        return {
+            **self.static_routes,
+            **self.dynamic_routes,
+        }

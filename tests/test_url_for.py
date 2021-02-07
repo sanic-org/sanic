@@ -1,24 +1,45 @@
 import asyncio
 
+import pytest
+
 from sanic_testing.testing import SanicTestClient
 
 from sanic.blueprints import Blueprint
 
 
 def test_routes_with_host(app):
-    @app.route("/")
     @app.route("/", name="hostindex", host="example.com")
     @app.route("/path", name="hostpath", host="path.example.com")
     def index(request):
         pass
 
-    assert app.url_for("index") == "/"
     assert app.url_for("hostindex") == "/"
     assert app.url_for("hostpath") == "/path"
     assert app.url_for("hostindex", _external=True) == "http://example.com/"
     assert (
         app.url_for("hostpath", _external=True)
         == "http://path.example.com/path"
+    )
+
+
+def test_routes_with_multiple_hosts(app):
+    @app.route("/", name="hostindex", host=["example.com", "path.example.com"])
+    def index(request):
+        pass
+
+    assert app.url_for("hostindex") == "/"
+    assert (
+        app.url_for("hostindex", _host="example.com") == "http://example.com/"
+    )
+
+    with pytest.raises(ValueError) as e:
+        assert app.url_for("hostindex", _external=True)
+    assert str(e.value).startswith("Host is ambiguous")
+
+    with pytest.raises(ValueError) as e:
+        assert app.url_for("hostindex", _host="unknown.com")
+    assert str(e.value).startswith(
+        "Requested host (unknown.com) is not available for this route"
     )
 
 
@@ -63,3 +84,7 @@ def test_websocket_bp_route_name(app):
 
     uri = app.url_for("test_bp.foobar_3")
     assert uri == "/bp/route3"
+
+
+# TODO: add test with a route with multiple hosts
+# TODO: add test with a route with _host in url_for

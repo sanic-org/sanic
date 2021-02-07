@@ -1,3 +1,7 @@
+import pytest
+
+from sanic_routing.exceptions import RouteExists
+
 from sanic.response import text
 
 
@@ -38,13 +42,12 @@ def test_vhosts_with_defaults(app):
     async def handler1(request):
         return text("Hello, world!")
 
-    @app.route("/")
-    async def handler2(request):
-        return text("default")
+    with pytest.raises(RouteExists):
+
+        @app.route("/")
+        async def handler2(request):
+            return text("default")
 
     headers = {"Host": "hello.com"}
     request, response = app.test_client.get("/", headers=headers)
     assert response.text == "Hello, world!"
-
-    request, response = app.test_client.get("/")
-    assert response.text == "default"

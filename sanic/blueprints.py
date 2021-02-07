@@ -109,22 +109,35 @@ class Blueprint(BaseSanic):
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
 
+            strict_slashes = (
+                self.strict_slashes
+                if future.strict_slashes is None
+                and self.strict_slashes is not None
+                else future.strict_slashes
+            )
+
+            print(uri, strict_slashes)
+
             apply_route = FutureRoute(
                 future.handler,
                 uri[1:] if uri.startswith("//") else uri,
                 future.methods,
                 future.host or self.host,
-                future.strict_slashes,
+                strict_slashes,
                 future.stream,
                 future.version or self.version,
                 future.name,
                 future.ignore_body,
                 future.websocket,
                 future.subprotocols,
+                future.unquote,
+                future.static,
             )
 
             route = app._apply_route(apply_route)
-            operation = routes.extend if isinstance(route, list) else routes.append
+            operation = (
+                routes.extend if isinstance(route, list) else routes.append
+            )
             operation(route)
 
         # Static Files
@@ -149,6 +162,3 @@ class Blueprint(BaseSanic):
         # Event listeners
         for listener in self._future_listeners:
             app._apply_listener(listener)
-
-    def _generate_name(self, handler, name: str) -> str:
-        return f"{self.name}.{name or handler.__name__}"

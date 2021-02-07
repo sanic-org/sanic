@@ -6,6 +6,8 @@ from re import sub
 from time import gmtime, strftime
 from urllib.parse import unquote
 
+from sanic_routing.patterns import REGEX_TYPES
+
 from sanic.compat import stat_async
 from sanic.exceptions import (
     ContentRangeError,
@@ -157,11 +159,11 @@ def register(
     # If we're not trying to match a file directly,
     # serve from the folder
     if not path.isfile(file_or_directory):
-        uri += "<file_uri:" + static.pattern + ">"
+        uri += "/<file_uri:path>"
 
     # special prefix for static files
-    if not static.name.startswith("_static_"):
-        name = f"_static_{static.name}"
+    # if not static.name.startswith("_static_"):
+    #     name = f"_static_{static.name}"
 
     _handler = wraps(_static_request_handler)(
         partial(
@@ -174,11 +176,13 @@ def register(
         )
     )
 
-    _routes, _ = app.route(
+    route, _ = app.route(
         uri=uri,
         methods=["GET", "HEAD"],
         name=name,
         host=static.host,
         strict_slashes=static.strict_slashes,
+        static=True,
     )(_handler)
-    return _routes
+
+    return route

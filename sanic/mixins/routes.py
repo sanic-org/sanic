@@ -36,6 +36,8 @@ class RouteMixin:
         apply=True,
         subprotocols=None,
         websocket=False,
+        unquote=False,
+        static=False,
     ):
         """Create a blueprint route from a decorated function.
 
@@ -74,21 +76,28 @@ class RouteMixin:
             nonlocal ignore_body
             nonlocal subprotocols
             nonlocal websocket
+            nonlocal static
 
             if isinstance(handler, tuple):
                 # if a handler fn is already wrapped in a route, the handler
                 # variable will be a tuple of (existing routes, handler fn)
                 _, handler = handler
 
-            # TODO:
-            # - THink this thru.... do we want all routes namespaced?
-            # -
-            name = self._generate_name(handler, name)
+            name = self._generate_name(name, handler)
 
             if isinstance(host, str):
                 host = frozenset([host])
             elif host and not isinstance(host, frozenset):
-                host = frozenset(host)
+                try:
+                    host = frozenset(host)
+                except TypeError:
+                    raise ValueError(
+                        "Expected either string or Iterable of host strings, "
+                        "not %s" % host
+                    )
+
+            if isinstance(subprotocols, (list, tuple, set)):
+                subprotocols = frozenset(subprotocols)
 
             route = FutureRoute(
                 handler,
@@ -102,6 +111,8 @@ class RouteMixin:
                 ignore_body,
                 websocket,
                 subprotocols,
+                unquote,
+                static,
             )
 
             self._future_routes.add(route)
@@ -499,11 +510,15 @@ class RouteMixin:
         :rtype: List[sanic.router.Route]
         """
 
-        if not name.startswith(self.name + "."):
-            name = f"{self.name}.{name}"
+        name = self._generate_name(name)
 
         if strict_slashes is None and self.strict_slashes is not None:
             strict_slashes = self.strict_slashes
+
+        if not isinstance(file_or_directory, (str, bytes, PurePath)):
+            raise ValueError(
+                f"Static route must be a valid path, not {file_or_directory}"
+            )
 
         static = FutureStatic(
             uri,
@@ -522,5 +537,25 @@ class RouteMixin:
         if apply:
             self._apply_static(static)
 
-    def _generate_name(self, handler, name: str) -> str:
-        return name or handler.__name__
+    def _generate_name(self, *objects) -> str:
+        name = None
+        for obj in objects:
+            if obj:
+                if isinstance(obj, str):
+                    name = obj
+                    break
+
+                try:
+                    name = obj.__name__
+                except AttributeError:
+                    continue
+                else:
+                    break
+
+        if not name:
+            raise Exception("...")
+
+        if not name.startswith(f"{self.name}."):
+            name = f"{self.name}.{name}"
+
+        return name

@@ -42,12 +42,6 @@ class Router(BaseRouter):
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
         except NoMethod as e:
-            print(
-                "Method {} not allowed for URL {}".format(
-                    request.method, request.path
-                ),
-                e.allowed_methods,
-            )
             raise MethodNotSupported(
                 "Method {} not allowed for URL {}".format(
                     request.method, request.path

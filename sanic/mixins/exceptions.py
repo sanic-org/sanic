@@ -32,7 +32,6 @@ class ExceptionMixin:
             if isinstance(exceptions[0], list):
                 exceptions = tuple(*exceptions)
 
-            print(handler, exceptions)
             future_exception = FutureException(handler, exceptions)
             self._future_exceptions.add(future_exception)
             if apply:

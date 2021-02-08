@@ -69,9 +69,11 @@ def handler(request):
 def test_pickle_app(app, protocol):
     app.route("/")(handler)
     app.router.finalize()
+    app.router.reset()
     p_app = pickle.dumps(app, protocol=protocol)
     del app
     up_p_app = pickle.loads(p_app)
+    up_p_app.router.finalize()
     assert up_p_app
     request, response = up_p_app.test_client.get("/")
     assert response.text == "Hello"
@@ -82,9 +84,12 @@ def test_pickle_app_with_bp(app, protocol):
     bp = Blueprint("test_text")
     bp.route("/")(handler)
     app.blueprint(bp)
+    app.router.finalize()
+    app.router.reset()
     p_app = pickle.dumps(app, protocol=protocol)
     del app
     up_p_app = pickle.loads(p_app)
+    up_p_app.router.finalize()
     assert up_p_app
     request, response = up_p_app.test_client.get("/")
     assert response.text == "Hello"
@@ -94,9 +99,12 @@ def test_pickle_app_with_bp(app, protocol):
 def test_pickle_app_with_static(app, protocol):
     app.route("/")(handler)
     app.static("/static", "/tmp/static")
+    app.router.finalize()
+    app.router.reset()
     p_app = pickle.dumps(app, protocol=protocol)
     del app
     up_p_app = pickle.loads(p_app)
+    up_p_app.router.finalize()
     assert up_p_app
     request, response = up_p_app.test_client.get("/static/missing.txt")
     assert response.status == 404

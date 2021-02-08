@@ -54,7 +54,6 @@ def test_listeners_triggered():
 
     @app.listener("before_server_start")
     def do_before_server_start(*args, **kwargs):
-        raise Exception("......")
         nonlocal before_server_start
         before_server_start = True
 
@@ -73,6 +72,10 @@ def test_listeners_triggered():
         nonlocal after_server_stop
         after_server_stop = True
 
+    @app.route("/")
+    def handler(request):
+        return text("...")
+
     class CustomServer(uvicorn.Server):
         def install_signal_handlers(self):
             pass
@@ -80,8 +83,8 @@ def test_listeners_triggered():
     config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
     server = CustomServer(config=config)
 
-    # with pytest.warns(UserWarning):
-    server.run()
+    with pytest.warns(UserWarning):
+        server.run()
 
     all_tasks = (
         asyncio.Task.all_tasks()
@@ -122,6 +125,10 @@ def test_listeners_triggered_async(app):
     async def do_after_server_stop(*args, **kwargs):
         nonlocal after_server_stop
         after_server_stop = True
+
+    @app.route("/")
+    def handler(request):
+        return text("...")
 
     class CustomServer(uvicorn.Server):
         def install_signal_handlers(self):

@@ -137,6 +137,7 @@ class GunicornWorker(base.Worker):
             await _shutdown
 
     async def _run(self):
+        self.app.router.finalize()
         for sock in self.sockets:
             state = dict(requests_count=0)
             self._server_settings["host"] = None

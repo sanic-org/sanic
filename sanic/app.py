@@ -1037,8 +1037,8 @@ class Sanic(BaseSanic):
         details: https://asgi.readthedocs.io/en/latest/"""
         # raise Exception("call")
         self.asgi = True
-        self.router.finalize()
-        asgi_app = await ASGIApp.create(self, scope, receive, send)
+        self._asgi_app = await ASGIApp.create(self, scope, receive, send)
+        asgi_app = self._asgi_app
         await asgi_app()
 
     # _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable

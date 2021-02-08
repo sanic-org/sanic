@@ -4,14 +4,16 @@ import string
 import sys
 import uuid
 
+from typing import Tuple
+
 import pytest
 
+from sanic_routing.exceptions import RouteExists
 from sanic_testing import TestManager
 
 from sanic import Sanic
-
-
-# from sanic.router import RouteExists, Router
+from sanic.constants import HTTP_METHODS
+from sanic.router import Router
 
 
 random.seed("Pack my box with five dozen liquor jugs.")
@@ -40,12 +42,12 @@ async def _handler(request):
 
 TYPE_TO_GENERATOR_MAP = {
     "string": lambda: "".join(
-        [random.choice(string.ascii_letters + string.digits) for _ in range(4)]
+        [random.choice(string.ascii_lowercase) for _ in range(4)]
     ),
     "int": lambda: random.choice(range(1000000)),
     "number": lambda: random.random(),
     "alpha": lambda: "".join(
-        [random.choice(string.ascii_letters) for _ in range(4)]
+        [random.choice(string.ascii_lowercase) for _ in range(4)]
     ),
     "uuid": lambda: str(uuid.uuid1()),
 }
@@ -54,7 +56,7 @@ TYPE_TO_GENERATOR_MAP = {
 class RouteStringGenerator:
 
     ROUTE_COUNT_PER_DEPTH = 100
-    HTTP_METHODS = ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTION"]
+    HTTP_METHODS = HTTP_METHODS
     ROUTE_PARAM_TYPES = ["string", "int", "number", "alpha", "uuid"]
 
     def generate_random_direct_route(self, max_route_depth=4):
@@ -106,25 +108,25 @@ class RouteStringGenerator:
 
 @pytest.fixture(scope="function")
 def sanic_router(app):
-    ...
-    # # noinspection PyProtectedMember
-    # def _setup(route_details: tuple) -> (Router, tuple):
-    #     router = Router(app)
-    #     added_router = []
-    #     for method, route in route_details:
-    #         try:
-    #             router._add(
-    #                 uri=f"/{route}",
-    #                 methods=frozenset({method}),
-    #                 host="localhost",
-    #                 handler=_handler,
-    #             )
-    #             added_router.append((method, route))
-    #         except RouteExists:
-    #             pass
-    #     return router, added_router
+    # noinspection PyProtectedMember
+    def _setup(route_details: tuple) -> Tuple[Router, tuple]:
+        router = Router()
+        added_router = []
+        for method, route in route_details:
+            try:
+                router.add(
+                    uri=f"/{route}",
+                    methods=frozenset({method}),
+                    host="localhost",
+                    handler=_handler,
+                )
+                added_router.append((method, route))
+            except RouteExists:
+                pass
+        router.finalize()
+        return router, added_router
 
-    # return _setup
+    return _setup
 
 
 @pytest.fixture(scope="function")
@@ -140,5 +142,4 @@ def url_param_generator():
 @pytest.fixture(scope="function")
 def app(request):
     app = Sanic(request.node.name)
-    # TestManager(app)
     return app

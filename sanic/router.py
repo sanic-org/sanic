@@ -20,7 +20,7 @@ class Router(BaseRouter):
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
 
-    # @lru_cache
+    @lru_cache
     def get(self, request: Request):
         """
         Retrieve a `Route` object containg the details about how to handle
@@ -42,6 +42,12 @@ class Router(BaseRouter):
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
         except NoMethod as e:
+            print(
+                "Method {} not allowed for URL {}".format(
+                    request.method, request.path
+                ),
+                e.allowed_methods,
+            )
             raise MethodNotSupported(
                 "Method {} not allowed for URL {}".format(
                     request.method, request.path
@@ -175,8 +181,14 @@ class Router(BaseRouter):
         if not view_name:
             return None
 
-        name = self.ctx.app._generate_name(view_name)
-        route = self.name_index.get(name)
+        # TODO:
+        # - Check blueprint naming, we shouldn't need to double check here
+        #   but it seems like blueprints are not receiving full names
+        #   probably need tocheck the blueprint registration func
+        route = self.name_index.get(view_name)
+        if not route:
+            full_name = self.ctx.app._generate_name(view_name)
+            route = self.name_index.get(full_name)
 
         if not route:
             return None
@@ -185,7 +197,16 @@ class Router(BaseRouter):
 
     @property
     def routes_all(self):
-        return {
-            **self.static_routes,
-            **self.dynamic_routes,
-        }
+        return self.routes
+
+    @property
+    def routes_static(self):
+        return self.static_routes
+
+    @property
+    def routes_dynamic(self):
+        return self.dynamic_routes
+
+    @property
+    def routes_regex(self):
+        return self.regex_routes

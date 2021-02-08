@@ -404,7 +404,7 @@ class Sanic(BaseSanic):
 
         # find all the parameters we will need to build in the URL
         # matched_params = re.findall(self.router.parameter_pattern, uri)
-        route.finalize_params()
+        route.finalize()
         for params in route.params.values():
             # name, _type, pattern = self.router.parse_parameter_string(match)
             # we only want to match against each individual parameter
@@ -552,7 +552,7 @@ class Sanic(BaseSanic):
                 # Execute Handler
                 # -------------------------------------------- #
 
-                request.uri_template = uri
+                request.uri_template = f"/{uri}"
                 if handler is None:
                     raise ServerError(
                         (
@@ -561,7 +561,7 @@ class Sanic(BaseSanic):
                         )
                     )
 
-                request.endpoint = endpoint
+                request.endpoint = request.name
 
                 # Run response handler
                 response = handler(request, *args, **kwargs)
@@ -1035,12 +1035,13 @@ class Sanic(BaseSanic):
         """To be ASGI compliant, our instance must be a callable that accepts
         three arguments: scope, receive, send. See the ASGI reference for more
         details: https://asgi.readthedocs.io/en/latest/"""
+        # raise Exception("call")
         self.asgi = True
         self.router.finalize()
         asgi_app = await ASGIApp.create(self, scope, receive, send)
         await asgi_app()
 
-    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
+    # _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
 
     # -------------------------------------------------------------------- #
     # Configuration

@@ -7,6 +7,7 @@ import pytest as pytest
 from sanic_testing.testing import HOST as test_host
 from sanic_testing.testing import PORT as test_port
 
+from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.exceptions import URLBuildError
 from sanic.response import text
@@ -98,15 +99,16 @@ def test_url_for_with_server_name(app):
     assert response.text == "this should pass"
 
 
-def test_fails_if_endpoint_not_found(app):
+def test_fails_if_endpoint_not_found():
+    app = Sanic("app")
+
     @app.route("/fail")
     def fail(request):
         return text("this should fail")
 
     with pytest.raises(URLBuildError) as e:
         app.url_for("passes")
-
-    assert str(e.value) == "Endpoint with name `passes` was not found"
+        e.match("Endpoint with name `app.passes` was not found")
 
 
 def test_fails_url_build_if_param_not_passed(app):
@@ -251,7 +253,8 @@ def test_adds_other_supplied_values_as_query_string(app):
 
 
 @pytest.fixture
-def blueprint_app(app):
+def blueprint_app():
+    app = Sanic("app")
 
     first_print = Blueprint("first", url_prefix="/first")
     second_print = Blueprint("second", url_prefix="/second")
@@ -279,6 +282,7 @@ def blueprint_app(app):
 
 
 def test_blueprints_are_named_correctly(blueprint_app):
+    print(f"{blueprint_app.router.name_index=}")
     first_url = blueprint_app.url_for("first.foo")
     assert first_url == "/first/foo"
 

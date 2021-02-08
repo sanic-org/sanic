@@ -14,6 +14,7 @@ import pytest
 from aiofiles import os as async_os
 from sanic_testing.testing import HOST, PORT
 
+from sanic import Sanic
 from sanic.response import (
     HTTPResponse,
     StreamingHTTPResponse,
@@ -51,16 +52,22 @@ async def sample_streaming_fn(response):
     await response.write("bar")
 
 
-def test_method_not_allowed(app):
+def test_method_not_allowed():
+    app = Sanic("app")
+
     @app.get("/")
     async def test_get(request):
         return response.json({"hello": "world"})
 
     request, response = app.test_client.head("/")
-    assert response.headers["Allow"] == "GET"
+    assert set(response.headers["Allow"].split(", ")) == {
+        "GET",
+    }
 
     request, response = app.test_client.post("/")
-    assert response.headers["Allow"] == "GET"
+    assert set(response.headers["Allow"].split(", ")) == {"GET", "HEAD"}
+
+    app.router.reset()
 
     @app.post("/")
     async def test_post(request):
@@ -68,12 +75,20 @@ def test_method_not_allowed(app):
 
     request, response = app.test_client.head("/")
     assert response.status == 405
-    assert set(response.headers["Allow"].split(", ")) == {"GET", "POST"}
+    assert set(response.headers["Allow"].split(", ")) == {
+        "GET",
+        "POST",
+        "HEAD",
+    }
     assert response.headers["Content-Length"] == "0"
 
     request, response = app.test_client.patch("/")
     assert response.status == 405
-    assert set(response.headers["Allow"].split(", ")) == {"GET", "POST"}
+    assert set(response.headers["Allow"].split(", ")) == {
+        "GET",
+        "POST",
+        "HEAD",
+    }
     assert response.headers["Content-Length"] == "0"
 
 
@@ -237,7 +252,7 @@ def test_chunked_streaming_returns_correct_content(streaming_app):
 @pytest.mark.asyncio
 async def test_chunked_streaming_returns_correct_content_asgi(streaming_app):
     request, response = await streaming_app.asgi_client.get("/")
-    assert response.text == "foo,bar"
+    assert response.body == b"foo,bar"
 
 
 def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):

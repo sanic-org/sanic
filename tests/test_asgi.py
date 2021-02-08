@@ -45,7 +45,8 @@ def protocol(transport):
     return transport.get_protocol()
 
 
-def test_listeners_triggered(app):
+def test_listeners_triggered():
+    app = Sanic("app")
     before_server_start = False
     after_server_start = False
     before_server_stop = False
@@ -53,6 +54,7 @@ def test_listeners_triggered(app):
 
     @app.listener("before_server_start")
     def do_before_server_start(*args, **kwargs):
+        raise Exception("......")
         nonlocal before_server_start
         before_server_start = True
 
@@ -78,8 +80,8 @@ def test_listeners_triggered(app):
     config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
     server = CustomServer(config=config)
 
-    with pytest.warns(UserWarning):
-        server.run()
+    # with pytest.warns(UserWarning):
+    server.run()
 
     all_tasks = (
         asyncio.Task.all_tasks()
@@ -304,18 +306,24 @@ async def test_cookie_customization(app):
     _, response = await app.asgi_client.get("/cookie")
 
     CookieDef = namedtuple("CookieDef", ("value", "httponly"))
+    Cookie = namedtuple("Cookie", ("domain", "path", "value", "httponly"))
     cookie_map = {
         "test": CookieDef("Cookie1", True),
         "c2": CookieDef("Cookie2", False),
     }
 
+    cookies = {
+        c.name: Cookie(c.domain, c.path, c.value, "HttpOnly" in c._rest.keys())
+        for c in response.cookies.jar
+    }
+
     for name, definition in cookie_map.items():
-        cookie = response.cookies.get(name)
+        cookie = cookies.get(name)
         assert cookie
         assert cookie.value == definition.value
-        assert cookie.get("domain") == "mockserver.local"
-        assert cookie.get("path") == "/"
-        assert cookie.get("httponly", False) == definition.httponly
+        assert cookie.domain == "mockserver.local"
+        assert cookie.path == "/"
+        assert cookie.httponly == definition.httponly
 
 
 @pytest.mark.asyncio

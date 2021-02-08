@@ -574,44 +574,46 @@ def test_dynamic_route_uuid(app):
     assert response.status == 404
 
 
-# def test_dynamic_route_path(app):
-#     @app.route("/<path:path>/info")
-#     async def handler(request, path):
-#         return text("OK")
+def test_dynamic_route_path(app):
+    @app.route("/<path:path>/info")
+    async def handler(request, path):
+        return text("OK")
 
-#     request, response = app.test_client.get("/path/1/info")
-#     assert response.status == 200
+    request, response = app.test_client.get("/path/1/info")
+    assert response.status == 200
 
-#     request, response = app.test_client.get("/info")
-#     assert response.status == 404
+    request, response = app.test_client.get("/info")
+    assert response.status == 404
 
-#     @app.route("/<path:path>")
-#     async def handler1(request, path):
-#         return text("OK")
+    app.router.reset()
 
-#     request, response = app.test_client.get("/info")
-#     assert response.status == 200
+    @app.route("/<path:path>")
+    async def handler1(request, path):
+        return text("OK")
 
-#     request, response = app.test_client.get("/whatever/you/set")
-#     assert response.status == 200
+    request, response = app.test_client.get("/info")
+    assert response.status == 200
+
+    request, response = app.test_client.get("/whatever/you/set")
+    assert response.status == 200
 
 
-# def test_dynamic_route_unhashable(app):
-#     @app.route("/folder/<unhashable:[A-Za-z0-9/]+>/end/")
-#     async def handler(request, unhashable):
-#         return text("OK")
+def test_dynamic_route_unhashable(app):
+    @app.route("/folder/<unhashable:[A-Za-z0-9/]+>/end/")
+    async def handler(request, unhashable):
+        return text("OK")
 
-#     request, response = app.test_client.get("/folder/test/asdf/end/")
-#     assert response.status == 200
+    request, response = app.test_client.get("/folder/test/asdf/end/")
+    assert response.status == 200
 
-#     request, response = app.test_client.get("/folder/test///////end/")
-#     assert response.status == 200
+    request, response = app.test_client.get("/folder/test///////end/")
+    assert response.status == 200
 
-#     request, response = app.test_client.get("/folder/test/end/")
-#     assert response.status == 200
+    request, response = app.test_client.get("/folder/test/end/")
+    assert response.status == 200
 
-#     request, response = app.test_client.get("/folder/test/nope/")
-#     assert response.status == 404
+    request, response = app.test_client.get("/folder/test/nope/")
+    assert response.status == 404
 
 
 @pytest.mark.parametrize("url", ["/ws", "ws"])
@@ -629,17 +631,17 @@ def test_websocket_route(app, url):
     assert ev.is_set()
 
 
-# @pytest.mark.asyncio
-# @pytest.mark.parametrize("url", ["/ws", "ws"])
-# async def test_websocket_route_asgi(app, url):
-#     ev = asyncio.Event()
+@pytest.mark.asyncio
+@pytest.mark.parametrize("url", ["/ws", "ws"])
+async def test_websocket_route_asgi(app, url):
+    ev = asyncio.Event()
 
-#     @app.websocket(url)
-#     async def handler(request, ws):
-#         ev.set()
+    @app.websocket(url)
+    async def handler(request, ws):
+        ev.set()
 
-#     request, response = await app.asgi_client.websocket(url)
-#     assert ev.is_set()
+    request, response = await app.asgi_client.websocket(url)
+    assert ev.is_set()
 
 
 def test_websocket_route_with_subprotocols(app):
@@ -878,23 +880,23 @@ def test_dynamic_add_route_regex(app):
     assert response.status == 200
 
 
-# def test_dynamic_add_route_unhashable(app):
-#     async def handler(request, unhashable):
-#         return text("OK")
+def test_dynamic_add_route_unhashable(app):
+    async def handler(request, unhashable):
+        return text("OK")
 
-#     app.add_route(handler, "/folder/<unhashable:[A-Za-z0-9/]+>/end/")
+    app.add_route(handler, "/folder/<unhashable:[A-Za-z0-9/]+>/end/")
 
-#     request, response = app.test_client.get("/folder/test/asdf/end/")
-#     assert response.status == 200
+    request, response = app.test_client.get("/folder/test/asdf/end/")
+    assert response.status == 200
 
-#     request, response = app.test_client.get("/folder/test///////end/")
-#     assert response.status == 200
+    request, response = app.test_client.get("/folder/test///////end/")
+    assert response.status == 200
 
-#     request, response = app.test_client.get("/folder/test/end/")
-#     assert response.status == 200
+    request, response = app.test_client.get("/folder/test/end/")
+    assert response.status == 200
 
-#     request, response = app.test_client.get("/folder/test/nope/")
-#     assert response.status == 404
+    request, response = app.test_client.get("/folder/test/nope/")
+    assert response.status == 404
 
 
 def test_add_route_duplicate(app):

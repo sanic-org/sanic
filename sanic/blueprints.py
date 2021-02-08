@@ -115,8 +115,7 @@ class Blueprint(BaseSanic):
                 and self.strict_slashes is not None
                 else future.strict_slashes
             )
-
-            print(uri, strict_slashes)
+            name = app._generate_name(future.name)
 
             apply_route = FutureRoute(
                 future.handler,
@@ -126,7 +125,7 @@ class Blueprint(BaseSanic):
                 strict_slashes,
                 future.stream,
                 future.version or self.version,
-                future.name,
+                name,
                 future.ignore_body,
                 future.websocket,
                 future.subprotocols,

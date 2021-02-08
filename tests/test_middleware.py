@@ -102,6 +102,7 @@ def test_middleware_response_raise_exception(app, caplog):
     async def process_response(request, response):
         raise Exception("Exception at response middleware")
 
+    app.route("/")(lambda x: x)
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get("/fail")
 
@@ -129,7 +130,7 @@ def test_middleware_override_request(app):
     async def handler(request):
         return text("FAIL")
 
-    response = app.test_client.get("/", gather_request=False)
+    _, response = app.test_client.get("/", gather_request=False)
 
     assert response.status == 200
     assert response.text == "OK"

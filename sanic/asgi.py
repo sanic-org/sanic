@@ -131,6 +131,7 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         startup event.
         """
+        print(">>> starting up")
         self.asgi_app.sanic_app.router.finalize()
         listeners = self.asgi_app.sanic_app.listeners.get(
             "before_server_start", []
@@ -191,6 +192,7 @@ class ASGIApp:
     async def create(
         cls, sanic_app, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
     ) -> "ASGIApp":
+        raise Exception("create")
         instance = cls()
         instance.sanic_app = sanic_app
         instance.transport = MockTransport(scope, receive, send)
@@ -204,6 +206,7 @@ class ASGIApp:
             ]
         )
         instance.lifespan = Lifespan(instance)
+        print(instance.lifespan)
 
         if scope["type"] == "lifespan":
             await instance.lifespan(scope, receive, send)
@@ -293,4 +296,5 @@ class ASGIApp:
         """
         Handle the incoming request.
         """
+        print("......")
         await self.sanic_app.handle_request(self.request)

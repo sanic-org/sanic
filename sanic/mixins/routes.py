@@ -539,6 +539,7 @@ class RouteMixin:
 
     def _generate_name(self, *objects) -> str:
         name = None
+
         for obj in objects:
             if obj:
                 if isinstance(obj, str):
@@ -546,9 +547,12 @@ class RouteMixin:
                     break
 
                 try:
-                    name = obj.__name__
+                    name = obj.name
                 except AttributeError:
-                    continue
+                    try:
+                        name = obj.__name__
+                    except AttributeError:
+                        continue
                 else:
                     break
 

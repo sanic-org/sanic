@@ -2,10 +2,13 @@ import pytest
 
 from sanic_routing.exceptions import RouteExists
 
+from sanic import Sanic
 from sanic.response import text
 
 
-def test_vhosts(app):
+def test_vhosts():
+    app = Sanic("app")
+
     @app.route("/", host="example.com")
     async def handler1(request):
         return text("You're at example.com!")

@@ -23,6 +23,10 @@ class Router(BaseRouter):
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
 
+    # Putting the lru_cache on Router.get() performs better for the benchmarsk
+    # at tests/benchmark/test_route_resolution_benchmark.py
+    # However, overall application performance is significantly improved
+    # with the lru_cache on this method.
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(self, path, method, host):
         try:

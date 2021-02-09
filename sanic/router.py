@@ -11,6 +11,9 @@ from sanic.exceptions import MethodNotSupported, NotFound
 from sanic.request import Request
 
 
+ROUTER_CACHE_SIZE = 1024
+
+
 class Router(BaseRouter):
     """
     The router implementation responsible for routing a :class:`Request` object
@@ -20,33 +23,20 @@ class Router(BaseRouter):
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
 
-    @lru_cache
-    def get(self, request: Request):
-        """
-        Retrieve a `Route` object containg the details about how to handle
-        a response for a given request
-
-        :param request: the incoming request object
-        :type request: Request
-        :return: details needed for handling the request and returning the
-            correct response
-        :rtype: Tuple[ RouteHandler, Tuple[Any, ...], Dict[str, Any], str, str,
-            Optional[str], bool, ]
-        """
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
+    def _get(self, path, method, host):
         try:
             route, handler, params = self.resolve(
-                path=request.path,
-                method=request.method,
-                extra={"host": request.headers.get("host")},
+                path=path,
+                method=method,
+                extra={"host": host},
             )
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
         except NoMethod as e:
             raise MethodNotSupported(
-                "Method {} not allowed for URL {}".format(
-                    request.method, request.path
-                ),
-                method=request.method,
+                "Method {} not allowed for URL {}".format(method, path),
+                method=method,
                 allowed_methods=e.allowed_methods,
             )
 
@@ -62,6 +52,22 @@ class Router(BaseRouter):
             route.name,
             None,
             route.ctx.ignore_body,
+        )
+
+    def get(self, request: Request):
+        """
+        Retrieve a `Route` object containg the details about how to handle
+        a response for a given request
+
+        :param request: the incoming request object
+        :type request: Request
+        :return: details needed for handling the request and returning the
+            correct response
+        :rtype: Tuple[ RouteHandler, Tuple[Any, ...], Dict[str, Any], str, str,
+            Optional[str], bool, ]
+        """
+        return self._get(
+            request.path, request.method, request.headers.get("host")
         )
 
     def add(
@@ -163,7 +169,7 @@ class Router(BaseRouter):
             handler = getattr(handler.view_class, request.method.lower())
         return hasattr(handler, "is_stream")
 
-    # @lru_cache(maxsize=ROUTER_CACHE_SIZE)
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name, name=None):
         """
         Find a route in the router based on the specified view name.

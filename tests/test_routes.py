@@ -538,6 +538,9 @@ def test_dynamic_route_regex(app):
     async def handler(request, folder_id):
         return text("OK")
 
+    app.router.finalize()
+    print(app.router.find_route_src)
+
     request, response = app.test_client.get("/folder/test")
     assert response.status == 200
 

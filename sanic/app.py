@@ -405,46 +405,42 @@ class Sanic(BaseSanic):
         # find all the parameters we will need to build in the URL
         # matched_params = re.findall(self.router.parameter_pattern, uri)
         route.finalize()
-        for params in route.params.values():
+        for param_info in route.params.values():
             # name, _type, pattern = self.router.parse_parameter_string(match)
             # we only want to match against each individual parameter
 
-            for idx, param_info in enumerate(params):
-                try:
-                    supplied_param = str(kwargs.pop(param_info.name))
-                except KeyError:
-                    raise URLBuildError(
-                        f"Required parameter `{param_info.name}` was not "
-                        "passed to url_for"
-                    )
+            try:
+                supplied_param = str(kwargs.pop(param_info.name))
+            except KeyError:
+                raise URLBuildError(
+                    f"Required parameter `{param_info.name}` was not "
+                    "passed to url_for"
+                )
 
-                # determine if the parameter supplied by the caller
-                # passes the test in the URL
-                if param_info.pattern:
-                    passes_pattern = param_info.pattern.match(supplied_param)
-                    if not passes_pattern:
-                        if idx + 1 == len(params):
-                            if param_info.cast != str:
-                                msg = (
-                                    f'Value "{supplied_param}" '
-                                    f"for parameter `{param_info.name}` does "
-                                    "not match pattern for type "
-                                    f"`{param_info.cast.__name__}`: "
-                                    f"{param_info.pattern.pattern}"
-                                )
-                            else:
-                                msg = (
-                                    f'Value "{supplied_param}" for parameter '
-                                    f"`{param_info.name}` does not satisfy "
-                                    f"pattern {param_info.pattern.pattern}"
-                                )
-                            raise URLBuildError(msg)
-                        else:
-                            continue
+            # determine if the parameter supplied by the caller
+            # passes the test in the URL
+            if param_info.pattern:
+                passes_pattern = param_info.pattern.match(supplied_param)
+                if not passes_pattern:
+                    if param_info.cast != str:
+                        msg = (
+                            f'Value "{supplied_param}" '
+                            f"for parameter `{param_info.name}` does "
+                            "not match pattern for type "
+                            f"`{param_info.cast.__name__}`: "
+                            f"{param_info.pattern.pattern}"
+                        )
+                    else:
+                        msg = (
+                            f'Value "{supplied_param}" for parameter '
+                            f"`{param_info.name}` does not satisfy "
+                            f"pattern {param_info.pattern.pattern}"
+                        )
+                    raise URLBuildError(msg)
 
-                # replace the parameter in the URL with the supplied value
-                replacement_regex = f"(<{param_info.name}.*?>)"
-                out = re.sub(replacement_regex, supplied_param, out)
+            # replace the parameter in the URL with the supplied value
+            replacement_regex = f"(<{param_info.name}.*?>)"
+            out = re.sub(replacement_regex, supplied_param, out)
 
         # parse the remainder of the keyword arguments into a querystring
         query_string = urlencode(kwargs, doseq=True) if kwargs else ""

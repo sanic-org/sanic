@@ -88,18 +88,18 @@ def test_bp_strict_slash(app):
 
     app.blueprint(bp)
 
-    # request, response = app.test_client.get("/get")
-    # assert response.text == "OK"
-    # assert response.json is None
+    request, response = app.test_client.get("/get")
+    assert response.text == "OK"
+    assert response.json is None
 
-    # request, response = app.test_client.get("/get/")
-    # assert response.status == 404
+    request, response = app.test_client.get("/get/")
+    assert response.status == 404
 
     request, response = app.test_client.post("/post/")
     assert response.text == "OK"
 
-    # request, response = app.test_client.post("/post")
-    # assert response.status == 404
+    request, response = app.test_client.post("/post")
+    assert response.status == 404
 
 
 def test_bp_strict_slash_default_value(app):

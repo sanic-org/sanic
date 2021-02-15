@@ -2,7 +2,7 @@ from inspect import signature
 from pathlib import PurePath
 from typing import Set, Union
 
-from sanic_routing.route import Route
+from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
 from sanic.models.futures import FutureRoute, FutureStatic

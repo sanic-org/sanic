@@ -14,8 +14,8 @@ from traceback import format_exc
 from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
 from urllib.parse import urlencode, urlunparse
 
-from sanic_routing.exceptions import FinalizationError
-from sanic_routing.route import Route
+from sanic_routing.exceptions import FinalizationError  # type: ignore
+from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
 from sanic.asgi import ASGIApp

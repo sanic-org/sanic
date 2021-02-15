@@ -7,11 +7,9 @@ from json import loads as json_loads
 from urllib.parse import urlparse
 
 import pytest
-import ujson
 
 from sanic_testing.testing import (
     ASGI_BASE_URL,
-    ASGI_HOST,
     ASGI_PORT,
     HOST,
     PORT,

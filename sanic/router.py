@@ -1,10 +1,12 @@
 from functools import lru_cache
 from typing import Iterable, List, Optional, Union
 
-from sanic_routing import BaseRouter
-from sanic_routing.exceptions import NoMethod
-from sanic_routing.exceptions import NotFound as RoutingNotFound
-from sanic_routing.route import Route
+from sanic_routing import BaseRouter  # type: ignore
+from sanic_routing.exceptions import NoMethod  # type: ignore
+from sanic_routing.exceptions import (
+    NotFound as RoutingNotFound,  # type: ignore
+)
+from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import MethodNotSupported, NotFound

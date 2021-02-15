@@ -161,9 +161,10 @@ def test_matching(path, headers, expected):
     request = Request(path, headers, None, "GET", None, app)
 
     try:
+        app.router.get(request=request)
     except NotFound:
         response = 404
-    except Exception as e:
+    except Exception:
         response = 500
     else:
         response = 200

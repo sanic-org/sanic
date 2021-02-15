@@ -633,6 +633,19 @@ def test_websocket_route(app, url):
     assert ev.is_set()
 
 
+def test_websocket_route_invalid_handler(app):
+    with pytest.raises(ValueError) as e:
+
+        @app.websocket("/")
+        async def handler():
+            ...
+
+    assert e.match(
+        r"Required parameter `request` and/or `ws` missing in the "
+        r"handler\(\) route\?"
+    )
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("url", ["/ws", "ws"])
 async def test_websocket_route_asgi(app, url):

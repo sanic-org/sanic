@@ -25,27 +25,24 @@ from typing import (
 )
 from urllib.parse import urlencode, urlunparse
 
-from sanic_routing.route import Route
+from sanic_routing.exceptions import FinalizationError  # type: ignore
+from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
 from sanic.asgi import ASGIApp
+from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
 from sanic.exceptions import (
     InvalidUsage,
-    NotFound,
     SanicException,
     ServerError,
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
-from sanic.mixins.base import BaseMixin
-from sanic.mixins.exceptions import ExceptionMixin
-from sanic.mixins.listeners import ListenerEvent, ListenerMixin
-from sanic.mixins.middleware import MiddlewareMixin
-from sanic.mixins.routes import RouteMixin
+from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -68,9 +65,7 @@ from sanic.static import register as static_register
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
-class Sanic(
-    BaseMixin, RouteMixin, MiddlewareMixin, ListenerMixin, ExceptionMixin
-):
+class Sanic(BaseSanic):
     """
     The main application instance
     """
@@ -103,9 +98,7 @@ class Sanic(
 
         self.name = name
         self.asgi = False
-        self.router = router or Router(
-            exception=NotFound, method_handler_exception=NotFound
-        )
+        self.router = router or Router()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
@@ -124,6 +117,9 @@ class Sanic(
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        # self.named_request_middleware: Dict[str, MiddlewareType] = {}
+        # self.named_response_middleware: Dict[str, MiddlewareType] = {}
+        self._test_manager = None
         self._test_client = None
         self._asgi_client = None
         # Register alternative method names
@@ -134,6 +130,8 @@ class Sanic(
 
         if self.config.REGISTER:
             self.__class__.register_app(self)
+
+        self.router.ctx.app = self
 
     @property
     def loop(self):
@@ -175,10 +173,6 @@ class Sanic(
                 partial(self._loop_add_task, task)
             )
 
-    # Decorator
-    def _apply_listener(self, listener: FutureListener):
-        return self.register_listener(listener.listener, listener.event)
-
     def register_listener(self, listener: Callable, event: str) -> Any:
         """
         Register the listener for a given event.
@@ -196,42 +190,6 @@ class Sanic(
 
         self.listeners[_event].append(listener)
         return listener
-
-    def _apply_route(self, route: FutureRoute) -> Route:
-        return self.router.add(**route._asdict())
-
-    def _apply_static(self, static: FutureStatic) -> Route:
-        return static_register(self, static)
-
-    def enable_websocket(self, enable: bool = True):
-        """
-        Enable or disable the support for websocket.
-
-        Websocket is enabled automatically if websocket routes are
-        added to the application.
-        """
-        if not self.websocket_enabled:
-            # if the server is stopped, we want to cancel any ongoing
-            # websocket tasks, to allow the server to exit promptly
-            self.listener("before_server_stop")(self._cancel_websocket_tasks)
-
-        self.websocket_enabled = enable
-
-    # Decorator
-    def _apply_exception_handler(self, handler: FutureException):
-        """Decorate a function to be registered as a handler for exceptions
-
-        :param exceptions: exceptions
-        :return: decorated function
-        """
-
-        for exception in handler.exceptions:
-            if isinstance(exception, (tuple, list)):
-                for e in exception:
-                    self.error_handler.add(e, handler.handler)
-            else:
-                self.error_handler.add(exception, handler.handler)
-        return handler
 
     def register_middleware(self, middleware, attach_to: str = "request"):
         """
@@ -288,13 +246,49 @@ class Sanic(
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
 
-    # Decorator
+    def _apply_exception_handler(self, handler: FutureException):
+        """Decorate a function to be registered as a handler for exceptions
+
+        :param exceptions: exceptions
+        :return: decorated function
+        """
+
+        for exception in handler.exceptions:
+            if isinstance(exception, (tuple, list)):
+                for e in exception:
+                    self.error_handler.add(e, handler.handler)
+            else:
+                self.error_handler.add(exception, handler.handler)
+        return handler
+
+    def _apply_listener(self, listener: FutureListener):
+        return self.register_listener(listener.listener, listener.event)
+
+    def _apply_route(self, route: FutureRoute) -> Route:
+        params = route._asdict()
+        websocket = params.pop("websocket", False)
+        subprotocols = params.pop("subprotocols", None)
+
+        if websocket:
+            self.enable_websocket()
+            websocket_handler = partial(
+                self._websocket_handler,
+                route.handler,
+                subprotocols=subprotocols,
+            )
+            websocket_handler.__name__ = route.handler.__name__  # type: ignore
+            websocket_handler.is_websocket = True  # type: ignore
+            params["handler"] = websocket_handler
+        return self.router.add(**params)
+
+    def _apply_static(self, static: FutureStatic) -> Route:
+        return static_register(self, static)
+
     def _apply_middleware(
         self,
         middleware: FutureMiddleware,
         route_names: Optional[List[str]] = None,
     ):
-        print(f"{middleware=}")
         if route_names:
             return self.register_named_middleware(
                 middleware.middleware, route_names, middleware.attach_to
@@ -303,6 +297,19 @@ class Sanic(
             return self.register_middleware(
                 middleware.middleware, middleware.attach_to
             )
+
+    def enable_websocket(self, enable=True):
+        """Enable or disable the support for websocket.
+
+        Websocket is enabled automatically if websocket routes are
+        added to the application.
+        """
+        if not self.websocket_enabled:
+            # if the server is stopped, we want to cancel any ongoing
+            # websocket tasks, to allow the server to exit promptly
+            self.listener("before_server_stop")(self._cancel_websocket_tasks)
+
+        self.websocket_enabled = enable
 
     def blueprint(self, blueprint, **options):
         """Register a blueprint on the application.
@@ -323,6 +330,12 @@ class Sanic(
         else:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)
+
+        if (
+            self.strict_slashes is not None
+            and blueprint.strict_slashes is None
+        ):
+            blueprint.strict_slashes = self.strict_slashes
         blueprint.register(self, options)
 
     def url_for(self, view_name: str, **kwargs):
@@ -351,30 +364,28 @@ class Sanic(
         # find the route by the supplied view name
         kw: Dict[str, str] = {}
         # special static files url_for
-        if view_name == "static":
-            kw.update(name=kwargs.pop("name", "static"))
-        elif view_name.endswith(".static"):  # blueprint.static
-            kwargs.pop("name", None)
+
+        if "." not in view_name:
+            view_name = f"{self.name}.{view_name}"
+
+        if view_name.endswith(".static"):
+            name = kwargs.pop("name", None)
+            if name:
+                view_name = view_name.replace("static", name)
             kw.update(name=view_name)
 
-        uri, route = self.router.find_route_by_view_name(view_name, **kw)
-        if not (uri and route):
+        route = self.router.find_route_by_view_name(view_name, **kw)
+        if not route:
             raise URLBuildError(
                 f"Endpoint with name `{view_name}` was not found"
             )
 
-        # If the route has host defined, split that off
-        # TODO: Retain netloc and path separately in Route objects
-        host = uri.find("/")
-        if host > 0:
-            host, uri = uri[:host], uri[host:]
-        else:
-            host = None
+        uri = route.path
 
-        if view_name == "static" or view_name.endswith(".static"):
-            filename = kwargs.pop("filename", None)
+        if getattr(route.ctx, "static", None):
+            filename = kwargs.pop("filename", "")
             # it's static folder
-            if "<file_uri:" in uri:
+            if "file_uri" in uri:
                 folder_ = uri.split("<file_uri:", 1)[0]
                 if folder_.endswith("/"):
                     folder_ = folder_[:-1]
@@ -382,22 +393,36 @@ class Sanic(
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                uri = f"{folder_}/{filename}"
+                kwargs["file_uri"] = filename
 
         if uri != "/" and uri.endswith("/"):
             uri = uri[:-1]
 
-        out = uri
+        if not uri.startswith("/"):
+            uri = f"/{uri}"
 
-        # find all the parameters we will need to build in the URL
-        matched_params = re.findall(self.router.parameter_pattern, uri)
+        out = uri
 
         # _method is only a placeholder now, don't know how to support it
         kwargs.pop("_method", None)
         anchor = kwargs.pop("_anchor", "")
         # _external need SERVER_NAME in config or pass _server arg
-        external = kwargs.pop("_external", False)
+        host = kwargs.pop("_host", None)
+        external = kwargs.pop("_external", False) or bool(host)
         scheme = kwargs.pop("_scheme", "")
+        if route.ctx.hosts and external:
+            if not host and len(route.ctx.hosts) > 1:
+                raise ValueError(
+                    f"Host is ambiguous: {', '.join(route.ctx.hosts)}"
+                )
+            elif host and host not in route.ctx.hosts:
+                raise ValueError(
+                    f"Requested host ({host}) is not available for this "
+                    f"route: {route.ctx.hosts}"
+                )
+            elif not host:
+                host = list(route.ctx.hosts)[0]
+
         if scheme and not external:
             raise ValueError("When specifying _scheme, _external must be True")
 
@@ -415,44 +440,44 @@ class Sanic(
             if "://" in netloc[:8]:
                 netloc = netloc.split("://", 1)[-1]
 
-        for match in matched_params:
-            name, _type, pattern = self.router.parse_parameter_string(match)
+        # find all the parameters we will need to build in the URL
+        # matched_params = re.findall(self.router.parameter_pattern, uri)
+        route.finalize()
+        for param_info in route.params.values():
+            # name, _type, pattern = self.router.parse_parameter_string(match)
             # we only want to match against each individual parameter
-            specific_pattern = f"^{pattern}$"
-            supplied_param = None
 
-            if name in kwargs:
-                supplied_param = kwargs.get(name)
-                del kwargs[name]
-            else:
+            try:
+                supplied_param = str(kwargs.pop(param_info.name))
+            except KeyError:
                 raise URLBuildError(
-                    f"Required parameter `{name}` was not passed to url_for"
+                    f"Required parameter `{param_info.name}` was not "
+                    "passed to url_for"
                 )
 
-            supplied_param = str(supplied_param)
-            # determine if the parameter supplied by the caller passes the test
-            # in the URL
-            passes_pattern = re.match(specific_pattern, supplied_param)
-
-            if not passes_pattern:
-                if _type != str:
-                    type_name = _type.__name__
-
-                    msg = (
-                        f'Value "{supplied_param}" '
-                        f"for parameter `{name}` does not "
-                        f"match pattern for type `{type_name}`: {pattern}"
-                    )
-                else:
-                    msg = (
-                        f'Value "{supplied_param}" for parameter `{name}` '
-                        f"does not satisfy pattern {pattern}"
-                    )
-                raise URLBuildError(msg)
+            # determine if the parameter supplied by the caller
+            # passes the test in the URL
+            if param_info.pattern:
+                passes_pattern = param_info.pattern.match(supplied_param)
+                if not passes_pattern:
+                    if param_info.cast != str:
+                        msg = (
+                            f'Value "{supplied_param}" '
+                            f"for parameter `{param_info.name}` does "
+                            "not match pattern for type "
+                            f"`{param_info.cast.__name__}`: "
+                            f"{param_info.pattern.pattern}"
+                        )
+                    else:
+                        msg = (
+                            f'Value "{supplied_param}" for parameter '
+                            f"`{param_info.name}` does not satisfy "
+                            f"pattern {param_info.pattern.pattern}"
+                        )
+                    raise URLBuildError(msg)
 
             # replace the parameter in the URL with the supplied value
-            replacement_regex = f"(<{name}.*?>)"
-
+            replacement_regex = f"(<{param_info.name}.*?>)"
             out = re.sub(replacement_regex, supplied_param, out)
 
         # parse the remainder of the keyword arguments into a querystring
@@ -545,14 +570,13 @@ class Sanic(
             # Fetch handler from router
             (
                 handler,
-                args,
                 kwargs,
                 uri,
                 name,
-                endpoint,
                 ignore_body,
             ) = self.router.get(request)
             request.name = name
+            request._match_info = kwargs
 
             if (
                 request.stream
@@ -578,7 +602,7 @@ class Sanic(
                 # Execute Handler
                 # -------------------------------------------- #
 
-                request.uri_template = uri
+                request.uri_template = f"/{uri}"
                 if handler is None:
                     raise ServerError(
                         (
@@ -587,10 +611,10 @@ class Sanic(
                         )
                     )
 
-                request.endpoint = endpoint
+                request.endpoint = request.name
 
                 # Run response handler
-                response = handler(request, *args, **kwargs)
+                response = handler(request, **kwargs)
                 if isawaitable(response):
                     response = await response
             if response:
@@ -615,26 +639,60 @@ class Sanic(
         except CancelledError:
             raise
         except Exception as e:
-            # -------------------------------------------- #
             # Response Generation Failed
-            # -------------------------------------------- #
             await self.handle_exception(request, e)
+
+    async def _websocket_handler(
+        self, handler, request, *args, subprotocols=None, **kwargs
+    ):
+        request.app = self
+        if not getattr(handler, "__blueprintname__", False):
+            request.endpoint = handler.__name__
+        else:
+            request.endpoint = (
+                getattr(handler, "__blueprintname__", "") + handler.__name__
+            )
+
+            pass
+
+        if self.asgi:
+            ws = request.transport.get_websocket_connection()
+        else:
+            protocol = request.transport.get_protocol()
+            protocol.app = self
+
+            ws = await protocol.websocket_handshake(request, subprotocols)
+
+        # schedule the application handler
+        # its future is kept in self.websocket_tasks in case it
+        # needs to be cancelled due to the server being stopped
+        fut = ensure_future(handler(request, ws, *args, **kwargs))
+        self.websocket_tasks.add(fut)
+        try:
+            await fut
+        except (CancelledError, ConnectionClosed):
+            pass
+        finally:
+            self.websocket_tasks.remove(fut)
+            await ws.close()
 
     # -------------------------------------------------------------------- #
     # Testing
     # -------------------------------------------------------------------- #
 
     @property
-    def test_client(self):
+    def test_client(self):  # noqa
         if self._test_client:
             return self._test_client
+        elif self._test_manager:
+            return self._test_manager.test_client
         from sanic_testing.testing import SanicTestClient  # type: ignore
 
         self._test_client = SanicTestClient(self)
         return self._test_client
 
     @property
-    def asgi_client(self):
+    def asgi_client(self):  # noqa
         """
         A testing client that uses ASGI to reach into the application to
         execute hanlers.
@@ -644,6 +702,8 @@ class Sanic(
         """
         if self._asgi_client:
             return self._asgi_client
+        elif self._test_manager:
+            return self._test_manager.asgi_client
         from sanic_testing.testing import SanicASGITestClient  # type: ignore
 
         self._asgi_client = SanicASGITestClient(self)
@@ -915,7 +975,11 @@ class Sanic(
     ):
         """Helper function used by `run` and `create_server`."""
 
-        self.router.finalize()
+        try:
+            self.router.finalize()
+        except FinalizationError as e:
+            if not Sanic.test_mode:
+                raise e
 
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -950,9 +1014,7 @@ class Sanic(
             "backlog": backlog,
         }
 
-        # -------------------------------------------- #
         # Register start/stop events
-        # -------------------------------------------- #
 
         for event_name, settings_name, reverse in (
             ("before_server_start", "before_start", False),
@@ -1014,40 +1076,6 @@ class Sanic(
         for task in app.websocket_tasks:
             task.cancel()
 
-    async def _websocket_handler(
-        self, handler, request, *args, subprotocols=None, **kwargs
-    ):
-        request.app = self
-        if not getattr(handler, "__blueprintname__", False):
-            request.endpoint = handler.__name__
-        else:
-            request.endpoint = (
-                getattr(handler, "__blueprintname__", "") + handler.__name__
-            )
-
-            pass
-
-        if self.asgi:
-            ws = request.transport.get_websocket_connection()
-        else:
-            protocol = request.transport.get_protocol()
-            protocol.app = self
-
-            ws = await protocol.websocket_handshake(request, subprotocols)
-
-        # schedule the application handler
-        # its future is kept in self.websocket_tasks in case it
-        # needs to be cancelled due to the server being stopped
-        fut = ensure_future(handler(request, ws, *args, **kwargs))
-        self.websocket_tasks.add(fut)
-        try:
-            await fut
-        except (CancelledError, ConnectionClosed):
-            pass
-        finally:
-            self.websocket_tasks.remove(fut)
-            await ws.close()
-
     # -------------------------------------------------------------------- #
     # ASGI
     # -------------------------------------------------------------------- #
@@ -1057,9 +1085,10 @@ class Sanic(
         To be ASGI compliant, our instance must be a callable that accepts
         three arguments: scope, receive, send. See the ASGI reference for more
         details: https://asgi.readthedocs.io/en/latest
-        /"""
+        """
         self.asgi = True
-        asgi_app = await ASGIApp.create(self, scope, receive, send)
+        self._asgi_app = await ASGIApp.create(self, scope, receive, send)
+        asgi_app = self._asgi_app
         await asgi_app()
 
     _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable

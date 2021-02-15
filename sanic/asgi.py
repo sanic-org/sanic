@@ -131,6 +131,7 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         startup event.
         """
+        self.asgi_app.sanic_app.router.finalize()
         listeners = self.asgi_app.sanic_app.listeners.get(
             "before_server_start", []
         ) + self.asgi_app.sanic_app.listeners.get("after_server_start", [])

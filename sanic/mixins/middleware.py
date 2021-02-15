@@ -1,12 +1,12 @@
 from functools import partial
-from typing import Set
+from typing import List
 
 from sanic.models.futures import FutureMiddleware
 
 
 class MiddlewareMixin:
     def __init__(self, *args, **kwargs) -> None:
-        self._future_middleware: Set[FutureMiddleware] = set()
+        self._future_middleware: List[FutureMiddleware] = list()
 
     def _apply_middleware(self, middleware: FutureMiddleware):
         raise NotImplementedError
@@ -30,7 +30,7 @@ class MiddlewareMixin:
             nonlocal apply
 
             future_middleware = FutureMiddleware(middleware, attach_to)
-            self._future_middleware.add(future_middleware)
+            self._future_middleware.append(future_middleware)
             if apply:
                 self._apply_middleware(future_middleware)
             return middleware

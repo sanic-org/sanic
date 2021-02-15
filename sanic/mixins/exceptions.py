@@ -1,5 +1,3 @@
-from enum import Enum, auto
-from functools import partial
 from typing import Set
 
 from sanic.models.futures import FutureException
@@ -28,6 +26,9 @@ class ExceptionMixin:
         def decorator(handler):
             nonlocal apply
             nonlocal exceptions
+
+            if isinstance(exceptions[0], list):
+                exceptions = tuple(*exceptions)
 
             future_exception = FutureException(handler, exceptions)
             self._future_exceptions.add(future_exception)

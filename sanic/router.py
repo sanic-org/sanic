@@ -1,12 +1,20 @@
 from functools import lru_cache
-from typing import Any, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-from sanic_routing import BaseRouter
-from sanic_routing.route import Route
+from sanic_routing import BaseRouter  # type: ignore
+from sanic_routing.exceptions import NoMethod  # type: ignore
+from sanic_routing.exceptions import (
+    NotFound as RoutingNotFound,  # type: ignore
+)
+from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
+from sanic.exceptions import MethodNotSupported, NotFound
 from sanic.handlers import RouteHandler
 from sanic.request import Request
+
+
+ROUTER_CACHE_SIZE = 1024
 
 
 class Router(BaseRouter):
@@ -18,18 +26,38 @@ class Router(BaseRouter):
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
 
-    @lru_cache
-    def get(
-        self, request: Request
-    ) -> Tuple[
-        RouteHandler,
-        Tuple[Any, ...],
-        Dict[str, Any],
-        str,
-        str,
-        Optional[str],
-        bool,
-    ]:
+    # Putting the lru_cache on Router.get() performs better for the benchmarsk
+    # at tests/benchmark/test_route_resolution_benchmark.py
+    # However, overall application performance is significantly improved
+    # with the lru_cache on this method.
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
+    def _get(
+        self, path, method, host
+    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool,]:
+        try:
+            route, handler, params = self.resolve(
+                path=path,
+                method=method,
+                extra={"host": host},
+            )
+        except RoutingNotFound as e:
+            raise NotFound("Requested URL {} not found".format(e.path))
+        except NoMethod as e:
+            raise MethodNotSupported(
+                "Method {} not allowed for URL {}".format(method, path),
+                method=method,
+                allowed_methods=e.allowed_methods,
+            )
+
+        return (
+            handler,
+            params,
+            route.path,
+            route.name,
+            route.ctx.ignore_body,
+        )
+
+    def get(self, request: Request):
         """
         Retrieve a `Route` object containg the details about how to handle
         a response for a given request
@@ -41,23 +69,8 @@ class Router(BaseRouter):
         :rtype: Tuple[ RouteHandler, Tuple[Any, ...], Dict[str, Any], str, str,
             Optional[str], bool, ]
         """
-        route, handler, params = self.resolve(
-            path=request.path,
-            method=request.method,
-        )
-
-        # TODO: Implement response
-        # - args,
-        # - endpoint,
-
-        return (
-            handler,
-            (),
-            params,
-            route.path,
-            route.name,
-            None,
-            route.ctx.ignore_body,
+        return self._get(
+            request.path, request.method, request.headers.get("host")
         )
 
     def add(
@@ -65,13 +78,15 @@ class Router(BaseRouter):
         uri: str,
         methods: Iterable[str],
         handler: RouteHandler,
-        host: Optional[str] = None,
+        host: Optional[Union[str, Iterable[str]]] = None,
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
         version: Union[str, float, int] = None,
         name: Optional[str] = None,
-    ) -> Route:
+        unquote: bool = False,
+        static: bool = False,
+    ) -> Union[Route, List[Route]]:
         """
         Add a handler to the router
 
@@ -99,19 +114,93 @@ class Router(BaseRouter):
         :return: the route object
         :rtype: Route
         """
-        # TODO: Implement
-        # - host
-        # - strict_slashes
-        # - ignore_body
-        # - stream
         if version is not None:
             version = str(version).strip("/").lstrip("v")
             uri = "/".join([f"/v{version}", uri.lstrip("/")])
 
-        route = super().add(
-            path=uri, handler=handler, methods=methods, name=name
+        params = dict(
+            path=uri,
+            handler=handler,
+            methods=methods,
+            name=name,
+            strict=strict_slashes,
+            unquote=unquote,
         )
-        route.ctx.ignore_body = ignore_body
-        route.ctx.stream = stream
+
+        if isinstance(host, str):
+            hosts = [host]
+        else:
+            hosts = host or [None]  # type: ignore
+
+        routes = []
+
+        for host in hosts:
+            if host:
+                params.update({"requirements": {"host": host}})
+
+            route = super().add(**params)
+            route.ctx.ignore_body = ignore_body
+            route.ctx.stream = stream
+            route.ctx.hosts = hosts
+            route.ctx.static = static
+
+            routes.append(route)
+
+        if len(routes) == 1:
+            return routes[0]
+        return routes
+
+    def is_stream_handler(self, request) -> bool:
+        """
+        Handler for request is stream or not.
+
+        :param request: Request object
+        :return: bool
+        """
+        try:
+            handler = self.get(request)[0]
+        except (NotFound, MethodNotSupported):
+            return False
+        if hasattr(handler, "view_class") and hasattr(
+            handler.view_class, request.method.lower()
+        ):
+            handler = getattr(handler.view_class, request.method.lower())
+        return hasattr(handler, "is_stream")
+
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
+    def find_route_by_view_name(self, view_name, name=None):
+        """
+        Find a route in the router based on the specified view name.
+
+        :param view_name: string of view name to search by
+        :param kwargs: additional params, usually for static files
+        :return: tuple containing (uri, Route)
+        """
+        if not view_name:
+            return None
+
+        route = self.name_index.get(view_name)
+        if not route:
+            full_name = self.ctx.app._generate_name(view_name)
+            route = self.name_index.get(full_name)
+
+        if not route:
+            return None
 
         return route
+
+    @property
+    def routes_all(self):
+        return self.routes
+
+    @property
+    def routes_static(self):
+        return self.static_routes
+
+    @property
+    def routes_dynamic(self):
+        return self.dynamic_routes
+
+    @property
+    def routes_regex(self):
+        return self.regex_routes

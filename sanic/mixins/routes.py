@@ -1,9 +1,8 @@
-from functools import partial
 from inspect import signature
 from pathlib import PurePath
 from typing import Iterable, List, Optional, Set, Union
 
-from sanic_routing.route import Route
+from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
 from sanic.models.futures import FutureRoute, FutureStatic
@@ -36,6 +35,8 @@ class RouteMixin:
         apply: bool = True,
         subprotocols: Optional[List[str]] = None,
         websocket: bool = False,
+        unquote: bool = False,
+        static: bool = False,
     ):
         """
         Decorate a function to be registered as a route
@@ -52,9 +53,6 @@ class RouteMixin:
         :return: tuple of routes, decorated function
         """
 
-        if websocket:
-            self.enable_websocket()
-
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
         if not uri.startswith("/"):
@@ -62,6 +60,9 @@ class RouteMixin:
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
+
+        if not methods and not websocket:
+            methods = frozenset({"GET"})
 
         def decorator(handler):
             nonlocal uri
@@ -74,39 +75,43 @@ class RouteMixin:
             nonlocal ignore_body
             nonlocal subprotocols
             nonlocal websocket
+            nonlocal static
 
             if isinstance(handler, tuple):
                 # if a handler fn is already wrapped in a route, the handler
                 # variable will be a tuple of (existing routes, handler fn)
                 _, handler = handler
 
-            if websocket:
-                websocket_handler = partial(
-                    self._websocket_handler,
-                    handler,
-                    subprotocols=subprotocols,
-                )
-                websocket_handler.__name__ = (
-                    "websocket_handler_" + handler.__name__
-                )
-                websocket_handler.is_websocket = True
-                handler = websocket_handler
+            name = self._generate_name(name, handler)
 
-            # TODO:
-            # - THink this thru.... do we want all routes namespaced?
-            # -
-            name = self._generate_name(handler, name)
+            if isinstance(host, str):
+                host = frozenset([host])
+            elif host and not isinstance(host, frozenset):
+                try:
+                    host = frozenset(host)
+                except TypeError:
+                    raise ValueError(
+                        "Expected either string or Iterable of host strings, "
+                        "not %s" % host
+                    )
+
+            if isinstance(subprotocols, (list, tuple, set)):
+                subprotocols = frozenset(subprotocols)
 
             route = FutureRoute(
                 handler,
                 uri,
-                frozenset(methods),
+                None if websocket else frozenset([x.upper() for x in methods]),
                 host,
                 strict_slashes,
                 stream,
                 version,
                 name,
                 ignore_body,
+                websocket,
+                subprotocols,
+                unquote,
+                static,
             )
 
             self._future_routes.add(route)
@@ -441,6 +446,7 @@ class RouteMixin:
         subprotocols: Optional[List[str]] = None,
         version: Optional[int] = None,
         name: Optional[str] = None,
+        apply: bool = True,
     ):
         """
         Decorate a function to be registered as a websocket route
@@ -543,11 +549,15 @@ class RouteMixin:
         :rtype: List[sanic.router.Route]
         """
 
-        if not name.startswith(self.name + "."):
-            name = f"{self.name}.{name}"
+        name = self._generate_name(name)
 
         if strict_slashes is None and self.strict_slashes is not None:
             strict_slashes = self.strict_slashes
+
+        if not isinstance(file_or_directory, (str, bytes, PurePath)):
+            raise ValueError(
+                f"Static route must be a valid path, not {file_or_directory}"
+            )
 
         static = FutureStatic(
             uri,
@@ -566,5 +576,29 @@ class RouteMixin:
         if apply:
             self._apply_static(static)
 
-    def _generate_name(self, handler, name: str) -> str:
-        return name or handler.__name__
+    def _generate_name(self, *objects) -> str:
+        name = None
+
+        for obj in objects:
+            if obj:
+                if isinstance(obj, str):
+                    name = obj
+                    break
+
+                try:
+                    name = obj.name
+                except AttributeError:
+                    try:
+                        name = obj.__name__
+                    except AttributeError:
+                        continue
+                else:
+                    break
+
+        if not name:
+            raise Exception("...")
+
+        if not name.startswith(f"{self.name}."):
+            name = f"{self.name}.{name}"
+
+        return name

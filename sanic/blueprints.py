@@ -1,18 +1,12 @@
-from collections import defaultdict, namedtuple
-from typing import Iterable, Optional
+from collections import defaultdict
+from typing import Optional
 
+from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
-from sanic.mixins.base import BaseMixin
-from sanic.mixins.exceptions import ExceptionMixin
-from sanic.mixins.listeners import ListenerMixin
-from sanic.mixins.middleware import MiddlewareMixin
-from sanic.mixins.routes import RouteMixin
 from sanic.models.futures import FutureRoute, FutureStatic
 
 
-class Blueprint(
-    BaseMixin, RouteMixin, MiddlewareMixin, ListenerMixin, ExceptionMixin
-):
+class Blueprint(BaseSanic):
     """
     In *Sanic* terminology, a **Blueprint** is a logical collection of
     URLs that perform a specific set of tasks which can be identified by
@@ -122,20 +116,35 @@ class Blueprint(
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
 
+            strict_slashes = (
+                self.strict_slashes
+                if future.strict_slashes is None
+                and self.strict_slashes is not None
+                else future.strict_slashes
+            )
+            name = app._generate_name(future.name)
+
             apply_route = FutureRoute(
                 future.handler,
                 uri[1:] if uri.startswith("//") else uri,
                 future.methods,
                 future.host or self.host,
-                future.strict_slashes,
+                strict_slashes,
                 future.stream,
                 future.version or self.version,
-                future.name,
+                name,
                 future.ignore_body,
+                future.websocket,
+                future.subprotocols,
+                future.unquote,
+                future.static,
             )
 
             route = app._apply_route(apply_route)
-            routes.append(route)
+            operation = (
+                routes.extend if isinstance(route, list) else routes.append
+            )
+            operation(route)
 
         # Static Files
         for future in self._future_statics:
@@ -148,8 +157,9 @@ class Blueprint(
         route_names = [route.name for route in routes if route]
 
         # Middleware
-        for future in self._future_middleware:
-            app._apply_middleware(future, route_names)
+        if route_names:
+            for future in self._future_middleware:
+                app._apply_middleware(future, route_names)
 
         # Exceptions
         for future in self._future_exceptions:
@@ -158,6 +168,3 @@ class Blueprint(
         # Event listeners
         for listener in self._future_listeners:
             app._apply_listener(listener)
-
-    def _generate_name(self, handler, name: str) -> str:
-        return f"{self.name}.{name or handler.__name__}"

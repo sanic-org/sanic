@@ -42,6 +42,8 @@ def write_app(filename, **runargs):
 
             app = Sanic(__name__)
 
+            app.route("/")(lambda x: x)
+
             @app.listener("after_server_start")
             def complete(*args):
                 print("complete", os.getpid(), {text!r})

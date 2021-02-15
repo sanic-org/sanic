@@ -87,6 +87,7 @@ class Request:
         "_port",
         "_remote_addr",
         "_socket",
+        "_match_info",
         "app",
         "body",
         "conn_info",
@@ -147,6 +148,7 @@ class Request:
         self.uri_template: Optional[str] = None
         self.request_middleware_started = False
         self._cookies: Dict[str, str] = {}
+        self._match_info = {}
         self.stream: Optional[Http] = None
         self.endpoint: Optional[str] = None
 
@@ -455,7 +457,7 @@ class Request:
         """
         :return: matched info after resolving route
         """
-        return self.app.router.get(self)[2]
+        return self._match_info
 
     # Transport properties (obtained from local interface only)
 

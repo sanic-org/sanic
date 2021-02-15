@@ -126,8 +126,9 @@ def test_html_traceback_output_in_debug_mode():
     assert response.status == 500
     soup = BeautifulSoup(response.body, "html.parser")
     html = str(soup)
+    print(html)
 
-    assert "response = handler(request, *args, **kwargs)" in html
+    assert "response = handler(request, **kwargs)" in html
     assert "handler_4" in html
     assert "foo = bar" in html
 
@@ -151,7 +152,7 @@ def test_chained_exception_handler():
     soup = BeautifulSoup(response.body, "html.parser")
     html = str(soup)
 
-    assert "response = handler(request, *args, **kwargs)" in html
+    assert "response = handler(request, **kwargs)" in html
     assert "handler_6" in html
     assert "foo = 1 / arg" in html
     assert "ValueError" in html

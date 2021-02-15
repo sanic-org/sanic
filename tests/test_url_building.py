@@ -7,6 +7,7 @@ import pytest as pytest
 from sanic_testing.testing import HOST as test_host
 from sanic_testing.testing import PORT as test_port
 
+from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.exceptions import URLBuildError
 from sanic.response import text
@@ -98,36 +99,36 @@ def test_url_for_with_server_name(app):
     assert response.text == "this should pass"
 
 
-def test_fails_if_endpoint_not_found(app):
+def test_fails_if_endpoint_not_found():
+    app = Sanic("app")
+
     @app.route("/fail")
     def fail(request):
         return text("this should fail")
 
     with pytest.raises(URLBuildError) as e:
         app.url_for("passes")
-
-    assert str(e.value) == "Endpoint with name `passes` was not found"
+        e.match("Endpoint with name `app.passes` was not found")
 
 
 def test_fails_url_build_if_param_not_passed(app):
     url = "/"
 
-    for letter in string.ascii_letters:
+    for letter in string.ascii_lowercase:
         url += f"<{letter}>/"
 
     @app.route(url)
     def fail(request):
         return text("this should fail")
 
-    fail_args = list(string.ascii_letters)
+    fail_args = list(string.ascii_lowercase)
     fail_args.pop()
 
     fail_kwargs = {l: l for l in fail_args}
 
     with pytest.raises(URLBuildError) as e:
         app.url_for("fail", **fail_kwargs)
-
-    assert "Required parameter `Z` was not passed to url_for" in str(e.value)
+        assert e.match("Required parameter `z` was not passed to url_for")
 
 
 def test_fails_url_build_if_params_not_passed(app):
@@ -137,8 +138,7 @@ def test_fails_url_build_if_params_not_passed(app):
 
     with pytest.raises(ValueError) as e:
         app.url_for("fail", _scheme="http")
-
-    assert str(e.value) == "When specifying _scheme, _external must be True"
+        assert e.match("When specifying _scheme, _external must be True")
 
 
 COMPLEX_PARAM_URL = (
@@ -168,7 +168,7 @@ def test_fails_with_int_message(app):
 
     expected_error = (
         r'Value "not_int" for parameter `foo` '
-        r"does not match pattern for type `int`: -?\d+"
+        r"does not match pattern for type `int`: ^-?\d+"
     )
     assert str(e.value) == expected_error
 
@@ -199,13 +199,10 @@ def test_fails_with_two_letter_string_message(app):
 
     with pytest.raises(URLBuildError) as e:
         app.url_for("fail", **failing_kwargs)
-
-    expected_error = (
-        'Value "foobar" for parameter `two_letter_string` '
-        "does not satisfy pattern [A-z]{2}"
-    )
-
-    assert str(e.value) == expected_error
+        e.match(
+            'Value "foobar" for parameter `two_letter_string` '
+            "does not satisfy pattern ^[A-z]{2}$"
+        )
 
 
 def test_fails_with_number_message(app):
@@ -218,13 +215,10 @@ def test_fails_with_number_message(app):
 
     with pytest.raises(URLBuildError) as e:
         app.url_for("fail", **failing_kwargs)
-
-    expected_error = (
-        'Value "foo" for parameter `some_number` '
-        r"does not match pattern for type `float`: -?(?:\d+(?:\.\d*)?|\.\d+)"
-    )
-
-    assert str(e.value) == expected_error
+        e.match(
+            'Value "foo" for parameter `some_number` '
+            r"does not match pattern for type `float`: ^-?(?:\d+(?:\.\d*)?|\.\d+)$"
+        )
 
 
 @pytest.mark.parametrize("number", [3, -3, 13.123, -13.123])
@@ -259,7 +253,8 @@ def test_adds_other_supplied_values_as_query_string(app):
 
 
 @pytest.fixture
-def blueprint_app(app):
+def blueprint_app():
+    app = Sanic("app")
 
     first_print = Blueprint("first", url_prefix="/first")
     second_print = Blueprint("second", url_prefix="/second")
@@ -273,11 +268,11 @@ def blueprint_app(app):
         return text(f"foo from first : {param}")
 
     @second_print.route("/foo")  # noqa
-    def foo(request):
+    def bar(request):
         return text("foo from second")
 
     @second_print.route("/foo/<param>")  # noqa
-    def foo_with_param(request, param):
+    def bar_with_param(request, param):
         return text(f"foo from second : {param}")
 
     app.blueprint(first_print)
@@ -290,7 +285,7 @@ def test_blueprints_are_named_correctly(blueprint_app):
     first_url = blueprint_app.url_for("first.foo")
     assert first_url == "/first/foo"
 
-    second_url = blueprint_app.url_for("second.foo")
+    second_url = blueprint_app.url_for("second.bar")
     assert second_url == "/second/foo"
 
 
@@ -298,7 +293,7 @@ def test_blueprints_work_with_params(blueprint_app):
     first_url = blueprint_app.url_for("first.foo_with_param", param="bar")
     assert first_url == "/first/foo/bar"
 
-    second_url = blueprint_app.url_for("second.foo_with_param", param="bar")
+    second_url = blueprint_app.url_for("second.bar_with_param", param="bar")
     assert second_url == "/second/foo/bar"
 
 

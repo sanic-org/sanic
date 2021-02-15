@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import FrozenSet, Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from sanic_routing import BaseRouter
 from sanic_routing.exceptions import NoMethod
@@ -44,17 +44,11 @@ class Router(BaseRouter):
                 allowed_methods=e.allowed_methods,
             )
 
-        # TODO: Implement response
-        # - args,
-        # - endpoint,
-
         return (
             handler,
-            (),
             params,
             route.path,
             route.name,
-            None,
             route.ctx.ignore_body,
         )
 
@@ -79,7 +73,7 @@ class Router(BaseRouter):
         uri: str,
         methods: Iterable[str],
         handler,
-        host: Optional[Union[str, FrozenSet[str]]] = None,
+        host: Optional[Union[str, Iterable[str]]] = None,
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
@@ -115,11 +109,6 @@ class Router(BaseRouter):
         :return: the route object
         :rtype: Route
         """
-        # TODO: Implement
-        # - host
-        # - strict_slashes
-        # - ignore_body
-        # - stream
         if version is not None:
             version = str(version).strip("/").lstrip("v")
             uri = "/".join([f"/v{version}", uri.lstrip("/")])
@@ -136,7 +125,7 @@ class Router(BaseRouter):
         if isinstance(host, str):
             hosts = [host]
         else:
-            hosts = host or [None]
+            hosts = host or [None]  # type: ignore
 
         routes = []
 
@@ -185,10 +174,6 @@ class Router(BaseRouter):
         if not view_name:
             return None
 
-        # TODO:
-        # - Check blueprint naming, we shouldn't need to double check here
-        #   but it seems like blueprints are not receiving full names
-        #   probably need tocheck the blueprint registration func
         route = self.name_index.get(view_name)
         if not route:
             full_name = self.ctx.app._generate_name(view_name)

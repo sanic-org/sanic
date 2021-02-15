@@ -1,4 +1,3 @@
-from functools import partial
 from inspect import signature
 from pathlib import PurePath
 from typing import Set, Union

@@ -6,8 +6,6 @@ from re import sub
 from time import gmtime, strftime
 from urllib.parse import unquote
 
-from sanic_routing.patterns import REGEX_TYPES
-
 from sanic.compat import stat_async
 from sanic.exceptions import (
     ContentRangeError,

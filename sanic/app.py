@@ -14,6 +14,7 @@ from traceback import format_exc
 from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
 from urllib.parse import urlencode, urlunparse
 
+from sanic_routing.exceptions import FinalizationError
 from sanic_routing.route import Route
 
 from sanic import reloader_helpers
@@ -24,8 +25,6 @@ from sanic.blueprints import Blueprint
 from sanic.config import BASE_LOGO, Config
 from sanic.exceptions import (
     InvalidUsage,
-    MethodNotSupported,
-    NotFound,
     SanicException,
     ServerError,
     URLBuildError,
@@ -226,8 +225,6 @@ class Sanic(BaseSanic):
         return self.register_listener(listener.listener, listener.event)
 
     def _apply_route(self, route: FutureRoute) -> Route:
-        # TODO:
-        # - move websocket handler out and attach it when applying
         params = route._asdict()
         websocket = params.pop("websocket", False)
         subprotocols = params.pop("subprotocols", None)
@@ -239,10 +236,8 @@ class Sanic(BaseSanic):
                 route.handler,
                 subprotocols=subprotocols,
             )
-            websocket_handler.__name__ = (
-                "websocket_handler_" + route.handler.__name__
-            )
-            websocket_handler.is_websocket = True
+            websocket_handler.__name__ = route.handler.__name__  # type: ignore
+            websocket_handler.is_websocket = True  # type: ignore
             params["handler"] = websocket_handler
         return self.router.add(**params)
 
@@ -304,7 +299,7 @@ class Sanic(BaseSanic):
         blueprint.register(self, options)
 
     def url_for(self, view_name: str, **kwargs):
-        r"""Build a URL based on a view name and the values provided.
+        """Build a URL based on a view name and the values provided.
 
         In order to build a URL, all request parameters must be supplied as
         keyword arguments, and each parameter must pass the test for the
@@ -315,7 +310,7 @@ class Sanic(BaseSanic):
         the output URL's query string.
 
         :param view_name: string referencing the view name
-        :param \**kwargs: keys and values that are used to build request
+        :param **kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL
@@ -519,11 +514,9 @@ class Sanic(BaseSanic):
             # Fetch handler from router
             (
                 handler,
-                args,
                 kwargs,
                 uri,
                 name,
-                endpoint,
                 ignore_body,
             ) = self.router.get(request)
             request.name = name
@@ -560,7 +553,7 @@ class Sanic(BaseSanic):
                 request.endpoint = request.name
 
                 # Run response handler
-                response = handler(request, *args, **kwargs)
+                response = handler(request, **kwargs)
                 if isawaitable(response):
                     response = await response
             if response:
@@ -920,11 +913,9 @@ class Sanic(BaseSanic):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        # TODO:
-        # - Catch proper exception
         try:
             self.router.finalize()
-        except Exception as e:
+        except FinalizationError as e:
             if not Sanic.test_mode:
                 raise e
 

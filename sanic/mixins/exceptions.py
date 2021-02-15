@@ -1,5 +1,3 @@
-from enum import Enum, auto
-from functools import partial
 from typing import Set
 
 from sanic.models.futures import FutureException

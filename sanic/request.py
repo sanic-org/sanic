@@ -58,6 +58,7 @@ class Request:
         "_port",
         "_remote_addr",
         "_socket",
+        "_match_info",
         "app",
         "body",
         "conn_info",
@@ -106,6 +107,7 @@ class Request:
         self.uri_template = None
         self.request_middleware_started = False
         self._cookies = None
+        self._match_info = {}
         self.stream = None
         self.endpoint = None
 
@@ -370,7 +372,7 @@ class Request:
     @property
     def match_info(self):
         """return matched info after resolving route"""
-        return self.app.router.get(self)[2]
+        return self._match_info
 
     # Transport properties (obtained from local interface only)
 

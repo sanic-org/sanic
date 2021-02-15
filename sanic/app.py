@@ -520,6 +520,7 @@ class Sanic(BaseSanic):
                 ignore_body,
             ) = self.router.get(request)
             request.name = name
+            request._match_info = kwargs
 
             if request.stream.request_body and not ignore_body:
                 if self.router.is_stream_handler(request):

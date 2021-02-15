@@ -157,12 +157,10 @@ def test_matching(path, headers, expected):
     app.blueprint(bp4)
 
     app.router.finalize()
-    print(app.router.static_routes)
 
     request = Request(path, headers, None, "GET", None, app)
 
     try:
-        print(app.router.get(request=request))
     except NotFound:
         response = 404
     except Exception as e:

@@ -282,7 +282,6 @@ def blueprint_app():
 
 
 def test_blueprints_are_named_correctly(blueprint_app):
-    print(f"{blueprint_app.router.name_index=}")
     first_url = blueprint_app.url_for("first.foo")
     assert first_url == "/first/foo"
 

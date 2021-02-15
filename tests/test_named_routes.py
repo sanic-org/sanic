@@ -35,7 +35,6 @@ def test_versioned_named_routes_get(method):
             return text("OK")
 
     else:
-        print(func)
         raise
 
     func = getattr(bp, method)
@@ -46,7 +45,6 @@ def test_versioned_named_routes_get(method):
             return text("OK")
 
     else:
-        print(func)
         raise
 
     app.blueprint(bp)

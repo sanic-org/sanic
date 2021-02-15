@@ -70,7 +70,10 @@ endif
 black:
 	black --config ./.black.toml sanic tests
 
-pretty: beautify
+isort:
+	isort sanic tests --profile=black
+
+pretty: black isort
 
 docs-clean:
 	cd docs && make clean

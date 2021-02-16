@@ -57,7 +57,8 @@ setup_kwargs = {
     "author": "Sanic Community",
     "author_email": "admhpkns@gmail.com",
     "description": (
-        "A web server and web framework that's written to go fast. Build fast. Run fast."
+        "A web server and web framework that's written to go fast. "
+        "Build fast. Run fast."
     ),
     "long_description": long_description,
     "packages": ["sanic"],

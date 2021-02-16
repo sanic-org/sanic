@@ -20,7 +20,7 @@ class ListenerMixin:
         self._future_listeners: List[FutureListener] = list()
 
     def _apply_listener(self, listener: FutureListener):
-        raise NotImplementedError
+        raise NotImplementedError  # noqa
 
     def listener(
         self,

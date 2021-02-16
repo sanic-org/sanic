@@ -8,6 +8,8 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
+from sanic.exceptions import InvalidUsage
+
 
 AVAILABLE_LISTENERS = [
     "before_server_start",
@@ -80,6 +82,18 @@ def test_all_listeners(app):
         assert app.name + listener_name == output.pop()
 
 
+@skipif_no_alarm
+def test_all_listeners_as_convenience(app):
+    output = []
+    for listener_name in AVAILABLE_LISTENERS:
+        listener = create_listener(listener_name, output)
+        method = getattr(app, listener_name)
+        method(listener)
+    start_stop_app(app)
+    for listener_name in AVAILABLE_LISTENERS:
+        assert app.name + listener_name == output.pop()
+
+
 @pytest.mark.asyncio
 async def test_trigger_before_events_create_server(app):
     class MySanicDb:
@@ -93,6 +107,20 @@ async def test_trigger_before_events_create_server(app):
 
     assert hasattr(app, "db")
     assert isinstance(app.db, MySanicDb)
+
+
+@pytest.mark.asyncio
+async def test_trigger_before_events_create_server_missing_event(app):
+    class MySanicDb:
+        pass
+
+    with pytest.raises(InvalidUsage):
+
+        @app.listener
+        async def init_db(app, loop):
+            app.db = MySanicDb()
+
+    assert not hasattr(app, "db")
 
 
 def test_create_server_trigger_events(app):

@@ -34,7 +34,7 @@ class Header(CIMultiDict):
 
 use_trio = argv[0].endswith("hypercorn") and "trio" in argv
 
-if use_trio:
+if use_trio:  # pragma: no cover
     import trio  # type: ignore
 
     def stat_async(path):

@@ -9,7 +9,7 @@ class MiddlewareMixin:
         self._future_middleware: List[FutureMiddleware] = list()
 
     def _apply_middleware(self, middleware: FutureMiddleware):
-        raise NotImplementedError
+        raise NotImplementedError  # noqa
 
     def middleware(
         self, middleware_or_request, attach_to="request", apply=True
@@ -45,8 +45,14 @@ class MiddlewareMixin:
                 register_middleware, attach_to=middleware_or_request
             )
 
-    def on_request(self, middleware):
-        return self.middleware(middleware, "request")
+    def on_request(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "request")
+        else:
+            return partial(self.middleware, attach_to="request")
 
-    def on_response(self, middleware):
-        return self.middleware(middleware, "response")
+    def on_response(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "response")
+        else:
+            return partial(self.middleware, attach_to="response")

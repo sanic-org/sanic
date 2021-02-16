@@ -44,7 +44,7 @@ def str_to_bool(val: str) -> bool:
 
 def load_module_from_file_location(
     location: Union[bytes, str, Path], encoding: str = "utf8", *args, **kwargs
-):
+):  # noqa
     """Returns loaded module provided as a file path.
 
     :param args:

@@ -61,7 +61,6 @@ from sanic.server import (
     serve_multiple,
     trigger_events,
 )
-from sanic.static import register as static_register
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
@@ -282,7 +281,7 @@ class Sanic(BaseSanic):
         return self.router.add(**params)
 
     def _apply_static(self, static: FutureStatic) -> Route:
-        return static_register(self, static)
+        return self._register_static(static)
 
     def _apply_middleware(
         self,

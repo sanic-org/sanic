@@ -8,7 +8,7 @@ class ExceptionMixin:
         self._future_exceptions: Set[FutureException] = set()
 
     def _apply_exception_handler(self, handler: FutureException):
-        raise NotImplementedError
+        raise NotImplementedError  # noqa
 
     def exception(self, *exceptions, apply=True):
         """

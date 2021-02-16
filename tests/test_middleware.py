@@ -30,6 +30,23 @@ def test_middleware_request(app):
     assert type(results[0]) is Request
 
 
+def test_middleware_request_as_convenience(app):
+    results = []
+
+    @app.on_request
+    async def handler1(request):
+        results.append(request)
+
+    @app.route("/")
+    async def handler2(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/")
+
+    assert response.text == "OK"
+    assert type(results[0]) is Request
+
+
 def test_middleware_response(app):
     results = []
 
@@ -38,6 +55,54 @@ def test_middleware_response(app):
         results.append(request)
 
     @app.middleware("response")
+    async def process_response(request, response):
+        results.append(request)
+        results.append(response)
+
+    @app.route("/")
+    async def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/")
+
+    assert response.text == "OK"
+    assert type(results[0]) is Request
+    assert type(results[1]) is Request
+    assert isinstance(results[2], HTTPResponse)
+
+
+def test_middleware_response_as_convenience(app):
+    results = []
+
+    @app.on_request
+    async def process_request(request):
+        results.append(request)
+
+    @app.on_response
+    async def process_response(request, response):
+        results.append(request)
+        results.append(response)
+
+    @app.route("/")
+    async def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get("/")
+
+    assert response.text == "OK"
+    assert type(results[0]) is Request
+    assert type(results[1]) is Request
+    assert isinstance(results[2], HTTPResponse)
+
+
+def test_middleware_response_as_convenience_called(app):
+    results = []
+
+    @app.on_request()
+    async def process_request(request):
+        results.append(request)
+
+    @app.on_response()
     async def process_response(request, response):
         results.append(request)
         results.append(response)
@@ -102,6 +167,7 @@ def test_middleware_response_raise_exception(app, caplog):
     async def process_response(request, response):
         raise Exception("Exception at response middleware")
 
+    app.route("/")(lambda x: x)
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get("/fail")
 
@@ -129,7 +195,7 @@ def test_middleware_override_request(app):
     async def handler(request):
         return text("FAIL")
 
-    response = app.test_client.get("/", gather_request=False)
+    _, response = app.test_client.get("/", gather_request=False)
 
     assert response.status == 200
     assert response.text == "OK"

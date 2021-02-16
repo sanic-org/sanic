@@ -1,18 +1,180 @@
 import asyncio
 
+from unittest.mock import Mock
+
 import pytest
 
+from sanic_routing.exceptions import ParameterNameConflicts, RouteExists
 from sanic_testing.testing import SanicTestClient
 
-from sanic import Sanic
+from sanic import Blueprint, Sanic
 from sanic.constants import HTTP_METHODS
+from sanic.exceptions import NotFound
+from sanic.request import Request
 from sanic.response import json, text
-from sanic.router import ParameterNameConflicts, RouteDoesNotExist, RouteExists
 
 
-# ------------------------------------------------------------ #
-#  UTF-8
-# ------------------------------------------------------------ #
+@pytest.mark.parametrize(
+    "path,headers,expected",
+    (
+        # app base
+        (b"/", {}, 200),
+        (b"/", {"host": "maybe.com"}, 200),
+        (b"/host", {"host": "matching.com"}, 200),
+        (b"/host", {"host": "wrong.com"}, 404),
+        # app strict_slashes default
+        (b"/without", {}, 200),
+        (b"/without/", {}, 200),
+        (b"/with", {}, 200),
+        (b"/with/", {}, 200),
+        # app strict_slashes off - expressly
+        (b"/expwithout", {}, 200),
+        (b"/expwithout/", {}, 200),
+        (b"/expwith", {}, 200),
+        (b"/expwith/", {}, 200),
+        # app strict_slashes on
+        (b"/without/strict", {}, 200),
+        (b"/without/strict/", {}, 404),
+        (b"/with/strict", {}, 404),
+        (b"/with/strict/", {}, 200),
+        # bp1 base
+        (b"/bp1", {}, 200),
+        (b"/bp1", {"host": "maybe.com"}, 200),
+        (b"/bp1/host", {"host": "matching.com"}, 200),  # BROKEN ON MASTER
+        (b"/bp1/host", {"host": "wrong.com"}, 404),
+        # bp1 strict_slashes default
+        (b"/bp1/without", {}, 200),
+        (b"/bp1/without/", {}, 200),
+        (b"/bp1/with", {}, 200),
+        (b"/bp1/with/", {}, 200),
+        # bp1 strict_slashes off - expressly
+        (b"/bp1/expwithout", {}, 200),
+        (b"/bp1/expwithout/", {}, 200),
+        (b"/bp1/expwith", {}, 200),
+        (b"/bp1/expwith/", {}, 200),
+        # bp1 strict_slashes on
+        (b"/bp1/without/strict", {}, 200),
+        (b"/bp1/without/strict/", {}, 404),
+        (b"/bp1/with/strict", {}, 404),
+        (b"/bp1/with/strict/", {}, 200),
+        # bp2 base
+        (b"/bp2/", {}, 200),
+        (b"/bp2/", {"host": "maybe.com"}, 200),
+        (b"/bp2/host", {"host": "matching.com"}, 200),  # BROKEN ON MASTER
+        (b"/bp2/host", {"host": "wrong.com"}, 404),
+        # bp2 strict_slashes default
+        (b"/bp2/without", {}, 200),
+        (b"/bp2/without/", {}, 404),
+        (b"/bp2/with", {}, 404),
+        (b"/bp2/with/", {}, 200),
+        # # bp2 strict_slashes off - expressly
+        (b"/bp2/expwithout", {}, 200),
+        (b"/bp2/expwithout/", {}, 200),
+        (b"/bp2/expwith", {}, 200),
+        (b"/bp2/expwith/", {}, 200),
+        # # bp2 strict_slashes on
+        (b"/bp2/without/strict", {}, 200),
+        (b"/bp2/without/strict/", {}, 404),
+        (b"/bp2/with/strict", {}, 404),
+        (b"/bp2/with/strict/", {}, 200),
+        # bp3 base
+        (b"/bp3", {}, 200),
+        (b"/bp3", {"host": "maybe.com"}, 200),
+        (b"/bp3/host", {"host": "matching.com"}, 200),  # BROKEN ON MASTER
+        (b"/bp3/host", {"host": "wrong.com"}, 404),
+        # bp3 strict_slashes default
+        (b"/bp3/without", {}, 200),
+        (b"/bp3/without/", {}, 200),
+        (b"/bp3/with", {}, 200),
+        (b"/bp3/with/", {}, 200),
+        # bp3 strict_slashes off - expressly
+        (b"/bp3/expwithout", {}, 200),
+        (b"/bp3/expwithout/", {}, 200),
+        (b"/bp3/expwith", {}, 200),
+        (b"/bp3/expwith/", {}, 200),
+        # bp3 strict_slashes on
+        (b"/bp3/without/strict", {}, 200),
+        (b"/bp3/without/strict/", {}, 404),
+        (b"/bp3/with/strict", {}, 404),
+        (b"/bp3/with/strict/", {}, 200),
+        # bp4 base
+        (b"/bp4", {}, 404),
+        (b"/bp4", {"host": "maybe.com"}, 200),
+        (b"/bp4/host", {"host": "matching.com"}, 200),  # BROKEN ON MASTER
+        (b"/bp4/host", {"host": "wrong.com"}, 404),
+        # bp4 strict_slashes default
+        (b"/bp4/without", {}, 404),
+        (b"/bp4/without/", {}, 404),
+        (b"/bp4/with", {}, 404),
+        (b"/bp4/with/", {}, 404),
+        # bp4 strict_slashes off - expressly
+        (b"/bp4/expwithout", {}, 404),
+        (b"/bp4/expwithout/", {}, 404),
+        (b"/bp4/expwith", {}, 404),
+        (b"/bp4/expwith/", {}, 404),
+        # bp4 strict_slashes on
+        (b"/bp4/without/strict", {}, 404),
+        (b"/bp4/without/strict/", {}, 404),
+        (b"/bp4/with/strict", {}, 404),
+        (b"/bp4/with/strict/", {}, 404),
+    ),
+)
+def test_matching(path, headers, expected):
+    app = Sanic("dev")
+    bp1 = Blueprint("bp1", url_prefix="/bp1")
+    bp2 = Blueprint("bp2", url_prefix="/bp2", strict_slashes=True)
+    bp3 = Blueprint("bp3", url_prefix="/bp3", strict_slashes=False)
+    bp4 = Blueprint("bp4", url_prefix="/bp4", host="maybe.com")
+
+    def handler(request):
+        return text("Hello!")
+
+    defs = (
+        ("/", None, None),
+        ("/host", None, "matching.com"),
+        ("/without", None, None),
+        ("/with/", None, None),
+        ("/expwithout", False, None),
+        ("/expwith/", False, None),
+        ("/without/strict", True, None),
+        ("/with/strict/", True, None),
+    )
+    for uri, strict_slashes, host in defs:
+        params = {"uri": uri}
+        if strict_slashes is not None:
+            params["strict_slashes"] = strict_slashes
+        if host is not None:
+            params["host"] = host
+        app.route(**params)(handler)
+        bp1.route(**params)(handler)
+        bp2.route(**params)(handler)
+        bp3.route(**params)(handler)
+        bp4.route(**params)(handler)
+
+    app.blueprint(bp1)
+    app.blueprint(bp2)
+    app.blueprint(bp3)
+    app.blueprint(bp4)
+
+    app.router.finalize()
+
+    request = Request(path, headers, None, "GET", None, app)
+
+    try:
+        app.router.get(request=request)
+    except NotFound:
+        response = 404
+    except Exception:
+        response = 500
+    else:
+        response = 200
+
+    assert response == expected
+
+
+# # ------------------------------------------------------------ #
+# #  UTF-8
+# # ------------------------------------------------------------ #
 
 
 @pytest.mark.parametrize("method", HTTP_METHODS)
@@ -164,7 +326,6 @@ def test_route_optional_slash(app):
 
 def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     # Part of regression test for issue #1120
-
     test_client = SanicTestClient(app, port=42101)
     site1 = f"127.0.0.1:{test_client.port}"
 
@@ -176,6 +337,8 @@ def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     request, response = test_client.get("http://" + site1 + "/get")
     assert response.text == "OK"
 
+    app.router.finalized = False
+
     @app.post("/post", host=[site1, "site2.com"], strict_slashes=False)
     def post_handler(request):
         return text("OK")
@@ -183,12 +346,16 @@ def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     request, response = test_client.post("http://" + site1 + "/post")
     assert response.text == "OK"
 
+    app.router.finalized = False
+
     @app.put("/put", host=[site1, "site2.com"], strict_slashes=False)
     def put_handler(request):
         return text("OK")
 
     request, response = test_client.put("http://" + site1 + "/put")
     assert response.text == "OK"
+
+    app.router.finalized = False
 
     @app.delete("/delete", host=[site1, "site2.com"], strict_slashes=False)
     def delete_handler(request):
@@ -294,6 +461,8 @@ def test_dynamic_route(app):
         results.append(name)
         return text("OK")
 
+    app.router.finalize(False)
+
     request, response = app.test_client.get("/folder/test123")
 
     assert response.text == "OK"
@@ -368,6 +537,9 @@ def test_dynamic_route_regex(app):
     async def handler(request, folder_id):
         return text("OK")
 
+    app.router.finalize()
+    print(app.router.find_route_src)
+
     request, response = app.test_client.get("/folder/test")
     assert response.status == 200
 
@@ -415,6 +587,8 @@ def test_dynamic_route_path(app):
     request, response = app.test_client.get("/info")
     assert response.status == 404
 
+    app.router.reset()
+
     @app.route("/<path:path>")
     async def handler1(request, path):
         return text("OK")
@@ -457,6 +631,19 @@ def test_websocket_route(app, url):
     request, response = app.test_client.websocket(url)
     assert response.opened is True
     assert ev.is_set()
+
+
+def test_websocket_route_invalid_handler(app):
+    with pytest.raises(ValueError) as e:
+
+        @app.websocket("/")
+        async def handler():
+            ...
+
+    assert e.match(
+        r"Required parameter `request` and/or `ws` missing in the "
+        r"handler\(\) route\?"
+    )
 
 
 @pytest.mark.asyncio
@@ -774,7 +961,7 @@ def test_removing_slash(app):
     def post(_):
         pass
 
-    assert len(app.router.routes_all.keys()) == 2
+    assert len(app.router.routes_all.keys()) == 1
 
 
 def test_overload_routes(app):
@@ -798,6 +985,7 @@ def test_overload_routes(app):
     request, response = app.test_client.delete("/overload")
     assert response.status == 405
 
+    app.router.reset()
     with pytest.raises(RouteExists):
 
         @app.route("/overload", methods=["PUT", "DELETE"])
@@ -810,17 +998,29 @@ def test_unmergeable_overload_routes(app):
     async def handler1(request):
         return text("OK1")
 
-    with pytest.raises(RouteExists):
+    @app.route("/overload_whole", methods=["POST", "PUT"])
+    async def handler2(request):
+        return text("OK1")
 
-        @app.route("/overload_whole", methods=["POST", "PUT"])
-        async def handler2(request):
-            return text("Duplicated")
+    assert (
+        len(
+            dict(list(app.router.static_routes.values())[0].handlers)[
+                "overload_whole"
+            ]
+        )
+        == 3
+    )
 
     request, response = app.test_client.get("/overload_whole")
     assert response.text == "OK1"
 
     request, response = app.test_client.post("/overload_whole")
     assert response.text == "OK1"
+
+    request, response = app.test_client.put("/overload_whole")
+    assert response.text == "OK1"
+
+    app.router.reset()
 
     @app.route("/overload_part", methods=["GET"])
     async def handler3(request):
@@ -847,7 +1047,9 @@ def test_unicode_routes(app):
     request, response = app.test_client.get("/你好")
     assert response.text == "OK1"
 
-    @app.route("/overload/<param>", methods=["GET"])
+    app.router.reset()
+
+    @app.route("/overload/<param>", methods=["GET"], unquote=True)
     async def handler2(request, param):
         return text("OK2 " + param)
 
@@ -865,20 +1067,38 @@ def test_uri_with_different_method_and_different_params(app):
         return json({"action": action})
 
     request, response = app.test_client.get("/ads/1234")
-    assert response.status == 200
-    assert response.json == {"ad_id": "1234"}
+    assert response.status == 405
 
     request, response = app.test_client.post("/ads/post")
     assert response.status == 200
     assert response.json == {"action": "post"}
 
 
-def test_route_raise_ParameterNameConflicts(app):
-    with pytest.raises(ParameterNameConflicts):
+def test_uri_with_different_method_and_same_params(app):
+    @app.route("/ads/<ad_id>", methods=["GET"])
+    async def ad_get(request, ad_id):
+        return json({"ad_id": ad_id})
 
-        @app.get("/api/v1/<user>/<user>/")
-        def handler(request, user):
-            return text("OK")
+    @app.route("/ads/<ad_id>", methods=["POST"])
+    async def ad_post(request, ad_id):
+        return json({"ad_id": ad_id})
+
+    request, response = app.test_client.get("/ads/1234")
+    assert response.status == 200
+    assert response.json == {"ad_id": "1234"}
+
+    request, response = app.test_client.post("/ads/post")
+    assert response.status == 200
+    assert response.json == {"ad_id": "post"}
+
+
+def test_route_raise_ParameterNameConflicts(app):
+    @app.get("/api/v1/<user>/<user>/")
+    def handler(request, user):
+        return text("OK")
+
+    with pytest.raises(ParameterNameConflicts):
+        app.router.finalize()
 
 
 def test_route_invalid_host(app):

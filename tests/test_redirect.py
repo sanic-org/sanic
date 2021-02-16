@@ -1,4 +1,4 @@
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import pytest
 
@@ -109,7 +109,14 @@ def test_redirect_with_header_injection(redirect_app):
     assert not response.text.startswith("test-body")
 
 
-@pytest.mark.parametrize("test_str", ["sanic-test", "sanictest", "sanic test"])
+@pytest.mark.parametrize(
+    "test_str",
+    [
+        "sanic-test",
+        "sanictest",
+        "sanic test",
+    ],
+)
 def test_redirect_with_params(app, test_str):
     use_in_uri = quote(test_str)
 
@@ -117,7 +124,7 @@ def test_redirect_with_params(app, test_str):
     async def init_handler(request, test):
         return redirect(f"/api/v2/test/{use_in_uri}/")
 
-    @app.route("/api/v2/test/<test>/")
+    @app.route("/api/v2/test/<test>/", unquote=True)
     async def target_handler(request, test):
         assert test == test_str
         return text("OK")
@@ -125,4 +132,4 @@ def test_redirect_with_params(app, test_str):
     _, response = app.test_client.get(f"/api/v1/test/{use_in_uri}/")
     assert response.status == 200
 
-    assert response.content == b"OK"
+    assert response.body == b"OK"

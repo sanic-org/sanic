@@ -4,6 +4,8 @@ from pytest import mark
 
 import sanic.router
 
+from sanic.request import Request
+
 
 seed("Pack my box with five dozen liquor jugs.")
 
@@ -23,8 +25,17 @@ class TestSanicRouteResolution:
         route_to_call = choice(simple_routes)
 
         result = benchmark.pedantic(
-            router._get,
-            ("/{}".format(route_to_call[-1]), route_to_call[0], "localhost"),
+            router.get,
+            (
+                Request(
+                    "/{}".format(route_to_call[-1]).encode(),
+                    {"host": "localhost"},
+                    "v1",
+                    route_to_call[0],
+                    None,
+                    None,
+                ),
+            ),
             iterations=1000,
             rounds=1000,
         )
@@ -47,8 +58,17 @@ class TestSanicRouteResolution:
         print("{} -> {}".format(route_to_call[-1], url))
 
         result = benchmark.pedantic(
-            router._get,
-            ("/{}".format(url), route_to_call[0], "localhost"),
+            router.get,
+            (
+                Request(
+                    "/{}".format(url).encode(),
+                    {"host": "localhost"},
+                    "v1",
+                    route_to_call[0],
+                    None,
+                    None,
+                ),
+            ),
             iterations=1000,
             rounds=1000,
         )

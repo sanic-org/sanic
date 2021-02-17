@@ -394,7 +394,12 @@ class Sanic(BaseSanic):
 
                 kwargs["file_uri"] = filename
 
-        if uri != "/" and uri.endswith("/"):
+        if (
+            uri != "/"
+            and uri.endswith("/")
+            and not route.strict
+            and not route.raw_path[:-1]
+        ):
             uri = uri[:-1]
 
         if not uri.startswith("/"):

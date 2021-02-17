@@ -344,3 +344,23 @@ def test_methodview_naming(methodview_app):
 
     assert viewone_url == "/view_one"
     assert viewtwo_url == "/view_two"
+
+
+@pytest.mark.parametrize(
+    "path,version,expected",
+    (
+        ("/foo", 1, "/v1/foo"),
+        ("/foo", 1.1, "/v1.1/foo"),
+        ("/foo", "1", "/v1/foo"),
+        ("/foo", "1.1", "/v1.1/foo"),
+        ("/foo", "1.0.1", "/v1.0.1/foo"),
+        ("/foo", "v1.0.1", "/v1.0.1/foo"),
+    ),
+)
+def test_versioning(app, path, version, expected):
+    @app.route(path, version=version)
+    def handler(*_):
+        ...
+
+    url = app.url_for("handler")
+    assert url == expected

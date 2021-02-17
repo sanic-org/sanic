@@ -59,6 +59,7 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
             result = ""
             while True:
                 body = await request.stream.read()
+                print(f"{body=}")
                 if body is None:
                     break
                 result += body.decode("utf-8")

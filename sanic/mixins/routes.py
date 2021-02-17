@@ -611,7 +611,7 @@ class RouteMixin:
                 else:
                     break
 
-        if not name:  # noq
+        if not name:  # noqa
             raise ValueError("Could not generate a name for handler")
 
         if not name.startswith(f"{self.name}."):

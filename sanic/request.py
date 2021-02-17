@@ -12,6 +12,8 @@ from typing import (
     Union,
 )
 
+from sanic_routing.route import Route
+
 
 if TYPE_CHECKING:
     from sanic.server import ConnInfo
@@ -104,6 +106,7 @@ class Request:
         "parsed_forwarded",
         "raw_url",
         "request_middleware_started",
+        "route",
         "stream",
         "transport",
         "uri_template",
@@ -151,6 +154,7 @@ class Request:
         self._match_info = {}
         self.stream: Optional[Http] = None
         self.endpoint: Optional[str] = None
+        self.route: Optional[Route] = None
 
     def __repr__(self):
         class_name = self.__class__.__name__

@@ -74,3 +74,12 @@ def test_custom_generator():
         "/", headers={"SOME-OTHER-REQUEST-ID": f"{REQUEST_ID}"}
     )
     assert request.id == REQUEST_ID * 2
+
+
+def test_route_assigned_to_request(app):
+    @app.get("/")
+    async def get(request):
+        return response.empty()
+
+    request, _ = app.test_client.get("/")
+    assert request.route is list(app.router.routes.values())[0]

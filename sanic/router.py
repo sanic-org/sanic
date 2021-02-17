@@ -34,7 +34,7 @@ class Router(BaseRouter):
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(
         self, path, method, host
-    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool]:
+    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         try:
             route, handler, params = self.resolve(
                 path=path,
@@ -51,14 +51,14 @@ class Router(BaseRouter):
             )
 
         return (
+            route,
             handler,
             params,
-            route.path,
-            route.name,
-            route.ctx.ignore_body,
         )
 
-    def get(self, request: Request):
+    def get(
+        self, request: Request
+    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         """
         Retrieve a `Route` object containg the details about how to handle
         a response for a given request
@@ -67,8 +67,7 @@ class Router(BaseRouter):
         :type request: Request
         :return: details needed for handling the request and returning the
             correct response
-        :rtype: Tuple[ RouteHandler, Tuple[Any, ...], Dict[str, Any], str, str,
-            Optional[str], bool, ]
+        :rtype: Tuple[ Route, RouteHandler, Dict[str, Any]]
         """
         return self._get(
             request.path, request.method, request.headers.get("host")
@@ -150,23 +149,6 @@ class Router(BaseRouter):
         if len(routes) == 1:
             return routes[0]
         return routes
-
-    def is_stream_handler(self, request) -> bool:
-        """
-        Handler for request is stream or not.
-
-        :param request: Request object
-        :return: bool
-        """
-        try:
-            handler = self.get(request)[0]
-        except (NotFound, MethodNotSupported):
-            return False
-        if hasattr(handler, "view_class") and hasattr(
-            handler.view_class, request.method.lower()
-        ):
-            handler = getattr(handler.view_class, request.method.lower())
-        return hasattr(handler, "is_stream")
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name, name=None):

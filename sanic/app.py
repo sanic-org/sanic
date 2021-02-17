@@ -59,7 +59,6 @@ from sanic.server import (
     Signal,
     serve,
     serve_multiple,
-    trigger_events,
 )
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -908,7 +907,7 @@ class Sanic(BaseSanic):
         )
 
         # Trigger before_start events
-        await trigger_events(
+        await self.trigger_events(
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
@@ -916,6 +915,16 @@ class Sanic(BaseSanic):
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
+
+    async def trigger_events(self, events, loop):
+        """Trigger events (functions or async)
+        :param events: one or more sync or async functions to execute
+        :param loop: event loop
+        """
+        for event in events:
+            result = event(loop)
+            if isawaitable(result):
+                await result
 
     async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why

@@ -4,6 +4,7 @@ import uuid
 from collections import defaultdict, namedtuple
 from http.cookies import SimpleCookie
 from types import SimpleNamespace
+from typing import Optional
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
@@ -56,6 +57,7 @@ class Request:
         "_ip",
         "_parsed_url",
         "_port",
+        "_raw_headers",
         "_remote_addr",
         "_socket",
         "_match_info",
@@ -74,6 +76,7 @@ class Request:
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
+        "request_line",
         "request_middleware_started",
         "stream",
         "transport",
@@ -81,7 +84,17 @@ class Request:
         "version",
     )
 
-    def __init__(self, url_bytes, headers, version, method, transport, app):
+    def __init__(
+        self,
+        url_bytes,
+        headers,
+        version,
+        method,
+        transport,
+        app,
+        raw_headers: Optional[str] = None,
+        request_line: Optional[str] = None,
+    ):
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
@@ -92,6 +105,8 @@ class Request:
         self.version = version
         self.method = method
         self.transport = transport
+        self._raw_headers = raw_headers
+        self.request_line = request_line
 
         # Init but do not inhale
         self.body = b""
@@ -156,6 +171,11 @@ class Request:
         """
         if not self.body:
             self.body = b"".join([data async for data in self.stream])
+
+    @property
+    def raw_headers(self):
+        _, headers = self._raw_headers.split("\r\n", 1)
+        return headers
 
     @property
     def id(self):

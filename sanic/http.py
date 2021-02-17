@@ -148,7 +148,7 @@ class Http:
         # Parse header content
         try:
             raw_headers = buf[:pos].decode(errors="surrogateescape")
-            reqline, *raw_headers = raw_headers.split("\r\n")
+            reqline, *split_headers = raw_headers.split("\r\n")
             method, self.url, protocol = reqline.split(" ")
 
             if protocol == "HTTP/1.1":
@@ -162,7 +162,7 @@ class Http:
             request_body = False
             headers = []
 
-            for name, value in (h.split(":", 1) for h in raw_headers):
+            for name, value in (h.split(":", 1) for h in split_headers):
                 name, value = h = name.lower(), value.lstrip()
 
                 if name in ("content-length", "transfer-encoding"):
@@ -181,6 +181,8 @@ class Http:
         request = self.protocol.request_class(
             url_bytes=self.url.encode(),
             headers=headers_instance,
+            raw_headers=raw_headers,
+            request_line=reqline,
             version=protocol[5:],
             method=method,
             transport=self.protocol.transport,

@@ -268,7 +268,9 @@ class HttpProtocol(Protocol):
             self.transport = transport
             self._task = self.loop.create_task(self.connection_task())
             self.recv_buffer = bytearray()
-            self._buffer = memoryview(bytearray(64 * 1024))
+            self._buffer = memoryview(
+                bytearray(self.app.config.REQUEST_BUFFER_SIZE)
+            )
             self.conn_info = ConnInfo(self.transport, unix=self._unix)
         except Exception:
             logger.exception("protocol.connect_made")

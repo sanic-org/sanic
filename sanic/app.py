@@ -59,7 +59,6 @@ from sanic.server import (
     Signal,
     serve,
     serve_multiple,
-    trigger_events,
 )
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -384,15 +383,15 @@ class Sanic(BaseSanic):
         if getattr(route.ctx, "static", None):
             filename = kwargs.pop("filename", "")
             # it's static folder
-            if "file_uri" in uri:
-                folder_ = uri.split("<file_uri:", 1)[0]
+            if "__file_uri__" in uri:
+                folder_ = uri.split("<__file_uri__:", 1)[0]
                 if folder_.endswith("/"):
                     folder_ = folder_[:-1]
 
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                kwargs["file_uri"] = filename
+                kwargs["__file_uri__"] = filename
 
         if (
             uri != "/"
@@ -913,7 +912,7 @@ class Sanic(BaseSanic):
         )
 
         # Trigger before_start events
-        await trigger_events(
+        await self.trigger_events(
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
@@ -921,6 +920,16 @@ class Sanic(BaseSanic):
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
+
+    async def trigger_events(self, events, loop):
+        """Trigger events (functions or async)
+        :param events: one or more sync or async functions to execute
+        :param loop: event loop
+        """
+        for event in events:
+            result = event(loop)
+            if isawaitable(result):
+                await result
 
     async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why

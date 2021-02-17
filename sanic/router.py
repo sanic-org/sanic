@@ -9,12 +9,13 @@ from sanic_routing.exceptions import (
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import MethodNotSupported, NotFound
+from sanic.exceptions import MethodNotSupported, NotFound, SanicException
 from sanic.handlers import RouteHandler
 from sanic.request import Request
 
 
 ROUTER_CACHE_SIZE = 1024
+ALLOWED_LABELS = ("__file_uri__",)
 
 
 class Router(BaseRouter):
@@ -33,7 +34,7 @@ class Router(BaseRouter):
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(
         self, path, method, host
-    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool,]:
+    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool]:
         try:
             route, handler, params = self.resolve(
                 path=path,
@@ -204,3 +205,15 @@ class Router(BaseRouter):
     @property
     def routes_regex(self):
         return self.regex_routes
+
+    def finalize(self, *args, **kwargs):
+        super().finalize(*args, **kwargs)
+
+        for route in self.dynamic_routes.values():
+            if any(
+                label.startswith("__") and label not in ALLOWED_LABELS
+                for label in route.labels
+            ):
+                raise SanicException(
+                    f"Invalid route: {route}. Parameter names cannot use '__'."
+                )

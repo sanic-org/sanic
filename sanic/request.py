@@ -147,7 +147,7 @@ class Request:
         ] = defaultdict(list)
         self.uri_template: Optional[str] = None
         self.request_middleware_started = False
-        self._cookies: Dict[str, str] = {}
+        self._cookies: Optional[Dict[str, str]] = None
         self._match_info = {}
         self.stream: Optional[Http] = None
         self.endpoint: Optional[str] = None
@@ -183,8 +183,7 @@ class Request:
             response = await self.app._run_response_middleware(
                 self, response, request_name=self.name
             )
-        # Redefining this as a tuple here satisfies mypy
-        except tuple(*CancelledErrors):
+        except CancelledErrors:
             raise
         except Exception:
             error_logger.exception(
@@ -432,6 +431,7 @@ class Request:
         :return: Incoming cookies on the request
         :rtype: Dict[str, str]
         """
+
         if self._cookies is None:
             cookie = self.headers.get("Cookie")
             if cookie is not None:

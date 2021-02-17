@@ -752,7 +752,7 @@ def test_static_blueprint_name(static_file_directory, file_name):
     app.blueprint(bp)
 
     uri = app.url_for("static", name="static.testing")
-    assert uri == "/static/test.file"
+    assert uri == "/static/test.file/"
 
     _, response = app.test_client.get("/static/test.file")
     assert response.status == 404

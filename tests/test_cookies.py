@@ -15,6 +15,8 @@ from sanic.response import text
 def test_cookies(app):
     @app.route("/")
     def handler(request):
+        print(request.headers)
+        print(request.cookies)
         cookie_value = request.cookies["test"]
         response = text(f"Cookies are: {cookie_value}")
         response.cookies["right_back"] = "at you"

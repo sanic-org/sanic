@@ -842,6 +842,13 @@ class Sanic(BaseSanic):
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
+        main_start = server_settings.pop("main_start", None)
+        main_stop = server_settings.pop("main_stop", None)
+        if main_start or main_stop:
+            logger.warning(
+                "Listener events for the main process are not available "
+                "with create_server()"
+            )
 
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings

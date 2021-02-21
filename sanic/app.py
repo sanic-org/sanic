@@ -3,7 +3,14 @@ import logging.config
 import os
 import re
 
-from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
+
+try:
+    from asyncio import BufferedProtocol as BaseProtocol
+except ImportError:
+    # Support for Python 3.6
+    from asyncio import Protocol as BaseProtocol  # type: ignore
+
+from asyncio import CancelledError, ensure_future, get_event_loop
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
@@ -654,7 +661,7 @@ class Sanic(BaseSanic):
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[Type[BaseProtocol]] = None,
         backlog: int = 100,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
@@ -766,7 +773,7 @@ class Sanic(BaseSanic):
         debug: bool = False,
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
-        protocol: Type[Protocol] = None,
+        protocol: Optional[Type[BaseProtocol]] = None,
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,

@@ -24,10 +24,10 @@ from sanic.request import Request
 
 
 try:
-    from asyncio import BufferedProtocol as Protocol
+    from asyncio import BufferedProtocol as BaseProtocol
 except ImportError:
     # Support for Python 3.6
-    from asyncio import Protocol
+    from asyncio import Protocol as BaseProtocol  # type: ignore
 
 try:
     import uvloop  # type: ignore
@@ -77,7 +77,7 @@ class ConnInfo:
             self.client_port = addr[1]
 
 
-class HttpProtocol(Protocol):
+class HttpProtocol(BaseProtocol):
     """
     This class provides a basic HTTP implementation of the sanic framework.
     """

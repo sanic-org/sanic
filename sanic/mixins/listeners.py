@@ -13,6 +13,8 @@ class ListenerEvent(str, Enum):
     AFTER_SERVER_START = auto()
     BEFORE_SERVER_STOP = auto()
     AFTER_SERVER_STOP = auto()
+    MAIN_PROCESS_START = auto()
+    MAIN_PROCESS_STOP = auto()
 
 
 class ListenerMixin:

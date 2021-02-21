@@ -209,18 +209,28 @@ def test_bp_with_host(app):
 
     app.blueprint(bp)
     headers = {"Host": "example.com"}
+
     request, response = app.test_client.get("/test1/", headers=headers)
     assert response.text == "Hello"
 
     headers = {"Host": "sub.example.com"}
     request, response = app.test_client.get("/test1/", headers=headers)
-
-    assert response.text == "Hello subdomain!"
+    assert response.body == b"Hello subdomain!"
 
 
 def test_several_bp_with_host(app):
-    bp = Blueprint("test_text", url_prefix="/test", host="example.com")
-    bp2 = Blueprint("test_text2", url_prefix="/test", host="sub.example.com")
+    bp = Blueprint(
+        "test_text",
+        url_prefix="/test",
+        host="example.com",
+        strict_slashes=True,
+    )
+    bp2 = Blueprint(
+        "test_text2",
+        url_prefix="/test",
+        host="sub.example.com",
+        strict_slashes=True,
+    )
 
     @bp.route("/")
     def handler(request):
@@ -240,6 +250,7 @@ def test_several_bp_with_host(app):
     assert bp.host == "example.com"
     headers = {"Host": "example.com"}
     request, response = app.test_client.get("/test/", headers=headers)
+
     assert response.text == "Hello"
 
     assert bp2.host == "sub.example.com"
@@ -352,6 +363,29 @@ def test_bp_middleware(app):
     assert response.text == "FAIL"
 
 
+def test_bp_middleware_with_route(app):
+    blueprint = Blueprint("test_bp_middleware")
+
+    @blueprint.middleware("response")
+    async def process_response(request, response):
+        return text("OK")
+
+    @app.route("/")
+    async def handler(request):
+        return text("FAIL")
+
+    @blueprint.route("/bp")
+    async def bp_handler(request):
+        return text("FAIL")
+
+    app.blueprint(blueprint)
+
+    request, response = app.test_client.get("/bp")
+
+    assert response.status == 200
+    assert response.text == "OK"
+
+
 def test_bp_middleware_order(app):
     blueprint = Blueprint("test_bp_middleware_order")
     order = list()
@@ -425,6 +459,7 @@ def test_bp_exception_handler(app):
 
 
 def test_bp_listeners(app):
+    app.route("/")(lambda x: x)
     blueprint = Blueprint("test_middleware")
 
     order = []
@@ -537,19 +572,19 @@ def test_bp_shorthand(app):
     app.blueprint(blueprint)
 
     request, response = app.test_client.get("/get")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.post("/get")
     assert response.status == 405
 
     request, response = app.test_client.put("/put")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/post")
     assert response.status == 405
 
     request, response = app.test_client.post("/post")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/post")
     assert response.status == 405
@@ -561,19 +596,19 @@ def test_bp_shorthand(app):
     assert response.status == 405
 
     request, response = app.test_client.options("/options")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/options")
     assert response.status == 405
 
     request, response = app.test_client.patch("/patch")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/patch")
     assert response.status == 405
 
     request, response = app.test_client.delete("/delete")
-    assert response.text == "OK"
+    assert response.body == b"OK"
 
     request, response = app.test_client.get("/delete")
     assert response.status == 405
@@ -699,7 +734,8 @@ def test_blueprint_middleware_with_args(app: Sanic):
 
 
 @pytest.mark.parametrize("file_name", ["test.file"])
-def test_static_blueprint_name(app: Sanic, static_file_directory, file_name):
+def test_static_blueprint_name(static_file_directory, file_name):
+    app = Sanic("app")
     current_file = inspect.getfile(inspect.currentframe())
     with open(current_file, "rb") as file:
         file.read()
@@ -814,17 +850,19 @@ def test_duplicate_blueprint(app):
     )
 
 
-def test_strict_slashes_behavior_adoption(app):
+def test_strict_slashes_behavior_adoption():
+    app = Sanic("app")
     app.strict_slashes = True
+    bp = Blueprint("bp")
+    bp2 = Blueprint("bp2", strict_slashes=False)
 
     @app.get("/test")
     def handler_test(request):
         return text("Test")
 
-    assert app.test_client.get("/test")[1].status == 200
-    assert app.test_client.get("/test/")[1].status == 404
-
-    bp = Blueprint("bp")
+    @app.get("/f1", strict_slashes=False)
+    def f1(request):
+        return text("f1")
 
     @bp.get("/one", strict_slashes=False)
     def one(request):
@@ -834,7 +872,15 @@ def test_strict_slashes_behavior_adoption(app):
     def second(request):
         return text("second")
 
+    @bp2.get("/third")
+    def third(request):
+        return text("third")
+
     app.blueprint(bp)
+    app.blueprint(bp2)
+
+    assert app.test_client.get("/test")[1].status == 200
+    assert app.test_client.get("/test/")[1].status == 404
 
     assert app.test_client.get("/one")[1].status == 200
     assert app.test_client.get("/one/")[1].status == 200
@@ -842,19 +888,8 @@ def test_strict_slashes_behavior_adoption(app):
     assert app.test_client.get("/second")[1].status == 200
     assert app.test_client.get("/second/")[1].status == 404
 
-    bp2 = Blueprint("bp2", strict_slashes=False)
-
-    @bp2.get("/third")
-    def third(request):
-        return text("third")
-
-    app.blueprint(bp2)
     assert app.test_client.get("/third")[1].status == 200
     assert app.test_client.get("/third/")[1].status == 200
-
-    @app.get("/f1", strict_slashes=False)
-    def f1(request):
-        return text("f1")
 
     assert app.test_client.get("/f1")[1].status == 200
     assert app.test_client.get("/f1/")[1].status == 200

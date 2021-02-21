@@ -110,6 +110,11 @@ def test_bp_group(app: Sanic):
         global MIDDLEWARE_INVOKE_COUNTER
         MIDDLEWARE_INVOKE_COUNTER["request"] += 1
 
+    @blueprint_group_1.middleware
+    def blueprint_group_1_middleware_not_called(request):
+        global MIDDLEWARE_INVOKE_COUNTER
+        MIDDLEWARE_INVOKE_COUNTER["request"] += 1
+
     @blueprint_3.route("/")
     def blueprint_3_default_route(request):
         return text("BP3_OK")
@@ -142,7 +147,7 @@ def test_bp_group(app: Sanic):
     assert response.text == "BP3_OK"
 
     assert MIDDLEWARE_INVOKE_COUNTER["response"] == 3
-    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 2
+    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 4
 
 
 def test_bp_group_list_operations(app: Sanic):
@@ -179,3 +184,19 @@ def test_bp_group_list_operations(app: Sanic):
     assert len(blueprint_group_1) == 2
 
     assert blueprint_group_1.url_prefix == "/bp"
+
+
+def test_bp_group_as_list():
+    blueprint_1 = Blueprint("blueprint_1", url_prefix="/bp1")
+    blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
+    blueprint_group_1 = Blueprint.group([blueprint_1, blueprint_2])
+    assert len(blueprint_group_1) == 2
+
+
+def test_bp_group_as_nested_group():
+    blueprint_1 = Blueprint("blueprint_1", url_prefix="/bp1")
+    blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
+    blueprint_group_1 = Blueprint.group(
+        Blueprint.group(blueprint_1, blueprint_2)
+    )
+    assert len(blueprint_group_1) == 2

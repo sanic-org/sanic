@@ -103,7 +103,13 @@ def test_logging_pass_customer_logconfig():
         assert fmt._fmt == modified_config["formatters"]["access"]["format"]
 
 
-@pytest.mark.parametrize("debug", (True, False))
+@pytest.mark.parametrize(
+    "debug",
+    (
+        True,
+        False,
+    ),
+)
 def test_log_connection_lost(app, debug, monkeypatch):
     """ Should not log Connection lost exception on non debug """
     stream = StringIO()
@@ -117,7 +123,7 @@ def test_log_connection_lost(app, debug, monkeypatch):
         request.transport.close()
         return response
 
-    req, res = app.test_client.get("/conn_lost", debug=debug)
+    req, res = app.test_client.get("/conn_lost", debug=debug, allow_none=True)
     assert res is None
 
     log = stream.getvalue()

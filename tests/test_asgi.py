@@ -45,7 +45,8 @@ def protocol(transport):
     return transport.get_protocol()
 
 
-def test_listeners_triggered(app):
+def test_listeners_triggered():
+    app = Sanic("app")
     before_server_start = False
     after_server_start = False
     before_server_stop = False
@@ -70,6 +71,10 @@ def test_listeners_triggered(app):
     def do_after_server_stop(*args, **kwargs):
         nonlocal after_server_stop
         after_server_stop = True
+
+    @app.route("/")
+    def handler(request):
+        return text("...")
 
     class CustomServer(uvicorn.Server):
         def install_signal_handlers(self):
@@ -120,6 +125,10 @@ def test_listeners_triggered_async(app):
     async def do_after_server_stop(*args, **kwargs):
         nonlocal after_server_stop
         after_server_stop = True
+
+    @app.route("/")
+    def handler(request):
+        return text("...")
 
     class CustomServer(uvicorn.Server):
         def install_signal_handlers(self):
@@ -325,7 +334,7 @@ async def test_cookie_customization(app):
 
 
 @pytest.mark.asyncio
-async def test_json_content_type(app):
+async def test_content_type(app):
     @app.get("/json")
     def send_json(request):
         return json({"foo": "bar"})

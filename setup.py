@@ -57,7 +57,8 @@ setup_kwargs = {
     "author": "Sanic Community",
     "author_email": "admhpkns@gmail.com",
     "description": (
-        "A web server and web framework that's written to go fast. Build fast. Run fast."
+        "A web server and web framework that's written to go fast. "
+        "Build fast. Run fast."
     ),
     "long_description": long_description,
     "packages": ["sanic"],
@@ -80,9 +81,10 @@ env_dependency = (
     '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
 )
 ujson = "ujson>=1.35" + env_dependency
-uvloop = "uvloop>=0.5.3" + env_dependency
+uvloop = "uvloop>=0.5.3,<0.15.0" + env_dependency
 
 requirements = [
+    "sanic-routing",
     "httptools>=0.0.10",
     uvloop,
     ujson,

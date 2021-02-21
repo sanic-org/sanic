@@ -106,6 +106,7 @@ def test_static_file_bytes(app, static_file_directory, file_name):
     [dict(), list(), object()],
 )
 def test_static_file_invalid_path(app, static_file_directory, file_name):
+    app.route("/")(lambda x: x)
     with pytest.raises(ValueError):
         app.static("/testing.file", file_name)
     request, response = app.test_client.get("/testing.file")
@@ -124,6 +125,40 @@ def test_static_file_content_type(app, static_file_directory, file_name):
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
     assert response.headers["Content-Type"] == "text/html; charset=utf-8"
+
+
+@pytest.mark.parametrize(
+    "file_name,expected",
+    [
+        ("test.html", "text/html; charset=utf-8"),
+        ("decode me.txt", "text/plain; charset=utf-8"),
+        ("test.file", "application/octet-stream"),
+    ],
+)
+def test_static_file_content_type_guessed(
+    app, static_file_directory, file_name, expected
+):
+    app.static(
+        "/testing.file",
+        get_file_path(static_file_directory, file_name),
+    )
+
+    request, response = app.test_client.get("/testing.file")
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+    assert response.headers["Content-Type"] == expected
+
+
+def test_static_file_content_type_with_charset(app, static_file_directory):
+    app.static(
+        "/testing.file",
+        get_file_path(static_file_directory, "decode me.txt"),
+        content_type="text/plain;charset=ISO-8859-1",
+    )
+
+    request, response = app.test_client.get("/testing.file")
+    assert response.status == 200
+    assert response.headers["Content-Type"] == "text/plain;charset=ISO-8859-1"
 
 
 @pytest.mark.parametrize(

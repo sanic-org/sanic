@@ -24,7 +24,7 @@ from sanic.request import Request
 
 
 try:
-    from asyncio import BufferedProtocol as BaseProtocol
+    from asyncio import BufferedProtocol as BaseProtocol  # type: ignore
 except ImportError:
     # Support for Python 3.6
     from asyncio import Protocol as BaseProtocol  # type: ignore

@@ -30,7 +30,7 @@ class RouteMixin:
         self._future_routes: Set[FutureRoute] = set()
         self._future_statics: Set[FutureStatic] = set()
         self.name = ""
-        self.strict_slashes = False
+        self.strict_slashes: Optional[bool] = False
 
     def _apply_route(self, route: FutureRoute) -> Route:
         raise NotImplementedError  # noqa
@@ -41,7 +41,7 @@ class RouteMixin:
     def route(
         self,
         uri: str,
-        methods: Iterable[str] = frozenset({"GET"}),
+        methods: Optional[Iterable[str]] = None,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,

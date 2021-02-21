@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 import email.utils
 import uuid
 
-from asyncio.transports import Transport
 from collections import defaultdict
 from http.cookies import SimpleCookie
 from types import SimpleNamespace
@@ -39,6 +38,7 @@ from sanic.headers import (
     parse_xforwarded,
 )
 from sanic.log import error_logger, logger
+from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
 
@@ -116,7 +116,7 @@ class Request:
         headers: Header,
         version: str,
         method: str,
-        transport: Transport,
+        transport: TransportProtocol,
         app: Sanic,
     ):
         self.raw_url = url_bytes
@@ -148,7 +148,7 @@ class Request:
         self.uri_template: Optional[str] = None
         self.request_middleware_started = False
         self._cookies: Optional[Dict[str, str]] = None
-        self._match_info = {}
+        self._match_info: Dict[str, Any] = {}
         self.stream: Optional[Http] = None
         self.endpoint: Optional[str] = None
 

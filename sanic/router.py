@@ -33,7 +33,7 @@ class Router(BaseRouter):
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(
         self, path, method, host
-    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool,]:
+    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool]:
         try:
             route, handler, params = self.resolve(
                 path=path,

@@ -40,6 +40,7 @@ from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import logger
+from sanic.models.protocol_types import TransportProtocol
 from sanic.request import Request
 
 
@@ -69,7 +70,7 @@ class ConnInfo:
         "ssl",
     )
 
-    def __init__(self, transport: Transport, unix=None):
+    def __init__(self, transport: TransportProtocol, unix=None):
         self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
         self.server = self.client = ""
         self.server_port = self.client_port = 0

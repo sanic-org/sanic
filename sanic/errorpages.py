@@ -1,5 +1,6 @@
 """
-Sanic `provides a pattern <https://sanicframework.org/guide/best-practices/exceptions.html#using-sanic-exceptions>`_
+Sanic `provides a pattern
+<https://sanicframework.org/guide/best-practices/exceptions.html#using-sanic-exceptions>`_
 for providing a response when an exception occurs. However, if you do no handle
 an exception, it will provide a fallback. There are three fallback types:
 
@@ -72,9 +73,9 @@ class BaseRenderer:
         status_text = STATUS_CODES.get(self.status, b"Error Occurred").decode()
         return f"{self.status} — {status_text}"
 
-    def render(self) -> str:
+    def render(self) -> HTTPResponse:
         """
-        Outputs the exception as a ``str`` for response.
+        Outputs the exception as a :class:`HTTPResponse`.
 
         :return: The formatted exception
         :rtype: str
@@ -86,14 +87,14 @@ class BaseRenderer:
         )
         return output()
 
-    def minimal(self) -> str:  # noqa
+    def minimal(self) -> HTTPResponse:  # noqa
         """
         Provide a formatted message that is meant to not show any sensitive
         data or details.
         """
         raise NotImplementedError
 
-    def full(self) -> str:  # noqa
+    def full(self) -> HTTPResponse:  # noqa
         """
         Provide a formatted message that has all details and is mean to be used
         primarily for debugging and non-production environments.
@@ -145,7 +146,7 @@ class HTMLRenderer(BaseRenderer):
         "{body}"
     )
 
-    def full(self):
+    def full(self) -> HTTPResponse:
         return html(
             self.OUTPUT_HTML.format(
                 title=self.title,
@@ -156,7 +157,7 @@ class HTMLRenderer(BaseRenderer):
             status=self.status,
         )
 
-    def minimal(self):
+    def minimal(self) -> HTTPResponse:
         return html(
             self.OUTPUT_HTML.format(
                 title=self.title,
@@ -217,7 +218,7 @@ class TextRenderer(BaseRenderer):
     OUTPUT_TEXT = "{title}\n{bar}\n{text}\n\n{body}"
     SPACER = "  "
 
-    def full(self):
+    def full(self) -> HTTPResponse:
         return text(
             self.OUTPUT_TEXT.format(
                 title=self.title,
@@ -228,7 +229,7 @@ class TextRenderer(BaseRenderer):
             status=self.status,
         )
 
-    def minimal(self):
+    def minimal(self) -> HTTPResponse:
         return text(
             self.OUTPUT_TEXT.format(
                 title=self.title,
@@ -277,11 +278,11 @@ class JSONRenderer(BaseRenderer):
     Render an exception as JSON.
     """
 
-    def full(self):
+    def full(self) -> HTTPResponse:
         output = self._generate_output(full=True)
         return json(output, status=self.status, dumps=dumps)
 
-    def minimal(self):
+    def minimal(self) -> HTTPResponse:
         output = self._generate_output(full=False)
         return json(output, status=self.status, dumps=dumps)
 

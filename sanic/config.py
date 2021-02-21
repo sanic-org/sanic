@@ -113,8 +113,8 @@ class Config(dict):
             config.update_config("${some}/py/file")
 
         Yes you can put environment variable here, but they must be provided
-        in format: ``${some_env_var}``, and mark that ``$some_env_var`` is treated
-        as plain string.
+        in format: ``${some_env_var}``, and mark that ``$some_env_var`` is
+        treated as plain string.
 
         You can upload app config by providing dict holding settings.
 
@@ -134,7 +134,8 @@ class Config(dict):
 
             config.update_config(C)
 
-        `See user guide <https://sanicframework.org/guide/deployment/configuration.html>`__
+        `See user guide
+        <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
 
         if isinstance(config, (bytes, str, Path)):

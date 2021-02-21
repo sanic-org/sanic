@@ -86,11 +86,7 @@ def test_listeners_triggered():
     with pytest.warns(UserWarning):
         server.run()
 
-    all_tasks = (
-        asyncio.Task.all_tasks()
-        if sys.version_info < (3, 7)
-        else asyncio.all_tasks(asyncio.get_event_loop())
-    )
+    all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
     for task in all_tasks:
         task.cancel()
 
@@ -140,11 +136,7 @@ def test_listeners_triggered_async(app):
     with pytest.warns(UserWarning):
         server.run()
 
-    all_tasks = (
-        asyncio.Task.all_tasks()
-        if sys.version_info < (3, 7)
-        else asyncio.all_tasks(asyncio.get_event_loop())
-    )
+    all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
     for task in all_tasks:
         task.cancel()
 

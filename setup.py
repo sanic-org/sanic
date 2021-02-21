@@ -64,12 +64,11 @@ setup_kwargs = {
     "packages": ["sanic"],
     "package_data": {"sanic": ["py.typed"]},
     "platforms": "any",
-    "python_requires": ">=3.6",
+    "python_requires": ">=3.7",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -81,7 +80,7 @@ env_dependency = (
     '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
 )
 ujson = "ujson>=1.35" + env_dependency
-uvloop = "uvloop>=0.5.3,<0.15.0" + env_dependency
+uvloop = "uvloop>=0.5.3" + env_dependency
 
 requirements = [
     "sanic-routing",

@@ -36,7 +36,9 @@ class Signal:
 
 
 class ConnInfo:
-    """Local and remote addresses and SSL status info."""
+    """
+    Local and remote addresses and SSL status info.
+    """
 
     __slots__ = (
         "sockname",

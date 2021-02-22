@@ -1,7 +1,8 @@
+codecov:
+  require_ci_to_pass: no
 coverage:
   precision: 3
   round: nearest
-  require_ci_to_pass: no
   status:
     project:
       default:

@@ -109,12 +109,6 @@ sanic.server
     :members:
     :show-inheritance:
 
-sanic.static
-------------
-
-.. automodule:: sanic.static
-    :members:
-    :show-inheritance:
 
 sanic.views
 -----------

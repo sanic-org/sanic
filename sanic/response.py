@@ -10,13 +10,12 @@ from typing import (
     Dict,
     Iterator,
     Optional,
+    Protocol,
     Tuple,
     Union,
 )
 from urllib.parse import quote_plus
 from warnings import warn
-
-from typing_extensions import Protocol
 
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar

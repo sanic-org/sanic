@@ -159,7 +159,7 @@ class Sanic(BaseSanic):
         is delayed until before server start.
 
         `See user guide
-        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`_
+        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
 
         :param task: future, couroutine or awaitable
         """
@@ -357,7 +357,7 @@ class Sanic(BaseSanic):
         the output URL's query string.
 
         `See user guide
-        <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`_
+        <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
 
         :param view_name: string referencing the view name
         :param kwargs: keys and values that are used to build request

@@ -39,7 +39,7 @@ from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import logger
-from sanic.models.protocol_types import TransportProtocol
+from sanic.models.transport import TransportProtocol
 from sanic.request import Request
 
 

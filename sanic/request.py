@@ -38,7 +38,7 @@ from sanic.headers import (
     parse_xforwarded,
 )
 from sanic.log import error_logger, logger
-from sanic.models.protocol_types import TransportProtocol
+from sanic.models.transport import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
 

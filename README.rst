@@ -130,6 +130,7 @@ And, we can verify it is working: ``curl localhost:8000 -i``
 
 **Now, let's go build something fast!**
 
+Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12LTS.
 
 Documentation
 -------------

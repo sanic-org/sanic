@@ -4,7 +4,6 @@ import os
 import secrets
 import socket
 import stat
-import sys
 
 from asyncio import CancelledError
 from functools import partial
@@ -43,7 +42,9 @@ class Signal:
 
 
 class ConnInfo:
-    """Local and remote addresses and SSL status info."""
+    """
+    Local and remote addresses and SSL status info.
+    """
 
     __slots__ = (
         "sockname",
@@ -132,7 +133,6 @@ class HttpProtocol(BaseProtocol):
     ):
         asyncio.set_event_loop(loop)
         self.loop = loop
-        deprecated_loop = self.loop if sys.version_info < (3, 7) else None
         self.app = app
         self.url = None
         self.transport = None
@@ -154,8 +154,8 @@ class HttpProtocol(BaseProtocol):
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
-        self._data_received = asyncio.Event(loop=deprecated_loop)
-        self._can_write = asyncio.Event(loop=deprecated_loop)
+        self._data_received = asyncio.Event()
+        self._can_write = asyncio.Event()
         self._can_write.set()
         self._exception = None
         self._unix = unix

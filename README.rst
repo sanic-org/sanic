@@ -16,14 +16,14 @@ Sanic | Build fast. Run fast.
     * - Package
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support
-      - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby| |Awesome|
+      - | |Forums| |Discord| |Awesome|
     * - Stats
       - | |Downloads| |WkDownloads| |Conda downloads|
 
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
-.. |Join the chat at https://gitter.im/sanic-python/Lobby| image:: https://badges.gitter.im/sanic-python/Lobby.svg
-   :target: https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+.. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
+   :target: https://discord.com/channels/812221182594121728/812221182594121731
 .. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/sanic-org/sanic
 .. |Build Status| image:: https://travis-ci.com/sanic-org/sanic.svg?branch=master

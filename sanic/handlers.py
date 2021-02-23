@@ -26,6 +26,7 @@ MiddlewareType = Union[RequestMiddlewareType, ResponseMiddlewareType]
 ListenerType = Callable[
     [Sanic, AbstractEventLoop], Optional[Coroutine[Any, Any, None]]
 ]
+SignalHandler = Callable[..., Coroutine[Any, Any, None]]
 
 
 class ErrorHandler:

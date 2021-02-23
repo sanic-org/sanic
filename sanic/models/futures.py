@@ -37,3 +37,4 @@ FutureStatic = namedtuple(
         "content_type",
     ],
 )
+FutureSignal = namedtuple("FutureSignal", ["handler", "event"])

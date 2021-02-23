@@ -37,18 +37,16 @@ from sanic.models.futures import (
     FutureListener,
     FutureMiddleware,
     FutureRoute,
+    FutureSignal,
     FutureStatic,
 )
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
-from sanic.server import (
-    AsyncioServer,
-    HttpProtocol,
-    Signal,
-    serve,
-    serve_multiple,
-)
+from sanic.server import AsyncioServer, HttpProtocol
+from sanic.server import Signal as ServerSignal
+from sanic.server import serve, serve_multiple
+from sanic.signals import Signal, SignalRouter
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
@@ -59,10 +57,11 @@ class Sanic(BaseSanic):
     def __init__(
         self,
         name: str = None,
-        router: Router = None,
-        error_handler: ErrorHandler = None,
+        router: Optional[Router] = None,
+        signal_router: Optional[SignalRouter] = None,
+        error_handler: Optional[ErrorHandler] = None,
         load_env: bool = True,
-        request_class: Request = None,
+        request_class: Optional[Request] = None,
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
@@ -82,6 +81,7 @@ class Sanic(BaseSanic):
         self.name = name
         self.asgi = False
         self.router = router or Router()
+        self.signal_router = signal_router or SignalRouter()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
@@ -256,6 +256,12 @@ class Sanic(BaseSanic):
             return self.register_middleware(
                 middleware.middleware, middleware.attach_to
             )
+
+    def _apply_signal(self, signal: FutureSignal) -> Signal:
+        return self.signal_router.add(*signal)
+
+    def dispatch(self, *args, **kwargs):
+        return self.signal_router.dispatch(*args, **kwargs)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -913,11 +919,17 @@ class Sanic(BaseSanic):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        try:
-            self.router.finalize()
-        except FinalizationError as e:
-            if not Sanic.test_mode:
-                raise e
+        async def finalize(app, _):
+            try:
+                app.router.finalize()
+                app.signal_router.finalize()
+            except FinalizationError as e:
+                if not Sanic.test_mode:
+                    raise e
+
+        self.listeners["before_server_start"] = [finalize] + self.listeners[
+            "before_server_start"
+        ]
 
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -946,7 +958,7 @@ class Sanic(BaseSanic):
             "unix": unix,
             "ssl": ssl,
             "app": self,
-            "signal": Signal(),
+            "signal": ServerSignal(),
             "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,

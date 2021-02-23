@@ -69,6 +69,21 @@ The project is maintained by the community, for the community. **Contributions a
 
 The goal of the project is to provide a simple way to get up and running a highly performant HTTP server that is easy to build, to expand, and ultimately to scale.
 
+Sponsor
+-------
+
+|Try CodeStream|
+
+.. |Try CodeStream| image:: https://alt-images.codestream.com/codestream_logo_sanicorg.png
+   :target: https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner
+   :alt: Try CodeStream
+   
+Manage pull requests and conduct code reviews in your IDE with full source-tree context. Comment on any line, not just the diffs. Use jump-to-definition, your favorite keybindings, and code intelligence with more of your workflow.
+
+`Try it free <https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner>`_
+
+Thank you to our sponsor. Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
+
 Installation
 ------------
 

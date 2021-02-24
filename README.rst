@@ -23,7 +23,7 @@ Sanic | Build fast. Run fast.
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
 .. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
-   :target: https://discord.com/channels/812221182594121728/812221182594121731
+   :target: https://discord.gg/FARQzAEMAA
 .. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/sanic-org/sanic
 .. |Build Status| image:: https://travis-ci.com/sanic-org/sanic.svg?branch=master

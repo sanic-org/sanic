@@ -80,7 +80,7 @@ Sponsor
    
 Manage pull requests and conduct code reviews in your IDE with full source-tree context. Comment on any line, not just the diffs. Use jump-to-definition, your favorite keybindings, and code intelligence with more of your workflow.
 
-`Try it free <https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner>`_
+`Learn More <https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner>`_
 
 Thank you to our sponsor. Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
 

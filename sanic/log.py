@@ -54,5 +54,16 @@ LOGGING_CONFIG_DEFAULTS = dict(
 
 
 logger = logging.getLogger("sanic.root")
+"""
+General Sanic logger
+"""
+
 error_logger = logging.getLogger("sanic.error")
+"""
+Logger used by Sanic for error logging
+"""
+
 access_logger = logging.getLogger("sanic.access")
+"""
+Logger used by Sanic for access logging
+"""

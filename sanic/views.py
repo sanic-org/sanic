@@ -19,8 +19,6 @@ class HTTPMethodView:
             def put(self, request, *args, **kwargs):
                 return text('I am put method')
 
-    etc.
-
     If someone tries to use a non-implemented method, there will be a
     405 response.
 
@@ -33,8 +31,9 @@ class HTTPMethodView:
                 return text('I am get method with %s' % my_param_here)
 
     To add the view into the routing you could use
-        1) app.add_route(DummyView.as_view(), '/')
-        2) app.route('/')(DummyView.as_view())
+
+        1) ``app.add_route(DummyView.as_view(), '/')``, OR
+        2) ``app.route('/')(DummyView.as_view())``
 
     To add any decorator you could set it into decorators variable
     """
@@ -78,11 +77,12 @@ class CompositionView:
     for every HTTP method you want to support.
 
     For example:
+
+    .. code-block:: python
+
         view = CompositionView()
         view.add(['GET'], lambda request: text('I am get method'))
         view.add(['POST', 'PUT'], lambda request: text('I am post/put method'))
-
-    etc.
 
     If someone tries to use a non-implemented method, there will be a
     405 response.

@@ -23,6 +23,12 @@ from sanic.request import Request
 
 
 try:
+    from asyncio import BufferedProtocol as BaseProtocol  # type: ignore
+except ImportError:
+    # Support for Python 3.6
+    from asyncio import Protocol as BaseProtocol  # type: ignore
+
+try:
     import uvloop  # type: ignore
 
     if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
@@ -72,7 +78,7 @@ class ConnInfo:
             self.client_port = addr[1]
 
 
-class HttpProtocol(asyncio.Protocol):
+class HttpProtocol(BaseProtocol):
     """
     This class provides a basic HTTP implementation of the sanic framework.
     """
@@ -110,6 +116,7 @@ class HttpProtocol(asyncio.Protocol):
         "_http",
         "_exception",
         "recv_buffer",
+        "_buffer",
         "_unix",
     )
 
@@ -261,6 +268,9 @@ class HttpProtocol(asyncio.Protocol):
             self.transport = transport
             self._task = self.loop.create_task(self.connection_task())
             self.recv_buffer = bytearray()
+            self._buffer = memoryview(
+                bytearray(self.app.config.REQUEST_BUFFER_SIZE)
+            )
             self.conn_info = ConnInfo(self.transport, unix=self._unix)
         except Exception:
             logger.exception("protocol.connect_made")
@@ -280,6 +290,10 @@ class HttpProtocol(asyncio.Protocol):
     def resume_writing(self):
         self._can_write.set()
 
+    # -------------------------------------------- #
+    # Python 3.6
+    # -------------------------------------------- #
+
     def data_received(self, data):
         try:
             self._time = current_time()
@@ -294,6 +308,29 @@ class HttpProtocol(asyncio.Protocol):
                 self._data_received.set()
         except Exception:
             logger.exception("protocol.data_received")
+
+    # -------------------------------------------- #
+    # Python 3.7+
+    # -------------------------------------------- #
+
+    def get_buffer(self, sizehint=-1):
+        return self._buffer
+
+    def buffer_updated(self, nbytes: int) -> None:
+        data = self._buffer[:nbytes]
+        self._time = current_time()
+        self.recv_buffer += data
+
+        if len(self.recv_buffer) > self.app.config.REQUEST_BUFFER_SIZE:
+            self.transport.pause_reading()
+
+        if self._data_received:
+            self._data_received.set()
+
+    def eof_received(self):
+        return self.close()
+
+    #     self.data_received(b"")
 
 
 def trigger_events(events, loop):

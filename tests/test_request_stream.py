@@ -59,7 +59,6 @@ def test_request_stream_100_continue(app, headers, expect_raise_exception):
             result = ""
             while True:
                 body = await request.stream.read()
-                print(f"{body=}")
                 if body is None:
                     break
                 result += body.decode("utf-8")
@@ -647,7 +646,6 @@ def test_streaming_echo():
                 data = await reader.read(4096)
                 assert data
                 buffer += data
-                print(res)
             assert buffer[size : size + 2] == b"\r\n"
             ret, buffer = buffer[:size], buffer[size + 2 :]
             return ret

@@ -194,7 +194,6 @@ def test_versioned_routes_get(app, method):
             return text("OK")
 
     else:
-        print(func)
         raise Exception(f"Method: {method} is not callable")
 
     client_method = getattr(app.test_client, method)

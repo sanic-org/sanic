@@ -11,7 +11,7 @@ from sanic.exceptions import SignalsNotFrozenException
 
 
 class Singleton(type):
-    _instances = {}
+    _instances = {}  # type: t.Dict[type, t.Any]
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
@@ -30,9 +30,9 @@ class SignalContext:
         context: t.AnyStr,
         action: t.Union[None, t.AnyStr],
     ):
-        self._namespace = namespace
-        self._context = context
-        self._action = action
+        self._namespace = namespace  # type: t.AnyStr
+        self._context = context  # type: t.AnyStr
+        self._action = action  # type: t.Union[None, t.AnyStr]
 
     def __repr__(self):
         signal_name = f"{self._namespace}.{self._context}"
@@ -50,9 +50,13 @@ class SignalData:
         response: t.Union[None, "sanic.response.HTTPResponse"] = None,
         additional_info: t.Dict[t.AnyStr, t.Any] = None,
     ):
-        self._request = request
-        self._response = response
-        self._additional_info = additional_info
+        self._request = request  # type: t.Union[None, "sanic.request.Request"]
+        self._response = (
+            response
+        )  # type: t.Union[None, "sanic.response.HTTPResponse"]
+        self._additional_info = (
+            additional_info
+        )  # type: t.Dict[t.AnyStr, t.Any]
 
     @property
     def request(self) -> t.Union[None, "sanic.request.Request"]:
@@ -89,11 +93,11 @@ class Signal(FrozenList):
 
     async def dispatch(
         self,
-        app: "sanic.Sanic",
-        loop: AbstractEventLoop,
         signal: SignalContext,
-        signal_data: SignalData,
-    ):
+        app: t.Union[None, "sanic.Sanic"],
+        loop: t.Union[None, AbstractEventLoop],
+        signal_data: t.Union[None, SignalData],
+    ) -> None:
         if not self.frozen:
             raise SignalsNotFrozenException(
                 message=f"Unable to dispatch events on a non-frozen signal set for source {self._owner}"
@@ -122,15 +126,15 @@ class SignalRegistry(metaclass=Singleton):
         self._signals_map = {}  # type: t.Dict[SignalContext, Signal]
 
     @property
-    def signals(self):
+    def signals(self) -> t.Dict[SignalContext, Signal]:
         return self._signals_map
 
-    def register(self, context: SignalContext, owner: t.AnyStr):
+    def register(self, context: SignalContext, owner: t.AnyStr) -> None:
         self._signals_map[context] = Signal(owner=owner)
 
     def subscribe(
         self, context: SignalContext, callback: t.Callable[..., signal_handler]
-    ):
+    ) -> None:
         self._signals_map[context].append(callback)
 
     async def dispatch(
@@ -139,12 +143,12 @@ class SignalRegistry(metaclass=Singleton):
         data: t.Union[None, SignalData] = None,
         app: t.Union[None, "sanic.Sanic"] = None,
         loop: t.Union[None, AbstractEventLoop] = None,
-    ):
+    ) -> None:
         await self._signals_map[context].dispatch(
             app=app, loop=loop, signal=context, signal_data=data
         )
 
-    def freeze(self, context: t.Union[SignalContext, None] = None):
+    def freeze(self, context: t.Union[SignalContext, None] = None) -> None:
         if not context:
             for _ctx, _sig in self._signals_map.items():
                 _sig.freeze()

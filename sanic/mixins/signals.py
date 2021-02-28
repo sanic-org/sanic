@@ -21,7 +21,7 @@ class SignalMixin:
     def __init__(self, *args, **kwargs) -> None:
         self._signal_registry = SignalRegistry()
         self._ctx_mapper = {}  # type: t.Dict[str, SignalContext]
-        self.name = None
+        self.name = ""
 
     def signal(self, signal: str):
         def _wrapper(handler: t.Callable):

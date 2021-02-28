@@ -2,6 +2,7 @@ import re
 import string
 
 from datetime import datetime
+from typing import Dict
 
 
 DEFAULT_MAX_AGE = 0
@@ -41,16 +42,17 @@ _is_legal_key = re.compile("[%s]+" % re.escape(_LegalChars)).fullmatch
 
 
 class CookieJar(dict):
-    """CookieJar dynamically writes headers as cookies are added and removed
+    """
+    CookieJar dynamically writes headers as cookies are added and removed
     It gets around the limitation of one header per name by using the
     MultiHeader class to provide a unique key that encodes to Set-Cookie.
     """
 
     def __init__(self, headers):
         super().__init__()
-        self.headers = headers
-        self.cookie_headers = {}
-        self.header_key = "Set-Cookie"
+        self.headers: Dict[str, str] = headers
+        self.cookie_headers: Dict[str, str] = {}
+        self.header_key: str = "Set-Cookie"
 
     def __setitem__(self, key, value):
         # If this cookie doesn't exist, add it to the header keys

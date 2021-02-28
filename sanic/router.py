@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from sanic_routing import BaseRouter  # type: ignore
 from sanic_routing.exceptions import NoMethod  # type: ignore
@@ -10,6 +10,7 @@ from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import MethodNotSupported, NotFound
+from sanic.handlers import RouteHandler
 from sanic.request import Request
 
 
@@ -30,7 +31,9 @@ class Router(BaseRouter):
     # However, overall application performance is significantly improved
     # with the lru_cache on this method.
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
-    def _get(self, path, method, host):
+    def _get(
+        self, path, method, host
+    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool]:
         try:
             route, handler, params = self.resolve(
                 path=path,
@@ -74,7 +77,7 @@ class Router(BaseRouter):
         self,
         uri: str,
         methods: Iterable[str],
-        handler,
+        handler: RouteHandler,
         host: Optional[Union[str, Iterable[str]]] = None,
         strict_slashes: bool = False,
         stream: bool = False,

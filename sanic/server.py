@@ -1,3 +1,23 @@
+from __future__ import annotations
+
+from ssl import SSLContext
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Type,
+    Union,
+)
+
+from sanic.handlers import ListenerType
+
+
+if TYPE_CHECKING:
+    from sanic.app import Sanic
+
 import asyncio
 import multiprocessing
 import os
@@ -6,19 +26,20 @@ import socket
 import stat
 
 from asyncio import CancelledError
+from asyncio.transports import Transport
 from functools import partial
 from inspect import isawaitable
 from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import monotonic as current_time
-from typing import Dict, Type, Union
 
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import logger
+from sanic.models.protocol_types import TransportProtocol
 from sanic.request import Request
 
 
@@ -50,8 +71,8 @@ class ConnInfo:
         "ssl",
     )
 
-    def __init__(self, transport, unix=None):
-        self.ssl = bool(transport.get_extra_info("sslcontext"))
+    def __init__(self, transport: TransportProtocol, unix=None):
+        self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
         self.server = self.client = ""
         self.server_port = self.client_port = 0
         self.peername = None
@@ -117,8 +138,8 @@ class HttpProtocol(asyncio.Protocol):
         self,
         *,
         loop,
-        app,
-        signal=Signal(),
+        app: Sanic,
+        signal=None,
         connections=None,
         state=None,
         unix=None,
@@ -126,12 +147,12 @@ class HttpProtocol(asyncio.Protocol):
     ):
         asyncio.set_event_loop(loop)
         self.loop = loop
-        self.app = app
+        self.app: Sanic = app
         self.url = None
-        self.transport = None
-        self.conn_info = None
-        self.request = None
-        self.signal = signal
+        self.transport: Optional[Transport] = None
+        self.conn_info: Optional[ConnInfo] = None
+        self.request: Optional[Request] = None
+        self.signal = signal or Signal()
         self.access_log = self.app.config.ACCESS_LOG
         self.connections = connections if connections is not None else set()
         self.request_handler = self.app.handle_request
@@ -159,7 +180,8 @@ class HttpProtocol(asyncio.Protocol):
         self.check_timeouts()
 
     async def connection_task(self):
-        """Run a HTTP connection.
+        """
+        Run a HTTP connection.
 
         Timeouts and some additional error handling occur here, while most of
         everything else happens in class Http or in code called from there.
@@ -186,13 +208,17 @@ class HttpProtocol(asyncio.Protocol):
                 logger.exception("Closing failed")
 
     async def receive_more(self):
-        """Wait until more data is received into self._buffer."""
+        """
+        Wait until more data is received into the Server protocol's buffer
+        """
         self.transport.resume_reading()
         self._data_received.clear()
         await self._data_received.wait()
 
     def check_timeouts(self):
-        """Runs itself periodically to enforce any expired timeouts."""
+        """
+        Runs itself periodically to enforce any expired timeouts.
+        """
         try:
             if not self._task:
                 return
@@ -223,15 +249,18 @@ class HttpProtocol(asyncio.Protocol):
             logger.exception("protocol.check_timeouts")
 
     async def send(self, data):
-        """Writes data with backpressure control."""
+        """
+        Writes data with backpressure control.
+        """
         await self._can_write.wait()
         if self.transport.is_closing():
             raise CancelledError
         self.transport.write(data)
         self._time = current_time()
 
-    def close_if_idle(self):
-        """Close the connection if a request is not being sent or received
+    def close_if_idle(self) -> bool:
+        """
+        Close the connection if a request is not being sent or received
 
         :return: boolean - True if closed, false if staying open
         """
@@ -280,14 +309,17 @@ class HttpProtocol(asyncio.Protocol):
     def resume_writing(self):
         self._can_write.set()
 
-    def data_received(self, data):
+    def data_received(self, data: bytes):
         try:
             self._time = current_time()
             if not data:
                 return self.close()
             self.recv_buffer += data
 
-            if len(self.recv_buffer) > self.app.config.REQUEST_BUFFER_SIZE:
+            if (
+                len(self.recv_buffer) > self.app.config.REQUEST_BUFFER_SIZE
+                and self.transport
+            ):
                 self.transport.pause_reading()
 
             if self._data_received:
@@ -296,16 +328,18 @@ class HttpProtocol(asyncio.Protocol):
             logger.exception("protocol.data_received")
 
 
-def trigger_events(events, loop):
-    """Trigger event callbacks (functions or async)
+def trigger_events(events: Optional[Iterable[Callable[..., Any]]], loop):
+    """
+    Trigger event callbacks (functions or async)
 
     :param events: one or more sync or async functions to execute
     :param loop: event loop
     """
-    for event in events:
-        result = event(loop)
-        if isawaitable(result):
-            loop.run_until_complete(result)
+    if events:
+        for event in events:
+            result = event(loop)
+            if isawaitable(result):
+                loop.run_until_complete(result)
 
 
 class AsyncioServer:
@@ -329,9 +363,9 @@ class AsyncioServer:
         loop,
         serve_coro,
         connections,
-        after_start,
-        before_stop,
-        after_stop,
+        after_start: Optional[Iterable[ListenerType]],
+        before_stop: Optional[Iterable[ListenerType]],
+        after_stop: Optional[Iterable[ListenerType]],
     ):
         # Note, Sanic already called "before_server_start" events
         # before this helper was even created. So we don't need it here.
@@ -344,18 +378,24 @@ class AsyncioServer:
         self.connections = connections
 
     def after_start(self):
-        """Trigger "after_server_start" events"""
+        """
+        Trigger "after_server_start" events
+        """
         trigger_events(self._after_start, self.loop)
 
     def before_stop(self):
-        """Trigger "before_server_stop" events"""
+        """
+        Trigger "before_server_stop" events
+        """
         trigger_events(self._before_stop, self.loop)
 
     def after_stop(self):
-        """Trigger "after_server_stop" events"""
+        """
+        Trigger "after_server_stop" events
+        """
         trigger_events(self._after_stop, self.loop)
 
-    def is_serving(self):
+    def is_serving(self) -> bool:
         if self.server:
             return self.server.is_serving()
         return False
@@ -392,7 +432,9 @@ class AsyncioServer:
                 )
 
     def __await__(self):
-        """Starts the asyncio server, returns AsyncServerCoro"""
+        """
+        Starts the asyncio server, returns AsyncServerCoro
+        """
         task = asyncio.ensure_future(self.serve_coro)
         while not task.done():
             yield
@@ -404,20 +446,20 @@ def serve(
     host,
     port,
     app,
-    before_start=None,
-    after_start=None,
-    before_stop=None,
-    after_stop=None,
-    ssl=None,
-    sock=None,
-    unix=None,
-    reuse_port=False,
+    before_start: Optional[Iterable[ListenerType]] = None,
+    after_start: Optional[Iterable[ListenerType]] = None,
+    before_stop: Optional[Iterable[ListenerType]] = None,
+    after_stop: Optional[Iterable[ListenerType]] = None,
+    ssl: Optional[SSLContext] = None,
+    sock: Optional[socket.socket] = None,
+    unix: Optional[str] = None,
+    reuse_port: bool = False,
     loop=None,
-    protocol=HttpProtocol,
-    backlog=100,
-    register_sys_signals=True,
-    run_multiple=False,
-    run_async=False,
+    protocol: Type[asyncio.Protocol] = HttpProtocol,
+    backlog: int = 100,
+    register_sys_signals: bool = True,
+    run_multiple: bool = False,
+    run_async: bool = False,
     connections=None,
     signal=Signal(),
     state=None,
@@ -542,7 +584,7 @@ def serve(
         # instead of letting connection hangs forever.
         # Let's roughly calcucate time.
         graceful = app.config.GRACEFUL_SHUTDOWN_TIMEOUT
-        start_shutdown = 0
+        start_shutdown: float = 0
         while connections and (start_shutdown < graceful):
             loop.run_until_complete(asyncio.sleep(0.1))
             start_shutdown = start_shutdown + 0.1
@@ -565,7 +607,7 @@ def serve(
 
 
 def _build_protocol_kwargs(
-    protocol: Type[HttpProtocol], config: Config
+    protocol: Type[asyncio.Protocol], config: Config
 ) -> Dict[str, Union[int, float]]:
     if hasattr(protocol, "websocket_handshake"):
         return {
@@ -641,7 +683,7 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     return sock
 
 
-def remove_unix_socket(path: str) -> None:
+def remove_unix_socket(path: Optional[str]) -> None:
     """Remove dead unix socket during server exit."""
     if not path:
         return

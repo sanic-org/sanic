@@ -1,41 +1,51 @@
 from collections import defaultdict
+from typing import Dict, List, Optional
+
+from sanic_routing.route import Route  # type: ignore
 
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
+from sanic.handlers import ListenerType, MiddlewareType, RouteHandler
 from sanic.models.futures import FutureRoute, FutureStatic
 
 
 class Blueprint(BaseSanic):
+    """
+    In *Sanic* terminology, a **Blueprint** is a logical collection of
+    URLs that perform a specific set of tasks which can be identified by
+    a unique name.
+
+    It is the main tool for grouping functionality and similar endpoints.
+
+    `See user guide
+    <https://sanicframework.org/guide/best-practices/blueprints.html>`__
+
+    :param name: unique name of the blueprint
+    :param url_prefix: URL to be prefixed before all route URLs
+    :param host: IP Address of FQDN for the sanic server to use.
+    :param version: Blueprint Version
+    :param strict_slashes: Enforce the API urls are requested with a
+        training */*
+    """
+
     def __init__(
         self,
-        name,
-        url_prefix=None,
-        host=None,
-        version=None,
-        strict_slashes=None,
+        name: str,
+        url_prefix: Optional[str] = None,
+        host: Optional[str] = None,
+        version: Optional[int] = None,
+        strict_slashes: Optional[bool] = None,
     ):
-        """
-        In *Sanic* terminology, a **Blueprint** is a logical collection of
-        URLs that perform a specific set of tasks which can be identified by
-        a unique name.
-
-        :param name: unique name of the blueprint
-        :param url_prefix: URL to be prefixed before all route URLs
-        :param host: IP Address of FQDN for the sanic server to use.
-        :param version: Blueprint Version
-        :param strict_slashes: Enforce the API urls are requested with a
-            training */*
-        """
         self.name = name
         self.url_prefix = url_prefix
         self.host = host
 
-        self.routes = []
-        self.websocket_routes = []
-        self.exceptions = []
-        self.listeners = defaultdict(list)
-        self.middlewares = []
-        self.statics = []
+        self.routes: List[Route] = []
+        self.websocket_routes: List[Route] = []
+        self.exceptions: List[RouteHandler] = []
+        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.middlewares: List[MiddlewareType] = []
+        self.statics: List[RouteHandler] = []
         self.version = version
         self.strict_slashes = strict_slashes
 
@@ -100,6 +110,9 @@ class Blueprint(BaseSanic):
         url_prefix = options.get("url_prefix", self.url_prefix)
 
         routes = []
+        middleware = []
+        exception_handlers = []
+        listeners = defaultdict(list)
 
         # Routes
         for future in self._future_routes:
@@ -152,12 +165,22 @@ class Blueprint(BaseSanic):
         # Middleware
         if route_names:
             for future in self._future_middleware:
-                app._apply_middleware(future, route_names)
+                middleware.append(app._apply_middleware(future, route_names))
 
         # Exceptions
         for future in self._future_exceptions:
-            app._apply_exception_handler(future)
+            exception_handlers.append(app._apply_exception_handler(future))
 
         # Event listeners
         for listener in self._future_listeners:
-            app._apply_listener(listener)
+            listeners[listener.event].append(app._apply_listener(listener))
+
+        self.routes = [route for route in routes if isinstance(route, Route)]
+
+        # Deprecate these in 21.6
+        self.websocket_routes = [
+            route for route in self.routes if route.ctx.websocket
+        ]
+        self.middlewares = middleware
+        self.exceptions = exception_handlers
+        self.listeners = dict(listeners)

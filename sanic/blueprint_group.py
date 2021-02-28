@@ -1,4 +1,5 @@
 from collections.abc import MutableSequence
+from typing import List
 
 
 class BlueprintGroup(MutableSequence):
@@ -9,6 +10,32 @@ class BlueprintGroup(MutableSequence):
     some of the existing implementation, this class provides a custom
     iterator implementation that will let you use the object of this
     class as a list/tuple inside the existing implementation.
+
+    .. code-block:: python
+
+        bp1 = Blueprint('bp1', url_prefix='/bp1')
+        bp2 = Blueprint('bp2', url_prefix='/bp2')
+
+        @bp1.middleware('request')
+        async def bp1_only_middleware(request):
+            print('applied on Blueprint : bp1 Only')
+
+        @bp1.route('/')
+        async def bp1_route(request):
+            return text('bp1')
+
+        @bp2.route('/<param>')
+        async def bp2_route(request, param):
+            return text(param)
+
+        group = Blueprint.group(bp1, bp2)
+
+        @group.middleware('request')
+        async def group_middleware(request):
+            print('common middleware applied for both bp1 and bp2')
+
+        # Register Blueprint group under the app
+        app.blueprint(group)
     """
 
     __slots__ = ("_blueprints", "_url_prefix")
@@ -23,23 +50,27 @@ class BlueprintGroup(MutableSequence):
         self._url_prefix = url_prefix
 
     @property
-    def url_prefix(self):
+    def url_prefix(self) -> str:
         """
         Retrieve the URL prefix being used for the Current Blueprint Group
+
         :return: string with url prefix
         """
         return self._url_prefix
 
     @property
-    def blueprints(self):
+    def blueprints(self) -> List:
         """
         Retrieve a list of all the available blueprints under this group.
+
         :return: List of Blueprint instance
         """
         return self._blueprints
 
     def __iter__(self):
-        """Tun the class Blueprint Group into an Iterable item"""
+        """
+        Tun the class Blueprint Group into an Iterable item
+        """
         return iter(self._blueprints)
 
     def __getitem__(self, item):
@@ -85,6 +116,7 @@ class BlueprintGroup(MutableSequence):
     def __len__(self) -> int:
         """
         Get the Length of the blueprint group object.
+
         :return: Length of Blueprint group object
         """
         return len(self._blueprints)

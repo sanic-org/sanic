@@ -11,7 +11,18 @@ from inspect import isawaitable
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Deque,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Type,
+    Union,
+)
 from urllib.parse import urlencode, urlunparse
 
 from sanic_routing.exceptions import FinalizationError  # type: ignore
@@ -54,6 +65,10 @@ from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic(BaseSanic):
+    """
+    The main application instance
+    """
+
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
@@ -63,7 +78,7 @@ class Sanic(BaseSanic):
         router: Router = None,
         error_handler: ErrorHandler = None,
         load_env: bool = True,
-        request_class: Request = None,
+        request_class: Type[Request] = None,
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
@@ -86,8 +101,8 @@ class Sanic(BaseSanic):
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
-        self.request_middleware: Iterable[MiddlewareType] = deque()
-        self.response_middleware: Iterable[MiddlewareType] = deque()
+        self.request_middleware: Deque[MiddlewareType] = deque()
+        self.response_middleware: Deque[MiddlewareType] = deque()
         self.blueprints: Dict[str, Blueprint] = {}
         self._blueprint_order: List[Blueprint] = []
         self.configure_logging = configure_logging
@@ -99,8 +114,10 @@ class Sanic(BaseSanic):
         self.is_running = False
         self.websocket_enabled = False
         self.websocket_tasks: Set[Future] = set()
-        self.named_request_middleware: Dict[str, MiddlewareType] = {}
-        self.named_response_middleware: Dict[str, MiddlewareType] = {}
+        self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        # self.named_request_middleware: Dict[str, MiddlewareType] = {}
+        # self.named_response_middleware: Dict[str, MiddlewareType] = {}
         self._test_manager = None
         self._test_client = None
         self._asgi_client = None
@@ -117,9 +134,12 @@ class Sanic(BaseSanic):
 
     @property
     def loop(self):
-        """Synonymous with asyncio.get_event_loop().
+        """
+        Synonymous with asyncio.get_event_loop().
 
-        Only supported when using the `app.run` method.
+        .. note::
+
+            Only supported when using the `app.run` method.
         """
         if not self.is_running and self.asgi is False:
             raise SanicException(
@@ -132,11 +152,15 @@ class Sanic(BaseSanic):
     # Registration
     # -------------------------------------------------------------------- #
 
-    def add_task(self, task):
-        """Schedule a task to run later, after the loop has started.
+    def add_task(self, task) -> None:
+        """
+        Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
         also return a future, and the actual ensure_future call
         is delayed until before server start.
+
+        `See user guide
+        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
 
         :param task: future, couroutine or awaitable
         """
@@ -148,7 +172,7 @@ class Sanic(BaseSanic):
                 partial(self._loop_add_task, task)
             )
 
-    def register_listener(self, listener, event):
+    def register_listener(self, listener: Callable, event: str) -> Any:
         """
         Register the listener for a given event.
 
@@ -166,7 +190,7 @@ class Sanic(BaseSanic):
         self.listeners[_event].append(listener)
         return listener
 
-    def register_middleware(self, middleware, attach_to="request"):
+    def register_middleware(self, middleware, attach_to: str = "request"):
         """
         Register an application level middleware that will be attached
         to all the API URLs registered under this application.
@@ -191,8 +215,23 @@ class Sanic(BaseSanic):
         return middleware
 
     def register_named_middleware(
-        self, middleware, route_names, attach_to="request"
+        self,
+        middleware,
+        route_names: Iterable[str],
+        attach_to: str = "request",
     ):
+        """
+        Method for attaching middleware to specific routes. This is mainly an
+        internal tool for use by Blueprints to attach middleware to only its
+        specfic routes. But, it could be used in a more generalized fashion.
+
+        :param middleware: the middleware to execute
+        :param route_names: a list of the names of the endpoints
+        :type route_names: Iterable[str]
+        :param attach_to: whether to attach to request or response,
+            defaults to "request"
+        :type attach_to: str, optional
+        """
         if attach_to == "request":
             for _rn in route_names:
                 if _rn not in self.named_request_middleware:
@@ -205,6 +244,7 @@ class Sanic(BaseSanic):
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
+        return middleware
 
     def _apply_exception_handler(self, handler: FutureException):
         """Decorate a function to be registered as a handler for exceptions
@@ -219,12 +259,12 @@ class Sanic(BaseSanic):
                     self.error_handler.add(e, handler.handler)
             else:
                 self.error_handler.add(exception, handler.handler)
-        return handler
+        return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
         return self.register_listener(listener.listener, listener.event)
 
-    def _apply_route(self, route: FutureRoute) -> Route:
+    def _apply_route(self, route: FutureRoute) -> List[Route]:
         params = route._asdict()
         websocket = params.pop("websocket", False)
         subprotocols = params.pop("subprotocols", None)
@@ -239,7 +279,15 @@ class Sanic(BaseSanic):
             websocket_handler.__name__ = route.handler.__name__  # type: ignore
             websocket_handler.is_websocket = True  # type: ignore
             params["handler"] = websocket_handler
-        return self.router.add(**params)
+
+        routes = self.router.add(**params)
+        if isinstance(routes, Route):
+            routes = [routes]
+        for r in routes:
+            r.ctx.websocket = websocket
+            r.ctx.static = params.get("static", False)
+
+        return routes
 
     def _apply_static(self, static: FutureStatic) -> Route:
         return self._register_static(static)
@@ -309,8 +357,11 @@ class Sanic(BaseSanic):
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
+        `See user guide
+        <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
+
         :param view_name: string referencing the view name
-        :param **kwargs: keys and values that are used to build request
+        :param kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL
@@ -448,7 +499,18 @@ class Sanic(BaseSanic):
     # Request Handling
     # -------------------------------------------------------------------- #
 
-    async def handle_exception(self, request, exception):
+    async def handle_exception(
+        self, request: Request, exception: BaseException
+    ):
+        """
+        A handler that catches specific exceptions and outputs a response.
+
+        :param request: The current request object
+        :type request: :class:`SanicASGITestClient`
+        :param exception: The exception that was raised
+        :type exception: BaseException
+        :raises ServerError: response 500
+        """
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
@@ -481,11 +543,13 @@ class Sanic(BaseSanic):
                 response = await request.respond(response)
             except BaseException:
                 # Skip response middleware
-                request.stream.respond(response)
+                if request.stream:
+                    request.stream.respond(response)
                 await response.send(end_stream=True)
                 raise
         else:
-            response = request.stream.response
+            if request.stream:
+                response = request.stream.response
         if isinstance(response, BaseHTTPResponse):
             await response.send(end_stream=True)
         else:
@@ -493,7 +557,7 @@ class Sanic(BaseSanic):
                 f"Invalid response type {response!r} (need HTTPResponse)"
             )
 
-    async def handle_request(self, request):
+    async def handle_request(self, request: Request):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
@@ -522,7 +586,11 @@ class Sanic(BaseSanic):
             request.name = name
             request._match_info = kwargs
 
-            if request.stream.request_body and not ignore_body:
+            if (
+                request.stream
+                and request.stream.request_body
+                and not ignore_body
+            ):
                 if self.router.is_stream_handler(request):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
@@ -560,7 +628,8 @@ class Sanic(BaseSanic):
             if response:
                 response = await request.respond(response)
             else:
-                response = request.stream.response
+                if request.stream:
+                    response = request.stream.response
             # Make sure that response is finished / run StreamingHTTP callback
 
             if isinstance(response, BaseHTTPResponse):
@@ -568,7 +637,7 @@ class Sanic(BaseSanic):
             else:
                 try:
                     # Fastest method for checking if the property exists
-                    handler.is_websocket
+                    handler.is_websocket  # type: ignore
                 except AttributeError:
                     raise ServerError(
                         f"Invalid response type {response!r} "
@@ -632,6 +701,13 @@ class Sanic(BaseSanic):
 
     @property
     def asgi_client(self):  # noqa
+        """
+        A testing client that uses ASGI to reach into the application to
+        execute hanlers.
+
+        :return: testing client
+        :rtype: :class:`SanicASGITestClient`
+        """
         if self._asgi_client:
             return self._asgi_client
         elif self._test_manager:
@@ -662,7 +738,8 @@ class Sanic(BaseSanic):
         unix: Optional[str] = None,
         loop: None = None,
     ) -> None:
-        """Run the HTTP Server and listen until keyboard interrupt or term
+        """
+        Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
         :param host: Address to host on
@@ -754,7 +831,9 @@ class Sanic(BaseSanic):
         logger.info("Server Stopped")
 
     def stop(self):
-        """This kills the Sanic"""
+        """
+        This kills the Sanic
+        """
         if not self.is_stopping:
             self.is_stopping = True
             get_event_loop().stop()
@@ -771,8 +850,8 @@ class Sanic(BaseSanic):
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        return_asyncio_server=False,
-        asyncio_server_kwargs=None,
+        return_asyncio_server: bool = False,
+        asyncio_server_kwargs: Dict[str, Any] = None,
     ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
@@ -1029,25 +1108,29 @@ class Sanic(BaseSanic):
     # -------------------------------------------------------------------- #
 
     async def __call__(self, scope, receive, send):
-        """To be ASGI compliant, our instance must be a callable that accepts
+        """
+        To be ASGI compliant, our instance must be a callable that accepts
         three arguments: scope, receive, send. See the ASGI reference for more
-        details: https://asgi.readthedocs.io/en/latest/"""
-        # raise Exception("call")
+        details: https://asgi.readthedocs.io/en/latest
+        """
         self.asgi = True
         self._asgi_app = await ASGIApp.create(self, scope, receive, send)
         asgi_app = self._asgi_app
         await asgi_app()
 
-    # _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
+    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
 
     # -------------------------------------------------------------------- #
     # Configuration
     # -------------------------------------------------------------------- #
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """Update app.config.
+        """
+        Update app.config. Full implementation can be found in the user guide.
 
-        Please refer to config.py::Config.update_config for documentation."""
+        `See user guide
+        <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
+        """
 
         self.config.update_config(config)
 
@@ -1057,7 +1140,9 @@ class Sanic(BaseSanic):
 
     @classmethod
     def register_app(cls, app: "Sanic") -> None:
-        """Register a Sanic instance"""
+        """
+        Register a Sanic instance
+        """
         if not isinstance(app, cls):
             raise SanicException("Registered app must be an instance of Sanic")
 
@@ -1069,7 +1154,9 @@ class Sanic(BaseSanic):
 
     @classmethod
     def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
-        """Retrieve an instantiated Sanic instance"""
+        """
+        Retrieve an instantiated Sanic instance
+        """
         try:
             return cls._app_registry[name]
         except KeyError:

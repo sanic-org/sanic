@@ -6,6 +6,9 @@ from urllib.parse import unquote
 from sanic.helpers import STATUS_CODES
 
 
+# TODO:
+# - the Options object should be a typed object to allow for less casting
+#   across the application (in request.py for example)
 HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
 HeaderBytesIterable = Iterable[Tuple[bytes, bytes]]
 Options = Dict[str, Union[int, str]]  # key=value fields in various headers

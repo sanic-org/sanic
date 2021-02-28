@@ -90,6 +90,7 @@ requirements = [
     "aiofiles>=0.6.0",
     "websockets>=8.1,<9.0",
     "multidict>=5.0,<6.0",
+    "frozenlist==1.1.1",
 ]
 
 tests_require = [

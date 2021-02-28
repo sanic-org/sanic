@@ -188,3 +188,11 @@ def abort(status_code, message=None):
         message = message.decode("utf8")
     sanic_exception = _sanic_exceptions.get(status_code, SanicException)
     raise sanic_exception(message=message, status_code=status_code)
+
+
+class SignalsNotFrozenException(SanicException):
+    pass
+
+
+class InvalidSignalFormatException(SanicException):
+    pass

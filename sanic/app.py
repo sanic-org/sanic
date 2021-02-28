@@ -28,6 +28,7 @@ from sanic.exceptions import (
     SanicException,
     ServerError,
     URLBuildError,
+    NotFound,
 )
 from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
@@ -49,6 +50,7 @@ from sanic.server import (
     serve,
     serve_multiple,
 )
+from sanic.signals import SignalData
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
@@ -510,6 +512,9 @@ class Sanic(BaseSanic):
         response = None
         name = None
         try:
+            await self.publish(
+                signal="app.route.before", data=SignalData(request=request)
+            )
             # Fetch handler from router
             (
                 handler,
@@ -577,6 +582,11 @@ class Sanic(BaseSanic):
         except CancelledError:
             raise
         except Exception as e:
+            if isinstance(e, NotFound):
+                await self.publish(
+                    signal="app.route.missing",
+                    data=SignalData(request=request),
+                )
             # Response Generation Failed
             await self.handle_exception(request, e)
 
@@ -1040,6 +1050,22 @@ class Sanic(BaseSanic):
         Please refer to config.py::Config.update_config for documentation."""
 
         self.config.update_config(config)
+
+    # -------------------------------------------------------------------- #
+    # Signal Handler
+    # -------------------------------------------------------------------- #
+    async def publish(
+        self, signal: str, data: Union[Dict[str, Any], SignalData]
+    ):
+        if self.get_signal_context(signal=signal):
+            await self._signal_registry.dispatch(
+                context=self.get_signal_context(signal=signal),
+                data=SignalData(additional_info=data)
+                if not isinstance(data, SignalData)
+                else data,
+                app=self,
+                loop=self.loop,
+            )
 
     # -------------------------------------------------------------------- #
     # Class methods

@@ -2,6 +2,7 @@ from sanic.mixins.exceptions import ExceptionMixin
 from sanic.mixins.listeners import ListenerMixin
 from sanic.mixins.middleware import MiddlewareMixin
 from sanic.mixins.routes import RouteMixin
+from sanic.mixins.signals import SignalMixin
 
 
 class Base(type):
@@ -31,6 +32,7 @@ class BaseSanic(
     MiddlewareMixin,
     ListenerMixin,
     ExceptionMixin,
+    SignalMixin,
     metaclass=Base,
 ):
     ...

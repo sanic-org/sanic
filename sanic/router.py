@@ -11,16 +11,19 @@ from sanic_routing.route import Route  # type: ignore
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import MethodNotSupported, NotFound
 from sanic.request import Request
-
+from sanic.mixins.signals import SignalMixin
 
 ROUTER_CACHE_SIZE = 1024
 
 
-class Router(BaseRouter):
+class Router(BaseRouter, SignalMixin):
     """
     The router implementation responsible for routing a :class:`Request` object
     to the appropriate handler.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(Router, self).__init__(*args, **kwargs)
 
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS

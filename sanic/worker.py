@@ -76,7 +76,7 @@ class GunicornWorker(base.Worker):
         main_start = self._server_settings.pop("main_start", None)
         main_stop = self._server_settings.pop("main_stop", None)
 
-        if main_start or main_stop:
+        if main_start or main_stop:  # noqa
             logger.warning(
                 "Listener events for the main process are not available "
                 "with GunicornWorker"

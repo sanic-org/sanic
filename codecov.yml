@@ -1,0 +1,14 @@
+codecov:
+  require_ci_to_pass: no
+coverage:
+  precision: 3
+  round: nearest
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0.5%
+    patch:
+      default:
+        target: auto
+        threshold: 0.75%

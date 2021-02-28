@@ -66,7 +66,16 @@ class Config(dict):
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
         Looks for prefixed environment variables and applies
-        them to the configuration if present.
+        them to the configuration if present. This is called automatically when
+        Sanic starts up to load environment variables into config.
+
+        It will automatically hyrdate the following types:
+
+        - ``int``
+        - ``float``
+        - ``bool``
+
+        Anything else will be imported as a ``str``.
         """
         for k, v in environ.items():
             if k.startswith(prefix):
@@ -86,7 +95,9 @@ class Config(dict):
         """
         Update app.config.
 
-        Note:: only upper case settings are considered.
+        .. note::
+
+            Only upper case settings are considered
 
         You can upload app config by providing path to py file
         holding settings.
@@ -102,8 +113,8 @@ class Config(dict):
             config.update_config("${some}/py/file")
 
         Yes you can put environment variable here, but they must be provided
-        in format: ${some_env_var}, and mark that $some_env_var is treated
-        as plain string.
+        in format: ``${some_env_var}``, and mark that ``$some_env_var`` is
+        treated as plain string.
 
         You can upload app config by providing dict holding settings.
 
@@ -122,6 +133,9 @@ class Config(dict):
                 B = 2
 
             config.update_config(C)
+
+        `See user guide
+        <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
 
         if isinstance(config, (bytes, str, Path)):

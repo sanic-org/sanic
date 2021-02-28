@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from functools import partial
-from typing import List
+from typing import Any, Callable, Coroutine, List, Optional, Union
 
 from sanic.models.futures import FutureListener
 
@@ -24,10 +24,29 @@ class ListenerMixin:
     def _apply_listener(self, listener: FutureListener):
         raise NotImplementedError  # noqa
 
-    def listener(self, listener_or_event, event_or_none=None, apply=True):
-        """Create a listener from a decorated function.
+    def listener(
+        self,
+        listener_or_event: Union[
+            Callable[..., Coroutine[Any, Any, None]], str
+        ],
+        event_or_none: Optional[str] = None,
+        apply: bool = True,
+    ):
+        """
+        Create a listener from a decorated function.
 
-        :param event: Event to listen to.
+        To be used as a deocrator:
+
+        .. code-block:: python
+
+            @bp.listener("before_server_start")
+            async def before_server_start(app, loop):
+                ...
+
+        `See user guide
+        <https://sanicframework.org/guide/basics/listeners.html#listeners>`_
+
+        :param event: event to listen to
         """
 
         def register_listener(listener, event):

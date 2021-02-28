@@ -56,7 +56,7 @@ class Router(BaseRouter):
             params,
         )
 
-    def get(
+    def get(  # type: ignore
         self, request: Request
     ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         """
@@ -73,7 +73,7 @@ class Router(BaseRouter):
             request.path, request.method, request.headers.get("host")
         )
 
-    def add(
+    def add(  # type: ignore
         self,
         uri: str,
         methods: Iterable[str],
@@ -138,7 +138,7 @@ class Router(BaseRouter):
             if host:
                 params.update({"requirements": {"host": host}})
 
-            route = super().add(**params)
+            route = super().add(**params)  # type: ignore
             route.ctx.ignore_body = ignore_body
             route.ctx.stream = stream
             route.ctx.hosts = hosts

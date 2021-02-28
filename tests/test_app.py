@@ -32,9 +32,6 @@ def test_app_loop_running(app):
     assert response.text == "pass"
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
 def test_create_asyncio_server(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -44,9 +41,6 @@ def test_create_asyncio_server(app):
         assert srv.is_serving() is True
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
 def test_asyncio_server_no_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()
@@ -59,9 +53,6 @@ def test_asyncio_server_no_start_serving(app):
         assert srv.is_serving() is False
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
 def test_asyncio_server_start_serving(app):
     if not uvloop_installed():
         loop = asyncio.get_event_loop()

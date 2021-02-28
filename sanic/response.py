@@ -16,12 +16,11 @@ from typing import (
 from urllib.parse import quote_plus
 from warnings import warn
 
-from typing_extensions import Protocol
-
 from sanic.compat import Header, open_async
 from sanic.cookies import CookieJar
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
+from sanic.models.protocol_types import HTMLProtocol, Range
 
 
 try:
@@ -32,28 +31,6 @@ except ImportError:
     from json import dumps
 
     json_dumps = partial(dumps, separators=(",", ":"))
-
-
-class HTMLProtocol(Protocol):
-    def __html__(self) -> AnyStr:
-        ...
-
-    def _repr_html_(self) -> AnyStr:
-        ...
-
-
-class Range(Protocol):
-    def start(self) -> int:
-        ...
-
-    def end(self) -> int:
-        ...
-
-    def size(self) -> int:
-        ...
-
-    def total(self) -> int:
-        ...
 
 
 class BaseHTTPResponse:

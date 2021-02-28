@@ -159,7 +159,7 @@ class Sanic(BaseSanic):
         is delayed until before server start.
 
         `See user guide
-        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`_
+        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
 
         :param task: future, couroutine or awaitable
         """
@@ -243,6 +243,7 @@ class Sanic(BaseSanic):
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
+        return middleware
 
     def _apply_exception_handler(self, handler: FutureException):
         """Decorate a function to be registered as a handler for exceptions
@@ -257,12 +258,12 @@ class Sanic(BaseSanic):
                     self.error_handler.add(e, handler.handler)
             else:
                 self.error_handler.add(exception, handler.handler)
-        return handler
+        return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
         return self.register_listener(listener.listener, listener.event)
 
-    def _apply_route(self, route: FutureRoute) -> Route:
+    def _apply_route(self, route: FutureRoute) -> List[Route]:
         params = route._asdict()
         websocket = params.pop("websocket", False)
         subprotocols = params.pop("subprotocols", None)
@@ -277,7 +278,15 @@ class Sanic(BaseSanic):
             websocket_handler.__name__ = route.handler.__name__  # type: ignore
             websocket_handler.is_websocket = True  # type: ignore
             params["handler"] = websocket_handler
-        return self.router.add(**params)
+
+        routes = self.router.add(**params)
+        if isinstance(routes, Route):
+            routes = [routes]
+        for r in routes:
+            r.ctx.websocket = websocket
+            r.ctx.static = params.get("static", False)
+
+        return routes
 
     def _apply_static(self, static: FutureStatic) -> Route:
         return self._register_static(static)
@@ -348,7 +357,7 @@ class Sanic(BaseSanic):
         the output URL's query string.
 
         `See user guide
-        <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`_
+        <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
 
         :param view_name: string referencing the view name
         :param kwargs: keys and values that are used to build request

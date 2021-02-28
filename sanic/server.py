@@ -24,7 +24,6 @@ import os
 import secrets
 import socket
 import stat
-import sys
 
 from asyncio import CancelledError
 from asyncio.transports import Transport
@@ -40,6 +39,7 @@ from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import logger
+from sanic.models.protocol_types import TransportProtocol
 from sanic.request import Request
 
 
@@ -57,7 +57,9 @@ class Signal:
 
 
 class ConnInfo:
-    """Local and remote addresses and SSL status info."""
+    """
+    Local and remote addresses and SSL status info.
+    """
 
     __slots__ = (
         "sockname",
@@ -69,7 +71,7 @@ class ConnInfo:
         "ssl",
     )
 
-    def __init__(self, transport: Transport, unix=None):
+    def __init__(self, transport: TransportProtocol, unix=None):
         self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
         self.server = self.client = ""
         self.server_port = self.client_port = 0
@@ -145,7 +147,6 @@ class HttpProtocol(asyncio.Protocol):
     ):
         asyncio.set_event_loop(loop)
         self.loop = loop
-        deprecated_loop = self.loop if sys.version_info < (3, 7) else None
         self.app: Sanic = app
         self.url = None
         self.transport: Optional[Transport] = None
@@ -167,8 +168,8 @@ class HttpProtocol(asyncio.Protocol):
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
-        self._data_received = asyncio.Event(loop=deprecated_loop)
-        self._can_write = asyncio.Event(loop=deprecated_loop)
+        self._data_received = asyncio.Event()
+        self._can_write = asyncio.Event()
         self._can_write.set()
         self._exception = None
         self._unix = unix

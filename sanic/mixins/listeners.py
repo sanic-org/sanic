@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from functools import partial
-from typing import Any, Callable, Coroutine, List, Optional, Set, Union
+from typing import Any, Callable, Coroutine, List, Optional, Union
 
 from sanic.models.futures import FutureListener
 

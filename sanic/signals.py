@@ -6,19 +6,8 @@ from frozenlist import FrozenList
 
 import sanic
 
-
 from sanic.exceptions import SignalsNotFrozenException
-
-
-class Singleton(type):
-    _instances = {}  # type: t.Dict[type, t.Any]
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(
-                *args, **kwargs
-            )
-        return cls._instances[cls]
+from sanic.utils import Singleton
 
 
 class SignalContext:

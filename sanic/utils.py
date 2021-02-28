@@ -4,7 +4,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 from os import environ as os_environ
 from pathlib import Path
 from re import findall as re_findall
-from typing import Union
+from typing import Union, Dict, Any
 
 from sanic.exceptions import LoadFileException, PyFileError
 from sanic.helpers import import_string
@@ -129,3 +129,14 @@ def load_module_from_file_location(
             return import_string(location)
         except ValueError:
             raise IOError("Unable to load configuration %s" % str(location))
+
+
+class Singleton(type):
+    _instances = {}  # type: Dict[type, Any]
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(
+                *args, **kwargs
+            )
+        return cls._instances[cls]

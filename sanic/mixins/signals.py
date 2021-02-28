@@ -38,7 +38,7 @@ class SignalMixin:
 
         return _wrapper
 
-    def get_signal_context(self, signal: str) -> SignalContext:
+    def get_signal_context(self, signal: str) -> t.Union[None, SignalContext]:
         return self._ctx_mapper.get(signal)
 
     def freeze(self, signal: t.Union[None, str] = None):

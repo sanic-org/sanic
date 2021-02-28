@@ -1057,9 +1057,10 @@ class Sanic(BaseSanic):
     async def publish(
         self, signal: str, data: Union[Dict[str, Any], SignalData]
     ):
-        if self.get_signal_context(signal=signal):
+        ctx = self.get_signal_context(signal=signal)
+        if ctx:
             await self._signal_registry.dispatch(
-                context=self.get_signal_context(signal=signal),
+                context=ctx,
                 data=SignalData(additional_info=data)
                 if not isinstance(data, SignalData)
                 else data,

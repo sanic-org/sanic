@@ -15,13 +15,13 @@ class SignalContext:
 
     def __init__(
         self,
-        namespace: t.AnyStr,
-        context: t.AnyStr,
-        action: t.Union[None, t.AnyStr],
+        namespace: str,
+        context: str,
+        action: t.Union[None, str],
     ):
-        self._namespace = namespace  # type: t.AnyStr
-        self._context = context  # type: t.AnyStr
-        self._action = action  # type: t.Union[None, t.AnyStr]
+        self._namespace = namespace  # type: str
+        self._context = context  # type: str
+        self._action = action  # type: t.Union[None, str]
 
     def __repr__(self):
         signal_name = f"{self._namespace}.{self._context}"
@@ -37,15 +37,15 @@ class SignalData:
         self,
         request: t.Union[None, "sanic.request.Request"] = None,
         response: t.Union[None, "sanic.response.HTTPResponse"] = None,
-        additional_info: t.Dict[t.AnyStr, t.Any] = None,
-    ):
+        additional_info: t.Union[None, t.Dict[str, t.Any]] = None,
+    ) -> None:
         self._request = request  # type: t.Union[None, "sanic.request.Request"]
         self._response = (
             response
         )  # type: t.Union[None, "sanic.response.HTTPResponse"]
         self._additional_info = (
             additional_info
-        )  # type: t.Dict[t.AnyStr, t.Any]
+        )  # type: t.Union[None, t.Dict[str, t.Any]]
 
     @property
     def request(self) -> t.Union[None, "sanic.request.Request"]:
@@ -56,7 +56,7 @@ class SignalData:
         return self._response
 
     @property
-    def additional_info(self) -> t.Dict[t.AnyStr, t.Any]:
+    def additional_info(self) -> t.Union[None, t.Dict[str, t.Any]]:
         return self._additional_info
 
     def __repr__(self):
@@ -76,9 +76,9 @@ class SignalData:
 class Signal(FrozenList):
     __slots__ = ("_owner",)
 
-    def __init__(self, owner):
+    def __init__(self, owner: str):
         super(Signal, self).__init__(items=None)
-        self._owner = owner
+        self._owner = owner  # type: str
 
     async def dispatch(
         self,
@@ -118,7 +118,7 @@ class SignalRegistry(metaclass=Singleton):
     def signals(self) -> t.Dict[SignalContext, Signal]:
         return self._signals_map
 
-    def register(self, context: SignalContext, owner: t.AnyStr) -> None:
+    def register(self, context: SignalContext, owner: str) -> None:
         self._signals_map[context] = Signal(owner=owner)
 
     def subscribe(

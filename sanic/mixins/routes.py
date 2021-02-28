@@ -5,7 +5,7 @@ from os import path
 from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
-from typing import Set, Union
+from typing import Iterable, List, Optional, Set, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
@@ -30,7 +30,7 @@ class RouteMixin:
         self._future_routes: Set[FutureRoute] = set()
         self._future_statics: Set[FutureStatic] = set()
         self.name = ""
-        self.strict_slashes = False
+        self.strict_slashes: Optional[bool] = False
 
     def _apply_route(self, route: FutureRoute) -> Route:
         raise NotImplementedError  # noqa
@@ -40,33 +40,33 @@ class RouteMixin:
 
     def route(
         self,
-        uri,
-        methods=None,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-        ignore_body=False,
-        apply=True,
-        subprotocols=None,
-        websocket=False,
-        unquote=False,
-        static=False,
+        uri: str,
+        methods: Optional[Iterable[str]] = None,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = False,
+        apply: bool = True,
+        subprotocols: Optional[List[str]] = None,
+        websocket: bool = False,
+        unquote: bool = False,
+        static: bool = False,
     ):
-        """Create a blueprint route from a decorated function.
+        """
+        Decorate a function to be registered as a route
 
-        :param uri: endpoint at which the route will be accessible.
-        :param methods: list of acceptable HTTP methods.
-        :param host: IP Address of FQDN for the sanic server to use.
-        :param strict_slashes: Enforce the API urls are requested with a
-            training */*
-        :param stream: If the route should provide a streaming support
-        :param version: Blueprint Version
-        :param name: Unique name to identify the Route
-
-        :return a decorated method that when invoked will return an object
-            of type :class:`FutureRoute`
+        :param uri: path of the URL
+        :param methods: list or tuple of methods allowed
+        :param host: the host, if required
+        :param strict_slashes: whether to apply strict slashes to the route
+        :param stream: whether to allow the request to stream its body
+        :param version: route specific versioning
+        :param name: user defined route name for url_for
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests)
+        :return: tuple of routes, decorated function
         """
 
         # Fix case where the user did not prefix the URL with a /
@@ -161,13 +161,13 @@ class RouteMixin:
     def add_route(
         self,
         handler,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        stream=False,
+        uri: str,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        stream: bool = False,
     ):
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -220,12 +220,12 @@ class RouteMixin:
     # Shorthand method decorators
     def get(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -250,12 +250,12 @@ class RouteMixin:
 
     def post(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **POST** *HTTP* method
@@ -280,12 +280,12 @@ class RouteMixin:
 
     def put(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **PUT** *HTTP* method
@@ -310,13 +310,32 @@ class RouteMixin:
 
     def head(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
+        """
+        Add an API URL under the **HEAD** *HTTP* method
+
+        :param uri: URL to be tagged to **HEAD** method of *HTTP*
+        :type uri: str
+        :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
+        :param version: API Version
+        :type version: Optional[str], optional
+        :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"HEAD"}),
@@ -329,22 +348,30 @@ class RouteMixin:
 
     def options(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
 
         :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
+        :type uri: str
         :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
         :param version: API Version
+        :type version: Optional[str], optional
         :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -359,22 +386,32 @@ class RouteMixin:
 
     def patch(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         stream=False,
-        version=None,
-        name=None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         Add an API URL under the **PATCH** *HTTP* method
 
         :param uri: URL to be tagged to **PATCH** method of *HTTP*
+        :type uri: str
         :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
+        :param stream: whether to allow the request to stream its body
+        :type stream: Optional[bool], optional
         :param version: API Version
+        :type version: Optional[str], optional
         :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -389,12 +426,12 @@ class RouteMixin:
 
     def delete(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -419,22 +456,25 @@ class RouteMixin:
 
     def websocket(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        subprotocols=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        subprotocols: Optional[List[str]] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
         apply: bool = True,
     ):
-        """Create a blueprint websocket route from a decorated function.
+        """
+        Decorate a function to be registered as a websocket route
 
-        :param uri: endpoint at which the route will be accessible.
-        :param host: IP Address of FQDN for the sanic server to use.
-        :param strict_slashes: Enforce the API urls are requested with a
-            training */*
-        :param version: Blueprint Version
-        :param name: Unique name to identify the Websocket Route
+        :param uri: path of the URL
+        :param host: Host IP or FQDN details
+        :param strict_slashes: If the API endpoint needs to terminate
+                               with a "/" or not
+        :param subprotocols: optional list of str with supported subprotocols
+        :param name: A unique name assigned to the URL so that it can
+                     be used with :func:`url_for`
+        :return: tuple of routes, decorated function
         """
         return self.route(
             uri=uri,
@@ -451,12 +491,12 @@ class RouteMixin:
     def add_websocket_route(
         self,
         handler,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version=None,
-        name=None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
     ):
         """
         A helper method to register a function as a websocket route.

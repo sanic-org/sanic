@@ -77,9 +77,7 @@ class SignalData:
         if self._additional_info:
             info = f"{info}\nAdditional Info({self._additional_info})"
 
-        if info:
-            return info
-        return self
+        return info
 
 
 class Signal(FrozenList):
@@ -122,6 +120,10 @@ signal_handler = t.Callable[
 class SignalRegistry(metaclass=Singleton):
     def __init__(self):
         self._signals_map = {}  # type: t.Dict[SignalContext, Signal]
+
+    @property
+    def signals(self):
+        return self._signals_map
 
     def register(self, context: SignalContext, owner: t.AnyStr):
         self._signals_map[context] = Signal(owner=owner)

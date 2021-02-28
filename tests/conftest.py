@@ -14,6 +14,7 @@ from sanic_testing import TestManager
 from sanic import Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.router import Router
+from sanic.signals import SignalRegistry, SignalContext
 
 
 random.seed("Pack my box with five dozen liquor jugs.")
@@ -143,3 +144,59 @@ def url_param_generator():
 def app(request):
     app = Sanic(request.node.name)
     return app
+
+
+@pytest.fixture(scope="function")
+def callback_tracker():
+    class Tracker:
+        def __init__(self):
+            self.called = 0
+
+        def inc(self):
+            self.called += 1
+
+        @property
+        def call_count(self):
+            return self.called
+
+    return Tracker
+
+
+@pytest.fixture(scope="function")
+def signal_registry():
+    return SignalRegistry()
+
+
+@pytest.fixture(scope="function")
+def test_signal_context():
+    return SignalContext(namespace="test", context="unit-test", action="run")
+
+
+@pytest.fixture(scope="function")
+def dummy_signal_callback():
+    def _callback_generator(call_tracker=None):
+        async def _callback(app, loop, signal, data):
+            call_tracker.inc()
+            import logging
+
+            logger = logging.getLogger()
+            logger.info(f"{data} {signal}")
+
+        return _callback
+
+    return _callback_generator
+
+
+@pytest.fixture(scope="function")
+def dummy_signal_callback_sync():
+    def _callback_generator(call_tracker=None):
+        def _callback(app, loop, signal, data):
+            call_tracker.inc()
+            import logging
+
+            logger = logging.getLogger()
+            logger.info(f"{data} {signal}")
+
+        return _callback
+
+    return _callback_generator

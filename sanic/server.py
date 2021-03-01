@@ -490,7 +490,7 @@ def serve(
                                   create_server method
     :return: Nothing
     """
-    if not run_async:
+    if not run_async and not loop:
         # create new event_loop after fork
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -603,7 +603,6 @@ def serve(
 
         trigger_events(after_stop, loop)
 
-        loop.close()
         remove_unix_socket(unix)
 
 
@@ -700,6 +699,23 @@ def remove_unix_socket(path: Optional[str]) -> None:
         pass
 
 
+def serve_single(server_settings):
+    main_start = server_settings.pop("main_start", None)
+    main_stop = server_settings.pop("main_stop", None)
+
+    if not server_settings.get("run_async"):
+        # create new event_loop after fork
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        server_settings["loop"] = loop
+
+    trigger_events(main_start, server_settings["loop"])
+    serve(**server_settings)
+    trigger_events(main_stop, server_settings["loop"])
+
+    server_settings["loop"].close()
+
+
 def serve_multiple(server_settings, workers):
     """Start multiple server processes simultaneously.  Stop on interrupt
     and terminate signals, and drain connections when complete.
@@ -711,6 +727,13 @@ def serve_multiple(server_settings, workers):
     """
     server_settings["reuse_port"] = True
     server_settings["run_multiple"] = True
+
+    main_start = server_settings.pop("main_start", None)
+    main_stop = server_settings.pop("main_stop", None)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    trigger_events(main_start, loop)
 
     # Create a listening socket or use the one in settings
     sock = server_settings.get("sock")
@@ -752,5 +775,8 @@ def serve_multiple(server_settings, workers):
     for process in processes:
         process.terminate()
 
+    trigger_events(main_stop, loop)
+
     sock.close()
+    loop.close()
     remove_unix_socket(unix)

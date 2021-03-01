@@ -59,6 +59,7 @@ from sanic.server import (
     Signal,
     serve,
     serve_multiple,
+    serve_single,
 )
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -392,17 +393,22 @@ class Sanic(BaseSanic):
         if getattr(route.ctx, "static", None):
             filename = kwargs.pop("filename", "")
             # it's static folder
-            if "file_uri" in uri:
-                folder_ = uri.split("<file_uri:", 1)[0]
+            if "__file_uri__" in uri:
+                folder_ = uri.split("<__file_uri__:", 1)[0]
                 if folder_.endswith("/"):
                     folder_ = folder_[:-1]
 
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                kwargs["file_uri"] = filename
+                kwargs["__file_uri__"] = filename
 
-        if uri != "/" and uri.endswith("/"):
+        if (
+            uri != "/"
+            and uri.endswith("/")
+            and not route.strict
+            and not route.raw_path[:-1]
+        ):
             uri = uri[:-1]
 
         if not uri.startswith("/"):
@@ -572,25 +578,27 @@ class Sanic(BaseSanic):
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
         response = None
-        name = None
         try:
             # Fetch handler from router
             (
+                route,
                 handler,
                 kwargs,
-                uri,
-                name,
-                ignore_body,
             ) = self.router.get(request)
-            request.name = name
+
             request._match_info = kwargs
+            request.route = route
+            request.name = route.name
+            request.uri_template = f"/{route.path}"
+            request.endpoint = request.name
 
             if (
                 request.stream
                 and request.stream.request_body
-                and not ignore_body
+                and not route.ctx.ignore_body
             ):
-                if self.router.is_stream_handler(request):
+
+                if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
                 else:
@@ -601,15 +609,15 @@ class Sanic(BaseSanic):
             # Request Middleware
             # -------------------------------------------- #
             response = await self._run_request_middleware(
-                request, request_name=name
+                request, request_name=route.name
             )
+
             # No middleware results
             if not response:
                 # -------------------------------------------- #
                 # Execute Handler
                 # -------------------------------------------- #
 
-                request.uri_template = f"/{uri}"
                 if handler is None:
                     raise ServerError(
                         (
@@ -618,12 +626,11 @@ class Sanic(BaseSanic):
                         )
                     )
 
-                request.endpoint = request.name
-
                 # Run response handler
                 response = handler(request, **kwargs)
                 if isawaitable(response):
                     response = await response
+
             if response:
                 response = await request.respond(response)
             else:
@@ -817,7 +824,7 @@ class Sanic(BaseSanic):
                 )
                 workers = 1
             if workers == 1:
-                serve(**server_settings)
+                serve_single(server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
@@ -920,6 +927,13 @@ class Sanic(BaseSanic):
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
+        main_start = server_settings.pop("main_start", None)
+        main_stop = server_settings.pop("main_stop", None)
+        if main_start or main_stop:
+            logger.warning(
+                "Listener events for the main process are not available "
+                "with create_server()"
+            )
 
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
@@ -1038,6 +1052,8 @@ class Sanic(BaseSanic):
             ("after_server_start", "after_start", False),
             ("before_server_stop", "before_stop", True),
             ("after_server_stop", "after_stop", True),
+            ("main_process_start", "main_start", False),
+            ("main_process_stop", "main_stop", True),
         ):
             listeners = self.listeners[event_name].copy()
             if reverse:

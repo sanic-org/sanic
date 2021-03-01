@@ -126,7 +126,6 @@ def test_html_traceback_output_in_debug_mode():
     assert response.status == 500
     soup = BeautifulSoup(response.body, "html.parser")
     html = str(soup)
-    print(html)
 
     assert "response = handler(request, **kwargs)" in html
     assert "handler_4" in html

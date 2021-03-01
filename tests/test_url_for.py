@@ -88,3 +88,19 @@ def test_websocket_bp_route_name(app):
 
 # TODO: add test with a route with multiple hosts
 # TODO: add test with a route with _host in url_for
+@pytest.mark.parametrize(
+    "path,strict,expected",
+    (
+        ("/foo", False, "/foo"),
+        ("/foo/", False, "/foo"),
+        ("/foo", True, "/foo"),
+        ("/foo/", True, "/foo/"),
+    ),
+)
+def test_trailing_slash_url_for(app, path, strict, expected):
+    @app.route(path, strict_slashes=strict)
+    def handler(*_):
+        ...
+
+    url = app.url_for("handler")
+    assert url == expected

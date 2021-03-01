@@ -611,7 +611,7 @@ class RouteMixin:
                 else:
                     break
 
-        if not name:  # noq
+        if not name:  # noqa
             raise ValueError("Could not generate a name for handler")
 
         if not name.startswith(f"{self.name}."):
@@ -627,19 +627,19 @@ class RouteMixin:
         stream_large_files,
         request,
         content_type=None,
-        file_uri=None,
+        __file_uri__=None,
     ):
         # Using this to determine if the URL is trying to break out of the path
         # served.  os.path.realpath seems to be very slow
-        if file_uri and "../" in file_uri:
+        if __file_uri__ and "../" in __file_uri__:
             raise InvalidUsage("Invalid URL")
         # Merge served directory and requested file if provided
         # Strip all / that in the beginning of the URL to help prevent python
         # from herping a derp and treating the uri as an absolute path
         root_path = file_path = file_or_directory
-        if file_uri:
+        if __file_uri__:
             file_path = path.join(
-                file_or_directory, sub("^[/]*", "", file_uri)
+                file_or_directory, sub("^[/]*", "", __file_uri__)
             )
 
         # URL decode the path sent by the browser otherwise we won't be able to
@@ -648,10 +648,12 @@ class RouteMixin:
         if not file_path.startswith(path.abspath(unquote(root_path))):
             error_logger.exception(
                 f"File not found: path={file_or_directory}, "
-                f"relative_url={file_uri}"
+                f"relative_url={__file_uri__}"
             )
             raise FileNotFound(
-                "File not found", path=file_or_directory, relative_url=file_uri
+                "File not found",
+                path=file_or_directory,
+                relative_url=__file_uri__,
             )
         try:
             headers = {}
@@ -719,10 +721,12 @@ class RouteMixin:
         except Exception:
             error_logger.exception(
                 f"File not found: path={file_or_directory}, "
-                f"relative_url={file_uri}"
+                f"relative_url={__file_uri__}"
             )
             raise FileNotFound(
-                "File not found", path=file_or_directory, relative_url=file_uri
+                "File not found",
+                path=file_or_directory,
+                relative_url=__file_uri__,
             )
 
     def _register_static(
@@ -772,7 +776,7 @@ class RouteMixin:
         # If we're not trying to match a file directly,
         # serve from the folder
         if not path.isfile(file_or_directory):
-            uri += "/<file_uri>"
+            uri += "/<__file_uri__>"
 
         # special prefix for static files
         # if not static.name.startswith("_static_"):

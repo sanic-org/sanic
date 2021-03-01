@@ -59,6 +59,7 @@ from sanic.server import (
     Signal,
     serve,
     serve_multiple,
+    serve_single,
 )
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
@@ -817,7 +818,7 @@ class Sanic(BaseSanic):
                 )
                 workers = 1
             if workers == 1:
-                serve(**server_settings)
+                serve_single(server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
@@ -920,6 +921,13 @@ class Sanic(BaseSanic):
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
+        main_start = server_settings.pop("main_start", None)
+        main_stop = server_settings.pop("main_stop", None)
+        if main_start or main_stop:
+            logger.warning(
+                "Listener events for the main process are not available "
+                "with create_server()"
+            )
 
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
@@ -1038,6 +1046,8 @@ class Sanic(BaseSanic):
             ("after_server_start", "after_start", False),
             ("before_server_stop", "before_stop", True),
             ("after_server_stop", "after_stop", True),
+            ("main_process_start", "main_start", False),
+            ("main_process_stop", "main_stop", True),
         ):
             listeners = self.listeners[event_name].copy()
             if reverse:

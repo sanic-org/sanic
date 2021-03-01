@@ -1,6 +1,6 @@
-.. include:: sanic/index.rst
+.. include:: ../README.rst
 
-Guides
+API
 ======
 
 .. toctree::
@@ -16,4 +16,3 @@ Module Documentation
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`

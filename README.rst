@@ -7,6 +7,7 @@ Sanic | Build fast. Run fast.
 .. start-badges
 
 .. list-table::
+    :widths: 15 85
     :stub-columns: 1
 
     * - Build
@@ -77,7 +78,7 @@ Sponsor
 .. |Try CodeStream| image:: https://alt-images.codestream.com/codestream_logo_sanicorg.png
    :target: https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner
    :alt: Try CodeStream
-   
+
 Manage pull requests and conduct code reviews in your IDE with full source-tree context. Comment on any line, not just the diffs. Use jump-to-definition, your favorite keybindings, and code intelligence with more of your workflow.
 
 `Learn More <https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner>`_

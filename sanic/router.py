@@ -9,12 +9,13 @@ from sanic_routing.exceptions import (
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import MethodNotSupported, NotFound
+from sanic.exceptions import MethodNotSupported, NotFound, SanicException
 from sanic.handlers import RouteHandler
 from sanic.request import Request
 
 
 ROUTER_CACHE_SIZE = 1024
+ALLOWED_LABELS = ("__file_uri__",)
 
 
 class Router(BaseRouter):
@@ -33,7 +34,7 @@ class Router(BaseRouter):
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(
         self, path, method, host
-    ) -> Tuple[RouteHandler, Dict[str, Any], str, str, bool]:
+    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         try:
             route, handler, params = self.resolve(
                 path=path,
@@ -50,14 +51,14 @@ class Router(BaseRouter):
             )
 
         return (
+            route,
             handler,
             params,
-            route.path,
-            route.name,
-            route.ctx.ignore_body,
         )
 
-    def get(self, request: Request):
+    def get(  # type: ignore
+        self, request: Request
+    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         """
         Retrieve a `Route` object containg the details about how to handle
         a response for a given request
@@ -66,14 +67,13 @@ class Router(BaseRouter):
         :type request: Request
         :return: details needed for handling the request and returning the
             correct response
-        :rtype: Tuple[ RouteHandler, Tuple[Any, ...], Dict[str, Any], str, str,
-            Optional[str], bool, ]
+        :rtype: Tuple[ Route, RouteHandler, Dict[str, Any]]
         """
         return self._get(
             request.path, request.method, request.headers.get("host")
         )
 
-    def add(
+    def add(  # type: ignore
         self,
         uri: str,
         methods: Iterable[str],
@@ -138,7 +138,7 @@ class Router(BaseRouter):
             if host:
                 params.update({"requirements": {"host": host}})
 
-            route = super().add(**params)
+            route = super().add(**params)  # type: ignore
             route.ctx.ignore_body = ignore_body
             route.ctx.stream = stream
             route.ctx.hosts = hosts
@@ -149,23 +149,6 @@ class Router(BaseRouter):
         if len(routes) == 1:
             return routes[0]
         return routes
-
-    def is_stream_handler(self, request) -> bool:
-        """
-        Handler for request is stream or not.
-
-        :param request: Request object
-        :return: bool
-        """
-        try:
-            handler = self.get(request)[0]
-        except (NotFound, MethodNotSupported):
-            return False
-        if hasattr(handler, "view_class") and hasattr(
-            handler.view_class, request.method.lower()
-        ):
-            handler = getattr(handler.view_class, request.method.lower())
-        return hasattr(handler, "is_stream")
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name, name=None):
@@ -204,3 +187,15 @@ class Router(BaseRouter):
     @property
     def routes_regex(self):
         return self.regex_routes
+
+    def finalize(self, *args, **kwargs):
+        super().finalize(*args, **kwargs)
+
+        for route in self.dynamic_routes.values():
+            if any(
+                label.startswith("__") and label not in ALLOWED_LABELS
+                for label in route.labels
+            ):
+                raise SanicException(
+                    f"Invalid route: {route}. Parameter names cannot use '__'."
+                )

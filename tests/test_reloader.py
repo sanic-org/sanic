@@ -59,7 +59,6 @@ def write_app(filename, **runargs):
 def scanner(proc):
     for line in proc.stdout:
         line = line.decode().strip()
-        print(">", line)
         if line.startswith("complete"):
             yield line
 

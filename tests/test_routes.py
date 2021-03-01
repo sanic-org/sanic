@@ -1,15 +1,20 @@
 import asyncio
+import re
 
 from unittest.mock import Mock
 
 import pytest
 
-from sanic_routing.exceptions import ParameterNameConflicts, RouteExists
+from sanic_routing.exceptions import (
+    InvalidUsage,
+    ParameterNameConflicts,
+    RouteExists,
+)
 from sanic_testing.testing import SanicTestClient
 
 from sanic import Blueprint, Sanic
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import NotFound
+from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request
 from sanic.response import json, text
 
@@ -189,7 +194,6 @@ def test_versioned_routes_get(app, method):
             return text("OK")
 
     else:
-        print(func)
         raise Exception(f"Method: {method} is not callable")
 
     client_method = getattr(app.test_client, method)
@@ -1113,3 +1117,59 @@ def test_route_invalid_host(app):
     assert str(excinfo.value) == (
         "Expected either string or Iterable of " "host strings, not {!r}"
     ).format(host)
+
+
+def test_route_with_regex_group(app):
+    @app.route("/path/to/<ext:file\.(txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    _, response = app.test_client.get("/path/to/file.txt")
+    assert response.text == "txt"
+
+
+def test_route_with_regex_named_group(app):
+    @app.route(r"/path/to/<ext:file\.(?P<ext>txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    _, response = app.test_client.get("/path/to/file.txt")
+    assert response.text == "txt"
+
+
+def test_route_with_regex_named_group_invalid(app):
+    @app.route(r"/path/to/<ext:file\.(?P<wrong>txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    with pytest.raises(InvalidUsage) as e:
+        app.router.finalize()
+
+    assert e.match(
+        re.escape("Named group (wrong) must match your named parameter (ext)")
+    )
+
+
+def test_route_with_regex_group_ambiguous(app):
+    @app.route("/path/to/<ext:file(?:\.)(txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    with pytest.raises(InvalidUsage) as e:
+        app.router.finalize()
+
+    assert e.match(
+        re.escape(
+            "Could not compile pattern file(?:\.)(txt). Try using a named "
+            "group instead: '(?P<ext>your_matching_group)'"
+        )
+    )
+
+
+def test_route_with_bad_named_param(app):
+    @app.route("/foo/<__bar__>")
+    async def handler(request):
+        return text("...")
+
+    with pytest.raises(SanicException):
+        app.router.finalize()

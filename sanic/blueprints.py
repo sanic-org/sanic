@@ -49,6 +49,23 @@ class Blueprint(BaseSanic):
         self.version = version
         self.strict_slashes = strict_slashes
 
+    def __repr__(self) -> str:
+        args = ", ".join(
+            [
+                f'{attr}="{getattr(self, attr)}"'
+                if isinstance(getattr(self, attr), str)
+                else f"{attr}={getattr(self, attr)}"
+                for attr in (
+                    "name",
+                    "url_prefix",
+                    "host",
+                    "version",
+                    "strict_slashes",
+                )
+            ]
+        )
+        return f"Blueprint({args})"
+
     def route(self, *args, **kwargs):
         kwargs["apply"] = False
         return super().route(*args, **kwargs)

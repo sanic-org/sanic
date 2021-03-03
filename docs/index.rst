@@ -1,9 +1,9 @@
+.. include:: ../README.rst
+
 User Guide
 ==========
 
 To learn about using Sanic, checkout the `User Guide <https://sanicframework.org/guide/>`_.
-
-.. include:: ../README.rst
 
 API
 ======

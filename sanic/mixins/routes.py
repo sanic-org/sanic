@@ -11,7 +11,7 @@ from urllib.parse import unquote
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.compat import stat_async
-from sanic.constants import HTTP_METHODS
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.exceptions import (
     ContentRangeError,
     FileNotFound,
@@ -689,7 +689,7 @@ class RouteMixin:
                 content_type = (
                     content_type
                     or guess_type(file_path)[0]
-                    or "application/octet-stream"
+                    or DEFAULT_HTTP_CONTENT_TYPE
                 )
 
                 if "charset=" not in content_type and (

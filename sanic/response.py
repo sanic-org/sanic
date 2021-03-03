@@ -17,6 +17,7 @@ from urllib.parse import quote_plus
 from warnings import warn
 
 from sanic.compat import Header, open_async
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
@@ -297,7 +298,7 @@ def raw(
     body: Optional[AnyStr],
     status: int = 200,
     headers: Optional[Dict[str, str]] = None,
-    content_type: str = "application/octet-stream",
+    content_type: str = DEFAULT_HTTP_CONTENT_TYPE,
 ) -> HTTPResponse:
     """
     Returns response object without encoding the body.

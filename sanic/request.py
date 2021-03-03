@@ -31,6 +31,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
     Options,
@@ -48,12 +49,6 @@ try:
     from ujson import loads as json_loads  # type: ignore
 except ImportError:
     from json import loads as json_loads  # type: ignore
-
-DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
-
-# HTTP/1.1: https://www.w3.org/Protocols/rfc2616/rfc2616-sec7.html#sec7.2.1
-# > If the media type remains unknown, the recipient SHOULD treat it
-# > as type "application/octet-stream"
 
 
 class RequestParameters(dict):
@@ -95,6 +90,7 @@ class Request:
         "conn_info",
         "ctx",
         "endpoint",
+        "head",
         "headers",
         "method",
         "name",
@@ -121,6 +117,7 @@ class Request:
         method: str,
         transport: TransportProtocol,
         app: Sanic,
+        head: bytes = b"",
     ):
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
@@ -132,6 +129,7 @@ class Request:
         self.version = version
         self.method = method
         self.transport = transport
+        self.head = head
 
         # Init but do not inhale
         self.body = b""
@@ -206,6 +204,16 @@ class Request:
         """
         if not self.body:
             self.body = b"".join([data async for data in self.stream])
+
+    @property
+    def raw_headers(self):
+        _, headers = self.head.split(b"\r\n", 1)
+        return bytes(headers)
+
+    @property
+    def request_line(self):
+        reqline, _ = self.head.split(b"\r\n", 1)
+        return bytes(reqline)
 
     @property
     def id(self) -> Optional[Union[uuid.UUID, str, int]]:

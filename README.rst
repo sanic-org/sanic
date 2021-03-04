@@ -13,7 +13,7 @@ Sanic | Build fast. Run fast.
     * - Build
       - | |Build Status| |AppVeyor Build Status| |Codecov|
     * - Docs
-      - |Documentation|
+      - | |UserGuide| Documentation|
     * - Package
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support
@@ -21,6 +21,8 @@ Sanic | Build fast. Run fast.
     * - Stats
       - | |Downloads| |WkDownloads| |Conda downloads|
 
+.. |UserGuide| image:: https://img.shields.io/badge/user%20guide-sanic-ff0068
+   :target: https://sanicframework.org/
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
 .. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord

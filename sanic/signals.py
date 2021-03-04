@@ -4,8 +4,8 @@ import asyncio
 
 from inspect import isawaitable
 
-from sanic_routing import BaseRouter, Route
-from sanic_routing.utils import path_to_parts
+from sanic_routing import BaseRouter, Route  # type: ignore
+from sanic_routing.utils import path_to_parts  # type: ignore
 
 from sanic.exceptions import InvalidSignal
 from sanic.handlers import SignalHandler

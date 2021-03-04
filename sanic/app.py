@@ -158,7 +158,7 @@ class Sanic(BaseSanic):
         also return a future, and the actual ensure_future call
         is delayed until before server start.
 
-        `See user guide
+        `See user guide re: background tasks
         <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
 
         :param task: future, couroutine or awaitable
@@ -362,7 +362,7 @@ class Sanic(BaseSanic):
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
-        `See user guide
+        `See user guide re: routing
         <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
 
         :param view_name: string referencing the view name
@@ -1014,7 +1014,8 @@ class Sanic(BaseSanic):
         async def finalize(app, _):
             try:
                 app.router.finalize()
-                app.signal_router.finalize()
+                if app.signal_router.routes:
+                    app.signal_router.finalize()
             except FinalizationError as e:
                 if not Sanic.test_mode:
                     raise e
@@ -1145,7 +1146,7 @@ class Sanic(BaseSanic):
         """
         Update app.config. Full implementation can be found in the user guide.
 
-        `See user guide
+        `See user guide re: configuration
         <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
         """
 

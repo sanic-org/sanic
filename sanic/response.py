@@ -66,8 +66,8 @@ class BaseHTTPResponse:
                 response.cookies["test"]["domain"] = ".yummy-yummy-cookie.com"
                 response.cookies["test"]["httponly"] = True
 
-        `See user guide
-        <https://sanicframework.org/guide/basics/cookies.html>`_
+        `See user guide re: cookies
+        <https://sanicframework.org/guide/basics/cookies.html>`__
 
         :return: the cookie jar
         :rtype: CookieJar

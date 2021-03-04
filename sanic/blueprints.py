@@ -18,7 +18,7 @@ class Blueprint(BaseSanic):
 
     It is the main tool for grouping functionality and similar endpoints.
 
-    `See user guide
+    `See user guide re: blueprints
     <https://sanicframework.org/guide/best-practices/blueprints.html>`__
 
     :param name: unique name of the blueprint

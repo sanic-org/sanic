@@ -1,6 +1,6 @@
 from typing import Any, Dict, Set
 
-from sanic_routing.exceptions import NotFound
+from sanic_routing.exceptions import NotFound  # type: ignore
 
 from sanic.handlers import SignalHandler
 from sanic.models.futures import FutureSignal

@@ -7,23 +7,26 @@ Sanic | Build fast. Run fast.
 .. start-badges
 
 .. list-table::
+    :widths: 15 85
     :stub-columns: 1
 
     * - Build
       - | |Build Status| |AppVeyor Build Status| |Codecov|
     * - Docs
-      - |Documentation|
+      - | |UserGuide| |Documentation|
     * - Package
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support
-      - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby| |Awesome|
+      - | |Forums| |Discord| |Awesome|
     * - Stats
       - | |Downloads| |WkDownloads| |Conda downloads|
 
+.. |UserGuide| image:: https://img.shields.io/badge/user%20guide-sanic-ff0068
+   :target: https://sanicframework.org/
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
-.. |Join the chat at https://gitter.im/sanic-python/Lobby| image:: https://badges.gitter.im/sanic-python/Lobby.svg
-   :target: https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+.. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
+   :target: https://discord.gg/FARQzAEMAA
 .. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/sanic-org/sanic
 .. |Build Status| image:: https://travis-ci.com/sanic-org/sanic.svg?branch=master
@@ -59,15 +62,30 @@ Sanic | Build fast. Run fast.
 
 .. end-badges
 
-Sanic is a **Python 3.6+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic is a **Python 3.7+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
 Sanic is also ASGI compliant, so you can deploy it with an `alternative ASGI webserver <https://sanic.readthedocs.io/en/latest/sanic/deploying.html#running-via-asgi>`_.
 
-`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_.
+`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_ | `User Guide <https://sanicframework.org>`_
 
 The project is maintained by the community, for the community. **Contributions are welcome!**
 
 The goal of the project is to provide a simple way to get up and running a highly performant HTTP server that is easy to build, to expand, and ultimately to scale.
+
+Sponsor
+-------
+
+|Try CodeStream|
+
+.. |Try CodeStream| image:: https://alt-images.codestream.com/codestream_logo_sanicorg.png
+   :target: https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner
+   :alt: Try CodeStream
+
+Manage pull requests and conduct code reviews in your IDE with full source-tree context. Comment on any line, not just the diffs. Use jump-to-definition, your favorite keybindings, and code intelligence with more of your workflow.
+
+`Learn More <https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner>`_
+
+Thank you to our sponsor. Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
 
 Installation
 ------------
@@ -135,7 +153,7 @@ Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12
 Documentation
 -------------
 
-`Documentation on Readthedocs <http://sanic.readthedocs.io/>`_.
+`User Guide <https://sanicframework.org>`_ and `API Documentation <http://sanic.readthedocs.io/>`_.
 
 Changelog
 ---------

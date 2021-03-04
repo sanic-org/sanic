@@ -2,11 +2,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from sanic import Sanic, headers
-from sanic.compat import Header
+from sanic import headers, text
 from sanic.exceptions import PayloadTooLarge
 from sanic.http import Http
-from sanic.request import Request
 
 
 @pytest.mark.parametrize(
@@ -85,3 +83,35 @@ async def test_header_size_exceeded():
 
     with pytest.raises(PayloadTooLarge):
         await http.http1_request_header()
+
+
+def test_raw_headers(app):
+    app.route("/")(lambda _: text(""))
+    request, _ = app.test_client.get(
+        "/",
+        headers={
+            "FOO": "bar",
+            "Host": "example.com",
+            "User-Agent": "Sanic-Testing",
+        },
+    )
+
+    assert request.raw_headers == (
+        b"Host: example.com\r\nAccept: */*\r\nAccept-Encoding: gzip, "
+        b"deflate\r\nConnection: keep-alive\r\nUser-Agent: "
+        b"Sanic-Testing\r\nFOO: bar"
+    )
+
+
+def test_request_line(app):
+    app.route("/")(lambda _: text(""))
+    request, _ = app.test_client.get(
+        "/",
+        headers={
+            "FOO": "bar",
+            "Host": "example.com",
+            "User-Agent": "Sanic-Testing",
+        },
+    )
+
+    assert request.request_line == b"GET / HTTP/1.1"

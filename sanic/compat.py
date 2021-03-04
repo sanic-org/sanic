@@ -11,7 +11,24 @@ OS_IS_WINDOWS = os.name == "nt"
 
 
 class Header(CIMultiDict):
-    def get_all(self, key):
+    """
+    Container used for both request and response headers. It is a subclass of
+    `CIMultiDict
+    <https://multidict.readthedocs.io/en/stable/multidict.html#cimultidictproxy>`_.
+
+    It allows for multiple values for a single key in keeping with the HTTP
+    spec. Also, all keys are *case in-sensitive*.
+
+    Please checkout `the MultiDict documentation
+    <https://multidict.readthedocs.io/en/stable/multidict.html#multidict>`_
+    for more details about how to use the object. In general, it should work
+    very similar to a regular dictionary.
+    """
+
+    def get_all(self, key: str):
+        """
+        Convenience method mapped to ``getall()``.
+        """
         return self.getall(key, default=[])
 
 

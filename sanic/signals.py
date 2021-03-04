@@ -7,6 +7,7 @@ from inspect import isawaitable
 from sanic_routing import BaseRouter, Route
 from sanic_routing.utils import path_to_parts
 
+from sanic.exceptions import InvalidSignal
 from sanic.handlers import SignalHandler
 
 
@@ -33,7 +34,7 @@ class SignalRouter(BaseRouter):
         )
         self.ctx.loop = None
 
-    def get(self, event: str, extra=None):
+    def get(self, event: str, extra=None):  # type: ignore
         return self.resolve(f".{event}", extra=extra)
 
     async def _dispatch(
@@ -54,11 +55,14 @@ class SignalRouter(BaseRouter):
         signal_event.set()
         if context:
             params.update(context)
-        for handler in handlers:
-            maybe_coroutine = handler(**params)
-            if isawaitable(maybe_coroutine):
-                await maybe_coroutine
-        signal_event.clear()
+
+        try:
+            for handler in handlers:
+                maybe_coroutine = handler(**params)
+                if isawaitable(maybe_coroutine):
+                    await maybe_coroutine
+        finally:
+            signal_event.clear()
 
     async def dispatch(
         self, event: str, *fields, context=None, where=None
@@ -73,13 +77,17 @@ class SignalRouter(BaseRouter):
         )
         await asyncio.sleep(0)
 
-    def add(
+    def add(  # type: ignore
         self, handler: SignalHandler, event: str, requirements=None
     ) -> Signal:
         parts = path_to_parts(event, self.delimiter)
 
-        if parts[0].startswith("<") or parts[1].startswith("<"):
-            raise Exception(f"Invalid signal event: {event}")
+        if (
+            len(parts) != 3
+            or parts[0].startswith("<")
+            or parts[1].startswith("<")
+        ):
+            raise InvalidSignal(f"Invalid signal event: {event}")
 
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])

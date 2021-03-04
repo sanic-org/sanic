@@ -1,159 +1,132 @@
-API Reference
-=============
+📑 API Reference
+================
 
-Submodules
-----------
-
-sanic.app module
-----------------
+sanic.app
+---------
 
 .. automodule:: sanic.app
     :members:
-    :undoc-members:
     :show-inheritance:
+    :inherited-members:
 
-sanic.blueprints module
------------------------
+sanic.blueprints
+----------------
 
 .. automodule:: sanic.blueprints
     :members:
-    :undoc-members:
     :show-inheritance:
+    :inherited-members:
 
-sanic.blueprint_group module
-----------------------------
+sanic.blueprint_group
+---------------------
 
 .. automodule:: sanic.blueprint_group
     :members:
-    :undoc-members:
+    :special-members:
+
+
+sanic.compat
+------------
+
+.. automodule:: sanic.compat
+    :members:
     :show-inheritance:
 
-
-sanic.config module
--------------------
+sanic.config
+------------
 
 .. automodule:: sanic.config
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.constants module
-----------------------
-
-.. automodule:: sanic.constants
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sanic.cookies module
---------------------
+sanic.cookies
+-------------
 
 .. automodule:: sanic.cookies
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.exceptions module
------------------------
+sanic.errorpages
+----------------
+
+.. automodule:: sanic.errorpages
+    :members:
+    :show-inheritance:
+
+sanic.exceptions
+----------------
 
 .. automodule:: sanic.exceptions
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.handlers module
----------------------
+sanic.handlers
+--------------
 
 .. automodule:: sanic.handlers
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.log module
-----------------
+sanic.http
+----------
+
+.. automodule:: sanic.http
+    :members:
+    :show-inheritance:
+
+sanic.log
+---------
 
 .. automodule:: sanic.log
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.request module
---------------------
+sanic.request
+-------------
 
 .. automodule:: sanic.request
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.response module
----------------------
+sanic.response
+--------------
 
 .. automodule:: sanic.response
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.router module
--------------------
+sanic.router
+------------
 
 .. automodule:: sanic.router
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.server module
--------------------
+sanic.server
+------------
 
 .. automodule:: sanic.server
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.static module
--------------------
 
-.. automodule:: sanic.static
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sanic.testing module
---------------------
-
-.. automodule:: sanic.testing
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sanic.views module
-------------------
+sanic.views
+-----------
 
 .. automodule:: sanic.views
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.websocket module
-----------------------
+sanic.websocket
+---------------
 
 .. automodule:: sanic.websocket
     :members:
-    :undoc-members:
     :show-inheritance:
 
-sanic.worker module
--------------------
+sanic.worker
+------------
 
 .. automodule:: sanic.worker
     :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: sanic
-    :members:
-    :undoc-members:
     :show-inheritance:

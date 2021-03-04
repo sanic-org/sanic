@@ -1,3 +1,5 @@
+from typing import Optional, Union
+
 from sanic.helpers import STATUS_CODES
 
 
@@ -33,16 +35,28 @@ class SanicException(Exception):
 
 @add_status_code(404)
 class NotFound(SanicException):
+    """
+    **Status**: 404 Not Found
+    """
+
     pass
 
 
 @add_status_code(400)
 class InvalidUsage(SanicException):
+    """
+    **Status**: 400 Bad Request
+    """
+
     pass
 
 
 @add_status_code(405)
 class MethodNotSupported(SanicException):
+    """
+    **Status**: 405 Method Not Allowed
+    """
+
     def __init__(self, message, method, allowed_methods):
         super().__init__(message)
         self.headers = {"Allow": ", ".join(allowed_methods)}
@@ -50,22 +64,38 @@ class MethodNotSupported(SanicException):
 
 @add_status_code(500)
 class ServerError(SanicException):
+    """
+    **Status**: 500 Internal Server Error
+    """
+
     pass
 
 
 @add_status_code(503)
 class ServiceUnavailable(SanicException):
-    """The server is currently unavailable (because it is overloaded or
-    down for maintenance). Generally, this is a temporary state."""
+    """
+    **Status**: 503 Service Unavailable
+
+    The server is currently unavailable (because it is overloaded or
+    down for maintenance). Generally, this is a temporary state.
+    """
 
     pass
 
 
 class URLBuildError(ServerError):
+    """
+    **Status**: 500 Internal Server Error
+    """
+
     pass
 
 
 class FileNotFound(NotFound):
+    """
+    **Status**: 404 Not Found
+    """
+
     def __init__(self, message, path, relative_url):
         super().__init__(message)
         self.path = path
@@ -87,15 +117,27 @@ class RequestTimeout(SanicException):
 
 @add_status_code(413)
 class PayloadTooLarge(SanicException):
+    """
+    **Status**: 413 Payload Too Large
+    """
+
     pass
 
 
 class HeaderNotFound(InvalidUsage):
+    """
+    **Status**: 400 Bad Request
+    """
+
     pass
 
 
 @add_status_code(416)
 class ContentRangeError(SanicException):
+    """
+    **Status**: 416 Range Not Satisfiable
+    """
+
     def __init__(self, message, content_range):
         super().__init__(message)
         self.headers = {"Content-Range": f"bytes */{content_range.total}"}
@@ -103,15 +145,27 @@ class ContentRangeError(SanicException):
 
 @add_status_code(417)
 class HeaderExpectationFailed(SanicException):
+    """
+    **Status**: 417 Expectation Failed
+    """
+
     pass
 
 
 @add_status_code(403)
 class Forbidden(SanicException):
+    """
+    **Status**: 403 Forbidden
+    """
+
     pass
 
 
 class InvalidRangeType(ContentRangeError):
+    """
+    **Status**: 416 Range Not Satisfiable
+    """
+
     pass
 
 
@@ -123,7 +177,7 @@ class PyFileError(Exception):
 @add_status_code(401)
 class Unauthorized(SanicException):
     """
-    Unauthorized exception (401 HTTP status code).
+    **Status**: 401 Unauthorized
 
     :param message: Message describing the exception.
     :param status_code: HTTP Status code.
@@ -173,18 +227,23 @@ class LoadFileException(SanicException):
     pass
 
 
-def abort(status_code, message=None):
+class InvalidSignal(SanicException):
+    pass
+
+
+def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
     """
     Raise an exception based on SanicException. Returns the HTTP response
     message appropriate for the given status code, unless provided.
 
+    STATUS_CODES from sanic.helpers for the given status code.
+
     :param status_code: The HTTP status code to return.
     :param message: The HTTP response body. Defaults to the messages in
-    STATUS_CODES from sanic.helpers for the given status code.
     """
     if message is None:
-        message = STATUS_CODES.get(status_code)
+        msg: bytes = STATUS_CODES[status_code]
         # These are stored as bytes in the STATUS_CODES dict
-        message = message.decode("utf8")
+        message = msg.decode("utf8")
     sanic_exception = _sanic_exceptions.get(status_code, SanicException)
     raise sanic_exception(message=message, status_code=status_code)

@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Any, Dict, Set
 
 from sanic_routing.exceptions import NotFound
 
@@ -7,14 +7,23 @@ from sanic.models.futures import FutureSignal
 from sanic.signals import Signal
 
 
+class HashableDict(dict):
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
+
 class SignalMixin:
     def __init__(self, *args, **kwargs) -> None:
         self._future_signals: Set[FutureSignal] = set()
+
+    def _apply_signal(self, signal: FutureSignal) -> Signal:
+        raise NotImplementedError  # noqa
 
     def signal(
         self,
         event: str,
         apply: bool = True,
+        requirements: Dict[str, Any] = None,
     ):
         # TODO:
         # - Event validation
@@ -23,7 +32,9 @@ class SignalMixin:
             nonlocal event
             nonlocal apply
 
-            future_signal = FutureSignal(handler, event)
+            future_signal = FutureSignal(
+                handler, event, HashableDict(requirements or {})
+            )
             self._future_signals.add(future_signal)
 
             if apply:

@@ -646,7 +646,6 @@ def test_streaming_echo():
                 data = await reader.read(4096)
                 assert data
                 buffer += data
-                print(res)
             assert buffer[size : size + 2] == b"\r\n"
             ret, buffer = buffer[:size], buffer[size + 2 :]
             return ret

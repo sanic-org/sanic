@@ -4,7 +4,7 @@ import sys
 
 from inspect import isawaitable
 from os import environ
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -70,6 +70,20 @@ def test_asyncio_server_start_serving(app):
         # Looks like we can't easily test `serve_forever()`
 
 
+def test_create_server_main(app, caplog):
+    app.listener("main_process_start")(lambda *_: ...)
+    loop = asyncio.get_event_loop()
+    with caplog.at_level(logging.INFO):
+        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        loop.run_until_complete(asyncio_srv_coro)
+    assert (
+        "sanic.root",
+        30,
+        "Listener events for the main process are not available with "
+        "create_server()",
+    ) in caplog.record_tuples
+
+
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
         app.loop
@@ -109,7 +123,7 @@ def test_app_route_raise_value_error(app):
 
 def test_app_handle_request_handler_is_none(app, monkeypatch):
     def mockreturn(*args, **kwargs):
-        return None, {}, "", "", False
+        return Mock(), None, {}
 
     # Not sure how to make app.router.get() return None, so use mock here.
     monkeypatch.setattr(app.router, "get", mockreturn)

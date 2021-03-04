@@ -39,7 +39,7 @@ class TestSanicRouteResolution:
             iterations=1000,
             rounds=1000,
         )
-        assert await result[0](None) == 1
+        assert await result[1](None) == 1
 
     @mark.asyncio
     async def test_resolve_route_with_typed_args(
@@ -72,4 +72,4 @@ class TestSanicRouteResolution:
             iterations=1000,
             rounds=1000,
         )
-        assert await result[0](None) == 1
+        assert await result[1](None) == 1

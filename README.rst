@@ -13,7 +13,7 @@ Sanic | Build fast. Run fast.
     * - Build
       - | |Build Status| |AppVeyor Build Status| |Codecov|
     * - Docs
-      - | |UserGuide| Documentation|
+      - | |UserGuide| |Documentation|
     * - Package
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support

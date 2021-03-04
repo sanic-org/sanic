@@ -64,7 +64,7 @@ Sanic is a **Python 3.7+** web server and web framework that's written to go fas
 
 Sanic is also ASGI compliant, so you can deploy it with an `alternative ASGI webserver <https://sanic.readthedocs.io/en/latest/sanic/deploying.html#running-via-asgi>`_.
 
-`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_.
+`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_ | `User Guide <https://sanicframework.org>`_
 
 The project is maintained by the community, for the community. **Contributions are welcome!**
 
@@ -151,7 +151,7 @@ Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12
 Documentation
 -------------
 
-`Documentation on Readthedocs <http://sanic.readthedocs.io/>`_.
+`User Guide <https://sanicframework.org>`_ and `API Documentation <http://sanic.readthedocs.io/>`_.
 
 Changelog
 ---------

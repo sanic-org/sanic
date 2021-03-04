@@ -177,5 +177,5 @@ def setup(app):
 
 
 html_theme_options = {
-    "style_external_links": True,
+    "style_external_links": False,
 }

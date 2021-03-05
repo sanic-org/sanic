@@ -177,7 +177,7 @@ class WebSocketConnection:
             {
                 "type": "websocket.accept",
                 "subprotocol": ",".join(
-                    [subprotocol for subprotocol in self.subprotocols]
+                    list(self.subprotocols)
                 ),
             }
         )

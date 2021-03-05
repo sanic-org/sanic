@@ -10,6 +10,7 @@ from subprocess import Popen, PIPE
 
 from jinja2 import Environment, BaseLoader
 from requests import patch
+import sys
 import towncrier
 
 GIT_COMMANDS = {
@@ -124,7 +125,7 @@ def _get_current_tag(git_command_name="get_tag"):
     global GIT_COMMANDS
     command = GIT_COMMANDS.get(git_command_name)
     out, err, ret = _run_shell_command(command)
-    if len(str(out)):
+    if str(out):
         return str(out).split("\n")[0]
     else:
         return None
@@ -178,7 +179,7 @@ def _update_release_version_for_sanic(
                 err.decode("utf-8")
             )
         )
-        exit(1)
+        sys.exit(1)
 
 
 def _generate_change_log(current_version: str = None):
@@ -186,13 +187,13 @@ def _generate_change_log(current_version: str = None):
     command = GIT_COMMANDS.get("get_change_log")
     command[0] = command[0].format(current_version=current_version)
     output, error, ret = _run_shell_command(command=command)
-    if not len(str(output)):
+    if not str(output):
         print("Unable to Fetch Change log details to update the Release Note")
-        exit(1)
+        sys.exit(1)
 
     commit_details = OrderedDict()
-    commit_details["authors"] = dict()
-    commit_details["commits"] = list()
+    commit_details["authors"] = {}
+    commit_details["commits"] = []
 
     for line in str(output).split("\n"):
         commit, author, description = line.split(":::")
@@ -228,7 +229,7 @@ def _tag_release(new_version, current_version, milestone, release_name, token):
         out, error, ret = _run_shell_command(command=command)
         if int(ret) != 0:
             print("Failed to execute the command: {}".format(command[0]))
-            exit(1)
+            sys.exit(1)
 
     change_log = _generate_markdown_document(
         milestone, release_name, current_version, new_version
@@ -256,7 +257,7 @@ def release(args: Namespace):
                 current_tag, current_version
             )
         )
-        exit(1)
+        sys.exit(1)
     new_version = args.release_version or _get_new_version(
         args.config, current_version, args.micro_release
     )
@@ -348,6 +349,6 @@ if __name__ == "__main__":
         }.items():
             if not value:
                 print(f"{key} is mandatory while using --tag-release")
-                exit(1)
+                sys.exit(1)
     with Directory():
         release(args)

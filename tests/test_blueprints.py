@@ -388,7 +388,7 @@ def test_bp_middleware_with_route(app):
 
 def test_bp_middleware_order(app):
     blueprint = Blueprint("test_bp_middleware_order")
-    order = list()
+    order = []
 
     @blueprint.middleware("request")
     def mw_1(request):

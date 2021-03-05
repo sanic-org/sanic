@@ -374,7 +374,7 @@ def test_file_head_response(app, file_name, static_file_directory):
         file_path = os.path.join(static_file_directory, filename)
         file_path = os.path.abspath(unquote(file_path))
         stats = await async_os.stat(file_path)
-        headers = dict()
+        headers = {}
         headers["Accept-Ranges"] = "bytes"
         headers["Content-Length"] = str(stats.st_size)
         if request.method == "HEAD":
@@ -450,7 +450,7 @@ def test_file_stream_head_response(app, file_name, static_file_directory):
     async def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
         file_path = os.path.abspath(unquote(file_path))
-        headers = dict()
+        headers = {}
         headers["Accept-Ranges"] = "bytes"
         if request.method == "HEAD":
             # Return a normal HTTPResponse, not a

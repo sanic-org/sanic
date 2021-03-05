@@ -103,7 +103,7 @@ def test_static_file_bytes(app, static_file_directory, file_name):
 
 @pytest.mark.parametrize(
     "file_name",
-    [dict(), list(), object()],
+    [{}, [], object()],
 )
 def test_static_file_invalid_path(app, static_file_directory, file_name):
     app.route("/")(lambda x: x)

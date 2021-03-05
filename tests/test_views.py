@@ -1,4 +1,4 @@
-import pytest as pytest
+import pytest
 
 from sanic.blueprints import Blueprint
 from sanic.constants import HTTP_METHODS

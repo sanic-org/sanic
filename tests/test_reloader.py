@@ -83,7 +83,7 @@ argv = dict(
     [
         (dict(port=42102, auto_reload=True), "script"),
         (dict(port=42103, debug=True), "module"),
-        (dict(), "sanic"),
+        ({}, "sanic"),
     ],
 )
 async def test_reloader_live(runargs, mode):

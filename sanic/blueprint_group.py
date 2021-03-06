@@ -1,6 +1,9 @@
 from collections.abc import MutableSequence
 from typing import List
 
+import sanic
+from sanic.exceptions import APIVersionMismatchException
+
 
 class BlueprintGroup(MutableSequence):
     """
@@ -16,6 +19,11 @@ class BlueprintGroup(MutableSequence):
         bp1 = Blueprint('bp1', url_prefix='/bp1')
         bp2 = Blueprint('bp2', url_prefix='/bp2')
 
+        bp3 = Blueprint('bp3', url_prefix='/bp4')
+        bp3 = Blueprint('bp3', url_prefix='/bp4')
+
+        bpg = BlueprintGroup(bp3, bp4, url_prefix="/api", version="v1")
+
         @bp1.middleware('request')
         async def bp1_only_middleware(request):
             print('applied on Blueprint : bp1 Only')
@@ -28,6 +36,14 @@ class BlueprintGroup(MutableSequence):
         async def bp2_route(request, param):
             return text(param)
 
+        @bp3.route('/')
+        async def bp1_route(request):
+            return text('bp1')
+
+        @bp4.route('/<param>')
+        async def bp2_route(request, param):
+            return text(param)
+
         group = Blueprint.group(bp1, bp2)
 
         @group.middleware('request')
@@ -36,18 +52,23 @@ class BlueprintGroup(MutableSequence):
 
         # Register Blueprint group under the app
         app.blueprint(group)
+        app.blueprint(bpg)
     """
 
-    __slots__ = ("_blueprints", "_url_prefix")
+    __slots__ = ("_blueprints", "_url_prefix", "_version", "_strict_slashes")
 
-    def __init__(self, url_prefix=None):
+    def __init__(self, url_prefix=None, version=None, strict_slashes=None):
         """
         Create a new Blueprint Group
 
         :param url_prefix: URL: to be prefixed before all the Blueprint Prefix
+        :param version: API Version for the blueprint group. This will be inherited by each of the Blueprint
+        :param strict_slashes: URL Strict slash behavior indicator
         """
         self._blueprints = []
         self._url_prefix = url_prefix
+        self._version = version
+        self._strict_slashes = strict_slashes
 
     @property
     def url_prefix(self) -> str:
@@ -121,7 +142,7 @@ class BlueprintGroup(MutableSequence):
         """
         return len(self._blueprints)
 
-    def insert(self, index: int, item: object) -> None:
+    def insert(self, index: int, item: "sanic.blueprints.Blueprint") -> None:
         """
         The Abstract class `MutableSequence` leverages this insert method to
         perform the `BlueprintGroup.append` operation.
@@ -130,6 +151,15 @@ class BlueprintGroup(MutableSequence):
         :param item: New `Blueprint` object.
         :return: None
         """
+        if self._version and item.version and self._version != item.version:
+            raise APIVersionMismatchException(
+                f"API Version Mismatch. Blueprint {item.name} has version {item.version} "
+                f"while Blueprint Group has {self._version}"
+            )
+        if self._version and not item.version:
+            item.version = self._version
+        if self._strict_slashes is not None:
+            item.strict_slashes = self._strict_slashes
         self._blueprints.insert(index, item)
 
     def middleware(self, *args, **kwargs):

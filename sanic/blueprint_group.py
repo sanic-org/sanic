@@ -170,7 +170,7 @@ class BlueprintGroup(MutableSequence):
         if self._url_prefix:
             merged_prefix = "/".join(
                 u.strip("/") for u in [self._url_prefix, bp.url_prefix or ""]
-            )
+            ).rstrip("/")
             bp.url_prefix = f"/{merged_prefix}"
         for _attr in ["version", "strict_slashes"]:
             if getattr(bp, _attr) is None:

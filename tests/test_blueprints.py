@@ -948,7 +948,7 @@ def test_blueprint_group_strict_slashes():
     )
 
     bp3 = Blueprint(
-        name="bp3", version=3, url_prefix="/bp3/", strict_slashes=None
+        name="bp3", version=None, url_prefix="/bp3/", strict_slashes=None
     )
 
     @bp1.get("/r1")
@@ -975,7 +975,7 @@ def test_blueprint_group_strict_slashes():
     )
 
     group2 = Blueprint.group(
-        [bp3], url_prefix=None, version=2, strict_slashes=False
+        [bp3], url_prefix="/other-prefix/", version=2, strict_slashes=False
     )
 
     app.blueprint(group)
@@ -987,3 +987,4 @@ def test_blueprint_group_strict_slashes():
     assert app.test_client.get("/v3/slash-check/bp2/r1/")[1].status == 404
     assert app.test_client.get("/v3/slash-check/bp2/r2")[1].status == 404
     assert app.test_client.get("/v3/slash-check/bp2/r2/")[1].status == 200
+    assert app.test_client.get("/v2/other-prefix/bp3/r1")[1].status == 200

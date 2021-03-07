@@ -167,8 +167,11 @@ class BlueprintGroup(MutableSequence):
         :param bp: Sanic Blueprint entity Object
         :return: Modified Blueprint
         """
-        item_prefix = bp.url_prefix or ""
-        bp.url_prefix = f"{self._url_prefix}{item_prefix}"
+        if self._url_prefix:
+            merged_prefix = "/".join(
+                u.strip("/") for u in [self._url_prefix, bp.url_prefix or ""]
+            )
+            bp.url_prefix = f"/{merged_prefix}"
         for _attr in ["version", "strict_slashes"]:
             if getattr(bp, _attr) is None:
                 setattr(bp, _attr, getattr(self, _attr))

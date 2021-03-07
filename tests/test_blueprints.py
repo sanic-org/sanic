@@ -933,7 +933,7 @@ def test_blueprint_group_versioning():
     assert app.test_client.get("/v2/group1/bp2/r2")[1].status == 200
     assert app.test_client.get("/v1/group1/bp1/pre-group")[1].status == 200
     assert app.test_client.get("/v3/group1/bp2/r3")[1].status == 200
-    assert app.test_client.get("bp3/r1")[1].status == 200
+    assert app.test_client.get("/bp3/r1")[1].status == 200
 
     assert group.version == 1
     assert group2.strict_slashes is None
@@ -947,6 +947,10 @@ def test_blueprint_group_strict_slashes():
         name="bp2", version=3, url_prefix="/bp2", strict_slashes=None
     )
 
+    bp3 = Blueprint(
+        name="bp3", version=3, url_prefix="/bp3/", strict_slashes=None
+    )
+
     @bp1.get("/r1")
     async def bp1_r1(request):
         return json({"from": "bp1/r1"})
@@ -955,13 +959,31 @@ def test_blueprint_group_strict_slashes():
     async def bp2_r1(request):
         return json({"from": "bp2/r1"})
 
+    @bp2.get("/r2/")
+    async def bp2_r2(request):
+        return json({"from": "bp2/r2"})
+
+    @bp3.get("/r1")
+    async def bp3_r1(request):
+        return json({"from": "bp3/r1"})
+
     group = Blueprint.group(
-        [bp1, bp2], url_prefix="/slash-check", version=1.3, strict_slashes=True
+        [bp1, bp2],
+        url_prefix="/slash-check/",
+        version=1.3,
+        strict_slashes=True,
+    )
+
+    group2 = Blueprint.group(
+        [bp3], url_prefix=None, version=2, strict_slashes=False
     )
 
     app.blueprint(group)
+    app.blueprint(group2)
 
     assert app.test_client.get("/v1.3/slash-check/r1")[1].status == 200
     assert app.test_client.get("/v1.3/slash-check/r1/")[1].status == 200
     assert app.test_client.get("/v3/slash-check/bp2/r1")[1].status == 200
     assert app.test_client.get("/v3/slash-check/bp2/r1/")[1].status == 404
+    assert app.test_client.get("/v3/slash-check/bp2/r2")[1].status == 404
+    assert app.test_client.get("/v3/slash-check/bp2/r2/")[1].status == 200

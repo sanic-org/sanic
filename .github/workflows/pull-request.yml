@@ -1,3 +1,4 @@
+name: Pull Request Patchset Runner
 on:
   pull_request:
     branches: [ master ]

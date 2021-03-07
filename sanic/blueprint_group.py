@@ -88,7 +88,7 @@ class BlueprintGroup(MutableSequence):
         return self._blueprints
 
     @property
-    def version(self) -> Union[None, str, int, float]:
+    def version(self) -> Optional[Union[str, int, float]]:
         """
         API Version for the Blueprint Group. This will be applied only in case if the Blueprint doesn't already have
         a version specified

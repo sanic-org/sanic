@@ -975,7 +975,7 @@ def test_blueprint_group_strict_slashes():
     )
 
     group2 = Blueprint.group(
-        [bp3], url_prefix="/other-prefix/", version=2, strict_slashes=False
+        [bp3], url_prefix="/other-prefix/", version="v2", strict_slashes=False
     )
 
     app.blueprint(group)

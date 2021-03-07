@@ -2,6 +2,7 @@ from pytest import raises
 
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
+from sanic.blueprint_group import BlueprintGroup
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
 
@@ -200,3 +201,20 @@ def test_bp_group_as_nested_group():
         Blueprint.group(blueprint_1, blueprint_2)
     )
     assert len(blueprint_group_1) == 2
+
+
+def test_blueprint_group_insert():
+    blueprint_1 = Blueprint(
+        "blueprint_1", url_prefix="/bp1", strict_slashes=True, version=1
+    )
+    blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
+    blueprint_3 = Blueprint("blueprint_3", url_prefix=None)
+    group = BlueprintGroup(
+        url_prefix="/test", version=1.3, strict_slashes=False
+    )
+    group.insert(0, blueprint_1)
+    group.insert(0, blueprint_2)
+    group.insert(0, blueprint_3)
+    assert group.blueprints[1].strict_slashes is False
+    assert group.blueprints[2].strict_slashes is True
+    assert group.blueprints[0].url_prefix == "/test"

@@ -1,5 +1,5 @@
 from collections.abc import MutableSequence
-from typing import List, Union
+from typing import List, Optional, Union
 
 import sanic
 
@@ -98,7 +98,7 @@ class BlueprintGroup(MutableSequence):
         return self._version
 
     @property
-    def strict_slashes(self) -> Union[None, bool]:
+    def strict_slashes(self) -> Optional[bool]:
         """
         URL Slash termination behavior configuration
 

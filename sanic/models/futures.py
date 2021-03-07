@@ -1,5 +1,5 @@
 from pathlib import PurePath
-from typing import NamedTuple, List, Union, Iterable
+from typing import NamedTuple, List, Union, Iterable, Optional
 
 from sanic.models.handler_types import (
     ListenerType,
@@ -11,15 +11,15 @@ from sanic.models.handler_types import (
 class FutureRoute(NamedTuple):
     handler: str
     uri: str
-    methods: Union[None, Iterable[str]]
+    methods: Optional[Iterable[str]]
     host: str
     strict_slashes: bool
     stream: bool
-    version: Union[None, int]
+    version: Optional[int]
     name: str
     ignore_body: bool
     websocket: bool
-    subprotocols: Union[None, List[str]]
+    subprotocols: Optional[List[str]]
     unquote: bool
     static: bool
 
@@ -47,6 +47,6 @@ class FutureStatic(NamedTuple):
     use_content_range: bool
     stream_large_files: bool
     name: str
-    host: Union[None, str]
-    strict_slashes: Union[None, bool]
-    content_type: Union[None, bool]
+    host: Optional[str]
+    strict_slashes: Optional[bool]
+    content_type: Optional[bool]

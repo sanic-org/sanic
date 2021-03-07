@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Pull Request Pathcset Jobs for ${{ matrix.os }}
+    name: Pull Request Pathcset Jobs for ${{ matrix.os }} with ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

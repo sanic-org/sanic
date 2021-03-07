@@ -1,3 +1,5 @@
+import json
+import os
 import random
 import re
 import string
@@ -143,3 +145,11 @@ def url_param_generator():
 def app(request):
     app = Sanic(request.node.name)
     return app
+
+
+@pytest.fixture(scope="function")
+def urlparse_benchmark_data():
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    data_file = os.path.join(current_dir, "data/urldata.json")
+    with open(data_file) as fh:
+        return json.load(fh)

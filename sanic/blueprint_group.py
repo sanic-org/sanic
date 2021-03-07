@@ -88,7 +88,7 @@ class BlueprintGroup(MutableSequence):
         return self._blueprints
 
     @property
-    def version(self) -> Union[None, str, int]:
+    def version(self) -> Union[None, str, int, float]:
         """
         API Version for the Blueprint Group. This will be applied only in case if the Blueprint doesn't already have
         a version specified
@@ -160,6 +160,29 @@ class BlueprintGroup(MutableSequence):
         """
         return len(self._blueprints)
 
+    def _sanitize_blueprint(self, bp: "sanic.Blueprint") -> "sanic.Blueprint":
+        """
+        Sanitize the Blueprint Entity to override the Version and strict slash behaviors as required.
+
+        :param bp: Sanic Blueprint entity Object
+        :return: Modified Blueprint
+        """
+        item_prefix = bp.url_prefix or ""
+        bp.url_prefix = f"{self._url_prefix}{item_prefix}"
+        for _attr in ["version", "strict_slashes"]:
+            if getattr(bp, _attr) is None:
+                setattr(bp, _attr, getattr(self, _attr))
+        return bp
+
+    def append(self, value: "sanic.Blueprint") -> None:
+        """
+        The Abstract class `MutableSequence` leverages this append method to
+        perform the `BlueprintGroup.append` operation.
+        :param value: New `Blueprint` object.
+        :return: None
+        """
+        self._blueprints.append(self._sanitize_blueprint(bp=value))
+
     def insert(self, index: int, item: "sanic.Blueprint") -> None:
         """
         The Abstract class `MutableSequence` leverages this insert method to
@@ -169,10 +192,7 @@ class BlueprintGroup(MutableSequence):
         :param item: New `Blueprint` object.
         :return: None
         """
-        for _attr in ["version", "strict_slashes"]:
-            if getattr(item, _attr) is None:
-                setattr(item, _attr, getattr(self, _attr))
-        self._blueprints.insert(index, item)
+        self._blueprints.insert(index, self._sanitize_blueprint(item))
 
     def middleware(self, *args, **kwargs):
         """

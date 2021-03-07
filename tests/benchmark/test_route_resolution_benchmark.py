@@ -2,6 +2,9 @@ from random import choice, seed
 
 from pytest import mark
 
+from httptools import parse_url
+from urllib.parse import urlparse
+
 import sanic.router
 
 from sanic.request import Request
@@ -11,6 +14,34 @@ seed("Pack my box with five dozen liquor jugs.")
 
 # Disable Caching for testing purpose
 sanic.router.ROUTER_CACHE_SIZE = 0
+
+
+# noinspection PyBroadException
+class TestURLParseBenchmark:
+    @mark.asyncio
+    @mark.parametrize(
+        ("callback", "name"),
+        [(urlparse, "urlparse"), (parse_url, "parse_url")],
+    )
+    async def test_benchmark_url_parser(
+        self, callback, name, benchmark, urlparse_benchmark_data
+    ):
+        def _get_parser(cb):
+            def _run(*records):
+                for record in records:
+                    try:
+                        cb(record["input"].encode())
+                    except:
+                        pass
+
+            return _run
+
+        benchmark.pedantic(
+            _get_parser(callback),
+            urlparse_benchmark_data,
+            iterations=100,
+            rounds=100,
+        )
 
 
 class TestSanicRouteResolution:

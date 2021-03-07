@@ -1,11 +1,17 @@
 from pathlib import PurePath
-from typing import NamedTuple, List, Union, Callable
+from typing import NamedTuple, List, Union, Iterable
+
+from sanic.models.handler_types import (
+    ListenerType,
+    MiddlewareType,
+    ErrorMiddlewareType,
+)
 
 
 class FutureRoute(NamedTuple):
     handler: str
     uri: str
-    methods: Union[None, List[str]]
+    methods: Union[None, Iterable[str]]
     host: str
     strict_slashes: bool
     stream: bool
@@ -19,18 +25,18 @@ class FutureRoute(NamedTuple):
 
 
 class FutureListener(NamedTuple):
-    listener: Callable
+    listener: ListenerType
     event: str
 
 
 class FutureMiddleware(NamedTuple):
-    middleware: Callable
+    middleware: MiddlewareType
     attach_to: str
 
 
 class FutureException(NamedTuple):
-    handler: Callable
-    exceptions: List[Exception]
+    handler: ErrorMiddlewareType
+    exceptions: List[BaseException]
 
 
 class FutureStatic(NamedTuple):

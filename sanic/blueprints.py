@@ -5,7 +5,11 @@ from sanic_routing.route import Route  # type: ignore
 
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
-from sanic.handlers import ListenerType, MiddlewareType, RouteHandler
+from sanic.models.handler_types import (
+    ListenerType,
+    MiddlewareType,
+    RouteHandler,
+)
 from sanic.models.futures import FutureRoute, FutureStatic
 
 
@@ -114,13 +118,6 @@ class Blueprint(BaseSanic):
             strict_slashes=strict_slashes,
         )
         for bp in chain(blueprints):
-            if bp.url_prefix is None:
-                bp.url_prefix = ""
-            if bp.version is None and version:
-                bp.version = version
-            if bp.strict_slashes is None:
-                bp.strict_slashes = strict_slashes
-            bp.url_prefix = url_prefix + bp.url_prefix
             bps.append(bp)
         return bps
 

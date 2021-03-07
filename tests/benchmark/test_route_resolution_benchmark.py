@@ -39,8 +39,8 @@ class TestURLParseBenchmark:
         benchmark.pedantic(
             _get_parser(callback),
             urlparse_benchmark_data,
-            iterations=100,
-            rounds=100,
+            iterations=1,
+            rounds=1,
         )
 
 

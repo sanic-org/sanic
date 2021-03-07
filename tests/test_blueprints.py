@@ -904,7 +904,9 @@ def test_blueprint_group_versioning_and_strict_slash():
     bp3 = Blueprint(name="bp3", url_prefix="/bp3")
     bp4 = Blueprint(name="bp4", url_prefix=None)
 
-    bp5 = Blueprint(name="bp5", version=3, url_prefix="/bp5")
+    bp5 = Blueprint(
+        name="bp5", version=3, url_prefix="/bp5", strict_slashes=None
+    )
 
     @bp5.get("/r1")
     async def bp5_r1(request):

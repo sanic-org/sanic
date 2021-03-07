@@ -30,5 +30,3 @@ jobs:
     - name: Run Unit Test With Tox for Nightly Builds
       run: tox || true
       continue-on-error: true
-      with:
-        python-version: ${{ matrix.python-version }}

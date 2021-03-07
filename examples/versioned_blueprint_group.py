@@ -31,6 +31,5 @@ async def bp2_revised_name(request):
 
 app.blueprint(bpg)
 
-print(f"{app.router.routes_all}")
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)

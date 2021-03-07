@@ -902,7 +902,7 @@ def test_blueprint_group_versioning_and_strict_slash():
     bp2 = Blueprint(name="bp2", url_prefix="/bp2", version=2)
 
     bp3 = Blueprint(name="bp3", url_prefix="/bp3")
-    bp4 = Blueprint(name="bp4", url_prefix=None)
+    bp4 = Blueprint(name="bp4", url_prefix=None, strict_slashes=None)
 
     bp5 = Blueprint(
         name="bp5", version=3, url_prefix="/bp5", strict_slashes=None

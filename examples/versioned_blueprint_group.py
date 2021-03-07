@@ -6,7 +6,7 @@ from sanic.response import json
 app = Sanic(name="blue-print-group-version-example")
 
 bp1 = Blueprint(name="ultron", url_prefix="/ultron")
-bp2 = Blueprint(name="vision", url_prefix="/vision")
+bp2 = Blueprint(name="vision", url_prefix="/vision", strict_slashes=None)
 
 bpg = Blueprint.group([bp1, bp2], url_prefix="/sentient/robot", version=1, strict_slashes=True)
 

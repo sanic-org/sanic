@@ -5,7 +5,6 @@ from sanic_routing.route import Route  # type: ignore
 
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
-from sanic.exceptions import APIVersionMismatchException
 from sanic.handlers import ListenerType, MiddlewareType, RouteHandler
 from sanic.models.futures import FutureRoute, FutureStatic
 
@@ -115,16 +114,11 @@ class Blueprint(BaseSanic):
             strict_slashes=strict_slashes,
         )
         for bp in chain(blueprints):
-            if bp.version and version and bp.version != version:
-                raise APIVersionMismatchException(
-                    f"API Version Mismatch. Blueprint {bp.name} has version {bp.version} "
-                    f"while Blueprint Group has {version}"
-                )
             if bp.url_prefix is None:
                 bp.url_prefix = ""
-            if not bp.version and version:
+            if bp.version is None and version:
                 bp.version = version
-            if strict_slashes is not None:
+            if bp.strict_slashes is None:
                 bp.strict_slashes = strict_slashes
             bp.url_prefix = url_prefix + bp.url_prefix
             bps.append(bp)

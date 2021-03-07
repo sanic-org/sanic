@@ -33,15 +33,6 @@ class SanicException(Exception):
             self.quiet = True
 
 
-class APIVersionMismatchException(SanicException):
-    """
-    Exception generated for route setup configuration workflow when blueprint and blueprint-groups
-    are being configured to use two different API Versions
-    """
-
-    pass
-
-
 @add_status_code(404)
 class NotFound(SanicException):
     """

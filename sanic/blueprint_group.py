@@ -1,8 +1,7 @@
 from collections.abc import MutableSequence
-from typing import List
+from typing import List, Union
 
 import sanic
-from sanic.exceptions import APIVersionMismatchException
 
 
 class BlueprintGroup(MutableSequence):
@@ -80,13 +79,32 @@ class BlueprintGroup(MutableSequence):
         return self._url_prefix
 
     @property
-    def blueprints(self) -> List:
+    def blueprints(self) -> List["sanic.Blueprint"]:
         """
         Retrieve a list of all the available blueprints under this group.
 
         :return: List of Blueprint instance
         """
         return self._blueprints
+
+    @property
+    def version(self) -> Union[None, str, int]:
+        """
+        API Version for the Blueprint Group. This will be applied only in case if the Blueprint doesn't already have
+        a version specified
+
+        :return: Version information
+        """
+        return self._version
+
+    @property
+    def strict_slashes(self) -> Union[None, bool]:
+        """
+        URL Slash termination behavior configuration
+
+        :return: bool
+        """
+        return self._strict_slashes
 
     def __iter__(self):
         """
@@ -142,7 +160,7 @@ class BlueprintGroup(MutableSequence):
         """
         return len(self._blueprints)
 
-    def insert(self, index: int, item: "sanic.blueprints.Blueprint") -> None:
+    def insert(self, index: int, item: "sanic.Blueprint") -> None:
         """
         The Abstract class `MutableSequence` leverages this insert method to
         perform the `BlueprintGroup.append` operation.
@@ -151,15 +169,9 @@ class BlueprintGroup(MutableSequence):
         :param item: New `Blueprint` object.
         :return: None
         """
-        if self._version and item.version and self._version != item.version:
-            raise APIVersionMismatchException(
-                f"API Version Mismatch. Blueprint {item.name} has version {item.version} "
-                f"while Blueprint Group has {self._version}"
-            )
-        if self._version and not item.version:
-            item.version = self._version
-        if self._strict_slashes is not None:
-            item.strict_slashes = self._strict_slashes
+        for _attr in ["version", "strict_slashes"]:
+            if getattr(item, _attr) is None:
+                setattr(item, _attr, getattr(self, _attr))
         self._blueprints.insert(index, item)
 
     def middleware(self, *args, **kwargs):

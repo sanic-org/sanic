@@ -893,3 +893,64 @@ def test_strict_slashes_behavior_adoption():
 
     assert app.test_client.get("/f1")[1].status == 200
     assert app.test_client.get("/f1/")[1].status == 200
+
+
+def test_blueprint_group_versioning_and_strict_slash():
+    app = Sanic(name="blueprint-group-test")
+
+    bp1 = Blueprint(name="bp1", url_prefix="/bp1")
+    bp2 = Blueprint(name="bp2", url_prefix="/bp2", version=2)
+
+    bp3 = Blueprint(name="bp3", url_prefix="/bp3")
+    bp4 = Blueprint(name="bp4", url_prefix=None)
+
+    bp5 = Blueprint(name="bp5", version=3, url_prefix="/bp5")
+
+    @bp5.get("/r1")
+    async def bp5_r1(request):
+        return json({"from": "bp5/r1"})
+
+    @bp4.post("/r1")
+    async def bp4_r1(request):
+        return json({"from": "bp4/r1"})
+
+    @bp3.get("/r1")
+    async def bp3_r1(request):
+        return json({"from": "bp3/r1"})
+
+    @bp1.get("/pre-group")
+    async def pre_group(request):
+        return json({"from": "bp1/pre-group"})
+
+    group = Blueprint.group([bp1, bp2], url_prefix="/group1", version=1)
+
+    group2 = Blueprint.group([bp3, bp4], strict_slashes=True)
+
+    @bp1.get("/r1")
+    async def r1(request):
+        return json({"from": "bp1/r1"})
+
+    @bp2.get("/r2")
+    async def r2(request):
+        return json({"from": "bp2/r2"})
+
+    @bp2.get("/r3", version=3)
+    async def r3(request):
+        return json({"from": "bp2/r3"})
+
+    group2.insert(0, bp5)
+    app.blueprint([group, group2])
+
+    print(f"{app.router.routes_all}")
+    assert app.test_client.get("/v1/group1/bp1/r1/")[1].status == 200
+    assert app.test_client.get("/v2/group1/bp2/r2")[1].status == 200
+    assert app.test_client.get("/v1/group1/bp1/pre-group")[1].status == 200
+    assert app.test_client.get("/v3/group1/bp2/r3")[1].status == 200
+    assert app.test_client.get("bp3/r1")[1].status == 200
+    assert app.test_client.post("/r1/")[1].status == 404
+    assert app.test_client.post("/r1")[1].status == 200
+    assert app.test_client.get("/v3/bp5/r1")[1].status == 200
+    assert app.test_client.get("/v3/bp5/r1/")[1].status == 404
+
+    assert group.version == 1
+    assert group2.strict_slashes is True

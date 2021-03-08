@@ -176,9 +176,7 @@ class WebSocketConnection:
         await self._send(
             {
                 "type": "websocket.accept",
-                "subprotocol": ",".join(
-                    [subprotocol for subprotocol in self.subprotocols]
-                ),
+                "subprotocol": ",".join(list(self.subprotocols)),
             }
         )
 

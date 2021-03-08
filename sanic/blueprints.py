@@ -1,13 +1,17 @@
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.exceptions import SanicException
-from sanic.handlers import ListenerType, MiddlewareType, RouteHandler
 from sanic.models.futures import FutureRoute, FutureStatic
+from sanic.models.handler_types import (
+    ListenerType,
+    MiddlewareType,
+    RouteHandler,
+)
 
 
 class Blueprint(BaseSanic):
@@ -101,16 +105,19 @@ class Blueprint(BaseSanic):
         return super().signal(*args, **kwargs)
 
     @staticmethod
-    def group(*blueprints, url_prefix=""):
+    def group(*blueprints, url_prefix="", version=None, strict_slashes=None):
         """
         Create a list of blueprints, optionally grouping them under a
         general URL prefix.
 
         :param blueprints: blueprints to be registered as a group
         :param url_prefix: URL route to be prepended to all sub-prefixes
+        :param version: API Version to be used for Blueprint group
+        :param strict_slashes: Indicate strict slash termination behavior
+            for URL
         """
 
-        def chain(nested):
+        def chain(nested) -> Iterable[Blueprint]:
             """itertools.chain() but leaves strings untouched"""
             for i in nested:
                 if isinstance(i, (list, tuple)):
@@ -120,11 +127,12 @@ class Blueprint(BaseSanic):
                 else:
                     yield i
 
-        bps = BlueprintGroup(url_prefix=url_prefix)
+        bps = BlueprintGroup(
+            url_prefix=url_prefix,
+            version=version,
+            strict_slashes=strict_slashes,
+        )
         for bp in chain(blueprints):
-            if bp.url_prefix is None:
-                bp.url_prefix = ""
-            bp.url_prefix = url_prefix + bp.url_prefix
             bps.append(bp)
         return bps
 

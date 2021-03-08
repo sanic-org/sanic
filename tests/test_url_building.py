@@ -2,7 +2,7 @@ import string
 
 from urllib.parse import parse_qsl, urlsplit
 
-import pytest as pytest
+import pytest
 
 from sanic_testing.testing import HOST as test_host
 from sanic_testing.testing import PORT as test_port

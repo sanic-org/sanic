@@ -8,7 +8,7 @@ import sys
 
 from distutils.util import strtobool
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
@@ -61,7 +61,7 @@ setup_kwargs = {
         "Build fast. Run fast."
     ),
     "long_description": long_description,
-    "packages": ["sanic"],
+    "packages": find_packages(),
     "package_data": {"sanic": ["py.typed"]},
     "platforms": "any",
     "python_requires": ">=3.7",

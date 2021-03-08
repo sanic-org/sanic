@@ -140,7 +140,7 @@ async def test_dispatch_signal_triggers_on_bp(app):
         nonlocal app_counter
         app_counter += 1
 
-    @bp.signal("foo.bar.bazz")
+    @bp.signal("foo.bar.baz")
     def bp_signal():
         nonlocal bp_counter
         bp_counter += 1
@@ -150,8 +150,8 @@ async def test_dispatch_signal_triggers_on_bp(app):
 
     await app.dispatch("foo.bar.baz")
     assert app_counter == 1
-    assert bp_counter == 0
-
-    await bp.dispatch("foo.bar.bazz")
-    assert app_counter == 1
     assert bp_counter == 1
+
+    await bp.dispatch("foo.bar.baz")
+    assert app_counter == 1
+    assert bp_counter == 2

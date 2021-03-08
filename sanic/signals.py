@@ -8,7 +8,7 @@ from sanic_routing import BaseRouter, Route  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
 
 from sanic.exceptions import InvalidSignal
-from sanic.handlers import SignalHandler
+from sanic.models.handler_types import SignalHandler
 
 
 class Signal(Route):
@@ -35,6 +35,7 @@ class SignalRouter(BaseRouter):
         self.ctx.loop = None
 
     def get(self, event: str, extra=None):  # type: ignore
+        extra = extra or {}
         return self.resolve(f".{event}", extra=extra)
 
     async def _dispatch(
@@ -58,9 +59,10 @@ class SignalRouter(BaseRouter):
 
         try:
             for handler in handlers:
-                maybe_coroutine = handler(**params)
-                if isawaitable(maybe_coroutine):
-                    await maybe_coroutine
+                if where is None or where == handler.__requirements__:
+                    maybe_coroutine = handler(**params)
+                    if isawaitable(maybe_coroutine):
+                        await maybe_coroutine
         finally:
             signal_event.clear()
 
@@ -93,11 +95,15 @@ class SignalRouter(BaseRouter):
             name = ".".join([*parts[:-1], "*"])
         else:
             name = event
+
+        handler.__requirements__ = requirements  # type: ignore
+
         return super().add(
             event,
             handler,
             requirements=requirements,
             name=name,
+            overwrite=True,
         )  # type: ignore
 
     def finalize(self, do_compile: bool = True):

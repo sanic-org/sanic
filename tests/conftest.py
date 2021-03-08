@@ -9,7 +9,6 @@ from typing import Tuple
 import pytest
 
 from sanic_routing.exceptions import RouteExists
-from sanic_testing import TestManager
 
 from sanic import Sanic
 from sanic.constants import HTTP_METHODS

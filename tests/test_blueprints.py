@@ -388,7 +388,7 @@ def test_bp_middleware_with_route(app):
 
 def test_bp_middleware_order(app):
     blueprint = Blueprint("test_bp_middleware_order")
-    order = list()
+    order = []
 
     @blueprint.middleware("request")
     def mw_1(request):
@@ -893,3 +893,98 @@ def test_strict_slashes_behavior_adoption():
 
     assert app.test_client.get("/f1")[1].status == 200
     assert app.test_client.get("/f1/")[1].status == 200
+
+
+def test_blueprint_group_versioning():
+    app = Sanic(name="blueprint-group-test")
+
+    bp1 = Blueprint(name="bp1", url_prefix="/bp1")
+    bp2 = Blueprint(name="bp2", url_prefix="/bp2", version=2)
+
+    bp3 = Blueprint(name="bp3", url_prefix="/bp3")
+
+    @bp3.get("/r1")
+    async def bp3_r1(request):
+        return json({"from": "bp3/r1"})
+
+    @bp1.get("/pre-group")
+    async def pre_group(request):
+        return json({"from": "bp1/pre-group"})
+
+    group = Blueprint.group([bp1, bp2], url_prefix="/group1", version=1)
+
+    group2 = Blueprint.group([bp3])
+
+    @bp1.get("/r1")
+    async def r1(request):
+        return json({"from": "bp1/r1"})
+
+    @bp2.get("/r2")
+    async def r2(request):
+        return json({"from": "bp2/r2"})
+
+    @bp2.get("/r3", version=3)
+    async def r3(request):
+        return json({"from": "bp2/r3"})
+
+    app.blueprint([group, group2])
+
+    assert app.test_client.get("/v1/group1/bp1/r1/")[1].status == 200
+    assert app.test_client.get("/v2/group1/bp2/r2")[1].status == 200
+    assert app.test_client.get("/v1/group1/bp1/pre-group")[1].status == 200
+    assert app.test_client.get("/v3/group1/bp2/r3")[1].status == 200
+    assert app.test_client.get("/bp3/r1")[1].status == 200
+
+    assert group.version == 1
+    assert group2.strict_slashes is None
+
+
+def test_blueprint_group_strict_slashes():
+    app = Sanic(name="blueprint-group-test")
+    bp1 = Blueprint(name="bp1", url_prefix=None, strict_slashes=False)
+
+    bp2 = Blueprint(
+        name="bp2", version=3, url_prefix="/bp2", strict_slashes=None
+    )
+
+    bp3 = Blueprint(
+        name="bp3", version=None, url_prefix="/bp3/", strict_slashes=None
+    )
+
+    @bp1.get("/r1")
+    async def bp1_r1(request):
+        return json({"from": "bp1/r1"})
+
+    @bp2.get("/r1")
+    async def bp2_r1(request):
+        return json({"from": "bp2/r1"})
+
+    @bp2.get("/r2/")
+    async def bp2_r2(request):
+        return json({"from": "bp2/r2"})
+
+    @bp3.get("/r1")
+    async def bp3_r1(request):
+        return json({"from": "bp3/r1"})
+
+    group = Blueprint.group(
+        [bp1, bp2],
+        url_prefix="/slash-check/",
+        version=1.3,
+        strict_slashes=True,
+    )
+
+    group2 = Blueprint.group(
+        [bp3], url_prefix="/other-prefix/", version="v2", strict_slashes=False
+    )
+
+    app.blueprint(group)
+    app.blueprint(group2)
+
+    assert app.test_client.get("/v1.3/slash-check/r1")[1].status == 200
+    assert app.test_client.get("/v1.3/slash-check/r1/")[1].status == 200
+    assert app.test_client.get("/v3/slash-check/bp2/r1")[1].status == 200
+    assert app.test_client.get("/v3/slash-check/bp2/r1/")[1].status == 404
+    assert app.test_client.get("/v3/slash-check/bp2/r2")[1].status == 404
+    assert app.test_client.get("/v3/slash-check/bp2/r2/")[1].status == 200
+    assert app.test_client.get("/v2/other-prefix/bp3/r1")[1].status == 200

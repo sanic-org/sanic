@@ -1,6 +1,4 @@
-from asyncio.events import AbstractEventLoop
 from traceback import format_exc
-from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
 
 from sanic.errorpages import exception_response
 from sanic.exceptions import (
@@ -9,26 +7,7 @@ from sanic.exceptions import (
     InvalidRangeType,
 )
 from sanic.log import logger
-from sanic.request import Request
-from sanic.response import BaseHTTPResponse, HTTPResponse, text
-
-
-Sanic = TypeVar("Sanic")
-
-MiddlewareResponse = Union[
-    Optional[HTTPResponse], Coroutine[Any, Any, Optional[HTTPResponse]]
-]
-RequestMiddlewareType = Callable[[Request], MiddlewareResponse]
-ResponseMiddlewareType = Callable[
-    [Request, BaseHTTPResponse], MiddlewareResponse
-]
-MiddlewareType = Union[RequestMiddlewareType, ResponseMiddlewareType]
-ListenerType = Callable[
-    [Sanic, AbstractEventLoop], Optional[Coroutine[Any, Any, None]]
-]
-
-SignalHandler = Callable[..., Coroutine[Any, Any, None]]
-RouteHandler = Callable[..., Coroutine[Any, Any, HTTPResponse]]
+from sanic.response import text
 
 
 class ErrorHandler:

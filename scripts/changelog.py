@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from os import path
+import sys
 
 if __name__ == "__main__":
     try:
@@ -10,7 +11,7 @@ if __name__ == "__main__":
         print(
             "Please make sure you have a installed towncrier and click before using this tool"
         )
-        exit(1)
+        sys.exit(1)
 
     @click.command()
     @click.option(

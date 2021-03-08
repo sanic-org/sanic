@@ -19,7 +19,7 @@ class ListenerEvent(str, Enum):
 
 class ListenerMixin:
     def __init__(self, *args, **kwargs) -> None:
-        self._future_listeners: List[FutureListener] = list()
+        self._future_listeners: List[FutureListener] = []
 
     def _apply_listener(self, listener: FutureListener):
         raise NotImplementedError  # noqa

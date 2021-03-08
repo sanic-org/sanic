@@ -6,7 +6,7 @@ from sanic.models.futures import FutureMiddleware
 
 class MiddlewareMixin:
     def __init__(self, *args, **kwargs) -> None:
-        self._future_middleware: List[FutureMiddleware] = list()
+        self._future_middleware: List[FutureMiddleware] = []
 
     def _apply_middleware(self, middleware: FutureMiddleware):
         raise NotImplementedError  # noqa

@@ -7,7 +7,7 @@ from inspect import isawaitable
 from sanic_routing import BaseRouter, Route  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
 
-from sanic.exceptions import InvalidSignal
+from sanic.exceptions import InvalidSignal, SanicException
 from sanic.models.handler_types import SignalHandler
 
 
@@ -44,10 +44,10 @@ class SignalRouter(BaseRouter):
         if fields:
             try:
                 event = self.delimiter.join([event, *fields])
-            except TypeError as e:
-                raise TypeError(
-                    f"Cannot dispatch with supplied event: {e}."
-                    "If you wanted to pass context or where, define them as"
+            except TypeError:
+                raise SanicException(
+                    f"Cannot dispatch with supplied event: {event}. "
+                    "If you wanted to pass context or where, define them as "
                     "keyword arguments."
                 )
         signal, handlers, params = self.get(event, extra=where)
@@ -68,8 +68,8 @@ class SignalRouter(BaseRouter):
 
     async def dispatch(
         self, event: str, *fields, context=None, where=None
-    ) -> None:
-        self.ctx.loop.create_task(
+    ) -> asyncio.Task:
+        task = self.ctx.loop.create_task(
             self._dispatch(
                 event,
                 *fields,
@@ -78,6 +78,7 @@ class SignalRouter(BaseRouter):
             )
         )
         await asyncio.sleep(0)
+        return task
 
     def add(  # type: ignore
         self, handler: SignalHandler, event: str, requirements=None

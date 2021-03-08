@@ -32,7 +32,7 @@ class RouteMixin:
         self.name = ""
         self.strict_slashes: Optional[bool] = False
 
-    def _apply_route(self, route: FutureRoute) -> Route:
+    def _apply_route(self, route: FutureRoute) -> List[Route]:
         raise NotImplementedError  # noqa
 
     def _apply_static(self, static: FutureStatic) -> Route:

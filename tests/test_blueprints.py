@@ -7,7 +7,12 @@ import pytest
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import InvalidUsage, NotFound, ServerError
+from sanic.exceptions import (
+    InvalidUsage,
+    NotFound,
+    SanicException,
+    ServerError,
+)
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.views import CompositionView
@@ -16,6 +21,33 @@ from sanic.views import CompositionView
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
+
+
+def test_bp(app):
+    bp = Blueprint("test_text")
+
+    @bp.route("/")
+    def handler(request):
+        return text("Hello")
+
+    app.blueprint(bp)
+    request, response = app.test_client.get("/")
+
+    assert response.text == "Hello"
+
+
+def test_bp_app_access(app):
+    bp = Blueprint("test")
+
+    with pytest.raises(
+        SanicException,
+        match="<Blueprint test> has not yet been registered to an app",
+    ):
+        bp.app
+
+    app.blueprint(bp)
+
+    assert bp.app is app
 
 
 @pytest.fixture(scope="module")
@@ -60,19 +92,6 @@ def test_versioned_routes_get(app, method):
 
     request, response = client_method(f"/v1/{method}")
     assert response.status == 200
-
-
-def test_bp(app):
-    bp = Blueprint("test_text")
-
-    @bp.route("/")
-    def handler(request):
-        return text("Hello")
-
-    app.blueprint(bp)
-    request, response = app.test_client.get("/")
-
-    assert response.text == "Hello"
 
 
 def test_bp_strict_slash(app):

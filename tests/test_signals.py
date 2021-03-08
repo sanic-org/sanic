@@ -1,9 +1,10 @@
 import asyncio
+from typing import Type
 
 import pytest
 
 from sanic import Blueprint
-from sanic.exceptions import InvalidSignal
+from sanic.exceptions import InvalidSignal, SanicException
 
 
 def test_add_signal(app):
@@ -126,6 +127,28 @@ async def test_dispatch_signal_triggers_with_context(app):
 
     await app.dispatch("foo.bar.baz", context={"amount": 9})
     assert counter == 9
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_with_context_fail(app):
+    counter = 0
+
+    @app.signal("foo.bar.baz")
+    def sync_signal(amount):
+        nonlocal counter
+        counter += amount
+
+    app.signal_router.finalize()
+
+    task = await app.dispatch("foo.bar.baz", {"amount": 9})
+    with pytest.raises(
+        SanicException,
+        match=(
+            "Cannot dispatch with supplied event: foo.bar.baz. If you wanted "
+            "to pass context or where, define them as keyword arguments."
+        ),
+    ):
+        await task
 
 
 @pytest.mark.asyncio

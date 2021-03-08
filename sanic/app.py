@@ -104,6 +104,7 @@ class Sanic(BaseSanic):
         self.config = Config(load_env=load_env)
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
+        self._response_serializer = None
         self.blueprints: Dict[str, Blueprint] = {}
         self._blueprint_order: List[Blueprint] = []
         self.configure_logging = configure_logging
@@ -172,6 +173,20 @@ class Sanic(BaseSanic):
             self.listener("before_server_start")(
                 partial(self._loop_add_task, task)
             )
+            
+    def response_serializer(self, serializer: Callable):
+        """
+        Register the response serializer. 
+		The value returned by a route handler will be serialized by this function.
+		The serializer function should return a HTTPResponse.
+
+        :param serializer: callable
+        :return: serializer
+        """
+
+        self._response_serializer = serializer
+		
+        return serializer
 
     def register_listener(self, listener: Callable, event: str) -> Any:
         """
@@ -631,7 +646,10 @@ class Sanic(BaseSanic):
                 response = handler(request, **kwargs)
                 if isawaitable(response):
                     response = await response
-
+			
+            if self._response_serializer and callable(self._response_serializer):
+                response = self._response_serializer(response)
+			
             if response:
                 response = await request.respond(response)
             else:

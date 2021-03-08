@@ -25,9 +25,6 @@ class SignalMixin:
         apply: bool = True,
         requirements: Dict[str, Any] = None,
     ):
-        # TODO:
-        # - Event validation
-
         def decorator(handler: SignalHandler):
             nonlocal event
             nonlocal apply

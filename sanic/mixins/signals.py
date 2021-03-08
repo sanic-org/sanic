@@ -41,8 +41,9 @@ class SignalMixin:
 
         return decorator
 
-    def event(self, event):
-        signal = self.signal_router.name_index.get(event)
+    def event(self, event: str):
+        instance = getattr(self, "app", self)
+        signal = instance.signal_router.name_index.get(event)
         if not signal:
             raise NotFound
         return signal.ctx.event.wait()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from inspect import isawaitable
+from typing import Any, Dict, Optional
 
 from sanic_routing import BaseRouter, Route  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
@@ -34,12 +35,16 @@ class SignalRouter(BaseRouter):
         )
         self.ctx.loop = None
 
-    def get(self, event: str, extra=None):  # type: ignore
+    def get(self, event: str, extra: Optional[Dict[str, str]] = None):  # type: ignore
         extra = extra or {}
         return self.resolve(f".{event}", extra=extra)
 
     async def _dispatch(
-        self, event: str, *fields, context=None, where=None
+        self,
+        event: str,
+        *fields,
+        context: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, str]] = None,
     ) -> None:
         if fields:
             try:
@@ -67,7 +72,11 @@ class SignalRouter(BaseRouter):
             signal_event.clear()
 
     async def dispatch(
-        self, event: str, *fields, context=None, where=None
+        self,
+        event: str,
+        *fields,
+        context: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, str]] = None,
     ) -> asyncio.Task:
         task = self.ctx.loop.create_task(
             self._dispatch(
@@ -81,7 +90,10 @@ class SignalRouter(BaseRouter):
         return task
 
     def add(  # type: ignore
-        self, handler: SignalHandler, event: str, requirements=None
+        self,
+        handler: SignalHandler,
+        event: str,
+        requirements: Optional[Dict[str, Any]] = None,
     ) -> Signal:
         parts = path_to_parts(event, self.delimiter)
 

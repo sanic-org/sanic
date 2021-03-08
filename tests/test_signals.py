@@ -1,4 +1,5 @@
 import asyncio
+from inspect import isawaitable
 from typing import Type
 
 import pytest
@@ -178,3 +179,30 @@ async def test_dispatch_signal_triggers_on_bp(app):
     await bp.dispatch("foo.bar.baz")
     assert app_counter == 1
     assert bp_counter == 2
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_event(app):
+    app_counter = 0
+
+    @app.signal("foo.bar.baz")
+    def app_signal():
+        ...
+
+    async def do_wait():
+        nonlocal app_counter
+        # await asyncio.sleep(0)
+        await app.event("foo.bar.baz")
+        app_counter += 1
+
+    app.signal_router.finalize()
+
+    await app.dispatch("foo.bar.baz")
+    waiter = app.event("foo.bar.baz")
+    assert isawaitable(waiter)
+
+    fut = asyncio.ensure_future(do_wait())
+    await app.dispatch("foo.bar.baz")
+    await fut
+
+    assert app_counter == 1

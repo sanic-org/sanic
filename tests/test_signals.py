@@ -191,7 +191,6 @@ async def test_dispatch_signal_triggers_event(app):
 
     async def do_wait():
         nonlocal app_counter
-        # await asyncio.sleep(0)
         await app.event("foo.bar.baz")
         app_counter += 1
 
@@ -206,3 +205,17 @@ async def test_dispatch_signal_triggers_event(app):
     await fut
 
     assert app_counter == 1
+
+
+def test_bad_finalize(app):
+    counter = 0
+
+    @app.signal("foo.bar.baz")
+    def sync_signal(amount):
+        nonlocal counter
+        counter += amount
+
+    with pytest.raises(
+        RuntimeError, match="Cannot finalize signals outside of event loop"
+    ):
+        app.signal_router.finalize()

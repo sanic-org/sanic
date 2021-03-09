@@ -1,6 +1,11 @@
-from collections import defaultdict
-from typing import Dict, Iterable, List, Optional
+from __future__ import annotations
 
+import asyncio
+
+from collections import defaultdict
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set
+
+from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.base import BaseSanic
@@ -12,6 +17,10 @@ from sanic.models.handler_types import (
     MiddlewareType,
     RouteHandler,
 )
+
+
+if TYPE_CHECKING:
+    from sanic import Sanic
 
 
 class Blueprint(BaseSanic):
@@ -41,7 +50,7 @@ class Blueprint(BaseSanic):
         version: Optional[int] = None,
         strict_slashes: Optional[bool] = None,
     ):
-        self._app = None
+        self._apps: Set[Sanic] = set()
         self.name = name
         self.url_prefix = url_prefix
         self.host = host
@@ -73,12 +82,12 @@ class Blueprint(BaseSanic):
         return f"Blueprint({args})"
 
     @property
-    def app(self):
-        if not self._app:
+    def apps(self):
+        if not self._apps:
             raise SanicException(
                 f"{self} has not yet been registered to an app"
             )
-        return self._app
+        return self._apps
 
     def route(self, *args, **kwargs):
         kwargs["apply"] = False
@@ -146,7 +155,7 @@ class Blueprint(BaseSanic):
             *url_prefix* - URL Prefix to override the blueprint prefix
         """
 
-        self._app = app
+        self._apps.add(app)
         url_prefix = options.get("url_prefix", self.url_prefix)
 
         routes = []
@@ -229,8 +238,23 @@ class Blueprint(BaseSanic):
         self.exceptions = exception_handlers
         self.listeners = dict(listeners)
 
-    def dispatch(self, *args, **kwargs):
+    async def dispatch(self, *args, **kwargs):
         where = kwargs.pop("where", {})
         where.update({"blueprint": self.name})
         kwargs["where"] = where
-        return self.app.dispatch(*args, **kwargs)
+        for app in self.apps:
+            await app.dispatch(*args, **kwargs)
+
+    def event(self, event: str):
+        events = set()
+        for app in self.apps:
+            signal = app.signal_router.name_index.get(event)
+            if not signal:
+                raise NotFound
+            events.add(signal.ctx.event)
+
+        if events:
+            return asyncio.wait(
+                [event.wait() for event in events],
+                return_when=asyncio.FIRST_COMPLETED,
+            )

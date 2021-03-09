@@ -35,7 +35,11 @@ class SignalRouter(BaseRouter):
         )
         self.ctx.loop = None
 
-    def get(self, event: str, extra: Optional[Dict[str, str]] = None):  # type: ignore
+    def get(  # type: ignore
+        self,
+        event: str,
+        extra: Optional[Dict[str, str]] = None,
+    ):
         extra = extra or {}
         return self.resolve(f".{event}", extra=extra)
 

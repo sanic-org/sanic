@@ -1007,3 +1007,20 @@ def test_blueprint_group_strict_slashes():
     assert app.test_client.get("/v3/slash-check/bp2/r2")[1].status == 404
     assert app.test_client.get("/v3/slash-check/bp2/r2/")[1].status == 200
     assert app.test_client.get("/v2/other-prefix/bp3/r1")[1].status == 200
+
+
+def test_blueprint_registered_multiple_apps():
+    app1 = Sanic("app1")
+    app2 = Sanic("app2")
+    bp = Blueprint("bp")
+
+    @bp.get("/")
+    async def handler(request):
+        return text(request.route.name)
+
+    app1.blueprint(bp)
+    app2.blueprint(bp)
+
+    for app in (app1, app2):
+        _, response = app.test_client.get("/")
+        assert response.text == f"{app.name}.bp.handler"

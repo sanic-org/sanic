@@ -2,7 +2,7 @@ version = 1
 
 test_patterns = ["tests/**"]
 
-exclude_patterns = ["docker/**"]
+exclude_patterns = ["docker/**", "docs/**", "examples/**", "scripts/**"]
 
 [[analyzers]]
 name = "python"

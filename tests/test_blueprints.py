@@ -43,11 +43,11 @@ def test_bp_app_access(app):
         SanicException,
         match="<Blueprint test> has not yet been registered to an app",
     ):
-        bp.app
+        bp.apps
 
     app.blueprint(bp)
 
-    assert bp.app is app
+    assert app in bp.apps
 
 
 @pytest.fixture(scope="module")

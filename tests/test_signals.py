@@ -251,3 +251,5 @@ def test_bad_finalize(app):
         RuntimeError, match="Cannot finalize signals outside of event loop"
     ):
         app.signal_router.finalize()
+
+    assert counter == 0

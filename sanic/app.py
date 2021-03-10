@@ -358,6 +358,28 @@ class Sanic(BaseSanic):
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
+        There are several _special_ keyword arguments that will alter how the
+        URL will be returned:
+
+        1. **_anchor**: ``str`` - Adds an ``#anchor`` to the end
+        2. **_scheme**: ``str`` - Should be either ``"http"`` or ``"https"``,
+           default is ``"http"``
+        3. **_external**: ``bool`` - Whether to return the path or a full URL
+           with scheme and host
+        4. **_host**: ``str`` - Used when one or more hosts are defined for a
+           route to tell Sanic which to use
+           (only applies with ``_external=True``)
+        5. **_server**: ``str`` - If not using ``_host``, this will be used
+           for defining the hostname of the URL
+           (only applies with ``_external=True``),
+           defaults to ``app.config.SERVER_NAME``
+
+        If you want the PORT to appear in your URL, you should set it in:
+
+        .. code-block::
+
+            app.config.SERVER_NAME = "myserver:7777"
+
         `See user guide
         <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
 

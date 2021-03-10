@@ -2,6 +2,7 @@ import sys
 
 from dataclasses import asdict, dataclass
 from json import dumps as sdumps
+from typing import Type
 from unittest.mock import patch
 
 import pytest
@@ -41,8 +42,20 @@ def test_change_encoder():
 
 
 def test_json_response_ujson(payload):
+    """ujson will look at __json__"""
     response = json(payload)
     assert response.body == b'{"foo":{"bar":"bar"}}'
+
+    with pytest.raises(
+        TypeError, match="Object of type Foo is not JSON serializable"
+    ):
+        json(payload, dumps=sdumps)
+
+    Sanic("...", dumps=sdumps)
+    with pytest.raises(
+        TypeError, match="Object of type Foo is not JSON serializable"
+    ):
+        json(payload, dumps=sdumps)
 
 
 def test_json_response_json():

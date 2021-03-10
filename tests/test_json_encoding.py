@@ -2,8 +2,6 @@ import sys
 
 from dataclasses import asdict, dataclass
 from json import dumps as sdumps
-from typing import Type
-from unittest.mock import patch
 
 import pytest
 
@@ -41,6 +39,7 @@ def payload(foo):
 
 @pytest.fixture(autouse=True)
 def default_back_to_ujson():
+    yield
     BaseHTTPResponse._dumps = DEFAULT_DUMPS
 
 

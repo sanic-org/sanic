@@ -40,7 +40,7 @@ from sanic.exceptions import (
     ServerError,
     URLBuildError,
 )
-from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
+from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
@@ -50,6 +50,7 @@ from sanic.models.futures import (
     FutureRoute,
     FutureStatic,
 )
+from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router

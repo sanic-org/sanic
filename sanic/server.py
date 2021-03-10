@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from sanic.handlers import ListenerType
+from sanic.models.handler_types import ListenerType
 
 
 if TYPE_CHECKING:

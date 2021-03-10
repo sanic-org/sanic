@@ -55,7 +55,7 @@ def test_json_response_ujson(payload):
     with pytest.raises(
         TypeError, match="Object of type Foo is not JSON serializable"
     ):
-        json(payload, dumps=sdumps)
+        json(payload)
 
 
 def test_json_response_json():

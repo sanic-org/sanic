@@ -1,6 +1,7 @@
 import sys
 
 from dataclasses import asdict, dataclass
+from functools import partial
 from json import dumps as sdumps
 
 import pytest
@@ -13,7 +14,7 @@ try:
     DEFAULT_DUMPS = udumps
 except ModuleNotFoundError:
     NO_UJSON = True
-    DEFAULT_DUMPS = sdumps
+    DEFAULT_DUMPS = partial(sdumps, separators=(",", ":"))
 
 from sanic import Sanic
 from sanic.response import BaseHTTPResponse, json

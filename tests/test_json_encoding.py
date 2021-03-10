@@ -7,7 +7,15 @@ from unittest.mock import patch
 
 import pytest
 
-from ujson import dumps as udumps
+
+try:
+    from ujson import dumps as udumps
+
+    NO_UJSON = False
+    DEFAULT_DUMPS = udumps
+except ModuleNotFoundError:
+    NO_UJSON = True
+    DEFAULT_DUMPS = sdumps
 
 from sanic import Sanic
 from sanic.response import BaseHTTPResponse, json
@@ -33,7 +41,7 @@ def payload(foo):
 
 @pytest.fixture(autouse=True)
 def default_back_to_ujson():
-    BaseHTTPResponse._dumps = udumps
+    BaseHTTPResponse._dumps = DEFAULT_DUMPS
 
 
 def test_change_encoder():
@@ -41,6 +49,15 @@ def test_change_encoder():
     assert BaseHTTPResponse._dumps == sdumps
 
 
+def test_change_encoder_to_some_custom():
+    def my_custom_encoder():
+        return "foo"
+
+    Sanic("...", dumps=my_custom_encoder)
+    assert BaseHTTPResponse._dumps == my_custom_encoder
+
+
+@pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
 def test_json_response_ujson(payload):
     """ujson will look at __json__"""
     response = json(payload)
@@ -58,6 +75,7 @@ def test_json_response_ujson(payload):
         json(payload)
 
 
+@pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
 def test_json_response_json():
     """One of the easiest ways to tell the difference is that ujson cannot
     serialize over 64 bits"""

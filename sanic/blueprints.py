@@ -1,16 +1,16 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Iterable
+from typing import Dict, Iterable, List, Optional
 
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
+from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import (
     ListenerType,
     MiddlewareType,
     RouteHandler,
 )
-from sanic.models.futures import FutureRoute, FutureStatic
 
 
 class Blueprint(BaseSanic):
@@ -99,7 +99,8 @@ class Blueprint(BaseSanic):
         :param blueprints: blueprints to be registered as a group
         :param url_prefix: URL route to be prepended to all sub-prefixes
         :param version: API Version to be used for Blueprint group
-        :param strict_slashes: Indicate strict slash termination behavior for URL
+        :param strict_slashes: Indicate strict slash termination behavior
+            for URL
         """
 
         def chain(nested) -> Iterable[Blueprint]:

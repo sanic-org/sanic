@@ -1159,10 +1159,21 @@ class Sanic(BaseSanic):
         cls._app_registry[name] = app
 
     @classmethod
-    def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
+    def get_app(
+        cls, name: Optional[str] = None, *, force_create: bool = False
+    ) -> "Sanic":
         """
         Retrieve an instantiated Sanic instance
         """
+        if name is None:
+            if len(cls._app_registry) > 1:
+                raise SanicException(
+                    'Multiple Sanic apps found, use Sanic.get_app("app_name")'
+                )
+            elif len(cls._app_registry) == 0:
+                raise SanicException(f"No Sanic apps have been registered.")
+            else:
+                return list(cls._app_registry.values())[0]
         try:
             return cls._app_registry[name]
         except KeyError:

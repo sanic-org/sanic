@@ -2,18 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
-from asyncio.futures import Future
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set
 
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
@@ -256,9 +246,7 @@ class Blueprint(BaseSanic):
             *[app.dispatch(*args, **kwargs) for app in self.apps]
         )
 
-    def event(
-        self, event: str
-    ) -> Future[Tuple[Set[Future[Any]], Set[Future[Any]]]]:
+    def event(self, event: str):
         events = set()
         for app in self.apps:
             signal = app.signal_router.name_index.get(event)

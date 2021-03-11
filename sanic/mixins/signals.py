@@ -1,5 +1,4 @@
-from asyncio.futures import Future
-from typing import Any, Callable, Dict, Set, Tuple
+from typing import Any, Callable, Dict, Set
 
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
@@ -59,7 +58,5 @@ class SignalMixin:
 
         return decorator
 
-    def event(
-        self, event: str
-    ) -> Future[Tuple[Set[Future[Any]], Set[Future[Any]]]]:
+    def event(self, event: str):
         raise NotImplementedError

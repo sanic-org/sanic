@@ -5,7 +5,6 @@ import re
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from asyncio.futures import Future
-from asyncio.tasks import Task
 from collections import defaultdict, deque
 from functools import partial
 from inspect import isawaitable
@@ -14,6 +13,7 @@ from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
 from typing import (
     Any,
+    Awaitable,
     Callable,
     Coroutine,
     Deque,
@@ -22,7 +22,6 @@ from typing import (
     List,
     Optional,
     Set,
-    Tuple,
     Type,
     Union,
 )
@@ -321,16 +320,14 @@ class Sanic(BaseSanic):
         *,
         where: Optional[Dict[str, str]] = None,
         context: Optional[Dict[str, Any]] = None,
-    ) -> Coroutine[Any, Any, Task[Any]]:
+    ) -> Coroutine[Any, Any, Awaitable[Any]]:
         return self.signal_router.dispatch(
             event,
             context=context,
             where=where,
         )
 
-    def event(
-        self, event: str
-    ) -> Future[Tuple[Set[Future[Any]], Set[Future[Any]]]]:
+    def event(self, event: str):
         signal = self.signal_router.name_index.get(event)
         if not signal:
             raise NotFound("Could not find signal %s" % event)

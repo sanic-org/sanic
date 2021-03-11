@@ -1,5 +1,159 @@
+Version 21.3.0
+--------------
+
+Features
+********
+
+  *
+    `#1876 <https://github.com/sanic-org/sanic/pull/1876>`_
+    Unified streaming server
+
+  *
+    `#2005 <https://github.com/sanic-org/sanic/pull/2005>`_
+    New ``Request.id`` property
+
+  *
+    `#2008 <https://github.com/sanic-org/sanic/pull/2008>`_
+    Allow Pathlib Path objects to be passed to ``app.static()`` helper
+
+  *
+    `#2010 <https://github.com/sanic-org/sanic/pull/2010>`_, `#2031 <https://github.com/sanic-org/sanic/pull/2031>`_
+    New startup-optimized router
+
+  *
+    `#2018 <https://github.com/sanic-org/sanic/pull/2018>`_
+    Listeners for main server process
+
+  *
+    `#2032 <https://github.com/sanic-org/sanic/pull/2032>`_
+    Add raw header info to request object
+
+  *
+    `#2043 <https://github.com/sanic-org/sanic/pull/2043>`_
+    Add ``__str__`` and ``__repr__`` to Sanic and Blueprint
+
+  *
+    `#2047 <https://github.com/sanic-org/sanic/pull/2047>`_
+    Enable versioning and strict slash on BlueprintGroup
+
+Bugfixes and issues resolved
+****************************
+
+  * Resolve `#1420 <https://github.com/sanic-org/sanic/pull/1420>`_
+    ``url_for`` where ``strict_slashes`` are on for a path ending in ``/``
+  * Resolve `#1525 <https://github.com/sanic-org/sanic/pull/1525>`_
+    Routing is incorrect with some special characters
+  * Resolve `#1653 <https://github.com/sanic-org/sanic/pull/1653>`_
+    ASGI headers in body
+  * Resolve `#1722 <https://github.com/sanic-org/sanic/pull/1722>`_
+    Using curl in chunk mode
+  * Resolve `#1730 <https://github.com/sanic-org/sanic/pull/1730>`_
+    Extra content in ASGI streaming response
+  * Resolve `#1749 <https://github.com/sanic-org/sanic/pull/1749>`_
+    Restore broken middleware edge cases
+  * Resolve `#1785 <https://github.com/sanic-org/sanic/pull/1785>`_
+    `#1804 <https://github.com/sanic-org/sanic/pull/1804>`_
+    Synchronous error handlers
+  * Resolve `#1790 <https://github.com/sanic-org/sanic/pull/1790>`_
+    Protocol errors did not support async error handlers #1790
+  * Resolve `#1824 <https://github.com/sanic-org/sanic/pull/1824>`_
+    Timeout on specific methods
+  * Resolve `#1875 <https://github.com/sanic-org/sanic/pull/1875>`_
+    Response timeout error from all routes after returning several timeouts from a specific route
+  * Resolve `#1988 <https://github.com/sanic-org/sanic/pull/1988>`_
+    Handling of safe methods with body
+
+  *
+    `#2001 <https://github.com/sanic-org/sanic/pull/2001>`_
+    Raise ValueError when cookie max-age is not an integer
+
+Deprecations and Removals
+*************************
+
+  *
+    `#2007 <https://github.com/sanic-org/sanic/pull/2007>`_
+      * Config using ``from_envvar``
+      * Config using ``from_pyfile``
+      * Config using ``from_object``
+  *
+    `#2009 <https://github.com/sanic-org/sanic/pull/2009>`_
+    Remove Sanic test client to its own package
+
+  *
+    `#2036 <https://github.com/sanic-org/sanic/pull/2036>`_,
+    `#2037 <https://github.com/sanic-org/sanic/pull/2037>`_
+    Drop Python 3.6 support
+
+  * ``Request.endpoint`` deprecated in favor of ``Request.name``
+  * handler type name prefixes removed (static, websocket, etc)
+
+Developer infrastructure
+************************
+
+  *
+    `#1995 <https://github.com/sanic-org/sanic/pull/1995>`_
+    Create FUNDING.yml
+
+  *
+    `#2013 <https://github.com/sanic-org/sanic/pull/2013>`_
+    Add codeql to CI pipeline
+
+  *
+    `#2038 <https://github.com/sanic-org/sanic/pull/2038>`_
+    Codecov configuration updates
+
+  *
+    `#2049 <https://github.com/sanic-org/sanic/pull/2049>`_
+    Updated setup.py to use ``find_packages``
+
+Improved Documentation
+**********************
+
+  *
+    `#2006 <https://github.com/sanic-org/sanic/pull/2006>`_
+    Upgraded type annotations and improved docstrings and API documentation
+
+  *
+    `#2052 <https://github.com/sanic-org/sanic/pull/2052>`_
+    Fix some examples and docs
+
+Miscellaneous
+*************
+
+  * ``Request.route`` property
+  * Better websocket subprotocols support
+  * Resolve bug with middleware in Blueprint Group when passed callable
+  * Moves common logic between Blueprint and Sanic into mixins
+  * Route naming changed to be more consistent
+      * request endpoint is the route name
+      * route names are fully namespaced
+  * Some new convenience decorators:
+      * ``@app.before_server_start``
+      * ``@app.after_server_start``
+      * ``@app.before_server_stop``
+      * ``@app.after_server_stop``
+      * ``@app.on_request``
+      * ``@app.on_response``
+  * Fixes ``Allow`` header that did not include ``HEAD``
+  * Using "name" keyword in ``url_for`` for a "static" route where name does not exist
+  * Cannot have multiple ``app.static()`` without using the named param
+  * Using "filename" keyword in ``url_for`` on a file route
+  * ``unquote`` in route def (not automatic)
+  * ``routes_all`` is tuples
+  * Handler arguments are kwarg only
+  * ``request.match_info`` is now a cached (and not computed) property
+  * Unknown static file mimetype is sent as ``application/octet-stream``
+  * ``_host`` keyword in ``url_for``
+  * Add charset default to ``utf-8`` for text and js content types if not specified
+  * Version for a route can be str, float, or int
+  * Route has ctx property
+  * App has ``routes_static``, ``routes_dynamic``, ``routes_regex``
+  *
+    `#2044 <https://github.com/sanic-org/sanic/pull/2044>`_
+    Code cleanup and refactoring
+
 Version 20.12.2
-===============
+---------------
 
 Dependencies
 ************
@@ -13,7 +167,7 @@ Dependencies
     Remove old chardet requirement, add in hard multidict requirement
 
 Version 19.12.5
-===============
+---------------
 
 Dependencies
 ************
@@ -27,7 +181,7 @@ Dependencies
     Remove old chardet requirement, add in hard multidict requirement
 
 Version 20.12.0
-===============
+---------------
 
 Features
 ********
@@ -37,7 +191,7 @@ Features
     Add disable app registry
 
 Version 20.12.0
-===============
+---------------
 
 Features
 ********
@@ -124,7 +278,7 @@ Improved Documentation
 
 
 Version 20.9.1
-===============
+---------------
 
 Bugfixes
 ********
@@ -138,7 +292,7 @@ Bugfixes
 
 
 Version 19.12.3
-===============
+---------------
 
 Bugfixes
 ********
@@ -149,7 +303,7 @@ Bugfixes
 
 
 Version 20.9.0
-===============
+---------------
 
 
 Features
@@ -219,7 +373,7 @@ Improved Documentation
 
 
 Version 20.6.3
-===============
+---------------
 
 Bugfixes
 ********
@@ -230,7 +384,7 @@ Bugfixes
 
 
 Version 20.6.2
-===============
+---------------
 
 Features
 ********
@@ -241,7 +395,7 @@ Features
 
 
 Version 20.6.1
-===============
+---------------
 
 Features
 ********
@@ -317,13 +471,13 @@ Improved Documentation
 
 
 Version 20.6.0
-===============
+---------------
 
 *Released, but unintentionally ommitting PR #1880, so was replaced by 20.6.1*
 
 
 Version 20.3.0
-===============
+---------------
 
 Features
 ********
@@ -454,7 +608,7 @@ Improved Documentation
 
 
 Version 19.12.0
-===============
+---------------
 
 Bugfixes
 ********
@@ -489,7 +643,7 @@ Improved Documentation
 
 
 Version 19.6.3
-==============
+--------------
 
 Features
 ********
@@ -512,7 +666,7 @@ Improved Documentation
 
 
 Version 19.6.2
-==============
+--------------
 
 Features
 ********
@@ -573,7 +727,7 @@ Deprecations and Removals
 
 
 Version 19.3
-============
+------------
 
 Features
 ********
@@ -711,7 +865,7 @@ Improved Documentation
 Note: 19.3.0 was skipped for packagement purposes and not released on PyPI
 
 Version 18.12
-=============
+-------------
 
 18.12.0
 *******
@@ -756,7 +910,7 @@ Version 18.12
   * Fix document for logging
 
 Version 0.8
-===========
+-----------
 
 0.8.3
 *****
@@ -843,7 +997,7 @@ Version 0.8
 Note: Changelog was unmaintained between 0.1 and 0.7
 
 Version 0.1
-===========
+-----------
 
 
 0.1.7

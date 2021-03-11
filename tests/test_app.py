@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import sys
+import re
 
 from inspect import isawaitable
 from os import environ
@@ -11,6 +11,11 @@ import pytest
 from sanic import Sanic
 from sanic.exceptions import SanicException
 from sanic.response import text
+
+
+@pytest.fixture(autouse=True)
+def clear_app_registry():
+    Sanic._app_registry = {}
 
 
 def uvloop_installed():
@@ -286,14 +291,18 @@ def test_app_registry():
 
 
 def test_app_registry_wrong_type():
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match="Registered app must be an instance of Sanic"
+    ):
         Sanic.register_app(1)
 
 
 def test_app_registry_name_reuse():
     Sanic("test")
     Sanic.test_mode = False
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "test" already in use.'
+    ):
         Sanic("test")
     Sanic.test_mode = True
     Sanic("test")
@@ -304,8 +313,16 @@ def test_app_registry_retrieval():
     assert Sanic.get_app("test") is instance
 
 
+def test_app_registry_retrieval_from_multiple():
+    instance = Sanic("test")
+    Sanic("something_else")
+    assert Sanic.get_app("test") is instance
+
+
 def test_get_app_does_not_exist():
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "does-not-exist" not found.'
+    ):
         Sanic.get_app("does-not-exist")
 
 
@@ -315,15 +332,43 @@ def test_get_app_does_not_exist_force_create():
     )
 
 
+def test_get_app_default():
+    instance = Sanic("test")
+    assert Sanic.get_app() is instance
+
+
+def test_get_app_no_default():
+    with pytest.raises(
+        SanicException, match="No Sanic apps have been registered."
+    ):
+        Sanic.get_app()
+
+
+def test_get_app_default_ambiguous():
+    Sanic("test1")
+    Sanic("test2")
+    with pytest.raises(
+        SanicException,
+        match=re.escape(
+            'Multiple Sanic apps found, use Sanic.get_app("app_name")'
+        ),
+    ):
+        Sanic.get_app()
+
+
 def test_app_no_registry():
     Sanic("no-register", register=False)
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "no-register" not found.'
+    ):
         Sanic.get_app("no-register")
 
 
 def test_app_no_registry_env():
     environ["SANIC_REGISTER"] = "False"
     Sanic("no-register")
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "no-register" not found.'
+    ):
         Sanic.get_app("no-register")
     del environ["SANIC_REGISTER"]

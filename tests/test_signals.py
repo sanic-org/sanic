@@ -60,9 +60,6 @@ async def test_dispatch_signal_triggers_multiple_handlers(app):
     await app.dispatch("foo.bar.baz")
     assert counter == 2
 
-    await app.dispatch("foo", "bar", "baz")
-    assert counter == 4
-
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_triggers_triggers_event(app):
@@ -103,7 +100,7 @@ async def test_dispatch_signal_triggers_dynamic_route(app):
 async def test_dispatch_signal_triggers_with_requirements(app):
     counter = 0
 
-    @app.signal("foo.bar.baz", requirements={"one": "two"})
+    @app.signal("foo.bar.baz", where={"one": "two"})
     def sync_signal(*_):
         nonlocal counter
         counter += 1
@@ -142,15 +139,8 @@ async def test_dispatch_signal_triggers_with_context_fail(app):
 
     app.signal_router.finalize()
 
-    task = await app.dispatch("foo.bar.baz", {"amount": 9})
-    with pytest.raises(
-        SanicException,
-        match=(
-            "Cannot dispatch with supplied event: foo.bar.baz. If you wanted "
-            "to pass context or where, define them as keyword arguments."
-        ),
-    ):
-        await task
+    with pytest.raises(TypeError):
+        await app.dispatch("foo.bar.baz", {"amount": 9})
 
 
 @pytest.mark.asyncio
@@ -225,7 +215,7 @@ async def test_dispatch_signal_triggers_event_on_bp(app):
     app.blueprint(bp)
     app.signal_router.finalize()
     signal, *_ = app.signal_router.get(
-        "foo.bar.baz", extra={"blueprint": "bp"}
+        "foo.bar.baz", where={"blueprint": "bp"}
     )
 
     await bp.dispatch("foo.bar.baz")

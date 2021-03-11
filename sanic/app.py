@@ -5,6 +5,7 @@ import re
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from asyncio.futures import Future
+from asyncio.tasks import Task
 from collections import defaultdict, deque
 from functools import partial
 from inspect import isawaitable
@@ -14,18 +15,21 @@ from traceback import format_exc
 from typing import (
     Any,
     Callable,
+    Coroutine,
     Deque,
     Dict,
     Iterable,
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
 
 from sanic_routing.exceptions import FinalizationError  # type: ignore
+from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
@@ -82,6 +86,7 @@ class Sanic(BaseSanic):
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
         register: Optional[bool] = None,
+        dumps: Optional[Callable[..., str]] = None,
     ) -> None:
         super().__init__()
 
@@ -116,8 +121,6 @@ class Sanic(BaseSanic):
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
-        # self.named_request_middleware: Dict[str, MiddlewareType] = {}
-        # self.named_response_middleware: Dict[str, MiddlewareType] = {}
         self._test_manager = None
         self._test_client = None
         self._asgi_client = None
@@ -131,6 +134,9 @@ class Sanic(BaseSanic):
             self.__class__.register_app(self)
 
         self.router.ctx.app = self
+
+        if dumps:
+            BaseHTTPResponse._dumps = dumps
 
     @property
     def loop(self):
@@ -309,8 +315,26 @@ class Sanic(BaseSanic):
     def _apply_signal(self, signal: FutureSignal) -> Signal:
         return self.signal_router.add(*signal)
 
-    def dispatch(self, *args, **kwargs):
-        return self.signal_router.dispatch(*args, **kwargs)
+    def dispatch(
+        self,
+        event: str,
+        *,
+        where: Optional[Dict[str, str]] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Coroutine[Any, Any, Task[Any]]:
+        return self.signal_router.dispatch(
+            event,
+            context=context,
+            where=where,
+        )
+
+    def event(
+        self, event: str
+    ) -> Future[Tuple[Set[Future[Any]], Set[Future[Any]]]]:
+        signal = self.signal_router.name_index.get(event)
+        if not signal:
+            raise NotFound("Could not find signal %s" % event)
+        return signal.ctx.event.wait()
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -1194,10 +1218,21 @@ class Sanic(BaseSanic):
         cls._app_registry[name] = app
 
     @classmethod
-    def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
+    def get_app(
+        cls, name: Optional[str] = None, *, force_create: bool = False
+    ) -> "Sanic":
         """
         Retrieve an instantiated Sanic instance
         """
+        if name is None:
+            if len(cls._app_registry) > 1:
+                raise SanicException(
+                    'Multiple Sanic apps found, use Sanic.get_app("app_name")'
+                )
+            elif len(cls._app_registry) == 0:
+                raise SanicException(f"No Sanic apps have been registered.")
+            else:
+                return list(cls._app_registry.values())[0]
         try:
             return cls._app_registry[name]
         except KeyError:

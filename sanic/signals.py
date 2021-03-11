@@ -3,9 +3,10 @@ from __future__ import annotations
 import asyncio
 
 from inspect import isawaitable
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from sanic_routing import BaseRouter, Route  # type: ignore
+from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
 
 from sanic.exceptions import InvalidSignal, SanicException
@@ -38,28 +39,26 @@ class SignalRouter(BaseRouter):
     def get(  # type: ignore
         self,
         event: str,
-        extra: Optional[Dict[str, str]] = None,
+        where: Optional[Dict[str, str]] = None,
     ):
-        extra = extra or {}
-        return self.resolve(f".{event}", extra=extra)
+        extra = where or {}
+        try:
+            return self.resolve(f".{event}", extra=extra)
+        except NotFound:
+            message = "Could not find signal %s"
+            terms: List[Union[str, Optional[Dict[str, str]]]] = [event]
+            if extra:
+                message += " with %s"
+                terms.append(extra)
+            raise NotFound(message % tuple(terms))
 
     async def _dispatch(
         self,
         event: str,
-        *fields,
         context: Optional[Dict[str, Any]] = None,
         where: Optional[Dict[str, str]] = None,
     ) -> None:
-        if fields:
-            try:
-                event = self.delimiter.join([event, *fields])
-            except TypeError:
-                raise SanicException(
-                    f"Cannot dispatch with supplied event: {event}. "
-                    "If you wanted to pass context or where, define them as "
-                    "keyword arguments."
-                )
-        signal, handlers, params = self.get(event, extra=where)
+        signal, handlers, params = self.get(event, where=where)
 
         signal_event = signal.ctx.event
         signal_event.set()
@@ -78,14 +77,13 @@ class SignalRouter(BaseRouter):
     async def dispatch(
         self,
         event: str,
-        *fields,
+        *,
         context: Optional[Dict[str, Any]] = None,
         where: Optional[Dict[str, str]] = None,
     ) -> asyncio.Task:
         task = self.ctx.loop.create_task(
             self._dispatch(
                 event,
-                *fields,
                 context=context,
                 where=where,
             )
@@ -97,7 +95,7 @@ class SignalRouter(BaseRouter):
         self,
         handler: SignalHandler,
         event: str,
-        requirements: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> Signal:
         parts = path_to_parts(event, self.delimiter)
 
@@ -113,12 +111,12 @@ class SignalRouter(BaseRouter):
         else:
             name = event
 
-        handler.__requirements__ = requirements  # type: ignore
+        handler.__requirements__ = where  # type: ignore
 
         return super().add(
             event,
             handler,
-            requirements=requirements,
+            requirements=where,
             name=name,
             overwrite=True,
         )  # type: ignore

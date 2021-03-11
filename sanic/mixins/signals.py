@@ -1,6 +1,5 @@
-from typing import Any, Dict, Set
-
-from sanic_routing.exceptions import NotFound  # type: ignore
+from asyncio.futures import Future
+from typing import Any, Callable, Dict, Set, Tuple
 
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
@@ -22,9 +21,10 @@ class SignalMixin:
     def signal(
         self,
         event: str,
+        *,
         apply: bool = True,
-        requirements: Dict[str, Any] = None,
-    ):
+        where: Dict[str, Any] = None,
+    ) -> Callable[[SignalHandler], FutureSignal]:
         """
         For creating a signal handler, used similar to a route handler:
 
@@ -38,8 +38,9 @@ class SignalMixin:
         :type event: str
         :param apply: For lazy evaluation, defaults to True
         :type apply: bool, optional
-        :param requirements: For use with the ``where`` argument in dispatch filtering, defaults to None
-        :type requirements: Dict[str, Any], optional
+        :param where: For use with the ``where`` argument in dispatch
+            filtering, defaults to None
+        :type where: Dict[str, Any], optional
         """
 
         def decorator(handler: SignalHandler):
@@ -47,7 +48,7 @@ class SignalMixin:
             nonlocal apply
 
             future_signal = FutureSignal(
-                handler, event, HashableDict(requirements or {})
+                handler, event, HashableDict(where or {})
             )
             self._future_signals.add(future_signal)
 
@@ -58,8 +59,7 @@ class SignalMixin:
 
         return decorator
 
-    def event(self, event: str):
-        signal = self.signal_router.name_index.get(event)  # type: ignore
-        if not signal:
-            raise NotFound
-        return signal.ctx.event.wait()
+    def event(
+        self, event: str
+    ) -> Future[Tuple[Set[Future[Any]], Set[Future[Any]]]]:
+        raise NotImplementedError

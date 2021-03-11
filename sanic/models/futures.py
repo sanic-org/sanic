@@ -56,4 +56,4 @@ class FutureStatic(NamedTuple):
 class FutureSignal(NamedTuple):
     handler: SignalHandler
     event: str
-    requirements: Optional[Dict[str, str]]
+    where: Optional[Dict[str, str]]

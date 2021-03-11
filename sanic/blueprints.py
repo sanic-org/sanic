@@ -2,8 +2,19 @@ from __future__ import annotations
 
 import asyncio
 
+from asyncio.futures import Future
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Coroutine,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
@@ -225,7 +236,7 @@ class Blueprint(BaseSanic):
             listeners[listener.event].append(app._apply_listener(listener))
 
         for signal in self._future_signals:
-            signal.requirements.update({"blueprint": self.name})
+            signal.where.update({"blueprint": self.name})
             app._apply_signal(signal)
 
         self.routes = [route for route in routes if isinstance(route, Route)]
@@ -242,15 +253,18 @@ class Blueprint(BaseSanic):
         where = kwargs.pop("where", {})
         where.update({"blueprint": self.name})
         kwargs["where"] = where
-        for app in self.apps:
-            await app.dispatch(*args, **kwargs)
+        await asyncio.gather(
+            *[app.dispatch(*args, **kwargs) for app in self.apps]
+        )
 
-    def event(self, event: str):
+    def event(
+        self, event: str
+    ) -> Future[Tuple[Set[Future[Any]], Set[Future[Any]]]]:
         events = set()
         for app in self.apps:
             signal = app.signal_router.name_index.get(event)
             if not signal:
-                raise NotFound
+                raise NotFound("Could not find signal %s" % event)
             events.add(signal.ctx.event)
 
         if events:
@@ -258,3 +272,5 @@ class Blueprint(BaseSanic):
                 [event.wait() for event in events],
                 return_when=asyncio.FIRST_COMPLETED,
             )
+
+        raise NotFound("Could not find signal %s" % event)

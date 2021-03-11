@@ -1,12 +1,11 @@
 import asyncio
 
 from inspect import isawaitable
-from typing import Type
 
 import pytest
 
 from sanic import Blueprint
-from sanic.exceptions import InvalidSignal, SanicException
+from sanic.exceptions import InvalidSignal
 
 
 def test_add_signal(app):

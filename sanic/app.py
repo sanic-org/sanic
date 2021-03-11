@@ -1230,7 +1230,7 @@ class Sanic(BaseSanic):
                     'Multiple Sanic apps found, use Sanic.get_app("app_name")'
                 )
             elif len(cls._app_registry) == 0:
-                raise SanicException(f"No Sanic apps have been registered.")
+                raise SanicException("No Sanic apps have been registered.")
             else:
                 return list(cls._app_registry.values())[0]
         try:

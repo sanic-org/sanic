@@ -9,7 +9,7 @@ from sanic_routing import BaseRouter, Route  # type: ignore
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
 
-from sanic.exceptions import InvalidSignal, SanicException
+from sanic.exceptions import InvalidSignal
 from sanic.models.handler_types import SignalHandler
 
 

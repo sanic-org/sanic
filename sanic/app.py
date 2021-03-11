@@ -84,6 +84,7 @@ class Sanic(BaseSanic):
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
         register: Optional[bool] = None,
+        dumps: Optional[Callable[..., str]] = None,
     ) -> None:
         super().__init__()
 
@@ -117,8 +118,6 @@ class Sanic(BaseSanic):
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
-        # self.named_request_middleware: Dict[str, MiddlewareType] = {}
-        # self.named_response_middleware: Dict[str, MiddlewareType] = {}
         self._test_manager = None
         self._test_client = None
         self._asgi_client = None
@@ -132,6 +131,9 @@ class Sanic(BaseSanic):
             self.__class__.register_app(self)
 
         self.router.ctx.app = self
+
+        if dumps:
+            BaseHTTPResponse._dumps = dumps
 
     @property
     def loop(self):

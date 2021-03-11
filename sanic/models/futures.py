@@ -1,10 +1,10 @@
 from pathlib import PurePath
-from typing import NamedTuple, List, Union, Iterable, Optional
+from typing import Iterable, List, NamedTuple, Optional, Union
 
 from sanic.models.handler_types import (
+    ErrorMiddlewareType,
     ListenerType,
     MiddlewareType,
-    ErrorMiddlewareType,
 )
 
 

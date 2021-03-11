@@ -39,6 +39,8 @@ class BaseHTTPResponse:
     The base class for all HTTP Responses
     """
 
+    _dumps = json_dumps
+
     def __init__(self):
         self.asgi: bool = False
         self.body: Optional[bytes] = None
@@ -66,8 +68,8 @@ class BaseHTTPResponse:
                 response.cookies["test"]["domain"] = ".yummy-yummy-cookie.com"
                 response.cookies["test"]["httponly"] = True
 
-        `See user guide
-        <https://sanicframework.org/guide/basics/cookies.html>`_
+        `See user guide re: cookies
+        <https://sanicframework.org/guide/basics/cookies.html>`__
 
         :return: the cookie jar
         :rtype: CookieJar
@@ -251,7 +253,7 @@ def json(
     status: int = 200,
     headers: Optional[Dict[str, str]] = None,
     content_type: str = "application/json",
-    dumps: Callable[..., str] = json_dumps,
+    dumps: Optional[Callable[..., str]] = None,
     **kwargs,
 ) -> HTTPResponse:
     """
@@ -262,6 +264,8 @@ def json(
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
+    if not dumps:
+        dumps = BaseHTTPResponse._dumps
     return HTTPResponse(
         dumps(body, **kwargs),
         headers=headers,

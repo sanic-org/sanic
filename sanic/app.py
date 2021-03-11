@@ -1059,10 +1059,10 @@ class Sanic(BaseSanic):
             try:
                 app.router.finalize()
                 if app.signal_router.routes:
-                    app.signal_router.finalize()
+                    app.signal_router.finalize()  # noqa
             except FinalizationError as e:
                 if not Sanic.test_mode:
-                    raise e
+                    raise e  # noqa
 
         self.listeners["before_server_start"] = [finalize] + self.listeners[
             "before_server_start"

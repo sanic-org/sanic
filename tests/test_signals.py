@@ -4,6 +4,8 @@ from inspect import isawaitable
 
 import pytest
 
+from sanic_routing.exceptions import NotFound
+
 from sanic import Blueprint
 from sanic.exceptions import InvalidSignal
 
@@ -242,3 +244,16 @@ def test_bad_finalize(app):
         app.signal_router.finalize()
 
     assert counter == 0
+
+
+def test_event_not_exist(app):
+    with pytest.raises(NotFound, match="Could not find signal does.not.exist"):
+        app.event("does.not.exist")
+
+
+def test_event_not_exist_on_bp(app):
+    bp = Blueprint("bp")
+    app.blueprint(bp)
+
+    with pytest.raises(NotFound, match="Could not find signal does.not.exist"):
+        bp.event("does.not.exist")

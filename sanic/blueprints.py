@@ -20,7 +20,7 @@ from sanic.models.handler_types import (
 
 
 if TYPE_CHECKING:
-    from sanic import Sanic
+    from sanic import Sanic  # noqa
 
 
 class Blueprint(BaseSanic):

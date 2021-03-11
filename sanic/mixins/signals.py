@@ -25,6 +25,16 @@ class SignalMixin:
         apply: bool = True,
         requirements: Dict[str, Any] = None,
     ):
+        """
+        Used similar to a route handler:
+
+        .. code-block:: python
+
+            @app.signal("foo.bar.<thing>")
+            async def signal_handler(thing, **kwargs):
+                print(f"[signal_handler] {thing=}", kwargs)
+        """
+
         def decorator(handler: SignalHandler):
             nonlocal event
             nonlocal apply

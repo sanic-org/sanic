@@ -26,13 +26,20 @@ class SignalMixin:
         requirements: Dict[str, Any] = None,
     ):
         """
-        Used similar to a route handler:
+        For creating a signal handler, used similar to a route handler:
 
         .. code-block:: python
 
             @app.signal("foo.bar.<thing>")
             async def signal_handler(thing, **kwargs):
                 print(f"[signal_handler] {thing=}", kwargs)
+
+        :param event: Representation of the event in ``one.two.three`` form
+        :type event: str
+        :param apply: For lazy evaluation, defaults to True
+        :type apply: bool, optional
+        :param requirements: For use with the ``where`` argument in dispatch filtering, defaults to None
+        :type requirements: Dict[str, Any], optional
         """
 
         def decorator(handler: SignalHandler):

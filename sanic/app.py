@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import logging.config
 import os
@@ -327,11 +328,11 @@ class Sanic(BaseSanic):
             where=where,
         )
 
-    def event(self, event: str):
+    def event(self, event: str, timeout: Optional[Union[int, float]] = None):
         signal = self.signal_router.name_index.get(event)
         if not signal:
             raise NotFound("Could not find signal %s" % event)
-        return signal.ctx.event.wait()
+        return asyncio.wait_for(signal.ctx.event.wait(), timeout=timeout)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -1055,18 +1056,9 @@ class Sanic(BaseSanic):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        async def finalize(app, _):
-            try:
-                app.router.finalize()
-                if app.signal_router.routes:
-                    app.signal_router.finalize()  # noqa
-            except FinalizationError as e:
-                if not Sanic.test_mode:
-                    raise e  # noqa
-
-        self.listeners["before_server_start"] = [finalize] + self.listeners[
-            "before_server_start"
-        ]
+        self.listeners["before_server_start"] = [
+            self.finalize
+        ] + self.listeners["before_server_start"]
 
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -1236,3 +1228,17 @@ class Sanic(BaseSanic):
             if force_create:
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
+
+    # -------------------------------------------------------------------- #
+    # Static methods
+    # -------------------------------------------------------------------- #
+
+    @staticmethod
+    async def finalize(app, _):
+        try:
+            app.router.finalize()
+            if app.signal_router.routes:
+                app.signal_router.finalize()  # noqa
+        except FinalizationError as e:
+            if not Sanic.test_mode:
+                raise e  # noqa

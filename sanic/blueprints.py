@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
 
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
@@ -109,9 +109,9 @@ class Blueprint(BaseSanic):
         kwargs["apply"] = False
         return super().exception(*args, **kwargs)
 
-    def signal(self, *args, **kwargs):
+    def signal(self, event: str, *args, **kwargs):
         kwargs["apply"] = False
-        return super().signal(*args, **kwargs)
+        return super().signal(event, *args, **kwargs)
 
     @staticmethod
     def group(*blueprints, url_prefix="", version=None, strict_slashes=None):
@@ -246,7 +246,7 @@ class Blueprint(BaseSanic):
             *[app.dispatch(*args, **kwargs) for app in self.apps]
         )
 
-    def event(self, event: str):
+    def event(self, event: str, timeout: Optional[Union[int, float]] = None):
         events = set()
         for app in self.apps:
             signal = app.signal_router.name_index.get(event)
@@ -258,6 +258,7 @@ class Blueprint(BaseSanic):
             return asyncio.wait(
                 [event.wait() for event in events],
                 return_when=asyncio.FIRST_COMPLETED,
+                timeout=timeout,
             )
 
         raise NotFound("Could not find signal %s" % event)

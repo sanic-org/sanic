@@ -3,7 +3,7 @@ import logging.config
 import os
 import re
 
-from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
+from asyncio import CancelledError, Protocol, ensure_future, gather, get_event_loop
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
@@ -969,10 +969,13 @@ class Sanic(BaseSanic):
         :param events: one or more sync or async functions to execute
         :param loop: event loop
         """
+        awaitables = []
         for event in events:
             result = event(loop)
             if isawaitable(result):
-                await result
+                awaitables.append(result)
+        if awaitables:
+            await gather(*awaitables)
 
     async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why

@@ -336,10 +336,13 @@ def trigger_events(events: Optional[Iterable[Callable[..., Any]]], loop):
     :param loop: event loop
     """
     if events:
+        awaitables = []
         for event in events:
             result = event(loop)
             if isawaitable(result):
-                loop.run_until_complete(result)
+                awaitables.append(result)
+        if awaitables:
+            loop.run_until_complete(asyncio.gather(*awaitables))
 
 
 class AsyncioServer:

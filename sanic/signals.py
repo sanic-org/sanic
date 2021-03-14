@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from inspect import isawaitable
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from sanic_routing import BaseRouter, Route  # type: ignore
 from sanic_routing.exceptions import NotFound  # type: ignore
@@ -11,6 +11,12 @@ from sanic_routing.utils import path_to_parts  # type: ignore
 
 from sanic.exceptions import InvalidSignal
 from sanic.models.handler_types import SignalHandler
+
+
+RESERVED_NAMESPACES = (
+    "server",
+    "http",
+)
 
 
 class Signal(Route):
@@ -97,15 +103,7 @@ class SignalRouter(BaseRouter):
         event: str,
         condition: Optional[Dict[str, Any]] = None,
     ) -> Signal:
-        parts = path_to_parts(event, self.delimiter)
-
-        if (
-            len(parts) != 3
-            or parts[0].startswith("<")
-            or parts[1].startswith("<")
-        ):
-            raise InvalidSignal(f"Invalid signal event: {event}")
-
+        parts = self._build_event_parts(event)
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])
         else:
@@ -131,3 +129,18 @@ class SignalRouter(BaseRouter):
             signal.ctx.event = asyncio.Event()
 
         return super().finalize(do_compile=do_compile)
+
+    def _build_event_parts(self, event: str) -> Tuple[str, str, str]:
+        parts = path_to_parts(event, self.delimiter)
+        if (
+            len(parts) != 3
+            or parts[0].startswith("<")
+            or parts[1].startswith("<")
+        ):
+            raise InvalidSignal("Invalid signal event: %s" % event)
+
+        if parts[0] in RESERVED_NAMESPACES:
+            raise InvalidSignal(
+                "Cannot declare reserved signal event: %s" % event
+            )
+        return parts

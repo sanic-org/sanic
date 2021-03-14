@@ -271,3 +271,24 @@ def test_event_on_bp_not_registered():
         match="<Blueprint bp> has not yet been registered to an app",
     ):
         bp.event("foo.bar.baz")
+
+
+@pytest.mark.parametrize(
+    "event,expected",
+    (
+        ("foo.bar.baz", True),
+        ("server.init.before", False),
+        ("http.request.start", False),
+        ("sanic.notice.anything", True),
+        ("sanic.no.way", False),
+    ),
+)
+def test_signal_reservation(app, event, expected):
+    if not expected:
+        with pytest.raises(
+            InvalidSignal,
+            match=f"Cannot declare reserved signal event: {event}",
+        ):
+            app.signal(event)(lambda: ...)
+    else:
+        app.signal(event)(lambda: ...)

@@ -280,7 +280,6 @@ def test_event_on_bp_not_registered():
         ("server.init.before", False),
         ("http.request.start", False),
         ("sanic.notice.anything", True),
-        ("sanic.no.way", False),
     ),
 )
 def test_signal_reservation(app, event, expected):

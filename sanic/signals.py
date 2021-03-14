@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 
-from collections import namedtuple
 from inspect import isawaitable
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -14,11 +13,9 @@ from sanic.exceptions import InvalidSignal
 from sanic.models.handler_types import SignalHandler
 
 
-Reservation = namedtuple("Reservation", ("namespace", "reference", "action"))
-
-RESERVED_EVENTS = (
-    Reservation("server,http", "*", "*"),
-    Reservation("sanic", "notice,log", None),
+RESERVED_NAMESPACES = (
+    "server",
+    "http",
 )
 
 
@@ -142,33 +139,8 @@ class SignalRouter(BaseRouter):
         ):
             raise InvalidSignal("Invalid signal event: %s" % event)
 
-        current = Reservation(*parts)
-        for reservation in RESERVED_EVENTS:
-            if reservation.namespace == "*":
-                raise InvalidSignal(
-                    "Cannot declare reserved signal event: %s" % event
-                )
-
-            if reservation.namespace is not None and (
-                current.namespace in reservation.namespace.split(",")
-            ):
-                if (
-                    reservation.reference == "*"
-                    or current.reference
-                    not in reservation.reference.split(",")
-                ):
-                    raise InvalidSignal(
-                        "Cannot declare reserved signal event: %s" % event
-                    )
-
-                if reservation.reference is None or reservation.action is None:
-                    continue
-
-                if (
-                    current.action not in reservation.action.split(",")
-                    or reservation.action == "*"
-                ):
-                    raise InvalidSignal(
-                        "Cannot declare reserved signal event: %s" % event
-                    )
+        if parts[0] in RESERVED_NAMESPACES:
+            raise InvalidSignal(
+                "Cannot declare reserved signal event: %s" % event
+            )
         return parts

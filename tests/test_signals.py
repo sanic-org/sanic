@@ -7,7 +7,7 @@ import pytest
 from sanic_routing.exceptions import NotFound
 
 from sanic import Blueprint
-from sanic.exceptions import InvalidSignal
+from sanic.exceptions import InvalidSignal, SanicException
 
 
 def test_add_signal(app):
@@ -257,3 +257,17 @@ def test_event_not_exist_on_bp(app):
 
     with pytest.raises(NotFound, match="Could not find signal does.not.exist"):
         bp.event("does.not.exist")
+
+
+def test_event_on_bp_not_registered():
+    bp = Blueprint("bp")
+
+    @bp.signal("foo.bar.baz")
+    def bp_signal():
+        ...
+
+    with pytest.raises(
+        SanicException,
+        match="<Blueprint bp> has not yet been registered to an app",
+    ):
+        bp.event("foo.bar.baz")

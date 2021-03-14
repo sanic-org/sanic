@@ -254,11 +254,8 @@ class Blueprint(BaseSanic):
                 raise NotFound("Could not find signal %s" % event)
             events.add(signal.ctx.event)
 
-        if events:
-            return asyncio.wait(
-                [event.wait() for event in events],
-                return_when=asyncio.FIRST_COMPLETED,
-                timeout=timeout,
-            )
-
-        raise NotFound("Could not find signal %s" % event)
+        return asyncio.wait(
+            [event.wait() for event in events],
+            return_when=asyncio.FIRST_COMPLETED,
+            timeout=timeout,
+        )

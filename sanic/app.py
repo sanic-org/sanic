@@ -1,10 +1,15 @@
-import asyncio
 import logging
 import logging.config
 import os
 import re
 
-from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
+from asyncio import (
+    CancelledError,
+    Protocol,
+    ensure_future,
+    get_event_loop,
+    wait_for,
+)
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
@@ -332,7 +337,7 @@ class Sanic(BaseSanic):
         signal = self.signal_router.name_index.get(event)
         if not signal:
             raise NotFound("Could not find signal %s" % event)
-        return asyncio.wait_for(signal.ctx.event.wait(), timeout=timeout)
+        return wait_for(signal.ctx.event.wait(), timeout=timeout)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.

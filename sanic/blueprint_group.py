@@ -61,7 +61,8 @@ class BlueprintGroup(MutableSequence):
         Create a new Blueprint Group
 
         :param url_prefix: URL: to be prefixed before all the Blueprint Prefix
-        :param version: API Version for the blueprint group. This will be inherited by each of the Blueprint
+        :param version: API Version for the blueprint group. This will be
+            inherited by each of the Blueprint
         :param strict_slashes: URL Strict slash behavior indicator
         """
         self._blueprints = []
@@ -90,8 +91,8 @@ class BlueprintGroup(MutableSequence):
     @property
     def version(self) -> Optional[Union[str, int, float]]:
         """
-        API Version for the Blueprint Group. This will be applied only in case if the Blueprint doesn't already have
-        a version specified
+        API Version for the Blueprint Group. This will be applied only in case
+        if the Blueprint doesn't already have a version specified
 
         :return: Version information
         """
@@ -162,7 +163,8 @@ class BlueprintGroup(MutableSequence):
 
     def _sanitize_blueprint(self, bp: "sanic.Blueprint") -> "sanic.Blueprint":
         """
-        Sanitize the Blueprint Entity to override the Version and strict slash behaviors as required.
+        Sanitize the Blueprint Entity to override the Version and strict slash
+        behaviors as required.
 
         :param bp: Sanic Blueprint entity Object
         :return: Modified Blueprint

@@ -43,8 +43,8 @@ class ListenerMixin:
             async def before_server_start(app, loop):
                 ...
 
-        `See user guide
-        <https://sanicframework.org/guide/basics/listeners.html#listeners>`_
+        `See user guide re: listeners
+        <https://sanicframework.org/guide/basics/listeners.html#listeners>`__
 
         :param event: event to listen to
         """

@@ -43,6 +43,8 @@ class Lifespan:
         startup event.
         """
         self.asgi_app.sanic_app.router.finalize()
+        if self.asgi_app.sanic_app.signal_router.routes:
+            self.asgi_app.sanic_app.signal_router.finalize()
         listeners = self.asgi_app.sanic_app.listeners.get(
             "before_server_start", []
         ) + self.asgi_app.sanic_app.listeners.get("after_server_start", [])

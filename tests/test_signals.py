@@ -11,6 +11,15 @@ from sanic.exceptions import InvalidSignal, SanicException
 
 
 def test_add_signal(app):
+    def sync_signal(*_):
+        ...
+
+    app.add_signal(sync_signal, "foo.bar.baz")
+
+    assert len(app.signal_router.routes) == 1
+
+
+def test_add_signal_decorator(app):
     @app.signal("foo.bar.baz")
     def sync_signal(*_):
         ...

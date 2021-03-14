@@ -118,7 +118,7 @@ Hello World Example
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic()
+    app = Sanic("My Hello, world app")
 
     @app.route('/')
     async def test(request):
@@ -169,4 +169,4 @@ Questions and Discussion
 Contribution
 ------------
 
-We are always happy to have new contributions. We have `marked issues good for anyone looking to get started <https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner>`_, and welcome `questions on the forums <https://community.sanicframework.org/>`_. Please take a look at our `Contribution guidelines <https://sanic.readthedocs.io/en/latest/sanic/contributing.html>`_.
+We are always happy to have new contributions. We have `marked issues good for anyone looking to get started <https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner>`_, and welcome `questions on the forums <https://community.sanicframework.org/>`_. Please take a look at our `Contribution guidelines <https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst>`_.

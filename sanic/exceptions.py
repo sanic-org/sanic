@@ -227,6 +227,10 @@ class LoadFileException(SanicException):
     pass
 
 
+class InvalidSignal(SanicException):
+    pass
+
+
 def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
     """
     Raise an exception based on SanicException. Returns the HTTP response

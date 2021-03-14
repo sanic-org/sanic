@@ -3,7 +3,13 @@ import logging.config
 import os
 import re
 
-from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
+from asyncio import (
+    CancelledError,
+    Protocol,
+    ensure_future,
+    get_event_loop,
+    wait_for,
+)
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
@@ -13,7 +19,9 @@ from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
 from typing import (
     Any,
+    Awaitable,
     Callable,
+    Coroutine,
     Deque,
     Dict,
     Iterable,
@@ -26,6 +34,7 @@ from typing import (
 from urllib.parse import urlencode, urlunparse
 
 from sanic_routing.exceptions import FinalizationError  # type: ignore
+from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
@@ -48,20 +57,17 @@ from sanic.models.futures import (
     FutureListener,
     FutureMiddleware,
     FutureRoute,
+    FutureSignal,
     FutureStatic,
 )
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
-from sanic.server import (
-    AsyncioServer,
-    HttpProtocol,
-    Signal,
-    serve,
-    serve_multiple,
-    serve_single,
-)
+from sanic.server import AsyncioServer, HttpProtocol
+from sanic.server import Signal as ServerSignal
+from sanic.server import serve, serve_multiple, serve_single
+from sanic.signals import Signal, SignalRouter
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
@@ -76,14 +82,16 @@ class Sanic(BaseSanic):
     def __init__(
         self,
         name: str = None,
-        router: Router = None,
-        error_handler: ErrorHandler = None,
+        router: Optional[Router] = None,
+        signal_router: Optional[SignalRouter] = None,
+        error_handler: Optional[ErrorHandler] = None,
         load_env: bool = True,
-        request_class: Type[Request] = None,
+        request_class: Optional[Type[Request]] = None,
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
         register: Optional[bool] = None,
+        dumps: Optional[Callable[..., str]] = None,
     ) -> None:
         super().__init__()
 
@@ -99,6 +107,7 @@ class Sanic(BaseSanic):
         self.name = name
         self.asgi = False
         self.router = router or Router()
+        self.signal_router = signal_router or SignalRouter()
         self.request_class = request_class
         self.error_handler = error_handler or ErrorHandler()
         self.config = Config(load_env=load_env)
@@ -118,8 +127,6 @@ class Sanic(BaseSanic):
         self.websocket_tasks: Set[Future] = set()
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
-        # self.named_request_middleware: Dict[str, MiddlewareType] = {}
-        # self.named_response_middleware: Dict[str, MiddlewareType] = {}
         self._test_manager = None
         self._test_client = None
         self._asgi_client = None
@@ -133,6 +140,9 @@ class Sanic(BaseSanic):
             self.__class__.register_app(self)
 
         self.router.ctx.app = self
+
+        if dumps:
+            BaseHTTPResponse._dumps = dumps
 
     @property
     def loop(self):
@@ -161,7 +171,7 @@ class Sanic(BaseSanic):
         also return a future, and the actual ensure_future call
         is delayed until before server start.
 
-        `See user guide
+        `See user guide re: background tasks
         <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
 
         :param task: future, couroutine or awaitable
@@ -322,6 +332,28 @@ class Sanic(BaseSanic):
                 middleware.middleware, middleware.attach_to
             )
 
+    def _apply_signal(self, signal: FutureSignal) -> Signal:
+        return self.signal_router.add(*signal)
+
+    def dispatch(
+        self,
+        event: str,
+        *,
+        condition: Optional[Dict[str, str]] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Coroutine[Any, Any, Awaitable[Any]]:
+        return self.signal_router.dispatch(
+            event,
+            context=context,
+            condition=condition,
+        )
+
+    def event(self, event: str, timeout: Optional[Union[int, float]] = None):
+        signal = self.signal_router.name_index.get(event)
+        if not signal:
+            raise NotFound("Could not find signal %s" % event)
+        return wait_for(signal.ctx.event.wait(), timeout=timeout)
+
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
 
@@ -373,7 +405,29 @@ class Sanic(BaseSanic):
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
-        `See user guide
+        There are several _special_ keyword arguments that will alter how the
+        URL will be returned:
+
+        1. **_anchor**: ``str`` - Adds an ``#anchor`` to the end
+        2. **_scheme**: ``str`` - Should be either ``"http"`` or ``"https"``,
+           default is ``"http"``
+        3. **_external**: ``bool`` - Whether to return the path or a full URL
+           with scheme and host
+        4. **_host**: ``str`` - Used when one or more hosts are defined for a
+           route to tell Sanic which to use
+           (only applies with ``_external=True``)
+        5. **_server**: ``str`` - If not using ``_host``, this will be used
+           for defining the hostname of the URL
+           (only applies with ``_external=True``),
+           defaults to ``app.config.SERVER_NAME``
+
+        If you want the PORT to appear in your URL, you should set it in:
+
+        .. code-block::
+
+            app.config.SERVER_NAME = "myserver:7777"
+
+        `See user guide re: routing
         <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
 
         :param view_name: string referencing the view name
@@ -1025,11 +1079,9 @@ class Sanic(BaseSanic):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        try:
-            self.router.finalize()
-        except FinalizationError as e:
-            if not Sanic.test_mode:
-                raise e
+        self.listeners["before_server_start"] = [
+            self.finalize
+        ] + self.listeners["before_server_start"]
 
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -1058,7 +1110,7 @@ class Sanic(BaseSanic):
             "unix": unix,
             "ssl": ssl,
             "app": self,
-            "signal": Signal(),
+            "signal": ServerSignal(),
             "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
@@ -1153,7 +1205,7 @@ class Sanic(BaseSanic):
         """
         Update app.config. Full implementation can be found in the user guide.
 
-        `See user guide
+        `See user guide re: configuration
         <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
         """
 
@@ -1178,13 +1230,38 @@ class Sanic(BaseSanic):
         cls._app_registry[name] = app
 
     @classmethod
-    def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
+    def get_app(
+        cls, name: Optional[str] = None, *, force_create: bool = False
+    ) -> "Sanic":
         """
         Retrieve an instantiated Sanic instance
         """
+        if name is None:
+            if len(cls._app_registry) > 1:
+                raise SanicException(
+                    'Multiple Sanic apps found, use Sanic.get_app("app_name")'
+                )
+            elif len(cls._app_registry) == 0:
+                raise SanicException("No Sanic apps have been registered.")
+            else:
+                return list(cls._app_registry.values())[0]
         try:
             return cls._app_registry[name]
         except KeyError:
             if force_create:
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
+
+    # -------------------------------------------------------------------- #
+    # Static methods
+    # -------------------------------------------------------------------- #
+
+    @staticmethod
+    async def finalize(app, _):
+        try:
+            app.router.finalize()
+            if app.signal_router.routes:
+                app.signal_router.finalize()  # noqa
+        except FinalizationError as e:
+            if not Sanic.test_mode:
+                raise e  # noqa

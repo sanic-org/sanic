@@ -7,7 +7,6 @@ from sanic.response import BaseHTTPResponse, HTTPResponse
 
 Sanic = TypeVar("Sanic")
 
-
 MiddlewareResponse = Union[
     Optional[HTTPResponse], Coroutine[Any, Any, Optional[HTTPResponse]]
 ]
@@ -23,3 +22,4 @@ ListenerType = Callable[
     [Sanic, AbstractEventLoop], Optional[Coroutine[Any, Any, None]]
 ]
 RouteHandler = Callable[..., Coroutine[Any, Any, HTTPResponse]]
+SignalHandler = Callable[..., Coroutine[Any, Any, None]]

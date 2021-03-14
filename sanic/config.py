@@ -134,7 +134,7 @@ class Config(dict):
 
             config.update_config(C)
 
-        `See user guide
+        `See user guide re: config
         <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
 

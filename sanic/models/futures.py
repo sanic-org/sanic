@@ -1,10 +1,11 @@
 from pathlib import PurePath
-from typing import Iterable, List, NamedTuple, Optional, Union
+from typing import Dict, Iterable, List, NamedTuple, Optional, Union
 
 from sanic.models.handler_types import (
     ErrorMiddlewareType,
     ListenerType,
     MiddlewareType,
+    SignalHandler,
 )
 
 
@@ -50,3 +51,9 @@ class FutureStatic(NamedTuple):
     host: Optional[str]
     strict_slashes: Optional[bool]
     content_type: Optional[bool]
+
+
+class FutureSignal(NamedTuple):
+    handler: SignalHandler
+    event: str
+    condition: Optional[Dict[str, str]]

@@ -1,16 +1,26 @@
-from collections import defaultdict
-from typing import Dict, Iterable, List, Optional
+from __future__ import annotations
 
+import asyncio
+
+from collections import defaultdict
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
+
+from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
+from sanic.exceptions import SanicException
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import (
     ListenerType,
     MiddlewareType,
     RouteHandler,
 )
+
+
+if TYPE_CHECKING:
+    from sanic import Sanic  # noqa
 
 
 class Blueprint(BaseSanic):
@@ -21,7 +31,7 @@ class Blueprint(BaseSanic):
 
     It is the main tool for grouping functionality and similar endpoints.
 
-    `See user guide
+    `See user guide re: blueprints
     <https://sanicframework.org/guide/best-practices/blueprints.html>`__
 
     :param name: unique name of the blueprint
@@ -40,6 +50,7 @@ class Blueprint(BaseSanic):
         version: Optional[int] = None,
         strict_slashes: Optional[bool] = None,
     ):
+        self._apps: Set[Sanic] = set()
         self.name = name
         self.url_prefix = url_prefix
         self.host = host
@@ -70,6 +81,14 @@ class Blueprint(BaseSanic):
         )
         return f"Blueprint({args})"
 
+    @property
+    def apps(self):
+        if not self._apps:
+            raise SanicException(
+                f"{self} has not yet been registered to an app"
+            )
+        return self._apps
+
     def route(self, *args, **kwargs):
         kwargs["apply"] = False
         return super().route(*args, **kwargs)
@@ -89,6 +108,10 @@ class Blueprint(BaseSanic):
     def exception(self, *args, **kwargs):
         kwargs["apply"] = False
         return super().exception(*args, **kwargs)
+
+    def signal(self, event: str, *args, **kwargs):
+        kwargs["apply"] = False
+        return super().signal(event, *args, **kwargs)
 
     @staticmethod
     def group(*blueprints, url_prefix="", version=None, strict_slashes=None):
@@ -132,6 +155,7 @@ class Blueprint(BaseSanic):
             *url_prefix* - URL Prefix to override the blueprint prefix
         """
 
+        self._apps.add(app)
         url_prefix = options.get("url_prefix", self.url_prefix)
 
         routes = []
@@ -200,6 +224,10 @@ class Blueprint(BaseSanic):
         for listener in self._future_listeners:
             listeners[listener.event].append(app._apply_listener(listener))
 
+        for signal in self._future_signals:
+            signal.condition.update({"blueprint": self.name})
+            app._apply_signal(signal)
+
         self.routes = [route for route in routes if isinstance(route, Route)]
 
         # Deprecate these in 21.6
@@ -209,3 +237,25 @@ class Blueprint(BaseSanic):
         self.middlewares = middleware
         self.exceptions = exception_handlers
         self.listeners = dict(listeners)
+
+    async def dispatch(self, *args, **kwargs):
+        condition = kwargs.pop("condition", {})
+        condition.update({"blueprint": self.name})
+        kwargs["condition"] = condition
+        await asyncio.gather(
+            *[app.dispatch(*args, **kwargs) for app in self.apps]
+        )
+
+    def event(self, event: str, timeout: Optional[Union[int, float]] = None):
+        events = set()
+        for app in self.apps:
+            signal = app.signal_router.name_index.get(event)
+            if not signal:
+                raise NotFound("Could not find signal %s" % event)
+            events.add(signal.ctx.event)
+
+        return asyncio.wait(
+            [event.wait() for event in events],
+            return_when=asyncio.FIRST_COMPLETED,
+            timeout=timeout,
+        )

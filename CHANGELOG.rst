@@ -31,6 +31,10 @@ Features
     Add raw header info to request object
 
   *
+    `#2042 <https://github.com/sanic-org/sanic/pull/2042>`_
+    Introduce Signals API
+
+  *
     `#2043 <https://github.com/sanic-org/sanic/pull/2043>`_
     Add ``__str__`` and ``__repr__`` to Sanic and Blueprint
 
@@ -41,6 +45,10 @@ Features
   *
     `#2053 <https://github.com/sanic-org/sanic/pull/2053>`_
     Make ``get_app`` name argument optional
+
+  *
+    `#2055 <https://github.com/sanic-org/sanic/pull/2055>`_
+    JSON encoder change via app
 
 Bugfixes and issues resolved
 ****************************

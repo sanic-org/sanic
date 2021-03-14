@@ -324,13 +324,13 @@ class Sanic(BaseSanic):
         self,
         event: str,
         *,
-        where: Optional[Dict[str, str]] = None,
+        condition: Optional[Dict[str, str]] = None,
         context: Optional[Dict[str, Any]] = None,
     ) -> Coroutine[Any, Any, Awaitable[Any]]:
         return self.signal_router.dispatch(
             event,
             context=context,
-            where=where,
+            condition=condition,
         )
 
     def event(self, event: str, timeout: Optional[Union[int, float]] = None):

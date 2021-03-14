@@ -22,7 +22,7 @@ class SignalMixin:
         event: str,
         *,
         apply: bool = True,
-        where: Dict[str, Any] = None,
+        condition: Dict[str, Any] = None,
     ) -> Callable[[SignalHandler], FutureSignal]:
         """
         For creating a signal handler, used similar to a route handler:
@@ -37,9 +37,9 @@ class SignalMixin:
         :type event: str
         :param apply: For lazy evaluation, defaults to True
         :type apply: bool, optional
-        :param where: For use with the ``where`` argument in dispatch
+        :param condition: For use with the ``condition`` argument in dispatch
             filtering, defaults to None
-        :type where: Dict[str, Any], optional
+        :type condition: Dict[str, Any], optional
         """
 
         def decorator(handler: SignalHandler):
@@ -47,7 +47,7 @@ class SignalMixin:
             nonlocal apply
 
             future_signal = FutureSignal(
-                handler, event, HashableDict(where or {})
+                handler, event, HashableDict(condition or {})
             )
             self._future_signals.add(future_signal)
 

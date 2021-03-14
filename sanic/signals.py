@@ -39,9 +39,9 @@ class SignalRouter(BaseRouter):
     def get(  # type: ignore
         self,
         event: str,
-        where: Optional[Dict[str, str]] = None,
+        condition: Optional[Dict[str, str]] = None,
     ):
-        extra = where or {}
+        extra = condition or {}
         try:
             return self.resolve(f".{event}", extra=extra)
         except NotFound:
@@ -56,9 +56,9 @@ class SignalRouter(BaseRouter):
         self,
         event: str,
         context: Optional[Dict[str, Any]] = None,
-        where: Optional[Dict[str, str]] = None,
+        condition: Optional[Dict[str, str]] = None,
     ) -> None:
-        signal, handlers, params = self.get(event, where=where)
+        signal, handlers, params = self.get(event, condition=condition)
 
         signal_event = signal.ctx.event
         signal_event.set()
@@ -67,7 +67,7 @@ class SignalRouter(BaseRouter):
 
         try:
             for handler in handlers:
-                if where is None or where == handler.__requirements__:
+                if condition is None or condition == handler.__requirements__:
                     maybe_coroutine = handler(**params)
                     if isawaitable(maybe_coroutine):
                         await maybe_coroutine
@@ -79,13 +79,13 @@ class SignalRouter(BaseRouter):
         event: str,
         *,
         context: Optional[Dict[str, Any]] = None,
-        where: Optional[Dict[str, str]] = None,
+        condition: Optional[Dict[str, str]] = None,
     ) -> asyncio.Task:
         task = self.ctx.loop.create_task(
             self._dispatch(
                 event,
                 context=context,
-                where=where,
+                condition=condition,
             )
         )
         await asyncio.sleep(0)
@@ -95,7 +95,7 @@ class SignalRouter(BaseRouter):
         self,
         handler: SignalHandler,
         event: str,
-        where: Optional[Dict[str, Any]] = None,
+        condition: Optional[Dict[str, Any]] = None,
     ) -> Signal:
         parts = path_to_parts(event, self.delimiter)
 
@@ -111,12 +111,12 @@ class SignalRouter(BaseRouter):
         else:
             name = event
 
-        handler.__requirements__ = where  # type: ignore
+        handler.__requirements__ = condition  # type: ignore
 
         return super().add(
             event,
             handler,
-            requirements=where,
+            requirements=condition,
             name=name,
             overwrite=True,
         )  # type: ignore

@@ -101,7 +101,7 @@ async def test_dispatch_signal_triggers_dynamic_route(app):
 async def test_dispatch_signal_triggers_with_requirements(app):
     counter = 0
 
-    @app.signal("foo.bar.baz", where={"one": "two"})
+    @app.signal("foo.bar.baz", condition={"one": "two"})
     def sync_signal(*_):
         nonlocal counter
         counter += 1
@@ -110,7 +110,7 @@ async def test_dispatch_signal_triggers_with_requirements(app):
 
     await app.dispatch("foo.bar.baz")
     assert counter == 0
-    await app.dispatch("foo.bar.baz", where={"one": "two"})
+    await app.dispatch("foo.bar.baz", condition={"one": "two"})
     assert counter == 1
 
 
@@ -216,7 +216,7 @@ async def test_dispatch_signal_triggers_event_on_bp(app):
     app.blueprint(bp)
     app.signal_router.finalize()
     signal, *_ = app.signal_router.get(
-        "foo.bar.baz", where={"blueprint": "bp"}
+        "foo.bar.baz", condition={"blueprint": "bp"}
     )
 
     await bp.dispatch("foo.bar.baz")

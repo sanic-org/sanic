@@ -225,7 +225,7 @@ class Blueprint(BaseSanic):
             listeners[listener.event].append(app._apply_listener(listener))
 
         for signal in self._future_signals:
-            signal.where.update({"blueprint": self.name})
+            signal.condition.update({"blueprint": self.name})
             app._apply_signal(signal)
 
         self.routes = [route for route in routes if isinstance(route, Route)]
@@ -239,9 +239,9 @@ class Blueprint(BaseSanic):
         self.listeners = dict(listeners)
 
     async def dispatch(self, *args, **kwargs):
-        where = kwargs.pop("where", {})
-        where.update({"blueprint": self.name})
-        kwargs["where"] = where
+        condition = kwargs.pop("condition", {})
+        condition.update({"blueprint": self.name})
+        kwargs["condition"] = condition
         await asyncio.gather(
             *[app.dispatch(*args, **kwargs) for app in self.apps]
         )

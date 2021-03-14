@@ -58,5 +58,14 @@ class SignalMixin:
 
         return decorator
 
+    def add_signal(
+        self,
+        handler,
+        event: str,
+        condition: Dict[str, Any] = None,
+    ):
+        self.signal(event=event, condition=condition)(handler)
+        return handler
+
     def event(self, event: str):
         raise NotImplementedError

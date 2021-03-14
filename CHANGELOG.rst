@@ -1,6 +1,8 @@
 Version 21.3.0
 --------------
 
+`Release Notes <https://sanicframework.org/en/guide/release-notes/v21.3.html>`_
+
 Features
 ********
 
@@ -35,6 +37,10 @@ Features
   *
     `#2047 <https://github.com/sanic-org/sanic/pull/2047>`_
     Enable versioning and strict slash on BlueprintGroup
+
+  *
+    `#2053 <https://github.com/sanic-org/sanic/pull/2053>`_
+    Make ``get_app`` name argument optional
 
 Bugfixes and issues resolved
 ****************************

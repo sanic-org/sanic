@@ -168,6 +168,16 @@ Miscellaneous
     `#2044 <https://github.com/sanic-org/sanic/pull/2044>`_
     Code cleanup and refactoring
 
+Version 20.12.3
+---------------
+
+Bugfixes
+********
+
+  *
+    `#2021 <https://github.com/sanic-org/sanic/pull/2021>`_
+    Remove prefix from websocket handler name
+
 Version 20.12.2
 ---------------
 

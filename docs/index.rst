@@ -3,7 +3,7 @@
 User Guide
 ==========
 
-To learn about using Sanic, checkout the `User Guide <https://sanicframework.org/guide/>`_.
+To learn about using Sanic, checkout the `User Guide <https://sanicframework.org/guide/>`__.
 
 API
 ===

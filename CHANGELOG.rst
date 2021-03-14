@@ -32,6 +32,7 @@ Features
 
   *
     `#2042 <https://github.com/sanic-org/sanic/pull/2042>`_
+    `#2060 <https://github.com/sanic-org/sanic/pull/2060>`_
     `#2061 <https://github.com/sanic-org/sanic/pull/2061>`_
     Introduce Signals API
 

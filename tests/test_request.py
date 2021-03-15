@@ -5,6 +5,7 @@ import pytest
 
 from sanic import Sanic, response
 from sanic.request import Request, uuid
+from sanic.server import HttpProtocol
 
 
 def test_no_request_id_not_called(monkeypatch):
@@ -83,3 +84,18 @@ def test_route_assigned_to_request(app):
 
     request, _ = app.test_client.get("/")
     assert request.route is list(app.router.routes.values())[0]
+
+
+def test_protocol_attribute(app):
+    retrieved = None
+
+    @app.get("/")
+    async def get(request):
+        nonlocal retrieved
+        retrieved = request.protocol
+        return response.empty()
+
+    headers = {"Connection": "keep-alive"}
+    _ = app.test_client.get("/", headers=headers)
+
+    assert isinstance(retrieved, HttpProtocol)

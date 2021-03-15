@@ -208,11 +208,9 @@ class Request:
             self.body = b"".join([data async for data in self.stream])
 
     @property
-    def connection(self):
+    def protocol(self):
         if not self._protocol:
             self._protocol = self.transport.get_protocol()
-            if not hasattr(self._protocol, "ctx"):
-                self._protocol.ctx = SimpleNamespace()
         return self._protocol
 
     @property

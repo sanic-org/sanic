@@ -79,6 +79,7 @@ class Sanic(BaseSanic):
     """
 
     __fake_slots__ = (
+        "_app_registry",
         "_asgi_client",
         "_blueprint_order",
         "_future_routes",
@@ -110,6 +111,7 @@ class Sanic(BaseSanic):
         "signal_router",
         "sock",
         "strict_slashes",
+        "test_mode",
         "websocket_enabled",
         "websocket_tasks",
     )

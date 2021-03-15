@@ -288,7 +288,6 @@ class HttpProtocol(asyncio.Protocol):
         try:
             # TODO: Benchmark to find suitable write buffer limits
             transport.set_write_buffer_limits(low=16384, high=65536)
-            # if not hasattr(transport, "ctx"):
             self.ctx = SimpleNamespace()
             self.connections.add(self)
             self.transport = transport

@@ -82,6 +82,7 @@ class Request:
         "_ip",
         "_parsed_url",
         "_port",
+        "_protocol",
         "_remote_addr",
         "_socket",
         "_match_info",
@@ -153,6 +154,7 @@ class Request:
         self.stream: Optional[Http] = None
         self.endpoint: Optional[str] = None
         self.route: Optional[Route] = None
+        self._protocol = None
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -204,6 +206,12 @@ class Request:
         """
         if not self.body:
             self.body = b"".join([data async for data in self.stream])
+
+    @property
+    def connection(self):
+        if not self._protocol:
+            self._protocol = self.transport.get_protocol()
+        return self._protocol
 
     @property
     def raw_headers(self):

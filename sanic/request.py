@@ -211,6 +211,8 @@ class Request:
     def connection(self):
         if not self._protocol:
             self._protocol = self.transport.get_protocol()
+            if not hasattr(self._protocol, "ctx"):
+                self._protocol.ctx = SimpleNamespace()
         return self._protocol
 
     @property

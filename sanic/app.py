@@ -190,8 +190,8 @@ class Sanic(BaseSanic):
         if name not in self.__fake_slots__:
             warn(
                 "Setting variables on application instances is deprecated and "
-                "will be removed in version 21.12. You should change your "
-                f"to use app.ctx.{name} instead."
+                "will be removed in version 21.9. You should change your "
+                f"application to use app.ctx.{name} instead."
             )
         super().__setattr__(name, value)
 

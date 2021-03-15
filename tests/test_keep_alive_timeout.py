@@ -185,10 +185,12 @@ class ReuseableSanicTestClient(SanicTestClient):
 keep_alive_timeout_app_reuse = Sanic("test_ka_timeout_reuse")
 keep_alive_app_client_timeout = Sanic("test_ka_client_timeout")
 keep_alive_app_server_timeout = Sanic("test_ka_server_timeout")
+keep_alive_app_context = Sanic("keep_alive_app_context")
 
 keep_alive_timeout_app_reuse.config.update(CONFIG_FOR_TESTS)
 keep_alive_app_client_timeout.config.update(CONFIG_FOR_TESTS)
 keep_alive_app_server_timeout.config.update(CONFIG_FOR_TESTS)
+keep_alive_app_context.config.update(CONFIG_FOR_TESTS)
 
 
 @keep_alive_timeout_app_reuse.route("/1")
@@ -204,6 +206,17 @@ async def handler2(request):
 @keep_alive_app_server_timeout.route("/1")
 async def handler3(request):
     return text("OK")
+
+
+@keep_alive_app_context.post("/ctx")
+def set_ctx(request):
+    request.connection.ctx.foo = "hello"
+    return text("OK")
+
+
+@keep_alive_app_context.get("/ctx")
+def get_ctx(request):
+    return text(request.connection.ctx.foo)
 
 
 @pytest.mark.skipif(
@@ -279,5 +292,32 @@ def test_keep_alive_server_timeout():
         exception = None
         request, response = client.get("/1", request_keepalive=60)
         assert ReusableSanicConnectionPool.last_reused_connection is None
+    finally:
+        client.kill_server()
+
+
+@pytest.mark.skipif(
+    bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
+    reason="Not testable with current client",
+)
+def test_keep_alive_connection_context():
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        client = ReuseableSanicTestClient(keep_alive_app_context, loop)
+        headers = {"Connection": "keep-alive"}
+        request1, _ = client.post("/ctx", headers=headers)
+
+        loop.run_until_complete(aio_sleep(1))
+
+        request2, response = client.get("/ctx")
+
+        assert response.text == "hello"
+        assert id(request1.connection.ctx) == id(request2.connection.ctx)
+        assert (
+            request1.connection.ctx.foo
+            == request2.connection.ctx.foo
+            == "hello"
+        )
     finally:
         client.kill_server()

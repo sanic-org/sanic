@@ -122,8 +122,8 @@ class Blueprint(BaseSanic):
         if name not in self.__fake_slots__:
             warn(
                 "Setting variables on blueprint instances is deprecated and "
-                "will be removed in version 21.12. You should change your "
-                f"to use bp.ctx.{name} instead."
+                "will be removed in version 21.9. You should change your "
+                f"blueprint to use bp.ctx.{name} instead."
             )
         super().__setattr__(name, value)
 

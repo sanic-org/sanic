@@ -1024,3 +1024,16 @@ def test_blueprint_registered_multiple_apps():
     for app in (app1, app2):
         _, response = app.test_client.get("/")
         assert response.text == f"{app.name}.bp.handler"
+
+
+def test_bp_set_attribute_warning():
+    bp = Blueprint("bp")
+    with pytest.warns(UserWarning) as record:
+        bp.foo = 1
+
+    assert len(record) == 1
+    assert record[0].message.args[0] == (
+        "Setting variables on blueprint instances is deprecated "
+        "and will be removed in version 21.9. You should change your "
+        "blueprint to use bp.ctx.foo instead."
+    )

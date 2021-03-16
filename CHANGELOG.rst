@@ -127,6 +127,18 @@ Improved Documentation
 **********************
 
   *
+    `#1218 <https://github.com/sanic-org/sanic/pull/1218>`_
+    Documentation for sanic.log.* is missing
+
+  *
+    `#1608 <https://github.com/sanic-org/sanic/pull/1608>`_
+    Add documentation on calver and LTS
+
+  *
+    `#1731 <https://github.com/sanic-org/sanic/pull/1731>`_
+    Support mounting application elsewhere than at root path
+
+  *
     `#2006 <https://github.com/sanic-org/sanic/pull/2006>`_
     Upgraded type annotations and improved docstrings and API documentation
 

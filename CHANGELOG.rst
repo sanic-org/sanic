@@ -24,6 +24,7 @@ Features
 
   *
     `#2018 <https://github.com/sanic-org/sanic/pull/2018>`_
+    `#2064 <https://github.com/sanic-org/sanic/pull/2064>`_
     Listeners for main server process
 
   *

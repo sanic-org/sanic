@@ -125,13 +125,13 @@ Hello World Example
         return json({'hello': 'world'})
 
     if __name__ == '__main__':
-        app.run(host='0.0.0.0', port=8000)
+        app.run()
 
 Sanic can now be easily run using ``sanic hello.app``.
 
 .. code::
 
-    [2018-12-30 11:37:41 +0200] [13564] [INFO] Goin' Fast @ http://0.0.0.0:8000
+    [2018-12-30 11:37:41 +0200] [13564] [INFO] Goin' Fast @ http://127.0.0.1:8000
     [2018-12-30 11:37:41 +0200] [13564] [INFO] Starting worker [13564]
 
 And, we can verify it is working: ``curl localhost:8000 -i``

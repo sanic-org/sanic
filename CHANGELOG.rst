@@ -157,6 +157,8 @@ Miscellaneous
       * request endpoint is the route name
       * route names are fully namespaced
   * Some new convenience decorators:
+      * ``@app.main_process_start``
+      * ``@app.main_process_stop``
       * ``@app.before_server_start``
       * ``@app.after_server_start``
       * ``@app.before_server_stop``

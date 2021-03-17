@@ -19,10 +19,6 @@ CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
 PORT = 42101  # test_keep_alive_timeout_reuse doesn't work with random port
 
-from httpcore._async.base import ConnectionState
-from httpcore._async.connection import AsyncHTTPConnection
-from httpcore._types import Origin
-
 
 class ReusableSanicConnectionPool(httpcore.AsyncConnectionPool):
     last_reused_connection = None
@@ -185,10 +181,12 @@ class ReuseableSanicTestClient(SanicTestClient):
 keep_alive_timeout_app_reuse = Sanic("test_ka_timeout_reuse")
 keep_alive_app_client_timeout = Sanic("test_ka_client_timeout")
 keep_alive_app_server_timeout = Sanic("test_ka_server_timeout")
+keep_alive_app_context = Sanic("keep_alive_app_context")
 
 keep_alive_timeout_app_reuse.config.update(CONFIG_FOR_TESTS)
 keep_alive_app_client_timeout.config.update(CONFIG_FOR_TESTS)
 keep_alive_app_server_timeout.config.update(CONFIG_FOR_TESTS)
+keep_alive_app_context.config.update(CONFIG_FOR_TESTS)
 
 
 @keep_alive_timeout_app_reuse.route("/1")
@@ -204,6 +202,17 @@ async def handler2(request):
 @keep_alive_app_server_timeout.route("/1")
 async def handler3(request):
     return text("OK")
+
+
+@keep_alive_app_context.post("/ctx")
+def set_ctx(request):
+    request.conn_info.ctx.foo = "hello"
+    return text("OK")
+
+
+@keep_alive_app_context.get("/ctx")
+def get_ctx(request):
+    return text(request.conn_info.ctx.foo)
 
 
 @pytest.mark.skipif(
@@ -243,14 +252,14 @@ def test_keep_alive_client_timeout():
         asyncio.set_event_loop(loop)
         client = ReuseableSanicTestClient(keep_alive_app_client_timeout, loop)
         headers = {"Connection": "keep-alive"}
-        request, response = client.get(
-            "/1", headers=headers, request_keepalive=1
-        )
+        _, response = client.get("/1", headers=headers, request_keepalive=1)
+
         assert response.status == 200
         assert response.text == "OK"
+
         loop.run_until_complete(aio_sleep(2))
-        exception = None
-        request, response = client.get("/1", request_keepalive=1)
+        _, response = client.get("/1", request_keepalive=1)
+
         assert ReusableSanicConnectionPool.last_reused_connection is None
     finally:
         client.kill_server()
@@ -270,14 +279,38 @@ def test_keep_alive_server_timeout():
         asyncio.set_event_loop(loop)
         client = ReuseableSanicTestClient(keep_alive_app_server_timeout, loop)
         headers = {"Connection": "keep-alive"}
-        request, response = client.get(
-            "/1", headers=headers, request_keepalive=60
-        )
+        _, response = client.get("/1", headers=headers, request_keepalive=60)
+
         assert response.status == 200
         assert response.text == "OK"
+
         loop.run_until_complete(aio_sleep(3))
-        exception = None
-        request, response = client.get("/1", request_keepalive=60)
+        _, response = client.get("/1", request_keepalive=60)
+
         assert ReusableSanicConnectionPool.last_reused_connection is None
+    finally:
+        client.kill_server()
+
+
+@pytest.mark.skipif(
+    bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
+    reason="Not testable with current client",
+)
+def test_keep_alive_connection_context():
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        client = ReuseableSanicTestClient(keep_alive_app_context, loop)
+        headers = {"Connection": "keep-alive"}
+        request1, _ = client.post("/ctx", headers=headers)
+
+        loop.run_until_complete(aio_sleep(1))
+        request2, response = client.get("/ctx")
+
+        assert response.text == "hello"
+        assert id(request1.conn_info.ctx) == id(request2.conn_info.ctx)
+        assert (
+            request1.conn_info.ctx.foo == request2.conn_info.ctx.foo == "hello"
+        )
     finally:
         client.kill_server()

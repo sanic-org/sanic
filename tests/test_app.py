@@ -89,6 +89,20 @@ def test_create_server_main(app, caplog):
     ) in caplog.record_tuples
 
 
+def test_create_server_main_convenience(app, caplog):
+    app.main_process_start(lambda *_: ...)
+    loop = asyncio.get_event_loop()
+    with caplog.at_level(logging.INFO):
+        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        loop.run_until_complete(asyncio_srv_coro)
+    assert (
+        "sanic.root",
+        30,
+        "Listener events for the main process are not available with "
+        "create_server()",
+    ) in caplog.record_tuples
+
+
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
         app.loop
@@ -372,3 +386,22 @@ def test_app_no_registry_env():
     ):
         Sanic.get_app("no-register")
     del environ["SANIC_REGISTER"]
+
+
+def test_app_set_attribute_warning(app):
+    with pytest.warns(UserWarning) as record:
+        app.foo = 1
+
+    assert len(record) == 1
+    assert record[0].message.args[0] == (
+        "Setting variables on Sanic instances is deprecated "
+        "and will be removed in version 21.9. You should change your "
+        "Sanic instance to use instance.ctx.foo instead."
+    )
+
+
+def test_app_set_context(app):
+    app.ctx.foo = 1
+
+    retrieved = Sanic.get_app(app.name)
+    assert retrieved.ctx.foo == 1

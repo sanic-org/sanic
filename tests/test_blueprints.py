@@ -1033,7 +1033,7 @@ def test_bp_set_attribute_warning():
 
     assert len(record) == 1
     assert record[0].message.args[0] == (
-        "Setting variables on blueprint instances is deprecated "
+        "Setting variables on Blueprint instances is deprecated "
         "and will be removed in version 21.9. You should change your "
-        "blueprint to use bp.ctx.foo instead."
+        "Blueprint instance to use instance.ctx.foo instead."
     )

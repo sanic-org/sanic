@@ -33,7 +33,6 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import warn
 
 from sanic_routing.exceptions import FinalizationError  # type: ignore
 from sanic_routing.exceptions import NotFound  # type: ignore
@@ -184,18 +183,6 @@ class Sanic(BaseSanic):
 
         if dumps:
             BaseHTTPResponse._dumps = dumps
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        # This is a temporary compat layer so we can raise a warning until
-        # setting attributes on the app instance can be removed and deprecated
-        # with a proper implementation of __slots__
-        if name not in self.__fake_slots__:
-            warn(
-                "Setting variables on application instances is deprecated and "
-                "will be removed in version 21.9. You should change your "
-                f"application to use app.ctx.{name} instead."
-            )
-        super().__setattr__(name, value)
 
     @property
     def loop(self):

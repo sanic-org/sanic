@@ -380,9 +380,9 @@ def test_app_set_attribute_warning(app):
 
     assert len(record) == 1
     assert record[0].message.args[0] == (
-        "Setting variables on application instances is deprecated "
+        "Setting variables on Sanic instances is deprecated "
         "and will be removed in version 21.9. You should change your "
-        "application to use app.ctx.foo instead."
+        "Sanic instance to use instance.ctx.foo instead."
     )
 
 

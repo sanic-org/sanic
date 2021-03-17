@@ -4,17 +4,7 @@ import asyncio
 
 from collections import defaultdict
 from types import SimpleNamespace
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Union,
-)
-from warnings import warn
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
 
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
@@ -114,18 +104,6 @@ class Blueprint(BaseSanic):
             ]
         )
         return f"Blueprint({args})"
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        # This is a temporary compat layer so we can raise a warning until
-        # setting attributes on the app instance can be removed and deprecated
-        # with a proper implementation of __slots__
-        if name not in self.__fake_slots__:
-            warn(
-                "Setting variables on blueprint instances is deprecated and "
-                "will be removed in version 21.9. You should change your "
-                f"blueprint to use bp.ctx.{name} instead."
-            )
-        super().__setattr__(name, value)
 
     @property
     def apps(self):

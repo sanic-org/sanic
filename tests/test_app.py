@@ -89,6 +89,20 @@ def test_create_server_main(app, caplog):
     ) in caplog.record_tuples
 
 
+def test_create_server_main_convenience(app, caplog):
+    app.main_process_start(lambda *_: ...)
+    loop = asyncio.get_event_loop()
+    with caplog.at_level(logging.INFO):
+        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        loop.run_until_complete(asyncio_srv_coro)
+    assert (
+        "sanic.root",
+        30,
+        "Listener events for the main process are not available with "
+        "create_server()",
+    ) in caplog.record_tuples
+
+
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
         app.loop

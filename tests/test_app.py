@@ -386,3 +386,22 @@ def test_app_no_registry_env():
     ):
         Sanic.get_app("no-register")
     del environ["SANIC_REGISTER"]
+
+
+def test_app_set_attribute_warning(app):
+    with pytest.warns(UserWarning) as record:
+        app.foo = 1
+
+    assert len(record) == 1
+    assert record[0].message.args[0] == (
+        "Setting variables on Sanic instances is deprecated "
+        "and will be removed in version 21.9. You should change your "
+        "Sanic instance to use instance.ctx.foo instead."
+    )
+
+
+def test_app_set_context(app):
+    app.ctx.foo = 1
+
+    retrieved = Sanic.get_app(app.name)
+    assert retrieved.ctx.foo == 1

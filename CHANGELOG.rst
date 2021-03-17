@@ -53,6 +53,10 @@ Features
     `#2055 <https://github.com/sanic-org/sanic/pull/2055>`_
     JSON encoder change via app
 
+  *
+    `#2063 <https://github.com/sanic-org/sanic/pull/2063>`_
+    App and connection level context objects
+
 Bugfixes and issues resolved
 ****************************
 

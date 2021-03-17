@@ -153,18 +153,18 @@ Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12
 Documentation
 -------------
 
-`User Guide <https://sanicframework.org>`_ and `API Documentation <http://sanic.readthedocs.io/>`_.
+`User Guide <https://sanicframework.org>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
 
 Changelog
 ---------
 
-`Release Changelogs <https://github.com/sanic-org/sanic/blob/master/CHANGELOG.rst>`_.
+`Release Changelogs <https://github.com/sanic-org/sanic/blob/master/CHANGELOG.rst>`__.
 
 
 Questions and Discussion
 ------------------------
 
-`Ask a question or join the conversation <https://community.sanicframework.org/>`_.
+`Ask a question or join the conversation <https://community.sanicframework.org/>`__.
 
 Contribution
 ------------

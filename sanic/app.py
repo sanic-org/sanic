@@ -17,6 +17,7 @@ from inspect import isawaitable
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
+from types import SimpleNamespace
 from typing import (
     Any,
     Awaitable,
@@ -76,6 +77,44 @@ class Sanic(BaseSanic):
     The main application instance
     """
 
+    __fake_slots__ = (
+        "_app_registry",
+        "_asgi_client",
+        "_blueprint_order",
+        "_future_routes",
+        "_future_statics",
+        "_future_middleware",
+        "_future_listeners",
+        "_future_exceptions",
+        "_future_signals",
+        "_test_client",
+        "_test_manager",
+        "asgi",
+        "blueprints",
+        "config",
+        "configure_logging",
+        "ctx",
+        "debug",
+        "error_handler",
+        "go_fast",
+        "is_running",
+        "is_stopping",
+        "listeners",
+        "name",
+        "named_request_middleware",
+        "named_response_middleware",
+        "request_class",
+        "request_middleware",
+        "response_middleware",
+        "router",
+        "signal_router",
+        "sock",
+        "strict_slashes",
+        "test_mode",
+        "websocket_enabled",
+        "websocket_tasks",
+    )
+
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
@@ -104,31 +143,33 @@ class Sanic(BaseSanic):
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
-        self.name = name
-        self.asgi = False
-        self.router = router or Router()
-        self.signal_router = signal_router or SignalRouter()
-        self.request_class = request_class
-        self.error_handler = error_handler or ErrorHandler()
-        self.config = Config(load_env=load_env)
-        self.request_middleware: Deque[MiddlewareType] = deque()
-        self.response_middleware: Deque[MiddlewareType] = deque()
-        self.blueprints: Dict[str, Blueprint] = {}
+        self._asgi_client = None
         self._blueprint_order: List[Blueprint] = []
+        self._test_client = None
+        self._test_manager = None
+        self.asgi = False
+        self.blueprints: Dict[str, Blueprint] = {}
+        self.config = Config(load_env=load_env)
         self.configure_logging = configure_logging
+        self.ctx = SimpleNamespace()
         self.debug = None
-        self.sock = None
-        self.strict_slashes = strict_slashes
-        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
-        self.is_stopping = False
+        self.error_handler = error_handler or ErrorHandler()
         self.is_running = False
-        self.websocket_enabled = False
-        self.websocket_tasks: Set[Future] = set()
+        self.is_stopping = False
+        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
+        self.name = name
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
-        self._test_manager = None
-        self._test_client = None
-        self._asgi_client = None
+        self.request_class = request_class
+        self.request_middleware: Deque[MiddlewareType] = deque()
+        self.response_middleware: Deque[MiddlewareType] = deque()
+        self.router = router or Router()
+        self.signal_router = signal_router or SignalRouter()
+        self.sock = None
+        self.strict_slashes = strict_slashes
+        self.websocket_enabled = False
+        self.websocket_tasks: Set[Future] = set()
+
         # Register alternative method names
         self.go_fast = self.run
 

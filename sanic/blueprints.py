@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from collections import defaultdict
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
 
 from sanic_routing.exceptions import NotFound  # type: ignore
@@ -42,6 +43,28 @@ class Blueprint(BaseSanic):
         training */*
     """
 
+    __fake_slots__ = (
+        "_apps",
+        "_future_routes",
+        "_future_statics",
+        "_future_middleware",
+        "_future_listeners",
+        "_future_exceptions",
+        "_future_signals",
+        "ctx",
+        "exceptions",
+        "host",
+        "listeners",
+        "middlewares",
+        "name",
+        "routes",
+        "statics",
+        "strict_slashes",
+        "url_prefix",
+        "version",
+        "websocket_routes",
+    )
+
     def __init__(
         self,
         name: str,
@@ -50,19 +73,20 @@ class Blueprint(BaseSanic):
         version: Optional[int] = None,
         strict_slashes: Optional[bool] = None,
     ):
-        self._apps: Set[Sanic] = set()
-        self.name = name
-        self.url_prefix = url_prefix
-        self.host = host
 
-        self.routes: List[Route] = []
-        self.websocket_routes: List[Route] = []
+        self._apps: Set[Sanic] = set()
+        self.ctx = SimpleNamespace()
         self.exceptions: List[RouteHandler] = []
+        self.host = host
         self.listeners: Dict[str, List[ListenerType]] = {}
         self.middlewares: List[MiddlewareType] = []
+        self.name = name
+        self.routes: List[Route] = []
         self.statics: List[RouteHandler] = []
-        self.version = version
         self.strict_slashes = strict_slashes
+        self.url_prefix = url_prefix
+        self.version = version
+        self.websocket_routes: List[Route] = []
 
     def __repr__(self) -> str:
         args = ", ".join(

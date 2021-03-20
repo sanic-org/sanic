@@ -16,9 +16,7 @@ class Base(type):
             nonlocal init
             nonlocal name
 
-            bases = [
-                b for base in type(self).__bases__ for b in base.__bases__
-            ]
+            bases = BaseSanic.__bases__
 
             for base in bases:
                 base.__init__(self, *args, **kwargs)

@@ -3,26 +3,14 @@ from typing import Optional, Union
 from sanic.helpers import STATUS_CODES
 
 
-_sanic_exceptions = {}
-
-
-def add_status_code(code, quiet=None):
-    """
-    Decorator used for adding exceptions to :class:`SanicException`.
-    """
-
-    def class_decorator(cls):
-        cls.status_code = code
-        if quiet or quiet is None and code != 500:
-            cls.quiet = True
-        _sanic_exceptions[code] = cls
-        return cls
-
-    return class_decorator
-
-
 class SanicException(Exception):
-    def __init__(self, message, status_code=None, quiet=None):
+    def __init__(self, message=None, status_code=None, quiet=None):
+
+        if message is None:
+            msg: bytes = STATUS_CODES.get(status_code, b'')
+            # These are stored as bytes in the STATUS_CODES dict
+            message = msg.decode("utf8")
+
         super().__init__(message)
 
         if status_code is not None:
@@ -33,45 +21,38 @@ class SanicException(Exception):
             self.quiet = True
 
 
-@add_status_code(404)
 class NotFound(SanicException):
     """
     **Status**: 404 Not Found
     """
+    status_code = 404
 
-    pass
 
-
-@add_status_code(400)
 class InvalidUsage(SanicException):
     """
     **Status**: 400 Bad Request
     """
+    status_code = 400
 
-    pass
 
-
-@add_status_code(405)
 class MethodNotSupported(SanicException):
     """
     **Status**: 405 Method Not Allowed
     """
+    status_code = 405
 
     def __init__(self, message, method, allowed_methods):
         super().__init__(message)
         self.headers = {"Allow": ", ".join(allowed_methods)}
 
 
-@add_status_code(500)
 class ServerError(SanicException):
     """
     **Status**: 500 Internal Server Error
     """
+    status_code = 500
 
-    pass
 
-
-@add_status_code(503)
 class ServiceUnavailable(SanicException):
     """
     **Status**: 503 Service Unavailable
@@ -79,16 +60,14 @@ class ServiceUnavailable(SanicException):
     The server is currently unavailable (because it is overloaded or
     down for maintenance). Generally, this is a temporary state.
     """
-
-    pass
+    status_code = 503
 
 
 class URLBuildError(ServerError):
     """
     **Status**: 500 Internal Server Error
     """
-
-    pass
+    status_code = 500
 
 
 class FileNotFound(NotFound):
@@ -102,7 +81,6 @@ class FileNotFound(NotFound):
         self.relative_url = relative_url
 
 
-@add_status_code(408)
 class RequestTimeout(SanicException):
     """The Web server (running the Web site) thinks that there has been too
     long an interval of time between 1) the establishment of an IP
@@ -111,62 +89,53 @@ class RequestTimeout(SanicException):
     the connection. The socket connection has actually been lost - the Web
     server has 'timed out' on that particular socket connection.
     """
+    status_code = 408
 
-    pass
 
-
-@add_status_code(413)
 class PayloadTooLarge(SanicException):
     """
     **Status**: 413 Payload Too Large
     """
-
-    pass
+    status_code = 413
 
 
 class HeaderNotFound(InvalidUsage):
     """
     **Status**: 400 Bad Request
     """
+    status_code = 400
 
-    pass
 
-
-@add_status_code(416)
 class ContentRangeError(SanicException):
     """
     **Status**: 416 Range Not Satisfiable
     """
+    status_code = 416
 
     def __init__(self, message, content_range):
         super().__init__(message)
         self.headers = {"Content-Range": f"bytes */{content_range.total}"}
 
 
-@add_status_code(417)
 class HeaderExpectationFailed(SanicException):
     """
     **Status**: 417 Expectation Failed
     """
+    status_code = 417
 
-    pass
 
-
-@add_status_code(403)
 class Forbidden(SanicException):
     """
     **Status**: 403 Forbidden
     """
-
-    pass
+    status_code = 403
 
 
 class InvalidRangeType(ContentRangeError):
     """
     **Status**: 416 Range Not Satisfiable
     """
-
-    pass
+    status_code = 416
 
 
 class PyFileError(Exception):
@@ -174,7 +143,6 @@ class PyFileError(Exception):
         super().__init__("could not execute config file %s", file)
 
 
-@add_status_code(401)
 class Unauthorized(SanicException):
     """
     **Status**: 401 Unauthorized
@@ -209,6 +177,7 @@ class Unauthorized(SanicException):
                            scheme="Bearer",
                            realm="Restricted Area")
     """
+    status_code = 401
 
     def __init__(self, message, status_code=None, scheme=None, **kwargs):
         super().__init__(message, status_code)
@@ -241,9 +210,11 @@ def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
     :param status_code: The HTTP status code to return.
     :param message: The HTTP response body. Defaults to the messages in
     """
-    if message is None:
-        msg: bytes = STATUS_CODES[status_code]
-        # These are stored as bytes in the STATUS_CODES dict
-        message = msg.decode("utf8")
-    sanic_exception = _sanic_exceptions.get(status_code, SanicException)
-    raise sanic_exception(message=message, status_code=status_code)
+    import warnings
+    warnings.warn(
+        "sanic.exceptions.abort has been marked as deprecated, and will be "
+        "removed in release 21.12.\n To migrate your code, simply replace "
+        "abort(status_code, msg) with raise SanicException(msg, status_code), "
+        "or even better, raise an appropriate SanicException subclass.")
+
+    raise SanicException(message=message, status_code=status_code)

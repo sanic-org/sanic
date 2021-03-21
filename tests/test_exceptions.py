@@ -4,12 +4,12 @@ from bs4 import BeautifulSoup
 
 from sanic import Sanic
 from sanic.exceptions import (
+    SanicException,
     Forbidden,
     InvalidUsage,
     NotFound,
     ServerError,
     Unauthorized,
-    abort,
 )
 from sanic.response import text
 
@@ -68,16 +68,15 @@ def exception_app():
 
     @app.route("/abort/401")
     def handler_401_error(request):
-        abort(401)
+        raise SanicException(status_code=401)
 
     @app.route("/abort")
     def handler_500_error(request):
-        abort(500)
-        return text("OK")
+        raise SanicException(status_code=500)
 
     @app.route("/abort/message")
     def handler_abort_message(request):
-        abort(500, message="Abort")
+        raise SanicException(message="Abort", status_code=500)
 
     @app.route("/divide_by_zero")
     def handle_unhandled_exception(request):

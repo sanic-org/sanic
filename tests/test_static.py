@@ -445,3 +445,12 @@ def test_static_name(app, static_file_directory, static_name, file_name):
     request, response = app.test_client.get(f"/static/{file_name}")
 
     assert response.status == 200
+
+
+def test_nested_dir(app, static_file_directory):
+    app.static("/static", static_file_directory)
+
+    request, response = app.test_client.get("/static/nested/dir/foo.txt")
+
+    assert response.status == 200
+    assert response.text == "foo\n"

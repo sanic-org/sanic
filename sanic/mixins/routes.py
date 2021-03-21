@@ -776,7 +776,7 @@ class RouteMixin:
         # If we're not trying to match a file directly,
         # serve from the folder
         if not path.isfile(file_or_directory):
-            uri += "/<__file_uri__>"
+            uri += "/<__file_uri__:path>"
 
         # special prefix for static files
         # if not static.name.startswith("_static_"):

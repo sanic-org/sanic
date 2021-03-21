@@ -1,3 +1,12 @@
+Version 21.3.1
+--------------
+
+Bugfixes
+********
+
+  * `#2076 <https://github.com/sanic-org/sanic/pull/2076>`_
+    Static files inside subfolders are not accessible (404)
+
 Version 21.3.0
 --------------
 

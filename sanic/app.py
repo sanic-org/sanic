@@ -676,27 +676,23 @@ class Sanic(BaseSanic):
         response = None
         try:
             # Fetch handler from router
-            (
-                route,
-                handler,
-                kwargs,
-            ) = self.router.get(request)
+            route, handler, kwargs = self.router.get(
+                request.path, request.method, request.headers.get("host")
+            )
 
             request._match_info = kwargs
             request.route = route
-            request.name = route.name
-            request.uri_template = f"/{route.path}"
-            request.endpoint = request.name
 
             if (
-                request.stream
-                and request.stream.request_body
+                request.stream.request_body  # type: ignore
                 and not route.ctx.ignore_body
             ):
 
                 if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
-                    request.stream.request_max_size = float("inf")
+                    request.stream.request_max_size = float(  # type: ignore
+                        "inf"
+                    )
                 else:
                     # Non-streaming handler: preload body
                     await request.receive_body()
@@ -730,8 +726,7 @@ class Sanic(BaseSanic):
             if response:
                 response = await request.respond(response)
             else:
-                if request.stream:
-                    response = request.stream.response
+                response = request.stream.response  # type: ignore
             # Make sure that response is finished / run StreamingHTTP callback
 
             if isinstance(response, BaseHTTPResponse):
@@ -757,9 +752,9 @@ class Sanic(BaseSanic):
     ):
         request.app = self
         if not getattr(handler, "__blueprintname__", False):
-            request.endpoint = handler.__name__
+            request._name = handler.__name__
         else:
-            request.endpoint = (
+            request._name = (
                 getattr(handler, "__blueprintname__", "") + handler.__name__
             )
 

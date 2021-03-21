@@ -86,15 +86,14 @@ class Request:
         "_remote_addr",
         "_socket",
         "_match_info",
+        "_name",
         "app",
         "body",
         "conn_info",
         "ctx",
-        "endpoint",
         "head",
         "headers",
         "method",
-        "name",
         "parsed_args",
         "parsed_not_grouped_args",
         "parsed_files",
@@ -106,7 +105,6 @@ class Request:
         "route",
         "stream",
         "transport",
-        "uri_template",
         "version",
     )
 
@@ -124,6 +122,7 @@ class Request:
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
         self._id: Optional[Union[uuid.UUID, str, int]] = None
+        self._name: Optional[str] = None
         self.app = app
 
         self.headers = headers
@@ -136,7 +135,6 @@ class Request:
         self.body = b""
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
-        self.name: Optional[str] = None
         self.parsed_forwarded: Optional[Options] = None
         self.parsed_json = None
         self.parsed_form = None
@@ -147,12 +145,10 @@ class Request:
         self.parsed_not_grouped_args: DefaultDict[
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
-        self.uri_template: Optional[str] = None
         self.request_middleware_started = False
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
         self.stream: Optional[Http] = None
-        self.endpoint: Optional[str] = None
         self.route: Optional[Route] = None
         self._protocol = None
 
@@ -206,6 +202,22 @@ class Request:
         """
         if not self.body:
             self.body = b"".join([data async for data in self.stream])
+
+    @property
+    def name(self):
+        if self._name:
+            return self._name
+        elif self.route:
+            return self.route.name
+        return None
+
+    @property
+    def endpoint(self):
+        return self.name
+
+    @property
+    def uri_template(self):
+        return f"/{self.route.path}"
 
     @property
     def protocol(self):

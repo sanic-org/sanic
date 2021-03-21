@@ -35,6 +35,27 @@ def test_request_id_defaults_uuid():
     assert request.id == request.id == request._id
 
 
+def test_name_none():
+    request = Request(b"/", {}, None, "GET", None, None)
+
+    assert request.name is None
+
+
+def test_name_from_route():
+    request = Request(b"/", {}, None, "GET", None, None)
+    route = Mock()
+    request.route = route
+
+    assert request.name == route.name
+
+
+def test_name_from_set():
+    request = Request(b"/", {}, None, "GET", None, None)
+    request._name = "foo"
+
+    assert request.name == "foo"
+
+
 @pytest.mark.parametrize(
     "request_id,expected_type",
     (

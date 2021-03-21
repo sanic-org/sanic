@@ -11,7 +11,6 @@ from sanic_routing.route import Route  # type: ignore
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import MethodNotSupported, NotFound, SanicException
 from sanic.models.handler_types import RouteHandler
-from sanic.request import Request
 
 
 ROUTER_CACHE_SIZE = 1024

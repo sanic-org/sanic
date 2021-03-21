@@ -752,9 +752,9 @@ class Sanic(BaseSanic):
     ):
         request.app = self
         if not getattr(handler, "__blueprintname__", False):
-            request.endpoint = handler.__name__
+            request._name = handler.__name__
         else:
-            request.endpoint = (
+            request._name = (
                 getattr(handler, "__blueprintname__", "") + handler.__name__
             )
 

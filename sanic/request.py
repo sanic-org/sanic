@@ -86,6 +86,7 @@ class Request:
         "_remote_addr",
         "_socket",
         "_match_info",
+        "_name",
         "app",
         "body",
         "conn_info",
@@ -121,6 +122,7 @@ class Request:
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
         self._id: Optional[Union[uuid.UUID, str, int]] = None
+        self._name: Optional[str] = None
         self.app = app
 
         self.headers = headers
@@ -203,11 +205,15 @@ class Request:
 
     @property
     def name(self):
-        return self.route.name
+        if self._name:
+            return self._name
+        elif self.route:
+            return self.route.name
+        return None
 
     @property
     def endpoint(self):
-        return self.route.name
+        return self.name
 
     @property
     def uri_template(self):

@@ -66,7 +66,7 @@ Sanic is a **Python 3.7+** web server and web framework that's written to go fas
 
 Sanic is also ASGI compliant, so you can deploy it with an `alternative ASGI webserver <https://sanic.readthedocs.io/en/latest/sanic/deploying.html#running-via-asgi>`_.
 
-`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_ | `User Guide <https://sanicframework.org>`_
+`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_ | `User Guide <https://sanicframework.org>`_ | `Chat on Discord <https://discord.gg/FARQzAEMAA>`_
 
 The project is maintained by the community, for the community. **Contributions are welcome!**
 
@@ -125,13 +125,13 @@ Hello World Example
         return json({'hello': 'world'})
 
     if __name__ == '__main__':
-        app.run(host='0.0.0.0', port=8000)
+        app.run()
 
 Sanic can now be easily run using ``sanic hello.app``.
 
 .. code::
 
-    [2018-12-30 11:37:41 +0200] [13564] [INFO] Goin' Fast @ http://0.0.0.0:8000
+    [2018-12-30 11:37:41 +0200] [13564] [INFO] Goin' Fast @ http://127.0.0.1:8000
     [2018-12-30 11:37:41 +0200] [13564] [INFO] Starting worker [13564]
 
 And, we can verify it is working: ``curl localhost:8000 -i``
@@ -153,18 +153,18 @@ Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12
 Documentation
 -------------
 
-`User Guide <https://sanicframework.org>`_ and `API Documentation <http://sanic.readthedocs.io/>`_.
+`User Guide <https://sanicframework.org>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
 
 Changelog
 ---------
 
-`Release Changelogs <https://github.com/sanic-org/sanic/blob/master/CHANGELOG.rst>`_.
+`Release Changelogs <https://github.com/sanic-org/sanic/blob/master/CHANGELOG.rst>`__.
 
 
 Questions and Discussion
 ------------------------
 
-`Ask a question or join the conversation <https://community.sanicframework.org/>`_.
+`Ask a question or join the conversation <https://community.sanicframework.org/>`__.
 
 Contribution
 ------------

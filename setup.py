@@ -8,7 +8,7 @@ import sys
 
 from distutils.util import strtobool
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
 
@@ -52,7 +52,7 @@ with open_local(["README.rst"]) as rm:
 setup_kwargs = {
     "name": "sanic",
     "version": version,
-    "url": "http://github.com/huge-success/sanic/",
+    "url": "http://github.com/sanic-org/sanic/",
     "license": "MIT",
     "author": "Sanic Community",
     "author_email": "admhpkns@gmail.com",

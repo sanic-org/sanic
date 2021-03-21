@@ -4,10 +4,15 @@ from sanic.helpers import STATUS_CODES
 
 
 class SanicException(Exception):
-    def __init__(self, message=None, status_code=None, quiet=None):
+    def __init__(
+        self,
+        message: Optional[Union[str, bytes]] = None,
+        status_code: Optional[int] = None,
+        quiet: Optional[bool] = None,
+    ) -> None:
 
-        if message is None:
-            msg: bytes = STATUS_CODES.get(status_code, b'')
+        if message is None and status_code is not None:
+            msg: bytes = STATUS_CODES.get(status_code, b"")
             # These are stored as bytes in the STATUS_CODES dict
             message = msg.decode("utf8")
 
@@ -25,6 +30,7 @@ class NotFound(SanicException):
     """
     **Status**: 404 Not Found
     """
+
     status_code = 404
 
 
@@ -32,6 +38,7 @@ class InvalidUsage(SanicException):
     """
     **Status**: 400 Bad Request
     """
+
     status_code = 400
 
 
@@ -39,6 +46,7 @@ class MethodNotSupported(SanicException):
     """
     **Status**: 405 Method Not Allowed
     """
+
     status_code = 405
 
     def __init__(self, message, method, allowed_methods):
@@ -50,6 +58,7 @@ class ServerError(SanicException):
     """
     **Status**: 500 Internal Server Error
     """
+
     status_code = 500
 
 
@@ -60,6 +69,7 @@ class ServiceUnavailable(SanicException):
     The server is currently unavailable (because it is overloaded or
     down for maintenance). Generally, this is a temporary state.
     """
+
     status_code = 503
 
 
@@ -67,6 +77,7 @@ class URLBuildError(ServerError):
     """
     **Status**: 500 Internal Server Error
     """
+
     status_code = 500
 
 
@@ -89,6 +100,7 @@ class RequestTimeout(SanicException):
     the connection. The socket connection has actually been lost - the Web
     server has 'timed out' on that particular socket connection.
     """
+
     status_code = 408
 
 
@@ -96,6 +108,7 @@ class PayloadTooLarge(SanicException):
     """
     **Status**: 413 Payload Too Large
     """
+
     status_code = 413
 
 
@@ -103,6 +116,7 @@ class HeaderNotFound(InvalidUsage):
     """
     **Status**: 400 Bad Request
     """
+
     status_code = 400
 
 
@@ -110,6 +124,7 @@ class ContentRangeError(SanicException):
     """
     **Status**: 416 Range Not Satisfiable
     """
+
     status_code = 416
 
     def __init__(self, message, content_range):
@@ -121,6 +136,7 @@ class HeaderExpectationFailed(SanicException):
     """
     **Status**: 417 Expectation Failed
     """
+
     status_code = 417
 
 
@@ -128,6 +144,7 @@ class Forbidden(SanicException):
     """
     **Status**: 403 Forbidden
     """
+
     status_code = 403
 
 
@@ -135,6 +152,7 @@ class InvalidRangeType(ContentRangeError):
     """
     **Status**: 416 Range Not Satisfiable
     """
+
     status_code = 416
 
 
@@ -177,6 +195,7 @@ class Unauthorized(SanicException):
                            scheme="Bearer",
                            realm="Restricted Area")
     """
+
     status_code = 401
 
     def __init__(self, message, status_code=None, scheme=None, **kwargs):
@@ -211,10 +230,12 @@ def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
     :param message: The HTTP response body. Defaults to the messages in
     """
     import warnings
+
     warnings.warn(
         "sanic.exceptions.abort has been marked as deprecated, and will be "
         "removed in release 21.12.\n To migrate your code, simply replace "
         "abort(status_code, msg) with raise SanicException(msg, status_code), "
-        "or even better, raise an appropriate SanicException subclass.")
+        "or even better, raise an appropriate SanicException subclass."
+    )
 
     raise SanicException(message=message, status_code=status_code)

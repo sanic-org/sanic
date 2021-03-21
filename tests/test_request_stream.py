@@ -8,7 +8,6 @@ import pytest
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import json, text
-from sanic.server import HttpProtocol
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
 

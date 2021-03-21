@@ -3,7 +3,7 @@ import logging
 from asyncio import CancelledError
 from itertools import count
 
-from sanic.exceptions import NotFound, SanicException
+from sanic.exceptions import NotFound
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
 

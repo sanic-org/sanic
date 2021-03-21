@@ -1,23 +1,19 @@
 import asyncio
 import inspect
 import os
-import warnings
 
 from collections import namedtuple
 from mimetypes import guess_type
 from random import choice
-from unittest.mock import MagicMock
 from urllib.parse import unquote
 
 import pytest
 
 from aiofiles import os as async_os
-from sanic_testing.testing import HOST, PORT
 
 from sanic import Sanic
 from sanic.response import (
     HTTPResponse,
-    StreamingHTTPResponse,
     empty,
     file,
     file_stream,
@@ -26,7 +22,6 @@ from sanic.response import (
     stream,
     text,
 )
-from sanic.server import HttpProtocol
 
 
 JSON_DATA = {"ok": True}

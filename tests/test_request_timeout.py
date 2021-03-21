@@ -1,21 +1,10 @@
 import asyncio
 
-from typing import cast
 
 import httpcore
 import httpx
 
-from httpcore._async.base import (
-    AsyncByteStream,
-    AsyncHTTPTransport,
-    ConnectionState,
-    NewConnectionRequired,
-)
-from httpcore._async.connection import AsyncHTTPConnection
-from httpcore._async.connection_pool import ResponseByteStream
-from httpcore._exceptions import LocalProtocolError, UnsupportedProtocol
-from httpcore._types import TimeoutDict
-from httpcore._utils import url_to_origin
+
 from sanic_testing.testing import SanicTestClient
 
 from sanic import Sanic

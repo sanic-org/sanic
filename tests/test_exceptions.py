@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 from bs4 import BeautifulSoup
@@ -10,6 +12,7 @@ from sanic.exceptions import (
     NotFound,
     ServerError,
     Unauthorized,
+    abort
 )
 from sanic.response import text
 
@@ -74,9 +77,13 @@ def exception_app():
     def handler_500_error(request):
         raise SanicException(status_code=500)
 
+    @app.route("/old_abort")
+    def handler_old_abort_error(request):
+        abort(500)
+
     @app.route("/abort/message")
     def handler_abort_message(request):
-        raise SanicException(message="Abort", status_code=500)
+        raise SanicException(message="Custom Message", status_code=500)
 
     @app.route("/divide_by_zero")
     def handle_unhandled_exception(request):
@@ -207,14 +214,21 @@ def test_exception_in_exception_handler_debug_on(exception_app):
     assert response.body.startswith(b"Exception raised in exception ")
 
 
-def test_abort(exception_app):
-    """Test the abort function"""
+def test_sanic_exception(exception_app):
+    """Test sanic exceptions are handled"""
     request, response = exception_app.test_client.get("/abort/401")
     assert response.status == 401
 
     request, response = exception_app.test_client.get("/abort")
     assert response.status == 500
+    # check fallback message
+    assert "Internal Server Error" in response.text
 
     request, response = exception_app.test_client.get("/abort/message")
     assert response.status == 500
-    assert "Abort" in response.text
+    assert "Custom Message" in response.text
+
+    with warnings.catch_warnings(record=True) as w:
+        request, response = exception_app.test_client.get("/old_abort")
+    assert response.status == 500
+    assert len(w) == 1 and 'deprecated' in w[0].message.args[0]

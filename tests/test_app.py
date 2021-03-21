@@ -405,3 +405,10 @@ def test_app_set_context(app):
 
     retrieved = Sanic.get_app(app.name)
     assert retrieved.ctx.foo == 1
+
+
+def test_subclass_initialisation():
+    class CustomSanic(Sanic):
+        pass
+
+    CustomSanic("test_subclass_initialisation")

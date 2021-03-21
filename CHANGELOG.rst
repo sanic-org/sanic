@@ -183,9 +183,16 @@ Miscellaneous
   * Version for a route can be str, float, or int
   * Route has ctx property
   * App has ``routes_static``, ``routes_dynamic``, ``routes_regex``
+
   *
     `#2044 <https://github.com/sanic-org/sanic/pull/2044>`_
     Code cleanup and refactoring
+  *
+    `#2072 <https://github.com/sanic-org/sanic/pull/2072>`_
+    Remove ``BaseSanic`` metaclass
+  *
+    `#2074 <https://github.com/sanic-org/sanic/pull/2074>`_
+    Performance adjustments in ``handle_request_``
 
 Version 20.12.3
 ---------------

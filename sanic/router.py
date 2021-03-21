@@ -11,7 +11,6 @@ from sanic_routing.route import Route  # type: ignore
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import MethodNotSupported, NotFound, SanicException
 from sanic.models.handler_types import RouteHandler
-from sanic.request import Request
 
 
 ROUTER_CACHE_SIZE = 1024
@@ -27,16 +26,11 @@ class Router(BaseRouter):
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
 
-    # Putting the lru_cache on Router.get() performs better for the benchmarsk
-    # at tests/benchmark/test_route_resolution_benchmark.py
-    # However, overall application performance is significantly improved
-    # with the lru_cache on this method.
-    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def _get(
-        self, path, method, host
+        self, path: str, method: str, host: Optional[str]
     ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         try:
-            route, handler, params = self.resolve(
+            return self.resolve(
                 path=path,
                 method=method,
                 extra={"host": host},
@@ -50,14 +44,9 @@ class Router(BaseRouter):
                 allowed_methods=e.allowed_methods,
             )
 
-        return (
-            route,
-            handler,
-            params,
-        )
-
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def get(  # type: ignore
-        self, request: Request
+        self, path: str, method: str, host: Optional[str]
     ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         """
         Retrieve a `Route` object containg the details about how to handle
@@ -69,9 +58,7 @@ class Router(BaseRouter):
             correct response
         :rtype: Tuple[ Route, RouteHandler, Dict[str, Any]]
         """
-        return self._get(
-            request.path, request.method, request.headers.get("host")
-        )
+        return self._get(path, method, host)
 
     def add(  # type: ignore
         self,

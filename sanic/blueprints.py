@@ -73,6 +73,7 @@ class Blueprint(BaseSanic):
         version: Optional[int] = None,
         strict_slashes: Optional[bool] = None,
     ):
+        super().__init__()
 
         self._apps: Set[Sanic] = set()
         self.ctx = SimpleNamespace()

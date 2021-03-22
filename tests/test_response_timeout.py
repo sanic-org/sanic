@@ -1,16 +1,21 @@
 import asyncio
+import logging
 
 from time import sleep
 
 from sanic import Sanic
 from sanic.exceptions import ServiceUnavailable
+from sanic.log import LOGGING_CONFIG_DEFAULTS
 from sanic.response import text
 
+
+modified_config = LOGGING_CONFIG_DEFAULTS
+modified_config["loggers"]["sanic.root"]["level"] = "DEBUG"
 
 response_timeout_app = Sanic("test_response_timeout")
 response_timeout_default_app = Sanic("test_response_timeout_default")
 response_handler_cancelled_app = Sanic("test_response_handler_cancelled")
-response_ws_app = Sanic("response_ws_app")
+response_ws_app = Sanic("response_ws_app", log_config=modified_config)
 
 response_timeout_app.config.RESPONSE_TIMEOUT = 1
 response_timeout_default_app.config.RESPONSE_TIMEOUT = 1
@@ -80,6 +85,12 @@ def test_response_handler_cancelled():
     assert response_handler_cancelled_app.ctx.flag is False
 
 
-def test_response_timeout_not_applied():
-    _ = response_ws_app.test_client.websocket("/ws")
+def test_response_timeout_not_applied(caplog):
+    with caplog.at_level(logging.DEBUG):
+        _ = response_ws_app.test_client.websocket("/ws")
     assert response_ws_app.ctx.event.is_set()
+    assert (
+        "sanic.root",
+        10,
+        "Handling websocket. Timeouts disabled.",
+    ) in caplog.record_tuples

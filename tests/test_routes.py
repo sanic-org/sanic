@@ -12,7 +12,7 @@ from sanic_routing.exceptions import (
 )
 from sanic_testing.testing import SanicTestClient
 
-from sanic import Blueprint, Sanic, response
+from sanic import Blueprint, Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request

@@ -80,7 +80,6 @@ def test_response_handler_cancelled():
     assert response_handler_cancelled_app.ctx.flag is False
 
 
-# @pytest.mark.asyncio
 def test_response_timeout_not_applied():
     _ = response_ws_app.test_client.websocket("/ws")
     assert response_ws_app.ctx.event.is_set()

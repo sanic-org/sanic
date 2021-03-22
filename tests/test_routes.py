@@ -12,7 +12,7 @@ from sanic_routing.exceptions import (
 )
 from sanic_testing.testing import SanicTestClient
 
-from sanic import Blueprint, Sanic
+from sanic import Blueprint, Sanic, response
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request
@@ -1175,3 +1175,59 @@ def test_route_with_bad_named_param(app):
 
     with pytest.raises(SanicException):
         app.router.finalize()
+
+
+def test_routes_with_and_without_slash_definitions(app):
+    bar = Blueprint("bar", url_prefix="bar")
+    baz = Blueprint("baz", url_prefix="/baz")
+    fizz = Blueprint("fizz", url_prefix="fizz/")
+    buzz = Blueprint("buzz", url_prefix="/buzz/")
+
+    instances = (
+        (app, "foo"),
+        (bar, "bar"),
+        (baz, "baz"),
+        (fizz, "fizz"),
+        (buzz, "buzz"),
+    )
+
+    for instance, term in instances:
+        route = f"/{term}" if isinstance(instance, Sanic) else ""
+
+        @instance.get(route, strict_slashes=True)
+        def get_without(request):
+            return text(f"{term}_without")
+
+        @instance.get(f"{route}/", strict_slashes=True)
+        def get_with(request):
+            return text(f"{term}_with")
+
+        @instance.post(route, strict_slashes=True)
+        def post_without(request):
+            return text(f"{term}_without")
+
+        @instance.post(f"{route}/", strict_slashes=True)
+        def post_with(request):
+            return text(f"{term}_with")
+
+    app.blueprint(bar)
+    app.blueprint(baz)
+    app.blueprint(fizz)
+    app.blueprint(buzz)
+
+    for _, term in instances:
+        _, response = app.test_client.get(f"/{term}")
+        assert response.status == 200
+        assert response.text == f"{term}_without"
+
+        _, response = app.test_client.get(f"/{term}/")
+        assert response.status == 200
+        assert response.text == f"{term}_with"
+
+        _, response = app.test_client.post(f"/{term}")
+        assert response.status == 200
+        assert response.text == f"{term}_without"
+
+        _, response = app.test_client.post(f"/{term}/")
+        assert response.status == 200
+        assert response.text == f"{term}_with"

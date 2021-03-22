@@ -71,7 +71,7 @@ class RouteMixin:
 
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
-        if not uri.startswith("/"):
+        if uri and not uri.startswith("/"):
             uri = "/" + uri
 
         if strict_slashes is None:

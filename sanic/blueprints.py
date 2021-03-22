@@ -47,7 +47,7 @@ class Blueprint(BaseSanic):
         "_apps",
         "_future_routes",
         "_future_statics",
-        "_future_middleware",
+        "_future_middlewares",
         "_future_listeners",
         "_future_exceptions",
         "_future_signals",
@@ -238,7 +238,7 @@ class Blueprint(BaseSanic):
 
         # Middleware
         if route_names:
-            for future in self._future_middleware:
+            for future in self._future_middlewares:
                 middleware.append(app._apply_middleware(future, route_names))
 
         # Exceptions

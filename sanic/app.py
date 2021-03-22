@@ -83,7 +83,7 @@ class Sanic(BaseSanic):
         "_blueprint_order",
         "_future_routes",
         "_future_statics",
-        "_future_middleware",
+        "_future_middlewares",
         "_future_listeners",
         "_future_exceptions",
         "_future_signals",

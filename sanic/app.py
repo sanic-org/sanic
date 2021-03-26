@@ -78,6 +78,7 @@ class Sanic(BaseSanic):
     """
 
     __fake_slots__ = (
+        "_asgi_app",
         "_app_registry",
         "_asgi_client",
         "_blueprint_order",

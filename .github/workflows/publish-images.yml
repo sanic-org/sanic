@@ -1,0 +1,46 @@
+name: Publish Docker Images
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  publishDockerImages:
+    name: Docker Image Build [${{ matrix.python-version }}]
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.7", "3.8", "3.9"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build Latest Base images for ${{ matrix.python-version }}
+        uses: harshanarayana/custom-actions@main
+        with:
+          docker-image-base-name: sanicframework/sanic-build
+          ignore-python-setup: 'true'
+          dockerfile-base-dir: './docker'
+          action: 'image-publish'
+          docker-image-tag: "${{ matrix.python-version }}"
+          docker-file-suffix: "base"
+          docker-build-args: "PYTHON_VERSION=${{ matrix.python-version }}"
+          registry-auth-user: ${{ secrets.DOCKER_ACCESS_USER }}
+          registry-auth-password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          push-images: 'true'
+
+      - name: Install Sanic on Base Images
+        uses: harshanarayana/custom-actions@main
+        with:
+          docker-image-base-name: sanicframework/sanic
+          ignore-python-setup: 'true'
+          dockerfile-base-dir: './docker'
+          action: 'image-publish'
+          docker-build-args: "BASE_IMAGE_TAG=${{ matrix.python-version }}"
+          docker-image-prefix: "${{ matrix.python-version }}"
+          registry-auth-user: ${{ secrets.DOCKER_ACCESS_USER }}
+          registry-auth-password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          push-images: 'true'

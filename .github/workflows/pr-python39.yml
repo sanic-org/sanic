@@ -31,4 +31,4 @@ jobs:
           test-infra-tool: tox
           test-infra-version: latest
           action: tests
-          test-additional-args: "-e=${{ matrix.config.tox-env }},-vvvv=''"
+          test-additional-args: "-e=${{ matrix.config.tox-env }},-vv=''"

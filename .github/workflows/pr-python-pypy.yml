@@ -20,7 +20,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         config:
-          - { python-version: "${{ github.event.inputs.pypy-version }}", tox-env: "${{ github.event.inputs.tox-evn" }
+          - { python-version: "${{ github.event.inputs.pypy-version }}", tox-env: "${{ github.event.inputs.tox-env }}" }
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v2

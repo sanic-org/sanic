@@ -8,7 +8,6 @@ jobs:
   testsOnWindows:
     name: ut-${{ matrix.config.tox-env }}
     runs-on: windows-latest
-    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -31,3 +30,4 @@ jobs:
           action: tests
           test-additional-args: "-e=${{ matrix.config.tox-env }}"
           experimental-ignore-error: "true"
+          command-timeout: '600000'

@@ -8,7 +8,6 @@ jobs:
   bandit:
     name: type-check-${{ matrix.config.python-version }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
     strategy:
       fail-fast: false
       matrix:

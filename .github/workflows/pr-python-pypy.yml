@@ -14,7 +14,6 @@ jobs:
   testPyPy:
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -35,3 +34,4 @@ jobs:
           action: tests
           test-additional-args: "-e=${{ matrix.config.tox-env }}"
           experimental-ignore-error: "true"
+          command-timeout: '600000'

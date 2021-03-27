@@ -1,11 +1,11 @@
-name: Run Security Checks on PR
+name: Security Analysis
 on:
   pull_request:
     branches:
       - main
 
 jobs:
-  linter:
+  bandit:
     name: type-check-${{ matrix.config.python-version }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5

@@ -1,0 +1,39 @@
+name: On Demand Task
+on:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: 'Version of Python to use for running Test'
+        required: false
+        default: "3.8"
+      tox-env:
+        description: 'Test Environment to Run'
+        required: true
+        default: ''
+      os:
+        description: 'Operating System to Run Test on'
+        required: false
+        default: ubuntu-latest
+jobs:
+  onDemand:
+    name: tox-${{ matrix.config.tox-env }}-on-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["${{ github.event.inputs.os}}"]
+        config:
+          - { tox-env: "${{ github.event.inputs.tox-env }}", py-version: "${{ github.event.inputs.python-version }}"}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Run tests
+        uses: harshanarayana/custom-actions@main
+        with:
+          python-version: ${{ matrix.config.py-version }}
+          test-infra-tool: tox
+          test-infra-version: latest
+          action: tests
+          test-additional-args: "-e=${{ matrix.config.tox-env }}"
+          experimental-ignore-error: "yes"

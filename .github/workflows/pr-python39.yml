@@ -8,14 +8,14 @@ on:
       - main
 
 jobs:
-  test:
+  testPy39:
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         config:
           - { python-version: 3.9, tox-env: py39}
           - { python-version: 3.9, tox-env: py39-no-ext}

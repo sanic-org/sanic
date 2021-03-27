@@ -8,14 +8,14 @@ on:
       - main
 
 jobs:
-  test:
+  testPy37:
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         config:
           - { python-version: 3.7, tox-env: py37 }
           - { python-version: 3.7, tox-env: py37-no-ext }

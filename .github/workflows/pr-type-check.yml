@@ -1,11 +1,11 @@
-name: Run Typing Checks on PR
+name: Typing Checks
 on:
   pull_request:
     branches:
       - main
 
 jobs:
-  linter:
+  typeChecking:
     name: type-check-${{ matrix.config.python-version }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5

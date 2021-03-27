@@ -1,24 +1,26 @@
-name: Python PyPy 3.7 Tests
+name: Python PyPy Tests
 on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
-
+  workflow_dispatch:
+    inputs:
+      tox-env:
+        description: 'Tox Env to run on the PyPy Infra'
+        required: false
+        default: 'pypy37'
+      pypy-version:
+        description: 'Version of PyPy to use'
+        required: false
+        default: 'pypy-3.7'
 jobs:
-  test:
+  testPyPy:
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         config:
-          - { python-version: pypy-3.7, tox-env: pypy37}
-          - { python-version: pypy-3.7, tox-env: pypy37-no-ext}
+          - { python-version: "${{ github.event.inputs.pypy-version }}", tox-env: "${{ github.event.inputs.tox-evn" }
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v2

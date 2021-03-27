@@ -30,3 +30,4 @@ jobs:
           test-infra-version: latest
           action: tests
           test-additional-args: "-e=${{ matrix.config.tox-env }}"
+          experimental-ignore-error: "true"

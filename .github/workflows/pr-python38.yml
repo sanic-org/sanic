@@ -16,8 +16,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         config:
-          - { python-version: 3.8, tox-env: py37}
-          - { python-version: 3.8, tox-env: py37-no-ext}
+          - { python-version: 3.8, tox-env: py38}
+          - { python-version: 3.8, tox-env: py38-no-ext}
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v2

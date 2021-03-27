@@ -34,7 +34,7 @@ jobs:
           registry-auth-password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
           push-images: 'true'
 
-      - name: Install Sanic on Base Images
+      - name: Publish Sanic Docker Image for ${{ matrix.python-version }}
         uses: harshanarayana/custom-actions@main
         with:
           docker-image-base-name: sanicframework/sanic

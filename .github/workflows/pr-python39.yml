@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: ut-${{ matrix.confix.tox-env }}-${{ matrix.os }}
+    name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

@@ -1,0 +1,29 @@
+name: Document Linter
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  docsLinter:
+    name: Lint Documentation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+          - {python-version: "3.8", tox-env: "docs"}
+      fail-fast: false
+
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Document Linter
+        uses: harshanarayana/custom-actions@main
+        with:
+          python-version: ${{ matrix.config.python-version }}
+          test-infra-tool: tox
+          test-infra-version: latest
+          action: tests
+          test-additional-args: "-e=${{ matrix.config.tox-env }}"

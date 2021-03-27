@@ -1,28 +1,26 @@
-name: Python 3.8 Tests
+name: Run Unit Tests on Windows
 on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
 
 jobs:
-  testPy38:
-    name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  testsOnWindows:
+    name: ut-${{ matrix.config.tox-env }}
+    runs-on: windows-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
         config:
-          - { python-version: 3.8, tox-env: py38}
-          - { python-version: 3.8, tox-env: py38-no-ext}
+          - { python-version: 3.7, tox-env: py37-no-ext }
+          - { python-version: 3.8, tox-env: py37-no-ext }
+          - { python-version: 3.8, tox-env: py37-no-ext }
+          - { python-version: pypy-3.7, tox-env: pypy37-no-ext }
+
     steps:
-      - name: Checkout the Repository
+      - name: Checkout Repository
         uses: actions/checkout@v2
-        id: checkout-branch
 
       - name: Run Unit Tests
         uses: harshanarayana/custom-actions@main
@@ -32,3 +30,4 @@ jobs:
           test-infra-version: latest
           action: tests
           test-additional-args: "-e=${{ matrix.config.tox-env }}"
+          experimental-ignore-error: "true"

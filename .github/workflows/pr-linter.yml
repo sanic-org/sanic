@@ -1,0 +1,29 @@
+name: Run Linter Checks on PR
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  linter:
+    name: lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubunut-latest]
+        config:
+          - { python-version: 3.8, tox-env: lint}
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+        id: checkout-branch
+      - name: Run Linter Checks
+        id: linter-check
+        uses: harshanarayana/custom-actions@main
+        with:
+          python-version: ${{ matrix.config.python-version }}
+          test-infra-tool: tox
+          test-infra-version: latest
+          action: tests
+          test-additional-args: "-e=${{ matrix.config.tox-env }}"

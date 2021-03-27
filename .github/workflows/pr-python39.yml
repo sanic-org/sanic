@@ -17,8 +17,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         config:
-          - { python-version: 3.9, tox-env: py39}
-          - { python-version: 3.9, tox-env: py39-no-ext}
+          - { python-version: 3.9, tox-env: py39, ignore-error-flake: "false"}
+          - { python-version: 3.9, tox-env: py39-no-ext, ignore-error-flake: "true"}
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v2
@@ -32,3 +32,4 @@ jobs:
           test-infra-version: latest
           action: tests
           test-additional-args: "-e=${{ matrix.config.tox-env }},-vv=''"
+          experimental-ignore-error: "${{ matrix.config.ignore-error-flake }}"

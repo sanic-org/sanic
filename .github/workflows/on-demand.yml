@@ -28,6 +28,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+
       - name: Run tests
         uses: harshanarayana/custom-actions@main
         with:

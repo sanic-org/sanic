@@ -1,8 +1,10 @@
 name: Publish Docker Images
 on:
-  release:
+  workflow_run:
+    workflows:
+      - 'Publish Artifacts'
     types:
-      - created
+      - completed
 
 jobs:
   publishDockerImages:

@@ -21,6 +21,7 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
         id: checkout-branch
+
       - name: Run Linter Checks
         id: linter-check
         uses: harshanarayana/custom-actions@main

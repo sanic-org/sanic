@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         config:
           - { python-version: 3.9, tox-env: py39}
           - { python-version: 3.9, tox-env: py39-no-ext}

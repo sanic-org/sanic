@@ -6,6 +6,7 @@ from os import environ
 
 import httpcore
 import httpx
+import platform
 import pytest
 
 from sanic_testing.testing import HOST, SanicTestClient
@@ -241,7 +242,9 @@ def test_keep_alive_timeout_reuse():
 
 
 @pytest.mark.skipif(
-    bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
+    bool(environ.get("SANIC_NO_UVLOOP"))
+    or OS_IS_WINDOWS
+    or platform.system() != "Linux",
     reason="Not testable with current client",
 )
 def test_keep_alive_client_timeout():

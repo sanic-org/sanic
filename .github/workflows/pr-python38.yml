@@ -31,3 +31,4 @@ jobs:
           test-infra-version: latest
           action: tests
           test-additional-args: "-e=${{ matrix.config.tox-env }}"
+          test-failure-retry: "3"

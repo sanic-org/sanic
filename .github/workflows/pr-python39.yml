@@ -33,3 +33,4 @@ jobs:
           test-additional-args: "-e=${{ matrix.config.tox-env }},-vv=''"
           experimental-ignore-error: "${{ matrix.config.ignore-error-flake }}"
           command-timeout: "${{ matrix.config.command-timeout }}"
+          test-failure-retry: "3"

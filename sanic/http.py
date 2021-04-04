@@ -218,7 +218,7 @@ class Http:
             raise InvalidUsage("Bad Request")
 
         headers_instance = Header(headers)
-        self.upgrade_websocket = headers_instance.get("upgrade") == "websocket"
+        self.upgrade_websocket = "upgrade" in headers_instance and headers_instance.get("upgrade").lower() == "websocket"
 
         # Prepare a Request object
         request = self.protocol.request_class(

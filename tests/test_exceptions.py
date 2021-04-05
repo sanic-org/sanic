@@ -6,13 +6,13 @@ from bs4 import BeautifulSoup
 
 from sanic import Sanic
 from sanic.exceptions import (
-    SanicException,
     Forbidden,
     InvalidUsage,
     NotFound,
+    SanicException,
     ServerError,
     Unauthorized,
-    abort
+    abort,
 )
 from sanic.response import text
 
@@ -231,4 +231,4 @@ def test_sanic_exception(exception_app):
     with warnings.catch_warnings(record=True) as w:
         request, response = exception_app.test_client.get("/old_abort")
     assert response.status == 500
-    assert len(w) == 1 and 'deprecated' in w[0].message.args[0]
+    assert len(w) == 1 and "deprecated" in w[0].message.args[0]

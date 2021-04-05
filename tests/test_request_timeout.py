@@ -1,9 +1,7 @@
 import asyncio
 
-
 import httpcore
 import httpx
-
 
 from sanic_testing.testing import SanicTestClient
 

@@ -1,5 +1,4 @@
 import asyncio
-import sys
 
 from collections import deque, namedtuple
 

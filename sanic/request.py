@@ -581,7 +581,7 @@ class Request:
 
         if (
             self.app.websocket_enabled
-            and self.headers.get("upgrade") == "websocket"
+            and self.headers.get("upgrade", "").lower() == "websocket"
         ):
             scheme = "ws"
         else:

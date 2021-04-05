@@ -13,7 +13,6 @@ class SanicException(Exception):
 
         if message is None and status_code is not None:
             msg: bytes = STATUS_CODES.get(status_code, b"")
-            # These are stored as bytes in the STATUS_CODES dict
             message = msg.decode("utf8")
 
         super().__init__(message)

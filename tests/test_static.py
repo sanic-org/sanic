@@ -1,5 +1,6 @@
 import inspect
 import os
+import logging
 
 from pathlib import Path
 from time import gmtime, strftime
@@ -454,3 +455,12 @@ def test_nested_dir(app, static_file_directory):
 
     assert response.status == 200
     assert response.text == "foo\n"
+
+
+def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
+    app.static("/static", static_file_directory)
+
+    with caplog.at_level(logging.INFO):
+        request, response = app.test_client.get("/static/non_existing_file.file")
+    assert response.status == 404
+    assert len(caplog.record_tuples) == 6

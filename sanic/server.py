@@ -234,11 +234,16 @@ class HttpProtocol(asyncio.Protocol):
             if stage is Stage.IDLE and duration > self.keep_alive_timeout:
                 logger.debug("KeepAlive Timeout. Closing connection.")
             elif stage is Stage.REQUEST and duration > self.request_timeout:
+                logger.debug("Request Timeout. Closing connection.")
                 self._http.exception = RequestTimeout("Request Timeout")
+            elif stage is Stage.HANDLER and self._http.upgrade_websocket:
+                logger.debug("Handling websocket. Timeouts disabled.")
+                return
             elif (
                 stage in (Stage.HANDLER, Stage.RESPONSE, Stage.FAILED)
                 and duration > self.response_timeout
             ):
+                logger.debug("Response Timeout. Closing connection.")
                 self._http.exception = ServiceUnavailable("Response Timeout")
             else:
                 interval = (

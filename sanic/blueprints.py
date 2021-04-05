@@ -85,7 +85,11 @@ class Blueprint(BaseSanic):
         self.routes: List[Route] = []
         self.statics: List[RouteHandler] = []
         self.strict_slashes = strict_slashes
-        self.url_prefix = url_prefix
+        self.url_prefix = (
+            url_prefix[:-1]
+            if url_prefix and url_prefix.endswith("/")
+            else url_prefix
+        )
         self.version = version
         self.websocket_routes: List[Route] = []
 

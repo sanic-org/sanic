@@ -71,7 +71,7 @@ class RouteMixin:
 
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
-        if not uri.startswith("/"):
+        if not uri.startswith("/") and (uri or hasattr(self, "router")):
             uri = "/" + uri
 
         if strict_slashes is None:
@@ -776,7 +776,7 @@ class RouteMixin:
         # If we're not trying to match a file directly,
         # serve from the folder
         if not path.isfile(file_or_directory):
-            uri += "/<__file_uri__>"
+            uri += "/<__file_uri__:path>"
 
         # special prefix for static files
         # if not static.name.startswith("_static_"):

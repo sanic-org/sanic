@@ -1,3 +1,24 @@
+Version 21.3.2
+--------------
+
+Bugfixes
+********
+
+  * `#2081 <https://github.com/sanic-org/sanic/pull/2081>`_
+    Disable response timeout on websocket connections
+
+  * `#2085 <https://github.com/sanic-org/sanic/pull/2085>`_
+    Make sure that blueprints with no slash is maintained when applied
+
+Version 21.3.1
+--------------
+
+Bugfixes
+********
+
+  * `#2076 <https://github.com/sanic-org/sanic/pull/2076>`_
+    Static files inside subfolders are not accessible (404)
+
 Version 21.3.0
 --------------
 

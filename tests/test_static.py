@@ -7,7 +7,7 @@ from time import gmtime, strftime
 
 import pytest
 
-from sanic import text
+from sanic import Sanic, text
 from sanic.exceptions import FileNotFound
 
 
@@ -460,7 +460,8 @@ def test_nested_dir(app, static_file_directory):
     assert response.text == "foo\n"
 
 
-def test_stack_trace_on_not_found(app, static_file_directory, caplog):
+def test_stack_trace_on_not_found(static_file_directory, caplog):
+    app = Sanic("foo")
     app.static("/static", static_file_directory)
 
     with caplog.at_level(logging.INFO):
@@ -471,7 +472,8 @@ def test_stack_trace_on_not_found(app, static_file_directory, caplog):
     assert 40 in log_levels
 
 
-def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
+def test_no_stack_trace_on_not_found(static_file_directory, caplog):
+    app = Sanic("foo")
     app.static("/static", static_file_directory)
 
     @app.exception(FileNotFound)

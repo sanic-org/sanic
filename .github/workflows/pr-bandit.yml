@@ -1,0 +1,32 @@
+name: Security Analysis
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  bandit:
+    name: type-check-${{ matrix.config.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        config:
+          - { python-version: 3.7, tox-env: security}
+          - { python-version: 3.8, tox-env: security}
+          - { python-version: 3.9, tox-env: security}
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+        id: checkout-branch
+
+      - name: Run Linter Checks
+        id: linter-check
+        uses: harshanarayana/custom-actions@main
+        with:
+          python-version: ${{ matrix.config.python-version }}
+          test-infra-tool: tox
+          test-infra-version: latest
+          action: tests
+          test-additional-args: "-e=${{ matrix.config.tox-env }}"

@@ -2,12 +2,13 @@ import inspect
 import logging
 import os
 
+from collections import Counter
 from pathlib import Path
 from time import gmtime, strftime
 
 import pytest
 
-from sanic import Sanic, text
+from sanic import text
 from sanic.exceptions import FileNotFound
 
 
@@ -460,20 +461,20 @@ def test_nested_dir(app, static_file_directory):
     assert response.text == "foo\n"
 
 
-def test_stack_trace_on_not_found(static_file_directory, caplog):
-    app = Sanic("foo")
+def test_stack_trace_on_not_found(app, static_file_directory, caplog):
     app.static("/static", static_file_directory)
 
     with caplog.at_level(logging.INFO):
         _, response = app.test_client.get("/static/non_existing_file.file")
-    log_levels = {record[1] for record in caplog.record_tuples}
+
+    counter = Counter([r[1] for r in caplog.record_tuples])
+
     assert response.status == 404
-    assert len(caplog.record_tuples) == 6
-    assert 40 in log_levels
+    assert counter[logging.INFO] == 5
+    assert counter[logging.ERROR] == 1
 
 
-def test_no_stack_trace_on_not_found(static_file_directory, caplog):
-    app = Sanic("foo")
+def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
     app.static("/static", static_file_directory)
 
     @app.exception(FileNotFound)
@@ -482,8 +483,10 @@ def test_no_stack_trace_on_not_found(static_file_directory, caplog):
 
     with caplog.at_level(logging.INFO):
         _, response = app.test_client.get("/static/non_existing_file.file")
-    log_levels = {record[1] for record in caplog.record_tuples}
+
+    counter = Counter([r[1] for r in caplog.record_tuples])
+
     assert response.status == 404
-    assert len(caplog.record_tuples) == 5
-    assert 40 not in log_levels
+    assert counter[logging.INFO] == 5
+    assert logging.ERROR not in counter
     assert response.text == "No file: /static/non_existing_file.file"

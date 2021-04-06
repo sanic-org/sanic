@@ -718,15 +718,17 @@ class RouteMixin:
                 return await file(file_path, headers=headers, _range=_range)
         except ContentRangeError:
             raise
-        except Exception:
-            error_logger.exception(
-                f"File not found: path={file_or_directory}, "
-                f"relative_url={__file_uri__}"
-            )
+        except FileNotFoundError:
             raise FileNotFound(
                 "File not found",
                 path=file_or_directory,
                 relative_url=__file_uri__,
+            )
+        except Exception:
+            error_logger.exception(
+                f"Exception in static request handler:\
+ path={file_or_directory}, "
+                f"relative_url={__file_uri__}"
             )
 
     def _register_static(

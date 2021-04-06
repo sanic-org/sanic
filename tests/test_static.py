@@ -1,10 +1,15 @@
 import inspect
+import logging
 import os
 
+from collections import Counter
 from pathlib import Path
 from time import gmtime, strftime
 
 import pytest
+
+from sanic import text
+from sanic.exceptions import FileNotFound
 
 
 @pytest.fixture(scope="module")
@@ -454,3 +459,34 @@ def test_nested_dir(app, static_file_directory):
 
     assert response.status == 200
     assert response.text == "foo\n"
+
+
+def test_stack_trace_on_not_found(app, static_file_directory, caplog):
+    app.static("/static", static_file_directory)
+
+    with caplog.at_level(logging.INFO):
+        _, response = app.test_client.get("/static/non_existing_file.file")
+
+    counter = Counter([r[1] for r in caplog.record_tuples])
+
+    assert response.status == 404
+    assert counter[logging.INFO] == 5
+    assert counter[logging.ERROR] == 1
+
+
+def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
+    app.static("/static", static_file_directory)
+
+    @app.exception(FileNotFound)
+    async def file_not_found(request, exception):
+        return text(f"No file: {request.path}", status=404)
+
+    with caplog.at_level(logging.INFO):
+        _, response = app.test_client.get("/static/non_existing_file.file")
+
+    counter = Counter([r[1] for r in caplog.record_tuples])
+
+    assert response.status == 404
+    assert counter[logging.INFO] == 5
+    assert logging.ERROR not in counter
+    assert response.text == "No file: /static/non_existing_file.file"

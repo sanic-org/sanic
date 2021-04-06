@@ -1,6 +1,5 @@
 import asyncio
 
-from time import monotonic as current_time
 from unittest.mock import Mock
 
 import pytest

@@ -125,7 +125,7 @@ class Request:
         self._name: Optional[str] = None
         self.app = app
 
-        self.headers = headers
+        self.headers = Header(headers)
         self.version = version
         self.method = method
         self.transport = transport

@@ -262,7 +262,7 @@ class Request:
             app = Sanic("MyApp", request_class=IntRequest)
         """
         if not self._id:
-            self._id = self.headers.get(
+            self._id = self.headers.getone(
                 self.app.config.REQUEST_ID_HEADER,
                 self.__class__.generate_id(self),  # type: ignore
             )
@@ -303,7 +303,7 @@ class Request:
         :return: token related to request
         """
         prefixes = ("Bearer", "Token")
-        auth_header = self.headers.get("Authorization")
+        auth_header = self.headers.getone("Authorization", None)
 
         if auth_header is not None:
             for prefix in prefixes:
@@ -317,7 +317,7 @@ class Request:
         if self.parsed_form is None:
             self.parsed_form = RequestParameters()
             self.parsed_files = RequestParameters()
-            content_type = self.headers.get(
+            content_type = self.headers.getone(
                 "Content-Type", DEFAULT_HTTP_CONTENT_TYPE
             )
             content_type, parameters = parse_content_header(content_type)
@@ -465,7 +465,7 @@ class Request:
         """
 
         if self._cookies is None:
-            cookie = self.headers.get("Cookie")
+            cookie = self.headers.getone("Cookie", None)
             if cookie is not None:
                 cookies: SimpleCookie = SimpleCookie()
                 cookies.load(cookie)
@@ -482,7 +482,7 @@ class Request:
         :return: Content-Type header form the request
         :rtype: str
         """
-        return self.headers.get("Content-Type", DEFAULT_HTTP_CONTENT_TYPE)
+        return self.headers.getone("Content-Type", DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
     def match_info(self):
@@ -581,7 +581,7 @@ class Request:
 
         if (
             self.app.websocket_enabled
-            and self.headers.get("upgrade", "").lower() == "websocket"
+            and self.headers.getone("upgrade", "").lower() == "websocket"
         ):
             scheme = "ws"
         else:
@@ -608,7 +608,9 @@ class Request:
         server_name = self.app.config.get("SERVER_NAME")
         if server_name:
             return server_name.split("//", 1)[-1].split("/", 1)[0]
-        return str(self.forwarded.get("host") or self.headers.get("host", ""))
+        return str(
+            self.forwarded.get("host") or self.headers.getone("host", "")
+        )
 
     @property
     def server_name(self) -> str:

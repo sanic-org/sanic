@@ -673,7 +673,9 @@ class Sanic(BaseSanic):
         try:
             # Fetch handler from router
             route, handler, kwargs = self.router.get(
-                request.path, request.method, request.headers.get("host")
+                request.path,
+                request.method,
+                request.headers.getone("host", None),
             )
 
             request._match_info = kwargs

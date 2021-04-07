@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import platform
 import subprocess
 import sys
 
@@ -175,6 +176,10 @@ def test_unix_connection_multiple_workers():
     app_multi.run(host="myhost.invalid", unix=SOCKPATH, workers=2)
 
 
+@pytest.mark.xfail(
+    condition=platform.system() != "Linux",
+    reason="Flaky Test on Non Linux Infra",
+)
 async def test_zero_downtime():
     """Graceful server termination and socket replacement on restarts"""
     from signal import SIGINT

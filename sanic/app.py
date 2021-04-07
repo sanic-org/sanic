@@ -78,6 +78,7 @@ class Sanic(BaseSanic):
     """
 
     __fake_slots__ = (
+        "_asgi_app",
         "_app_registry",
         "_asgi_client",
         "_blueprint_order",
@@ -664,11 +665,6 @@ class Sanic(BaseSanic):
         exception handling must be done here
 
         :param request: HTTP Request object
-        :param write_callback: Synchronous response function to be
-            called with the response as the only argument
-        :param stream_callback: Coroutine that handles streaming a
-            StreamingHTTPResponse if produced by the handler.
-
         :return: Nothing
         """
         # Define `response` var here to remove warnings about

@@ -303,7 +303,7 @@ class Request:
         :return: token related to request
         """
         prefixes = ("Bearer", "Token")
-        auth_header = self.headers.getone("Authorization", None)
+        auth_header = self.headers.getone("authorization", None)
 
         if auth_header is not None:
             for prefix in prefixes:
@@ -318,7 +318,7 @@ class Request:
             self.parsed_form = RequestParameters()
             self.parsed_files = RequestParameters()
             content_type = self.headers.getone(
-                "Content-Type", DEFAULT_HTTP_CONTENT_TYPE
+                "content-type", DEFAULT_HTTP_CONTENT_TYPE
             )
             content_type, parameters = parse_content_header(content_type)
             try:
@@ -465,7 +465,7 @@ class Request:
         """
 
         if self._cookies is None:
-            cookie = self.headers.getone("Cookie", None)
+            cookie = self.headers.getone("cookie", None)
             if cookie is not None:
                 cookies: SimpleCookie = SimpleCookie()
                 cookies.load(cookie)
@@ -482,7 +482,7 @@ class Request:
         :return: Content-Type header form the request
         :rtype: str
         """
-        return self.headers.getone("Content-Type", DEFAULT_HTTP_CONTENT_TYPE)
+        return self.headers.getone("content-type", DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
     def match_info(self):

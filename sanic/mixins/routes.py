@@ -666,7 +666,7 @@ class RouteMixin:
                     "%a, %d %b %Y %H:%M:%S GMT", gmtime(stats.st_mtime)
                 )
                 if (
-                    request.headers.getone("If-Modified-Since", None)
+                    request.headers.getone("if-modified-since", None)
                     == modified_since
                 ):
                     return HTTPResponse(status=304)

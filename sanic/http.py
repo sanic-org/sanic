@@ -219,7 +219,7 @@ class Http:
 
         headers_instance = Header(headers)
         self.upgrade_websocket = (
-            headers_instance.get("upgrade", "").lower() == "websocket"
+            headers_instance.getone("upgrade", "").lower() == "websocket"
         )
 
         # Prepare a Request object
@@ -237,7 +237,7 @@ class Http:
         self.request_bytes_left = self.request_bytes = 0
         if request_body:
             headers = request.headers
-            expect = headers.get("expect")
+            expect = headers.getone("expect", None)
 
             if expect is not None:
                 if expect.lower() == "100-continue":
@@ -245,7 +245,7 @@ class Http:
                 else:
                     raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
 
-            if headers.get("transfer-encoding") == "chunked":
+            if headers.getone("transfer-encoding", None) == "chunked":
                 self.request_body = "chunked"
                 pos -= 2  # One CRLF stays in buffer
             else:

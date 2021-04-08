@@ -665,7 +665,10 @@ class RouteMixin:
                 modified_since = strftime(
                     "%a, %d %b %Y %H:%M:%S GMT", gmtime(stats.st_mtime)
                 )
-                if request.headers.get("If-Modified-Since") == modified_since:
+                if (
+                    request.headers.getone("if-modified-since", None)
+                    == modified_since
+                ):
                     return HTTPResponse(status=304)
                 headers["Last-Modified"] = modified_since
             _range = None

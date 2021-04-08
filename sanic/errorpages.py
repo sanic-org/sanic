@@ -366,7 +366,7 @@ def exception_response(
                 except InvalidUsage:
                     renderer = HTMLRenderer
 
-                content_type, *_ = request.headers.get(
+                content_type, *_ = request.headers.getone(
                     "content-type", ""
                 ).split(";")
                 renderer = RENDERERS_BY_CONTENT_TYPE.get(

@@ -368,11 +368,13 @@ class Sanic(BaseSanic):
         *,
         condition: Optional[Dict[str, str]] = None,
         context: Optional[Dict[str, Any]] = None,
+        inline: bool = False,
     ) -> Coroutine[Any, Any, Awaitable[Any]]:
         return self.signal_router.dispatch(
             event,
             context=context,
             condition=condition,
+            inline=inline,
         )
 
     def event(self, event: str, timeout: Optional[Union[int, float]] = None):
@@ -1093,10 +1095,6 @@ class Sanic(BaseSanic):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        self.listeners["before_server_start"] = [
-            self.finalize
-        ] + self.listeners["before_server_start"]
-
         if isinstance(ssl, dict):
             # try common aliaseses
             cert = ssl.get("cert") or ssl.get("certificate")
@@ -1267,15 +1265,20 @@ class Sanic(BaseSanic):
             raise SanicException(f'Sanic app name "{name}" not found.')
 
     # -------------------------------------------------------------------- #
-    # Static methods
+    # Lifecycle
     # -------------------------------------------------------------------- #
 
-    @staticmethod
-    async def finalize(app, _):
+    async def finalize(self):
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>> FINALIZING")
         try:
-            app.router.finalize()
-            if app.signal_router.routes:
-                app.signal_router.finalize()  # noqa
+            self.router.finalize()
+            if self.signal_router.routes:
+                self.signal_router.finalize()  # noqa
         except FinalizationError as e:
             if not Sanic.test_mode:
                 raise e  # noqa
+
+    async def _startup(self):
+        await self.finalize()
+        # ODE: server.worker.start
+        # await self.dispatch()

@@ -551,7 +551,7 @@ def serve(
             after_stop=after_stop,
         )
 
-    trigger_events(before_start, loop)
+    loop.run_until_complete(app._startup())
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -559,7 +559,7 @@ def serve(
         logger.exception("Unable to start server")
         return
 
-    trigger_events(after_start, loop)
+    # dispatch_signal(app, loop, "server.worker.stop")
 
     # Ignore SIGINT when run_multiple
     if run_multiple:

@@ -1,3 +1,21 @@
+"""
+Internal Sanic signals
+
+    server.main.start
+    server.main.stop
+    server.worker.start  ||  before/after
+    server.worker.stop  ||  before/after
+    http.lifecycle.request
+    http.lifecycle.response
+    http.lifecycle.exception
+    http.lifecycle.complete
+    http.middleware.before  ||  request/response
+    http.middleware.after ||  request/response
+    sanic.notification.debug
+    sanic.notification.info
+    sanic.notification.warning
+    sanic.notification.error
+"""
 from __future__ import annotations
 
 import asyncio
@@ -13,10 +31,22 @@ from sanic.exceptions import InvalidSignal
 from sanic.models.handler_types import SignalHandler
 
 
-RESERVED_NAMESPACES = (
-    "server",
-    "http",
-)
+RESERVED_NAMESPACES = {
+    "server": (
+        "server.main.start",
+        "server.main.stop",
+        "server.worker.start",
+        "server.worker.stop",
+    ),
+    "http": (
+        "http.lifecycle.request",
+        "http.lifecycle.response",
+        "http.lifecycle.exception",
+        "http.lifecycle.complete",
+        "http.middleware.before",
+        "http.middleware.after",
+    ),
+}
 
 
 class Signal(Route):
@@ -63,7 +93,7 @@ class SignalRouter(BaseRouter):
         event: str,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
-    ) -> None:
+    ) -> Any:
         signal, handlers, params = self.get(event, condition=condition)
 
         signal_event = signal.ctx.event
@@ -76,7 +106,12 @@ class SignalRouter(BaseRouter):
                 if condition is None or condition == handler.__requirements__:
                     maybe_coroutine = handler(**params)
                     if isawaitable(maybe_coroutine):
-                        await maybe_coroutine
+                        retval = await maybe_coroutine
+                        if retval:
+                            return retval
+                    elif maybe_coroutine:
+                        return maybe_coroutine
+            return None
         finally:
             signal_event.clear()
 
@@ -86,14 +121,18 @@ class SignalRouter(BaseRouter):
         *,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
-    ) -> asyncio.Task:
-        task = self.ctx.loop.create_task(
-            self._dispatch(
-                event,
-                context=context,
-                condition=condition,
-            )
+        inline: bool = False,
+    ) -> Union[asyncio.Task, Any]:
+        dispatch = self._dispatch(
+            event,
+            context=context,
+            condition=condition,
         )
+
+        if inline:
+            return await dispatch
+
+        task = self.ctx.loop.create_task(dispatch)
         await asyncio.sleep(0)
         return task
 
@@ -139,7 +178,10 @@ class SignalRouter(BaseRouter):
         ):
             raise InvalidSignal("Invalid signal event: %s" % event)
 
-        if parts[0] in RESERVED_NAMESPACES:
+        if (
+            parts[0] in RESERVED_NAMESPACES
+            and event not in RESERVED_NAMESPACES[parts[0]]
+        ):
             raise InvalidSignal(
                 "Cannot declare reserved signal event: %s" % event
             )

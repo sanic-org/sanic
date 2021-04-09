@@ -265,9 +265,12 @@ class Request:
         :type errors: str
         :return: RequestParameters
         """
-        if not self.parsed_args[
-            (keep_blank_values, strict_parsing, encoding, errors)
-        ]:
+        if (
+            keep_blank_values,
+            strict_parsing,
+            encoding,
+            errors,
+        ) not in self.parsed_args:
             if self.query_string:
                 self.parsed_args[
                     (keep_blank_values, strict_parsing, encoding, errors)
@@ -321,9 +324,12 @@ class Request:
         :type errors: str
         :return: list
         """
-        if not self.parsed_not_grouped_args[
-            (keep_blank_values, strict_parsing, encoding, errors)
-        ]:
+        if (
+            keep_blank_values,
+            strict_parsing,
+            encoding,
+            errors,
+        ) not in self.parsed_not_grouped_args:
             if self.query_string:
                 self.parsed_not_grouped_args[
                     (keep_blank_values, strict_parsing, encoding, errors)

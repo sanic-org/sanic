@@ -20,7 +20,7 @@ from sanic.exceptions import (
 )
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
-from sanic.log import access_logger, logger
+from sanic.log import access_logger, error_logger, logger
 
 
 class Stage(Enum):
@@ -143,7 +143,7 @@ class Http:
             # Try to consume any remaining request body
             if self.request_body:
                 if self.response and 200 <= self.response.status < 300:
-                    logger.error(f"{self.request} body not consumed.")
+                    error_logger.error(f"{self.request} body not consumed.")
 
                 try:
                     async for _ in self:

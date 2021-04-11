@@ -43,7 +43,7 @@ from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.config import BASE_LOGO, Config
+from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
     SanicException,
@@ -125,7 +125,8 @@ class Sanic(BaseSanic):
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
         error_handler: Optional[ErrorHandler] = None,
-        load_env: bool = True,
+        load_env: Union[bool, str] = True,
+        env_prefix: Optional[str] = SANIC_PREFIX,
         request_class: Optional[Type[Request]] = None,
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
@@ -150,7 +151,7 @@ class Sanic(BaseSanic):
         self._test_manager = None
         self.asgi = False
         self.blueprints: Dict[str, Blueprint] = {}
-        self.config = Config(load_env=load_env)
+        self.config = Config(load_env=load_env, env_prefix=env_prefix)
         self.configure_logging = configure_logging
         self.ctx = SimpleNamespace()
         self.debug = None

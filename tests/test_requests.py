@@ -244,6 +244,17 @@ def test_query_string(app):
     assert request.args.getlist("test1") == ["1"]
     assert request.args.get("test3", default="My value") == "My value"
 
+def test_popped_stays_popped(app):
+    @app.route("/")
+    async def handler(request):
+        return text("OK")
+
+    request, response = app.test_client.get(
+        "/", params=[("test1", "1")]
+    )
+
+    assert request.args.pop("test1") == ["1"]
+    assert "test1" not in request.args
 
 @pytest.mark.asyncio
 async def test_query_string_asgi(app):

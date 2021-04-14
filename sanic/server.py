@@ -65,6 +65,7 @@ class ConnInfo:
     __slots__ = (
         "client_port",
         "client",
+        "client_ip",
         "ctx",
         "peername",
         "server_port",
@@ -96,6 +97,7 @@ class ConnInfo:
 
         if isinstance(addr, tuple):
             self.client = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.client_ip = addr[0]
             self.client_port = addr[1]
 
 

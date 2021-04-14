@@ -79,6 +79,7 @@ class ConnInfo:
         self.peername = None
         self.server = self.client = ""
         self.server_port = self.client_port = 0
+        self.client_ip = ""
         self.sockname = addr = transport.get_extra_info("sockname")
         self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
 

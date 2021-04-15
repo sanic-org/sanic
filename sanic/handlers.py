@@ -6,7 +6,7 @@ from sanic.exceptions import (
     HeaderNotFound,
     InvalidRangeType,
 )
-from sanic.log import logger
+from sanic.log import error_logger
 from sanic.response import text
 
 
@@ -101,7 +101,7 @@ class ErrorHandler:
             response_message = (
                 "Exception raised in exception handler " '"%s" for uri: %s'
             )
-            logger.exception(response_message, handler.__name__, url)
+            error_logger.exception(response_message, handler.__name__, url)
 
             if self.debug:
                 return text(response_message % (handler.__name__, url), 500)
@@ -137,7 +137,9 @@ class ErrorHandler:
                 url = "unknown"
 
             self.log(format_exc())
-            logger.exception("Exception occurred while handling uri: %s", url)
+            error_logger.exception(
+                "Exception occurred while handling uri: %s", url
+            )
 
         return exception_response(request, exception, self.debug)
 
@@ -165,7 +167,7 @@ class ContentRangeHandler:
 
     def __init__(self, request, stats):
         self.total = stats.st_size
-        _range = request.headers.get("Range")
+        _range = request.headers.getone("range", None)
         if _range is None:
             raise HeaderNotFound("Range Header Not Found")
         unit, _, value = tuple(map(str.strip, _range.partition("=")))

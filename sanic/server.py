@@ -39,7 +39,7 @@ from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
-from sanic.log import logger
+from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.request import Request
 
@@ -199,11 +199,11 @@ class HttpProtocol(asyncio.Protocol):
         except CancelledError:
             pass
         except Exception:
-            logger.exception("protocol.connection_task uncaught")
+            error_logger.exception("protocol.connection_task uncaught")
         finally:
             if self.app.debug and self._http:
                 ip = self.transport.get_extra_info("peername")
-                logger.error(
+                error_logger.error(
                     "Connection lost before response written"
                     f" @ {ip} {self._http.request}"
                 )
@@ -212,7 +212,7 @@ class HttpProtocol(asyncio.Protocol):
             try:
                 self.close()
             except BaseException:
-                logger.exception("Closing failed")
+                error_logger.exception("Closing failed")
 
     async def receive_more(self):
         """
@@ -258,7 +258,7 @@ class HttpProtocol(asyncio.Protocol):
                 return
             self._task.cancel()
         except Exception:
-            logger.exception("protocol.check_timeouts")
+            error_logger.exception("protocol.check_timeouts")
 
     async def send(self, data):
         """
@@ -304,7 +304,7 @@ class HttpProtocol(asyncio.Protocol):
             self.recv_buffer = bytearray()
             self.conn_info = ConnInfo(self.transport, unix=self._unix)
         except Exception:
-            logger.exception("protocol.connect_made")
+            error_logger.exception("protocol.connect_made")
 
     def connection_lost(self, exc):
         try:
@@ -313,7 +313,7 @@ class HttpProtocol(asyncio.Protocol):
             if self._task:
                 self._task.cancel()
         except Exception:
-            logger.exception("protocol.connection_lost")
+            error_logger.exception("protocol.connection_lost")
 
     def pause_writing(self):
         self._can_write.clear()
@@ -337,7 +337,7 @@ class HttpProtocol(asyncio.Protocol):
             if self._data_received:
                 self._data_received.set()
         except Exception:
-            logger.exception("protocol.data_received")
+            error_logger.exception("protocol.data_received")
 
 
 def trigger_events(events: Optional[Iterable[Callable[..., Any]]], loop):
@@ -556,7 +556,7 @@ def serve(
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except BaseException:
-        logger.exception("Unable to start server")
+        error_logger.exception("Unable to start server")
         return
 
     trigger_events(after_start, loop)

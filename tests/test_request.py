@@ -122,3 +122,12 @@ def test_protocol_attribute(app):
     _ = app.test_client.get("/", headers=headers)
 
     assert isinstance(retrieved, HttpProtocol)
+
+
+def test_ipv6_address_is_not_wrapped(app):
+     @app.get("/")
+    async def get(request):
+        return response.empty()
+
+    request, _ = app.test_client.get("/", host="::ff")
+    assert request.route is list(app.router.routes.values())[0]

@@ -125,7 +125,8 @@ def test_protocol_attribute(app):
 
 
 def test_ipv6_address_is_not_wrapped(app):
-     @app.get("/")
+
+    @app.get("/")
     async def get(request):
         return response.empty()
 

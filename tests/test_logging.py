@@ -113,9 +113,9 @@ def test_logging_pass_customer_logconfig():
 def test_log_connection_lost(app, debug, monkeypatch):
     """ Should not log Connection lost exception on non debug """
     stream = StringIO()
-    root = logging.getLogger("sanic.root")
-    root.addHandler(logging.StreamHandler(stream))
-    monkeypatch.setattr(sanic.server, "logger", root)
+    error = logging.getLogger("sanic.error")
+    error.addHandler(logging.StreamHandler(stream))
+    monkeypatch.setattr(sanic.server, "error_logger", error)
 
     @app.route("/conn_lost")
     async def conn_lost(request):

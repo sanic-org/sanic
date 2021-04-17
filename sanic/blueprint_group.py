@@ -1,7 +1,10 @@
 from collections.abc import MutableSequence
-from typing import List, Optional, Union
+from typing import List, Optional, Union, TYPE_CHECKING
 
 import sanic
+
+if TYPE_CHECKING:
+    from sanic.blueprints import Blueprint
 
 
 class BlueprintGroup(MutableSequence):
@@ -56,7 +59,12 @@ class BlueprintGroup(MutableSequence):
 
     __slots__ = ("_blueprints", "_url_prefix", "_version", "_strict_slashes")
 
-    def __init__(self, url_prefix=None, version=None, strict_slashes=None):
+    def __init__(
+        self,
+        url_prefix: Optional[str] = None,
+        version: Optional[Union[int, str, float]] = None,
+        strict_slashes: Optional[bool] = None,
+    ):
         """
         Create a new Blueprint Group
 
@@ -65,7 +73,7 @@ class BlueprintGroup(MutableSequence):
             inherited by each of the Blueprint
         :param strict_slashes: URL Strict slash behavior indicator
         """
-        self._blueprints = []
+        self._blueprints: List[Blueprint] = []
         self._url_prefix = url_prefix
         self._version = version
         self._strict_slashes = strict_slashes

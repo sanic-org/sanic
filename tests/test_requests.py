@@ -253,6 +253,31 @@ async def test_empty_json_asgi(app):
     assert response.body == b"null"
 
 
+def test_echo_json(app):
+    @app.post("/")
+    async def handler(request):
+        return json(request.json)
+
+    data = {"foo": "bar"}
+    request, response = app.test_client.post("/", json=data)
+
+    assert response.status == 200
+    assert response.json == data
+
+
+@pytest.mark.asyncio
+async def test_echo_json_asgi(app):
+    @app.post("/")
+    async def handler(request):
+        return json(request.json)
+
+    data = {"foo": "bar"}
+    request, response = await app.asgi_client.post("/", json=data)
+
+    assert response.status == 200
+    assert response.json == data
+
+
 def test_invalid_json(app):
     @app.post("/")
     async def handler(request):
@@ -2159,3 +2184,52 @@ def test_safe_method_with_body(app):
     assert request.body == data.encode("utf-8")
     assert request.json.get("test") == "OK"
     assert response.body == b"OK"
+
+
+def test_conflicting_body_methods_overload(app):
+    @app.put("/")
+    @app.put("/p/")
+    @app.put("/p/<foo>")
+    async def put(request, foo=None):
+        return json(
+            {"name": request.route.name, "body": request.body, "foo": foo}
+        )
+
+    @app.delete("/p/<foo>")
+    async def delete(request, foo):
+        return json(
+            {"name": request.route.name, "body": request.body, "foo": foo}
+        )
+
+    payload = {"test": "OK"}
+    headers = {"content-type": "application/json"}
+    data = json_dumps(payload)
+
+    _, response = app.test_client.put("/", data=data, headers=headers)
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.put",
+        "foo": None,
+        "body": data,
+    }
+    _, response = app.test_client.put("/p", data=data, headers=headers)
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.put",
+        "foo": None,
+        "body": data,
+    }
+    _, response = app.test_client.put("/p/test", data=data, headers=headers)
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.put",
+        "foo": "test",
+        "body": data,
+    }
+    _, response = app.test_client.delete("/p/test")
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.delete",
+        "foo": "test",
+        "body": "",
+    }

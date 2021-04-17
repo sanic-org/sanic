@@ -28,7 +28,8 @@ def test_add_signal_decorator(app):
     async def async_signal(*_):
         ...
 
-    assert len(app.signal_router.routes) == 1
+    assert len(app.signal_router.routes) == 2
+    assert len(app.signal_router.dynamic_routes) == 1
 
 
 @pytest.mark.parametrize(
@@ -79,13 +80,13 @@ async def test_dispatch_signal_triggers_triggers_event(app):
     def sync_signal(*args):
         nonlocal app
         nonlocal counter
-        signal, *_ = app.signal_router.get("foo.bar.baz")
-        counter += signal.ctx.event.is_set()
+        group, *_ = app.signal_router.get("foo.bar.baz")
+        for signal in group:
+            counter += signal.ctx.event.is_set()
 
     app.signal_router.finalize()
 
     await app.dispatch("foo.bar.baz")
-    signal, *_ = app.signal_router.get("foo.bar.baz")
 
     assert counter == 1
 
@@ -224,7 +225,7 @@ async def test_dispatch_signal_triggers_event_on_bp(app):
 
     app.blueprint(bp)
     app.signal_router.finalize()
-    signal, *_ = app.signal_router.get(
+    signal_group, *_ = app.signal_router.get(
         "foo.bar.baz", condition={"blueprint": "bp"}
     )
 
@@ -233,7 +234,8 @@ async def test_dispatch_signal_triggers_event_on_bp(app):
     assert isawaitable(waiter)
 
     fut = asyncio.ensure_future(do_wait())
-    signal.ctx.event.set()
+    for signal in signal_group:
+        signal.ctx.event.set()
     await fut
 
     assert bp_counter == 1

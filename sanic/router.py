@@ -161,7 +161,7 @@ class Router(BaseRouter):
 
     @property
     def routes_all(self):
-        return self.routes
+        return {route.parts: route for route in self.routes}
 
     @property
     def routes_static(self):

@@ -45,7 +45,7 @@ class RouteMixin:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = False,
         apply: bool = True,

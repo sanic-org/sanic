@@ -79,7 +79,7 @@ class BlueprintGroup(MutableSequence):
         self._strict_slashes = strict_slashes
 
     @property
-    def url_prefix(self) -> str:
+    def url_prefix(self) -> Optional[Union[int, str, float]]:
         """
         Retrieve the URL prefix being used for the Current Blueprint Group
 

@@ -2233,3 +2233,24 @@ def test_conflicting_body_methods_overload(app):
         "foo": "test",
         "body": "",
     }
+
+
+def test_handler_overload(app):
+    @app.get(
+        "/long/sub/route/param_a/<param_a:string>/param_b/<param_b:string>"
+    )
+    @app.post("/long/sub/route/")
+    def handler(request, **kwargs):
+        return json(kwargs)
+
+    _, response = app.test_client.get(
+        "/long/sub/route/param_a/foo/param_b/bar"
+    )
+    assert response.status == 200
+    assert response.json == {
+        "param_a": "foo",
+        "param_b": "bar",
+    }
+    _, response = app.test_client.post("/long/sub/route")
+    assert response.status == 200
+    assert response.json == {}

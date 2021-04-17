@@ -33,7 +33,7 @@ class Router(BaseRouter):
             return self.resolve(
                 path=path,
                 method=method,
-                extra={"host": host},
+                extra={"host": host} if host else None,
             )
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))

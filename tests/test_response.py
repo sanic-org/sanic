@@ -529,3 +529,19 @@ def test_empty_response(app):
     request, response = app.test_client.get("/test")
     assert response.content_type is None
     assert response.body == b""
+
+
+def test_direct_response_stream(app):
+    @app.route("/")
+    async def test(request):
+        response = await request.respond(content_type="text/csv")
+        await response.send("foo,")
+        await response.send("bar")
+        await response.eof()
+        return response
+
+    _, response = app.test_client.get("/")
+    assert response.text == "foo,bar"
+    assert response.headers["Transfer-Encoding"] == "chunked"
+    assert response.headers["Content-Type"] == "text/csv"
+    assert "Content-Length" not in response.headers

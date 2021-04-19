@@ -1,7 +1,8 @@
 from collections.abc import MutableSequence
-from typing import List, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import sanic
+
 
 if TYPE_CHECKING:
     from sanic.blueprints import Blueprint

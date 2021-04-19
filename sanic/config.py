@@ -1,7 +1,8 @@
 from inspect import isclass
 from os import environ
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Dict, Optional, Union
+from warnings import warn
 
 from .utils import load_module_from_file_location, str_to_bool
 
@@ -41,7 +42,13 @@ DEFAULT_CONFIG = {
 
 
 class Config(dict):
-    def __init__(self, defaults=None, load_env=True, keep_alive=None):
+    def __init__(
+        self,
+        defaults: Dict[str, Union[str, bool, int, float, None]] = None,
+        load_env: Optional[Union[bool, str]] = True,
+        env_prefix: Optional[str] = SANIC_PREFIX,
+        keep_alive: Optional[int] = None,
+    ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
@@ -50,9 +57,20 @@ class Config(dict):
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
 
-        if load_env:
-            prefix = SANIC_PREFIX if load_env is True else load_env
-            self.load_environment_vars(prefix=prefix)
+        if env_prefix != SANIC_PREFIX:
+            if env_prefix:
+                self.load_environment_vars(env_prefix)
+        elif load_env is not True:
+            if load_env:
+                self.load_environment_vars(prefix=load_env)
+            warn(
+                "Use of load_env is deprecated and will be removed in "
+                "21.12. Modify the configuration prefix by passing "
+                "env_prefix instead.",
+                DeprecationWarning,
+            )
+        else:
+            self.load_environment_vars(SANIC_PREFIX)
 
     def __getattr__(self, attr):
         try:

@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from sanic import __version__
 from sanic.app import Sanic
 from sanic.config import BASE_LOGO
-from sanic.log import logger
+from sanic.log import error_logger
 
 
 class SanicArgumentParser(ArgumentParser):
@@ -119,13 +119,13 @@ def main():
             ssl=ssl,
         )
     except ImportError as e:
-        logger.error(
+        error_logger.error(
             f"No module named {e.name} found.\n"
             f"  Example File: project/sanic_server.py -> app\n"
             f"  Example Module: project.sanic_server.app"
         )
     except ValueError:
-        logger.exception("Failed to run app")
+        error_logger.exception("Failed to run app")
 
 
 if __name__ == "__main__":

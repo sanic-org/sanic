@@ -20,7 +20,7 @@ from sanic.exceptions import (
 )
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
-from sanic.log import access_logger, logger
+from sanic.log import access_logger, error_logger, logger
 
 
 class Stage(Enum):
@@ -144,7 +144,7 @@ class Http:
             # Try to consume any remaining request body
             if self.request_body:
                 if self.response and 200 <= self.response.status < 300:
-                    logger.error(f"{self.request} body not consumed.")
+                    error_logger.error(f"{self.request} body not consumed.")
 
                 try:
                     async for _ in self:
@@ -220,7 +220,7 @@ class Http:
 
         headers_instance = Header(headers)
         self.upgrade_websocket = (
-            headers_instance.get("upgrade", "").lower() == "websocket"
+            headers_instance.getone("upgrade", "").lower() == "websocket"
         )
 
         # Prepare a Request object
@@ -238,7 +238,7 @@ class Http:
         self.request_bytes_left = self.request_bytes = 0
         if request_body:
             headers = request.headers
-            expect = headers.get("expect")
+            expect = headers.getone("expect", None)
 
             if expect is not None:
                 if expect.lower() == "100-continue":
@@ -246,7 +246,7 @@ class Http:
                 else:
                     raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
 
-            if headers.get("transfer-encoding") == "chunked":
+            if headers.getone("transfer-encoding", None) == "chunked":
                 self.request_body = "chunked"
                 pos -= 2  # One CRLF stays in buffer
             else:

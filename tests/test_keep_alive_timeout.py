@@ -1,4 +1,5 @@
 import asyncio
+import platform
 
 from asyncio import sleep as aio_sleep
 from json import JSONDecodeError
@@ -6,7 +7,6 @@ from os import environ
 
 import httpcore
 import httpx
-import platform
 import pytest
 
 from sanic_testing.testing import HOST, SanicTestClient

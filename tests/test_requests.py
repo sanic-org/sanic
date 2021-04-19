@@ -2203,34 +2203,33 @@ def test_conflicting_body_methods_overload(app):
     @app.put("/p/<foo>")
     async def put(request, foo=None):
         return json(
-            {"name": request.route.name, "body": request.body, "foo": foo}
+            {"name": request.route.name, "body": str(request.body), "foo": foo}
         )
 
     @app.delete("/p/<foo>")
     async def delete(request, foo):
         return json(
-            {"name": request.route.name, "body": request.body, "foo": foo}
+            {"name": request.route.name, "body": str(request.body), "foo": foo}
         )
 
     payload = {"test": "OK"}
-    headers = {"content-type": "application/json"}
-    data = json_dumps(payload)
+    data = str(json_dumps(payload).encode())
 
-    _, response = app.test_client.put("/", data=data, headers=headers)
+    _, response = app.test_client.put("/", json=payload)
     assert response.status == 200
     assert response.json == {
         "name": "test_conflicting_body_methods_overload.put",
         "foo": None,
         "body": data,
     }
-    _, response = app.test_client.put("/p", data=data, headers=headers)
+    _, response = app.test_client.put("/p", json=payload)
     assert response.status == 200
     assert response.json == {
         "name": "test_conflicting_body_methods_overload.put",
         "foo": None,
         "body": data,
     }
-    _, response = app.test_client.put("/p/test", data=data, headers=headers)
+    _, response = app.test_client.put("/p/test", json=payload)
     assert response.status == 200
     assert response.json == {
         "name": "test_conflicting_body_methods_overload.put",
@@ -2242,7 +2241,7 @@ def test_conflicting_body_methods_overload(app):
     assert response.json == {
         "name": "test_conflicting_body_methods_overload.delete",
         "foo": "test",
-        "body": "",
+        "body": str("".encode()),
     }
 
 

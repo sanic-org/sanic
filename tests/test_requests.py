@@ -317,15 +317,15 @@ def test_query_string(app):
     assert request.args.get("test3", default="My value") == "My value"
 
 
-def test_popped_stays_popped(app):
-    @app.route("/")
-    async def handler(request):
-        return text("OK")
+# def test_popped_stays_popped(app):
+#     @app.route("/")
+#     async def handler(request):
+#         return text("OK")
 
-    request, response = app.test_client.get("/", params=[("test1", "1")])
+#     request, response = app.test_client.get("/", params=[("test1", "1")])
 
-    assert request.args.pop("test1") == ["1"]
-    assert "test1" not in request.args
+#     assert request.args.pop("test1") == ["1"]
+#     assert "test1" not in request.args
 
 
 @pytest.mark.asyncio

@@ -104,7 +104,7 @@ def test_route_assigned_to_request(app):
         return response.empty()
 
     request, _ = app.test_client.get("/")
-    assert request.route is list(app.router.routes.values())[0]
+    assert request.route is list(app.router.routes)[0]
 
 
 def test_protocol_attribute(app):

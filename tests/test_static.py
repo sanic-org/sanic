@@ -454,3 +454,51 @@ def test_nested_dir(app, static_file_directory):
 
     assert response.status == 200
     assert response.text == "foo\n"
+
+
+def test_stack_trace_on_not_found(app, static_file_directory, caplog):
+    app.static("/static", static_file_directory)
+
+    with caplog.at_level(logging.INFO):
+        _, response = app.test_client.get("/static/non_existing_file.file")
+
+    counter = Counter([r[1] for r in caplog.record_tuples])
+
+    assert response.status == 404
+    assert counter[logging.INFO] == 5
+    assert counter[logging.ERROR] == 1
+
+
+def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
+    app.static("/static", static_file_directory)
+
+    @app.exception(FileNotFound)
+    async def file_not_found(request, exception):
+        return text(f"No file: {request.path}", status=404)
+
+    with caplog.at_level(logging.INFO):
+        _, response = app.test_client.get("/static/non_existing_file.file")
+
+    counter = Counter([r[1] for r in caplog.record_tuples])
+
+    assert response.status == 404
+    assert counter[logging.INFO] == 5
+    assert logging.ERROR not in counter
+    assert response.text == "No file: /static/non_existing_file.file"
+
+
+def test_multiple_statics(app, static_file_directory):
+    app.static("/file", get_file_path(static_file_directory, "test.file"))
+    app.static("/png", get_file_path(static_file_directory, "python.png"))
+
+    _, response = app.test_client.get("/file")
+    assert response.status == 200
+    assert response.body == get_file_content(
+        static_file_directory, "test.file"
+    )
+
+    _, response = app.test_client.get("/png")
+    assert response.status == 200
+    assert response.body == get_file_content(
+        static_file_directory, "python.png"
+    )

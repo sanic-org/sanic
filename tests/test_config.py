@@ -80,11 +80,25 @@ def test_dont_load_env():
     del environ["SANIC_TEST_ANSWER"]
 
 
+@pytest.mark.parametrize("load_env", [None, False, "", "MYAPP_"])
+def test_load_env_deprecation(load_env):
+    with pytest.warns(DeprecationWarning, match=r"21\.12"):
+        _ = Sanic(name=__name__, load_env=load_env)
+
+
 def test_load_env_prefix():
     environ["MYAPP_TEST_ANSWER"] = "42"
     app = Sanic(name=__name__, load_env="MYAPP_")
     assert app.config.TEST_ANSWER == 42
     del environ["MYAPP_TEST_ANSWER"]
+
+
+@pytest.mark.parametrize("env_prefix", [None, ""])
+def test_empty_load_env_prefix(env_prefix):
+    environ["SANIC_TEST_ANSWER"] = "42"
+    app = Sanic(name=__name__, env_prefix=env_prefix)
+    assert getattr(app.config, "TEST_ANSWER", None) is None
+    del environ["SANIC_TEST_ANSWER"]
 
 
 def test_load_env_prefix_float_values():

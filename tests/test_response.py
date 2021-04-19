@@ -65,7 +65,9 @@ def test_method_not_allowed():
     }
 
     request, response = app.test_client.post("/")
-    assert set(response.headers["Allow"].split(", ")) == {"GET", "HEAD"}
+    assert set(response.headers["Allow"].split(", ")) == {
+        "GET",
+    }
 
     app.router.reset()
 
@@ -78,7 +80,6 @@ def test_method_not_allowed():
     assert set(response.headers["Allow"].split(", ")) == {
         "GET",
         "POST",
-        "HEAD",
     }
     assert response.headers["Content-Length"] == "0"
 
@@ -87,7 +88,6 @@ def test_method_not_allowed():
     assert set(response.headers["Allow"].split(", ")) == {
         "GET",
         "POST",
-        "HEAD",
     }
     assert response.headers["Content-Length"] == "0"
 

@@ -82,6 +82,7 @@ class Http:
         "request_max_size",
         "response",
         "response_func",
+        "response_size",
         "response_bytes_left",
         "upgrade_websocket",
     ]
@@ -270,6 +271,7 @@ class Http:
         size = len(data)
         headers = res.headers
         status = res.status
+        self.response_size = size
 
         if not isinstance(status, int) or status < 200:
             raise RuntimeError(f"Invalid response status {status!r}")
@@ -424,7 +426,9 @@ class Http:
         req, res = self.request, self.response
         extra = {
             "status": getattr(res, "status", 0),
-            "byte": getattr(self, "response_bytes_left", -1),
+            "byte": getattr(
+                self, "response_bytes_left", getattr(self, "response_size", -1)
+            ),
             "host": "UNKNOWN",
             "request": "nil",
         }

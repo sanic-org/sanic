@@ -70,7 +70,7 @@ class Blueprint(BaseSanic):
         name: str,
         url_prefix: Optional[str] = None,
         host: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
     ):
         super().__init__()

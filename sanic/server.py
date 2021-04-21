@@ -65,6 +65,7 @@ class ConnInfo:
     __slots__ = (
         "client_port",
         "client",
+        "client_ip",
         "ctx",
         "peername",
         "server_port",
@@ -78,6 +79,7 @@ class ConnInfo:
         self.peername = None
         self.server = self.client = ""
         self.server_port = self.client_port = 0
+        self.client_ip = ""
         self.sockname = addr = transport.get_extra_info("sockname")
         self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
 
@@ -96,6 +98,7 @@ class ConnInfo:
 
         if isinstance(addr, tuple):
             self.client = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.client_ip = addr[0]
             self.client_port = addr[1]
 
 

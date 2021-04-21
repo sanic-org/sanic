@@ -505,7 +505,7 @@ class Request:
         :return: peer ip of the socket
         :rtype: str
         """
-        return self.conn_info.client if self.conn_info else ""
+        return self.conn_info.client_ip if self.conn_info else ""
 
     @property
     def port(self) -> int:

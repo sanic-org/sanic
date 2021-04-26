@@ -25,7 +25,6 @@ class ErrorHandler:
 
     handlers = None
     cached_handlers = None
-    _missing = object()
 
     def __init__(self):
         self.handlers = []
@@ -45,7 +44,9 @@ class ErrorHandler:
 
         :return: None
         """
+        # self.handlers to be deprecated
         self.handlers.append((exception, handler))
+        self.cached_handlers[exception] = handler
 
     def lookup(self, exception):
         """
@@ -61,14 +62,20 @@ class ErrorHandler:
 
         :return: Registered function if found ``None`` otherwise
         """
-        handler = self.cached_handlers.get(type(exception), self._missing)
-        if handler is self._missing:
-            for exception_class, handler in self.handlers:
-                if isinstance(exception, exception_class):
-                    self.cached_handlers[type(exception)] = handler
-                    return handler
-            self.cached_handlers[type(exception)] = None
-            handler = None
+        handler = self.cached_handlers.get(type(exception))
+        if handler:
+            return handler
+
+        exception_class = type(exception)
+        for ancestor in type.mro(exception_class):
+            handler = self.cached_handlers.get(ancestor)
+            if handler:
+                self.cached_handlers[exception_class] = handler
+                return handler
+            if ancestor is BaseException:
+                break
+        self.cached_handlers[type(exception)] = None
+        handler = None
         return handler
 
     def response(self, request, exception):

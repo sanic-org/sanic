@@ -724,21 +724,14 @@ class Sanic(BaseSanic):
 
             if response:
                 response = await request.respond(response)
-            else:
-                try:
-                    # Fastest method for checking if the property exists
-                    handler.is_websocket  # type: ignore
-                except AttributeError:
-                    response = request.stream.response  # type: ignore
+            elif not hasattr(handler, "is_websocket"):
+                response = request.stream.response  # type: ignore
 
             # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
                 await response.send(end_stream=True)
             else:
-                try:
-                    # Fastest method for checking if the property exists
-                    handler.is_websocket  # type: ignore
-                except AttributeError:
+                if not hasattr(handler, "is_websocket"):
                     raise ServerError(
                         f"Invalid response type {response!r} "
                         "(need HTTPResponse)"

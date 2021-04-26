@@ -37,7 +37,7 @@ class WebSocketProtocol(HttpProtocol):
         websocket_write_limit=2 ** 16,
         websocket_ping_interval=20,
         websocket_ping_timeout=20,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.websocket = None
@@ -148,7 +148,7 @@ class WebSocketConnection:
     ) -> None:
         self._send = send
         self._receive = receive
-        self.subprotocols = subprotocols or []
+        self._subprotocols = subprotocols or []
 
     async def send(self, data: Union[str, bytes], *args, **kwargs) -> None:
         message: Dict[str, Union[str, bytes]] = {"type": "websocket.send"}
@@ -176,9 +176,17 @@ class WebSocketConnection:
         await self._send(
             {
                 "type": "websocket.accept",
-                "subprotocol": ",".join(list(self.subprotocols)),
+                "subprotocols": ",".join(list(self.subprotocols)) or [],
             }
         )
 
     async def close(self) -> None:
         pass
+
+    @property
+    def subprotocols(self):
+        return self._subprotocols
+
+    @subprotocols.setter
+    def subprotocols(self, subprotocols: Optional[List[str]] = None):
+        self._subprotocols = subprotocols or []

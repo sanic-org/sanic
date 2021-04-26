@@ -725,9 +725,13 @@ class Sanic(BaseSanic):
             if response:
                 response = await request.respond(response)
             else:
-                response = request.stream.response  # type: ignore
-            # Make sure that response is finished / run StreamingHTTP callback
+                try:
+                    # Fastest method for checking if the property exists
+                    handler.is_websocket  # type: ignore
+                except AttributeError:
+                    response = request.stream.response  # type: ignore
 
+            # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
                 await response.send(end_stream=True)
             else:

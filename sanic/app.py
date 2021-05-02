@@ -569,7 +569,12 @@ class Sanic(BaseSanic):
             # determine if the parameter supplied by the caller
             # passes the test in the URL
             if param_info.pattern:
-                passes_pattern = param_info.pattern.match(supplied_param)
+                pattern = (
+                    param_info.pattern[1]
+                    if isinstance(param_info.pattern, tuple)
+                    else param_info.pattern
+                )
+                passes_pattern = pattern.match(supplied_param)
                 if not passes_pattern:
                     if param_info.cast != str:
                         msg = (
@@ -577,13 +582,13 @@ class Sanic(BaseSanic):
                             f"for parameter `{param_info.name}` does "
                             "not match pattern for type "
                             f"`{param_info.cast.__name__}`: "
-                            f"{param_info.pattern.pattern}"
+                            f"{pattern.pattern}"
                         )
                     else:
                         msg = (
                             f'Value "{supplied_param}" for parameter '
                             f"`{param_info.name}` does not satisfy "
-                            f"pattern {param_info.pattern.pattern}"
+                            f"pattern {pattern.pattern}"
                         )
                     raise URLBuildError(msg)
 
@@ -758,6 +763,7 @@ class Sanic(BaseSanic):
 
         if self.asgi:
             ws = request.transport.get_websocket_connection()
+            await ws.accept(subprotocols)
         else:
             protocol = request.transport.get_protocol()
             protocol.app = self

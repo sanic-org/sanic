@@ -172,11 +172,18 @@ class WebSocketConnection:
 
     receive = recv
 
-    async def accept(self) -> None:
+    async def accept(self, subprotocols: Optional[List[str]] = None) -> None:
+        subprotocol = None
+        if subprotocols:
+            for subp in subprotocols:
+                if subp in self.subprotocols:
+                    subprotocol = subp
+                    break
+
         await self._send(
             {
                 "type": "websocket.accept",
-                "subprotocols": ",".join(list(self.subprotocols)) or [],
+                "subprotocol": subprotocol,
             }
         )
 

@@ -585,7 +585,6 @@ def test_dynamic_route_path(app):
         return text("OK")
 
     app.router.finalize()
-    print(app.router.find_route_src)
 
     request, response = app.test_client.get("/path/1/info")
     assert response.status == 200
@@ -1067,7 +1066,8 @@ def test_uri_with_different_method_and_different_params(app):
         return json({"action": action})
 
     request, response = app.test_client.get("/ads/1234")
-    assert response.status == 405
+    assert response.status == 200
+    assert response.json == {"ad_id": "1234"}
 
     request, response = app.test_client.post("/ads/post")
     assert response.status == 200

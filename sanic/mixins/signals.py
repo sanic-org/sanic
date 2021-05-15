@@ -69,3 +69,16 @@ class SignalMixin:
 
     def event(self, event: str):
         raise NotImplementedError
+
+    """
+    def add_signal(
+        self,
+        handler: Optional[Callable[SignalHandler, None]],
+        event: str,
+        condition: Dict[str, Any] = None,
+    ):
+        if not handler:
+            handler = lambda: ...
+        self.signal(event=event, condition=condition)(handler)
+        return handler
+    """

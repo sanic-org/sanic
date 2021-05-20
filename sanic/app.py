@@ -90,6 +90,7 @@ class Sanic(BaseSanic):
         "_future_signals",
         "_test_client",
         "_test_manager",
+        "auto_reload",
         "asgi",
         "blueprints",
         "config",
@@ -150,6 +151,7 @@ class Sanic(BaseSanic):
         self._test_client = None
         self._test_manager = None
         self.asgi = False
+        self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
         self.config = Config(load_env=load_env, env_prefix=env_prefix)
         self.configure_logging = configure_logging
@@ -876,8 +878,9 @@ class Sanic(BaseSanic):
             )
 
         if auto_reload or auto_reload is None and debug:
+            self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return reloader_helpers.watchdog(1.0)
+                return reloader_helpers.watchdog(1.0, self)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -1175,6 +1178,10 @@ class Sanic(BaseSanic):
                 logger.info(f"Goin' Fast @ {unix} {proto}://...")
             else:
                 logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
+
+        debug_mode = "enabled" if self.debug else "disabled"
+        logger.debug("Sanic auto-reload: enabled")
+        logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings
 

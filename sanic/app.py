@@ -1136,19 +1136,6 @@ class Sanic(BaseSanic):
             "backlog": backlog,
         }
 
-        if (
-            self.config.LOGO
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
-
-            @self.main_process_start
-            def display_logo(app, _):
-                logger.debug(
-                    app.config.LOGO
-                    if isinstance(app.config.LOGO, str)
-                    else BASE_LOGO
-                )
-
         # Register start/stop events
 
         for event_name, settings_name, reverse in (
@@ -1168,6 +1155,16 @@ class Sanic(BaseSanic):
 
         if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
+
+        if (
+            self.config.LOGO
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):
+            logger.debug(
+                self.config.LOGO
+                if isinstance(self.config.LOGO, str)
+                else BASE_LOGO
+            )
 
         if run_async:
             server_settings["run_async"] = True

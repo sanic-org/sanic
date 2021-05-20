@@ -30,7 +30,8 @@ def capture(command):
 def test_server_run(appname):
     command = ["sanic", appname]
     out, err, exitcode = capture(command)
-    firstline, _ = out.split(b"\n", 1)
+    lines = out.split(b"\n")
+    firstline = lines[6]
 
     assert exitcode == 0
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
@@ -46,7 +47,8 @@ def test_server_run(appname):
 def test_host_port(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
-    firstline, _ = out.split(b"\n", 1)
+    lines = out.split(b"\n")
+    firstline = lines[6]
 
     assert exitcode == 0
     assert firstline == b"Goin' Fast @ http://localhost:9999"

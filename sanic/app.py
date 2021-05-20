@@ -388,8 +388,6 @@ class Sanic(BaseSanic):
                 self.add_signal(None, event)
                 signal = self.signal_router.name_index.get(event)
                 self.signal_router.finalize()
-                # signal.ctx.loop = get_running_loop()
-                # signal.ctx.event = Event()
             else:
                 raise NotFound("Could not find signal %s" % event)
         return await wait_for(signal.ctx.event.wait(), timeout=timeout)

@@ -147,7 +147,7 @@ class Sanic(BaseSanic):
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
-        if config and load_env or env_prefix:
+        if config and (load_env is not True or env_prefix != SANIC_PREFIX):
             raise SanicException(
                 "When instantiating Sanic with config, you cannot also pass "
                 "load_env or env_prefix"

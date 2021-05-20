@@ -33,7 +33,7 @@ class Router(BaseRouter):
             return self.resolve(
                 path=path,
                 method=method,
-                extra={"host": host},
+                extra={"host": host} if host else None,
             )
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
@@ -73,6 +73,7 @@ class Router(BaseRouter):
         name: Optional[str] = None,
         unquote: bool = False,
         static: bool = False,
+        version_prefix: str = "/v",
     ) -> Union[Route, List[Route]]:
         """
         Add a handler to the router
@@ -103,7 +104,7 @@ class Router(BaseRouter):
         """
         if version is not None:
             version = str(version).strip("/").lstrip("v")
-            uri = "/".join([f"/v{version}", uri.lstrip("/")])
+            uri = "/".join([f"{version_prefix}{version}", uri.lstrip("/")])
 
         params = dict(
             path=uri,
@@ -161,7 +162,7 @@ class Router(BaseRouter):
 
     @property
     def routes_all(self):
-        return self.routes
+        return {route.parts: route for route in self.routes}
 
     @property
     def routes_static(self):

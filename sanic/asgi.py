@@ -164,10 +164,12 @@ class ASGIApp:
         Read and stream the body in chunks from an incoming ASGI message.
         """
         message = await self.transport.receive()
+        body = message.get("body", b"")
         if not message.get("more_body", False):
             self.request_body = False
-            return None
-        return message.get("body", b"")
+            if not body:
+                return None
+        return body
 
     async def __aiter__(self):
         while self.request_body:

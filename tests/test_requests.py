@@ -253,6 +253,31 @@ async def test_empty_json_asgi(app):
     assert response.body == b"null"
 
 
+def test_echo_json(app):
+    @app.post("/")
+    async def handler(request):
+        return json(request.json)
+
+    data = {"foo": "bar"}
+    request, response = app.test_client.post("/", json=data)
+
+    assert response.status == 200
+    assert response.json == data
+
+
+@pytest.mark.asyncio
+async def test_echo_json_asgi(app):
+    @app.post("/")
+    async def handler(request):
+        return json(request.json)
+
+    data = {"foo": "bar"}
+    request, response = await app.asgi_client.post("/", json=data)
+
+    assert response.status == 200
+    assert response.json == data
+
+
 def test_invalid_json(app):
     @app.post("/")
     async def handler(request):
@@ -291,17 +316,17 @@ def test_query_string(app):
     assert request.args.getlist("test1") == ["1"]
     assert request.args.get("test3", default="My value") == "My value"
 
+
 def test_popped_stays_popped(app):
     @app.route("/")
     async def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get(
-        "/", params=[("test1", "1")]
-    )
+    request, response = app.test_client.get("/", params=[("test1", "1")])
 
     assert request.args.pop("test1") == ["1"]
     assert "test1" not in request.args
+
 
 @pytest.mark.asyncio
 async def test_query_string_asgi(app):
@@ -2170,3 +2195,72 @@ def test_safe_method_with_body(app):
     assert request.body == data.encode("utf-8")
     assert request.json.get("test") == "OK"
     assert response.body == b"OK"
+
+
+def test_conflicting_body_methods_overload(app):
+    @app.put("/")
+    @app.put("/p/")
+    @app.put("/p/<foo>")
+    async def put(request, foo=None):
+        return json(
+            {"name": request.route.name, "body": str(request.body), "foo": foo}
+        )
+
+    @app.delete("/p/<foo>")
+    async def delete(request, foo):
+        return json(
+            {"name": request.route.name, "body": str(request.body), "foo": foo}
+        )
+
+    payload = {"test": "OK"}
+    data = str(json_dumps(payload).encode())
+
+    _, response = app.test_client.put("/", json=payload)
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.put",
+        "foo": None,
+        "body": data,
+    }
+    _, response = app.test_client.put("/p", json=payload)
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.put",
+        "foo": None,
+        "body": data,
+    }
+    _, response = app.test_client.put("/p/test", json=payload)
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.put",
+        "foo": "test",
+        "body": data,
+    }
+    _, response = app.test_client.delete("/p/test")
+    assert response.status == 200
+    assert response.json == {
+        "name": "test_conflicting_body_methods_overload.delete",
+        "foo": "test",
+        "body": str("".encode()),
+    }
+
+
+def test_handler_overload(app):
+    @app.get(
+        "/long/sub/route/param_a/<param_a:string>/param_b/<param_b:string>"
+    )
+    @app.post("/long/sub/route/")
+    def handler(request, **kwargs):
+        return json(kwargs)
+
+    _, response = app.test_client.get(
+        "/long/sub/route/param_a/foo/param_b/bar"
+    )
+    assert response.status == 200
+    assert response.json == {
+        "param_a": "foo",
+        "param_b": "bar",
+    }
+    _, response = app.test_client.post("/long/sub/route")
+    assert response.status == 200
+    assert response.json == {}

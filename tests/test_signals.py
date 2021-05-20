@@ -2,13 +2,11 @@ import asyncio
 
 from inspect import isawaitable
 
-import py
 import pytest
 
-from async_timeout import timeout
 from sanic_routing.exceptions import NotFound
 
-from sanic import Blueprint, Sanic
+from sanic import Blueprint
 from sanic.exceptions import InvalidSignal, SanicException
 
 

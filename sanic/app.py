@@ -5,11 +5,9 @@ import re
 
 from asyncio import (
     CancelledError,
-    Event,
     Protocol,
     ensure_future,
     get_event_loop,
-    get_running_loop,
     wait_for,
 )
 from asyncio.futures import Future

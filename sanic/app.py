@@ -376,11 +376,19 @@ class Sanic(BaseSanic):
             condition=condition,
         )
 
-    def event(self, event: str, timeout: Optional[Union[int, float]] = None):
+    async def event(
+        self, event: str, timeout: Optional[Union[int, float]] = None
+    ):
         signal = self.signal_router.name_index.get(event)
         if not signal:
-            raise NotFound("Could not find signal %s" % event)
-        return wait_for(signal.ctx.event.wait(), timeout=timeout)
+            if self.config.EVENT_AUTOREGISTER:
+                self.add_signal(None, event)
+                signal = self.signal_router.name_index.get(event)
+                self.signal_router.reset()
+                self.signal_router.finalize()
+            else:
+                raise NotFound("Could not find signal %s" % event)
+        return await wait_for(signal.ctx.event.wait(), timeout=timeout)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.

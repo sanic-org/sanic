@@ -880,7 +880,7 @@ class Sanic(BaseSanic):
         if auto_reload or auto_reload is None and debug:
             self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return reloader_helpers.watchdog(1.0)
+                return reloader_helpers.watchdog(1.0, self)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -1136,6 +1136,19 @@ class Sanic(BaseSanic):
             "backlog": backlog,
         }
 
+        if (
+            self.config.LOGO
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):
+
+            @self.main_process_start
+            def display_logo(app, _):
+                logger.debug(
+                    app.config.LOGO
+                    if isinstance(app.config.LOGO, str)
+                    else BASE_LOGO
+                )
+
         # Register start/stop events
 
         for event_name, settings_name, reverse in (
@@ -1156,16 +1169,6 @@ class Sanic(BaseSanic):
         if self.configure_logging and debug:
             logger.setLevel(logging.DEBUG)
 
-        if (
-            self.config.LOGO
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
-            logger.debug(
-                self.config.LOGO
-                if isinstance(self.config.LOGO, str)
-                else BASE_LOGO
-            )
-
         if run_async:
             server_settings["run_async"] = True
 
@@ -1178,6 +1181,10 @@ class Sanic(BaseSanic):
                 logger.info(f"Goin' Fast @ {unix} {proto}://...")
             else:
                 logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
+
+        debug_mode = "enabled" if self.debug else "disabled"
+        logger.debug("Sanic auto-reload: enabled")
+        logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings
 

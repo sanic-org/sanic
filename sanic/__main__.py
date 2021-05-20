@@ -114,22 +114,24 @@ def main():
         else:
             ssl = None
 
-        app.run(
-            host=args.host,
-            port=args.port,
-            unix=args.unix,
-            workers=args.workers,
-            debug=args.debug,
-            auto_reload=args.auto_reload,
-            access_log=args.access_log,
-            ssl=ssl,
-        )
+        kwargs = {
+            "host": args.host,
+            "port": args.port,
+            "unix": args.unix,
+            "workers": args.workers,
+            "debug": args.debug,
+            "access_log": args.access_log,
+            "ssl": ssl,
+        }
+        if args.auto_reload:
+            kwargs["auto_reload"] = True
+        app.run(**kwargs)
     except ImportError as e:
         if module_name.startswith(e.name):
             error_logger.error(
                 f"No module named {e.name} found.\n"
-                f"  Example File: project/sanic_server.py -> app\n"
-                f"  Example Module: project.sanic_server.app"
+                "  Example File: project/sanic_server.py -> app\n"
+                "  Example Module: project.sanic_server.app"
             )
         else:
             raise e

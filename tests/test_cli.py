@@ -79,20 +79,21 @@ def test_debug(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[7]
+    app_info = lines[9]
     info = json.loads(app_info)
 
     assert (b"\n".join(lines[:6])).decode("utf-8") == BASE_LOGO
     assert info["debug"] is True
-    assert info["auto_reload"] is False
+    assert info["auto_reload"] is True
 
 
 @pytest.mark.parametrize("cmd", ("--auto-reload", "-r"))
 def test_auto_reload(cmd):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
-    _, app_info, *_ = out.split(b"\n", 2)
+    lines = out.split(b"\n")
 
+    app_info = lines[9]
     info = json.loads(app_info)
 
     assert info["debug"] is False
@@ -105,8 +106,9 @@ def test_auto_reload(cmd):
 def test_access_logs(cmd, expected):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
-    _, app_info, *_ = out.split(b"\n", 2)
+    lines = out.split(b"\n")
 
+    app_info = lines[9]
     info = json.loads(app_info)
 
     assert info["access_log"] is expected

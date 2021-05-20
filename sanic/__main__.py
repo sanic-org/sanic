@@ -120,6 +120,7 @@ def main():
             unix=args.unix,
             workers=args.workers,
             debug=args.debug,
+            auto_reload=args.auto_reload,
             access_log=args.access_log,
             ssl=ssl,
         )

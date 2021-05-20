@@ -5,9 +5,11 @@ import re
 
 from asyncio import (
     CancelledError,
+    Event,
     Protocol,
     ensure_future,
     get_event_loop,
+    get_running_loop,
     wait_for,
 )
 from asyncio.futures import Future
@@ -382,10 +384,12 @@ class Sanic(BaseSanic):
         signal = self.signal_router.name_index.get(event)
         if not signal:
             if self.config.EVENT_AUTOREGISTER:
+                self.signal_router.reset()
                 self.add_signal(None, event)
                 signal = self.signal_router.name_index.get(event)
-                self.signal_router.reset()
                 self.signal_router.finalize()
+                # signal.ctx.loop = get_running_loop()
+                # signal.ctx.event = Event()
             else:
                 raise NotFound("Could not find signal %s" % event)
         return await wait_for(signal.ctx.event.wait(), timeout=timeout)

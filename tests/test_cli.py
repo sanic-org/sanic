@@ -33,7 +33,7 @@ def test_server_run(appname):
     lines = out.split(b"\n")
     firstline = lines[6]
 
-    assert exitcode == 0
+    assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
@@ -50,7 +50,7 @@ def test_host_port(cmd):
     lines = out.split(b"\n")
     firstline = lines[6]
 
-    assert exitcode == 0
+    assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://localhost:9999"
 
 
@@ -71,7 +71,7 @@ def test_num_workers(num, cmd):
     lines = out.split(b"\n")
 
     worker_lines = [line for line in lines if b"worker" in line]
-    assert exitcode == 0
+    assert exitcode != 1
     assert len(worker_lines) == num * 2
 
 

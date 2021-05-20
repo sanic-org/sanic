@@ -5,7 +5,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from importlib import import_module
 from typing import Any, Dict, Optional
 
-from sanic_routing import __version__ as __routing_version__
+from sanic_routing import __version__ as __routing_version__  # type: ignore
 
 from sanic import __version__
 from sanic.app import Sanic

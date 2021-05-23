@@ -23,7 +23,7 @@ import asyncio
 from inspect import isawaitable
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from sanic_routing import BaseRouter, Route  # type: ignore
+from sanic_routing import BaseRouter, Route, RouteGroup  # type: ignore
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
 
@@ -50,17 +50,11 @@ RESERVED_NAMESPACES = {
 
 
 class Signal(Route):
-    def get_handler(self, raw_path, method, _):
-        method = method or self.router.DEFAULT_METHOD
-        raw_path = raw_path.lstrip(self.router.delimiter)
-        try:
-            return self.handlers[raw_path][method]
-        except (IndexError, KeyError):
-            raise self.router.method_handler_exception(
-                f"Method '{method}' not found on {self}",
-                method=method,
-                allowed_methods=set(self.methods[raw_path]),
-            )
+    ...
+
+
+class SignalGroup(RouteGroup):
+    ...
 
 
 class SignalRouter(BaseRouter):
@@ -68,6 +62,7 @@ class SignalRouter(BaseRouter):
         super().__init__(
             delimiter=".",
             route_class=Signal,
+            group_class=SignalGroup,
             stacking=True,
         )
         self.ctx.loop = None
@@ -79,7 +74,13 @@ class SignalRouter(BaseRouter):
     ):
         extra = condition or {}
         try:
-            return self.resolve(f".{event}", extra=extra)
+            group, param_basket = self.find_route(
+                f".{event}",
+                self.DEFAULT_METHOD,
+                self,
+                {"__params__": {}},
+                extra=extra,
+            )
         except NotFound:
             message = "Could not find signal %s"
             terms: List[Union[str, Optional[Dict[str, str]]]] = [event]
@@ -88,16 +89,20 @@ class SignalRouter(BaseRouter):
                 terms.append(extra)
             raise NotFound(message % tuple(terms))
 
+        params = param_basket.pop("__params__")
+        return group, [route.handler for route in group], params
+
     async def _dispatch(
         self,
         event: str,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
     ) -> Any:
-        signal, handlers, params = self.get(event, condition=condition)
+        group, handlers, params = self.get(event, condition=condition)
 
-        signal_event = signal.ctx.event
-        signal_event.set()
+        events = [signal.ctx.event for signal in group]
+        for signal_event in events:
+            signal_event.set()
         if context:
             params.update(context)
 
@@ -113,7 +118,8 @@ class SignalRouter(BaseRouter):
                         return maybe_coroutine
             return None
         finally:
-            signal_event.clear()
+            for signal_event in events:
+                signal_event.clear()
 
     async def dispatch(
         self,
@@ -155,7 +161,7 @@ class SignalRouter(BaseRouter):
             handler,
             requirements=condition,
             name=name,
-            overwrite=True,
+            append=True,
         )  # type: ignore
 
     def finalize(self, do_compile: bool = True):
@@ -164,7 +170,7 @@ class SignalRouter(BaseRouter):
         except RuntimeError:
             raise RuntimeError("Cannot finalize signals outside of event loop")
 
-        for signal in self.routes.values():
+        for signal in self.routes:
             signal.ctx.event = asyncio.Event()
 
         return super().finalize(do_compile=do_compile)

@@ -276,7 +276,7 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
     assert response.status == 500
     assert "Mock SanicException" in response.text
     assert (
-        "sanic.root",
+        "sanic.error",
         logging.ERROR,
         f"Exception occurred while handling uri: 'http://127.0.0.1:{port}/'",
     ) in caplog.record_tuples

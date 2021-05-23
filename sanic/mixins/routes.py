@@ -45,7 +45,7 @@ class RouteMixin:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = False,
         apply: bool = True,
@@ -53,6 +53,7 @@ class RouteMixin:
         websocket: bool = False,
         unquote: bool = False,
         static: bool = False,
+        version_prefix: str = "/v",
     ):
         """
         Decorate a function to be registered as a route
@@ -66,6 +67,8 @@ class RouteMixin:
         :param name: user defined route name for url_for
         :param ignore_body: whether the handler should ignore request
             body (eg. GET requests)
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: tuple of routes, decorated function
         """
 
@@ -92,6 +95,7 @@ class RouteMixin:
             nonlocal subprotocols
             nonlocal websocket
             nonlocal static
+            nonlocal version_prefix
 
             if isinstance(handler, tuple):
                 # if a handler fn is already wrapped in a route, the handler
@@ -128,6 +132,7 @@ class RouteMixin:
                 subprotocols,
                 unquote,
                 static,
+                version_prefix,
             )
 
             self._future_routes.add(route)
@@ -168,6 +173,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         stream: bool = False,
+        version_prefix: str = "/v",
     ):
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -182,6 +188,8 @@ class RouteMixin:
         :param version:
         :param name: user defined route name for url_for
         :param stream: boolean specifying if the handler is a stream handler
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -214,6 +222,7 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )(handler)
         return handler
 
@@ -226,6 +235,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -236,6 +246,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -246,6 +258,7 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def post(
@@ -256,6 +269,7 @@ class RouteMixin:
         stream: bool = False,
         version: Optional[int] = None,
         name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **POST** *HTTP* method
@@ -266,6 +280,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -276,6 +292,7 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )
 
     def put(
@@ -286,6 +303,7 @@ class RouteMixin:
         stream: bool = False,
         version: Optional[int] = None,
         name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **PUT** *HTTP* method
@@ -296,6 +314,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -306,6 +326,7 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )
 
     def head(
@@ -316,6 +337,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **HEAD** *HTTP* method
@@ -334,6 +356,8 @@ class RouteMixin:
         :param ignore_body: whether the handler should ignore request
             body (eg. GET requests), defaults to True
         :type ignore_body: bool, optional
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -344,6 +368,7 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def options(
@@ -354,6 +379,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
@@ -372,6 +398,8 @@ class RouteMixin:
         :param ignore_body: whether the handler should ignore request
             body (eg. GET requests), defaults to True
         :type ignore_body: bool, optional
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -382,6 +410,7 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def patch(
@@ -392,6 +421,7 @@ class RouteMixin:
         stream=False,
         version: Optional[int] = None,
         name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **PATCH** *HTTP* method
@@ -412,6 +442,8 @@ class RouteMixin:
         :param ignore_body: whether the handler should ignore request
             body (eg. GET requests), defaults to True
         :type ignore_body: bool, optional
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -422,6 +454,7 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )
 
     def delete(
@@ -432,6 +465,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -442,6 +476,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -452,6 +488,7 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def websocket(
@@ -463,6 +500,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         apply: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Decorate a function to be registered as a websocket route
@@ -474,6 +512,8 @@ class RouteMixin:
         :param subprotocols: optional list of str with supported subprotocols
         :param name: A unique name assigned to the URL so that it can
                      be used with :func:`url_for`
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: tuple of routes, decorated function
         """
         return self.route(
@@ -486,6 +526,7 @@ class RouteMixin:
             apply=apply,
             subprotocols=subprotocols,
             websocket=True,
+            version_prefix=version_prefix,
         )
 
     def add_websocket_route(
@@ -497,6 +538,7 @@ class RouteMixin:
         subprotocols=None,
         version: Optional[int] = None,
         name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         A helper method to register a function as a websocket route.
@@ -513,6 +555,8 @@ class RouteMixin:
                 handshake
         :param name: A unique name assigned to the URL so that it can
                 be used with :func:`url_for`
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Objected decorated by :func:`websocket`
         """
         return self.websocket(
@@ -522,6 +566,7 @@ class RouteMixin:
             subprotocols=subprotocols,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )(handler)
 
     def static(
@@ -665,7 +710,10 @@ class RouteMixin:
                 modified_since = strftime(
                     "%a, %d %b %Y %H:%M:%S GMT", gmtime(stats.st_mtime)
                 )
-                if request.headers.get("If-Modified-Since") == modified_since:
+                if (
+                    request.headers.getone("if-modified-since", None)
+                    == modified_since
+                ):
                     return HTTPResponse(status=304)
                 headers["Last-Modified"] = modified_since
             _range = None

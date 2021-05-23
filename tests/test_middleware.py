@@ -156,7 +156,7 @@ def test_middleware_response_raise_cancelled_error(app, caplog):
 
         assert response.status == 503
         assert (
-            "sanic.root",
+            "sanic.error",
             logging.ERROR,
             "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
         ) not in caplog.record_tuples
@@ -174,7 +174,7 @@ def test_middleware_response_raise_exception(app, caplog):
     assert response.status == 404
     # 404 errors are not logged
     assert (
-        "sanic.root",
+        "sanic.error",
         logging.ERROR,
         "Exception occurred while handling uri: 'http://127.0.0.1:42101/'",
     ) not in caplog.record_tuples

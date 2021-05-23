@@ -203,6 +203,9 @@ class StreamingHTTPResponse(BaseHTTPResponse):
             self.streaming_fn = None
         await super().send(*args, **kwargs)
 
+    async def eof(self):
+        raise NotImplementedError
+
 
 class HTTPResponse(BaseHTTPResponse):
     """
@@ -234,6 +237,9 @@ class HTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
+
+    async def eof(self):
+        await self.send("", True)
 
 
 def empty(

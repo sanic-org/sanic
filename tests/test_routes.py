@@ -543,9 +543,6 @@ def test_dynamic_route_regex(app):
     async def handler(request, folder_id):
         return text("OK")
 
-    app.router.finalize()
-    print(app.router.find_route_src)
-
     request, response = app.test_client.get("/folder/test")
     assert response.status == 200
 
@@ -586,6 +583,9 @@ def test_dynamic_route_path(app):
     @app.route("/<path:path>/info")
     async def handler(request, path):
         return text("OK")
+
+    app.router.finalize()
+    print(app.router.find_route_src)
 
     request, response = app.test_client.get("/path/1/info")
     assert response.status == 200
@@ -1008,14 +1008,8 @@ def test_unmergeable_overload_routes(app):
     async def handler2(request):
         return text("OK1")
 
-    assert (
-        len(
-            dict(list(app.router.static_routes.values())[0].handlers)[
-                "overload_whole"
-            ]
-        )
-        == 3
-    )
+    assert len(app.router.static_routes) == 1
+    assert len(app.router.static_routes[("overload_whole",)].methods) == 3
 
     request, response = app.test_client.get("/overload_whole")
     assert response.text == "OK1"

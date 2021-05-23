@@ -43,7 +43,7 @@ from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.config import BASE_LOGO, Config
+from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
     SanicException,
@@ -90,6 +90,7 @@ class Sanic(BaseSanic):
         "_future_signals",
         "_test_client",
         "_test_manager",
+        "auto_reload",
         "asgi",
         "blueprints",
         "config",
@@ -125,7 +126,8 @@ class Sanic(BaseSanic):
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
         error_handler: Optional[ErrorHandler] = None,
-        load_env: bool = True,
+        load_env: Union[bool, str] = True,
+        env_prefix: Optional[str] = SANIC_PREFIX,
         request_class: Optional[Type[Request]] = None,
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
@@ -149,8 +151,9 @@ class Sanic(BaseSanic):
         self._test_client = None
         self._test_manager = None
         self.asgi = False
+        self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
-        self.config = Config(load_env=load_env)
+        self.config = Config(load_env=load_env, env_prefix=env_prefix)
         self.configure_logging = configure_logging
         self.ctx = SimpleNamespace()
         self.debug = None
@@ -675,7 +678,9 @@ class Sanic(BaseSanic):
         try:
             # Fetch handler from router
             route, handler, kwargs = self.router.get(
-                request.path, request.method, request.headers.get("host")
+                request.path,
+                request.method,
+                request.headers.getone("host", None),
             )
 
             request._match_info = kwargs
@@ -875,8 +880,9 @@ class Sanic(BaseSanic):
             )
 
         if auto_reload or auto_reload is None and debug:
+            self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return reloader_helpers.watchdog(1.0)
+                return reloader_helpers.watchdog(1.0, self)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -1170,6 +1176,10 @@ class Sanic(BaseSanic):
                 logger.info(f"Goin' Fast @ {unix} {proto}://...")
             else:
                 logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
+
+        debug_mode = "enabled" if self.debug else "disabled"
+        logger.debug("Sanic auto-reload: enabled")
+        logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings
 

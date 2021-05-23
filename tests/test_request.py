@@ -20,6 +20,7 @@ def test_request_id_generates_from_request(monkeypatch):
     monkeypatch.setattr(Request, "generate_id", Mock())
     Request.generate_id.return_value = 1
     request = Request(b"/", {}, None, "GET", None, Mock())
+    request.app.config.REQUEST_ID_HEADER = "foo"
 
     for _ in range(10):
         request.id
@@ -28,6 +29,7 @@ def test_request_id_generates_from_request(monkeypatch):
 
 def test_request_id_defaults_uuid():
     request = Request(b"/", {}, None, "GET", None, Mock())
+    request.app.config.REQUEST_ID_HEADER = "foo"
 
     assert isinstance(request.id, UUID)
 
@@ -104,7 +106,7 @@ def test_route_assigned_to_request(app):
         return response.empty()
 
     request, _ = app.test_client.get("/")
-    assert request.route is list(app.router.routes.values())[0]
+    assert request.route is list(app.router.routes)[0]
 
 
 def test_protocol_attribute(app):

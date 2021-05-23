@@ -102,7 +102,7 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
     """Parse traditional proxy headers."""
     real_ip_header = config.REAL_IP_HEADER
     proxies_count = config.PROXIES_COUNT
-    addr = real_ip_header and headers.get(real_ip_header)
+    addr = real_ip_header and headers.getone(real_ip_header, None)
     if not addr and proxies_count:
         assert proxies_count > 0
         try:
@@ -131,7 +131,7 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
             ("port", "x-forwarded-port"),
             ("path", "x-forwarded-path"),
         ):
-            yield key, headers.get(header)
+            yield key, headers.getone(header, None)
 
     return fwd_normalize(options())
 

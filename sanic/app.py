@@ -69,10 +69,11 @@ from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
 from sanic.server import serve, serve_multiple, serve_single
 from sanic.signals import Signal, SignalRouter
+from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
-class Sanic(BaseSanic):
+class Sanic(BaseSanic, metaclass=TouchUpMeta):
     """
     The main application instance
     """
@@ -116,6 +117,7 @@ class Sanic(BaseSanic):
         "websocket_enabled",
         "websocket_tasks",
     )
+    __touchup__ = ("_run_request_middleware",)
 
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
@@ -1057,9 +1059,11 @@ class Sanic(BaseSanic):
             request.request_middleware_started = True
 
             for middleware in applicable_middleware:
+                # ODE: http.middleware.before {"request": request}
                 response = middleware(request)
                 if isawaitable(response):
                     response = await response
+                # ODE: http.middleware.after {"request": request, "response": response}  # noqa
                 if response:
                     return response
         return None
@@ -1230,7 +1234,6 @@ class Sanic(BaseSanic):
         `See user guide re: configuration
         <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
         """
-
         self.config.update_config(config)
 
     # -------------------------------------------------------------------- #
@@ -1279,7 +1282,6 @@ class Sanic(BaseSanic):
     # -------------------------------------------------------------------- #
 
     async def finalize(self):
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>> FINALIZING")
         try:
             self.router.finalize()
             if self.signal_router.routes:
@@ -1290,5 +1292,4 @@ class Sanic(BaseSanic):
 
     async def _startup(self):
         await self.finalize()
-        # ODE: server.worker.start
-        # await self.dispatch()
+        TouchUp.run(self)

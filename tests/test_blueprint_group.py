@@ -218,3 +218,32 @@ def test_blueprint_group_insert():
     assert group.blueprints[1].strict_slashes is False
     assert group.blueprints[2].strict_slashes is True
     assert group.blueprints[0].url_prefix == "/test"
+
+
+def test_bp_group_properties():
+    blueprint_1 = Blueprint("blueprint_1", url_prefix="/bp1")
+    blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
+    group = Blueprint.group(
+        blueprint_1,
+        blueprint_2,
+        version=1,
+        version_prefix="/api/v",
+        url_prefix="/grouped",
+        strict_slashes=True,
+    )
+
+    assert group.version_prefix == "/api/v"
+    assert blueprint_1.version_prefix == "/api/v"
+    assert blueprint_2.version_prefix == "/api/v"
+
+    assert group.version == 1
+    assert blueprint_1.version == 1
+    assert blueprint_2.version == 1
+
+    assert group.strict_slashes
+    assert blueprint_1.strict_slashes
+    assert blueprint_2.strict_slashes
+
+    assert group.url_prefix == "/grouped"
+    assert blueprint_1.url_prefix == "/grouped/bp1"
+    assert blueprint_2.url_prefix == "/grouped/bp2"

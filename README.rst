@@ -29,8 +29,8 @@ Sanic | Build fast. Run fast.
    :target: https://discord.gg/FARQzAEMAA
 .. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/sanic-org/sanic
-.. |Build Status| image:: https://travis-ci.com/sanic-org/sanic.svg?branch=master
-   :target: https://travis-ci.com/sanic-org/sanic
+.. |Build Status| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python39/badge.svg
+   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
 .. |AppVeyor Build Status| image:: https://ci.appveyor.com/api/projects/status/d8pt3ids0ynexi8c/branch/master?svg=true
    :target: https://ci.appveyor.com/project/sanic-org/sanic
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest

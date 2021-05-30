@@ -390,7 +390,7 @@ def test_app_no_registry_env():
 
 
 def test_app_set_attribute_warning(app):
-    with pytest.warns(UserWarning) as record:
+    with pytest.warns(DeprecationWarning) as record:
         app.foo = 1
 
     assert len(record) == 1

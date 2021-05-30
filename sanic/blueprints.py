@@ -62,19 +62,20 @@ class Blueprint(BaseSanic):
         "strict_slashes",
         "url_prefix",
         "version",
+        "version_prefix",
         "websocket_routes",
     )
 
     def __init__(
         self,
-        name: str,
+        name: str = None,
         url_prefix: Optional[str] = None,
         host: Optional[str] = None,
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
     ):
-        super().__init__()
+        super().__init__(name=name)
 
         self._apps: Set[Sanic] = set()
         self.ctx = SimpleNamespace()
@@ -82,7 +83,6 @@ class Blueprint(BaseSanic):
         self.host = host
         self.listeners: Dict[str, List[ListenerType]] = {}
         self.middlewares: List[MiddlewareType] = []
-        self.name = name
         self.routes: List[Route] = []
         self.statics: List[RouteHandler] = []
         self.strict_slashes = strict_slashes

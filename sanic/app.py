@@ -135,13 +135,8 @@ class Sanic(BaseSanic):
         register: Optional[bool] = None,
         dumps: Optional[Callable[..., str]] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(name=name)
 
-        if name is None:
-            raise SanicException(
-                "Sanic instance cannot be unnamed. "
-                "Please use Sanic(name='your_application_name') instead.",
-            )
         # logging
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
@@ -161,7 +156,6 @@ class Sanic(BaseSanic):
         self.is_running = False
         self.is_stopping = False
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
-        self.name = name
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.request_class = request_class

@@ -26,10 +26,11 @@ from sanic.views import CompositionView
 
 
 class RouteMixin:
+    name: str
+
     def __init__(self, *args, **kwargs) -> None:
         self._future_routes: Set[FutureRoute] = set()
         self._future_statics: Set[FutureStatic] = set()
-        self.name = ""
         self.strict_slashes: Optional[bool] = False
 
     def _apply_route(self, route: FutureRoute) -> List[Route]:

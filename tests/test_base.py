@@ -41,3 +41,48 @@ def test_bp_repr_with_values(bp):
         'Blueprint(name="my_bp", url_prefix="/foo", host="example.com", '
         "version=3, strict_slashes=True)"
     )
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        "something",
+        "some-thing",
+        "some_thing",
+        "Something",
+        "SomeThing",
+        "Some-Thing",
+        "Some_Thing",
+        "SomeThing123",
+        "something123",
+        "some-thing123",
+        "some_thing123",
+        "some-Thing123",
+        "some_Thing123",
+    ),
+)
+def test_names_okay(name):
+    app = Sanic(name)
+    bp = Blueprint(name)
+
+    assert app.name == name
+    assert bp.name == name
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        "123something",
+        "some thing",
+        "something!",
+    ),
+)
+def test_names_not_okay(name):
+    with pytest.warns(DeprecationWarning):
+        app = Sanic(name)
+
+    with pytest.warns(DeprecationWarning):
+        bp = Blueprint(name)
+
+    assert app.name == name
+    assert bp.name == name

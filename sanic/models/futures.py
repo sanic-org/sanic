@@ -23,6 +23,7 @@ class FutureRoute(NamedTuple):
     subprotocols: Optional[List[str]]
     unquote: bool
     static: bool
+    version_prefix: str
 
 
 class FutureListener(NamedTuple):

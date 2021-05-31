@@ -1028,7 +1028,7 @@ def test_blueprint_registered_multiple_apps():
 
 def test_bp_set_attribute_warning():
     bp = Blueprint("bp")
-    with pytest.warns(UserWarning) as record:
+    with pytest.warns(DeprecationWarning) as record:
         bp.foo = 1
 
     assert len(record) == 1

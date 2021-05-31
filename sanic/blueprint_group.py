@@ -58,13 +58,20 @@ class BlueprintGroup(MutableSequence):
         app.blueprint(bpg)
     """
 
-    __slots__ = ("_blueprints", "_url_prefix", "_version", "_strict_slashes")
+    __slots__ = (
+        "_blueprints",
+        "_url_prefix",
+        "_version",
+        "_strict_slashes",
+        "_version_prefix",
+    )
 
     def __init__(
         self,
         url_prefix: Optional[str] = None,
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
+        version_prefix: str = "/v",
     ):
         """
         Create a new Blueprint Group
@@ -77,6 +84,7 @@ class BlueprintGroup(MutableSequence):
         self._blueprints: List[Blueprint] = []
         self._url_prefix = url_prefix
         self._version = version
+        self._version_prefix = version_prefix
         self._strict_slashes = strict_slashes
 
     @property
@@ -115,6 +123,15 @@ class BlueprintGroup(MutableSequence):
         :return: bool
         """
         return self._strict_slashes
+
+    @property
+    def version_prefix(self) -> str:
+        """
+        Version prefix; defaults to ``/v``
+
+        :return: str
+        """
+        return self._version_prefix
 
     def __iter__(self):
         """
@@ -186,6 +203,9 @@ class BlueprintGroup(MutableSequence):
         for _attr in ["version", "strict_slashes"]:
             if getattr(bp, _attr) is None:
                 setattr(bp, _attr, getattr(self, _attr))
+        if bp.version_prefix == "/v":
+            bp.version_prefix = self._version_prefix
+
         return bp
 
     def append(self, value: "sanic.Blueprint") -> None:

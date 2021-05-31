@@ -11,7 +11,7 @@ Sanic | Build fast. Run fast.
     :stub-columns: 1
 
     * - Build
-      - | |Build Status| |AppVeyor Build Status| |Codecov|
+      - | |Py39Test| |Py38Test| |Py37Test| |Codecov|
     * - Docs
       - | |UserGuide| |Documentation|
     * - Package
@@ -29,10 +29,12 @@ Sanic | Build fast. Run fast.
    :target: https://discord.gg/FARQzAEMAA
 .. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/sanic-org/sanic
-.. |Build Status| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python39/badge.svg
+.. |Py39Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml/badge.svg?branch=main
    :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
-.. |AppVeyor Build Status| image:: https://ci.appveyor.com/api/projects/status/d8pt3ids0ynexi8c/branch/master?svg=true
-   :target: https://ci.appveyor.com/project/sanic-org/sanic
+.. |Py38Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml/badge.svg?branch=main
+   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml
+.. |Py37Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml/badge.svg?branch=main
+   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest
    :target: http://sanic.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/sanic.svg

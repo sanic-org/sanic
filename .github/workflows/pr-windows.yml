@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run Unit Tests
-        uses: harshanarayana/custom-actions@main
+        uses:  ahopkins/custom-actions@pip-extra-args
         with:
           python-version: ${{ matrix.config.python-version }}
           test-infra-tool: tox
@@ -31,3 +31,4 @@ jobs:
           test-additional-args: "-e=${{ matrix.config.tox-env }}"
           experimental-ignore-error: "true"
           command-timeout: '600000'
+          pip-extra-args: "--user"

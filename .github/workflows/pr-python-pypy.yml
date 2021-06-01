@@ -3,13 +3,13 @@ on:
   workflow_dispatch:
     inputs:
       tox-env:
-        description: 'Tox Env to run on the PyPy Infra'
+        description: "Tox Env to run on the PyPy Infra"
         required: false
-        default: 'pypy37'
+        default: "pypy37"
       pypy-version:
-        description: 'Version of PyPy to use'
+        description: "Version of PyPy to use"
         required: false
-        default: 'pypy-3.7'
+        default: "pypy-3.7"
 jobs:
   testPyPy:
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
@@ -17,9 +17,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         config:
-          - { python-version: "${{ github.event.inputs.pypy-version }}", tox-env: "${{ github.event.inputs.tox-env }}" }
+          - {
+              python-version: "${{ github.event.inputs.pypy-version }}",
+              tox-env: "${{ github.event.inputs.tox-env }}",
+            }
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v2
@@ -34,4 +38,4 @@ jobs:
           action: tests
           test-additional-args: "-e=${{ matrix.config.tox-env }}"
           experimental-ignore-error: "true"
-          command-timeout: '600000'
+          command-timeout: "600000"

@@ -16,28 +16,29 @@ BASE_LOGO = """
 """
 
 DEFAULT_CONFIG = {
-    "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
+    "ACCESS_LOG": True,
+    "EVENT_AUTOREGISTER": False,
+    "FALLBACK_ERROR_FORMAT": "html",
+    "FORWARDED_FOR_HEADER": "X-Forwarded-For",
+    "FORWARDED_SECRET": None,
+    "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
+    "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
+    "KEEP_ALIVE": True,
+    "PROXIES_COUNT": None,
+    "REAL_IP_HEADER": None,
+    "REGISTER": True,
     "REQUEST_BUFFER_QUEUE_SIZE": 100,
     "REQUEST_BUFFER_SIZE": 65536,  # 64 KiB
+    "REQUEST_ID_HEADER": "X-Request-ID",
+    "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
-    "KEEP_ALIVE": True,
-    "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
-    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_MAX_QUEUE": 32,
+    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
+    "WEBSOCKET_PING_INTERVAL": 20,
+    "WEBSOCKET_PING_TIMEOUT": 20,
     "WEBSOCKET_READ_LIMIT": 2 ** 16,
     "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
-    "WEBSOCKET_PING_TIMEOUT": 20,
-    "WEBSOCKET_PING_INTERVAL": 20,
-    "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
-    "ACCESS_LOG": True,
-    "FORWARDED_SECRET": None,
-    "REAL_IP_HEADER": None,
-    "PROXIES_COUNT": None,
-    "FORWARDED_FOR_HEADER": "X-Forwarded-For",
-    "REQUEST_ID_HEADER": "X-Request-ID",
-    "FALLBACK_ERROR_FORMAT": "html",
-    "REGISTER": True,
 }
 
 

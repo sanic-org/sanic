@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Set
+from typing import Any, Callable, Dict, Optional, Set
 
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
@@ -60,10 +60,16 @@ class SignalMixin:
 
     def add_signal(
         self,
-        handler,
+        handler: Optional[Callable[..., Any]],
         event: str,
         condition: Dict[str, Any] = None,
     ):
+        if not handler:
+
+            async def noop():
+                ...
+
+            handler = noop
         self.signal(event=event, condition=condition)(handler)
         return handler
 

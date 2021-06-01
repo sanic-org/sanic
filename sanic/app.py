@@ -123,6 +123,8 @@ class Sanic(BaseSanic):
     def __init__(
         self,
         name: str = None,
+        config: Optional[Config] = None,
+        ctx: Optional[Any] = None,
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
         error_handler: Optional[ErrorHandler] = None,
@@ -141,6 +143,12 @@ class Sanic(BaseSanic):
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
+        if config and (load_env is not True or env_prefix != SANIC_PREFIX):
+            raise SanicException(
+                "When instantiating Sanic with config, you cannot also pass "
+                "load_env or env_prefix"
+            )
+
         self._asgi_client = None
         self._blueprint_order: List[Blueprint] = []
         self._test_client = None
@@ -148,9 +156,11 @@ class Sanic(BaseSanic):
         self.asgi = False
         self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
-        self.config = Config(load_env=load_env, env_prefix=env_prefix)
+        self.config = config or Config(
+            load_env=load_env, env_prefix=env_prefix
+        )
         self.configure_logging = configure_logging
-        self.ctx = SimpleNamespace()
+        self.ctx = ctx or SimpleNamespace()
         self.debug = None
         self.error_handler = error_handler or ErrorHandler()
         self.is_running = False

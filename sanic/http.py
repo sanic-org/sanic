@@ -64,6 +64,8 @@ class Http:
     :raises RuntimeError:
     """
 
+    HEADER_CEILING = 8192
+
     __slots__ = [
         "_send",
         "_receive_more",
@@ -169,7 +171,7 @@ class Http:
         """
         Receive and parse request header into self.request.
         """
-        HEADER_MAX_SIZE = min(8192, self.request_max_size)
+        HEADER_MAX_SIZE = min(self.HEADER_CEILING, self.request_max_size)
         # Receive until full header is in buffer
         buf = self.recv_buffer
         pos = 0

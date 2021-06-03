@@ -546,7 +546,6 @@ class Http:
 
     @classmethod
     def set_header_max_size(cls, *sizes: int):
-        print(f"{sizes=}")
         cls.HEADER_MAX_SIZE = min(
             *sizes,
             cls.HEADER_CEILING,

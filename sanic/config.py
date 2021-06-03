@@ -56,7 +56,6 @@ class Config(dict):
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]
     REGISTER: bool
-    REQUEST_BUFFER_QUEUE_SIZE: int
     REQUEST_BUFFER_SIZE: int
     REQUEST_MAX_HEADER_SIZE: int
     REQUEST_ID_HEADER: str

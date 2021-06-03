@@ -29,7 +29,6 @@ DEFAULT_CONFIG = {
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
     "REGISTER": True,
-    "REQUEST_BUFFER_QUEUE_SIZE": 100,
     "REQUEST_BUFFER_SIZE": 65536,  # 64 KiB
     "REQUEST_MAX_HEADER_SIZE": 8192,  # 8 KiB, but cannot exceed 16384
     "REQUEST_ID_HEADER": "X-Request-ID",

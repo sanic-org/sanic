@@ -78,7 +78,10 @@ def main():
     parser.add_argument(
         "--factory",
         action="store_true",
-        help="Treat app as an application factory, i.e. a () -> <Sanic app> callable.",
+        help=(
+            "Treat app as an application factory, "
+            "i.e. a () -> <Sanic app> callable."
+        ),
     )
     parser.add_argument(
         "-v",

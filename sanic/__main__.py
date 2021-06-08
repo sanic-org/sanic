@@ -76,6 +76,11 @@ def main():
         help="Watch source directory for file changes and reload on changes",
     )
     parser.add_argument(
+        "--factory",
+        action="store_true",
+        help="Treat app as an application factory, i.e. a () -> <Sanic app> callable.",
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="version",
@@ -99,6 +104,9 @@ def main():
 
         module = import_module(module_name)
         app = getattr(module, app_name, None)
+        if args.factory:
+            app = app()
+
         app_name = type(app).__name__
 
         if not isinstance(app, Sanic):

@@ -745,22 +745,10 @@ class Sanic(BaseSanic):
     async def _websocket_handler(
         self, handler, request, *args, subprotocols=None, **kwargs
     ):
-        request.app = self
-        if not getattr(handler, "__blueprintname__", False):
-            request._name = handler.__name__
-        else:
-            request._name = (
-                getattr(handler, "__blueprintname__", "") + handler.__name__
-            )
-
-            pass
-
         if self.asgi:
             ws = request.transport.get_websocket_connection()
         else:
             protocol = request.transport.get_protocol()
-            protocol.app = self
-
             ws = await protocol.websocket_handshake(request, subprotocols)
 
         # schedule the application handler

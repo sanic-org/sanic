@@ -99,11 +99,7 @@ class ConnInfo:
             self.client_port = addr[1]
 
 
-class HttpProtocol(asyncio.Protocol):
-    """
-    This class provides a basic HTTP implementation of the sanic framework.
-    """
-
+class SanicProtocol(asyncio.Protocol):
     __slots__ = (
         # app
         "app",
@@ -111,9 +107,110 @@ class HttpProtocol(asyncio.Protocol):
         "loop",
         "transport",
         "connections",
-        "signal",
         "conn_info",
-        "ctx",
+        "signal",
+        "_can_write",
+        "_time",
+        "_task",
+        "_unix",
+        "_data_received",
+    )
+
+    def __init__(
+        self,
+        *,
+        loop,
+        app: Sanic,
+        signal=None,
+        connections=None,
+        unix=None,
+        **kwargs,
+    ):
+        asyncio.set_event_loop(loop)
+        self.loop = loop
+        self.app: Sanic = app
+        self.signal = signal or Signal()
+        self.transport: Optional[Transport] = None
+        self.connections = connections if connections is not None else set()
+        self.conn_info: Optional[ConnInfo] = None
+        self._can_write = asyncio.Event()
+        self._can_write.set()
+        self._unix = unix
+        self._time = 0.0  # type: float
+        self._task = None  # type: Optional[asyncio.Task]
+        self._data_received = asyncio.Event()
+
+    @property
+    def ctx(self):
+        if self.conn_info is not None:
+            return self.conn_info.ctx
+        else:
+            return self.ctx
+
+    async def send(self, data):
+        """
+        Writes data with backpressure control.
+        """
+        await self._can_write.wait()
+        if self.transport.is_closing():
+            raise CancelledError
+        self.transport.write(data)
+        self._time = current_time()
+
+    def close(self):
+        """
+        Force close the connection.
+        """
+        # Cause a call to connection_lost where further cleanup occurs
+        if self.transport:
+            self.transport.close()
+            self.transport = None
+
+    # asyncio.Protocol API Callbacks #
+    # ------------------------------ #
+    def connection_made(self, transport):
+        try:
+            # TODO: Benchmark to find suitable write buffer limits
+            transport.set_write_buffer_limits(low=16384, high=65536)
+            self.connections.add(self)
+            self.transport = transport
+            self.conn_info = ConnInfo(self.transport, unix=self._unix)
+        except Exception:
+            error_logger.exception("protocol.connect_made")
+
+    def connection_lost(self, exc):
+        try:
+            self.connections.discard(self)
+            self.resume_writing()
+            if self._task:
+                self._task.cancel()
+        except BaseException:
+            error_logger.exception("protocol.connection_lost")
+
+    def pause_writing(self):
+        self._can_write.clear()
+
+    def resume_writing(self):
+        self._can_write.set()
+
+    def data_received(self, data: bytes):
+        try:
+            self._time = current_time()
+            if not data:
+                return self.close()
+
+            if self._data_received:
+                self._data_received.set()
+        except BaseException:
+            error_logger.exception("protocol.data_received")
+
+
+class HttpProtocol(SanicProtocol):
+    """
+    This class provides a basic HTTP implementation of the sanic framework.
+    """
+
+    __slots__ = (
         # request params
         "request",
         # request config
@@ -131,14 +228,9 @@ class HttpProtocol(asyncio.Protocol):
         "state",
         "url",
         "_handler_task",
-        "_can_write",
-        "_data_received",
-        "_time",
-        "_task",
         "_http",
         "_exception",
         "recv_buffer",
-        "_unix",
     )
 
     def __init__(
@@ -152,16 +244,10 @@ class HttpProtocol(asyncio.Protocol):
         unix=None,
         **kwargs,
     ):
-        asyncio.set_event_loop(loop)
-        self.loop = loop
-        self.app: Sanic = app
+        super().__init__(loop=loop, app=app, signal=signal, connections=connections, unix=unix)
         self.url = None
-        self.transport: Optional[Transport] = None
-        self.conn_info: Optional[ConnInfo] = None
         self.request: Optional[Request] = None
-        self.signal = signal or Signal()
         self.access_log = self.app.config.ACCESS_LOG
-        self.connections = connections if connections is not None else set()
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
@@ -175,11 +261,7 @@ class HttpProtocol(asyncio.Protocol):
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
-        self._data_received = asyncio.Event()
-        self._can_write = asyncio.Event()
-        self._can_write.set()
         self._exception = None
-        self._unix = unix
 
     def _setup_connection(self):
         self._http = Http(self)
@@ -260,16 +342,6 @@ class HttpProtocol(asyncio.Protocol):
         except Exception:
             error_logger.exception("protocol.check_timeouts")
 
-    async def send(self, data):
-        """
-        Writes data with backpressure control.
-        """
-        await self._can_write.wait()
-        if self.transport.is_closing():
-            raise CancelledError
-        self.transport.write(data)
-        self._time = current_time()
-
     def close_if_idle(self) -> bool:
         """
         Close the connection if a request is not being sent or received
@@ -280,15 +352,6 @@ class HttpProtocol(asyncio.Protocol):
             self.close()
             return True
         return False
-
-    def close(self):
-        """
-        Force close the connection.
-        """
-        # Cause a call to connection_lost where further cleanup occurs
-        if self.transport:
-            self.transport.close()
-            self.transport = None
 
     # -------------------------------------------- #
     # Only asyncio.Protocol callbacks below this
@@ -305,21 +368,6 @@ class HttpProtocol(asyncio.Protocol):
             self.conn_info = ConnInfo(self.transport, unix=self._unix)
         except Exception:
             error_logger.exception("protocol.connect_made")
-
-    def connection_lost(self, exc):
-        try:
-            self.connections.discard(self)
-            self.resume_writing()
-            if self._task:
-                self._task.cancel()
-        except Exception:
-            error_logger.exception("protocol.connection_lost")
-
-    def pause_writing(self):
-        self._can_write.clear()
-
-    def resume_writing(self):
-        self._can_write.set()
 
     def data_received(self, data: bytes):
         try:
@@ -606,7 +654,7 @@ def serve(
         coros = []
         for conn in connections:
             if hasattr(conn, "websocket") and conn.websocket:
-                coros.append(conn.websocket.close_connection())
+                coros.append(conn.websocket.close(code=1001))
             else:
                 conn.close()
 
@@ -624,7 +672,6 @@ def _build_protocol_kwargs(
     if hasattr(protocol, "websocket_handshake"):
         return {
             "websocket_max_size": config.WEBSOCKET_MAX_SIZE,
-            "websocket_max_queue": config.WEBSOCKET_MAX_QUEUE,
             "websocket_read_limit": config.WEBSOCKET_READ_LIMIT,
             "websocket_write_limit": config.WEBSOCKET_WRITE_LIMIT,
             "websocket_ping_timeout": config.WEBSOCKET_PING_TIMEOUT,

@@ -115,8 +115,11 @@ class RouteMixin:
                         "Expected either string or Iterable of host strings, "
                         "not %s" % host
                     )
-
-            if isinstance(subprotocols, (list, tuple, set)):
+            if isinstance(subprotocols, list):
+                # Ordered subprotocols, maintain order
+                subprotocols = tuple(subprotocols)
+            if isinstance(subprotocols, set):
+                # subprotocol is unordered, keep it unordered
                 subprotocols = frozenset(subprotocols)
 
             route = FutureRoute(

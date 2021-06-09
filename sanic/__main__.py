@@ -76,6 +76,14 @@ def main():
         help="Watch source directory for file changes and reload on changes",
     )
     parser.add_argument(
+        "--factory",
+        action="store_true",
+        help=(
+            "Treat app as an application factory, "
+            "i.e. a () -> <Sanic app> callable."
+        ),
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="version",
@@ -97,13 +105,20 @@ def main():
         delimiter = ":" if ":" in args.module else "."
         module_name, app_name = args.module.rsplit(delimiter, 1)
 
+        if app_name.endswith("()"):
+            args.factory = True
+            app_name = app_name[:-2]
+
         module = import_module(module_name)
         app = getattr(module, app_name, None)
-        app_name = type(app).__name__
+        if args.factory:
+            app = app()
+
+        app_type_name = type(app).__name__
 
         if not isinstance(app, Sanic):
             raise ValueError(
-                f"Module is not a Sanic app, it is a {app_name}.  "
+                f"Module is not a Sanic app, it is a {app_type_name}.  "
                 f"Perhaps you meant {args.module}.app?"
             )
         if args.cert is not None or args.key is not None:

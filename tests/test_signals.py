@@ -257,17 +257,60 @@ def test_bad_finalize(app):
     assert counter == 0
 
 
-def test_event_not_exist(app):
+@pytest.mark.asyncio
+async def test_event_not_exist(app):
     with pytest.raises(NotFound, match="Could not find signal does.not.exist"):
-        app.event("does.not.exist")
+        await app.event("does.not.exist")
 
 
-def test_event_not_exist_on_bp(app):
+@pytest.mark.asyncio
+async def test_event_not_exist_on_bp(app):
     bp = Blueprint("bp")
     app.blueprint(bp)
 
     with pytest.raises(NotFound, match="Could not find signal does.not.exist"):
-        bp.event("does.not.exist")
+        await bp.event("does.not.exist")
+
+
+@pytest.mark.asyncio
+async def test_event_not_exist_with_autoregister(app):
+    app.config.EVENT_AUTOREGISTER = True
+    try:
+        await app.event("does.not.exist", timeout=0.1)
+    except asyncio.TimeoutError:
+        ...
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_non_exist_event_with_autoregister(app):
+    @app.signal("some.stand.in")
+    async def signal_handler():
+        ...
+
+    app.config.EVENT_AUTOREGISTER = True
+    app_counter = 0
+    app.signal_router.finalize()
+
+    async def do_wait():
+        nonlocal app_counter
+        await app.event("foo.bar.baz")
+        app_counter += 1
+
+    fut = asyncio.ensure_future(do_wait())
+    await app.dispatch("foo.bar.baz")
+    await fut
+
+    assert app_counter == 1
+
+
+@pytest.mark.asyncio
+async def test_dispatch_not_exist(app):
+    @app.signal("do.something.start")
+    async def signal_handler():
+        ...
+
+    app.signal_router.finalize()
+    await app.dispatch("does.not.exist")
 
 
 def test_event_on_bp_not_registered():

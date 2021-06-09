@@ -219,7 +219,6 @@ class HttpProtocol(SanicProtocol):
         "response_timeout",
         "keep_alive_timeout",
         "request_max_size",
-        "request_buffer_queue_size",
         "request_class",
         "error_handler",
         # enable or disable access log purpose
@@ -251,9 +250,6 @@ class HttpProtocol(SanicProtocol):
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
-        self.request_buffer_queue_size = (
-            self.app.config.REQUEST_BUFFER_QUEUE_SIZE
-        )
         self.response_timeout = self.app.config.RESPONSE_TIMEOUT
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE

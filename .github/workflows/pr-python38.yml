@@ -14,10 +14,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         config:
-          - { python-version: 3.8, tox-env: py38}
-          - { python-version: 3.8, tox-env: py38-no-ext}
+          - { python-version: 3.8, tox-env: py38 }
+          - { python-version: 3.8, tox-env: py38-no-ext }
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v2

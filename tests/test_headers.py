@@ -7,6 +7,13 @@ from sanic.exceptions import PayloadTooLarge
 from sanic.http import Http
 
 
+@pytest.fixture
+def raised_ceiling():
+    Http.HEADER_CEILING = 32_768
+    yield
+    Http.HEADER_CEILING = 16_384
+
+
 @pytest.mark.parametrize(
     "input, expected",
     [
@@ -76,13 +83,73 @@ async def test_header_size_exceeded():
         recv_buffer += b"123"
 
     protocol = Mock()
+    Http.set_header_max_size(1)
     http = Http(protocol)
     http._receive_more = _receive_more
-    http.request_max_size = 1
     http.recv_buffer = recv_buffer
 
     with pytest.raises(PayloadTooLarge):
         await http.http1_request_header()
+
+
+@pytest.mark.asyncio
+async def test_header_size_increased_okay():
+    recv_buffer = bytearray()
+
+    async def _receive_more():
+        nonlocal recv_buffer
+        recv_buffer += b"123"
+
+    protocol = Mock()
+    Http.set_header_max_size(12_288)
+    http = Http(protocol)
+    http._receive_more = _receive_more
+    http.recv_buffer = recv_buffer
+
+    with pytest.raises(PayloadTooLarge):
+        await http.http1_request_header()
+
+    assert len(recv_buffer) == 12_291
+
+
+@pytest.mark.asyncio
+async def test_header_size_exceeded_maxed_out():
+    recv_buffer = bytearray()
+
+    async def _receive_more():
+        nonlocal recv_buffer
+        recv_buffer += b"123"
+
+    protocol = Mock()
+    Http.set_header_max_size(18_432)
+    http = Http(protocol)
+    http._receive_more = _receive_more
+    http.recv_buffer = recv_buffer
+
+    with pytest.raises(PayloadTooLarge):
+        await http.http1_request_header()
+
+    assert len(recv_buffer) == 16_389
+
+
+@pytest.mark.asyncio
+async def test_header_size_exceeded_raised_ceiling(raised_ceiling):
+    recv_buffer = bytearray()
+
+    async def _receive_more():
+        nonlocal recv_buffer
+        recv_buffer += b"123"
+
+    protocol = Mock()
+    http = Http(protocol)
+    Http.set_header_max_size(65_536)
+    http._receive_more = _receive_more
+    http.recv_buffer = recv_buffer
+
+    with pytest.raises(PayloadTooLarge):
+        await http.http1_request_header()
+
+    assert len(recv_buffer) == 32_772
 
 
 def test_raw_headers(app):

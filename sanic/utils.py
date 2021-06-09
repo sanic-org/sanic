@@ -105,7 +105,7 @@ def load_module_from_file_location(
             _mod_spec = spec_from_file_location(
                 name, location, *args, **kwargs
             )
-            assert _mod_spec is not None # type assertion for mypy
+            assert _mod_spec is not None  # type assertion for mypy
             module = module_from_spec(_mod_spec)
             _mod_spec.loader.exec_module(module)  # type: ignore
 

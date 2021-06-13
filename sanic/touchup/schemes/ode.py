@@ -53,11 +53,8 @@ class OptionalDispatchEvent(BaseScheme):
                 and expr.func.attr == "dispatch"
             ):
                 event = expr.args[0]
-
-                if (
-                    getattr(event, "value", event.s)
-                    not in self._registered_events
-                ):
-                    logger.debug(f"Disabling event: {event.value}")
+                event_name = getattr(event, "value", event.s)
+                if event_name not in self._registered_events:
+                    logger.debug(f"Disabling event: {event_name}")
                     return None
         return node

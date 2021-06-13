@@ -1,30 +1,3 @@
-"""
-Internal Sanic signals
-
-    IMPLEMENTED
-    http.routing.before
-    http.routing.after
-    http.lifecycle.response
-    http.lifecycle.read_body
-    http.lifecycle.read_head
-    http.lifecycle.request
-    http.lifecycle.send
-    http.lifecycle.connection_task
-    http.middleware.before  ||  attach_to=request/response
-    http.middleware.after ||  attach_to=request/response
-
-    PLANNED
-    server.main.start
-    server.main.stop
-    server.worker.start  ||  before/after
-    server.worker.stop  ||  before/after
-    http.lifecycle.exception
-    http.lifecycle.complete
-    sanic.notification.debug
-    sanic.notification.info
-    sanic.notification.warning
-    sanic.notification.error
-"""
 from __future__ import annotations
 
 import asyncio

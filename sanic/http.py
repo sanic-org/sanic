@@ -21,6 +21,7 @@ from sanic.exceptions import (
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
 from sanic.log import access_logger, error_logger, logger
+from sanic.touchup import TouchUpMeta
 
 
 class Stage(Enum):
@@ -45,7 +46,7 @@ class Stage(Enum):
 HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 
-class Http:
+class Http(metaclass=TouchUpMeta):
     """
     Internal helper for managing the HTTP request/response cycle
 
@@ -67,9 +68,14 @@ class Http:
     HEADER_CEILING = 16_384
     HEADER_MAX_SIZE = 0
 
+    __touchup__ = (
+        "http1_request_header",
+        "http1_response_header",
+    )
     __slots__ = [
         "_send",
         "_receive_more",
+        "dispatch",
         "recv_buffer",
         "protocol",
         "expecting_continue",
@@ -108,6 +114,7 @@ class Http:
         self.exception = None
         self.url = None
         self.upgrade_websocket = False
+        self.dispatch = self.protocol.app.dispatch
 
     def __bool__(self):
         """Test if request handling is in progress"""
@@ -197,6 +204,12 @@ class Http:
             reqline, *split_headers = raw_headers.split("\r\n")
             method, self.url, protocol = reqline.split(" ")
 
+            await self.dispatch(
+                "http.lifecycle.read_head",
+                inline=True,
+                context={"head": head},
+            )
+
             if protocol == "HTTP/1.1":
                 self.keep_alive = True
             elif protocol == "HTTP/1.0":
@@ -234,6 +247,11 @@ class Http:
             method=method,
             transport=self.protocol.transport,
             app=self.protocol.app,
+        )
+        await self.dispatch(
+            "http.lifecycle.request",
+            inline=True,
+            context={"request": request},
         )
 
         # Prepare for request body

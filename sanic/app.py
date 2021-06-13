@@ -69,14 +69,16 @@ from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
 from sanic.server import serve, serve_multiple, serve_single
 from sanic.signals import Signal, SignalRouter
+from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
-class Sanic(BaseSanic):
+class Sanic(BaseSanic, metaclass=TouchUpMeta):
     """
     The main application instance
     """
 
+    __touchup__ = ("handle_request",)
     __fake_slots__ = (
         "_asgi_app",
         "_app_registry",
@@ -374,11 +376,13 @@ class Sanic(BaseSanic):
         *,
         condition: Optional[Dict[str, str]] = None,
         context: Optional[Dict[str, Any]] = None,
+        inline: bool = False,
     ) -> Coroutine[Any, Any, Awaitable[Any]]:
         return self.signal_router.dispatch(
             event,
             context=context,
             condition=condition,
+            inline=inline,
         )
 
     async def event(
@@ -389,7 +393,7 @@ class Sanic(BaseSanic):
             if self.config.EVENT_AUTOREGISTER:
                 self.signal_router.reset()
                 self.add_signal(None, event)
-                signal = self.signal_router.name_index.get(event)
+                signal = self.signal_router.name_index[event]
                 self.signal_router.finalize()
             else:
                 raise NotFound("Could not find signal %s" % event)
@@ -685,6 +689,12 @@ class Sanic(BaseSanic):
         # allocation before assignment below.
         response = None
         try:
+
+            await self.dispatch(
+                "http.routing.before",
+                inline=True,
+                context={"request": request},
+            )
             # Fetch handler from router
             route, handler, kwargs = self.router.get(
                 request.path,
@@ -692,7 +702,17 @@ class Sanic(BaseSanic):
                 request.headers.getone("host", None),
             )
 
-            request._match_info = kwargs
+            await self.dispatch(
+                "http.routing.after",
+                inline=True,
+                context={
+                    "request": request,
+                    "route": route,
+                    "kwargs": kwargs,
+                },
+            )
+
+            request._match_info = {**kwargs}
             request.route = route
 
             if (
@@ -742,6 +762,14 @@ class Sanic(BaseSanic):
             # Make sure that response is finished / run StreamingHTTP callback
 
             if isinstance(response, BaseHTTPResponse):
+                await self.dispatch(
+                    "http.lifecycle.response",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": response,
+                    },
+                )
                 await response.send(end_stream=True)
             else:
                 try:
@@ -1066,9 +1094,30 @@ class Sanic(BaseSanic):
             request.request_middleware_started = True
 
             for middleware in applicable_middleware:
+                await self.dispatch(
+                    "http.middleware.before",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": None,
+                    },
+                    condition={"attach_to": "request"},
+                )
+
                 response = middleware(request)
                 if isawaitable(response):
                     response = await response
+
+                await self.dispatch(
+                    "http.middleware.after",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": None,
+                    },
+                    condition={"attach_to": "request"},
+                )
+
                 if response:
                     return response
         return None
@@ -1082,9 +1131,30 @@ class Sanic(BaseSanic):
         applicable_middleware = self.response_middleware + named_middleware
         if applicable_middleware:
             for middleware in applicable_middleware:
+                await self.dispatch(
+                    "http.middleware.before",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": response,
+                    },
+                    condition={"attach_to": "response"},
+                )
+
                 _response = middleware(request, response)
                 if isawaitable(_response):
                     _response = await _response
+
+                await self.dispatch(
+                    "http.middleware.after",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": _response if _response else response,
+                    },
+                    condition={"attach_to": "response"},
+                )
+
                 if _response:
                     response = _response
                     if isinstance(response, BaseHTTPResponse):
@@ -1288,15 +1358,18 @@ class Sanic(BaseSanic):
             raise SanicException(f'Sanic app name "{name}" not found.')
 
     # -------------------------------------------------------------------- #
-    # Static methods
+    # Lifecycle
     # -------------------------------------------------------------------- #
 
-    @staticmethod
-    async def finalize(app, _):
+    async def finalize(self):
         try:
-            app.router.finalize()
-            if app.signal_router.routes:
-                app.signal_router.finalize()  # noqa
+            self.router.finalize()
+            if self.signal_router.routes:
+                self.signal_router.finalize()
         except FinalizationError as e:
             if not Sanic.test_mode:
-                raise e  # noqa
+                raise e
+
+    async def _startup(self):
+        await self.finalize()
+        TouchUp.run(self)

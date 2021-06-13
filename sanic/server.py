@@ -14,6 +14,7 @@ from typing import (
 )
 
 from sanic.models.handler_types import ListenerType
+from sanic.touchup.meta import TouchUpMeta
 
 
 if TYPE_CHECKING:
@@ -99,11 +100,15 @@ class ConnInfo:
             self.client_port = addr[1]
 
 
-class HttpProtocol(asyncio.Protocol):
+class HttpProtocol(asyncio.Protocol, metaclass=TouchUpMeta):
     """
     This class provides a basic HTTP implementation of the sanic framework.
     """
 
+    __touchup__ = (
+        "send",
+        "connection_task",
+    )
     __slots__ = (
         # app
         "app",
@@ -191,6 +196,11 @@ class HttpProtocol(asyncio.Protocol):
         """
         try:
             self._setup_connection()
+            await self.app.dispatch(
+                "http.lifecycle.connection_task",
+                inline=True,
+                context={"conn_info": self.conn_info},
+            )
             await self._http.http1()
         except CancelledError:
             pass
@@ -263,6 +273,11 @@ class HttpProtocol(asyncio.Protocol):
         await self._can_write.wait()
         if self.transport.is_closing():
             raise CancelledError
+        await self.app.dispatch(
+            "http.lifecycle.send",
+            inline=True,
+            context={"data": data},
+        )
         self.transport.write(data)
         self._time = current_time()
 
@@ -547,7 +562,7 @@ def serve(
             after_stop=after_stop,
         )
 
-    trigger_events(before_start, loop)
+    loop.run_until_complete(app._startup())
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -555,7 +570,7 @@ def serve(
         error_logger.exception("Unable to start server")
         return
 
-    trigger_events(after_start, loop)
+    # trigger_events(after_start, loop)
 
     # Ignore SIGINT when run_multiple
     if run_multiple:
@@ -576,7 +591,7 @@ def serve(
         logger.info("Stopping worker [%s]", pid)
 
         # Run the on_stop function if provided
-        trigger_events(before_stop, loop)
+        # trigger_events(before_stop, loop)
 
         # Wait for event loop to finish and all connections to drain
         http_server.close()

@@ -81,6 +81,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     __touchup__ = (
         "handle_request",
         "handle_exception",
+        "_run_response_middleware",
+        "_run_request_middleware",
     )
     __fake_slots__ = (
         "_asgi_app",
@@ -724,6 +726,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "request": request,
                     "route": route,
                     "kwargs": kwargs,
+                    "handler": handler,
                 },
             )
 

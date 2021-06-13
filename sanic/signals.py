@@ -30,6 +30,8 @@ RESERVED_NAMESPACES = {
         "http.lifecycle.read_head",
         "http.lifecycle.request",
         "http.lifecycle.response",
+        "http.routing.after",
+        "http.routing.before",
         "http.lifecycle.send",
         "http.middleware.after",
         "http.middleware.before",

@@ -78,7 +78,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     The main application instance
     """
 
-    __touchup__ = ("handle_request",)
+    __touchup__ = (
+        "handle_request",
+        "handle_exception",
+    )
     __fake_slots__ = (
         "_asgi_app",
         "_app_registry",
@@ -631,6 +634,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type exception: BaseException
         :raises ServerError: response 500
         """
+        await self.dispatch(
+            "http.lifecycle.exception",
+            inline=True,
+            context={"request": request, "exception": exception},
+        )
+
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
@@ -685,6 +694,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :param request: HTTP Request object
         :return: Nothing
         """
+        await self.dispatch(
+            "http.lifecycle.handle",
+            inline=True,
+            context={"request": request},
+        )
+
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
         response = None
@@ -1364,6 +1379,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     async def finalize(self):
         try:
             self.router.finalize()
+        except FinalizationError as e:
+            if not Sanic.test_mode:
+                raise e
+
+    async def signalize(self):
+        try:
             if self.signal_router.routes:
                 self.signal_router.finalize()
         except FinalizationError as e:
@@ -1371,5 +1392,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 raise e
 
     async def _startup(self):
+        await self.signalize()
         await self.finalize()
         TouchUp.run(self)

@@ -197,7 +197,7 @@ class HttpProtocol(asyncio.Protocol, metaclass=TouchUpMeta):
         try:
             self._setup_connection()
             await self.app.dispatch(
-                "http.lifecycle.connection_task",
+                "http.lifecycle.begin",
                 inline=True,
                 context={"conn_info": self.conn_info},
             )
@@ -219,6 +219,13 @@ class HttpProtocol(asyncio.Protocol, metaclass=TouchUpMeta):
                 self.close()
             except BaseException:
                 error_logger.exception("Closing failed")
+            finally:
+                await self.app.dispatch(
+                    "http.lifecycle.complete",
+                    inline=True,
+                    context={"conn_info": self.conn_info},
+                )
+                ...
 
     async def receive_more(self):
         """

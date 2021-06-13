@@ -25,18 +25,23 @@ class OptionalDispatchEvent(BaseScheme):
         node = self._clean_node(tree)
         compiled_src = compile(node, method.__name__, "exec")
         exec_locals: Dict[str, Any] = {}
-        exec(compiled_src, module_globals, exec_locals)
+        exec(compiled_src, module_globals, exec_locals)  # nosec
 
         return exec_locals[method.__name__]
 
+    def _clean_body(self, body):
+        new_body = []
+        for item in body:
+            new_item = self._clean_node(item)
+            if new_item:
+                new_body.append(new_item)
+        return new_body
+
     def _clean_node(self, node):
         if hasattr(node, "body"):
-            new_body = []
-            for item in node.body:
-                new_item = self._clean_node(item)
-                if new_item:
-                    new_body.append(new_item)
-            node.body = new_body
+            node.body = self._clean_body(node.body)
+            if hasattr(node, "finalbody"):
+                node.finalbody = self._clean_body(node.finalbody)
         elif isinstance(node, Expr):
             expr = node.value
             if isinstance(expr, Await):

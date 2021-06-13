@@ -71,6 +71,7 @@ class Http(metaclass=TouchUpMeta):
     __touchup__ = (
         "http1_request_header",
         "http1_response_header",
+        "read",
     )
     __slots__ = [
         "_send",
@@ -207,7 +208,7 @@ class Http(metaclass=TouchUpMeta):
             await self.dispatch(
                 "http.lifecycle.read_head",
                 inline=True,
-                context={"head": head},
+                context={"head": bytes(head)},
             )
 
             if protocol == "HTTP/1.1":
@@ -538,6 +539,12 @@ class Http(metaclass=TouchUpMeta):
         del buf[:size]
 
         self.request_bytes_left -= size
+
+        await self.dispatch(
+            "http.lifecycle.read_body",
+            inline=True,
+            context={"body": data},
+        )
 
         return data
 

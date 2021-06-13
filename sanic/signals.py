@@ -5,6 +5,7 @@ Internal Sanic signals
     http.routing.before
     http.routing.after
     http.lifecycle.response
+    http.lifecycle.read_body
     http.lifecycle.read_head
     http.lifecycle.request
     http.lifecycle.send
@@ -42,21 +43,23 @@ from sanic.models.handler_types import SignalHandler
 
 RESERVED_NAMESPACES = {
     "server": (
-        "server.main.start",
-        "server.main.stop",
-        "server.worker.start",
-        "server.worker.stop",
+        # "server.main.start",
+        # "server.main.stop",
+        # "server.worker.start",
+        # "server.worker.stop",
     ),
     "http": (
+        "http.lifecycle.begin",
+        "http.lifecycle.complete",
+        "http.lifecycle.exception",
+        "http.lifecycle.handle",
+        "http.lifecycle.read_body",
+        "http.lifecycle.read_head",
         "http.lifecycle.request",
         "http.lifecycle.response",
         "http.lifecycle.send",
-        "http.lifecycle.read_head",
-        "http.lifecycle.connection_task",
-        # "http.lifecycle.exception",
-        # "http.lifecycle.complete",
-        "http.middleware.before",
         "http.middleware.after",
+        "http.middleware.before",
     ),
 }
 
@@ -186,7 +189,7 @@ class SignalRouter(BaseRouter):
             append=True,
         )  # type: ignore
 
-    def finalize(self, do_compile: bool = True):
+    def finalize(self, do_compile: bool = True, do_optimize: bool = False):
         try:
             self.ctx.loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -195,7 +198,7 @@ class SignalRouter(BaseRouter):
         for signal in self.routes:
             signal.ctx.event = asyncio.Event()
 
-        return super().finalize(do_compile=do_compile)
+        return super().finalize(do_compile=do_compile, do_optimize=do_optimize)
 
     def _build_event_parts(self, event: str) -> Tuple[str, str, str]:
         parts = path_to_parts(event, self.delimiter)

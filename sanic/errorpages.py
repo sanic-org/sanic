@@ -19,7 +19,7 @@ import typing as t
 from functools import partial
 from traceback import extract_tb
 
-from sanic.exceptions import InvalidUsage, SanicException
+from sanic.exceptions import SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
@@ -345,6 +345,21 @@ RENDERERS_BY_CONTENT_TYPE = {
     "text/plain": TextRenderer,
 }
 
+RESPONSE_MAPPING = {
+    "empty": "html",
+    "json": "json",
+    "text": "text",
+    "raw": "text",
+    "html": "html",
+    "file": "html",
+    "file_stream": "text",
+    "stream": "text",
+    "redirect": "html",
+    "text/plain": "text",
+    "text/html": "html",
+    "application/json": "json",
+}
+
 
 def exception_response(
     request: Request,
@@ -360,21 +375,23 @@ def exception_response(
         renderer = HTMLRenderer
 
         if request:
-            if request.app.config.FALLBACK_ERROR_FORMAT == "auto":
-                try:
-                    renderer = JSONRenderer if request.json else HTMLRenderer
-                except InvalidUsage:
-                    renderer = HTMLRenderer
+            # if request.app.config.FALLBACK_ERROR_FORMAT == "auto":
+            #     try:
+            #         renderer = JSONRenderer if request.json else HTMLRenderer
+            #     except InvalidUsage:
+            #         renderer = HTMLRenderer
 
-                content_type, *_ = request.headers.getone(
-                    "content-type", ""
-                ).split(";")
-                renderer = RENDERERS_BY_CONTENT_TYPE.get(
-                    content_type, renderer
-                )
-            else:
-                render_format = request.app.config.FALLBACK_ERROR_FORMAT
-                renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
+            #     content_type, *_ = request.headers.getone(
+            #         "content-type", ""
+            #     ).split(";")
+            #     renderer = RENDERERS_BY_CONTENT_TYPE.get(
+            #         content_type, renderer
+            #     )
+            # else:
+
+            # We can ignore mypy here because request.route will exist
+            render_format = request.route.ctx.error_format  # type: ignore
+            renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()

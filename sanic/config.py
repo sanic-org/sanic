@@ -19,6 +19,7 @@ BASE_LOGO = """
 
 DEFAULT_CONFIG = {
     "ACCESS_LOG": True,
+    "ERROR_FORMAT": "auto",
     "EVENT_AUTOREGISTER": False,
     "FALLBACK_ERROR_FORMAT": "html",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
@@ -46,6 +47,7 @@ DEFAULT_CONFIG = {
 
 class Config(dict):
     ACCESS_LOG: bool
+    ERROR_FORMAT: str
     EVENT_AUTOREGISTER: bool
     FALLBACK_ERROR_FORMAT: str
     FORWARDED_FOR_HEADER: str

@@ -1,17 +1,20 @@
+from ast import NodeVisitor, Return, parse
+from distutils.log import error
 from functools import partial, wraps
-from inspect import signature
+from inspect import getsource, signature
 from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
-from typing import Iterable, List, Optional, Set, Union
+from typing import Any, Iterable, List, Optional, Set, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
+from sanic.errorpages import RESPONSE_MAPPING
 from sanic.exceptions import (
     ContentRangeError,
     FileNotFound,
@@ -55,6 +58,7 @@ class RouteMixin:
         unquote: bool = False,
         static: bool = False,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Decorate a function to be registered as a route
@@ -97,6 +101,7 @@ class RouteMixin:
             nonlocal websocket
             nonlocal static
             nonlocal version_prefix
+            nonlocal error_format
 
             if isinstance(handler, tuple):
                 # if a handler fn is already wrapped in a route, the handler
@@ -119,6 +124,9 @@ class RouteMixin:
             if isinstance(subprotocols, (list, tuple, set)):
                 subprotocols = frozenset(subprotocols)
 
+            if not error_format or error_format == "auto":
+                error_format = self._determine_error_format(handler)
+
             route = FutureRoute(
                 handler,
                 uri,
@@ -134,6 +142,7 @@ class RouteMixin:
                 unquote,
                 static,
                 version_prefix,
+                error_format,
             )
 
             self._future_routes.add(route)
@@ -175,6 +184,7 @@ class RouteMixin:
         name: Optional[str] = None,
         stream: bool = False,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -224,6 +234,7 @@ class RouteMixin:
             version=version,
             name=name,
             version_prefix=version_prefix,
+            error_format=error_format,
         )(handler)
         return handler
 
@@ -237,6 +248,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -260,6 +272,7 @@ class RouteMixin:
             name=name,
             ignore_body=ignore_body,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def post(
@@ -271,6 +284,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Add an API URL under the **POST** *HTTP* method
@@ -294,6 +308,7 @@ class RouteMixin:
             version=version,
             name=name,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def put(
@@ -305,6 +320,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Add an API URL under the **PUT** *HTTP* method
@@ -328,6 +344,7 @@ class RouteMixin:
             version=version,
             name=name,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def head(
@@ -339,6 +356,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Add an API URL under the **HEAD** *HTTP* method
@@ -370,6 +388,7 @@ class RouteMixin:
             name=name,
             ignore_body=ignore_body,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def options(
@@ -381,6 +400,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
@@ -412,6 +432,7 @@ class RouteMixin:
             name=name,
             ignore_body=ignore_body,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def patch(
@@ -423,6 +444,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Add an API URL under the **PATCH** *HTTP* method
@@ -456,6 +478,7 @@ class RouteMixin:
             version=version,
             name=name,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def delete(
@@ -467,6 +490,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -490,6 +514,7 @@ class RouteMixin:
             name=name,
             ignore_body=ignore_body,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def websocket(
@@ -502,6 +527,7 @@ class RouteMixin:
         name: Optional[str] = None,
         apply: bool = True,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         Decorate a function to be registered as a websocket route
@@ -528,6 +554,7 @@ class RouteMixin:
             subprotocols=subprotocols,
             websocket=True,
             version_prefix=version_prefix,
+            error_format=error_format,
         )
 
     def add_websocket_route(
@@ -540,6 +567,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ):
         """
         A helper method to register a function as a websocket route.
@@ -568,6 +596,7 @@ class RouteMixin:
             version=version,
             name=name,
             version_prefix=version_prefix,
+            error_format=error_format,
         )(handler)
 
     def static(
@@ -854,3 +883,38 @@ class RouteMixin:
         )(_handler)
 
         return route
+
+    def _determine_error_format(self, handler) -> str:
+        src = getsource(handler)
+        tree = parse(src)
+        http_response_types = self._get_response_types(tree)
+
+        if len(http_response_types) == 1:
+            return next(iter(http_response_types))
+        return self.config.FALLBACK_ERROR_FORMAT
+
+    def _get_response_types(self, node):
+        types = set()
+
+        class HttpResponseVisitor(NodeVisitor):
+            def visit_Return(self, node: Return) -> Any:
+                nonlocal types
+
+                try:
+                    checks = [node.value.func.id]  # type: ignore
+                    if node.value.keywords:  # type: ignore
+                        checks += [
+                            k.value
+                            for k in node.value.keywords  # type: ignore
+                            if k.arg == "content_type"
+                        ]
+
+                    for check in checks:
+                        if check in RESPONSE_MAPPING:
+                            types.add(RESPONSE_MAPPING[check])
+                except AttributeError:
+                    ...
+
+        HttpResponseVisitor().visit(node)
+
+        return types

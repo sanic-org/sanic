@@ -74,6 +74,7 @@ class Router(BaseRouter):
         unquote: bool = False,
         static: bool = False,
         version_prefix: str = "/v",
+        error_format: Optional[str] = None,
     ) -> Union[Route, List[Route]]:
         """
         Add a handler to the router
@@ -131,6 +132,9 @@ class Router(BaseRouter):
             route.ctx.stream = stream
             route.ctx.hosts = hosts
             route.ctx.static = static
+            route.ctx.error_format = (
+                error_format or self.ctx.app.config.ERROR_FORMAT
+            )
 
             routes.append(route)
 

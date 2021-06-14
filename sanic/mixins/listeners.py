@@ -9,10 +9,10 @@ class ListenerEvent(str, Enum):
     def _generate_next_value_(name: str, *args) -> str:  # type: ignore
         return name.lower()
 
-    BEFORE_SERVER_START = auto()
-    AFTER_SERVER_START = auto()
-    BEFORE_SERVER_STOP = auto()
-    AFTER_SERVER_STOP = auto()
+    BEFORE_SERVER_START = "server.init.before"
+    AFTER_SERVER_START = "server.init.after"
+    BEFORE_SERVER_STOP = "server.shutdown.before"
+    AFTER_SERVER_STOP = "server.shutdown.after"
     MAIN_PROCESS_START = auto()
     MAIN_PROCESS_STOP = auto()
 

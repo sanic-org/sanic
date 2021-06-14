@@ -18,8 +18,10 @@ RESERVED_NAMESPACES = {
     "server": (
         # "server.main.start",
         # "server.main.stop",
-        # "server.worker.start",
-        # "server.worker.stop",
+        "server.init.before",
+        "server.init.after",
+        "server.shutdown.before",
+        "server.shutdown.after",
     ),
     "http": (
         "http.lifecycle.begin",
@@ -56,6 +58,7 @@ class SignalRouter(BaseRouter):
             stacking=True,
         )
         self.ctx.loop = None
+        self.add(lambda: None, "sanic.__signal__.__init__")  # type: ignore
 
     def get(  # type: ignore
         self,
@@ -97,8 +100,16 @@ class SignalRouter(BaseRouter):
         event: str,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
+        fail_not_found: bool = True,
+        reverse: bool = False,
     ) -> Any:
-        group, handlers, params = self.get(event, condition=condition)
+        try:
+            group, handlers, params = self.get(event, condition=condition)
+        except NotFound as e:
+            if fail_not_found:
+                raise e
+            else:
+                return
 
         events = [signal.ctx.event for signal in group]
         for signal_event in events:
@@ -106,6 +117,8 @@ class SignalRouter(BaseRouter):
         if context:
             params.update(context)
 
+        if not reverse:
+            handlers = handlers[::-1]
         try:
             for handler in handlers:
                 if condition is None or condition == handler.__requirements__:
@@ -127,12 +140,16 @@ class SignalRouter(BaseRouter):
         *,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
+        fail_not_found: bool = True,
         inline: bool = False,
+        reverse: bool = False,
     ) -> Union[asyncio.Task, Any]:
         dispatch = self._dispatch(
             event,
             context=context,
             condition=condition,
+            fail_not_found=fail_not_found,
+            reverse=reverse,
         )
         logger.debug(f"Dispatching signal: {event}")
         if inline:
@@ -187,6 +204,7 @@ class SignalRouter(BaseRouter):
         if (
             parts[0] in RESERVED_NAMESPACES
             and event not in RESERVED_NAMESPACES[parts[0]]
+            and not (parts[2].startswith("<") and parts[2].endswith(">"))
         ):
             raise InvalidSignal(
                 "Cannot declare reserved signal event: %s" % event

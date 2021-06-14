@@ -379,51 +379,61 @@ class AsyncioServer:
     """
 
     __slots__ = (
+        "app",
+        "connections",
         "loop",
         "serve_coro",
-        "_after_start",
-        "_before_stop",
-        "_after_stop",
         "server",
-        "connections",
     )
 
     def __init__(
         self,
+        app,
         loop,
         serve_coro,
         connections,
-        after_start: Optional[Iterable[ListenerType]],
-        before_stop: Optional[Iterable[ListenerType]],
-        after_stop: Optional[Iterable[ListenerType]],
     ):
         # Note, Sanic already called "before_server_start" events
         # before this helper was even created. So we don't need it here.
+        self.app = app
+        self.connections = connections
         self.loop = loop
         self.serve_coro = serve_coro
-        self._after_start = after_start
-        self._before_stop = before_stop
-        self._after_stop = after_stop
         self.server = None
-        self.connections = connections
+
+    def startup(self):
+        """
+        Trigger "before_server_start" events
+        """
+        self.loop.run_until_complete(self.app._startup())
+
+    def before_start(self):
+        """
+        Trigger "before_server_start" events
+        """
+        self.loop.run_until_complete(self.app._sever_event("init", "before"))
 
     def after_start(self):
         """
         Trigger "after_server_start" events
         """
-        trigger_events(self._after_start, self.loop)
+        self.loop.run_until_complete(self.app._sever_event("init", "after"))
 
     def before_stop(self):
         """
         Trigger "before_server_stop" events
         """
-        trigger_events(self._before_stop, self.loop)
+        self.loop.run_until_complete(
+            self.app._sever_event("shutdown", "before")
+        )
 
     def after_stop(self):
         """
         Trigger "after_server_stop" events
         """
-        trigger_events(self._after_stop, self.loop)
+        self.loop.run_until_complete(
+            self.app._sever_event("shutdown", "before")
+        )
 
     def is_serving(self) -> bool:
         if self.server:
@@ -476,10 +486,6 @@ def serve(
     host,
     port,
     app,
-    before_start: Optional[Iterable[ListenerType]] = None,
-    after_start: Optional[Iterable[ListenerType]] = None,
-    before_stop: Optional[Iterable[ListenerType]] = None,
-    after_stop: Optional[Iterable[ListenerType]] = None,
     ssl: Optional[SSLContext] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
@@ -561,15 +567,14 @@ def serve(
 
     if run_async:
         return AsyncioServer(
+            app=app,
             loop=loop,
             serve_coro=server_coroutine,
             connections=connections,
-            after_start=after_start,
-            before_stop=before_stop,
-            after_stop=after_stop,
         )
 
     loop.run_until_complete(app._startup())
+    loop.run_until_complete(app._sever_event("init", "before"))
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -577,7 +582,7 @@ def serve(
         error_logger.exception("Unable to start server")
         return
 
-    # trigger_events(after_start, loop)
+    loop.run_until_complete(app._sever_event("init", "after"))
 
     # Ignore SIGINT when run_multiple
     if run_multiple:
@@ -598,7 +603,7 @@ def serve(
         logger.info("Stopping worker [%s]", pid)
 
         # Run the on_stop function if provided
-        # trigger_events(before_stop, loop)
+        loop.run_until_complete(app._sever_event("shutdown", "before"))
 
         # Wait for event loop to finish and all connections to drain
         http_server.close()
@@ -630,8 +635,7 @@ def serve(
 
         _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
-
-        trigger_events(after_stop, loop)
+        loop.run_until_complete(app._sever_event("shutdown", "after"))
 
         remove_unix_socket(unix)
 

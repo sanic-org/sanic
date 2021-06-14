@@ -42,19 +42,9 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         startup event.
         """
-        self.asgi_app.sanic_app.router.finalize()
-        if self.asgi_app.sanic_app.signal_router.routes:
-            self.asgi_app.sanic_app.signal_router.finalize()
-        listeners = self.asgi_app.sanic_app.listeners.get(
-            "before_server_start", []
-        ) + self.asgi_app.sanic_app.listeners.get("after_server_start", [])
-
-        for handler in listeners:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
-            if response and isawaitable(response):
-                await response
+        await self.asgi_app.sanic_app._startup()
+        await self.asgi_app.sanic_app._sever_event("init", "before")
+        await self.asgi_app.sanic_app._sever_event("init", "after")
 
     async def shutdown(self) -> None:
         """
@@ -65,16 +55,8 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         shutdown event.
         """
-        listeners = self.asgi_app.sanic_app.listeners.get(
-            "before_server_stop", []
-        ) + self.asgi_app.sanic_app.listeners.get("after_server_stop", [])
-
-        for handler in listeners:
-            response = handler(
-                self.asgi_app.sanic_app, self.asgi_app.sanic_app.loop
-            )
-            if response and isawaitable(response):
-                await response
+        await self.asgi_app.sanic_app._sever_event("init", "before")
+        await self.asgi_app.sanic_app._sever_event("shutdown", "after")
 
     async def __call__(
         self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend

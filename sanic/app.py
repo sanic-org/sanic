@@ -4,6 +4,7 @@ import os
 import re
 
 from asyncio import (
+    AbstractEventLoop,
     CancelledError,
     Protocol,
     ensure_future,
@@ -13,7 +14,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
-from inspect import isawaitable
+from inspect import isawaitable, signature
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -248,12 +249,24 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
 
         try:
-            _event = ListenerEvent(event)
+            _event = ListenerEvent[event.upper()]
         except ValueError:
-            valid = ", ".join(ListenerEvent.__members__.values())
+            valid = ", ".join(
+                map(lambda x: x.lower(), ListenerEvent.__members__.keys())
+            )
             raise InvalidUsage(f"Invalid event: {event}. Use one of: {valid}")
 
-        self.listeners[_event].append(listener)
+        if "." in _event:
+            sig = signature(listener)
+            args: List[Union[Sanic, AbstractEventLoop]] = []
+            if sig.parameters:
+                args.append(self)
+            if len(sig.parameters) > 1:
+                args.append(get_event_loop())
+            self.signal(_event.value)(partial(listener, *args))
+        else:
+            self.listeners[_event.value].append(listener)
+
         return listener
 
     def register_middleware(self, middleware, attach_to: str = "request"):
@@ -381,13 +394,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         *,
         condition: Optional[Dict[str, str]] = None,
         context: Optional[Dict[str, Any]] = None,
+        fail_not_found: bool = True,
         inline: bool = False,
+        reverse: bool = False,
     ) -> Coroutine[Any, Any, Awaitable[Any]]:
         return self.signal_router.dispatch(
             event,
             context=context,
             condition=condition,
             inline=inline,
+            reverse=reverse,
+            fail_not_found=fail_not_found,
         )
 
     async def event(
@@ -1198,10 +1215,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        self.listeners["before_server_start"] = [
-            self.finalize
-        ] + self.listeners["before_server_start"]
-
         if isinstance(ssl, dict):
             # try common aliaseses
             cert = ssl.get("cert") or ssl.get("certificate")
@@ -1238,10 +1251,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         # Register start/stop events
 
         for event_name, settings_name, reverse in (
-            ("before_server_start", "before_start", False),
-            ("after_server_start", "after_start", False),
-            ("before_server_stop", "before_stop", True),
-            ("after_server_stop", "after_stop", True),
             ("main_process_start", "main_start", False),
             ("main_process_stop", "main_stop", True),
         ):
@@ -1388,8 +1397,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def signalize(self):
         try:
-            if self.signal_router.routes:
-                self.signal_router.finalize()
+            self.signal_router.finalize()
         except FinalizationError as e:
             if not Sanic.test_mode:
                 raise e
@@ -1398,3 +1406,20 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         await self.signalize()
         await self.finalize()
         TouchUp.run(self)
+        # await self._sever_event()
+
+    async def _sever_event(self, concern, action):
+        event = f"server.{concern}.{action}"
+        if action not in ("before", "after") or concern not in (
+            "init",
+            "shutdown",
+        ):
+            raise SanicException(f"Invalid server event: {event}")
+        logger.info(f"Triggering server events: {event}")
+        reverse = concern == "shutdown"
+        await self.dispatch(
+            event,
+            fail_not_found=False,
+            reverse=reverse,
+            inline=True,
+        )

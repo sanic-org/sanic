@@ -891,7 +891,7 @@ class RouteMixin:
 
         if len(http_response_types) == 1:
             return next(iter(http_response_types))
-        return self.config.FALLBACK_ERROR_FORMAT
+        return "html"
 
     def _get_response_types(self, node):
         types = set()

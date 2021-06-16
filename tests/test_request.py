@@ -127,9 +127,15 @@ def test_protocol_attribute(app):
 def test_ipv6_address_is_not_wrapped(app):
     @app.get("/")
     async def get(request):
-        return response.json(request.protocol.conn_info)
+        return response.json(
+            {
+                "client_ip": request.conn_info.client_ip,
+                "client": request.conn_info.client,
+            }
+        )
 
     request, resp = app.test_client.get("/", host="::1")
+
     assert request.route is list(app.router.routes)[0]
     assert resp.json["client"] == "[::1]"
     assert resp.json["client_ip"] == "::1"

@@ -281,7 +281,7 @@ class WebsocketImplProtocol:
             except AttributeError:
                 loop = asyncio.get_event_loop()
         self.loop = loop
-        self.io_proto = io_proto  # this will be a WebSocketProtocol
+        self.io_proto: WebSocketProtocol = io_proto
         self.connection_lost_waiter = self.loop.create_future()
         self.data_finished_fut = asyncio.shield(self.loop.create_future())
 

@@ -1,7 +1,13 @@
 import os
 import sys
 
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+    MetavarTypeHelpFormatter,
+    RawDescriptionHelpFormatter,
+    RawTextHelpFormatter,
+)
 from importlib import import_module
 from typing import Any, Dict, Optional
 
@@ -17,7 +23,7 @@ class SanicArgumentParser(ArgumentParser):
     def add_bool_arguments(self, *args, **kwargs):
         group = self.add_mutually_exclusive_group()
         group.add_argument(*args, action="store_true", **kwargs)
-        kwargs["help"] = "no " + kwargs["help"]
+        kwargs["help"] = f"no {kwargs['help']}\n "
         group.add_argument(
             "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
         )
@@ -27,7 +33,15 @@ def main():
     parser = SanicArgumentParser(
         prog="sanic",
         description=BASE_LOGO,
-        formatter_class=RawDescriptionHelpFormatter,
+        formatter_class=lambda prog: RawTextHelpFormatter(
+            prog, max_help_position=33
+        ),
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"Sanic {__version__}; Routing {__routing_version__}",
     )
     parser.add_argument(
         "-H",
@@ -51,13 +65,24 @@ def main():
         dest="unix",
         type=str,
         default="",
-        help="location of unix socket",
+        help="location of unix socket\n ",
     )
     parser.add_argument(
         "--cert", dest="cert", type=str, help="location of certificate for SSL"
     )
     parser.add_argument(
-        "--key", dest="key", type=str, help="location of keyfile for SSL."
+        "--key", dest="key", type=str, help="location of keyfile for SSL\n "
+    )
+    parser.add_bool_arguments(
+        "--access-logs", dest="access_log", help="display access logs"
+    )
+    parser.add_argument(
+        "--factory",
+        action="store_true",
+        help=(
+            "Treat app as an application factory, "
+            "i.e. a () -> <Sanic app> callable\n "
+        ),
     )
     parser.add_argument(
         "-w",
@@ -65,7 +90,7 @@ def main():
         dest="workers",
         type=int,
         default=1,
-        help="number of worker processes [default 1]",
+        help="number of worker processes [default 1]\n ",
     )
     parser.add_argument("-d", "--debug", dest="debug", action="store_true")
     parser.add_argument(
@@ -80,24 +105,7 @@ def main():
         "--include-dir",
         dest="include_dir",
         action="append",
-        help="Extra directories to watch and reload on changes",
-    )
-    parser.add_argument(
-        "--factory",
-        action="store_true",
-        help=(
-            "Treat app as an application factory, "
-            "i.e. a () -> <Sanic app> callable."
-        ),
-    )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=f"Sanic {__version__}; Routing {__routing_version__}",
-    )
-    parser.add_bool_arguments(
-        "--access-logs", dest="access_log", help="display access logs"
+        help="Extra directories to watch and reload on changes\n ",
     )
     parser.add_argument(
         "module", help="path to your Sanic app. Example: path.to.server:app"

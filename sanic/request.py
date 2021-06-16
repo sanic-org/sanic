@@ -497,6 +497,10 @@ class Request:
         """
         return self._match_info
 
+    @match_info.setter
+    def match_info(self, value):
+        self._match_info = value
+
     # Transport properties (obtained from local interface only)
 
     @property

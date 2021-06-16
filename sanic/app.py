@@ -736,6 +736,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 request.headers.getone("host", None),
             )
 
+            request._match_info = {**kwargs}
+            request.route = route
+
             await self.dispatch(
                 "http.routing.after",
                 inline=True,
@@ -746,9 +749,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "handler": handler,
                 },
             )
-
-            request._match_info = {**kwargs}
-            request.route = route
 
             if (
                 request.stream.request_body  # type: ignore
@@ -786,7 +786,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     )
 
                 # Run response handler
-                response = handler(request, **kwargs)
+                response = handler(request, **request.match_info)
                 if isawaitable(response):
                     response = await response
 

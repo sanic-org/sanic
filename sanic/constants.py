@@ -9,6 +9,12 @@ class HTTPMethod(str, Enum):
         value = str(value).upper()
         return super().__eq__(value)
 
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+    def __str__(self) -> int:
+        return self.value
+
     GET = auto()
     POST = auto()
     PUT = auto()

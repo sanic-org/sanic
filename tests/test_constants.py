@@ -10,6 +10,9 @@ def test_string_compat():
     assert "get" == HTTPMethod.GET
     assert "get" in HTTP_METHODS
 
+    assert HTTPMethod.GET.lower() == "get"
+    assert HTTPMethod.GET.upper() == "GET"
+
 
 def test_use_in_routes(app):
     @app.route("/", methods=[HTTPMethod.GET, HTTPMethod.POST])

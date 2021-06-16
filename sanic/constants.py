@@ -12,7 +12,7 @@ class HTTPMethod(str, Enum):
     def __hash__(self) -> int:
         return hash(self.value)
 
-    def __str__(self) -> int:
+    def __str__(self) -> str:
         return self.value
 
     GET = auto()

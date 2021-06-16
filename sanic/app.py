@@ -183,7 +183,6 @@ class Sanic(BaseSanic):
 
         if register is not None:
             self.config.REGISTER = register
-
         if self.config.REGISTER:
             self.__class__.register_app(self)
 

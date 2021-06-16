@@ -76,6 +76,13 @@ def main():
         help="Watch source directory for file changes and reload on changes",
     )
     parser.add_argument(
+        "-D",
+        "--include-dir",
+        dest="include_dir",
+        action="append",
+        help="Extra directories to watch and reload on changes",
+    )
+    parser.add_argument(
         "--factory",
         action="store_true",
         help=(
@@ -140,6 +147,17 @@ def main():
         }
         if args.auto_reload:
             kwargs["auto_reload"] = True
+
+        if args.include_dir:
+            if args.auto_reload or args.debug:
+                kwargs["include_dir"] = args.include_dir
+            else:
+                error_logger.warning(
+                    "Ignoring '--include-dir' since auto reloading was not "
+                    "enabled. If you would like to watch directories for "
+                    "changes, consider using --debug or --auto-reload."
+                )
+
         app.run(**kwargs)
     except ImportError as e:
         if module_name.startswith(e.name):

@@ -3,6 +3,7 @@ import signal
 import subprocess
 import sys
 
+from pathlib import Path
 from time import sleep
 
 from sanic.config import BASE_LOGO
@@ -59,6 +60,20 @@ def restart_with_reloader():
     )
 
 
+def _check_file(filename, mtimes):
+    need_reload = False
+
+    mtime = os.stat(filename).st_mtime
+    old_time = mtimes.get(filename)
+    if old_time is None:
+        mtimes[filename] = mtime
+    elif mtime > old_time:
+        mtimes[filename] = mtime
+        need_reload = True
+
+    return need_reload
+
+
 def watchdog(sleep_interval, app):
     """Watch project files, restart worker process if a change happened.
 
@@ -85,18 +100,22 @@ def watchdog(sleep_interval, app):
         while True:
             need_reload = False
 
-            for filename in _iter_module_files():
-                try:
-                    mtime = os.stat(filename).st_mtime
-                except OSError:
-                    continue
+            for collection in (_iter_module_files(), *app.reload_dirs):
+                if isinstance(collection, Path):
+                    collection = collection.glob("**/*")
 
-                old_time = mtimes.get(filename)
-                if old_time is None:
-                    mtimes[filename] = mtime
-                elif mtime > old_time:
-                    mtimes[filename] = mtime
-                    need_reload = True
+                for filename in collection:
+                    try:
+                        check = _check_file(filename, mtimes)
+                    except OSError:
+                        continue
+
+                    if check:
+                        need_reload = True
+                        break
+
+                if need_reload:
+                    break
 
             if need_reload:
                 worker_process.terminate()

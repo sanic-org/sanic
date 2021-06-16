@@ -23,6 +23,8 @@ try:
 except ImportError:
     flags = 0
 
+TIMER_DELAY = 2
+
 
 def terminate(proc):
     if flags:
@@ -53,6 +55,40 @@ def write_app(filename, **runargs):
             """
             )
         )
+    return text
+
+
+def write_json_config_app(filename, jsonfile, **runargs):
+    with open(filename, "w") as f:
+        f.write(
+            dedent(
+                f"""\
+            import os
+            from sanic import Sanic
+            import json
+
+            app = Sanic(__name__)
+            with open("{jsonfile}", "r") as f:
+                config = json.load(f)
+            app.config.update_config(config)
+
+            app.route("/")(lambda x: x)
+
+            @app.listener("after_server_start")
+            def complete(*args):
+                print("complete", os.getpid(), app.config.FOO)
+
+            if __name__ == "__main__":
+                app.run(**{runargs!r})
+            """
+            )
+        )
+
+
+def write_file(filename):
+    text = secrets.token_urlsafe()
+    with open(filename, "w") as f:
+        f.write(f"""{{"FOO": "{text}"}}""")
     return text
 
 
@@ -90,9 +126,10 @@ async def test_reloader_live(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")
         text = write_app(filename, **runargs)
-        proc = Popen(argv[mode], cwd=tmpdir, stdout=PIPE, creationflags=flags)
+        command = argv[mode]
+        proc = Popen(command, cwd=tmpdir, stdout=PIPE, creationflags=flags)
         try:
-            timeout = Timer(5, terminate, [proc])
+            timeout = Timer(TIMER_DELAY, terminate, [proc])
             timeout.start()
             # Python apparently keeps using the old source sometimes if
             # we don't sleep before rewrite (pycache timestamp problem?)
@@ -101,6 +138,43 @@ async def test_reloader_live(runargs, mode):
             assert text in next(line)
             # Edit source code and try again
             text = write_app(filename, **runargs)
+            assert text in next(line)
+        finally:
+            timeout.cancel()
+            terminate(proc)
+            with suppress(TimeoutExpired):
+                proc.wait(timeout=3)
+
+
+@pytest.mark.parametrize(
+    "runargs, mode",
+    [
+        (dict(port=42102, auto_reload=True), "script"),
+        (dict(port=42103, debug=True), "module"),
+        ({}, "sanic"),
+    ],
+)
+async def test_reloader_live_with_dir(runargs, mode):
+    with TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, "reloader.py")
+        config_file = os.path.join(tmpdir, "config.json")
+        runargs["include_dir"] = tmpdir
+        write_json_config_app(filename, config_file, **runargs)
+        text = write_file(config_file)
+        command = argv[mode]
+        if mode == "sanic":
+            command += ["--include-dir", tmpdir]
+        proc = Popen(command, cwd=tmpdir, stdout=PIPE, creationflags=flags)
+        try:
+            timeout = Timer(TIMER_DELAY, terminate, [proc])
+            timeout.start()
+            # Python apparently keeps using the old source sometimes if
+            # we don't sleep before rewrite (pycache timestamp problem?)
+            sleep(1)
+            line = scanner(proc)
+            assert text in next(line)
+            # Edit source code and try again
+            text = write_file(config_file)
             assert text in next(line)
         finally:
             timeout.cancel()

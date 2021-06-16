@@ -133,3 +133,4 @@ def test_ipv6_address_is_not_wrapped(app):
     assert request.route is list(app.router.routes)[0]
     assert resp.json["client"] == "[::1]"
     assert resp.json["client_ip"] == "::1"
+    assert request.ip == "::1"

@@ -5,6 +5,8 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from importlib import import_module
 from typing import Any, Dict, Optional
 
+from sanic_routing import __version__ as __routing_version__  # type: ignore
+
 from sanic import __version__
 from sanic.app import Sanic
 from sanic.config import BASE_LOGO
@@ -65,15 +67,30 @@ def main():
         default=1,
         help="number of worker processes [default 1]",
     )
-    parser.add_argument("--debug", dest="debug", action="store_true")
-    parser.add_bool_arguments(
-        "--access-logs", dest="access_log", help="display access logs"
+    parser.add_argument("-d", "--debug", dest="debug", action="store_true")
+    parser.add_argument(
+        "-r",
+        "--auto-reload",
+        dest="auto_reload",
+        action="store_true",
+        help="Watch source directory for file changes and reload on changes",
+    )
+    parser.add_argument(
+        "--factory",
+        action="store_true",
+        help=(
+            "Treat app as an application factory, "
+            "i.e. a () -> <Sanic app> callable."
+        ),
     )
     parser.add_argument(
         "-v",
         "--version",
         action="version",
-        version=f"Sanic {__version__}",
+        version=f"Sanic {__version__}; Routing {__routing_version__}",
+    )
+    parser.add_bool_arguments(
+        "--access-logs", dest="access_log", help="display access logs"
     )
     parser.add_argument(
         "module", help="path to your Sanic app. Example: path.to.server:app"
@@ -85,45 +102,54 @@ def main():
         if module_path not in sys.path:
             sys.path.append(module_path)
 
-        if ":" in args.module:
-            module_name, app_name = args.module.rsplit(":", 1)
-        else:
-            module_parts = args.module.split(".")
-            module_name = ".".join(module_parts[:-1])
-            app_name = module_parts[-1]
+        delimiter = ":" if ":" in args.module else "."
+        module_name, app_name = args.module.rsplit(delimiter, 1)
+
+        if app_name.endswith("()"):
+            args.factory = True
+            app_name = app_name[:-2]
 
         module = import_module(module_name)
         app = getattr(module, app_name, None)
-        app_name = type(app).__name__
+        if args.factory:
+            app = app()
+
+        app_type_name = type(app).__name__
 
         if not isinstance(app, Sanic):
             raise ValueError(
-                f"Module is not a Sanic app, it is a {app_name}.  "
+                f"Module is not a Sanic app, it is a {app_type_name}.  "
                 f"Perhaps you meant {args.module}.app?"
             )
         if args.cert is not None or args.key is not None:
-            ssl = {
+            ssl: Optional[Dict[str, Any]] = {
                 "cert": args.cert,
                 "key": args.key,
-            }  # type: Optional[Dict[str, Any]]
+            }
         else:
             ssl = None
 
-        app.run(
-            host=args.host,
-            port=args.port,
-            unix=args.unix,
-            workers=args.workers,
-            debug=args.debug,
-            access_log=args.access_log,
-            ssl=ssl,
-        )
+        kwargs = {
+            "host": args.host,
+            "port": args.port,
+            "unix": args.unix,
+            "workers": args.workers,
+            "debug": args.debug,
+            "access_log": args.access_log,
+            "ssl": ssl,
+        }
+        if args.auto_reload:
+            kwargs["auto_reload"] = True
+        app.run(**kwargs)
     except ImportError as e:
-        error_logger.error(
-            f"No module named {e.name} found.\n"
-            f"  Example File: project/sanic_server.py -> app\n"
-            f"  Example Module: project.sanic_server.app"
-        )
+        if module_name.startswith(e.name):
+            error_logger.error(
+                f"No module named {e.name} found.\n"
+                "  Example File: project/sanic_server.py -> app\n"
+                "  Example Module: project.sanic_server.app"
+            )
+        else:
+            raise e
     except ValueError:
         error_logger.exception("Failed to run app")
 

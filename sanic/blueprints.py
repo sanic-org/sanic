@@ -62,18 +62,20 @@ class Blueprint(BaseSanic):
         "strict_slashes",
         "url_prefix",
         "version",
+        "version_prefix",
         "websocket_routes",
     )
 
     def __init__(
         self,
-        name: str,
+        name: str = None,
         url_prefix: Optional[str] = None,
         host: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
+        version_prefix: str = "/v",
     ):
-        super().__init__()
+        super().__init__(name=name)
 
         self._apps: Set[Sanic] = set()
         self.ctx = SimpleNamespace()
@@ -81,7 +83,6 @@ class Blueprint(BaseSanic):
         self.host = host
         self.listeners: Dict[str, List[ListenerType]] = {}
         self.middlewares: List[MiddlewareType] = []
-        self.name = name
         self.routes: List[Route] = []
         self.statics: List[RouteHandler] = []
         self.strict_slashes = strict_slashes
@@ -91,6 +92,7 @@ class Blueprint(BaseSanic):
             else url_prefix
         )
         self.version = version
+        self.version_prefix = version_prefix
         self.websocket_routes: List[Route] = []
 
     def __repr__(self) -> str:
@@ -143,7 +145,13 @@ class Blueprint(BaseSanic):
         return super().signal(event, *args, **kwargs)
 
     @staticmethod
-    def group(*blueprints, url_prefix="", version=None, strict_slashes=None):
+    def group(
+        *blueprints,
+        url_prefix="",
+        version=None,
+        strict_slashes=None,
+        version_prefix: str = "/v",
+    ):
         """
         Create a list of blueprints, optionally grouping them under a
         general URL prefix.
@@ -169,6 +177,7 @@ class Blueprint(BaseSanic):
             url_prefix=url_prefix,
             version=version,
             strict_slashes=strict_slashes,
+            version_prefix=version_prefix,
         )
         for bp in chain(blueprints):
             bps.append(bp)
@@ -186,6 +195,8 @@ class Blueprint(BaseSanic):
 
         self._apps.add(app)
         url_prefix = options.get("url_prefix", self.url_prefix)
+        opt_version = options.get("version", None)
+        opt_version_prefix = options.get("version_prefix", self.version_prefix)
 
         routes = []
         middleware = []
@@ -199,6 +210,21 @@ class Blueprint(BaseSanic):
             future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
+
+            version_prefix = self.version_prefix
+            for prefix in (
+                future.version_prefix,
+                opt_version_prefix,
+            ):
+                if prefix and prefix != "/v":
+                    version_prefix = prefix
+                    break
+
+            version = self.version
+            for v in (future.version, opt_version, self.version):
+                if v is not None:
+                    version = v
+                    break
 
             strict_slashes = (
                 self.strict_slashes
@@ -215,13 +241,14 @@ class Blueprint(BaseSanic):
                 future.host or self.host,
                 strict_slashes,
                 future.stream,
-                future.version or self.version,
+                version,
                 name,
                 future.ignore_body,
                 future.websocket,
                 future.subprotocols,
                 future.unquote,
                 future.static,
+                version_prefix,
             )
 
             route = app._apply_route(apply_route)

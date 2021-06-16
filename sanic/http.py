@@ -64,6 +64,9 @@ class Http:
     :raises RuntimeError:
     """
 
+    HEADER_CEILING = 16_384
+    HEADER_MAX_SIZE = 0
+
     __slots__ = [
         "_send",
         "_receive_more",
@@ -82,6 +85,7 @@ class Http:
         "request_max_size",
         "response",
         "response_func",
+        "response_size",
         "response_bytes_left",
         "upgrade_websocket",
     ]
@@ -168,7 +172,6 @@ class Http:
         """
         Receive and parse request header into self.request.
         """
-        HEADER_MAX_SIZE = min(8192, self.request_max_size)
         # Receive until full header is in buffer
         buf = self.recv_buffer
         pos = 0
@@ -179,12 +182,12 @@ class Http:
                 break
 
             pos = max(0, len(buf) - 3)
-            if pos >= HEADER_MAX_SIZE:
+            if pos >= self.HEADER_MAX_SIZE:
                 break
 
             await self._receive_more()
 
-        if pos >= HEADER_MAX_SIZE:
+        if pos >= self.HEADER_MAX_SIZE:
             raise PayloadTooLarge("Request header exceeds the size limit")
 
         # Parse header content
@@ -272,6 +275,7 @@ class Http:
         size = len(data)
         headers = res.headers
         status = res.status
+        self.response_size = size
 
         if not isinstance(status, int) or status < 200:
             raise RuntimeError(f"Invalid response status {status!r}")
@@ -426,7 +430,9 @@ class Http:
         req, res = self.request, self.response
         extra = {
             "status": getattr(res, "status", 0),
-            "byte": getattr(self, "response_bytes_left", -1),
+            "byte": getattr(
+                self, "response_bytes_left", getattr(self, "response_size", -1)
+            ),
             "host": "UNKNOWN",
             "request": "nil",
         }
@@ -537,3 +543,10 @@ class Http:
     @property
     def send(self):
         return self.response_func
+
+    @classmethod
+    def set_header_max_size(cls, *sizes: int):
+        cls.HEADER_MAX_SIZE = min(
+            *sizes,
+            cls.HEADER_CEILING,
+        )

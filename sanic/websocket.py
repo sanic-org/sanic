@@ -768,7 +768,7 @@ class WebSocketProtocol(HttpProtocol):
         **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.websocket = None # type: Union[None, WebsocketImplProtocol]
+        self.websocket: Union[None, WebsocketImplProtocol] = None
         # self.app = None
         self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size

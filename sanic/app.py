@@ -392,7 +392,7 @@ class Sanic(BaseSanic):
             if self.config.EVENT_AUTOREGISTER:
                 self.signal_router.reset()
                 self.add_signal(None, event)
-                signal = self.signal_router.name_index.get(event)
+                signal = self.signal_router.name_index[event]
                 self.signal_router.finalize()
             else:
                 raise NotFound("Could not find signal %s" % event)
@@ -849,7 +849,7 @@ class Sanic(BaseSanic):
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         loop: None = None,
-        include_dir: Optional[Union[List[str], str]] = None,
+        reload_dir: Optional[Union[List[str], str]] = None,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -884,11 +884,11 @@ class Sanic(BaseSanic):
         :type unix: str
         :return: Nothing
         """
-        if include_dir:
-            if isinstance(include_dir, str):
-                include_dir = [include_dir]
+        if reload_dir:
+            if isinstance(reload_dir, str):
+                reload_dir = [reload_dir]
 
-            for directory in include_dir:
+            for directory in reload_dir:
                 direc = Path(directory)
                 if not direc.is_dir():
                     logger.warning(

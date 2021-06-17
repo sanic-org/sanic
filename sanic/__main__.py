@@ -89,6 +89,7 @@ def main():
     parser.add_argument("-d", "--debug", dest="debug", action="store_true")
     parser.add_argument(
         "-r",
+        "--reload",
         "--auto-reload",
         dest="auto_reload",
         action="store_true",
@@ -96,8 +97,8 @@ def main():
     )
     parser.add_argument(
         "-D",
-        "--include-dir",
-        dest="include_dir",
+        "--reload-dir",
+        dest="reload_dir",
         action="append",
         help="Extra directories to watch and reload on changes\n ",
     )
@@ -150,12 +151,12 @@ def main():
         if args.auto_reload:
             kwargs["auto_reload"] = True
 
-        if args.include_dir:
+        if args.reload_dir:
             if args.auto_reload or args.debug:
-                kwargs["include_dir"] = args.include_dir
+                kwargs["reload_dir"] = args.reload_dir
             else:
                 error_logger.warning(
-                    "Ignoring '--include-dir' since auto reloading was not "
+                    "Ignoring '--reload-dir' since auto reloading was not "
                     "enabled. If you would like to watch directories for "
                     "changes, consider using --debug or --auto-reload."
                 )

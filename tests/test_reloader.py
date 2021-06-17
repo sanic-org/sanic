@@ -158,12 +158,12 @@ async def test_reloader_live_with_dir(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")
         config_file = os.path.join(tmpdir, "config.json")
-        runargs["include_dir"] = tmpdir
+        runargs["reload_dir"] = tmpdir
         write_json_config_app(filename, config_file, **runargs)
         text = write_file(config_file)
         command = argv[mode]
         if mode == "sanic":
-            command += ["--include-dir", tmpdir]
+            command += ["--reload-dir", tmpdir]
         proc = Popen(command, cwd=tmpdir, stdout=PIPE, creationflags=flags)
         try:
             timeout = Timer(TIMER_DELAY, terminate, [proc])

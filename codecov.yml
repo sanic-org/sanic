@@ -13,7 +13,7 @@ coverage:
         target: auto
         threshold: 0.75%
 ignore:
-  - sanic/__main__.py
-  - sanic/reload_helpers.py
-  - sanic/simple.py
-  - sanic/utils.py
+  - "*/**/__main__.py"
+  - "*/**/reload_helpers.py"
+  - "*/**/simple.py"
+  - "*/**/utils.py"

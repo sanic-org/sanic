@@ -2,10 +2,10 @@
 branch = True
 source = sanic
 omit =
-    site-packages,
-    sanic/__main__.py,
-    sanic/reload_helpers.py,
-    sanic/simple.py,
+    site-packages
+    sanic/__main__.py
+    sanic/reload_helpers.py
+    sanic/simple.py
     sanic/utils.py
 
 [html]

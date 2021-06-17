@@ -5,7 +5,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
     env:
       OS: ${{ matrix.os }}
       PYTHON: "3.9"
@@ -17,9 +17,8 @@ jobs:
           python-version: 3.9
       - name: Generate coverage report
         run: |
-          pip install pytest
-          pip install pytest-cov
-          pytest tests --cov=./sanic --cov-report=xml
+          pip install tox
+          tox -e codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

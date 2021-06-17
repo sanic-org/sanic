@@ -22,8 +22,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
-          files: ./coverage1.xml,./coverage2.xml
-          directory: ./coverage/reports/
+          files: ./coverage.xml
           flags: unittests
           env_vars: OS,PYTHON
           name: sanic-coverage

@@ -36,11 +36,6 @@ def _iter_module_files():
                 yield filename
 
 
-def _iter_dirs(dirs):
-    for filename in (d.glob("**/*") for d in dirs):
-        yield filename
-
-
 def _get_args_for_reloading():
     """Returns the executable."""
     main_module = sys.modules["__main__"]

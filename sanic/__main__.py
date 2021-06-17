@@ -153,7 +153,7 @@ def main():
 
         if args.path:
             if args.auto_reload or args.debug:
-                kwargs["path"] = args.path
+                kwargs["reload_dir"] = args.path
             else:
                 error_logger.warning(
                     "Ignoring '--reload-dir' since auto reloading was not "

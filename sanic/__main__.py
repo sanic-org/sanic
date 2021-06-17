@@ -96,9 +96,9 @@ def main():
         help="Watch source directory for file changes and reload on changes",
     )
     parser.add_argument(
-        "-D",
+        "-R",
         "--reload-dir",
-        dest="reload_dir",
+        dest="path",
         action="append",
         help="Extra directories to watch and reload on changes\n ",
     )
@@ -151,9 +151,9 @@ def main():
         if args.auto_reload:
             kwargs["auto_reload"] = True
 
-        if args.reload_dir:
+        if args.path:
             if args.auto_reload or args.debug:
-                kwargs["reload_dir"] = args.reload_dir
+                kwargs["path"] = args.path
             else:
                 error_logger.warning(
                     "Ignoring '--reload-dir' since auto reloading was not "

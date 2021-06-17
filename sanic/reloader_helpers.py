@@ -1,9 +1,9 @@
+import itertools
 import os
 import signal
 import subprocess
 import sys
 
-from pathlib import Path
 from time import sleep
 
 from sanic.config import BASE_LOGO
@@ -34,6 +34,11 @@ def _iter_module_files():
                 if filename[-4:] in (".pyc", ".pyo"):
                     filename = filename[:-1]
                 yield filename
+
+
+def _iter_dirs(dirs):
+    for filename in (d.glob("**/*") for d in dirs):
+        yield filename
 
 
 def _get_args_for_reloading():
@@ -100,22 +105,17 @@ def watchdog(sleep_interval, app):
         while True:
             need_reload = False
 
-            for collection in (_iter_module_files(), *app.reload_dirs):
-                if isinstance(collection, Path):
-                    collection = collection.glob("**/*")
+            for filename in itertools.chain(
+                _iter_module_files(),
+                *(d.glob("**/*") for d in app.reload_dirs),
+            ):
+                try:
+                    check = _check_file(filename, mtimes)
+                except OSError:
+                    continue
 
-                for filename in collection:
-                    try:
-                        check = _check_file(filename, mtimes)
-                    except OSError:
-                        continue
-
-                    if check:
-                        need_reload = True
-                        break
-
-                if need_reload:
-                    break
+                if check:
+                    need_reload = True
 
             if need_reload:
                 worker_process.terminate()

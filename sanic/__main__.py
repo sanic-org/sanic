@@ -1,8 +1,9 @@
 import os
 import sys
 
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from argparse import ArgumentParser, RawTextHelpFormatter
 from importlib import import_module
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from sanic_routing import __version__ as __routing_version__  # type: ignore
@@ -11,6 +12,7 @@ from sanic import __version__
 from sanic.app import Sanic
 from sanic.config import BASE_LOGO
 from sanic.log import error_logger
+from sanic.simple import create_simple_server
 
 
 class SanicArgumentParser(ArgumentParser):
@@ -27,7 +29,7 @@ def main():
     parser = SanicArgumentParser(
         prog="sanic",
         description=BASE_LOGO,
-        formatter_class=RawDescriptionHelpFormatter,
+        formatter_class=RawTextHelpFormatter,
     )
     parser.add_argument(
         "-H",
@@ -35,7 +37,7 @@ def main():
         dest="host",
         type=str,
         default="127.0.0.1",
-        help="host address [default 127.0.0.1]",
+        help="Host address [default 127.0.0.1]",
     )
     parser.add_argument(
         "-p",
@@ -43,7 +45,7 @@ def main():
         dest="port",
         type=int,
         default=8000,
-        help="port to serve on [default 8000]",
+        help="Port to serve on [default 8000]",
     )
     parser.add_argument(
         "-u",
@@ -51,13 +53,13 @@ def main():
         dest="unix",
         type=str,
         default="",
-        help="location of unix socket",
+        help="Location of unix socket",
     )
     parser.add_argument(
-        "--cert", dest="cert", type=str, help="location of certificate for SSL"
+        "--cert", dest="cert", type=str, help="Location of certificate for SSL"
     )
     parser.add_argument(
-        "--key", dest="key", type=str, help="location of keyfile for SSL."
+        "--key", dest="key", type=str, help="Location of keyfile for SSL"
     )
     parser.add_argument(
         "-w",
@@ -65,7 +67,7 @@ def main():
         dest="workers",
         type=int,
         default=1,
-        help="number of worker processes [default 1]",
+        help="Number of worker processes [default 1]",
     )
     parser.add_argument("-d", "--debug", dest="debug", action="store_true")
     parser.add_argument(
@@ -93,7 +95,19 @@ def main():
         "--access-logs", dest="access_log", help="display access logs"
     )
     parser.add_argument(
-        "module", help="path to your Sanic app. Example: path.to.server:app"
+        "module",
+        help=(
+            "Path to your Sanic app. Example: path.to.server:app\n"
+            "If running a Simple Server, path to directory to serve. "
+            "Example: ./\n"
+        ),
+    )
+    parser.add_argument(
+        "-s",
+        "--simple",
+        dest="simple",
+        action="store_true",
+        help="Whether to run a Simple Server",
     )
     args = parser.parse_args()
 
@@ -102,25 +116,29 @@ def main():
         if module_path not in sys.path:
             sys.path.append(module_path)
 
-        delimiter = ":" if ":" in args.module else "."
-        module_name, app_name = args.module.rsplit(delimiter, 1)
+        if args.simple:
+            path = Path(args.module)
+            app = create_simple_server(path)
+        else:
+            delimiter = ":" if ":" in args.module else "."
+            module_name, app_name = args.module.rsplit(delimiter, 1)
 
-        if app_name.endswith("()"):
-            args.factory = True
-            app_name = app_name[:-2]
+            if app_name.endswith("()"):
+                args.factory = True
+                app_name = app_name[:-2]
 
-        module = import_module(module_name)
-        app = getattr(module, app_name, None)
-        if args.factory:
-            app = app()
+            module = import_module(module_name)
+            app = getattr(module, app_name, None)
+            if args.factory:
+                app = app()
 
-        app_type_name = type(app).__name__
+            app_type_name = type(app).__name__
 
-        if not isinstance(app, Sanic):
-            raise ValueError(
-                f"Module is not a Sanic app, it is a {app_type_name}.  "
-                f"Perhaps you meant {args.module}.app?"
-            )
+            if not isinstance(app, Sanic):
+                raise ValueError(
+                    f"Module is not a Sanic app, it is a {app_type_name}.  "
+                    f"Perhaps you meant {args.module}.app?"
+                )
         if args.cert is not None or args.key is not None:
             ssl: Optional[Dict[str, Any]] = {
                 "cert": args.cert,

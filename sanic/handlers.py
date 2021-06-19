@@ -44,7 +44,7 @@ class ErrorHandler:
 
         :return: None
         """
-        # self.handlers to be deprecated
+        # self.handlers to be deprecated and removed in version 21.12
         self.handlers.append((exception, handler))
         self.cached_handlers[exception] = handler
 

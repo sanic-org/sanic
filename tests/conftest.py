@@ -15,6 +15,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.router import Router
 
 
+slugify = re.compile(r"[^a-zA-Z0-9_\-]")
 random.seed("Pack my box with five dozen liquor jugs.")
 Sanic.test_mode = True
 
@@ -140,5 +141,5 @@ def url_param_generator():
 
 @pytest.fixture(scope="function")
 def app(request):
-    app = Sanic(request.node.name)
+    app = Sanic(slugify.sub("-", request.node.name))
     return app

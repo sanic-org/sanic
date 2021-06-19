@@ -33,7 +33,7 @@ def capture(command):
         "fake.server:app",
         "fake.server:create_app()",
         "fake.server.create_app()",
-    )
+    ),
 )
 def test_server_run(appname):
     command = ["sanic", appname]

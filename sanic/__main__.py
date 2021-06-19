@@ -19,7 +19,7 @@ class SanicArgumentParser(ArgumentParser):
     def add_bool_arguments(self, *args, **kwargs):
         group = self.add_mutually_exclusive_group()
         group.add_argument(*args, action="store_true", **kwargs)
-        kwargs["help"] = "no " + kwargs["help"]
+        kwargs["help"] = f"no {kwargs['help']}\n "
         group.add_argument(
             "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
         )
@@ -29,7 +29,30 @@ def main():
     parser = SanicArgumentParser(
         prog="sanic",
         description=BASE_LOGO,
-        formatter_class=RawTextHelpFormatter,
+        formatter_class=lambda prog: RawTextHelpFormatter(
+            prog, max_help_position=33
+        ),
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"Sanic {__version__}; Routing {__routing_version__}",
+    )
+    parser.add_argument(
+        "--factory",
+        action="store_true",
+        help=(
+            "Treat app as an application factory, "
+            "i.e. a () -> <Sanic app> callable"
+        ),
+    )
+    parser.add_argument(
+        "-s",
+        "--simple",
+        dest="simple",
+        action="store_true",
+        help="Run Sanic as a Simple Server (module arg should be a path)\n ",
     )
     parser.add_argument(
         "-H",
@@ -53,13 +76,16 @@ def main():
         dest="unix",
         type=str,
         default="",
-        help="Location of unix socket",
+        help="location of unix socket\n ",
     )
     parser.add_argument(
         "--cert", dest="cert", type=str, help="Location of certificate for SSL"
     )
     parser.add_argument(
-        "--key", dest="key", type=str, help="Location of keyfile for SSL"
+        "--key", dest="key", type=str, help="location of keyfile for SSL\n "
+    )
+    parser.add_bool_arguments(
+        "--access-logs", dest="access_log", help="display access logs"
     )
     parser.add_argument(
         "-w",
@@ -67,32 +93,23 @@ def main():
         dest="workers",
         type=int,
         default=1,
-        help="Number of worker processes [default 1]",
+        help="number of worker processes [default 1]\n ",
     )
     parser.add_argument("-d", "--debug", dest="debug", action="store_true")
     parser.add_argument(
         "-r",
+        "--reload",
         "--auto-reload",
         dest="auto_reload",
         action="store_true",
         help="Watch source directory for file changes and reload on changes",
     )
     parser.add_argument(
-        "--factory",
-        action="store_true",
-        help=(
-            "Treat app as an application factory, "
-            "i.e. a () -> <Sanic app> callable."
-        ),
-    )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=f"Sanic {__version__}; Routing {__routing_version__}",
-    )
-    parser.add_bool_arguments(
-        "--access-logs", dest="access_log", help="display access logs"
+        "-R",
+        "--reload-dir",
+        dest="path",
+        action="append",
+        help="Extra directories to watch and reload on changes\n ",
     )
     parser.add_argument(
         "module",
@@ -101,13 +118,6 @@ def main():
             "If running a Simple Server, path to directory to serve. "
             "Example: ./\n"
         ),
-    )
-    parser.add_argument(
-        "-s",
-        "--simple",
-        dest="simple",
-        action="store_true",
-        help="Whether to run a Simple Server",
     )
     args = parser.parse_args()
 
@@ -158,6 +168,17 @@ def main():
         }
         if args.auto_reload:
             kwargs["auto_reload"] = True
+
+        if args.path:
+            if args.auto_reload or args.debug:
+                kwargs["reload_dir"] = args.path
+            else:
+                error_logger.warning(
+                    "Ignoring '--reload-dir' since auto reloading was not "
+                    "enabled. If you would like to watch directories for "
+                    "changes, consider using --debug or --auto-reload."
+                )
+
         app.run(**kwargs)
     except ImportError as e:
         if module_name.startswith(e.name):

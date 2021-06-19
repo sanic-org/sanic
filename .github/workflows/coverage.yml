@@ -1,16 +1,17 @@
-name: build
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - "!*" # Do not execute on tags
-    paths:
-      - sanic/*
-      - tests/*
-  pull_request:
-    paths:
-      - "!*.MD"
+name: Coverage check
+# on:
+#   push:
+#     branches:
+#       - master
+#     tags:
+#       - "!*" # Do not execute on tags
+#     paths:
+#       - sanic/*
+#       - tests/*
+#   pull_request:
+#     paths:
+#       - "!*.MD"
+on: [push, pull_request]
 jobs:
   test:
     runs-on: ${{ matrix.os }}

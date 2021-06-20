@@ -63,7 +63,7 @@ class ErrorHandler:
         :return: Registered function if found ``None`` otherwise
         """
         handler = self.cached_handlers.get(type(exception))
-        if handler:
+        if type(exception) in self.cached_handlers:
             return handler
 
         exception_class = type(exception)

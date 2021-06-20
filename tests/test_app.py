@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from sanic import Sanic
+from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
 
@@ -389,7 +390,7 @@ def test_app_no_registry_env():
 
 
 def test_app_set_attribute_warning(app):
-    with pytest.warns(UserWarning) as record:
+    with pytest.warns(DeprecationWarning) as record:
         app.foo = 1
 
     assert len(record) == 1
@@ -412,3 +413,42 @@ def test_subclass_initialisation():
         pass
 
     CustomSanic("test_subclass_initialisation")
+
+
+def test_bad_custom_config():
+    with pytest.raises(
+        SanicException,
+        match=(
+            "When instantiating Sanic with config, you cannot also pass "
+            "load_env or env_prefix"
+        ),
+    ):
+        Sanic("test", config=1, load_env=1)
+    with pytest.raises(
+        SanicException,
+        match=(
+            "When instantiating Sanic with config, you cannot also pass "
+            "load_env or env_prefix"
+        ),
+    ):
+        Sanic("test", config=1, env_prefix=1)
+
+
+def test_custom_config():
+    class CustomConfig(Config):
+        ...
+
+    config = CustomConfig()
+    app = Sanic("custom", config=config)
+
+    assert app.config == config
+
+
+def test_custom_context():
+    class CustomContext:
+        ...
+
+    ctx = CustomContext()
+    app = Sanic("custom", ctx=ctx)
+
+    assert app.ctx == ctx

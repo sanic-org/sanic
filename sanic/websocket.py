@@ -14,8 +14,12 @@ from websockets import (  # type: ignore
     ConnectionClosed,
     InvalidHandshake,
     WebSocketCommonProtocol,
-    handshake,
 )
+
+# Despite the "legacy" namespace, the primary maintainer of websockets
+# committed to maintaining backwards-compatibility until 2026 and will
+# consider extending it if sanic continues depending on this module.
+from websockets.legacy import handshake
 
 from sanic.exceptions import InvalidUsage
 from sanic.server import HttpProtocol
@@ -126,7 +130,9 @@ class WebSocketProtocol(HttpProtocol):
             ping_interval=self.websocket_ping_interval,
             ping_timeout=self.websocket_ping_timeout,
         )
-        # Following two lines are required for websockets 8.x
+        # we use WebSocketCommonProtocol because we don't want the handshake
+        # logic from WebSocketServerProtocol; however, we must tell it that
+        # we're running on the server side
         self.websocket.is_client = False
         self.websocket.side = "server"
         self.websocket.subprotocol = subprotocol

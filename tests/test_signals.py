@@ -16,7 +16,7 @@ def test_add_signal(app):
 
     app.add_signal(sync_signal, "foo.bar.baz")
 
-    assert len(app.signal_router.routes) == 1
+    assert len(app.signal_router.routes) == 2
 
 
 def test_add_signal_decorator(app):
@@ -28,7 +28,7 @@ def test_add_signal_decorator(app):
     async def async_signal(*_):
         ...
 
-    assert len(app.signal_router.routes) == 2
+    assert len(app.signal_router.routes) == 3
     assert len(app.signal_router.dynamic_routes) == 1
 
 
@@ -331,7 +331,8 @@ def test_event_on_bp_not_registered():
     "event,expected",
     (
         ("foo.bar.baz", True),
-        ("server.init.before", False),
+        ("server.init.before", True),
+        ("server.init.somethingelse", False),
         ("http.request.start", False),
         ("sanic.notice.anything", True),
     ),

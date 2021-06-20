@@ -93,6 +93,7 @@ class SignalRouter(BaseRouter):
                 param.name: param_basket["__matches__"][idx]
                 for idx, param in group.params.items()
             }
+
         return group, [route.handler for route in group], params
 
     async def _dispatch(

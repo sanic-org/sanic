@@ -62,19 +62,18 @@ class ErrorHandler:
 
         :return: Registered function if found ``None`` otherwise
         """
-        handler = self.cached_handlers.get(type(exception))
-        if type(exception) in self.cached_handlers:
-            return handler
-
         exception_class = type(exception)
+        if exception_class in self.cached_handlers:
+            return self.cached_handlers[exception_class]
+
         for ancestor in type.mro(exception_class):
-            handler = self.cached_handlers.get(ancestor)
-            if handler:
+            if ancestor in self.cached_handlers:
+                handler = self.cached_handlers[ancestor]
                 self.cached_handlers[exception_class] = handler
                 return handler
             if ancestor is BaseException:
                 break
-        self.cached_handlers[type(exception)] = None
+        self.cached_handlers[exception_class] = None
         handler = None
         return handler
 

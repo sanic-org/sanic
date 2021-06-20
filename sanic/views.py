@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Union,
+)
 from warnings import warn
 
 from sanic.constants import HTTP_METHODS
@@ -52,11 +60,26 @@ class HTTPMethodView:
         cls,
         attach: Optional[Union[Sanic, Blueprint]] = None,
         uri: str = "",
-        *args,
-        **kwargs,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        stream: bool = False,
+        version_prefix: str = "/v",
     ) -> None:
         if attach:
-            cls.attach(attach, uri, *args, **kwargs)
+            cls.attach(
+                attach,
+                uri=uri,
+                methods=methods,
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+                stream=stream,
+                version_prefix=version_prefix,
+            )
 
     def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)
@@ -85,9 +108,28 @@ class HTTPMethodView:
 
     @classmethod
     def attach(
-        cls, to: Union[Sanic, Blueprint], uri: str, *args, **kwargs
+        cls,
+        to: Union[Sanic, Blueprint],
+        uri: str,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        stream: bool = False,
+        version_prefix: str = "/v",
     ) -> None:
-        to.add_route(cls.as_view(), uri, *args, **kwargs)
+        to.add_route(
+            cls.as_view(),
+            uri=uri,
+            methods=methods,
+            host=host,
+            strict_slashes=strict_slashes,
+            version=version,
+            name=name,
+            stream=stream,
+            version_prefix=version_prefix,
+        )
 
 
 def stream(func):

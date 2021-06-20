@@ -35,7 +35,7 @@ class ListenerMixin:
         """
         Create a listener from a decorated function.
 
-        To be used as a deocrator:
+        To be used as a decorator:
 
         .. code-block:: python
 

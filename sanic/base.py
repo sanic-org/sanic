@@ -36,7 +36,7 @@ class BaseSanic(
             warn(
                 f"{class_name} instance named '{name}' uses a format that is"
                 f"deprecated. Starting in version 21.12, {class_name} objects "
-                "be named only using alphanumeric characters, _, or -.",
+                "must be named only using alphanumeric characters, _, or -.",
                 DeprecationWarning,
             )
 

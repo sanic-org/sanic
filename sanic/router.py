@@ -110,7 +110,7 @@ class Router(BaseRouter):
         params = dict(
             path=uri,
             handler=handler,
-            methods=methods,
+            methods=frozenset(map(str, methods)) if methods else None,
             name=name,
             strict=strict_slashes,
             unquote=unquote,

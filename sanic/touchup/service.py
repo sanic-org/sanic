@@ -26,6 +26,8 @@ class TouchUp:
                 modified = scheme(app)(method, module_globals)
                 setattr(target, method_name, modified)
 
+            target.__touched__ = True
+
     @classmethod
     def register(cls, target, method_name):
         cls._registry.add((target, method_name))

@@ -198,6 +198,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             self.__class__.register_app(self)
 
         self.router.ctx.app = self
+        self.signal_router.ctx.app = self
 
         if dumps:
             BaseHTTPResponse._dumps = dumps
@@ -238,7 +239,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             loop = self.loop  # Will raise SanicError if loop is not started
             self._loop_add_task(task, self, loop)
         except SanicException:
-            self.listener("before_server_start")(
+            self.listener("after_server_start")(
                 partial(self._loop_add_task, task)
             )
 
@@ -1319,6 +1320,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             try:
                 loop.create_task(task(app))
             except TypeError:
+                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> TypeError")
                 loop.create_task(task())
         else:
             loop.create_task(task)

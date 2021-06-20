@@ -8,6 +8,7 @@ class TouchUpMeta(type):
         gen_class = super().__new__(cls, name, bases, attrs, **kwargs)
 
         methods = attrs.get("__touchup__")
+        attrs["__touched__"] = False
         if methods:
 
             for method in methods:

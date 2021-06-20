@@ -10,7 +10,7 @@ from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
 
 from sanic.exceptions import InvalidSignal
-from sanic.log import logger
+from sanic.log import error_logger, logger
 from sanic.models.handler_types import SignalHandler
 
 
@@ -110,7 +110,9 @@ class SignalRouter(BaseRouter):
             if fail_not_found:
                 raise e
             else:
-                return
+                if self.ctx.app.debug:
+                    error_logger.warning(str(e))
+                return None
 
         events = [signal.ctx.event for signal in group]
         for signal_event in events:
@@ -149,10 +151,11 @@ class SignalRouter(BaseRouter):
             event,
             context=context,
             condition=condition,
-            fail_not_found=fail_not_found,
+            fail_not_found=fail_not_found and inline,
             reverse=reverse,
         )
         logger.debug(f"Dispatching signal: {event}")
+
         if inline:
             return await dispatch
 

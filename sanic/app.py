@@ -15,6 +15,7 @@ from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
 from inspect import isawaitable, signature
+from pathlib import Path
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -113,6 +114,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "name",
         "named_request_middleware",
         "named_response_middleware",
+        "reload_dirs",
         "request_class",
         "request_middleware",
         "response_middleware",
@@ -176,6 +178,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        self.reload_dirs: Set[Path] = set()
         self.request_class = request_class
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
@@ -909,6 +912,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         loop: None = None,
+        reload_dir: Optional[Union[List[str], str]] = None,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -943,6 +947,18 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type unix: str
         :return: Nothing
         """
+        if reload_dir:
+            if isinstance(reload_dir, str):
+                reload_dir = [reload_dir]
+
+            for directory in reload_dir:
+                direc = Path(directory)
+                if not direc.is_dir():
+                    logger.warning(
+                        f"Directory {directory} could not be located"
+                    )
+                self.reload_dirs.add(Path(directory))
+
         if loop is not None:
             raise TypeError(
                 "loop is not a valid argument. To use an existing loop, "

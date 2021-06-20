@@ -1320,7 +1320,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             try:
                 loop.create_task(task(app))
             except TypeError:
-                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> TypeError")
                 loop.create_task(task())
         else:
             loop.create_task(task)

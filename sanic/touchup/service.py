@@ -11,6 +11,14 @@ class TouchUp:
     def run(cls, app):
         for target, method_name in cls._registry:
             method = getattr(target, method_name)
+
+            if app.test_mode:
+                placeholder = f"_{method_name}"
+                if hasattr(target, placeholder):
+                    method = getattr(target, placeholder)
+                else:
+                    setattr(target, placeholder, method)
+
             module = getmodule(target)
             module_globals = dict(getmembers(module))
 

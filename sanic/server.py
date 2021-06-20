@@ -408,7 +408,7 @@ class AsyncioServer:
         """
         Trigger "before_server_start" events
         """
-        self.loop.run_until_complete(self.app._startup())
+        self.app._startup()
 
     def before_start(self):
         """

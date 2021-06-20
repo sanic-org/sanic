@@ -1404,14 +1404,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # Lifecycle
     # -------------------------------------------------------------------- #
 
-    async def finalize(self):
+    def finalize(self):
         try:
             self.router.finalize()
         except FinalizationError as e:
             if not Sanic.test_mode:
                 raise e
 
-    async def signalize(self):
+    def signalize(self):
         try:
             self.signal_router.finalize()
         except FinalizationError as e:
@@ -1419,10 +1419,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 raise e
 
     async def _startup(self):
-        await self.signalize()
-        await self.finalize()
+        self.signalize()
+        self.finalize()
         TouchUp.run(self)
-        # await self._sever_event()
 
     async def _sever_event(self, concern, action):
         event = f"server.{concern}.{action}"

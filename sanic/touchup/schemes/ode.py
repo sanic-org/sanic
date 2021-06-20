@@ -1,4 +1,4 @@
-from ast import Attribute, Await, Call, Dict, Expr, NodeTransformer, parse
+from ast import Attribute, Await, Dict, Expr, NodeTransformer, parse
 from inspect import getsource
 from textwrap import dedent
 from typing import Any
@@ -49,7 +49,7 @@ class RemoveDispatch(NodeTransformer):
             if hasattr(event, "s"):
                 event_name = getattr(event, "value", event.s)
                 if self._not_registered(event_name):
-                    logger.debug(f"Disabling event: {event_name}")
+                    logger.info(f"Disabling event: {event_name}")
                     return None
         return node
 

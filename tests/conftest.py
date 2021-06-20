@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import random
 import re
 import string
@@ -9,10 +11,12 @@ from typing import Tuple
 import pytest
 
 from sanic_routing.exceptions import RouteExists
+from sanic_testing.testing import PORT
 
 from sanic import Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.router import Router
+from sanic.touchup.service import TouchUp
 
 
 slugify = re.compile(r"[^a-zA-Z0-9_\-]")
@@ -21,11 +25,6 @@ Sanic.test_mode = True
 
 if sys.platform in ["win32", "cygwin"]:
     collect_ignore = ["test_worker.py"]
-
-
-@pytest.fixture
-def caplog(caplog):
-    yield caplog
 
 
 async def _handler(request):
@@ -51,6 +50,8 @@ TYPE_TO_GENERATOR_MAP = {
     ),
     "uuid": lambda: str(uuid.uuid1()),
 }
+
+CACHE = {}
 
 
 class RouteStringGenerator:
@@ -141,5 +142,33 @@ def url_param_generator():
 
 @pytest.fixture(scope="function")
 def app(request):
+    if not CACHE:
+        for target, method_name in TouchUp._registry:
+            CACHE[method_name] = getattr(target, method_name)
     app = Sanic(slugify.sub("-", request.node.name))
-    return app
+    yield app
+    # for target, method_name in TouchUp._registry:
+    #     setattr(target, method_name, CACHE[method_name])
+
+
+@pytest.fixture(scope="function")
+def run_startup(caplog):
+    def run(app):
+        nonlocal caplog
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        with caplog.at_level(logging.DEBUG):
+            server = app.create_server(
+                debug=True, return_asyncio_server=True, port=PORT
+            )
+            loop._stopping = False
+
+            _server = loop.run_until_complete(server)
+
+            _server.close()
+            loop.run_until_complete(_server.wait_closed())
+            app.stop()
+
+        return caplog.record_tuples
+
+    return run

@@ -9,6 +9,7 @@ from sanic_routing.exceptions import (
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
+from sanic.errorpages import check_error_format
 from sanic.exceptions import MethodNotSupported, NotFound, SanicException
 from sanic.models.handler_types import RouteHandler
 
@@ -135,6 +136,8 @@ class Router(BaseRouter):
             route.ctx.error_format = (
                 error_format or self.ctx.app.config.FALLBACK_ERROR_FORMAT
             )
+
+            check_error_format(route.ctx.error_format)
 
             routes.append(route)
 

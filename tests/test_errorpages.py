@@ -2,7 +2,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.errorpages import HTMLRenderer, exception_response
-from sanic.exceptions import NotFound
+from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
 
@@ -157,3 +157,16 @@ def test_route_error_response_from_explicit_format(app):
 
     _, response = app.test_client.get("/json")
     assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_unknown_fallback_format(app):
+    with pytest.raises(SanicException, match="Unknown format: bad"):
+        app.config.FALLBACK_ERROR_FORMAT = "bad"
+
+
+def test_route_error_format_unknown(app):
+    with pytest.raises(SanicException, match="Unknown format: bad"):
+
+        @app.get("/text", error_format="bad")
+        def handler(request):
+            ...

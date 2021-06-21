@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from warnings import warn
 
+from sanic.errorpages import RENDERERS_BY_CONFIG, check_error_format
+from sanic.exceptions import SanicException
 from sanic.http import Http
 
 from .utils import load_module_from_file_location, str_to_bool
@@ -100,6 +102,7 @@ class Config(dict):
             self.load_environment_vars(SANIC_PREFIX)
 
         self._configure_header_size()
+        self._check_error_format()
 
     def __getattr__(self, attr):
         try:
@@ -115,6 +118,8 @@ class Config(dict):
             "REQUEST_MAX_SIZE",
         ):
             self._configure_header_size()
+        elif attr == "FALLBACK_ERROR_FORMAT":
+            self._check_error_format()
 
     def _configure_header_size(self):
         Http.set_header_max_size(
@@ -122,6 +127,9 @@ class Config(dict):
             self.REQUEST_BUFFER_SIZE - 4096,
             self.REQUEST_MAX_SIZE,
         )
+
+    def _check_error_format(self):
+        check_error_format(self.FALLBACK_ERROR_FORMAT)
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """

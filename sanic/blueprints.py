@@ -168,8 +168,6 @@ class Blueprint(BaseSanic):
             for i in nested:
                 if isinstance(i, (list, tuple)):
                     yield from chain(i)
-                elif isinstance(i, BlueprintGroup):
-                    yield from i.blueprints
                 else:
                     yield i
 
@@ -196,6 +194,7 @@ class Blueprint(BaseSanic):
         self._apps.add(app)
         url_prefix = options.get("url_prefix", self.url_prefix)
         opt_version = options.get("version", None)
+        opt_strict_slashes = options.get("strict_slashes", None)
         opt_version_prefix = options.get("version_prefix", self.version_prefix)
 
         routes = []
@@ -220,18 +219,13 @@ class Blueprint(BaseSanic):
                     version_prefix = prefix
                     break
 
-            version = self.version
-            for v in (future.version, opt_version, self.version):
-                if v is not None:
-                    version = v
-                    break
-
-            strict_slashes = (
-                self.strict_slashes
-                if future.strict_slashes is None
-                and self.strict_slashes is not None
-                else future.strict_slashes
+            version = self._extract_value(
+                future.version, opt_version, self.version
             )
+            strict_slashes = self._extract_value(
+                future.strict_slashes, opt_strict_slashes, self.strict_slashes
+            )
+
             name = app._generate_name(future.name)
 
             apply_route = FutureRoute(
@@ -315,3 +309,12 @@ class Blueprint(BaseSanic):
             return_when=asyncio.FIRST_COMPLETED,
             timeout=timeout,
         )
+
+    @staticmethod
+    def _extract_value(*values):
+        value = values[-1]
+        for v in values:
+            if v is not None:
+                value = v
+                break
+        return value

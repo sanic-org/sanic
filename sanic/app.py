@@ -420,7 +420,33 @@ class Sanic(BaseSanic):
         """
         if isinstance(blueprint, (list, tuple, BlueprintGroup)):
             for item in blueprint:
-                self.blueprint(item, **options)
+                params = {**options}
+                if isinstance(blueprint, BlueprintGroup):
+                    if blueprint.url_prefix:
+                        merge_from = [
+                            options.get("url_prefix", ""),
+                            blueprint.url_prefix,
+                        ]
+                        if not isinstance(item, BlueprintGroup):
+                            merge_from.append(item.url_prefix or "")
+                        merged_prefix = "/".join(
+                            u.strip("/") for u in merge_from
+                        ).rstrip("/")
+                        params["url_prefix"] = f"/{merged_prefix}"
+
+                    for _attr in ["version", "strict_slashes"]:
+                        if getattr(item, _attr) is None:
+                            params[_attr] = getattr(
+                                blueprint, _attr
+                            ) or options.get(_attr)
+                    if item.version_prefix == "/v":
+                        if blueprint.version_prefix == "/v":
+                            params["version_prefix"] = options.get(
+                                "version_prefix"
+                            )
+                        else:
+                            params["version_prefix"] = blueprint.version_prefix
+                self.blueprint(item, **params)
             return
         if blueprint.name in self.blueprints:
             assert self.blueprints[blueprint.name] is blueprint, (

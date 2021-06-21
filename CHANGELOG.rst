@@ -20,7 +20,7 @@ Features
     Implement new version of AST router
       * Proper differentiation between ``alpha`` and ``string`` param types
       * Adds a ``slug`` param type
-      * Deprecates ``<foo:string>` in favor of ``<foo:str>``
+      * Deprecates ``<foo:string>`` in favor of ``<foo:str>``
       * Deprecates ``<foo:number>`` in favor of ``<foo:float>``
       * Adds a ``route.uri`` accessor
   * `#2136 <https://github.com/sanic-org/sanic/pull/2136>`_
@@ -72,7 +72,7 @@ Deprecations and Removals
     Remove config value ``REQUEST_BUFFER_QUEUE_SIZE``
   * `#2170 <https://github.com/sanic-org/sanic/pull/2170>`_
     ``CompositionView`` deprecated and marked for removal in 21.12
-  * `#__ <https://github.com/sanic-org/sanic/pull/2170>`_
+  * `#2172 <https://github.com/sanic-org/sanic/pull/2170>`_
     Deprecate StreamingHTTPResponse
 
 Developer infrastructure

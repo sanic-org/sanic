@@ -140,7 +140,6 @@ class ASGIApp:
                 instance.ws = instance.transport.create_websocket_connection(
                     send, receive
                 )
-                await instance.ws.accept()
             else:
                 raise ServerError("Received unknown ASGI scope")
 

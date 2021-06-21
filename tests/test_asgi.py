@@ -218,7 +218,7 @@ async def test_websocket_accept_with_no_subprotocols(
 
     message = message_stack.popleft()
     assert message["type"] == "websocket.accept"
-    assert message["subprotocol"] == ""
+    assert message["subprotocol"] is None
     assert "bytes" not in message
 
 
@@ -227,7 +227,7 @@ async def test_websocket_accept_with_subprotocol(send, receive, message_stack):
     subprotocols = ["graphql-ws"]
 
     ws = WebSocketConnection(send, receive, subprotocols)
-    await ws.accept()
+    await ws.accept(subprotocols)
 
     assert len(message_stack) == 1
 
@@ -244,13 +244,13 @@ async def test_websocket_accept_with_multiple_subprotocols(
     subprotocols = ["graphql-ws", "hello", "world"]
 
     ws = WebSocketConnection(send, receive, subprotocols)
-    await ws.accept()
+    await ws.accept(["hello", "world"])
 
     assert len(message_stack) == 1
 
     message = message_stack.popleft()
     assert message["type"] == "websocket.accept"
-    assert message["subprotocol"] == "graphql-ws,hello,world"
+    assert message["subprotocol"] == "hello"
     assert "bytes" not in message
 
 

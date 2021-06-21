@@ -1,4 +1,3 @@
-from traceback import format_exc
 from typing import Dict, List, Type
 
 from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response

@@ -30,3 +30,7 @@ async def app_info_dump(app: Sanic, _):
 @app.after_server_start
 async def shutdown(app: Sanic, _):
     app.stop()
+
+
+def create_app():
+    return app

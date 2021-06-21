@@ -6,6 +6,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - sanic/*
+      - tests/*
 
 jobs:
   testPy37:
@@ -14,7 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        #         os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         config:
           - { python-version: 3.7, tox-env: py37 }
           - { python-version: 3.7, tox-env: py37-no-ext }

@@ -6,6 +6,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - sanic/*
+      - tests/*
 
 jobs:
   testPy39:
@@ -14,10 +17,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         config:
-          - { python-version: 3.9, tox-env: py39, ignore-error-flake: "false", command-timeout: '0'}
-          - { python-version: 3.9, tox-env: py39-no-ext, ignore-error-flake: "true", command-timeout: '600000'}
+          - {
+              python-version: 3.9,
+              tox-env: py39,
+              ignore-error-flake: "false",
+              command-timeout: "0",
+            }
+          - {
+              python-version: 3.9,
+              tox-env: py39-no-ext,
+              ignore-error-flake: "true",
+              command-timeout: "600000",
+            }
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v2

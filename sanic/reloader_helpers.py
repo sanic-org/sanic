@@ -1,3 +1,4 @@
+import itertools
 import os
 import signal
 import subprocess
@@ -59,6 +60,20 @@ def restart_with_reloader():
     )
 
 
+def _check_file(filename, mtimes):
+    need_reload = False
+
+    mtime = os.stat(filename).st_mtime
+    old_time = mtimes.get(filename)
+    if old_time is None:
+        mtimes[filename] = mtime
+    elif mtime > old_time:
+        mtimes[filename] = mtime
+        need_reload = True
+
+    return need_reload
+
+
 def watchdog(sleep_interval, app):
     """Watch project files, restart worker process if a change happened.
 
@@ -85,17 +100,16 @@ def watchdog(sleep_interval, app):
         while True:
             need_reload = False
 
-            for filename in _iter_module_files():
+            for filename in itertools.chain(
+                _iter_module_files(),
+                *(d.glob("**/*") for d in app.reload_dirs),
+            ):
                 try:
-                    mtime = os.stat(filename).st_mtime
+                    check = _check_file(filename, mtimes)
                 except OSError:
                     continue
 
-                old_time = mtimes.get(filename)
-                if old_time is None:
-                    mtimes[filename] = mtime
-                elif mtime > old_time:
-                    mtimes[filename] = mtime
+                if check:
                     need_reload = True
 
             if need_reload:

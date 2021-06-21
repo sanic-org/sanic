@@ -65,6 +65,7 @@ class ConnInfo:
     __slots__ = (
         "client_port",
         "client",
+        "client_ip",
         "ctx",
         "peername",
         "server_port",
@@ -78,6 +79,7 @@ class ConnInfo:
         self.peername = None
         self.server = self.client = ""
         self.server_port = self.client_port = 0
+        self.client_ip = ""
         self.sockname = addr = transport.get_extra_info("sockname")
         self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
 
@@ -96,6 +98,7 @@ class ConnInfo:
 
         if isinstance(addr, tuple):
             self.client = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.client_ip = addr[0]
             self.client_port = addr[1]
 
 
@@ -122,7 +125,6 @@ class HttpProtocol(asyncio.Protocol):
         "response_timeout",
         "keep_alive_timeout",
         "request_max_size",
-        "request_buffer_queue_size",
         "request_class",
         "error_handler",
         # enable or disable access log purpose
@@ -165,9 +167,6 @@ class HttpProtocol(asyncio.Protocol):
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
-        self.request_buffer_queue_size = (
-            self.app.config.REQUEST_BUFFER_QUEUE_SIZE
-        )
         self.response_timeout = self.app.config.RESPONSE_TIMEOUT
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE

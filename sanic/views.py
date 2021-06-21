@@ -1,7 +1,23 @@
-from typing import Any, Callable, List
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Union,
+)
+from warnings import warn
 
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import InvalidUsage
+
+
+if TYPE_CHECKING:
+    from sanic import Sanic
+    from sanic.blueprints import Blueprint
 
 
 class HTTPMethodView:
@@ -40,6 +56,31 @@ class HTTPMethodView:
 
     decorators: List[Callable[[Callable[..., Any]], Callable[..., Any]]] = []
 
+    def __init_subclass__(
+        cls,
+        attach: Optional[Union[Sanic, Blueprint]] = None,
+        uri: str = "",
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        stream: bool = False,
+        version_prefix: str = "/v",
+    ) -> None:
+        if attach:
+            cls.attach(
+                attach,
+                uri=uri,
+                methods=methods,
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+                stream=stream,
+                version_prefix=version_prefix,
+            )
+
     def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)
         return handler(request, *args, **kwargs)
@@ -64,6 +105,31 @@ class HTTPMethodView:
         view.__module__ = cls.__module__
         view.__name__ = cls.__name__
         return view
+
+    @classmethod
+    def attach(
+        cls,
+        to: Union[Sanic, Blueprint],
+        uri: str,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        stream: bool = False,
+        version_prefix: str = "/v",
+    ) -> None:
+        to.add_route(
+            cls.as_view(),
+            uri=uri,
+            methods=methods,
+            host=host,
+            strict_slashes=strict_slashes,
+            version=version,
+            name=name,
+            stream=stream,
+            version_prefix=version_prefix,
+        )
 
 
 def stream(func):
@@ -91,6 +157,11 @@ class CompositionView:
     def __init__(self):
         self.handlers = {}
         self.name = self.__class__.__name__
+        warn(
+            "CompositionView has been deprecated and will be removed in "
+            "v21.12. Please update your view to HTTPMethodView.",
+            DeprecationWarning,
+        )
 
     def __name__(self):
         return self.name

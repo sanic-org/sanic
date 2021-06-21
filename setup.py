@@ -88,12 +88,12 @@ requirements = [
     uvloop,
     ujson,
     "aiofiles>=0.6.0",
-    "websockets>=8.1,<9.0",
+    "websockets>=9.0",
     "multidict>=5.0,<6.0",
 ]
 
 tests_require = [
-    "sanic-testing",
+    "sanic-testing>=0.6.0",
     "pytest==5.2.1",
     "multidict>=5.0,<6.0",
     "gunicorn==20.0.4",

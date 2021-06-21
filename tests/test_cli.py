@@ -26,7 +26,15 @@ def capture(command):
     return out, err, proc.returncode
 
 
-@pytest.mark.parametrize("appname", ("fake.server.app", "fake.server:app"))
+@pytest.mark.parametrize(
+    "appname",
+    (
+        "fake.server.app",
+        "fake.server:app",
+        "fake.server:create_app()",
+        "fake.server.create_app()",
+    ),
+)
 def test_server_run(appname):
     command = ["sanic", appname]
     out, err, exitcode = capture(command)

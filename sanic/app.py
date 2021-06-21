@@ -14,6 +14,7 @@ from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
 from inspect import isawaitable
+from pathlib import Path
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
@@ -105,6 +106,7 @@ class Sanic(BaseSanic):
         "name",
         "named_request_middleware",
         "named_response_middleware",
+        "reload_dirs",
         "request_class",
         "request_middleware",
         "response_middleware",
@@ -168,6 +170,7 @@ class Sanic(BaseSanic):
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        self.reload_dirs: Set[Path] = set()
         self.request_class = request_class
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
@@ -183,7 +186,6 @@ class Sanic(BaseSanic):
 
         if register is not None:
             self.config.REGISTER = register
-
         if self.config.REGISTER:
             self.__class__.register_app(self)
 
@@ -390,7 +392,7 @@ class Sanic(BaseSanic):
             if self.config.EVENT_AUTOREGISTER:
                 self.signal_router.reset()
                 self.add_signal(None, event)
-                signal = self.signal_router.name_index.get(event)
+                signal = self.signal_router.name_index[event]
                 self.signal_router.finalize()
             else:
                 raise NotFound("Could not find signal %s" % event)
@@ -583,7 +585,12 @@ class Sanic(BaseSanic):
             # determine if the parameter supplied by the caller
             # passes the test in the URL
             if param_info.pattern:
-                passes_pattern = param_info.pattern.match(supplied_param)
+                pattern = (
+                    param_info.pattern[1]
+                    if isinstance(param_info.pattern, tuple)
+                    else param_info.pattern
+                )
+                passes_pattern = pattern.match(supplied_param)
                 if not passes_pattern:
                     if param_info.cast != str:
                         msg = (
@@ -591,13 +598,13 @@ class Sanic(BaseSanic):
                             f"for parameter `{param_info.name}` does "
                             "not match pattern for type "
                             f"`{param_info.cast.__name__}`: "
-                            f"{param_info.pattern.pattern}"
+                            f"{pattern.pattern}"
                         )
                     else:
                         msg = (
                             f'Value "{supplied_param}" for parameter '
                             f"`{param_info.name}` does not satisfy "
-                            f"pattern {param_info.pattern.pattern}"
+                            f"pattern {pattern.pattern}"
                         )
                     raise URLBuildError(msg)
 
@@ -738,17 +745,14 @@ class Sanic(BaseSanic):
 
             if response:
                 response = await request.respond(response)
-            else:
+            elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
-            # Make sure that response is finished / run StreamingHTTP callback
 
+            # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
                 await response.send(end_stream=True)
             else:
-                try:
-                    # Fastest method for checking if the property exists
-                    handler.is_websocket  # type: ignore
-                except AttributeError:
+                if not hasattr(handler, "is_websocket"):
                     raise ServerError(
                         f"Invalid response type {response!r} "
                         "(need HTTPResponse)"
@@ -775,6 +779,7 @@ class Sanic(BaseSanic):
 
         if self.asgi:
             ws = request.transport.get_websocket_connection()
+            await ws.accept(subprotocols)
         else:
             protocol = request.transport.get_protocol()
             protocol.app = self
@@ -847,6 +852,7 @@ class Sanic(BaseSanic):
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         loop: None = None,
+        reload_dir: Optional[Union[List[str], str]] = None,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -881,6 +887,18 @@ class Sanic(BaseSanic):
         :type unix: str
         :return: Nothing
         """
+        if reload_dir:
+            if isinstance(reload_dir, str):
+                reload_dir = [reload_dir]
+
+            for directory in reload_dir:
+                direc = Path(directory)
+                if not direc.is_dir():
+                    logger.warning(
+                        f"Directory {directory} could not be located"
+                    )
+                self.reload_dirs.add(Path(directory))
+
         if loop is not None:
             raise TypeError(
                 "loop is not a valid argument. To use an existing loop, "

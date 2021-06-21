@@ -14,8 +14,12 @@ from websockets import (  # type: ignore
     ConnectionClosed,
     InvalidHandshake,
     WebSocketCommonProtocol,
-    handshake,
 )
+
+# Despite the "legacy" namespace, the primary maintainer of websockets
+# committed to maintaining backwards-compatibility until 2026 and will
+# consider extending it if sanic continues depending on this module.
+from websockets.legacy import handshake
 
 from sanic.exceptions import InvalidUsage
 from sanic.server import HttpProtocol
@@ -37,7 +41,7 @@ class WebSocketProtocol(HttpProtocol):
         websocket_write_limit=2 ** 16,
         websocket_ping_interval=20,
         websocket_ping_timeout=20,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.websocket = None
@@ -126,7 +130,9 @@ class WebSocketProtocol(HttpProtocol):
             ping_interval=self.websocket_ping_interval,
             ping_timeout=self.websocket_ping_timeout,
         )
-        # Following two lines are required for websockets 8.x
+        # we use WebSocketCommonProtocol because we don't want the handshake
+        # logic from WebSocketServerProtocol; however, we must tell it that
+        # we're running on the server side
         self.websocket.is_client = False
         self.websocket.side = "server"
         self.websocket.subprotocol = subprotocol
@@ -148,7 +154,7 @@ class WebSocketConnection:
     ) -> None:
         self._send = send
         self._receive = receive
-        self.subprotocols = subprotocols or []
+        self._subprotocols = subprotocols or []
 
     async def send(self, data: Union[str, bytes], *args, **kwargs) -> None:
         message: Dict[str, Union[str, bytes]] = {"type": "websocket.send"}
@@ -172,13 +178,28 @@ class WebSocketConnection:
 
     receive = recv
 
-    async def accept(self) -> None:
+    async def accept(self, subprotocols: Optional[List[str]] = None) -> None:
+        subprotocol = None
+        if subprotocols:
+            for subp in subprotocols:
+                if subp in self.subprotocols:
+                    subprotocol = subp
+                    break
+
         await self._send(
             {
                 "type": "websocket.accept",
-                "subprotocol": ",".join(list(self.subprotocols)),
+                "subprotocol": subprotocol,
             }
         )
 
     async def close(self) -> None:
         pass
+
+    @property
+    def subprotocols(self):
+        return self._subprotocols
+
+    @subprotocols.setter
+    def subprotocols(self, subprotocols: Optional[List[str]] = None):
+        self._subprotocols = subprotocols or []

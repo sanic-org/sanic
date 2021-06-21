@@ -1,5 +1,4 @@
 from ast import NodeVisitor, Return, parse
-from distutils.log import error
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
@@ -805,8 +804,8 @@ class RouteMixin:
             )
         except Exception:
             error_logger.exception(
-                f"Exception in static request handler:\
- path={file_or_directory}, "
+                f"Exception in static request handler: "
+                f"path={file_or_directory}, "
                 f"relative_url={__file_uri__}"
             )
 
@@ -886,12 +885,14 @@ class RouteMixin:
         return route
 
     def _determine_error_format(self, handler) -> str:
-        src = dedent(getsource(handler))
-        tree = parse(src)
-        http_response_types = self._get_response_types(tree)
+        if not isinstance(handler, CompositionView):
+            src = dedent(getsource(handler))
+            tree = parse(src)
+            http_response_types = self._get_response_types(tree)
 
-        if len(http_response_types) == 1:
-            return next(iter(http_response_types))
+            if len(http_response_types) == 1:
+                return next(iter(http_response_types))
+
         return "auto"
 
     def _get_response_types(self, node):

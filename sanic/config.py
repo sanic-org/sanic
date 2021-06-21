@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from warnings import warn
 
-from sanic.errorpages import RENDERERS_BY_CONFIG, check_error_format
-from sanic.exceptions import SanicException
+from sanic.errorpages import check_error_format
 from sanic.http import Http
 
 from .utils import load_module_from_file_location, str_to_bool

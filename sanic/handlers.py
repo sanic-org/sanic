@@ -135,7 +135,6 @@ class ErrorHandler:
             error_logger.exception(
                 "Exception occurred while handling uri: %s", url
             )
-            error_logger.error(format_exc())
 
         return exception_response(
             request,

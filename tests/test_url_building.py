@@ -143,7 +143,7 @@ def test_fails_url_build_if_params_not_passed(app):
 
 COMPLEX_PARAM_URL = (
     "/<foo:int>/<four_letter_string:[A-z]{4}>/"
-    "<two_letter_string:[A-z]{2}>/<normal_string>/<some_number:number>"
+    "<two_letter_string:[A-z]{2}>/<normal_string>/<some_number:float>"
 )
 PASSING_KWARGS = {
     "foo": 4,
@@ -168,7 +168,7 @@ def test_fails_with_int_message(app):
 
     expected_error = (
         r'Value "not_int" for parameter `foo` '
-        r"does not match pattern for type `int`: ^-?\d+"
+        r"does not match pattern for type `int`: ^-?\d+$"
     )
     assert str(e.value) == expected_error
 
@@ -223,7 +223,7 @@ def test_fails_with_number_message(app):
 
 @pytest.mark.parametrize("number", [3, -3, 13.123, -13.123])
 def test_passes_with_negative_number_message(app, number):
-    @app.route("path/<possibly_neg:number>/another-word")
+    @app.route("path/<possibly_neg:float>/another-word")
     def good(request, possibly_neg):
         assert isinstance(possibly_neg, (int, float))
         return text(f"this should pass with `{possibly_neg}`")

@@ -160,7 +160,9 @@ class RouteMixin:
             if apply:
                 self._apply_route(route)
 
-            return route, handler
+            if static:
+                return route, handler
+            return handler
 
         return decorator
 

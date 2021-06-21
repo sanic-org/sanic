@@ -2246,9 +2246,7 @@ def test_conflicting_body_methods_overload(app):
 
 
 def test_handler_overload(app):
-    @app.get(
-        "/long/sub/route/param_a/<param_a:string>/param_b/<param_b:string>"
-    )
+    @app.get("/long/sub/route/param_a/<param_a:str>/param_b/<param_b:str>")
     @app.post("/long/sub/route/")
     def handler(request, **kwargs):
         return json(kwargs)

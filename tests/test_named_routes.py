@@ -234,7 +234,7 @@ def test_named_dynamic_route():
         app.router.routes_all[
             (
                 "folder",
-                "<name>",
+                "<name:str>",
             )
         ].name
         == "app.route_dynamic"
@@ -369,7 +369,8 @@ def test_dynamic_add_named_route():
 
     app.add_route(handler, "/folder/<name>", name="route_dynamic")
     assert (
-        app.router.routes_all[("folder", "<name>")].name == "app.route_dynamic"
+        app.router.routes_all[("folder", "<name:str>")].name
+        == "app.route_dynamic"
     )
     assert app.url_for("route_dynamic", name="test") == "/folder/test"
     with pytest.raises(URLBuildError):

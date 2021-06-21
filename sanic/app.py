@@ -164,7 +164,9 @@ class Sanic(BaseSanic):
         self.configure_logging = configure_logging
         self.ctx = ctx or SimpleNamespace()
         self.debug = None
-        self.error_handler = error_handler or ErrorHandler()
+        self.error_handler = error_handler or ErrorHandler(
+            fallback=self.config.FALLBACK_ERROR_FORMAT,
+        )
         self.is_running = False
         self.is_stopping = False
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)

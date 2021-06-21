@@ -1,12 +1,14 @@
 from traceback import format_exc
+from typing import Dict, List, Type
 
-from sanic.errorpages import exception_response
+from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
 from sanic.exceptions import (
     ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
 )
 from sanic.log import error_logger
+from sanic.models.handler_types import RouteHandler
 from sanic.response import text
 
 
@@ -23,14 +25,14 @@ class ErrorHandler:
 
     """
 
-    handlers = None
-    cached_handlers = None
+    handlers: List[RouteHandler] = []
+    cached_handlers: Dict[Type[BaseException], RouteHandler] = {}
     _missing = object()
 
-    def __init__(self):
-        self.handlers = []
-        self.cached_handlers = {}
+    def __init__(self, fallback: str, base: Type[BaseRenderer] = HTMLRenderer):
         self.debug = False
+        self.fallback = fallback
+        self.base = base
 
     def add(self, exception, handler):
         """
@@ -93,7 +95,6 @@ class ErrorHandler:
             if response is None:
                 response = self.default(request, exception)
         except Exception:
-            self.log(format_exc())
             try:
                 url = repr(request.url)
             except AttributeError:
@@ -108,11 +109,6 @@ class ErrorHandler:
             else:
                 return text("An error occurred while handling an error", 500)
         return response
-
-    def log(self, message, level="error"):
-        """
-        Deprecated, do not use.
-        """
 
     def default(self, request, exception):
         """
@@ -136,12 +132,18 @@ class ErrorHandler:
             except AttributeError:
                 url = "unknown"
 
-            self.log(format_exc())
             error_logger.exception(
                 "Exception occurred while handling uri: %s", url
             )
+            error_logger.error(format_exc())
 
-        return exception_response(request, exception, self.debug)
+        return exception_response(
+            request,
+            exception,
+            debug=self.debug,
+            base=self.base,
+            fallback=self.fallback,
+        )
 
 
 class ContentRangeHandler:

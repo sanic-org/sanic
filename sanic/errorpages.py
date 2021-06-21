@@ -19,7 +19,7 @@ import typing as t
 from functools import partial
 from traceback import extract_tb
 
-from sanic.exceptions import SanicException
+from sanic.exceptions import InvalidUsage, SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
@@ -365,6 +365,8 @@ def exception_response(
     request: Request,
     exception: Exception,
     debug: bool,
+    fallback: str,
+    base: t.Type[BaseRenderer],
     renderer: t.Type[t.Optional[BaseRenderer]] = None,
 ) -> HTTPResponse:
     """
@@ -372,26 +374,41 @@ def exception_response(
     """
 
     if not renderer:
-        renderer = HTMLRenderer
+        # Make sure we have something set
+        renderer = base
+        render_format = fallback
 
         if request:
-            # if request.app.config.FALLBACK_ERROR_FORMAT == "auto":
-            #     try:
-            #         renderer = JSONRenderer if request.json else HTMLRenderer
-            #     except InvalidUsage:
-            #         renderer = HTMLRenderer
+            # If there is a request, try and get the format
+            # from the route
+            if request.route:
+                try:
+                    render_format = request.route.ctx.error_format
+                except AttributeError:
+                    ...
 
-            #     content_type, *_ = request.headers.getone(
-            #         "content-type", ""
-            #     ).split(";")
-            #     renderer = RENDERERS_BY_CONTENT_TYPE.get(
-            #         content_type, renderer
-            #     )
-            # else:
+            # If the format is auto still, make a guess
+            if render_format == "auto":
+                # First, look to see if there was a JSON body
+                try:
+                    renderer = JSONRenderer if request.json else base
+                except InvalidUsage:
+                    renderer = base
 
-            # We can ignore mypy here because request.route will exist
-            render_format = request.route.ctx.error_format  # type: ignore
-            renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
+                # Second, if there is a content-type in the request
+                # we can assume that's what we want. Otherwise, go back to
+                # previous guess.
+                content_type, *_ = request.headers.getone(
+                    "content-type", ""
+                ).split(";")
+                renderer = RENDERERS_BY_CONTENT_TYPE.get(
+                    content_type, renderer
+                )
+
+                # Third, TODO: if there is an Accept header, make sure
+                # our choice is okay
+            else:
+                renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()

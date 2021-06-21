@@ -133,7 +133,7 @@ class Router(BaseRouter):
             route.ctx.hosts = hosts
             route.ctx.static = static
             route.ctx.error_format = (
-                error_format or self.ctx.app.config.ERROR_FORMAT
+                error_format or self.ctx.app.config.FALLBACK_ERROR_FORMAT
             )
 
             routes.append(route)

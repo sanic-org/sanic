@@ -6,6 +6,7 @@ from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from re import sub
+from textwrap import dedent
 from time import gmtime, strftime
 from typing import Any, Iterable, List, Optional, Set, Union
 from urllib.parse import unquote
@@ -885,13 +886,13 @@ class RouteMixin:
         return route
 
     def _determine_error_format(self, handler) -> str:
-        src = getsource(handler)
+        src = dedent(getsource(handler))
         tree = parse(src)
         http_response_types = self._get_response_types(tree)
 
         if len(http_response_types) == 1:
             return next(iter(http_response_types))
-        return "html"
+        return "auto"
 
     def _get_response_types(self, node):
         types = set()

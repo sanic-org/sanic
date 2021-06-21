@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, List, Optional, Union
-
-import sanic
 
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ class BlueprintGroup(MutableSequence):
         return self._url_prefix
 
     @property
-    def blueprints(self) -> List["sanic.Blueprint"]:
+    def blueprints(self) -> List[Blueprint]:
         """
         Retrieve a list of all the available blueprints under this group.
 
@@ -187,7 +187,7 @@ class BlueprintGroup(MutableSequence):
         """
         return len(self._blueprints)
 
-    def append(self, value: "sanic.Blueprint") -> None:
+    def append(self, value: Blueprint) -> None:
         """
         The Abstract class `MutableSequence` leverages this append method to
         perform the `BlueprintGroup.append` operation.
@@ -196,7 +196,7 @@ class BlueprintGroup(MutableSequence):
         """
         self._blueprints.append(value)
 
-    def insert(self, index: int, item: "sanic.Blueprint") -> None:
+    def insert(self, index: int, item: Blueprint) -> None:
         """
         The Abstract class `MutableSequence` leverages this insert method to
         perform the `BlueprintGroup.append` operation.

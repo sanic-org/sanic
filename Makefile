@@ -49,6 +49,9 @@ test: clean
 test-coverage: clean
 	python setup.py test --pytest-args="--cov sanic --cov-report term --cov-append "
 
+view-coverage:
+	sanic ./coverage --simple
+
 install:
 	python setup.py install
 

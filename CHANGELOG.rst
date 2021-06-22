@@ -18,6 +18,7 @@ Features
     Alternatate classes on instantiation for ``Config`` and ``Sanic.ctx``
   * `#2133 <https://github.com/sanic-org/sanic/pull/2133>`_
     Implement new version of AST router
+
       * Proper differentiation between ``alpha`` and ``string`` param types
       * Adds a ``slug`` param type
       * Deprecates ``<foo:string>`` in favor of ``<foo:str>``

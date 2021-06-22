@@ -87,7 +87,7 @@ Permform ``flake8``\ , ``black`` and ``isort`` checks.
    tox -e lint
 
 Run type annotation checks
----------------
+--------------------------
 
 ``tox`` environment -> ``[testenv:type-checking]``
 

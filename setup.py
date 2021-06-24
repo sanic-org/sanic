@@ -95,12 +95,9 @@ requirements = [
 tests_require = [
     "sanic-testing>=0.6.0",
     "pytest==5.2.1",
-    "multidict>=5.0,<6.0",
     "gunicorn==20.0.4",
     "pytest-cov",
     "beautifulsoup4",
-    uvloop,
-    ujson,
     "pytest-sanic",
     "pytest-sugar",
     "pytest-benchmark",
@@ -115,7 +112,6 @@ docs_require = [
 ]
 
 dev_require = tests_require + [
-    "aiofiles",
     "tox",
     "black",
     "flake8",
@@ -128,13 +124,11 @@ all_require = dev_require + docs_require
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
-    tests_require.remove(ujson)
 
 # 'nt' means windows OS
 if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
-    tests_require.remove(uvloop)
 
 extras_require = {
     "test": tests_require,

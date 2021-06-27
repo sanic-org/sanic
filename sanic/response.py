@@ -245,6 +245,12 @@ class HTTPResponse(BaseHTTPResponse):
     async def eof(self):
         await self.send("", True)
 
+    async def __aenter__(self):
+        return self.send
+
+    async def __aexit__(self, *_):
+        await self.eof()
+
 
 def empty(
     status=204, headers: Optional[Dict[str, str]] = None

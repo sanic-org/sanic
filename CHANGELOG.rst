@@ -5,7 +5,7 @@ Features
 ********
 
   * `#2094 <https://github.com/sanic-org/sanic/pull/2094>`_
-    Add ``eof`` method for closing a stream in a handler
+    Add ``response.eof()`` method for closing a stream in a handler
   * `#2097 <https://github.com/sanic-org/sanic/pull/2097>`_
     Allow case-insensitive HTTP Upgrade header
   * `#2104 <https://github.com/sanic-org/sanic/pull/2104>`_
@@ -20,12 +20,12 @@ Features
     Implement new version of AST router
 
       * Proper differentiation between ``alpha`` and ``string`` param types
-      * Adds a ``slug`` param type
+      * Adds a ``slug`` param type, example: ``<foo:slug>``
       * Deprecates ``<foo:string>`` in favor of ``<foo:str>``
       * Deprecates ``<foo:number>`` in favor of ``<foo:float>``
       * Adds a ``route.uri`` accessor
   * `#2136 <https://github.com/sanic-org/sanic/pull/2136>`_
-    CLI improvements
+    CLI improvements with new optional params
   * `#2137 <https://github.com/sanic-org/sanic/pull/2137>`_
     Add ``version_prefix`` to URL builders
   * `#2140 <https://github.com/sanic-org/sanic/pull/2140>`_
@@ -63,7 +63,7 @@ Bugfixes
   * `#2127 <https://github.com/sanic-org/sanic/pull/2127>`_
     Make sure ASGI ws subprotocols is a list
   * `#2128 <https://github.com/sanic-org/sanic/pull/2128>`_
-    Make sure ASGI ws subprotocols is a list
+    Fix issue where Blueprint exception handlers do not consistently route to proper handler
 
 
 Deprecations and Removals

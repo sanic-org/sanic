@@ -224,7 +224,6 @@ def non_chunked_streaming_app(app):
             sample_streaming_fn,
             headers={"Content-Length": "7"},
             content_type="text/csv",
-            chunked=False,
         )
 
     return app
@@ -251,11 +250,7 @@ async def test_chunked_streaming_returns_correct_content_asgi(streaming_app):
 
 
 def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
-    with pytest.warns(UserWarning) as record:
-        request, response = non_chunked_streaming_app.test_client.get("/")
-
-    assert len(record) == 1
-    assert "removed in v21.6" in record[0].message.args[0]
+    request, response = non_chunked_streaming_app.test_client.get("/")
 
     assert "Transfer-Encoding" not in response.headers
     assert response.headers["Content-Type"] == "text/csv"

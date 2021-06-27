@@ -113,6 +113,7 @@ docs_require = [
 
 dev_require = tests_require + [
     "tox",
+    "isort",
     "black",
     "flake8",
     "bandit",

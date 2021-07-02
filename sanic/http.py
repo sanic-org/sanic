@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse
+    from sanic.server import HttpProtocol
 
 from asyncio import CancelledError, sleep
 from enum import Enum
@@ -90,7 +91,7 @@ class Http:
         "upgrade_websocket",
     ]
 
-    def __init__(self, protocol):
+    def __init__(self, protocol: HttpProtocol):
         self._send = protocol.send
         self._receive_more = protocol.receive_more
         self.recv_buffer = protocol.recv_buffer

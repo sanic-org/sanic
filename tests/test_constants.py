@@ -1,6 +1,4 @@
-from crypt import methods
-
-from sanic import text
+from sanic import Sanic, text
 from sanic.constants import HTTP_METHODS, HTTPMethod
 
 
@@ -14,7 +12,7 @@ def test_string_compat():
     assert HTTPMethod.GET.upper() == "GET"
 
 
-def test_use_in_routes(app):
+def test_use_in_routes(app: Sanic):
     @app.route("/", methods=[HTTPMethod.GET, HTTPMethod.POST])
     def handler(_):
         return text("It works")

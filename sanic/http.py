@@ -99,15 +99,15 @@ class Http:
         self.expecting_continue: bool = False
         self.stage: Stage = Stage.IDLE
         self.request_body = None
-        self.request_bytes = None
-        self.request_bytes_left = None
-        self.request_max_size = protocol.request_max_size
+        self.request_bytes: Optional[int] = None
+        self.request_bytes_left: Optional[int] = None
+        self.request_max_size: int = protocol.request_max_size
         self.keep_alive = True
         self.head_only = None
-        self.request: Request = None
-        self.response: BaseHTTPResponse = None
+        self.request: Optional[Request] = None
+        self.response: Optional[BaseHTTPResponse] = None
         self.exception = None
-        self.url = None
+        self.url: Optional[str] = None
         self.upgrade_websocket = False
 
     def __bool__(self):
@@ -268,6 +268,8 @@ class Http:
         self, data: bytes, end_stream: bool
     ) -> None:
         res = self.response
+        if not res:
+            raise ServerError("No response found")
 
         # Compatibility with simple response body
         if not data and getattr(res, "body", None):
@@ -281,7 +283,7 @@ class Http:
         if not isinstance(status, int) or status < 200:
             raise RuntimeError(f"Invalid response status {status!r}")
 
-        if not has_message_body(status):
+        if not has_message_body(status) and self.request:
             # Header-only response status
             self.response_func = None
             if (
@@ -397,7 +399,7 @@ class Http:
             self.stage = Stage.HANDLER
 
         # From request and handler states we can respond, otherwise be silent
-        if self.stage is Stage.HANDLER:
+        if self.stage is Stage.HANDLER and self.request:
             app = self.protocol.app
 
             if self.request is None:
@@ -411,7 +413,8 @@ class Http:
         if an error occurred during before a request was received. Create a
         bogus response for error handling use.
         """
-
+        if not self.protocol.transport:
+            raise ServerError("No transport protocol found")
         # FIXME: Avoid this by refactoring error handling and response code
         self.request = self.protocol.request_class(
             url_bytes=self.url.encode() if self.url else b"*",
@@ -464,6 +467,9 @@ class Http:
         if self.expecting_continue:
             self.expecting_continue = False
             await self._send(HTTP_CONTINUE)
+
+        if self.request_bytes is None:
+            self.request_bytes = 0
 
         # Receive request body chunk
         buf = self.recv_buffer

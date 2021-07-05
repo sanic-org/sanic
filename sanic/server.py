@@ -162,15 +162,15 @@ class HttpProtocol(asyncio.Protocol):
         self.conn_info: Optional[ConnInfo] = None
         self.request: Optional[Request] = None
         self.signal = signal or Signal()
-        self.access_log = self.app.config.ACCESS_LOG
+        self.access_log: bool = self.app.config.ACCESS_LOG
         self.connections = connections if connections is not None else set()
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
         self.response_timeout = self.app.config.RESPONSE_TIMEOUT
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
-        self.request_max_size = self.app.config.REQUEST_MAX_SIZE
-        self.request_class = self.app.request_class or Request
+        self.request_max_size: int = self.app.config.REQUEST_MAX_SIZE
+        self.request_class: Type[Request] = self.app.request_class or Request
         self.state = state if state else {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0

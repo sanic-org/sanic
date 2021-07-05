@@ -490,6 +490,7 @@ class Http:
 
             if size <= 0:
                 self.request_body = None
+                self.protocol._task = None
 
                 if size < 0:
                     self.keep_alive = False

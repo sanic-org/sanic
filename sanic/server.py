@@ -219,18 +219,7 @@ class HttpProtocol(asyncio.Protocol):
         """
         self.transport.resume_reading()
         self._data_received.clear()
-        try:
-            await self._data_received.wait()
-        except CancelledError as e:
-            if (
-                self._http
-                and self._http.request
-                and self._http.request.route
-                and not getattr(
-                    self._http.request.route.handler, "is_stream", None
-                )
-            ):
-                raise e
+        await self._data_received.wait()
 
     def check_timeouts(self):
         """

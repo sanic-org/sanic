@@ -297,8 +297,6 @@ class Blueprint(BaseSanic):
             app._apply_signal(signal)
 
         self.routes = [route for route in routes if isinstance(route, Route)]
-
-        # Deprecate these in 21.6
         self.websocket_routes = [
             route for route in self.routes if route.ctx.websocket
         ]

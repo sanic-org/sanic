@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from collections import defaultdict
+from copy import deepcopy
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
 
@@ -143,6 +144,23 @@ class Blueprint(BaseSanic):
     def signal(self, event: str, *args, **kwargs):
         kwargs["apply"] = False
         return super().signal(event, *args, **kwargs)
+
+    def copy(
+        self,
+        name: str,
+        url_prefix: str = "",
+        version: Optional[Union[int, str, float]] = None,
+        strict_slashes: Optional[bool] = None,
+        version_prefix: str = "/v",
+    ):
+        new_bp = deepcopy(self)
+        new_bp.name = name
+        new_bp.url_prefix = url_prefix
+        new_bp.version = version
+        new_bp.strict_slashes = strict_slashes
+        new_bp.version_prefix = version_prefix
+
+        return new_bp
 
     @staticmethod
     def group(

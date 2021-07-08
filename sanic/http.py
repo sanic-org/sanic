@@ -494,10 +494,11 @@ class Http:
                     raise InvalidUsage("Bad chunked encoding")
 
                 # Consume CRLF, chunk size 0 and the two CRLF that follow
-                assert pos + 4 == 7  # CRLF-0-CRLF-CRLF
-                while len(buf) < 7:
+                pos += 4
+                # Might need to wait for the final CRLF
+                while len(buf) < pos:
                     await self._receive_more()
-                del buf[:7]
+                del buf[:pos]
                 return None
 
             # Remove CRLF, chunk size and the CRLF that follows

@@ -474,7 +474,7 @@ def serve(
     unix: Optional[str] = None,
     reuse_port: bool = False,
     loop=None,
-    protocol: Type[asyncio.Protocol] = HttpProtocol,
+    protocol: Type[HttpProtocol] = HttpProtocol,
     backlog: int = 100,
     register_sys_signals: bool = True,
     run_multiple: bool = False,
@@ -626,7 +626,7 @@ def serve(
 
 
 def _build_protocol_kwargs(
-    protocol: Type[asyncio.Protocol], config: Config
+    protocol: Type[HttpProtocol], config: Config
 ) -> Dict[str, Union[int, float]]:
     if hasattr(protocol, "websocket_handshake"):
         return {

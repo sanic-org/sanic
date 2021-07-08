@@ -6,7 +6,6 @@ import re
 from asyncio import (
     BufferedProtocol,
     CancelledError,
-    Protocol,
     ensure_future,
     get_event_loop,
     wait_for,

@@ -132,6 +132,7 @@ class HttpProtocol(BufferedProtocol):
         # connection management
         "state",
         "url",
+        "_buffer",
         "_handler_task",
         "_can_write",
         "_data_received",
@@ -329,10 +330,14 @@ class HttpProtocol(BufferedProtocol):
 
     def buffer_updated(self, nbytes: int) -> None:
         data = self._buffer[:nbytes]
+
         self._time = current_time()
         self.recv_buffer += data
 
-        if len(self.recv_buffer) > self.app.config.REQUEST_BUFFER_SIZE:
+        if (
+            len(self.recv_buffer) > self.app.config.REQUEST_BUFFER_SIZE
+            and self.transport
+        ):
             self.transport.pause_reading()
 
         if self._data_received:
@@ -340,8 +345,6 @@ class HttpProtocol(BufferedProtocol):
 
     def eof_received(self):
         return self.close()
-
-    #     self.data_received(b"")
 
 
 def trigger_events(events: Optional[Iterable[Callable[..., Any]]], loop):

@@ -492,7 +492,7 @@ class Http:
                 self.request_body = None
                 # Because we are leaving one CRLF in the buffer, we manually
                 # reset the buffer here
-                self.recv_buffer = bytearray()
+                self.recv_buffer = self.protocol.recv_buffer = bytearray()
 
                 if size < 0:
                     self.keep_alive = False

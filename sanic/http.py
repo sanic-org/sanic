@@ -139,7 +139,8 @@ class Http:
                 e = self.exception or ServiceUnavailable("Cancelled")
                 self.exception = None
                 self.keep_alive = False
-                await self.error_response(e)
+                if self.protocol.transport:
+                    await self.error_response(e)
             except Exception as e:
                 # Write an error response
                 await self.error_response(e)

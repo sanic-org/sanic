@@ -486,19 +486,22 @@ class Http:
                 self.keep_alive = False
                 raise InvalidUsage("Bad chunked encoding")
 
-            del buf[: pos + 2]
-
             if size <= 0:
                 self.request_body = None
-                # Because we are leaving one CRLF in the buffer, we manually
-                # reset the buffer here
-                self.recv_buffer = bytearray()
 
                 if size < 0:
                     self.keep_alive = False
                     raise InvalidUsage("Bad chunked encoding")
 
+                # Consume CRLF, chunk size 0 and the two CRLF that follow
+                assert pos + 4 == 7  # CRLF-0-CRLF-CRLF
+                while len(buf) < 7:
+                    await self._receive_more()
+                del buf[:7]
                 return None
+
+            # Remove CRLF, chunk size and the CRLF that follows
+            del buf[: pos + 2]
 
             self.request_bytes_left = size
             self.request_bytes += size

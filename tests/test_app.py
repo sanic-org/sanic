@@ -1,16 +1,22 @@
 import asyncio
 import logging
-import sys
+import re
 
 from inspect import isawaitable
 from os import environ
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from sanic import Sanic
+from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
+
+
+@pytest.fixture(autouse=True)
+def clear_app_registry():
+    Sanic._app_registry = {}
 
 
 def uvloop_installed():
@@ -70,6 +76,34 @@ def test_asyncio_server_start_serving(app):
         # Looks like we can't easily test `serve_forever()`
 
 
+def test_create_server_main(app, caplog):
+    app.listener("main_process_start")(lambda *_: ...)
+    loop = asyncio.get_event_loop()
+    with caplog.at_level(logging.INFO):
+        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        loop.run_until_complete(asyncio_srv_coro)
+    assert (
+        "sanic.root",
+        30,
+        "Listener events for the main process are not available with "
+        "create_server()",
+    ) in caplog.record_tuples
+
+
+def test_create_server_main_convenience(app, caplog):
+    app.main_process_start(lambda *_: ...)
+    loop = asyncio.get_event_loop()
+    with caplog.at_level(logging.INFO):
+        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        loop.run_until_complete(asyncio_srv_coro)
+    assert (
+        "sanic.root",
+        30,
+        "Listener events for the main process are not available with "
+        "create_server()",
+    ) in caplog.record_tuples
+
+
 def test_app_loop_not_running(app):
     with pytest.raises(SanicException) as excinfo:
         app.loop
@@ -109,7 +143,7 @@ def test_app_route_raise_value_error(app):
 
 def test_app_handle_request_handler_is_none(app, monkeypatch):
     def mockreturn(*args, **kwargs):
-        return None, {}, "", "", False
+        return Mock(), None, {}
 
     # Not sure how to make app.router.get() return None, so use mock here.
     monkeypatch.setattr(app.router, "get", mockreturn)
@@ -243,7 +277,7 @@ def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
     assert response.status == 500
     assert "Mock SanicException" in response.text
     assert (
-        "sanic.root",
+        "sanic.error",
         logging.ERROR,
         f"Exception occurred while handling uri: 'http://127.0.0.1:{port}/'",
     ) in caplog.record_tuples
@@ -272,14 +306,18 @@ def test_app_registry():
 
 
 def test_app_registry_wrong_type():
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match="Registered app must be an instance of Sanic"
+    ):
         Sanic.register_app(1)
 
 
 def test_app_registry_name_reuse():
     Sanic("test")
     Sanic.test_mode = False
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "test" already in use.'
+    ):
         Sanic("test")
     Sanic.test_mode = True
     Sanic("test")
@@ -290,8 +328,16 @@ def test_app_registry_retrieval():
     assert Sanic.get_app("test") is instance
 
 
+def test_app_registry_retrieval_from_multiple():
+    instance = Sanic("test")
+    Sanic("something_else")
+    assert Sanic.get_app("test") is instance
+
+
 def test_get_app_does_not_exist():
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "does-not-exist" not found.'
+    ):
         Sanic.get_app("does-not-exist")
 
 
@@ -301,15 +347,108 @@ def test_get_app_does_not_exist_force_create():
     )
 
 
+def test_get_app_default():
+    instance = Sanic("test")
+    assert Sanic.get_app() is instance
+
+
+def test_get_app_no_default():
+    with pytest.raises(
+        SanicException, match="No Sanic apps have been registered."
+    ):
+        Sanic.get_app()
+
+
+def test_get_app_default_ambiguous():
+    Sanic("test1")
+    Sanic("test2")
+    with pytest.raises(
+        SanicException,
+        match=re.escape(
+            'Multiple Sanic apps found, use Sanic.get_app("app_name")'
+        ),
+    ):
+        Sanic.get_app()
+
+
 def test_app_no_registry():
     Sanic("no-register", register=False)
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "no-register" not found.'
+    ):
         Sanic.get_app("no-register")
 
 
 def test_app_no_registry_env():
     environ["SANIC_REGISTER"] = "False"
     Sanic("no-register")
-    with pytest.raises(SanicException):
+    with pytest.raises(
+        SanicException, match='Sanic app name "no-register" not found.'
+    ):
         Sanic.get_app("no-register")
     del environ["SANIC_REGISTER"]
+
+
+def test_app_set_attribute_warning(app):
+    with pytest.warns(DeprecationWarning) as record:
+        app.foo = 1
+
+    assert len(record) == 1
+    assert record[0].message.args[0] == (
+        "Setting variables on Sanic instances is deprecated "
+        "and will be removed in version 21.9. You should change your "
+        "Sanic instance to use instance.ctx.foo instead."
+    )
+
+
+def test_app_set_context(app):
+    app.ctx.foo = 1
+
+    retrieved = Sanic.get_app(app.name)
+    assert retrieved.ctx.foo == 1
+
+
+def test_subclass_initialisation():
+    class CustomSanic(Sanic):
+        pass
+
+    CustomSanic("test_subclass_initialisation")
+
+
+def test_bad_custom_config():
+    with pytest.raises(
+        SanicException,
+        match=(
+            "When instantiating Sanic with config, you cannot also pass "
+            "load_env or env_prefix"
+        ),
+    ):
+        Sanic("test", config=1, load_env=1)
+    with pytest.raises(
+        SanicException,
+        match=(
+            "When instantiating Sanic with config, you cannot also pass "
+            "load_env or env_prefix"
+        ),
+    ):
+        Sanic("test", config=1, env_prefix=1)
+
+
+def test_custom_config():
+    class CustomConfig(Config):
+        ...
+
+    config = CustomConfig()
+    app = Sanic("custom", config=config)
+
+    assert app.config == config
+
+
+def test_custom_context():
+    class CustomContext:
+        ...
+
+    ctx = CustomContext()
+    app = Sanic("custom", ctx=ctx)
+
+    assert app.ctx == ctx

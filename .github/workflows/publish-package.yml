@@ -1,0 +1,28 @@
+name: Publish Artifacts
+on:
+  release:
+    types: [created]
+
+jobs:
+  publishPythonPackage:
+    name: Publishing Sanic Release Artifacts
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.8"]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Publish Python Package
+        uses: harshanarayana/custom-actions@main
+        with:
+          python-version: ${{ matrix.python-version }}
+          package-infra-name: "twine"
+          pypi-user: __token__
+          pypi-access-token: ${{ secrets.PYPI_ACCESS_TOKEN }}
+          action: "package-publish"
+          pypi-verify-metadata: "true"

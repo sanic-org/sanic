@@ -3,25 +3,41 @@ import logging.config
 import os
 import re
 
-
-try:
-    from asyncio import BufferedProtocol as BaseProtocol  # type: ignore
-except ImportError:
-    # Support for Python 3.6
-    from asyncio import Protocol as BaseProtocol  # type: ignore
-
-from asyncio import CancelledError, ensure_future, get_event_loop
+from asyncio import (
+    BufferedProtocol,
+    CancelledError,
+    Protocol,
+    ensure_future,
+    get_event_loop,
+    wait_for,
+)
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
 from inspect import isawaitable
+from pathlib import Path
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
 from traceback import format_exc
-from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
+from types import SimpleNamespace
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Deque,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Type,
+    Union,
+)
 from urllib.parse import urlencode, urlunparse
 
 from sanic_routing.exceptions import FinalizationError  # type: ignore
+from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
@@ -29,14 +45,14 @@ from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.config import BASE_LOGO, Config
+from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
     SanicException,
     ServerError,
     URLBuildError,
 )
-from sanic.handlers import ErrorHandler, ListenerType, MiddlewareType
+from sanic.handlers import ErrorHandler
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
@@ -44,88 +60,149 @@ from sanic.models.futures import (
     FutureListener,
     FutureMiddleware,
     FutureRoute,
+    FutureSignal,
     FutureStatic,
 )
+from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
-from sanic.server import (
-    AsyncioServer,
-    HttpProtocol,
-    Signal,
-    serve,
-    serve_multiple,
-)
+from sanic.server import AsyncioServer, HttpProtocol
+from sanic.server import Signal as ServerSignal
+from sanic.server import serve, serve_multiple, serve_single
+from sanic.signals import Signal, SignalRouter
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic(BaseSanic):
+    """
+    The main application instance
+    """
+
+    __fake_slots__ = (
+        "_asgi_app",
+        "_app_registry",
+        "_asgi_client",
+        "_blueprint_order",
+        "_future_routes",
+        "_future_statics",
+        "_future_middleware",
+        "_future_listeners",
+        "_future_exceptions",
+        "_future_signals",
+        "_test_client",
+        "_test_manager",
+        "auto_reload",
+        "asgi",
+        "blueprints",
+        "config",
+        "configure_logging",
+        "ctx",
+        "debug",
+        "error_handler",
+        "go_fast",
+        "is_running",
+        "is_stopping",
+        "listeners",
+        "name",
+        "named_request_middleware",
+        "named_response_middleware",
+        "reload_dirs",
+        "request_class",
+        "request_middleware",
+        "response_middleware",
+        "router",
+        "signal_router",
+        "sock",
+        "strict_slashes",
+        "test_mode",
+        "websocket_enabled",
+        "websocket_tasks",
+    )
+
     _app_registry: Dict[str, "Sanic"] = {}
     test_mode = False
 
     def __init__(
         self,
         name: str = None,
-        router: Router = None,
-        error_handler: ErrorHandler = None,
-        load_env: bool = True,
-        request_class: Request = None,
+        config: Optional[Config] = None,
+        ctx: Optional[Any] = None,
+        router: Optional[Router] = None,
+        signal_router: Optional[SignalRouter] = None,
+        error_handler: Optional[ErrorHandler] = None,
+        load_env: Union[bool, str] = True,
+        env_prefix: Optional[str] = SANIC_PREFIX,
+        request_class: Optional[Type[Request]] = None,
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
         register: Optional[bool] = None,
+        dumps: Optional[Callable[..., str]] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(name=name)
 
-        if name is None:
-            raise SanicException(
-                "Sanic instance cannot be unnamed. "
-                "Please use Sanic(name='your_application_name') instead.",
-            )
         # logging
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
 
-        self.name = name
-        self.asgi = False
-        self.router = router or Router()
-        self.request_class = request_class
-        self.error_handler = error_handler or ErrorHandler()
-        self.config = Config(load_env=load_env)
-        self.request_middleware: Iterable[MiddlewareType] = deque()
-        self.response_middleware: Iterable[MiddlewareType] = deque()
-        self.blueprints: Dict[str, Blueprint] = {}
+        if config and (load_env is not True or env_prefix != SANIC_PREFIX):
+            raise SanicException(
+                "When instantiating Sanic with config, you cannot also pass "
+                "load_env or env_prefix"
+            )
+
+        self._asgi_client = None
         self._blueprint_order: List[Blueprint] = []
+        self._test_client = None
+        self._test_manager = None
+        self.asgi = False
+        self.auto_reload = False
+        self.blueprints: Dict[str, Blueprint] = {}
+        self.config = config or Config(
+            load_env=load_env, env_prefix=env_prefix
+        )
         self.configure_logging = configure_logging
+        self.ctx = ctx or SimpleNamespace()
         self.debug = None
+        self.error_handler = error_handler or ErrorHandler()
+        self.is_running = False
+        self.is_stopping = False
+        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
+        self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        self.reload_dirs: Set[Path] = set()
+        self.request_class = request_class
+        self.request_middleware: Deque[MiddlewareType] = deque()
+        self.response_middleware: Deque[MiddlewareType] = deque()
+        self.router = router or Router()
+        self.signal_router = signal_router or SignalRouter()
         self.sock = None
         self.strict_slashes = strict_slashes
-        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
-        self.is_stopping = False
-        self.is_running = False
         self.websocket_enabled = False
         self.websocket_tasks: Set[Future] = set()
-        self.named_request_middleware: Dict[str, MiddlewareType] = {}
-        self.named_response_middleware: Dict[str, MiddlewareType] = {}
-        self._test_manager = None
-        self._test_client = None
-        self._asgi_client = None
+
         # Register alternative method names
         self.go_fast = self.run
 
         if register is not None:
             self.config.REGISTER = register
-
         if self.config.REGISTER:
             self.__class__.register_app(self)
 
         self.router.ctx.app = self
 
+        if dumps:
+            BaseHTTPResponse._dumps = dumps
+
     @property
     def loop(self):
-        """Synonymous with asyncio.get_event_loop().
+        """
+        Synonymous with asyncio.get_event_loop().
 
-        Only supported when using the `app.run` method.
+        .. note::
+
+            Only supported when using the `app.run` method.
         """
         if not self.is_running and self.asgi is False:
             raise SanicException(
@@ -138,11 +215,15 @@ class Sanic(BaseSanic):
     # Registration
     # -------------------------------------------------------------------- #
 
-    def add_task(self, task):
-        """Schedule a task to run later, after the loop has started.
+    def add_task(self, task) -> None:
+        """
+        Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
         also return a future, and the actual ensure_future call
         is delayed until before server start.
+
+        `See user guide re: background tasks
+        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
 
         :param task: future, couroutine or awaitable
         """
@@ -154,7 +235,7 @@ class Sanic(BaseSanic):
                 partial(self._loop_add_task, task)
             )
 
-    def register_listener(self, listener, event):
+    def register_listener(self, listener: Callable, event: str) -> Any:
         """
         Register the listener for a given event.
 
@@ -172,7 +253,7 @@ class Sanic(BaseSanic):
         self.listeners[_event].append(listener)
         return listener
 
-    def register_middleware(self, middleware, attach_to="request"):
+    def register_middleware(self, middleware, attach_to: str = "request"):
         """
         Register an application level middleware that will be attached
         to all the API URLs registered under this application.
@@ -197,8 +278,23 @@ class Sanic(BaseSanic):
         return middleware
 
     def register_named_middleware(
-        self, middleware, route_names, attach_to="request"
+        self,
+        middleware,
+        route_names: Iterable[str],
+        attach_to: str = "request",
     ):
+        """
+        Method for attaching middleware to specific routes. This is mainly an
+        internal tool for use by Blueprints to attach middleware to only its
+        specfic routes. But, it could be used in a more generalized fashion.
+
+        :param middleware: the middleware to execute
+        :param route_names: a list of the names of the endpoints
+        :type route_names: Iterable[str]
+        :param attach_to: whether to attach to request or response,
+            defaults to "request"
+        :type attach_to: str, optional
+        """
         if attach_to == "request":
             for _rn in route_names:
                 if _rn not in self.named_request_middleware:
@@ -211,6 +307,7 @@ class Sanic(BaseSanic):
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
+        return middleware
 
     def _apply_exception_handler(self, handler: FutureException):
         """Decorate a function to be registered as a handler for exceptions
@@ -225,12 +322,12 @@ class Sanic(BaseSanic):
                     self.error_handler.add(e, handler.handler)
             else:
                 self.error_handler.add(exception, handler.handler)
-        return handler
+        return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
         return self.register_listener(listener.listener, listener.event)
 
-    def _apply_route(self, route: FutureRoute) -> Route:
+    def _apply_route(self, route: FutureRoute) -> List[Route]:
         params = route._asdict()
         websocket = params.pop("websocket", False)
         subprotocols = params.pop("subprotocols", None)
@@ -245,7 +342,15 @@ class Sanic(BaseSanic):
             websocket_handler.__name__ = route.handler.__name__  # type: ignore
             websocket_handler.is_websocket = True  # type: ignore
             params["handler"] = websocket_handler
-        return self.router.add(**params)
+
+        routes = self.router.add(**params)
+        if isinstance(routes, Route):
+            routes = [routes]
+        for r in routes:
+            r.ctx.websocket = websocket
+            r.ctx.static = params.get("static", False)
+
+        return routes
 
     def _apply_static(self, static: FutureStatic) -> Route:
         return self._register_static(static)
@@ -263,6 +368,36 @@ class Sanic(BaseSanic):
             return self.register_middleware(
                 middleware.middleware, middleware.attach_to
             )
+
+    def _apply_signal(self, signal: FutureSignal) -> Signal:
+        return self.signal_router.add(*signal)
+
+    def dispatch(
+        self,
+        event: str,
+        *,
+        condition: Optional[Dict[str, str]] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Coroutine[Any, Any, Awaitable[Any]]:
+        return self.signal_router.dispatch(
+            event,
+            context=context,
+            condition=condition,
+        )
+
+    async def event(
+        self, event: str, timeout: Optional[Union[int, float]] = None
+    ):
+        signal = self.signal_router.name_index.get(event)
+        if not signal:
+            if self.config.EVENT_AUTOREGISTER:
+                self.signal_router.reset()
+                self.add_signal(None, event)
+                signal = self.signal_router.name_index[event]
+                self.signal_router.finalize()
+            else:
+                raise NotFound("Could not find signal %s" % event)
+        return await wait_for(signal.ctx.event.wait(), timeout=timeout)
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
@@ -286,7 +421,33 @@ class Sanic(BaseSanic):
         """
         if isinstance(blueprint, (list, tuple, BlueprintGroup)):
             for item in blueprint:
-                self.blueprint(item, **options)
+                params = {**options}
+                if isinstance(blueprint, BlueprintGroup):
+                    if blueprint.url_prefix:
+                        merge_from = [
+                            options.get("url_prefix", ""),
+                            blueprint.url_prefix,
+                        ]
+                        if not isinstance(item, BlueprintGroup):
+                            merge_from.append(item.url_prefix or "")
+                        merged_prefix = "/".join(
+                            u.strip("/") for u in merge_from
+                        ).rstrip("/")
+                        params["url_prefix"] = f"/{merged_prefix}"
+
+                    for _attr in ["version", "strict_slashes"]:
+                        if getattr(item, _attr) is None:
+                            params[_attr] = getattr(
+                                blueprint, _attr
+                            ) or options.get(_attr)
+                    if item.version_prefix == "/v":
+                        if blueprint.version_prefix == "/v":
+                            params["version_prefix"] = options.get(
+                                "version_prefix"
+                            )
+                        else:
+                            params["version_prefix"] = blueprint.version_prefix
+                self.blueprint(item, **params)
             return
         if blueprint.name in self.blueprints:
             assert self.blueprints[blueprint.name] is blueprint, (
@@ -315,8 +476,33 @@ class Sanic(BaseSanic):
         Keyword arguments that are not request parameters will be included in
         the output URL's query string.
 
+        There are several _special_ keyword arguments that will alter how the
+        URL will be returned:
+
+        1. **_anchor**: ``str`` - Adds an ``#anchor`` to the end
+        2. **_scheme**: ``str`` - Should be either ``"http"`` or ``"https"``,
+           default is ``"http"``
+        3. **_external**: ``bool`` - Whether to return the path or a full URL
+           with scheme and host
+        4. **_host**: ``str`` - Used when one or more hosts are defined for a
+           route to tell Sanic which to use
+           (only applies with ``_external=True``)
+        5. **_server**: ``str`` - If not using ``_host``, this will be used
+           for defining the hostname of the URL
+           (only applies with ``_external=True``),
+           defaults to ``app.config.SERVER_NAME``
+
+        If you want the PORT to appear in your URL, you should set it in:
+
+        .. code-block::
+
+            app.config.SERVER_NAME = "myserver:7777"
+
+        `See user guide re: routing
+        <https://sanicframework.org/guide/basics/routing.html#generating-a-url>`__
+
         :param view_name: string referencing the view name
-        :param **kwargs: keys and values that are used to build request
+        :param kwargs: keys and values that are used to build request
             parameters and query string arguments.
 
         :return: the built URL
@@ -348,17 +534,22 @@ class Sanic(BaseSanic):
         if getattr(route.ctx, "static", None):
             filename = kwargs.pop("filename", "")
             # it's static folder
-            if "file_uri" in uri:
-                folder_ = uri.split("<file_uri:", 1)[0]
+            if "__file_uri__" in uri:
+                folder_ = uri.split("<__file_uri__:", 1)[0]
                 if folder_.endswith("/"):
                     folder_ = folder_[:-1]
 
                 if filename.startswith("/"):
                     filename = filename[1:]
 
-                kwargs["file_uri"] = filename
+                kwargs["__file_uri__"] = filename
 
-        if uri != "/" and uri.endswith("/"):
+        if (
+            uri != "/"
+            and uri.endswith("/")
+            and not route.strict
+            and not route.raw_path[:-1]
+        ):
             uri = uri[:-1]
 
         if not uri.startswith("/"):
@@ -421,7 +612,12 @@ class Sanic(BaseSanic):
             # determine if the parameter supplied by the caller
             # passes the test in the URL
             if param_info.pattern:
-                passes_pattern = param_info.pattern.match(supplied_param)
+                pattern = (
+                    param_info.pattern[1]
+                    if isinstance(param_info.pattern, tuple)
+                    else param_info.pattern
+                )
+                passes_pattern = pattern.match(supplied_param)
                 if not passes_pattern:
                     if param_info.cast != str:
                         msg = (
@@ -429,13 +625,13 @@ class Sanic(BaseSanic):
                             f"for parameter `{param_info.name}` does "
                             "not match pattern for type "
                             f"`{param_info.cast.__name__}`: "
-                            f"{param_info.pattern.pattern}"
+                            f"{pattern.pattern}"
                         )
                     else:
                         msg = (
                             f'Value "{supplied_param}" for parameter '
                             f"`{param_info.name}` does not satisfy "
-                            f"pattern {param_info.pattern.pattern}"
+                            f"pattern {pattern.pattern}"
                         )
                     raise URLBuildError(msg)
 
@@ -454,7 +650,18 @@ class Sanic(BaseSanic):
     # Request Handling
     # -------------------------------------------------------------------- #
 
-    async def handle_exception(self, request, exception):
+    async def handle_exception(
+        self, request: Request, exception: BaseException
+    ):
+        """
+        A handler that catches specific exceptions and outputs a response.
+
+        :param request: The current request object
+        :type request: :class:`SanicASGITestClient`
+        :param exception: The exception that was raised
+        :type exception: BaseException
+        :raises ServerError: response 500
+        """
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
@@ -487,11 +694,13 @@ class Sanic(BaseSanic):
                 response = await request.respond(response)
             except BaseException:
                 # Skip response middleware
-                request.stream.respond(response)
+                if request.stream:
+                    request.stream.respond(response)
                 await response.send(end_stream=True)
                 raise
         else:
-            response = request.stream.response
+            if request.stream:
+                response = request.stream.response
         if isinstance(response, BaseHTTPResponse):
             await response.send(end_stream=True)
         else:
@@ -499,39 +708,38 @@ class Sanic(BaseSanic):
                 f"Invalid response type {response!r} (need HTTPResponse)"
             )
 
-    async def handle_request(self, request):
+    async def handle_request(self, request: Request):
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
 
         :param request: HTTP Request object
-        :param write_callback: Synchronous response function to be
-            called with the response as the only argument
-        :param stream_callback: Coroutine that handles streaming a
-            StreamingHTTPResponse if produced by the handler.
-
         :return: Nothing
         """
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
         response = None
-        name = None
         try:
             # Fetch handler from router
-            (
-                handler,
-                kwargs,
-                uri,
-                name,
-                ignore_body,
-            ) = self.router.get(request)
-            request.name = name
-            request._match_info = kwargs
+            route, handler, kwargs = self.router.get(
+                request.path,
+                request.method,
+                request.headers.getone("host", None),
+            )
 
-            if request.stream.request_body and not ignore_body:
-                if self.router.is_stream_handler(request):
+            request._match_info = kwargs
+            request.route = route
+
+            if (
+                request.stream.request_body  # type: ignore
+                and not route.ctx.ignore_body
+            ):
+
+                if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
-                    request.stream.request_max_size = float("inf")
+                    request.stream.request_max_size = float(  # type: ignore
+                        "inf"
+                    )
                 else:
                     # Non-streaming handler: preload body
                     await request.receive_body()
@@ -540,15 +748,15 @@ class Sanic(BaseSanic):
             # Request Middleware
             # -------------------------------------------- #
             response = await self._run_request_middleware(
-                request, request_name=name
+                request, request_name=route.name
             )
+
             # No middleware results
             if not response:
                 # -------------------------------------------- #
                 # Execute Handler
                 # -------------------------------------------- #
 
-                request.uri_template = f"/{uri}"
                 if handler is None:
                     raise ServerError(
                         (
@@ -557,25 +765,21 @@ class Sanic(BaseSanic):
                         )
                     )
 
-                request.endpoint = request.name
-
                 # Run response handler
                 response = handler(request, **kwargs)
                 if isawaitable(response):
                     response = await response
+
             if response:
                 response = await request.respond(response)
-            else:
-                response = request.stream.response
-            # Make sure that response is finished / run StreamingHTTP callback
+            elif not hasattr(handler, "is_websocket"):
+                response = request.stream.response  # type: ignore
 
+            # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
                 await response.send(end_stream=True)
             else:
-                try:
-                    # Fastest method for checking if the property exists
-                    handler.is_websocket
-                except AttributeError:
+                if not hasattr(handler, "is_websocket"):
                     raise ServerError(
                         f"Invalid response type {response!r} "
                         "(need HTTPResponse)"
@@ -592,9 +796,9 @@ class Sanic(BaseSanic):
     ):
         request.app = self
         if not getattr(handler, "__blueprintname__", False):
-            request.endpoint = handler.__name__
+            request._name = handler.__name__
         else:
-            request.endpoint = (
+            request._name = (
                 getattr(handler, "__blueprintname__", "") + handler.__name__
             )
 
@@ -602,6 +806,7 @@ class Sanic(BaseSanic):
 
         if self.asgi:
             ws = request.transport.get_websocket_connection()
+            await ws.accept(subprotocols)
         else:
             protocol = request.transport.get_protocol()
             protocol.app = self
@@ -638,6 +843,13 @@ class Sanic(BaseSanic):
 
     @property
     def asgi_client(self):  # noqa
+        """
+        A testing client that uses ASGI to reach into the application to
+        execute hanlers.
+
+        :return: testing client
+        :rtype: :class:`SanicASGITestClient`
+        """
         if self._asgi_client:
             return self._asgi_client
         elif self._test_manager:
@@ -661,14 +873,16 @@ class Sanic(BaseSanic):
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
-        protocol: Optional[Type[BaseProtocol]] = None,
+        protocol: Optional[Type[BufferedProtocol]] = None,
         backlog: int = 100,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         loop: None = None,
+        reload_dir: Optional[Union[List[str], str]] = None,
     ) -> None:
-        """Run the HTTP Server and listen until keyboard interrupt or term
+        """
+        Run the HTTP Server and listen until keyboard interrupt or term
         signal. On termination, drain connections before closing.
 
         :param host: Address to host on
@@ -700,6 +914,18 @@ class Sanic(BaseSanic):
         :type unix: str
         :return: Nothing
         """
+        if reload_dir:
+            if isinstance(reload_dir, str):
+                reload_dir = [reload_dir]
+
+            for directory in reload_dir:
+                direc = Path(directory)
+                if not direc.is_dir():
+                    logger.warning(
+                        f"Directory {directory} could not be located"
+                    )
+                self.reload_dirs.add(Path(directory))
+
         if loop is not None:
             raise TypeError(
                 "loop is not a valid argument. To use an existing loop, "
@@ -709,8 +935,9 @@ class Sanic(BaseSanic):
             )
 
         if auto_reload or auto_reload is None and debug:
+            self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return reloader_helpers.watchdog(1.0)
+                return reloader_helpers.watchdog(1.0, self)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -747,7 +974,7 @@ class Sanic(BaseSanic):
                 )
                 workers = 1
             if workers == 1:
-                serve(**server_settings)
+                serve_single(server_settings)
             else:
                 serve_multiple(server_settings, workers)
         except BaseException:
@@ -760,7 +987,9 @@ class Sanic(BaseSanic):
         logger.info("Server Stopped")
 
     def stop(self):
-        """This kills the Sanic"""
+        """
+        This kills the Sanic
+        """
         if not self.is_stopping:
             self.is_stopping = True
             get_event_loop().stop()
@@ -773,12 +1002,12 @@ class Sanic(BaseSanic):
         debug: bool = False,
         ssl: Union[dict, SSLContext, None] = None,
         sock: Optional[socket] = None,
-        protocol: Optional[Type[BaseProtocol]] = None,
+        protocol: Optional[Type[BufferedProtocol]] = None,
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        return_asyncio_server=False,
-        asyncio_server_kwargs=None,
+        return_asyncio_server: bool = False,
+        asyncio_server_kwargs: Dict[str, Any] = None,
     ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
@@ -848,6 +1077,13 @@ class Sanic(BaseSanic):
             server_settings.get("before_start", []),
             server_settings.get("loop"),
         )
+        main_start = server_settings.pop("main_start", None)
+        main_stop = server_settings.pop("main_stop", None)
+        if main_start or main_stop:
+            logger.warning(
+                "Listener events for the main process are not available "
+                "with create_server()"
+            )
 
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
@@ -920,11 +1156,9 @@ class Sanic(BaseSanic):
     ):
         """Helper function used by `run` and `create_server`."""
 
-        try:
-            self.router.finalize()
-        except FinalizationError as e:
-            if not Sanic.test_mode:
-                raise e
+        self.listeners["before_server_start"] = [
+            self.finalize
+        ] + self.listeners["before_server_start"]
 
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -953,7 +1187,7 @@ class Sanic(BaseSanic):
             "unix": unix,
             "ssl": ssl,
             "app": self,
-            "signal": Signal(),
+            "signal": ServerSignal(),
             "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
@@ -966,6 +1200,8 @@ class Sanic(BaseSanic):
             ("after_server_start", "after_start", False),
             ("before_server_stop", "before_stop", True),
             ("after_server_stop", "after_stop", True),
+            ("main_process_start", "main_start", False),
+            ("main_process_stop", "main_stop", True),
         ):
             listeners = self.listeners[event_name].copy()
             if reverse:
@@ -1000,6 +1236,10 @@ class Sanic(BaseSanic):
             else:
                 logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
+        debug_mode = "enabled" if self.debug else "disabled"
+        logger.debug("Sanic auto-reload: enabled")
+        logger.debug(f"Sanic debug mode: {debug_mode}")
+
         return server_settings
 
     def _build_endpoint_name(self, *parts):
@@ -1026,25 +1266,29 @@ class Sanic(BaseSanic):
     # -------------------------------------------------------------------- #
 
     async def __call__(self, scope, receive, send):
-        """To be ASGI compliant, our instance must be a callable that accepts
+        """
+        To be ASGI compliant, our instance must be a callable that accepts
         three arguments: scope, receive, send. See the ASGI reference for more
-        details: https://asgi.readthedocs.io/en/latest/"""
-        # raise Exception("call")
+        details: https://asgi.readthedocs.io/en/latest
+        """
         self.asgi = True
         self._asgi_app = await ASGIApp.create(self, scope, receive, send)
         asgi_app = self._asgi_app
         await asgi_app()
 
-    # _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
+    _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
 
     # -------------------------------------------------------------------- #
     # Configuration
     # -------------------------------------------------------------------- #
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """Update app.config.
+        """
+        Update app.config. Full implementation can be found in the user guide.
 
-        Please refer to config.py::Config.update_config for documentation."""
+        `See user guide re: configuration
+        <https://sanicframework.org/guide/deployment/configuration.html#basics>`__
+        """
 
         self.config.update_config(config)
 
@@ -1054,7 +1298,9 @@ class Sanic(BaseSanic):
 
     @classmethod
     def register_app(cls, app: "Sanic") -> None:
-        """Register a Sanic instance"""
+        """
+        Register a Sanic instance
+        """
         if not isinstance(app, cls):
             raise SanicException("Registered app must be an instance of Sanic")
 
@@ -1065,11 +1311,38 @@ class Sanic(BaseSanic):
         cls._app_registry[name] = app
 
     @classmethod
-    def get_app(cls, name: str, *, force_create: bool = False) -> "Sanic":
-        """Retrieve an instantiated Sanic instance"""
+    def get_app(
+        cls, name: Optional[str] = None, *, force_create: bool = False
+    ) -> "Sanic":
+        """
+        Retrieve an instantiated Sanic instance
+        """
+        if name is None:
+            if len(cls._app_registry) > 1:
+                raise SanicException(
+                    'Multiple Sanic apps found, use Sanic.get_app("app_name")'
+                )
+            elif len(cls._app_registry) == 0:
+                raise SanicException("No Sanic apps have been registered.")
+            else:
+                return list(cls._app_registry.values())[0]
         try:
             return cls._app_registry[name]
         except KeyError:
             if force_create:
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
+
+    # -------------------------------------------------------------------- #
+    # Static methods
+    # -------------------------------------------------------------------- #
+
+    @staticmethod
+    async def finalize(app, _):
+        try:
+            app.router.finalize()
+            if app.signal_router.routes:
+                app.signal_router.finalize()  # noqa
+        except FinalizationError as e:
+            if not Sanic.test_mode:
+                raise e  # noqa

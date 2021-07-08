@@ -1,23 +1,19 @@
 import asyncio
 import inspect
 import os
-import warnings
 
 from collections import namedtuple
 from mimetypes import guess_type
 from random import choice
-from unittest.mock import MagicMock
 from urllib.parse import unquote
 
 import pytest
 
 from aiofiles import os as async_os
-from sanic_testing.testing import HOST, PORT
 
 from sanic import Sanic
 from sanic.response import (
     HTTPResponse,
-    StreamingHTTPResponse,
     empty,
     file,
     file_stream,
@@ -26,7 +22,6 @@ from sanic.response import (
     stream,
     text,
 )
-from sanic.server import HttpProtocol
 
 
 JSON_DATA = {"ok": True}
@@ -65,7 +60,9 @@ def test_method_not_allowed():
     }
 
     request, response = app.test_client.post("/")
-    assert set(response.headers["Allow"].split(", ")) == {"GET", "HEAD"}
+    assert set(response.headers["Allow"].split(", ")) == {
+        "GET",
+    }
 
     app.router.reset()
 
@@ -78,7 +75,6 @@ def test_method_not_allowed():
     assert set(response.headers["Allow"].split(", ")) == {
         "GET",
         "POST",
-        "HEAD",
     }
     assert response.headers["Content-Length"] == "0"
 
@@ -87,7 +83,6 @@ def test_method_not_allowed():
     assert set(response.headers["Allow"].split(", ")) == {
         "GET",
         "POST",
-        "HEAD",
     }
     assert response.headers["Content-Length"] == "0"
 
@@ -229,7 +224,6 @@ def non_chunked_streaming_app(app):
             sample_streaming_fn,
             headers={"Content-Length": "7"},
             content_type="text/csv",
-            chunked=False,
         )
 
     return app
@@ -256,11 +250,7 @@ async def test_chunked_streaming_returns_correct_content_asgi(streaming_app):
 
 
 def test_non_chunked_streaming_adds_correct_headers(non_chunked_streaming_app):
-    with pytest.warns(UserWarning) as record:
-        request, response = non_chunked_streaming_app.test_client.get("/")
-
-    assert len(record) == 1
-    assert "removed in v21.6" in record[0].message.args[0]
+    request, response = non_chunked_streaming_app.test_client.get("/")
 
     assert "Transfer-Encoding" not in response.headers
     assert response.headers["Content-Type"] == "text/csv"
@@ -374,7 +364,7 @@ def test_file_head_response(app, file_name, static_file_directory):
         file_path = os.path.join(static_file_directory, filename)
         file_path = os.path.abspath(unquote(file_path))
         stats = await async_os.stat(file_path)
-        headers = dict()
+        headers = {}
         headers["Accept-Ranges"] = "bytes"
         headers["Content-Length"] = str(stats.st_size)
         if request.method == "HEAD":
@@ -450,7 +440,7 @@ def test_file_stream_head_response(app, file_name, static_file_directory):
     async def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
         file_path = os.path.abspath(unquote(file_path))
-        headers = dict()
+        headers = {}
         headers["Accept-Ranges"] = "bytes"
         if request.method == "HEAD":
             # Return a normal HTTPResponse, not a
@@ -534,3 +524,19 @@ def test_empty_response(app):
     request, response = app.test_client.get("/test")
     assert response.content_type is None
     assert response.body == b""
+
+
+def test_direct_response_stream(app):
+    @app.route("/")
+    async def test(request):
+        response = await request.respond(content_type="text/csv")
+        await response.send("foo,")
+        await response.send("bar")
+        await response.eof()
+        return response
+
+    _, response = app.test_client.get("/")
+    assert response.text == "foo,bar"
+    assert response.headers["Transfer-Encoding"] == "chunked"
+    assert response.headers["Content-Type"] == "text/csv"
+    assert "Content-Length" not in response.headers

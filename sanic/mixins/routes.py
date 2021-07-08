@@ -5,13 +5,13 @@ from os import path
 from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
-from typing import Set, Union
+from typing import Iterable, List, Optional, Set, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.compat import stat_async
-from sanic.constants import HTTP_METHODS
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.exceptions import (
     ContentRangeError,
     FileNotFound,
@@ -26,13 +26,14 @@ from sanic.views import CompositionView
 
 
 class RouteMixin:
+    name: str
+
     def __init__(self, *args, **kwargs) -> None:
         self._future_routes: Set[FutureRoute] = set()
         self._future_statics: Set[FutureStatic] = set()
-        self.name = ""
-        self.strict_slashes = False
+        self.strict_slashes: Optional[bool] = False
 
-    def _apply_route(self, route: FutureRoute) -> Route:
+    def _apply_route(self, route: FutureRoute) -> List[Route]:
         raise NotImplementedError  # noqa
 
     def _apply_static(self, static: FutureStatic) -> Route:
@@ -40,38 +41,41 @@ class RouteMixin:
 
     def route(
         self,
-        uri,
-        methods=None,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
-        ignore_body=False,
-        apply=True,
-        subprotocols=None,
-        websocket=False,
-        unquote=False,
-        static=False,
+        uri: str,
+        methods: Optional[Iterable[str]] = None,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[Union[int, str, float]] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = False,
+        apply: bool = True,
+        subprotocols: Optional[List[str]] = None,
+        websocket: bool = False,
+        unquote: bool = False,
+        static: bool = False,
+        version_prefix: str = "/v",
     ):
-        """Create a blueprint route from a decorated function.
+        """
+        Decorate a function to be registered as a route
 
-        :param uri: endpoint at which the route will be accessible.
-        :param methods: list of acceptable HTTP methods.
-        :param host: IP Address of FQDN for the sanic server to use.
-        :param strict_slashes: Enforce the API urls are requested with a
-            training */*
-        :param stream: If the route should provide a streaming support
-        :param version: Blueprint Version
-        :param name: Unique name to identify the Route
-
-        :return a decorated method that when invoked will return an object
-            of type :class:`FutureRoute`
+        :param uri: path of the URL
+        :param methods: list or tuple of methods allowed
+        :param host: the host, if required
+        :param strict_slashes: whether to apply strict slashes to the route
+        :param stream: whether to allow the request to stream its body
+        :param version: route specific versioning
+        :param name: user defined route name for url_for
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests)
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
+        :return: tuple of routes, decorated function
         """
 
         # Fix case where the user did not prefix the URL with a /
         # and will probably get confused as to why it's not working
-        if not uri.startswith("/"):
+        if not uri.startswith("/") and (uri or hasattr(self, "router")):
             uri = "/" + uri
 
         if strict_slashes is None:
@@ -92,6 +96,7 @@ class RouteMixin:
             nonlocal subprotocols
             nonlocal websocket
             nonlocal static
+            nonlocal version_prefix
 
             if isinstance(handler, tuple):
                 # if a handler fn is already wrapped in a route, the handler
@@ -128,6 +133,7 @@ class RouteMixin:
                 subprotocols,
                 unquote,
                 static,
+                version_prefix,
             )
 
             self._future_routes.add(route)
@@ -154,20 +160,23 @@ class RouteMixin:
             if apply:
                 self._apply_route(route)
 
-            return route, handler
+            if static:
+                return route, handler
+            return handler
 
         return decorator
 
     def add_route(
         self,
         handler,
-        uri,
-        methods=frozenset({"GET"}),
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        stream=False,
+        uri: str,
+        methods: Iterable[str] = frozenset({"GET"}),
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        stream: bool = False,
+        version_prefix: str = "/v",
     ):
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -182,6 +191,8 @@ class RouteMixin:
         :param version:
         :param name: user defined route name for url_for
         :param stream: boolean specifying if the handler is a stream handler
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -214,18 +225,20 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )(handler)
         return handler
 
     # Shorthand method decorators
     def get(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **GET** *HTTP* method
@@ -236,6 +249,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -246,16 +261,18 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def post(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **POST** *HTTP* method
@@ -266,6 +283,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -276,16 +295,18 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )
 
     def put(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        stream=False,
-        version=None,
-        name=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        stream: bool = False,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **PUT** *HTTP* method
@@ -296,6 +317,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -306,17 +329,40 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )
 
     def head(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
+        """
+        Add an API URL under the **HEAD** *HTTP* method
+
+        :param uri: URL to be tagged to **HEAD** method of *HTTP*
+        :type uri: str
+        :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
+        :param strict_slashes: Instruct :class:`Sanic` to check if the request
+            URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
+        :param version: API Version
+        :type version: Optional[str], optional
+        :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
+        :return: Object decorated with :func:`route` method
+        """
         return self.route(
             uri,
             methods=frozenset({"HEAD"}),
@@ -325,26 +371,38 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def options(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **OPTIONS** *HTTP* method
 
         :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
+        :type uri: str
         :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
         :param version: API Version
+        :type version: Optional[str], optional
         :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -355,26 +413,40 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def patch(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         stream=False,
-        version=None,
-        name=None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **PATCH** *HTTP* method
 
         :param uri: URL to be tagged to **PATCH** method of *HTTP*
+        :type uri: str
         :param host: Host IP or FQDN for the service to use
+        :type host: Optional[str], optional
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
+        :type strict_slashes: Optional[bool], optional
+        :param stream: whether to allow the request to stream its body
+        :type stream: Optional[bool], optional
         :param version: API Version
+        :type version: Optional[str], optional
         :param name: Unique name that can be used to identify the Route
+        :type name: Optional[str], optional
+        :param ignore_body: whether the handler should ignore request
+            body (eg. GET requests), defaults to True
+        :type ignore_body: bool, optional
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -385,16 +457,18 @@ class RouteMixin:
             stream=stream,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )
 
     def delete(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        ignore_body=True,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        ignore_body: bool = True,
+        version_prefix: str = "/v",
     ):
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -405,6 +479,8 @@ class RouteMixin:
             URLs need to terminate with a */*
         :param version: API Version
         :param name: Unique name that can be used to identify the Route
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -415,26 +491,33 @@ class RouteMixin:
             version=version,
             name=name,
             ignore_body=ignore_body,
+            version_prefix=version_prefix,
         )
 
     def websocket(
         self,
-        uri,
-        host=None,
-        strict_slashes=None,
-        version=None,
-        name=None,
-        subprotocols=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        subprotocols: Optional[List[str]] = None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
         apply: bool = True,
+        version_prefix: str = "/v",
     ):
-        """Create a blueprint websocket route from a decorated function.
+        """
+        Decorate a function to be registered as a websocket route
 
-        :param uri: endpoint at which the route will be accessible.
-        :param host: IP Address of FQDN for the sanic server to use.
-        :param strict_slashes: Enforce the API urls are requested with a
-            training */*
-        :param version: Blueprint Version
-        :param name: Unique name to identify the Websocket Route
+        :param uri: path of the URL
+        :param host: Host IP or FQDN details
+        :param strict_slashes: If the API endpoint needs to terminate
+                               with a "/" or not
+        :param subprotocols: optional list of str with supported subprotocols
+        :param name: A unique name assigned to the URL so that it can
+                     be used with :func:`url_for`
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
+        :return: tuple of routes, decorated function
         """
         return self.route(
             uri=uri,
@@ -446,17 +529,19 @@ class RouteMixin:
             apply=apply,
             subprotocols=subprotocols,
             websocket=True,
+            version_prefix=version_prefix,
         )
 
     def add_websocket_route(
         self,
         handler,
-        uri,
-        host=None,
-        strict_slashes=None,
+        uri: str,
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version=None,
-        name=None,
+        version: Optional[int] = None,
+        name: Optional[str] = None,
+        version_prefix: str = "/v",
     ):
         """
         A helper method to register a function as a websocket route.
@@ -473,6 +558,8 @@ class RouteMixin:
                 handshake
         :param name: A unique name assigned to the URL so that it can
                 be used with :func:`url_for`
+        :param version_prefix: URL path that should be before the version
+            value; default: ``/v``
         :return: Objected decorated by :func:`websocket`
         """
         return self.websocket(
@@ -482,6 +569,7 @@ class RouteMixin:
             subprotocols=subprotocols,
             version=version,
             name=name,
+            version_prefix=version_prefix,
         )(handler)
 
     def static(
@@ -571,7 +659,7 @@ class RouteMixin:
                 else:
                     break
 
-        if not name:  # noq
+        if not name:  # noqa
             raise ValueError("Could not generate a name for handler")
 
         if not name.startswith(f"{self.name}."):
@@ -587,19 +675,19 @@ class RouteMixin:
         stream_large_files,
         request,
         content_type=None,
-        file_uri=None,
+        __file_uri__=None,
     ):
         # Using this to determine if the URL is trying to break out of the path
         # served.  os.path.realpath seems to be very slow
-        if file_uri and "../" in file_uri:
+        if __file_uri__ and "../" in __file_uri__:
             raise InvalidUsage("Invalid URL")
         # Merge served directory and requested file if provided
         # Strip all / that in the beginning of the URL to help prevent python
         # from herping a derp and treating the uri as an absolute path
         root_path = file_path = file_or_directory
-        if file_uri:
+        if __file_uri__:
             file_path = path.join(
-                file_or_directory, sub("^[/]*", "", file_uri)
+                file_or_directory, sub("^[/]*", "", __file_uri__)
             )
 
         # URL decode the path sent by the browser otherwise we won't be able to
@@ -608,10 +696,12 @@ class RouteMixin:
         if not file_path.startswith(path.abspath(unquote(root_path))):
             error_logger.exception(
                 f"File not found: path={file_or_directory}, "
-                f"relative_url={file_uri}"
+                f"relative_url={__file_uri__}"
             )
             raise FileNotFound(
-                "File not found", path=file_or_directory, relative_url=file_uri
+                "File not found",
+                path=file_or_directory,
+                relative_url=__file_uri__,
             )
         try:
             headers = {}
@@ -623,7 +713,10 @@ class RouteMixin:
                 modified_since = strftime(
                     "%a, %d %b %Y %H:%M:%S GMT", gmtime(stats.st_mtime)
                 )
-                if request.headers.get("If-Modified-Since") == modified_since:
+                if (
+                    request.headers.getone("if-modified-since", None)
+                    == modified_since
+                ):
                     return HTTPResponse(status=304)
                 headers["Last-Modified"] = modified_since
             _range = None
@@ -647,7 +740,7 @@ class RouteMixin:
                 content_type = (
                     content_type
                     or guess_type(file_path)[0]
-                    or "application/octet-stream"
+                    or DEFAULT_HTTP_CONTENT_TYPE
                 )
 
                 if "charset=" not in content_type and (
@@ -676,13 +769,17 @@ class RouteMixin:
                 return await file(file_path, headers=headers, _range=_range)
         except ContentRangeError:
             raise
+        except FileNotFoundError:
+            raise FileNotFound(
+                "File not found",
+                path=file_or_directory,
+                relative_url=__file_uri__,
+            )
         except Exception:
             error_logger.exception(
-                f"File not found: path={file_or_directory}, "
-                f"relative_url={file_uri}"
-            )
-            raise FileNotFound(
-                "File not found", path=file_or_directory, relative_url=file_uri
+                f"Exception in static request handler:\
+ path={file_or_directory}, "
+                f"relative_url={__file_uri__}"
             )
 
     def _register_static(
@@ -732,7 +829,7 @@ class RouteMixin:
         # If we're not trying to match a file directly,
         # serve from the folder
         if not path.isfile(file_or_directory):
-            uri += "/<file_uri>"
+            uri += "/<__file_uri__:path>"
 
         # special prefix for static files
         # if not static.name.startswith("_static_"):

@@ -1,4 +1,4 @@
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 
 import pytest
 

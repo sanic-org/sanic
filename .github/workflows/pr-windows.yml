@@ -1,0 +1,34 @@
+# name: Run Unit Tests on Windows
+# on:
+#   pull_request:
+#     branches:
+#       - main
+
+# jobs:
+#   testsOnWindows:
+#     name: ut-${{ matrix.config.tox-env }}
+#     runs-on: windows-latest
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         config:
+#           - { python-version: 3.7, tox-env: py37-no-ext }
+#           - { python-version: 3.8, tox-env: py38-no-ext }
+#           - { python-version: 3.9, tox-env: py39-no-ext }
+#           - { python-version: pypy-3.7, tox-env: pypy37-no-ext }
+
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v2
+
+#       - name: Run Unit Tests
+#         uses: ahopkins/custom-actions@pip-extra-args
+#         with:
+#           python-version: ${{ matrix.config.python-version }}
+#           test-infra-tool: tox
+#           test-infra-version: latest
+#           action: tests
+#           test-additional-args: "-e=${{ matrix.config.tox-env }}"
+#           experimental-ignore-error: "true"
+#           command-timeout: "600000"
+#           pip-extra-args: "--user"

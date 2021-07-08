@@ -23,23 +23,26 @@ class TestSanicRouteResolution:
         )
         router, simple_routes = sanic_router(route_details=simple_routes)
         route_to_call = choice(simple_routes)
+        request = Request(
+            "/{}".format(route_to_call[-1]).encode(),
+            {"host": "localhost"},
+            "v1",
+            route_to_call[0],
+            None,
+            None,
+        )
 
         result = benchmark.pedantic(
             router.get,
             (
-                Request(
-                    "/{}".format(route_to_call[-1]).encode(),
-                    {"host": "localhost"},
-                    "v1",
-                    route_to_call[0],
-                    None,
-                    None,
-                ),
+                request.path,
+                request.method,
+                request.headers.get("host"),
             ),
             iterations=1000,
             rounds=1000,
         )
-        assert await result[0](None) == 1
+        assert await result[1](None) == 1
 
     @mark.asyncio
     async def test_resolve_route_with_typed_args(
@@ -56,20 +59,23 @@ class TestSanicRouteResolution:
         )
 
         print("{} -> {}".format(route_to_call[-1], url))
+        request = Request(
+            "/{}".format(url).encode(),
+            {"host": "localhost"},
+            "v1",
+            route_to_call[0],
+            None,
+            None,
+        )
 
         result = benchmark.pedantic(
             router.get,
             (
-                Request(
-                    "/{}".format(url).encode(),
-                    {"host": "localhost"},
-                    "v1",
-                    route_to_call[0],
-                    None,
-                    None,
-                ),
+                request.path,
+                request.method,
+                request.headers.get("host"),
             ),
             iterations=1000,
             rounds=1000,
         )
-        assert await result[0](None) == 1
+        assert await result[1](None) == 1

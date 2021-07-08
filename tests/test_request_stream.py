@@ -8,7 +8,6 @@ import pytest
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import json, text
-from sanic.server import HttpProtocol
 from sanic.views import CompositionView, HTTPMethodView
 from sanic.views import stream as stream_decorator
 
@@ -646,7 +645,6 @@ def test_streaming_echo():
                 data = await reader.read(4096)
                 assert data
                 buffer += data
-                print(res)
             assert buffer[size : size + 2] == b"\r\n"
             ret, buffer = buffer[:size], buffer[size + 2 :]
             return ret

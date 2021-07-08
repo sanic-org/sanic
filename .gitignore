@@ -6,6 +6,7 @@
 .coverage
 .coverage.*
 coverage
+coverage.xml
 .tox
 settings.py
 .idea/*
@@ -18,3 +19,6 @@ build/*
 .DS_Store
 dist/*
 pip-wheel-metadata/
+.pytest_cache/*
+.venv/*
+.vscode/*

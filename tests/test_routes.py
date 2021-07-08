@@ -1,15 +1,20 @@
 import asyncio
+import re
 
 from unittest.mock import Mock
 
 import pytest
 
-from sanic_routing.exceptions import ParameterNameConflicts, RouteExists
+from sanic_routing.exceptions import (
+    InvalidUsage,
+    ParameterNameConflicts,
+    RouteExists,
+)
 from sanic_testing.testing import SanicTestClient
 
 from sanic import Blueprint, Sanic
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import NotFound
+from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request
 from sanic.response import json, text
 
@@ -161,7 +166,9 @@ def test_matching(path, headers, expected):
     request = Request(path, headers, None, "GET", None, app)
 
     try:
-        app.router.get(request=request)
+        app.router.get(
+            request.path, request.method, request.headers.get("host")
+        )
     except NotFound:
         response = 404
     except Exception:
@@ -189,7 +196,6 @@ def test_versioned_routes_get(app, method):
             return text("OK")
 
     else:
-        print(func)
         raise Exception(f"Method: {method} is not callable")
 
     client_method = getattr(app.test_client, method)
@@ -252,7 +258,7 @@ def test_route_strict_slash(app):
 def test_route_invalid_parameter_syntax(app):
     with pytest.raises(ValueError):
 
-        @app.get("/get/<:string>", strict_slashes=True)
+        @app.get("/get/<:str>", strict_slashes=True)
         def handler(request):
             return text("OK")
 
@@ -472,7 +478,7 @@ def test_dynamic_route(app):
 def test_dynamic_route_string(app):
     results = []
 
-    @app.route("/folder/<name:string>")
+    @app.route("/folder/<name:str>")
     async def handler(request, name):
         results.append(name)
         return text("OK")
@@ -507,7 +513,7 @@ def test_dynamic_route_int(app):
 def test_dynamic_route_number(app):
     results = []
 
-    @app.route("/weight/<weight:number>")
+    @app.route("/weight/<weight:float>")
     async def handler(request, weight):
         results.append(weight)
         return text("OK")
@@ -536,9 +542,6 @@ def test_dynamic_route_regex(app):
     @app.route("/folder/<folder_id:[A-Za-z0-9]{0,4}>")
     async def handler(request, folder_id):
         return text("OK")
-
-    app.router.finalize()
-    print(app.router.find_route_src)
 
     request, response = app.test_client.get("/folder/test")
     assert response.status == 200
@@ -580,6 +583,8 @@ def test_dynamic_route_path(app):
     @app.route("/<path:path>/info")
     async def handler(request, path):
         return text("OK")
+
+    app.router.finalize()
 
     request, response = app.test_client.get("/path/1/info")
     assert response.status == 200
@@ -818,7 +823,7 @@ def test_dynamic_add_route_string(app):
         results.append(name)
         return text("OK")
 
-    app.add_route(handler, "/folder/<name:string>")
+    app.add_route(handler, "/folder/<name:str>")
     request, response = app.test_client.get("/folder/test123")
 
     assert response.text == "OK"
@@ -854,7 +859,7 @@ def test_dynamic_add_route_number(app):
         results.append(weight)
         return text("OK")
 
-    app.add_route(handler, "/weight/<weight:number>")
+    app.add_route(handler, "/weight/<weight:float>")
 
     request, response = app.test_client.get("/weight/12345")
     assert response.text == "OK"
@@ -1002,14 +1007,8 @@ def test_unmergeable_overload_routes(app):
     async def handler2(request):
         return text("OK1")
 
-    assert (
-        len(
-            dict(list(app.router.static_routes.values())[0].handlers)[
-                "overload_whole"
-            ]
-        )
-        == 3
-    )
+    assert len(app.router.static_routes) == 1
+    assert len(app.router.static_routes[("overload_whole",)].methods) == 3
 
     request, response = app.test_client.get("/overload_whole")
     assert response.text == "OK1"
@@ -1067,7 +1066,8 @@ def test_uri_with_different_method_and_different_params(app):
         return json({"action": action})
 
     request, response = app.test_client.get("/ads/1234")
-    assert response.status == 405
+    assert response.status == 200
+    assert response.json == {"ad_id": "1234"}
 
     request, response = app.test_client.post("/ads/post")
     assert response.status == 200
@@ -1113,3 +1113,115 @@ def test_route_invalid_host(app):
     assert str(excinfo.value) == (
         "Expected either string or Iterable of " "host strings, not {!r}"
     ).format(host)
+
+
+def test_route_with_regex_group(app):
+    @app.route("/path/to/<ext:file\.(txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    _, response = app.test_client.get("/path/to/file.txt")
+    assert response.text == "txt"
+
+
+def test_route_with_regex_named_group(app):
+    @app.route(r"/path/to/<ext:file\.(?P<ext>txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    _, response = app.test_client.get("/path/to/file.txt")
+    assert response.text == "txt"
+
+
+def test_route_with_regex_named_group_invalid(app):
+    @app.route(r"/path/to/<ext:file\.(?P<wrong>txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    with pytest.raises(InvalidUsage) as e:
+        app.router.finalize()
+
+    assert e.match(
+        re.escape("Named group (wrong) must match your named parameter (ext)")
+    )
+
+
+def test_route_with_regex_group_ambiguous(app):
+    @app.route("/path/to/<ext:file(?:\.)(txt)>")
+    async def handler(request, ext):
+        return text(ext)
+
+    with pytest.raises(InvalidUsage) as e:
+        app.router.finalize()
+
+    assert e.match(
+        re.escape(
+            "Could not compile pattern file(?:\.)(txt). Try using a named "
+            "group instead: '(?P<ext>your_matching_group)'"
+        )
+    )
+
+
+def test_route_with_bad_named_param(app):
+    @app.route("/foo/<__bar__>")
+    async def handler(request):
+        return text("...")
+
+    with pytest.raises(SanicException):
+        app.router.finalize()
+
+
+def test_routes_with_and_without_slash_definitions(app):
+    bar = Blueprint("bar", url_prefix="bar")
+    baz = Blueprint("baz", url_prefix="/baz")
+    fizz = Blueprint("fizz", url_prefix="fizz/")
+    buzz = Blueprint("buzz", url_prefix="/buzz/")
+
+    instances = (
+        (app, "foo"),
+        (bar, "bar"),
+        (baz, "baz"),
+        (fizz, "fizz"),
+        (buzz, "buzz"),
+    )
+
+    for instance, term in instances:
+        route = f"/{term}" if isinstance(instance, Sanic) else ""
+
+        @instance.get(route, strict_slashes=True)
+        def get_without(request):
+            return text(f"{term}_without")
+
+        @instance.get(f"{route}/", strict_slashes=True)
+        def get_with(request):
+            return text(f"{term}_with")
+
+        @instance.post(route, strict_slashes=True)
+        def post_without(request):
+            return text(f"{term}_without")
+
+        @instance.post(f"{route}/", strict_slashes=True)
+        def post_with(request):
+            return text(f"{term}_with")
+
+    app.blueprint(bar)
+    app.blueprint(baz)
+    app.blueprint(fizz)
+    app.blueprint(buzz)
+
+    for _, term in instances:
+        _, response = app.test_client.get(f"/{term}")
+        assert response.status == 200
+        assert response.text == f"{term}_without"
+
+        _, response = app.test_client.get(f"/{term}/")
+        assert response.status == 200
+        assert response.text == f"{term}_with"
+
+        _, response = app.test_client.post(f"/{term}")
+        assert response.status == 200
+        assert response.text == f"{term}_without"
+
+        _, response = app.test_client.post(f"/{term}/")
+        assert response.status == 200
+        assert response.text == f"{term}_with"

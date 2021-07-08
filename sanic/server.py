@@ -1,3 +1,24 @@
+from __future__ import annotations
+
+from ssl import SSLContext
+from types import SimpleNamespace
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Type,
+    Union,
+)
+
+from sanic.models.handler_types import ListenerType
+
+
+if TYPE_CHECKING:
+    from sanic.app import Sanic
+
 import asyncio
 import multiprocessing
 import os
@@ -5,28 +26,23 @@ import secrets
 import socket
 import stat
 
-from asyncio import CancelledError
+from asyncio import BufferedProtocol, CancelledError
+from asyncio.transports import Transport
 from functools import partial
 from inspect import isawaitable
 from ipaddress import ip_address
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import monotonic as current_time
-from typing import Dict, Type, Union
 
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
-from sanic.log import logger
+from sanic.log import error_logger, logger
+from sanic.models.protocol_types import TransportProtocol
 from sanic.request import Request
 
-
-try:
-    from asyncio import BufferedProtocol as BaseProtocol  # type: ignore
-except ImportError:
-    # Support for Python 3.6
-    from asyncio import Protocol as BaseProtocol  # type: ignore
 
 try:
     import uvloop  # type: ignore
@@ -47,24 +63,30 @@ class ConnInfo:
     """
 
     __slots__ = (
-        "sockname",
-        "peername",
-        "server",
-        "server_port",
-        "client",
         "client_port",
+        "client",
+        "client_ip",
+        "ctx",
+        "peername",
+        "server_port",
+        "server",
+        "sockname",
         "ssl",
     )
 
-    def __init__(self, transport, unix=None):
-        self.ssl = bool(transport.get_extra_info("sslcontext"))
+    def __init__(self, transport: TransportProtocol, unix=None):
+        self.ctx = SimpleNamespace()
+        self.peername = None
         self.server = self.client = ""
         self.server_port = self.client_port = 0
-        self.peername = None
+        self.client_ip = ""
         self.sockname = addr = transport.get_extra_info("sockname")
+        self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
+
         if isinstance(addr, str):  # UNIX socket
             self.server = unix or addr
             return
+
         # IPv4 (ip, port) or IPv6 (ip, port, flowinfo, scopeid)
         if isinstance(addr, tuple):
             self.server = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
@@ -73,12 +95,14 @@ class ConnInfo:
             if addr[1] != (443 if self.ssl else 80):
                 self.server = f"{self.server}:{addr[1]}"
         self.peername = addr = transport.get_extra_info("peername")
+
         if isinstance(addr, tuple):
             self.client = addr[0] if len(addr) == 2 else f"[{addr[0]}]"
+            self.client_ip = addr[0]
             self.client_port = addr[1]
 
 
-class HttpProtocol(BaseProtocol):
+class HttpProtocol(BufferedProtocol):
     """
     This class provides a basic HTTP implementation of the sanic framework.
     """
@@ -92,6 +116,7 @@ class HttpProtocol(BaseProtocol):
         "connections",
         "signal",
         "conn_info",
+        "ctx",
         # request params
         "request",
         # request config
@@ -100,7 +125,6 @@ class HttpProtocol(BaseProtocol):
         "response_timeout",
         "keep_alive_timeout",
         "request_max_size",
-        "request_buffer_queue_size",
         "request_class",
         "error_handler",
         # enable or disable access log purpose
@@ -124,8 +148,8 @@ class HttpProtocol(BaseProtocol):
         self,
         *,
         loop,
-        app,
-        signal=Signal(),
+        app: Sanic,
+        signal=None,
         connections=None,
         state=None,
         unix=None,
@@ -133,20 +157,17 @@ class HttpProtocol(BaseProtocol):
     ):
         asyncio.set_event_loop(loop)
         self.loop = loop
-        self.app = app
+        self.app: Sanic = app
         self.url = None
-        self.transport = None
-        self.conn_info = None
-        self.request = None
-        self.signal = signal
+        self.transport: Optional[Transport] = None
+        self.conn_info: Optional[ConnInfo] = None
+        self.request: Optional[Request] = None
+        self.signal = signal or Signal()
         self.access_log = self.app.config.ACCESS_LOG
         self.connections = connections if connections is not None else set()
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
-        self.request_buffer_queue_size = (
-            self.app.config.REQUEST_BUFFER_QUEUE_SIZE
-        )
         self.response_timeout = self.app.config.RESPONSE_TIMEOUT
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE
@@ -166,7 +187,8 @@ class HttpProtocol(BaseProtocol):
         self.check_timeouts()
 
     async def connection_task(self):
-        """Run a HTTP connection.
+        """
+        Run a HTTP connection.
 
         Timeouts and some additional error handling occur here, while most of
         everything else happens in class Http or in code called from there.
@@ -177,11 +199,11 @@ class HttpProtocol(BaseProtocol):
         except CancelledError:
             pass
         except Exception:
-            logger.exception("protocol.connection_task uncaught")
+            error_logger.exception("protocol.connection_task uncaught")
         finally:
             if self.app.debug and self._http:
                 ip = self.transport.get_extra_info("peername")
-                logger.error(
+                error_logger.error(
                     "Connection lost before response written"
                     f" @ {ip} {self._http.request}"
                 )
@@ -190,16 +212,20 @@ class HttpProtocol(BaseProtocol):
             try:
                 self.close()
             except BaseException:
-                logger.exception("Closing failed")
+                error_logger.exception("Closing failed")
 
     async def receive_more(self):
-        """Wait until more data is received into self._buffer."""
+        """
+        Wait until more data is received into the Server protocol's buffer
+        """
         self.transport.resume_reading()
         self._data_received.clear()
         await self._data_received.wait()
 
     def check_timeouts(self):
-        """Runs itself periodically to enforce any expired timeouts."""
+        """
+        Runs itself periodically to enforce any expired timeouts.
+        """
         try:
             if not self._task:
                 return
@@ -208,11 +234,16 @@ class HttpProtocol(BaseProtocol):
             if stage is Stage.IDLE and duration > self.keep_alive_timeout:
                 logger.debug("KeepAlive Timeout. Closing connection.")
             elif stage is Stage.REQUEST and duration > self.request_timeout:
+                logger.debug("Request Timeout. Closing connection.")
                 self._http.exception = RequestTimeout("Request Timeout")
+            elif stage is Stage.HANDLER and self._http.upgrade_websocket:
+                logger.debug("Handling websocket. Timeouts disabled.")
+                return
             elif (
                 stage in (Stage.HANDLER, Stage.RESPONSE, Stage.FAILED)
                 and duration > self.response_timeout
             ):
+                logger.debug("Response Timeout. Closing connection.")
                 self._http.exception = ServiceUnavailable("Response Timeout")
             else:
                 interval = (
@@ -227,18 +258,21 @@ class HttpProtocol(BaseProtocol):
                 return
             self._task.cancel()
         except Exception:
-            logger.exception("protocol.check_timeouts")
+            error_logger.exception("protocol.check_timeouts")
 
     async def send(self, data):
-        """Writes data with backpressure control."""
+        """
+        Writes data with backpressure control.
+        """
         await self._can_write.wait()
         if self.transport.is_closing():
             raise CancelledError
         self.transport.write(data)
         self._time = current_time()
 
-    def close_if_idle(self):
-        """Close the connection if a request is not being sent or received
+    def close_if_idle(self) -> bool:
+        """
+        Close the connection if a request is not being sent or received
 
         :return: boolean - True if closed, false if staying open
         """
@@ -273,7 +307,7 @@ class HttpProtocol(BaseProtocol):
             )
             self.conn_info = ConnInfo(self.transport, unix=self._unix)
         except Exception:
-            logger.exception("protocol.connect_made")
+            error_logger.exception("protocol.connect_made")
 
     def connection_lost(self, exc):
         try:
@@ -282,36 +316,13 @@ class HttpProtocol(BaseProtocol):
             if self._task:
                 self._task.cancel()
         except Exception:
-            logger.exception("protocol.connection_lost")
+            error_logger.exception("protocol.connection_lost")
 
     def pause_writing(self):
         self._can_write.clear()
 
     def resume_writing(self):
         self._can_write.set()
-
-    # -------------------------------------------- #
-    # Python 3.6
-    # -------------------------------------------- #
-
-    def data_received(self, data):
-        try:
-            self._time = current_time()
-            if not data:
-                return self.close()
-            self.recv_buffer += data
-
-            if len(self.recv_buffer) > self.app.config.REQUEST_BUFFER_SIZE:
-                self.transport.pause_reading()
-
-            if self._data_received:
-                self._data_received.set()
-        except Exception:
-            logger.exception("protocol.data_received")
-
-    # -------------------------------------------- #
-    # Python 3.7+
-    # -------------------------------------------- #
 
     def get_buffer(self, sizehint=-1):
         return self._buffer
@@ -333,16 +344,18 @@ class HttpProtocol(BaseProtocol):
     #     self.data_received(b"")
 
 
-def trigger_events(events, loop):
-    """Trigger event callbacks (functions or async)
+def trigger_events(events: Optional[Iterable[Callable[..., Any]]], loop):
+    """
+    Trigger event callbacks (functions or async)
 
     :param events: one or more sync or async functions to execute
     :param loop: event loop
     """
-    for event in events:
-        result = event(loop)
-        if isawaitable(result):
-            loop.run_until_complete(result)
+    if events:
+        for event in events:
+            result = event(loop)
+            if isawaitable(result):
+                loop.run_until_complete(result)
 
 
 class AsyncioServer:
@@ -366,9 +379,9 @@ class AsyncioServer:
         loop,
         serve_coro,
         connections,
-        after_start,
-        before_stop,
-        after_stop,
+        after_start: Optional[Iterable[ListenerType]],
+        before_stop: Optional[Iterable[ListenerType]],
+        after_stop: Optional[Iterable[ListenerType]],
     ):
         # Note, Sanic already called "before_server_start" events
         # before this helper was even created. So we don't need it here.
@@ -381,18 +394,24 @@ class AsyncioServer:
         self.connections = connections
 
     def after_start(self):
-        """Trigger "after_server_start" events"""
+        """
+        Trigger "after_server_start" events
+        """
         trigger_events(self._after_start, self.loop)
 
     def before_stop(self):
-        """Trigger "before_server_stop" events"""
+        """
+        Trigger "before_server_stop" events
+        """
         trigger_events(self._before_stop, self.loop)
 
     def after_stop(self):
-        """Trigger "after_server_stop" events"""
+        """
+        Trigger "after_server_stop" events
+        """
         trigger_events(self._after_stop, self.loop)
 
-    def is_serving(self):
+    def is_serving(self) -> bool:
         if self.server:
             return self.server.is_serving()
         return False
@@ -429,7 +448,9 @@ class AsyncioServer:
                 )
 
     def __await__(self):
-        """Starts the asyncio server, returns AsyncServerCoro"""
+        """
+        Starts the asyncio server, returns AsyncServerCoro
+        """
         task = asyncio.ensure_future(self.serve_coro)
         while not task.done():
             yield
@@ -441,20 +462,20 @@ def serve(
     host,
     port,
     app,
-    before_start=None,
-    after_start=None,
-    before_stop=None,
-    after_stop=None,
-    ssl=None,
-    sock=None,
-    unix=None,
-    reuse_port=False,
+    before_start: Optional[Iterable[ListenerType]] = None,
+    after_start: Optional[Iterable[ListenerType]] = None,
+    before_stop: Optional[Iterable[ListenerType]] = None,
+    after_stop: Optional[Iterable[ListenerType]] = None,
+    ssl: Optional[SSLContext] = None,
+    sock: Optional[socket.socket] = None,
+    unix: Optional[str] = None,
+    reuse_port: bool = False,
     loop=None,
-    protocol=HttpProtocol,
-    backlog=100,
-    register_sys_signals=True,
-    run_multiple=False,
-    run_async=False,
+    protocol: Type[asyncio.Protocol] = HttpProtocol,
+    backlog: int = 100,
+    register_sys_signals: bool = True,
+    run_multiple: bool = False,
+    run_async: bool = False,
     connections=None,
     signal=Signal(),
     state=None,
@@ -485,7 +506,7 @@ def serve(
                                   create_server method
     :return: Nothing
     """
-    if not run_async:
+    if not run_async and not loop:
         # create new event_loop after fork
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -539,7 +560,7 @@ def serve(
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except BaseException:
-        logger.exception("Unable to start server")
+        error_logger.exception("Unable to start server")
         return
 
     trigger_events(after_start, loop)
@@ -579,7 +600,7 @@ def serve(
         # instead of letting connection hangs forever.
         # Let's roughly calcucate time.
         graceful = app.config.GRACEFUL_SHUTDOWN_TIMEOUT
-        start_shutdown = 0
+        start_shutdown: float = 0
         while connections and (start_shutdown < graceful):
             loop.run_until_complete(asyncio.sleep(0.1))
             start_shutdown = start_shutdown + 0.1
@@ -598,12 +619,11 @@ def serve(
 
         trigger_events(after_stop, loop)
 
-        loop.close()
         remove_unix_socket(unix)
 
 
 def _build_protocol_kwargs(
-    protocol: Type[HttpProtocol], config: Config
+    protocol: Type[asyncio.Protocol], config: Config
 ) -> Dict[str, Union[int, float]]:
     if hasattr(protocol, "websocket_handshake"):
         return {
@@ -679,7 +699,7 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     return sock
 
 
-def remove_unix_socket(path: str) -> None:
+def remove_unix_socket(path: Optional[str]) -> None:
     """Remove dead unix socket during server exit."""
     if not path:
         return
@@ -695,6 +715,23 @@ def remove_unix_socket(path: str) -> None:
         pass
 
 
+def serve_single(server_settings):
+    main_start = server_settings.pop("main_start", None)
+    main_stop = server_settings.pop("main_stop", None)
+
+    if not server_settings.get("run_async"):
+        # create new event_loop after fork
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        server_settings["loop"] = loop
+
+    trigger_events(main_start, server_settings["loop"])
+    serve(**server_settings)
+    trigger_events(main_stop, server_settings["loop"])
+
+    server_settings["loop"].close()
+
+
 def serve_multiple(server_settings, workers):
     """Start multiple server processes simultaneously.  Stop on interrupt
     and terminate signals, and drain connections when complete.
@@ -706,6 +743,13 @@ def serve_multiple(server_settings, workers):
     """
     server_settings["reuse_port"] = True
     server_settings["run_multiple"] = True
+
+    main_start = server_settings.pop("main_start", None)
+    main_stop = server_settings.pop("main_stop", None)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    trigger_events(main_start, loop)
 
     # Create a listening socket or use the one in settings
     sock = server_settings.get("sock")
@@ -747,5 +791,8 @@ def serve_multiple(server_settings, workers):
     for process in processes:
         process.terminate()
 
+    trigger_events(main_stop, loop)
+
     sock.close()
+    loop.close()
     remove_unix_socket(unix)

@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from sanic_routing import BaseRouter  # type: ignore
 from sanic_routing.exceptions import NoMethod  # type: ignore
@@ -9,11 +9,12 @@ from sanic_routing.exceptions import (
 from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import MethodNotSupported, NotFound
-from sanic.request import Request
+from sanic.exceptions import MethodNotSupported, NotFound, SanicException
+from sanic.models.handler_types import RouteHandler
 
 
 ROUTER_CACHE_SIZE = 1024
+ALLOWED_LABELS = ("__file_uri__",)
 
 
 class Router(BaseRouter):
@@ -25,17 +26,14 @@ class Router(BaseRouter):
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
 
-    # Putting the lru_cache on Router.get() performs better for the benchmarsk
-    # at tests/benchmark/test_route_resolution_benchmark.py
-    # However, overall application performance is significantly improved
-    # with the lru_cache on this method.
-    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
-    def _get(self, path, method, host):
+    def _get(
+        self, path: str, method: str, host: Optional[str]
+    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         try:
-            route, handler, params = self.resolve(
+            return self.resolve(
                 path=path,
                 method=method,
-                extra={"host": host},
+                extra={"host": host} if host else None,
             )
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
@@ -46,15 +44,10 @@ class Router(BaseRouter):
                 allowed_methods=e.allowed_methods,
             )
 
-        return (
-            handler,
-            params,
-            route.path,
-            route.name,
-            route.ctx.ignore_body,
-        )
-
-    def get(self, request: Request):
+    @lru_cache(maxsize=ROUTER_CACHE_SIZE)
+    def get(  # type: ignore
+        self, path: str, method: str, host: Optional[str]
+    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         """
         Retrieve a `Route` object containg the details about how to handle
         a response for a given request
@@ -63,18 +56,15 @@ class Router(BaseRouter):
         :type request: Request
         :return: details needed for handling the request and returning the
             correct response
-        :rtype: Tuple[ RouteHandler, Tuple[Any, ...], Dict[str, Any], str, str,
-            Optional[str], bool, ]
+        :rtype: Tuple[ Route, RouteHandler, Dict[str, Any]]
         """
-        return self._get(
-            request.path, request.method, request.headers.get("host")
-        )
+        return self._get(path, method, host)
 
-    def add(
+    def add(  # type: ignore
         self,
         uri: str,
         methods: Iterable[str],
-        handler,
+        handler: RouteHandler,
         host: Optional[Union[str, Iterable[str]]] = None,
         strict_slashes: bool = False,
         stream: bool = False,
@@ -83,6 +73,7 @@ class Router(BaseRouter):
         name: Optional[str] = None,
         unquote: bool = False,
         static: bool = False,
+        version_prefix: str = "/v",
     ) -> Union[Route, List[Route]]:
         """
         Add a handler to the router
@@ -113,12 +104,12 @@ class Router(BaseRouter):
         """
         if version is not None:
             version = str(version).strip("/").lstrip("v")
-            uri = "/".join([f"/v{version}", uri.lstrip("/")])
+            uri = "/".join([f"{version_prefix}{version}", uri.lstrip("/")])
 
         params = dict(
             path=uri,
             handler=handler,
-            methods=methods,
+            methods=frozenset(map(str, methods)) if methods else None,
             name=name,
             strict=strict_slashes,
             unquote=unquote,
@@ -135,7 +126,7 @@ class Router(BaseRouter):
             if host:
                 params.update({"requirements": {"host": host}})
 
-            route = super().add(**params)
+            route = super().add(**params)  # type: ignore
             route.ctx.ignore_body = ignore_body
             route.ctx.stream = stream
             route.ctx.hosts = hosts
@@ -146,23 +137,6 @@ class Router(BaseRouter):
         if len(routes) == 1:
             return routes[0]
         return routes
-
-    def is_stream_handler(self, request) -> bool:
-        """
-        Handler for request is stream or not.
-
-        :param request: Request object
-        :return: bool
-        """
-        try:
-            handler = self.get(request)[0]
-        except (NotFound, MethodNotSupported):
-            return False
-        if hasattr(handler, "view_class") and hasattr(
-            handler.view_class, request.method.lower()
-        ):
-            handler = getattr(handler.view_class, request.method.lower())
-        return hasattr(handler, "is_stream")
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(self, view_name, name=None):
@@ -188,7 +162,7 @@ class Router(BaseRouter):
 
     @property
     def routes_all(self):
-        return self.routes
+        return {route.parts: route for route in self.routes}
 
     @property
     def routes_static(self):
@@ -201,3 +175,15 @@ class Router(BaseRouter):
     @property
     def routes_regex(self):
         return self.regex_routes
+
+    def finalize(self, *args, **kwargs):
+        super().finalize(*args, **kwargs)
+
+        for route in self.dynamic_routes.values():
+            if any(
+                label.startswith("__") and label not in ALLOWED_LABELS
+                for label in route.labels
+            ):
+                raise SanicException(
+                    f"Invalid route: {route}. Parameter names cannot use '__'."
+                )

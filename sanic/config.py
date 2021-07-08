@@ -1,7 +1,10 @@
 from inspect import isclass
 from os import environ
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Dict, Optional, Union
+from warnings import warn
+
+from sanic.http import Http
 
 from .utils import load_module_from_file_location, str_to_bool
 
@@ -15,33 +18,64 @@ BASE_LOGO = """
 """
 
 DEFAULT_CONFIG = {
-    "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
-    "REQUEST_BUFFER_QUEUE_SIZE": 100,
+    "ACCESS_LOG": True,
+    "EVENT_AUTOREGISTER": False,
+    "FALLBACK_ERROR_FORMAT": "html",
+    "FORWARDED_FOR_HEADER": "X-Forwarded-For",
+    "FORWARDED_SECRET": None,
+    "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
+    "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
+    "KEEP_ALIVE": True,
+    "PROXIES_COUNT": None,
+    "REAL_IP_HEADER": None,
+    "REGISTER": True,
     "REQUEST_BUFFER_SIZE": 65536,  # 64 KiB
+    "REQUEST_MAX_HEADER_SIZE": 8192,  # 8 KiB, but cannot exceed 16384
+    "REQUEST_ID_HEADER": "X-Request-ID",
+    "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
-    "KEEP_ALIVE": True,
-    "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
-    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_MAX_QUEUE": 32,
+    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
+    "WEBSOCKET_PING_INTERVAL": 20,
+    "WEBSOCKET_PING_TIMEOUT": 20,
     "WEBSOCKET_READ_LIMIT": 2 ** 16,
     "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
-    "WEBSOCKET_PING_TIMEOUT": 20,
-    "WEBSOCKET_PING_INTERVAL": 20,
-    "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
-    "ACCESS_LOG": True,
-    "FORWARDED_SECRET": None,
-    "REAL_IP_HEADER": None,
-    "PROXIES_COUNT": None,
-    "FORWARDED_FOR_HEADER": "X-Forwarded-For",
-    "REQUEST_ID_HEADER": "X-Request-ID",
-    "FALLBACK_ERROR_FORMAT": "html",
-    "REGISTER": True,
 }
 
 
 class Config(dict):
-    def __init__(self, defaults=None, load_env=True, keep_alive=None):
+    ACCESS_LOG: bool
+    EVENT_AUTOREGISTER: bool
+    FALLBACK_ERROR_FORMAT: str
+    FORWARDED_FOR_HEADER: str
+    FORWARDED_SECRET: Optional[str]
+    GRACEFUL_SHUTDOWN_TIMEOUT: float
+    KEEP_ALIVE_TIMEOUT: int
+    KEEP_ALIVE: bool
+    PROXIES_COUNT: Optional[int]
+    REAL_IP_HEADER: Optional[str]
+    REGISTER: bool
+    REQUEST_BUFFER_SIZE: int
+    REQUEST_MAX_HEADER_SIZE: int
+    REQUEST_ID_HEADER: str
+    REQUEST_MAX_SIZE: int
+    REQUEST_TIMEOUT: int
+    RESPONSE_TIMEOUT: int
+    WEBSOCKET_MAX_QUEUE: int
+    WEBSOCKET_MAX_SIZE: int
+    WEBSOCKET_PING_INTERVAL: int
+    WEBSOCKET_PING_TIMEOUT: int
+    WEBSOCKET_READ_LIMIT: int
+    WEBSOCKET_WRITE_LIMIT: int
+
+    def __init__(
+        self,
+        defaults: Dict[str, Union[str, bool, int, float, None]] = None,
+        load_env: Optional[Union[bool, str]] = True,
+        env_prefix: Optional[str] = SANIC_PREFIX,
+        keep_alive: Optional[bool] = None,
+    ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
@@ -50,9 +84,22 @@ class Config(dict):
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
 
-        if load_env:
-            prefix = SANIC_PREFIX if load_env is True else load_env
-            self.load_environment_vars(prefix=prefix)
+        if env_prefix != SANIC_PREFIX:
+            if env_prefix:
+                self.load_environment_vars(env_prefix)
+        elif load_env is not True:
+            if load_env:
+                self.load_environment_vars(prefix=load_env)
+            warn(
+                "Use of load_env is deprecated and will be removed in "
+                "21.12. Modify the configuration prefix by passing "
+                "env_prefix instead.",
+                DeprecationWarning,
+            )
+        else:
+            self.load_environment_vars(SANIC_PREFIX)
+
+        self._configure_header_size()
 
     def __getattr__(self, attr):
         try:
@@ -62,11 +109,33 @@ class Config(dict):
 
     def __setattr__(self, attr, value):
         self[attr] = value
+        if attr in (
+            "REQUEST_MAX_HEADER_SIZE",
+            "REQUEST_BUFFER_SIZE",
+            "REQUEST_MAX_SIZE",
+        ):
+            self._configure_header_size()
+
+    def _configure_header_size(self):
+        Http.set_header_max_size(
+            self.REQUEST_MAX_HEADER_SIZE,
+            self.REQUEST_BUFFER_SIZE - 4096,
+            self.REQUEST_MAX_SIZE,
+        )
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
         Looks for prefixed environment variables and applies
-        them to the configuration if present.
+        them to the configuration if present. This is called automatically when
+        Sanic starts up to load environment variables into config.
+
+        It will automatically hyrdate the following types:
+
+        - ``int``
+        - ``float``
+        - ``bool``
+
+        Anything else will be imported as a ``str``.
         """
         for k, v in environ.items():
             if k.startswith(prefix):
@@ -86,7 +155,9 @@ class Config(dict):
         """
         Update app.config.
 
-        Note:: only upper case settings are considered.
+        .. note::
+
+            Only upper case settings are considered
 
         You can upload app config by providing path to py file
         holding settings.
@@ -102,8 +173,8 @@ class Config(dict):
             config.update_config("${some}/py/file")
 
         Yes you can put environment variable here, but they must be provided
-        in format: ${some_env_var}, and mark that $some_env_var is treated
-        as plain string.
+        in format: ``${some_env_var}``, and mark that ``$some_env_var`` is
+        treated as plain string.
 
         You can upload app config by providing dict holding settings.
 
@@ -122,6 +193,9 @@ class Config(dict):
                 B = 2
 
             config.update_config(C)
+
+        `See user guide re: config
+        <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
 
         if isinstance(config, (bytes, str, Path)):

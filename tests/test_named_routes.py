@@ -209,13 +209,13 @@ def test_named_static_routes():
         return text("OK2")
 
     assert app.router.routes_all[("test",)].name == "app.route_test"
-    assert app.router.routes_static[("test",)].name == "app.route_test"
+    assert app.router.routes_static[("test",)][0].name == "app.route_test"
     assert app.url_for("route_test") == "/test"
     with pytest.raises(URLBuildError):
         app.url_for("handler1")
 
     assert app.router.routes_all[("pizazz",)].name == "app.route_pizazz"
-    assert app.router.routes_static[("pizazz",)].name == "app.route_pizazz"
+    assert app.router.routes_static[("pizazz",)][0].name == "app.route_pizazz"
     assert app.url_for("route_pizazz") == "/pizazz"
     with pytest.raises(URLBuildError):
         app.url_for("handler2")
@@ -234,7 +234,7 @@ def test_named_dynamic_route():
         app.router.routes_all[
             (
                 "folder",
-                "<name>",
+                "<name:str>",
             )
         ].name
         == "app.route_dynamic"
@@ -347,13 +347,13 @@ def test_static_add_named_route():
     app.add_route(handler2, "/test2", name="route_test2")
 
     assert app.router.routes_all[("test",)].name == "app.route_test"
-    assert app.router.routes_static[("test",)].name == "app.route_test"
+    assert app.router.routes_static[("test",)][0].name == "app.route_test"
     assert app.url_for("route_test") == "/test"
     with pytest.raises(URLBuildError):
         app.url_for("handler1")
 
     assert app.router.routes_all[("test2",)].name == "app.route_test2"
-    assert app.router.routes_static[("test2",)].name == "app.route_test2"
+    assert app.router.routes_static[("test2",)][0].name == "app.route_test2"
     assert app.url_for("route_test2") == "/test2"
     with pytest.raises(URLBuildError):
         app.url_for("handler2")
@@ -369,7 +369,8 @@ def test_dynamic_add_named_route():
 
     app.add_route(handler, "/folder/<name>", name="route_dynamic")
     assert (
-        app.router.routes_all[("folder", "<name>")].name == "app.route_dynamic"
+        app.router.routes_all[("folder", "<name:str>")].name
+        == "app.route_dynamic"
     )
     assert app.url_for("route_dynamic", name="test") == "/folder/test"
     with pytest.raises(URLBuildError):

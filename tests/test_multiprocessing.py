@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import pickle
 import random
@@ -8,6 +9,7 @@ import pytest
 from sanic_testing.testing import HOST, PORT
 
 from sanic import Blueprint
+from sanic.log import logger
 from sanic.response import text
 
 
@@ -108,3 +110,43 @@ def test_pickle_app_with_static(app, protocol):
     assert up_p_app
     request, response = up_p_app.test_client.get("/static/missing.txt")
     assert response.status == 404
+
+
+def test_main_process_event(app, caplog):
+    # Selects a number at random so we can spot check
+    num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
+
+    def stop_on_alarm(*args):
+        for process in multiprocessing.active_children():
+            process.terminate()
+
+    signal.signal(signal.SIGALRM, stop_on_alarm)
+    signal.alarm(1)
+
+    @app.listener("main_process_start")
+    def main_process_start(app, loop):
+        logger.info("main_process_start")
+
+    @app.listener("main_process_stop")
+    def main_process_stop(app, loop):
+        logger.info("main_process_stop")
+
+    @app.main_process_start
+    def main_process_start(app, loop):
+        logger.info("main_process_start")
+
+    @app.main_process_stop
+    def main_process_stop(app, loop):
+        logger.info("main_process_stop")
+
+    with caplog.at_level(logging.INFO):
+        app.run(HOST, PORT, workers=num_workers)
+
+    assert (
+        caplog.record_tuples.count(("sanic.root", 20, "main_process_start"))
+        == 2
+    )
+    assert (
+        caplog.record_tuples.count(("sanic.root", 20, "main_process_stop"))
+        == 2
+    )

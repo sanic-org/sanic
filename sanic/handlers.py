@@ -1,6 +1,4 @@
-from asyncio.events import AbstractEventLoop
 from traceback import format_exc
-from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
 
 from sanic.errorpages import exception_response
 from sanic.exceptions import (
@@ -8,24 +6,8 @@ from sanic.exceptions import (
     HeaderNotFound,
     InvalidRangeType,
 )
-from sanic.log import logger
-from sanic.request import Request
-from sanic.response import BaseHTTPResponse, HTTPResponse, text
-
-
-Sanic = TypeVar("Sanic")
-
-MiddlewareResponse = Union[
-    Optional[HTTPResponse], Coroutine[Any, Any, Optional[HTTPResponse]]
-]
-RequestMiddlewareType = Callable[[Request], MiddlewareResponse]
-ResponseMiddlewareType = Callable[
-    [Request, BaseHTTPResponse], MiddlewareResponse
-]
-MiddlewareType = Union[RequestMiddlewareType, ResponseMiddlewareType]
-ListenerType = Callable[
-    [Sanic, AbstractEventLoop], Optional[Coroutine[Any, Any, None]]
-]
+from sanic.log import error_logger
+from sanic.response import text
 
 
 class ErrorHandler:
@@ -43,7 +25,6 @@ class ErrorHandler:
 
     handlers = None
     cached_handlers = None
-    _missing = object()
 
     def __init__(self):
         self.handlers = []
@@ -63,7 +44,9 @@ class ErrorHandler:
 
         :return: None
         """
+        # self.handlers to be deprecated and removed in version 21.12
         self.handlers.append((exception, handler))
+        self.cached_handlers[exception] = handler
 
     def lookup(self, exception):
         """
@@ -79,14 +62,19 @@ class ErrorHandler:
 
         :return: Registered function if found ``None`` otherwise
         """
-        handler = self.cached_handlers.get(type(exception), self._missing)
-        if handler is self._missing:
-            for exception_class, handler in self.handlers:
-                if isinstance(exception, exception_class):
-                    self.cached_handlers[type(exception)] = handler
-                    return handler
-            self.cached_handlers[type(exception)] = None
-            handler = None
+        exception_class = type(exception)
+        if exception_class in self.cached_handlers:
+            return self.cached_handlers[exception_class]
+
+        for ancestor in type.mro(exception_class):
+            if ancestor in self.cached_handlers:
+                handler = self.cached_handlers[ancestor]
+                self.cached_handlers[exception_class] = handler
+                return handler
+            if ancestor is BaseException:
+                break
+        self.cached_handlers[exception_class] = None
+        handler = None
         return handler
 
     def response(self, request, exception):
@@ -119,7 +107,7 @@ class ErrorHandler:
             response_message = (
                 "Exception raised in exception handler " '"%s" for uri: %s'
             )
-            logger.exception(response_message, handler.__name__, url)
+            error_logger.exception(response_message, handler.__name__, url)
 
             if self.debug:
                 return text(response_message % (handler.__name__, url), 500)
@@ -155,7 +143,9 @@ class ErrorHandler:
                 url = "unknown"
 
             self.log(format_exc())
-            logger.exception("Exception occurred while handling uri: %s", url)
+            error_logger.exception(
+                "Exception occurred while handling uri: %s", url
+            )
 
         return exception_response(request, exception, self.debug)
 
@@ -183,7 +173,7 @@ class ContentRangeHandler:
 
     def __init__(self, request, stats):
         self.total = stats.st_size
-        _range = request.headers.get("Range")
+        _range = request.headers.getone("range", None)
         if _range is None:
             raise HeaderNotFound("Range Header Not Found")
         unit, _, value = tuple(map(str.strip, _range.partition("=")))

@@ -1,3 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
+
+if TYPE_CHECKING:
+    from sanic.request import Request
+    from sanic.response import BaseHTTPResponse
+
 from asyncio import CancelledError, sleep
 from enum import Enum
 
@@ -11,10 +20,21 @@ from sanic.exceptions import (
 )
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
-from sanic.log import access_logger, logger
+from sanic.log import access_logger, error_logger, logger
 
 
 class Stage(Enum):
+    """
+    Enum for representing the stage of the request/response cycle
+
+    | ``IDLE``  Waiting for request
+    | ``REQUEST``  Request headers being received
+    | ``HANDLER``  Headers done, handler running
+    | ``RESPONSE``  Response headers sent, body in progress
+    | ``FAILED``  Unrecoverable state (error while sending response)
+    |
+    """
+
     IDLE = 0  # Waiting for request
     REQUEST = 1  # Request headers being received
     HANDLER = 3  # Headers done, handler running
@@ -26,6 +46,27 @@ HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 
 class Http:
+    """
+    Internal helper for managing the HTTP request/response cycle
+
+    :raises ServerError:
+    :raises PayloadTooLarge:
+    :raises Exception:
+    :raises InvalidUsage:
+    :raises HeaderExpectationFailed:
+    :raises RuntimeError:
+    :raises ServerError:
+    :raises ServerError:
+    :raises InvalidUsage:
+    :raises InvalidUsage:
+    :raises InvalidUsage:
+    :raises PayloadTooLarge:
+    :raises RuntimeError:
+    """
+
+    HEADER_CEILING = 16_384
+    HEADER_MAX_SIZE = 0
+
     __slots__ = [
         "_send",
         "_receive_more",
@@ -44,6 +85,7 @@ class Http:
         "request_max_size",
         "response",
         "response_func",
+        "response_size",
         "response_bytes_left",
         "upgrade_websocket",
     ]
@@ -53,16 +95,16 @@ class Http:
         self._receive_more = protocol.receive_more
         self.recv_buffer = protocol.recv_buffer
         self.protocol = protocol
-        self.expecting_continue = False
-        self.stage = Stage.IDLE
+        self.expecting_continue: bool = False
+        self.stage: Stage = Stage.IDLE
         self.request_body = None
         self.request_bytes = None
         self.request_bytes_left = None
         self.request_max_size = protocol.request_max_size
         self.keep_alive = True
         self.head_only = None
-        self.request = None
-        self.response = None
+        self.request: Request = None
+        self.response: BaseHTTPResponse = None
         self.exception = None
         self.url = None
         self.upgrade_websocket = False
@@ -72,7 +114,9 @@ class Http:
         return self.stage in (Stage.HANDLER, Stage.RESPONSE)
 
     async def http1(self):
-        """HTTP 1.1 connection handler"""
+        """
+        HTTP 1.1 connection handler
+        """
         while True:  # As long as connection stays keep-alive
             try:
                 # Receive and handle a request
@@ -103,7 +147,7 @@ class Http:
             # Try to consume any remaining request body
             if self.request_body:
                 if self.response and 200 <= self.response.status < 300:
-                    logger.error(f"{self.request} body not consumed.")
+                    error_logger.error(f"{self.request} body not consumed.")
 
                 try:
                     async for _ in self:
@@ -125,8 +169,9 @@ class Http:
                 await self._receive_more()
 
     async def http1_request_header(self):
-        """Receive and parse request header into self.request."""
-        HEADER_MAX_SIZE = min(8192, self.request_max_size)
+        """
+        Receive and parse request header into self.request.
+        """
         # Receive until full header is in buffer
         buf = self.recv_buffer
         pos = 0
@@ -137,18 +182,19 @@ class Http:
                 break
 
             pos = max(0, len(buf) - 3)
-            if pos >= HEADER_MAX_SIZE:
+            if pos >= self.HEADER_MAX_SIZE:
                 break
 
             await self._receive_more()
 
-        if pos >= HEADER_MAX_SIZE:
+        if pos >= self.HEADER_MAX_SIZE:
             raise PayloadTooLarge("Request header exceeds the size limit")
 
         # Parse header content
         try:
-            raw_headers = buf[:pos].decode(errors="surrogateescape")
-            reqline, *raw_headers = raw_headers.split("\r\n")
+            head = buf[:pos]
+            raw_headers = head.decode(errors="surrogateescape")
+            reqline, *split_headers = raw_headers.split("\r\n")
             method, self.url, protocol = reqline.split(" ")
 
             if protocol == "HTTP/1.1":
@@ -162,7 +208,7 @@ class Http:
             request_body = False
             headers = []
 
-            for name, value in (h.split(":", 1) for h in raw_headers):
+            for name, value in (h.split(":", 1) for h in split_headers):
                 name, value = h = name.lower(), value.lstrip()
 
                 if name in ("content-length", "transfer-encoding"):
@@ -175,12 +221,15 @@ class Http:
             raise InvalidUsage("Bad Request")
 
         headers_instance = Header(headers)
-        self.upgrade_websocket = headers_instance.get("upgrade") == "websocket"
+        self.upgrade_websocket = (
+            headers_instance.getone("upgrade", "").lower() == "websocket"
+        )
 
         # Prepare a Request object
         request = self.protocol.request_class(
             url_bytes=self.url.encode(),
             headers=headers_instance,
+            head=bytes(head),
             version=protocol[5:],
             method=method,
             transport=self.protocol.transport,
@@ -191,7 +240,7 @@ class Http:
         self.request_bytes_left = self.request_bytes = 0
         if request_body:
             headers = request.headers
-            expect = headers.get("expect")
+            expect = headers.getone("expect", None)
 
             if expect is not None:
                 if expect.lower() == "100-continue":
@@ -199,7 +248,7 @@ class Http:
                 else:
                     raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
 
-            if headers.get("transfer-encoding") == "chunked":
+            if headers.getone("transfer-encoding", None) == "chunked":
                 self.request_body = "chunked"
                 pos -= 2  # One CRLF stays in buffer
             else:
@@ -214,16 +263,19 @@ class Http:
         self.request, request.stream = request, self
         self.protocol.state["requests_count"] += 1
 
-    async def http1_response_header(self, data, end_stream):
+    async def http1_response_header(
+        self, data: bytes, end_stream: bool
+    ) -> None:
         res = self.response
 
         # Compatibility with simple response body
         if not data and getattr(res, "body", None):
-            data, end_stream = res.body, True
+            data, end_stream = res.body, True  # type: ignore
 
         size = len(data)
         headers = res.headers
         status = res.status
+        self.response_size = size
 
         if not isinstance(status, int) or status < 200:
             raise RuntimeError(f"Invalid response status {status!r}")
@@ -257,7 +309,7 @@ class Http:
         else:
             # Length not known, use chunked encoding
             headers["transfer-encoding"] = "chunked"
-            data = b"%x\r\n%b\r\n" % (size, data) if size else None
+            data = b"%x\r\n%b\r\n" % (size, data) if size else b""
             self.response_func = self.http1_response_chunked
 
         if self.head_only:
@@ -283,14 +335,20 @@ class Http:
         await self._send(ret)
         self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
 
-    def head_response_ignored(self, data, end_stream):
-        """HEAD response: body data silently ignored."""
+    def head_response_ignored(self, data: bytes, end_stream: bool) -> None:
+        """
+        HEAD response: body data silently ignored.
+        """
         if end_stream:
             self.response_func = None
             self.stage = Stage.IDLE
 
-    async def http1_response_chunked(self, data, end_stream):
-        """Format a part of response body in chunked encoding."""
+    async def http1_response_chunked(
+        self, data: bytes, end_stream: bool
+    ) -> None:
+        """
+        Format a part of response body in chunked encoding.
+        """
         # Chunked encoding
         size = len(data)
         if end_stream:
@@ -304,8 +362,12 @@ class Http:
         elif size:
             await self._send(b"%x\r\n%b\r\n" % (size, data))
 
-    async def http1_response_normal(self, data: bytes, end_stream: bool):
-        """Format / keep track of non-chunked response."""
+    async def http1_response_normal(
+        self, data: bytes, end_stream: bool
+    ) -> None:
+        """
+        Format / keep track of non-chunked response.
+        """
         bytes_left = self.response_bytes_left - len(data)
         if bytes_left <= 0:
             if bytes_left < 0:
@@ -321,7 +383,10 @@ class Http:
             await self._send(data)
         self.response_bytes_left = bytes_left
 
-    async def error_response(self, exception):
+    async def error_response(self, exception: Exception) -> None:
+        """
+        Handle response when exception encountered
+        """
         # Disconnect after an error if in any other state than handler
         if self.stage is not Stage.HANDLER:
             self.keep_alive = False
@@ -339,10 +404,13 @@ class Http:
 
             await app.handle_exception(self.request, exception)
 
-    def create_empty_request(self):
-        """Current error handling code needs a request object that won't exist
+    def create_empty_request(self) -> None:
+        """
+        Current error handling code needs a request object that won't exist
         if an error occurred during before a request was received. Create a
-        bogus response for error handling use."""
+        bogus response for error handling use.
+        """
+
         # FIXME: Avoid this by refactoring error handling and response code
         self.request = self.protocol.request_class(
             url_bytes=self.url.encode() if self.url else b"*",
@@ -354,22 +422,17 @@ class Http:
         )
         self.request.stream = self
 
-    def log_response(self):
+    def log_response(self) -> None:
         """
         Helper method provided to enable the logging of responses in case if
         the :attr:`HttpProtocol.access_log` is enabled.
-
-        :param response: Response generated for the current request
-
-        :type response: :class:`sanic.response.HTTPResponse` or
-            :class:`sanic.response.StreamingHTTPResponse`
-
-        :return: None
         """
         req, res = self.request, self.response
         extra = {
             "status": getattr(res, "status", 0),
-            "byte": getattr(self, "response_bytes_left", -1),
+            "byte": getattr(
+                self, "response_bytes_left", getattr(self, "response_size", -1)
+            ),
             "host": "UNKNOWN",
             "request": "nil",
         }
@@ -382,15 +445,20 @@ class Http:
     # Request methods
 
     async def __aiter__(self):
-        """Async iterate over request body."""
+        """
+        Async iterate over request body.
+        """
         while self.request_body:
             data = await self.read()
 
             if data:
                 yield data
 
-    async def read(self):
-        """Read some bytes of request body."""
+    async def read(self) -> Optional[bytes]:
+        """
+        Read some bytes of request body.
+        """
+
         # Send a 100-continue if needed
         if self.expecting_continue:
             self.expecting_continue = False
@@ -422,6 +490,9 @@ class Http:
 
             if size <= 0:
                 self.request_body = None
+                # Because we are leaving one CRLF in the buffer, we manually
+                # reset the buffer here
+                self.recv_buffer = bytearray()
 
                 if size < 0:
                     self.keep_alive = False
@@ -440,7 +511,7 @@ class Http:
         # End of request body?
         if not self.request_bytes_left:
             self.request_body = None
-            return
+            return None
 
         # At this point we are good to read/return up to request_bytes_left
         if not buf:
@@ -457,12 +528,14 @@ class Http:
 
     # Response methods
 
-    def respond(self, response):
-        """Initiate new streaming response.
+    def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
+        """
+        Initiate new streaming response.
 
         Nothing is sent until the first send() call on the returned object, and
         calling this function multiple times will just alter the response to be
-        given."""
+        given.
+        """
         if self.stage is not Stage.HANDLER:
             self.stage = Stage.FAILED
             raise RuntimeError("Response already started")
@@ -473,3 +546,10 @@ class Http:
     @property
     def send(self):
         return self.response_func
+
+    @classmethod
+    def set_header_max_size(cls, *sizes: int):
+        cls.HEADER_MAX_SIZE = min(
+            *sizes,
+            cls.HEADER_CEILING,
+        )

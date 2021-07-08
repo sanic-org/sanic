@@ -1,11 +1,8 @@
-FROM python:3.5
-MAINTAINER Channel Cat <channelcat@gmail.com>
+FROM sanicframework/sanic:LTS
 
-ADD . /code
-RUN pip3 install git+https://github.com/channelcat/sanic
+RUN mkdir /srv
+COPY . /srv
 
-EXPOSE 8000
+WORKDIR /srv
 
-WORKDIR /code
-
-CMD ["python", "simple_server.py"]
+CMD ["sanic", "simple_server.app"]

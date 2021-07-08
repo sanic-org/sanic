@@ -1,0 +1,50 @@
+name: Python 3.9 Tests
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    paths:
+      - sanic/*
+      - tests/*
+
+jobs:
+  testPy39:
+    name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
+        config:
+          - {
+              python-version: 3.9,
+              tox-env: py39,
+              ignore-error-flake: "false",
+              command-timeout: "0",
+            }
+          - {
+              python-version: 3.9,
+              tox-env: py39-no-ext,
+              ignore-error-flake: "true",
+              command-timeout: "600000",
+            }
+    steps:
+      - name: Checkout the Repository
+        uses: actions/checkout@v2
+        id: checkout-branch
+
+      - name: Run Unit Tests
+        uses: harshanarayana/custom-actions@main
+        with:
+          python-version: ${{ matrix.config.python-version }}
+          test-infra-tool: tox
+          test-infra-version: latest
+          action: tests
+          test-additional-args: "-e=${{ matrix.config.tox-env }},-vv=''"
+          experimental-ignore-error: "${{ matrix.config.ignore-error-flake }}"
+          command-timeout: "${{ matrix.config.command-timeout }}"
+          test-failure-retry: "3"

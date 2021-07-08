@@ -7,29 +7,34 @@ Sanic | Build fast. Run fast.
 .. start-badges
 
 .. list-table::
+    :widths: 15 85
     :stub-columns: 1
 
     * - Build
-      - | |Build Status| |AppVeyor Build Status| |Codecov|
+      - | |Py39Test| |Py38Test| |Py37Test| |Codecov|
     * - Docs
-      - |Documentation|
+      - | |UserGuide| |Documentation|
     * - Package
       - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
     * - Support
-      - | |Forums| |Join the chat at https://gitter.im/sanic-python/Lobby| |Awesome|
+      - | |Forums| |Discord| |Awesome|
     * - Stats
       - | |Downloads| |WkDownloads| |Conda downloads|
 
+.. |UserGuide| image:: https://img.shields.io/badge/user%20guide-sanic-ff0068
+   :target: https://sanicframework.org/
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
-.. |Join the chat at https://gitter.im/sanic-python/Lobby| image:: https://badges.gitter.im/sanic-python/Lobby.svg
-   :target: https://gitter.im/sanic-python/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+.. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
+   :target: https://discord.gg/FARQzAEMAA
 .. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/sanic-org/sanic
-.. |Build Status| image:: https://travis-ci.com/sanic-org/sanic.svg?branch=master
-   :target: https://travis-ci.com/sanic-org/sanic
-.. |AppVeyor Build Status| image:: https://ci.appveyor.com/api/projects/status/d8pt3ids0ynexi8c/branch/master?svg=true
-   :target: https://ci.appveyor.com/project/sanic-org/sanic
+.. |Py39Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml/badge.svg?branch=main
+   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
+.. |Py38Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml/badge.svg?branch=main
+   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml
+.. |Py37Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml/badge.svg?branch=main
+   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest
    :target: http://sanic.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/sanic.svg
@@ -59,15 +64,30 @@ Sanic | Build fast. Run fast.
 
 .. end-badges
 
-Sanic is a **Python 3.6+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic is a **Python 3.7+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
 Sanic is also ASGI compliant, so you can deploy it with an `alternative ASGI webserver <https://sanic.readthedocs.io/en/latest/sanic/deploying.html#running-via-asgi>`_.
 
-`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_.
+`Source code on GitHub <https://github.com/sanic-org/sanic/>`_ | `Help and discussion board <https://community.sanicframework.org/>`_ | `User Guide <https://sanicframework.org>`_ | `Chat on Discord <https://discord.gg/FARQzAEMAA>`_
 
 The project is maintained by the community, for the community. **Contributions are welcome!**
 
 The goal of the project is to provide a simple way to get up and running a highly performant HTTP server that is easy to build, to expand, and ultimately to scale.
+
+Sponsor
+-------
+
+|Try CodeStream|
+
+.. |Try CodeStream| image:: https://alt-images.codestream.com/codestream_logo_sanicorg.png
+   :target: https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner
+   :alt: Try CodeStream
+
+Manage pull requests and conduct code reviews in your IDE with full source-tree context. Comment on any line, not just the diffs. Use jump-to-definition, your favorite keybindings, and code intelligence with more of your workflow.
+
+`Learn More <https://codestream.com/?utm_source=github&amp;utm_campaign=sanicorg&amp;utm_medium=banner>`_
+
+Thank you to our sponsor. Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
 
 Installation
 ------------
@@ -100,20 +120,20 @@ Hello World Example
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic()
+    app = Sanic("My Hello, world app")
 
     @app.route('/')
     async def test(request):
         return json({'hello': 'world'})
 
     if __name__ == '__main__':
-        app.run(host='0.0.0.0', port=8000)
+        app.run()
 
 Sanic can now be easily run using ``sanic hello.app``.
 
 .. code::
 
-    [2018-12-30 11:37:41 +0200] [13564] [INFO] Goin' Fast @ http://0.0.0.0:8000
+    [2018-12-30 11:37:41 +0200] [13564] [INFO] Goin' Fast @ http://127.0.0.1:8000
     [2018-12-30 11:37:41 +0200] [13564] [INFO] Starting worker [13564]
 
 And, we can verify it is working: ``curl localhost:8000 -i``
@@ -135,20 +155,20 @@ Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12
 Documentation
 -------------
 
-`Documentation on Readthedocs <http://sanic.readthedocs.io/>`_.
+`User Guide <https://sanicframework.org>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
 
 Changelog
 ---------
 
-`Release Changelogs <https://github.com/sanic-org/sanic/blob/master/CHANGELOG.rst>`_.
+`Release Changelogs <https://github.com/sanic-org/sanic/blob/master/CHANGELOG.rst>`__.
 
 
 Questions and Discussion
 ------------------------
 
-`Ask a question or join the conversation <https://community.sanicframework.org/>`_.
+`Ask a question or join the conversation <https://community.sanicframework.org/>`__.
 
 Contribution
 ------------
 
-We are always happy to have new contributions. We have `marked issues good for anyone looking to get started <https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner>`_, and welcome `questions on the forums <https://community.sanicframework.org/>`_. Please take a look at our `Contribution guidelines <https://sanic.readthedocs.io/en/latest/sanic/contributing.html>`_.
+We are always happy to have new contributions. We have `marked issues good for anyone looking to get started <https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner>`_, and welcome `questions on the forums <https://community.sanicframework.org/>`_. Please take a look at our `Contribution guidelines <https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst>`_.

@@ -1,0 +1,3 @@
+*  @sanic-org/sanic-release-managers
+/sanic/ @sanic-org/framework
+/tests/ @sanic-org/framework

@@ -5,8 +5,9 @@ import signal
 import sys
 import traceback
 
-from gunicorn.workers import base as base  # type: ignore
+from gunicorn.workers import base  # type: ignore
 
+from sanic.log import logger
 from sanic.server import HttpProtocol, Signal, serve, trigger_events
 from sanic.websocket import WebSocketProtocol
 
@@ -71,6 +72,15 @@ class GunicornWorker(base.Worker):
             self._server_settings.get("before_start", []), self.loop
         )
         self._server_settings["before_start"] = ()
+
+        main_start = self._server_settings.pop("main_start", None)
+        main_stop = self._server_settings.pop("main_stop", None)
+
+        if main_start or main_stop:  # noqa
+            logger.warning(
+                "Listener events for the main process are not available "
+                "with GunicornWorker"
+            )
 
         self._runner = asyncio.ensure_future(self._run(), loop=self.loop)
         try:

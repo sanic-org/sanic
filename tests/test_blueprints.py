@@ -7,7 +7,12 @@ import pytest
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import InvalidUsage, NotFound, ServerError
+from sanic.exceptions import (
+    InvalidUsage,
+    NotFound,
+    SanicException,
+    ServerError,
+)
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.views import CompositionView
@@ -16,6 +21,33 @@ from sanic.views import CompositionView
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
+
+
+def test_bp(app):
+    bp = Blueprint("test_text")
+
+    @bp.route("/")
+    def handler(request):
+        return text("Hello")
+
+    app.blueprint(bp)
+    request, response = app.test_client.get("/")
+
+    assert response.text == "Hello"
+
+
+def test_bp_app_access(app):
+    bp = Blueprint("test")
+
+    with pytest.raises(
+        SanicException,
+        match="<Blueprint test> has not yet been registered to an app",
+    ):
+        bp.apps
+
+    app.blueprint(bp)
+
+    assert app in bp.apps
 
 
 @pytest.fixture(scope="module")
@@ -60,19 +92,6 @@ def test_versioned_routes_get(app, method):
 
     request, response = client_method(f"/v1/{method}")
     assert response.status == 200
-
-
-def test_bp(app):
-    bp = Blueprint("test_text")
-
-    @bp.route("/")
-    def handler(request):
-        return text("Hello")
-
-    app.blueprint(bp)
-    request, response = app.test_client.get("/")
-
-    assert response.text == "Hello"
 
 
 def test_bp_strict_slash(app):
@@ -388,7 +407,7 @@ def test_bp_middleware_with_route(app):
 
 def test_bp_middleware_order(app):
     blueprint = Blueprint("test_bp_middleware_order")
-    order = list()
+    order = []
 
     @blueprint.middleware("request")
     def mw_1(request):
@@ -752,7 +771,7 @@ def test_static_blueprint_name(static_file_directory, file_name):
     app.blueprint(bp)
 
     uri = app.url_for("static", name="static.testing")
-    assert uri == "/static/test.file"
+    assert uri == "/static/test.file/"
 
     _, response = app.test_client.get("/static/test.file")
     assert response.status == 404
@@ -893,3 +912,128 @@ def test_strict_slashes_behavior_adoption():
 
     assert app.test_client.get("/f1")[1].status == 200
     assert app.test_client.get("/f1/")[1].status == 200
+
+
+def test_blueprint_group_versioning():
+    app = Sanic(name="blueprint-group-test")
+
+    bp1 = Blueprint(name="bp1", url_prefix="/bp1")
+    bp2 = Blueprint(name="bp2", url_prefix="/bp2", version=2)
+
+    bp3 = Blueprint(name="bp3", url_prefix="/bp3")
+
+    @bp3.get("/r1")
+    async def bp3_r1(request):
+        return json({"from": "bp3/r1"})
+
+    @bp1.get("/pre-group")
+    async def pre_group(request):
+        return json({"from": "bp1/pre-group"})
+
+    group = Blueprint.group([bp1, bp2], url_prefix="/group1", version=1)
+
+    group2 = Blueprint.group([bp3])
+
+    @bp1.get("/r1")
+    async def r1(request):
+        return json({"from": "bp1/r1"})
+
+    @bp2.get("/r2")
+    async def r2(request):
+        return json({"from": "bp2/r2"})
+
+    @bp2.get("/r3", version=3)
+    async def r3(request):
+        return json({"from": "bp2/r3"})
+
+    app.blueprint([group, group2])
+
+    assert app.test_client.get("/v1/group1/bp1/r1/")[1].status == 200
+    assert app.test_client.get("/v2/group1/bp2/r2")[1].status == 200
+    assert app.test_client.get("/v1/group1/bp1/pre-group")[1].status == 200
+    assert app.test_client.get("/v3/group1/bp2/r3")[1].status == 200
+    assert app.test_client.get("/bp3/r1")[1].status == 200
+
+    assert group.version == 1
+    assert group2.strict_slashes is None
+
+
+def test_blueprint_group_strict_slashes():
+    app = Sanic(name="blueprint-group-test")
+    bp1 = Blueprint(name="bp1", url_prefix=None, strict_slashes=False)
+
+    bp2 = Blueprint(
+        name="bp2", version=3, url_prefix="/bp2", strict_slashes=None
+    )
+
+    bp3 = Blueprint(
+        name="bp3", version=None, url_prefix="/bp3/", strict_slashes=None
+    )
+
+    @bp1.get("/r1")
+    async def bp1_r1(request):
+        return json({"from": "bp1/r1"})
+
+    @bp2.get("/r1")
+    async def bp2_r1(request):
+        return json({"from": "bp2/r1"})
+
+    @bp2.get("/r2/")
+    async def bp2_r2(request):
+        return json({"from": "bp2/r2"})
+
+    @bp3.get("/r1")
+    async def bp3_r1(request):
+        return json({"from": "bp3/r1"})
+
+    group = Blueprint.group(
+        [bp1, bp2],
+        url_prefix="/slash-check/",
+        version=1.3,
+        strict_slashes=True,
+    )
+
+    group2 = Blueprint.group(
+        [bp3], url_prefix="/other-prefix/", version="v2", strict_slashes=False
+    )
+
+    app.blueprint(group)
+    app.blueprint(group2)
+
+    assert app.test_client.get("/v1.3/slash-check/r1")[1].status == 200
+    assert app.test_client.get("/v1.3/slash-check/r1/")[1].status == 200
+    assert app.test_client.get("/v3/slash-check/bp2/r1")[1].status == 200
+    assert app.test_client.get("/v3/slash-check/bp2/r1/")[1].status == 404
+    assert app.test_client.get("/v3/slash-check/bp2/r2")[1].status == 404
+    assert app.test_client.get("/v3/slash-check/bp2/r2/")[1].status == 200
+    assert app.test_client.get("/v2/other-prefix/bp3/r1")[1].status == 200
+
+
+def test_blueprint_registered_multiple_apps():
+    app1 = Sanic("app1")
+    app2 = Sanic("app2")
+    bp = Blueprint("bp")
+
+    @bp.get("/")
+    async def handler(request):
+        return text(request.route.name)
+
+    app1.blueprint(bp)
+    app2.blueprint(bp)
+
+    for app in (app1, app2):
+        _, response = app.test_client.get("/")
+        assert response.text == f"{app.name}.bp.handler"
+
+
+def test_bp_set_attribute_warning():
+    bp = Blueprint("bp")
+    with pytest.warns(DeprecationWarning) as record:
+        bp.foo = 1
+
+    assert len(record) == 1
+    assert record[0].message.args[0] == (
+        "Setting variables on Blueprint instances is deprecated "
+        "and will be removed in version 21.9. You should change your "
+        "Blueprint instance to use instance.ctx.foo instead."
+    )

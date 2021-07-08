@@ -1,20 +1,17 @@
-
-Contributing
-============
-
 Thank you for your interest! Sanic is always looking for contributors. If you
-don't feel comfortable contributing code, adding docstrings to the source files
-is very appreciated.
+don't feel comfortable contributing code, adding docstrings to the source files,
+or helping with the `Sanic User Guide <https://github.com/sanic-org/sanic-guide>`_
+by providing documentation or implementation examples would be appreciated!
 
 We are committed to providing a friendly, safe and welcoming environment for all,
 regardless of gender, sexual orientation, disability, ethnicity, religion,
 or similar personal characteristic.
-Our `code of conduct <./CONDUCT.md>`_ sets the standards for behavior.
+Our `code of conduct <https://github.com/sanic-org/sanic/blob/master/CONDUCT.md>`_ sets the standards for behavior.
 
 Installation
 ------------
 
-To develop on sanic (and mainly to just run the tests) it is highly recommend to
+To develop on Sanic (and mainly to just run the tests) it is highly recommend to
 install from sources.
 
 So assume you have already cloned the repo and are in the working directory with
@@ -89,6 +86,17 @@ Permform ``flake8``\ , ``black`` and ``isort`` checks.
 
    tox -e lint
 
+Run type annotation checks
+--------------------------
+
+``tox`` environment -> ``[testenv:type-checking]``
+
+Permform ``mypy`` checks.
+
+.. code-block:: bash
+
+   tox -e type-checking
+
 Run other checks
 ----------------
 
@@ -161,6 +169,12 @@ flake8
 
 ``isort``\ , ``black`` and ``flake8`` checks are performed during ``tox`` lint checks.
 
+The **easiest** way to make your code conform is to run the following before committing.
+
+.. code-block:: bash
+
+   make pretty
+
 Refer `tox <https://tox.readthedocs.io/en/latest/index.html>`_ documentation for more details.
 
 Pull requests
@@ -168,12 +182,13 @@ Pull requests
 
 So the pull request approval rules are pretty simple:
 
-#. All pull requests must have a changelog details associated with it.
 #. All pull requests must pass unit tests.
-#. All pull requests must be reviewed and approved by at least one current collaborator on the project.
+#. All pull requests must be reviewed and approved by at least one current member of the Core Developer team.
 #. All pull requests must pass flake8 checks.
+#. All pull requests must match ``isort`` and ``black`` requirements.
+#. All pull requests must be **PROPERLY** type annotated, unless exemption is given.
 #. All pull requests must be consistent with the existing code.
-#. If you decide to remove/change anything from any common interface a deprecation message should accompany it.
+#. If you decide to remove/change anything from any common interface a deprecation message should accompany it in accordance with our `deprecation policy <https://sanicframework.org/en/guide/project/policies.html#deprecation>`_.
 #. If you implement a new feature you should have at least one unit test to accompany it.
 #. An example must be one of the following:
 
@@ -182,55 +197,13 @@ So the pull request approval rules are pretty simple:
    * Example of how to use Sanic and asynchronous library
 
 
-Changelog
----------
-
-It is mandatory to add documentation for Change log as part of your Pull request when you fix/contribute something
-to the ``sanic`` community. This will enable us in generating better and well defined change logs during the
-release which can aid community users in a great way.
-
-.. note::
-
-    Single line explaining the details of the PR in brief
-
-    Detailed description of what the PR is about and what changes or enhancements are being done.
-    No need to include examples or any other details here. But it is important that you provide
-    enough context here to let user understand what this change is all about and why it is being
-    introduced into the ``sanic`` codebase.
-
-    Make sure you leave an line space after the first line to make sure the document rendering is clean
-
-
-.. list-table::
-   :header-rows: 1
-
-   * - Contribution Type
-     - Changelog file name format
-     - Changelog file location
-   * - Features
-     - <git_issue>.feature.rst
-     - ``changelogs``
-   * - Bugfixes
-     - <git_issue>.bugfix.rst
-     - ``changelogs``
-   * - Improved Documentation
-     - <git_issue>.doc.rst
-     - ``changelogs``
-   * - Deprecations and Removals
-     - <git_issue>.removal.rst
-     - ``changelogs``
-   * - Miscellaneous internal changes
-     - <git_issue>.misc.rst
-     - ``changelogs``
-
-
 Documentation
 -------------
 
-Sanic's documentation is built
-using `sphinx <http://www.sphinx-doc.org/en/1.5.1/>`_. Guides are written in
-Markdown and can be found in the ``docs`` folder, while the module reference is
+Sanic's API documentation is built using `sphinx <http://www.sphinx-doc.org/en/1.5.1/>`_ with module references
 automatically generated using ``sphinx-apidoc``.
+
+The User Guide is in the `sanic-guide <https://github.com/sanic-org/sanic-guide>`_ repository.
 
 To generate the documentation from scratch:
 
@@ -244,6 +217,14 @@ To generate the documentation from scratch:
    make docs
 
 The HTML documentation will be created in the ``docs/_build`` folder.
+
+You can run the following to have a live development server with the API documents
+
+.. code-block:: bash
+
+   make docs-serve
+
+Refer to the User Guide repo for documentation on how to contribute there.
 
 .. warning::
    One of the main goals of Sanic is speed. Code that lowers the performance of

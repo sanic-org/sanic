@@ -1,6 +1,7 @@
 from pytest import raises
 
 from sanic.app import Sanic
+from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
@@ -199,4 +200,76 @@ def test_bp_group_as_nested_group():
     blueprint_group_1 = Blueprint.group(
         Blueprint.group(blueprint_1, blueprint_2)
     )
-    assert len(blueprint_group_1) == 2
+    assert len(blueprint_group_1) == 1
+
+
+def test_blueprint_group_insert():
+    blueprint_1 = Blueprint(
+        "blueprint_1", url_prefix="/bp1", strict_slashes=True, version=1
+    )
+    blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
+    blueprint_3 = Blueprint("blueprint_3", url_prefix=None)
+    group = BlueprintGroup(
+        url_prefix="/test", version=1.3, strict_slashes=False
+    )
+    group.insert(0, blueprint_1)
+    group.insert(0, blueprint_2)
+    group.insert(0, blueprint_3)
+
+    @blueprint_1.route("/")
+    def blueprint_1_default_route(request):
+        return text("BP1_OK")
+
+    @blueprint_2.route("/")
+    def blueprint_2_default_route(request):
+        return text("BP2_OK")
+
+    @blueprint_3.route("/")
+    def blueprint_3_default_route(request):
+        return text("BP3_OK")
+
+    app = Sanic("PropTest")
+    app.blueprint(group)
+    app.router.finalize()
+
+    routes = [(route.path, route.strict) for route in app.router.routes]
+
+    assert len(routes) == 3
+    assert ("v1/test/bp1/", True) in routes
+    assert ("v1.3/test/bp2", False) in routes
+    assert ("v1.3/test", False) in routes
+
+
+def test_bp_group_properties():
+    blueprint_1 = Blueprint("blueprint_1", url_prefix="/bp1")
+    blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
+    group = Blueprint.group(
+        blueprint_1,
+        blueprint_2,
+        version=1,
+        version_prefix="/api/v",
+        url_prefix="/grouped",
+        strict_slashes=True,
+    )
+    primary = Blueprint.group(group, url_prefix="/primary")
+
+    @blueprint_1.route("/")
+    def blueprint_1_default_route(request):
+        return text("BP1_OK")
+
+    @blueprint_2.route("/")
+    def blueprint_2_default_route(request):
+        return text("BP2_OK")
+
+    app = Sanic("PropTest")
+    app.blueprint(group)
+    app.blueprint(primary)
+    app.router.finalize()
+
+    routes = [route.path for route in app.router.routes]
+
+    assert len(routes) == 4
+    assert "api/v1/grouped/bp1/" in routes
+    assert "api/v1/grouped/bp2/" in routes
+    assert "api/v1/primary/grouped/bp1" in routes
+    assert "api/v1/primary/grouped/bp2" in routes

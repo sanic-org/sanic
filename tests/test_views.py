@@ -1,4 +1,4 @@
-import pytest as pytest
+import pytest
 
 from sanic.blueprints import Blueprint
 from sanic.constants import HTTP_METHODS
@@ -70,6 +70,56 @@ def test_with_bp(app):
             return text("I am get method")
 
     bp.add_route(DummyView.as_view(), "/")
+
+    app.blueprint(bp)
+    request, response = app.test_client.get("/")
+
+    assert response.text == "I am get method"
+
+
+def test_with_attach(app):
+    class DummyView(HTTPMethodView):
+        def get(self, request):
+            return text("I am get method")
+
+    DummyView.attach(app, "/")
+
+    request, response = app.test_client.get("/")
+
+    assert response.text == "I am get method"
+
+
+def test_with_sub_init(app):
+    class DummyView(HTTPMethodView, attach=app, uri="/"):
+        def get(self, request):
+            return text("I am get method")
+
+    request, response = app.test_client.get("/")
+
+    assert response.text == "I am get method"
+
+
+def test_with_attach_and_bp(app):
+    bp = Blueprint("test_text")
+
+    class DummyView(HTTPMethodView):
+        def get(self, request):
+            return text("I am get method")
+
+    DummyView.attach(bp, "/")
+
+    app.blueprint(bp)
+    request, response = app.test_client.get("/")
+
+    assert response.text == "I am get method"
+
+
+def test_with_sub_init_and_bp(app):
+    bp = Blueprint("test_text")
+
+    class DummyView(HTTPMethodView, attach=bp, uri="/"):
+        def get(self, request):
+            return text("I am get method")
 
     app.blueprint(bp)
     request, response = app.test_client.get("/")
@@ -218,15 +268,15 @@ def test_composition_view_runs_methods_as_expected(app, method):
         assert response.status == 200
         assert response.text == "first method"
 
-        # response = view(request)
-        # assert response.body.decode() == "first method"
+        response = view(request)
+        assert response.body.decode() == "first method"
 
-    # if method in ["DELETE", "PATCH"]:
-    #     request, response = getattr(app.test_client, method.lower())("/")
-    #     assert response.text == "second method"
+    if method in ["DELETE", "PATCH"]:
+        request, response = getattr(app.test_client, method.lower())("/")
+        assert response.text == "second method"
 
-    #     response = view(request)
-    #     assert response.body.decode() == "second method"
+        response = view(request)
+        assert response.body.decode() == "second method"
 
 
 @pytest.mark.parametrize("method", HTTP_METHODS)
@@ -244,3 +294,12 @@ def test_composition_view_rejects_invalid_methods(app, method):
     if method in ["DELETE", "PATCH"]:
         request, response = getattr(app.test_client, method.lower())("/")
         assert response.status == 405
+
+
+def test_composition_view_deprecation():
+    message = (
+        "CompositionView has been deprecated and will be removed in v21.12. "
+        "Please update your view to HTTPMethodView."
+    )
+    with pytest.warns(DeprecationWarning, match=message):
+        CompositionView()

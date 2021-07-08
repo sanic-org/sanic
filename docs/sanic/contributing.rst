@@ -1,1 +1,4 @@
+♥️ Contributing
+==============
+
 .. include:: ../../CONTRIBUTING.rst

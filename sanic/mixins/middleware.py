@@ -6,7 +6,7 @@ from sanic.models.futures import FutureMiddleware
 
 class MiddlewareMixin:
     def __init__(self, *args, **kwargs) -> None:
-        self._future_middleware: List[FutureMiddleware] = list()
+        self._future_middleware: List[FutureMiddleware] = []
 
     def _apply_middleware(self, middleware: FutureMiddleware):
         raise NotImplementedError  # noqa
@@ -18,6 +18,9 @@ class MiddlewareMixin:
         Decorate and register middleware to be called before a request.
         Can either be called as *@app.middleware* or
         *@app.middleware('request')*
+
+        `See user guide re: middleware
+        <https://sanicframework.org/guide/basics/middleware.html>`__
 
         :param: middleware_or_request: Optional parameter to use for
             identifying which type of middleware is being registered.

@@ -51,7 +51,7 @@ def test_json_body_requests(app):
 def test_streaming_body_requests(app):
     @app.post("/", stream=True)
     async def handler(request):
-        data = [part async for part in request.stream]
+        data = [part.decode("utf-8") async for part in request.stream]
         return json(
             {
                 "request_id": str(request.id),

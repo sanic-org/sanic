@@ -93,7 +93,7 @@ requirements = [
 ]
 
 tests_require = [
-    "sanic-testing>=0.6.0",
+    "sanic-testing>=0.7.0b1",
     "pytest==5.2.1",
     "multidict>=5.0,<6.0",
     "gunicorn==20.0.4",

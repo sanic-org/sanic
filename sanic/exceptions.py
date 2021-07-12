@@ -31,6 +31,7 @@ class NotFound(SanicException):
     """
 
     status_code = 404
+    quiet = True
 
 
 class InvalidUsage(SanicException):
@@ -39,6 +40,7 @@ class InvalidUsage(SanicException):
     """
 
     status_code = 400
+    quiet = True
 
 
 class MethodNotSupported(SanicException):
@@ -47,6 +49,7 @@ class MethodNotSupported(SanicException):
     """
 
     status_code = 405
+    quiet = True
 
     def __init__(self, message, method, allowed_methods):
         super().__init__(message)
@@ -70,6 +73,7 @@ class ServiceUnavailable(SanicException):
     """
 
     status_code = 503
+    quiet = True
 
 
 class URLBuildError(ServerError):
@@ -101,6 +105,7 @@ class RequestTimeout(SanicException):
     """
 
     status_code = 408
+    quiet = True
 
 
 class PayloadTooLarge(SanicException):
@@ -109,6 +114,7 @@ class PayloadTooLarge(SanicException):
     """
 
     status_code = 413
+    quiet = True
 
 
 class HeaderNotFound(InvalidUsage):
@@ -117,6 +123,7 @@ class HeaderNotFound(InvalidUsage):
     """
 
     status_code = 400
+    quiet = True
 
 
 class ContentRangeError(SanicException):
@@ -125,6 +132,7 @@ class ContentRangeError(SanicException):
     """
 
     status_code = 416
+    quiet = True
 
     def __init__(self, message, content_range):
         super().__init__(message)
@@ -137,6 +145,7 @@ class HeaderExpectationFailed(SanicException):
     """
 
     status_code = 417
+    quiet = True
 
 
 class Forbidden(SanicException):
@@ -145,6 +154,7 @@ class Forbidden(SanicException):
     """
 
     status_code = 403
+    quiet = True
 
 
 class InvalidRangeType(ContentRangeError):
@@ -153,6 +163,7 @@ class InvalidRangeType(ContentRangeError):
     """
 
     status_code = 416
+    quiet = True
 
 
 class PyFileError(Exception):
@@ -196,6 +207,7 @@ class Unauthorized(SanicException):
     """
 
     status_code = 401
+    quiet = True
 
     def __init__(self, message, status_code=None, scheme=None, **kwargs):
         super().__init__(message, status_code)

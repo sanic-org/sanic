@@ -471,7 +471,7 @@ def test_stack_trace_on_not_found(app, static_file_directory, caplog):
 
     assert response.status == 404
     assert counter[logging.INFO] == 5
-    assert counter[logging.ERROR] == 1
+    assert counter[logging.ERROR] == 0
 
 
 def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):

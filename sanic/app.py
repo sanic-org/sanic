@@ -21,6 +21,7 @@ from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
     Any,
+    AnyStr,
     Awaitable,
     Callable,
     Coroutine,
@@ -137,7 +138,7 @@ class Sanic(BaseSanic):
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
         register: Optional[bool] = None,
-        dumps: Optional[Callable[..., str]] = None,
+        dumps: Optional[Callable[..., AnyStr]] = None,
     ) -> None:
         super().__init__(name=name)
 
@@ -736,9 +737,7 @@ class Sanic(BaseSanic):
 
                 if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
-                    request.stream.request_max_size = float(  # type: ignore
-                        "inf"
-                    )
+                    request.stream.request_max_size = float("inf")  # type: ignore
                 else:
                     # Non-streaming handler: preload body
                     await request.receive_body()

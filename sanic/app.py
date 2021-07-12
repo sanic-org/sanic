@@ -30,6 +30,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
 )
@@ -413,7 +414,7 @@ class Sanic(BaseSanic):
 
     def blueprint(
         self,
-        blueprint: Union[Blueprint, list[Blueprint], tuple[Blueprint], BlueprintGroup],
+        blueprint: Union[Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup],
         **options: Any,
     ):
         """Register a blueprint on the application.

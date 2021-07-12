@@ -18,16 +18,15 @@ PORT = 1234
 class RawClient:
     CRLF = b"\r\n"
 
-    def __init__(self, host: str, port: int, loop: asyncio.BaseEventLoop):
+    def __init__(self, host: str, port: int):
         self.reader = None
         self.writer = None
         self.host = host
         self.port = port
-        self.loop = loop
 
     async def connect(self):
         self.reader, self.writer = await asyncio.open_connection(
-            self.host, self.port, loop=self.loop
+            self.host, self.port
         )
 
     async def close(self):
@@ -85,8 +84,7 @@ def runner(test_app):
 def client(runner):
     client = namedtuple("Client", ("raw", "send", "recv"))
 
-    loop = runner._loop
-    raw = RawClient(runner.host, runner.port, loop)
+    raw = RawClient(runner.host, runner.port)
     runner._run(raw.connect())
 
     def send(msg):
@@ -127,10 +125,10 @@ def test_transfer_chunked(client):
         """
     )
     client.send(b"3\nfoo\n")
-    client.send(b"3\nfoo\n")
+    client.send(b"3\nbar\n")
     client.send(b"0\n\n")
     response = client.recv()
     _, body = response.rsplit(b"\r\n\r\n", 1)
     json = ujson.loads(body)
 
-    assert json == ["foo", "foo"]
+    assert json == ["foo", "bar"]

@@ -411,7 +411,11 @@ class Sanic(BaseSanic):
 
         self.websocket_enabled = enable
 
-    def blueprint(self, blueprint: Union[Blueprint, list[Blueprint], tuple[Blueprint], BlueprintGroup], **options: str):
+    def blueprint(
+        self,
+        blueprint: Union[Blueprint, list[Blueprint], tuple[Blueprint], BlueprintGroup],
+        **options: Any,
+    ):
         """Register a blueprint on the application.
 
         :param blueprint: Blueprint object or (list, tuple) thereof

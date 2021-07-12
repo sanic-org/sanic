@@ -1,10 +1,10 @@
 import asyncio
+import json as stdjson
 
 from collections import namedtuple
 from textwrap import dedent
 
 import pytest
-import ujson
 
 from sanic_testing.reusable import ReusableClient
 
@@ -129,6 +129,6 @@ def test_transfer_chunked(client):
     client.send(b"0\n\n")
     response = client.recv()
     _, body = response.rsplit(b"\r\n\r\n", 1)
-    json = ujson.loads(body)
+    data = stdjson.loads(body)
 
-    assert json == ["foo", "bar"]
+    assert data == ["foo", "bar"]

@@ -30,6 +30,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
 )
@@ -411,7 +412,13 @@ class Sanic(BaseSanic):
 
         self.websocket_enabled = enable
 
-    def blueprint(self, blueprint, **options):
+    def blueprint(
+        self,
+        blueprint: Union[
+            Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup
+        ],
+        **options: Any,
+    ):
         """Register a blueprint on the application.
 
         :param blueprint: Blueprint object or (list, tuple) thereof
@@ -869,7 +876,7 @@ class Sanic(BaseSanic):
         *,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
-        ssl: Union[dict, SSLContext, None] = None,
+        ssl: Union[Dict[str, str], SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
         protocol: Optional[Type[Protocol]] = None,
@@ -999,7 +1006,7 @@ class Sanic(BaseSanic):
         port: Optional[int] = None,
         *,
         debug: bool = False,
-        ssl: Union[dict, SSLContext, None] = None,
+        ssl: Union[Dict[str, str], SSLContext, None] = None,
         sock: Optional[socket] = None,
         protocol: Type[Protocol] = None,
         backlog: int = 100,

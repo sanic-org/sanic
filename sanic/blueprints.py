@@ -13,7 +13,7 @@ from sanic_routing.route import Route  # type: ignore
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.exceptions import SanicException
-from sanic.helpers import _default
+from sanic.helpers import Default, _default
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import (
     ListenerType,
@@ -149,10 +149,10 @@ class Blueprint(BaseSanic):
     def copy(
         self,
         name: str,
-        url_prefix: str = _default,
-        version: Optional[Union[int, str, float]] = _default,
-        version_prefix: str = _default,
-        strict_slashes: Optional[bool] = _default,
+        url_prefix: Optional[Union[str, Default]] = _default,
+        version: Optional[Union[int, str, float, Default]] = _default,
+        version_prefix: Optional[Union[str, Default]] = _default,
+        strict_slashes: Optional[Union[bool, Default]] = _default,
     ):
         """
         Copy a blueprint instance with some optional parameters to 

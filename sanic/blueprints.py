@@ -13,6 +13,7 @@ from sanic_routing.route import Route  # type: ignore
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.exceptions import SanicException
+from sanic.helpers import _default
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import (
     ListenerType,
@@ -148,17 +149,33 @@ class Blueprint(BaseSanic):
     def copy(
         self,
         name: str,
-        url_prefix: str = "",
-        version: Optional[Union[int, str, float]] = None,
-        strict_slashes: Optional[bool] = None,
-        version_prefix: str = "/v",
+        url_prefix: str = _default,
+        version: Optional[Union[int, str, float]] = _default,
+        version_prefix: str = _default,
+        strict_slashes: Optional[bool] = _default,
     ):
+        """
+        Copy a blueprint instance with some optional parameters to 
+        override the values of attributes in the old instance.
+
+        :param name: unique name of the blueprint
+        :param url_prefix: URL to be prefixed before all route URLs
+        :param host: IP Address of FQDN for the sanic server to use.
+        :param version: Blueprint Version
+        :param version_prefix: the prefix of the version number shown in the URL.
+        :param strict_slashes: Enforce the API urls are requested with a
+            training */*
+        """
         new_bp = deepcopy(self)
         new_bp.name = name
-        new_bp.url_prefix = url_prefix
-        new_bp.version = version
-        new_bp.strict_slashes = strict_slashes
-        new_bp.version_prefix = version_prefix
+        if url_prefix != _default:
+            new_bp.url_prefix = url_prefix
+        if version != _default:
+            new_bp.version = version
+        if strict_slashes != _default:
+            new_bp.strict_slashes = strict_slashes
+        if version_prefix != _default:
+            new_bp.version_prefix = version_prefix
 
         return new_bp
 

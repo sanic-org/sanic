@@ -42,7 +42,7 @@ class Blueprint(BaseSanic):
     :param host: IP Address of FQDN for the sanic server to use.
     :param version: Blueprint Version
     :param strict_slashes: Enforce the API urls are requested with a
-        training */*
+        trailing */*
     """
 
     __fake_slots__ = (
@@ -160,11 +160,10 @@ class Blueprint(BaseSanic):
 
         :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
-        :param host: IP Address of FQDN for the sanic server to use.
         :param version: Blueprint Version
         :param version_prefix: the prefix of the version number shown in the URL.
         :param strict_slashes: Enforce the API urls are requested with a
-            training */*
+            trailing */*
         """
         new_bp = deepcopy(self)
         new_bp.name = name

@@ -414,7 +414,9 @@ class Sanic(BaseSanic):
 
     def blueprint(
         self,
-        blueprint: Union[Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup],
+        blueprint: Union[
+            Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup
+        ],
         **options: Any,
     ):
         """Register a blueprint on the application.

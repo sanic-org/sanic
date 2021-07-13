@@ -151,11 +151,11 @@ class Blueprint(BaseSanic):
         name: str,
         url_prefix: Optional[Union[str, Default]] = _default,
         version: Optional[Union[int, str, float, Default]] = _default,
-        version_prefix: Optional[Union[str, Default]] = _default,
+        version_prefix: Union[str, Default] = _default,
         strict_slashes: Optional[Union[bool, Default]] = _default,
     ):
         """
-        Copy a blueprint instance with some optional parameters to 
+        Copy a blueprint instance with some optional parameters to
         override the values of attributes in the old instance.
 
         :param name: unique name of the blueprint
@@ -168,13 +168,14 @@ class Blueprint(BaseSanic):
         """
         new_bp = deepcopy(self)
         new_bp.name = name
-        if url_prefix != _default:
+
+        if not isinstance(url_prefix, Default):
             new_bp.url_prefix = url_prefix
-        if version != _default:
+        if not isinstance(version, Default):
             new_bp.version = version
-        if strict_slashes != _default:
+        if not isinstance(strict_slashes, Default):
             new_bp.strict_slashes = strict_slashes
-        if version_prefix != _default:
+        if not isinstance(version_prefix, Default):
             new_bp.version_prefix = version_prefix
 
         return new_bp

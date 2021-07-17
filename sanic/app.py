@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import logging.config
 import os
@@ -92,6 +93,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_app_registry",
         "_asgi_client",
         "_blueprint_order",
+        "_delayed_tasks",
         "_future_routes",
         "_future_statics",
         "_future_middleware",
@@ -162,6 +164,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         self._asgi_client = None
         self._blueprint_order: List[Blueprint] = []
+        self._delayed_tasks: List[str] = []
         self._test_client = None
         self._test_manager = None
         self.asgi = False
@@ -240,9 +243,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             loop = self.loop  # Will raise SanicError if loop is not started
             self._loop_add_task(task, self, loop)
         except SanicException:
-            self.listener("after_server_start")(
-                partial(self._loop_add_task, task)
-            )
+            task_name = f"sanic.delayed_task.{hash(task)}"
+            if not self._delayed_tasks:
+                self.after_server_start(partial(self.dispatch_delayed_tasks))
+
+            self.signal(task_name)(partial(self.run_delayed_task, task=task))
+            self._delayed_tasks.append(task_name)
 
     def register_listener(self, listener: Callable, event: str) -> Any:
         """
@@ -1142,11 +1148,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             run_async=return_asyncio_server,
         )
 
-        # Trigger before_start events
-        await self.trigger_events(
-            server_settings.get("before_start", []),
-            server_settings.get("loop"),
-        )
         main_start = server_settings.pop("main_start", None)
         main_stop = server_settings.pop("main_stop", None)
         if main_start or main_stop:
@@ -1158,16 +1159,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return await serve(
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
-
-    async def trigger_events(self, events, loop):
-        """Trigger events (functions or async)
-        :param events: one or more sync or async functions to execute
-        :param loop: event loop
-        """
-        for event in events:
-            result = event(loop)
-            if isawaitable(result):
-                await result
 
     async def _run_request_middleware(self, request, request_name=None):
         # The if improves speed.  I don't know why
@@ -1351,19 +1342,34 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return ".".join(parts)
 
     @classmethod
-    def _loop_add_task(cls, task, app, loop):
+    def _prep_task(cls, task, app, loop):
         if callable(task):
             try:
-                loop.create_task(task(app))
+                task = task(app)
             except TypeError:
-                loop.create_task(task())
-        else:
-            loop.create_task(task)
+                task = task()
+
+        return task
+
+    @classmethod
+    def _loop_add_task(cls, task, app, loop):
+        prepped = cls._prep_task(task, app, loop)
+        loop.create_task(prepped)
 
     @classmethod
     def _cancel_websocket_tasks(cls, app, loop):
         for task in app.websocket_tasks:
             task.cancel()
+
+    @staticmethod
+    async def dispatch_delayed_tasks(app, loop):
+        for name in app._delayed_tasks:
+            await app.dispatch(name, context={"app": app, "loop": loop})
+
+    @staticmethod
+    async def run_delayed_task(app, loop, task):
+        prepped = app._prep_task(task, app, loop)
+        await prepped
 
     # -------------------------------------------------------------------- #
     # ASGI

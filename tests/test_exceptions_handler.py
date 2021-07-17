@@ -151,6 +151,7 @@ def test_chained_exception_handler():
     soup = BeautifulSoup(response.body, "html.parser")
     html = str(soup)
 
+    print(html)
     assert "response = handler(request, **kwargs)" in html
     assert "handler_6" in html
     assert "foo = 1 / arg" in html

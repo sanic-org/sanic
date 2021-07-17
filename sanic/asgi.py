@@ -1,6 +1,5 @@
 import warnings
 
-from inspect import isawaitable
 from typing import Optional
 from urllib.parse import quote
 
@@ -18,14 +17,20 @@ class Lifespan:
     def __init__(self, asgi_app: "ASGIApp") -> None:
         self.asgi_app = asgi_app
 
-        if "before_server_start" in self.asgi_app.sanic_app.listeners:
+        if (
+            "server.init.before"
+            in self.asgi_app.sanic_app.signal_router.name_index
+        ):
             warnings.warn(
                 'You have set a listener for "before_server_start" '
                 "in ASGI mode. "
                 "It will be executed as early as possible, but not before "
                 "the ASGI server is started."
             )
-        if "after_server_stop" in self.asgi_app.sanic_app.listeners:
+        if (
+            "server.shutdown.after"
+            in self.asgi_app.sanic_app.signal_router.name_index
+        ):
             warnings.warn(
                 'You have set a listener for "after_server_stop" '
                 "in ASGI mode. "
@@ -55,7 +60,7 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         shutdown event.
         """
-        await self.asgi_app.sanic_app._sever_event("init", "before")
+        await self.asgi_app.sanic_app._sever_event("shutdown", "before")
         await self.asgi_app.sanic_app._sever_event("shutdown", "after")
 
     async def __call__(

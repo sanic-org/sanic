@@ -13,7 +13,6 @@ from typing import (
     Union,
 )
 
-from sanic.models.handler_types import ListenerType
 from sanic.touchup.meta import TouchUpMeta
 
 
@@ -488,7 +487,7 @@ class AsyncioServer:
 def serve(
     host,
     port,
-    app,
+    app: Sanic,
     ssl: Optional[SSLContext] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,

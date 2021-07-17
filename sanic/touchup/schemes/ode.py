@@ -49,7 +49,7 @@ class RemoveDispatch(NodeTransformer):
             if hasattr(event, "s"):
                 event_name = getattr(event, "value", event.s)
                 if self._not_registered(event_name):
-                    logger.info(f"Disabling event: {event_name}")
+                    logger.debug(f"Disabling event: {event_name}")
                     return None
         return node
 

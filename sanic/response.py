@@ -143,7 +143,7 @@ class StreamingHTTPResponse(BaseHTTPResponse):
 
     .. warning::
 
-        **Deprecated** and set for removal in v21.6. You can now achieve the
+        **Deprecated** and set for removal in v21.12. You can now achieve the
         same functionality without a callback.
 
         .. code-block:: python
@@ -174,12 +174,16 @@ class StreamingHTTPResponse(BaseHTTPResponse):
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: str = "text/plain; charset=utf-8",
-        chunked="deprecated",
+        ignore_deprecation_notice: bool = False,
     ):
-        if chunked != "deprecated":
+        if not ignore_deprecation_notice:
             warn(
-                "The chunked argument has been deprecated and will be "
-                "removed in v21.6"
+                "Use of the StreamingHTTPResponse is deprecated in v21.6, and "
+                "will be removed in v21.12. Please upgrade your streaming "
+                "response implementation. You can learn more here: "
+                "https://sanicframework.org/en/guide/advanced/streaming.html"
+                "#response-streaming. If you use the builtin stream() or "
+                "file_stream() methods, this upgrade will be be done for you."
             )
 
         super().__init__()
@@ -240,6 +244,12 @@ class HTTPResponse(BaseHTTPResponse):
 
     async def eof(self):
         await self.send("", True)
+
+    async def __aenter__(self):
+        return self.send
+
+    async def __aexit__(self, *_):
+        await self.eof()
 
 
 def empty(
@@ -402,7 +412,6 @@ async def file_stream(
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
-    chunked="deprecated",
     _range: Optional[Range] = None,
 ) -> StreamingHTTPResponse:
     """Return a streaming response object with file data.
@@ -415,12 +424,6 @@ async def file_stream(
     :param chunked: Deprecated
     :param _range:
     """
-    if chunked != "deprecated":
-        warn(
-            "The chunked argument has been deprecated and will be "
-            "removed in v21.6"
-        )
-
     headers = headers or {}
     if filename:
         headers.setdefault(
@@ -459,6 +462,7 @@ async def file_stream(
         status=status,
         headers=headers,
         content_type=mime_type,
+        ignore_deprecation_notice=True,
     )
 
 
@@ -467,7 +471,6 @@ def stream(
     status: int = 200,
     headers: Optional[Dict[str, str]] = None,
     content_type: str = "text/plain; charset=utf-8",
-    chunked="deprecated",
 ):
     """Accepts an coroutine `streaming_fn` which can be used to
     write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
@@ -488,17 +491,12 @@ def stream(
     :param headers: Custom Headers.
     :param chunked: Deprecated
     """
-    if chunked != "deprecated":
-        warn(
-            "The chunked argument has been deprecated and will be "
-            "removed in v21.6"
-        )
-
     return StreamingHTTPResponse(
         streaming_fn,
         headers=headers,
         content_type=content_type,
         status=status,
+        ignore_deprecation_notice=True,
     )
 
 

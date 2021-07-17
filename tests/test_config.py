@@ -13,7 +13,7 @@ from sanic.exceptions import PyFileError
 
 @contextmanager
 def temp_path():
-    """ a simple cross platform replacement for NamedTemporaryFile """
+    """a simple cross platform replacement for NamedTemporaryFile"""
     with TemporaryDirectory() as td:
         yield Path(td, "file")
 

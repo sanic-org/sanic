@@ -111,7 +111,7 @@ def test_logging_pass_customer_logconfig():
     ),
 )
 def test_log_connection_lost(app, debug, monkeypatch):
-    """ Should not log Connection lost exception on non debug """
+    """Should not log Connection lost exception on non debug"""
     stream = StringIO()
     error = logging.getLogger("sanic.error")
     error.addHandler(logging.StreamHandler(stream))

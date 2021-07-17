@@ -1,8 +1,8 @@
 name: Publish Artifacts
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  release:
+    types: [created]
+
 jobs:
   publishPythonPackage:
     name: Publishing Sanic Release Artifacts
@@ -21,8 +21,8 @@ jobs:
         uses: harshanarayana/custom-actions@main
         with:
           python-version: ${{ matrix.python-version }}
-          package-infra-name: 'twine'
+          package-infra-name: "twine"
           pypi-user: __token__
           pypi-access-token: ${{ secrets.PYPI_ACCESS_TOKEN }}
-          action: 'package-publish'
-          pypi-verify-metadata: 'true'
+          action: "package-publish"
+          pypi-verify-metadata: "true"

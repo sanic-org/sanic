@@ -271,5 +271,13 @@ def test_media_type_equality():
         ("*/*", headers.Accept.parse("*/*")),
     ),
 )
-def test_accept_matching_full(value, other):
+def test_accept_matching(value, other):
     assert headers.Accept.parse(value).match(other)
+
+
+@pytest.mark.parametrize("value", ("foo/bar", "foo/*", "*/*"))
+def test_value_in_accept(value):
+    acceptable = headers.parse_accept(value)
+    assert "foo/bar" in acceptable
+    assert "foo/*" in acceptable
+    assert "*/*" in acceptable

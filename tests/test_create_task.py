@@ -2,8 +2,6 @@ import asyncio
 
 from threading import Event
 
-import pytest
-
 from sanic.response import text
 
 
@@ -32,18 +30,19 @@ def test_create_task(app):
     assert response.body == b"True"
 
 
-# @pytest.mark.asyncio
-# async def test_create_task_with_app_arg(app):
-#     q = asyncio.Queue()
+def test_create_task_with_app_arg(app):
+    @app.after_server_start
+    async def setup_q(app, _):
+        app.ctx.q = asyncio.Queue()
 
-#     @app.route("/")
-#     def not_set(request):
-#         return "hello"
+    @app.route("/")
+    async def not_set(request):
+        return text(await request.app.ctx.q.get())
 
-#     async def coro(app):
-#         await q.put(app.name)
+    async def coro(app):
+        await app.ctx.q.put(app.name)
 
-#     app.add_task(coro)
+    app.add_task(coro)
 
-#     request, response = await app.asgi_client.get("/")
-#     assert await q.get() == "test_create_task_with_app_arg"
+    _, response = app.test_client.get("/")
+    assert response.text == "test_create_task_with_app_arg"

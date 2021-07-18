@@ -147,8 +147,8 @@ def app(request):
             CACHE[method_name] = getattr(target, method_name)
     app = Sanic(slugify.sub("-", request.node.name))
     yield app
-    # for target, method_name in TouchUp._registry:
-    #     setattr(target, method_name, CACHE[method_name])
+    for target, method_name in TouchUp._registry:
+        setattr(target, method_name, CACHE[method_name])
 
 
 @pytest.fixture(scope="function")

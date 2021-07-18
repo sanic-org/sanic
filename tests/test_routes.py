@@ -654,14 +654,21 @@ def test_websocket_route_invalid_handler(app):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("url", ["/ws", "ws"])
 async def test_websocket_route_asgi(app, url):
-    ev = asyncio.Event()
+    @app.after_server_start
+    async def setup_ev(app, _):
+        app.ctx.ev = asyncio.Event()
 
     @app.websocket(url)
     async def handler(request, ws):
-        ev.set()
+        request.app.ctx.ev.set()
 
-    request, response = await app.asgi_client.websocket(url)
-    assert ev.is_set()
+    @app.get("/ev")
+    async def check(request):
+        return json({"set": request.app.ctx.ev.is_set()})
+
+    _, response = await app.asgi_client.websocket(url)
+    _, response = await app.asgi_client.get("/")
+    assert response.json["set"]
 
 
 @pytest.mark.parametrize(

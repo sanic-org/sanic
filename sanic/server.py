@@ -468,7 +468,8 @@ class AsyncioServer:
     def _server_event(self, concern: str, action: str):
         if not self.init:
             raise SanicException(
-                "Cannot dispatch server event without first running server.startup()"
+                "Cannot dispatch server event without "
+                "first running server.startup()"
             )
         return self.app._server_event(concern, action, loop=self.loop)
 

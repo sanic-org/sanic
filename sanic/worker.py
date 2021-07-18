@@ -8,7 +8,7 @@ import traceback
 from gunicorn.workers import base  # type: ignore
 
 from sanic.log import logger
-from sanic.server import HttpProtocol, Signal, serve, trigger_events
+from sanic.server import HttpProtocol, Signal, serve
 from sanic.websocket import WebSocketProtocol
 
 

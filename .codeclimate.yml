@@ -10,3 +10,15 @@ exclude_patterns:
   - "examples/"
   - "hack/"
   - "scripts/"
+  - "tests/"
+checks:
+  argument-count:
+    enabled: false
+  file-lines:
+    config:
+      threshold: 1000
+  method-count:
+    config:
+      threshold: 40
+  complex-logic:
+    enabled: false

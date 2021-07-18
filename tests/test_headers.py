@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 from sanic import headers, text
-from sanic.exceptions import PayloadTooLarge
+from sanic.exceptions import InvalidHeader, PayloadTooLarge
 from sanic.http import Http
 
 
@@ -182,3 +182,55 @@ def test_request_line(app):
     )
 
     assert request.request_line == b"GET / HTTP/1.1"
+
+
+@pytest.mark.parametrize(
+    "raw",
+    (
+        "show/first, show/second",
+        "show/*, show/first",
+        "*/*, show/first",
+        "*/*, show/*",
+        "other/*; q=0.1, show/*; q=0.2",
+        "show/first; q=0.5, show/second; q=0.5",
+        "show/first; foo=bar, show/second; foo=bar",
+        "show/second, show/first; foo=bar",
+        "show/second; q=0.5, show/first; foo=bar; q=0.5",
+        "show/second; q=0.5, show/first; q=1.0",
+        "show/first, show/second; q=1.0",
+    ),
+)
+def test_parse_accept_ordered_okay(raw):
+    ordered = headers.parse_accept(raw)
+    expected_subtype = (
+        "*" if all(q.subtype.is_wildcard for q in ordered) else "first"
+    )
+    assert ordered[0].type_ == "show"
+    assert ordered[0].subtype == expected_subtype
+
+
+@pytest.mark.parametrize(
+    "raw",
+    (
+        "missing",
+        "missing/",
+        "/missing",
+    ),
+)
+def test_bad_accept(raw):
+    with pytest.raises(InvalidHeader):
+        headers.parse_accept(raw)
+
+
+def test_empty_accept():
+    assert headers.parse_accept("") == []
+
+
+def test_wildcard_accept_set_ok():
+    accept = headers.parse_accept("*/*")[0]
+    assert accept.type_.is_wildcard
+    assert accept.subtype.is_wildcard
+
+    accept = headers.parse_accept("foo/bar")[0]
+    assert not accept.type_.is_wildcard
+    assert not accept.subtype.is_wildcard

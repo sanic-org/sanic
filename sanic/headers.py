@@ -3,6 +3,7 @@ import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import unquote
 
+from sanic.exceptions import InvalidHeader
 from sanic.helpers import STATUS_CODES
 
 
@@ -28,6 +29,63 @@ _host_re = re.compile(
 # even though no client espaces in a way that would allow perfect handling.
 
 # For more information, consult ../tests/test_requests.py
+
+
+class MediaType(str):
+    def __new__(cls, value: str):
+        return str.__new__(cls, value)
+
+    def __init__(self, value: str) -> None:
+        self.is_wildcard = value == "*"
+
+
+class Accept(str):
+    def __new__(cls, value: str, *args, **kwargs):
+        return str.__new__(cls, value)
+
+    def __init__(
+        self,
+        value: str,
+        type_: MediaType,
+        subtype: MediaType,
+        *,
+        q: str = "1.0",
+        **kwargs: str,
+    ):
+        qvalue = float(q)
+        if qvalue > 1 or qvalue < 0:
+            raise InvalidHeader(
+                f"Accept header qvalue must be between 0 and 1, not: {qvalue}"
+            )
+        self.value = value
+        self.type_ = type_
+        self.subtype = subtype
+        self.qvalue = qvalue
+        self.params = kwargs
+
+    def _compare(self, other, method):
+        try:
+            return method(self.qvalue, other.qvalue)
+        except (AttributeError, TypeError):
+            return NotImplemented
+
+    def __lt__(self, other):
+        return self._compare(other, lambda s, o: s < o)
+
+    def __le__(self, other):
+        return self._compare(other, lambda s, o: s <= o)
+
+    def __eq__(self, other):
+        return self._compare(other, lambda s, o: s == o)
+
+    def __ge__(self, other):
+        return self._compare(other, lambda s, o: s >= o)
+
+    def __gt__(self, other):
+        return self._compare(other, lambda s, o: s > o)
+
+    def __ne__(self, other):
+        return self._compare(other, lambda s, o: s != o)
 
 
 def parse_content_header(value: str) -> Tuple[str, Options]:
@@ -194,3 +252,47 @@ def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
         ret += b"%b: %b\r\n" % h
     ret += b"\r\n"
     return ret
+
+
+def _sort_accept_value(accept: Accept):
+    return (
+        accept.qvalue,
+        len(accept.params),
+        accept.subtype != "*",
+        accept.type_ != "*",
+    )
+
+
+def parse_accept(accept: str) -> List[Accept]:
+    media_types = accept.split(",")
+    accept_list: List[Accept] = []
+
+    for mtype in media_types:
+        if not mtype:
+            continue
+
+        invalid = False
+        mtype = mtype.strip()
+
+        try:
+            media, *raw_params = mtype.split(";")
+            type_, subtype = media.split("/")
+        except ValueError:
+            invalid = True
+
+        if invalid or not type_ or not subtype:
+            raise InvalidHeader(
+                f"Header contains invalid Accept value: {accept}"
+            )
+
+        params = dict(
+            [
+                (key.strip(), value.strip())
+                for key, value in (param.split("=", 1) for param in raw_params)
+            ]
+        )
+        accept_list.append(
+            Accept(mtype, MediaType(type_), MediaType(subtype), **params)
+        )
+
+    return sorted(accept_list, key=_sort_accept_value, reverse=True)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -31,12 +33,37 @@ _host_re = re.compile(
 # For more information, consult ../tests/test_requests.py
 
 
+def parse_arg_as_accept(f):
+    def func(self, other):
+        if not isinstance(other, Accept):
+            other = Accept.parse(other)
+        return f(self, other)
+
+    return func
+
+
 class MediaType(str):
     def __new__(cls, value: str):
         return str.__new__(cls, value)
 
     def __init__(self, value: str) -> None:
-        self.is_wildcard = value == "*"
+        self.value = value
+        self.is_wildcard = self.check_if_wildcard(value)
+
+    def __eq__(self, other):
+        other_is_wildcard = (
+            other.is_wildcard
+            if isinstance(other, MediaType)
+            else self.check_if_wildcard(other)
+        )
+        other_value = other.value if isinstance(other, MediaType) else other
+        return (
+            self.value == other_value or self.is_wildcard or other_is_wildcard
+        )
+
+    @staticmethod
+    def check_if_wildcard(value):
+        return value == "*"
 
 
 class Accept(str):
@@ -69,23 +96,56 @@ class Accept(str):
         except (AttributeError, TypeError):
             return NotImplemented
 
-    def __lt__(self, other):
+    @parse_arg_as_accept
+    def __lt__(self, other: Union[str, Accept]):
         return self._compare(other, lambda s, o: s < o)
 
-    def __le__(self, other):
+    @parse_arg_as_accept
+    def __le__(self, other: Union[str, Accept]):
         return self._compare(other, lambda s, o: s <= o)
 
-    def __eq__(self, other):
+    @parse_arg_as_accept
+    def __eq__(self, other: Union[str, Accept]):  # type: ignore
         return self._compare(other, lambda s, o: s == o)
 
-    def __ge__(self, other):
+    @parse_arg_as_accept
+    def __ge__(self, other: Union[str, Accept]):
         return self._compare(other, lambda s, o: s >= o)
 
-    def __gt__(self, other):
+    @parse_arg_as_accept
+    def __gt__(self, other: Union[str, Accept]):
         return self._compare(other, lambda s, o: s > o)
 
-    def __ne__(self, other):
+    @parse_arg_as_accept
+    def __ne__(self, other: Union[str, Accept]):  # type: ignore
         return self._compare(other, lambda s, o: s != o)
+
+    @parse_arg_as_accept
+    def match(self, other) -> bool:
+        return self.type_ == other.type_ and self.subtype == other.subtype
+
+    @classmethod
+    def parse(cls, raw: str) -> Accept:
+        invalid = False
+        mtype = raw.strip()
+
+        try:
+            media, *raw_params = mtype.split(";")
+            type_, subtype = media.split("/")
+        except ValueError:
+            invalid = True
+
+        if invalid or not type_ or not subtype:
+            raise InvalidHeader(f"Header contains invalid Accept value: {raw}")
+
+        params = dict(
+            [
+                (key.strip(), value.strip())
+                for key, value in (param.split("=", 1) for param in raw_params)
+            ]
+        )
+
+        return cls(mtype, MediaType(type_), MediaType(subtype), **params)
 
 
 def parse_content_header(value: str) -> Tuple[str, Options]:
@@ -275,28 +335,6 @@ def parse_accept(accept: str) -> List[Accept]:
         if not mtype:
             continue
 
-        invalid = False
-        mtype = mtype.strip()
-
-        try:
-            media, *raw_params = mtype.split(";")
-            type_, subtype = media.split("/")
-        except ValueError:
-            invalid = True
-
-        if invalid or not type_ or not subtype:
-            raise InvalidHeader(
-                f"Header contains invalid Accept value: {accept}"
-            )
-
-        params = dict(
-            [
-                (key.strip(), value.strip())
-                for key, value in (param.split("=", 1) for param in raw_params)
-            ]
-        )
-        accept_list.append(
-            Accept(mtype, MediaType(type_), MediaType(subtype), **params)
-        )
+        accept_list.append(Accept.parse(mtype))
 
     return sorted(accept_list, key=_sort_accept_value, reverse=True)

@@ -234,3 +234,42 @@ def test_wildcard_accept_set_ok():
     accept = headers.parse_accept("foo/bar")[0]
     assert not accept.type_.is_wildcard
     assert not accept.subtype.is_wildcard
+
+
+def test_accept_parsed_against_str():
+    accept = headers.Accept.parse("foo/bar")
+    assert accept > "foo/bar; q=0.1"
+
+
+def test_media_type_equality():
+    assert headers.MediaType("foo") == headers.MediaType("foo") == "foo"
+    assert headers.MediaType("foo") == headers.MediaType("*") == "*"
+    assert headers.MediaType("foo") != headers.MediaType("bar")
+    assert headers.MediaType("foo") != "bar"
+
+
+@pytest.mark.parametrize(
+    "value,other",
+    (
+        ("foo/bar", "foo/bar"),
+        ("foo/bar", headers.Accept.parse("foo/bar")),
+        ("foo/bar", "foo/*"),
+        ("foo/bar", headers.Accept.parse("foo/*")),
+        ("foo/bar", "*/*"),
+        ("foo/bar", headers.Accept.parse("*/*")),
+        ("foo/*", "foo/bar"),
+        ("foo/*", headers.Accept.parse("foo/bar")),
+        ("foo/*", "foo/*"),
+        ("foo/*", headers.Accept.parse("foo/*")),
+        ("foo/*", "*/*"),
+        ("foo/*", headers.Accept.parse("*/*")),
+        ("*/*", "foo/bar"),
+        ("*/*", headers.Accept.parse("foo/bar")),
+        ("*/*", "foo/*"),
+        ("*/*", headers.Accept.parse("foo/*")),
+        ("*/*", "*/*"),
+        ("*/*", headers.Accept.parse("*/*")),
+    ),
+)
+def test_accept_matching_full(value, other):
+    assert headers.Accept.parse(value).match(other)

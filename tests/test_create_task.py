@@ -32,18 +32,18 @@ def test_create_task(app):
     assert response.body == b"True"
 
 
-@pytest.mark.asyncio
-async def test_create_task_with_app_arg(app):
-    q = asyncio.Queue()
+# @pytest.mark.asyncio
+# async def test_create_task_with_app_arg(app):
+#     q = asyncio.Queue()
 
-    @app.route("/")
-    def not_set(request):
-        return "hello"
+#     @app.route("/")
+#     def not_set(request):
+#         return "hello"
 
-    async def coro(app):
-        await q.put(app.name)
+#     async def coro(app):
+#         await q.put(app.name)
 
-    app.add_task(coro)
+#     app.add_task(coro)
 
-    request, response = await app.asgi_client.get("/")
-    # assert await q.get() == "test_create_task_with_app_arg"
+#     request, response = await app.asgi_client.get("/")
+#     assert await q.get() == "test_create_task_with_app_arg"

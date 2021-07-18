@@ -1,4 +1,5 @@
-import asyncio
+from __future__ import annotations
+
 import logging
 import logging.config
 import os
@@ -15,7 +16,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
-from inspect import isawaitable, signature
+from inspect import isawaitable
 from pathlib import Path
 from socket import socket
 from ssl import Purpose, SSLContext, create_default_context
@@ -261,20 +262,16 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         try:
             _event = ListenerEvent[event.upper()]
-        except ValueError:
+        except (ValueError, AttributeError):
             valid = ", ".join(
                 map(lambda x: x.lower(), ListenerEvent.__members__.keys())
             )
             raise InvalidUsage(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
-            sig = signature(listener)
-            args: List[Union[Sanic, AbstractEventLoop]] = []
-            if sig.parameters:
-                args.append(self)
-            if len(sig.parameters) > 1:
-                args.append(get_event_loop())
-            self.signal(_event.value)(partial(listener, *args))
+            self.signal(_event.value)(
+                partial(self._listener, listener=listener)
+            )
         else:
             self.listeners[_event.value].append(listener)
 
@@ -1371,6 +1368,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         prepped = app._prep_task(task, app, loop)
         await prepped
 
+    @staticmethod
+    async def _listener(
+        app: Sanic, loop: AbstractEventLoop, listener: ListenerType
+    ):
+        maybe_coro = listener(app, loop)
+        if maybe_coro and isawaitable(maybe_coro):
+            await maybe_coro
+
     # -------------------------------------------------------------------- #
     # ASGI
     # -------------------------------------------------------------------- #
@@ -1466,18 +1471,29 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.finalize()
         TouchUp.run(self)
 
-    async def _sever_event(self, concern, action):
+    async def _server_event(
+        self,
+        concern: str,
+        action: str,
+        loop: Optional[AbstractEventLoop] = None,
+    ) -> None:
         event = f"server.{concern}.{action}"
         if action not in ("before", "after") or concern not in (
             "init",
             "shutdown",
         ):
             raise SanicException(f"Invalid server event: {event}")
-        logger.info(f"Triggering server events: {event}")
+        logger.debug(f"Triggering server events: {event}")
         reverse = concern == "shutdown"
+        if loop is None:
+            loop = self.loop
         await self.dispatch(
             event,
             fail_not_found=False,
             reverse=reverse,
             inline=True,
+            context={
+                "app": self,
+                "loop": loop,
+            },
         )

@@ -37,7 +37,7 @@ from time import monotonic as current_time
 
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
-from sanic.exceptions import RequestTimeout, ServiceUnavailable
+from sanic.exceptions import RequestTimeout, SanicException, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
@@ -380,13 +380,7 @@ class AsyncioServer:
     a user who needs to manage the server lifecycle manually.
     """
 
-    __slots__ = (
-        "app",
-        "connections",
-        "loop",
-        "serve_coro",
-        "server",
-    )
+    __slots__ = ("app", "connections", "loop", "serve_coro", "server", "init")
 
     def __init__(
         self,
@@ -402,40 +396,38 @@ class AsyncioServer:
         self.loop = loop
         self.serve_coro = serve_coro
         self.server = None
+        self.init = False
 
     def startup(self):
         """
         Trigger "before_server_start" events
         """
-        self.app._startup()
+        self.init = True
+        return self.app._startup()
 
     def before_start(self):
         """
         Trigger "before_server_start" events
         """
-        self.loop.run_until_complete(self.app._sever_event("init", "before"))
+        return self._server_event("init", "before")
 
     def after_start(self):
         """
         Trigger "after_server_start" events
         """
-        self.loop.run_until_complete(self.app._sever_event("init", "after"))
+        return self._server_event("init", "after")
 
     def before_stop(self):
         """
         Trigger "before_server_stop" events
         """
-        self.loop.run_until_complete(
-            self.app._sever_event("shutdown", "before")
-        )
+        return self._server_event("shutdown", "before")
 
     def after_stop(self):
         """
         Trigger "after_server_stop" events
         """
-        self.loop.run_until_complete(
-            self.app._sever_event("shutdown", "before")
-        )
+        return self._server_event("shutdown", "after")
 
     def is_serving(self) -> bool:
         if self.server:
@@ -472,6 +464,13 @@ class AsyncioServer:
                     "server.serve_forever not available in this version "
                     "of asyncio or uvloop."
                 )
+
+    def _server_event(self, concern: str, action: str):
+        if not self.init:
+            raise SanicException(
+                "Cannot dispatch server event without first running server.startup()"
+            )
+        return self.app._server_event(concern, action, loop=self.loop)
 
     def __await__(self):
         """
@@ -576,15 +575,13 @@ def serve(
         )
 
     loop.run_until_complete(app._startup())
-    loop.run_until_complete(app._sever_event("init", "before"))
+    loop.run_until_complete(app._server_event("init", "before"))
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except BaseException:
         error_logger.exception("Unable to start server")
         return
-
-    loop.run_until_complete(app._sever_event("init", "after"))
 
     # Ignore SIGINT when run_multiple
     if run_multiple:
@@ -597,6 +594,8 @@ def serve(
         else:
             for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
                 loop.add_signal_handler(_signal, app.stop)
+
+    loop.run_until_complete(app._server_event("init", "after"))
     pid = os.getpid()
     try:
         logger.info("Starting worker [%s]", pid)
@@ -605,7 +604,7 @@ def serve(
         logger.info("Stopping worker [%s]", pid)
 
         # Run the on_stop function if provided
-        loop.run_until_complete(app._sever_event("shutdown", "before"))
+        loop.run_until_complete(app._server_event("shutdown", "before"))
 
         # Wait for event loop to finish and all connections to drain
         http_server.close()
@@ -637,7 +636,7 @@ def serve(
 
         _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
-        loop.run_until_complete(app._sever_event("shutdown", "after"))
+        loop.run_until_complete(app._server_event("shutdown", "after"))
 
         remove_unix_socket(unix)
 

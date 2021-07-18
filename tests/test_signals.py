@@ -16,7 +16,7 @@ def test_add_signal(app):
 
     app.add_signal(sync_signal, "foo.bar.baz")
 
-    assert len(app.signal_router.routes) == 2
+    assert len(app.signal_router.routes) == 1
 
 
 def test_add_signal_decorator(app):
@@ -28,7 +28,7 @@ def test_add_signal_decorator(app):
     async def async_signal(*_):
         ...
 
-    assert len(app.signal_router.routes) == 3
+    assert len(app.signal_router.routes) == 2
     assert len(app.signal_router.dynamic_routes) == 1
 
 
@@ -68,6 +68,7 @@ async def test_dispatch_signal_triggers_multiple_handlers(app):
 
     app.signal_router.finalize()
 
+    assert len(app.signal_router.routes) == 3
     await app.dispatch("foo.bar.baz")
     assert counter == 2
 

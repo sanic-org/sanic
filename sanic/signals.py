@@ -41,6 +41,10 @@ RESERVED_NAMESPACES = {
 }
 
 
+def _blank():
+    ...
+
+
 class Signal(Route):
     ...
 
@@ -58,7 +62,6 @@ class SignalRouter(BaseRouter):
             stacking=True,
         )
         self.ctx.loop = None
-        self.add(lambda: None, "sanic.__signal__.__init__")  # type: ignore
 
     def get(  # type: ignore
         self,
@@ -159,7 +162,7 @@ class SignalRouter(BaseRouter):
         if inline:
             return await dispatch
 
-        task = self.ctx.loop.create_task(dispatch)
+        task = asyncio.get_running_loop().create_task(dispatch)
         await asyncio.sleep(0)
         return task
 
@@ -186,6 +189,8 @@ class SignalRouter(BaseRouter):
         )  # type: ignore
 
     def finalize(self, do_compile: bool = True, do_optimize: bool = False):
+        self.add(_blank, "sanic.__signal__.__init__")
+
         try:
             self.ctx.loop = asyncio.get_running_loop()
         except RuntimeError:

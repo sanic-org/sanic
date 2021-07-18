@@ -48,8 +48,8 @@ class Lifespan:
         startup event.
         """
         await self.asgi_app.sanic_app._startup()
-        await self.asgi_app.sanic_app._sever_event("init", "before")
-        await self.asgi_app.sanic_app._sever_event("init", "after")
+        await self.asgi_app.sanic_app._server_event("init", "before")
+        await self.asgi_app.sanic_app._server_event("init", "after")
 
     async def shutdown(self) -> None:
         """
@@ -60,8 +60,8 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         shutdown event.
         """
-        await self.asgi_app.sanic_app._sever_event("shutdown", "before")
-        await self.asgi_app.sanic_app._sever_event("shutdown", "after")
+        await self.asgi_app.sanic_app._server_event("shutdown", "before")
+        await self.asgi_app.sanic_app._server_event("shutdown", "after")
 
     async def __call__(
         self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend

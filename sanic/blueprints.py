@@ -146,10 +146,10 @@ class Blueprint(BaseSanic):
 
     @staticmethod
     def group(
-        *blueprints,
-        url_prefix="",
-        version=None,
-        strict_slashes=None,
+        *blueprints: Union[Blueprint, BlueprintGroup],
+        url_prefix: Optional[str] = None,
+        version: Optional[Union[int, str, float]] = None,
+        strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
     ):
         """

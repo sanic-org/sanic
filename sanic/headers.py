@@ -264,6 +264,10 @@ def _sort_accept_value(accept: Accept):
 
 
 def parse_accept(accept: str) -> List[Accept]:
+    """Parse an Accept header and order the acceptable media types in
+    accorsing to RFC 7231, s. 5.3.2
+    https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
+    """
     media_types = accept.split(",")
     accept_list: List[Accept] = []
 

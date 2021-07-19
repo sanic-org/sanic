@@ -26,7 +26,6 @@ class ErrorHandler:
 
     handlers: List[RouteHandler] = []
     cached_handlers: Dict[Type[BaseException], RouteHandler] = {}
-    _missing = object()
 
     def __init__(self, fallback: str, base: Type[BaseRenderer] = HTMLRenderer):
         self.debug = False
@@ -46,7 +45,9 @@ class ErrorHandler:
 
         :return: None
         """
+        # self.handlers to be deprecated and removed in version 21.12
         self.handlers.append((exception, handler))
+        self.cached_handlers[exception] = handler
 
     def lookup(self, exception):
         """
@@ -62,14 +63,19 @@ class ErrorHandler:
 
         :return: Registered function if found ``None`` otherwise
         """
-        handler = self.cached_handlers.get(type(exception), self._missing)
-        if handler is self._missing:
-            for exception_class, handler in self.handlers:
-                if isinstance(exception, exception_class):
-                    self.cached_handlers[type(exception)] = handler
-                    return handler
-            self.cached_handlers[type(exception)] = None
-            handler = None
+        exception_class = type(exception)
+        if exception_class in self.cached_handlers:
+            return self.cached_handlers[exception_class]
+
+        for ancestor in type.mro(exception_class):
+            if ancestor in self.cached_handlers:
+                handler = self.cached_handlers[ancestor]
+                self.cached_handlers[exception_class] = handler
+                return handler
+            if ancestor is BaseException:
+                break
+        self.cached_handlers[exception_class] = None
+        handler = None
         return handler
 
     def response(self, request, exception):

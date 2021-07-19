@@ -169,7 +169,9 @@ class RouteMixin:
             if apply:
                 self._apply_route(route)
 
-            return route, handler
+            if static:
+                return route, handler
+            return handler
 
         return decorator
 
@@ -808,6 +810,7 @@ class RouteMixin:
                 f"path={file_or_directory}, "
                 f"relative_url={__file_uri__}"
             )
+            raise
 
     def _register_static(
         self,

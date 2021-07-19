@@ -48,7 +48,7 @@ class SignalRouter(BaseRouter):
                 f".{event}",
                 self.DEFAULT_METHOD,
                 self,
-                {"__params__": {}},
+                {"__params__": {}, "__matches__": {}},
                 extra=extra,
             )
         except NotFound:
@@ -59,7 +59,13 @@ class SignalRouter(BaseRouter):
                 terms.append(extra)
             raise NotFound(message % tuple(terms))
 
-        params = param_basket.pop("__params__")
+        params = param_basket["__params__"]
+        if not params:
+            params = {
+                param.name: param_basket["__matches__"][idx]
+                for idx, param in group.params.items()
+            }
+
         return group, [route.handler for route in group], params
 
     async def _dispatch(

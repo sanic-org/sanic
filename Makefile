@@ -49,6 +49,9 @@ test: clean
 test-coverage: clean
 	python setup.py test --pytest-args="--cov sanic --cov-report term --cov-append "
 
+view-coverage:
+	sanic ./coverage --simple
+
 install:
 	python setup.py install
 
@@ -85,8 +88,7 @@ docs-test: docs-clean
 	cd docs && make dummy
 
 docs-serve:
-	# python -m http.server --directory=./docs/_build/html 9999
-	sphinx-autobuild docs docs/_build/html --port 9999 --watch ./sanic
+	sphinx-autobuild docs docs/_build/html --port 9999 --watch ./
 
 changelog:
 	python scripts/changelog.py

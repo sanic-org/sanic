@@ -30,6 +30,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
 )
@@ -413,7 +414,13 @@ class Sanic(BaseSanic):
 
         self.websocket_enabled = enable
 
-    def blueprint(self, blueprint, **options):
+    def blueprint(
+        self,
+        blueprint: Union[
+            Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup
+        ],
+        **options: Any,
+    ):
         """Register a blueprint on the application.
 
         :param blueprint: Blueprint object or (list, tuple) thereof
@@ -422,7 +429,33 @@ class Sanic(BaseSanic):
         """
         if isinstance(blueprint, (list, tuple, BlueprintGroup)):
             for item in blueprint:
-                self.blueprint(item, **options)
+                params = {**options}
+                if isinstance(blueprint, BlueprintGroup):
+                    if blueprint.url_prefix:
+                        merge_from = [
+                            options.get("url_prefix", ""),
+                            blueprint.url_prefix,
+                        ]
+                        if not isinstance(item, BlueprintGroup):
+                            merge_from.append(item.url_prefix or "")
+                        merged_prefix = "/".join(
+                            u.strip("/") for u in merge_from
+                        ).rstrip("/")
+                        params["url_prefix"] = f"/{merged_prefix}"
+
+                    for _attr in ["version", "strict_slashes"]:
+                        if getattr(item, _attr) is None:
+                            params[_attr] = getattr(
+                                blueprint, _attr
+                            ) or options.get(_attr)
+                    if item.version_prefix == "/v":
+                        if blueprint.version_prefix == "/v":
+                            params["version_prefix"] = options.get(
+                                "version_prefix"
+                            )
+                        else:
+                            params["version_prefix"] = blueprint.version_prefix
+                self.blueprint(item, **params)
             return
         if blueprint.name in self.blueprints:
             assert self.blueprints[blueprint.name] is blueprint, (
@@ -587,7 +620,12 @@ class Sanic(BaseSanic):
             # determine if the parameter supplied by the caller
             # passes the test in the URL
             if param_info.pattern:
-                passes_pattern = param_info.pattern.match(supplied_param)
+                pattern = (
+                    param_info.pattern[1]
+                    if isinstance(param_info.pattern, tuple)
+                    else param_info.pattern
+                )
+                passes_pattern = pattern.match(supplied_param)
                 if not passes_pattern:
                     if param_info.cast != str:
                         msg = (
@@ -595,13 +633,13 @@ class Sanic(BaseSanic):
                             f"for parameter `{param_info.name}` does "
                             "not match pattern for type "
                             f"`{param_info.cast.__name__}`: "
-                            f"{param_info.pattern.pattern}"
+                            f"{pattern.pattern}"
                         )
                     else:
                         msg = (
                             f'Value "{supplied_param}" for parameter '
                             f"`{param_info.name}` does not satisfy "
-                            f"pattern {param_info.pattern.pattern}"
+                            f"pattern {pattern.pattern}"
                         )
                     raise URLBuildError(msg)
 
@@ -742,17 +780,14 @@ class Sanic(BaseSanic):
 
             if response:
                 response = await request.respond(response)
-            else:
+            elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
-            # Make sure that response is finished / run StreamingHTTP callback
 
+            # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
                 await response.send(end_stream=True)
             else:
-                try:
-                    # Fastest method for checking if the property exists
-                    handler.is_websocket  # type: ignore
-                except AttributeError:
+                if not hasattr(handler, "is_websocket"):
                     raise ServerError(
                         f"Invalid response type {response!r} "
                         "(need HTTPResponse)"
@@ -779,6 +814,7 @@ class Sanic(BaseSanic):
 
         if self.asgi:
             ws = request.transport.get_websocket_connection()
+            await ws.accept(subprotocols)
         else:
             protocol = request.transport.get_protocol()
             protocol.app = self
@@ -842,7 +878,7 @@ class Sanic(BaseSanic):
         *,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
-        ssl: Union[dict, SSLContext, None] = None,
+        ssl: Union[Dict[str, str], SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
         protocol: Optional[Type[Protocol]] = None,
@@ -972,7 +1008,7 @@ class Sanic(BaseSanic):
         port: Optional[int] = None,
         *,
         debug: bool = False,
-        ssl: Union[dict, SSLContext, None] = None,
+        ssl: Union[Dict[str, str], SSLContext, None] = None,
         sock: Optional[socket] = None,
         protocol: Type[Protocol] = None,
         backlog: int = 100,

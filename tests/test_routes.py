@@ -258,7 +258,7 @@ def test_route_strict_slash(app):
 def test_route_invalid_parameter_syntax(app):
     with pytest.raises(ValueError):
 
-        @app.get("/get/<:string>", strict_slashes=True)
+        @app.get("/get/<:str>", strict_slashes=True)
         def handler(request):
             return text("OK")
 
@@ -478,7 +478,7 @@ def test_dynamic_route(app):
 def test_dynamic_route_string(app):
     results = []
 
-    @app.route("/folder/<name:string>")
+    @app.route("/folder/<name:str>")
     async def handler(request, name):
         results.append(name)
         return text("OK")
@@ -513,7 +513,7 @@ def test_dynamic_route_int(app):
 def test_dynamic_route_number(app):
     results = []
 
-    @app.route("/weight/<weight:number>")
+    @app.route("/weight/<weight:float>")
     async def handler(request, weight):
         results.append(weight)
         return text("OK")
@@ -585,7 +585,6 @@ def test_dynamic_route_path(app):
         return text("OK")
 
     app.router.finalize()
-    print(app.router.find_route_src)
 
     request, response = app.test_client.get("/path/1/info")
     assert response.status == 200
@@ -824,7 +823,7 @@ def test_dynamic_add_route_string(app):
         results.append(name)
         return text("OK")
 
-    app.add_route(handler, "/folder/<name:string>")
+    app.add_route(handler, "/folder/<name:str>")
     request, response = app.test_client.get("/folder/test123")
 
     assert response.text == "OK"
@@ -860,7 +859,7 @@ def test_dynamic_add_route_number(app):
         results.append(weight)
         return text("OK")
 
-    app.add_route(handler, "/weight/<weight:number>")
+    app.add_route(handler, "/weight/<weight:float>")
 
     request, response = app.test_client.get("/weight/12345")
     assert response.text == "OK"
@@ -1067,7 +1066,8 @@ def test_uri_with_different_method_and_different_params(app):
         return json({"action": action})
 
     request, response = app.test_client.get("/ads/1234")
-    assert response.status == 405
+    assert response.status == 200
+    assert response.json == {"ad_id": "1234"}
 
     request, response = app.test_client.post("/ads/post")
     assert response.status == 200

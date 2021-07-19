@@ -738,11 +738,12 @@ class Sanic(BaseSanic):
             request.route = route
 
             if (
-                request.stream.request_body  # type: ignore
+                request.stream
+                and request.stream.request_body
                 and not route.ctx.ignore_body
             ):
 
-                if hasattr(handler, "is_stream") and request.stream:
+                if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
                 else:

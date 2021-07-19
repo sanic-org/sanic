@@ -170,3 +170,21 @@ def test_route_error_format_unknown(app):
         @app.get("/text", error_format="bad")
         def handler(request):
             ...
+
+
+def test_fallback_with_content_type_mismatch_accept(app):
+    app.config.FALLBACK_ERROR_FORMAT = "auto"
+
+    _, response = app.test_client.get(
+        "/error",
+        headers={"content-type": "application/json", "accept": "text/plain"},
+    )
+    assert response.status == 500
+    assert response.content_type == "text/plain"
+
+    _, response = app.test_client.get(
+        "/error",
+        headers={"content-type": "text/plain", "accept": "foo/bar"},
+    )
+    assert response.status == 500
+    assert response.content_type == "application/json"

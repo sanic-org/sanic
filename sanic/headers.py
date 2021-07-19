@@ -51,15 +51,19 @@ class MediaType(str):
         self.is_wildcard = self.check_if_wildcard(value)
 
     def __eq__(self, other):
+        if self.is_wildcard:
+            return True
+
+        other_value = other.value if isinstance(other, MediaType) else other
+        if self.value == other_value:
+            return True
+
         other_is_wildcard = (
             other.is_wildcard
             if isinstance(other, MediaType)
             else self.check_if_wildcard(other)
         )
-        other_value = other.value if isinstance(other, MediaType) else other
-        return (
-            self.value == other_value or self.is_wildcard or other_is_wildcard
-        )
+        return self.is_wildcard or other_is_wildcard
 
     @staticmethod
     def check_if_wildcard(value):
@@ -146,6 +150,11 @@ class Accept(str):
         )
 
         return cls(mtype, MediaType(type_), MediaType(subtype), **params)
+
+
+class AcceptContainer(list):
+    def __contains__(self, o: object) -> bool:
+        return any(item.match(o) for item in self)
 
 
 def parse_content_header(value: str) -> Tuple[str, Options]:
@@ -323,7 +332,7 @@ def _sort_accept_value(accept: Accept):
     )
 
 
-def parse_accept(accept: str) -> List[Accept]:
+def parse_accept(accept: str) -> AcceptContainer:
     """Parse an Accept header and order the acceptable media types in
     accorsing to RFC 7231, s. 5.3.2
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
@@ -337,4 +346,6 @@ def parse_accept(accept: str) -> List[Accept]:
 
         accept_list.append(Accept.parse(mtype))
 
-    return sorted(accept_list, key=_sort_accept_value, reverse=True)
+    return AcceptContainer(
+        sorted(accept_list, key=_sort_accept_value, reverse=True)
+    )

@@ -281,3 +281,10 @@ def test_value_in_accept(value):
     assert "foo/bar" in acceptable
     assert "foo/*" in acceptable
     assert "*/*" in acceptable
+
+
+@pytest.mark.parametrize("value", ("foo/bar", "foo/*"))
+def test_value_not_in_accept(value):
+    acceptable = headers.parse_accept(value)
+    assert "no/match" not in acceptable
+    assert "no/*" not in acceptable

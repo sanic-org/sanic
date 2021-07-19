@@ -343,6 +343,7 @@ RENDERERS_BY_CONTENT_TYPE = {
     "multipart/form-data": HTMLRenderer,
     "application/json": JSONRenderer,
     "text/plain": TextRenderer,
+    "text/html": HTMLRenderer,
 }
 
 RESPONSE_MAPPING = {
@@ -377,6 +378,7 @@ def exception_response(
     """
     Render a response for the default FALLBACK exception handler.
     """
+    content_type = None
 
     if not renderer:
         # Make sure we have something set
@@ -392,6 +394,10 @@ def exception_response(
                 except AttributeError:
                     ...
 
+            content_type, *_ = request.headers.getone(
+                "content-type", ""
+            ).split(";")
+
             # If the format is auto still, make a guess
             if render_format == "auto":
                 # First, look to see if there was a JSON body
@@ -403,17 +409,26 @@ def exception_response(
                 # Second, if there is a content-type in the request
                 # we can assume that's what we want. Otherwise, go back to
                 # previous guess.
-                content_type, *_ = request.headers.getone(
-                    "content-type", ""
-                ).split(";")
                 renderer = RENDERERS_BY_CONTENT_TYPE.get(
                     content_type, renderer
                 )
-
-                # Third, TODO: if there is an Accept header, make sure
-                # our choice is okay
             else:
                 renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
+
+            # Third, if there is an Accept header, make sure
+            # our choice is okay
+            acceptable = request.accept
+            print(
+                ">>>> ", acceptable, content_type, content_type in acceptable
+            )
+            if acceptable and content_type not in acceptable:
+                for accept in acceptable:
+                    mtype = f"{accept.type_}/{accept.subtype}"
+                    if mtype in RENDERERS_BY_CONTENT_TYPE:
+                        renderer = RENDERERS_BY_CONTENT_TYPE[mtype]
+                        break
+                else:
+                    renderer = base
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()

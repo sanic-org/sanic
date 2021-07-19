@@ -100,7 +100,7 @@ class Http:
         self.init_for_request()
 
     def init_for_request(self):
-        """Perform any initialization that is necessary before handling a request (after previous ones)."""
+        """Init/reset all per-request variables."""
         self.exception = None
         self.expecting_continue: bool = False
         self.head_only = None

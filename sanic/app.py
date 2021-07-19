@@ -742,9 +742,9 @@ class Sanic(BaseSanic):
                 and not route.ctx.ignore_body
             ):
 
-                if hasattr(handler, "is_stream"):
+                if hasattr(handler, "is_stream") and request.stream:
                     # Streaming handler: lift the size limit
-                    request.stream.request_max_size = float("inf")  # type: ignore
+                    request.stream.request_max_size = float("inf")
                 else:
                     # Non-streaming handler: preload body
                     await request.receive_body()

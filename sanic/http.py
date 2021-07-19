@@ -95,19 +95,23 @@ class Http:
         self._receive_more = protocol.receive_more
         self.recv_buffer = protocol.recv_buffer
         self.protocol = protocol
-        self.expecting_continue: bool = False
+        self.keep_alive = True
         self.stage: Stage = Stage.IDLE
+        self.init_for_request()
+
+    def init_for_request(self):
+        """Perform any initialization that is necessary before handling a request (after previous ones)."""
+        self.exception = None
+        self.expecting_continue: bool = False
+        self.head_only = None
         self.request_body = None
         self.request_bytes = None
         self.request_bytes_left = None
-        self.request_max_size = protocol.request_max_size
-        self.keep_alive = True
-        self.head_only = None
+        self.request_max_size = self.protocol.request_max_size
         self.request: Request = None
         self.response: BaseHTTPResponse = None
-        self.exception = None
-        self.url = None
         self.upgrade_websocket = False
+        self.url = None
 
     def __bool__(self):
         """Test if request handling is in progress"""
@@ -160,11 +164,19 @@ class Http:
                     await sleep(0.001)
                     self.keep_alive = False
 
+            # Clean up to free memory and for the next request
+            if self.request:
+                self.request.stream = None
+                if self.response:
+                    self.response.stream = None
+
+            self.init_for_request()
+
             # Exit and disconnect if no more requests can be taken
             if self.stage is not Stage.IDLE or not self.keep_alive:
                 break
 
-            # Wait for next request
+            # Wait for the next request
             if not self.recv_buffer:
                 await self._receive_more()
 

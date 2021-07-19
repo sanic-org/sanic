@@ -3,6 +3,7 @@ import json as stdjson
 
 from collections import namedtuple
 from textwrap import dedent
+from typing import AnyStr
 
 import pytest
 
@@ -33,8 +34,11 @@ class RawClient:
         self.writer.close()
         await self.writer.wait_closed()
 
-    async def send(self, message: bytes):
-        msg = self._clean(message)
+    async def send(self, message: AnyStr):
+        if isinstance(message, str):
+            msg = self._clean(message).encode("utf-8")
+        else:
+            msg = message
         await self._send(msg)
 
     async def _send(self, message: bytes):
@@ -47,12 +51,11 @@ class RawClient:
             raise Exception("No open read stream")
         return await self.reader.read(nbytes)
 
-    def _clean(self, message: bytes) -> bytes:
+    def _clean(self, message: str) -> str:
         return (
-            dedent(message.decode("utf-8"))
-            .lstrip()
-            .encode("utf-8")
-            .replace(b"\n", self.CRLF)
+            dedent(message)
+            .lstrip("\n")
+            .replace("\n", self.CRLF.decode("utf-8"))
         )
 
 
@@ -105,7 +108,7 @@ def client(runner):
 
 def test_full_message(client):
     client.send(
-        b"""
+        """
         GET / HTTP/1.1
         host: localhost:7777
 
@@ -118,15 +121,15 @@ def test_full_message(client):
 
 def test_transfer_chunked(client):
     client.send(
-        b"""
+        """
         POST /upload HTTP/1.1
         transfer-encoding: chunked
 
         """
     )
-    client.send(b"3\nfoo\n")
-    client.send(b"3\nbar\n")
-    client.send(b"0\n\n")
+    client.send(b"3\r\nfoo\r\n")
+    client.send(b"3\r\nbar\r\n")
+    client.send(b"0\r\n\r\n")
     response = client.recv()
     _, body = response.rsplit(b"\r\n\r\n", 1)
     data = stdjson.loads(body)

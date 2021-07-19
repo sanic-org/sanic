@@ -34,7 +34,9 @@ from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
+    Accept,
     Options,
+    parse_accept,
     parse_content_header,
     parse_forwarded,
     parse_host,
@@ -295,6 +297,11 @@ class Request:
             raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
+
+    @property
+    def accept(self) -> List[Accept]:
+        accept_header = self.headers.getone("accept", "")
+        return parse_accept(accept_header)
 
     @property
     def token(self):

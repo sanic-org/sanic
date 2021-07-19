@@ -122,8 +122,11 @@ class HeaderNotFound(InvalidUsage):
     **Status**: 400 Bad Request
     """
 
-    status_code = 400
-    quiet = True
+
+class InvalidHeader(InvalidUsage):
+    """
+    **Status**: 400 Bad Request
+    """
 
 
 class ContentRangeError(SanicException):

@@ -152,7 +152,10 @@ class Http:
             if self.request_body:
                 if self.response and 200 <= self.response.status < 300:
                     error_logger.error(f"{self.request} body not consumed.")
-
+                # Limit the size because the handler may have set it infinite
+                self.request_max_size = min(
+                    self.request_max_size, self.protocol.request_max_size
+                )
                 try:
                     async for _ in self:
                         pass

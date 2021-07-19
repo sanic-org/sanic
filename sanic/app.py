@@ -193,7 +193,7 @@ class Sanic(BaseSanic):
         self.router.ctx.app = self
 
         if dumps:
-            BaseHTTPResponse._dumps = dumps
+            BaseHTTPResponse._dumps = dumps  # type: ignore
 
     @property
     def loop(self):

@@ -79,14 +79,9 @@ class Blueprint(BaseSanic):
     ):
         super().__init__(name=name)
 
-        self._apps: Set[Sanic] = set()
         self.ctx = SimpleNamespace()
-        self.exceptions: List[RouteHandler] = []
         self.host = host
-        self.listeners: Dict[str, List[ListenerType]] = {}
-        self.middlewares: List[MiddlewareType] = []
-        self.routes: List[Route] = []
-        self.statics: List[RouteHandler] = []
+        self.reset()
         self.strict_slashes = strict_slashes
         self.url_prefix = (
             url_prefix[:-1]
@@ -95,7 +90,6 @@ class Blueprint(BaseSanic):
         )
         self.version = version
         self.version_prefix = version_prefix
-        self.websocket_routes: List[Route] = []
 
     def __repr__(self) -> str:
         args = ", ".join(
@@ -153,6 +147,8 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float, Default]] = _default,
         version_prefix: Union[str, Default] = _default,
         strict_slashes: Optional[Union[bool, Default]] = _default,
+        with_registration: bool = True,
+        with_ctx: bool = False,
     ):
         """
         Copy a blueprint instance with some optional parameters to
@@ -164,7 +160,22 @@ class Blueprint(BaseSanic):
         :param version_prefix: the prefix of the version number shown in the URL.
         :param strict_slashes: Enforce the API urls are requested with a
             trailing */*
+        :param with_registration: whether register new blueprint instance with
+            sanic apps that were registered with the old instance or not.
+        :param with_ctx: whether `ctx` will be copied or not.
         """
+
+        attrs_backup = {
+            "_apps": self._apps,
+            "routes": self.routes,
+            "websocket_routes": self.websocket_routes,
+            "middlewares": self.middlewares,
+            "exceptions": self.exceptions,
+            "listeners": self.listeners,
+            "statics": self.statics,
+        }
+
+        self.reset()
         new_bp = deepcopy(self)
         new_bp.name = name
 
@@ -176,6 +187,21 @@ class Blueprint(BaseSanic):
             new_bp.strict_slashes = strict_slashes
         if not isinstance(version_prefix, Default):
             new_bp.version_prefix = version_prefix
+
+        for key, value in attrs_backup.items():
+            setattr(self, key, value)
+
+        if with_registration:
+            if len(new_bp._future_statics) > 0 and len(self._apps) > 0:
+                raise Exception(
+                    "Static routes registered with the old blueprint instance, "
+                    "cannot be registered again."
+                )
+            for app in self._apps:
+                app.blueprint(new_bp)
+
+        if not with_ctx:
+            new_bp.ctx = SimpleNamespace()
 
         return new_bp
 
@@ -328,6 +354,15 @@ class Blueprint(BaseSanic):
         await asyncio.gather(
             *[app.dispatch(*args, **kwargs) for app in self.apps]
         )
+
+    def reset(self):
+        self._apps: Set[Sanic] = set()
+        self.exceptions: List[RouteHandler] = []
+        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.middlewares: List[MiddlewareType] = []
+        self.routes: List[Route] = []
+        self.statics: List[RouteHandler] = []
+        self.websocket_routes: List[Route] = []
 
     def event(self, event: str, timeout: Optional[Union[int, float]] = None):
         events = set()

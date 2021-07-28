@@ -1,7 +1,7 @@
 from httpx import AsyncByteStream
 from sanic_testing.reusable import ReusableClient
 
-from sanic.response import json
+from sanic.response import json, text
 
 
 def test_no_body_requests(app):
@@ -80,3 +80,26 @@ def test_streaming_body_requests(app):
     assert response1.json["data"] == response2.json["data"] == data
     assert response1.json["request_id"] != response2.json["request_id"]
     assert response1.json["connection_id"] == response2.json["connection_id"]
+
+
+def test_bad_headers(app):
+    @app.get("/")
+    async def handler(request):
+        return text("")
+
+    @app.on_response
+    async def reqid(request, response):
+        response.headers["x-request-id"] = request.id
+
+    client = ReusableClient(app, port=1234)
+    bad_headers = {"bad": "bad" * 5_000}
+
+    with client:
+        _, response1 = client.get("/")
+        _, response2 = client.get("/", headers=bad_headers)
+
+    assert response1.status == 200
+    assert response2.status == 413
+    assert (
+        response1.headers["x-request-id"] != response2.headers["x-request-id"]
+    )

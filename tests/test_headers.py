@@ -248,31 +248,88 @@ def test_media_type_equality():
     assert headers.MediaType("foo") != "bar"
 
 
+def test_media_type_matching():
+    assert headers.MediaType("foo").match(headers.MediaType("foo"))
+    assert headers.MediaType("foo").match("foo")
+
+    assert not headers.MediaType("foo").match(headers.MediaType("*"))
+    assert not headers.MediaType("foo").match("*")
+
+    assert not headers.MediaType("foo").match(headers.MediaType("bar"))
+    assert not headers.MediaType("foo").match("bar")
+
+
 @pytest.mark.parametrize(
-    "value,other",
+    "value,other,outcome,allow_type,allow_subtype",
     (
-        ("foo/bar", "foo/bar"),
-        ("foo/bar", headers.Accept.parse("foo/bar")),
-        ("foo/bar", "foo/*"),
-        ("foo/bar", headers.Accept.parse("foo/*")),
-        ("foo/bar", "*/*"),
-        ("foo/bar", headers.Accept.parse("*/*")),
-        ("foo/*", "foo/bar"),
-        ("foo/*", headers.Accept.parse("foo/bar")),
-        ("foo/*", "foo/*"),
-        ("foo/*", headers.Accept.parse("foo/*")),
-        ("foo/*", "*/*"),
-        ("foo/*", headers.Accept.parse("*/*")),
-        ("*/*", "foo/bar"),
-        ("*/*", headers.Accept.parse("foo/bar")),
-        ("*/*", "foo/*"),
-        ("*/*", headers.Accept.parse("foo/*")),
-        ("*/*", "*/*"),
-        ("*/*", headers.Accept.parse("*/*")),
+        # ALLOW BOTH
+        ("foo/bar", "foo/bar", True, True, True),
+        ("foo/bar", headers.Accept.parse("foo/bar"), True, True, True),
+        ("foo/bar", "foo/*", True, True, True),
+        ("foo/bar", headers.Accept.parse("foo/*"), True, True, True),
+        ("foo/bar", "*/*", True, True, True),
+        ("foo/bar", headers.Accept.parse("*/*"), True, True, True),
+        ("foo/*", "foo/bar", True, True, True),
+        ("foo/*", headers.Accept.parse("foo/bar"), True, True, True),
+        ("foo/*", "foo/*", True, True, True),
+        ("foo/*", headers.Accept.parse("foo/*"), True, True, True),
+        ("foo/*", "*/*", True, True, True),
+        ("foo/*", headers.Accept.parse("*/*"), True, True, True),
+        ("*/*", "foo/bar", True, True, True),
+        ("*/*", headers.Accept.parse("foo/bar"), True, True, True),
+        ("*/*", "foo/*", True, True, True),
+        ("*/*", headers.Accept.parse("foo/*"), True, True, True),
+        ("*/*", "*/*", True, True, True),
+        ("*/*", headers.Accept.parse("*/*"), True, True, True),
+        # ALLOW TYPE
+        ("foo/bar", "foo/bar", True, True, False),
+        ("foo/bar", headers.Accept.parse("foo/bar"), True, True, False),
+        ("foo/bar", "foo/*", False, True, False),
+        ("foo/bar", headers.Accept.parse("foo/*"), False, True, False),
+        ("foo/bar", "*/*", False, True, False),
+        ("foo/bar", headers.Accept.parse("*/*"), False, True, False),
+        ("foo/*", "foo/bar", False, True, False),
+        ("foo/*", headers.Accept.parse("foo/bar"), False, True, False),
+        ("foo/*", "foo/*", False, True, False),
+        ("foo/*", headers.Accept.parse("foo/*"), False, True, False),
+        ("foo/*", "*/*", False, True, False),
+        ("foo/*", headers.Accept.parse("*/*"), False, True, False),
+        ("*/*", "foo/bar", False, True, False),
+        ("*/*", headers.Accept.parse("foo/bar"), False, True, False),
+        ("*/*", "foo/*", False, True, False),
+        ("*/*", headers.Accept.parse("foo/*"), False, True, False),
+        ("*/*", "*/*", False, True, False),
+        ("*/*", headers.Accept.parse("*/*"), False, True, False),
+        # ALLOW SUBTYPE
+        ("foo/bar", "foo/bar", True, False, True),
+        ("foo/bar", headers.Accept.parse("foo/bar"), True, False, True),
+        ("foo/bar", "foo/*", True, False, True),
+        ("foo/bar", headers.Accept.parse("foo/*"), True, False, True),
+        ("foo/bar", "*/*", False, False, True),
+        ("foo/bar", headers.Accept.parse("*/*"), False, False, True),
+        ("foo/*", "foo/bar", True, False, True),
+        ("foo/*", headers.Accept.parse("foo/bar"), True, False, True),
+        ("foo/*", "foo/*", True, False, True),
+        ("foo/*", headers.Accept.parse("foo/*"), True, False, True),
+        ("foo/*", "*/*", False, False, True),
+        ("foo/*", headers.Accept.parse("*/*"), False, False, True),
+        ("*/*", "foo/bar", False, False, True),
+        ("*/*", headers.Accept.parse("foo/bar"), False, False, True),
+        ("*/*", "foo/*", False, False, True),
+        ("*/*", headers.Accept.parse("foo/*"), False, False, True),
+        ("*/*", "*/*", False, False, True),
+        ("*/*", headers.Accept.parse("*/*"), False, False, True),
     ),
 )
-def test_accept_matching(value, other):
-    assert headers.Accept.parse(value).match(other)
+def test_accept_matching(value, other, outcome, allow_type, allow_subtype):
+    assert (
+        headers.Accept.parse(value).match(
+            other,
+            allow_type_wildcard=allow_type,
+            allow_subtype_wildcard=allow_subtype,
+        )
+        is outcome
+    )
 
 
 @pytest.mark.parametrize("value", ("foo/bar", "foo/*", "*/*"))

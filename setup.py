@@ -93,7 +93,7 @@ requirements = [
 ]
 
 tests_require = [
-    "sanic-testing>=0.7.0b1",
+    "sanic-testing==0.7.0b1",
     "pytest==5.2.1",
     "coverage==5.3",
     "gunicorn==20.0.4",

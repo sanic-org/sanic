@@ -40,11 +40,11 @@ async def _handler(request):
 
 
 TYPE_TO_GENERATOR_MAP = {
-    "string": lambda: "".join(
+    "str": lambda: "".join(
         [random.choice(string.ascii_lowercase) for _ in range(4)]
     ),
     "int": lambda: random.choice(range(1000000)),
-    "number": lambda: random.random(),
+    "float": lambda: random.random(),
     "alpha": lambda: "".join(
         [random.choice(string.ascii_lowercase) for _ in range(4)]
     ),
@@ -58,17 +58,14 @@ class RouteStringGenerator:
 
     ROUTE_COUNT_PER_DEPTH = 100
     HTTP_METHODS = HTTP_METHODS
-    ROUTE_PARAM_TYPES = ["string", "int", "number", "alpha", "uuid"]
+    ROUTE_PARAM_TYPES = ["str", "int", "float", "alpha", "uuid"]
 
     def generate_random_direct_route(self, max_route_depth=4):
         routes = []
         for depth in range(1, max_route_depth + 1):
             for _ in range(self.ROUTE_COUNT_PER_DEPTH):
                 route = "/".join(
-                    [
-                        TYPE_TO_GENERATOR_MAP.get("string")()
-                        for _ in range(depth)
-                    ]
+                    [TYPE_TO_GENERATOR_MAP.get("str")() for _ in range(depth)]
                 )
                 route = route.replace(".", "", -1)
                 route_detail = (random.choice(self.HTTP_METHODS), route)
@@ -84,7 +81,7 @@ class RouteStringGenerator:
             new_route_part = "/".join(
                 [
                     "<{}:{}>".format(
-                        TYPE_TO_GENERATOR_MAP.get("string")(),
+                        TYPE_TO_GENERATOR_MAP.get("str")(),
                         random.choice(self.ROUTE_PARAM_TYPES),
                     )
                     for _ in range(max_route_depth - current_length)
@@ -99,7 +96,7 @@ class RouteStringGenerator:
     def generate_url_for_template(template):
         url = template
         for pattern, param_type in re.findall(
-            re.compile(r"((?:<\w+:(string|int|number|alpha|uuid)>)+)"),
+            re.compile(r"((?:<\w+:(str|int|float|alpha|uuid)>)+)"),
             template,
         ):
             value = TYPE_TO_GENERATOR_MAP.get(param_type)()

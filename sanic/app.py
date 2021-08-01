@@ -689,7 +689,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def handle_exception(
         self, request: Request, exception: BaseException
-    ):
+    ):  # no cov
         """
         A handler that catches specific exceptions and outputs a response.
 
@@ -751,7 +751,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 f"Invalid response type {response!r} (need HTTPResponse)"
             )
 
-    async def handle_request(self, request: Request):
+    async def handle_request(self, request: Request):  # no cov
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
@@ -1157,7 +1157,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
 
-    async def _run_request_middleware(self, request, request_name=None):
+    async def _run_request_middleware(
+        self, request, request_name=None
+    ):  # no cov
         # The if improves speed.  I don't know why
         named_middleware = self.named_request_middleware.get(
             request_name, deque()
@@ -1200,7 +1202,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def _run_response_middleware(
         self, request, response, request_name=None
-    ):
+    ):  # no cov
         named_middleware = self.named_response_middleware.get(
             request_name, deque()
         )

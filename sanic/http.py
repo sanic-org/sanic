@@ -191,7 +191,7 @@ class Http(metaclass=TouchUpMeta):
             if not self.recv_buffer:
                 await self._receive_more()
 
-    async def http1_request_header(self):
+    async def http1_request_header(self):  # no cov
         """
         Receive and parse request header into self.request.
         """
@@ -299,7 +299,7 @@ class Http(metaclass=TouchUpMeta):
 
     async def http1_response_header(
         self, data: bytes, end_stream: bool
-    ) -> None:
+    ) -> None:  # no cov
         res = self.response
 
         # Compatibility with simple response body
@@ -488,7 +488,7 @@ class Http(metaclass=TouchUpMeta):
             if data:
                 yield data
 
-    async def read(self) -> Optional[bytes]:
+    async def read(self) -> Optional[bytes]:  # no cov
         """
         Read some bytes of request body.
         """

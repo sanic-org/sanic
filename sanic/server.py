@@ -189,7 +189,7 @@ class HttpProtocol(asyncio.Protocol, metaclass=TouchUpMeta):
         self._time = current_time()
         self.check_timeouts()
 
-    async def connection_task(self):
+    async def connection_task(self):  # no cov
         """
         Run a HTTP connection.
 
@@ -275,7 +275,7 @@ class HttpProtocol(asyncio.Protocol, metaclass=TouchUpMeta):
         except Exception:
             error_logger.exception("protocol.check_timeouts")
 
-    async def send(self, data):
+    async def send(self, data):  # no cov
         """
         Writes data with backpressure control.
         """

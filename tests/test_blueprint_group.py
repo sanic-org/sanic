@@ -167,8 +167,8 @@ def test_bp_group(app: Sanic):
     _, response = app.test_client.get("/api/bp3")
     assert response.text == "BP3_OK"
 
-    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 5
-    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 6
+    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 9
+    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 8
 
 
 def test_bp_group_list_operations(app: Sanic):

@@ -826,6 +826,8 @@ class Sanic(BaseSanic):
         self.websocket_tasks.add(fut)
         try:
             await fut
+        except Exception as e:
+            self.error_handler.log(request, e)
         except (CancelledError, ConnectionClosed):
             pass
         finally:

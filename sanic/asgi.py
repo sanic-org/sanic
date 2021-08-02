@@ -207,4 +207,7 @@ class ASGIApp:
         """
         Handle the incoming request.
         """
-        await self.sanic_app.handle_request(self.request)
+        try:
+            await self.sanic_app.handle_request(self.request)
+        except Exception as e:
+            await self.sanic_app.handle_exception(self.request, e)

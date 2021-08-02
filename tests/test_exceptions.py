@@ -235,13 +235,15 @@ def test_sanic_exception(exception_app):
     assert len(w) == 1 and "deprecated" in w[0].message.args[0]
 
 
-def test_exception_in_ws_logged(exception_app, caplog):
-    @exception_app.websocket("/feed")
+def test_exception_in_ws_logged(caplog):
+    app = Sanic(__file__)
+
+    @app.websocket("/feed")
     async def feed(request, ws):
         raise Exception("...")
 
     with caplog.at_level(logging.INFO):
-        exception_app.test_client.websocket("/feed")
+        app.test_client.websocket("/feed")
 
     assert caplog.record_tuples[1][0] == "sanic.error"
     assert caplog.record_tuples[1][1] == logging.ERROR

@@ -99,7 +99,6 @@ class ErrorHandler:
             if response is None:
                 response = self.default(request, exception)
         except Exception:
-            self.log(format_exc())
             try:
                 url = repr(request.url)
             except AttributeError:

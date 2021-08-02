@@ -24,9 +24,6 @@ class ErrorHandler:
 
     """
 
-    # handlers = None
-    # cached_handlers = None
-
     def __init__(self):
         self.handlers = []
         self.cached_handlers = {}

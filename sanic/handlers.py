@@ -1,5 +1,3 @@
-from traceback import format_exc
-
 from sanic.errorpages import exception_response
 from sanic.exceptions import (
     ContentRangeError,

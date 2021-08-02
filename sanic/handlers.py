@@ -108,7 +108,6 @@ class ErrorHandler:
         """
         route_name = request.name if request else None
         handler = self.lookup(exception, route_name)
-        print(self.cached_handlers, route_name)
         response = None
         try:
             if handler:

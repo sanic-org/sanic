@@ -471,8 +471,8 @@ class Http(metaclass=TouchUpMeta):
             "request": "nil",
         }
         if req is not None:
-            if req.ip:
-                extra["host"] = f"{req.ip}:{req.port}"
+            if req.remote_addr or req.ip:
+                extra["host"] = f"{req.remote_addr or req.ip}:{req.port}"
             extra["request"] = f"{req.method} {req.url}"
         access_logger.info("", extra=extra)
 

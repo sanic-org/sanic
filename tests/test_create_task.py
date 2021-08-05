@@ -12,8 +12,6 @@ def test_create_task(app):
         await asyncio.sleep(0.05)
         e.set()
 
-    app.add_task(coro)
-
     @app.route("/early")
     def not_set(request):
         return text(str(e.is_set()))
@@ -23,9 +21,13 @@ def test_create_task(app):
         await asyncio.sleep(0.1)
         return text(str(e.is_set()))
 
+    app.add_task(coro)
+
     request, response = app.test_client.get("/early")
     assert response.body == b"False"
 
+    app.signal_router.reset()
+    app.add_task(coro)
     request, response = app.test_client.get("/late")
     assert response.body == b"True"
 

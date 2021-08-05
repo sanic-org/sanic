@@ -1364,7 +1364,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     async def dispatch_delayed_tasks(app, loop):
         for name in app._delayed_tasks:
             await app.dispatch(name, context={"app": app, "loop": loop})
-        app._delayed_tasks = []
+        app._delayed_tasks.clear()
 
     @staticmethod
     async def run_delayed_task(app, loop, task):

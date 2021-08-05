@@ -16,9 +16,5 @@ class BaseScheme(ABC):
     def __init_subclass__(cls):
         BaseScheme._registry.add(cls)
 
-    @property
-    def trigger(self):
-        return f"# {self.ident}: "
-
     def __call__(self, method, module_globals):
         return self.run(method, module_globals)

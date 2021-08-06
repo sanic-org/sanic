@@ -91,6 +91,15 @@ class Blueprint(BaseSanic):
         self.version = version
         self.version_prefix = version_prefix
 
+    def reset(self):
+        self._apps: Set[Sanic] = set()
+        self.exceptions: List[RouteHandler] = []
+        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.middlewares: List[MiddlewareType] = []
+        self.routes: List[Route] = []
+        self.statics: List[RouteHandler] = []
+        self.websocket_routes: List[Route] = []
+
     def __repr__(self) -> str:
         args = ", ".join(
             [
@@ -157,7 +166,8 @@ class Blueprint(BaseSanic):
         :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
         :param version: Blueprint Version
-        :param version_prefix: the prefix of the version number shown in the URL.
+        :param version_prefix: the prefix of the version number shown in the 
+            URL.
         :param strict_slashes: Enforce the API urls are requested with a
             trailing */*
         :param with_registration: whether register new blueprint instance with
@@ -194,8 +204,8 @@ class Blueprint(BaseSanic):
         if with_registration:
             if len(new_bp._future_statics) > 0 and len(self._apps) > 0:
                 raise Exception(
-                    "Static routes registered with the old blueprint instance, "
-                    "cannot be registered again."
+                    "Static routes registered with the old blueprint instance,"
+                    " cannot be registered again."
                 )
             for app in self._apps:
                 app.blueprint(new_bp)
@@ -354,15 +364,6 @@ class Blueprint(BaseSanic):
         await asyncio.gather(
             *[app.dispatch(*args, **kwargs) for app in self.apps]
         )
-
-    def reset(self):
-        self._apps: Set[Sanic] = set()
-        self.exceptions: List[RouteHandler] = []
-        self.listeners: Dict[str, List[ListenerType]] = {}
-        self.middlewares: List[MiddlewareType] = []
-        self.routes: List[Route] = []
-        self.statics: List[RouteHandler] = []
-        self.websocket_routes: List[Route] = []
 
     def event(self, event: str, timeout: Optional[Union[int, float]] = None):
         events = set()

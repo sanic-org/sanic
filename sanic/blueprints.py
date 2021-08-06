@@ -166,7 +166,7 @@ class Blueprint(BaseSanic):
         :param name: unique name of the blueprint
         :param url_prefix: URL to be prefixed before all route URLs
         :param version: Blueprint Version
-        :param version_prefix: the prefix of the version number shown in the 
+        :param version_prefix: the prefix of the version number shown in the
             URL.
         :param strict_slashes: Enforce the API urls are requested with a
             trailing */*

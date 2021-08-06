@@ -19,6 +19,9 @@ def test_bp_copy(app: Sanic):
     bp3 = bp1.copy(name="test_bp3", version=3, with_registration=True)
     bp4 = bp1.copy(name="test_bp4", version=4, with_ctx=True)
     bp5 = bp1.copy(name="test_bp5", version=5, with_registration=False)
+    assert id(bp2) != id(bp3)
+    assert id(bp3) != id(bp4)
+    assert id(bp4) != id(bp5)
     app.blueprint(bp5)
 
     _, response = app.test_client.get("/v1/page")

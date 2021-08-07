@@ -5,6 +5,7 @@ import uuid
 
 from importlib import reload
 from io import StringIO
+from unittest.mock import Mock
 
 import pytest
 
@@ -51,7 +52,7 @@ def test_log(app):
 
 def test_logging_defaults():
     # reset_logging()
-    app = Sanic("test_logging")
+    Sanic("test_logging")
 
     for fmt in [h.formatter for h in logging.getLogger("sanic.root").handlers]:
         assert (
@@ -87,7 +88,7 @@ def test_logging_pass_customer_logconfig():
         "format"
     ] = "%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s"
 
-    app = Sanic("test_logging", log_config=modified_config)
+    Sanic("test_logging", log_config=modified_config)
 
     for fmt in [h.formatter for h in logging.getLogger("sanic.root").handlers]:
         assert fmt._fmt == modified_config["formatters"]["generic"]["format"]
@@ -208,6 +209,56 @@ def test_logging_modified_root_logger_config():
     modified_config = LOGGING_CONFIG_DEFAULTS
     modified_config["loggers"]["sanic.root"]["level"] = "DEBUG"
 
-    app = Sanic("test_logging", log_config=modified_config)
+    Sanic("test_logging", log_config=modified_config)
 
     assert logging.getLogger("sanic.root").getEffectiveLevel() == logging.DEBUG
+
+
+def test_access_log_client_ip_remote_addr(monkeypatch):
+    access = Mock()
+    monkeypatch.setattr(sanic.http, "access_logger", access)
+
+    app = Sanic("test_logging")
+    app.config.PROXIES_COUNT = 2
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.remote_addr)
+
+    headers = {"X-Forwarded-For": "1.1.1.1, 2.2.2.2"}
+
+    request, response = app.test_client.get("/", headers=headers)
+
+    assert request.remote_addr == "1.1.1.1"
+    access.info.assert_called_with(
+        "",
+        extra={
+            "status": 200,
+            "byte": len(response.content),
+            "host": f"{request.remote_addr}:{request.port}",
+            "request": f"GET {request.scheme}://{request.host}/",
+        },
+    )
+
+
+def test_access_log_client_ip_reqip(monkeypatch):
+    access = Mock()
+    monkeypatch.setattr(sanic.http, "access_logger", access)
+
+    app = Sanic("test_logging")
+
+    @app.route("/")
+    async def handler(request):
+        return text(request.ip)
+
+    request, response = app.test_client.get("/")
+
+    access.info.assert_called_with(
+        "",
+        extra={
+            "status": 200,
+            "byte": len(response.content),
+            "host": f"{request.ip}:{request.port}",
+            "request": f"GET {request.scheme}://{request.host}/",
+        },
+    )

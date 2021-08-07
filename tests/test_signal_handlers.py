@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from sanic_testing.reusable import ReusableClient
 from sanic_testing.testing import HOST, PORT
 
 from sanic.compat import ctrlc_workaround_for_windows
@@ -28,9 +29,13 @@ def set_loop(app, loop):
         signal.signal = mock
     else:
         loop.add_signal_handler = mock
+    print(">>>>>>>>>>>>>>>1", id(loop))
+    print(">>>>>>>>>>>>>>>1", loop.add_signal_handler)
 
 
 def after(app, loop):
+    print(">>>>>>>>>>>>>>>2", id(loop))
+    print(">>>>>>>>>>>>>>>2", loop.add_signal_handler)
     calledq.put(mock.called)
 
 

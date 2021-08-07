@@ -4,7 +4,6 @@ import warnings
 import pytest
 
 from bs4 import BeautifulSoup
-from requests import status_codes
 
 from sanic import Sanic
 from sanic.exceptions import (
@@ -251,7 +250,7 @@ def test_custom_exception_default_message(exception_app):
     assert response.status == 418
     assert b"Tempest in a teapot" in response.body
 
-    
+
 def test_exception_in_ws_logged(caplog):
     app = Sanic(__file__)
 

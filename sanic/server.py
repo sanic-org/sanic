@@ -13,7 +13,7 @@ from typing import (
     Union,
 )
 
-from sanic.models.handler_types import ListenerType
+from sanic.touchup.meta import TouchUpMeta
 
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ from time import monotonic as current_time
 
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.config import Config
-from sanic.exceptions import RequestTimeout, ServiceUnavailable
+from sanic.exceptions import RequestTimeout, SanicException, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
@@ -102,11 +102,15 @@ class ConnInfo:
             self.client_port = addr[1]
 
 
-class HttpProtocol(asyncio.Protocol):
+class HttpProtocol(asyncio.Protocol, metaclass=TouchUpMeta):
     """
     This class provides a basic HTTP implementation of the sanic framework.
     """
 
+    __touchup__ = (
+        "send",
+        "connection_task",
+    )
     __slots__ = (
         # app
         "app",
@@ -185,7 +189,7 @@ class HttpProtocol(asyncio.Protocol):
         self._time = current_time()
         self.check_timeouts()
 
-    async def connection_task(self):
+    async def connection_task(self):  # no cov
         """
         Run a HTTP connection.
 
@@ -194,6 +198,11 @@ class HttpProtocol(asyncio.Protocol):
         """
         try:
             self._setup_connection()
+            await self.app.dispatch(
+                "http.lifecycle.begin",
+                inline=True,
+                context={"conn_info": self.conn_info},
+            )
             await self._http.http1()
         except CancelledError:
             pass
@@ -212,6 +221,13 @@ class HttpProtocol(asyncio.Protocol):
                 self.close()
             except BaseException:
                 error_logger.exception("Closing failed")
+            finally:
+                await self.app.dispatch(
+                    "http.lifecycle.complete",
+                    inline=True,
+                    context={"conn_info": self.conn_info},
+                )
+                ...
 
     async def receive_more(self):
         """
@@ -259,13 +275,18 @@ class HttpProtocol(asyncio.Protocol):
         except Exception:
             error_logger.exception("protocol.check_timeouts")
 
-    async def send(self, data):
+    async def send(self, data):  # no cov
         """
         Writes data with backpressure control.
         """
         await self._can_write.wait()
         if self.transport.is_closing():
             raise CancelledError
+        await self.app.dispatch(
+            "http.lifecycle.send",
+            inline=True,
+            context={"data": data},
+        )
         self.transport.write(data)
         self._time = current_time()
 
@@ -359,52 +380,54 @@ class AsyncioServer:
     a user who needs to manage the server lifecycle manually.
     """
 
-    __slots__ = (
-        "loop",
-        "serve_coro",
-        "_after_start",
-        "_before_stop",
-        "_after_stop",
-        "server",
-        "connections",
-    )
+    __slots__ = ("app", "connections", "loop", "serve_coro", "server", "init")
 
     def __init__(
         self,
+        app,
         loop,
         serve_coro,
         connections,
-        after_start: Optional[Iterable[ListenerType]],
-        before_stop: Optional[Iterable[ListenerType]],
-        after_stop: Optional[Iterable[ListenerType]],
     ):
         # Note, Sanic already called "before_server_start" events
         # before this helper was even created. So we don't need it here.
+        self.app = app
+        self.connections = connections
         self.loop = loop
         self.serve_coro = serve_coro
-        self._after_start = after_start
-        self._before_stop = before_stop
-        self._after_stop = after_stop
         self.server = None
-        self.connections = connections
+        self.init = False
+
+    def startup(self):
+        """
+        Trigger "before_server_start" events
+        """
+        self.init = True
+        return self.app._startup()
+
+    def before_start(self):
+        """
+        Trigger "before_server_start" events
+        """
+        return self._server_event("init", "before")
 
     def after_start(self):
         """
         Trigger "after_server_start" events
         """
-        trigger_events(self._after_start, self.loop)
+        return self._server_event("init", "after")
 
     def before_stop(self):
         """
         Trigger "before_server_stop" events
         """
-        trigger_events(self._before_stop, self.loop)
+        return self._server_event("shutdown", "before")
 
     def after_stop(self):
         """
         Trigger "after_server_stop" events
         """
-        trigger_events(self._after_stop, self.loop)
+        return self._server_event("shutdown", "after")
 
     def is_serving(self) -> bool:
         if self.server:
@@ -442,6 +465,14 @@ class AsyncioServer:
                     "of asyncio or uvloop."
                 )
 
+    def _server_event(self, concern: str, action: str):
+        if not self.init:
+            raise SanicException(
+                "Cannot dispatch server event without "
+                "first running server.startup()"
+            )
+        return self.app._server_event(concern, action, loop=self.loop)
+
     def __await__(self):
         """
         Starts the asyncio server, returns AsyncServerCoro
@@ -456,11 +487,7 @@ class AsyncioServer:
 def serve(
     host,
     port,
-    app,
-    before_start: Optional[Iterable[ListenerType]] = None,
-    after_start: Optional[Iterable[ListenerType]] = None,
-    before_stop: Optional[Iterable[ListenerType]] = None,
-    after_stop: Optional[Iterable[ListenerType]] = None,
+    app: Sanic,
     ssl: Optional[SSLContext] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
@@ -542,23 +569,20 @@ def serve(
 
     if run_async:
         return AsyncioServer(
+            app=app,
             loop=loop,
             serve_coro=server_coroutine,
             connections=connections,
-            after_start=after_start,
-            before_stop=before_stop,
-            after_stop=after_stop,
         )
 
-    trigger_events(before_start, loop)
+    loop.run_until_complete(app._startup())
+    loop.run_until_complete(app._server_event("init", "before"))
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except BaseException:
         error_logger.exception("Unable to start server")
         return
-
-    trigger_events(after_start, loop)
 
     # Ignore SIGINT when run_multiple
     if run_multiple:
@@ -571,6 +595,8 @@ def serve(
         else:
             for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
                 loop.add_signal_handler(_signal, app.stop)
+
+    loop.run_until_complete(app._server_event("init", "after"))
     pid = os.getpid()
     try:
         logger.info("Starting worker [%s]", pid)
@@ -579,7 +605,7 @@ def serve(
         logger.info("Stopping worker [%s]", pid)
 
         # Run the on_stop function if provided
-        trigger_events(before_stop, loop)
+        loop.run_until_complete(app._server_event("shutdown", "before"))
 
         # Wait for event loop to finish and all connections to drain
         http_server.close()
@@ -611,8 +637,7 @@ def serve(
 
         _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)
-
-        trigger_events(after_stop, loop)
+        loop.run_until_complete(app._server_event("shutdown", "after"))
 
         remove_unix_socket(unix)
 

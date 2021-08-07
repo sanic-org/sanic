@@ -236,7 +236,7 @@ def test_sanic_exception(exception_app):
 
 
 def test_custom_exception_default_message(exception_app):
-    class FooError(SanicException):
+    class TeaError(SanicException):
         message = "Tempest in a teapot"
         status_code = 418
 
@@ -244,7 +244,7 @@ def test_custom_exception_default_message(exception_app):
 
     @exception_app.get("/tempest")
     def tempest(_):
-        raise FooError
+        raise TeaError
 
     _, response = exception_app.test_client.get("/tempest", debug=True)
     assert response.status == 418

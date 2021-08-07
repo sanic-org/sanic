@@ -3,6 +3,7 @@ import warnings
 import pytest
 
 from bs4 import BeautifulSoup
+from requests import status_codes
 
 from sanic import Sanic
 from sanic.exceptions import (
@@ -232,3 +233,19 @@ def test_sanic_exception(exception_app):
         request, response = exception_app.test_client.get("/old_abort")
     assert response.status == 500
     assert len(w) == 1 and "deprecated" in w[0].message.args[0]
+
+
+def test_custom_exception_default_message(exception_app):
+    class FooError(SanicException):
+        message = "Tempest in a teapot"
+        status_code = 418
+
+    exception_app.router.reset()
+
+    @exception_app.get("/tempest")
+    def tempest(_):
+        raise FooError
+
+    _, response = exception_app.test_client.get("/tempest", debug=True)
+    assert response.status == 418
+    assert b"Tempest in a teapot" in response.body

@@ -4,12 +4,16 @@ from sanic.helpers import STATUS_CODES
 
 
 class SanicException(Exception):
+    message: str = ""
+
     def __init__(
         self,
         message: Optional[Union[str, bytes]] = None,
         status_code: Optional[int] = None,
         quiet: Optional[bool] = None,
     ) -> None:
+        if message is None and self.message:
+            message = self.message
 
         if message is None and status_code is not None:
             msg: bytes = STATUS_CODES.get(status_code, b"")

@@ -203,7 +203,7 @@ class Blueprint(BaseSanic):
 
         if with_registration and self._apps:
             if new_bp._future_statics:
-                raise Exception(
+                raise SanicException(
                     "Static routes registered with the old blueprint instance,"
                     " cannot be registered again."
                 )

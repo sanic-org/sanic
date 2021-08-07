@@ -68,6 +68,7 @@ async def test_dispatch_signal_triggers_multiple_handlers(app):
 
     app.signal_router.finalize()
 
+    assert len(app.signal_router.routes) == 3
     await app.dispatch("foo.bar.baz")
     assert counter == 2
 
@@ -331,7 +332,8 @@ def test_event_on_bp_not_registered():
     "event,expected",
     (
         ("foo.bar.baz", True),
-        ("server.init.before", False),
+        ("server.init.before", True),
+        ("server.init.somethingelse", False),
         ("http.request.start", False),
         ("sanic.notice.anything", True),
     ),

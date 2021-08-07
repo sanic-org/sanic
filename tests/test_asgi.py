@@ -7,7 +7,7 @@ import uvicorn
 
 from sanic import Sanic
 from sanic.asgi import MockTransport
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.websocket import WebSocketConnection
@@ -346,3 +346,33 @@ async def test_content_type(app):
 
     _, response = await app.asgi_client.get("/custom")
     assert response.headers.get("content-type") == "somethingelse"
+
+
+@pytest.mark.asyncio
+async def test_request_handle_exception(app):
+    @app.get("/error-prone")
+    def _request(request):
+        raise ServiceUnavailable(message="Service unavailable")
+
+    _, response = await app.asgi_client.get("/wrong-path")
+    assert response.status_code == 404
+
+    _, response = await app.asgi_client.get("/error-prone")
+    assert response.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_request_exception_suppressed_by_middleware(app):
+    @app.get("/error-prone")
+    def _request(request):
+        raise ServiceUnavailable(message="Service unavailable")
+
+    @app.on_request
+    def forbidden(request):
+        raise Forbidden(message="forbidden")
+
+    _, response = await app.asgi_client.get("/wrong-path")
+    assert response.status_code == 403
+
+    _, response = await app.asgi_client.get("/error-prone")
+    assert response.status_code == 403

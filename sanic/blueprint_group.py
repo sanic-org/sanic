@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Union
 
 
@@ -229,3 +230,15 @@ class BlueprintGroup(MutableSequence):
             args = list(args)[1:]
             return register_middleware_for_blueprints(fn)
         return register_middleware_for_blueprints
+
+    def on_request(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "request")
+        else:
+            return partial(self.middleware, attach_to="request")
+
+    def on_response(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "response")
+        else:
+            return partial(self.middleware, attach_to="response")

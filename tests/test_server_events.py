@@ -8,7 +8,7 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import InvalidUsage, SanicException
 
 
 AVAILABLE_LISTENERS = [
@@ -103,7 +103,11 @@ async def test_trigger_before_events_create_server(app):
     async def init_db(app, loop):
         app.db = MySanicDb()
 
-    await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
+    srv = await app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
+    await srv.startup()
+    await srv.before_start()
 
     assert hasattr(app, "db")
     assert isinstance(app.db, MySanicDb)
@@ -157,14 +161,15 @@ def test_create_server_trigger_events(app):
         serv_coro = app.create_server(return_asyncio_server=True, sock=sock)
         serv_task = asyncio.ensure_future(serv_coro, loop=loop)
         server = loop.run_until_complete(serv_task)
-        server.after_start()
+        loop.run_until_complete(server.startup())
+        loop.run_until_complete(server.after_start())
         try:
             loop.run_forever()
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             loop.stop()
         finally:
             # Run the on_stop function if provided
-            server.before_stop()
+            loop.run_until_complete(server.before_stop())
 
             # Wait for server to close
             close_task = server.close()
@@ -174,5 +179,19 @@ def test_create_server_trigger_events(app):
             signal.stopped = True
             for connection in server.connections:
                 connection.close_if_idle()
-            server.after_stop()
+            loop.run_until_complete(server.after_stop())
         assert flag1 and flag2 and flag3
+
+
+@pytest.mark.asyncio
+async def test_missing_startup_raises_exception(app):
+    @app.listener("before_server_start")
+    async def init_db(app, loop):
+        ...
+
+    srv = await app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
+
+    with pytest.raises(SanicException):
+        await srv.before_start()

@@ -37,14 +37,19 @@ def test_middleware_request_as_convenience(app):
     async def handler1(request):
         results.append(request)
 
-    @app.route("/")
+    @app.on_request()
     async def handler2(request):
+        results.append(request)
+
+    @app.route("/")
+    async def handler3(request):
         return text("OK")
 
     request, response = app.test_client.get("/")
 
     assert response.text == "OK"
     assert type(results[0]) is Request
+    assert type(results[1]) is Request
 
 
 def test_middleware_response(app):
@@ -79,7 +84,12 @@ def test_middleware_response_as_convenience(app):
         results.append(request)
 
     @app.on_response
-    async def process_response(request, response):
+    async def process_response_1(request, response):
+        results.append(request)
+        results.append(response)
+
+    @app.on_response()
+    async def process_response_2(request, response):
         results.append(request)
         results.append(response)
 
@@ -93,6 +103,8 @@ def test_middleware_response_as_convenience(app):
     assert type(results[0]) is Request
     assert type(results[1]) is Request
     assert isinstance(results[2], HTTPResponse)
+    assert type(results[3]) is Request
+    assert isinstance(results[4], HTTPResponse)
 
 
 def test_middleware_response_as_convenience_called(app):

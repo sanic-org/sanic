@@ -10,13 +10,39 @@ from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.utils import path_to_parts  # type: ignore
 
 from sanic.exceptions import InvalidSignal
+from sanic.log import error_logger, logger
 from sanic.models.handler_types import SignalHandler
 
 
-RESERVED_NAMESPACES = (
-    "server",
-    "http",
-)
+RESERVED_NAMESPACES = {
+    "server": (
+        # "server.main.start",
+        # "server.main.stop",
+        "server.init.before",
+        "server.init.after",
+        "server.shutdown.before",
+        "server.shutdown.after",
+    ),
+    "http": (
+        "http.lifecycle.begin",
+        "http.lifecycle.complete",
+        "http.lifecycle.exception",
+        "http.lifecycle.handle",
+        "http.lifecycle.read_body",
+        "http.lifecycle.read_head",
+        "http.lifecycle.request",
+        "http.lifecycle.response",
+        "http.routing.after",
+        "http.routing.before",
+        "http.lifecycle.send",
+        "http.middleware.after",
+        "http.middleware.before",
+    ),
+}
+
+
+def _blank():
+    ...
 
 
 class Signal(Route):
@@ -59,8 +85,13 @@ class SignalRouter(BaseRouter):
                 terms.append(extra)
             raise NotFound(message % tuple(terms))
 
+        # Regex routes evaluate and can extract params directly. They are set
+        # on param_basket["__params__"]
         params = param_basket["__params__"]
         if not params:
+            # If param_basket["__params__"] does not exist, we might have
+            # param_basket["__matches__"], which are indexed based matches
+            # on path segments. They should already be cast types.
             params = {
                 param.name: param_basket["__matches__"][idx]
                 for idx, param in group.params.items()
@@ -73,8 +104,18 @@ class SignalRouter(BaseRouter):
         event: str,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
-    ) -> None:
-        group, handlers, params = self.get(event, condition=condition)
+        fail_not_found: bool = True,
+        reverse: bool = False,
+    ) -> Any:
+        try:
+            group, handlers, params = self.get(event, condition=condition)
+        except NotFound as e:
+            if fail_not_found:
+                raise e
+            else:
+                if self.ctx.app.debug:
+                    error_logger.warning(str(e))
+                return None
 
         events = [signal.ctx.event for signal in group]
         for signal_event in events:
@@ -82,12 +123,19 @@ class SignalRouter(BaseRouter):
         if context:
             params.update(context)
 
+        if not reverse:
+            handlers = handlers[::-1]
         try:
             for handler in handlers:
                 if condition is None or condition == handler.__requirements__:
                     maybe_coroutine = handler(**params)
                     if isawaitable(maybe_coroutine):
-                        await maybe_coroutine
+                        retval = await maybe_coroutine
+                        if retval:
+                            return retval
+                    elif maybe_coroutine:
+                        return maybe_coroutine
+            return None
         finally:
             for signal_event in events:
                 signal_event.clear()
@@ -98,14 +146,23 @@ class SignalRouter(BaseRouter):
         *,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
-    ) -> asyncio.Task:
-        task = self.ctx.loop.create_task(
-            self._dispatch(
-                event,
-                context=context,
-                condition=condition,
-            )
+        fail_not_found: bool = True,
+        inline: bool = False,
+        reverse: bool = False,
+    ) -> Union[asyncio.Task, Any]:
+        dispatch = self._dispatch(
+            event,
+            context=context,
+            condition=condition,
+            fail_not_found=fail_not_found and inline,
+            reverse=reverse,
         )
+        logger.debug(f"Dispatching signal: {event}")
+
+        if inline:
+            return await dispatch
+
+        task = asyncio.get_running_loop().create_task(dispatch)
         await asyncio.sleep(0)
         return task
 
@@ -131,7 +188,9 @@ class SignalRouter(BaseRouter):
             append=True,
         )  # type: ignore
 
-    def finalize(self, do_compile: bool = True):
+    def finalize(self, do_compile: bool = True, do_optimize: bool = False):
+        self.add(_blank, "sanic.__signal__.__init__")
+
         try:
             self.ctx.loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -140,7 +199,7 @@ class SignalRouter(BaseRouter):
         for signal in self.routes:
             signal.ctx.event = asyncio.Event()
 
-        return super().finalize(do_compile=do_compile)
+        return super().finalize(do_compile=do_compile, do_optimize=do_optimize)
 
     def _build_event_parts(self, event: str) -> Tuple[str, str, str]:
         parts = path_to_parts(event, self.delimiter)
@@ -151,7 +210,11 @@ class SignalRouter(BaseRouter):
         ):
             raise InvalidSignal("Invalid signal event: %s" % event)
 
-        if parts[0] in RESERVED_NAMESPACES:
+        if (
+            parts[0] in RESERVED_NAMESPACES
+            and event not in RESERVED_NAMESPACES[parts[0]]
+            and not (parts[2].startswith("<") and parts[2].endswith(">"))
+        ):
             raise InvalidSignal(
                 "Cannot declare reserved signal event: %s" % event
             )

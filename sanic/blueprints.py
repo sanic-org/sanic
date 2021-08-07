@@ -201,8 +201,8 @@ class Blueprint(BaseSanic):
         for key, value in attrs_backup.items():
             setattr(self, key, value)
 
-        if with_registration:
-            if len(new_bp._future_statics) > 0 and len(self._apps) > 0:
+        if with_registration and self._apps:
+            if new_bp._future_statics:
                 raise Exception(
                     "Static routes registered with the old blueprint instance,"
                     " cannot be registered again."

@@ -360,6 +360,7 @@ async def test_request_handle_exception(app):
     _, response = await app.asgi_client.get("/error-prone")
     assert response.status_code == 503
 
+
 @pytest.mark.asyncio
 async def test_request_exception_suppressed_by_middleware(app):
     @app.get("/error-prone")

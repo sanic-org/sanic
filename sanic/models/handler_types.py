@@ -21,5 +21,5 @@ MiddlewareType = Union[RequestMiddlewareType, ResponseMiddlewareType]
 ListenerType = Callable[
     [Sanic, AbstractEventLoop], Optional[Coroutine[Any, Any, None]]
 ]
-RouteHandler = Callable[..., Coroutine[Any, Any, HTTPResponse]]
+RouteHandler = Callable[..., Coroutine[Any, Any, Optional[HTTPResponse]]]
 SignalHandler = Callable[..., Coroutine[Any, Any, None]]

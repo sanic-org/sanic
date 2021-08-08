@@ -1,10 +1,11 @@
 from enum import Enum, auto
 from functools import partial
+from sanic.models.handler_types import SignalHandler
 from typing import Any, Callable, Coroutine, List, Optional, TypeVar, Union
 
 from sanic.models.futures import FutureListener
 
-L = TypeVar("L", bound=Callable[..., Coroutine[Any, Any, None]])
+L = TypeVar("L", bound=SignalHandler)
 
 
 class ListenerEvent(str, Enum):

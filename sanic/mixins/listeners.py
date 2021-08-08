@@ -1,8 +1,10 @@
 from enum import Enum, auto
 from functools import partial
-from typing import Any, Callable, Coroutine, List, Optional, Union
+from typing import Any, Callable, Coroutine, List, Optional, TypeVar, Union
 
 from sanic.models.futures import FutureListener
+
+L = TypeVar("L", bound=Callable[..., Coroutine[Any, Any, None]])
 
 
 class ListenerEvent(str, Enum):
@@ -63,20 +65,20 @@ class ListenerMixin:
         else:
             return partial(register_listener, event=listener_or_event)
 
-    def main_process_start(self, listener):
+    def main_process_start(self, listener: L) -> L:
         return self.listener(listener, "main_process_start")
 
-    def main_process_stop(self, listener):
+    def main_process_stop(self, listener: L) -> L:
         return self.listener(listener, "main_process_stop")
 
-    def before_server_start(self, listener):
+    def before_server_start(self, listener: L) -> L:
         return self.listener(listener, "before_server_start")
 
-    def after_server_start(self, listener):
+    def after_server_start(self, listener: L) -> L:
         return self.listener(listener, "after_server_start")
 
-    def before_server_stop(self, listener):
+    def before_server_stop(self, listener: L) -> L:
         return self.listener(listener, "before_server_stop")
 
-    def after_server_stop(self, listener):
+    def after_server_stop(self, listener: L) -> L:
         return self.listener(listener, "after_server_stop")

@@ -1,4 +1,3 @@
-from traceback import format_exc
 from typing import List, Optional
 
 from sanic.errorpages import exception_response
@@ -42,7 +41,7 @@ class ErrorHandler:
 
         :return: None
         """
-        # self.handlers to be deprecated and removed in version 21.12
+        # self.handlers is deprecated and will be removed in version 22.3
         self.handlers.append((exception, handler))
 
         if route_names:
@@ -112,7 +111,6 @@ class ErrorHandler:
             if response is None:
                 response = self.default(request, exception)
         except Exception:
-            self.log(format_exc())
             try:
                 url = repr(request.url)
             except AttributeError:
@@ -127,11 +125,6 @@ class ErrorHandler:
             else:
                 return text("An error occurred while handling an error", 500)
         return response
-
-    def log(self, message, level="error"):
-        """
-        Deprecated, do not use.
-        """
 
     def default(self, request, exception):
         """
@@ -148,6 +141,11 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
+        self.log(request, exception)
+        return exception_response(request, exception, self.debug)
+
+    @staticmethod
+    def log(request, exception):
         quiet = getattr(exception, "quiet", False)
         if quiet is False:
             try:
@@ -155,12 +153,9 @@ class ErrorHandler:
             except AttributeError:
                 url = "unknown"
 
-            self.log(format_exc())
             error_logger.exception(
                 "Exception occurred while handling uri: %s", url
             )
-
-        return exception_response(request, exception, self.debug)
 
 
 class ContentRangeHandler:

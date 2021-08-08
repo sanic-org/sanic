@@ -91,15 +91,6 @@ class Blueprint(BaseSanic):
         self.version = version
         self.version_prefix = version_prefix
 
-    def reset(self):
-        self._apps: Set[Sanic] = set()
-        self.exceptions: List[RouteHandler] = []
-        self.listeners: Dict[str, List[ListenerType]] = {}
-        self.middlewares: List[MiddlewareType] = []
-        self.routes: List[Route] = []
-        self.statics: List[RouteHandler] = []
-        self.websocket_routes: List[Route] = []
-
     def __repr__(self) -> str:
         args = ", ".join(
             [
@@ -148,6 +139,15 @@ class Blueprint(BaseSanic):
     def signal(self, event: str, *args, **kwargs):
         kwargs["apply"] = False
         return super().signal(event, *args, **kwargs)
+
+    def reset(self):
+        self._apps: Set[Sanic] = set()
+        self.exceptions: List[RouteHandler] = []
+        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.middlewares: List[MiddlewareType] = []
+        self.routes: List[Route] = []
+        self.statics: List[RouteHandler] = []
+        self.websocket_routes: List[Route] = []
 
     def copy(
         self,

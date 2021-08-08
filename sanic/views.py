@@ -86,7 +86,7 @@ class HTTPMethodView:
         return handler(request, *args, **kwargs)
 
     @classmethod
-    def as_view(cls, *class_args, **class_kwargs):
+    def as_view(cls, *class_args: Any, **class_kwargs: Any) -> Any:
         """Return view function for use with the routing system, that
         dispatches request to appropriate handler method.
         """

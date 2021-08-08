@@ -1,11 +1,12 @@
 from enum import Enum, auto
 from functools import partial
-from sanic.models.handler_types import SignalHandler
-from typing import Any, Callable, Coroutine, List, Optional, TypeVar, Union
+from typing import List, Optional, Union
 
 from sanic.models.futures import FutureListener
+from sanic.models.handler_types import ListenerType
 
-L = TypeVar("L", bound=SignalHandler)
+
+Listener = Union[ListenerType, str]
 
 
 class ListenerEvent(str, Enum):
@@ -29,9 +30,7 @@ class ListenerMixin:
 
     def listener(
         self,
-        listener_or_event: Union[
-            Callable[..., Coroutine[Any, Any, None]], str
-        ],
+        listener_or_event: Listener,
         event_or_none: Optional[str] = None,
         apply: bool = True,
     ):
@@ -66,20 +65,20 @@ class ListenerMixin:
         else:
             return partial(register_listener, event=listener_or_event)
 
-    def main_process_start(self, listener: L) -> L:
+    def main_process_start(self, listener: Listener) -> ListenerType:
         return self.listener(listener, "main_process_start")
 
-    def main_process_stop(self, listener: L) -> L:
+    def main_process_stop(self, listener: Listener) -> ListenerType:
         return self.listener(listener, "main_process_stop")
 
-    def before_server_start(self, listener: L) -> L:
+    def before_server_start(self, listener: Listener) -> ListenerType:
         return self.listener(listener, "before_server_start")
 
-    def after_server_start(self, listener: L) -> L:
+    def after_server_start(self, listener: Listener) -> ListenerType:
         return self.listener(listener, "after_server_start")
 
-    def before_server_stop(self, listener: L) -> L:
+    def before_server_stop(self, listener: Listener) -> ListenerType:
         return self.listener(listener, "before_server_stop")
 
-    def after_server_stop(self, listener: L) -> L:
+    def after_server_stop(self, listener: Listener) -> ListenerType:
         return self.listener(listener, "after_server_stop")

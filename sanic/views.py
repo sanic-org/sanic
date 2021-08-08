@@ -13,6 +13,7 @@ from warnings import warn
 
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import InvalidUsage
+from sanic.models.handler_types import RouteHandler
 
 
 if TYPE_CHECKING:
@@ -86,7 +87,7 @@ class HTTPMethodView:
         return handler(request, *args, **kwargs)
 
     @classmethod
-    def as_view(cls, *class_args: Any, **class_kwargs: Any) -> Any:
+    def as_view(cls, *class_args: Any, **class_kwargs: Any) -> RouteHandler:
         """Return view function for use with the routing system, that
         dispatches request to appropriate handler method.
         """
@@ -100,7 +101,7 @@ class HTTPMethodView:
             for decorator in cls.decorators:
                 view = decorator(view)
 
-        view.view_class = cls
+        view.view_class = cls  # type: ignore
         view.__doc__ = cls.__doc__
         view.__module__ = cls.__module__
         view.__name__ = cls.__name__

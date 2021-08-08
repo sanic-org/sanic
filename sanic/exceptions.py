@@ -12,14 +12,12 @@ class SanicException(Exception):
         status_code: Optional[int] = None,
         quiet: Optional[bool] = None,
     ) -> None:
-        if message is None and self.message:
-            message = self.message
-
-        print(f"{message=}")
-        print(f"{status_code=}")
-        if message is None and status_code is not None:
-            msg: bytes = STATUS_CODES.get(status_code, b"")
-            message = msg.decode("utf8")
+        if message is None:
+            if self.message:
+                message = self.message
+            elif status_code is not None:
+                msg: bytes = STATUS_CODES.get(status_code, b"")
+                message = msg.decode("utf8")
 
         super().__init__(message)
 

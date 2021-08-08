@@ -4,9 +4,8 @@ from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from re import sub
-from sanic.models.handler_types import MiddlewareResponse
 from time import gmtime, strftime
-from typing import Iterable, List, Optional, Set, Union
+from typing import Any, Coroutine, Iterable, List, Optional, Set, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
@@ -169,7 +168,7 @@ class RouteMixin:
 
     def add_route(
         self,
-        handler: MiddlewareResponse,
+        handler: Union[Coroutine[Any, Any, HTTPResponse], HTTPMethodView],
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
         host: Optional[str] = None,
@@ -178,7 +177,7 @@ class RouteMixin:
         name: Optional[str] = None,
         stream: bool = False,
         version_prefix: str = "/v",
-    ) -> MiddlewareResponse:
+    ) -> Union[Coroutine[Any, Any, HTTPResponse], HTTPMethodView]:
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.

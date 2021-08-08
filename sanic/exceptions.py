@@ -15,6 +15,8 @@ class SanicException(Exception):
         if message is None and self.message:
             message = self.message
 
+        print(f"{message=}")
+        print(f"{status_code=}")
         if message is None and status_code is not None:
             msg: bytes = STATUS_CODES.get(status_code, b"")
             message = msg.decode("utf8")

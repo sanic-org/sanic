@@ -78,10 +78,9 @@ class Blueprint(BaseSanic):
         version_prefix: str = "/v",
     ):
         super().__init__(name=name)
-
+        self.reset()
         self.ctx = SimpleNamespace()
         self.host = host
-        self.reset()
         self.strict_slashes = strict_slashes
         self.url_prefix = (
             url_prefix[:-1]

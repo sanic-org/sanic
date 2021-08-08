@@ -6,9 +6,6 @@ from sanic.models.futures import FutureListener
 from sanic.models.handler_types import ListenerType
 
 
-Listener = Union[ListenerType, str]
-
-
 class ListenerEvent(str, Enum):
     def _generate_next_value_(name: str, *args) -> str:  # type: ignore
         return name.lower()
@@ -30,7 +27,7 @@ class ListenerMixin:
 
     def listener(
         self,
-        listener_or_event: Listener,
+        listener_or_event: Union[ListenerType, str],
         event_or_none: Optional[str] = None,
         apply: bool = True,
     ):
@@ -65,20 +62,20 @@ class ListenerMixin:
         else:
             return partial(register_listener, event=listener_or_event)
 
-    def main_process_start(self, listener: Listener) -> ListenerType:
+    def main_process_start(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "main_process_start")
 
-    def main_process_stop(self, listener: Listener) -> ListenerType:
+    def main_process_stop(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "main_process_stop")
 
-    def before_server_start(self, listener: Listener) -> ListenerType:
+    def before_server_start(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "before_server_start")
 
-    def after_server_start(self, listener: Listener) -> ListenerType:
+    def after_server_start(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "after_server_start")
 
-    def before_server_stop(self, listener: Listener) -> ListenerType:
+    def before_server_stop(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "before_server_stop")
 
-    def after_server_stop(self, listener: Listener) -> ListenerType:
+    def after_server_stop(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "after_server_stop")

@@ -5,7 +5,7 @@ from os import path
 from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
-from typing import Iterable, List, Optional, Set, Union
+from typing import Callable, Iterable, List, Optional, Set, Tuple, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
@@ -24,6 +24,11 @@ from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
 from sanic.views import CompositionView
+
+
+RouteWrapper = Callable[
+    [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
+]
 
 
 class RouteMixin:
@@ -56,7 +61,7 @@ class RouteMixin:
         unquote: bool = False,
         static: bool = False,
         version_prefix: str = "/v",
-    ):
+    ) -> RouteWrapper:
         """
         Decorate a function to be registered as a route
 
@@ -241,7 +246,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """
         Add an API URL under the **GET** *HTTP* method
 
@@ -275,7 +280,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """
         Add an API URL under the **POST** *HTTP* method
 
@@ -309,7 +314,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """
         Add an API URL under the **PUT** *HTTP* method
 
@@ -343,7 +348,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """
         Add an API URL under the **HEAD** *HTTP* method
 
@@ -385,7 +390,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """
         Add an API URL under the **OPTIONS** *HTTP* method
 
@@ -427,7 +432,7 @@ class RouteMixin:
         version: Optional[int] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """
         Add an API URL under the **PATCH** *HTTP* method
 
@@ -471,7 +476,7 @@ class RouteMixin:
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """
         Add an API URL under the **DELETE** *HTTP* method
 
@@ -849,7 +854,7 @@ class RouteMixin:
             )
         )
 
-        route, _ = self.route(
+        route, _ = self.route(  # type: ignore
             uri=uri,
             methods=["GET", "HEAD"],
             name=name,

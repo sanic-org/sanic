@@ -5,7 +5,7 @@ from os import path
 from pathlib import PurePath
 from re import sub
 from time import gmtime, strftime
-from typing import Iterable, List, Optional, Set, Union
+from typing import Any, Callable, Coroutine, Iterable, List, Optional, Set, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
@@ -22,7 +22,7 @@ from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.response import HTTPResponse, file, file_stream
-from sanic.views import CompositionView
+from sanic.views import CompositionView, HTTPMethodView
 
 
 class RouteMixin:
@@ -168,7 +168,7 @@ class RouteMixin:
 
     def add_route(
         self,
-        handler,
+        handler: Union[Coroutine[Any, Any, HTTPResponse], HTTPMethodView],
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
         host: Optional[str] = None,
@@ -177,7 +177,7 @@ class RouteMixin:
         name: Optional[str] = None,
         stream: bool = False,
         version_prefix: str = "/v",
-    ):
+    ) -> Union[Coroutine[Any, Any, HTTPResponse], HTTPMethodView]:
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.

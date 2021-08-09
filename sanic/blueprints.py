@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from collections import defaultdict
+from copy import deepcopy
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
 
@@ -12,6 +13,7 @@ from sanic_routing.route import Route  # type: ignore
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.exceptions import SanicException
+from sanic.helpers import Default, _default
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import (
     ListenerType,
@@ -40,7 +42,7 @@ class Blueprint(BaseSanic):
     :param host: IP Address of FQDN for the sanic server to use.
     :param version: Blueprint Version
     :param strict_slashes: Enforce the API urls are requested with a
-        training */*
+        trailing */*
     """
 
     __fake_slots__ = (
@@ -76,15 +78,9 @@ class Blueprint(BaseSanic):
         version_prefix: str = "/v",
     ):
         super().__init__(name=name)
-
-        self._apps: Set[Sanic] = set()
+        self.reset()
         self.ctx = SimpleNamespace()
-        self.exceptions: List[RouteHandler] = []
         self.host = host
-        self.listeners: Dict[str, List[ListenerType]] = {}
-        self.middlewares: List[MiddlewareType] = []
-        self.routes: List[Route] = []
-        self.statics: List[RouteHandler] = []
         self.strict_slashes = strict_slashes
         self.url_prefix = (
             url_prefix[:-1]
@@ -93,7 +89,6 @@ class Blueprint(BaseSanic):
         )
         self.version = version
         self.version_prefix = version_prefix
-        self.websocket_routes: List[Route] = []
 
     def __repr__(self) -> str:
         args = ", ".join(
@@ -143,6 +138,81 @@ class Blueprint(BaseSanic):
     def signal(self, event: str, *args, **kwargs):
         kwargs["apply"] = False
         return super().signal(event, *args, **kwargs)
+
+    def reset(self):
+        self._apps: Set[Sanic] = set()
+        self.exceptions: List[RouteHandler] = []
+        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.middlewares: List[MiddlewareType] = []
+        self.routes: List[Route] = []
+        self.statics: List[RouteHandler] = []
+        self.websocket_routes: List[Route] = []
+
+    def copy(
+        self,
+        name: str,
+        url_prefix: Optional[Union[str, Default]] = _default,
+        version: Optional[Union[int, str, float, Default]] = _default,
+        version_prefix: Union[str, Default] = _default,
+        strict_slashes: Optional[Union[bool, Default]] = _default,
+        with_registration: bool = True,
+        with_ctx: bool = False,
+    ):
+        """
+        Copy a blueprint instance with some optional parameters to
+        override the values of attributes in the old instance.
+
+        :param name: unique name of the blueprint
+        :param url_prefix: URL to be prefixed before all route URLs
+        :param version: Blueprint Version
+        :param version_prefix: the prefix of the version number shown in the
+            URL.
+        :param strict_slashes: Enforce the API urls are requested with a
+            trailing */*
+        :param with_registration: whether register new blueprint instance with
+            sanic apps that were registered with the old instance or not.
+        :param with_ctx: whether ``ctx`` will be copied or not.
+        """
+
+        attrs_backup = {
+            "_apps": self._apps,
+            "routes": self.routes,
+            "websocket_routes": self.websocket_routes,
+            "middlewares": self.middlewares,
+            "exceptions": self.exceptions,
+            "listeners": self.listeners,
+            "statics": self.statics,
+        }
+
+        self.reset()
+        new_bp = deepcopy(self)
+        new_bp.name = name
+
+        if not isinstance(url_prefix, Default):
+            new_bp.url_prefix = url_prefix
+        if not isinstance(version, Default):
+            new_bp.version = version
+        if not isinstance(strict_slashes, Default):
+            new_bp.strict_slashes = strict_slashes
+        if not isinstance(version_prefix, Default):
+            new_bp.version_prefix = version_prefix
+
+        for key, value in attrs_backup.items():
+            setattr(self, key, value)
+
+        if with_registration and self._apps:
+            if new_bp._future_statics:
+                raise SanicException(
+                    "Static routes registered with the old blueprint instance,"
+                    " cannot be registered again."
+                )
+            for app in self._apps:
+                app.blueprint(new_bp)
+
+        if not with_ctx:
+            new_bp.ctx = SimpleNamespace()
+
+        return new_bp
 
     @staticmethod
     def group(

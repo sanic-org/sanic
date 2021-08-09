@@ -171,7 +171,7 @@ class Blueprint(BaseSanic):
             trailing */*
         :param with_registration: whether register new blueprint instance with
             sanic apps that were registered with the old instance or not.
-        :param with_ctx: whether `ctx` will be copied or not.
+        :param with_ctx: whether ``ctx`` will be copied or not.
         """
 
         attrs_backup = {

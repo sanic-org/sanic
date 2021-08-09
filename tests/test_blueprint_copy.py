@@ -42,6 +42,15 @@ def test_bp_copy(app: Sanic):
 
     app.blueprint(bp5)
 
+    bp6 = bp1.copy(
+        name="test_bp6",
+        version=6,
+        with_registration=True,
+        version_prefix="/version",
+    )
+    assert bp6._apps
+    assert bp6.version_prefix == "/version"
+
     _, response = app.test_client.get("/v1/page")
     assert "Hello world!" in response.text
 
@@ -56,15 +65,6 @@ def test_bp_copy(app: Sanic):
 
     _, response = app.test_client.get("/v5/page")
     assert "Hello world!" in response.text
-
-    bp6 = bp1.copy(
-        name="test_bp6",
-        version=6,
-        with_registration=True,
-        version_prefix="/version",
-    )
-    assert bp6._apps
-    assert bp6.version_prefix == "/version"
 
     _, response = app.test_client.get("/version6/page")
     assert "Hello world!" in response.text

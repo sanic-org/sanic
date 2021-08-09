@@ -17,6 +17,11 @@ def test_bp_copy(app: Sanic):
     assert id(bp1) != id(bp2)
     assert bp1._apps == bp2._apps == set()
     assert not hasattr(bp2.ctx, "test")
+    assert len(bp2._future_exceptions) == len(bp1._future_exceptions)
+    assert len(bp2._future_listeners) == len(bp1._future_listeners)
+    assert len(bp2._future_middleware) == len(bp1._future_middleware)
+    assert len(bp2._future_routes) == len(bp1._future_routes)
+    assert len(bp2._future_signals) == len(bp1._future_signals)
 
     app.blueprint(bp1)
     app.blueprint(bp2)

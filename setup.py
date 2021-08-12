@@ -117,9 +117,9 @@ tests_require = [
 docs_require = [
     "sphinx>=2.1.2",
     "sphinx_rtd_theme>=0.4.3",
-    "recommonmark>=0.5.0",
     "docutils",
     "pygments",
+    "m2r2",
 ]
 
 dev_require = tests_require + [

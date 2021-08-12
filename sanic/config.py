@@ -62,6 +62,7 @@ class Config(dict):
     REQUEST_MAX_SIZE: int
     REQUEST_TIMEOUT: int
     RESPONSE_TIMEOUT: int
+    SERVER_NAME: str
     WEBSOCKET_MAX_QUEUE: int
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int

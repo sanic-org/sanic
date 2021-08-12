@@ -26,7 +26,7 @@ import sanic
 
 # -- General configuration ------------------------------------------------
 
-extensions = ["sphinx.ext.autodoc", "recommonmark"]
+extensions = ["sphinx.ext.autodoc", "m2r2"]
 
 templates_path = ["_templates"]
 

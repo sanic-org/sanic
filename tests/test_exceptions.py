@@ -235,6 +235,22 @@ def test_sanic_exception(exception_app):
     assert len(w) == 1 and "deprecated" in w[0].message.args[0]
 
 
+def test_custom_exception_default_message(exception_app):
+    class TeaError(SanicException):
+        message = "Tempest in a teapot"
+        status_code = 418
+
+    exception_app.router.reset()
+
+    @exception_app.get("/tempest")
+    def tempest(_):
+        raise TeaError
+
+    _, response = exception_app.test_client.get("/tempest", debug=True)
+    assert response.status == 418
+    assert b"Tempest in a teapot" in response.body
+
+
 def test_exception_in_ws_logged(caplog):
     app = Sanic(__file__)
 

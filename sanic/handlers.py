@@ -130,6 +130,17 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
+        self.log(request, exception)
+        return exception_response(
+            request,
+            exception,
+            debug=self.debug,
+            base=self.base,
+            fallback=self.fallback,
+        )
+
+    @staticmethod
+    def log(request, exception):
         quiet = getattr(exception, "quiet", False)
         if quiet is False:
             try:
@@ -140,14 +151,6 @@ class ErrorHandler:
             error_logger.exception(
                 "Exception occurred while handling uri: %s", url
             )
-
-        return exception_response(
-            request,
-            exception,
-            debug=self.debug,
-            base=self.base,
-            fallback=self.fallback,
-        )
 
 
 class ContentRangeHandler:

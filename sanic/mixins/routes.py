@@ -7,7 +7,7 @@ from pathlib import PurePath
 from re import sub
 from textwrap import dedent
 from time import gmtime, strftime
-from typing import Any, Iterable, List, Optional, Set, Union
+from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
@@ -24,8 +24,14 @@ from sanic.exceptions import (
 from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
+from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
 from sanic.views import CompositionView
+
+
+RouteWrapper = Callable[
+    [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
+]
 
 
 class RouteMixin:
@@ -59,7 +65,7 @@ class RouteMixin:
         static: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Decorate a function to be registered as a route
 
@@ -177,7 +183,7 @@ class RouteMixin:
 
     def add_route(
         self,
-        handler,
+        handler: RouteHandler,
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
         host: Optional[str] = None,
@@ -187,7 +193,7 @@ class RouteMixin:
         stream: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteHandler:
         """A helper method to register class instance or
         functions as a handler to the application url
         routes.
@@ -210,7 +216,8 @@ class RouteMixin:
             methods = set()
 
             for method in HTTP_METHODS:
-                _handler = getattr(handler.view_class, method.lower(), None)
+                view_class = getattr(handler, "view_class")
+                _handler = getattr(view_class, method.lower(), None)
                 if _handler:
                     methods.add(method)
                     if hasattr(_handler, "is_stream"):
@@ -251,7 +258,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Add an API URL under the **GET** *HTTP* method
 
@@ -287,7 +294,7 @@ class RouteMixin:
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Add an API URL under the **POST** *HTTP* method
 
@@ -323,7 +330,7 @@ class RouteMixin:
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Add an API URL under the **PUT** *HTTP* method
 
@@ -359,7 +366,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Add an API URL under the **HEAD** *HTTP* method
 
@@ -403,7 +410,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Add an API URL under the **OPTIONS** *HTTP* method
 
@@ -447,7 +454,7 @@ class RouteMixin:
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Add an API URL under the **PATCH** *HTTP* method
 
@@ -493,7 +500,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-    ):
+    ) -> RouteWrapper:
         """
         Add an API URL under the **DELETE** *HTTP* method
 
@@ -876,7 +883,7 @@ class RouteMixin:
             )
         )
 
-        route, _ = self.route(
+        route, _ = self.route(  # type: ignore
             uri=uri,
             methods=["GET", "HEAD"],
             name=name,

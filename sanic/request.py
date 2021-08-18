@@ -96,6 +96,7 @@ class Request:
         "head",
         "headers",
         "method",
+        "parsed_accept",
         "parsed_args",
         "parsed_not_grouped_args",
         "parsed_files",
@@ -138,6 +139,7 @@ class Request:
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
+        self.parsed_accept: Optional[List[Accept]] = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -300,8 +302,10 @@ class Request:
 
     @property
     def accept(self) -> List[Accept]:
-        accept_header = self.headers.getone("accept", "")
-        return parse_accept(accept_header)
+        if self.parsed_accept is None:
+            accept_header = self.headers.getone("accept", "")
+            self.parsed_accept = parse_accept(accept_header)
+        return self.parsed_accept
 
     @property
     def token(self):
@@ -503,6 +507,10 @@ class Request:
         :return: matched info after resolving route
         """
         return self._match_info
+
+    @match_info.setter
+    def match_info(self, value):
+        self._match_info = value
 
     # Transport properties (obtained from local interface only)
 

@@ -34,10 +34,10 @@ _host_re = re.compile(
 
 
 def parse_arg_as_accept(f):
-    def func(self, other):
+    def func(self, other, *args, **kwargs):
         if not isinstance(other, Accept):
             other = Accept.parse(other)
-        return f(self, other)
+        return f(self, other, *args, **kwargs)
 
     return func
 
@@ -54,8 +54,7 @@ class MediaType(str):
         if self.is_wildcard:
             return True
 
-        other_value = other.value if isinstance(other, MediaType) else other
-        if self.value == other_value:
+        if self.match(other):
             return True
 
         other_is_wildcard = (
@@ -63,7 +62,12 @@ class MediaType(str):
             if isinstance(other, MediaType)
             else self.check_if_wildcard(other)
         )
-        return self.is_wildcard or other_is_wildcard
+
+        return other_is_wildcard
+
+    def match(self, other):
+        other_value = other.value if isinstance(other, MediaType) else other
+        return self.value == other_value
 
     @staticmethod
     def check_if_wildcard(value):
@@ -125,8 +129,33 @@ class Accept(str):
         return self._compare(other, lambda s, o: s != o)
 
     @parse_arg_as_accept
-    def match(self, other) -> bool:
-        return self.type_ == other.type_ and self.subtype == other.subtype
+    def match(
+        self,
+        other,
+        *,
+        allow_type_wildcard: bool = True,
+        allow_subtype_wildcard: bool = True,
+    ) -> bool:
+        type_match = (
+            self.type_ == other.type_
+            if allow_type_wildcard
+            else (
+                self.type_.match(other.type_)
+                and not self.type_.is_wildcard
+                and not other.type_.is_wildcard
+            )
+        )
+        subtype_match = (
+            self.subtype == other.subtype
+            if allow_subtype_wildcard
+            else (
+                self.subtype.match(other.subtype)
+                and not self.subtype.is_wildcard
+                and not other.subtype.is_wildcard
+            )
+        )
+
+        return type_match and subtype_match
 
     @classmethod
     def parse(cls, raw: str) -> Accept:

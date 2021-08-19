@@ -110,7 +110,7 @@ tests_require = [
     "mypy>=0.901",
     "docutils",
     "pygments",
-    "uvicorn",
+    "uvicorn<0.15.0",
     types_ujson,
 ]
 

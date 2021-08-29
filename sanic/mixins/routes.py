@@ -592,7 +592,7 @@ class RouteMixin:
         strict_slashes=None,
         content_type=None,
         apply=True,
-        src: str = "file",
+        src: Optional[str] = None,
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -832,12 +832,14 @@ class RouteMixin:
             raise ValueError("Invalid file path string.")
         else:
             file_or_directory = static.file_or_directory
-
-        uri = static.uri
-        name = static.name
+        
+        uri = static.uri 
+        name = static.name        
         # If we're not trying to match a file directly,
-        # serve from the folder
-        if static.src == "dir" and not path.isfile(file_or_directory):
+        # serve from the folder        
+        if not static.src and not path.isfile(file_or_directory):
+            uri += "/<__file_uri__:path>"
+        elif static.src == "dir": 
             uri += "/<__file_uri__:path>"
         elif static.src != "file":
             raise ValueError("The location of the static resource should be set to 'file' or 'dir'")

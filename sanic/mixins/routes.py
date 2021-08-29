@@ -592,6 +592,7 @@ class RouteMixin:
         strict_slashes=None,
         content_type=None,
         apply=True,
+        src: str = "file",
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -836,8 +837,10 @@ class RouteMixin:
         name = static.name
         # If we're not trying to match a file directly,
         # serve from the folder
-        if not path.isfile(file_or_directory):
+        if static.src == "dir" and not path.isfile(file_or_directory):
             uri += "/<__file_uri__:path>"
+        elif static.src != "file":
+            raise ValueError("The location of the static resource should be set to 'file' or 'dir'")
 
         # special prefix for static files
         # if not static.name.startswith("_static_"):

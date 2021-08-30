@@ -896,12 +896,15 @@ class RouteMixin:
 
     def _determine_error_format(self, handler) -> str:
         if not isinstance(handler, CompositionView):
-            src = dedent(getsource(handler))
-            tree = parse(src)
-            http_response_types = self._get_response_types(tree)
+            try:
+                src = dedent(getsource(handler))
+                tree = parse(src)
+                http_response_types = self._get_response_types(tree)
 
-            if len(http_response_types) == 1:
-                return next(iter(http_response_types))
+                if len(http_response_types) == 1:
+                    return next(iter(http_response_types))
+            except OSError:
+                ...
 
         return "auto"
 

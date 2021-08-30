@@ -837,9 +837,10 @@ class RouteMixin:
         name = static.name        
         # If we're not trying to match a file directly,
         # serve from the folder        
-        if not static.src and not path.isfile(file_or_directory):
-            uri += "/<__file_uri__:path>"
-        elif static.src == "dir": 
+        if not static.src:
+            if not path.isfile(file_or_directory):
+                uri += "/<__file_uri__:path>"
+        elif static.src == "dir":
             uri += "/<__file_uri__:path>"
         elif static.src != "file":
             raise ValueError("The location of the static resource should be set to 'file' or 'dir'")

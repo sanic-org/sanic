@@ -16,7 +16,6 @@ request type.
 import sys
 import typing as t
 
-from copy import copy, deepcopy
 from functools import partial
 from traceback import extract_tb
 
@@ -383,7 +382,7 @@ def exception_response(
 
     if not renderer:
         # Make sure we have something set
-        renderer = deepcopy(base)
+        renderer = base
         render_format = fallback
 
         if request:

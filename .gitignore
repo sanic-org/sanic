@@ -21,5 +21,4 @@ dist/*
 pip-wheel-metadata/
 .pytest_cache/*
 .venv/*
-.test-sanic/*
 .vscode/*

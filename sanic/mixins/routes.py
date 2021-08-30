@@ -592,7 +592,7 @@ class RouteMixin:
         strict_slashes=None,
         content_type=None,
         apply=True,
-        src: Optional[str] = None,
+        src=None,
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -642,6 +642,7 @@ class RouteMixin:
             host,
             strict_slashes,
             content_type,
+            src,
         )
         self._future_statics.add(static)
 

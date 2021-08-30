@@ -16,6 +16,7 @@ request type.
 import sys
 import typing as t
 
+from copy import copy, deepcopy
 from functools import partial
 from traceback import extract_tb
 
@@ -382,7 +383,7 @@ def exception_response(
 
     if not renderer:
         # Make sure we have something set
-        renderer = base
+        renderer = deepcopy(base)
         render_format = fallback
 
         if request:
@@ -418,10 +419,7 @@ def exception_response(
             # Third, if there is an Accept header, make sure
             # our choice is okay
             acceptable = request.accept
-            print(
-                ">>>> ", acceptable, content_type, content_type in acceptable
-            )
-            if acceptable and content_type not in acceptable:
+            if acceptable and content_type and content_type not in acceptable:
                 for accept in acceptable:
                     mtype = f"{accept.type_}/{accept.subtype}"
                     if mtype in RENDERERS_BY_CONTENT_TYPE:

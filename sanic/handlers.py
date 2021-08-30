@@ -24,10 +24,9 @@ class ErrorHandler:
 
     """
 
-    handlers: List[RouteHandler] = []
-    cached_handlers: Dict[Type[BaseException], RouteHandler] = {}
-
     def __init__(self, fallback: str, base: Type[BaseRenderer] = HTMLRenderer):
+        self.handlers: List[RouteHandler] = []
+        self.cached_handlers: Dict[Type[BaseException], RouteHandler] = {}
         self.debug = False
         self.fallback = fallback
         self.base = base

@@ -35,7 +35,7 @@ _host_re = re.compile(
 
 def parse_arg_as_accept(f):
     def func(self, other, *args, **kwargs):
-        if not isinstance(other, Accept):
+        if not isinstance(other, Accept) and other:
             other = Accept.parse(other)
         return f(self, other, *args, **kwargs)
 

@@ -109,6 +109,7 @@ def sanic_router(app):
     # noinspection PyProtectedMember
     def _setup(route_details: tuple) -> Tuple[Router, tuple]:
         router = Router()
+        router.ctx.app = app
         added_router = []
         for method, route in route_details:
             try:

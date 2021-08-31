@@ -116,7 +116,9 @@ def test_log_connection_lost(app, debug, monkeypatch):
     stream = StringIO()
     error = logging.getLogger("sanic.error")
     error.addHandler(logging.StreamHandler(stream))
-    monkeypatch.setattr(sanic.server, "error_logger", error)
+    monkeypatch.setattr(
+        sanic.server.protocols.http_protocol, "error_logger", error
+    )
 
     @app.route("/conn_lost")
     async def conn_lost(request):

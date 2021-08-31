@@ -220,7 +220,8 @@ class SanicProtocol(asyncio.Protocol):
 
 class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
     """
-    This class provides implements the HTTP 1.1 protocol on top of our Sanic Server transport
+    This class provides implements the HTTP 1.1 protocol on top of our
+    Sanic Server transport
     """
 
     __touchup__ = (
@@ -261,7 +262,13 @@ class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
         unix=None,
         **kwargs,
     ):
-        super().__init__(loop=loop, app=app, signal=signal, connections=connections, unix=unix)
+        super().__init__(
+            loop=loop,
+            app=app,
+            signal=signal,
+            connections=connections,
+            unix=unix
+        )
         self.url = None
         self.request: Optional[Request] = None
         self.access_log = self.app.config.ACCESS_LOG

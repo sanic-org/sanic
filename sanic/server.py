@@ -229,7 +229,6 @@ class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
         "connection_task",
     )
     __slots__ = (
-
         # request params
         "request",
         # request config
@@ -267,7 +266,7 @@ class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
             app=app,
             signal=signal,
             connections=connections,
-            unix=unix
+            unix=unix,
         )
         self.url = None
         self.request: Optional[Request] = None

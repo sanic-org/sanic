@@ -1,3 +1,110 @@
+Version 21.6.1
+--------------
+
+Bugfixes
+********
+
+  * `#2178 <https://github.com/sanic-org/sanic/pull/2178>`_
+    Update sanic-routing to allow for better splitting of complex URI templates
+  * `#2183 <https://github.com/sanic-org/sanic/pull/2183>`_
+    Proper handling of chunked request bodies to resolve phantom 503 in logs
+  * `#2181 <https://github.com/sanic-org/sanic/pull/2181>`_
+    Resolve regression in exception logging
+  * `#2201 <https://github.com/sanic-org/sanic/pull/2201>`_
+    Cleanup request info in pipelined requests
+
+Version 21.6.0
+--------------
+
+Features
+********
+
+  * `#2094 <https://github.com/sanic-org/sanic/pull/2094>`_
+    Add ``response.eof()`` method for closing a stream in a handler
+  * `#2097 <https://github.com/sanic-org/sanic/pull/2097>`_
+    Allow case-insensitive HTTP Upgrade header
+  * `#2104 <https://github.com/sanic-org/sanic/pull/2104>`_
+    Explicit usage of CIMultiDict getters
+  * `#2109 <https://github.com/sanic-org/sanic/pull/2109>`_
+    Consistent use of error loggers
+  * `#2114 <https://github.com/sanic-org/sanic/pull/2114>`_
+    New ``client_ip`` access of connection info instance
+  * `#2119 <https://github.com/sanic-org/sanic/pull/2119>`_
+    Alternatate classes on instantiation for ``Config`` and ``Sanic.ctx``
+  * `#2133 <https://github.com/sanic-org/sanic/pull/2133>`_
+    Implement new version of AST router
+
+      * Proper differentiation between ``alpha`` and ``string`` param types
+      * Adds a ``slug`` param type, example: ``<foo:slug>``
+      * Deprecates ``<foo:string>`` in favor of ``<foo:str>``
+      * Deprecates ``<foo:number>`` in favor of ``<foo:float>``
+      * Adds a ``route.uri`` accessor
+  * `#2136 <https://github.com/sanic-org/sanic/pull/2136>`_
+    CLI improvements with new optional params
+  * `#2137 <https://github.com/sanic-org/sanic/pull/2137>`_
+    Add ``version_prefix`` to URL builders
+  * `#2140 <https://github.com/sanic-org/sanic/pull/2140>`_
+    Event autoregistration with ``EVENT_AUTOREGISTER``
+  * `#2146 <https://github.com/sanic-org/sanic/pull/2146>`_, `#2147 <https://github.com/sanic-org/sanic/pull/2147>`_
+    Require stricter names on  ``Sanic()`` and ``Blueprint()``
+  * `#2150 <https://github.com/sanic-org/sanic/pull/2150>`_
+    Infinitely reusable and nestable ``Blueprint`` and ``BlueprintGroup``
+  * `#2154 <https://github.com/sanic-org/sanic/pull/2154>`_
+    Upgrade ``websockets`` dependency to min version
+  * `#2155 <https://github.com/sanic-org/sanic/pull/2155>`_
+    Allow for maximum header sizes to be increased: ``REQUEST_MAX_HEADER_SIZE``
+  * `#2157 <https://github.com/sanic-org/sanic/pull/2157>`_
+    Allow app factory pattern in CLI
+  * `#2165 <https://github.com/sanic-org/sanic/pull/2165>`_
+    Change HTTP methods to enums
+  * `#2167 <https://github.com/sanic-org/sanic/pull/2167>`_
+    Allow auto-reloading on additional directories
+  * `#2168 <https://github.com/sanic-org/sanic/pull/2168>`_
+    Add simple HTTP server to CLI
+  * `#2170 <https://github.com/sanic-org/sanic/pull/2170>`_
+    Additional methods for attaching ``HTTPMethodView``
+
+Bugfixes
+********
+
+  * `#2091 <https://github.com/sanic-org/sanic/pull/2091>`_
+    Fix ``UserWarning`` in ASGI mode for missing ``__slots__``
+  * `#2099 <https://github.com/sanic-org/sanic/pull/2099>`_
+    Fix static request handler logging exception on 404
+  * `#2110 <https://github.com/sanic-org/sanic/pull/2110>`_
+    Fix request.args.pop removes parameters inconsistently
+  * `#2107 <https://github.com/sanic-org/sanic/pull/2107>`_
+    Fix type hinting for load_env
+  * `#2127 <https://github.com/sanic-org/sanic/pull/2127>`_
+    Make sure ASGI ws subprotocols is a list
+  * `#2128 <https://github.com/sanic-org/sanic/pull/2128>`_
+    Fix issue where Blueprint exception handlers do not consistently route to proper handler
+
+
+Deprecations and Removals
+*************************
+
+  * `#2156 <https://github.com/sanic-org/sanic/pull/2156>`_
+    Remove config value ``REQUEST_BUFFER_QUEUE_SIZE``
+  * `#2170 <https://github.com/sanic-org/sanic/pull/2170>`_
+    ``CompositionView`` deprecated and marked for removal in 21.12
+  * `#2172 <https://github.com/sanic-org/sanic/pull/2170>`_
+    Deprecate StreamingHTTPResponse
+
+Developer infrastructure
+************************
+
+  * `#2149 <https://github.com/sanic-org/sanic/pull/2149>`_
+    Remove Travis CI in favor of GitHub Actions
+
+Improved Documentation
+**********************
+
+  * `#2164 <https://github.com/sanic-org/sanic/pull/2164>`_
+    Fix typo in documentation
+  * `#2100 <https://github.com/sanic-org/sanic/pull/2100>`_
+    Remove documentation for non-existent arguments
+
 Version 21.3.2
 --------------
 

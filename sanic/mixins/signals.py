@@ -23,7 +23,7 @@ class SignalMixin:
         *,
         apply: bool = True,
         condition: Dict[str, Any] = None,
-    ) -> Callable[[SignalHandler], FutureSignal]:
+    ) -> Callable[[SignalHandler], SignalHandler]:
         """
         For creating a signal handler, used similar to a route handler:
 
@@ -54,7 +54,7 @@ class SignalMixin:
             if apply:
                 self._apply_signal(future_signal)
 
-            return future_signal
+            return handler
 
         return decorator
 

@@ -26,7 +26,15 @@ def capture(command):
     return out, err, proc.returncode
 
 
-@pytest.mark.parametrize("appname", ("fake.server.app", "fake.server:app"))
+@pytest.mark.parametrize(
+    "appname",
+    (
+        "fake.server.app",
+        "fake.server:app",
+        "fake.server:create_app()",
+        "fake.server.create_app()",
+    ),
+)
 def test_server_run(appname):
     command = ["sanic", appname]
     out, err, exitcode = capture(command)
@@ -81,7 +89,7 @@ def test_debug(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[9]
+    app_info = lines[26]
     info = json.loads(app_info)
 
     assert (b"\n".join(lines[:6])).decode("utf-8") == BASE_LOGO
@@ -95,7 +103,7 @@ def test_auto_reload(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[9]
+    app_info = lines[26]
     info = json.loads(app_info)
 
     assert info["debug"] is False
@@ -110,7 +118,7 @@ def test_access_logs(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[9]
+    app_info = lines[26]
     info = json.loads(app_info)
 
     assert info["access_log"] is expected

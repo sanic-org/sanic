@@ -461,6 +461,22 @@ def test_nested_dir(app, static_file_directory):
     assert response.text == "foo\n"
 
 
+def test_handle_is_a_directory_error(app, static_file_directory):
+    error_text = "Is a directory. Access denied"
+    app.static("/static", static_file_directory)
+
+    @app.exception(Exception)
+    async def handleStaticDirError(request, exception):
+        if isinstance(exception, IsADirectoryError):
+            return text(error_text, status=403)
+        raise exception
+
+    request, response = app.test_client.get("/static/")
+
+    assert response.status == 403
+    assert response.text == error_text
+
+
 def test_stack_trace_on_not_found(app, static_file_directory, caplog):
     app.static("/static", static_file_directory)
 
@@ -471,7 +487,7 @@ def test_stack_trace_on_not_found(app, static_file_directory, caplog):
 
     assert response.status == 404
     assert counter[logging.INFO] == 5
-    assert counter[logging.ERROR] == 1
+    assert counter[logging.ERROR] == 0
 
 
 def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):

@@ -1,18 +1,19 @@
 from enum import Enum, auto
 from functools import partial
-from typing import Any, Callable, Coroutine, List, Optional, Union
+from typing import List, Optional, Union
 
 from sanic.models.futures import FutureListener
+from sanic.models.handler_types import ListenerType
 
 
 class ListenerEvent(str, Enum):
     def _generate_next_value_(name: str, *args) -> str:  # type: ignore
         return name.lower()
 
-    BEFORE_SERVER_START = auto()
-    AFTER_SERVER_START = auto()
-    BEFORE_SERVER_STOP = auto()
-    AFTER_SERVER_STOP = auto()
+    BEFORE_SERVER_START = "server.init.before"
+    AFTER_SERVER_START = "server.init.after"
+    BEFORE_SERVER_STOP = "server.shutdown.before"
+    AFTER_SERVER_STOP = "server.shutdown.after"
     MAIN_PROCESS_START = auto()
     MAIN_PROCESS_STOP = auto()
 
@@ -26,16 +27,14 @@ class ListenerMixin:
 
     def listener(
         self,
-        listener_or_event: Union[
-            Callable[..., Coroutine[Any, Any, None]], str
-        ],
+        listener_or_event: Union[ListenerType, str],
         event_or_none: Optional[str] = None,
         apply: bool = True,
     ):
         """
         Create a listener from a decorated function.
 
-        To be used as a deocrator:
+        To be used as a decorator:
 
         .. code-block:: python
 
@@ -63,20 +62,20 @@ class ListenerMixin:
         else:
             return partial(register_listener, event=listener_or_event)
 
-    def main_process_start(self, listener):
+    def main_process_start(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "main_process_start")
 
-    def main_process_stop(self, listener):
+    def main_process_stop(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "main_process_stop")
 
-    def before_server_start(self, listener):
+    def before_server_start(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "before_server_start")
 
-    def after_server_start(self, listener):
+    def after_server_start(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "after_server_start")
 
-    def before_server_stop(self, listener):
+    def before_server_stop(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "before_server_stop")
 
-    def after_server_stop(self, listener):
+    def after_server_stop(self, listener: ListenerType) -> ListenerType:
         return self.listener(listener, "after_server_stop")

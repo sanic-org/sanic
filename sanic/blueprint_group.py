@@ -1,7 +1,8 @@
-from collections.abc import MutableSequence
-from typing import TYPE_CHECKING, List, Optional, Union
+from __future__ import annotations
 
-import sanic
+from collections.abc import MutableSequence
+from functools import partial
+from typing import TYPE_CHECKING, List, Optional, Union
 
 
 if TYPE_CHECKING:
@@ -97,7 +98,7 @@ class BlueprintGroup(MutableSequence):
         return self._url_prefix
 
     @property
-    def blueprints(self) -> List["sanic.Blueprint"]:
+    def blueprints(self) -> List[Blueprint]:
         """
         Retrieve a list of all the available blueprints under this group.
 
@@ -187,37 +188,16 @@ class BlueprintGroup(MutableSequence):
         """
         return len(self._blueprints)
 
-    def _sanitize_blueprint(self, bp: "sanic.Blueprint") -> "sanic.Blueprint":
-        """
-        Sanitize the Blueprint Entity to override the Version and strict slash
-        behaviors as required.
-
-        :param bp: Sanic Blueprint entity Object
-        :return: Modified Blueprint
-        """
-        if self._url_prefix:
-            merged_prefix = "/".join(
-                u.strip("/") for u in [self._url_prefix, bp.url_prefix or ""]
-            ).rstrip("/")
-            bp.url_prefix = f"/{merged_prefix}"
-        for _attr in ["version", "strict_slashes"]:
-            if getattr(bp, _attr) is None:
-                setattr(bp, _attr, getattr(self, _attr))
-        if bp.version_prefix == "/v":
-            bp.version_prefix = self._version_prefix
-
-        return bp
-
-    def append(self, value: "sanic.Blueprint") -> None:
+    def append(self, value: Blueprint) -> None:
         """
         The Abstract class `MutableSequence` leverages this append method to
         perform the `BlueprintGroup.append` operation.
         :param value: New `Blueprint` object.
         :return: None
         """
-        self._blueprints.append(self._sanitize_blueprint(bp=value))
+        self._blueprints.append(value)
 
-    def insert(self, index: int, item: "sanic.Blueprint") -> None:
+    def insert(self, index: int, item: Blueprint) -> None:
         """
         The Abstract class `MutableSequence` leverages this insert method to
         perform the `BlueprintGroup.append` operation.
@@ -226,7 +206,7 @@ class BlueprintGroup(MutableSequence):
         :param item: New `Blueprint` object.
         :return: None
         """
-        self._blueprints.insert(index, self._sanitize_blueprint(item))
+        self._blueprints.insert(index, item)
 
     def middleware(self, *args, **kwargs):
         """
@@ -250,3 +230,15 @@ class BlueprintGroup(MutableSequence):
             args = list(args)[1:]
             return register_middleware_for_blueprints(fn)
         return register_middleware_for_blueprints
+
+    def on_request(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "request")
+        else:
+            return partial(self.middleware, attach_to="request")
+
+    def on_response(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "response")
+        else:
+            return partial(self.middleware, attach_to="response")

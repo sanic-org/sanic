@@ -6,6 +6,7 @@
 .coverage
 .coverage.*
 coverage
+coverage.xml
 .tox
 settings.py
 .idea/*

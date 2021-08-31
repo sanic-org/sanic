@@ -81,60 +81,63 @@ env_dependency = (
 )
 ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.5.3" + env_dependency
-
+types_ujson = "types-ujson" + env_dependency
 requirements = [
-    "sanic-routing>=0.6.0",
+    "sanic-routing~=0.7",
     "httptools>=0.0.10",
     uvloop,
     ujson,
     "aiofiles>=0.6.0",
-    "websockets>=8.1,<9.0",
+    "websockets>=9.0",
     "multidict>=5.0,<6.0",
 ]
 
 tests_require = [
-    "sanic-testing",
+    "sanic-testing>=0.7.0b2",
     "pytest==5.2.1",
-    "multidict>=5.0,<6.0",
+    "coverage==5.3",
     "gunicorn==20.0.4",
     "pytest-cov",
     "beautifulsoup4",
-    uvloop,
-    ujson,
     "pytest-sanic",
     "pytest-sugar",
     "pytest-benchmark",
+    "chardet==3.*",
+    "flake8",
+    "black",
+    "isort>=5.0.0",
+    "bandit",
+    "mypy>=0.901",
+    "docutils",
+    "pygments",
+    "uvicorn<0.15.0",
+    types_ujson,
 ]
 
 docs_require = [
     "sphinx>=2.1.2",
-    "sphinx_rtd_theme",
+    "sphinx_rtd_theme>=0.4.3",
     "recommonmark>=0.5.0",
     "docutils",
     "pygments",
 ]
 
 dev_require = tests_require + [
-    "aiofiles",
     "tox",
-    "black",
-    "flake8",
-    "bandit",
     "towncrier",
 ]
 
-all_require = dev_require + docs_require
+all_require = list(set(dev_require + docs_require))
 
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
-    tests_require.remove(ujson)
+    tests_require.remove(types_ujson)
 
 # 'nt' means windows OS
 if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
-    tests_require.remove(uvloop)
 
 extras_require = {
     "test": tests_require,

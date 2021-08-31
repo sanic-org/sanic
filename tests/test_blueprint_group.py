@@ -116,6 +116,16 @@ def test_bp_group(app: Sanic):
         global MIDDLEWARE_INVOKE_COUNTER
         MIDDLEWARE_INVOKE_COUNTER["request"] += 1
 
+    @blueprint_group_1.on_request
+    def blueprint_group_1_convenience_1(request):
+        global MIDDLEWARE_INVOKE_COUNTER
+        MIDDLEWARE_INVOKE_COUNTER["request"] += 1
+
+    @blueprint_group_1.on_request()
+    def blueprint_group_1_convenience_2(request):
+        global MIDDLEWARE_INVOKE_COUNTER
+        MIDDLEWARE_INVOKE_COUNTER["request"] += 1
+
     @blueprint_3.route("/")
     def blueprint_3_default_route(request):
         return text("BP3_OK")
@@ -126,6 +136,16 @@ def test_bp_group(app: Sanic):
 
     @blueprint_group_2.middleware("response")
     def blueprint_group_2_middleware(request, response):
+        global MIDDLEWARE_INVOKE_COUNTER
+        MIDDLEWARE_INVOKE_COUNTER["response"] += 1
+
+    @blueprint_group_2.on_response
+    def blueprint_group_2_middleware_convenience_1(request, response):
+        global MIDDLEWARE_INVOKE_COUNTER
+        MIDDLEWARE_INVOKE_COUNTER["response"] += 1
+
+    @blueprint_group_2.on_response()
+    def blueprint_group_2_middleware_convenience_2(request, response):
         global MIDDLEWARE_INVOKE_COUNTER
         MIDDLEWARE_INVOKE_COUNTER["response"] += 1
 
@@ -147,8 +167,8 @@ def test_bp_group(app: Sanic):
     _, response = app.test_client.get("/api/bp3")
     assert response.text == "BP3_OK"
 
-    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 3
-    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 4
+    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 9
+    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 8
 
 
 def test_bp_group_list_operations(app: Sanic):
@@ -200,7 +220,7 @@ def test_bp_group_as_nested_group():
     blueprint_group_1 = Blueprint.group(
         Blueprint.group(blueprint_1, blueprint_2)
     )
-    assert len(blueprint_group_1) == 2
+    assert len(blueprint_group_1) == 1
 
 
 def test_blueprint_group_insert():
@@ -215,9 +235,29 @@ def test_blueprint_group_insert():
     group.insert(0, blueprint_1)
     group.insert(0, blueprint_2)
     group.insert(0, blueprint_3)
-    assert group.blueprints[1].strict_slashes is False
-    assert group.blueprints[2].strict_slashes is True
-    assert group.blueprints[0].url_prefix == "/test"
+
+    @blueprint_1.route("/")
+    def blueprint_1_default_route(request):
+        return text("BP1_OK")
+
+    @blueprint_2.route("/")
+    def blueprint_2_default_route(request):
+        return text("BP2_OK")
+
+    @blueprint_3.route("/")
+    def blueprint_3_default_route(request):
+        return text("BP3_OK")
+
+    app = Sanic("PropTest")
+    app.blueprint(group)
+    app.router.finalize()
+
+    routes = [(route.path, route.strict) for route in app.router.routes]
+
+    assert len(routes) == 3
+    assert ("v1/test/bp1/", True) in routes
+    assert ("v1.3/test/bp2", False) in routes
+    assert ("v1.3/test", False) in routes
 
 
 def test_bp_group_properties():
@@ -231,19 +271,25 @@ def test_bp_group_properties():
         url_prefix="/grouped",
         strict_slashes=True,
     )
+    primary = Blueprint.group(group, url_prefix="/primary")
 
-    assert group.version_prefix == "/api/v"
-    assert blueprint_1.version_prefix == "/api/v"
-    assert blueprint_2.version_prefix == "/api/v"
+    @blueprint_1.route("/")
+    def blueprint_1_default_route(request):
+        return text("BP1_OK")
 
-    assert group.version == 1
-    assert blueprint_1.version == 1
-    assert blueprint_2.version == 1
+    @blueprint_2.route("/")
+    def blueprint_2_default_route(request):
+        return text("BP2_OK")
 
-    assert group.strict_slashes
-    assert blueprint_1.strict_slashes
-    assert blueprint_2.strict_slashes
+    app = Sanic("PropTest")
+    app.blueprint(group)
+    app.blueprint(primary)
+    app.router.finalize()
 
-    assert group.url_prefix == "/grouped"
-    assert blueprint_1.url_prefix == "/grouped/bp1"
-    assert blueprint_2.url_prefix == "/grouped/bp2"
+    routes = [route.path for route in app.router.routes]
+
+    assert len(routes) == 4
+    assert "api/v1/grouped/bp1/" in routes
+    assert "api/v1/grouped/bp2/" in routes
+    assert "api/v1/primary/grouped/bp1" in routes
+    assert "api/v1/primary/grouped/bp2" in routes

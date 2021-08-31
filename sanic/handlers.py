@@ -1,5 +1,3 @@
-from traceback import format_exc
-
 from sanic.errorpages import exception_response
 from sanic.exceptions import (
     ContentRangeError,
@@ -25,7 +23,6 @@ class ErrorHandler:
 
     handlers = None
     cached_handlers = None
-    _missing = object()
 
     def __init__(self):
         self.handlers = []
@@ -45,7 +42,9 @@ class ErrorHandler:
 
         :return: None
         """
+        # self.handlers to be deprecated and removed in version 21.12
         self.handlers.append((exception, handler))
+        self.cached_handlers[exception] = handler
 
     def lookup(self, exception):
         """
@@ -61,14 +60,19 @@ class ErrorHandler:
 
         :return: Registered function if found ``None`` otherwise
         """
-        handler = self.cached_handlers.get(type(exception), self._missing)
-        if handler is self._missing:
-            for exception_class, handler in self.handlers:
-                if isinstance(exception, exception_class):
-                    self.cached_handlers[type(exception)] = handler
-                    return handler
-            self.cached_handlers[type(exception)] = None
-            handler = None
+        exception_class = type(exception)
+        if exception_class in self.cached_handlers:
+            return self.cached_handlers[exception_class]
+
+        for ancestor in type.mro(exception_class):
+            if ancestor in self.cached_handlers:
+                handler = self.cached_handlers[ancestor]
+                self.cached_handlers[exception_class] = handler
+                return handler
+            if ancestor is BaseException:
+                break
+        self.cached_handlers[exception_class] = None
+        handler = None
         return handler
 
     def response(self, request, exception):
@@ -93,7 +97,6 @@ class ErrorHandler:
             if response is None:
                 response = self.default(request, exception)
         except Exception:
-            self.log(format_exc())
             try:
                 url = repr(request.url)
             except AttributeError:
@@ -108,11 +111,6 @@ class ErrorHandler:
             else:
                 return text("An error occurred while handling an error", 500)
         return response
-
-    def log(self, message, level="error"):
-        """
-        Deprecated, do not use.
-        """
 
     def default(self, request, exception):
         """
@@ -129,6 +127,11 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
+        self.log(request, exception)
+        return exception_response(request, exception, self.debug)
+
+    @staticmethod
+    def log(request, exception):
         quiet = getattr(exception, "quiet", False)
         if quiet is False:
             try:
@@ -136,12 +139,9 @@ class ErrorHandler:
             except AttributeError:
                 url = "unknown"
 
-            self.log(format_exc())
             error_logger.exception(
                 "Exception occurred while handling uri: %s", url
             )
-
-        return exception_response(request, exception, self.debug)
 
 
 class ContentRangeHandler:

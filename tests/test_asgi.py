@@ -7,7 +7,7 @@ import uvicorn
 
 from sanic import Sanic
 from sanic.asgi import MockTransport
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.websocket import WebSocketConnection
@@ -218,7 +218,7 @@ async def test_websocket_accept_with_no_subprotocols(
 
     message = message_stack.popleft()
     assert message["type"] == "websocket.accept"
-    assert message["subprotocol"] == ""
+    assert message["subprotocol"] is None
     assert "bytes" not in message
 
 
@@ -227,7 +227,7 @@ async def test_websocket_accept_with_subprotocol(send, receive, message_stack):
     subprotocols = ["graphql-ws"]
 
     ws = WebSocketConnection(send, receive, subprotocols)
-    await ws.accept()
+    await ws.accept(subprotocols)
 
     assert len(message_stack) == 1
 
@@ -244,13 +244,13 @@ async def test_websocket_accept_with_multiple_subprotocols(
     subprotocols = ["graphql-ws", "hello", "world"]
 
     ws = WebSocketConnection(send, receive, subprotocols)
-    await ws.accept()
+    await ws.accept(["hello", "world"])
 
     assert len(message_stack) == 1
 
     message = message_stack.popleft()
     assert message["type"] == "websocket.accept"
-    assert message["subprotocol"] == "graphql-ws,hello,world"
+    assert message["subprotocol"] == "hello"
     assert "bytes" not in message
 
 
@@ -346,3 +346,33 @@ async def test_content_type(app):
 
     _, response = await app.asgi_client.get("/custom")
     assert response.headers.get("content-type") == "somethingelse"
+
+
+@pytest.mark.asyncio
+async def test_request_handle_exception(app):
+    @app.get("/error-prone")
+    def _request(request):
+        raise ServiceUnavailable(message="Service unavailable")
+
+    _, response = await app.asgi_client.get("/wrong-path")
+    assert response.status_code == 404
+
+    _, response = await app.asgi_client.get("/error-prone")
+    assert response.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_request_exception_suppressed_by_middleware(app):
+    @app.get("/error-prone")
+    def _request(request):
+        raise ServiceUnavailable(message="Service unavailable")
+
+    @app.on_request
+    def forbidden(request):
+        raise Forbidden(message="forbidden")
+
+    _, response = await app.asgi_client.get("/wrong-path")
+    assert response.status_code == 403
+
+    _, response = await app.asgi_client.get("/error-prone")
+    assert response.status_code == 403

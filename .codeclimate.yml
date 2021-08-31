@@ -1,0 +1,24 @@
+exclude_patterns:
+  - "sanic/__main__.py"
+  - "sanic/reloader_helpers.py"
+  - "sanic/simple.py"
+  - "sanic/utils.py"
+  - ".github/"
+  - "changelogs/"
+  - "docker/"
+  - "docs/"
+  - "examples/"
+  - "hack/"
+  - "scripts/"
+  - "tests/"
+checks:
+  argument-count:
+    enabled: false
+  file-lines:
+    config:
+      threshold: 1000
+  method-count:
+    config:
+      threshold: 40
+  complex-logic:
+    enabled: false

@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from sanic.errorpages import exception_response
 from sanic.exceptions import (
     ContentRangeError,
@@ -21,15 +23,12 @@ class ErrorHandler:
 
     """
 
-    handlers = None
-    cached_handlers = None
-
     def __init__(self):
         self.handlers = []
         self.cached_handlers = {}
         self.debug = False
 
-    def add(self, exception, handler):
+    def add(self, exception, handler, route_names: Optional[List[str]] = None):
         """
         Add a new exception handler to an already existing handler object.
 
@@ -42,11 +41,16 @@ class ErrorHandler:
 
         :return: None
         """
-        # self.handlers to be deprecated and removed in version 21.12
+        # self.handlers is deprecated and will be removed in version 22.3
         self.handlers.append((exception, handler))
-        self.cached_handlers[exception] = handler
 
-    def lookup(self, exception):
+        if route_names:
+            for route in route_names:
+                self.cached_handlers[(exception, route)] = handler
+        else:
+            self.cached_handlers[(exception, None)] = handler
+
+    def lookup(self, exception, route_name: Optional[str]):
         """
         Lookup the existing instance of :class:`ErrorHandler` and fetch the
         registered handler for a specific type of exception.
@@ -61,17 +65,26 @@ class ErrorHandler:
         :return: Registered function if found ``None`` otherwise
         """
         exception_class = type(exception)
-        if exception_class in self.cached_handlers:
-            return self.cached_handlers[exception_class]
 
-        for ancestor in type.mro(exception_class):
-            if ancestor in self.cached_handlers:
-                handler = self.cached_handlers[ancestor]
-                self.cached_handlers[exception_class] = handler
+        for name in (route_name, None):
+            exception_key = (exception_class, name)
+            handler = self.cached_handlers.get(exception_key)
+            if handler:
                 return handler
-            if ancestor is BaseException:
-                break
-        self.cached_handlers[exception_class] = None
+
+        for name in (route_name, None):
+            for ancestor in type.mro(exception_class):
+                exception_key = (ancestor, name)
+                if exception_key in self.cached_handlers:
+                    handler = self.cached_handlers[exception_key]
+                    self.cached_handlers[
+                        (exception_class, route_name)
+                    ] = handler
+                    return handler
+
+                if ancestor is BaseException:
+                    break
+        self.cached_handlers[(exception_class, route_name)] = None
         handler = None
         return handler
 
@@ -89,7 +102,8 @@ class ErrorHandler:
         :return: Wrap the return value obtained from :func:`default`
             or registered handler for that type of exception.
         """
-        handler = self.lookup(exception)
+        route_name = request.name if request else None
+        handler = self.lookup(exception, route_name)
         response = None
         try:
             if handler:

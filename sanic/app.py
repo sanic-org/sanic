@@ -334,7 +334,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     self.named_response_middleware[_rn].appendleft(middleware)
         return middleware
 
-    def _apply_exception_handler(self, handler: FutureException):
+    def _apply_exception_handler(
+        self,
+        handler: FutureException,
+        route_names: Optional[List[str]] = None,
+    ):
         """Decorate a function to be registered as a handler for exceptions
 
         :param exceptions: exceptions
@@ -344,9 +348,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         for exception in handler.exceptions:
             if isinstance(exception, (tuple, list)):
                 for e in exception:
-                    self.error_handler.add(e, handler.handler)
+                    self.error_handler.add(e, handler.handler, route_names)
             else:
-                self.error_handler.add(exception, handler.handler)
+                self.error_handler.add(exception, handler.handler, route_names)
         return handler.handler
 
     def _apply_listener(self, listener: FutureListener):

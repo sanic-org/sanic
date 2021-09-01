@@ -180,7 +180,7 @@ def serve(
             if hasattr(conn, "websocket") and conn.websocket:
                 coros.append(conn.websocket.close_connection())
             else:
-                conn.close()
+                conn.abort()
 
         _shutdown = asyncio.gather(*coros)
         loop.run_until_complete(_shutdown)

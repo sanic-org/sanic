@@ -81,13 +81,24 @@ class SanicProtocol(asyncio.Protocol):
         self._data_received.clear()
         await self._data_received.wait()
 
-    def close(self):
+    def close(self, timeout: Optional[float] = None):
+        """
+        Attempt close the connection.
+        """
+        # Cause a call to connection_lost where further cleanup occurs
+        if self.transport:
+            self.transport.close()
+            if timeout is None:
+                timeout = self.app.config.GRACEFUL_SHUTDOWN_TIMEOUT
+            self.loop.call_later(timeout, self.abort)
+
+    def abort(self):
         """
         Force close the connection.
         """
         # Cause a call to connection_lost where further cleanup occurs
         if self.transport:
-            self.transport.close()
+            self.transport.abort()
             self.transport = None
 
     # asyncio.Protocol API Callbacks #

@@ -338,7 +338,9 @@ class Blueprint(BaseSanic):
 
         # Exceptions
         for future in self._future_exceptions:
-            exception_handlers.append(app._apply_exception_handler(future))
+            exception_handlers.append(
+                app._apply_exception_handler(future, route_names)
+            )
 
         # Event listeners
         for listener in self._future_listeners:

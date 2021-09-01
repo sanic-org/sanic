@@ -278,7 +278,6 @@ def _build_protocol_kwargs(
     if hasattr(protocol, "websocket_handshake"):
         return {
             "websocket_max_size": config.WEBSOCKET_MAX_SIZE,
-            "websocket_max_queue": config.WEBSOCKET_MAX_QUEUE,
             "websocket_read_limit": config.WEBSOCKET_READ_LIMIT,
             "websocket_write_limit": config.WEBSOCKET_WRITE_LIMIT,
             "websocket_ping_timeout": config.WEBSOCKET_PING_TIMEOUT,

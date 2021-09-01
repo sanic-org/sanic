@@ -12,7 +12,8 @@ from typing import (
     Union,
     Iterable,
     Sequence,
-    Mapping, AsyncIterator
+    Mapping, AsyncIterator,
+    TYPE_CHECKING
 )
 import codecs
 
@@ -26,11 +27,12 @@ from websockets.frames import Frame, Opcode, prepare_ctrl, OP_PONG
 from websockets.utils import accept_key
 
 from sanic.exceptions import InvalidUsage, Forbidden, SanicException
-from sanic.server import HttpProtocol, SanicProtocol
+from sanic.server import HttpProtocol
+from sanic.server.protocols.base_protocol import SanicProtocol
+from sanic.response import BaseHTTPResponse
 from sanic.log import error_logger, logger
 
 import asyncio
-
 
 ASIMessage = MutableMapping[str, Any]
 UTF8Decoder = codecs.getincrementaldecoder("utf-8")
@@ -42,6 +44,20 @@ class WebsocketFrameAssembler:
     https://github.com/aaugustin/websockets/blob/6eb98dd8fa5b2c896b9f6be7e8d117708da82a39/src/websockets/sync/messages.py
     """
     __slots__ = ("protocol", "read_mutex", "write_mutex", "message_complete", "message_fetched", "get_in_progress", "decoder", "completed_queue", "chunks", "chunks_queue", "paused", "get_id", "put_id")
+    if TYPE_CHECKING:
+        protocol: "WebsocketImplProtocol"
+        read_mutex: asyncio.Lock
+        write_mutex: asyncio.Lock
+        message_complete: asyncio.Event
+        message_fetched: asyncio.Event
+        completed_queue: asyncio.Queue
+        get_in_progress: bool
+        decoder: Optional[codecs.IncrementalDecoder]
+        # For streaming chunks rather than messages:
+        chunks: List[Data]
+        chunks_queue: Optional[asyncio.Queue[Optional[Data]]]
+        paused: bool
+
 
     def __init__(self, protocol) -> None:
 
@@ -62,10 +78,10 @@ class WebsocketFrameAssembler:
         self.get_in_progress = False
 
         # Decoder for text frames, None for binary frames.
-        self.decoder: Optional[codecs.IncrementalDecoder] = None
+        self.decoder = None
 
         # Buffer data from frames belonging to the same message.
-        self.chunks: List[Data] = []
+        self.chunks = []
 
         # When switching from "buffering" to "streaming", we use a thread-safe
         # queue for transferring frames from the writing thread (library code)
@@ -74,7 +90,7 @@ class WebsocketFrameAssembler:
         # value marking the end of the stream, superseding message_complete.
 
         # Stream data from frames belonging to the same message.
-        self.chunks_queue: Optional[asyncio.Queue[Optional[Data]]] = None
+        self.chunks_queue = None
 
         # Flag to indicate we've paused the protocol
         self.paused = False
@@ -185,8 +201,8 @@ class WebsocketFrameAssembler:
         :meth:`put` assumes that the stream of frames respects the protocol.
         If it doesn't, the behavior is undefined.
         """
-        id = self.put_id
-        self.put_id += 1
+        #id = self.put_id
+        #self.put_id += 1
         async with self.write_mutex:
             if frame.opcode is Opcode.TEXT:
                 self.decoder = UTF8Decoder(errors="strict")
@@ -226,25 +242,45 @@ class WebsocketFrameAssembler:
             self.message_fetched.clear()
             self.decoder = None
 
+
 class WebsocketImplProtocol:
+    connection: ServerConnection
+    io_proto: Optional[SanicProtocol]
+    loop: Optional[asyncio.BaseEventLoop]
+    max_queue: int
+    ping_interval: Optional[float]
+    ping_timeout: Optional[float]
+    assembler: WebsocketFrameAssembler
+    pings: Dict[bytes, asyncio.Future]  # Dict[bytes, asyncio.Future[None]]
+    conn_mutex: asyncio.Lock
+    recv_lock: asyncio.Lock
+    process_event_mutex: asyncio.Lock
+    can_pause: bool
+    data_finished_fut: Optional[asyncio.Future]  # Optional[asyncio.Future[None]]
+    pause_frame_fut: Optional[asyncio.Future]  # Optional[asyncio.Future[None]]
+    connection_lost_waiter: Optional[asyncio.Future]  # Optional[asyncio.Future[None]]
+    keepalive_ping_task: Optional[asyncio.Task]
+    close_connection_task: Optional[asyncio.Task]
+
+
     def __init__(self, connection, max_queue=None, ping_interval: Optional[float] = 20, ping_timeout: Optional[float] = 20, loop=None):
-        self.connection: ServerConnection = connection
-        self.io_proto: Optional[SanicProtocol] = None
-        self.loop: Optional[asyncio.BaseEventLoop] = None
+        self.connection = connection
+        self.io_proto = None
+        self.loop = None
         self.max_queue = max_queue
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
         self.assembler = WebsocketFrameAssembler(self)
-        self.pings: Dict[bytes, asyncio.Future[None]] = {}
+        self.pings = {}
         self.conn_mutex = asyncio.Lock()
         self.recv_lock = asyncio.Lock()
         self.process_event_mutex = asyncio.Lock()
-        self.data_finished_fut: Optional[asyncio.Future[None]] = None
+        self.data_finished_fut = None
         self.can_pause = True
-        self.pause_frame_fut: Optional[asyncio.Future[None]] = None
+        self.pause_frame_fut = None
         self.keepalive_ping_task = None
         self.close_connection_task = None
-        self.connection_lost_waiter: Optional[asyncio.Future[None]] = None
+        self.connection_lost_waiter = None
 
     @property
     def subprotocol(self):
@@ -274,14 +310,14 @@ class WebsocketImplProtocol:
         self.pause_frame_fut = None
         return True
 
-    async def connection_made(self, io_proto: asyncio.Protocol, loop=None):
+    async def connection_made(self, io_proto: SanicProtocol, loop=None):
         if loop is None:
             try:
                 loop = getattr(io_proto, "loop")
             except AttributeError:
                 loop = asyncio.get_event_loop()
         self.loop = loop
-        self.io_proto: WebSocketProtocol = io_proto
+        self.io_proto = io_proto  # this will be a WebSocketProtocol
         self.connection_lost_waiter = self.loop.create_future()
         self.data_finished_fut = asyncio.shield(self.loop.create_future())
 
@@ -626,19 +662,15 @@ class WebsocketImplProtocol:
                 self.connection.send_binary(message)
                 await self.send_data(self.connection.data_to_send())
 
-            # Catch a common mistake -- passing a dict to send().
-
             elif isinstance(message, Mapping):
+                # Catch a common mistake -- passing a dict to send().
                 raise TypeError("data is a dict-like object")
 
-            # Fragmented message -- regular iterator.
-
             elif isinstance(message, Iterable):
-                # TODO use an incremental encoder maybe?
-                raise NotImplementedError
-
+                # Fragmented message -- regular iterator.
+                raise NotImplementedError("Fragmented websocket messages are not supported.")
             else:
-                raise TypeError("data must be bytes, str, or iterable")
+                raise TypeError("Websocket data must be bytes, str.")
 
     async def ping(self, data: Optional[Data] = None) -> asyncio.Future:
         """
@@ -768,7 +800,7 @@ class WebSocketProtocol(HttpProtocol):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.websocket: Union[None, WebsocketImplProtocol] = None
+        self.websocket = None # type: Union[None, WebsocketImplProtocol]
         # self.app = None
         self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size
@@ -778,19 +810,6 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_write_limit = websocket_write_limit
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
-
-    # timeouts make no sense for websocket routes
-    def request_timeout_callback(self):
-        if self.websocket is None:
-            super().request_timeout_callback()
-
-    def response_timeout_callback(self):
-        if self.websocket is None:
-            super().response_timeout_callback()
-
-    def keep_alive_timeout_callback(self):
-        if self.websocket is None:
-            super().keep_alive_timeout_callback()
 
     def connection_lost(self, exc):
         if self.websocket is not None:
@@ -839,42 +858,24 @@ class WebSocketProtocol(HttpProtocol):
                 subprotocols = list(subprotocols)
             ws_server = ServerConnection(max_size=self.websocket_max_size, subprotocols=subprotocols,
                                          state=OPEN, logger=error_logger)
-            key, extensions_header, protocol_header = ws_server.process_request(request)
-        except InvalidOrigin as exc:
-            raise Forbidden(
-                f"Failed to open a WebSocket connection: {exc}.\n",
-            )
-        except InvalidUpgrade as exc:
-            msg = (
-                    f"Failed to open a WebSocket connection: {exc}.\n"
-                    f"\n"
-                    f"You cannot access a WebSocket server directly "
-                    f"with a browser. You need a WebSocket client.\n"
-                )
-            raise SanicException(msg, status_code=426)
-        except InvalidHandshake as exc:
-            raise InvalidUsage(f"Failed to open a WebSocket connection: {exc}.\n")
+            resp = ws_server.accept(request)  # type: websockets.http11.Response
         except Exception as exc:
             msg = (
                     "Failed to open a WebSocket connection.\n"
                     "See server log for more information.\n"
                 )
             raise SanicException(msg, status_code=500)
+        if 100 <= resp.status_code <= 299:
+            rbytes = b"".join([b"HTTP/1.1 ", b'%d' % resp.status_code, b" ", resp.reason_phrase.encode("utf-8"), b"\r\n"])
+            for k, v in resp.headers.items():
+                rbytes += k.encode("utf-8") + b": " + v.encode("utf-8") + b"\r\n"
+            if resp.body:
+                rbytes += b"\r\n" + resp.body + b"\r\n"
+            rbytes += b"\r\n"
+            await super().send(rbytes)
+        else:
+            raise SanicException(resp.body, resp.status_code)
 
-        headers["Sec-WebSocket-Accept"] = accept_key(key)
-
-        if extensions_header is not None:
-            headers["Sec-WebSocket-Extensions"] = extensions_header
-
-        if protocol_header is not None:
-            headers["Sec-WebSocket-Protocol"] = protocol_header
-        headers["Date"] = formatdate(usegmt=True)
-        # write the 101 response back to the client
-        rv = b"HTTP/1.1 101 Switching Protocols\r\n"
-        for k, v in headers.items():
-            rv += k.encode("utf-8") + b": " + v.encode("utf-8") + b"\r\n"
-        rv += b"\r\n"
-        await super().send(rv)
         self.websocket = WebsocketImplProtocol(ws_server, ping_interval=self.websocket_ping_interval, ping_timeout=self.websocket_ping_timeout)
         loop = request.transport.loop if hasattr(request, "transport") and hasattr(request.transport, "loop") else None
         await self.websocket.connection_made(self, loop=loop)

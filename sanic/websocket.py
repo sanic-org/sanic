@@ -228,9 +228,9 @@ class WebsocketFrameAssembler:
 
 class WebsocketImplProtocol:
     def __init__(self, connection, max_queue=None, ping_interval: Optional[float] = 20, ping_timeout: Optional[float] = 20, loop=None):
-        self.connection = connection  # type: ServerConnection
-        self.io_proto = None  # type: Optional[SanicProtocol]
-        self.loop = None  # type: Optional[asyncio.BaseEventLoop]
+        self.connection: ServerConnection = connection
+        self.io_proto: Optional[SanicProtocol] = None
+        self.loop: Optional[asyncio.BaseEventLoop] = None
         self.max_queue = max_queue
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
@@ -239,12 +239,12 @@ class WebsocketImplProtocol:
         self.conn_mutex = asyncio.Lock()
         self.recv_lock = asyncio.Lock()
         self.process_event_mutex = asyncio.Lock()
-        self.data_finished_fut = None  # type: Optional[asyncio.Future[None]]
+        self.data_finished_fut: Optional[asyncio.Future[None]] = None
         self.can_pause = True
-        self.pause_frame_fut = None  # type: Optional[asyncio.Future[None]]
+        self.pause_frame_fut: Optional[asyncio.Future[None]] = None
         self.keepalive_ping_task = None
         self.close_connection_task = None
-        self.connection_lost_waiter = None  # type: Optional[asyncio.Future[None]]
+        self.connection_lost_waiter: Optional[asyncio.Future[None]] = None
 
     @property
     def subprotocol(self):
@@ -281,7 +281,7 @@ class WebsocketImplProtocol:
             except AttributeError:
                 loop = asyncio.get_event_loop()
         self.loop = loop
-        self.io_proto = io_proto  # this will be a WebSocketProtocol
+        self.io_proto: WebSocketProtocol = io_proto
         self.connection_lost_waiter = self.loop.create_future()
         self.data_finished_fut = asyncio.shield(self.loop.create_future())
 
@@ -768,7 +768,7 @@ class WebSocketProtocol(HttpProtocol):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.websocket = None # type: Union[None, WebsocketImplProtocol]
+        self.websocket: Union[None, WebsocketImplProtocol] = None
         # self.app = None
         self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size

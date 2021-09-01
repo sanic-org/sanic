@@ -178,7 +178,7 @@ def serve(
         coros = []
         for conn in connections:
             if hasattr(conn, "websocket") and conn.websocket:
-                coros.append(conn.websocket.close_connection())
+                coros.append(conn.websocket.close(code=1001))
             else:
                 conn.abort()
 

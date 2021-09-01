@@ -76,7 +76,8 @@ from sanic.server import Signal as ServerSignal
 from sanic.server import serve, serve_multiple, serve_single
 from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
-from sanic.websocket import ConnectionClosed, WebSocketProtocol
+from sanic.server.protocols.websocket_protocol import WebSocketProtocol
+from sanic.server.websockets.impl import ConnectionClosed
 
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):

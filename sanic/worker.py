@@ -9,7 +9,7 @@ from gunicorn.workers import base  # type: ignore
 
 from sanic.log import logger
 from sanic.server import HttpProtocol, Signal, serve
-from sanic.websocket import WebSocketProtocol
+from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 
 
 try:
@@ -147,7 +147,7 @@ class GunicornWorker(base.Worker):
                 if hasattr(conn, "websocket") and conn.websocket:
                     coros.append(conn.websocket.close(code=1001))
                 else:
-                    conn.close()
+                    conn.abort()
             _shutdown = asyncio.gather(*coros, loop=self.loop)
             await _shutdown
 

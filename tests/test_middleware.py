@@ -5,7 +5,7 @@ from itertools import count
 
 from sanic.exceptions import NotFound
 from sanic.request import Request
-from sanic.response import HTTPResponse, text
+from sanic.response import HTTPResponse, json, text
 
 
 # ------------------------------------------------------------ #
@@ -283,3 +283,17 @@ def test_request_middleware_executes_once(app):
 
     request, response = app.test_client.get("/")
     assert next(i) == 3
+
+
+def test_middleware_added_response(app):
+    @app.on_response
+    def display(_, response):
+        response["foo"] = "bar"
+        return json(response)
+
+    @app.get("/")
+    async def handler(request):
+        return {}
+
+    _, response = app.test_client.get("/")
+    assert response.json["foo"] == "bar"

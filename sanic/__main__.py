@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -11,7 +12,7 @@ from sanic_routing import __version__ as __routing_version__  # type: ignore
 from sanic import __version__
 from sanic.app import Sanic
 from sanic.config import BASE_LOGO
-from sanic.log import error_logger
+from sanic.log import error_logger, logger
 from sanic.simple import create_simple_server
 
 
@@ -87,15 +88,53 @@ def main():
     parser.add_bool_arguments(
         "--access-logs", dest="access_log", help="display access logs"
     )
-    parser.add_argument(
+    group_worker = parser.add_mutually_exclusive_group()
+    group_worker.add_argument(
         "-w",
         "--workers",
         dest="workers",
         type=int,
         default=1,
-        help="number of worker processes [default 1]\n ",
+        help="Number of worker processes [default 1]",
     )
-    parser.add_argument("-d", "--debug", dest="debug", action="store_true")
+    group_worker.add_argument(
+        "--fast",
+        action="store_true",
+        help=(
+            "Run with maximum allowable processes.\nThis should be equal "
+            "to the number of CPU processes available.\n "
+        ),
+    )
+    group_mode = parser.add_mutually_exclusive_group()
+    group_mode.add_argument(
+        "--mode",
+        help="Set the mode",
+        nargs="?",
+        choices=("debug", "prod"),
+        default="default",
+    )
+    group_mode.add_argument(
+        "-d",
+        "--debug",
+        dest="mode",
+        const="debug",
+        action="store_const",
+        help="Shortcut to set to DEBUG mode",
+    )
+    group_mode.add_argument(
+        "--prod",
+        dest="mode",
+        const="prod",
+        action="store_const",
+        help="Shortcut to set to PROD mode",
+    )
+    group_mode.add_argument(
+        "--dev",
+        dest="mode",
+        const="dev",
+        action="store_const",
+        help="Shortcut to set to DEBUG mode, and enables auto-reload\n ",
+    )
     parser.add_argument(
         "-r",
         "--reload",
@@ -116,10 +155,36 @@ def main():
         help=(
             "Path to your Sanic app. Example: path.to.server:app\n"
             "If running a Simple Server, path to directory to serve. "
-            "Example: ./\n"
+            "Example: ./"
         ),
     )
     args = parser.parse_args()
+
+    if "-d" in sys.argv:
+        error_logger.error(
+            DeprecationWarning(
+                "The -d flag has been deprecated and will be removed in v22.3"
+            )
+        )
+
+    if args.mode == "dev":
+        args.mode = "debug"
+        args.auto_reload = True
+    elif (
+        args.mode == "default"
+        and not args.access_log
+        and "--no-access-logs" not in sys.argv
+    ):
+        args.access_log = True
+        error_logger.error(
+            DeprecationWarning(
+                "Default access logging has been deprecated. Beginning v22.3 "
+                "you must either expressly use '--access-logs', or run in "
+                "DEBUG mode to display them."
+            )
+        )
+    elif args.mode == "prod":
+        args.access_log = False
 
     try:
         module_path = os.path.abspath(os.getcwd())
@@ -157,12 +222,20 @@ def main():
         else:
             ssl = None
 
+        if args.fast:
+            try:
+                args.workers = len(os.sched_getaffinity(0))
+            except AttributeError:
+                error_logger.warning(
+                    "Ignoring '--fast' since it is not supported on this OS."
+                )
+
         kwargs = {
             "host": args.host,
             "port": args.port,
             "unix": args.unix,
             "workers": args.workers,
-            "debug": args.debug,
+            "debug": args.mode == "debug",
             "access_log": args.access_log,
             "ssl": ssl,
         }
@@ -179,13 +252,16 @@ def main():
                     "changes, consider using --debug or --auto-reload."
                 )
 
+        if app.configure_logging and args.mode == "prod":
+            logger.setLevel(logging.WARNING)
+
         app.run(**kwargs)
     except ImportError as e:
         if module_name.startswith(e.name):
             error_logger.error(
                 f"No module named {e.name} found.\n"
                 "  Example File: project/sanic_server.py -> app\n"
-                "  Example Module: project.sanic_server.app"
+                "  Example Module: project.sanic_server:app"
             )
         else:
             raise e

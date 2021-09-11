@@ -1014,6 +1014,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
 
         if auto_reload or auto_reload is None and debug:
+            if auto_reload is None and debug:
+                error_logger.warning(
+                    DeprecationWarning(
+                        "Enabling auto-reload via debug mode is deprecated "
+                        "and will be removed in v22.3. Consider using "
+                        "'sanic server:app --dev' instead."
+                    )
+                )
             self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
                 return reloader_helpers.watchdog(1.0, self)
@@ -1028,6 +1036,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
+        else:
+            error_logger.warning(
+                DeprecationWarning(
+                    "Enabling access logging by default is deprecated "
+                    "and will be removed in v22.3. Consider using "
+                    "'sanic server:app --access-logs' explicitly, or "
+                    "'sanic server:app --dev' instead."
+                )
+            )
 
         server_settings = self._helper(
             host=host,

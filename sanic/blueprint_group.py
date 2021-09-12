@@ -200,7 +200,7 @@ class BlueprintGroup(MutableSequence):
     def exception(self, *exceptions, **kwargs):
         """
         A decorator that can be used to implement a global exception handler
-        for all of the Blueprints that belongs to this specific Blueprint Group.
+        for all the Blueprints that belong to this Blueprint Group.
 
         In case of nested Blueprint Groups, the same handler is applied
         across each of the Blueprints recursively.

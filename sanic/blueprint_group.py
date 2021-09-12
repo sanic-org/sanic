@@ -197,6 +197,27 @@ class BlueprintGroup(MutableSequence):
         """
         self._blueprints.append(value)
 
+    def exception(self, *exceptions, **kwargs):
+        """
+        A decorator that can be used to implement a global exception handler
+        for all of the Blueprints that belongs to this specific Blueprint Group.
+
+        In case of nested Blueprint Groups, the same handler is applied
+        across each of the Blueprints recursively.
+
+        :param args: List of Python exceptions to be caught by the handler
+        :param kwargs: Additional optional arguments to be passed to the
+            exception handler
+        :return a decorated method to handle global exceptions for any
+            blueprint registered under this group.
+        """
+
+        def register_exception_handler_for_blueprints(fn):
+            for blueprint in self.blueprints:
+                blueprint.exception(*exceptions, **kwargs)(fn)
+
+        return register_exception_handler_for_blueprints
+
     def insert(self, index: int, item: Blueprint) -> None:
         """
         The Abstract class `MutableSequence` leverages this insert method to

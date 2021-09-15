@@ -86,11 +86,10 @@ class WebSocketProtocol(HttpProtocol):
         # Called by HttpProtocol at the end of connection_task
         # If we've upgraded to websocket, we do our own closing
         if self.websocket is not None:
-            if self.websocket.loop is not None:
-                ...
-                self.websocket.loop.create_task(self.websocket.close(1001))
-            else:
-                self.websocket.fail_connection(1001)
+            # Note, we don't want to use websocket.close()
+            # That is used for user's application code to send a
+            # websocket close packet. This is different.
+            self.websocket.end_connection(1001)
         else:
             super().close()
 
@@ -103,7 +102,7 @@ class WebSocketProtocol(HttpProtocol):
             elif self.websocket.loop is not None:
                 self.websocket.loop.create_task(self.websocket.close(1001))
             else:
-                self.websocket.fail_connection(1001)
+                self.websocket.end_connection(1001)
         else:
             return super().close_if_idle()
 

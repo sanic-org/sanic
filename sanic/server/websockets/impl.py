@@ -103,7 +103,7 @@ class WebsocketImplProtocol:
         if self.pause_frame_fut is None:
             return False
         if self.loop is None or self.io_proto is None:
-            error_logger.warning(
+            error_logger.debug(
                 "Websocket attempting to resume reading frames, but connection is gone."
             )
             return False
@@ -225,6 +225,39 @@ class WebsocketImplProtocol:
         except Exception:
             error_logger.warning("Unexpected exception in keepalive ping task")
 
+    def _force_disconnect(self) -> bool:
+        """
+        Internal methdod used by end_connection and fail_connection
+        only when the graceful auto-closer cannot be used
+        """
+        if (
+            self.auto_closer_task is not None
+            and not self.auto_closer_task.done()
+        ):
+            self.auto_closer_task.cancel()
+        if (
+            self.data_finished_fut is not None
+            and not self.data_finished_fut.done()
+        ):
+            self.data_finished_fut.cancel()
+            self.data_finished_fut = None
+        if (
+            self.keepalive_ping_task is not None
+            and not self.keepalive_ping_task.done()
+        ):
+            self.keepalive_ping_task.cancel()
+            self.keepalive_ping_task = None
+        if (
+            self.loop is None
+            or self.io_proto is None
+            or self.io_proto.transport is None
+        ):
+            # We were never open, or already closed
+            return True
+        self.io_proto.transport.close()
+        self.loop.call_later(self.close_timeout, self.io_proto.transport.abort)
+        return True
+
     def fail_connection(self, code: int = 1006, reason: str = "") -> bool:
         """
         Fail the WebSocket Connection
@@ -255,7 +288,7 @@ class WebsocketImplProtocol:
                 if code in (1000, 1001):
                     self.connection.send_close(code, reason)
                 else:
-                    self.connection.fail_connection(code, reason)
+                    self.connection.fail(code, reason)
                 try:
                     data_to_send = self.connection.data_to_send()
                     while (
@@ -271,7 +304,7 @@ class WebsocketImplProtocol:
                     ...
         if code == 1006:
             # Special case: 1006 consider the transport already closed
-            self.connection.set_state(CLOSED)
+            self.connection.state = CLOSED
         if (
             self.data_finished_fut is not None
             and not self.data_finished_fut.done()
@@ -279,27 +312,50 @@ class WebsocketImplProtocol:
             # We have a graceful auto-closer. Use it to close the connection.
             self.data_finished_fut.cancel()
             self.data_finished_fut = None
-        if self.auto_closer_task is not None:
-            if self.auto_closer_task.done():
-                # auto_closer has already closed the connection?
-                self.auto_closer_task = None
-                return True
-            return False
-        else:
-            # Auto closer is not running. Do it manually.
-            if (
-                self.loop is None
-                or self.io_proto is None
-                or self.io_proto.transport is None
-            ):
-                # We were never open, or already closed
-                return True
-            # cannot use the connection_lost_waiter future here,
-            # because this is a synchronous function.
-            self.io_proto.transport.close()
-            self.loop.call_later(
-                self.close_timeout, self.io_proto.transport.abort
-            )
+        if self.auto_closer_task is None or self.auto_closer_task.done():
+            return self._force_disconnect()
+
+    def end_connection(self, code=1000, reason=""):
+        # This is like slightly more graceful form of fail_connection
+        # Use this instead of close() when you need an immediate
+        # close and cannot await websocket.close() handshake.
+
+        if (
+            code == 1006
+            or self.io_proto is None
+            or self.io_proto.transport is None
+        ):
+            return self.fail_connection(code, reason)
+
+        # Stop new data coming in
+        # In Python Version 3.7: pause_reading is idempotent
+        # i.e. it can be called when the transport is already paused or closed.
+        self.io_proto.transport.pause_reading()
+        if self.connection.state == OPEN:
+            data_to_send = self.connection.data_to_send()
+            self.connection.send_close(code, reason)
+            try:
+                data_to_send.extend(self.connection.data_to_send())
+                while (
+                    len(data_to_send)
+                    and self.io_proto
+                    and self.io_proto.transport is not None
+                ):
+                    frame_data = data_to_send.pop(0)
+                    self.io_proto.transport.write(frame_data)
+            except Exception:
+                # sending close frames may fail if the
+                # transport closes during this period
+                ...
+        if (
+            self.data_finished_fut is not None
+            and not self.data_finished_fut.done()
+        ):
+            # We have a graceful auto-closer. Use it to close the connection.
+            self.data_finished_fut.cancel()
+            self.data_finished_fut = None
+        if self.auto_closer_task is None or self.auto_closer_task.done():
+            return self._force_disconnect()
 
     async def auto_close_connection(self) -> None:
         """
@@ -323,6 +379,7 @@ class WebsocketImplProtocol:
             # Cancel the keepalive ping task.
             if self.keepalive_ping_task is not None:
                 self.keepalive_ping_task.cancel()
+                self.keepalive_ping_task = None
 
             # Half-close the TCP connection if possible (when there's no TLS).
             if (
@@ -340,7 +397,6 @@ class WebsocketImplProtocol:
         finally:
             # The try/finally ensures that the transport never remains open,
             # even if this coroutine is cancelled (for example).
-            self.auto_closer_task = None
             if self.io_proto is None or self.io_proto.transport is None:
                 # we were never open, or already dead and buried. Can't do any finalization.
                 return
@@ -397,6 +453,7 @@ class WebsocketImplProtocol:
     async def close(self, code: int = 1000, reason: str = "") -> None:
         """
         Perform the closing handshake.
+        This is a websocket-protocol level close.
         :meth:`close` waits for the other end to complete the handshake and
         for the TCP connection to terminate.
         :meth:`close` is idempotent: it doesn't do anything once the
@@ -404,6 +461,9 @@ class WebsocketImplProtocol:
         :param code: WebSocket close code
         :param reason: WebSocket close reason
         """
+        if code == 1006:
+            self.fail_connection(code, reason)
+            return
         async with self.conn_mutex:
             if self.connection.state is OPEN:
                 self.connection.send_close(code, reason)
@@ -542,11 +602,7 @@ class WebsocketImplProtocol:
                 raise ServerError(
                     "Cannot write to websocket interface after it is closed."
                 )
-            if (
-                self.data_finished_fut is None
-                or self.data_finished_fut.cancelled()
-                or self.data_finished_fut.done()
-            ):
+            if self.data_finished_fut is None or self.data_finished_fut.done():
                 raise ServerError(
                     "Cannot write to websocket interface after it is finished."
                 )
@@ -704,7 +760,12 @@ class WebsocketImplProtocol:
         """
         The WebSocket Connection is Closed.
         """
-        self.connection.set_state(CLOSED)
+        if not self.connection.state == CLOSED:
+            # signal to the websocket connection handler
+            # we've lost the connection
+            self.connection.fail(code=1006)
+            self.connection.state = CLOSED
+
         self.abort_pings()
         if self.connection_lost_waiter is not None:
             self.connection_lost_waiter.set_result(None)

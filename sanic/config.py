@@ -38,8 +38,6 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
     "WEBSOCKET_PING_TIMEOUT": 20,
-    "WEBSOCKET_READ_LIMIT": 2 ** 16,
-    "WEBSOCKET_WRITE_LIMIT": 2 ** 16,
 }
 
 
@@ -64,8 +62,6 @@ class Config(dict):
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int
     WEBSOCKET_PING_TIMEOUT: int
-    WEBSOCKET_READ_LIMIT: int
-    WEBSOCKET_WRITE_LIMIT: int
 
     def __init__(
         self,

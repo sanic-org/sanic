@@ -884,15 +884,19 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         # needs to be cancelled due to the server being stopped
         fut = ensure_future(handler(request, ws, *args, **kwargs))
         self.websocket_tasks.add(fut)
+        cancelled = False
         try:
             await fut
         except Exception as e:
             self.error_handler.log(request, e)
-        except (CancelledError, ConnectionClosed):
-            pass
+        except (CancelledError, ConnectionClosed) as E:
+            cancelled = True
         finally:
             self.websocket_tasks.remove(fut)
-            await ws.close()
+            if cancelled:
+                ws.end_connection(1000)
+            else:
+                await ws.close()
 
     # -------------------------------------------------------------------- #
     # Testing

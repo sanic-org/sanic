@@ -840,7 +840,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isawaitable(response):
                     response = await response
 
-            if response:
+            if response is not None:
                 response = await request.respond(response)
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore

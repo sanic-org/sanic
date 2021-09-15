@@ -175,15 +175,11 @@ def serve(
 
         # Force close non-idle connection after waiting for
         # graceful_shutdown_timeout
-        coros = []
         for conn in connections:
             if hasattr(conn, "websocket") and conn.websocket:
-                coros.append(conn.websocket.close(code=1001))
+                conn.websocket.fail_connection(code=1001)
             else:
                 conn.abort()
-
-        _shutdown = asyncio.gather(*coros)
-        loop.run_until_complete(_shutdown)
         loop.run_until_complete(app._server_event("shutdown", "after"))
 
         remove_unix_socket(unix)

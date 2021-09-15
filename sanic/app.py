@@ -74,10 +74,10 @@ from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
 from sanic.server import serve, serve_multiple, serve_single
-from sanic.signals import Signal, SignalRouter
-from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
+from sanic.signals import Signal, SignalRouter
+from sanic.touchup import TouchUp, TouchUpMeta
 
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):

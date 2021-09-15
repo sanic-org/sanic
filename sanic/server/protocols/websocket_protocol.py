@@ -1,44 +1,65 @@
-from typing import (
-    Optional,
-    Union,
-    Sequence,
-    TYPE_CHECKING
-)
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 from httptools import HttpParserUpgrade  # type: ignore
+from websockets.connection import CLOSED, CLOSING, OPEN
 from websockets.server import ServerConnection
-from websockets.connection import OPEN, CLOSING, CLOSED
 
-from sanic.exceptions import SanicException
-from sanic.server import HttpProtocol
+from sanic.exceptions import ServerError
 from sanic.log import error_logger
+from sanic.server import HttpProtocol
+
 from ..websockets.impl import WebsocketImplProtocol
+
 
 if TYPE_CHECKING:
     from websockets import http11
 
+
 class WebSocketProtocol(HttpProtocol):
+
+    websocket: Union[None, WebsocketImplProtocol]
+    websocket_timeout: float
+    websocket_max_size = Union[None, int]
+    websocket_ping_interval = Union[None, float]
+    websocket_ping_timeout = Union[None, float]
+
     def __init__(
         self,
         *args,
-        websocket_timeout=10,
-        websocket_max_size=None,
-        websocket_max_queue=None,
-        websocket_read_limit=2 ** 16,
-        websocket_write_limit=2 ** 16,
-        websocket_ping_interval=20,
-        websocket_ping_timeout=20,
+        websocket_timeout: Optional[float] = 10.0,
+        websocket_max_size: Optional[int] = None,
+        websocket_max_queue: Optional[int] = None,  # max_queue is deprecated
+        websocket_read_limit: Optional[int] = 2 ** 16,
+        websocket_write_limit: Optional[int] = 2 ** 16,
+        websocket_ping_interval: Optional[float] = 20.0,
+        websocket_ping_timeout: Optional[float] = 20.0,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.websocket = None  # type: Union[None, WebsocketImplProtocol]
-        # self.app = None
+        self.websocket = None
         self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size
         if websocket_max_queue is not None and int(websocket_max_queue) > 0:
-            error_logger.warning(DeprecationWarning("websocket_max_queue is no longer used. No websocket message queueing is implemented."))
-        self.websocket_read_limit = websocket_read_limit
-        self.websocket_write_limit = websocket_write_limit
+            error_logger.warning(
+                DeprecationWarning(
+                    "websocket_max_queue is no longer used. No websocket message queueing is implemented."
+                )
+            )
+        if websocket_read_limit is not None and int(websocket_read_limit) > 0:
+            error_logger.warning(
+                DeprecationWarning(
+                    "websocket_read_limit is no longer used. No websocket rate limiting is implemented."
+                )
+            )
+        if (
+            websocket_write_limit is not None
+            and int(websocket_write_limit) > 0
+        ):
+            error_logger.warning(
+                DeprecationWarning(
+                    "websocket_write_limit is no longer used. No websocket rate limiting is implemented."
+                )
+            )
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
 
@@ -65,7 +86,11 @@ class WebSocketProtocol(HttpProtocol):
         # Called by HttpProtocol at the end of connection_task
         # If we've upgraded to websocket, we do our own closing
         if self.websocket is not None:
-            self.websocket.fail_connection(1001)
+            if self.websocket.loop is not None:
+                ...
+                self.websocket.loop.create_task(self.websocket.close(1001))
+            else:
+                self.websocket.fail_connection(1001)
         else:
             super().close()
 
@@ -75,39 +100,65 @@ class WebSocketProtocol(HttpProtocol):
         if self.websocket is not None:
             if self.websocket.connection.state in (CLOSING, CLOSED):
                 return True
+            elif self.websocket.loop is not None:
+                self.websocket.loop.create_task(self.websocket.close(1001))
             else:
-                return self.websocket.fail_connection(1001)
+                self.websocket.fail_connection(1001)
         else:
             return super().close_if_idle()
 
-    async def websocket_handshake(self, request, subprotocols=Optional[Sequence[str]]):
+    async def websocket_handshake(
+        self, request, subprotocols=Optional[Sequence[str]]
+    ):
         # let the websockets package do the handshake with the client
         headers = {"Upgrade": "websocket", "Connection": "Upgrade"}
         try:
             if subprotocols is not None:
                 # subprotocols can be a set or frozenset, but ServerConnection needs a list
                 subprotocols = list(subprotocols)
-            ws_conn = ServerConnection(max_size=self.websocket_max_size, subprotocols=subprotocols,
-                                       state=OPEN, logger=error_logger)
+            ws_conn = ServerConnection(
+                max_size=self.websocket_max_size,
+                subprotocols=subprotocols,
+                state=OPEN,
+                logger=error_logger,
+            )
             resp: "http11.Response" = ws_conn.accept(request)
         except Exception as exc:
             msg = (
-                    "Failed to open a WebSocket connection.\n"
-                    "See server log for more information.\n"
-                )
-            raise SanicException(msg, status_code=500)
+                "Failed to open a WebSocket connection.\n"
+                "See server log for more information.\n"
+            )
+            raise ServerError(msg, status_code=500)
         if 100 <= resp.status_code <= 299:
-            rbytes = b"".join([b"HTTP/1.1 ", b'%d' % resp.status_code, b" ", resp.reason_phrase.encode("utf-8"), b"\r\n"])
-            for k, v in resp.headers.items():
-                rbytes += k.encode("utf-8") + b": " + v.encode("utf-8") + b"\r\n"
-            if resp.body:
-                rbytes += b"\r\n" + resp.body + b"\r\n"
-            rbytes += b"\r\n"
-            await super().send(rbytes)
+            rbody = "".join(
+                [
+                    "HTTP/1.1 ",
+                    str(resp.status_code),
+                    " ",
+                    resp.reason_phrase,
+                    "\r\n",
+                ]
+            )
+            rbody += "".join(f"{k}: {v}\r\n" for k, v in resp.headers.items())
+            if resp.body is not None:
+                rbody += f"\r\n{resp.body}\r\n\r\n"
+            else:
+                rbody += "\r\n"
+            await super().send(rbody.encode())
         else:
-            raise SanicException(resp.body, resp.status_code)
+            raise ServerError(resp.body, resp.status_code)
 
-        self.websocket = WebsocketImplProtocol(ws_conn, ping_interval=self.websocket_ping_interval, ping_timeout=self.websocket_ping_timeout)
-        loop = request.transport.loop if hasattr(request, "transport") and hasattr(request.transport, "loop") else None
+        self.websocket = WebsocketImplProtocol(
+            ws_conn,
+            ping_interval=self.websocket_ping_interval,
+            ping_timeout=self.websocket_ping_timeout,
+            close_timeout=self.websocket_timeout,
+        )
+        loop = (
+            request.transport.loop
+            if hasattr(request, "transport")
+            and hasattr(request.transport, "loop")
+            else None
+        )
         await self.websocket.connection_made(self, loop=loop)
         return self.websocket

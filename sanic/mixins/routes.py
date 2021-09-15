@@ -124,7 +124,7 @@ class RouteMixin:
             if isinstance(subprotocols, list):
                 # Ordered subprotocols, maintain order
                 subprotocols = tuple(subprotocols)
-            if isinstance(subprotocols, set):
+            elif isinstance(subprotocols, set):
                 # subprotocol is unordered, keep it unordered
                 subprotocols = frozenset(subprotocols)
 

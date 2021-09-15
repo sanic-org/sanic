@@ -1,6 +1,17 @@
-from typing import Optional, List, Callable, Awaitable, Union, Dict, MutableMapping, Any
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    MutableMapping,
+    Optional,
+    Union,
+)
+
 
 ASIMessage = MutableMapping[str, Any]
+
 
 class WebSocketConnection:
     """
@@ -8,6 +19,7 @@ class WebSocketConnection:
     It provides an interface similar to WebsocketProtocol, but
     sends/receives over an ASGI connection.
     """
+
     # TODO
     # - Implement ping/pong
 

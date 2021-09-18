@@ -3,6 +3,7 @@ from pytest import raises
 from sanic.app import Sanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
+from sanic.exceptions import Forbidden, InvalidUsage, SanicException, ServerError
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
 
@@ -96,15 +97,27 @@ def test_bp_group(app: Sanic):
     def blueprint_1_default_route(request):
         return text("BP1_OK")
 
+    @blueprint_1.route("/invalid")
+    def blueprint_1_error(request: Request):
+        raise InvalidUsage("Invalid")
+
     @blueprint_2.route("/")
     def blueprint_2_default_route(request):
         return text("BP2_OK")
+
+    @blueprint_2.route("/error")
+    def blueprint_2_error(request: Request):
+        raise ServerError("Error")
 
     blueprint_group_1 = Blueprint.group(
         blueprint_1, blueprint_2, url_prefix="/bp"
     )
 
     blueprint_3 = Blueprint("blueprint_3", url_prefix="/bp3")
+
+    @blueprint_group_1.exception(InvalidUsage)
+    def handle_group_exception(request, exception):
+        return text("BP1_ERR_OK")
 
     @blueprint_group_1.middleware("request")
     def blueprint_group_1_middleware(request):
@@ -130,9 +143,17 @@ def test_bp_group(app: Sanic):
     def blueprint_3_default_route(request):
         return text("BP3_OK")
 
+    @blueprint_3.route("/forbidden")
+    def blueprint_3_forbidden(request: Request):
+        raise Forbidden("Forbidden")
+
     blueprint_group_2 = Blueprint.group(
         blueprint_group_1, blueprint_3, url_prefix="/api"
     )
+
+    @blueprint_group_2.exception(SanicException)
+    def handle_non_handled_exception(request, exception):
+        return text("BP2_ERR_OK")
 
     @blueprint_group_2.middleware("response")
     def blueprint_group_2_middleware(request, response):
@@ -161,14 +182,23 @@ def test_bp_group(app: Sanic):
     _, response = app.test_client.get("/api/bp/bp1")
     assert response.text == "BP1_OK"
 
+    _, response = app.test_client.get("/api/bp/bp1/invalid")
+    assert response.text == "BP1_ERR_OK"
+
     _, response = app.test_client.get("/api/bp/bp2")
     assert response.text == "BP2_OK"
+
+    _, response = app.test_client.get("/api/bp/bp2/error")
+    assert response.text == "BP2_ERR_OK"
 
     _, response = app.test_client.get("/api/bp3")
     assert response.text == "BP3_OK"
 
-    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 9
-    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 8
+    _, response = app.test_client.get("/api/bp3/forbidden")
+    assert response.text == "BP2_ERR_OK"
+
+    assert MIDDLEWARE_INVOKE_COUNTER["response"] == 18
+    assert MIDDLEWARE_INVOKE_COUNTER["request"] == 16
 
 
 def test_bp_group_list_operations(app: Sanic):

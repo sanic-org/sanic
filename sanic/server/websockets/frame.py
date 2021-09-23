@@ -8,6 +8,8 @@ from websockets.typing import Data
 
 from sanic.exceptions import ServerError
 
+if TYPE_CHECKING:
+    from .impl import WebsocketImplProtocol
 
 UTF8Decoder = codecs.getincrementaldecoder("utf-8")
 
@@ -101,7 +103,8 @@ class WebsocketFrameAssembler:
             if self.get_in_progress:
                 # This should be guarded against with the read_mutex, exception is only here as a failsafe
                 raise ServerError(
-                    "Called get() on Websocket frame assembler while asynchronous get is already in progress."
+                    "Called get() on Websocket frame assembler "
+                    "while asynchronous get is already in progress."
                 )
             self.get_in_progress = True
 
@@ -168,7 +171,8 @@ class WebsocketFrameAssembler:
             if self.get_in_progress:
                 # This should be guarded against with the read_mutex, exception is only here as a failsafe
                 raise ServerError(
-                    "Called get_iter on Websocket frame assembler while asynchronous get is already in progress."
+                    "Called get_iter on Websocket frame assembler "
+                    "while asynchronous get is already in progress."
                 )
             self.get_in_progress = True
 

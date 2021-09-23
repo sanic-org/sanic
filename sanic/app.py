@@ -889,7 +889,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             await fut
         except Exception as e:
             self.error_handler.log(request, e)
-        except (CancelledError, ConnectionClosed) as E:
+        except (CancelledError, ConnectionClosed):
             cancelled = True
         finally:
             self.websocket_tasks.remove(fut)

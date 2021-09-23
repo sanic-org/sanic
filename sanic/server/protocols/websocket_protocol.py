@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Optional, Sequence, Union
 
-from httptools import HttpParserUpgrade  # type: ignore
 from websockets.connection import CLOSED, CLOSING, OPEN
 from websockets.server import ServerConnection
 
@@ -30,7 +29,7 @@ class WebSocketProtocol(HttpProtocol):
         websocket_max_size: Optional[int] = None,
         websocket_max_queue: Optional[int] = None,  # max_queue is deprecated
         websocket_read_limit: Optional[int] = None,  # read_limit is deprecated
-        websocket_write_limit: Optional[int] = None,  # write_limit is deprecated
+        websocket_write_limit: Optional[int] = None,  # write_limit deprecated
         websocket_ping_interval: Optional[float] = 20.0,
         websocket_ping_timeout: Optional[float] = 20.0,
         **kwargs,
@@ -42,13 +41,15 @@ class WebSocketProtocol(HttpProtocol):
         if websocket_max_queue is not None and int(websocket_max_queue) > 0:
             error_logger.warning(
                 DeprecationWarning(
-                    "websocket_max_queue is no longer used. No websocket message queueing is implemented."
+                    "websocket_max_queue is no longer used. "
+                    "No websocket message queueing is implemented."
                 )
             )
         if websocket_read_limit is not None and int(websocket_read_limit) > 0:
             error_logger.warning(
                 DeprecationWarning(
-                    "websocket_read_limit is no longer used. No websocket rate limiting is implemented."
+                    "websocket_read_limit is no longer used. "
+                    "No websocket rate limiting is implemented."
                 )
             )
         if (
@@ -57,7 +58,8 @@ class WebSocketProtocol(HttpProtocol):
         ):
             error_logger.warning(
                 DeprecationWarning(
-                    "websocket_write_limit is no longer used. No websocket rate limiting is implemented."
+                    "websocket_write_limit is no longer used. "
+                    "No websocket rate limiting is implemented."
                 )
             )
         self.websocket_ping_interval = websocket_ping_interval
@@ -110,10 +112,10 @@ class WebSocketProtocol(HttpProtocol):
         self, request, subprotocols=Optional[Sequence[str]]
     ):
         # let the websockets package do the handshake with the client
-        headers = {"Upgrade": "websocket", "Connection": "Upgrade"}
         try:
             if subprotocols is not None:
-                # subprotocols can be a set or frozenset, but ServerConnection needs a list
+                # subprotocols can be a set or frozenset,
+                # but ServerConnection needs a list
                 subprotocols = list(subprotocols)
             ws_conn = ServerConnection(
                 max_size=self.websocket_max_size,
@@ -122,7 +124,7 @@ class WebSocketProtocol(HttpProtocol):
                 logger=error_logger,
             )
             resp: "http11.Response" = ws_conn.accept(request)
-        except Exception as exc:
+        except Exception:
             msg = (
                 "Failed to open a WebSocket connection.\n"
                 "See server log for more information.\n"

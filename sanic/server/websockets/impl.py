@@ -439,11 +439,12 @@ class WebsocketImplProtocol:
         """
         if self.connection.state is not CLOSED:
             raise ServerError(
-                "webscoket about_pings should only be called after connection state is changed to CLOSED"
+                "Webscoket about_pings should only be called "
+                "after connection state is changed to CLOSED"
             )
 
         for ping in self.pings.values():
-            ping.set_exception(ConnectionClosedError(1006, ""))
+            ping.set_exception(ConnectionClosedError(None))
             # If the exception is never retrieved, it will be logged when ping
             # is garbage-collected. This is confusing for users.
             # Given that ping is done (with an exception), canceling it does
@@ -563,7 +564,8 @@ class WebsocketImplProtocol:
         """
         if self.recv_lock.locked():
             raise ServerError(
-                "cannot call recv_streaming while another task is already waiting for the next message"
+                "Cannot call recv_streaming while another task "
+                "is already waiting for the next message"
             )
         await self.recv_lock.acquire()
         if self.connection.state in (CLOSED, CLOSING):

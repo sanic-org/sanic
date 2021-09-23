@@ -29,8 +29,8 @@ class WebSocketProtocol(HttpProtocol):
         websocket_timeout: Optional[float] = 10.0,
         websocket_max_size: Optional[int] = None,
         websocket_max_queue: Optional[int] = None,  # max_queue is deprecated
-        websocket_read_limit: Optional[int] = 2 ** 16,
-        websocket_write_limit: Optional[int] = 2 ** 16,
+        websocket_read_limit: Optional[int] = None,  # read_limit is deprecated
+        websocket_write_limit: Optional[int] = None,  # write_limit is deprecated
         websocket_ping_interval: Optional[float] = 20.0,
         websocket_ping_timeout: Optional[float] = 20.0,
         **kwargs,

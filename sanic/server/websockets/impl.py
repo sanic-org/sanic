@@ -387,7 +387,7 @@ class WebsocketImplProtocol:
                 and self.io_proto.transport is not None
                 and self.io_proto.transport.can_write_eof()
             ):
-                error_logger.warning("Websocket half-closing TCP connection")
+                error_logger.debug("Websocket half-closing TCP connection")
                 self.io_proto.transport.write_eof()
                 if self.connection_lost_waiter is not None:
                     if await self.wait_for_connection_lost(timeout=0):

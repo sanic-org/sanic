@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WebSocket benchmark</title>
+    </head>
+    <body>
+        <script>
+            function make_msg(length) {
+                var result = '';
+                var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                var clen = characters.length;
+                for ( var i = 0; i < length; i++ ) {
+                  result += characters.charAt(Math.floor(Math.random() * clen));
+               }
+               return result;
+            }
+            var ws = new WebSocket('ws://' + document.domain + ':' + location.port + '/bench');
+            var msg = make_msg(16384);
+            var started = false;
+            function send_msg() {
+                if (ws.readyState === ws.OPEN) {
+                    ws.send(msg);
+                    window.setTimeout(send_msg, 1);
+                }
+            }
+            function run_bench() {
+                console.log("first msg seen, starting bench...");
+                window.setTimeout(send_msg, 0);
+            }
+            function stop_bench() {
+                ws.close(1000);
+            }
+            ws.onmessage = function(event) {
+                console.log("Received "+ event.data);
+                if (started === false) {
+                    started = true;
+                    window.setTimeout(run_bench, 0);
+                    window.setTimeout(stop_bench, 40000);
+                }
+            };
+            ws.onclose = function(event) {
+                console.log("Websocket connection closed.");
+            }
+
+        </script>
+    </body>
+</html>

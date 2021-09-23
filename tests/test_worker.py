@@ -175,7 +175,7 @@ def test_worker_close(worker):
     worker.wsgi = mock.Mock()
     conn = mock.Mock()
     conn.websocket = mock.Mock()
-    conn.websocket.close = mock.Mock(wraps=_a_noop)
+    conn.websocket.fail_connection = mock.Mock(wraps=_a_noop)
     worker.connections = set([conn])
     worker.log = mock.Mock()
     worker.loop = loop
@@ -190,5 +190,5 @@ def test_worker_close(worker):
     loop.run_until_complete(_close)
 
     assert worker.signal.stopped
-    assert conn.websocket.close.called
+    assert conn.websocket.fail_connection.called
     assert len(worker.servers) == 0

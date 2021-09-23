@@ -671,31 +671,29 @@ async def test_websocket_route_asgi(app, url):
     assert response.json["set"]
 
 
-def test_websocket_route_with_subprotocols(app):
+@pytest.mark.parametrize(
+    "subprotocols,expected",
+    (
+        (["one"], "one"),
+        (["three", "one"], "one"),
+        (["tree"], None),
+        (None, None),
+    ),
+)
+def test_websocket_route_with_subprotocols(app, subprotocols, expected):
     results = []
 
     @app.websocket("/ws", subprotocols=["zero", "one", "two", "three"])
     async def handler(request, ws):
-        results.append(ws.subprotocol)
+        nonlocal results
+        results = ws.subprotocol
         assert ws.subprotocol is not None
 
-    _, response = SanicTestClient(app).websocket("/ws", subprotocols=["one"])
-    assert response.opened is True
-    assert results == ["one"]
-
     _, response = SanicTestClient(app).websocket(
-        "/ws", subprotocols=["three", "one"]
+        "/ws", subprotocols=subprotocols
     )
     assert response.opened is True
-    assert results == ["one", "one"]
-
-    _, response = SanicTestClient(app).websocket("/ws", subprotocols=["tree"])
-    assert response.opened is True
-    assert results == ["one", "one", None]
-
-    _, response = SanicTestClient(app).websocket("/ws")
-    assert response.opened is True
-    assert results == ["one", "one", None, None]
+    assert results == expected
 
 
 @pytest.mark.parametrize("strict_slashes", [True, False, None])

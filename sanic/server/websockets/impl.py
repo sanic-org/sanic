@@ -334,8 +334,8 @@ class WebsocketImplProtocol:
         if self.connection.state == OPEN:
             data_to_send = self.connection.data_to_send()
             self.connection.send_close(code, reason)
+            data_to_send.extend(self.connection.data_to_send())
             try:
-                data_to_send.extend(self.connection.data_to_send())
                 while (
                     len(data_to_send)
                     and self.io_proto
@@ -346,15 +346,18 @@ class WebsocketImplProtocol:
             except Exception:
                 # sending close frames may fail if the
                 # transport closes during this period
+                # But that doesn't matter at this point
                 ...
         if (
             self.data_finished_fut is not None
             and not self.data_finished_fut.done()
         ):
-            # We have a graceful auto-closer. Use it to close the connection.
+            # We have the ability to signal the auto-closer
+            # try to trigger it to auto-close the connection
             self.data_finished_fut.cancel()
             self.data_finished_fut = None
         if self.auto_closer_task is None or self.auto_closer_task.done():
+            # Auto-closer is not running, do force disconnect
             return self._force_disconnect()
 
     async def auto_close_connection(self) -> None:

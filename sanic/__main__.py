@@ -226,9 +226,7 @@ def main():
             try:
                 args.workers = len(os.sched_getaffinity(0))
             except AttributeError:
-                error_logger.warning(
-                    "Ignoring '--fast' since it is not supported on this OS."
-                )
+                args.workers = os.cpu_count()
 
         kwargs = {
             "host": args.host,

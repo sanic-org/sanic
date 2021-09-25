@@ -842,7 +842,19 @@ class RouteMixin:
             if not path.isfile(file_or_directory):
                 uri += "/<__file_uri__:path>"
         elif static.resource_type == "dir":
+            if path.isfile(file_or_directory):
+                raise TypeError(
+                    "Resource type improperly identified as directory. "
+                    f"'{file_or_directory}'"
+                )
             uri += "/<__file_uri__:path>"
+        elif static.resource_type == "file" and not path.isfile(
+            file_or_directory
+        ):
+            raise TypeError(
+                "Resource type improperly identified as file. "
+                f"'{file_or_directory}'"
+            )
         elif static.resource_type != "file":
             raise ValueError(
                 "The resource_type should be set to 'file' or 'dir'"

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Optional, Sequence
 
 from websockets.connection import CLOSED, CLOSING, OPEN
 from websockets.server import ServerConnection
@@ -16,16 +16,16 @@ if TYPE_CHECKING:
 
 class WebSocketProtocol(HttpProtocol):
 
-    websocket: Union[None, WebsocketImplProtocol]
+    websocket: Optional[WebsocketImplProtocol]
     websocket_timeout: float
-    websocket_max_size = Union[None, int]
-    websocket_ping_interval = Union[None, float]
-    websocket_ping_timeout = Union[None, float]
+    websocket_max_size = Optional[int]
+    websocket_ping_interval = Optional[float]
+    websocket_ping_timeout = Optional[float]
 
     def __init__(
         self,
         *args,
-        websocket_timeout: Optional[float] = 10.0,
+        websocket_timeout: float = 10.0,
         websocket_max_size: Optional[int] = None,
         websocket_max_queue: Optional[int] = None,  # max_queue is deprecated
         websocket_read_limit: Optional[int] = None,  # read_limit is deprecated
@@ -38,28 +38,25 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket = None
         self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size
-        if websocket_max_queue is not None and int(websocket_max_queue) > 0:
+        if websocket_max_queue is not None and websocket_max_queue > 0:
+            # TODO: Reminder remove this warning in v22.3
             error_logger.warning(
                 DeprecationWarning(
-                    "websocket_max_queue is no longer used. "
-                    "No websocket message queueing is implemented."
+                    "Websocket no longer uses queueing, so websocket_max_queue is no longer required."
                 )
             )
-        if websocket_read_limit is not None and int(websocket_read_limit) > 0:
+        if websocket_read_limit is not None and websocket_read_limit > 0:
+            # TODO: Reminder remove this warning in v22.3
             error_logger.warning(
                 DeprecationWarning(
-                    "websocket_read_limit is no longer used. "
-                    "No websocket rate limiting is implemented."
+                    "Websocket no longer uses read buffers, so websocket_read_limit is not required."
                 )
             )
-        if (
-            websocket_write_limit is not None
-            and int(websocket_write_limit) > 0
-        ):
+        if websocket_write_limit is not None and websocket_write_limit > 0:
+            # TODO: Reminder remove this warning in v22.3
             error_logger.warning(
                 DeprecationWarning(
-                    "websocket_write_limit is no longer used. "
-                    "No websocket rate limiting is implemented."
+                    "Websocket no longer uses write buffers, so websocket_write_limit is not required."
                 )
             )
         self.websocket_ping_interval = websocket_ping_interval

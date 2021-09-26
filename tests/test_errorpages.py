@@ -233,3 +233,57 @@ def test_fallback_with_content_type_mismatch_accept(app):
     )
     assert response.status == 500
     assert response.content_type == "text/html; charset=utf-8"
+
+
+@pytest.mark.parametrize(
+    "accept,content_type,expected",
+    (
+        (None, None, "text/plain; charset=utf-8"),
+        ("foo/bar", None, "text/html; charset=utf-8"),
+        ("application/json", None, "application/json"),
+        ("application/json,text/plain", None, "application/json"),
+        ("text/plain,application/json", None, "application/json"),
+        ("text/plain,foo/bar", None, "text/plain; charset=utf-8"),
+        # Following test is valid after v22.3
+        # ("text/plain,text/html", None, "text/plain; charset=utf-8"),
+        ("*/*", "foo/bar", "text/html; charset=utf-8"),
+        ("*/*", "application/json", "application/json"),
+    ),
+)
+def test_combinations_for_auto(fake_request, accept, content_type, expected):
+    if accept:
+        fake_request.headers["accept"] = accept
+    else:
+        del fake_request.headers["accept"]
+
+    if content_type:
+        fake_request.headers["content-type"] = content_type
+
+    try:
+        raise Exception("bad stuff")
+    except Exception as e:
+        response = exception_response(
+            fake_request,
+            e,
+            True,
+            base=HTMLRenderer,
+            fallback="auto",
+        )
+
+    assert response.content_type == expected
+
+
+def test_curl_gets_text(fake_request):
+    fake_request.headers["user-agent"] = "curl/9.9.9"
+    try:
+        raise Exception("bad stuff")
+    except Exception as e:
+        response = exception_response(
+            fake_request,
+            e,
+            True,
+            base=HTMLRenderer,
+            fallback="auto",
+        )
+
+    assert response.content_type == "text/plain; charset=utf-8"

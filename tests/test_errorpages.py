@@ -271,19 +271,3 @@ def test_combinations_for_auto(fake_request, accept, content_type, expected):
         )
 
     assert response.content_type == expected
-
-
-def test_curl_gets_text(fake_request):
-    fake_request.headers["user-agent"] = "curl/9.9.9"
-    try:
-        raise Exception("bad stuff")
-    except Exception as e:
-        response = exception_response(
-            fake_request,
-            e,
-            True,
-            base=HTMLRenderer,
-            fallback="auto",
-        )
-
-    assert response.content_type == "text/plain; charset=utf-8"

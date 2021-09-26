@@ -441,14 +441,6 @@ def exception_response(
                 elif not acceptable:
                     renderer = TextRenderer
                 else:
-                    # If the client is curl, we will default to TextRenderer
-                    default = (
-                        TextRenderer
-                        if "curl"
-                        in request.headers.get("user-agent", "").lower()
-                        else base
-                    )
-
                     # Fourth, look to see if there was a JSON body
                     # When in this situation, the request is probably coming
                     # from curl, an API client like Postman or Insomnia, or a
@@ -457,13 +449,9 @@ def exception_response(
                         # Give them the benefit of the doubt if they did:
                         # $ curl localhost:8000 -d '{"foo": "bar"}'
                         # And provide them with JSONRenderer
-                        renderer = (
-                            JSONRenderer  # type: ignore
-                            if request.json
-                            else default
-                        )
+                        renderer = JSONRenderer if request.json else base
                     except InvalidUsage:
-                        renderer = default  # type: ignore
+                        renderer = base
             else:
                 renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
 

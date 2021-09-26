@@ -34,7 +34,7 @@ from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
-    Accept,
+    AcceptContainer,
     Options,
     parse_accept,
     parse_content_header,
@@ -139,7 +139,7 @@ class Request:
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
-        self.parsed_accept: Optional[List[Accept]] = None
+        self.parsed_accept: Optional[AcceptContainer] = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -301,7 +301,7 @@ class Request:
         return self.parsed_json
 
     @property
-    def accept(self) -> List[Accept]:
+    def accept(self) -> AcceptContainer:
         if self.parsed_accept is None:
             accept_header = self.headers.getone("accept", "")
             self.parsed_accept = parse_accept(accept_header)

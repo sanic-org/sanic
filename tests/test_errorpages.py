@@ -20,7 +20,7 @@ def app():
 
 @pytest.fixture
 def fake_request(app):
-    return Request(b"/foobar", {}, "1.1", "GET", None, app)
+    return Request(b"/foobar", {"accept": "*/*"}, "1.1", "GET", None, app)
 
 
 @pytest.mark.parametrize(
@@ -80,16 +80,16 @@ def test_auto_fallback_with_content_type(app):
     app.config.FALLBACK_ERROR_FORMAT = "auto"
 
     _, response = app.test_client.get(
-        "/error", headers={"content-type": "application/json"}
+        "/error", headers={"content-type": "application/json", "accpet": "*/*"}
     )
     assert response.status == 500
     assert response.content_type == "application/json"
 
     _, response = app.test_client.get(
-        "/error", headers={"content-type": "text/plain"}
+        "/error", headers={"content-type": "foo/bar", "accpet": "*/*"}
     )
     assert response.status == 500
-    assert response.content_type == "text/plain; charset=utf-8"
+    assert response.content_type == "text/html; charset=utf-8"
 
 
 def test_route_error_format_set_on_auto(app):
@@ -206,11 +206,23 @@ def test_fallback_with_content_type_mismatch_accept(app):
         headers={"accept": "foo/bar"},
     )
     assert response.status == 500
+    assert response.content_type == "text/html; charset=utf-8"
+    _, response = app.test_client.get(
+        "/alt1",
+        headers={"accept": "foo/bar,*/*"},
+    )
+    assert response.status == 500
     assert response.content_type == "application/json"
 
     _, response = app.test_client.get(
         "/alt2",
         headers={"accept": "foo/bar"},
+    )
+    assert response.status == 500
+    assert response.content_type == "text/html; charset=utf-8"
+    _, response = app.test_client.get(
+        "/alt2",
+        headers={"accept": "foo/bar,*/*"},
     )
     assert response.status == 500
     assert response.content_type == "text/plain; charset=utf-8"

@@ -185,6 +185,22 @@ class AcceptContainer(list):
     def __contains__(self, o: object) -> bool:
         return any(item.match(o) for item in self)
 
+    def match(
+        self,
+        o: object,
+        *,
+        allow_type_wildcard: bool = True,
+        allow_subtype_wildcard: bool = True,
+    ) -> bool:
+        return any(
+            item.match(
+                o,
+                allow_type_wildcard=allow_type_wildcard,
+                allow_subtype_wildcard=allow_subtype_wildcard,
+            )
+            for item in self
+        )
+
 
 def parse_content_header(value: str) -> Tuple[str, Options]:
     """Parse content-type and content-disposition header values.

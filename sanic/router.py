@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 from functools import lru_cache
+from inspect import signature
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from uuid import UUID
 
 from sanic_routing import BaseRouter  # type: ignore
 from sanic_routing.exceptions import NoMethod  # type: ignore
@@ -108,6 +112,8 @@ class Router(BaseRouter):
             version = str(version).strip("/").lstrip("v")
             uri = "/".join([f"{version_prefix}{version}", uri.lstrip("/")])
 
+        uri = self._normalize(uri, handler)
+
         params = dict(
             path=uri,
             handler=handler,
@@ -194,3 +200,24 @@ class Router(BaseRouter):
                 raise SanicException(
                     f"Invalid route: {route}. Parameter names cannot use '__'."
                 )
+
+    def _normalize(self, uri: str, handler: RouteHandler) -> str:
+        if "<" not in uri:
+            return uri
+
+        sig = signature(handler)
+        mapping = {
+            param.name: param.annotation.__name__.lower()
+            for param in sig.parameters.values()
+            if param.annotation in (str, int, float, UUID)
+        }
+
+        reconstruction = []
+        for part in uri.split("/"):
+            if part.startswith("<") and ":" not in part:
+                name = part[1:-1]
+                annotation = mapping.get(name)
+                if annotation:
+                    part = f"<{name}:{annotation}>"
+            reconstruction.append(part)
+        return "/".join(reconstruction)

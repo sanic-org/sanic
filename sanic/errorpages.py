@@ -340,10 +340,13 @@ RENDERERS_BY_CONFIG = {
 }
 
 RENDERERS_BY_CONTENT_TYPE = {
-    "multipart/form-data": HTMLRenderer,
-    "application/json": JSONRenderer,
     "text/plain": TextRenderer,
+    "application/json": JSONRenderer,
+    "multipart/form-data": HTMLRenderer,
     "text/html": HTMLRenderer,
+}
+CONTENT_TYPE_BY_RENDERERS = {
+    v: k for k, v in RENDERERS_BY_CONTENT_TYPE.items()
 }
 
 RESPONSE_MAPPING = {
@@ -398,34 +401,89 @@ def exception_response(
                 "content-type", ""
             ).split(";")
 
+            acceptable = request.accept
+
             # If the format is auto still, make a guess
             if render_format == "auto":
-                # First, look to see if there was a JSON body
-                try:
-                    renderer = JSONRenderer if request.json else base
-                except InvalidUsage:
-                    renderer = base
+                # First, if there is an Accept header, check if text/html
+                # is the first option
+                # According to MDN Web Docs, all major browsers use text/html
+                # as the primary value in Accept (with the exception of IE 8,
+                # and, well, if you are supporting IE 8, then you have bigger
+                # problems to concern yourself with than what default exception
+                # renderer is used)
+                # Source:
+                # https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation/List_of_default_Accept_values
 
-                # Second, if there is a content-type in the request
-                # we can assume that's what we want. Otherwise, go back to
-                # previous guess.
-                renderer = RENDERERS_BY_CONTENT_TYPE.get(
-                    content_type, renderer
-                )
+                if acceptable and acceptable[0].match(
+                    "text/html",
+                    allow_type_wildcard=False,
+                    allow_subtype_wildcard=False,
+                ):
+                    renderer = HTMLRenderer
+
+                # Second, if there is an Accept header, check if
+                # application/json is an option, or if the content-type
+                # is application/json
+                elif (
+                    acceptable
+                    and acceptable.match(
+                        "application/json",
+                        allow_type_wildcard=False,
+                        allow_subtype_wildcard=False,
+                    )
+                    or content_type == "application/json"
+                ):
+                    renderer = JSONRenderer
+
+                # Third, if there is no Accept header, assume we want text.
+                # The likely use case here is a raw socket.
+                elif not acceptable:
+                    renderer = TextRenderer
+                else:
+                    # If the client is curl, we will default to TextRenderer
+                    default = (
+                        TextRenderer
+                        if "curl"
+                        in request.headers.get("user-agent", "").lower()
+                        else base
+                    )
+
+                    # Fourth, look to see if there was a JSON body
+                    # When in this situation, the request is probably coming
+                    # from curl, an API client like Postman or Insomnia, or a
+                    # package like requests or httpx
+                    try:
+                        # Give them the benefit of the doubt if they did:
+                        # $ curl localhost:8000 -d '{"foo": "bar"}'
+                        # And provide them with JSONRenderer
+                        renderer = (
+                            JSONRenderer  # type: ignore
+                            if request.json
+                            else default
+                        )
+                    except InvalidUsage:
+                        renderer = default  # type: ignore
             else:
                 renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
 
-            # Third, if there is an Accept header, make sure
+            # Lastly, if there is an Accept header, make sure
             # our choice is okay
-            acceptable = request.accept
-            if acceptable and content_type and content_type not in acceptable:
-                for accept in acceptable:
-                    mtype = f"{accept.type_}/{accept.subtype}"
-                    if mtype in RENDERERS_BY_CONTENT_TYPE:
-                        renderer = RENDERERS_BY_CONTENT_TYPE[mtype]
-                        break
-                else:
-                    renderer = base
+            if acceptable:
+                type_ = CONTENT_TYPE_BY_RENDERERS.get(renderer)  # type: ignore
+                if type_ and type_ not in acceptable:
+                    # If the renderer selected is not in the Accept header
+                    # look through what is in the Accept header, and select
+                    # the first option that matches. Otherwise, just drop back
+                    # to the original default
+                    for accept in acceptable:
+                        mtype = f"{accept.type_}/{accept.subtype}"
+                        maybe = RENDERERS_BY_CONTENT_TYPE.get(mtype)
+                        if maybe:
+                            renderer = maybe
+                            break
+                    else:
+                        renderer = base
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()

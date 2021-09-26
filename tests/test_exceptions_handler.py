@@ -182,18 +182,24 @@ def test_exception_handler_lookup(exception_handler_app):
     handler.add(CustomError, custom_error_handler)
     handler.add(ServerError, server_error_handler)
 
-    assert handler.lookup(ImportError()) == import_error_handler
-    assert handler.lookup(ModuleNotFoundError()) == import_error_handler
-    assert handler.lookup(CustomError()) == custom_error_handler
-    assert handler.lookup(ServerError("Error")) == server_error_handler
-    assert handler.lookup(CustomServerError("Error")) == server_error_handler
+    assert handler.lookup(ImportError(), None) == import_error_handler
+    assert handler.lookup(ModuleNotFoundError(), None) == import_error_handler
+    assert handler.lookup(CustomError(), None) == custom_error_handler
+    assert handler.lookup(ServerError("Error"), None) == server_error_handler
+    assert (
+        handler.lookup(CustomServerError("Error"), None)
+        == server_error_handler
+    )
 
     # once again to ensure there is no caching bug
-    assert handler.lookup(ImportError()) == import_error_handler
-    assert handler.lookup(ModuleNotFoundError()) == import_error_handler
-    assert handler.lookup(CustomError()) == custom_error_handler
-    assert handler.lookup(ServerError("Error")) == server_error_handler
-    assert handler.lookup(CustomServerError("Error")) == server_error_handler
+    assert handler.lookup(ImportError(), None) == import_error_handler
+    assert handler.lookup(ModuleNotFoundError(), None) == import_error_handler
+    assert handler.lookup(CustomError(), None) == custom_error_handler
+    assert handler.lookup(ServerError("Error"), None) == server_error_handler
+    assert (
+        handler.lookup(CustomServerError("Error"), None)
+        == server_error_handler
+    )
 
 
 def test_exception_handler_processed_request_middleware(exception_handler_app):

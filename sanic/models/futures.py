@@ -52,6 +52,7 @@ class FutureStatic(NamedTuple):
     host: Optional[str]
     strict_slashes: Optional[bool]
     content_type: Optional[bool]
+    resource_type: Optional[str]
 
 
 class FutureSignal(NamedTuple):

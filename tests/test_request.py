@@ -140,3 +140,39 @@ def test_ipv6_address_is_not_wrapped(app):
     assert resp.json["client"] == "[::1]"
     assert resp.json["client_ip"] == "::1"
     assert request.ip == "::1"
+
+
+def test_request_accept():
+    app = Sanic("req-generator")
+
+    @app.get("/")
+    async def get(request):
+        return response.empty()
+
+    request, _ = app.test_client.get(
+        "/",
+        headers={
+            "Accept": "text/*, text/plain, text/plain;format=flowed, */*"
+        },
+    )
+    assert request.accept == [
+        "text/plain;format=flowed",
+        "text/plain",
+        "text/*",
+        "*/*",
+    ]
+
+    request, _ = app.test_client.get(
+        "/",
+        headers={
+            "Accept": (
+                "text/plain; q=0.5, text/html, text/x-dvi; q=0.8, text/x-c"
+            )
+        },
+    )
+    assert request.accept == [
+        "text/html",
+        "text/x-c",
+        "text/x-dvi; q=0.8",
+        "text/plain; q=0.5",
+    ]

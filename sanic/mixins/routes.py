@@ -595,6 +595,7 @@ class RouteMixin:
         strict_slashes=None,
         content_type=None,
         apply=True,
+        resource_type=None,
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -644,6 +645,7 @@ class RouteMixin:
             host,
             strict_slashes,
             content_type,
+            resource_type,
         )
         self._future_statics.add(static)
 
@@ -839,8 +841,27 @@ class RouteMixin:
         name = static.name
         # If we're not trying to match a file directly,
         # serve from the folder
-        if not path.isfile(file_or_directory):
+        if not static.resource_type:
+            if not path.isfile(file_or_directory):
+                uri += "/<__file_uri__:path>"
+        elif static.resource_type == "dir":
+            if path.isfile(file_or_directory):
+                raise TypeError(
+                    "Resource type improperly identified as directory. "
+                    f"'{file_or_directory}'"
+                )
             uri += "/<__file_uri__:path>"
+        elif static.resource_type == "file" and not path.isfile(
+            file_or_directory
+        ):
+            raise TypeError(
+                "Resource type improperly identified as file. "
+                f"'{file_or_directory}'"
+            )
+        elif static.resource_type != "file":
+            raise ValueError(
+                "The resource_type should be set to 'file' or 'dir'"
+            )
 
         # special prefix for static files
         # if not static.name.startswith("_static_"):

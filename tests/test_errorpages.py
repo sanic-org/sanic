@@ -80,13 +80,13 @@ def test_auto_fallback_with_content_type(app):
     app.config.FALLBACK_ERROR_FORMAT = "auto"
 
     _, response = app.test_client.get(
-        "/error", headers={"content-type": "application/json", "accpet": "*/*"}
+        "/error", headers={"content-type": "application/json", "accept": "*/*"}
     )
     assert response.status == 500
     assert response.content_type == "application/json"
 
     _, response = app.test_client.get(
-        "/error", headers={"content-type": "foo/bar", "accpet": "*/*"}
+        "/error", headers={"content-type": "foo/bar", "accept": "*/*"}
     )
     assert response.status == 500
     assert response.content_type == "text/html; charset=utf-8"

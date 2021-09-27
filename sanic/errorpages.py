@@ -397,9 +397,9 @@ def exception_response(
                 except AttributeError:
                     ...
 
-            content_type, *_ = request.headers.getone(
-                "content-type", ""
-            ).split(";")
+            content_type = request.headers.getone("content-type", "").split(
+                ";"
+            )[0]
 
             acceptable = request.accept
 

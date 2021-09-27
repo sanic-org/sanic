@@ -1,3 +1,7 @@
+.. note::
+
+  From v21.9, CHANGELOG files are maintained in ``./docs/sanic/releases``
+
 Version 21.6.1
 --------------
 

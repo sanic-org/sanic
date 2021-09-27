@@ -337,10 +337,11 @@ class Blueprint(BaseSanic):
                 middleware.append(app._apply_middleware(future, route_names))
 
         # Exceptions
-        for future in self._future_exceptions:
-            exception_handlers.append(
-                app._apply_exception_handler(future, route_names)
-            )
+        if route_names:
+            for future in self._future_exceptions:
+                exception_handlers.append(
+                    app._apply_exception_handler(future, route_names)
+                )
 
         # Event listeners
         for listener in self._future_listeners:

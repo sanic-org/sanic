@@ -148,6 +148,12 @@ class Http(metaclass=TouchUpMeta):
                     await self.response.send(end_stream=True)
             except CancelledError:
                 # Write an appropriate response before exiting
+                if not self.protocol.transport:
+                    logger.info(
+                        f"Request: {self.request.method} {self.request.url} "
+                        "stopped. Transport is closed."
+                    )
+                    return
                 e = self.exception or ServiceUnavailable("Cancelled")
                 self.exception = None
                 self.keep_alive = False

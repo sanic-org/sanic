@@ -1,13 +1,14 @@
 from sanic import Sanic
-from sanic.response import file
+from sanic.response import file, redirect
 
 app = Sanic(__name__)
 
 
-@app.route('/')
-async def index(request):
-    return await file('websocket.html')
+app.static('index.html', "websocket.html")
 
+@app.route('/')
+def index(request):
+    return redirect("index.html")
 
 @app.websocket('/feed')
 async def feed(request, ws):

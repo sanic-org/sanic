@@ -101,7 +101,8 @@ class WebsocketFrameAssembler:
                 if not self.message_complete.is_set():
                     return None
             if self.get_in_progress:
-                # This should be guarded against with the read_mutex, exception is only here as a failsafe
+                # This should be guarded against with the read_mutex,
+                # exception is only here as a failsafe
                 raise ServerError(
                     "Called get() on Websocket frame assembler "
                     "while asynchronous get is already in progress."
@@ -130,9 +131,11 @@ class WebsocketFrameAssembler:
                 self.protocol.resume_frames()
                 self.paused = False
             if not self.get_in_progress:
-                # This should be guarded against with the read_mutex, exception is here as a failsafe
+                # This should be guarded against with the read_mutex,
+                # exception is here as a failsafe
                 raise ServerError(
-                    "State of Websocket frame assembler was modified while an asynchronous get was in progress."
+                    "State of Websocket frame assembler was modified while an "
+                    "asynchronous get was in progress."
                 )
             self.get_in_progress = False
 
@@ -148,10 +151,12 @@ class WebsocketFrameAssembler:
             # mypy cannot figure out that chunks have the proper type.
             message: Data = joiner.join(self.chunks)  # type: ignore
             if self.message_fetched.is_set():
-                # This should be guarded against with the read_mutex, and get_in_progress check,
-                # this exception is here as a failsafe
+                # This should be guarded against with the read_mutex,
+                # and get_in_progress check, this exception is here
+                # as a failsafe
                 raise ServerError(
-                    "Websocket get() found a message when state was already fetched."
+                    "Websocket get() found a message when "
+                    "state was already fetched."
                 )
             self.message_fetched.set()
             self.chunks = []
@@ -169,7 +174,8 @@ class WebsocketFrameAssembler:
         """
         async with self.read_mutex:
             if self.get_in_progress:
-                # This should be guarded against with the read_mutex, exception is only here as a failsafe
+                # This should be guarded against with the read_mutex,
+                # exception is only here as a failsafe
                 raise ServerError(
                     "Called get_iter on Websocket frame assembler "
                     "while asynchronous get is already in progress."
@@ -186,7 +192,7 @@ class WebsocketFrameAssembler:
             if self.message_complete.is_set():
                 await self.chunks_queue.put(None)
 
-            # Locking with get_in_progress ensures only one thread can get here.
+            # Locking with get_in_progress ensures only one thread can get here
             for c in chunks:
                 yield c
             while True:
@@ -200,22 +206,28 @@ class WebsocketFrameAssembler:
                 self.protocol.resume_frames()
                 self.paused = False
             if not self.get_in_progress:
-                # This should be guarded against with the read_mutex, exception is here as a failsafe
+                # This should be guarded against with the read_mutex,
+                # exception is here as a failsafe
                 raise ServerError(
-                    "State of Websocket frame assembler was modified while an asynchronous get was in progress."
+                    "State of Websocket frame assembler was modified while an "
+                    "asynchronous get was in progress."
                 )
             self.get_in_progress = False
             if not self.message_complete.is_set():
-                # This should be guarded against with the read_mutex, exception is here as a failsafe
+                # This should be guarded against with the read_mutex,
+                # exception is here as a failsafe
                 raise ServerError(
-                    "Websocket frame assembler chunks queue ended before message was complete."
+                    "Websocket frame assembler chunks queue ended before "
+                    "message was complete."
                 )
             self.message_complete.clear()
             if self.message_fetched.is_set():
-                # This should be guarded against with the read_mutex, and get_in_progress check,
-                # this exception is here as a failsafe
+                # This should be guarded against with the read_mutex,
+                # and get_in_progress check, this exception is
+                # here as a failsafe
                 raise ServerError(
-                    "Websocket get_iter() found a message when state was already fetched."
+                    "Websocket get_iter() found a message when state was "
+                    "already fetched."
                 )
 
             self.message_fetched.set()
@@ -257,7 +269,8 @@ class WebsocketFrameAssembler:
             if not frame.fin:
                 return
             if not self.get_in_progress:
-                # nobody is waiting for this frame, so try to pause subsequent frames at the protocol level
+                # nobody is waiting for this frame, so try to pause subsequent
+                # frames at the protocol level
                 self.paused = self.protocol.pause_frames()
             # Message is complete. Wait until it's fetched to return.
 
@@ -266,13 +279,15 @@ class WebsocketFrameAssembler:
             if self.message_complete.is_set():
                 # This should be guarded against with the write_mutex
                 raise ServerError(
-                    "Websocket put() got a new message when a message was already in its chamber."
+                    "Websocket put() got a new message when a message was "
+                    "already in its chamber."
                 )
             self.message_complete.set()  # Signal to get() it can serve the
             if self.message_fetched.is_set():
                 # This should be guarded against with the write_mutex
                 raise ServerError(
-                    "Websocket put() got a new message when the previous message was not yet fetched."
+                    "Websocket put() got a new message when the previous "
+                    "message was not yet fetched."
                 )
 
             # Allow get() to run and eventually set the event.

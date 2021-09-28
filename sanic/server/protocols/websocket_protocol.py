@@ -42,21 +42,24 @@ class WebSocketProtocol(HttpProtocol):
             # TODO: Reminder remove this warning in v22.3
             error_logger.warning(
                 DeprecationWarning(
-                    "Websocket no longer uses queueing, so websocket_max_queue is no longer required."
+                    "Websocket no longer uses queueing, so websocket_max_queue"
+                    " is no longer required."
                 )
             )
         if websocket_read_limit is not None and websocket_read_limit > 0:
             # TODO: Reminder remove this warning in v22.3
             error_logger.warning(
                 DeprecationWarning(
-                    "Websocket no longer uses read buffers, so websocket_read_limit is not required."
+                    "Websocket no longer uses read buffers, so "
+                    "websocket_read_limit is not required."
                 )
             )
         if websocket_write_limit is not None and websocket_write_limit > 0:
             # TODO: Reminder remove this warning in v22.3
             error_logger.warning(
                 DeprecationWarning(
-                    "Websocket no longer uses write buffers, so websocket_write_limit is not required."
+                    "Websocket no longer uses write buffers, so "
+                    "websocket_write_limit is not required."
                 )
             )
         self.websocket_ping_interval = websocket_ping_interval

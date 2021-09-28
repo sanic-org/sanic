@@ -3,7 +3,6 @@ import random
 import struct
 
 from typing import (
-    TYPE_CHECKING,
     AsyncIterator,
     Dict,
     Iterable,
@@ -15,7 +14,7 @@ from typing import (
 
 from websockets.connection import CLOSED, CLOSING, OPEN, Event
 from websockets.exceptions import ConnectionClosed, ConnectionClosedError
-from websockets.frames import OP_PONG
+from websockets.frames import Frame, OP_PONG
 from websockets.server import ServerConnection
 from websockets.typing import Data
 
@@ -24,10 +23,6 @@ from sanic.server.protocols.base_protocol import SanicProtocol
 
 from ...exceptions import ServerError
 from .frame import WebsocketFrameAssembler
-
-
-if TYPE_CHECKING:
-    from websockets.frames import Frame
 
 
 class WebsocketImplProtocol:
@@ -90,26 +85,31 @@ class WebsocketImplProtocol:
         if not self.can_pause:
             return False
         if self.pause_frame_fut:
+            logger.debug("Websocket connection already paused.")
             return False
         if (not self.loop) or (not self.io_proto):
             return False
         if self.io_proto.transport:
             self.io_proto.transport.pause_reading()
         self.pause_frame_fut = self.loop.create_future()
+        logger.debug("Websocket connection paused.")
         return True
 
     def resume_frames(self):
         if not self.pause_frame_fut:
+            logger.debug("Websocket connection not paused.")
             return False
         if (not self.loop) or (not self.io_proto):
             logger.debug(
-                "Websocket attempting to resume reading frames, but connection is gone."
+                "Websocket attempting to resume reading frames, "
+                "but connection is gone."
             )
             return False
         if self.io_proto.transport:
             self.io_proto.transport.resume_reading()
         self.pause_frame_fut.set_result(None)
         self.pause_frame_fut = None
+        logger.debug("Websocket connection unpaused.")
         return True
 
     async def connection_made(
@@ -128,7 +128,8 @@ class WebsocketImplProtocol:
             raise ServerError("Connection received with no asyncio loop.")
         if self.auto_closer_task:
             raise ServerError(
-                "Cannot call connection_made more than once on a websocket connection."
+                "Cannot call connection_made more than once "
+                "on a websocket connection."
             )
         self.loop = loop
         self.io_proto = io_proto
@@ -163,9 +164,9 @@ class WebsocketImplProtocol:
                 )
                 return True
             except asyncio.TimeoutError:
-                # Re-check self.connection_lost_waiter.done() synchronously because
-                # connection_lost() could run between the moment the timeout occurs
-                # and the moment this coroutine resumes running.
+                # Re-check self.connection_lost_waiter.done() synchronously
+                # because connection_lost() could run between the moment the
+                # timeout occurs and the moment this coroutine resumes running
                 return self.connection_lost_waiter.done()
 
     async def process_events(self, events: Sequence[Event]) -> None:
@@ -216,7 +217,7 @@ class WebsocketImplProtocol:
                 await asyncio.sleep(self.ping_interval)
 
                 # ping() raises CancelledError if the connection is closed,
-                # when auto_close_connection() cancels self.keepalive_ping_task.
+                # when auto_close_connection() cancels keepalive_ping_task.
 
                 # ping() raises ConnectionClosed if the connection is lost,
                 # when connection_lost() calls abort_pings().
@@ -281,7 +282,7 @@ class WebsocketImplProtocol:
         if self.io_proto and self.io_proto.transport:
             # Stop new data coming in
             # In Python Version 3.7: pause_reading is idempotent
-            # i.e. it can be called when the transport is already paused or closed.
+            # ut can be called when the transport is already paused or closed
             self.io_proto.transport.pause_reading()
 
             # Keeping fail_connection() synchronous guarantees it can't
@@ -377,8 +378,8 @@ class WebsocketImplProtocol:
                         "Websocket task finished. Closing the connection."
                     )
                 except asyncio.CancelledError:
-                    # Cancelled error will be called when data phase is cancelled
-                    # This can be if an error occurred or the client app closed the connection
+                    # Cancelled error is called when data phase is cancelled
+                    # if an error occurred or the client closed the connection
                     logger.debug(
                         "Websocket handler cancelled. Closing the connection."
                     )
@@ -405,13 +406,13 @@ class WebsocketImplProtocol:
             # The try/finally ensures that the transport never remains open,
             # even if this coroutine is cancelled (for example).
             if (not self.io_proto) or (not self.io_proto.transport):
-                # we were never open, or already dead and buried. Can't do any finalization.
+                # we were never open, or done. Can't do any finalization.
                 return
             elif (
                 self.connection_lost_waiter
                 and self.connection_lost_waiter.done()
             ):
-                # connection was confirmed closed already, proceed to abort waiter
+                # connection confirmed closed already, proceed to abort waiter
                 ...
             elif self.io_proto.transport.is_closing():
                 # Connection is already closing (due to half-close above)
@@ -500,7 +501,8 @@ class WebsocketImplProtocol:
 
         if self.recv_lock.locked():
             raise ServerError(
-                "cannot call recv while another task is already waiting for the next message"
+                "cannot call recv while another task is "
+                "already waiting for the next message"
             )
         await self.recv_lock.acquire()
         if self.connection.state in (CLOSED, CLOSING):
@@ -531,7 +533,8 @@ class WebsocketImplProtocol:
 
         if self.recv_lock.locked():
             raise ServerError(
-                "cannot call recv_burst while another task is already waiting for the next message"
+                "cannot call recv_burst while another task is already waiting "
+                "for the next message"
             )
         await self.recv_lock.acquire()
         if self.connection.state in (CLOSED, CLOSING):
@@ -656,11 +659,13 @@ class WebsocketImplProtocol:
         async with self.conn_mutex:
             if self.connection.state in (CLOSED, CLOSING):
                 raise ServerError(
-                    "Cannot send a ping when the websocket interface is closed."
+                    "Cannot send a ping when the websocket interface "
+                    "is closed."
                 )
             if (not self.io_proto) or (not self.io_proto.loop):
                 raise ServerError(
-                    "Cannot send a ping when the websocket has no io protocol attached."
+                    "Cannot send a ping when the websocket has no I/O "
+                    "protocol attached."
                 )
             if data is not None:
                 if isinstance(data, str):
@@ -708,8 +713,8 @@ class WebsocketImplProtocol:
             if data:
                 await self.io_proto.send(data)
             else:
-                # Send an EOF
-                # We don't actually send it, just trigger to autoclose the connection
+                # Send an EOF - We don't actually send it,
+                # just trigger to autoclose the connection
                 if (
                     self.auto_closer_task
                     and not self.auto_closer_task.done()

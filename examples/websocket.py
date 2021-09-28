@@ -1,5 +1,5 @@
 from sanic import Sanic
-from sanic.response import file, redirect
+from sanic.response import redirect
 
 app = Sanic(__name__)
 

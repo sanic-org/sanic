@@ -14,7 +14,7 @@ from typing import (
 
 from websockets.connection import CLOSED, CLOSING, OPEN, Event
 from websockets.exceptions import ConnectionClosed, ConnectionClosedError
-from websockets.frames import Frame, OP_PONG
+from websockets.frames import OP_PONG, Frame
 from websockets.server import ServerConnection
 from websockets.typing import Data
 

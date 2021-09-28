@@ -8,6 +8,7 @@ from websockets.typing import Data
 
 from sanic.exceptions import ServerError
 
+
 if TYPE_CHECKING:
     from .impl import WebsocketImplProtocol
 

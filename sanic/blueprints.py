@@ -331,13 +331,12 @@ class Blueprint(BaseSanic):
 
         route_names = [route.name for route in routes if route]
 
-        # Middleware
         if route_names:
+            # Middleware
             for future in self._future_middleware:
                 middleware.append(app._apply_middleware(future, route_names))
 
-        # Exceptions
-        if route_names:
+            # Exceptions
             for future in self._future_exceptions:
                 exception_handlers.append(
                     app._apply_exception_handler(future, route_names)
@@ -347,6 +346,7 @@ class Blueprint(BaseSanic):
         for listener in self._future_listeners:
             listeners[listener.event].append(app._apply_listener(listener))
 
+        # Signals
         for signal in self._future_signals:
             signal.condition.update({"blueprint": self.name})
             app._apply_signal(signal)

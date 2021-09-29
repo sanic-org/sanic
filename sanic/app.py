@@ -1337,7 +1337,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
         debug_mode = "enabled" if self.debug else "disabled"
-        logger.debug("Sanic auto-reload: enabled")
+        reload_mode = "enabled" if auto_reload else "disabled"
+        logger.debug(f"Sanic auto-reload: {reload_mode}")
         logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings

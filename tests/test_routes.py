@@ -674,16 +674,16 @@ async def test_websocket_route_asgi(app, url):
 @pytest.mark.parametrize(
     "subprotocols,expected",
     (
-        (["bar"], "bar"),
-        (["bar", "foo"], "bar"),
-        (["baz"], None),
+        (["one"], "one"),
+        (["three", "one"], "one"),
+        (["tree"], None),
         (None, None),
     ),
 )
 def test_websocket_route_with_subprotocols(app, subprotocols, expected):
-    results = "unset"
+    results = []
 
-    @app.websocket("/ws", subprotocols=["foo", "bar"])
+    @app.websocket("/ws", subprotocols=["zero", "one", "two", "three"])
     async def handler(request, ws):
         nonlocal results
         results = ws.subprotocol

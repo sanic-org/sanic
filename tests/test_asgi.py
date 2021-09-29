@@ -10,7 +10,7 @@ from sanic.asgi import MockTransport
 from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
-from sanic.websocket import WebSocketConnection
+from sanic.server.websockets.connection import WebSocketConnection
 
 
 @pytest.fixture

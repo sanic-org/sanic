@@ -3,7 +3,7 @@ import asyncio
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 
 from sanic.exceptions import InvalidUsage
-from sanic.websocket import WebSocketConnection
+from sanic.server.websockets.connection import WebSocketConnection
 
 
 ASGIScope = MutableMapping[str, Any]

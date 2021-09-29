@@ -24,6 +24,7 @@ class FutureRoute(NamedTuple):
     unquote: bool
     static: bool
     version_prefix: str
+    error_format: Optional[str]
 
 
 class FutureListener(NamedTuple):

@@ -35,7 +35,7 @@ _host_re = re.compile(
 
 def parse_arg_as_accept(f):
     def func(self, other, *args, **kwargs):
-        if not isinstance(other, Accept):
+        if not isinstance(other, Accept) and other:
             other = Accept.parse(other)
         return f(self, other, *args, **kwargs)
 
@@ -179,6 +179,27 @@ class Accept(str):
         )
 
         return cls(mtype, MediaType(type_), MediaType(subtype), **params)
+
+
+class AcceptContainer(list):
+    def __contains__(self, o: object) -> bool:
+        return any(item.match(o) for item in self)
+
+    def match(
+        self,
+        o: object,
+        *,
+        allow_type_wildcard: bool = True,
+        allow_subtype_wildcard: bool = True,
+    ) -> bool:
+        return any(
+            item.match(
+                o,
+                allow_type_wildcard=allow_type_wildcard,
+                allow_subtype_wildcard=allow_subtype_wildcard,
+            )
+            for item in self
+        )
 
 
 def parse_content_header(value: str) -> Tuple[str, Options]:
@@ -356,7 +377,7 @@ def _sort_accept_value(accept: Accept):
     )
 
 
-def parse_accept(accept: str) -> List[Accept]:
+def parse_accept(accept: str) -> AcceptContainer:
     """Parse an Accept header and order the acceptable media types in
     accorsing to RFC 7231, s. 5.3.2
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
@@ -370,4 +391,6 @@ def parse_accept(accept: str) -> List[Accept]:
 
         accept_list.append(Accept.parse(mtype))
 
-    return sorted(accept_list, key=_sort_accept_value, reverse=True)
+    return AcceptContainer(
+        sorted(accept_list, key=_sort_accept_value, reverse=True)
+    )

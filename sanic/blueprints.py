@@ -266,6 +266,9 @@ class Blueprint(BaseSanic):
         opt_version = options.get("version", None)
         opt_strict_slashes = options.get("strict_slashes", None)
         opt_version_prefix = options.get("version_prefix", self.version_prefix)
+        error_format = options.get(
+            "error_format", app.config.FALLBACK_ERROR_FORMAT
+        )
 
         routes = []
         middleware = []
@@ -313,6 +316,7 @@ class Blueprint(BaseSanic):
                 future.unquote,
                 future.static,
                 version_prefix,
+                error_format,
             )
 
             route = app._apply_route(apply_route)

@@ -175,15 +175,11 @@ def serve(
 
         # Force close non-idle connection after waiting for
         # graceful_shutdown_timeout
-        coros = []
         for conn in connections:
             if hasattr(conn, "websocket") and conn.websocket:
-                coros.append(conn.websocket.close_connection())
+                conn.websocket.fail_connection(code=1001)
             else:
                 conn.abort()
-
-        _shutdown = asyncio.gather(*coros)
-        loop.run_until_complete(_shutdown)
         loop.run_until_complete(app._server_event("shutdown", "after"))
 
         remove_unix_socket(unix)
@@ -278,9 +274,6 @@ def _build_protocol_kwargs(
     if hasattr(protocol, "websocket_handshake"):
         return {
             "websocket_max_size": config.WEBSOCKET_MAX_SIZE,
-            "websocket_max_queue": config.WEBSOCKET_MAX_QUEUE,
-            "websocket_read_limit": config.WEBSOCKET_READ_LIMIT,
-            "websocket_write_limit": config.WEBSOCKET_WRITE_LIMIT,
             "websocket_ping_timeout": config.WEBSOCKET_PING_TIMEOUT,
             "websocket_ping_interval": config.WEBSOCKET_PING_INTERVAL,
         }

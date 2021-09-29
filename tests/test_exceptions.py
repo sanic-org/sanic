@@ -16,6 +16,7 @@ from sanic.exceptions import (
     abort,
 )
 from sanic.response import text
+from websockets.version import version as websockets_version
 
 
 class SanicExceptionTestException(Exception):
@@ -260,9 +261,14 @@ def test_exception_in_ws_logged(caplog):
 
     with caplog.at_level(logging.INFO):
         app.test_client.websocket("/feed")
-
-    assert caplog.record_tuples[1][0] == "sanic.error"
-    assert caplog.record_tuples[1][1] == logging.ERROR
+    # Websockets v10.0 and above output an additional
+    # INFO message when a ws connection is accepted
+    ws_version_parts = websockets_version.split(".")
+    ws_major = int(ws_version_parts[0])
+    record_index = 2 if ws_major >= 10 else 1
+    assert caplog.record_tuples[record_index][0] == "sanic.error"
+    assert caplog.record_tuples[record_index][1] == logging.ERROR
     assert (
-        "Exception occurred while handling uri:" in caplog.record_tuples[1][2]
+        "Exception occurred while handling uri:"
+        in caplog.record_tuples[record_index][2]
     )

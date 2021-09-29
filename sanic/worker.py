@@ -9,7 +9,7 @@ from gunicorn.workers import base  # type: ignore
 
 from sanic.log import logger
 from sanic.server import HttpProtocol, Signal, serve
-from sanic.websocket import WebSocketProtocol
+from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 
 
 try:
@@ -142,14 +142,11 @@ class GunicornWorker(base.Worker):
 
             # Force close non-idle connection after waiting for
             # graceful_shutdown_timeout
-            coros = []
             for conn in self.connections:
                 if hasattr(conn, "websocket") and conn.websocket:
-                    coros.append(conn.websocket.close_connection())
+                    conn.websocket.fail_connection(code=1001)
                 else:
-                    conn.close()
-            _shutdown = asyncio.gather(*coros, loop=self.loop)
-            await _shutdown
+                    conn.abort()
 
     async def _run(self):
         for sock in self.sockets:

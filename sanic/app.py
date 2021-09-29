@@ -74,9 +74,10 @@ from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
 from sanic.server import serve, serve_multiple, serve_single
+from sanic.server.protocols.websocket_protocol import WebSocketProtocol
+from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
-from sanic.websocket import ConnectionClosed, WebSocketProtocol
 
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):
@@ -871,23 +872,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     async def _websocket_handler(
         self, handler, request, *args, subprotocols=None, **kwargs
     ):
-        request.app = self
-        if not getattr(handler, "__blueprintname__", False):
-            request._name = handler.__name__
-        else:
-            request._name = (
-                getattr(handler, "__blueprintname__", "") + handler.__name__
-            )
-
-            pass
-
         if self.asgi:
             ws = request.transport.get_websocket_connection()
             await ws.accept(subprotocols)
         else:
             protocol = request.transport.get_protocol()
-            protocol.app = self
-
             ws = await protocol.websocket_handshake(request, subprotocols)
 
         # schedule the application handler
@@ -895,15 +884,19 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         # needs to be cancelled due to the server being stopped
         fut = ensure_future(handler(request, ws, *args, **kwargs))
         self.websocket_tasks.add(fut)
+        cancelled = False
         try:
             await fut
         except Exception as e:
             self.error_handler.log(request, e)
         except (CancelledError, ConnectionClosed):
-            pass
+            cancelled = True
         finally:
             self.websocket_tasks.remove(fut)
-            await ws.close()
+            if cancelled:
+                ws.end_connection(1000)
+            else:
+                await ws.close()
 
     # -------------------------------------------------------------------- #
     # Testing

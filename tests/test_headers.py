@@ -5,6 +5,7 @@ import pytest
 from sanic import headers, text
 from sanic.exceptions import InvalidHeader, PayloadTooLarge
 from sanic.http import Http
+from sanic.request import Request
 
 
 @pytest.fixture
@@ -338,3 +339,31 @@ def test_value_in_accept(value):
     assert "foo/bar" in acceptable
     assert "foo/*" in acceptable
     assert "*/*" in acceptable
+
+
+@pytest.mark.parametrize("value", ("foo/bar", "foo/*"))
+def test_value_not_in_accept(value):
+    acceptable = headers.parse_accept(value)
+    assert "no/match" not in acceptable
+    assert "no/*" not in acceptable
+
+
+@pytest.mark.parametrize(
+    "header,expected",
+    (
+        (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",  # noqa: E501
+            [
+                "text/html",
+                "application/xhtml+xml",
+                "image/avif",
+                "image/webp",
+                "application/xml;q=0.9",
+                "*/*;q=0.8",
+            ],
+        ),
+    ),
+)
+def test_browser_headers(header, expected):
+    request = Request(b"/", {"accept": header}, "1.1", "GET", None, None)
+    assert request.accept == expected

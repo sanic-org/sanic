@@ -3,7 +3,12 @@ from pytest import raises
 from sanic.app import Sanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.exceptions import Forbidden, InvalidUsage, SanicException, ServerError
+from sanic.exceptions import (
+    Forbidden,
+    InvalidUsage,
+    SanicException,
+    ServerError,
+)
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
 

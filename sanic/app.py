@@ -179,7 +179,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.configure_logging = configure_logging
         self.ctx = ctx or SimpleNamespace()
         self.debug = None
-        self.error_handler = error_handler or ErrorHandler()
+        self.error_handler = error_handler or ErrorHandler(
+            fallback=self.config.FALLBACK_ERROR_FORMAT,
+        )
         self.is_running = False
         self.is_stopping = False
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
@@ -1330,7 +1332,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
         debug_mode = "enabled" if self.debug else "disabled"
-        logger.debug("Sanic auto-reload: enabled")
+        reload_mode = "enabled" if auto_reload else "disabled"
+        logger.debug(f"Sanic auto-reload: {reload_mode}")
         logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings

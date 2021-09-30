@@ -927,7 +927,7 @@ class RouteMixin:
 
                 if len(http_response_types) == 1:
                     return next(iter(http_response_types))
-            except OSError:
+            except (OSError, TypeError):
                 ...
 
         return "auto"

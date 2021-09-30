@@ -266,6 +266,9 @@ class Blueprint(BaseSanic):
         opt_version = options.get("version", None)
         opt_strict_slashes = options.get("strict_slashes", None)
         opt_version_prefix = options.get("version_prefix", self.version_prefix)
+        error_format = options.get(
+            "error_format", app.config.FALLBACK_ERROR_FORMAT
+        )
 
         routes = []
         middleware = []
@@ -313,6 +316,7 @@ class Blueprint(BaseSanic):
                 future.unquote,
                 future.static,
                 version_prefix,
+                error_format,
             )
 
             route = app._apply_route(apply_route)
@@ -331,21 +335,22 @@ class Blueprint(BaseSanic):
 
         route_names = [route.name for route in routes if route]
 
-        # Middleware
         if route_names:
+            # Middleware
             for future in self._future_middleware:
                 middleware.append(app._apply_middleware(future, route_names))
 
-        # Exceptions
-        for future in self._future_exceptions:
-            exception_handlers.append(
-                app._apply_exception_handler(future, route_names)
-            )
+            # Exceptions
+            for future in self._future_exceptions:
+                exception_handlers.append(
+                    app._apply_exception_handler(future, route_names)
+                )
 
         # Event listeners
         for listener in self._future_listeners:
             listeners[listener.event].append(app._apply_listener(listener))
 
+        # Signals
         for signal in self._future_signals:
             signal.condition.update({"blueprint": self.name})
             app._apply_signal(signal)

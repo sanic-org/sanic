@@ -10,7 +10,7 @@ from sanic.exceptions import ServerError
 from sanic.models.asgi import ASGIReceive, ASGIScope, ASGISend, MockTransport
 from sanic.request import Request
 from sanic.server import ConnInfo
-from sanic.websocket import WebSocketConnection
+from sanic.server.websockets.connection import WebSocketConnection
 
 
 class Lifespan:

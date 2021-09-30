@@ -83,7 +83,6 @@ def test_versioned_routes_get(app, method):
             return text("OK")
 
     else:
-        print(func)
         raise Exception(f"{func} is not callable")
 
     app.blueprint(bp)
@@ -475,6 +474,58 @@ def test_bp_exception_handler(app):
 
     request, response = app.test_client.get("/3")
     assert response.status == 200
+
+
+def test_bp_exception_handler_applied(app):
+    class Error(Exception):
+        pass
+
+    handled = Blueprint("handled")
+    nothandled = Blueprint("nothandled")
+
+    @handled.exception(Error)
+    def handle_error(req, e):
+        return text("handled {}".format(e))
+
+    @handled.route("/ok")
+    def ok(request):
+        raise Error("uh oh")
+
+    @nothandled.route("/notok")
+    def notok(request):
+        raise Error("uh oh")
+
+    app.blueprint(handled)
+    app.blueprint(nothandled)
+
+    _, response = app.test_client.get("/ok")
+    assert response.status == 200
+    assert response.text == "handled uh oh"
+
+    _, response = app.test_client.get("/notok")
+    assert response.status == 500
+
+
+def test_bp_exception_handler_not_applied(app):
+    class Error(Exception):
+        pass
+
+    handled = Blueprint("handled")
+    nothandled = Blueprint("nothandled")
+
+    @handled.exception(Error)
+    def handle_error(req, e):
+        return text("handled {}".format(e))
+
+    @nothandled.route("/notok")
+    def notok(request):
+        raise Error("uh oh")
+
+    app.blueprint(handled)
+    app.blueprint(nothandled)
+
+    _, response = app.test_client.get("/notok")
+    assert response.status == 500
 
 
 def test_bp_listeners(app):

@@ -1,12 +1,13 @@
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple, Type
 
-from sanic.errorpages import exception_response
+from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
 from sanic.exceptions import (
     ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
 )
 from sanic.log import error_logger
+from sanic.models.handler_types import RouteHandler
 from sanic.response import text
 
 
@@ -23,10 +24,15 @@ class ErrorHandler:
 
     """
 
-    def __init__(self):
-        self.handlers = []
-        self.cached_handlers = {}
+    # Beginning in v22.3, the base renderer will be TextRenderer
+    def __init__(self, fallback: str, base: Type[BaseRenderer] = HTMLRenderer):
+        self.handlers: List[Tuple[Type[BaseException], RouteHandler]] = []
+        self.cached_handlers: Dict[
+            Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
+        ] = {}
         self.debug = False
+        self.fallback = fallback
+        self.base = base
 
     def add(self, exception, handler, route_names: Optional[List[str]] = None):
         """
@@ -142,7 +148,13 @@ class ErrorHandler:
         :return:
         """
         self.log(request, exception)
-        return exception_response(request, exception, self.debug)
+        return exception_response(
+            request,
+            exception,
+            debug=self.debug,
+            base=self.base,
+            fallback=self.fallback,
+        )
 
     @staticmethod
     def log(request, exception):

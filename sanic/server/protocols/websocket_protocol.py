@@ -148,7 +148,6 @@ class WebSocketProtocol(HttpProtocol):
             await super().send(rbody.encode())
         else:
             raise ServerError(resp.body, resp.status_code)
-
         self.websocket = WebsocketImplProtocol(
             ws_conn,
             ping_interval=self.websocket_ping_interval,

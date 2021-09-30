@@ -161,10 +161,8 @@ class WebsocketFrameAssembler:
                 )
             self.message_fetched.set()
             self.chunks = []
-            self.chunks_queue = (
-                None  # this should already be None, but set it here for safety
-            )
-
+            # this should already be None, but set it here for safety
+            self.chunks_queue = None
             return message
 
     async def get_iter(self) -> AsyncIterator[Data]:
@@ -193,7 +191,7 @@ class WebsocketFrameAssembler:
             if self.message_complete.is_set():
                 await self.chunks_queue.put(None)
 
-            # Locking with get_in_progress ensures only one thread can get here
+            # Locking with get_in_progress ensures only one task can get here
             for c in chunks:
                 yield c
             while True:
@@ -232,9 +230,8 @@ class WebsocketFrameAssembler:
                 )
 
             self.message_fetched.set()
-            self.chunks = (
-                []
-            )  # this should already be empty, but set it here for safety
+            # this should already be empty, but set it here for safety
+            self.chunks = []
             self.chunks_queue = None
 
     async def put(self, frame: Frame) -> None:

@@ -237,6 +237,11 @@ class InvalidSignal(SanicException):
     pass
 
 
+class WebsocketClosed(SanicException):
+    quiet = True
+    message = "Client has closed the websocket connection"
+
+
 def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
     """
     Raise an exception based on SanicException. Returns the HTTP response

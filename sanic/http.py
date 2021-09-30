@@ -187,11 +187,11 @@ class Http(metaclass=TouchUpMeta):
                 if self.response:
                     self.response.stream = None
 
-            self.init_for_request()
-
             # Exit and disconnect if no more requests can be taken
             if self.stage is not Stage.IDLE or not self.keep_alive:
                 break
+
+            self.init_for_request()
 
             # Wait for the next request
             if not self.recv_buffer:

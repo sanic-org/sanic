@@ -109,7 +109,12 @@ class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
         except Exception:
             error_logger.exception("protocol.connection_task uncaught")
         finally:
-            if self.app.debug and self._http and self.transport:
+            if (
+                self.app.debug
+                and self._http
+                and self.transport
+                and not self._http.upgrade_websocket
+            ):
                 ip = self.transport.get_extra_info("peername")
                 error_logger.error(
                     "Connection lost before response written"

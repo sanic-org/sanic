@@ -190,7 +190,7 @@ class WebsocketImplProtocol:
                 else:
                     await self.assembler.put(event)
 
-    async def process_pong(self, frame: "Frame") -> None:
+    async def process_pong(self, frame: Frame) -> None:
         if frame.data in self.pings:
             # Acknowledge all pings up to the one matching this pong.
             ping_ids = []
@@ -791,7 +791,7 @@ class WebsocketImplProtocol:
     async def async_eof_received(self, data_to_send, events_to_process):
         # receiving EOF can generate data to send
         # send connection.data_to_send()
-        if self.connection.state == OPEN:
+        if self.connection.state in (OPEN, CLOSING) and len(data_to_send) > 0:
             await self.send_data(data_to_send)
         if len(events_to_process) > 0:
             await self.process_events(events_to_process)

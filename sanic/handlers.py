@@ -1,6 +1,5 @@
 from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type
-from warnings import warn
 
 from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
 from sanic.exceptions import (

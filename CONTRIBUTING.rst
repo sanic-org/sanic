@@ -19,7 +19,7 @@ a virtual environment already set up, then run:
 
 .. code-block:: bash
 
-   pip3 install -e . ".[dev]"
+   pip install -e ".[dev]"
 
 Dependency Changes
 ------------------

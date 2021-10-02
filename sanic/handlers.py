@@ -47,15 +47,16 @@ class ErrorHandler:
 
         sig = signature(error_handler.lookup)
         if len(sig.parameters) == 1:
-            warn(
-                "You are using a deprecated error handler. The lookup "
-                "method should accept two positional parameters: "
-                "exception, route_name: Optional[str]. "
-                "Until you upgrade your ErrorHandler.lookup, Blueprint "
-                "specific exceptions will not work properly. Beginning "
-                "in v22.3, the legacy style lookup method will not "
-                "work at all.",
-                DeprecationWarning,
+            error_logger.warning(
+                DeprecationWarning(
+                    "You are using a deprecated error handler. The lookup "
+                    "method should accept two positional parameters: "
+                    "exception, route_name: Optional[str]. "
+                    "Until you upgrade your ErrorHandler.lookup, Blueprint "
+                    "specific exceptions will not work properly. Beginning "
+                    "in v22.3, the legacy style lookup method will not "
+                    "work at all."
+                ),
             )
             error_handler._lookup = error_handler._legacy_lookup
 

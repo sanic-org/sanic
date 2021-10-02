@@ -34,7 +34,9 @@ from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import InvalidUsage
 from sanic.headers import (
+    AcceptContainer,
     Options,
+    parse_accept,
     parse_content_header,
     parse_forwarded,
     parse_host,
@@ -94,6 +96,7 @@ class Request:
         "head",
         "headers",
         "method",
+        "parsed_accept",
         "parsed_args",
         "parsed_not_grouped_args",
         "parsed_files",
@@ -136,6 +139,7 @@ class Request:
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
+        self.parsed_accept: Optional[AcceptContainer] = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
@@ -295,6 +299,13 @@ class Request:
             raise InvalidUsage("Failed when parsing body as json")
 
         return self.parsed_json
+
+    @property
+    def accept(self) -> AcceptContainer:
+        if self.parsed_accept is None:
+            accept_header = self.headers.getone("accept", "")
+            self.parsed_accept = parse_accept(accept_header)
+        return self.parsed_accept
 
     @property
     def token(self):
@@ -496,6 +507,10 @@ class Request:
         :return: matched info after resolving route
         """
         return self._match_info
+
+    @match_info.setter
+    def match_info(self, value):
+        self._match_info = value
 
     # Transport properties (obtained from local interface only)
 

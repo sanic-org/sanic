@@ -8,8 +8,8 @@ import traceback
 from gunicorn.workers import base  # type: ignore
 
 from sanic.log import logger
-from sanic.server import HttpProtocol, Signal, serve, trigger_events
-from sanic.websocket import WebSocketProtocol
+from sanic.server import HttpProtocol, Signal, serve
+from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 
 
 try:
@@ -68,10 +68,10 @@ class GunicornWorker(base.Worker):
         )
         self._server_settings["signal"] = self.signal
         self._server_settings.pop("sock")
-        trigger_events(
-            self._server_settings.get("before_start", []), self.loop
+        self._await(self.app.callable._startup())
+        self._await(
+            self.app.callable._server_event("init", "before", loop=self.loop)
         )
-        self._server_settings["before_start"] = ()
 
         main_start = self._server_settings.pop("main_start", None)
         main_stop = self._server_settings.pop("main_stop", None)
@@ -82,24 +82,29 @@ class GunicornWorker(base.Worker):
                 "with GunicornWorker"
             )
 
-        self._runner = asyncio.ensure_future(self._run(), loop=self.loop)
         try:
-            self.loop.run_until_complete(self._runner)
+            self._await(self._run())
             self.app.callable.is_running = True
-            trigger_events(
-                self._server_settings.get("after_start", []), self.loop
+            self._await(
+                self.app.callable._server_event(
+                    "init", "after", loop=self.loop
+                )
             )
             self.loop.run_until_complete(self._check_alive())
-            trigger_events(
-                self._server_settings.get("before_stop", []), self.loop
+            self._await(
+                self.app.callable._server_event(
+                    "shutdown", "before", loop=self.loop
+                )
             )
             self.loop.run_until_complete(self.close())
         except BaseException:
             traceback.print_exc()
         finally:
             try:
-                trigger_events(
-                    self._server_settings.get("after_stop", []), self.loop
+                self._await(
+                    self.app.callable._server_event(
+                        "shutdown", "after", loop=self.loop
+                    )
                 )
             except BaseException:
                 traceback.print_exc()
@@ -137,14 +142,11 @@ class GunicornWorker(base.Worker):
 
             # Force close non-idle connection after waiting for
             # graceful_shutdown_timeout
-            coros = []
             for conn in self.connections:
                 if hasattr(conn, "websocket") and conn.websocket:
-                    coros.append(conn.websocket.close_connection())
+                    conn.websocket.fail_connection(code=1001)
                 else:
-                    conn.close()
-            _shutdown = asyncio.gather(*coros, loop=self.loop)
-            await _shutdown
+                    conn.abort()
 
     async def _run(self):
         for sock in self.sockets:
@@ -238,3 +240,7 @@ class GunicornWorker(base.Worker):
         self.exit_code = 1
         self.cfg.worker_abort(self)
         sys.exit(1)
+
+    def _await(self, coro):
+        fut = asyncio.ensure_future(coro, loop=self.loop)
+        self.loop.run_until_complete(fut)

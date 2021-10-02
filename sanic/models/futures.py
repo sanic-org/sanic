@@ -24,6 +24,7 @@ class FutureRoute(NamedTuple):
     unquote: bool
     static: bool
     version_prefix: str
+    error_format: Optional[str]
 
 
 class FutureListener(NamedTuple):
@@ -52,6 +53,7 @@ class FutureStatic(NamedTuple):
     host: Optional[str]
     strict_slashes: Optional[bool]
     content_type: Optional[bool]
+    resource_type: Optional[str]
 
 
 class FutureSignal(NamedTuple):

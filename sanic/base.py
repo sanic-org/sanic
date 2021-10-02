@@ -58,7 +58,7 @@ class BaseSanic(
         if name not in self.__fake_slots__:
             warn(
                 f"Setting variables on {self.__class__.__name__} instances is "
-                "deprecated and will be removed in version 21.9. You should "
+                "deprecated and will be removed in version 21.12. You should "
                 f"change your {self.__class__.__name__} instance to use "
                 f"instance.ctx.{name} instead.",
                 DeprecationWarning,

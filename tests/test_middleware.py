@@ -5,7 +5,7 @@ from itertools import count
 
 from sanic.exceptions import NotFound
 from sanic.request import Request
-from sanic.response import HTTPResponse, text
+from sanic.response import HTTPResponse, json, text
 
 
 # ------------------------------------------------------------ #
@@ -37,14 +37,19 @@ def test_middleware_request_as_convenience(app):
     async def handler1(request):
         results.append(request)
 
-    @app.route("/")
+    @app.on_request()
     async def handler2(request):
+        results.append(request)
+
+    @app.route("/")
+    async def handler3(request):
         return text("OK")
 
     request, response = app.test_client.get("/")
 
     assert response.text == "OK"
     assert type(results[0]) is Request
+    assert type(results[1]) is Request
 
 
 def test_middleware_response(app):
@@ -79,7 +84,12 @@ def test_middleware_response_as_convenience(app):
         results.append(request)
 
     @app.on_response
-    async def process_response(request, response):
+    async def process_response_1(request, response):
+        results.append(request)
+        results.append(response)
+
+    @app.on_response()
+    async def process_response_2(request, response):
         results.append(request)
         results.append(response)
 
@@ -93,6 +103,8 @@ def test_middleware_response_as_convenience(app):
     assert type(results[0]) is Request
     assert type(results[1]) is Request
     assert isinstance(results[2], HTTPResponse)
+    assert type(results[3]) is Request
+    assert isinstance(results[4], HTTPResponse)
 
 
 def test_middleware_response_as_convenience_called(app):
@@ -271,3 +283,17 @@ def test_request_middleware_executes_once(app):
 
     request, response = app.test_client.get("/")
     assert next(i) == 3
+
+
+def test_middleware_added_response(app):
+    @app.on_response
+    def display(_, response):
+        response["foo"] = "bar"
+        return json(response)
+
+    @app.get("/")
+    async def handler(request):
+        return {}
+
+    _, response = app.test_client.get("/")
+    assert response.json["foo"] == "bar"

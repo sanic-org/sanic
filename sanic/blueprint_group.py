@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Union
 
 
@@ -196,6 +197,27 @@ class BlueprintGroup(MutableSequence):
         """
         self._blueprints.append(value)
 
+    def exception(self, *exceptions, **kwargs):
+        """
+        A decorator that can be used to implement a global exception handler
+        for all the Blueprints that belong to this Blueprint Group.
+
+        In case of nested Blueprint Groups, the same handler is applied
+        across each of the Blueprints recursively.
+
+        :param args: List of Python exceptions to be caught by the handler
+        :param kwargs: Additional optional arguments to be passed to the
+            exception handler
+        :return a decorated method to handle global exceptions for any
+            blueprint registered under this group.
+        """
+
+        def register_exception_handler_for_blueprints(fn):
+            for blueprint in self.blueprints:
+                blueprint.exception(*exceptions, **kwargs)(fn)
+
+        return register_exception_handler_for_blueprints
+
     def insert(self, index: int, item: Blueprint) -> None:
         """
         The Abstract class `MutableSequence` leverages this insert method to
@@ -229,3 +251,15 @@ class BlueprintGroup(MutableSequence):
             args = list(args)[1:]
             return register_middleware_for_blueprints(fn)
         return register_middleware_for_blueprints
+
+    def on_request(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "request")
+        else:
+            return partial(self.middleware, attach_to="request")
+
+    def on_response(self, middleware=None):
+        if callable(middleware):
+            return self.middleware(middleware, "response")
+        else:
+            return partial(self.middleware, attach_to="response")

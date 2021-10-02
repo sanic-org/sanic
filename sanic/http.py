@@ -21,6 +21,7 @@ from sanic.exceptions import (
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
 from sanic.log import access_logger, error_logger, logger
+from sanic.touchup import TouchUpMeta
 
 
 class Stage(Enum):
@@ -45,7 +46,7 @@ class Stage(Enum):
 HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 
-class Http:
+class Http(metaclass=TouchUpMeta):
     """
     Internal helper for managing the HTTP request/response cycle
 
@@ -67,9 +68,15 @@ class Http:
     HEADER_CEILING = 16_384
     HEADER_MAX_SIZE = 0
 
+    __touchup__ = (
+        "http1_request_header",
+        "http1_response_header",
+        "read",
+    )
     __slots__ = [
         "_send",
         "_receive_more",
+        "dispatch",
         "recv_buffer",
         "protocol",
         "expecting_continue",
@@ -97,6 +104,7 @@ class Http:
         self.protocol = protocol
         self.keep_alive = True
         self.stage: Stage = Stage.IDLE
+        self.dispatch = self.protocol.app.dispatch
         self.init_for_request()
 
     def init_for_request(self):
@@ -140,6 +148,12 @@ class Http:
                     await self.response.send(end_stream=True)
             except CancelledError:
                 # Write an appropriate response before exiting
+                if not self.protocol.transport:
+                    logger.info(
+                        f"Request: {self.request.method} {self.request.url} "
+                        "stopped. Transport is closed."
+                    )
+                    return
                 e = self.exception or ServiceUnavailable("Cancelled")
                 self.exception = None
                 self.keep_alive = False
@@ -173,17 +187,17 @@ class Http:
                 if self.response:
                     self.response.stream = None
 
-            self.init_for_request()
-
             # Exit and disconnect if no more requests can be taken
             if self.stage is not Stage.IDLE or not self.keep_alive:
                 break
+
+            self.init_for_request()
 
             # Wait for the next request
             if not self.recv_buffer:
                 await self._receive_more()
 
-    async def http1_request_header(self):
+    async def http1_request_header(self):  # no cov
         """
         Receive and parse request header into self.request.
         """
@@ -211,6 +225,12 @@ class Http:
             raw_headers = head.decode(errors="surrogateescape")
             reqline, *split_headers = raw_headers.split("\r\n")
             method, self.url, protocol = reqline.split(" ")
+
+            await self.dispatch(
+                "http.lifecycle.read_head",
+                inline=True,
+                context={"head": bytes(head)},
+            )
 
             if protocol == "HTTP/1.1":
                 self.keep_alive = True
@@ -250,6 +270,11 @@ class Http:
             transport=self.protocol.transport,
             app=self.protocol.app,
         )
+        await self.dispatch(
+            "http.lifecycle.request",
+            inline=True,
+            context={"request": request},
+        )
 
         # Prepare for request body
         self.request_bytes_left = self.request_bytes = 0
@@ -280,7 +305,7 @@ class Http:
 
     async def http1_response_header(
         self, data: bytes, end_stream: bool
-    ) -> None:
+    ) -> None:  # no cov
         res = self.response
 
         # Compatibility with simple response body
@@ -452,8 +477,8 @@ class Http:
             "request": "nil",
         }
         if req is not None:
-            if req.ip:
-                extra["host"] = f"{req.ip}:{req.port}"
+            if req.remote_addr or req.ip:
+                extra["host"] = f"{req.remote_addr or req.ip}:{req.port}"
             extra["request"] = f"{req.method} {req.url}"
         access_logger.info("", extra=extra)
 
@@ -469,7 +494,7 @@ class Http:
             if data:
                 yield data
 
-    async def read(self) -> Optional[bytes]:
+    async def read(self) -> Optional[bytes]:  # no cov
         """
         Read some bytes of request body.
         """
@@ -542,6 +567,12 @@ class Http:
         del buf[:size]
 
         self.request_bytes_left -= size
+
+        await self.dispatch(
+            "http.lifecycle.read_body",
+            inline=True,
+            context={"body": data},
+        )
 
         return data
 

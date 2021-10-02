@@ -178,9 +178,6 @@ def test_app_enable_websocket(app, websocket_enabled, enable):
 @patch("sanic.app.WebSocketProtocol")
 def test_app_websocket_parameters(websocket_protocol_mock, app):
     app.config.WEBSOCKET_MAX_SIZE = 44
-    app.config.WEBSOCKET_MAX_QUEUE = 45
-    app.config.WEBSOCKET_READ_LIMIT = 46
-    app.config.WEBSOCKET_WRITE_LIMIT = 47
     app.config.WEBSOCKET_PING_TIMEOUT = 48
     app.config.WEBSOCKET_PING_INTERVAL = 50
 
@@ -197,11 +194,6 @@ def test_app_websocket_parameters(websocket_protocol_mock, app):
     websocket_protocol_call_args = websocket_protocol_mock.call_args
     ws_kwargs = websocket_protocol_call_args[1]
     assert ws_kwargs["websocket_max_size"] == app.config.WEBSOCKET_MAX_SIZE
-    assert ws_kwargs["websocket_max_queue"] == app.config.WEBSOCKET_MAX_QUEUE
-    assert ws_kwargs["websocket_read_limit"] == app.config.WEBSOCKET_READ_LIMIT
-    assert (
-        ws_kwargs["websocket_write_limit"] == app.config.WEBSOCKET_WRITE_LIMIT
-    )
     assert (
         ws_kwargs["websocket_ping_timeout"]
         == app.config.WEBSOCKET_PING_TIMEOUT
@@ -396,7 +388,7 @@ def test_app_set_attribute_warning(app):
     assert len(record) == 1
     assert record[0].message.args[0] == (
         "Setting variables on Sanic instances is deprecated "
-        "and will be removed in version 21.9. You should change your "
+        "and will be removed in version 21.12. You should change your "
         "Sanic instance to use instance.ctx.foo instead."
     )
 

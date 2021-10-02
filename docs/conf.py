@@ -10,10 +10,8 @@
 import os
 import sys
 
-# Add support for auto-doc
-import recommonmark
 
-from recommonmark.transform import AutoStructify
+# Add support for auto-doc
 
 
 # Ensure that sanic is present in the path, to allow sphinx-apidoc to
@@ -26,7 +24,7 @@ import sanic
 
 # -- General configuration ------------------------------------------------
 
-extensions = ["sphinx.ext.autodoc", "recommonmark"]
+extensions = ["sphinx.ext.autodoc", "m2r2"]
 
 templates_path = ["_templates"]
 
@@ -161,20 +159,6 @@ autodoc_typehints = "description"
 autodoc_default_options = {
     "member-order": "groupwise",
 }
-
-
-# app setup hook
-def setup(app):
-    app.add_config_value(
-        "recommonmark_config",
-        {
-            "enable_eval_rst": True,
-            "enable_auto_doc_ref": False,
-        },
-        True,
-    )
-    app.add_transform(AutoStructify)
-
 
 html_theme_options = {
     "style_external_links": False,

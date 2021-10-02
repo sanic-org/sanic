@@ -4,16 +4,20 @@ from sanic.helpers import STATUS_CODES
 
 
 class SanicException(Exception):
+    message: str = ""
+
     def __init__(
         self,
         message: Optional[Union[str, bytes]] = None,
         status_code: Optional[int] = None,
         quiet: Optional[bool] = None,
     ) -> None:
-
-        if message is None and status_code is not None:
-            msg: bytes = STATUS_CODES.get(status_code, b"")
-            message = msg.decode("utf8")
+        if message is None:
+            if self.message:
+                message = self.message
+            elif status_code is not None:
+                msg: bytes = STATUS_CODES.get(status_code, b"")
+                message = msg.decode("utf8")
 
         super().__init__(message)
 
@@ -122,8 +126,11 @@ class HeaderNotFound(InvalidUsage):
     **Status**: 400 Bad Request
     """
 
-    status_code = 400
-    quiet = True
+
+class InvalidHeader(InvalidUsage):
+    """
+    **Status**: 400 Bad Request
+    """
 
 
 class ContentRangeError(SanicException):
@@ -228,6 +235,11 @@ class LoadFileException(SanicException):
 
 class InvalidSignal(SanicException):
     pass
+
+
+class WebsocketClosed(SanicException):
+    quiet = True
+    message = "Client has closed the websocket connection"
 
 
 def abort(status_code: int, message: Optional[Union[str, bytes]] = None):

@@ -43,7 +43,15 @@ def test_routes_with_multiple_hosts(app):
     )
 
 
-def test_websocket_bp_route_name(app):
+@pytest.mark.parametrize(
+    "name,expected",
+    (
+        ("test_route", "/bp/route"),
+        ("test_route2", "/bp/route2"),
+        ("foobar_3", "/bp/route3"),
+    ),
+)
+def test_websocket_bp_route_name(app, name, expected):
     """Tests that blueprint websocket route is named."""
     event = asyncio.Event()
     bp = Blueprint("test_bp", url_prefix="/bp")
@@ -69,21 +77,11 @@ def test_websocket_bp_route_name(app):
     uri = app.url_for("test_bp.main")
     assert uri == "/bp/main"
 
-    uri = app.url_for("test_bp.test_route")
-    assert uri == "/bp/route"
+    uri = app.url_for(f"test_bp.{name}")
+    assert uri == expected
     request, response = SanicTestClient(app).websocket(uri)
     assert response.opened is True
     assert event.is_set()
-
-    event.clear()
-    uri = app.url_for("test_bp.test_route2")
-    assert uri == "/bp/route2"
-    request, response = SanicTestClient(app).websocket(uri)
-    assert response.opened is True
-    assert event.is_set()
-
-    uri = app.url_for("test_bp.foobar_3")
-    assert uri == "/bp/route3"
 
 
 # TODO: add test with a route with multiple hosts

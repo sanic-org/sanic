@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import logging
 import logging.config
 import os
 import re
 
 from asyncio import (
+    AbstractEventLoop,
     CancelledError,
     Protocol,
     ensure_future,
@@ -21,6 +24,7 @@ from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
     Any,
+    AnyStr,
     Awaitable,
     Callable,
     Coroutine,
@@ -30,6 +34,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
 )
@@ -69,20 +74,29 @@ from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
 from sanic.server import serve, serve_multiple, serve_single
+from sanic.server.protocols.websocket_protocol import WebSocketProtocol
+from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
-from sanic.websocket import ConnectionClosed, WebSocketProtocol
+from sanic.touchup import TouchUp, TouchUpMeta
 
 
-class Sanic(BaseSanic):
+class Sanic(BaseSanic, metaclass=TouchUpMeta):
     """
     The main application instance
     """
 
+    __touchup__ = (
+        "handle_request",
+        "handle_exception",
+        "_run_response_middleware",
+        "_run_request_middleware",
+    )
     __fake_slots__ = (
         "_asgi_app",
         "_app_registry",
         "_asgi_client",
         "_blueprint_order",
+        "_delayed_tasks",
         "_future_routes",
         "_future_statics",
         "_future_middleware",
@@ -137,7 +151,7 @@ class Sanic(BaseSanic):
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
         register: Optional[bool] = None,
-        dumps: Optional[Callable[..., str]] = None,
+        dumps: Optional[Callable[..., AnyStr]] = None,
     ) -> None:
         super().__init__(name=name)
 
@@ -153,6 +167,7 @@ class Sanic(BaseSanic):
 
         self._asgi_client = None
         self._blueprint_order: List[Blueprint] = []
+        self._delayed_tasks: List[str] = []
         self._test_client = None
         self._test_manager = None
         self.asgi = False
@@ -164,7 +179,9 @@ class Sanic(BaseSanic):
         self.configure_logging = configure_logging
         self.ctx = ctx or SimpleNamespace()
         self.debug = None
-        self.error_handler = error_handler or ErrorHandler()
+        self.error_handler = error_handler or ErrorHandler(
+            fallback=self.config.FALLBACK_ERROR_FORMAT,
+        )
         self.is_running = False
         self.is_stopping = False
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
@@ -190,9 +207,10 @@ class Sanic(BaseSanic):
             self.__class__.register_app(self)
 
         self.router.ctx.app = self
+        self.signal_router.ctx.app = self
 
         if dumps:
-            BaseHTTPResponse._dumps = dumps
+            BaseHTTPResponse._dumps = dumps  # type: ignore
 
     @property
     def loop(self):
@@ -230,9 +248,12 @@ class Sanic(BaseSanic):
             loop = self.loop  # Will raise SanicError if loop is not started
             self._loop_add_task(task, self, loop)
         except SanicException:
-            self.listener("before_server_start")(
-                partial(self._loop_add_task, task)
-            )
+            task_name = f"sanic.delayed_task.{hash(task)}"
+            if not self._delayed_tasks:
+                self.after_server_start(partial(self.dispatch_delayed_tasks))
+
+            self.signal(task_name)(partial(self.run_delayed_task, task=task))
+            self._delayed_tasks.append(task_name)
 
     def register_listener(self, listener: Callable, event: str) -> Any:
         """
@@ -244,12 +265,20 @@ class Sanic(BaseSanic):
         """
 
         try:
-            _event = ListenerEvent(event)
-        except ValueError:
-            valid = ", ".join(ListenerEvent.__members__.values())
+            _event = ListenerEvent[event.upper()]
+        except (ValueError, AttributeError):
+            valid = ", ".join(
+                map(lambda x: x.lower(), ListenerEvent.__members__.keys())
+            )
             raise InvalidUsage(f"Invalid event: {event}. Use one of: {valid}")
 
-        self.listeners[_event].append(listener)
+        if "." in _event:
+            self.signal(_event.value)(
+                partial(self._listener, listener=listener)
+            )
+        else:
+            self.listeners[_event.value].append(listener)
+
         return listener
 
     def register_middleware(self, middleware, attach_to: str = "request"):
@@ -308,7 +337,11 @@ class Sanic(BaseSanic):
                     self.named_response_middleware[_rn].appendleft(middleware)
         return middleware
 
-    def _apply_exception_handler(self, handler: FutureException):
+    def _apply_exception_handler(
+        self,
+        handler: FutureException,
+        route_names: Optional[List[str]] = None,
+    ):
         """Decorate a function to be registered as a handler for exceptions
 
         :param exceptions: exceptions
@@ -318,9 +351,9 @@ class Sanic(BaseSanic):
         for exception in handler.exceptions:
             if isinstance(exception, (tuple, list)):
                 for e in exception:
-                    self.error_handler.add(e, handler.handler)
+                    self.error_handler.add(e, handler.handler, route_names)
             else:
-                self.error_handler.add(exception, handler.handler)
+                self.error_handler.add(exception, handler.handler, route_names)
         return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
@@ -377,11 +410,17 @@ class Sanic(BaseSanic):
         *,
         condition: Optional[Dict[str, str]] = None,
         context: Optional[Dict[str, Any]] = None,
+        fail_not_found: bool = True,
+        inline: bool = False,
+        reverse: bool = False,
     ) -> Coroutine[Any, Any, Awaitable[Any]]:
         return self.signal_router.dispatch(
             event,
             context=context,
             condition=condition,
+            inline=inline,
+            reverse=reverse,
+            fail_not_found=fail_not_found,
         )
 
     async def event(
@@ -411,7 +450,13 @@ class Sanic(BaseSanic):
 
         self.websocket_enabled = enable
 
-    def blueprint(self, blueprint, **options):
+    def blueprint(
+        self,
+        blueprint: Union[
+            Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup
+        ],
+        **options: Any,
+    ):
         """Register a blueprint on the application.
 
         :param blueprint: Blueprint object or (list, tuple) thereof
@@ -651,7 +696,7 @@ class Sanic(BaseSanic):
 
     async def handle_exception(
         self, request: Request, exception: BaseException
-    ):
+    ):  # no cov
         """
         A handler that catches specific exceptions and outputs a response.
 
@@ -661,6 +706,12 @@ class Sanic(BaseSanic):
         :type exception: BaseException
         :raises ServerError: response 500
         """
+        await self.dispatch(
+            "http.lifecycle.exception",
+            inline=True,
+            context={"request": request, "exception": exception},
+        )
+
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
@@ -707,7 +758,7 @@ class Sanic(BaseSanic):
                 f"Invalid response type {response!r} (need HTTPResponse)"
             )
 
-    async def handle_request(self, request: Request):
+    async def handle_request(self, request: Request):  # no cov
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
@@ -715,10 +766,22 @@ class Sanic(BaseSanic):
         :param request: HTTP Request object
         :return: Nothing
         """
+        await self.dispatch(
+            "http.lifecycle.handle",
+            inline=True,
+            context={"request": request},
+        )
+
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
         response = None
         try:
+
+            await self.dispatch(
+                "http.routing.before",
+                inline=True,
+                context={"request": request},
+            )
             # Fetch handler from router
             route, handler, kwargs = self.router.get(
                 request.path,
@@ -726,19 +789,29 @@ class Sanic(BaseSanic):
                 request.headers.getone("host", None),
             )
 
-            request._match_info = kwargs
+            request._match_info = {**kwargs}
             request.route = route
 
+            await self.dispatch(
+                "http.routing.after",
+                inline=True,
+                context={
+                    "request": request,
+                    "route": route,
+                    "kwargs": kwargs,
+                    "handler": handler,
+                },
+            )
+
             if (
-                request.stream.request_body  # type: ignore
+                request.stream
+                and request.stream.request_body
                 and not route.ctx.ignore_body
             ):
 
                 if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
-                    request.stream.request_max_size = float(  # type: ignore
-                        "inf"
-                    )
+                    request.stream.request_max_size = float("inf")
                 else:
                     # Non-streaming handler: preload body
                     await request.receive_body()
@@ -765,17 +838,25 @@ class Sanic(BaseSanic):
                     )
 
                 # Run response handler
-                response = handler(request, **kwargs)
+                response = handler(request, **request.match_info)
                 if isawaitable(response):
                     response = await response
 
-            if response:
+            if response is not None:
                 response = await request.respond(response)
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
 
             # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
+                await self.dispatch(
+                    "http.lifecycle.response",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": response,
+                    },
+                )
                 await response.send(end_stream=True)
             else:
                 if not hasattr(handler, "is_websocket"):
@@ -793,23 +874,11 @@ class Sanic(BaseSanic):
     async def _websocket_handler(
         self, handler, request, *args, subprotocols=None, **kwargs
     ):
-        request.app = self
-        if not getattr(handler, "__blueprintname__", False):
-            request._name = handler.__name__
-        else:
-            request._name = (
-                getattr(handler, "__blueprintname__", "") + handler.__name__
-            )
-
-            pass
-
         if self.asgi:
             ws = request.transport.get_websocket_connection()
             await ws.accept(subprotocols)
         else:
             protocol = request.transport.get_protocol()
-            protocol.app = self
-
             ws = await protocol.websocket_handshake(request, subprotocols)
 
         # schedule the application handler
@@ -817,13 +886,19 @@ class Sanic(BaseSanic):
         # needs to be cancelled due to the server being stopped
         fut = ensure_future(handler(request, ws, *args, **kwargs))
         self.websocket_tasks.add(fut)
+        cancelled = False
         try:
             await fut
+        except Exception as e:
+            self.error_handler.log(request, e)
         except (CancelledError, ConnectionClosed):
-            pass
+            cancelled = True
         finally:
             self.websocket_tasks.remove(fut)
-            await ws.close()
+            if cancelled:
+                ws.end_connection(1000)
+            else:
+                await ws.close()
 
     # -------------------------------------------------------------------- #
     # Testing
@@ -869,7 +944,7 @@ class Sanic(BaseSanic):
         *,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
-        ssl: Union[dict, SSLContext, None] = None,
+        ssl: Union[Dict[str, str], SSLContext, None] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
         protocol: Optional[Type[Protocol]] = None,
@@ -999,7 +1074,7 @@ class Sanic(BaseSanic):
         port: Optional[int] = None,
         *,
         debug: bool = False,
-        ssl: Union[dict, SSLContext, None] = None,
+        ssl: Union[Dict[str, str], SSLContext, None] = None,
         sock: Optional[socket] = None,
         protocol: Type[Protocol] = None,
         backlog: int = 100,
@@ -1071,11 +1146,6 @@ class Sanic(BaseSanic):
             run_async=return_asyncio_server,
         )
 
-        # Trigger before_start events
-        await self.trigger_events(
-            server_settings.get("before_start", []),
-            server_settings.get("loop"),
-        )
         main_start = server_settings.pop("main_start", None)
         main_stop = server_settings.pop("main_stop", None)
         if main_start or main_stop:
@@ -1088,17 +1158,9 @@ class Sanic(BaseSanic):
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
 
-    async def trigger_events(self, events, loop):
-        """Trigger events (functions or async)
-        :param events: one or more sync or async functions to execute
-        :param loop: event loop
-        """
-        for event in events:
-            result = event(loop)
-            if isawaitable(result):
-                await result
-
-    async def _run_request_middleware(self, request, request_name=None):
+    async def _run_request_middleware(
+        self, request, request_name=None
+    ):  # no cov
         # The if improves speed.  I don't know why
         named_middleware = self.named_request_middleware.get(
             request_name, deque()
@@ -1111,25 +1173,67 @@ class Sanic(BaseSanic):
             request.request_middleware_started = True
 
             for middleware in applicable_middleware:
+                await self.dispatch(
+                    "http.middleware.before",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": None,
+                    },
+                    condition={"attach_to": "request"},
+                )
+
                 response = middleware(request)
                 if isawaitable(response):
                     response = await response
+
+                await self.dispatch(
+                    "http.middleware.after",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": None,
+                    },
+                    condition={"attach_to": "request"},
+                )
+
                 if response:
                     return response
         return None
 
     async def _run_response_middleware(
         self, request, response, request_name=None
-    ):
+    ):  # no cov
         named_middleware = self.named_response_middleware.get(
             request_name, deque()
         )
         applicable_middleware = self.response_middleware + named_middleware
         if applicable_middleware:
             for middleware in applicable_middleware:
+                await self.dispatch(
+                    "http.middleware.before",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": response,
+                    },
+                    condition={"attach_to": "response"},
+                )
+
                 _response = middleware(request, response)
                 if isawaitable(_response):
                     _response = await _response
+
+                await self.dispatch(
+                    "http.middleware.after",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": _response if _response else response,
+                    },
+                    condition={"attach_to": "response"},
+                )
+
                 if _response:
                     response = _response
                     if isinstance(response, BaseHTTPResponse):
@@ -1154,10 +1258,6 @@ class Sanic(BaseSanic):
         auto_reload=False,
     ):
         """Helper function used by `run` and `create_server`."""
-
-        self.listeners["before_server_start"] = [
-            self.finalize
-        ] + self.listeners["before_server_start"]
 
         if isinstance(ssl, dict):
             # try common aliaseses
@@ -1195,10 +1295,6 @@ class Sanic(BaseSanic):
         # Register start/stop events
 
         for event_name, settings_name, reverse in (
-            ("before_server_start", "before_start", False),
-            ("after_server_start", "after_start", False),
-            ("before_server_stop", "before_stop", True),
-            ("after_server_stop", "after_stop", True),
             ("main_process_start", "main_start", False),
             ("main_process_stop", "main_stop", True),
         ):
@@ -1236,7 +1332,8 @@ class Sanic(BaseSanic):
                 logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
 
         debug_mode = "enabled" if self.debug else "disabled"
-        logger.debug("Sanic auto-reload: enabled")
+        reload_mode = "enabled" if auto_reload else "disabled"
+        logger.debug(f"Sanic auto-reload: {reload_mode}")
         logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings
@@ -1246,19 +1343,43 @@ class Sanic(BaseSanic):
         return ".".join(parts)
 
     @classmethod
-    def _loop_add_task(cls, task, app, loop):
+    def _prep_task(cls, task, app, loop):
         if callable(task):
             try:
-                loop.create_task(task(app))
+                task = task(app)
             except TypeError:
-                loop.create_task(task())
-        else:
-            loop.create_task(task)
+                task = task()
+
+        return task
+
+    @classmethod
+    def _loop_add_task(cls, task, app, loop):
+        prepped = cls._prep_task(task, app, loop)
+        loop.create_task(prepped)
 
     @classmethod
     def _cancel_websocket_tasks(cls, app, loop):
         for task in app.websocket_tasks:
             task.cancel()
+
+    @staticmethod
+    async def dispatch_delayed_tasks(app, loop):
+        for name in app._delayed_tasks:
+            await app.dispatch(name, context={"app": app, "loop": loop})
+        app._delayed_tasks.clear()
+
+    @staticmethod
+    async def run_delayed_task(app, loop, task):
+        prepped = app._prep_task(task, app, loop)
+        await prepped
+
+    @staticmethod
+    async def _listener(
+        app: Sanic, loop: AbstractEventLoop, listener: ListenerType
+    ):
+        maybe_coro = listener(app, loop)
+        if maybe_coro and isawaitable(maybe_coro):
+            await maybe_coro
 
     # -------------------------------------------------------------------- #
     # ASGI
@@ -1333,15 +1454,51 @@ class Sanic(BaseSanic):
             raise SanicException(f'Sanic app name "{name}" not found.')
 
     # -------------------------------------------------------------------- #
-    # Static methods
+    # Lifecycle
     # -------------------------------------------------------------------- #
 
-    @staticmethod
-    async def finalize(app, _):
+    def finalize(self):
         try:
-            app.router.finalize()
-            if app.signal_router.routes:
-                app.signal_router.finalize()  # noqa
+            self.router.finalize()
         except FinalizationError as e:
             if not Sanic.test_mode:
-                raise e  # noqa
+                raise e
+
+    def signalize(self):
+        try:
+            self.signal_router.finalize()
+        except FinalizationError as e:
+            if not Sanic.test_mode:
+                raise e
+
+    async def _startup(self):
+        self.signalize()
+        self.finalize()
+        TouchUp.run(self)
+
+    async def _server_event(
+        self,
+        concern: str,
+        action: str,
+        loop: Optional[AbstractEventLoop] = None,
+    ) -> None:
+        event = f"server.{concern}.{action}"
+        if action not in ("before", "after") or concern not in (
+            "init",
+            "shutdown",
+        ):
+            raise SanicException(f"Invalid server event: {event}")
+        logger.debug(f"Triggering server events: {event}")
+        reverse = concern == "shutdown"
+        if loop is None:
+            loop = self.loop
+        await self.dispatch(
+            event,
+            fail_not_found=False,
+            reverse=reverse,
+            inline=True,
+            context={
+                "app": self,
+                "loop": loop,
+            },
+        )

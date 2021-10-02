@@ -654,41 +654,46 @@ def test_websocket_route_invalid_handler(app):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("url", ["/ws", "ws"])
 async def test_websocket_route_asgi(app, url):
-    ev = asyncio.Event()
+    @app.after_server_start
+    async def setup_ev(app, _):
+        app.ctx.ev = asyncio.Event()
 
     @app.websocket(url)
     async def handler(request, ws):
-        ev.set()
+        request.app.ctx.ev.set()
 
-    request, response = await app.asgi_client.websocket(url)
-    assert ev.is_set()
+    @app.get("/ev")
+    async def check(request):
+        return json({"set": request.app.ctx.ev.is_set()})
+
+    _, response = await app.asgi_client.websocket(url)
+    _, response = await app.asgi_client.get("/")
+    assert response.json["set"]
 
 
-def test_websocket_route_with_subprotocols(app):
+@pytest.mark.parametrize(
+    "subprotocols,expected",
+    (
+        (["one"], "one"),
+        (["three", "one"], "one"),
+        (["tree"], None),
+        (None, None),
+    ),
+)
+def test_websocket_route_with_subprotocols(app, subprotocols, expected):
     results = []
 
-    @app.websocket("/ws", subprotocols=["foo", "bar"])
+    @app.websocket("/ws", subprotocols=["zero", "one", "two", "three"])
     async def handler(request, ws):
-        results.append(ws.subprotocol)
+        nonlocal results
+        results = ws.subprotocol
         assert ws.subprotocol is not None
 
-    _, response = SanicTestClient(app).websocket("/ws", subprotocols=["bar"])
-    assert response.opened is True
-    assert results == ["bar"]
-
     _, response = SanicTestClient(app).websocket(
-        "/ws", subprotocols=["bar", "foo"]
+        "/ws", subprotocols=subprotocols
     )
     assert response.opened is True
-    assert results == ["bar", "bar"]
-
-    _, response = SanicTestClient(app).websocket("/ws", subprotocols=["baz"])
-    assert response.opened is True
-    assert results == ["bar", "bar", None]
-
-    _, response = SanicTestClient(app).websocket("/ws")
-    assert response.opened is True
-    assert results == ["bar", "bar", None, None]
+    assert results == expected
 
 
 @pytest.mark.parametrize("strict_slashes", [True, False, None])

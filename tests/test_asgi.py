@@ -10,7 +10,7 @@ from sanic.asgi import MockTransport
 from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
-from sanic.websocket import WebSocketConnection
+from sanic.server.websockets.connection import WebSocketConnection
 
 
 @pytest.fixture
@@ -359,6 +359,7 @@ async def test_request_handle_exception(app):
 
     _, response = await app.asgi_client.get("/error-prone")
     assert response.status_code == 503
+
 
 @pytest.mark.asyncio
 async def test_request_exception_suppressed_by_middleware(app):

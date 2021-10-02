@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 import pytest
@@ -15,6 +16,7 @@ from sanic.exceptions import (
     abort,
 )
 from sanic.response import text
+from websockets.version import version as websockets_version
 
 
 class SanicExceptionTestException(Exception):
@@ -232,3 +234,41 @@ def test_sanic_exception(exception_app):
         request, response = exception_app.test_client.get("/old_abort")
     assert response.status == 500
     assert len(w) == 1 and "deprecated" in w[0].message.args[0]
+
+
+def test_custom_exception_default_message(exception_app):
+    class TeaError(SanicException):
+        message = "Tempest in a teapot"
+        status_code = 418
+
+    exception_app.router.reset()
+
+    @exception_app.get("/tempest")
+    def tempest(_):
+        raise TeaError
+
+    _, response = exception_app.test_client.get("/tempest", debug=True)
+    assert response.status == 418
+    assert b"Tempest in a teapot" in response.body
+
+
+def test_exception_in_ws_logged(caplog):
+    app = Sanic(__file__)
+
+    @app.websocket("/feed")
+    async def feed(request, ws):
+        raise Exception("...")
+
+    with caplog.at_level(logging.INFO):
+        app.test_client.websocket("/feed")
+    # Websockets v10.0 and above output an additional
+    # INFO message when a ws connection is accepted
+    ws_version_parts = websockets_version.split(".")
+    ws_major = int(ws_version_parts[0])
+    record_index = 2 if ws_major >= 10 else 1
+    assert caplog.record_tuples[record_index][0] == "sanic.error"
+    assert caplog.record_tuples[record_index][1] == logging.ERROR
+    assert (
+        "Exception occurred while handling uri:"
+        in caplog.record_tuples[record_index][2]
+    )

@@ -95,7 +95,7 @@ def test_windows_workaround():
         os.kill(os.getpid(), signal.SIGINT)
         await asyncio.sleep(0.2)
         assert app.is_stopping
-        assert app.stay_active_task.result() == None
+        assert app.stay_active_task.result() is None
         # Second Ctrl+C should raise
         with pytest.raises(KeyboardInterrupt):
             os.kill(os.getpid(), signal.SIGINT)

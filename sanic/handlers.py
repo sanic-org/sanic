@@ -1,12 +1,13 @@
-from traceback import format_exc
+from typing import Dict, List, Optional, Tuple, Type
 
-from sanic.errorpages import exception_response
+from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
 from sanic.exceptions import (
     ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
 )
 from sanic.log import error_logger
+from sanic.models.handler_types import RouteHandler
 from sanic.response import text
 
 
@@ -23,15 +24,17 @@ class ErrorHandler:
 
     """
 
-    handlers = None
-    cached_handlers = None
-
-    def __init__(self):
-        self.handlers = []
-        self.cached_handlers = {}
+    # Beginning in v22.3, the base renderer will be TextRenderer
+    def __init__(self, fallback: str, base: Type[BaseRenderer] = HTMLRenderer):
+        self.handlers: List[Tuple[Type[BaseException], RouteHandler]] = []
+        self.cached_handlers: Dict[
+            Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
+        ] = {}
         self.debug = False
+        self.fallback = fallback
+        self.base = base
 
-    def add(self, exception, handler):
+    def add(self, exception, handler, route_names: Optional[List[str]] = None):
         """
         Add a new exception handler to an already existing handler object.
 
@@ -44,11 +47,16 @@ class ErrorHandler:
 
         :return: None
         """
-        # self.handlers to be deprecated and removed in version 21.12
+        # self.handlers is deprecated and will be removed in version 22.3
         self.handlers.append((exception, handler))
-        self.cached_handlers[exception] = handler
 
-    def lookup(self, exception):
+        if route_names:
+            for route in route_names:
+                self.cached_handlers[(exception, route)] = handler
+        else:
+            self.cached_handlers[(exception, None)] = handler
+
+    def lookup(self, exception, route_name: Optional[str]):
         """
         Lookup the existing instance of :class:`ErrorHandler` and fetch the
         registered handler for a specific type of exception.
@@ -63,17 +71,26 @@ class ErrorHandler:
         :return: Registered function if found ``None`` otherwise
         """
         exception_class = type(exception)
-        if exception_class in self.cached_handlers:
-            return self.cached_handlers[exception_class]
 
-        for ancestor in type.mro(exception_class):
-            if ancestor in self.cached_handlers:
-                handler = self.cached_handlers[ancestor]
-                self.cached_handlers[exception_class] = handler
+        for name in (route_name, None):
+            exception_key = (exception_class, name)
+            handler = self.cached_handlers.get(exception_key)
+            if handler:
                 return handler
-            if ancestor is BaseException:
-                break
-        self.cached_handlers[exception_class] = None
+
+        for name in (route_name, None):
+            for ancestor in type.mro(exception_class):
+                exception_key = (ancestor, name)
+                if exception_key in self.cached_handlers:
+                    handler = self.cached_handlers[exception_key]
+                    self.cached_handlers[
+                        (exception_class, route_name)
+                    ] = handler
+                    return handler
+
+                if ancestor is BaseException:
+                    break
+        self.cached_handlers[(exception_class, route_name)] = None
         handler = None
         return handler
 
@@ -91,7 +108,8 @@ class ErrorHandler:
         :return: Wrap the return value obtained from :func:`default`
             or registered handler for that type of exception.
         """
-        handler = self.lookup(exception)
+        route_name = request.name if request else None
+        handler = self.lookup(exception, route_name)
         response = None
         try:
             if handler:
@@ -99,7 +117,6 @@ class ErrorHandler:
             if response is None:
                 response = self.default(request, exception)
         except Exception:
-            self.log(format_exc())
             try:
                 url = repr(request.url)
             except AttributeError:
@@ -114,11 +131,6 @@ class ErrorHandler:
             else:
                 return text("An error occurred while handling an error", 500)
         return response
-
-    def log(self, message, level="error"):
-        """
-        Deprecated, do not use.
-        """
 
     def default(self, request, exception):
         """
@@ -135,6 +147,17 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
+        self.log(request, exception)
+        return exception_response(
+            request,
+            exception,
+            debug=self.debug,
+            base=self.base,
+            fallback=self.fallback,
+        )
+
+    @staticmethod
+    def log(request, exception):
         quiet = getattr(exception, "quiet", False)
         if quiet is False:
             try:
@@ -142,12 +165,9 @@ class ErrorHandler:
             except AttributeError:
                 url = "unknown"
 
-            self.log(format_exc())
             error_logger.exception(
                 "Exception occurred while handling uri: %s", url
             )
-
-        return exception_response(request, exception, self.debug)
 
 
 class ContentRangeHandler:

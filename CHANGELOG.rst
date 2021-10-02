@@ -1,3 +1,22 @@
+.. note::
+
+  From v21.9, CHANGELOG files are maintained in ``./docs/sanic/releases``
+
+Version 21.6.1
+--------------
+
+Bugfixes
+********
+
+  * `#2178 <https://github.com/sanic-org/sanic/pull/2178>`_
+    Update sanic-routing to allow for better splitting of complex URI templates
+  * `#2183 <https://github.com/sanic-org/sanic/pull/2183>`_
+    Proper handling of chunked request bodies to resolve phantom 503 in logs
+  * `#2181 <https://github.com/sanic-org/sanic/pull/2181>`_
+    Resolve regression in exception logging
+  * `#2201 <https://github.com/sanic-org/sanic/pull/2201>`_
+    Cleanup request info in pipelined requests
+
 Version 21.6.0
 --------------
 

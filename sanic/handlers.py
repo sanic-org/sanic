@@ -57,12 +57,12 @@ class ErrorHandler:
                 "work at all.",
                 DeprecationWarning,
             )
-            error_handler._lookup = error_handler._single_lookup
+            error_handler._lookup = error_handler._legacy_lookup
 
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)
 
-    def _single_lookup(self, exception, route_name: Optional[str] = None):
+    def _legacy_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception)
 
     def add(self, exception, handler, route_names: Optional[List[str]] = None):

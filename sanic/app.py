@@ -1474,6 +1474,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     async def _startup(self):
         self.signalize()
         self.finalize()
+        ErrorHandler.finalize(self.error_handler)
         TouchUp.run(self)
 
     async def _server_event(

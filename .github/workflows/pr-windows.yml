@@ -15,6 +15,7 @@ jobs:
           - { python-version: 3.7, tox-env: py37-no-ext }
           - { python-version: 3.8, tox-env: py38-no-ext }
           - { python-version: 3.9, tox-env: py39-no-ext }
+          - { python-version: 3.10, tox-env: py39-no-ext }
           - { python-version: pypy-3.7, tox-env: pypy37-no-ext }
 
     steps:

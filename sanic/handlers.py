@@ -41,7 +41,7 @@ class ErrorHandler:
     def finalize(cls, error_handler):
         if not isinstance(error_handler, cls):
             error_logger.warning(
-                f"Error handler is non-confirming: {type(error_handler)}"
+                f"Error handler is non-conforming: {type(error_handler)}"
             )
 
         sig = signature(error_handler.lookup)
@@ -50,7 +50,7 @@ class ErrorHandler:
                 DeprecationWarning(
                     "You are using a deprecated error handler. The lookup "
                     "method should accept two positional parameters: "
-                    "exception, route_name: Optional[str]. "
+                    "(exception, route_name: Optional[str]). "
                     "Until you upgrade your ErrorHandler.lookup, Blueprint "
                     "specific exceptions will not work properly. Beginning "
                     "in v22.3, the legacy style lookup method will not "

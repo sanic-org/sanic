@@ -100,7 +100,7 @@ def main():
         "-ne",
         "--noisy-exceptions",
         dest="noisy_exceptions",
-        action="store_true"
+        action="store_true",
     )
     parser.add_argument(
         "-r",

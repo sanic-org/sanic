@@ -120,6 +120,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "name",
         "named_request_middleware",
         "named_response_middleware",
+        "noisy_exceptions",
         "reload_dirs",
         "request_class",
         "request_middleware",
@@ -187,6 +188,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
+        self.noisy_exceptions = False
         self.reload_dirs: Set[Path] = set()
         self.request_class = request_class
         self.request_middleware: Deque[MiddlewareType] = deque()
@@ -890,7 +892,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         try:
             await fut
         except Exception as e:
-            self.error_handler.log(request, e)
+            self.error_handler.log(request, e, self.noisy_exceptions)
         except (CancelledError, ConnectionClosed):
             cancelled = True
         finally:
@@ -954,6 +956,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         loop: None = None,
         reload_dir: Optional[Union[List[str], str]] = None,
+        noisy_exceptions: bool = False,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -1036,6 +1039,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             backlog=backlog,
             register_sys_signals=register_sys_signals,
             auto_reload=auto_reload,
+            noisy_exceptions=noisy_exceptions,
         )
 
         try:
@@ -1082,6 +1086,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         return_asyncio_server: bool = False,
         asyncio_server_kwargs: Dict[str, Any] = None,
+        noisy_exceptions: bool = False,
     ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
@@ -1144,6 +1149,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
+            noisy_exceptions=noisy_exceptions,
         )
 
         main_start = server_settings.pop("main_start", None)
@@ -1256,6 +1262,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         register_sys_signals=True,
         run_async=False,
         auto_reload=False,
+        noisy_exceptions=False,
     ):
         """Helper function used by `run` and `create_server`."""
 
@@ -1276,6 +1283,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
 
         self.error_handler.debug = debug
+        self.error_handler.noisy = noisy_exceptions
         self.debug = debug
 
         server_settings = {

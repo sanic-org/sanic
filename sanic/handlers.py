@@ -34,6 +34,7 @@ class ErrorHandler:
             Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
         ] = {}
         self.debug = False
+        self.noisy = False
         self.fallback = fallback
         self.base = base
 
@@ -180,7 +181,7 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
-        self.log(request, exception)
+        self.log(request, exception, self.noisy)
         return exception_response(
             request,
             exception,
@@ -190,9 +191,9 @@ class ErrorHandler:
         )
 
     @staticmethod
-    def log(request, exception):
+    def log(request, exception, noisy=False):
         quiet = getattr(exception, "quiet", False)
-        if quiet is False:
+        if quiet is False or noisy is True:
             try:
                 url = repr(request.url)
             except AttributeError:

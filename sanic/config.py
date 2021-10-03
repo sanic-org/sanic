@@ -36,6 +36,7 @@ DEFAULT_CONFIG = {
     "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
+    "USE_UVLOOP": True,
     "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
     "WEBSOCKET_PING_TIMEOUT": 20,
@@ -61,6 +62,7 @@ class Config(dict):
     REQUEST_TIMEOUT: int
     RESPONSE_TIMEOUT: int
     SERVER_NAME: str
+    USE_UVLOOP: bool
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int
     WEBSOCKET_PING_TIMEOUT: int

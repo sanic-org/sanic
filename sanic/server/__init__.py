@@ -6,13 +6,18 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 
 
-try:
-    import uvloop  # type: ignore
+def use_uvloop():
+    """
+    Use uvloop (if available) instead of the default
+    asyncio loop.
+    """
+    try:
+        import uvloop  # type: ignore
 
-    if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-except ImportError:
-    pass
+        if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    except ImportError:
+        pass
 
 
 __all__ = (

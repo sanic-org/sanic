@@ -4,6 +4,7 @@ import asyncio
 
 from collections import defaultdict
 from copy import deepcopy
+from functools import wraps
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
 
@@ -24,6 +25,25 @@ from sanic.models.handler_types import (
 
 if TYPE_CHECKING:
     from sanic import Sanic  # noqa
+
+
+def lazy(func):
+    @wraps(func)
+    def decorator(bp, *args, **kwargs):
+        kwargs["apply"] = False
+
+        def wrapper(handler):
+            future = func(bp, *args, **kwargs)(handler)
+
+            if bp.registered:
+                for app in bp.apps:
+                    bp.register(app, {})
+
+            return future
+
+        return wrapper
+
+    return decorator
 
 
 class Blueprint(BaseSanic):
@@ -115,29 +135,16 @@ class Blueprint(BaseSanic):
             )
         return self._apps
 
-    def route(self, *args, **kwargs):
-        kwargs["apply"] = False
-        return super().route(*args, **kwargs)
+    @property
+    def registered(self) -> bool:
+        return bool(self._apps)
 
-    def static(self, *args, **kwargs):
-        kwargs["apply"] = False
-        return super().static(*args, **kwargs)
-
-    def middleware(self, *args, **kwargs):
-        kwargs["apply"] = False
-        return super().middleware(*args, **kwargs)
-
-    def listener(self, *args, **kwargs):
-        kwargs["apply"] = False
-        return super().listener(*args, **kwargs)
-
-    def exception(self, *args, **kwargs):
-        kwargs["apply"] = False
-        return super().exception(*args, **kwargs)
-
-    def signal(self, event: str, *args, **kwargs):
-        kwargs["apply"] = False
-        return super().signal(event, *args, **kwargs)
+    exception = lazy(BaseSanic.exception)
+    listener = lazy(BaseSanic.listener)
+    middleware = lazy(BaseSanic.middleware)
+    route = lazy(BaseSanic.route)
+    signal = lazy(BaseSanic.signal)
+    static = lazy(BaseSanic.static)
 
     def reset(self):
         self._apps: Set[Sanic] = set()

@@ -97,7 +97,6 @@ def main():
     )
     parser.add_argument("-d", "--debug", dest="debug", action="store_true")
     parser.add_argument(
-        "-ne",
         "--noisy-exceptions",
         dest="noisy_exceptions",
         action="store_true",

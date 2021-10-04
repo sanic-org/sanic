@@ -206,7 +206,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         if self.config.REGISTER:
             self.__class__.register_app(self)
 
-        if not self.config.NO_UVLOOP:
+        if self.config.USE_UVLOOP:
             use_uvloop()
 
         self.router.ctx.app = self

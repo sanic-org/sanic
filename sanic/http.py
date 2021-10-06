@@ -374,7 +374,7 @@ class Http(metaclass=TouchUpMeta):
         HEAD response: body data silently ignored.
         """
         if end_stream:
-            self.q = None
+            self.response_func = None
             self.stage = Stage.IDLE
 
     async def http1_response_chunked(

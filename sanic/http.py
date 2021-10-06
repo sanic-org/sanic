@@ -105,7 +105,6 @@ class Http(metaclass=TouchUpMeta):
         self.keep_alive = True
         self.stage: Stage = Stage.IDLE
         self.dispatch = self.protocol.app.dispatch
-        self.init_for_request()
 
     def init_for_request(self):
         """Init/reset all per-request variables."""
@@ -129,14 +128,20 @@ class Http(metaclass=TouchUpMeta):
         """
         HTTP 1.1 connection handler
         """
-        while True:  # As long as connection stays keep-alive
+        # Handle requests while the connection stays reusable
+        while self.keep_alive and self.stage is Stage.IDLE:
+            self.init_for_request()
+            # Wait for incoming bytes (in IDLE stage)
+            if not self.recv_buffer:
+                await self._receive_more()
+            self.stage = Stage.REQUEST
             try:
                 # Receive and handle a request
-                self.stage = Stage.REQUEST
                 self.response_func = self.http1_response_header
 
                 await self.http1_request_header()
 
+                self.stage = Stage.HANDLER
                 self.request.conn_info = self.protocol.conn_info
                 await self.protocol.request_handler(self.request)
 
@@ -186,16 +191,6 @@ class Http(metaclass=TouchUpMeta):
                 self.request.stream = None
                 if self.response:
                     self.response.stream = None
-
-            # Exit and disconnect if no more requests can be taken
-            if self.stage is not Stage.IDLE or not self.keep_alive:
-                break
-
-            self.init_for_request()
-
-            # Wait for the next request
-            if not self.recv_buffer:
-                await self._receive_more()
 
     async def http1_request_header(self):  # no cov
         """
@@ -299,7 +294,6 @@ class Http(metaclass=TouchUpMeta):
 
         # Remove header and its trailing CRLF
         del buf[: pos + 4]
-        self.stage = Stage.HANDLER
         self.request, request.stream = request, self
         self.protocol.state["requests_count"] += 1
 
@@ -380,7 +374,7 @@ class Http(metaclass=TouchUpMeta):
         HEAD response: body data silently ignored.
         """
         if end_stream:
-            self.response_func = None
+            self.q = None
             self.stage = Stage.IDLE
 
     async def http1_response_chunked(

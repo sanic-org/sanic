@@ -225,11 +225,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             # uvloop requested and installed, but opted-out during install
             elif strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
                 error_logger.warning(
-                    "You are running the app using uvloop, but we've noticed "
-                    "that the 'SANIC_NO_UVLOOP' environment variable "
-                    "(used to opt-out of installing uvloop with Sanic) "
-                    "is set to true. If you want to disable uvloop with "
-                    "Sanic, set the 'USE_UVLOOP' configuration value to false."
+                    "You are running the app using uvloop, but the "
+                    "'SANIC_NO_UVLOOP' environment variable (used to opt-out "
+                    "of installing uvloop with Sanic) is set to true. If you "
+                    "want to disable uvloop with Sanic, set the 'USE_UVLOOP' "
+                    "configuration value to false."
                 )
 
         self.router.ctx.app = self

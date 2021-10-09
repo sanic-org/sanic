@@ -2,13 +2,19 @@ import asyncio
 import logging
 import re
 
+from distutils.util import strtobool
 from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch
 
 import pytest
+try:
+    import uvloop  # noqa
+except ImportError:
+    pass
 
 from sanic import Sanic
+from sanic.compat import OS_IS_WINDOWS
 from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
@@ -444,3 +450,46 @@ def test_custom_context():
     app = Sanic("custom", ctx=ctx)
 
     assert app.ctx == ctx
+
+
+def test_app_uvloop_config(caplog):
+    if uvloop_installed():
+        environ["SANIC_USE_UVLOOP"] = "false"
+        Sanic("dont_use_uvloop")
+        assert not isinstance(
+            asyncio.get_event_loop_policy(),
+            uvloop.EventLoopPolicy
+        )
+        del environ["SANIC_USE_UVLOOP"]
+
+        Sanic("use_uvloop")
+        assert isinstance(
+            asyncio.get_event_loop_policy(),
+            uvloop.EventLoopPolicy
+        )
+
+        environ["SANIC_NO_UVLOOP"] = "true"
+        with caplog.at_level(logging.WARNING):
+            Sanic("use_uvloop_with_no_uvloop_set")
+
+        assert caplog.records[0].message == (
+            "You are running the app using uvloop, but the "
+            "'SANIC_NO_UVLOOP' environment variable (used to opt-out "
+            "of installing uvloop with Sanic) is set to true. If you "
+            "want to disable uvloop with Sanic, set the 'USE_UVLOOP' "
+            "configuration value to false."
+        )
+        del environ["SANIC_NO_UVLOOP"]
+
+    elif not OS_IS_WINDOWS:
+        with caplog.at_level(logging.WARNING):
+            Sanic("wants_but_cant_use_uvloop")
+
+        assert caplog.records[0].message == (
+            "You are trying to use uvloop, but uvloop is not "
+            "installed in your system. In order to use uvloop "
+            "you must first install it. Otherwise, you can disable "
+            "uvloop completely by setting the 'USE_UVLOOP' "
+            "configuration  value to false. The app will now continue "
+            "to run without using uvloop."
+        )

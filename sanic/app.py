@@ -217,9 +217,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "You are trying to use uvloop, but uvloop is not "
                     "installed in your system. In order to use uvloop "
                     "you must first install it. Otherwise, you can disable "
-                    "uvloop completely by setting the 'USE_UVLOOP' configuration "
-                    "value to false. The app will now continue to run without "
-                    "using uvloop."
+                    "uvloop completely by setting the 'USE_UVLOOP' "
+                    "configuration  value to false. The app will now continue "
+                    "to run without using uvloop."
                 )
 
             # uvloop requested and installed, but opted-out during install
@@ -228,8 +228,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "You are running the app using uvloop, but we've noticed "
                     "that the 'SANIC_NO_UVLOOP' environment variable "
                     "(used to opt-out of installing uvloop with Sanic) "
-                    "is set to true. If you want to disable uvloop with Sanic, "
-                    "set the 'USE_UVLOOP' configuration value to false."
+                    "is set to true. If you want to disable uvloop with "
+                    "Sanic, set the 'USE_UVLOOP' configuration value to false."
                 )
 
         self.router.ctx.app = self

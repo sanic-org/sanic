@@ -218,7 +218,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "installed in your system. In order to use uvloop "
                     "you must first install it. Otherwise, you can disable "
                     "uvloop completely by setting the 'USE_UVLOOP' configuration "
-                    "value to false. The app will now run without uvloop."
+                    "value to false. The app will now continue to run without "
+                    "using uvloop."
                 )
 
             # uvloop requested and installed, but opted-out during install

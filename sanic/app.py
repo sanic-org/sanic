@@ -15,6 +15,7 @@ from asyncio import (
 )
 from asyncio.futures import Future
 from collections import defaultdict, deque
+from distutils.util import strtobool
 from functools import partial
 from inspect import isawaitable
 from pathlib import Path
@@ -49,6 +50,7 @@ from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
+from sanic.compat import OS_IS_WINDOWS
 from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
@@ -206,8 +208,28 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         if self.config.REGISTER:
             self.__class__.register_app(self)
 
-        if self.config.USE_UVLOOP:
-            use_uvloop()
+        if self.config.USE_UVLOOP and not OS_IS_WINDOWS:
+            uvloop_success = use_uvloop()
+
+            # uvloop requested, but not installed
+            if not uvloop_success:
+                error_logger.warning(
+                    "You are trying to use uvloop, but uvloop is not "
+                    "installed in your system. In order to use uvloop "
+                    "you must first install it. Otherwise, you can disable "
+                    "uvloop completely by setting the 'USE_UVLOOP' configuration "
+                    "value to false. The app will now run without uvloop."
+                )
+
+            # uvloop requested and installed, but opted-out during install
+            elif strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+                error_logger.warning(
+                    "You are running the app using uvloop, but we've noticed "
+                    "that the 'SANIC_NO_UVLOOP' environment variable "
+                    "(used to opt-out of installing uvloop with Sanic) "
+                    "is set to true. If you want to disable uvloop with Sanic, "
+                    "set the 'USE_UVLOOP' configuration value to false."
+                )
 
         self.router.ctx.app = self
         self.signal_router.ctx.app = self

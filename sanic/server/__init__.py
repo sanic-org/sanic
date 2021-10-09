@@ -6,7 +6,7 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 
 
-def use_uvloop():
+def use_uvloop() -> bool:
     """
     Use uvloop (if available) instead of the default
     asyncio loop.
@@ -19,7 +19,8 @@ def use_uvloop():
         ):
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     except ImportError:
-        pass
+        return False
+    return True
 
 
 __all__ = (

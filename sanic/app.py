@@ -208,30 +208,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         if self.config.REGISTER:
             self.__class__.register_app(self)
 
-        if self.config.USE_UVLOOP and not OS_IS_WINDOWS:
-            uvloop_success = use_uvloop()
-
-            # uvloop requested, but not installed
-            if not uvloop_success:
-                error_logger.warning(
-                    "You are trying to use uvloop, but uvloop is not "
-                    "installed in your system. In order to use uvloop "
-                    "you must first install it. Otherwise, you can disable "
-                    "uvloop completely by setting the 'USE_UVLOOP' "
-                    "configuration  value to false. The app will now continue "
-                    "to run without using uvloop."
-                )
-
-            # uvloop requested and installed, but opted-out during install
-            elif strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
-                error_logger.warning(
-                    "You are running the app using uvloop, but the "
-                    "'SANIC_NO_UVLOOP' environment variable (used to opt-out "
-                    "of installing uvloop with Sanic) is set to true. If you "
-                    "want to disable uvloop with Sanic, set the 'USE_UVLOOP' "
-                    "configuration value to false."
-                )
-
         self.router.ctx.app = self
         self.signal_router.ctx.app = self
 
@@ -1034,6 +1010,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "#asynchronous-support"
             )
 
+        self._configure_event_loop()
+
         if auto_reload or auto_reload is None and debug:
             self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
@@ -1155,6 +1133,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
+
+        self._configure_event_loop()
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
@@ -1437,6 +1417,29 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
 
         self.config.update_config(config)
+
+    def _configure_event_loop(self):
+        if self.config.USE_UVLOOP and not OS_IS_WINDOWS:
+            uvloop_success = use_uvloop()
+
+            if uvloop_success is False:
+                error_logger.warning(
+                    "You are trying to use uvloop, but uvloop is not "
+                    "installed in your system. In order to use uvloop "
+                    "you must first install it. Otherwise, you can disable "
+                    "uvloop completely by setting the 'USE_UVLOOP' "
+                    "configuration value to false. Sanic will now continue "
+                    "to run without using uvloop."
+                )
+
+            elif strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+                error_logger.warning(
+                    "You are running Sanic using uvloop, but the "
+                    "'SANIC_NO_UVLOOP' environment variable (used to opt-out "
+                    "of installing uvloop with Sanic) is set to true. If you "
+                    "want to disable uvloop with Sanic, set the 'USE_UVLOOP' "
+                    "configuration value to false."
+                )
 
     # -------------------------------------------------------------------- #
     # Class methods

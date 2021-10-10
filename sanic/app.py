@@ -1398,6 +1398,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         details: https://asgi.readthedocs.io/en/latest
         """
         self.asgi = True
+        self._configure_event_loop()
         self._asgi_app = await ASGIApp.create(self, scope, receive, send)
         asgi_app = self._asgi_app
         await asgi_app()

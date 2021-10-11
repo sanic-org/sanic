@@ -2,7 +2,6 @@ import asyncio
 import logging
 import re
 
-from distutils.util import strtobool
 from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch
@@ -501,13 +500,15 @@ def test_app_uvloop_config(caplog):
         del environ["SANIC_NO_UVLOOP"]
         asyncio.set_event_loop_policy(None)
 
-        assert caplog.records[0].message == (
+        assert (
+            "sanic.error",
+            logging.WARNING,
             "You are running the app using uvloop, but the "
             "'SANIC_NO_UVLOOP' environment variable (used to opt-out "
             "of installing uvloop with Sanic) is set to true. If you "
             "want to disable uvloop with Sanic, set the 'USE_UVLOOP' "
             "configuration value to false."
-        )
+        ) in caplog.record_tuples
 
     elif not OS_IS_WINDOWS:
         app = Sanic("wants_but_cant_use_uvloop")
@@ -518,11 +519,13 @@ def test_app_uvloop_config(caplog):
                 return text("ok")
             app.test_client.get("/")
 
-        assert caplog.records[0].message == (
+        assert (
+            "sanic.error",
+            logging.WARNING,
             "You are trying to use uvloop, but uvloop is not "
             "installed in your system. In order to use uvloop "
             "you must first install it. Otherwise, you can disable "
             "uvloop completely by setting the 'USE_UVLOOP' "
             "configuration  value to false. The app will now continue "
             "to run without using uvloop."
-        )
+        ) in caplog.record_tuples

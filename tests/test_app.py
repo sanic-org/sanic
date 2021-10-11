@@ -526,6 +526,6 @@ def test_app_uvloop_config(caplog):
             "installed in your system. In order to use uvloop "
             "you must first install it. Otherwise, you can disable "
             "uvloop completely by setting the 'USE_UVLOOP' "
-            "configuration  value to false. The app will now continue "
+            "configuration  value to false. Sanic will now continue "
             "to run without using uvloop."
         ) in caplog.record_tuples

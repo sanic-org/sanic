@@ -7,13 +7,8 @@ from os import environ
 from unittest.mock import Mock, patch
 
 import pytest
-try:
-    import uvloop  # noqa
-except ImportError:
-    pass
 
 from sanic import Sanic
-from sanic.compat import OS_IS_WINDOWS
 from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
@@ -449,83 +444,3 @@ def test_custom_context():
     app = Sanic("custom", ctx=ctx)
 
     assert app.ctx == ctx
-
-
-def test_app_uvloop_config(caplog):
-    if uvloop_installed():
-        asyncio.set_event_loop_policy(None)
-        environ["SANIC_USE_UVLOOP"] = "false"
-
-        app = Sanic("dont_use_uvloop")
-
-        @app.get("/")
-        def _(request):
-            assert not isinstance(
-                asyncio.get_event_loop_policy(),
-                uvloop.EventLoopPolicy
-            )
-            return text("ok")
-
-        app.test_client.get("/")
-        del environ["SANIC_USE_UVLOOP"]
-
-        app = Sanic("use_uvloop")
-
-        @app.get("/")
-        async def _(request):
-            assert isinstance(
-                asyncio.get_event_loop_policy(),
-                uvloop.EventLoopPolicy
-            )
-            return text("ok")
-
-        app.test_client.get("/")
-
-        asyncio.set_event_loop_policy(None)
-
-        environ["SANIC_NO_UVLOOP"] = "true"
-        app = Sanic("use_uvloop_with_no_uvloop_set")
-
-        with caplog.at_level(logging.WARNING):
-            @app.get("/")
-            async def _(request):
-                assert isinstance(
-                    asyncio.get_event_loop_policy(),
-                    uvloop.EventLoopPolicy
-                )
-                return text("ok")
-
-            app.test_client.get("/")
-
-        del environ["SANIC_NO_UVLOOP"]
-        asyncio.set_event_loop_policy(None)
-
-        assert (
-            "sanic.error",
-            logging.WARNING,
-            "You are running the app using uvloop, but the "
-            "'SANIC_NO_UVLOOP' environment variable (used to opt-out "
-            "of installing uvloop with Sanic) is set to true. If you "
-            "want to disable uvloop with Sanic, set the 'USE_UVLOOP' "
-            "configuration value to false."
-        ) in caplog.record_tuples
-
-    elif not OS_IS_WINDOWS:
-        app = Sanic("wants_but_cant_use_uvloop")
-
-        with caplog.at_level(logging.WARNING):
-            @app.get("/")
-            async def _(request):
-                return text("ok")
-            app.test_client.get("/")
-
-        assert (
-            "sanic.error",
-            logging.WARNING,
-            "You are trying to use uvloop, but uvloop is not "
-            "installed in your system. In order to use uvloop "
-            "you must first install it. Otherwise, you can disable "
-            "uvloop completely by setting the 'USE_UVLOOP' "
-            "configuration  value to false. Sanic will now continue "
-            "to run without using uvloop."
-        ) in caplog.record_tuples

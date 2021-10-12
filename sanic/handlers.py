@@ -209,7 +209,7 @@ class ErrorHandler:
         self.log(request, exception, noisy)
 
     def _legacy_log(self, request, exception, noisy: bool):
-        self.log(request, exception)
+        self.log(request, exception)  # type: ignore
 
     @staticmethod
     def log(request, exception, noisy: bool):

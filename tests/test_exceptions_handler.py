@@ -227,3 +227,46 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
         "v22.3, the legacy style lookup method will not work at all."
     )
     assert response.status == 400
+
+
+def test_double_arg_exception_handler_log_notice(exception_handler_app, caplog):
+    class CustomErrorHandler(ErrorHandler):
+        @staticmethod
+        def log(request, exception):
+            pass
+
+    exception_handler_app.error_handler = CustomErrorHandler()
+
+    with caplog.at_level(logging.WARNING):
+        _, response = exception_handler_app.test_client.get("/1")
+
+    assert caplog.records[0].message == (
+        "You are using a deprecated error handler. The log "
+        "method should accept three positional parameters: "
+        "(request, exception, noisy: bool). "
+        "Until you upgrade your ErrorHandler.log, the noisy "
+        "exceptions setting will not work properly. Beginning "
+        "in v??.?, the legacy style log method will not "
+        "work at all."
+    )
+    assert response.status == 400
+
+
+def test_error_handler_noisy_log(caplog):
+    class CustomError(Exception):
+        quiet = True
+
+    class FakeRequest(object):
+        url = "http://127.0.0.1:8000"
+
+    with caplog.at_level(logging.ERROR):
+        ErrorHandler.log(FakeRequest(), CustomError(), False)
+
+    assert len(caplog.records) == 0
+
+    with caplog.at_level(logging.ERROR):
+        ErrorHandler.log(FakeRequest(), CustomError(), True)
+
+    assert caplog.records[0].message == (
+        "Exception occurred while handling uri: '%s'" % FakeRequest.url
+    )

@@ -892,7 +892,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         try:
             await fut
         except Exception as e:
-            self.error_handler.log(request, e, self.noisy_exceptions)
+            self.error_handler._log(request, e, self.noisy_exceptions)
         except (CancelledError, ConnectionClosed):
             cancelled = True
         finally:

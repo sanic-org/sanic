@@ -120,7 +120,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "name",
         "named_request_middleware",
         "named_response_middleware",
-        "noisy_exceptions",
         "reload_dirs",
         "request_class",
         "request_middleware",
@@ -188,7 +187,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
-        self.noisy_exceptions = False
         self.reload_dirs: Set[Path] = set()
         self.request_class = request_class
         self.request_middleware: Deque[MiddlewareType] = deque()
@@ -892,7 +890,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         try:
             await fut
         except Exception as e:
-            self.error_handler._log(request, e, self.noisy_exceptions)
+            noisy = self.error_handler.noisy
+            self.error_handler._log(request, e, noisy)
         except (CancelledError, ConnectionClosed):
             cancelled = True
         finally:

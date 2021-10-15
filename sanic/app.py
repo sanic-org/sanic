@@ -45,7 +45,6 @@ from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
-from sanic.tls import process_to_context
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -78,6 +77,7 @@ from sanic.server import serve, serve_multiple, serve_single
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
+from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
 

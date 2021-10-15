@@ -109,7 +109,7 @@ class WebSocketProtocol(HttpProtocol):
             return super().close_if_idle()
 
     async def websocket_handshake(
-        self, request, subprotocols=Optional[Sequence[str]]
+        self, request, subprotocols: Optional[Sequence[str]] = None
     ):
         # let the websockets package do the handshake with the client
         try:

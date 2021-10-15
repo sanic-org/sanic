@@ -71,7 +71,8 @@ class SSLSelector:
         for p in paths:
             cert, ctx = load_cert_dir(p)
             self.names += [
-                name for dom, name in cert["subjectAltName"] if dom == "DNS"
+                name
+                for t, name in cert["subjectAltName"] if t in ["DNS", "IP"]
             ]
             self.certs.append((cert, ctx))
         logger.info(f"Loaded certificates for {', '.join(self.names)}")

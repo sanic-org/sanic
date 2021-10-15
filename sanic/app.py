@@ -19,7 +19,7 @@ from functools import partial
 from inspect import isawaitable
 from pathlib import Path
 from socket import socket
-from ssl import Purpose, SSLContext, create_default_context
+from ssl import SSLContext
 from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
@@ -45,6 +45,7 @@ from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
+from sanic.tls import process_to_context
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -1258,16 +1259,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         auto_reload=False,
     ):
         """Helper function used by `run` and `create_server`."""
-
-        if isinstance(ssl, dict):
-            # try common aliaseses
-            cert = ssl.get("cert") or ssl.get("certificate")
-            key = ssl.get("key") or ssl.get("keyfile")
-            if cert is None or key is None:
-                raise ValueError("SSLContext or certificate and key required.")
-            context = create_default_context(purpose=Purpose.CLIENT_AUTH)
-            context.load_cert_chain(cert, keyfile=key)
-            ssl = context
+        ssl = process_to_context(ssl)
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
                 "PROXIES_COUNT cannot be negative. "

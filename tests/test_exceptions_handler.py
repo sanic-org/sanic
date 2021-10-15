@@ -5,7 +5,7 @@ import pytest
 
 from bs4 import BeautifulSoup
 
-from sanic import Sanic
+from sanic import Sanic, Request
 from sanic.exceptions import Forbidden, InvalidUsage, NotFound, ServerError
 from sanic.handlers import ErrorHandler
 from sanic.response import stream, text
@@ -229,44 +229,29 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
     assert response.status == 400
 
 
-def test_double_arg_exception_handler_log_notice(exception_handler_app, caplog):
-    class CustomErrorHandler(ErrorHandler):
-        @staticmethod
-        def log(request, exception):
-            pass
-
-    exception_handler_app.error_handler = CustomErrorHandler()
-
-    with caplog.at_level(logging.WARNING):
-        _, response = exception_handler_app.test_client.get("/1")
-
-    assert caplog.records[0].message == (
-        "You are using a deprecated error handler. The log "
-        "method should accept three positional parameters: "
-        "(request, exception, noisy: bool). "
-        "Until you upgrade your ErrorHandler.log, the noisy "
-        "exceptions setting will not work properly. Beginning "
-        "in v??.?, the legacy style log method will not "
-        "work at all."
-    )
-    assert response.status == 400
-
-
-def test_error_handler_noisy_log(caplog):
+def test_error_handler_noisy_log(caplog, exception_handler_app):
     class CustomError(Exception):
         quiet = True
 
-    class FakeRequest(object):
-        url = "http://127.0.0.1:8000"
+    request = Request(
+        b"/foobar",
+        {"accept": "*/*"},
+        "1.1",
+        "GET",
+        None,
+        exception_handler_app
+    )
 
+    exception_handler_app.config.NOISY_EXCEPTIONS = False
     with caplog.at_level(logging.ERROR):
-        ErrorHandler.log(FakeRequest(), CustomError(), False)
+        ErrorHandler.log(request, CustomError())
 
     assert len(caplog.records) == 0
 
+    exception_handler_app.config.NOISY_EXCEPTIONS = True
     with caplog.at_level(logging.ERROR):
-        ErrorHandler.log(FakeRequest(), CustomError(), True)
+        ErrorHandler.log(request, CustomError())
 
     assert caplog.records[0].message == (
-        "Exception occurred while handling uri: '%s'" % FakeRequest.url
+        "Exception occurred while handling uri: '%s'" % request.url
     )

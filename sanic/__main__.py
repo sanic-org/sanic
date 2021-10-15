@@ -171,10 +171,13 @@ def main():
             "debug": args.debug,
             "access_log": args.access_log,
             "ssl": ssl,
-            "noisy_exceptions": args.noisy_exceptions,
         }
+
         if args.auto_reload:
             kwargs["auto_reload"] = True
+
+        if args.noisy_exceptions:
+            kwargs["noisy_exceptions"] = True
 
         if args.path:
             if args.auto_reload or args.debug:

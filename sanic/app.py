@@ -890,8 +890,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         try:
             await fut
         except Exception as e:
-            noisy = self.error_handler.noisy
-            self.error_handler._log(request, e, noisy)
+            self.error_handler.log(request, e)
         except (CancelledError, ConnectionClosed):
             cancelled = True
         finally:
@@ -955,7 +954,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         loop: None = None,
         reload_dir: Optional[Union[List[str], str]] = None,
-        noisy_exceptions: bool = False,
+        noisy_exceptions: Optional[bool] = None,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -988,6 +987,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type access_log: bool
         :param unix: Unix socket to listen on instead of TCP port
         :type unix: str
+        :param noisy_exceptions: Log exceptions that are normally considered
+                                 to be quiet/silent
+        :type noisy_exceptions: bool
         :return: Nothing
         """
         if reload_dir:
@@ -1026,6 +1028,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
 
+        if noisy_exceptions is not None:
+            self.config.NOISY_EXCEPTIONS = noisy_exceptions
+
         server_settings = self._helper(
             host=host,
             port=port,
@@ -1038,7 +1043,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             backlog=backlog,
             register_sys_signals=register_sys_signals,
             auto_reload=auto_reload,
-            noisy_exceptions=noisy_exceptions,
         )
 
         try:
@@ -1085,7 +1089,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         return_asyncio_server: bool = False,
         asyncio_server_kwargs: Dict[str, Any] = None,
-        noisy_exceptions: bool = False,
+        noisy_exceptions: Optional[bool] = None,
     ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
@@ -1123,6 +1127,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :param asyncio_server_kwargs: key-value arguments for
                                       asyncio/uvloop create_server method
         :type asyncio_server_kwargs: dict
+        :param noisy_exceptions: Log exceptions that are normally considered
+                                 to be quiet/silent
+        :type noisy_exceptions: bool
         :return: AsyncioServer if return_asyncio_server is true, else Nothing
         """
 
@@ -1133,9 +1140,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
+
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
+
+        if noisy_exceptions is not None:
+            self.config.NOISY_EXCEPTIONS = noisy_exceptions
 
         server_settings = self._helper(
             host=host,
@@ -1148,7 +1159,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
-            noisy_exceptions=noisy_exceptions,
         )
 
         main_start = server_settings.pop("main_start", None)
@@ -1261,7 +1271,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         register_sys_signals=True,
         run_async=False,
         auto_reload=False,
-        noisy_exceptions=False,
     ):
         """Helper function used by `run` and `create_server`."""
 
@@ -1282,7 +1291,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
 
         self.error_handler.debug = debug
-        self.error_handler.noisy = noisy_exceptions
         self.debug = debug
 
         server_settings = {

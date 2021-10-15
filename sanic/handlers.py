@@ -34,7 +34,6 @@ class ErrorHandler:
             Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
         ] = {}
         self.debug = False
-        self.noisy = False
         self.fallback = fallback
         self.base = base
 
@@ -59,21 +58,6 @@ class ErrorHandler:
                 ),
             )
             error_handler._lookup = error_handler._legacy_lookup
-
-        sig = signature(error_handler.log)
-        if len(sig.parameters) == 2:
-            error_logger.warning(
-                DeprecationWarning(
-                    "You are using a deprecated error handler. The log "
-                    "method should accept three positional parameters: "
-                    "(request, exception, noisy: bool). "
-                    "Until you upgrade your ErrorHandler.log, the noisy "
-                    "exceptions setting will not work properly. Beginning "
-                    "in v??.?, the legacy style log method will not "
-                    "work at all."
-                ),
-            )
-            error_handler._log = error_handler._legacy_log
 
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)
@@ -196,7 +180,7 @@ class ErrorHandler:
             :class:`Exception`
         :return:
         """
-        self._log(request, exception, self.noisy)
+        self.log(request, exception)
         return exception_response(
             request,
             exception,
@@ -205,15 +189,10 @@ class ErrorHandler:
             fallback=self.fallback,
         )
 
-    def _full_log(self, request, exception, noisy: bool):
-        self.log(request, exception, noisy)
-
-    def _legacy_log(self, request, exception, noisy: bool):
-        self.log(request, exception)  # type: ignore
-
     @staticmethod
-    def log(request, exception, noisy: bool):
+    def log(request, exception):
         quiet = getattr(exception, "quiet", False)
+        noisy = request.app.config.NOISY_EXCEPTIONS
         if quiet is False or noisy is True:
             try:
                 url = repr(request.url)
@@ -223,8 +202,6 @@ class ErrorHandler:
             error_logger.exception(
                 "Exception occurred while handling uri: %s", url
             )
-
-    _log = _full_log
 
 
 class ContentRangeHandler:

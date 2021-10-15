@@ -22,8 +22,7 @@ def process_to_context(context):
 def create_context():
     """Create a context with secure crypto and HTTP/1.1 in protocols."""
     context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-    context.options |= ssl.OP_NO_TLSv1
-    context.options |= ssl.OP_NO_TLSv1_1
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.set_alpn_protocols(["http/1.1"])
     context.set_ciphers(
         "ECDHE-ECDSA-AES256-GCM-SHA384:"
@@ -35,7 +34,7 @@ def create_context():
 
 def load_cert_dir(p):
     if os.path.isfile(p):
-        raise ValueError(f'Certificate directory expected but {p} is a file.')
+        raise ValueError(f"Certificate directory expected but {p} is a file.")
     pub = os.path.join(p, "fullchain.pem")
     pub2 = os.path.join(p, "chain.pem")
     key = os.path.join(p, "privkey.pem")
@@ -72,7 +71,8 @@ class SSLSelector:
             cert, ctx = load_cert_dir(p)
             self.names += [
                 name
-                for t, name in cert["subjectAltName"] if t in ["DNS", "IP"]
+                for t, name in cert["subjectAltName"]
+                if t in ["DNS", "IP"]
             ]
             self.certs.append((cert, ctx))
         logger.info(f"Loaded certificates for {', '.join(self.names)}")

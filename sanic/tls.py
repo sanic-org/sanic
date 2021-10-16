@@ -31,21 +31,21 @@ def process_to_context(context):
     """Process app.run ssl argument from easy formats to full SSLContext."""
     if context is None:
         return None
+    if isinstance(context, ssl.SSLContext):
+        return context
     if isinstance(context, dict):
         # try common aliaseses
         certfile = context.get("cert") or context.get("certificate")
         keyfile = context.get("key") or context.get("keyfile")
         if not certfile or not keyfile:
             raise ValueError("SSL dict needs filenames for cert and key.")
-        context = create_context(certfile, keyfile)
-    elif isinstance(context, (list, tuple)):
-        context = SSLSelector(*context).context
-    elif not isinstance(context, ssl.SSLContext):
-        raise ValueError(
-            f"Invalid ssl argument type {type(context)}."
-            " Expecting a list of certdirs, a dict or an SSLContext."
-        )
-    return context
+        return create_context(certfile, keyfile)
+    if isinstance(context, (list, tuple)):
+        return SSLSelector(*context).context
+    raise ValueError(
+        f"Invalid ssl argument type {type(context)}."
+        " Expecting a list of certdirs, a dict or an SSLContext."
+    )
 
 
 def load_cert_dir(p):

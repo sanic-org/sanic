@@ -1259,7 +1259,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         auto_reload=False,
     ):
         """Helper function used by `run` and `create_server`."""
-        ssl = process_to_context(ssl)
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
                 "PROXIES_COUNT cannot be negative. "
@@ -1269,6 +1268,33 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         self.error_handler.debug = debug
         self.debug = debug
+        if self.configure_logging and debug:
+            logger.setLevel(logging.DEBUG)
+        if (
+            self.config.LOGO
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):
+            logger.debug(
+                self.config.LOGO
+                if isinstance(self.config.LOGO, str)
+                else BASE_LOGO
+            )
+        # Serve
+        if host and port:
+            proto = "http"
+            if ssl is not None:
+                proto = "https"
+            if unix:
+                logger.info(f"Goin' Fast @ {unix} {proto}://...")
+            else:
+                logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
+
+        debug_mode = "enabled" if self.debug else "disabled"
+        reload_mode = "enabled" if auto_reload else "disabled"
+        logger.debug(f"Sanic auto-reload: {reload_mode}")
+        logger.debug(f"Sanic debug mode: {debug_mode}")
+
+        ssl = process_to_context(ssl)
 
         server_settings = {
             "protocol": protocol,
@@ -1297,36 +1323,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             listeners = [partial(listener, self) for listener in listeners]
             server_settings[settings_name] = listeners
 
-        if self.configure_logging and debug:
-            logger.setLevel(logging.DEBUG)
-
-        if (
-            self.config.LOGO
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
-            logger.debug(
-                self.config.LOGO
-                if isinstance(self.config.LOGO, str)
-                else BASE_LOGO
-            )
-
         if run_async:
             server_settings["run_async"] = True
-
-        # Serve
-        if host and port:
-            proto = "http"
-            if ssl is not None:
-                proto = "https"
-            if unix:
-                logger.info(f"Goin' Fast @ {unix} {proto}://...")
-            else:
-                logger.info(f"Goin' Fast @ {proto}://{host}:{port}")
-
-        debug_mode = "enabled" if self.debug else "disabled"
-        reload_mode = "enabled" if auto_reload else "disabled"
-        logger.debug(f"Sanic auto-reload: {reload_mode}")
-        logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings
 

@@ -29,6 +29,8 @@ def create_context(certfile=None, keyfile=None):
 
 def process_to_context(context):
     """Process app.run ssl argument from easy formats to full SSLContext."""
+    if context is None:
+        return None
     if isinstance(context, dict):
         # try common aliaseses
         certfile = context.get("cert") or context.get("certificate")
@@ -40,7 +42,8 @@ def process_to_context(context):
         context = SSLSelector(*context).context
     elif not isinstance(context, ssl.SSLContext):
         raise ValueError(
-            f"Invalid ssl argument type {type(context)}. Expecting a list of certdirs, a dict or an SSLContext."
+            f"Invalid ssl argument type {type(context)}."
+            " Expecting a list of certdirs, a dict or an SSLContext."
         )
     return context
 
@@ -78,10 +81,10 @@ class SSLSelector:
             self.names += [
                 name
                 for t, name in cert["subjectAltName"]
-                if t in ["DNS", "IP"]
+                if t in ["DNS", "IP Address"]
             ]
             self.certs.append((cert, ctx))
-        logger.debug(f"Certificate vhosts {', '.join(self.names)}")
+        logger.debug(f"Certificate vhosts: {', '.join(self.names)}")
 
     def find(self, hostname):
         """Find the first certificate that matches the given hostname.
@@ -110,6 +113,6 @@ class SSLSelector:
             logger.debug(
                 f"Rejecting TLS connection to unrecognized SNI {server_name!r}"
             )
-            # I think this is supposed to raise ERR_SSL_UNRECOGNIZED_NAME_ALERT
-            # on the client side but I am only getting ERR_CONNECTION_CLOSED.
+            # This would show ERR_SSL_UNRECOGNIZED_NAME_ALERT on client side if
+            # asyncio/uvloop did proper SSL shutdown. They don't.
             return ssl.ALERT_DESCRIPTION_UNRECOGNIZED_NAME

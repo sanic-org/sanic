@@ -1202,7 +1202,7 @@ def test_invalid_ssl_dict(app):
             "/test", server_kwargs={"ssl": ssl_dict}
         )
 
-    assert str(excinfo.value) == "SSLContext or certificate and key required."
+    assert str(excinfo.value) == "SSL dict needs filenames for cert and key."
 
 
 def test_form_with_multiple_values(app):

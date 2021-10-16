@@ -4,56 +4,62 @@ import ssl
 from sanic.log import logger
 
 
+# Only allow secure ciphers, notably leaving out AES-CBC mode
+# OpenSSL chooses ECDSA or RSA depending on the cert in use
+CIPHERS_TLS12 = [
+    "ECDHE-ECDSA-CHACHA20-POLY1305",
+    "ECDHE-ECDSA-AES256-GCM-SHA384",
+    "ECDHE-ECDSA-AES128-GCM-SHA256",
+    "ECDHE-RSA-CHACHA20-POLY1305",
+    "ECDHE-RSA-AES256-GCM-SHA384",
+    "ECDHE-RSA-AES128-GCM-SHA256",
+]
+
+
+def create_context(certfile=None, keyfile=None):
+    """Create a context with secure crypto and HTTP/1.1 in protocols."""
+    context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.set_ciphers(":".join(CIPHERS_TLS12))
+    context.set_alpn_protocols(["http/1.1"])
+    if certfile and keyfile:
+        context.load_cert_chain(certfile, keyfile)
+    return context
+
+
 def process_to_context(context):
     """Process app.run ssl argument from easy formats to full SSLContext."""
     if isinstance(context, dict):
         # try common aliaseses
-        cert = context.get("cert") or context.get("certificate")
-        key = context.get("key") or context.get("keyfile")
-        if cert is None or key is None:
-            raise ValueError("SSLContext or certificate and key required.")
-        context = create_context()
-        context.load_cert_chain(cert, keyfile=key)
-    elif isinstance(context, list):
+        certfile = context.get("cert") or context.get("certificate")
+        keyfile = context.get("key") or context.get("keyfile")
+        if not certfile or not keyfile:
+            raise ValueError("SSL dict needs filenames for cert and key.")
+        context = create_context(certfile, keyfile)
+    elif isinstance(context, (list, tuple)):
         context = SSLSelector(*context).context
-    return context
-
-
-def create_context():
-    """Create a context with secure crypto and HTTP/1.1 in protocols."""
-    context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-    context.minimum_version = ssl.TLSVersion.TLSv1_2
-    context.set_alpn_protocols(["http/1.1"])
-    context.set_ciphers(
-        "ECDHE-ECDSA-AES256-GCM-SHA384:"
-        "ECDHE-ECDSA-CHACHA20-POLY1305:"
-        "ECDHE-ECDSA-AES128-GCM-SHA256"
-    )
+    elif not isinstance(context, ssl.SSLContext):
+        raise ValueError(
+            f"Invalid ssl argument type {type(context)}. Expecting a list of certdirs, a dict or an SSLContext."
+        )
     return context
 
 
 def load_cert_dir(p):
     if os.path.isfile(p):
-        raise ValueError(f"Certificate directory expected but {p} is a file.")
-    pub = os.path.join(p, "fullchain.pem")
-    pub2 = os.path.join(p, "chain.pem")
-    key = os.path.join(p, "privkey.pem")
-    if not os.access(key, os.R_OK):
-        raise Exception(f"Certificate not found or permission denied {key}")
-    if not os.access(pub, os.R_OK):
-        if os.access(pub2, os.R_OK):
-            pub = pub2
-        else:
-            raise Exception(
-                f"Certificate {pub} (alternatively, chain.pem) cannot be read."
-            )
-    try:
-        ctx = create_context()
-        ctx.load_cert_chain(pub, keyfile=key)
-        cert = ssl._ssl._test_decode_cert(pub)
-    except Exception as e:
-        raise Exception(f"Error reading {pub}: {e}")
-    return cert, ctx
+        raise ValueError(f"Certificate folder expected but {p} is a file.")
+    keyfile = os.path.join(p, "privkey.pem")
+    certfile = os.path.join(p, "fullchain.pem")
+    if not os.access(keyfile, os.R_OK):
+        raise Exception(
+            f"Certificate not found or permission denied {keyfile}"
+        )
+    if not os.access(certfile, os.R_OK):
+        raise Exception(
+            f"Certificate not found or permission denied {certfile}"
+        )
+    cert = ssl._ssl._test_decode_cert(certfile)
+    return cert, create_context(certfile, keyfile)
 
 
 class SSLSelector:
@@ -64,7 +70,7 @@ class SSLSelector:
         will be matched in the order given whenever there is a new connection.
         """
         self.context = create_context()
-        self.context.sni_callback = self._callback
+        self.context.sni_callback = self._sni_callback
         self.names = []
         self.certs = []
         for p in paths:
@@ -75,7 +81,7 @@ class SSLSelector:
                 if t in ["DNS", "IP"]
             ]
             self.certs.append((cert, ctx))
-        logger.info(f"Loaded certificates for {', '.join(self.names)}")
+        logger.debug(f"Certificate vhosts {', '.join(self.names)}")
 
     def find(self, hostname):
         """Find the first certificate that matches the given hostname.
@@ -96,10 +102,14 @@ class SSLSelector:
             f"No certificate found matching hostname {hostname!r}"
         )
 
-    def _callback(self, ssock, hostname, ctx):
+    def _sni_callback(self, sslobj, server_name, ctx):
+        sslobj.server_name = server_name
         try:
-            ssock.context = self.find(hostname)
+            sslobj.context = self.find(server_name)
         except ssl.CertificateError:
+            logger.debug(
+                f"Rejecting TLS connection to unrecognized SNI {server_name!r}"
+            )
             # I think this is supposed to raise ERR_SSL_UNRECOGNIZED_NAME_ALERT
             # on the client side but I am only getting ERR_CONNECTION_CLOSED.
             return ssl.ALERT_DESCRIPTION_UNRECOGNIZED_NAME

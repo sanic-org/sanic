@@ -20,6 +20,7 @@ class ConnInfo:
         "peername",
         "server_port",
         "server",
+        "server_name",
         "sockname",
         "ssl",
     )
@@ -31,7 +32,10 @@ class ConnInfo:
         self.server_port = self.client_port = 0
         self.client_ip = ""
         self.sockname = addr = transport.get_extra_info("sockname")
-        self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
+        self.ssl = bool(transport.get_extra_info("sslcontext"))
+        # Server name resolves to "" if not SSL or no SNI
+        sslobj = transport.get_extra_info("ssl_object")
+        self.server_name = getattr(sslobj, "server_name", None) or ""
 
         if isinstance(addr, str):  # UNIX socket
             self.server = unix or addr

@@ -29,9 +29,7 @@ def create_context(certfile=None, keyfile=None):
 
 def process_to_context(context):
     """Process app.run ssl argument from easy formats to full SSLContext."""
-    if context is None:
-        return None
-    if isinstance(context, ssl.SSLContext):
+    if context is None or isinstance(context, ssl.SSLContext):
         return context
     if isinstance(context, dict):
         # try common aliaseses

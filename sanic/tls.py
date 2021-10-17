@@ -41,7 +41,7 @@ def process_to_context(context):
     if isinstance(context, (list, tuple)):
         return SSLSelector(*context).context
     raise ValueError(
-        f"Invalid ssl argument type {type(context)}."
+        f"Invalid ssl argument {type(context)}."
         " Expecting a list of certdirs, a dict or an SSLContext."
     )
 
@@ -52,11 +52,11 @@ def load_cert_dir(p):
     keyfile = os.path.join(p, "privkey.pem")
     certfile = os.path.join(p, "fullchain.pem")
     if not os.access(keyfile, os.R_OK):
-        raise Exception(
+        raise ValueError(
             f"Certificate not found or permission denied {keyfile}"
         )
     if not os.access(certfile, os.R_OK):
-        raise Exception(
+        raise ValueError(
             f"Certificate not found or permission denied {certfile}"
         )
     cert = ssl._ssl._test_decode_cert(certfile)
@@ -82,7 +82,7 @@ class SSLSelector:
                 if t in ["DNS", "IP Address"]
             ]
             self.certs.append((cert, ctx))
-        logger.debug(f"Certificate vhosts: {', '.join(self.names)}")
+        logger.info(f"Certificate vhosts: {', '.join(self.names)}")
 
     def find(self, hostname):
         """Find the first certificate that matches the given hostname.
@@ -108,7 +108,7 @@ class SSLSelector:
         try:
             sslobj.context = self.find(server_name)
         except ssl.CertificateError:
-            logger.debug(
+            logger.warning(
                 f"Rejecting TLS connection to unrecognized SNI {server_name!r}"
             )
             # This would show ERR_SSL_UNRECOGNIZED_NAME_ALERT on client side if

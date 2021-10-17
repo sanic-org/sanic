@@ -123,12 +123,20 @@ class SignalRouter(BaseRouter):
         if context:
             params.update(context)
 
+        signals = group.routes
         if not reverse:
-            handlers = handlers[::-1]
+            signals = signals[::-1]
         try:
-            for handler in handlers:
-                if condition is None or condition == handler.__requirements__:
-                    maybe_coroutine = handler(**params)
+            for signal in signals:
+                trigger = params.pop("__trigger__", None)
+                kwargs = params
+                if signal.ctx.trigger:
+                    kwargs[signal.ctx.trigger] = trigger
+                if (
+                    condition is None
+                    or condition == signal.handler.__requirements__
+                ) and (signal.ctx.trigger or event == signal.ctx.definition):
+                    maybe_coroutine = signal.handler(**params)
                     if isawaitable(maybe_coroutine):
                         retval = await maybe_coroutine
                         if retval:
@@ -172,21 +180,32 @@ class SignalRouter(BaseRouter):
         event: str,
         condition: Optional[Dict[str, Any]] = None,
     ) -> Signal:
+        event_definition = event
         parts = self._build_event_parts(event)
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])
+            trigger = parts[2][1:-1]
         else:
             name = event
+            trigger = None
+
+        if not trigger:
+            event = ".".join([*parts[:2], "<__trigger__>"])
 
         handler.__requirements__ = condition  # type: ignore
+        handler.__trigger__ = trigger  # type: ignore
 
-        return super().add(
+        signal = super().add(
             event,
             handler,
-            requirements=condition,
             name=name,
             append=True,
         )  # type: ignore
+
+        signal.ctx.trigger = trigger
+        signal.ctx.definition = event_definition
+
+        return signal
 
     def finalize(self, do_compile: bool = True, do_optimize: bool = False):
         self.add(_blank, "sanic.__signal__.__init__")

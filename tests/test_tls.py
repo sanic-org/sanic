@@ -253,6 +253,9 @@ def test_logger_static_and_secure(caplog):
 
     port = test_client.port
 
+    if not caplog.record_tuples[0][2].startswith("Goin"):
+        caplog.record_tuples = caplog.record_tuples[1:]
+
     assert caplog.record_tuples[0] == (
         "sanic.root",
         logging.INFO,

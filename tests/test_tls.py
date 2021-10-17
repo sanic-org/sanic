@@ -218,10 +218,10 @@ def test_logger_vhosts(caplog):
     with caplog.at_level(logging.INFO):
         app.run(host="127.0.0.1", port=42102, ssl=[localhost_dir, sanic_dir])
 
-    assert caplog.record_tuples[1] == (
-        "sanic.root",
-        logging.INFO,
-        "Certificate vhosts: localhost, 127.0.0.1, 0:0:0:0:0:0:0:1, sanic.example, www.sanic.example, *.sanic.test, 2001:DB8:0:0:0:0:0:541C, localhost",
+    logmsg = [m for s, l, m in caplog.record_tuples if m.startswith('Certificate')][0]
+
+    assert logmsg == (
+        "Certificate vhosts: localhost, 127.0.0.1, 0:0:0:0:0:0:0:1, sanic.example, www.sanic.example, *.sanic.test, 2001:DB8:0:0:0:0:0:541C, localhost"
     )
 
 

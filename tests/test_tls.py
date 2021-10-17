@@ -218,7 +218,9 @@ def test_logger_vhosts(caplog):
     with caplog.at_level(logging.INFO):
         app.run(host="127.0.0.1", port=42102, ssl=[localhost_dir, sanic_dir])
 
-    logmsg = [m for s, l, m in caplog.record_tuples if m.startswith('Certificate')][0]
+    logmsg = [
+        m for s, l, m in caplog.record_tuples if m.startswith("Certificate")
+    ][0]
 
     assert logmsg == (
         "Certificate vhosts: localhost, 127.0.0.1, 0:0:0:0:0:0:0:1, sanic.example, www.sanic.example, *.sanic.test, 2001:DB8:0:0:0:0:0:541C, localhost"
@@ -253,21 +255,24 @@ def test_logger_static_and_secure(caplog):
 
     port = test_client.port
 
-    if not caplog.record_tuples[0][2].startswith("Goin"):
-        caplog.record_tuples = caplog.record_tuples[1:]
+    record_tuples = (
+        caplog.record_tuples
+        if caplog.record_tuples[0][2].startswith("Goin")
+        else caplog.record_tuples[1:]
+    )
 
-    assert caplog.record_tuples[0] == (
+    assert record_tuples[0] == (
         "sanic.root",
         logging.INFO,
         f"Goin' Fast @ https://127.0.0.1:{port}",
     )
-    assert caplog.record_tuples[1] == (
+    assert record_tuples[1] == (
         "sanic.root",
         logging.INFO,
         f"https://127.0.0.1:{port}/",
     )
-    assert caplog.record_tuples[2] == ("sanic.root", logging.INFO, rand_string)
-    assert caplog.record_tuples[-1] == (
+    assert record_tuples[2] == ("sanic.root", logging.INFO, rand_string)
+    assert record_tuples[-1] == (
         "sanic.root",
         logging.INFO,
         "Server Stopped",

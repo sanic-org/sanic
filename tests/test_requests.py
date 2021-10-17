@@ -1,6 +1,4 @@
 import logging
-import os
-import ssl
 
 from json import dumps as json_dumps
 from json import loads as json_loads
@@ -1117,92 +1115,6 @@ async def test_url_attributes_no_ssl_asgi(app, path, query, expected_url):
     assert parsed.path == request.path
     assert parsed.query == request.query_string
     assert parsed.netloc == request.host
-
-
-@pytest.mark.parametrize(
-    "path,query,expected_url",
-    [
-        ("/foo", "", "https://{}:{}/foo"),
-        ("/bar/baz", "", "https://{}:{}/bar/baz"),
-        ("/moo/boo", "arg1=val1", "https://{}:{}/moo/boo?arg1=val1"),
-    ],
-)
-def test_url_attributes_with_ssl_context(app, path, query, expected_url):
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-    context.load_cert_chain(
-        os.path.join(current_dir, "certs/selfsigned.cert"),
-        keyfile=os.path.join(current_dir, "certs/selfsigned.key"),
-    )
-
-    async def handler(request):
-        return text("OK")
-
-    app.add_route(handler, path)
-
-    port = app.test_client.port
-    request, response = app.test_client.get(
-        f"https://{HOST}:{PORT}" + path + f"?{query}",
-        server_kwargs={"ssl": context},
-    )
-    assert request.url == expected_url.format(HOST, request.server_port)
-
-    parsed = urlparse(request.url)
-
-    assert parsed.scheme == request.scheme
-    assert parsed.path == request.path
-    assert parsed.query == request.query_string
-    assert parsed.netloc == request.host
-
-
-@pytest.mark.parametrize(
-    "path,query,expected_url",
-    [
-        ("/foo", "", "https://{}:{}/foo"),
-        ("/bar/baz", "", "https://{}:{}/bar/baz"),
-        ("/moo/boo", "arg1=val1", "https://{}:{}/moo/boo?arg1=val1"),
-    ],
-)
-def test_url_attributes_with_ssl_dict(app, path, query, expected_url):
-
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    ssl_cert = os.path.join(current_dir, "certs/selfsigned.cert")
-    ssl_key = os.path.join(current_dir, "certs/selfsigned.key")
-
-    ssl_dict = {"cert": ssl_cert, "key": ssl_key}
-
-    async def handler(request):
-        return text("OK")
-
-    app.add_route(handler, path)
-
-    request, response = app.test_client.get(
-        f"https://{HOST}:{PORT}" + path + f"?{query}",
-        server_kwargs={"ssl": ssl_dict},
-    )
-    assert request.url == expected_url.format(HOST, request.server_port)
-
-    parsed = urlparse(request.url)
-
-    assert parsed.scheme == request.scheme
-    assert parsed.path == request.path
-    assert parsed.query == request.query_string
-    assert parsed.netloc == request.host
-
-
-def test_invalid_ssl_dict(app):
-    @app.get("/test")
-    async def handler(request):
-        return text("ssl test")
-
-    ssl_dict = {"cert": None, "key": None}
-
-    with pytest.raises(ValueError) as excinfo:
-        request, response = app.test_client.get(
-            "/test", server_kwargs={"ssl": ssl_dict}
-        )
-
-    assert str(excinfo.value) == "SSL dict needs filenames for cert and key."
 
 
 def test_form_with_multiple_values(app):

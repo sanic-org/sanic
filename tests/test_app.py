@@ -8,7 +8,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+import sanic.app
+
 from sanic import Sanic
+from sanic.compat import OS_IS_WINDOWS
 from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
@@ -444,3 +447,35 @@ def test_custom_context():
     app = Sanic("custom", ctx=ctx)
 
     assert app.ctx == ctx
+
+
+def test_uvloop_config_enabled(monkeypatch):
+    app = Sanic("uvloop")
+
+    err_logger = Mock()
+    monkeypatch.setattr(sanic.app, "error_logger", err_logger)
+
+    use_uvloop = Mock(return_value=uvloop_installed())
+    monkeypatch.setattr(sanic.app, "use_uvloop", use_uvloop)
+
+    @app.get("/1")
+    def _(request):
+        if OS_IS_WINDOWS:
+            use_uvloop.assert_not_called()
+            return text("test")
+
+        use_uvloop.assert_called_once()
+
+        if not uvloop_installed():
+            err_logger.assert_called_with(
+                "You are trying to use uvloop, but uvloop is not "
+                "installed in your system. In order to use uvloop "
+                "you must first install it. Otherwise, you can disable "
+                "uvloop completely by setting the 'USE_UVLOOP' "
+                "configuration value to false. Sanic will now continue "
+                "to run without using uvloop."
+            )
+
+        return text("test")
+
+    app.test_client.get("/1")

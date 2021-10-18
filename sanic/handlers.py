@@ -192,7 +192,7 @@ class ErrorHandler:
     @staticmethod
     def log(request, exception):
         quiet = getattr(exception, "quiet", False)
-        noisy = request.app.config.NOISY_EXCEPTIONS
+        noisy = getattr(request.app.config, "NOISY_EXCEPTIONS", False)
         if quiet is False or noisy is True:
             try:
                 url = repr(request.url)

@@ -95,7 +95,6 @@ cert = selfsigned(
         "www.sanic.example",
         "*.sanic.test",
         "2001:db8::541c",
-        "localhost",
     ],
 )
 writefiles(key, cert)

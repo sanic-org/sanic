@@ -125,6 +125,7 @@ def test_cert_sni(app):
     async def handler(request):
         return text(request.conn_info.cert.get("commonName"))
 
+    # This test should match the localhost cert
     port = app.test_client.port
     request, response = app.test_client.get(
         f"https://localhost:{port}/sni",
@@ -132,6 +133,29 @@ def test_cert_sni(app):
     )
     assert response.status == 200
     assert response.text == "localhost"
+
+    request, response = app.test_client.get(
+        f"https://localhost:{port}/commonname",
+        server_kwargs={"ssl": ssl_list},
+    )
+    assert response.status == 200
+    assert response.text == "localhost"
+
+    # This part should use the sanic.example cert because it matches
+    with replace_server_name("www.sanic.example"):
+        request, response = app.test_client.get(
+            f"https://127.0.0.1:{port}/sni",
+            server_kwargs={"ssl": ssl_list},
+        )
+        assert response.status == 200
+        assert response.text == "www.sanic.example"
+
+        request, response = app.test_client.get(
+            f"https://127.0.0.1:{port}/commonname",
+            server_kwargs={"ssl": ssl_list},
+        )
+        assert response.status == 200
+        assert response.text == "sanic.example"
 
     # This part should use the sanic.example cert, that being the first listed
     with replace_server_name("invalid.test"):
@@ -325,5 +349,5 @@ def test_logger_vhosts(caplog):
     ][0]
 
     assert logmsg == (
-        "Certificate vhosts: localhost, 127.0.0.1, 0:0:0:0:0:0:0:1, sanic.example, www.sanic.example, *.sanic.test, 2001:DB8:0:0:0:0:0:541C, localhost"
+        "Certificate vhosts: localhost, 127.0.0.1, 0:0:0:0:0:0:0:1, sanic.example, www.sanic.example, *.sanic.test, 2001:DB8:0:0:0:0:0:541C"
     )

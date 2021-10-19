@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from functools import partial
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 
 if TYPE_CHECKING:

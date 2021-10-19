@@ -5,7 +5,16 @@ import asyncio
 from collections import defaultdict
 from copy import deepcopy
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Union,
+)
 
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
@@ -142,7 +151,7 @@ class Blueprint(BaseSanic):
     def reset(self):
         self._apps: Set[Sanic] = set()
         self.exceptions: List[RouteHandler] = []
-        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.listeners: Dict[str, List[ListenerType[Any]]] = {}
         self.middlewares: List[MiddlewareType] = []
         self.routes: List[Route] = []
         self.statics: List[RouteHandler] = []
@@ -221,7 +230,7 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
-    ):
+    ) -> BlueprintGroup:
         """
         Create a list of blueprints, optionally grouping them under a
         general URL prefix.
@@ -251,7 +260,7 @@ class Blueprint(BaseSanic):
             bps.append(bp)
         return bps
 
-    def register(self, app, options):
+    def register(self, app: Sanic, options: Dict[str, Any]):
         """
         Register the blueprint to the sanic app.
 

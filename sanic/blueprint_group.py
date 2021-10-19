@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from functools import partial
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 
 if TYPE_CHECKING:
@@ -229,7 +229,7 @@ class BlueprintGroup(MutableSequence):
         """
         self._blueprints.insert(index, item)
 
-    def middleware(self, *args, **kwargs):
+    def middleware(self, *args: Any, **kwargs: Any):
         """
         A decorator that can be used to implement a Middleware plugin to
         all of the Blueprints that belongs to this specific Blueprint Group.

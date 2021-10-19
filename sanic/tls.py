@@ -74,17 +74,7 @@ def load_cert_dir(p: str) -> ssl.SSLContext:
         raise ValueError(
             f"Certificate not found or permission denied {certfile}"
         )
-    cert = ssl._ssl._test_decode_cert(certfile)  # type: ignore
-    return CertSimple(
-        certfile,
-        keyfile,
-        names=[
-            name
-            for t, name in cert["subjectAltName"]
-            if t in ["DNS", "IP Address"]
-        ],
-        **{k: v for item in cert["subject"] for k, v in item},
-    )
+    return CertSimple(certfile, keyfile)
 
 
 class CertSimple(ssl.SSLContext):
@@ -97,9 +87,18 @@ class CertSimple(ssl.SSLContext):
         password = kw.pop("password", None)
         if not certfile or not keyfile:
             raise ValueError("SSL dict needs filenames for cert and key.")
+        subject = {}
+        if "names" not in kw:
+            cert = ssl._ssl._test_decode_cert(certfile)  # type: ignore
+            kw["names"] = [
+                name
+                for t, name in cert["subjectAltName"]
+                if t in ["DNS", "IP Address"]
+            ]
+            subject = {k: v for item in cert["subject"] for k, v in item}
         self = create_context(certfile, keyfile, password)
         self.__class__ = cls
-        self.sanic = kw
+        self.sanic = {**subject, **kw}
         return self
 
     def __init__(self, cert, key, **kw):

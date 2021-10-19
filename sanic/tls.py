@@ -1,6 +1,8 @@
 import os
 import ssl
 
+from typing import Iterable, Optional, Union
+
 from sanic.log import logger
 
 
@@ -16,37 +18,56 @@ CIPHERS_TLS12 = [
 ]
 
 
-def create_context(certfile=None, keyfile=None):
+def create_context(
+    certfile: Optional[str] = None,
+    keyfile: Optional[str] = None,
+    password: Optional[str] = None,
+):
     """Create a context with secure crypto and HTTP/1.1 in protocols."""
     context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.set_ciphers(":".join(CIPHERS_TLS12))
     context.set_alpn_protocols(["http/1.1"])
+    context.sni_callback = server_name_callback
     if certfile and keyfile:
-        context.load_cert_chain(certfile, keyfile)
+        context.load_cert_chain(certfile, keyfile, password)
     return context
 
 
-def process_to_context(context):
-    """Process app.run ssl argument from easy formats to full SSLContext."""
-    if context is None or isinstance(context, ssl.SSLContext):
-        return context
-    if isinstance(context, dict):
+def shorthand_to_ctx(ctxdef: Union[None, ssl.SSLContext, dict, str]):
+    """Convert an ssl argument shorthand to an SSLContext object."""
+    if ctxdef is None or isinstance(ctxdef, ssl.SSLContext):
+        return ctxdef
+    if isinstance(ctxdef, str):
+        return load_cert_dir(ctxdef)
+    if isinstance(ctxdef, dict):
         # try common aliaseses
-        certfile = context.get("cert") or context.get("certificate")
-        keyfile = context.get("key") or context.get("keyfile")
+        certfile = ctxdef.get("cert") or ctxdef.get("certificate")
+        keyfile = ctxdef.get("key") or ctxdef.get("keyfile")
+        password = ctxdef.get("password")
         if not certfile or not keyfile:
             raise ValueError("SSL dict needs filenames for cert and key.")
-        return create_context(certfile, keyfile)
-    if isinstance(context, (list, tuple)):
-        return SSLSelector(*context).context
+        ctx = create_context(certfile, keyfile, password)
+        ctx.sanic = ctxdef
+        return ctx
     raise ValueError(
-        f"Invalid ssl argument {type(context)}."
+        f"Invalid ssl argument {type(ctxdef)}."
         " Expecting a list of certdirs, a dict or an SSLContext."
     )
 
 
-def load_cert_dir(p):
+def process_to_context(
+    ssldef: Union[None, ssl.SSLContext, dict, str, list, tuple]
+):
+    """Process app.run ssl argument from easy formats to full SSLContext."""
+    return (
+        CertSelector(map(shorthand_to_ctx, ssldef))
+        if isinstance(ssldef, (list, tuple))
+        else shorthand_to_ctx(ssldef)
+    )
+
+
+def load_cert_dir(p: str) -> dict:
     if os.path.isfile(p):
         raise ValueError(f"Certificate folder expected but {p} is a file.")
     keyfile = os.path.join(p, "privkey.pem")
@@ -60,57 +81,108 @@ def load_cert_dir(p):
             f"Certificate not found or permission denied {certfile}"
         )
     cert = ssl._ssl._test_decode_cert(certfile)
-    return cert, create_context(certfile, keyfile)
+    ctx = create_context(certfile, keyfile)
+    ctx.sanic = dict(
+        key=keyfile,
+        cert=certfile,
+        names=[
+            name
+            for t, name in cert["subjectAltName"]
+            if t in ["DNS", "IP Address"]
+        ],
+    )
+    # Add all subject info such as commonName and organizationName
+    ctx.sanic = dict(
+        {k: v for l in cert["subject"] for k, v in l}, **ctx.sanic
+    )
+    return ctx
 
 
-class SSLSelector:
-    def __init__(self, *paths):
-        """Automatically select SSL certificate based on the hostname that the
-        client is trying to access, via SSL SNI. Paths to certificate folders
-        with privkey.pem and fullchain.pem in them should be provided, and
-        will be matched in the order given whenever there is a new connection.
-        """
-        self.context = create_context()
-        self.context.sni_callback = self._sni_callback
-        self.names = []
-        self.certs = []
-        for p in paths:
-            cert, ctx = load_cert_dir(p)
-            self.names += [
-                name
-                for t, name in cert["subjectAltName"]
-                if t in ["DNS", "IP Address"]
-            ]
-            self.certs.append((cert, ctx))
-        logger.info(f"Certificate vhosts: {', '.join(self.names)}")
+class CertSelector(ssl.SSLContext):
+    """Automatically select SSL certificate based on the hostname that the
+    client is trying to access, via SSL SNI. Paths to certificate folders
+    with privkey.pem and fullchain.pem in them should be provided, and
+    will be matched in the order given whenever there is a new connection.
+    """
 
-    def find(self, hostname):
-        """Find the first certificate that matches the given hostname.
+    def __new__(cls, *_):
+        return super().__new__(cls)
 
-        :raises ssl.CertificateError: No matching certificate found.
-        :return: A matching ssl.SSLContext object if found."""
-        if not hostname:
-            raise ssl.CertificateError(
-                "The client provided no SNI to match for certificate."
+    def __init__(self, ctxs: Iterable[ssl.SSLContext]):
+        super().__init__()
+        self.sni_callback = selector_sni_callback
+        self.sanic_select = []
+        self.sanic_fallback = None
+        all_names = []
+        for i, ctx in enumerate(ctxs):
+            if not ctx:
+                continue
+            names = getattr(ctx, "sanic", {}).get("names", [])
+            all_names += names
+            self.sanic_select.append(ctx)
+            if i == 0:
+                self.sanic_fallback = ctx
+        if not all_names:
+            raise ValueError(
+                "No certificates with SubjectAlternativeNames found."
             )
-        for cert, ctx in self.certs:
-            try:
-                ssl.match_hostname(cert, hostname)
-                return ctx
-            except ssl.CertificateError:
-                pass
+        logger.info(f"Certificate vhosts: {', '.join(all_names)}")
+
+
+def find_cert(self: CertSelector, server_name: str):
+    """Find the first certificate that matches the given SNI.
+
+    :raises ssl.CertificateError: No matching certificate found.
+    :return: A matching ssl.SSLContext object if found."""
+    if not server_name:
+        if self.sanic_fallback:
+            return self.sanic_fallback
         raise ssl.CertificateError(
-            f"No certificate found matching hostname {hostname!r}"
+            "The client provided no SNI to match for certificate."
         )
+    for ctx in self.sanic_select:
+        if match_hostname(ctx, server_name):
+            return ctx
+    if self.sanic_fallback:
+        return self.sanic_fallback
+    raise ssl.CertificateError(
+        f"No certificate found matching hostname {server_name!r}"
+    )
 
-    def _sni_callback(self, sslobj, server_name, ctx):
-        sslobj.server_name = server_name
-        try:
-            sslobj.context = self.find(server_name)
-        except ssl.CertificateError:
-            logger.warning(
-                f"Rejecting TLS connection to unrecognized SNI {server_name!r}"
-            )
-            # This would show ERR_SSL_UNRECOGNIZED_NAME_ALERT on client side if
-            # asyncio/uvloop did proper SSL shutdown. They don't.
-            return ssl.ALERT_DESCRIPTION_UNRECOGNIZED_NAME
+
+def match_hostname(ctx: CertSelector, hostname: str) -> bool:
+    """Match names from CertSelector against a received hostname."""
+    # Local certs are considered trusted, so this can be less pedantic
+    # and thus faster than the deprecated ssl.match_hostname function is.
+    names = getattr(ctx, "sanic", {}).get("names", [])
+    hostname = hostname.lower()
+    for name in names:
+        if name.startswith("*."):
+            if hostname.split(".", 1)[-1] == name[2:]:
+                return True
+        elif name == hostname:
+            return True
+    return False
+
+
+def selector_sni_callback(
+    sslobj: ssl.SSLObject, server_name: str, ctx: CertSelector
+) -> Optional[ssl.AlertDescription]:
+    """Select a certificate mathing the SNI."""
+    # Call server_name_callback to store the SNI on sslobj
+    server_name_callback(sslobj, server_name, ctx)
+    # Find a new context matching the hostname
+    try:
+        sslobj.context = find_cert(ctx, server_name)
+    except ssl.CertificateError as e:
+        logger.warning(f"Rejecting TLS connection: {e}")
+        # This would show ERR_SSL_UNRECOGNIZED_NAME_ALERT on client side if
+        # asyncio/uvloop did proper SSL shutdown. They don't.
+        return ssl.ALERT_DESCRIPTION_UNRECOGNIZED_NAME
+
+
+def server_name_callback(
+    sslobj: ssl.SSLObject, server_name: str, ctx: ssl.SSLContext
+) -> None:
+    """Store the received SNI as sslobj.sanic_server_name."""
+    sslobj.sanic_server_name = server_name

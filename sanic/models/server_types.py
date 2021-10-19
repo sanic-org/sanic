@@ -23,6 +23,7 @@ class ConnInfo:
         "server_name",
         "sockname",
         "ssl",
+        "cert",
     )
 
     def __init__(self, transport: TransportProtocol, unix=None):
@@ -32,11 +33,14 @@ class ConnInfo:
         self.server_port = self.client_port = 0
         self.client_ip = ""
         self.sockname = addr = transport.get_extra_info("sockname")
-        self.ssl = bool(transport.get_extra_info("sslcontext"))
-        # Server name resolves to "" if not SSL or no SNI
-        sslobj = transport.get_extra_info("ssl_object")
-        self.server_name = getattr(sslobj, "server_name", None) or ""
-
+        self.ssl = False
+        self.server_name = ""
+        self.cert = {}
+        ssl = transport.get_extra_info("ssl_object")
+        if ssl:
+            self.ssl = True
+            self.server_name = getattr(ssl, "sanic_server_name", None) or ""
+            self.cert = getattr(ssl.context, "sanic", {})
         if isinstance(addr, str):  # UNIX socket
             self.server = unix or addr
             return

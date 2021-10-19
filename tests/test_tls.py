@@ -3,6 +3,7 @@ import os
 import ssl
 import uuid
 
+from contextlib import contextmanager
 from urllib.parse import urlparse
 
 import pytest
@@ -23,6 +24,32 @@ localhost_cert = os.path.join(localhost_dir, "fullchain.pem")
 localhost_key = os.path.join(localhost_dir, "privkey.pem")
 sanic_cert = os.path.join(sanic_dir, "fullchain.pem")
 sanic_key = os.path.join(sanic_dir, "privkey.pem")
+
+
+@contextmanager
+def replace_server_name(hostname):
+    """Temporarily replace the server name sent with all TLS requests with a fake hostname."""
+
+    def hack_wrap_bio(
+        self,
+        incoming,
+        outgoing,
+        server_side=False,
+        server_hostname=None,
+        session=None,
+    ):
+        return orig_wrap_bio(
+            self, incoming, outgoing, server_side, hostname, session
+        )
+
+    orig_wrap_bio, ssl.SSLContext.wrap_bio = (
+        ssl.SSLContext.wrap_bio,
+        hack_wrap_bio,
+    )
+    try:
+        yield
+    finally:
+        ssl.SSLContext.wrap_bio = orig_wrap_bio
 
 
 @pytest.mark.parametrize(
@@ -88,47 +115,107 @@ def test_url_attributes_with_ssl_dict(app, path, query, expected_url):
 
 
 def test_cert_sni(app):
-    ssl_list = [localhost_dir, sanic_dir]
+    ssl_list = [sanic_dir, localhost_dir]
 
-    @app.get("/test")
+    @app.get("/sni")
     async def handler(request):
         return text(request.conn_info.server_name)
 
+    @app.get("/commonname")
+    async def handler(request):
+        return text(request.conn_info.cert.get("commonName"))
+
     port = app.test_client.port
     request, response = app.test_client.get(
-        f"https://localhost:{port}/test",
+        f"https://localhost:{port}/sni",
         server_kwargs={"ssl": ssl_list},
     )
     assert response.status == 200
     assert response.text == "localhost"
 
-    """The following requires foo.sanic.test 127.0.0.1 in hosts
-    port = app.test_client.port
-    request, response = app.test_client.get(
-        f"https://foo.sanic.test:{port}/test",
-        server_kwargs={"ssl": ssl_list},
-    )
-    assert response.status == 200
-    assert response.text == "foo.sanic.test"
-    """
+    # This part should use the sanic.example cert, that being the first listed
+    with replace_server_name("invalid.test"):
+        request, response = app.test_client.get(
+            f"https://127.0.0.1:{port}/sni",
+            server_kwargs={"ssl": ssl_list},
+        )
+        assert response.status == 200
+        assert response.text == "invalid.test"
+
+        request, response = app.test_client.get(
+            f"https://127.0.0.1:{port}/commonname",
+            server_kwargs={"ssl": ssl_list},
+        )
+        assert response.status == 200
+        assert response.text == "sanic.example"
 
 
 def test_missing_sni(app):
     """The sanic cert does not list 127.0.0.1 and httpx does not send IP as SNI anyway."""
-    ssl_list = [sanic_dir]
+    ssl_list = [None, sanic_dir]
 
-    @app.get("/")
+    @app.get("/sni")
     async def handler(request):
         return text(request.conn_info.server_name)
 
     port = app.test_client.port
     with pytest.raises(Exception) as exc:
         request, response = app.test_client.get(
-            f"https://127.0.0.1:{port}/",
+            f"https://127.0.0.1:{port}/sni",
             server_kwargs={"ssl": ssl_list},
         )
-
     assert "Request and response object expected" in str(exc.value)
+
+
+def test_no_matching_cert(app):
+    """The sanic cert does not list 127.0.0.1 and httpx does not send IP as SNI anyway."""
+    ssl_list = [None, sanic_dir]
+
+    @app.get("/sni")
+    async def handler(request):
+        return text(request.conn_info.server_name)
+
+    port = app.test_client.port
+    with replace_server_name("invalid.test"):
+        with pytest.raises(Exception) as exc:
+            request, response = app.test_client.get(
+                f"https://127.0.0.1:{port}/sni",
+                server_kwargs={"ssl": ssl_list},
+            )
+    assert "Request and response object expected" in str(exc.value)
+
+
+def test_wildcards(app):
+    ssl_list = [None, localhost_dir, sanic_dir]
+
+    @app.get("/sni")
+    async def handler(request):
+        return text(request.conn_info.server_name)
+
+    port = app.test_client.port
+
+    with replace_server_name("foo.sanic.test"):
+        request, response = app.test_client.get(
+            f"https://127.0.0.1:{port}/sni",
+            server_kwargs={"ssl": ssl_list},
+        )
+        assert response.status == 200
+        assert response.text == "foo.sanic.test"
+
+    with replace_server_name("sanic.test"):
+        with pytest.raises(Exception) as exc:
+            request, response = app.test_client.get(
+                f"https://127.0.0.1:{port}/sni",
+                server_kwargs={"ssl": ssl_list},
+            )
+        assert "Request and response object expected" in str(exc.value)
+    with replace_server_name("sub.foo.sanic.test"):
+        with pytest.raises(Exception) as exc:
+            request, response = app.test_client.get(
+                f"https://127.0.0.1:{port}/sni",
+                server_kwargs={"ssl": ssl_list},
+            )
+        assert "Request and response object expected" in str(exc.value)
 
 
 def test_invalid_ssl_dict(app):
@@ -206,6 +293,21 @@ def test_missing_cert_file(app):
 
     assert "not found" in str(excinfo.value)
     assert invalid2 + "/fullchain.pem" in str(excinfo.value)
+
+
+def test_no_certs_on_list(app):
+    @app.get("/test")
+    async def handler(request):
+        return text("ssl test")
+
+    ssl_list = [None]
+
+    with pytest.raises(ValueError) as excinfo:
+        request, response = app.test_client.get(
+            "/test", server_kwargs={"ssl": ssl_list}
+        )
+
+    assert "No certificates" in str(excinfo.value)
 
 
 def test_logger_vhosts(caplog):

@@ -22,7 +22,7 @@ def create_context(
     certfile: Optional[str] = None,
     keyfile: Optional[str] = None,
     password: Optional[str] = None,
-):
+) -> ssl.SSLContext:
     """Create a context with secure crypto and HTTP/1.1 in protocols."""
     context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     context.minimum_version = ssl.TLSVersion.TLSv1_2
@@ -34,22 +34,16 @@ def create_context(
     return context
 
 
-def shorthand_to_ctx(ctxdef: Union[None, ssl.SSLContext, dict, str]):
+def shorthand_to_ctx(
+    ctxdef: Union[None, ssl.SSLContext, dict, str]
+) -> Optional[ssl.SSLContext]:
     """Convert an ssl argument shorthand to an SSLContext object."""
     if ctxdef is None or isinstance(ctxdef, ssl.SSLContext):
         return ctxdef
     if isinstance(ctxdef, str):
         return load_cert_dir(ctxdef)
     if isinstance(ctxdef, dict):
-        # try common aliaseses
-        certfile = ctxdef.get("cert") or ctxdef.get("certificate")
-        keyfile = ctxdef.get("key") or ctxdef.get("keyfile")
-        password = ctxdef.get("password")
-        if not certfile or not keyfile:
-            raise ValueError("SSL dict needs filenames for cert and key.")
-        ctx = create_context(certfile, keyfile, password)
-        ctx.sanic = ctxdef
-        return ctx
+        return CertSimple(**ctxdef)
     raise ValueError(
         f"Invalid ssl argument {type(ctxdef)}."
         " Expecting a list of certdirs, a dict or an SSLContext."
@@ -58,7 +52,7 @@ def shorthand_to_ctx(ctxdef: Union[None, ssl.SSLContext, dict, str]):
 
 def process_to_context(
     ssldef: Union[None, ssl.SSLContext, dict, str, list, tuple]
-):
+) -> Optional[ssl.SSLContext]:
     """Process app.run ssl argument from easy formats to full SSLContext."""
     return (
         CertSelector(map(shorthand_to_ctx, ssldef))
@@ -67,7 +61,7 @@ def process_to_context(
     )
 
 
-def load_cert_dir(p: str) -> dict:
+def load_cert_dir(p: str) -> ssl.SSLContext:
     if os.path.isfile(p):
         raise ValueError(f"Certificate folder expected but {p} is a file.")
     keyfile = os.path.join(p, "privkey.pem")
@@ -80,22 +74,36 @@ def load_cert_dir(p: str) -> dict:
         raise ValueError(
             f"Certificate not found or permission denied {certfile}"
         )
-    cert = ssl._ssl._test_decode_cert(certfile)
-    ctx = create_context(certfile, keyfile)
-    ctx.sanic = dict(
-        key=keyfile,
-        cert=certfile,
+    cert = ssl._ssl._test_decode_cert(certfile)  # type: ignore
+    return CertSimple(
+        certfile,
+        keyfile,
         names=[
             name
             for t, name in cert["subjectAltName"]
             if t in ["DNS", "IP Address"]
         ],
+        **{k: v for item in cert["subject"] for k, v in item},
     )
-    # Add all subject info such as commonName and organizationName
-    ctx.sanic = dict(
-        {k: v for l in cert["subject"] for k, v in l}, **ctx.sanic
-    )
-    return ctx
+
+
+class CertSimple(ssl.SSLContext):
+    """A wrapper for creating SSLContext with a sanic attribute."""
+
+    def __new__(cls, cert, key, **kw):
+        # try common aliases, rename to cert/key
+        certfile = kw["cert"] = kw.pop("certificate", None) or cert
+        keyfile = kw["key"] = kw.pop("keyfile", None) or key
+        password = kw.pop("password", None)
+        if not certfile or not keyfile:
+            raise ValueError("SSL dict needs filenames for cert and key.")
+        self = create_context(certfile, keyfile, password)
+        self.__class__ = cls
+        self.sanic = kw
+        return self
+
+    def __init__(self, cert, key, **kw):
+        pass  # Do not call super().__init__ because it is already initialized
 
 
 class CertSelector(ssl.SSLContext):
@@ -105,12 +113,12 @@ class CertSelector(ssl.SSLContext):
     will be matched in the order given whenever there is a new connection.
     """
 
-    def __new__(cls, *_):
+    def __new__(cls, ctxs):
         return super().__new__(cls)
 
-    def __init__(self, ctxs: Iterable[ssl.SSLContext]):
+    def __init__(self, ctxs: Iterable[Optional[ssl.SSLContext]]):
         super().__init__()
-        self.sni_callback = selector_sni_callback
+        self.sni_callback = selector_sni_callback  # type: ignore
         self.sanic_select = []
         self.sanic_fallback = None
         all_names = []
@@ -150,7 +158,9 @@ def find_cert(self: CertSelector, server_name: str):
     )
 
 
-def match_hostname(ctx: CertSelector, hostname: str) -> bool:
+def match_hostname(
+    ctx: Union[ssl.SSLContext, CertSelector], hostname: str
+) -> bool:
     """Match names from CertSelector against a received hostname."""
     # Local certs are considered trusted, so this can be less pedantic
     # and thus faster than the deprecated ssl.match_hostname function is.
@@ -167,7 +177,7 @@ def match_hostname(ctx: CertSelector, hostname: str) -> bool:
 
 def selector_sni_callback(
     sslobj: ssl.SSLObject, server_name: str, ctx: CertSelector
-) -> Optional[ssl.AlertDescription]:
+) -> Optional[int]:
     """Select a certificate mathing the SNI."""
     # Call server_name_callback to store the SNI on sslobj
     server_name_callback(sslobj, server_name, ctx)
@@ -179,10 +189,11 @@ def selector_sni_callback(
         # This would show ERR_SSL_UNRECOGNIZED_NAME_ALERT on client side if
         # asyncio/uvloop did proper SSL shutdown. They don't.
         return ssl.ALERT_DESCRIPTION_UNRECOGNIZED_NAME
+    return None  # mypy complains without explicit return
 
 
 def server_name_callback(
     sslobj: ssl.SSLObject, server_name: str, ctx: ssl.SSLContext
 ) -> None:
     """Store the received SNI as sslobj.sanic_server_name."""
-    sslobj.sanic_server_name = server_name
+    sslobj.sanic_server_name = server_name  # type: ignore

@@ -229,7 +229,7 @@ class BlueprintGroup(MutableSequence):
         """
         self._blueprints.insert(index, item)
 
-    def middleware(self, *args: Any, **kwargs: Any):
+    def middleware(self, *args, **kwargs):
         """
         A decorator that can be used to implement a Middleware plugin to
         all of the Blueprints that belongs to this specific Blueprint Group.

@@ -114,7 +114,32 @@ def test_url_attributes_with_ssl_dict(app, path, query, expected_url):
     assert parsed.netloc == request.host
 
 
-def test_cert_sni(app):
+def test_cert_sni_single(app):
+    @app.get("/sni")
+    async def handler(request):
+        return text(request.conn_info.server_name)
+
+    @app.get("/commonname")
+    async def handler(request):
+        return text(request.conn_info.cert.get("commonName"))
+
+    port = app.test_client.port
+    request, response = app.test_client.get(
+        f"https://localhost:{port}/sni",
+        server_kwargs={"ssl": localhost_dir},
+    )
+    assert response.status == 200
+    assert response.text == "localhost"
+
+    request, response = app.test_client.get(
+        f"https://localhost:{port}/commonname",
+        server_kwargs={"ssl": localhost_dir},
+    )
+    assert response.status == 200
+    assert response.text == "localhost"
+
+
+def test_cert_sni_list(app):
     ssl_list = [sanic_dir, localhost_dir]
 
     @app.get("/sni")

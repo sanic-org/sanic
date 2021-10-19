@@ -260,7 +260,7 @@ class Blueprint(BaseSanic):
             bps.append(bp)
         return bps
 
-    def register(self, app: Sanic, options: Dict[str, Any]):
+    def register(self, app, options):
         """
         Register the blueprint to the sanic app.
 

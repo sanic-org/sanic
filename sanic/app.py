@@ -68,6 +68,7 @@ from sanic.models.futures import (
     FutureStatic,
 )
 from sanic.models.handler_types import ListenerType, MiddlewareType
+from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
@@ -259,8 +260,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             self._delayed_tasks.append(task_name)
 
     def register_listener(
-        self, listener: ListenerType[Any], event: str
-    ) -> Any:
+        self, listener: ListenerType[SanicVar], event: str
+    ) -> ListenerType[SanicVar]:
         """
         Register the listener for a given event.
 
@@ -288,7 +289,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     def register_middleware(
         self, middleware: MiddlewareType, attach_to: str = "request"
-    ):
+    ) -> MiddlewareType:
         """
         Register an application level middleware that will be attached
         to all the API URLs registered under this application.

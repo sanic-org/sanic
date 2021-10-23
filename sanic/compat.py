@@ -12,6 +12,7 @@ UVLOOP_INSTALLED = False
 
 try:
     import uvloop  # type: ignore # noqa
+
     UVLOOP_INSTALLED = True
 except ImportError:
     pass

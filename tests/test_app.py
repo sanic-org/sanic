@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from sanic import Sanic
+from sanic.compat import UVLOOP_INSTALLED
 from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
@@ -17,15 +18,6 @@ from sanic.response import text
 @pytest.fixture(autouse=True)
 def clear_app_registry():
     Sanic._app_registry = {}
-
-
-def uvloop_installed():
-    try:
-        import uvloop  # noqa
-
-        return True
-    except ImportError:
-        return False
 
 
 def test_app_loop_running(app):
@@ -39,7 +31,7 @@ def test_app_loop_running(app):
 
 
 def test_create_asyncio_server(app):
-    if not uvloop_installed():
+    if not UVLOOP_INSTALLED:
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(return_asyncio_server=True)
         assert isawaitable(asyncio_srv_coro)
@@ -48,7 +40,7 @@ def test_create_asyncio_server(app):
 
 
 def test_asyncio_server_no_start_serving(app):
-    if not uvloop_installed():
+    if not UVLOOP_INSTALLED:
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
             port=43123,
@@ -60,7 +52,7 @@ def test_asyncio_server_no_start_serving(app):
 
 
 def test_asyncio_server_start_serving(app):
-    if not uvloop_installed():
+    if not UVLOOP_INSTALLED:
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
             port=43124,

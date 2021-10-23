@@ -1010,8 +1010,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "#asynchronous-support"
             )
 
-        self._configure_event_loop()
-
         if auto_reload or auto_reload is None and debug:
             self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
@@ -1134,7 +1132,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
-        self._configure_event_loop()
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
@@ -1146,7 +1143,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             ssl=ssl,
             sock=sock,
             unix=unix,
-            loop=get_event_loop(),
+            create_loop=True,
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
@@ -1256,7 +1253,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         sock=None,
         unix=None,
         workers=1,
-        loop=None,
+        create_loop=None,
         protocol=HttpProtocol,
         backlog=100,
         register_sys_signals=True,
@@ -1293,7 +1290,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "ssl": ssl,
             "app": self,
             "signal": ServerSignal(),
-            "loop": loop,
+            "loop": None,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
         }
@@ -1323,6 +1320,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isinstance(self.config.LOGO, str)
                 else BASE_LOGO
             )
+
+        self._configure_event_loop()
+        if create_loop:
+            server_settings["loop"] = get_event_loop()
 
         if run_async:
             server_settings["run_async"] = True

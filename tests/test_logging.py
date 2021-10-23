@@ -187,17 +187,17 @@ def test_logger_static_and_secure(caplog):
 
     port = test_client.port
 
-    assert caplog.record_tuples[0] == (
+    assert (
         "sanic.root",
         logging.INFO,
         f"Goin' Fast @ https://127.0.0.1:{port}",
-    )
-    assert caplog.record_tuples[1] == (
+    ) in caplog.record_tuples
+    assert (
         "sanic.root",
         logging.INFO,
         f"https://127.0.0.1:{port}/",
-    )
-    assert caplog.record_tuples[2] == ("sanic.root", logging.INFO, rand_string)
+    ) in caplog.record_tuples
+    assert ("sanic.root", logging.INFO, rand_string) in caplog.record_tuples
     assert caplog.record_tuples[-1] == (
         "sanic.root",
         logging.INFO,

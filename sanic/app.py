@@ -50,7 +50,7 @@ from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.compat import OS_IS_WINDOWS
+from sanic.compat import OS_IS_WINDOWS, UVLOOP_INSTALLED
 from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
@@ -1421,10 +1421,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     def _configure_event_loop(self):
         if self.config.USE_UVLOOP and not OS_IS_WINDOWS:
-            uvloop_success = use_uvloop()
-
-            if uvloop_success is False:
-                error_logger.warning(
+            if not UVLOOP_INSTALLED:
+                return error_logger.warning(
                     "You are trying to use uvloop, but uvloop is not "
                     "installed in your system. In order to use uvloop "
                     "you must first install it. Otherwise, you can disable "
@@ -1433,7 +1431,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "to run without using uvloop."
                 )
 
-            elif strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+            use_uvloop()
+            if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
                 error_logger.warning(
                     "You are running Sanic using uvloop, but the "
                     "'SANIC_NO_UVLOOP' environment variable (used to opt-out "

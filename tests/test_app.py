@@ -11,7 +11,7 @@ import pytest
 import sanic.app
 
 from sanic import Sanic
-from sanic.compat import OS_IS_WINDOWS
+from sanic.compat import OS_IS_WINDOWS, UVLOOP_INSTALLED
 from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
@@ -20,15 +20,6 @@ from sanic.response import text
 @pytest.fixture(autouse=True)
 def clear_app_registry():
     Sanic._app_registry = {}
-
-
-def uvloop_installed():
-    try:
-        import uvloop  # noqa
-
-        return True
-    except ImportError:
-        return False
 
 
 def test_app_loop_running(app):
@@ -42,7 +33,7 @@ def test_app_loop_running(app):
 
 
 def test_create_asyncio_server(app):
-    if not uvloop_installed():
+    if not UVLOOP_INSTALLED:
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(return_asyncio_server=True)
         assert isawaitable(asyncio_srv_coro)
@@ -51,7 +42,7 @@ def test_create_asyncio_server(app):
 
 
 def test_asyncio_server_no_start_serving(app):
-    if not uvloop_installed():
+    if not UVLOOP_INSTALLED:
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
             port=43123,
@@ -63,7 +54,7 @@ def test_asyncio_server_no_start_serving(app):
 
 
 def test_asyncio_server_start_serving(app):
-    if not uvloop_installed():
+    if not UVLOOP_INSTALLED:
         loop = asyncio.get_event_loop()
         asyncio_srv_coro = app.create_server(
             port=43124,
@@ -455,7 +446,7 @@ def test_uvloop_config_enabled(monkeypatch):
     err_logger = Mock()
     monkeypatch.setattr(sanic.app, "error_logger", err_logger)
 
-    use_uvloop = Mock(return_value=uvloop_installed())
+    use_uvloop = Mock(return_value=UVLOOP_INSTALLED)
     monkeypatch.setattr(sanic.app, "use_uvloop", use_uvloop)
 
     @app.get("/1")
@@ -466,7 +457,7 @@ def test_uvloop_config_enabled(monkeypatch):
 
         use_uvloop.assert_called_once()
 
-        if not uvloop_installed():
+        if not UVLOOP_INSTALLED:
             err_logger.assert_called_with(
                 "You are trying to use uvloop, but uvloop is not "
                 "installed in your system. In order to use uvloop "

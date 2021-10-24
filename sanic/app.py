@@ -1146,7 +1146,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             ssl=ssl,
             sock=sock,
             unix=unix,
-            loop=get_event_loop(),
+            use_existing_loop=True,
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
@@ -1256,7 +1256,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         sock=None,
         unix=None,
         workers=1,
-        loop=None,
+        use_existing_loop=False,
         protocol=HttpProtocol,
         backlog=100,
         register_sys_signals=True,
@@ -1293,7 +1293,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "ssl": ssl,
             "app": self,
             "signal": ServerSignal(),
-            "loop": loop,
+            "loop": None,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
         }
@@ -1323,6 +1323,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isinstance(self.config.LOGO, str)
                 else BASE_LOGO
             )
+
+        self._configure_event_loop()
+        if use_existing_loop:
+            server_settings["loop"] = get_event_loop()
 
         if run_async:
             server_settings["run_async"] = True

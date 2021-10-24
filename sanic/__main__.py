@@ -4,7 +4,7 @@ import sys
 from argparse import ArgumentParser, RawTextHelpFormatter
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Union
 
 from sanic_routing import __version__ as __routing_version__  # type: ignore
 
@@ -102,7 +102,7 @@ def main():
         "--tls-strict-host",
         dest="tlshost",
         action="store_true",
-        help="Only allow clients that send an SNI matching server cert hostnames.\n ",
+        help="Only allow clients that send an SNI matching server certs.\n ",
     )
     parser.add_bool_arguments(
         "--access-logs", dest="access_log", help="display access logs"

@@ -95,7 +95,7 @@ requirements = [
 
 tests_require = [
     "sanic-testing>=0.7.0",
-    "pytest==5.2.1",
+    "pytest==6.2.5",
     "coverage==5.3",
     "gunicorn==20.0.4",
     "pytest-cov",

@@ -144,7 +144,7 @@ def find_cert(self: CertSelector, server_name: str):
     if not server_name:
         if self.sanic_fallback:
             return self.sanic_fallback
-        raise ssl.CertificateError(
+        raise ValueError(
             "The client provided no SNI to match for certificate."
         )
     for ctx in self.sanic_select:
@@ -152,9 +152,7 @@ def find_cert(self: CertSelector, server_name: str):
             return ctx
     if self.sanic_fallback:
         return self.sanic_fallback
-    raise ssl.CertificateError(
-        f"No certificate found matching hostname {server_name!r}"
-    )
+    raise ValueError(f"No certificate found matching hostname {server_name!r}")
 
 
 def match_hostname(
@@ -183,7 +181,7 @@ def selector_sni_callback(
     # Find a new context matching the hostname
     try:
         sslobj.context = find_cert(ctx, server_name)
-    except ssl.CertificateError as e:
+    except ValueError as e:
         logger.warning(f"Rejecting TLS connection: {e}")
         # This would show ERR_SSL_UNRECOGNIZED_NAME_ALERT on client side if
         # asyncio/uvloop did proper SSL shutdown. They don't.

@@ -63,6 +63,57 @@ def test_host_port(cmd):
 
 
 @pytest.mark.parametrize(
+    "cmd",
+    (
+        ("--host=127.0.0.127", "--port=9999"),
+        ("-H", "127.0.0.127", "-p", "9999"),
+    ),
+)
+def test_host_port(cmd):
+    command = ["sanic", "fake.server.app", *cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    firstline = lines[6]
+
+    assert exitcode != 1
+    assert firstline == b"Goin' Fast @ http://127.0.0.127:9999"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    (
+        ("--host=::", "--port=9999"),
+        ("-H", "::", "-p", "9999"),
+    ),
+)
+def test_host_port(cmd):
+    command = ["sanic", "fake.server.app", *cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    firstline = lines[6]
+
+    assert exitcode != 1
+    assert firstline == b"Goin' Fast @ http://[::]:9999"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    (
+        ("--host=::1", "--port=9999"),
+        ("-H", "::1", "-p", "9999"),
+    ),
+)
+def test_host_port(cmd):
+    command = ["sanic", "fake.server.app", *cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    firstline = lines[6]
+
+    assert exitcode != 1
+    assert firstline == b"Goin' Fast @ http://[::1]:9999"
+
+
+@pytest.mark.parametrize(
     "num,cmd",
     (
         (1, (f"--workers={1}",)),

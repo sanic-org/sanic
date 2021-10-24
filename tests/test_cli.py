@@ -52,7 +52,7 @@ def test_server_run(appname):
         ("-H", "localhost", "-p", "9999"),
     ),
 )
-def test_host_port(cmd):
+def test_host_port_localhost(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -69,7 +69,7 @@ def test_host_port(cmd):
         ("-H", "127.0.0.127", "-p", "9999"),
     ),
 )
-def test_host_port(cmd):
+def test_host_port_ipv4(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -86,7 +86,7 @@ def test_host_port(cmd):
         ("-H", "::", "-p", "9999"),
     ),
 )
-def test_host_port(cmd):
+def test_host_port_ipv6_any(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -103,7 +103,7 @@ def test_host_port(cmd):
         ("-H", "::1", "-p", "9999"),
     ),
 )
-def test_host_port(cmd):
+def test_host_port_ipv6_loopback(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")

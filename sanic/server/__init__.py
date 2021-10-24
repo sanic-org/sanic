@@ -17,6 +17,7 @@ def use_uvloop() -> None:
     """
     try:
         import uvloop  # type: ignore
+
         if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
             error_logger.warning(
                 "You are running Sanic using uvloop, but the "

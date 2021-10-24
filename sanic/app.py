@@ -49,7 +49,6 @@ from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.compat import OS_IS_WINDOWS
 from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,

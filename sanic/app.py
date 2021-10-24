@@ -1337,12 +1337,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if unix:
                 logger.info(f"Goin' Fast @ {unix} {proto}://...")
             else:
-                display_host = ''
                 # colon(:) is legal for a host only in an ipv6 address
-                if ':' not in host:
-                    display_host = host
-                else:
-                    display_host = f"[{host}]"
+                display_host = f"[{host}]" if ":" in host else host
                 logger.info(f"Goin' Fast @ {proto}://{display_host}:{port}")
 
         debug_mode = "enabled" if self.debug else "disabled"

@@ -15,7 +15,6 @@ from asyncio import (
 )
 from asyncio.futures import Future
 from collections import defaultdict, deque
-from distutils.util import strtobool
 from functools import partial
 from inspect import isawaitable
 from pathlib import Path
@@ -50,7 +49,7 @@ from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.compat import OS_IS_WINDOWS, UVLOOP_INSTALLED
+from sanic.compat import OS_IS_WINDOWS
 from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
@@ -1010,8 +1009,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "#asynchronous-support"
             )
 
-        self._configure_event_loop()
-
         if auto_reload or auto_reload is None and debug:
             self.auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
@@ -1024,6 +1021,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
+
+        if self.config.USE_UVLOOP:
+            use_uvloop()
+
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
@@ -1134,7 +1135,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
-        self._configure_event_loop()
+        if self.config.USE_UVLOOP:
+            use_uvloop()
+
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
@@ -1146,7 +1149,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             ssl=ssl,
             sock=sock,
             unix=unix,
-            use_existing_loop=True,
+            loop=get_event_loop(),
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
@@ -1256,7 +1259,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         sock=None,
         unix=None,
         workers=1,
-        use_existing_loop=False,
+        loop=None,
         protocol=HttpProtocol,
         backlog=100,
         register_sys_signals=True,
@@ -1293,7 +1296,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "ssl": ssl,
             "app": self,
             "signal": ServerSignal(),
-            "loop": None,
+            "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
         }
@@ -1323,10 +1326,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isinstance(self.config.LOGO, str)
                 else BASE_LOGO
             )
-
-        self._configure_event_loop()
-        if use_existing_loop:
-            server_settings["loop"] = get_event_loop()
 
         if run_async:
             server_settings["run_async"] = True
@@ -1402,7 +1401,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         details: https://asgi.readthedocs.io/en/latest
         """
         self.asgi = True
-        self._configure_event_loop()
+        if self.config.USE_UVLOOP:
+            use_uvloop()
         self._asgi_app = await ASGIApp.create(self, scope, receive, send)
         asgi_app = self._asgi_app
         await asgi_app()
@@ -1422,28 +1422,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
 
         self.config.update_config(config)
-
-    def _configure_event_loop(self):
-        if self.config.USE_UVLOOP and not OS_IS_WINDOWS:
-            if not UVLOOP_INSTALLED:
-                return error_logger.warning(
-                    "You are trying to use uvloop, but uvloop is not "
-                    "installed in your system. In order to use uvloop "
-                    "you must first install it. Otherwise, you can disable "
-                    "uvloop completely by setting the 'USE_UVLOOP' "
-                    "configuration value to false. Sanic will now continue "
-                    "to run without using uvloop."
-                )
-
-            use_uvloop()
-            if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
-                error_logger.warning(
-                    "You are running Sanic using uvloop, but the "
-                    "'SANIC_NO_UVLOOP' environment variable (used to opt-out "
-                    "of installing uvloop with Sanic) is set to true. If you "
-                    "want to disable uvloop with Sanic, set the 'USE_UVLOOP' "
-                    "configuration value to false."
-                )
 
     # -------------------------------------------------------------------- #
     # Class methods

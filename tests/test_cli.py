@@ -78,6 +78,21 @@ def test_host_port(cmd):
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://127.0.0.127:9999"
 
+@pytest.mark.parametrize(
+    "cmd",
+    (
+        ("--host=::", "--port=9999"),
+        ("-H", "::", "-p", "9999"),
+    ),
+)
+def test_host_port(cmd):
+    command = ["sanic", "fake.server.app", *cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    firstline = lines[6]
+
+    assert exitcode != 1
+    assert firstline == b"Goin' Fast @ http://[::]:9999"
 
 
 @pytest.mark.parametrize(

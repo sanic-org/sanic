@@ -945,7 +945,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         *,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
-        ssl: Union[Dict[str, str], SSLContext, None] = None,
+        ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
         protocol: Optional[Type[Protocol]] = None,
@@ -971,7 +971,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type auto_relaod: bool
         :param ssl: SSLContext, or location of certificate and key
                     for SSL encryption of worker(s)
-        :type ssl: SSLContext or dict
+        :type ssl: str, dict, SSLContext or list
         :param sock: Socket for the server to accept connections from
         :type sock: socket
         :param workers: Number of processes received before it is respected
@@ -1075,7 +1075,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         port: Optional[int] = None,
         *,
         debug: bool = False,
-        ssl: Union[Dict[str, str], SSLContext, None] = None,
+        ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         protocol: Type[Protocol] = None,
         backlog: int = 100,

@@ -68,6 +68,7 @@ from sanic.models.futures import (
     FutureStatic,
 )
 from sanic.models.handler_types import ListenerType, MiddlewareType
+from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
@@ -185,7 +186,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         )
         self.is_running = False
         self.is_stopping = False
-        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
+        self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.reload_dirs: Set[Path] = set()
@@ -197,7 +198,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.sock = None
         self.strict_slashes = strict_slashes
         self.websocket_enabled = False
-        self.websocket_tasks: Set[Future] = set()
+        self.websocket_tasks: Set[Future[Any]] = set()
 
         # Register alternative method names
         self.go_fast = self.run
@@ -233,7 +234,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # Registration
     # -------------------------------------------------------------------- #
 
-    def add_task(self, task) -> None:
+    def add_task(
+        self,
+        task: Union[Future[Any], Coroutine[Any, Any, Any], Awaitable[Any]],
+    ) -> None:
         """
         Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
@@ -256,7 +260,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             self.signal(task_name)(partial(self.run_delayed_task, task=task))
             self._delayed_tasks.append(task_name)
 
-    def register_listener(self, listener: Callable, event: str) -> Any:
+    def register_listener(
+        self, listener: ListenerType[SanicVar], event: str
+    ) -> ListenerType[SanicVar]:
         """
         Register the listener for a given event.
 
@@ -282,7 +288,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         return listener
 
-    def register_middleware(self, middleware, attach_to: str = "request"):
+    def register_middleware(
+        self, middleware: MiddlewareType, attach_to: str = "request"
+    ) -> MiddlewareType:
         """
         Register an application level middleware that will be attached
         to all the API URLs registered under this application.
@@ -308,7 +316,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     def register_named_middleware(
         self,
-        middleware,
+        middleware: MiddlewareType,
         route_names: Iterable[str],
         attach_to: str = "request",
     ):

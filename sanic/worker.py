@@ -7,6 +7,7 @@ import traceback
 
 from gunicorn.workers import base  # type: ignore
 
+from sanic.compat import UVLOOP_INSTALLED
 from sanic.log import logger
 from sanic.server import HttpProtocol, Signal, serve, use_uvloop
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
@@ -17,7 +18,8 @@ try:
 except ImportError:
     ssl = None  # type: ignore
 
-use_uvloop()
+if UVLOOP_INSTALLED:
+    use_uvloop()
 
 
 class GunicornWorker(base.Worker):

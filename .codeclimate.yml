@@ -21,5 +21,7 @@ checks:
     config:
       threshold: 40
   complex-logic:
+    enabled: false
+  method-complexity:
     config:
       threshold: 10

@@ -1,3 +1,4 @@
+from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type
 
 from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
@@ -25,7 +26,9 @@ class ErrorHandler:
     """
 
     # Beginning in v22.3, the base renderer will be TextRenderer
-    def __init__(self, fallback: str, base: Type[BaseRenderer] = HTMLRenderer):
+    def __init__(
+        self, fallback: str = "auto", base: Type[BaseRenderer] = HTMLRenderer
+    ):
         self.handlers: List[Tuple[Type[BaseException], RouteHandler]] = []
         self.cached_handlers: Dict[
             Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
@@ -33,6 +36,34 @@ class ErrorHandler:
         self.debug = False
         self.fallback = fallback
         self.base = base
+
+    @classmethod
+    def finalize(cls, error_handler):
+        if not isinstance(error_handler, cls):
+            error_logger.warning(
+                f"Error handler is non-conforming: {type(error_handler)}"
+            )
+
+        sig = signature(error_handler.lookup)
+        if len(sig.parameters) == 1:
+            error_logger.warning(
+                DeprecationWarning(
+                    "You are using a deprecated error handler. The lookup "
+                    "method should accept two positional parameters: "
+                    "(exception, route_name: Optional[str]). "
+                    "Until you upgrade your ErrorHandler.lookup, Blueprint "
+                    "specific exceptions will not work properly. Beginning "
+                    "in v22.3, the legacy style lookup method will not "
+                    "work at all."
+                ),
+            )
+            error_handler._lookup = error_handler._legacy_lookup
+
+    def _full_lookup(self, exception, route_name: Optional[str] = None):
+        return self.lookup(exception, route_name)
+
+    def _legacy_lookup(self, exception, route_name: Optional[str] = None):
+        return self.lookup(exception)
 
     def add(self, exception, handler, route_names: Optional[List[str]] = None):
         """
@@ -56,7 +87,7 @@ class ErrorHandler:
         else:
             self.cached_handlers[(exception, None)] = handler
 
-    def lookup(self, exception, route_name: Optional[str]):
+    def lookup(self, exception, route_name: Optional[str] = None):
         """
         Lookup the existing instance of :class:`ErrorHandler` and fetch the
         registered handler for a specific type of exception.
@@ -94,6 +125,8 @@ class ErrorHandler:
         handler = None
         return handler
 
+    _lookup = _full_lookup
+
     def response(self, request, exception):
         """Fetches and executes an exception handler and returns a response
         object
@@ -109,7 +142,7 @@ class ErrorHandler:
             or registered handler for that type of exception.
         """
         route_name = request.name if request else None
-        handler = self.lookup(exception, route_name)
+        handler = self._lookup(exception, route_name)
         response = None
         try:
             if handler:

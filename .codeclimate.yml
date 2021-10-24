@@ -21,4 +21,5 @@ checks:
     config:
       threshold: 40
   complex-logic:
-    enabled: false
+    config:
+      threshold: 10

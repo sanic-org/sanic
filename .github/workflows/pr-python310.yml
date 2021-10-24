@@ -21,13 +21,13 @@ jobs:
         os: [ubuntu-latest]
         config:
           - {
-              python-version: 3.10,
+              python-version: "3.10",
               tox-env: py310,
               ignore-error-flake: "false",
               command-timeout: "0",
             }
           - {
-              python-version: 3.10,
+              python-version: "3.10",
               tox-env: py310-no-ext,
               ignore-error-flake: "true",
               command-timeout: "600000",

@@ -96,10 +96,10 @@ def main():
         help="number of worker processes [default 1]\n ",
     )
     parser.add_argument("-d", "--debug", dest="debug", action="store_true")
-    parser.add_argument(
+    parser.add_bool_arguments(
         "--noisy-exceptions",
         dest="noisy_exceptions",
-        action="store_true",
+        help="print stack traces for all exceptions",
     )
     parser.add_argument(
         "-r",
@@ -171,13 +171,11 @@ def main():
             "debug": args.debug,
             "access_log": args.access_log,
             "ssl": ssl,
+            "noisy_exceptions": args.noisy_exceptions,
         }
 
         if args.auto_reload:
             kwargs["auto_reload"] = True
-
-        if args.noisy_exceptions:
-            kwargs["noisy_exceptions"] = True
 
         if args.path:
             if args.auto_reload or args.debug:

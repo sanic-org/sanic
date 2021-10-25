@@ -182,3 +182,23 @@ def test_version(cmd):
     version_string = f"Sanic {__version__}; Routing {__routing_version__}\n"
 
     assert out == version_string.encode("utf-8")
+
+
+@pytest.mark.parametrize(
+    "cmd,expected",
+    (
+        ("", False),
+        ("--noisy-exceptions", True),
+        ("--no-noisy-exceptions", False),
+    ),
+)
+def test_noisy_exceptions(cmd, expected):
+    command = ["sanic", "fake.server.app", cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+
+    assert lines is None
+    app_info = lines[26]
+    info = json.loads(app_info)
+
+    assert info["noisy_exceptions"] is expected

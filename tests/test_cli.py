@@ -187,7 +187,6 @@ def test_version(cmd):
 @pytest.mark.parametrize(
     "cmd,expected",
     (
-        ("", False),
         ("--noisy-exceptions", True),
         ("--no-noisy-exceptions", False),
     ),

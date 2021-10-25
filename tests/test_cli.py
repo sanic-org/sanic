@@ -197,7 +197,6 @@ def test_noisy_exceptions(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    assert lines is None
     app_info = lines[26]
     info = json.loads(app_info)
 

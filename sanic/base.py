@@ -23,7 +23,7 @@ class BaseSanic(
 ):
     __fake_slots__: Tuple[str, ...]
 
-    def __init__(self, name: str = None, *args, **kwargs) -> None:
+    def __init__(self, name: str = None, *args: Any, **kwargs: Any) -> None:
         class_name = self.__class__.__name__
 
         if name is None:

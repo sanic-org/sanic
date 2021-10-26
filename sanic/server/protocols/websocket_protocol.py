@@ -133,21 +133,18 @@ class WebSocketProtocol(HttpProtocol):
             )
             raise ServerError(msg, status_code=500)
         if 100 <= resp.status_code <= 299:
-            rbody = "".join(
-                [
-                    "HTTP/1.1 ",
-                    str(resp.status_code),
-                    " ",
-                    resp.reason_phrase,
-                    "\r\n",
-                ]
+            first_line = (
+                f"HTTP/1.1 {resp.status_code} {resp.reason_phrase}\r\n"
+            ).encode()
+            rbody = bytearray(first_line)
+            rbody += b"".join(
+                [f"{k}: {v}\r\n".encode() for k, v in resp.headers.items()]
             )
-            rbody += "".join(f"{k}: {v}\r\n" for k, v in resp.headers.items())
+            rbody += b"\r\n"
             if resp.body is not None:
-                rbody += f"\r\n{resp.body.decode('utf-8')}\r\n\r\n"
-            else:
-                rbody += "\r\n"
-            await super().send(rbody.encode())
+                rbody += resp.body
+                rbody += b"\r\n\r\n"
+            await super().send(rbody)
         else:
             raise ServerError(resp.body, resp.status_code)
         self.websocket = WebsocketImplProtocol(

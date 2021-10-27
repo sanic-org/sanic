@@ -272,3 +272,47 @@ def test_exception_in_ws_logged(caplog):
         "Exception occurred while handling uri:"
         in caplog.record_tuples[record_index][2]
     )
+
+
+@pytest.mark.parametrize("debug", (True, False))
+def test_contextual_exception(debug):
+    app = Sanic(__name__)
+
+    class TeapotError(SanicException):
+        status_code = 418
+        message = "Sorry, I cannot brew coffee"
+
+    @app.post("/coffee", error_format="json")
+    async def make_coffee(_):
+        raise TeapotError(context={"foo": "bar"})
+
+    _, response = app.test_client.post("/coffee", debug=debug)
+
+    assert response.status == 418
+    assert response.json["message"] == "Sorry, I cannot brew coffee"
+    assert response.json["context"] == {"foo": "bar"}
+
+
+@pytest.mark.parametrize("override", (True, False))
+def test_contextual_exception_functional_message(override):
+    app = Sanic(__name__)
+
+    class TeapotError(SanicException):
+        status_code = 418
+
+        @property
+        def message(self):
+            return f"Received foo={self.context['foo']}"
+
+    @app.post("/coffee", error_format="json")
+    async def make_coffee(_):
+        error_args = {"context": {"foo": "bar"}}
+        if override:
+            error_args["message"] = "override"
+        raise TeapotError(**error_args)
+
+    _, response = app.test_client.post("/coffee", debug=True)
+    error_message = "override" if override else "Received foo=bar"
+    assert response.status == 418
+    assert response.json["message"] == error_message
+    assert response.json["context"] == {"foo": "bar"}

@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from sanic.helpers import STATUS_CODES
 
@@ -11,7 +11,11 @@ class SanicException(Exception):
         message: Optional[Union[str, bytes]] = None,
         status_code: Optional[int] = None,
         quiet: Optional[bool] = None,
+        context: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
     ) -> None:
+        self.context = context
+        self.extra = extra
         if message is None:
             if self.message:
                 message = self.message

@@ -146,11 +146,21 @@ def main():
     )
     args = parser.parse_args()
 
-    # Custom handling for better diagnostic message
-    if args.tls and args.cert or bool(args.cert) != bool(args.key):
+    # Custom TLS mismatch handling for better diagnostics
+    if (
+        # one of cert/key missing
+        bool(args.cert) != bool(args.key)
+        # new and old style args used together
+        or args.tls
+        and args.cert
+        # strict host checking without certs would always fail
+        or args.tlshost
+        and not args.tls
+        and not args.cert
+    ):
         parser.print_usage(sys.stderr)
         error_logger.error(
-            "sanic: error: certificates must be specified by either of:\n"
+            "sanic: error: TLS certificates must be specified by either of:\n"
             "  --cert certdir/fullchain.pem --key certdir/privkey.pem\n"
             "  --tls certdir  (equivalent to the above)"
         )

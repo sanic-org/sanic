@@ -82,27 +82,27 @@ def main():
         "--cert",
         dest="cert",
         type=str,
-        help="Location of certificate (instead of --tls)",
+        help="Location of fullchain.pem, bundle.crt or equivalent",
     )
     parser.add_argument(
         "--key",
         dest="key",
         type=str,
-        help="Location of keyfile (instead of --tls)",
+        help="Location of privkey.pem or equivalent .key file",
     )
     parser.add_argument(
         "--tls",
         metavar="DIR",
         type=str,
         action="append",
-        help="TLS certificate folder with fullchain.pem and privkey.pem.\n"
-        "May be specified multiple times to choose of multiple certificates.",
+        help="TLS certificate folder with fullchain.pem and privkey.pem\n"
+        "May be specified multiple times to choose of multiple certificates",
     )
     parser.add_argument(
         "--tls-strict-host",
         dest="tlshost",
         action="store_true",
-        help="Only allow clients that send an SNI matching server certs.\n ",
+        help="Only allow clients that send an SNI matching server certs\n ",
     )
     parser.add_bool_arguments(
         "--access-logs", dest="access_log", help="display access logs"
@@ -145,6 +145,16 @@ def main():
         ),
     )
     args = parser.parse_args()
+
+    # Custom handling for better diagnostic message
+    if args.tls and args.cert or bool(args.cert) != bool(args.key):
+        parser.print_usage(sys.stderr)
+        error_logger.error(
+            "sanic: error: certificates must be specified by either of:\n"
+            "  --cert certdir/fullchain.pem --key certdir/privkey.pem\n"
+            "  --tls certdir  (equivalent to the above)"
+        )
+        sys.exit(1)
 
     try:
         module_path = os.path.abspath(os.getcwd())

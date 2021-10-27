@@ -2,10 +2,11 @@ import asyncio
 import logging
 
 import pytest
+from unittest.mock import Mock
 
 from bs4 import BeautifulSoup
 
-from sanic import Sanic
+from sanic import Sanic, handlers
 from sanic.exceptions import Forbidden, InvalidUsage, NotFound, ServerError
 from sanic.handlers import ErrorHandler
 from sanic.response import stream, text
@@ -227,3 +228,18 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
         "v22.3, the legacy style lookup method will not work at all."
     )
     assert response.status == 400
+
+
+def test_error_handler_noisy_log(exception_handler_app, monkeypatch):
+    err_logger = Mock()
+    monkeypatch.setattr(handlers, "error_logger", err_logger)
+
+    exception_handler_app.config["NOISY_EXCEPTIONS"] = False
+    exception_handler_app.test_client.get("/1")
+    err_logger.exception.assert_not_called()
+
+    exception_handler_app.config["NOISY_EXCEPTIONS"] = True
+    request, _ = exception_handler_app.test_client.get("/1")
+    err_logger.exception.assert_called_with(
+        "Exception occurred while handling uri: %s", repr(request.url)
+    )

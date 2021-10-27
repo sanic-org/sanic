@@ -116,6 +116,11 @@ def main():
         help="number of worker processes [default 1]\n ",
     )
     parser.add_argument("-d", "--debug", dest="debug", action="store_true")
+    parser.add_bool_arguments(
+        "--noisy-exceptions",
+        dest="noisy_exceptions",
+        help="print stack traces for all exceptions",
+    )
     parser.add_argument(
         "-r",
         "--reload",
@@ -169,6 +174,7 @@ def main():
                     f"Module is not a Sanic app, it is a {app_type_name}.  "
                     f"Perhaps you meant {args.module}.app?"
                 )
+
         ssl: Union[None, dict, str, list] = []
         if args.tlshost:
             ssl.append(None)
@@ -189,7 +195,9 @@ def main():
             "debug": args.debug,
             "access_log": args.access_log,
             "ssl": ssl,
+            "noisy_exceptions": args.noisy_exceptions,
         }
+
         if args.auto_reload:
             kwargs["auto_reload"] = True
 

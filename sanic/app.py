@@ -963,6 +963,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         loop: None = None,
         reload_dir: Optional[Union[List[str], str]] = None,
+        noisy_exceptions: Optional[bool] = None,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -995,6 +996,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type access_log: bool
         :param unix: Unix socket to listen on instead of TCP port
         :type unix: str
+        :param noisy_exceptions: Log exceptions that are normally considered
+                                 to be quiet/silent
+        :type noisy_exceptions: bool
         :return: Nothing
         """
         if reload_dir:
@@ -1032,6 +1036,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
+
+        if noisy_exceptions is not None:
+            self.config.NOISY_EXCEPTIONS = noisy_exceptions
 
         server_settings = self._helper(
             host=host,
@@ -1091,6 +1098,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         return_asyncio_server: bool = False,
         asyncio_server_kwargs: Dict[str, Any] = None,
+        noisy_exceptions: Optional[bool] = None,
     ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
@@ -1128,6 +1136,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :param asyncio_server_kwargs: key-value arguments for
                                       asyncio/uvloop create_server method
         :type asyncio_server_kwargs: dict
+        :param noisy_exceptions: Log exceptions that are normally considered
+                                 to be quiet/silent
+        :type noisy_exceptions: bool
         :return: AsyncioServer if return_asyncio_server is true, else Nothing
         """
 
@@ -1138,9 +1149,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
+
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
+
+        if noisy_exceptions is not None:
+            self.config.NOISY_EXCEPTIONS = noisy_exceptions
 
         server_settings = self._helper(
             host=host,

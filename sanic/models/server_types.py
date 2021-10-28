@@ -1,4 +1,6 @@
+from ssl import SSLObject
 from types import SimpleNamespace
+from typing import Optional
 
 from sanic.models.protocol_types import TransportProtocol
 
@@ -20,8 +22,10 @@ class ConnInfo:
         "peername",
         "server_port",
         "server",
+        "server_name",
         "sockname",
         "ssl",
+        "cert",
     )
 
     def __init__(self, transport: TransportProtocol, unix=None):
@@ -31,8 +35,16 @@ class ConnInfo:
         self.server_port = self.client_port = 0
         self.client_ip = ""
         self.sockname = addr = transport.get_extra_info("sockname")
-        self.ssl: bool = bool(transport.get_extra_info("sslcontext"))
-
+        self.ssl = False
+        self.server_name = ""
+        self.cert = {}
+        sslobj: Optional[SSLObject] = transport.get_extra_info(
+            "ssl_object"
+        )  # type: ignore
+        if sslobj:
+            self.ssl = True
+            self.server_name = getattr(sslobj, "sanic_server_name", None) or ""
+            self.cert = getattr(sslobj.context, "sanic", {})
         if isinstance(addr, str):  # UNIX socket
             self.server = unix or addr
             return

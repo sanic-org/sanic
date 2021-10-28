@@ -4,7 +4,7 @@ import sys
 from argparse import ArgumentParser, RawTextHelpFormatter
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Union
 
 from sanic_routing import __version__ as __routing_version__  # type: ignore
 
@@ -79,10 +79,30 @@ def main():
         help="location of unix socket\n ",
     )
     parser.add_argument(
-        "--cert", dest="cert", type=str, help="Location of certificate for SSL"
+        "--cert",
+        dest="cert",
+        type=str,
+        help="Location of fullchain.pem, bundle.crt or equivalent",
     )
     parser.add_argument(
-        "--key", dest="key", type=str, help="location of keyfile for SSL\n "
+        "--key",
+        dest="key",
+        type=str,
+        help="Location of privkey.pem or equivalent .key file",
+    )
+    parser.add_argument(
+        "--tls",
+        metavar="DIR",
+        type=str,
+        action="append",
+        help="TLS certificate folder with fullchain.pem and privkey.pem\n"
+        "May be specified multiple times to choose of multiple certificates",
+    )
+    parser.add_argument(
+        "--tls-strict-host",
+        dest="tlshost",
+        action="store_true",
+        help="Only allow clients that send an SNI matching server certs\n ",
     )
     parser.add_bool_arguments(
         "--access-logs", dest="access_log", help="display access logs"
@@ -126,6 +146,26 @@ def main():
     )
     args = parser.parse_args()
 
+    # Custom TLS mismatch handling for better diagnostics
+    if (
+        # one of cert/key missing
+        bool(args.cert) != bool(args.key)
+        # new and old style args used together
+        or args.tls
+        and args.cert
+        # strict host checking without certs would always fail
+        or args.tlshost
+        and not args.tls
+        and not args.cert
+    ):
+        parser.print_usage(sys.stderr)
+        error_logger.error(
+            "sanic: error: TLS certificates must be specified by either of:\n"
+            "  --cert certdir/fullchain.pem --key certdir/privkey.pem\n"
+            "  --tls certdir  (equivalent to the above)"
+        )
+        sys.exit(1)
+
     try:
         module_path = os.path.abspath(os.getcwd())
         if module_path not in sys.path:
@@ -155,14 +195,18 @@ def main():
                     f"Perhaps you meant {args.module}.app?"
                 )
 
+        ssl: Union[None, dict, str, list] = []
+        if args.tlshost:
+            ssl.append(None)
         if args.cert is not None or args.key is not None:
-            ssl: Optional[Dict[str, Any]] = {
-                "cert": args.cert,
-                "key": args.key,
-            }
-        else:
+            ssl.append(dict(cert=args.cert, key=args.key))
+        if args.tls:
+            ssl += args.tls
+        if not ssl:
             ssl = None
-
+        elif len(ssl) == 1 and ssl[0] is not None:
+            # Use only one cert, no TLSSelector.
+            ssl = ssl[0]
         kwargs = {
             "host": args.host,
             "port": args.port,

@@ -19,7 +19,6 @@ class MockProtocol:
         self.transport = transport
         # Fixup for 3.8+; Sanic still supports 3.7 where loop is required
         loop = loop if sys.version_info[:2] < (3, 8) else None
-        # Arjan style - minimizing indents
         # Optional in 3.9, necessary in 3.10 because the parameter "loop"
         # was completely removed
         if not loop:

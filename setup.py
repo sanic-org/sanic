@@ -124,6 +124,7 @@ docs_require = [
 ]
 
 dev_require = tests_require + [
+    "cryptography",
     "tox",
     "towncrier",
 ]

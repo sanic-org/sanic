@@ -19,7 +19,7 @@ from functools import partial
 from inspect import isawaitable
 from pathlib import Path
 from socket import socket
-from ssl import Purpose, SSLContext, create_default_context
+from ssl import SSLContext
 from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
@@ -78,6 +78,7 @@ from sanic.server import serve, serve_multiple, serve_single
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
+from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
@@ -952,7 +953,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         *,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
-        ssl: Union[Dict[str, str], SSLContext, None] = None,
+        ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
         protocol: Optional[Type[Protocol]] = None,
@@ -962,6 +963,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         loop: None = None,
         reload_dir: Optional[Union[List[str], str]] = None,
+        noisy_exceptions: Optional[bool] = None,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -978,7 +980,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type auto_relaod: bool
         :param ssl: SSLContext, or location of certificate and key
                     for SSL encryption of worker(s)
-        :type ssl: SSLContext or dict
+        :type ssl: str, dict, SSLContext or list
         :param sock: Socket for the server to accept connections from
         :type sock: socket
         :param workers: Number of processes received before it is respected
@@ -994,6 +996,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type access_log: bool
         :param unix: Unix socket to listen on instead of TCP port
         :type unix: str
+        :param noisy_exceptions: Log exceptions that are normally considered
+                                 to be quiet/silent
+        :type noisy_exceptions: bool
         :return: Nothing
         """
         if reload_dir:
@@ -1031,6 +1036,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
+
+        if noisy_exceptions is not None:
+            self.config.NOISY_EXCEPTIONS = noisy_exceptions
 
         server_settings = self._helper(
             host=host,
@@ -1082,7 +1090,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         port: Optional[int] = None,
         *,
         debug: bool = False,
-        ssl: Union[Dict[str, str], SSLContext, None] = None,
+        ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         protocol: Type[Protocol] = None,
         backlog: int = 100,
@@ -1090,6 +1098,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         unix: Optional[str] = None,
         return_asyncio_server: bool = False,
         asyncio_server_kwargs: Dict[str, Any] = None,
+        noisy_exceptions: Optional[bool] = None,
     ) -> Optional[AsyncioServer]:
         """
         Asynchronous version of :func:`run`.
@@ -1127,6 +1136,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :param asyncio_server_kwargs: key-value arguments for
                                       asyncio/uvloop create_server method
         :type asyncio_server_kwargs: dict
+        :param noisy_exceptions: Log exceptions that are normally considered
+                                 to be quiet/silent
+        :type noisy_exceptions: bool
         :return: AsyncioServer if return_asyncio_server is true, else Nothing
         """
 
@@ -1137,9 +1149,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
+
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
+
+        if noisy_exceptions is not None:
+            self.config.NOISY_EXCEPTIONS = noisy_exceptions
 
         server_settings = self._helper(
             host=host,
@@ -1266,16 +1282,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         auto_reload=False,
     ):
         """Helper function used by `run` and `create_server`."""
-
-        if isinstance(ssl, dict):
-            # try common aliaseses
-            cert = ssl.get("cert") or ssl.get("certificate")
-            key = ssl.get("key") or ssl.get("keyfile")
-            if cert is None or key is None:
-                raise ValueError("SSLContext or certificate and key required.")
-            context = create_default_context(purpose=Purpose.CLIENT_AUTH)
-            context.load_cert_chain(cert, keyfile=key)
-            ssl = context
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
                 "PROXIES_COUNT cannot be negative. "
@@ -1285,6 +1291,35 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         self.error_handler.debug = debug
         self.debug = debug
+        if self.configure_logging and debug:
+            logger.setLevel(logging.DEBUG)
+        if (
+            self.config.LOGO
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):
+            logger.debug(
+                self.config.LOGO
+                if isinstance(self.config.LOGO, str)
+                else BASE_LOGO
+            )
+        # Serve
+        if host and port:
+            proto = "http"
+            if ssl is not None:
+                proto = "https"
+            if unix:
+                logger.info(f"Goin' Fast @ {unix} {proto}://...")
+            else:
+                # colon(:) is legal for a host only in an ipv6 address
+                display_host = f"[{host}]" if ":" in host else host
+                logger.info(f"Goin' Fast @ {proto}://{display_host}:{port}")
+
+        debug_mode = "enabled" if self.debug else "disabled"
+        reload_mode = "enabled" if auto_reload else "disabled"
+        logger.debug(f"Sanic auto-reload: {reload_mode}")
+        logger.debug(f"Sanic debug mode: {debug_mode}")
+
+        ssl = process_to_context(ssl)
 
         server_settings = {
             "protocol": protocol,
@@ -1313,38 +1348,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             listeners = [partial(listener, self) for listener in listeners]
             server_settings[settings_name] = listeners
 
-        if self.configure_logging and debug:
-            logger.setLevel(logging.DEBUG)
-
-        if (
-            self.config.LOGO
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
-            logger.debug(
-                self.config.LOGO
-                if isinstance(self.config.LOGO, str)
-                else BASE_LOGO
-            )
-
         if run_async:
             server_settings["run_async"] = True
-
-        # Serve
-        if host and port:
-            proto = "http"
-            if ssl is not None:
-                proto = "https"
-            if unix:
-                logger.info(f"Goin' Fast @ {unix} {proto}://...")
-            else:
-                # colon(:) is legal for a host only in an ipv6 address
-                display_host = f"[{host}]" if ":" in host else host
-                logger.info(f"Goin' Fast @ {proto}://{display_host}:{port}")
-
-        debug_mode = "enabled" if self.debug else "disabled"
-        reload_mode = "enabled" if auto_reload else "disabled"
-        logger.debug(f"Sanic auto-reload: {reload_mode}")
-        logger.debug(f"Sanic debug mode: {debug_mode}")
 
         return server_settings
 

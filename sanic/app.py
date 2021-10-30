@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 import logging.config
 import os
+import platform
 import re
+import sys
 
 from asyncio import (
     AbstractEventLoop,
@@ -45,11 +47,14 @@ from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
+from sanic.application.logo import COLOR_LOGO
+from sanic.application.motd import MOTD
+from sanic.application.state import ApplicationState, Mode, Stage
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
-from sanic.config import BASE_LOGO, SANIC_PREFIX, Config
+from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
     SanicException,
@@ -57,7 +62,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
     FutureException,
@@ -170,22 +175,20 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._asgi_client = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
+        self._state = ApplicationState(app=self)
         self._test_client = None
         self._test_manager = None
         self.asgi = False
-        self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
         self.config = config or Config(
             load_env=load_env, env_prefix=env_prefix
         )
         self.configure_logging = configure_logging
         self.ctx = ctx or SimpleNamespace()
-        self.debug = None
+        self.debug = False
         self.error_handler = error_handler or ErrorHandler(
             fallback=self.config.FALLBACK_ERROR_FORMAT,
         )
-        self.is_running = False
-        self.is_stopping = False
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
@@ -223,7 +226,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
             Only supported when using the `app.run` method.
         """
-        if not self.is_running and self.asgi is False:
+        if self.state.stage is Stage.INIT and self.asgi is False:
             raise SanicException(
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
@@ -964,6 +967,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         loop: None = None,
         reload_dir: Optional[Union[List[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
+        fast: bool = False,
+        verbosity: int = 0,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -1001,6 +1006,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :type noisy_exceptions: bool
         :return: Nothing
         """
+        self.state.verbosity = verbosity
+
         if reload_dir:
             if isinstance(reload_dir, str):
                 reload_dir = [reload_dir]
@@ -1022,7 +1029,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
 
         if auto_reload or auto_reload is None and debug:
-            self.auto_reload = True
+            auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
                 return reloader_helpers.watchdog(1.0, self)
 
@@ -1033,12 +1040,21 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol = (
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
-        # if access_log is passed explicitly change config.ACCESS_LOG
-        if access_log is not None:
-            self.config.ACCESS_LOG = access_log
 
-        if noisy_exceptions is not None:
-            self.config.NOISY_EXCEPTIONS = noisy_exceptions
+        # Set explicitly passed configuration values
+        for attribute, value in {
+            "ACCESS_LOG": access_log,
+            "AUTO_RELOAD": auto_reload,
+            "NOISY_EXCEPTIONS": noisy_exceptions,
+        }.items():
+            if value is not None:
+                setattr(self.config, attribute, value)
+
+        if fast:
+            try:
+                workers = len(os.sched_getaffinity(0))
+            except AttributeError:
+                workers = os.cpu_count() or 1
 
         server_settings = self._helper(
             host=host,
@@ -1051,12 +1067,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol=protocol,
             backlog=backlog,
             register_sys_signals=register_sys_signals,
-            auto_reload=auto_reload,
         )
 
         try:
-            self.is_running = True
-            self.is_stopping = False
+            self.state.stage = Stage.STARTING
             if workers > 1 and os.name != "posix":
                 logger.warn(
                     f"Multiprocessing is currently not supported on {os.name},"
@@ -1073,7 +1087,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
             raise
         finally:
-            self.is_running = False
+            self.state.stage = Stage.STOPPING
         logger.info("Server Stopped")
 
     def stop(self):
@@ -1081,8 +1095,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         This kills the Sanic
         """
         if not self.is_stopping:
-            self.is_stopping = True
+            self.state.stage = Stage.STOPPING
             get_event_loop().stop()
+        self.state.stage = Stage.STOPPED
 
     async def create_server(
         self,
@@ -1279,7 +1294,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         backlog=100,
         register_sys_signals=True,
         run_async=False,
-        auto_reload=False,
     ):
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
@@ -1289,19 +1303,18 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "#proxy-configuration"
             )
 
-        self.error_handler.debug = debug
         self.debug = debug
-        if self.configure_logging and debug:
-            logger.setLevel(logging.DEBUG)
+        self.state.host = host
+        self.state.port = port
+
+        # Backwards compat for custom logo setting. Deprecated
+        # and to be removed in v22.6
         if (
             self.config.LOGO
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
         ):
-            logger.debug(
-                self.config.LOGO
-                if isinstance(self.config.LOGO, str)
-                else BASE_LOGO
-            )
+            logger.debug(self.config.LOGO)
+
         # Serve
         if host and port:
             proto = "http"
@@ -1313,11 +1326,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 # colon(:) is legal for a host only in an ipv6 address
                 display_host = f"[{host}]" if ":" in host else host
                 logger.info(f"Goin' Fast @ {proto}://{display_host}:{port}")
-
-        debug_mode = "enabled" if self.debug else "disabled"
-        reload_mode = "enabled" if auto_reload else "disabled"
-        logger.debug(f"Sanic auto-reload: {reload_mode}")
-        logger.debug(f"Sanic debug mode: {debug_mode}")
 
         ssl = process_to_context(ssl)
 
@@ -1334,6 +1342,30 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
         }
+
+        MOTD(
+            COLOR_LOGO,
+            {
+                "host": self.state.host,
+                "port": str(self.state.port),
+                "mode": self.state.mode,
+                "debug": str(self.state.is_debug),
+                "server": self.state.server,
+                "python": platform.python_version(),
+                "workers": str(workers),
+                "platform": platform.platform(),
+                "auto-reload": "enabled"
+                if self.config.AUTO_RELOAD
+                else "disabled",
+            },
+        ).display()
+
+        if sys.stdout.isatty() and not self.state.is_debug:
+            error_logger.warning(
+                f"{Colors.YELLOW}Sanic is running in PRODUCTION mode. "
+                "Consider using '--debug' or '--dev' while actively "
+                f"developing your application.{Colors.END}"
+            )
 
         # Register start/stop events
 
@@ -1427,6 +1459,35 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         self.config.update_config(config)
 
+    @property
+    def debug(self):
+        return self.state.is_debug
+
+    @debug.setter
+    def debug(self, value: bool):
+        mode = Mode.DEBUG if value else Mode.PRODUCTION
+        self.state.mode = mode
+
+    @property
+    def auto_reload(self):
+        return self.config.AUTO_RELOAD
+
+    @auto_reload.setter
+    def auto_reload(self, value: bool):
+        self.config.AUTO_RELOAD = value
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def is_running(self):
+        return self.state.stage is Stage.RUNNING
+
+    @property
+    def is_stopping(self):
+        return self.state.stage is Stage.STOPPING
+
     # -------------------------------------------------------------------- #
     # Class methods
     # -------------------------------------------------------------------- #
@@ -1504,7 +1565,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "shutdown",
         ):
             raise SanicException(f"Invalid server event: {event}")
-        logger.debug(f"Triggering server events: {event}")
+        if self.state.verbosity >= 1:
+            logger.debug(f"Triggering server events: {event}")
         reverse = concern == "shutdown"
         if loop is None:
             loop = self.loop

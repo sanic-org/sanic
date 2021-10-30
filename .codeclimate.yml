@@ -8,7 +8,6 @@ exclude_patterns:
   - "docker/"
   - "docs/"
   - "examples/"
-  - "hack/"
   - "scripts/"
   - "tests/"
 checks:

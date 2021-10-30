@@ -10,7 +10,7 @@ from sanic_routing import __version__ as __routing_version__  # type: ignore
 
 from sanic import __version__
 from sanic.app import Sanic
-from sanic.config import BASE_LOGO
+from sanic.application.logo import FULL_COLOR_LOGO
 from sanic.log import error_logger
 from sanic.simple import create_simple_server
 
@@ -25,16 +25,32 @@ class SanicArgumentParser(ArgumentParser):
         )
 
 
+description = f"""{FULL_COLOR_LOGO}
+
+To start running a Sanic application, provide a path to the module, where app
+is a Sanic() instance:
+
+    $ sanic path.to.server:app
+
+Or, a path to a callable that returns a Sanic() instance:
+
+    $ sanic path.to.factory:create_app --factory
+
+Or, a path to a directory to run as a simple HTTP server:
+
+    $ sanic ./path/to/static --simple
+"""
+
+
 def main():
     parser = SanicArgumentParser(
         prog="sanic",
-        description=BASE_LOGO,
+        description=description,
         formatter_class=lambda prog: RawTextHelpFormatter(
             prog, max_help_position=33
         ),
     )
     parser.add_argument(
-        "-v",
         "--version",
         action="version",
         version=f"Sanic {__version__}; Routing {__routing_version__}",
@@ -107,19 +123,49 @@ def main():
     parser.add_bool_arguments(
         "--access-logs", dest="access_log", help="display access logs"
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "-w",
         "--workers",
         dest="workers",
         type=int,
         default=1,
-        help="number of worker processes [default 1]\n ",
+        help="Number of worker processes [default 1]",
     )
-    parser.add_argument("-d", "--debug", dest="debug", action="store_true")
+    group.add_argument(
+        "--fast",
+        dest="fast",
+        action="store_true",
+        help="Set the number of workers to max allowed\n ",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Run the server in debug mode",
+    )
+    parser.add_argument(
+        "--dev",
+        dest="debug",
+        action="store_true",
+        help=(
+            "Currently is an alias for --debug. But starting in v22.3, "
+            "--debug will no longer automatically trigger auto_restart. "
+            "However, --dev will continue, effectively making it the same as "
+            "debug + auto_reload.\n "
+        ),
+    )
+    parser.add_argument(
+        "-v",
+        "--verbosity",
+        action="count",
+        help="Control the level of logging noise, eg. -vv",
+    )
     parser.add_bool_arguments(
         "--noisy-exceptions",
         dest="noisy_exceptions",
-        help="print stack traces for all exceptions",
+        help="Output stack traces for all exceptions",
     )
     parser.add_argument(
         "-r",
@@ -144,7 +190,11 @@ def main():
             "Example: ./\n"
         ),
     )
-    args = parser.parse_args()
+
+    # This is to provide backwards compat -v to display version
+    legacy_version = len(sys.argv) == 2 and sys.argv[-1] == "-v"
+    parse_args = ["--version"] if legacy_version else None
+    args = parser.parse_args(args=parse_args)
 
     # Custom TLS mismatch handling for better diagnostics
     if (
@@ -212,10 +262,12 @@ def main():
             "port": args.port,
             "unix": args.unix,
             "workers": args.workers,
+            "fast": args.fast,
             "debug": args.debug,
             "access_log": args.access_log,
             "ssl": ssl,
             "noisy_exceptions": args.noisy_exceptions,
+            "verbosity": args.verbosity or 0,
         }
 
         if args.auto_reload:

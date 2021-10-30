@@ -6,9 +6,6 @@ import sys
 
 from time import sleep
 
-from sanic.config import BASE_LOGO
-from sanic.log import logger
-
 
 def _iter_module_files():
     """This iterates over all relevant Python files.
@@ -90,11 +87,6 @@ def watchdog(sleep_interval, app):
         signal.signal(signal.SIGBREAK, interrupt_self)
 
     worker_process = restart_with_reloader()
-
-    if app.config.LOGO:
-        logger.debug(
-            app.config.LOGO if isinstance(app.config.LOGO, str) else BASE_LOGO
-        )
 
     try:
         while True:

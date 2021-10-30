@@ -6,20 +6,15 @@ from warnings import warn
 
 from sanic.errorpages import check_error_format
 from sanic.http import Http
-
-from .utils import load_module_from_file_location, str_to_bool
+from sanic.utils import load_module_from_file_location, str_to_bool
 
 
 SANIC_PREFIX = "SANIC_"
-BASE_LOGO = """
 
-                 Sanic
-         Build Fast. Run Fast.
-
-"""
 
 DEFAULT_CONFIG = {
     "ACCESS_LOG": True,
+    "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
     "FALLBACK_ERROR_FORMAT": "auto",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
@@ -45,6 +40,7 @@ DEFAULT_CONFIG = {
 
 class Config(dict):
     ACCESS_LOG: bool
+    AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
     FALLBACK_ERROR_FORMAT: str
     FORWARDED_FOR_HEADER: str
@@ -77,7 +73,7 @@ class Config(dict):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
-        self.LOGO = BASE_LOGO
+        self._LOGO = ""
 
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
@@ -116,6 +112,18 @@ class Config(dict):
             self._configure_header_size()
         elif attr == "FALLBACK_ERROR_FORMAT":
             self._check_error_format()
+
+    @property
+    def LOGO(self):
+        return self._LOGO
+
+    @LOGO.setter
+    def LOGO(self, value):
+        self._LOGO = value
+        warn(
+            "Setting the config.LOGO is deprecated and will no longer "
+            "starting in v22.6."
+        )
 
     def _configure_header_size(self):
         Http.set_header_max_size(

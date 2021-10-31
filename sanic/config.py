@@ -22,6 +22,8 @@ DEFAULT_CONFIG = {
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
+    "MOTD": True,
+    "MOTD_DISPLAY": {},
     "NOISY_EXCEPTIONS": False,
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
@@ -49,6 +51,8 @@ class Config(dict):
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
     NOISY_EXCEPTIONS: bool
+    MOTD: bool
+    MOTD_DISPLAY: Dict[str, str]
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]
     REGISTER: bool

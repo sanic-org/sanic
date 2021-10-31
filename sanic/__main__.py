@@ -139,13 +139,13 @@ def main():
         help="Set the number of workers to max allowed\n ",
     )
     parser.add_argument(
-        "-d",
         "--debug",
         dest="debug",
         action="store_true",
         help="Run the server in debug mode",
     )
     parser.add_argument(
+        "-d",
         "--dev",
         dest="debug",
         action="store_true",
@@ -155,6 +155,12 @@ def main():
             "However, --dev will continue, effectively making it the same as "
             "debug + auto_reload.\n "
         ),
+    )
+    parser.add_bool_arguments(
+        "--motd",
+        dest="motd",
+        default=True,
+        help="Show the startup display",
     )
     parser.add_argument(
         "-v",
@@ -258,16 +264,17 @@ def main():
             # Use only one cert, no TLSSelector.
             ssl = ssl[0]
         kwargs = {
-            "host": args.host,
-            "port": args.port,
-            "unix": args.unix,
-            "workers": args.workers,
-            "fast": args.fast,
-            "debug": args.debug,
             "access_log": args.access_log,
-            "ssl": ssl,
+            "debug": args.debug,
+            "fast": args.fast,
+            "host": args.host,
+            "motd": args.motd,
             "noisy_exceptions": args.noisy_exceptions,
+            "port": args.port,
+            "ssl": ssl,
+            "unix": args.unix,
             "verbosity": args.verbosity or 0,
+            "workers": args.workers,
         }
 
         if args.auto_reload:

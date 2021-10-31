@@ -4,7 +4,8 @@ import logging
 
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum, auto
-from typing import TYPE_CHECKING, Any, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Set, Union
 
 from sanic.log import logger
 
@@ -46,6 +47,9 @@ class ApplicationState:
     server: Server = field(default=Server.SANIC)
     stage: Stage = field(default=Stage.INIT)
     verbosity: int = field(default=0)
+    workers: int = field(default=0)
+    fast: bool = field(default=False)
+    reload_dirs: Set[Path] = field(default_factory=set)
 
     # This property relates to the ApplicationState instance and should
     # not be changed except in the __post_init__ method

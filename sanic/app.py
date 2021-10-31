@@ -18,6 +18,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
+from importlib import import_module
 from inspect import isawaitable
 from pathlib import Path
 from socket import socket
@@ -48,7 +49,7 @@ from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
 from sanic.application.logo import COLOR_LOGO
-from sanic.application.motd import MOTD
+from sanic.application.motd import MOTD, MOTDTTY, MOTDBasic
 from sanic.application.state import ApplicationState, Mode, Stage
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
@@ -127,7 +128,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "name",
         "named_request_middleware",
         "named_response_middleware",
-        "reload_dirs",
         "request_class",
         "request_middleware",
         "response_middleware",
@@ -192,7 +192,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
-        self.reload_dirs: Set[Path] = set()
         self.request_class = request_class
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
@@ -967,8 +966,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         loop: None = None,
         reload_dir: Optional[Union[List[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
+        motd: bool = True,
         fast: bool = False,
         verbosity: int = 0,
+        motd_display: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -1008,6 +1009,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
         self.state.verbosity = verbosity
 
+        if motd_display:
+            self.config.MOTD_DISPLAY.update(motd_display)
+
         if reload_dir:
             if isinstance(reload_dir, str):
                 reload_dir = [reload_dir]
@@ -1018,7 +1022,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     logger.warning(
                         f"Directory {directory} could not be located"
                     )
-                self.reload_dirs.add(Path(directory))
+                self.state.reload_dirs.add(Path(directory))
 
         if loop is not None:
             raise TypeError(
@@ -1045,12 +1049,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         for attribute, value in {
             "ACCESS_LOG": access_log,
             "AUTO_RELOAD": auto_reload,
+            "MOTD": motd,
             "NOISY_EXCEPTIONS": noisy_exceptions,
         }.items():
             if value is not None:
                 setattr(self.config, attribute, value)
 
         if fast:
+            self.state.fast = True
             try:
                 workers = len(os.sched_getaffinity(0))
             except AttributeError:
@@ -1306,6 +1312,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.debug = debug
         self.state.host = host
         self.state.port = port
+        self.state.workers = workers
 
         # Backwards compat for custom logo setting. Deprecated
         # and to be removed in v22.6
@@ -1316,16 +1323,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             logger.debug(self.config.LOGO)
 
         # Serve
+        serve_location = ""
         if host and port:
             proto = "http"
             if ssl is not None:
                 proto = "https"
             if unix:
-                logger.info(f"Goin' Fast @ {unix} {proto}://...")
+                serve_location = f"{unix} {proto}://..."
             else:
                 # colon(:) is legal for a host only in an ipv6 address
                 display_host = f"[{host}]" if ":" in host else host
-                logger.info(f"Goin' Fast @ {proto}://{display_host}:{port}")
+                serve_location = f"{proto}://{display_host}:{port}"
 
         ssl = process_to_context(ssl)
 
@@ -1343,22 +1351,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "backlog": backlog,
         }
 
-        MOTD(
-            COLOR_LOGO,
-            {
-                "host": self.state.host,
-                "port": str(self.state.port),
-                "mode": self.state.mode,
-                "debug": str(self.state.is_debug),
-                "server": self.state.server,
-                "python": platform.python_version(),
-                "workers": str(workers),
-                "platform": platform.platform(),
-                "auto-reload": "enabled"
-                if self.config.AUTO_RELOAD
-                else "disabled",
-            },
-        ).display()
+        self.motd(serve_location)
 
         if sys.stdout.isatty() and not self.state.is_debug:
             error_logger.warning(
@@ -1368,7 +1361,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
 
         # Register start/stop events
-
         for event_name, settings_name, reverse in (
             ("main_process_start", "main_start", False),
             ("main_process_stop", "main_stop", True),
@@ -1487,6 +1479,57 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     @property
     def is_stopping(self):
         return self.state.stage is Stage.STOPPING
+
+    @property
+    def reload_dirs(self):
+        return self.state.reload_dirs
+
+    def motd(self, serve_location):
+        if self.config.MOTD:
+            mode = [f"{self.state.mode},"]
+            if self.state.fast:
+                mode.append("goin' fast")
+            if self.state.workers == 1:
+                mode.append("single worker")
+            else:
+                mode.append(f"w/ {self.state.workers} workers")
+
+            display = {
+                "mode": " ".join(mode),
+                "server": self.state.server,
+                "python": platform.python_version(),
+                "platform": platform.platform(),
+            }
+            extra = {}
+            if self.config.AUTO_RELOAD:
+                reload_display = "enabled"
+                if self.state.reload_dirs:
+                    reload_display += ", ".join(
+                        [
+                            "",
+                            *(
+                                str(path.absolute())
+                                for path in self.state.reload_dirs
+                            ),
+                        ]
+                    )
+                display["auto-reload"] = reload_display
+            for package_name, module_name in {
+                "sanic-routing": "sanic_routing",
+                "sanic-testing": "sanic_testing",
+                "sanic-ext": "sanic_ext",
+            }.items():
+                try:
+                    module = import_module(module_name)
+                    display[package_name] = module.__version__
+                except ImportError:
+                    ...
+
+            if self.config.MOTD_DISPLAY:
+                extra.update(self.config.MOTD_DISPLAY)
+
+            motd_class = MOTDTTY if not sys.stdout.isatty() else MOTDBasic
+            motd_class(COLOR_LOGO, serve_location, display, extra).display()
 
     # -------------------------------------------------------------------- #
     # Class methods

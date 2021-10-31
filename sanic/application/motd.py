@@ -1,3 +1,5 @@
+import sys
+
 from abc import ABC, abstractmethod
 from shutil import get_terminal_size
 from textwrap import indent, wrap
@@ -26,15 +28,27 @@ class MOTD(ABC):
     def display(self):
         ...
 
+    @classmethod
+    def output(
+        cls,
+        logo: str,
+        serve_location: str,
+        data: Dict[str, str],
+        extra: Dict[str, str],
+    ) -> None:
+        motd_class = MOTDTTY if sys.stdout.isatty() else MOTDBasic
+        motd_class(logo, serve_location, data, extra).display()
+
 
 class MOTDBasic(MOTD):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     def display(self):
-        lines = [
-            f"Sanic v{__version__}",
-            f"Goin' Fast @ {self.serve_location}",
+        lines = [f"Sanic v{__version__}"]
+        if self.serve_location:
+            lines.append(f"Goin' Fast @ {self.serve_location}")
+        lines += [
             *(f"{key}: {value}" for key, value in self.data.items()),
             *(f"{key}: {value}" for key, value in self.extra.items()),
         ]
@@ -64,9 +78,11 @@ class MOTDTTY(MOTD):
 
     def display(self):
         version = f"Sanic v{__version__}".center(self.centering_length)
-        running = f"Goin' Fast @ {self.serve_location}".center(
-            self.centering_length
-        )
+        running = (
+            f"Goin' Fast @ {self.serve_location}"
+            if self.serve_location
+            else ""
+        ).center(self.centering_length)
         length = len(version) + 2 - self.logo_line_length
         first_filler = "─" * (self.logo_line_length - 1)
         second_filler = "─" * length

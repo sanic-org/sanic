@@ -41,15 +41,16 @@ class Stage(IntEnum):
 @dataclass
 class ApplicationState:
     app: Sanic
+    asgi: bool = field(default=False)
+    fast: bool = field(default=False)
     host: str = field(default="")
     mode: Mode = field(default=Mode.PRODUCTION)
     port: int = field(default=0)
+    reload_dirs: Set[Path] = field(default_factory=set)
     server: Server = field(default=Server.SANIC)
     stage: Stage = field(default=Stage.INIT)
     verbosity: int = field(default=0)
     workers: int = field(default=0)
-    fast: bool = field(default=False)
-    reload_dirs: Set[Path] = field(default_factory=set)
 
     # This property relates to the ApplicationState instance and should
     # not be changed except in the __post_init__ method

@@ -48,7 +48,7 @@ from sanic_routing.route import Route
 
 from sanic import reloader_helpers
 from sanic.application.logo import COLOR_LOGO
-from sanic.application.motd import MOTDTTY, MOTDBasic
+from sanic.application.motd import MOTD, MOTDTTY, MOTDBasic
 from sanic.application.state import ApplicationState, Mode, Stage
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
@@ -113,7 +113,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_test_client",
         "_test_manager",
         "auto_reload",
-        "asgi",
         "blueprints",
         "config",
         "configure_logging",
@@ -177,7 +176,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._state = ApplicationState(app=self)
         self._test_client = None
         self._test_manager = None
-        self.asgi = False
         self.blueprints: Dict[str, Blueprint] = {}
         self.config = config or Config(
             load_env=load_env, env_prefix=env_prefix
@@ -1430,6 +1428,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         details: https://asgi.readthedocs.io/en/latest
         """
         self.asgi = True
+        self.motd("")
         self._asgi_app = await ASGIApp.create(self, scope, receive, send)
         asgi_app = self._asgi_app
         await asgi_app()
@@ -1449,6 +1448,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
 
         self.config.update_config(config)
+
+    @property
+    def asgi(self):
+        return self.state.is_debug
+
+    @asgi.setter
+    def asgi(self, value: bool):
+        self.state.asgi = value
 
     @property
     def debug(self):
@@ -1488,10 +1495,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             mode = [f"{self.state.mode},"]
             if self.state.fast:
                 mode.append("goin' fast")
-            if self.state.workers == 1:
-                mode.append("single worker")
+            if self.state.asgi:
+                mode.append("ASGI")
             else:
-                mode.append(f"w/ {self.state.workers} workers")
+                if self.state.workers == 1:
+                    mode.append("single worker")
+                else:
+                    mode.append(f"w/ {self.state.workers} workers")
 
             display = {
                 "mode": " ".join(mode),
@@ -1532,8 +1542,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if self.config.MOTD_DISPLAY:
                 extra.update(self.config.MOTD_DISPLAY)
 
-            motd_class = MOTDTTY if sys.stdout.isatty() else MOTDBasic
-            motd_class(COLOR_LOGO, serve_location, display, extra).display()
+            MOTD.output(COLOR_LOGO, serve_location, display, extra)
 
     # -------------------------------------------------------------------- #
     # Class methods

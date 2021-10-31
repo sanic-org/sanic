@@ -47,7 +47,7 @@ from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
 
 from sanic import reloader_helpers
-from sanic.application.logo import COLOR_LOGO
+from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode, Stage
 from sanic.asgi import ASGIApp
@@ -1316,14 +1316,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.state.port = port
         self.state.workers = workers
 
-        # Backwards compat for custom logo setting. Deprecated
-        # and to be removed in v22.6
-        if (
-            self.config.LOGO
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
-            logger.debug(self.config.LOGO)
-
         # Serve
         serve_location = ""
         if host and port:
@@ -1547,7 +1539,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if self.config.MOTD_DISPLAY:
                 extra.update(self.config.MOTD_DISPLAY)
 
-            MOTD.output(COLOR_LOGO, serve_location, display, extra)
+            MOTD.output(get_logo(), serve_location, display, extra)
 
     # -------------------------------------------------------------------- #
     # Class methods

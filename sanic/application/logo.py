@@ -1,4 +1,7 @@
+import re
 import sys
+
+from os import environ
 
 
 BASE_LOGO = """
@@ -26,6 +29,20 @@ FULL_COLOR_LOGO = """
 
 """  # noqa
 
+ansi_pattern = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
-def get_logo():
-    return COLOR_LOGO if sys.stdout.isatty() else BASE_LOGO
+
+def get_logo(full=False):
+    logo = (
+        (FULL_COLOR_LOGO if full else COLOR_LOGO)
+        if sys.stdout.isatty()
+        else BASE_LOGO
+    )
+
+    if (
+        sys.platform == "darwin"
+        and environ.get("TERM_PROGRAM") == "Apple_Terminal"
+    ):
+        logo = ansi_pattern.sub("", logo)
+
+    return logo

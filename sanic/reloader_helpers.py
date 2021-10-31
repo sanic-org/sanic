@@ -53,7 +53,11 @@ def restart_with_reloader():
     """
     return subprocess.Popen(
         _get_args_for_reloading(),
-        env={**os.environ, "SANIC_SERVER_RUNNING": "true"},
+        env={
+            **os.environ,
+            "SANIC_SERVER_RUNNING": "true",
+            "SANIC_RELOADER_PROCESS": "true",
+        },
     )
 
 

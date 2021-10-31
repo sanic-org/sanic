@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from textwrap import indent
+from shutil import get_terminal_size
+from textwrap import indent, wrap
 from typing import Dict
 
 from sanic import __version__
@@ -38,7 +39,7 @@ class MOTDBasic(MOTD):
             *(f"{key}: {value}" for key, value in self.extra.items()),
         ]
         for line in lines:
-            logger.debug(line)
+            logger.info(line)
 
 
 class MOTDTTY(MOTD):
@@ -47,8 +48,13 @@ class MOTDTTY(MOTD):
         self.set_variables()
 
     def set_variables(self):
+        fallback = 80
+        terminal_width = min(get_terminal_size(fallback=fallback).columns, 108)
+        self.max_value_width = terminal_width - fallback + 36
         self.key_width = max(map(len, self.data.keys()))
-        self.value_width = max(map(len, self.data.values()))
+        self.value_width = min(
+            max(map(len, self.data.values())), self.max_value_width
+        )
         self.logo_lines = self.logo.split("\n")
         self.logo_line_length = 24
         self.centering_length = (
@@ -84,11 +90,22 @@ class MOTDTTY(MOTD):
         logger.info(indent("\n".join(lines), "  "))
 
     def _render_data(self, lines, data, start):
+        offset = 0
         for idx, (key, value) in enumerate(data.items(), start=start):
             key = key.rjust(self.key_width)
-            value = value.ljust(self.value_width)
-            logo_part = self._get_logo_part(idx)
-            lines.append(f"│ {logo_part} │ {key}: {value} │")
+
+            wrapped = wrap(value, self.max_value_width, break_on_hyphens=False)
+            for wrap_index, part in enumerate(wrapped):
+                part = part.ljust(self.value_width)
+                logo_part = self._get_logo_part(idx + offset + wrap_index)
+                display = (
+                    f"{key}: {part}"
+                    if wrap_index == 0
+                    else (" " * len(key) + f"  {part}")
+                )
+                lines.append(f"│ {logo_part} │ {display} │")
+                if wrap_index:
+                    offset += 1
 
     def _render_fill(self, lines):
         filler = " " * self.display_length

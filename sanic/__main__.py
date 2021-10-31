@@ -202,8 +202,17 @@ def main():
     parse_args = ["--version"] if legacy_version else None
     args = parser.parse_args(args=parse_args)
 
+    main_process = os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
+
+    if args.debug and main_process:
+        error_logger.warning(
+            "Starting in v22.3, --debug will no longer automatically "
+            "run the auto-reloader. Switch to --dev to continue using "
+            "that functionality."
+        )
+
     # Custom TLS mismatch handling for better diagnostics
-    if (
+    if main_process and (
         # one of cert/key missing
         bool(args.cert) != bool(args.key)
         # new and old style args used together

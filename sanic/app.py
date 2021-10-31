@@ -1513,6 +1513,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                         ]
                     )
                 display["auto-reload"] = reload_display
+
+            packages = []
             for package_name, module_name in {
                 "sanic-routing": "sanic_routing",
                 "sanic-testing": "sanic_testing",
@@ -1520,14 +1522,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             }.items():
                 try:
                     module = import_module(module_name)
-                    display[package_name] = module.__version__
+                    packages.append(f"{package_name}=={module.__version__}")
                 except ImportError:
                     ...
+
+            if packages:
+                display["packages"] = ", ".join(packages)
 
             if self.config.MOTD_DISPLAY:
                 extra.update(self.config.MOTD_DISPLAY)
 
-            motd_class = MOTDTTY if not sys.stdout.isatty() else MOTDBasic
+            motd_class = MOTDTTY if sys.stdout.isatty() else MOTDBasic
             motd_class(COLOR_LOGO, serve_location, display, extra).display()
 
     # -------------------------------------------------------------------- #

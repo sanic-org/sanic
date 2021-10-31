@@ -48,12 +48,13 @@ from sanic_routing.route import Route
 
 from sanic import reloader_helpers
 from sanic.application.logo import COLOR_LOGO
-from sanic.application.motd import MOTD, MOTDTTY, MOTDBasic
+from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode, Stage
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
+from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
@@ -85,6 +86,10 @@ from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
 from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
+
+
+if OS_IS_WINDOWS:
+    enable_windows_color_support()
 
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):

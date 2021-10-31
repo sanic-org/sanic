@@ -11,8 +11,13 @@ from sanic_routing import __version__ as __routing_version__  # type: ignore
 from sanic import __version__
 from sanic.app import Sanic
 from sanic.application.logo import FULL_COLOR_LOGO
+from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.log import error_logger
 from sanic.simple import create_simple_server
+
+
+if OS_IS_WINDOWS:
+    enable_windows_color_support()
 
 
 class SanicArgumentParser(ArgumentParser):

@@ -43,9 +43,8 @@ from typing import (
 )
 from urllib.parse import urlencode, urlunparse
 
-from sanic_routing.exceptions import FinalizationError  # type: ignore
-from sanic_routing.exceptions import NotFound  # type: ignore
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.exceptions import FinalizationError, NotFound
+from sanic_routing.route import Route
 
 from sanic import reloader_helpers
 from sanic.application.logo import COLOR_LOGO

@@ -49,7 +49,7 @@ from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
 from sanic.application.logo import COLOR_LOGO
-from sanic.application.motd import MOTD, MOTDTTY, MOTDBasic
+from sanic.application.motd import MOTDTTY, MOTDBasic
 from sanic.application.state import ApplicationState, Mode, Stage
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic

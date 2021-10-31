@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -40,17 +41,19 @@ Or, a path to a directory to run as a simple HTTP server:
     )
 
     def __init__(self) -> None:
+        width = shutil.get_terminal_size().columns
         self.parser = SanicArgumentParser(
             prog="sanic",
             description=self.DESCRIPTION,
             formatter_class=lambda prog: RawTextHelpFormatter(
                 prog,
-                max_help_position=33,
+                max_help_position=36 if width > 96 else 24,
+                indent_increment=4,
                 width=None,
             ),
         )
-        self.parser._positionals.title = "Required"
-        self.parser._optionals.title = "General"
+        self.parser._positionals.title = "Required\n========\n  Positional"
+        self.parser._optionals.title = "Optional\n========\n  General"
         self.main_process = (
             os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
         )

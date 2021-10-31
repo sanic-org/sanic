@@ -1448,7 +1448,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     @property
     def asgi(self):
-        return self.state.is_debug
+        return self.state.asgi
 
     @asgi.setter
     def asgi(self, value: bool):

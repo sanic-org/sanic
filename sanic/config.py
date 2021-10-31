@@ -126,7 +126,8 @@ class Config(dict):
         self._LOGO = value
         warn(
             "Setting the config.LOGO is deprecated and will no longer "
-            "starting in v22.6."
+            "be supported starting in v22.6.",
+            DeprecationWarning,
         )
 
     def _configure_header_size(self):

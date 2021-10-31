@@ -20,7 +20,7 @@ class Group:
         self.parser = parser
 
         if title:
-            self.container = self.parser.add_argument_group(title=title)
+            self.container = self.parser.add_argument_group(title=f"  {title}")
         else:
             self.container = self.parser
 

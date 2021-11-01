@@ -43,8 +43,11 @@ from typing import (
 )
 from urllib.parse import urlencode, urlunparse
 
-from sanic_routing.exceptions import FinalizationError, NotFound
-from sanic_routing.route import Route
+from sanic_routing.exceptions import (  # type: ignore
+    FinalizationError,
+    NotFound,
+)
+from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
 from sanic.application.logo import get_logo

@@ -2,9 +2,10 @@ import logging
 import sys
 
 from enum import Enum
+from typing import Any, Dict
 
 
-LOGGING_CONFIG_DEFAULTS = dict(
+LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(
     version=1,
     disable_existing_loggers=False,
     loggers={

@@ -265,7 +265,7 @@ def test_exception_in_ws_logged(caplog):
     # INFO message when a ws connection is accepted
     ws_version_parts = websockets_version.split(".")
     ws_major = int(ws_version_parts[0])
-    record_index = 2 if ws_major >= 10 else 1
+    record_index = 8 if ws_major >= 10 else 7
     assert caplog.record_tuples[record_index][0] == "sanic.error"
     assert caplog.record_tuples[record_index][1] == logging.ERROR
     assert (

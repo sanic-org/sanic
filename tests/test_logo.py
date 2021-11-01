@@ -1,42 +1,38 @@
-import asyncio
-import logging
+import os
+import sys
 
-from sanic_testing.testing import PORT
+from unittest.mock import patch
 
-from sanic.config import BASE_LOGO
+import pytest
 
-
-def test_logo_base(app, run_startup):
-    logs = run_startup(app)
-
-    assert logs[0][1] == logging.DEBUG
-    assert logs[0][2] == BASE_LOGO
-
-
-def test_logo_false(app, caplog, run_startup):
-    app.config.LOGO = False
-
-    logs = run_startup(app)
-
-    banner, port = logs[0][2].rsplit(":", 1)
-    assert logs[0][1] == logging.INFO
-    assert banner == "Goin' Fast @ http://127.0.0.1"
-    assert int(port) > 0
+from sanic.application.logo import (
+    BASE_LOGO,
+    COLOR_LOGO,
+    FULL_COLOR_LOGO,
+    get_logo,
+)
 
 
-def test_logo_true(app, run_startup):
-    app.config.LOGO = True
+@pytest.mark.parametrize(
+    "tty,full,expected",
+    (
+        (True, False, COLOR_LOGO),
+        (True, True, FULL_COLOR_LOGO),
+        (False, False, BASE_LOGO),
+        (False, True, BASE_LOGO),
+    ),
+)
+def test_get_logo_returns_expected_logo(tty, full, expected):
+    with patch("sys.stdout.isatty") as isatty:
+        isatty.return_value = tty
+        logo = get_logo(full=full)
+    assert logo is expected
 
-    logs = run_startup(app)
 
-    assert logs[0][1] == logging.DEBUG
-    assert logs[0][2] == BASE_LOGO
-
-
-def test_logo_custom(app, run_startup):
-    app.config.LOGO = "My Custom Logo"
-
-    logs = run_startup(app)
-
-    assert logs[0][1] == logging.DEBUG
-    assert logs[0][2] == "My Custom Logo"
+def test_get_logo_returns_no_colors_on_apple_terminal():
+    with patch("sys.stdout.isatty") as isatty:
+        isatty.return_value = False
+        sys.platform = "darwin"
+        os.environ["TERM_PROGRAM"] = "Apple_Terminal"
+        logo = get_logo()
+    assert "\033" not in logo

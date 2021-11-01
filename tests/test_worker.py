@@ -69,7 +69,13 @@ def test_gunicorn_worker_no_logs(gunicorn_worker_with_env_var):
     """
     with urllib.request.urlopen(f"http://localhost:{PORT + 2}/") as _:
         gunicorn_worker_with_env_var.kill()
-        assert not gunicorn_worker_with_env_var.stdout.read()
+        logs = list(
+            filter(
+                lambda x: x,
+                gunicorn_worker_with_env_var.stdout.read().split(b"\n"),
+            )
+        )
+        assert len(logs) == 6
 
 
 def test_gunicorn_worker_with_logs(gunicorn_worker_with_access_logs):

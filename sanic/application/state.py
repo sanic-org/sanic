@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum, auto
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Set, Union
 
@@ -30,14 +30,6 @@ class Mode(StrEnum):
     DEBUG = auto()
 
 
-class Stage(IntEnum):
-    INIT = auto()
-    STARTING = auto()
-    RUNNING = auto()
-    STOPPING = auto()
-    STOPPED = auto()
-
-
 @dataclass
 class ApplicationState:
     app: Sanic
@@ -48,7 +40,8 @@ class ApplicationState:
     port: int = field(default=0)
     reload_dirs: Set[Path] = field(default_factory=set)
     server: Server = field(default=Server.SANIC)
-    stage: Stage = field(default=Stage.INIT)
+    is_running: bool = field(default=False)
+    is_stopping: bool = field(default=False)
     verbosity: int = field(default=0)
     workers: int = field(default=0)
 
@@ -77,7 +70,3 @@ class ApplicationState:
     @property
     def is_debug(self):
         return self.mode is Mode.DEBUG
-
-    @property
-    def is_running(self):
-        return self.stage is Stage.RUNNING

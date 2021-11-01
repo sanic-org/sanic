@@ -1,8 +1,9 @@
 import asyncio
 import logging
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from bs4 import BeautifulSoup
 
@@ -220,7 +221,7 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
     with caplog.at_level(logging.WARNING):
         _, response = exception_handler_app.test_client.get("/1")
 
-    assert caplog.records[0].message == (
+    assert caplog.records[6].message == (
         "You are using a deprecated error handler. The lookup method should "
         "accept two positional parameters: (exception, route_name: "
         "Optional[str]). Until you upgrade your ErrorHandler.lookup, "

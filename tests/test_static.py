@@ -486,7 +486,7 @@ def test_stack_trace_on_not_found(app, static_file_directory, caplog):
     counter = Counter([r[1] for r in caplog.record_tuples])
 
     assert response.status == 404
-    assert counter[logging.INFO] == 5
+    assert counter[logging.INFO] == 11
     assert counter[logging.ERROR] == 0
 
 
@@ -503,7 +503,7 @@ def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
     counter = Counter([r[1] for r in caplog.record_tuples])
 
     assert response.status == 404
-    assert counter[logging.INFO] == 5
+    assert counter[logging.INFO] == 11
     assert logging.ERROR not in counter
     assert response.text == "No file: /static/non_existing_file.file"
 

@@ -116,19 +116,17 @@ class Config(dict):
             self._configure_header_size()
         elif attr == "FALLBACK_ERROR_FORMAT":
             self._check_error_format()
+        elif attr == "LOGO":
+            self._LOGO = value
+            warn(
+                "Setting the config.LOGO is deprecated and will no longer "
+                "be supported starting in v22.6.",
+                DeprecationWarning,
+            )
 
     @property
     def LOGO(self):
         return self._LOGO
-
-    @LOGO.setter
-    def LOGO(self, value):
-        self._LOGO = value
-        warn(
-            "Setting the config.LOGO is deprecated and will no longer "
-            "be supported starting in v22.6.",
-            DeprecationWarning,
-        )
 
     def _configure_header_size(self):
         Http.set_header_max_size(

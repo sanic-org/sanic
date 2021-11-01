@@ -3,7 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from shutil import get_terminal_size
 from textwrap import indent, wrap
-from typing import Dict
+from typing import Dict, Optional
 
 from sanic import __version__
 from sanic.log import logger
@@ -12,7 +12,7 @@ from sanic.log import logger
 class MOTD(ABC):
     def __init__(
         self,
-        logo: str,
+        logo: Optional[str],
         serve_location: str,
         data: Dict[str, str],
         extra: Dict[str, str],
@@ -31,7 +31,7 @@ class MOTD(ABC):
     @classmethod
     def output(
         cls,
-        logo: str,
+        logo: Optional[str],
         serve_location: str,
         data: Dict[str, str],
         extra: Dict[str, str],
@@ -45,6 +45,8 @@ class MOTDBasic(MOTD):
         super().__init__(*args, **kwargs)
 
     def display(self):
+        if self.logo:
+            logger.debug(self.logo)
         lines = [f"Sanic v{__version__}"]
         if self.serve_location:
             lines.append(f"Goin' Fast @ {self.serve_location}")

@@ -49,7 +49,7 @@ from sanic_routing.route import Route
 from sanic import reloader_helpers
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
-from sanic.application.state import ApplicationState, Mode, Stage
+from sanic.application.state import ApplicationState, Mode
 from sanic.asgi import ASGIApp
 from sanic.base import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -104,28 +104,33 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_run_request_middleware",
     )
     __fake_slots__ = (
-        "_asgi_app",
         "_app_registry",
+        "_asgi_app",
         "_asgi_client",
         "_blueprint_order",
         "_delayed_tasks",
-        "_future_routes",
-        "_future_statics",
-        "_future_middleware",
-        "_future_listeners",
         "_future_exceptions",
+        "_future_listeners",
+        "_future_middleware",
+        "_future_routes",
         "_future_signals",
+        "_future_statics",
         "_test_client",
         "_test_manager",
+        "asgi",
+        "auto_reload",
         "auto_reload",
         "blueprints",
         "config",
         "configure_logging",
         "ctx",
         "debug",
+        "debug",
         "error_handler",
         "go_fast",
         "is_running",
+        "is_running",
+        "is_stopping",
         "is_stopping",
         "listeners",
         "name",
@@ -227,7 +232,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
             Only supported when using the `app.run` method.
         """
-        if self.state.stage is Stage.INIT and self.asgi is False:
+        if not self.is_running and self.asgi is False:
             raise SanicException(
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
@@ -1078,7 +1083,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         )
 
         try:
-            self.state.stage = Stage.STARTING
+            self.is_running = True
+            self.is_stopping = False
             if workers > 1 and os.name != "posix":
                 logger.warn(
                     f"Multiprocessing is currently not supported on {os.name},"
@@ -1095,7 +1101,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
             raise
         finally:
-            self.state.stage = Stage.STOPPING
+            self.is_running = False
         logger.info("Server Stopped")
 
     def stop(self):
@@ -1103,9 +1109,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         This kills the Sanic
         """
         if not self.is_stopping:
-            self.state.stage = Stage.STOPPING
+            self.is_stopping = True
             get_event_loop().stop()
-        self.state.stage = Stage.STOPPED
 
     async def create_server(
         self,
@@ -1477,11 +1482,19 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     @property
     def is_running(self):
-        return self.state.stage is Stage.RUNNING
+        return self.state.is_running
+
+    @is_running.setter
+    def is_running(self, value: bool):
+        self.state.is_running = value
 
     @property
     def is_stopping(self):
-        return self.state.stage is Stage.STOPPING
+        return self.state.is_stopping
+
+    @is_stopping.setter
+    def is_stopping(self, value: bool):
+        self.state.is_stopping = value
 
     @property
     def reload_dirs(self):
@@ -1539,7 +1552,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if self.config.MOTD_DISPLAY:
                 extra.update(self.config.MOTD_DISPLAY)
 
-            MOTD.output(get_logo(), serve_location, display, extra)
+            logo = (
+                get_logo()
+                if self.config.LOGO == "" or self.config.LOGO is True
+                else self.config.LOGO
+            )
+            MOTD.output(logo, serve_location, display, extra)
 
     # -------------------------------------------------------------------- #
     # Class methods

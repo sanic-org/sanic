@@ -3,7 +3,6 @@ from __future__ import annotations
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
-from sanic.application.state import Stage
 from sanic.config import Config
 from sanic.server.events import trigger_events
 
@@ -123,7 +122,6 @@ def serve(
             connections=connections,
         )
 
-    app.state.stage = Stage.RUNNING
     loop.run_until_complete(app._startup())
     loop.run_until_complete(app._server_event("init", "before"))
 
@@ -184,7 +182,6 @@ def serve(
             else:
                 conn.abort()
         loop.run_until_complete(app._server_event("shutdown", "after"))
-
         remove_unix_socket(unix)
 
 

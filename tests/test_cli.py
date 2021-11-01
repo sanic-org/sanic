@@ -8,7 +8,10 @@ import pytest
 from sanic_routing import __version__ as __routing_version__
 
 from sanic import __version__
-from sanic.config import BASE_LOGO
+
+
+APP_INFO_LINE = 14
+SERVER_LOCATION_LINE = 7
 
 
 def capture(command):
@@ -39,53 +42,58 @@ def test_server_run(appname):
     command = ["sanic", appname]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[6]
+    firstline = lines[SERVER_LOCATION_LINE]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
 @pytest.mark.parametrize(
-    "cmd",
+    "cmd,offset",
     (
         (
-            "--cert=certs/sanic.example/fullchain.pem",
-            "--key=certs/sanic.example/privkey.pem",
+            (
+                "--cert=certs/sanic.example/fullchain.pem",
+                "--key=certs/sanic.example/privkey.pem",
+            ),
+            0,
         ),
         (
-            "--tls=certs/sanic.example/",
-            "--tls=certs/localhost/",
+            (
+                "--tls=certs/sanic.example/",
+                "--tls=certs/localhost/",
+            ),
+            1,
         ),
         (
-            "--tls=certs/sanic.example/",
-            "--tls=certs/localhost/",
-            "--tls-strict-host",
+            (
+                "--tls=certs/sanic.example/",
+                "--tls=certs/localhost/",
+                "--tls-strict-host",
+            ),
+            1,
         ),
     ),
 )
-def test_tls_options(cmd):
+def test_tls_options(cmd, offset):
     command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
     out, err, exitcode = capture(command)
     assert exitcode != 1
     lines = out.split(b"\n")
-    firstline = lines[6]
+    firstline = lines[SERVER_LOCATION_LINE + offset]
     assert firstline == b"Goin' Fast @ https://127.0.0.1:9999"
 
 
 @pytest.mark.parametrize(
     "cmd",
     (
-        (
-            "--cert=certs/sanic.example/fullchain.pem",
-        ),
+        ("--cert=certs/sanic.example/fullchain.pem",),
         (
             "--cert=certs/sanic.example/fullchain.pem",
             "--key=certs/sanic.example/privkey.pem",
             "--tls=certs/localhost/",
         ),
-        (
-            "--tls-strict-host",
-        ),
+        ("--tls-strict-host",),
     ),
 )
 def test_tls_wrong_options(cmd):
@@ -93,7 +101,9 @@ def test_tls_wrong_options(cmd):
     out, err, exitcode = capture(command)
     assert exitcode == 1
     assert not out
-    errmsg = err.decode().split("sanic: error: ")[1].split("\n")[0]
+    lines = err.decode().split("\n")
+
+    errmsg = lines[8]
     assert errmsg == "TLS certificates must be specified by either of:"
 
 
@@ -108,7 +118,7 @@ def test_host_port_localhost(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[6]
+    firstline = lines[SERVER_LOCATION_LINE]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://localhost:9999"
@@ -125,7 +135,7 @@ def test_host_port_ipv4(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[6]
+    firstline = lines[SERVER_LOCATION_LINE]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://127.0.0.127:9999"
@@ -142,7 +152,7 @@ def test_host_port_ipv6_any(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[6]
+    firstline = lines[SERVER_LOCATION_LINE]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://[::]:9999"
@@ -159,7 +169,7 @@ def test_host_port_ipv6_loopback(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[6]
+    firstline = lines[SERVER_LOCATION_LINE]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://[::1]:9999"
@@ -183,7 +193,7 @@ def test_num_workers(num, cmd):
 
     worker_lines = [line for line in lines if b"worker" in line]
     assert exitcode != 1
-    assert len(worker_lines) == num * 2
+    assert len(worker_lines) == (num * 2) + 1
 
 
 @pytest.mark.parametrize("cmd", ("--debug", "-d"))
@@ -192,10 +202,9 @@ def test_debug(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[26]
+    app_info = lines[APP_INFO_LINE + 1]
     info = json.loads(app_info)
 
-    assert (b"\n".join(lines[:6])).decode("utf-8") == BASE_LOGO
     assert info["debug"] is True
     assert info["auto_reload"] is True
 
@@ -206,7 +215,7 @@ def test_auto_reload(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[26]
+    app_info = lines[APP_INFO_LINE + 1]
     info = json.loads(app_info)
 
     assert info["debug"] is False
@@ -221,7 +230,7 @@ def test_access_logs(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[26]
+    app_info = lines[APP_INFO_LINE]
     info = json.loads(app_info)
 
     assert info["access_log"] is expected
@@ -248,7 +257,7 @@ def test_noisy_exceptions(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[26]
+    app_info = lines[APP_INFO_LINE]
     info = json.loads(app_info)
 
     assert info["noisy_exceptions"] is expected

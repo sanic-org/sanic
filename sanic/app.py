@@ -1034,9 +1034,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
-        if self.config.USE_UVLOOP:
-            use_uvloop()
-
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
@@ -1154,9 +1151,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
-        if self.config.USE_UVLOOP:
-            use_uvloop()
-
         # if access_log is passed explicitly change config.ACCESS_LOG
         if access_log is not None:
             self.config.ACCESS_LOG = access_log
@@ -1171,7 +1165,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             ssl=ssl,
             sock=sock,
             unix=unix,
-            loop=get_event_loop(),
+            loop=True,
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
@@ -1281,7 +1275,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         sock=None,
         unix=None,
         workers=1,
-        loop=None,
+        loop: Optional[Union[bool, AbstractEventLoop]] = None,
         protocol=HttpProtocol,
         backlog=100,
         register_sys_signals=True,
@@ -1309,6 +1303,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isinstance(self.config.LOGO, str)
                 else BASE_LOGO
             )
+
+        if not isinstance(loop, AbstractEventLoop):
+            if self.config.USE_UVLOOP:
+                use_uvloop()
+
+            if loop is True:
+                loop = get_event_loop()
+
         # Serve
         if host and port:
             proto = "http"

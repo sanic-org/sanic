@@ -455,16 +455,29 @@ def test_uvloop_usage(app, monkeypatch):
     app.test_client.get("/test")
     use_uvloop.assert_called_once()
 
-    # Try with create_server
-    use_uvloop.reset_mock()
+
+def test_uvloop_usage_with_create_server(app, monkeypatch):
+    @app.get("/test")
+    def handler(request):
+        return text("ok")
+
+    use_uvloop = Mock()
+    monkeypatch.setattr(sanic.app, "use_uvloop", use_uvloop)
+
     loop = asyncio.get_event_loop()
 
     app.config["USE_UVLOOP"] = False
-    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    asyncio_srv_coro = app.create_server(
+        return_asyncio_server=True,
+        asyncio_server_kwargs=dict(start_serving=False)
+    )
     loop.run_until_complete(asyncio_srv_coro)
     use_uvloop.assert_not_called()
 
     app.config["USE_UVLOOP"] = True
-    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    asyncio_srv_coro = app.create_server(
+        return_asyncio_server=True,
+        asyncio_server_kwargs=dict(start_serving=False)
+    )
     loop.run_until_complete(asyncio_srv_coro)
     use_uvloop.assert_called_once()

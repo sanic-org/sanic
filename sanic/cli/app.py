@@ -6,7 +6,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from importlib import import_module
 from pathlib import Path
 from textwrap import indent
-from typing import Union
+from typing import Any, List, Union
 
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
@@ -57,7 +57,7 @@ Or, a path to a directory to run as a simple HTTP server:
         self.main_process = (
             os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
         )
-        self.args = []
+        self.args: List[Any] = []
 
     def attach(self):
         for group in Group._registry:

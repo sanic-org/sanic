@@ -39,6 +39,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
@@ -175,7 +176,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         # logging
         if configure_logging:
-            logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
+            logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)  # type: ignore
 
         if config and (load_env is not True or env_prefix != SANIC_PREFIX):
             raise SanicException(
@@ -183,33 +184,33 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "load_env or env_prefix"
             )
 
-        self._asgi_client = None
+        self._asgi_client: Any = None
+        self._test_client: Any = None
+        self._test_manager: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
-        self._state = ApplicationState(app=self)
-        self._test_client = None
-        self._test_manager = None
+        self._state: ApplicationState = ApplicationState(app=self)
         self.blueprints: Dict[str, Blueprint] = {}
-        self.config = config or Config(
+        self.config: Config = config or Config(
             load_env=load_env, env_prefix=env_prefix
         )
-        self.configure_logging = configure_logging
-        self.ctx = ctx or SimpleNamespace()
+        self.configure_logging: bool = configure_logging
+        self.ctx: Any = ctx or SimpleNamespace()
         self.debug = False
-        self.error_handler = error_handler or ErrorHandler(
+        self.error_handler: ErrorHandler = error_handler or ErrorHandler(
             fallback=self.config.FALLBACK_ERROR_FORMAT,
         )
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
-        self.request_class = request_class
+        self.request_class: Type[Request] = request_class or Request
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
-        self.router = router or Router()
-        self.signal_router = signal_router or SignalRouter()
-        self.sock = None
-        self.strict_slashes = strict_slashes
-        self.websocket_enabled = False
+        self.router: Router = router or Router()
+        self.signal_router: SignalRouter = signal_router or SignalRouter()
+        self.sock: Optional[socket] = None
+        self.strict_slashes: bool = strict_slashes
+        self.websocket_enabled: bool = False
         self.websocket_tasks: Set[Future[Any]] = set()
 
         # Register alternative method names

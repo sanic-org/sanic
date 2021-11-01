@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser, _ArgumentGroup
-from typing import List, Optional, Union
+from typing import List, Optional, Type, Union
 
 from sanic_routing import __version__ as __routing_version__  # type: ignore
 
@@ -11,7 +11,7 @@ from sanic import __version__
 class Group:
     name: Optional[str]
     container: Union[ArgumentParser, _ArgumentGroup]
-    _registry: List[Group] = []
+    _registry: List[Type[Group]] = []
 
     def __init_subclass__(cls) -> None:
         Group._registry.append(cls)

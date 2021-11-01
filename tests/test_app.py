@@ -7,6 +7,7 @@ from os import environ
 from unittest.mock import Mock, patch
 
 import pytest
+import sanic
 
 from sanic import Sanic
 from sanic.compat import UVLOOP_INSTALLED
@@ -436,3 +437,34 @@ def test_custom_context():
     app = Sanic("custom", ctx=ctx)
 
     assert app.ctx == ctx
+
+
+def test_uvloop_usage(app, monkeypatch):
+    @app.get("/test")
+    def handler(request):
+        return text("ok")
+
+    use_uvloop = Mock()
+    monkeypatch.setattr(sanic.app, "use_uvloop", use_uvloop)
+
+    app.config["USE_UVLOOP"] = False
+    app.test_client.get("/test")
+    use_uvloop.assert_not_called()
+
+    app.config["USE_UVLOOP"] = True
+    app.test_client.get("/test")
+    use_uvloop.assert_called_once()
+
+    # Try with create_server
+    use_uvloop.reset_mock()
+    loop = asyncio.get_event_loop()
+
+    app.config["USE_UVLOOP"] = False
+    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    loop.run_until_complete(asyncio_srv_coro)
+    use_uvloop.assert_not_called()
+
+    app.config["USE_UVLOOP"] = True
+    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    loop.run_until_complete(asyncio_srv_coro)
+    use_uvloop.assert_called_once()

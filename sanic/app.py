@@ -39,7 +39,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TypeVar,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
@@ -176,7 +175,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         # logging
         if configure_logging:
-            logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)  # type: ignore
+            dict_config = log_config or LOGGING_CONFIG_DEFAULTS
+            logging.config.dictConfig(dict_config)  # type: ignore
 
         if config and (load_env is not True or env_prefix != SANIC_PREFIX):
             raise SanicException(

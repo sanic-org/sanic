@@ -197,7 +197,7 @@ def test_num_workers(num, cmd):
         if b"Starting worker" in line or b"Stopping worker" in line
     ]
     assert exitcode != 1
-    assert len(worker_lines) == num * 2
+    assert len(worker_lines) == num * 2, f"Lines found: {lines}"
 
 
 @pytest.mark.parametrize("cmd", ("--debug", "-d"))

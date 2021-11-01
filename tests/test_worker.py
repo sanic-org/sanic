@@ -15,7 +15,7 @@ from sanic.app import Sanic
 from sanic.worker import GunicornWorker
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def gunicorn_worker():
     command = (
         "gunicorn "
@@ -24,12 +24,12 @@ def gunicorn_worker():
         "examples.simple_server:app"
     )
     worker = subprocess.Popen(shlex.split(command))
-    time.sleep(3)
+    time.sleep(2)
     yield
     worker.kill()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def gunicorn_worker_with_access_logs():
     command = (
         "gunicorn "
@@ -42,7 +42,7 @@ def gunicorn_worker_with_access_logs():
     return worker
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def gunicorn_worker_with_env_var():
     command = (
         'env SANIC_ACCESS_LOG="False" '

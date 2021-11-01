@@ -191,9 +191,13 @@ def test_num_workers(num, cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    worker_lines = [line for line in lines if b"worker" in line]
+    worker_lines = [
+        line
+        for line in lines
+        if b"Starting worker" in line or b"Stopping worker" in line
+    ]
     assert exitcode != 1
-    assert len(worker_lines) == (num * 2) + 1
+    assert len(worker_lines) == num * 2
 
 
 @pytest.mark.parametrize("cmd", ("--debug", "-d"))

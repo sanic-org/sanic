@@ -10,10 +10,6 @@ from sanic_routing import __version__ as __routing_version__
 from sanic import __version__
 
 
-APP_INFO_LINE = 14
-SERVER_LOCATION_LINE = 7
-
-
 def capture(command):
     proc = subprocess.Popen(
         command,
@@ -29,6 +25,12 @@ def capture(command):
     return out, err, proc.returncode
 
 
+def starting_line(lines):
+    for idx, line in enumerate(lines):
+        if line.strip().startswith(b"Sanic v"):
+            return idx
+
+
 @pytest.mark.parametrize(
     "appname",
     (
@@ -42,45 +44,36 @@ def test_server_run(appname):
     command = ["sanic", appname]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[SERVER_LOCATION_LINE]
+    firstline = lines[starting_line(lines) + 1]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
 @pytest.mark.parametrize(
-    "cmd,offset",
+    "cmd",
     (
         (
-            (
-                "--cert=certs/sanic.example/fullchain.pem",
-                "--key=certs/sanic.example/privkey.pem",
-            ),
-            0,
+            "--cert=certs/sanic.example/fullchain.pem",
+            "--key=certs/sanic.example/privkey.pem",
         ),
         (
-            (
-                "--tls=certs/sanic.example/",
-                "--tls=certs/localhost/",
-            ),
-            1,
+            "--tls=certs/sanic.example/",
+            "--tls=certs/localhost/",
         ),
         (
-            (
-                "--tls=certs/sanic.example/",
-                "--tls=certs/localhost/",
-                "--tls-strict-host",
-            ),
-            1,
+            "--tls=certs/sanic.example/",
+            "--tls=certs/localhost/",
+            "--tls-strict-host",
         ),
     ),
 )
-def test_tls_options(cmd, offset):
+def test_tls_options(cmd):
     command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
     out, err, exitcode = capture(command)
     assert exitcode != 1
     lines = out.split(b"\n")
-    firstline = lines[SERVER_LOCATION_LINE + offset]
+    firstline = lines[starting_line(lines) + 1]
     assert firstline == b"Goin' Fast @ https://127.0.0.1:9999"
 
 
@@ -118,7 +111,7 @@ def test_host_port_localhost(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[SERVER_LOCATION_LINE]
+    firstline = lines[starting_line(lines) + 1]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://localhost:9999"
@@ -135,7 +128,7 @@ def test_host_port_ipv4(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[SERVER_LOCATION_LINE]
+    firstline = lines[starting_line(lines) + 1]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://127.0.0.127:9999"
@@ -152,7 +145,7 @@ def test_host_port_ipv6_any(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[SERVER_LOCATION_LINE]
+    firstline = lines[starting_line(lines) + 1]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://[::]:9999"
@@ -169,7 +162,7 @@ def test_host_port_ipv6_loopback(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[SERVER_LOCATION_LINE]
+    firstline = lines[starting_line(lines) + 1]
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://[::1]:9999"
@@ -206,7 +199,7 @@ def test_debug(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[APP_INFO_LINE + 1]
+    app_info = lines[starting_line(lines) + 9]
     info = json.loads(app_info)
 
     assert info["debug"] is True
@@ -219,7 +212,7 @@ def test_auto_reload(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[APP_INFO_LINE + 1]
+    app_info = lines[starting_line(lines) + 9]
     info = json.loads(app_info)
 
     assert info["debug"] is False
@@ -234,7 +227,7 @@ def test_access_logs(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[APP_INFO_LINE]
+    app_info = lines[starting_line(lines) + 8]
     info = json.loads(app_info)
 
     assert info["access_log"] is expected
@@ -261,7 +254,7 @@ def test_noisy_exceptions(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    app_info = lines[APP_INFO_LINE]
+    app_info = lines[starting_line(lines) + 8]
     info = json.loads(app_info)
 
     assert info["noisy_exceptions"] is expected

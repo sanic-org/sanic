@@ -974,7 +974,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        loop: None = None,
+        loop: AbstractEventLoop = None,
         reload_dir: Optional[Union[List[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
         motd: bool = True,
@@ -1299,18 +1299,18 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     def _helper(
         self,
-        host=None,
-        port=None,
-        debug=False,
-        ssl=None,
-        sock=None,
-        unix=None,
-        workers=1,
-        loop=None,
-        protocol=HttpProtocol,
-        backlog=100,
-        register_sys_signals=True,
-        run_async=False,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        debug: bool = False,
+        ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
+        sock: Optional[socket] = None,
+        unix: Optional[str] = None,
+        workers: int = 1,
+        loop: AbstractEventLoop = None,
+        protocol: Type[Protocol] = HttpProtocol,
+        backlog: int = 100,
+        register_sys_signals: bool = True,
+        run_async: bool = False,
     ):
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
@@ -1327,16 +1327,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         # Serve
         serve_location = ""
-        if host and port:
-            proto = "http"
-            if ssl is not None:
-                proto = "https"
-            if unix:
-                serve_location = f"{unix} {proto}://..."
-            else:
-                # colon(:) is legal for a host only in an ipv6 address
-                display_host = f"[{host}]" if ":" in host else host
-                serve_location = f"{proto}://{display_host}:{port}"
+        proto = "http"
+        if ssl is not None:
+            proto = "https"
+        if unix:
+            serve_location = f"{unix} {proto}://..."
+        elif sock:
+            serve_location = f"{sock.getsockname()} {proto}://..."
+        elif host and port:
+            # colon(:) is legal for a host only in an ipv6 address
+            display_host = f"[{host}]" if ":" in host else host
+            serve_location = f"{proto}://{display_host}:{port}"
 
         ssl = process_to_context(ssl)
 
@@ -1373,7 +1374,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 listeners.reverse()
             # Prepend sanic to the arguments when listeners are triggered
             listeners = [partial(listener, self) for listener in listeners]
-            server_settings[settings_name] = listeners
+            server_settings[settings_name] = listeners  # type: ignore
 
         if run_async:
             server_settings["run_async"] = True

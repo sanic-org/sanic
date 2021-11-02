@@ -1304,13 +1304,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 else BASE_LOGO
             )
 
-        if not isinstance(loop, AbstractEventLoop):
-            if self.config.USE_UVLOOP:
-                use_uvloop()
-
-            if loop is True:
-                loop = get_event_loop()
-
         # Serve
         if host and port:
             proto = "http"
@@ -1327,6 +1320,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         reload_mode = "enabled" if auto_reload else "disabled"
         logger.debug(f"Sanic auto-reload: {reload_mode}")
         logger.debug(f"Sanic debug mode: {debug_mode}")
+        
+        if not isinstance(loop, AbstractEventLoop):
+            if self.config.USE_UVLOOP:
+                use_uvloop()
+
+            if loop is True:
+                loop = get_event_loop()
 
         ssl = process_to_context(ssl)
 

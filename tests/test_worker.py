@@ -71,11 +71,11 @@ def test_gunicorn_worker_no_logs(gunicorn_worker_with_env_var):
         gunicorn_worker_with_env_var.kill()
         logs = list(
             filter(
-                lambda x: x,
+                lambda x: b"sanic.access" in x,
                 gunicorn_worker_with_env_var.stdout.read().split(b"\n"),
             )
         )
-        assert len(logs) == 6
+        assert len(logs) == 0
 
 
 def test_gunicorn_worker_with_logs(gunicorn_worker_with_access_logs):

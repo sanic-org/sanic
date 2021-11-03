@@ -118,6 +118,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_future_routes",
         "_future_signals",
         "_future_statics",
+        "_state",
         "_test_client",
         "_test_manager",
         "asgi",

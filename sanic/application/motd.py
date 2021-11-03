@@ -26,7 +26,7 @@ class MOTD(ABC):
 
     @abstractmethod
     def display(self):
-        ...
+        ...  # noqa
 
     @classmethod
     def output(
@@ -63,15 +63,19 @@ class MOTDTTY(MOTD):
         super().__init__(*args, **kwargs)
         self.set_variables()
 
-    def set_variables(self):
-        fallback = 80
+    def set_variables(self):  # no  cov
+        fallback = (80, 24)
         terminal_width = min(get_terminal_size(fallback=fallback).columns, 108)
-        self.max_value_width = terminal_width - fallback + 36
-        self.key_width = max(map(len, self.data.keys()))
-        self.value_width = min(
-            max(map(len, self.data.values())), self.max_value_width
-        )
-        self.logo_lines = self.logo.split("\n")
+        self.max_value_width = terminal_width - fallback[0] + 36
+
+        self.key_width = 4
+        self.value_width = self.max_value_width
+        if self.data:
+            self.key_width = max(map(len, self.data.keys()))
+            self.value_width = min(
+                max(map(len, self.data.values())), self.max_value_width
+            )
+        self.logo_lines = self.logo.split("\n") if self.logo else []
         self.logo_line_length = 24
         self.centering_length = (
             self.key_width + self.value_width + 2 + self.logo_line_length

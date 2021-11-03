@@ -3,6 +3,8 @@ branch = True
 source = sanic
 omit =
     site-packages
+    sanic/application/logo.py
+    sanic/application/motd.py
     sanic/cli
     sanic/__main__.py
     sanic/reloader_helpers.py

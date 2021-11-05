@@ -761,6 +761,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if request.stream:
                 response = request.stream.response
         if isinstance(response, BaseHTTPResponse):
+             await self.dispatch(
+                    "http.lifecycle.response",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": response,
+                    },
+            )
             await response.send(end_stream=True)
         else:
             raise ServerError(

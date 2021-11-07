@@ -74,7 +74,7 @@ class RouteMixin:
         static: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Decorate a function to be registered as a route
@@ -104,7 +104,7 @@ class RouteMixin:
         if not methods and not websocket:
             methods = frozenset({"GET"})
 
-        route_context = self._build_route_context(kwargs)
+        route_context = self._build_route_context(ctx_kwargs)
 
         def decorator(handler):
             nonlocal uri
@@ -209,7 +209,7 @@ class RouteMixin:
         stream: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteHandler:
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -261,7 +261,7 @@ class RouteMixin:
             name=name,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )(handler)
         return handler
 
@@ -276,7 +276,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Add an API URL under the **GET** *HTTP* method
@@ -301,7 +301,7 @@ class RouteMixin:
             ignore_body=ignore_body,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def post(
@@ -314,7 +314,7 @@ class RouteMixin:
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Add an API URL under the **POST** *HTTP* method
@@ -339,7 +339,7 @@ class RouteMixin:
             name=name,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def put(
@@ -352,7 +352,7 @@ class RouteMixin:
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Add an API URL under the **PUT** *HTTP* method
@@ -377,7 +377,7 @@ class RouteMixin:
             name=name,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def head(
@@ -390,7 +390,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Add an API URL under the **HEAD** *HTTP* method
@@ -423,7 +423,7 @@ class RouteMixin:
             ignore_body=ignore_body,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def options(
@@ -436,7 +436,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Add an API URL under the **OPTIONS** *HTTP* method
@@ -469,7 +469,7 @@ class RouteMixin:
             ignore_body=ignore_body,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def patch(
@@ -482,7 +482,7 @@ class RouteMixin:
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Add an API URL under the **PATCH** *HTTP* method
@@ -517,7 +517,7 @@ class RouteMixin:
             name=name,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def delete(
@@ -530,7 +530,7 @@ class RouteMixin:
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ) -> RouteWrapper:
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -555,7 +555,7 @@ class RouteMixin:
             ignore_body=ignore_body,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def websocket(
@@ -569,7 +569,7 @@ class RouteMixin:
         apply: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ):
         """
         Decorate a function to be registered as a websocket route
@@ -597,7 +597,7 @@ class RouteMixin:
             websocket=True,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )
 
     def add_websocket_route(
@@ -611,7 +611,7 @@ class RouteMixin:
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **kwargs,
+        **ctx_kwargs,
     ):
         """
         A helper method to register a function as a websocket route.
@@ -641,7 +641,7 @@ class RouteMixin:
             name=name,
             version_prefix=version_prefix,
             error_format=error_format,
-            **kwargs,
+            **ctx_kwargs,
         )(handler)
 
     def static(
@@ -993,15 +993,21 @@ class RouteMixin:
 
     def _build_route_context(self, raw):
         ctx_kwargs = {
-            key.replace("ctx_", ""): value
-            for key, value in raw.items()
+            key.replace("ctx_", ""): raw.pop(key)
+            for key in {**raw}.keys()
             if key.startswith("ctx_")
         }
         restricted = [
             key for key in ctx_kwargs.keys() if key in RESTRICTED_ROUTE_CONTEXT
         ]
         if restricted:
+            restricted_arguments = ", ".join(restricted)
             raise AttributeError(
-                f"Cannot use restricted route context: {restricted}."
+                f"Cannot use restricted route context: {restricted_arguments}."
+            )
+        if raw:
+            unexpected_arguments = ", ".join(raw.keys())
+            raise TypeError(
+                f"Unexpected keyword arguments: {unexpected_arguments}"
             )
         return HashableDict(ctx_kwargs)

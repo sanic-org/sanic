@@ -9,6 +9,7 @@ from asyncio import (
     AbstractEventLoop,
     CancelledError,
     Protocol,
+    Task,
     ensure_future,
     get_event_loop,
     wait_for,
@@ -103,6 +104,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_future_listeners",
         "_future_exceptions",
         "_future_signals",
+        "_task_registry",
         "_test_client",
         "_test_manager",
         "auto_reload",
@@ -168,6 +170,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._asgi_client = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
+        self._task_registry: Dict[str, Task] = {}
         self._test_client = None
         self._test_manager = None
         self.asgi = False
@@ -232,7 +235,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # Registration
     # -------------------------------------------------------------------- #
 
-    def add_task(self, task) -> None:
+    def add_task(self, task, *, name: Optional[str] = None) -> None:
         """
         Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
@@ -246,11 +249,16 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
         try:
             loop = self.loop  # Will raise SanicError if loop is not started
-            self._loop_add_task(task, self, loop)
+            self._loop_add_task(task, self, loop, name=name)
         except SanicException:
             task_name = f"sanic.delayed_task.{hash(task)}"
             if not self._delayed_tasks:
                 self.after_server_start(partial(self.dispatch_delayed_tasks))
+
+            if name:
+                raise RuntimeError(
+                    "Cannot name task outside of a running application"
+                )
 
             self.signal(task_name)(partial(self.run_delayed_task, task=task))
             self._delayed_tasks.append(task_name)
@@ -1343,7 +1351,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return ".".join(parts)
 
     @classmethod
-    def _prep_task(cls, task, app, loop):
+    def _prep_task(
+        cls,
+        task,
+        app,
+        loop,
+    ):
         if callable(task):
             try:
                 task = task(app)
@@ -1353,9 +1366,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return task
 
     @classmethod
-    def _loop_add_task(cls, task, app, loop):
+    def _loop_add_task(cls, task, app, loop, *, name: Optional[str] = None):
         prepped = cls._prep_task(task, app, loop)
-        loop.create_task(prepped)
+        task = loop.create_task(prepped, name=name)
+
+        if name:
+            app._task_registry[name] = task
 
     @classmethod
     def _cancel_websocket_tasks(cls, app, loop):
@@ -1380,6 +1396,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         maybe_coro = listener(app, loop)
         if maybe_coro and isawaitable(maybe_coro):
             await maybe_coro
+
+    def get_task(self, name: str) -> Task:
+        try:
+            return self._task_registry[name]
+        except KeyError:
+            raise SanicException(f'Registered task named "{name}" not found.')
 
     # -------------------------------------------------------------------- #
     # ASGI

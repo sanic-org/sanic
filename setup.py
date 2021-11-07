@@ -72,6 +72,7 @@ setup_kwargs = {
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }
@@ -94,7 +95,7 @@ requirements = [
 
 tests_require = [
     "sanic-testing>=0.7.0",
-    "pytest==5.2.1",
+    "pytest==6.2.5",
     "coverage==5.3",
     "gunicorn==20.0.4",
     "pytest-cov",
@@ -123,6 +124,7 @@ docs_require = [
 ]
 
 dev_require = tests_require + [
+    "cryptography",
     "tox",
     "towncrier",
 ]

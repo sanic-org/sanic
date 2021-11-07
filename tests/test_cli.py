@@ -48,11 +48,63 @@ def test_server_run(appname):
 @pytest.mark.parametrize(
     "cmd",
     (
+        (
+            "--cert=certs/sanic.example/fullchain.pem",
+            "--key=certs/sanic.example/privkey.pem",
+        ),
+        (
+            "--tls=certs/sanic.example/",
+            "--tls=certs/localhost/",
+        ),
+        (
+            "--tls=certs/sanic.example/",
+            "--tls=certs/localhost/",
+            "--tls-strict-host",
+        ),
+    ),
+)
+def test_tls_options(cmd):
+    command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
+    out, err, exitcode = capture(command)
+    assert exitcode != 1
+    lines = out.split(b"\n")
+    firstline = lines[6]
+    assert firstline == b"Goin' Fast @ https://127.0.0.1:9999"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    (
+        (
+            "--cert=certs/sanic.example/fullchain.pem",
+        ),
+        (
+            "--cert=certs/sanic.example/fullchain.pem",
+            "--key=certs/sanic.example/privkey.pem",
+            "--tls=certs/localhost/",
+        ),
+        (
+            "--tls-strict-host",
+        ),
+    ),
+)
+def test_tls_wrong_options(cmd):
+    command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
+    out, err, exitcode = capture(command)
+    assert exitcode == 1
+    assert not out
+    errmsg = err.decode().split("sanic: error: ")[1].split("\n")[0]
+    assert errmsg == "TLS certificates must be specified by either of:"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    (
         ("--host=localhost", "--port=9999"),
         ("-H", "localhost", "-p", "9999"),
     ),
 )
-def test_host_port(cmd):
+def test_host_port_localhost(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -60,6 +112,57 @@ def test_host_port(cmd):
 
     assert exitcode != 1
     assert firstline == b"Goin' Fast @ http://localhost:9999"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    (
+        ("--host=127.0.0.127", "--port=9999"),
+        ("-H", "127.0.0.127", "-p", "9999"),
+    ),
+)
+def test_host_port_ipv4(cmd):
+    command = ["sanic", "fake.server.app", *cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    firstline = lines[6]
+
+    assert exitcode != 1
+    assert firstline == b"Goin' Fast @ http://127.0.0.127:9999"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    (
+        ("--host=::", "--port=9999"),
+        ("-H", "::", "-p", "9999"),
+    ),
+)
+def test_host_port_ipv6_any(cmd):
+    command = ["sanic", "fake.server.app", *cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    firstline = lines[6]
+
+    assert exitcode != 1
+    assert firstline == b"Goin' Fast @ http://[::]:9999"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    (
+        ("--host=::1", "--port=9999"),
+        ("-H", "::1", "-p", "9999"),
+    ),
+)
+def test_host_port_ipv6_loopback(cmd):
+    command = ["sanic", "fake.server.app", *cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    firstline = lines[6]
+
+    assert exitcode != 1
+    assert firstline == b"Goin' Fast @ http://[::1]:9999"
 
 
 @pytest.mark.parametrize(
@@ -131,3 +234,21 @@ def test_version(cmd):
     version_string = f"Sanic {__version__}; Routing {__routing_version__}\n"
 
     assert out == version_string.encode("utf-8")
+
+
+@pytest.mark.parametrize(
+    "cmd,expected",
+    (
+        ("--noisy-exceptions", True),
+        ("--no-noisy-exceptions", False),
+    ),
+)
+def test_noisy_exceptions(cmd, expected):
+    command = ["sanic", "fake.server.app", cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+
+    app_info = lines[26]
+    info = json.loads(app_info)
+
+    assert info["noisy_exceptions"] is expected

@@ -235,7 +235,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # Registration
     # -------------------------------------------------------------------- #
 
-    def add_task(self, task, *, name: Optional[str] = None) -> None:
+    def add_task(
+        self, task, *, name: Optional[str] = None, register: bool = True
+    ) -> None:
         """
         Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
@@ -249,7 +251,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
         try:
             loop = self.loop  # Will raise SanicError if loop is not started
-            self._loop_add_task(task, self, loop, name=name)
+            self._loop_add_task(task, self, loop, name=name, register=register)
         except SanicException:
             task_name = f"sanic.delayed_task.{hash(task)}"
             if not self._delayed_tasks:
@@ -1366,11 +1368,19 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return task
 
     @classmethod
-    def _loop_add_task(cls, task, app, loop, *, name: Optional[str] = None):
+    def _loop_add_task(
+        cls,
+        task,
+        app,
+        loop,
+        *,
+        name: Optional[str] = None,
+        register: bool = True,
+    ):
         prepped = cls._prep_task(task, app, loop)
         task = loop.create_task(prepped, name=name)
 
-        if name:
+        if name and register:
             app._task_registry[name] = task
 
     @classmethod

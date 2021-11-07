@@ -231,7 +231,7 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
         "Optional[str]). Until you upgrade your ErrorHandler.lookup, "
         "Blueprint specific exceptions will not work properly. Beginning in "
         "v22.3, the legacy style lookup method will not work at all."
-    ) in caplog.record_tuples
+    )
     assert response.status == 400
 
 

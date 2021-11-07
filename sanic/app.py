@@ -79,7 +79,7 @@ from sanic.models.futures import (
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
-from sanic.response import BaseHTTPResponse, HTTPResponse
+from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
@@ -160,7 +160,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
         error_handler: Optional[ErrorHandler] = None,
-        load_env: Union[bool, str] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         request_class: Optional[Type[Request]] = None,
         strict_slashes: bool = False,
@@ -176,10 +175,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             dict_config = log_config or LOGGING_CONFIG_DEFAULTS
             logging.config.dictConfig(dict_config)  # type: ignore
 
-        if config and (load_env is not True or env_prefix != SANIC_PREFIX):
+        if config and env_prefix != SANIC_PREFIX:
             raise SanicException(
                 "When instantiating Sanic with config, you cannot also pass "
-                "load_env or env_prefix"
+                "env_prefix"
             )
 
         self._asgi_client: Any = None
@@ -189,9 +188,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._delayed_tasks: List[str] = []
         self._state: ApplicationState = ApplicationState(app=self)
         self.blueprints: Dict[str, Blueprint] = {}
-        self.config: Config = config or Config(
-            load_env=load_env, env_prefix=env_prefix
-        )
+        self.config: Config = config or Config(env_prefix=env_prefix)
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.debug = False
@@ -878,6 +875,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     },
                 )
                 await response.send(end_stream=True)
+            elif isinstance(response, ResponseStream):
+                resp = await response(request)
+                await self.dispatch(
+                    "http.lifecycle.response",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": resp,
+                    },
+                )
+                await response.eof()
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(

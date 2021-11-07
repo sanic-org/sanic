@@ -9,10 +9,7 @@ from typing import (
     Optional,
     Union,
 )
-from warnings import warn
 
-from sanic.constants import HTTP_METHODS
-from sanic.exceptions import InvalidUsage
 from sanic.models.handler_types import RouteHandler
 
 
@@ -136,48 +133,3 @@ class HTTPMethodView:
 def stream(func):
     func.is_stream = True
     return func
-
-
-class CompositionView:
-    """Simple method-function mapped view for the sanic.
-    You can add handler functions to methods (get, post, put, patch, delete)
-    for every HTTP method you want to support.
-
-    For example:
-
-    .. code-block:: python
-
-        view = CompositionView()
-        view.add(['GET'], lambda request: text('I am get method'))
-        view.add(['POST', 'PUT'], lambda request: text('I am post/put method'))
-
-    If someone tries to use a non-implemented method, there will be a
-    405 response.
-    """
-
-    def __init__(self):
-        self.handlers = {}
-        self.name = self.__class__.__name__
-        warn(
-            "CompositionView has been deprecated and will be removed in "
-            "v21.12. Please update your view to HTTPMethodView.",
-            DeprecationWarning,
-        )
-
-    def __name__(self):
-        return self.name
-
-    def add(self, methods, handler, stream=False):
-        if stream:
-            handler.is_stream = stream
-        for method in methods:
-            if method not in HTTP_METHODS:
-                raise InvalidUsage(f"{method} is not a valid HTTP method.")
-
-            if method in self.handlers:
-                raise InvalidUsage(f"Method {method} is already registered.")
-            self.handlers[method] = handler
-
-    def __call__(self, request, *args, **kwargs):
-        handler = self.handlers[request.method.upper()]
-        return handler(request, *args, **kwargs)

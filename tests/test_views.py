@@ -5,7 +5,7 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import InvalidUsage
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
-from sanic.views import CompositionView, HTTPMethodView
+from sanic.views import HTTPMethodView
 
 
 @pytest.mark.parametrize("method", HTTP_METHODS)
@@ -225,81 +225,3 @@ def test_with_decorator(app):
     request, response = app.test_client.get("/")
     assert response.text == "I am get method"
     assert results[0] == 1
-
-
-def test_composition_view_rejects_incorrect_methods():
-    def foo(request):
-        return text("Foo")
-
-    view = CompositionView()
-
-    with pytest.raises(InvalidUsage) as e:
-        view.add(["GET", "FOO"], foo)
-
-    assert str(e.value) == "FOO is not a valid HTTP method."
-
-
-def test_composition_view_rejects_duplicate_methods():
-    def foo(request):
-        return text("Foo")
-
-    view = CompositionView()
-
-    with pytest.raises(InvalidUsage) as e:
-        view.add(["GET", "POST", "GET"], foo)
-
-    assert str(e.value) == "Method GET is already registered."
-
-
-@pytest.mark.parametrize("method", HTTP_METHODS)
-def test_composition_view_runs_methods_as_expected(app, method):
-    view = CompositionView()
-
-    def first(request):
-        return text("first method")
-
-    view.add(["GET", "POST", "PUT"], first)
-    view.add(["DELETE", "PATCH"], lambda x: text("second method"))
-
-    app.add_route(view, "/")
-
-    if method in ["GET", "POST", "PUT"]:
-        request, response = getattr(app.test_client, method.lower())("/")
-        assert response.status == 200
-        assert response.text == "first method"
-
-        response = view(request)
-        assert response.body.decode() == "first method"
-
-    if method in ["DELETE", "PATCH"]:
-        request, response = getattr(app.test_client, method.lower())("/")
-        assert response.text == "second method"
-
-        response = view(request)
-        assert response.body.decode() == "second method"
-
-
-@pytest.mark.parametrize("method", HTTP_METHODS)
-def test_composition_view_rejects_invalid_methods(app, method):
-    view = CompositionView()
-    view.add(["GET", "POST", "PUT"], lambda x: text("first method"))
-
-    app.add_route(view, "/")
-
-    if method in ["GET", "POST", "PUT"]:
-        request, response = getattr(app.test_client, method.lower())("/")
-        assert response.status == 200
-        assert response.text == "first method"
-
-    if method in ["DELETE", "PATCH"]:
-        request, response = getattr(app.test_client, method.lower())("/")
-        assert response.status == 405
-
-
-def test_composition_view_deprecation():
-    message = (
-        "CompositionView has been deprecated and will be removed in v21.12. "
-        "Please update your view to HTTPMethodView."
-    )
-    with pytest.warns(DeprecationWarning, match=message):
-        CompositionView()

@@ -15,7 +15,6 @@ from sanic.exceptions import (
 )
 from sanic.request import Request
 from sanic.response import json, text
-from sanic.views import CompositionView
 
 
 # ------------------------------------------------------------ #
@@ -860,31 +859,6 @@ def test_static_blueprintp_mw(app: Sanic, static_file_directory, file_name):
 
     _, response = app.test_client.get("/test.file")
     assert triggered is True
-
-
-def test_route_handler_add(app: Sanic):
-    view = CompositionView()
-
-    async def get_handler(request):
-        return json({"response": "OK"})
-
-    view.add(["GET"], get_handler, stream=False)
-
-    async def default_handler(request):
-        return text("OK")
-
-    bp = Blueprint(name="handler", url_prefix="/handler")
-    bp.add_route(default_handler, uri="/default/", strict_slashes=True)
-
-    bp.add_route(view, uri="/view", name="test")
-
-    app.blueprint(bp)
-
-    _, response = app.test_client.get("/handler/default/")
-    assert response.text == "OK"
-
-    _, response = app.test_client.get("/handler/view")
-    assert response.json["response"] == "OK"
 
 
 def test_websocket_route(app: Sanic):

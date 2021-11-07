@@ -240,25 +240,3 @@ class InvalidSignal(SanicException):
 class WebsocketClosed(SanicException):
     quiet = True
     message = "Client has closed the websocket connection"
-
-
-def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
-    """
-    Raise an exception based on SanicException. Returns the HTTP response
-    message appropriate for the given status code, unless provided.
-
-    STATUS_CODES from sanic.helpers for the given status code.
-
-    :param status_code: The HTTP status code to return.
-    :param message: The HTTP response body. Defaults to the messages in
-    """
-    import warnings
-
-    warnings.warn(
-        "sanic.exceptions.abort has been marked as deprecated, and will be "
-        "removed in release 21.12.\n To migrate your code, simply replace "
-        "abort(status_code, msg) with raise SanicException(msg, status_code), "
-        "or even better, raise an appropriate SanicException subclass."
-    )
-
-    raise SanicException(message=message, status_code=status_code)

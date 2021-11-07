@@ -414,15 +414,7 @@ def test_bad_custom_config():
         SanicException,
         match=(
             "When instantiating Sanic with config, you cannot also pass "
-            "load_env or env_prefix"
-        ),
-    ):
-        Sanic("test", config=1, load_env=1)
-    with pytest.raises(
-        SanicException,
-        match=(
-            "When instantiating Sanic with config, you cannot also pass "
-            "load_env or env_prefix"
+            "env_prefix"
         ),
     ):
         Sanic("test", config=1, env_prefix=1)

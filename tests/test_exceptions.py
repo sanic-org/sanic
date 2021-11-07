@@ -13,7 +13,6 @@ from sanic.exceptions import (
     SanicException,
     ServerError,
     Unauthorized,
-    abort,
 )
 from sanic.response import text
 
@@ -77,10 +76,6 @@ def exception_app():
     @app.route("/abort")
     def handler_500_error(request):
         raise SanicException(status_code=500)
-
-    @app.route("/old_abort")
-    def handler_old_abort_error(request):
-        abort(500)
 
     @app.route("/abort/message")
     def handler_abort_message(request):
@@ -228,11 +223,6 @@ def test_sanic_exception(exception_app):
     request, response = exception_app.test_client.get("/abort/message")
     assert response.status == 500
     assert "Custom Message" in response.text
-
-    with warnings.catch_warnings(record=True) as w:
-        request, response = exception_app.test_client.get("/old_abort")
-    assert response.status == 500
-    assert len(w) == 1 and "deprecated" in w[0].message.args[0]
 
 
 def test_custom_exception_default_message(exception_app):

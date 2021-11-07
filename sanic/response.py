@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from functools import partial
 from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from typing import (
+    TYPE_CHECKING,
     Any,
     AnyStr,
     Callable,
@@ -11,6 +14,7 @@ from typing import (
     Iterator,
     Optional,
     Tuple,
+    TypeVar,
     Union,
 )
 from urllib.parse import quote_plus
@@ -22,6 +26,12 @@ from sanic.cookies import CookieJar
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
 from sanic.models.protocol_types import HTMLProtocol, Range
+
+
+if TYPE_CHECKING:
+    from sanic.request import Request
+else:
+    Request = TypeVar("Request")
 
 
 try:
@@ -101,7 +111,7 @@ class BaseHTTPResponse:
 
     async def send(
         self,
-        data: Optional[Union[AnyStr]] = None,
+        data: Optional[AnyStr] = None,
         end_stream: Optional[bool] = None,
     ) -> None:
         """
@@ -123,92 +133,6 @@ class BaseHTTPResponse:
 
 
 StreamingFunction = Callable[[BaseHTTPResponse], Coroutine[Any, Any, None]]
-
-
-class StreamingHTTPResponse(BaseHTTPResponse):
-    """
-    Old style streaming response where you pass a streaming function:
-
-    .. code-block:: python
-
-        async def sample_streaming_fn(response):
-            await response.write("foo")
-            await asyncio.sleep(1)
-            await response.write("bar")
-            await asyncio.sleep(1)
-
-            @app.post("/")
-            async def test(request):
-                return stream(sample_streaming_fn)
-
-    .. warning::
-
-        **Deprecated** and set for removal in v21.12. You can now achieve the
-        same functionality without a callback.
-
-        .. code-block:: python
-
-            @app.post("/")
-            async def test(request):
-                response = await request.respond()
-                await response.send("foo", False)
-                await asyncio.sleep(1)
-                await response.send("bar", False)
-                await asyncio.sleep(1)
-                await response.send("", True)
-                return response
-
-    """
-
-    __slots__ = (
-        "streaming_fn",
-        "status",
-        "content_type",
-        "headers",
-        "_cookies",
-    )
-
-    def __init__(
-        self,
-        streaming_fn: StreamingFunction,
-        status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
-        content_type: str = "text/plain; charset=utf-8",
-        ignore_deprecation_notice: bool = False,
-    ):
-        if not ignore_deprecation_notice:
-            warn(
-                "Use of the StreamingHTTPResponse is deprecated in v21.6, and "
-                "will be removed in v21.12. Please upgrade your streaming "
-                "response implementation. You can learn more here: "
-                "https://sanicframework.org/en/guide/advanced/streaming.html"
-                "#response-streaming. If you use the builtin stream() or "
-                "file_stream() methods, this upgrade will be be done for you."
-            )
-
-        super().__init__()
-
-        self.content_type = content_type
-        self.streaming_fn = streaming_fn
-        self.status = status
-        self.headers = Header(headers or {})
-        self._cookies = None
-
-    async def write(self, data):
-        """Writes a chunk of data to the streaming response.
-
-        :param data: str or bytes-ish data to be written.
-        """
-        await super().send(self._encode_body(data))
-
-    async def send(self, *args, **kwargs):
-        if self.streaming_fn is not None:
-            await self.streaming_fn(self)
-            self.streaming_fn = None
-        await super().send(*args, **kwargs)
-
-    async def eof(self):
-        raise NotImplementedError
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -405,6 +329,71 @@ async def file(
     )
 
 
+def redirect(
+    to: str,
+    headers: Optional[Dict[str, str]] = None,
+    status: int = 302,
+    content_type: str = "text/html; charset=utf-8",
+) -> HTTPResponse:
+    """
+    Abort execution and cause a 302 redirect (by default) by setting a
+    Location header.
+
+    :param to: path or fully qualified URL to redirect to
+    :param headers: optional dict of headers to include in the new request
+    :param status: status code (int) of the new request, defaults to 302
+    :param content_type: the content type (string) of the response
+    """
+    headers = headers or {}
+
+    # URL Quote the URL before redirecting
+    safe_to = quote_plus(to, safe=":/%#?&=@[]!$&'()*+,;")
+
+    # According to RFC 7231, a relative URI is now permitted.
+    headers["Location"] = safe_to
+
+    return HTTPResponse(
+        status=status, headers=headers, content_type=content_type
+    )
+
+
+class ResponseStream:
+    def __init__(
+        self,
+        streaming_fn: StreamingFunction,
+        status: int = 200,
+        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        content_type: Optional[str] = None,
+    ):
+        self.streaming_fn = streaming_fn
+        self.status = status
+        self.headers = headers
+        self.content_type = content_type
+        self.request: Optional[Request] = None
+
+    async def write(self, message: str):
+        await self.response.send(message)
+
+    async def stream(self) -> HTTPResponse:
+        self.response = await self.request.respond(
+            headers=self.headers,
+            status=self.status,
+            content_type=self.content_type,
+        )
+        await self.streaming_fn(self)
+        return self.response
+
+    async def eof(self) -> None:
+        await self.response.eof()
+
+    def __call__(self, request: Request) -> ResponseStream:
+        self.request = request
+        return self
+
+    def __await__(self):
+        return self.stream().__await__()
+
+
 async def file_stream(
     location: Union[str, PurePath],
     status: int = 200,
@@ -413,7 +402,7 @@ async def file_stream(
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
     _range: Optional[Range] = None,
-) -> StreamingHTTPResponse:
+) -> ResponseStream:
     """Return a streaming response object with file data.
 
     :param location: Location of file on system.
@@ -421,7 +410,6 @@ async def file_stream(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
-    :param chunked: Deprecated
     :param _range:
     """
     headers = headers or {}
@@ -457,12 +445,11 @@ async def file_stream(
                         break
                     await response.write(content)
 
-    return StreamingHTTPResponse(
+    return ResponseStream(
         streaming_fn=_streaming_fn,
         status=status,
         headers=headers,
         content_type=mime_type,
-        ignore_deprecation_notice=True,
     )
 
 
@@ -471,9 +458,9 @@ def stream(
     status: int = 200,
     headers: Optional[Dict[str, str]] = None,
     content_type: str = "text/plain; charset=utf-8",
-):
-    """Accepts an coroutine `streaming_fn` which can be used to
-    write chunks to a streaming response. Returns a `StreamingHTTPResponse`.
+) -> ResponseStream:
+    """Accepts a coroutine `streaming_fn` which can be used to
+    write chunks to a streaming response. Returns a `ResponseStream`.
 
     Example usage::
 
@@ -487,42 +474,13 @@ def stream(
 
     :param streaming_fn: A coroutine accepts a response and
         writes content to that response.
-    :param mime_type: Specific mime_type.
+    :param status: HTTP status.
+    :param content_type: Specific content_type.
     :param headers: Custom Headers.
-    :param chunked: Deprecated
     """
-    return StreamingHTTPResponse(
+    return ResponseStream(
         streaming_fn,
         headers=headers,
         content_type=content_type,
         status=status,
-        ignore_deprecation_notice=True,
-    )
-
-
-def redirect(
-    to: str,
-    headers: Optional[Dict[str, str]] = None,
-    status: int = 302,
-    content_type: str = "text/html; charset=utf-8",
-) -> HTTPResponse:
-    """
-    Abort execution and cause a 302 redirect (by default) by setting a
-    Location header.
-
-    :param to: path or fully qualified URL to redirect to
-    :param headers: optional dict of headers to include in the new request
-    :param status: status code (int) of the new request, defaults to 302
-    :param content_type: the content type (string) of the response
-    """
-    headers = headers or {}
-
-    # URL Quote the URL before redirecting
-    safe_to = quote_plus(to, safe=":/%#?&=@[]!$&'()*+,;")
-
-    # According to RFC 7231, a relative URI is now permitted.
-    headers["Location"] = safe_to
-
-    return HTTPResponse(
-        status=status, headers=headers, content_type=content_type
     )

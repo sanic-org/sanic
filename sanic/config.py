@@ -70,7 +70,6 @@ class Config(dict):
     def __init__(
         self,
         defaults: Dict[str, Union[str, bool, int, float, None]] = None,
-        load_env: Optional[Union[bool, str]] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
     ):
@@ -85,15 +84,6 @@ class Config(dict):
         if env_prefix != SANIC_PREFIX:
             if env_prefix:
                 self.load_environment_vars(env_prefix)
-        elif load_env is not True:
-            if load_env:
-                self.load_environment_vars(prefix=load_env)
-            warn(
-                "Use of load_env is deprecated and will be removed in "
-                "21.12. Modify the configuration prefix by passing "
-                "env_prefix instead.",
-                DeprecationWarning,
-            )
         else:
             self.load_environment_vars(SANIC_PREFIX)
 

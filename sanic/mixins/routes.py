@@ -26,7 +26,6 @@ from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
-from sanic.views import CompositionView
 
 
 RouteWrapper = Callable[
@@ -225,14 +224,6 @@ class RouteMixin:
                     methods.add(method)
                     if hasattr(_handler, "is_stream"):
                         stream = True
-
-        # handle composition view differently
-        if isinstance(handler, CompositionView):
-            methods = handler.handlers.keys()
-            for _handler in handler.handlers.values():
-                if hasattr(_handler, "is_stream"):
-                    stream = True
-                    break
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
@@ -919,16 +910,15 @@ class RouteMixin:
         return route
 
     def _determine_error_format(self, handler) -> str:
-        if not isinstance(handler, CompositionView):
-            try:
-                src = dedent(getsource(handler))
-                tree = parse(src)
-                http_response_types = self._get_response_types(tree)
+        try:
+            src = dedent(getsource(handler))
+            tree = parse(src)
+            http_response_types = self._get_response_types(tree)
 
-                if len(http_response_types) == 1:
-                    return next(iter(http_response_types))
-            except (OSError, TypeError):
-                ...
+            if len(http_response_types) == 1:
+                return next(iter(http_response_types))
+        except (OSError, TypeError):
+            ...
 
         return "auto"
 

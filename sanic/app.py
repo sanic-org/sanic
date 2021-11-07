@@ -129,12 +129,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "configure_logging",
         "ctx",
         "debug",
-        "debug",
         "error_handler",
         "go_fast",
         "is_running",
-        "is_running",
-        "is_stopping",
         "is_stopping",
         "listeners",
         "name",
@@ -1020,6 +1017,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         :return: Nothing
         """
         self.state.verbosity = verbosity
+
+        if fast and workers != 1:
+            raise RuntimeError("You cannot use both fast=True and workers=X")
 
         if motd_display:
             self.config.MOTD_DISPLAY.update(motd_display)

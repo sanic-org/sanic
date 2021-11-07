@@ -7,8 +7,10 @@ and pass in an instance of it when we create our Sanic instance. Inside this
 class' default handler, we can do anything including sending exceptions to
 an external service.
 """
-from sanic.handlers import ErrorHandler
 from sanic.exceptions import SanicException
+from sanic.handlers import ErrorHandler
+
+
 """
 Imports and code relevant for our CustomHandler class
 (Ordinarily this would be in a separate file)
@@ -16,7 +18,6 @@ Imports and code relevant for our CustomHandler class
 
 
 class CustomHandler(ErrorHandler):
-
     def default(self, request, exception):
         # Here, we have access to the exception object
         # and can do anything with it (log, send to external service, etc)
@@ -38,17 +39,17 @@ server's error_handler to an instance of our CustomHandler
 
 from sanic import Sanic
 
-app = Sanic(__name__)
 
 handler = CustomHandler()
-app.error_handler = handler
+app = Sanic(__name__, error_handler=handler)
 
 
 @app.route("/")
 async def test(request):
     # Here, something occurs which causes an unexpected exception
     # This exception will flow to our custom handler.
-    raise SanicException('You Broke It!')
+    raise SanicException("You Broke It!")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

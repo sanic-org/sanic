@@ -13,7 +13,7 @@ class FutureRoute(NamedTuple):
     handler: str
     uri: str
     methods: Optional[Iterable[str]]
-    host: str
+    host: Union[str, List[str]]
     strict_slashes: bool
     stream: bool
     version: Optional[int]

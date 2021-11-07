@@ -4,12 +4,14 @@ import asyncio
 
 from sanic import Sanic
 
-app = Sanic()
+
+app = Sanic(__name__)
 
 
 async def notify_server_started_after_five_seconds():
     await asyncio.sleep(5)
-    print('Server successfully started!')
+    print("Server successfully started!")
+
 
 app.add_task(notify_server_started_after_five_seconds())
 

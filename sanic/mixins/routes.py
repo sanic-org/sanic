@@ -52,7 +52,7 @@ class RouteMixin:
         self,
         uri: str,
         methods: Optional[Iterable[str]] = None,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
         version: Optional[Union[int, str, float]] = None,
@@ -189,7 +189,7 @@ class RouteMixin:
         handler: RouteHandler,
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[int] = None,
         name: Optional[str] = None,
@@ -254,7 +254,7 @@ class RouteMixin:
     def get(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[int] = None,
         name: Optional[str] = None,
@@ -290,7 +290,7 @@ class RouteMixin:
     def post(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
         version: Optional[int] = None,
@@ -326,7 +326,7 @@ class RouteMixin:
     def put(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
         version: Optional[int] = None,
@@ -362,7 +362,7 @@ class RouteMixin:
     def head(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[int] = None,
         name: Optional[str] = None,
@@ -406,7 +406,7 @@ class RouteMixin:
     def options(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[int] = None,
         name: Optional[str] = None,
@@ -450,7 +450,7 @@ class RouteMixin:
     def patch(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream=False,
         version: Optional[int] = None,
@@ -496,7 +496,7 @@ class RouteMixin:
     def delete(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[int] = None,
         name: Optional[str] = None,
@@ -532,7 +532,7 @@ class RouteMixin:
     def websocket(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols: Optional[List[str]] = None,
         version: Optional[int] = None,
@@ -573,7 +573,7 @@ class RouteMixin:
         self,
         handler,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols=None,
         version: Optional[int] = None,

@@ -4,7 +4,6 @@ import warnings
 import pytest
 
 from bs4 import BeautifulSoup
-from websockets.version import version as websockets_version
 
 from sanic import Sanic
 from sanic.exceptions import (
@@ -260,10 +259,8 @@ def test_exception_in_ws_logged(caplog):
         raise Exception("...")
 
     with caplog.at_level(logging.INFO):
-        req, _ = app.test_client.websocket("/feed")
+        app.test_client.websocket("/feed")
 
-    assert (
-        "sanic.error",
-        logging.ERROR,
-        "Exception occurred while handling uri: %s" % repr(req.url),
-    ) in caplog.record_tuples
+    error_logs = [r for r in caplog.record_tuples if r[0] == "sanic.error"]
+    assert error_logs[1][1] == logging.ERROR
+    assert "Exception occurred while handling uri:" in error_logs[1][2]

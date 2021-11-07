@@ -134,6 +134,7 @@ def serve(
     # Ignore SIGINT when run_multiple
     if run_multiple:
         signal_func(SIGINT, SIG_IGN)
+        os.environ["SANIC_WORKER_PROCESS"] = "true"
 
     # Register signals for graceful termination
     if register_sys_signals:
@@ -181,7 +182,6 @@ def serve(
             else:
                 conn.abort()
         loop.run_until_complete(app._server_event("shutdown", "after"))
-
         remove_unix_socket(unix)
 
 
@@ -249,7 +249,10 @@ def serve_multiple(server_settings, workers):
     mp = multiprocessing.get_context("fork")
 
     for _ in range(workers):
-        process = mp.Process(target=serve, kwargs=server_settings)
+        process = mp.Process(
+            target=serve,
+            kwargs=server_settings,
+        )
         process.daemon = True
         process.start()
         processes.append(process)

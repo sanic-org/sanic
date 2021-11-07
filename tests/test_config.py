@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from email import message
 from os import environ
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -350,3 +351,12 @@ def test_update_from_lowercase_key(app):
     d = {"test_setting_value": 1}
     app.update_config(d)
     assert "test_setting_value" not in app.config
+
+
+def test_deprecation_notice_when_setting_logo(app):
+    message = (
+        "Setting the config.LOGO is deprecated and will no longer be "
+        "supported starting in v22.6."
+    )
+    with pytest.warns(DeprecationWarning, match=message):
+        app.config.LOGO = "My Custom Logo"

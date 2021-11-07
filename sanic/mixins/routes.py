@@ -1003,7 +1003,10 @@ class RouteMixin:
         if restricted:
             restricted_arguments = ", ".join(restricted)
             raise AttributeError(
-                f"Cannot use restricted route context: {restricted_arguments}."
+                "Cannot use restricted route context: "
+                f"{restricted_arguments}. This limitation is only in place "
+                "until v22.3 when the restricted names will no longer be in"
+                "conflict. See ____ for more information."
             )
         if raw:
             unexpected_arguments = ", ".join(raw.keys())

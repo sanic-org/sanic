@@ -113,7 +113,7 @@ class SignalRouter(BaseRouter):
             if fail_not_found:
                 raise e
             else:
-                if self.ctx.app.debug:
+                if self.ctx.app.debug and self.ctx.app.state.verbosity >= 1:
                     error_logger.warning(str(e))
                 return None
 

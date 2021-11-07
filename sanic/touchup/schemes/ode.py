@@ -22,7 +22,9 @@ class OptionalDispatchEvent(BaseScheme):
         raw_source = getsource(method)
         src = dedent(raw_source)
         tree = parse(src)
-        node = RemoveDispatch(self._registered_events).visit(tree)
+        node = RemoveDispatch(
+            self._registered_events, self.app.state.verbosity
+        ).visit(tree)
         compiled_src = compile(node, method.__name__, "exec")
         exec_locals: Dict[str, Any] = {}
         exec(compiled_src, module_globals, exec_locals)  # nosec
@@ -31,8 +33,9 @@ class OptionalDispatchEvent(BaseScheme):
 
 
 class RemoveDispatch(NodeTransformer):
-    def __init__(self, registered_events) -> None:
+    def __init__(self, registered_events, verbosity: int = 0) -> None:
         self._registered_events = registered_events
+        self._verbosity = verbosity
 
     def visit_Expr(self, node: Expr) -> Any:
         call = node.value
@@ -49,7 +52,8 @@ class RemoveDispatch(NodeTransformer):
             if hasattr(event, "s"):
                 event_name = getattr(event, "value", event.s)
                 if self._not_registered(event_name):
-                    logger.debug(f"Disabling event: {event_name}")
+                    if self._verbosity >= 2:
+                        logger.debug(f"Disabling event: {event_name}")
                     return None
         return node
 

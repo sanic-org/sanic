@@ -38,9 +38,9 @@ def test_no_exceptions_when_cancel_pending_request(app, caplog):
 
     counter = Counter([r[1] for r in caplog.record_tuples])
 
-    assert counter[logging.INFO] == 5
+    assert counter[logging.INFO] == 11
     assert logging.ERROR not in counter
     assert (
-        caplog.record_tuples[3][2]
+        caplog.record_tuples[9][2]
         == "Request: GET http://127.0.0.1:8000/ stopped. Transport is closed."
     )

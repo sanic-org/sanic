@@ -2,10 +2,12 @@ import asyncio
 import logging
 import re
 
+from email import message
 from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch
 
+import py
 import pytest
 
 from sanic import Sanic
@@ -444,3 +446,9 @@ def test_custom_context():
     app = Sanic("custom", ctx=ctx)
 
     assert app.ctx == ctx
+
+
+def test_cannot_run_fast_and_workers(app):
+    message = "You cannot use both fast=True and workers=X"
+    with pytest.raises(RuntimeError, match=message):
+        app.run(fast=True, workers=4)

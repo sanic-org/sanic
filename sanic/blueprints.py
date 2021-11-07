@@ -326,6 +326,7 @@ class Blueprint(BaseSanic):
                 future.static,
                 version_prefix,
                 error_format,
+                future.route_context,
             )
 
             route = app._apply_route(apply_route)

@@ -7,6 +7,7 @@ from sanic.models.handler_types import (
     MiddlewareType,
     SignalHandler,
 )
+from sanic.types import HashableDict
 
 
 class FutureRoute(NamedTuple):
@@ -25,6 +26,7 @@ class FutureRoute(NamedTuple):
     static: bool
     version_prefix: str
     error_format: Optional[str]
+    route_context: HashableDict
 
 
 class FutureListener(NamedTuple):

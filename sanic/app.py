@@ -384,12 +384,16 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             websocket_handler.is_websocket = True  # type: ignore
             params["handler"] = websocket_handler
 
+        ctx = params.pop("route_context")
+
         routes = self.router.add(**params)
         if isinstance(routes, Route):
             routes = [routes]
+
         for r in routes:
             r.ctx.websocket = websocket
             r.ctx.static = params.get("static", False)
+            r.ctx.__dict__.update(ctx)
 
         return routes
 

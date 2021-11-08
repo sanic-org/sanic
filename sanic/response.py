@@ -358,6 +358,14 @@ def redirect(
 
 
 class ResponseStream:
+    __slots__ = (
+        "content_type",
+        "headers",
+        "request",
+        "status",
+        "streaming_fn",
+    )
+
     def __init__(
         self,
         streaming_fn: StreamingFunction,

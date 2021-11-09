@@ -26,6 +26,7 @@ from ssl import SSLContext
 from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
+    TYPE_CHECKING,
     Any,
     AnyStr,
     Awaitable,
@@ -50,6 +51,7 @@ from sanic_routing.exceptions import (  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
+from sanic.application.ext import cache_args
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
@@ -89,6 +91,13 @@ from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
 from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
+
+
+if TYPE_CHECKING:
+    try:
+        from sanic_ext.extensions.base import Extension
+    except ImportError:
+        ...
 
 
 if OS_IS_WINDOWS:
@@ -1564,6 +1573,22 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 else self.config.LOGO
             )
             MOTD.output(logo, serve_location, display, extra)
+
+    def ext(
+        self,
+        *,
+        extensions: Optional[List[Type[Extension]]] = None,
+        built_in_extensions: bool = True,
+        config: Optional[Union[Config, Dict[str, Any]]] = None,
+        **kwargs,
+    ) -> None:
+        cache_args(
+            self,
+            extensions=extensions,
+            built_in_extensions=built_in_extensions,
+            config=config,
+            **kwargs,
+        )
 
     # -------------------------------------------------------------------- #
     # Class methods

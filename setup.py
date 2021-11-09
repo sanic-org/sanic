@@ -146,6 +146,7 @@ extras_require = {
     "dev": dev_require,
     "docs": docs_require,
     "all": all_require,
+    "ext": ["sanic-ext"],
 }
 
 setup_kwargs["install_requires"] = requirements

@@ -64,7 +64,7 @@ def restart_with_reloader(changed=None):
 
 
 def _check_file(filename, mtimes):
-    need_reload = set()
+    need_reload = False
 
     mtime = os.stat(filename).st_mtime
     old_time = mtimes.get(filename)
@@ -72,7 +72,7 @@ def _check_file(filename, mtimes):
         mtimes[filename] = mtime
     elif mtime > old_time:
         mtimes[filename] = mtime
-        need_reload.add(filename)
+        need_reload = True
 
     return need_reload
 
@@ -103,7 +103,8 @@ def watchdog(sleep_interval, app):
                 *(d.glob("**/*") for d in app.reload_dirs),
             ):
                 try:
-                    changed |= _check_file(filename, mtimes)
+                    if _check_file(filename, mtimes):
+                        changed.add(filename)
                 except OSError:
                     continue
 

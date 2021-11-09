@@ -104,7 +104,12 @@ def watchdog(sleep_interval, app):
             ):
                 try:
                     if _check_file(filename, mtimes):
-                        changed.add(filename)
+                        path = (
+                            filename
+                            if isinstance(filename, str)
+                            else filename.resolve()
+                        )
+                        changed.add(str(path))
                 except OSError:
                     continue
 

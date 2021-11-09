@@ -47,22 +47,24 @@ def _get_args_for_reloading():
     return [sys.executable] + sys.argv
 
 
-def restart_with_reloader():
+def restart_with_reloader(changed=None):
     """Create a new process and a subprocess in it with the same arguments as
     this one.
     """
+    reloaded = ",".join(changed) if changed else ""
     return subprocess.Popen(
         _get_args_for_reloading(),
         env={
             **os.environ,
             "SANIC_SERVER_RUNNING": "true",
             "SANIC_RELOADER_PROCESS": "true",
+            "SANIC_RELOADED_FILES": reloaded,
         },
     )
 
 
 def _check_file(filename, mtimes):
-    need_reload = False
+    need_reload = set()
 
     mtime = os.stat(filename).st_mtime
     old_time = mtimes.get(filename)
@@ -70,7 +72,7 @@ def _check_file(filename, mtimes):
         mtimes[filename] = mtime
     elif mtime > old_time:
         mtimes[filename] = mtime
-        need_reload = True
+        need_reload.add(filename)
 
     return need_reload
 
@@ -94,24 +96,21 @@ def watchdog(sleep_interval, app):
 
     try:
         while True:
-            need_reload = False
 
+            changed = set()
             for filename in itertools.chain(
                 _iter_module_files(),
                 *(d.glob("**/*") for d in app.reload_dirs),
             ):
                 try:
-                    check = _check_file(filename, mtimes)
+                    changed |= _check_file(filename, mtimes)
                 except OSError:
                     continue
 
-                if check:
-                    need_reload = True
-
-            if need_reload:
+            if changed:
                 worker_process.terminate()
                 worker_process.wait()
-                worker_process = restart_with_reloader()
+                worker_process = restart_with_reloader(changed)
 
             sleep(sleep_interval)
     except KeyboardInterrupt:

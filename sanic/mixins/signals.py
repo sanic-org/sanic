@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, Set, Union, cast
+from typing import Any, Callable, Dict, Optional, Set, Union
 
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler

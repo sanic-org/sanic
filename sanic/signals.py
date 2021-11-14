@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+from enum import Enum
 from inspect import isawaitable
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -14,29 +15,47 @@ from sanic.log import error_logger, logger
 from sanic.models.handler_types import SignalHandler
 
 
+class Event(Enum):
+    SERVER_INIT_AFTER = "server.init.after"
+    SERVER_INIT_BEFORE = "server.init.before"
+    SERVER_SHUTDOWN_AFTER = "server.shutdown.after"
+    SERVER_SHUTDOWN_BEFORE = "server.shutdown.before"
+    HTTP_LIFECYCLE_BEGIN = "http.lifecycle.begin"
+    HTTP_LIFECYCLE_COMPLETE = "http.lifecycle.complete"
+    HTTP_LIFECYCLE_EXCEPTION = "http.lifecycle.exception"
+    HTTP_LIFECYCLE_HANDLE = "http.lifecycle.handle"
+    HTTP_LIFECYCLE_READ_BODY = "http.lifecycle.read_body"
+    HTTP_LIFECYCLE_READ_HEAD = "http.lifecycle.read_head"
+    HTTP_LIFECYCLE_REQUEST = "http.lifecycle.request"
+    HTTP_LIFECYCLE_RESPONSE = "http.lifecycle.response"
+    HTTP_ROUTING_AFTER = "http.routing.after"
+    HTTP_ROUTING_BEFORE = "http.routing.before"
+    HTTP_LIFECYCLE_SEND = "http.lifecycle.send"
+    HTTP_MIDDLEWARE_AFTER = "http.middleware.after"
+    HTTP_MIDDLEWARE_BEFORE = "http.middleware.before"
+
+
 RESERVED_NAMESPACES = {
     "server": (
-        # "server.main.start",
-        # "server.main.stop",
-        "server.init.before",
-        "server.init.after",
-        "server.shutdown.before",
-        "server.shutdown.after",
+        Event.SERVER_INIT_AFTER.value,
+        Event.SERVER_INIT_BEFORE.value,
+        Event.SERVER_SHUTDOWN_AFTER.value,
+        Event.SERVER_SHUTDOWN_BEFORE.value,
     ),
     "http": (
-        "http.lifecycle.begin",
-        "http.lifecycle.complete",
-        "http.lifecycle.exception",
-        "http.lifecycle.handle",
-        "http.lifecycle.read_body",
-        "http.lifecycle.read_head",
-        "http.lifecycle.request",
-        "http.lifecycle.response",
-        "http.routing.after",
-        "http.routing.before",
-        "http.lifecycle.send",
-        "http.middleware.after",
-        "http.middleware.before",
+        Event.HTTP_LIFECYCLE_BEGIN.value,
+        Event.HTTP_LIFECYCLE_COMPLETE.value,
+        Event.HTTP_LIFECYCLE_EXCEPTION.value,
+        Event.HTTP_LIFECYCLE_HANDLE.value,
+        Event.HTTP_LIFECYCLE_READ_BODY.value,
+        Event.HTTP_LIFECYCLE_READ_HEAD.value,
+        Event.HTTP_LIFECYCLE_REQUEST.value,
+        Event.HTTP_LIFECYCLE_RESPONSE.value,
+        Event.HTTP_ROUTING_AFTER.value,
+        Event.HTTP_ROUTING_BEFORE.value,
+        Event.HTTP_LIFECYCLE_SEND.value,
+        Event.HTTP_MIDDLEWARE_AFTER.value,
+        Event.HTTP_MIDDLEWARE_BEFORE.value,
     ),
 }
 

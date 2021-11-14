@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, Set, Union
+from typing import Any, Callable, Dict, Optional, Set, Union, cast
 
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
@@ -42,15 +42,11 @@ class SignalMixin:
             filtering, defaults to None
         :type condition: Dict[str, Any], optional
         """
-        if isinstance(event, Enum):
-            event = str(event.value)
+        event_value = str(event.value) if isinstance(event, Enum) else event
 
         def decorator(handler: SignalHandler):
-            nonlocal event
-            nonlocal apply
-
             future_signal = FutureSignal(
-                handler, event, HashableDict(condition or {})
+                handler, event_value, HashableDict(condition or {})
             )
             self._future_signals.add(future_signal)
 

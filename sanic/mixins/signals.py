@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, Optional, Set
+from enum import Enum
+from typing import Any, Callable, Dict, Optional, Set, Union
 
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
@@ -19,7 +20,7 @@ class SignalMixin:
 
     def signal(
         self,
-        event: str,
+        event: Union[str, Enum],
         *,
         apply: bool = True,
         condition: Dict[str, Any] = None,
@@ -41,6 +42,8 @@ class SignalMixin:
             filtering, defaults to None
         :type condition: Dict[str, Any], optional
         """
+        if isinstance(event, Enum):
+            event = str(event.value)
 
         def decorator(handler: SignalHandler):
             nonlocal event

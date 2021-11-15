@@ -96,8 +96,8 @@ from sanic.touchup import TouchUp, TouchUpMeta
 
 if TYPE_CHECKING:  # no cov
     try:
-        from sanic_ext import Extend
-        from sanic_ext.extensions.base import Extension
+        from sanic_ext import Extend  # type: ignore
+        from sanic_ext.extensions.base import Extension  # type: ignore
     except ImportError:
         Extend = TypeVar("Extend")  # type: ignore
 

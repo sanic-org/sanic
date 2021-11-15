@@ -10,7 +10,7 @@ if TYPE_CHECKING:  # no cov
     from sanic import Sanic
 
     try:
-        from sanic_ext import Extend
+        from sanic_ext import Extend  # type: ignore
     except ImportError:
         ...
 

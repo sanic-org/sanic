@@ -5,8 +5,19 @@ import asyncio
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
+from inspect import isfunction
+from itertools import chain
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Union,
+)
 
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
@@ -27,13 +38,20 @@ if TYPE_CHECKING:
     from sanic import Sanic  # noqa
 
 
-def lazy(func):
+def lazy(func, as_decorator=True):
     @wraps(func)
     def decorator(bp, *args, **kwargs):
+        nonlocal as_decorator
         kwargs["apply"] = False
+        pass_handler = None
+
+        if args and isfunction(args[0]):
+            as_decorator = False
 
         def wrapper(handler):
-            future = func(bp, *args, **kwargs)(handler)
+            future = func(bp, *args, **kwargs)
+            if as_decorator:
+                future = future(handler)
 
             if bp.registered:
                 for app in bp.apps:
@@ -41,7 +59,7 @@ def lazy(func):
 
             return future
 
-        return wrapper
+        return wrapper if as_decorator else wrapper(pass_handler)
 
     return decorator
 
@@ -144,16 +162,29 @@ class Blueprint(BaseSanic):
     middleware = lazy(BaseSanic.middleware)
     route = lazy(BaseSanic.route)
     signal = lazy(BaseSanic.signal)
-    static = lazy(BaseSanic.static)
+    static = lazy(BaseSanic.static, as_decorator=False)
 
     def reset(self):
         self._apps: Set[Sanic] = set()
         self.exceptions: List[RouteHandler] = []
-        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.listeners: Dict[str, List[ListenerType[Any]]] = {}
         self.middlewares: List[MiddlewareType] = []
         self.routes: List[Route] = []
         self.statics: List[RouteHandler] = []
         self.websocket_routes: List[Route] = []
+
+    def register_futures(self, apps: Set[Sanic]):
+        for app in apps:
+            app._future_registry |= set(
+                chain(
+                    self._future_routes,
+                    self._future_statics,
+                    self._future_middleware,
+                    self._future_exceptions,
+                    self._future_listeners,
+                    self._future_signals,
+                )
+            )
 
     def copy(
         self,
@@ -228,7 +259,7 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
-    ):
+    ) -> BlueprintGroup:
         """
         Create a list of blueprints, optionally grouping them under a
         general URL prefix.
@@ -284,6 +315,8 @@ class Blueprint(BaseSanic):
 
         # Routes
         for future in self._future_routes:
+            if future in app._future_registry:
+                continue
             # attach the blueprint name to the handler so that it can be
             # prefixed properly in the router
             future.handler.__blueprintname__ = self.name
@@ -334,6 +367,8 @@ class Blueprint(BaseSanic):
 
         # Static Files
         for future in self._future_statics:
+            if future in app._future_registry:
+                continue
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
             apply_route = FutureStatic(uri, *future[1:])
@@ -345,30 +380,41 @@ class Blueprint(BaseSanic):
         if route_names:
             # Middleware
             for future in self._future_middleware:
+                if future in app._future_registry:
+                    continue
                 middleware.append(app._apply_middleware(future, route_names))
 
             # Exceptions
             for future in self._future_exceptions:
+                if future in app._future_registry:
+                    continue
                 exception_handlers.append(
                     app._apply_exception_handler(future, route_names)
                 )
 
         # Event listeners
-        for listener in self._future_listeners:
-            listeners[listener.event].append(app._apply_listener(listener))
+        for future in self._future_listeners:
+            if future in app._future_registry:
+                continue
+            listeners[future.event].append(app._apply_listener(future))
 
         # Signals
-        for signal in self._future_signals:
-            signal.condition.update({"blueprint": self.name})
-            app._apply_signal(signal)
+        for future in self._future_signals:
+            if future in app._future_registry:
+                continue
+            future.condition.update({"blueprint": self.name})
+            app._apply_signal(future)
 
-        self.routes = [route for route in routes if isinstance(route, Route)]
-        self.websocket_routes = [
+        self.routes += [route for route in routes if isinstance(route, Route)]
+        self.websocket_routes += [
             route for route in self.routes if route.ctx.websocket
         ]
-        self.middlewares = middleware
-        self.exceptions = exception_handlers
-        self.listeners = dict(listeners)
+        self.middlewares += middleware
+        self.exceptions += exception_handlers
+        self.listeners.update(dict(listeners))
+
+        if self.registered:
+            self.register_futures(self.apps)
 
     async def dispatch(self, *args, **kwargs):
         condition = kwargs.pop("condition", {})

@@ -1,5 +1,7 @@
 exclude_patterns:
   - "sanic/__main__.py"
+  - "sanic/application/logo.py"
+  - "sanic/application/motd.py"
   - "sanic/reloader_helpers.py"
   - "sanic/simple.py"
   - "sanic/utils.py"
@@ -8,7 +10,6 @@ exclude_patterns:
   - "docker/"
   - "docs/"
   - "examples/"
-  - "hack/"
   - "scripts/"
   - "tests/"
 checks:
@@ -22,3 +23,6 @@ checks:
       threshold: 40
   complex-logic:
     enabled: false
+  method-complexity:
+    config:
+      threshold: 10

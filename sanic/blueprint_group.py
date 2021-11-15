@@ -208,7 +208,7 @@ class BlueprintGroup(MutableSequence):
         :param args: List of Python exceptions to be caught by the handler
         :param kwargs: Additional optional arguments to be passed to the
             exception handler
-        :return a decorated method to handle global exceptions for any
+        :return: a decorated method to handle global exceptions for any
             blueprint registered under this group.
         """
 

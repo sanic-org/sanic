@@ -23,6 +23,7 @@ async def app_info_dump(app: Sanic, _):
         "access_log": app.config.ACCESS_LOG,
         "auto_reload": app.auto_reload,
         "debug": app.debug,
+        "noisy_exceptions": app.config.NOISY_EXCEPTIONS,
     }
     logger.info(json.dumps(app_data))
 

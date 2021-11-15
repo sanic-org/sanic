@@ -15,7 +15,7 @@ jobs:
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         #         os: [ubuntu-latest, macos-latest]
         os: [ubuntu-latest]

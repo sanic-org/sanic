@@ -21,7 +21,7 @@ def gunicorn_worker():
         "gunicorn "
         f"--bind 127.0.0.1:{PORT} "
         "--worker-class sanic.worker.GunicornWorker "
-        "examples.simple_server:app"
+        "examples.hello_world:app"
     )
     worker = subprocess.Popen(shlex.split(command))
     time.sleep(2)
@@ -35,7 +35,7 @@ def gunicorn_worker_with_access_logs():
         "gunicorn "
         f"--bind 127.0.0.1:{PORT + 1} "
         "--worker-class sanic.worker.GunicornWorker "
-        "examples.simple_server:app"
+        "examples.hello_world:app"
     )
     worker = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
     time.sleep(2)
@@ -50,7 +50,7 @@ def gunicorn_worker_with_env_var():
         f"--bind 127.0.0.1:{PORT + 2} "
         "--worker-class sanic.worker.GunicornWorker "
         "--log-level info "
-        "examples.simple_server:app"
+        "examples.hello_world:app"
     )
     worker = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
     time.sleep(2)

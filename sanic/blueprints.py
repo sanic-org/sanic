@@ -4,6 +4,7 @@ import asyncio
 
 from collections import defaultdict
 from copy import deepcopy
+from enum import Enum
 from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
@@ -144,7 +145,7 @@ class Blueprint(BaseSanic):
         kwargs["apply"] = False
         return super().exception(*args, **kwargs)
 
-    def signal(self, event: str, *args, **kwargs):
+    def signal(self, event: Union[str, Enum], *args, **kwargs):
         kwargs["apply"] = False
         return super().signal(event, *args, **kwargs)
 

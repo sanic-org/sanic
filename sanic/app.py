@@ -40,6 +40,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
@@ -93,11 +94,12 @@ from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     try:
+        from sanic_ext import Extend
         from sanic_ext.extensions.base import Extension
     except ImportError:
-        ...
+        Extend = TypeVar("Extend")  # type: ignore
 
 
 if OS_IS_WINDOWS:
@@ -121,6 +123,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_asgi_client",
         "_blueprint_order",
         "_delayed_tasks",
+        "_ext",
         "_future_exceptions",
         "_future_listeners",
         "_future_middleware",
@@ -1574,7 +1577,21 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
             MOTD.output(logo, serve_location, display, extra)
 
-    def ext(
+    @property
+    def ext(self) -> Extend:
+        if not self.is_running:
+            raise SanicException(
+                "Cannot access Sanic.ext property while Sanic is not running."
+            )
+        if not hasattr(self, "_ext"):
+            raise RuntimeError(
+                "Sanic Extensions is not installed. You can add it to your "
+                "environment using:\n$ pip install sanic[ext]\nor\n$ pip "
+                "install sanic-ext"
+            )
+        return self._ext  # type: ignore
+
+    def extend(
         self,
         *,
         extensions: Optional[List[Type[Extension]]] = None,

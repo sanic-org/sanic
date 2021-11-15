@@ -32,8 +32,8 @@ from sanic.models.handler_types import (
 )
 
 
-if TYPE_CHECKING:
-    from sanic import Sanic  # noqa
+if TYPE_CHECKING:  # no cov
+    from sanic import Sanic
 
 
 class Blueprint(BaseSanic):

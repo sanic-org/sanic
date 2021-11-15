@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse
 

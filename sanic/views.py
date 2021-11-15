@@ -16,7 +16,7 @@ from sanic.exceptions import InvalidUsage
 from sanic.models.handler_types import RouteHandler
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic import Sanic
     from sanic.blueprints import Blueprint
 

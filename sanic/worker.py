@@ -14,14 +14,14 @@ from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 
 try:
     import ssl  # type: ignore
-except ImportError:
+except ImportError:  # no cov
     ssl = None  # type: ignore
 
 try:
     import uvloop  # type: ignore
 
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-except ImportError:
+except ImportError:  # no cov
     pass
 
 

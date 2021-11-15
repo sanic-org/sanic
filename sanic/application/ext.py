@@ -6,7 +6,7 @@ from importlib import import_module
 from typing import TYPE_CHECKING, Any, Dict
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic import Sanic
 
     try:
@@ -19,11 +19,13 @@ arg_cache: Dict[str, Dict[str, Any]] = {}
 
 def setup_ext(app: Sanic):
     sanic_ext = sys.modules.get("sanic_ext")
-    if sanic_ext:
+    if sanic_ext and not getattr(app, "_ext", None):
         Ext: Extend = getattr(sanic_ext, "Extend")
 
         kwargs = arg_cache.pop(app.name, {})
-        Ext(app, **kwargs)
+        app._ext = Ext(app, **kwargs)
+
+        return app.ext
 
 
 def cache_args(app: Sanic, **kwargs):

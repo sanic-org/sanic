@@ -15,7 +15,9 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Sequence,
     Set,
+    Tuple,
     Union,
 )
 
@@ -173,19 +175,6 @@ class Blueprint(BaseSanic):
         self.statics: List[RouteHandler] = []
         self.websocket_routes: List[Route] = []
 
-    def register_futures(self, apps: Set[Sanic]):
-        for app in apps:
-            app._future_registry |= set(
-                chain(
-                    self._future_routes,
-                    self._future_statics,
-                    self._future_middleware,
-                    self._future_exceptions,
-                    self._future_listeners,
-                    self._future_signals,
-                )
-            )
-
     def copy(
         self,
         name: str,
@@ -312,11 +301,10 @@ class Blueprint(BaseSanic):
         middleware = []
         exception_handlers = []
         listeners = defaultdict(list)
+        registered = set()
 
         # Routes
         for future in self._future_routes:
-            if future in app._future_registry:
-                continue
             # attach the blueprint name to the handler so that it can be
             # prefixed properly in the router
             future.handler.__blueprintname__ = self.name
@@ -340,12 +328,15 @@ class Blueprint(BaseSanic):
             )
 
             name = app._generate_name(future.name)
+            host = future.host or self.host
+            if isinstance(host, list):
+                host = tuple(host)
 
             apply_route = FutureRoute(
                 future.handler,
                 uri[1:] if uri.startswith("//") else uri,
                 future.methods,
-                future.host or self.host,
+                host,
                 strict_slashes,
                 future.stream,
                 version,
@@ -359,6 +350,10 @@ class Blueprint(BaseSanic):
                 error_format,
             )
 
+            if (self, apply_route) in app._future_registry:
+                continue
+
+            registered.add(apply_route)
             route = app._apply_route(apply_route)
             operation = (
                 routes.extend if isinstance(route, list) else routes.append
@@ -367,11 +362,14 @@ class Blueprint(BaseSanic):
 
         # Static Files
         for future in self._future_statics:
-            if future in app._future_registry:
-                continue
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
             apply_route = FutureStatic(uri, *future[1:])
+
+            if (self, apply_route) in app._future_registry:
+                continue
+
+            registered.add(apply_route)
             route = app._apply_static(apply_route)
             routes.append(route)
 
@@ -380,13 +378,13 @@ class Blueprint(BaseSanic):
         if route_names:
             # Middleware
             for future in self._future_middleware:
-                if future in app._future_registry:
+                if (self, future) in app._future_registry:
                     continue
                 middleware.append(app._apply_middleware(future, route_names))
 
             # Exceptions
             for future in self._future_exceptions:
-                if future in app._future_registry:
+                if (self, future) in app._future_registry:
                     continue
                 exception_handlers.append(
                     app._apply_exception_handler(future, route_names)
@@ -394,13 +392,13 @@ class Blueprint(BaseSanic):
 
         # Event listeners
         for future in self._future_listeners:
-            if future in app._future_registry:
+            if (self, future) in app._future_registry:
                 continue
             listeners[future.event].append(app._apply_listener(future))
 
         # Signals
         for future in self._future_signals:
-            if future in app._future_registry:
+            if (self, future) in app._future_registry:
                 continue
             future.condition.update({"blueprint": self.name})
             app._apply_signal(future)
@@ -414,7 +412,17 @@ class Blueprint(BaseSanic):
         self.listeners.update(dict(listeners))
 
         if self.registered:
-            self.register_futures(self.apps)
+            self.register_futures(
+                self.apps,
+                self,
+                chain(
+                    registered,
+                    self._future_middleware,
+                    self._future_exceptions,
+                    self._future_listeners,
+                    self._future_signals,
+                ),
+            )
 
     async def dispatch(self, *args, **kwargs):
         condition = kwargs.pop("condition", {})
@@ -446,3 +454,10 @@ class Blueprint(BaseSanic):
                 value = v
                 break
         return value
+
+    @staticmethod
+    def register_futures(
+        apps: Set[Sanic], bp: Blueprint, futures: Sequence[Tuple[Any, ...]]
+    ):
+        for app in apps:
+            app._future_registry.update(set((bp, item) for item in futures))

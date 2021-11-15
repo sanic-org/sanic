@@ -116,6 +116,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_future_exceptions",
         "_future_listeners",
         "_future_middleware",
+        "_future_registry",
         "_future_routes",
         "_future_signals",
         "_future_statics",
@@ -1627,7 +1628,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 raise e
 
     async def _startup(self):
-        self._future_registry = set()
+        self._future_registry.clear()
         self.signalize()
         self.finalize()
         ErrorHandler.finalize(self.error_handler)

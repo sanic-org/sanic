@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 from inspect import isclass
 from os import environ
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 from warnings import warn
 
 from sanic.errorpages import check_error_format
 from sanic.http import Http
 from sanic.utils import load_module_from_file_location, str_to_bool
+
+
+if TYPE_CHECKING:  # no cov
+    from sanic import Sanic
 
 
 SANIC_PREFIX = "SANIC_"
@@ -73,10 +79,13 @@ class Config(dict):
         load_env: Optional[Union[bool, str]] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
+        *,
+        app: Optional[Sanic] = None,
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
+        self._app = app
         self._LOGO = ""
 
         if keep_alive is not None:
@@ -99,6 +108,7 @@ class Config(dict):
 
         self._configure_header_size()
         self._check_error_format()
+        self._init = True
 
     def __getattr__(self, attr):
         try:
@@ -106,23 +116,47 @@ class Config(dict):
         except KeyError as ke:
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
-    def __setattr__(self, attr, value):
-        self[attr] = value
-        if attr in (
-            "REQUEST_MAX_HEADER_SIZE",
-            "REQUEST_BUFFER_SIZE",
-            "REQUEST_MAX_SIZE",
-        ):
-            self._configure_header_size()
-        elif attr == "FALLBACK_ERROR_FORMAT":
-            self._check_error_format()
-        elif attr == "LOGO":
-            self._LOGO = value
-            warn(
-                "Setting the config.LOGO is deprecated and will no longer "
-                "be supported starting in v22.6.",
-                DeprecationWarning,
-            )
+    def __setattr__(self, attr, value) -> None:
+        self.update({attr: value})
+
+    def __setitem__(self, attr, value) -> None:
+        self.update({attr: value})
+
+    def update(self, *other, **kwargs) -> None:
+        other_mapping = {k: v for item in other for k, v in dict(item).items()}
+        super().update(*other, **kwargs)
+        for attr, value in {**other_mapping, **kwargs}.items():
+            self._post_set(attr, value)
+
+    def _post_set(self, attr, value) -> None:
+        if self.get("_init"):
+            if attr in (
+                "REQUEST_MAX_HEADER_SIZE",
+                "REQUEST_BUFFER_SIZE",
+                "REQUEST_MAX_SIZE",
+            ):
+                self._configure_header_size()
+            elif attr == "FALLBACK_ERROR_FORMAT":
+                self._check_error_format()
+                if self.app and value != self.app.error_handler.fallback:
+                    if self.app.error_handler.fallback != "auto":
+                        warn(
+                            "Overriding non-default ErrorHandler fallback "
+                            "value. Changing from "
+                            f"{self.app.error_handler.fallback} to {value}."
+                        )
+                    self.app.error_handler.fallback = value
+            elif attr == "LOGO":
+                self._LOGO = value
+                warn(
+                    "Setting the config.LOGO is deprecated and will no longer "
+                    "be supported starting in v22.6.",
+                    DeprecationWarning,
+                )
+
+    @property
+    def app(self):
+        return self._app
 
     @property
     def LOGO(self):

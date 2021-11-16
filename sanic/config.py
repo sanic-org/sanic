@@ -47,7 +47,6 @@ DEFAULT_CONFIG = {
 
 
 class Config(dict):
-    app: Optional[Sanic]
     ACCESS_LOG: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
@@ -86,7 +85,7 @@ class Config(dict):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
-        self.app = app
+        self._app = app
         self._LOGO = ""
 
         if keep_alive is not None:
@@ -109,7 +108,7 @@ class Config(dict):
 
         self._configure_header_size()
         self._check_error_format()
-        self.init = True
+        self._init = True
 
     def __getattr__(self, attr):
         try:
@@ -130,7 +129,7 @@ class Config(dict):
             self._post_set(attr, value)
 
     def _post_set(self, attr, value) -> None:
-        if self.get("init"):
+        if self.get("_init"):
             if attr in (
                 "REQUEST_MAX_HEADER_SIZE",
                 "REQUEST_BUFFER_SIZE",
@@ -154,6 +153,10 @@ class Config(dict):
                     "be supported starting in v22.6.",
                     DeprecationWarning,
                 )
+
+    @property
+    def app(self):
+        return self._app
 
     @property
     def LOGO(self):

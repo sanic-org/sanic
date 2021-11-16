@@ -141,9 +141,9 @@ class Config(dict):
                 if self.app and value != self.app.error_handler.fallback:
                     if self.app.error_handler.fallback != "auto":
                         warn(
-                            "Overriding non-default ErrorHandler fallback value. "
-                            f"Changing from {self.app.error_handler.fallback} "
-                            f"to {value}."
+                            "Overriding non-default ErrorHandler fallback "
+                            "value. Changing from "
+                            f"{self.app.error_handler.fallback} to {value}."
                         )
                     self.app.error_handler.fallback = value
             elif attr == "LOGO":

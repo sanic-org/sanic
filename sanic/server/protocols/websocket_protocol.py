@@ -138,7 +138,7 @@ class WebSocketProtocol(HttpProtocol):
             ).encode()
             rbody = bytearray(first_line)
             rbody += (
-                "".join(f"{k}: {v}\r\n" for k, v in resp.headers.items())
+                "".join([f"{k}: {v}\r\n" for k, v in resp.headers.items()])
             ).encode()
             rbody += b"\r\n"
             if resp.body is not None:

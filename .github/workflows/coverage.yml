@@ -1,17 +1,17 @@
 name: Coverage check
-# on:
-#   push:
-#     branches:
-#       - main
-#     tags:
-#       - "!*" # Do not execute on tags
-#     paths:
-#       - sanic/*
-#       - tests/*
-#   pull_request:
-#     paths:
-#       - "!*.MD"
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "!*" # Do not execute on tags
+    paths:
+      - sanic/*
+      - tests/*
+  pull_request:
+    paths:
+      - "!*.MD"
+    types: [review_requested, ready_for_review]
 jobs:
   test:
     runs-on: ${{ matrix.os }}

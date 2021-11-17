@@ -190,14 +190,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._state: ApplicationState = ApplicationState(app=self)
         self.blueprints: Dict[str, Blueprint] = {}
         self.config: Config = config or Config(
-            load_env=load_env, env_prefix=env_prefix
+            load_env=load_env,
+            env_prefix=env_prefix,
+            app=self,
         )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.debug = False
-        self.error_handler: ErrorHandler = error_handler or ErrorHandler(
-            fallback=self.config.FALLBACK_ERROR_FORMAT,
-        )
+        self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}

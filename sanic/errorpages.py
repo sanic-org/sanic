@@ -383,6 +383,7 @@ def exception_response(
     """
     content_type = None
 
+    print("exception_response", fallback)
     if not renderer:
         # Make sure we have something set
         renderer = base
@@ -393,7 +394,8 @@ def exception_response(
             # from the route
             if request.route:
                 try:
-                    render_format = request.route.ctx.error_format
+                    if request.route.ctx.error_format:
+                        render_format = request.route.ctx.error_format
                 except AttributeError:
                     ...
 

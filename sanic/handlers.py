@@ -38,7 +38,14 @@ class ErrorHandler:
         self.base = base
 
     @classmethod
-    def finalize(cls, error_handler):
+    def finalize(cls, error_handler, fallback: Optional[str] = None):
+        if (
+            fallback
+            and fallback != "auto"
+            and error_handler.fallback == "auto"
+        ):
+            error_handler.fallback = fallback
+
         if not isinstance(error_handler, cls):
             error_logger.warning(
                 f"Error handler is non-conforming: {type(error_handler)}"

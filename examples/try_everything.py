@@ -56,7 +56,7 @@ async def test_file_stream(request):
 @app.exception(ServerError)
 async def test(request, exception):
     return response.json(
-        {"exception": "{}".format(exception), "status": exception.status_code},
+        {"exception": str(exception), "status": exception.status_code},
         status=exception.status_code,
     )
 

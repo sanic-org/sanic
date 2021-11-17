@@ -60,3 +60,7 @@ class FutureSignal(NamedTuple):
     handler: SignalHandler
     event: str
     condition: Optional[Dict[str, str]]
+
+
+class FutureRegistry(set):
+    ...

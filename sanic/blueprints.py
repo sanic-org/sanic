@@ -4,8 +4,18 @@ import asyncio
 
 from collections import defaultdict
 from copy import deepcopy
+from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Union,
+)
 
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
@@ -135,14 +145,14 @@ class Blueprint(BaseSanic):
         kwargs["apply"] = False
         return super().exception(*args, **kwargs)
 
-    def signal(self, event: str, *args, **kwargs):
+    def signal(self, event: Union[str, Enum], *args, **kwargs):
         kwargs["apply"] = False
         return super().signal(event, *args, **kwargs)
 
     def reset(self):
         self._apps: Set[Sanic] = set()
         self.exceptions: List[RouteHandler] = []
-        self.listeners: Dict[str, List[ListenerType]] = {}
+        self.listeners: Dict[str, List[ListenerType[Any]]] = {}
         self.middlewares: List[MiddlewareType] = []
         self.routes: List[Route] = []
         self.statics: List[RouteHandler] = []
@@ -221,7 +231,7 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
-    ):
+    ) -> BlueprintGroup:
         """
         Create a list of blueprints, optionally grouping them under a
         general URL prefix.

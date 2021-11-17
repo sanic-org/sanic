@@ -8,8 +8,7 @@ from warnings import warn
 
 from sanic.errorpages import check_error_format
 from sanic.http import Http
-
-from .utils import load_module_from_file_location, str_to_bool
+from sanic.utils import load_module_from_file_location, str_to_bool
 
 
 if TYPE_CHECKING:  # no cov
@@ -17,15 +16,11 @@ if TYPE_CHECKING:  # no cov
 
 
 SANIC_PREFIX = "SANIC_"
-BASE_LOGO = """
 
-                 Sanic
-         Build Fast. Run Fast.
-
-"""
 
 DEFAULT_CONFIG = {
     "ACCESS_LOG": True,
+    "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
     "FALLBACK_ERROR_FORMAT": "auto",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
@@ -33,6 +28,9 @@ DEFAULT_CONFIG = {
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
+    "MOTD": True,
+    "MOTD_DISPLAY": {},
+    "NOISY_EXCEPTIONS": False,
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
     "REGISTER": True,
@@ -50,6 +48,7 @@ DEFAULT_CONFIG = {
 
 class Config(dict):
     ACCESS_LOG: bool
+    AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
     FALLBACK_ERROR_FORMAT: str
     FORWARDED_FOR_HEADER: str
@@ -57,6 +56,9 @@ class Config(dict):
     GRACEFUL_SHUTDOWN_TIMEOUT: float
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
+    NOISY_EXCEPTIONS: bool
+    MOTD: bool
+    MOTD_DISPLAY: Dict[str, str]
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]
     REGISTER: bool

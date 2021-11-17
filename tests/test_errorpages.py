@@ -1,6 +1,7 @@
 import pytest
 
 from sanic import Sanic
+from sanic.config import Config
 from sanic.errorpages import HTMLRenderer, exception_response
 from sanic.exceptions import NotFound, SanicException
 from sanic.handlers import ErrorHandler
@@ -313,3 +314,31 @@ def test_setting_fallback_to_non_default_raise_warning(app):
         app.config.FALLBACK_ERROR_FORMAT = "json"
 
     assert app.error_handler.fallback == "json"
+
+
+def test_allow_fallback_error_format_in_config_injection():
+    class MyConfig(Config):
+        FALLBACK_ERROR_FORMAT = "text"
+
+    app = Sanic("test", config=MyConfig())
+
+    @app.route("/error", methods=["GET", "POST"])
+    def err(request):
+        raise Exception("something went wrong")
+
+    request, response = app.test_client.get("/error")
+    assert request.app.error_handler.fallback == "text"
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_allow_fallback_error_format_in_config_replacement(app):
+    class MyConfig(Config):
+        FALLBACK_ERROR_FORMAT = "text"
+
+    app.config = MyConfig()
+
+    request, response = app.test_client.get("/error")
+    assert request.app.error_handler.fallback == "text"
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"

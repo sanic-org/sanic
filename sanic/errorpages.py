@@ -46,7 +46,7 @@ class BaseRenderer:
     Base class that all renderers must inherit from.
     """
 
-    dumps = dumps
+    dumps = staticmethod(dumps)
 
     def __init__(self, request, exception, debug):
         self.request = request

@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 
@@ -14,10 +15,20 @@ ASGIReceive = Callable[[], Awaitable[ASGIMessage]]
 
 class MockProtocol:
     def __init__(self, transport: "MockTransport", loop):
+        # This should be refactored when < 3.8 support is dropped
         self.transport = transport
-        self._not_paused = asyncio.Event(loop=loop)
-        self._not_paused.set()
-        self._complete = asyncio.Event(loop=loop)
+        # Fixup for 3.8+; Sanic still supports 3.7 where loop is required
+        loop = loop if sys.version_info[:2] < (3, 8) else None
+        # Optional in 3.9, necessary in 3.10 because the parameter "loop"
+        # was completely removed
+        if not loop:
+            self._not_paused = asyncio.Event()
+            self._not_paused.set()
+            self._complete = asyncio.Event()
+        else:
+            self._not_paused = asyncio.Event(loop=loop)
+            self._not_paused.set()
+            self._complete = asyncio.Event(loop=loop)
 
     def pause_writing(self) -> None:
         self._not_paused.clear()

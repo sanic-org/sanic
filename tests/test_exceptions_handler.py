@@ -1,11 +1,13 @@
 import asyncio
 import logging
 
+from unittest.mock import Mock
+
 import pytest
 
 from bs4 import BeautifulSoup
 
-from sanic import Sanic
+from sanic import Sanic, handlers
 from sanic.exceptions import Forbidden, InvalidUsage, NotFound, ServerError
 from sanic.handlers import ErrorHandler
 from sanic.response import stream, text
@@ -219,7 +221,11 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
     with caplog.at_level(logging.WARNING):
         _, response = exception_handler_app.test_client.get("/1")
 
-    assert caplog.records[0].message == (
+    for record in caplog.records:
+        if record.message.startswith("You are"):
+            break
+
+    assert record.message == (
         "You are using a deprecated error handler. The lookup method should "
         "accept two positional parameters: (exception, route_name: "
         "Optional[str]). Until you upgrade your ErrorHandler.lookup, "
@@ -227,3 +233,18 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
         "v22.3, the legacy style lookup method will not work at all."
     )
     assert response.status == 400
+
+
+def test_error_handler_noisy_log(exception_handler_app, monkeypatch):
+    err_logger = Mock()
+    monkeypatch.setattr(handlers, "error_logger", err_logger)
+
+    exception_handler_app.config["NOISY_EXCEPTIONS"] = False
+    exception_handler_app.test_client.get("/1")
+    err_logger.exception.assert_not_called()
+
+    exception_handler_app.config["NOISY_EXCEPTIONS"] = True
+    request, _ = exception_handler_app.test_client.get("/1")
+    err_logger.exception.assert_called_with(
+        "Exception occurred while handling uri: %s", repr(request.url)
+    )

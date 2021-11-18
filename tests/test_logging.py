@@ -1,6 +1,4 @@
 import logging
-import os
-import sys
 import uuid
 
 from importlib import reload
@@ -9,12 +7,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from sanic_testing.testing import SanicTestClient
-
 import sanic
 
 from sanic import Sanic
-from sanic.compat import OS_IS_WINDOWS
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
 from sanic.response import text
 
@@ -153,56 +148,6 @@ async def test_logger(caplog):
 
     record = ("sanic.root", logging.INFO, rand_string)
     assert record in caplog.record_tuples
-
-
-@pytest.mark.skipif(
-    OS_IS_WINDOWS and sys.version_info >= (3, 8),
-    reason="Not testable with current client",
-)
-def test_logger_static_and_secure(caplog):
-    # Same as test_logger, except for more coverage:
-    # - test_client initialised separately for static port
-    # - using ssl
-    rand_string = str(uuid.uuid4())
-
-    app = Sanic(name=__name__)
-
-    @app.get("/")
-    def log_info(request):
-        logger.info(rand_string)
-        return text("hello")
-
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    ssl_cert = os.path.join(current_dir, "certs/selfsigned.cert")
-    ssl_key = os.path.join(current_dir, "certs/selfsigned.key")
-
-    ssl_dict = {"cert": ssl_cert, "key": ssl_key}
-
-    test_client = SanicTestClient(app, port=42101)
-    with caplog.at_level(logging.INFO):
-        request, response = test_client.get(
-            f"https://127.0.0.1:{test_client.port}/",
-            server_kwargs=dict(ssl=ssl_dict),
-        )
-
-    port = test_client.port
-
-    assert caplog.record_tuples[0] == (
-        "sanic.root",
-        logging.INFO,
-        f"Goin' Fast @ https://127.0.0.1:{port}",
-    )
-    assert caplog.record_tuples[1] == (
-        "sanic.root",
-        logging.INFO,
-        f"https://127.0.0.1:{port}/",
-    )
-    assert caplog.record_tuples[2] == ("sanic.root", logging.INFO, rand_string)
-    assert caplog.record_tuples[-1] == (
-        "sanic.root",
-        logging.INFO,
-        "Server Stopped",
-    )
 
 
 def test_logging_modified_root_logger_config():

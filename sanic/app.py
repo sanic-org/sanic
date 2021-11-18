@@ -960,6 +960,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # Execution
     # -------------------------------------------------------------------- #
 
+    def make_coffee(self, *args, **kwargs):
+        self.state.coffee = True
+        self.run(*args, **kwargs)
+
     def run(
         self,
         host: Optional[str] = None,
@@ -1562,7 +1566,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 extra.update(self.config.MOTD_DISPLAY)
 
             logo = (
-                get_logo()
+                get_logo(coffee=self.state.coffee)
                 if self.config.LOGO == "" or self.config.LOGO is True
                 else self.config.LOGO
             )

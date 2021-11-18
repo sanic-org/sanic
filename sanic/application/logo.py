@@ -10,6 +10,15 @@ BASE_LOGO = """
          Build Fast. Run Fast.
 
 """
+COFFEE_LOGO = """\033[48;2;255;13;104m                     \033[0m
+\033[38;2;255;255;255;48;2;255;13;104m     ▄████████▄      \033[0m
+\033[38;2;255;255;255;48;2;255;13;104m    ██       ██▀▀▄   \033[0m
+\033[38;2;255;255;255;48;2;255;13;104m    ███████████  █   \033[0m
+\033[38;2;255;255;255;48;2;255;13;104m    ███████████▄▄▀   \033[0m
+\033[38;2;255;255;255;48;2;255;13;104m     ▀███████▀       \033[0m
+\033[48;2;255;13;104m                     \033[0m
+Dark roast. No sugar."""
+
 COLOR_LOGO = """\033[48;2;255;13;104m                     \033[0m
 \033[38;2;255;255;255;48;2;255;13;104m    ▄███ █████ ██    \033[0m
 \033[38;2;255;255;255;48;2;255;13;104m   ██                \033[0m
@@ -32,9 +41,9 @@ FULL_COLOR_LOGO = """
 ansi_pattern = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
-def get_logo(full=False):
+def get_logo(full=False, coffee=False):
     logo = (
-        (FULL_COLOR_LOGO if full else COLOR_LOGO)
+        (FULL_COLOR_LOGO if full else (COFFEE_LOGO if coffee else COLOR_LOGO))
         if sys.stdout.isatty()
         else BASE_LOGO
     )

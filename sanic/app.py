@@ -72,6 +72,7 @@ from sanic.models.futures import (
     FutureException,
     FutureListener,
     FutureMiddleware,
+    FutureRegistry,
     FutureRoute,
     FutureSignal,
     FutureStatic,
@@ -115,6 +116,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_future_exceptions",
         "_future_listeners",
         "_future_middleware",
+        "_future_registry",
         "_future_routes",
         "_future_signals",
         "_future_statics",
@@ -187,17 +189,18 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._test_manager: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
+        self._future_registry: FutureRegistry = FutureRegistry()
         self._state: ApplicationState = ApplicationState(app=self)
         self.blueprints: Dict[str, Blueprint] = {}
         self.config: Config = config or Config(
-            load_env=load_env, env_prefix=env_prefix
+            load_env=load_env,
+            env_prefix=env_prefix,
+            app=self,
         )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.debug = False
-        self.error_handler: ErrorHandler = error_handler or ErrorHandler(
-            fallback=self.config.FALLBACK_ERROR_FORMAT,
-        )
+        self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
@@ -957,6 +960,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # Execution
     # -------------------------------------------------------------------- #
 
+    def make_coffee(self, *args, **kwargs):
+        self.state.coffee = True
+        self.run(*args, **kwargs)
+
     def run(
         self,
         host: Optional[str] = None,
@@ -1569,7 +1576,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 extra.update(self.config.MOTD_DISPLAY)
 
             logo = (
-                get_logo()
+                get_logo(coffee=self.state.coffee)
                 if self.config.LOGO == "" or self.config.LOGO is True
                 else self.config.LOGO
             )
@@ -1635,9 +1642,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 raise e
 
     async def _startup(self):
+        self._future_registry.clear()
         self.signalize()
         self.finalize()
-        ErrorHandler.finalize(self.error_handler)
+        ErrorHandler.finalize(
+            self.error_handler, fallback=self.config.FALLBACK_ERROR_FORMAT
+        )
         TouchUp.run(self)
 
     async def _server_event(

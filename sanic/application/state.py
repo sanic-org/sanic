@@ -34,6 +34,7 @@ class Mode(StrEnum):
 class ApplicationState:
     app: Sanic
     asgi: bool = field(default=False)
+    coffee: bool = field(default=False)
     fast: bool = field(default=False)
     host: str = field(default="")
     mode: Mode = field(default=Mode.PRODUCTION)

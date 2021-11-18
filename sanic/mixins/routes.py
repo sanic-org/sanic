@@ -918,7 +918,7 @@ class RouteMixin:
 
         return route
 
-    def _determine_error_format(self, handler) -> str:
+    def _determine_error_format(self, handler) -> Optional[str]:
         if not isinstance(handler, CompositionView):
             try:
                 src = dedent(getsource(handler))
@@ -930,7 +930,7 @@ class RouteMixin:
             except (OSError, TypeError):
                 ...
 
-        return "auto"
+        return None
 
     def _get_response_types(self, node):
         types = set()

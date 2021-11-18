@@ -1,8 +1,10 @@
 import pytest
 
 from sanic import Sanic
+from sanic.config import Config
 from sanic.errorpages import HTMLRenderer, exception_response
 from sanic.exceptions import NotFound, SanicException
+from sanic.handlers import ErrorHandler
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
 
@@ -271,3 +273,72 @@ def test_combinations_for_auto(fake_request, accept, content_type, expected):
         )
 
     assert response.content_type == expected
+
+
+def test_allow_fallback_error_format_set_main_process_start(app):
+    @app.main_process_start
+    async def start(app, _):
+        app.config.FALLBACK_ERROR_FORMAT = "text"
+
+    request, response = app.test_client.get("/error")
+    assert request.app.error_handler.fallback == "text"
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_setting_fallback_to_non_default_raise_warning(app):
+    app.error_handler = ErrorHandler(fallback="text")
+
+    assert app.error_handler.fallback == "text"
+
+    with pytest.warns(
+        UserWarning,
+        match=(
+            "Overriding non-default ErrorHandler fallback value. "
+            "Changing from text to auto."
+        ),
+    ):
+        app.config.FALLBACK_ERROR_FORMAT = "auto"
+
+    assert app.error_handler.fallback == "auto"
+
+    app.config.FALLBACK_ERROR_FORMAT = "text"
+
+    with pytest.warns(
+        UserWarning,
+        match=(
+            "Overriding non-default ErrorHandler fallback value. "
+            "Changing from text to json."
+        ),
+    ):
+        app.config.FALLBACK_ERROR_FORMAT = "json"
+
+    assert app.error_handler.fallback == "json"
+
+
+def test_allow_fallback_error_format_in_config_injection():
+    class MyConfig(Config):
+        FALLBACK_ERROR_FORMAT = "text"
+
+    app = Sanic("test", config=MyConfig())
+
+    @app.route("/error", methods=["GET", "POST"])
+    def err(request):
+        raise Exception("something went wrong")
+
+    request, response = app.test_client.get("/error")
+    assert request.app.error_handler.fallback == "text"
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_allow_fallback_error_format_in_config_replacement(app):
+    class MyConfig(Config):
+        FALLBACK_ERROR_FORMAT = "text"
+
+    app.config = MyConfig()
+
+    request, response = app.test_client.get("/error")
+    assert request.app.error_handler.fallback == "text"
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"

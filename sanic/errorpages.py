@@ -209,17 +209,10 @@ class HTMLRenderer(BaseRenderer):
                 "</div>",
             ]
 
-        if self.exception.context:
-            lines.append(
-                self._generate_object_display(
-                    self.exception.context, "context"
-                )
-            )
-
-        if self.exception.extra and full:
-            lines.append(
-                self._generate_object_display(self.exception.extra, "extra")
-            )
+        for attr in ("context", "extra"):
+            info = getattr(self.exception, attr, None)
+            if info:
+                lines.append(self._generate_object_display(info, attr))
 
         return "\n".join(lines)
 

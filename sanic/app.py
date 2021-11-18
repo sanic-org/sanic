@@ -960,7 +960,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # Execution
     # -------------------------------------------------------------------- #
 
-    def make_coffee(self, *args, **kwargs):  # no cov
+    def make_coffee(self, *args, **kwargs):
         self.state.coffee = True
         self.run(*args, **kwargs)
 

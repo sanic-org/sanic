@@ -144,7 +144,8 @@ class HTMLRenderer(BaseRenderer):
         "</div>"
     )
     OBJECT_WRAPPER_HTML = (
-        "<div class=obj-header>{title}</div>" "<dl>{display_html}</dl>"
+        "<div class=obj-header>{title}</div>"
+        "<dl class={obj_type}>{display_html}</dl>"
     )
     OBJECT_DISPLAY_HTML = "<dt>{key}</dt><dd><code>{value}</code></dd>"
     OUTPUT_HTML = (
@@ -209,9 +210,9 @@ class HTMLRenderer(BaseRenderer):
                 "</div>",
             ]
 
-        for attr in ("context", "extra"):
+        for attr, display in (("context", True), ("extra", bool(full))):
             info = getattr(self.exception, attr, None)
-            if info:
+            if info and display:
                 lines.append(self._generate_object_display(info, attr))
 
         return "\n".join(lines)
@@ -224,7 +225,9 @@ class HTMLRenderer(BaseRenderer):
             for key, value in obj.items()
         )
         return self.OBJECT_WRAPPER_HTML.format(
-            title=descriptor.title(), display_html=display
+            title=descriptor.title(),
+            display_html=display,
+            obj_type=descriptor.lower(),
         )
 
     def _format_exc(self, exc):
@@ -293,15 +296,10 @@ class TextRenderer(BaseRenderer):
 
             lines += exceptions[::-1]
 
-        if self.exception.context:
-            lines += self._generate_object_display_list(
-                self.exception.context, "context"
-            )
-
-        if self.exception.extra and full:
-            lines += self._generate_object_display_list(
-                self.exception.extra, "extra"
-            )
+        for attr, display in (("context", True), ("extra", bool(full))):
+            info = getattr(self.exception, attr, None)
+            if info and display:
+                lines += self._generate_object_display_list(info, attr)
 
         return "\n".join(lines)
 
@@ -344,11 +342,10 @@ class JSONRenderer(BaseRenderer):
             "message": self.text,
         }
 
-        if self.exception.context:
-            output["context"] = self.exception.context
-
-        if self.exception.extra and full:
-            output["extra"] = self.exception.extra
+        for attr, display in (("context", True), ("extra", bool(full))):
+            info = getattr(self.exception, attr, None)
+            if info and display:
+                output[attr] = info
 
         if full:
             _, exc_value, __ = sys.exc_info()

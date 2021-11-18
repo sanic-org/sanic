@@ -271,9 +271,13 @@ def test_exception_in_ws_logged(caplog):
     with caplog.at_level(logging.INFO):
         app.test_client.websocket("/feed")
 
-    error_logs = [r for r in caplog.record_tuples if r[0] == "sanic.error"]
-    assert error_logs[1][1] == logging.ERROR
-    assert "Exception occurred while handling uri:" in error_logs[1][2]
+    for record in caplog.record_tuples:
+        if record[2].startswith("Exception occurred"):
+            break
+
+    assert record[0] == "sanic.error"
+    assert record[1] == logging.ERROR
+    assert "Exception occurred while handling uri:" in record[2]
 
 
 @pytest.mark.parametrize("debug", (True, False))

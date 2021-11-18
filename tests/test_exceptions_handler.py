@@ -222,7 +222,7 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
         _, response = exception_handler_app.test_client.get("/1")
 
     for record in caplog.records:
-        if record.message.startswith("You are"):
+        if record.message.startswith("You are using"):
             break
 
     assert record.message == (

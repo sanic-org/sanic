@@ -437,7 +437,6 @@ def exception_response(
     """
     content_type = None
 
-    print("exception_response", fallback)
     if not renderer:
         # Make sure we have something set
         renderer = base

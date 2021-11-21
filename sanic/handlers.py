@@ -57,7 +57,11 @@ class ErrorHandler:
 
     @classmethod
     def finalize(cls, error_handler, fallback: Optional[str] = None):
-        if fallback and error_handler._fallback is _default:
+        if (
+            fallback
+            and fallback != "auto"
+            and error_handler._fallback is _default
+        ):
             error_handler.fallback = fallback
 
         if not isinstance(error_handler, cls):

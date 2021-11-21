@@ -286,6 +286,31 @@ def test_allow_fallback_error_format_set_main_process_start(app):
     assert response.content_type == "text/plain; charset=utf-8"
 
 
+def test_setting_fallback_on_config_changes_as_expected(app):
+    app.error_handler = ErrorHandler()
+
+    _, response = app.test_client.get("/error")
+    assert response.content_type == "text/html; charset=utf-8"
+
+    app.config.FALLBACK_ERROR_FORMAT = "text"
+    _, response = app.test_client.get("/error")
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_setting_fallback_on_config_does_not_change(app):
+    app.error_handler = ErrorHandler(fallback="text")
+
+    _, response = app.test_client.get("/error")
+    assert response.content_type == "text/plain; charset=utf-8"
+
+    app.config.FALLBACK_ERROR_FORMAT = "auto"
+    _, response = app.test_client.get("/error")
+    assert response.content_type == "text/plain; charset=utf-8"
+
+    app.config.FALLBACK_ERROR_FORMAT = "json"
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
 def test_allow_fallback_error_format_in_config_injection():
     class MyConfig(Config):
         FALLBACK_ERROR_FORMAT = "text"

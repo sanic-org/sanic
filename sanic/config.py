@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from inspect import isclass
+from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from warnings import warn
 
-from sanic.errorpages import check_error_format
+from sanic.errorpages import DEFAULT_FORMAT, check_error_format
+from sanic.helpers import _default
 from sanic.http import Http
 from sanic.utils import load_module_from_file_location, str_to_bool
 
@@ -15,10 +16,10 @@ SANIC_PREFIX = "SANIC_"
 
 
 DEFAULT_CONFIG = {
+    "_FALLBACK_ERROR_FORMAT": _default,
     "ACCESS_LOG": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
-    "FALLBACK_ERROR_FORMAT": "auto",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
@@ -42,11 +43,19 @@ DEFAULT_CONFIG = {
 }
 
 
-class Config(dict):
+class DescriptorMeta(type):
+    def __init__(cls, *_):
+        cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}
+
+    @staticmethod
+    def _is_setter(member: object):
+        return isdatadescriptor(member) and hasattr(member, "setter")
+
+
+class Config(dict, metaclass=DescriptorMeta):
     ACCESS_LOG: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
-    FALLBACK_ERROR_FORMAT: str
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
@@ -110,13 +119,24 @@ class Config(dict):
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
     def __setattr__(self, attr, value) -> None:
-        self.update({attr: value})
+        if attr in self.__class__.__setters__:
+            super().__setattr__(attr, value)
+        else:
+            self.update({attr: value})
 
     def __setitem__(self, attr, value) -> None:
         self.update({attr: value})
 
     def update(self, *other, **kwargs) -> None:
         other_mapping = {k: v for item in other for k, v in dict(item).items()}
+        if self.get("_init"):
+            kwargs.update(
+                {
+                    f"_{k}": v
+                    for k, v in other_mapping.items()
+                    if k in self.__class__.__setters__
+                }
+            )
         super().update(*other, **kwargs)
         for attr, value in {**other_mapping, **kwargs}.items():
             self._post_set(attr, value)
@@ -129,8 +149,6 @@ class Config(dict):
                 "REQUEST_MAX_SIZE",
             ):
                 self._configure_header_size()
-            elif attr == "FALLBACK_ERROR_FORMAT":
-                self._check_error_format()
             elif attr == "LOGO":
                 self._LOGO = value
                 warn(
@@ -142,6 +160,25 @@ class Config(dict):
     @property
     def LOGO(self):
         return self._LOGO
+
+    @property
+    def FALLBACK_ERROR_FORMAT(self) -> str:
+        if self._FALLBACK_ERROR_FORMAT is _default:
+            return DEFAULT_FORMAT
+        return self._FALLBACK_ERROR_FORMAT
+
+    @FALLBACK_ERROR_FORMAT.setter
+    def FALLBACK_ERROR_FORMAT(self, value):
+        self._check_error_format()
+        if (
+            self._FALLBACK_ERROR_FORMAT is not _default
+            and value != self._FALLBACK_ERROR_FORMAT
+        ):
+            warn(
+                "Setting config.FALLBACK_ERROR_FORMAT on an already "
+                "configured value may have unintended consequences."
+            )
+        self._FALLBACK_ERROR_FORMAT = value
 
     def _configure_header_size(self):
         Http.set_header_max_size(

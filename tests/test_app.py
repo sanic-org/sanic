@@ -6,7 +6,6 @@ from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch
 
-import py
 import pytest
 
 from sanic import Sanic

@@ -1,7 +1,15 @@
+from __future__ import annotations
+
 from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type, Union
 
-from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
+from sanic.config import Config
+from sanic.errorpages import (
+    DEFAULT_FORMAT,
+    BaseRenderer,
+    HTMLRenderer,
+    exception_response,
+)
 from sanic.exceptions import (
     ContentRangeError,
     HeaderNotFound,
@@ -41,28 +49,85 @@ class ErrorHandler:
         self._fallback = fallback
         self.base = base
 
+        if fallback is not _default:
+            self._warn_fallback_deprecation()
+
     @property
     def fallback(self):
+        # This id for backwards compat and can be removed in v22.6
         if self._fallback is _default:
-            return "auto"
+            return DEFAULT_FORMAT
         return self._fallback
 
     @fallback.setter
     def fallback(self, value: str):
+        self._warn_fallback_deprecation()
         if not isinstance(value, str):
             raise SanicException(
                 f"Cannot set error handler fallback to: {value=}"
             )
         self._fallback = value
 
+    @staticmethod
+    def _warn_fallback_deprecation():
+        error_logger.warning(
+            DeprecationWarning(
+                "Setting the ErrorHandler fallback value directly is "
+                "deprecated and no longer supported. This feature will "
+                "be removed in v22.6. Instead, use "
+                "app.config.FALLBACK_ERROR_FORMAT."
+            ),
+        )
+
     @classmethod
-    def finalize(cls, error_handler, fallback: Optional[str] = None):
+    def _get_fallback_value(
+        cls, error_handler: ErrorHandler, config: Optional[Config] = None
+    ):
+        if not config:
+            return error_handler.fallback
+
+        if error_handler._fallback is not _default:
+            if config._FALLBACK_ERROR_FORMAT is _default:
+                return error_handler.fallback
+
+            error_logger.warning(
+                "Conflicting error fallback values were found in the "
+                "error handler and in the app.config while handling an "
+                "exception. Using the value from app.config."
+            )
+        return config.FALLBACK_ERROR_FORMAT
+
+    @classmethod
+    def finalize(
+        cls,
+        error_handler: ErrorHandler,
+        fallback: Optional[str] = None,
+        config: Optional[Config] = None,
+    ):
+        if fallback:
+            error_logger.warning(
+                DeprecationWarning(
+                    "Setting the ErrorHandler fallback value via finalize() "
+                    "is deprecated and no longer supported. This feature will "
+                    "be removed in v22.6. Instead, use "
+                    "app.config.FALLBACK_ERROR_FORMAT."
+                ),
+            )
+
+        if config is None:
+            error_logger.warning(
+                DeprecationWarning(
+                    "Starting in v22.3, config will be a required argument "
+                    "for ErrorHandler.finalize()."
+                ),
+            )
+
         if (
             fallback
-            and fallback != "auto"
+            and fallback != DEFAULT_FORMAT
             and error_handler._fallback is _default
         ):
-            error_handler.fallback = fallback
+            error_handler._fallback = fallback
 
         if not isinstance(error_handler, cls):
             error_logger.warning(
@@ -82,7 +147,7 @@ class ErrorHandler:
                     "work at all."
                 ),
             )
-            error_handler._lookup = error_handler._legacy_lookup
+            error_handler._lookup = error_handler._legacy_lookup  # type: ignore
 
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)
@@ -206,11 +271,7 @@ class ErrorHandler:
         :return:
         """
         self.log(request, exception)
-        fallback = (
-            request.app.config.FALLBACK_ERROR_FORMAT
-            if self._fallback is _default
-            else self.fallback
-        )
+        fallback = ErrorHandler._get_fallback_value(self, request.app.config)
         return exception_response(
             request,
             exception,

@@ -129,14 +129,6 @@ class Config(dict, metaclass=DescriptorMeta):
 
     def update(self, *other, **kwargs) -> None:
         other_mapping = {k: v for item in other for k, v in dict(item).items()}
-        if self.get("_init"):
-            kwargs.update(
-                {
-                    f"_{k}": v
-                    for k, v in other_mapping.items()
-                    if k in self.__class__.__setters__
-                }
-            )
         super().update(*other, **kwargs)
         for attr, value in {**other_mapping, **kwargs}.items():
             self._post_set(attr, value)

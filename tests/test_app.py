@@ -2,7 +2,6 @@ import asyncio
 import logging
 import re
 
-from email import message
 from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch

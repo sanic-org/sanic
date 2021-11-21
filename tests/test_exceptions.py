@@ -4,6 +4,7 @@ import warnings
 import pytest
 
 from bs4 import BeautifulSoup
+from websockets.version import version as websockets_version
 
 from sanic import Sanic
 from sanic.exceptions import (
@@ -16,6 +17,7 @@ from sanic.exceptions import (
     abort,
 )
 from sanic.response import text
+<<<<<<< HEAD
 
 
 def dl_to_dict(soup, css_class):
@@ -26,6 +28,8 @@ def dl_to_dict(soup, css_class):
         for dd in dl.find_all("dd"):
             values.append(dd.text.strip())
     return dict(zip(keys, values))
+=======
+>>>>>>> 8673021ad4a159e2c12cd4886d5b26ba08a6fe38
 
 
 class SanicExceptionTestException(Exception):

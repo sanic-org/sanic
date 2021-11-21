@@ -1,7 +1,10 @@
 import asyncio
 import logging
+<<<<<<< HEAD
 
 from unittest.mock import Mock
+=======
+>>>>>>> 8673021ad4a159e2c12cd4886d5b26ba08a6fe38
 
 import pytest
 
@@ -221,11 +224,15 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
     with caplog.at_level(logging.WARNING):
         _, response = exception_handler_app.test_client.get("/1")
 
+<<<<<<< HEAD
     for record in caplog.records:
         if record.message.startswith("You are"):
             break
 
     assert record.message == (
+=======
+    assert caplog.records[0].message == (
+>>>>>>> 8673021ad4a159e2c12cd4886d5b26ba08a6fe38
         "You are using a deprecated error handler. The lookup method should "
         "accept two positional parameters: (exception, route_name: "
         "Optional[str]). Until you upgrade your ErrorHandler.lookup, "
@@ -233,6 +240,7 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
         "v22.3, the legacy style lookup method will not work at all."
     )
     assert response.status == 400
+<<<<<<< HEAD
 
 
 def test_error_handler_noisy_log(exception_handler_app, monkeypatch):
@@ -248,3 +256,5 @@ def test_error_handler_noisy_log(exception_handler_app, monkeypatch):
     err_logger.exception.assert_called_with(
         "Exception occurred while handling uri: %s", repr(request.url)
     )
+=======
+>>>>>>> 8673021ad4a159e2c12cd4886d5b26ba08a6fe38

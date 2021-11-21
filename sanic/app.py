@@ -180,8 +180,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
-        self.debug = False
+        self.debug = None
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
+        self.is_running = False
+        self.is_stopping = False
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}

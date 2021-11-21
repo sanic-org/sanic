@@ -84,7 +84,7 @@ class Config(dict):
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
         self._app = app
-        self._LOGO = ""
+        self._LOGO = BASE_LOGO
 
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive

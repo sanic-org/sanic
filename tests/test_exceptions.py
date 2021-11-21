@@ -4,6 +4,7 @@ import warnings
 import pytest
 
 from bs4 import BeautifulSoup
+from websockets.version import version as websockets_version
 
 from sanic import Sanic
 from sanic.exceptions import (
@@ -16,7 +17,6 @@ from sanic.exceptions import (
     abort,
 )
 from sanic.response import text
-from websockets.version import version as websockets_version
 
 
 class SanicExceptionTestException(Exception):

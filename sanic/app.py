@@ -173,18 +173,18 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.asgi = False
         self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
-        self.config = config or Config(
-            load_env=load_env, env_prefix=env_prefix
+        self.config: Config = config or Config(
+            load_env=load_env,
+            env_prefix=env_prefix,
+            app=self,
         )
-        self.configure_logging = configure_logging
-        self.ctx = ctx or SimpleNamespace()
+        self.configure_logging: bool = configure_logging
+        self.ctx: Any = ctx or SimpleNamespace()
         self.debug = None
-        self.error_handler = error_handler or ErrorHandler(
-            fallback=self.config.FALLBACK_ERROR_FORMAT,
-        )
+        self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.is_running = False
         self.is_stopping = False
-        self.listeners: Dict[str, List[ListenerType]] = defaultdict(list)
+        self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.reload_dirs: Set[Path] = set()
@@ -1474,6 +1474,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     async def _startup(self):
         self.signalize()
         self.finalize()
+        ErrorHandler.finalize(
+            self.error_handler, fallback=self.config.FALLBACK_ERROR_FORMAT
+        )
         TouchUp.run(self)
 
     async def _server_event(

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import pytest
 
@@ -206,3 +207,23 @@ def test_exception_handler_processed_request_middleware(exception_handler_app):
     request, response = exception_handler_app.test_client.get("/8")
     assert response.status == 200
     assert response.text == "Done."
+
+
+def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
+    class CustomErrorHandler(ErrorHandler):
+        def lookup(self, exception):
+            return super().lookup(exception, None)
+
+    exception_handler_app.error_handler = CustomErrorHandler()
+
+    with caplog.at_level(logging.WARNING):
+        _, response = exception_handler_app.test_client.get("/1")
+
+    assert caplog.records[0].message == (
+        "You are using a deprecated error handler. The lookup method should "
+        "accept two positional parameters: (exception, route_name: "
+        "Optional[str]). Until you upgrade your ErrorHandler.lookup, "
+        "Blueprint specific exceptions will not work properly. Beginning in "
+        "v22.3, the legacy style lookup method will not work at all."
+    )
+    assert response.status == 400

@@ -286,36 +286,6 @@ def test_allow_fallback_error_format_set_main_process_start(app):
     assert response.content_type == "text/plain; charset=utf-8"
 
 
-def test_setting_fallback_to_non_default_raise_warning(app):
-    app.error_handler = ErrorHandler(fallback="text")
-
-    assert app.error_handler.fallback == "text"
-
-    with pytest.warns(
-        UserWarning,
-        match=(
-            "Overriding non-default ErrorHandler fallback value. "
-            "Changing from text to auto."
-        ),
-    ):
-        app.config.FALLBACK_ERROR_FORMAT = "auto"
-
-    assert app.error_handler.fallback == "auto"
-
-    app.config.FALLBACK_ERROR_FORMAT = "text"
-
-    with pytest.warns(
-        UserWarning,
-        match=(
-            "Overriding non-default ErrorHandler fallback value. "
-            "Changing from text to json."
-        ),
-    ):
-        app.config.FALLBACK_ERROR_FORMAT = "json"
-
-    assert app.error_handler.fallback == "json"
-
-
 def test_allow_fallback_error_format_in_config_injection():
     class MyConfig(Config):
         FALLBACK_ERROR_FORMAT = "text"

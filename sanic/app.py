@@ -194,8 +194,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.blueprints: Dict[str, Blueprint] = {}
         self.config: Config = config or Config(
             load_env=load_env,
-            env_prefix=env_prefix,
-            app=self,
+            env_prefix=env_prefix
         )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()

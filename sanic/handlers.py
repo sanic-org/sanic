@@ -1,12 +1,14 @@
 from inspect import signature
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
 from sanic.exceptions import (
     ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
+    SanicException,
 )
+from sanic.helpers import Default, _default
 from sanic.log import error_logger
 from sanic.models.handler_types import RouteHandler
 from sanic.response import text
@@ -27,23 +29,35 @@ class ErrorHandler:
 
     # Beginning in v22.3, the base renderer will be TextRenderer
     def __init__(
-        self, fallback: str = "auto", base: Type[BaseRenderer] = HTMLRenderer
+        self,
+        fallback: Union[str, Default] = _default,
+        base: Type[BaseRenderer] = HTMLRenderer,
     ):
         self.handlers: List[Tuple[Type[BaseException], RouteHandler]] = []
         self.cached_handlers: Dict[
             Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
         ] = {}
         self.debug = False
-        self.fallback = fallback
+        self._fallback = fallback
         self.base = base
+
+    @property
+    def fallback(self):
+        if self._fallback is _default:
+            return "auto"
+        return self._fallback
+
+    @fallback.setter
+    def fallback(self, value: str):
+        if not isinstance(value, str):
+            raise SanicException(
+                f"Cannot set error handler fallback to: {value=}"
+            )
+        self._fallback = value
 
     @classmethod
     def finalize(cls, error_handler, fallback: Optional[str] = None):
-        if (
-            fallback
-            and fallback != "auto"
-            and error_handler.fallback == "auto"
-        ):
+        if fallback and error_handler._fallback is _default:
             error_handler.fallback = fallback
 
         if not isinstance(error_handler, cls):
@@ -188,12 +202,17 @@ class ErrorHandler:
         :return:
         """
         self.log(request, exception)
+        fallback = (
+            request.app.config.FALLBACK_ERROR_FORMAT
+            if self._fallback is _default
+            else self.fallback
+        )
         return exception_response(
             request,
             exception,
             debug=self.debug,
             base=self.base,
-            fallback=self.fallback,
+            fallback=fallback,
         )
 
     @staticmethod

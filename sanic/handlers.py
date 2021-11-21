@@ -80,12 +80,7 @@ class ErrorHandler:
         )
 
     @classmethod
-    def _get_fallback_value(
-        cls, error_handler: ErrorHandler, config: Optional[Config] = None
-    ):
-        if not config:
-            return error_handler.fallback
-
+    def _get_fallback_value(cls, error_handler: ErrorHandler, config: Config):
         if error_handler._fallback is not _default:
             if config._FALLBACK_ERROR_FORMAT is _default:
                 return error_handler.fallback
@@ -147,7 +142,8 @@ class ErrorHandler:
                     "work at all."
                 ),
             )
-            error_handler._lookup = error_handler._legacy_lookup  # type: ignore
+            legacy_lookup = error_handler._legacy_lookup
+            error_handler._lookup = legacy_lookup  # type: ignore
 
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)

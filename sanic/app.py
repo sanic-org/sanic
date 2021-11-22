@@ -747,7 +747,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     response = await response
             except Exception as e:
                 if isinstance(e, SanicException):
-                    response = self.error_handler._default(request, e)
+                    response = self.error_handler.default(request, e)
                 elif self.debug:
                     response = HTTPResponse(
                         (

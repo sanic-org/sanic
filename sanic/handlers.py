@@ -54,7 +54,7 @@ class ErrorHandler:
 
     @property
     def fallback(self):
-        # This is for backwards compat and can be removed in v22.6
+        # This id for backwards compat and can be removed in v22.6
         if self._fallback is _default:
             return DEFAULT_FORMAT
         return self._fallback
@@ -85,14 +85,11 @@ class ErrorHandler:
             if config._FALLBACK_ERROR_FORMAT is _default:
                 return error_handler.fallback
 
-            # This prevents the warning from being raised over and over again
-            if error_handler._fallback != config._FALLBACK_ERROR_FORMAT:
-                error_logger.warning(
-                    "Conflicting error fallback values were found in the "
-                    "error handler and in the app.config while handling an "
-                    "exception. Using the value from app.config."
-                )
-
+            error_logger.warning(
+                "Conflicting error fallback values were found in the "
+                "error handler and in the app.config while handling an "
+                "exception. Using the value from app.config."
+            )
         return config.FALLBACK_ERROR_FORMAT
 
     @classmethod
@@ -112,12 +109,6 @@ class ErrorHandler:
                 ),
             )
 
-            if (
-                fallback != DEFAULT_FORMAT
-                and error_handler._fallback is _default
-            ):
-                error_handler._fallback = fallback
-
         if config is None:
             error_logger.warning(
                 DeprecationWarning(
@@ -125,10 +116,13 @@ class ErrorHandler:
                     "for ErrorHandler.finalize()."
                 ),
             )
-        else:
-            error_handler._fallback = cls._get_fallback_value(
-                error_handler, config
-            )
+
+        if (
+            fallback
+            and fallback != DEFAULT_FORMAT
+            and error_handler._fallback is _default
+        ):
+            error_handler._fallback = fallback
 
         if not isinstance(error_handler, cls):
             error_logger.warning(
@@ -256,16 +250,6 @@ class ErrorHandler:
             else:
                 return text("An error occurred while handling an error", 500)
         return response
-
-    def _default(self, request, exception):
-        """
-        This is for backwards compat and can be removed in v22.6.
-        It allows `self.fallback` to stay updated when handling an
-        error, even if `app.config.ERROR_FALLBACK_FORMAT` was updated
-        after the error handler was finalized.
-        """
-        self._fallback = self._get_fallback_value(self, request.app.config)
-        return self.default(request, exception)
 
     def default(self, request, exception):
         """

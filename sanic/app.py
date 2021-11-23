@@ -775,6 +775,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if request.stream:
                 response = request.stream.response
         if isinstance(response, BaseHTTPResponse):
+            await self.dispatch(
+                "http.lifecycle.response",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": response,
+                },
+            )
             await response.send(end_stream=True)
         else:
             raise ServerError(
@@ -959,6 +967,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
     # Execution
     # -------------------------------------------------------------------- #
+
+    def make_coffee(self, *args, **kwargs):
+        self.state.coffee = True
+        self.run(*args, **kwargs)
 
     def run(
         self,
@@ -1562,7 +1574,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 extra.update(self.config.MOTD_DISPLAY)
 
             logo = (
-                get_logo()
+                get_logo(coffee=self.state.coffee)
                 if self.config.LOGO == "" or self.config.LOGO is True
                 else self.config.LOGO
             )

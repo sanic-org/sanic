@@ -25,12 +25,13 @@ from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
 
 
+dumps: t.Callable[..., str]
 try:
     from ujson import dumps
 
     dumps = partial(dumps, escape_forward_slashes=False)
 except ImportError:  # noqa
-    from json import dumps  # type: ignore
+    from json import dumps
 
 
 FALLBACK_TEXT = (
@@ -44,6 +45,8 @@ class BaseRenderer:
     """
     Base class that all renderers must inherit from.
     """
+
+    dumps = staticmethod(dumps)
 
     def __init__(self, request, exception, debug):
         self.request = request
@@ -112,14 +115,16 @@ class HTMLRenderer(BaseRenderer):
     TRACEBACK_STYLE = """
         html { font-family: sans-serif }
         h2 { color: #888; }
-        .tb-wrapper p { margin: 0 }
+        .tb-wrapper p, dl, dd { margin: 0 }
         .frame-border { margin: 1rem }
-        .frame-line > * { padding: 0.3rem 0.6rem }
-        .frame-line { margin-bottom: 0.3rem }
-        .frame-code { font-size: 16px; padding-left: 4ch }
-        .tb-wrapper { border: 1px solid #eee }
-        .tb-header { background: #eee; padding: 0.3rem; font-weight: bold }
-        .frame-descriptor { background: #e2eafb; font-size: 14px }
+        .frame-line > *, dt, dd { padding: 0.3rem 0.6rem }
+        .frame-line, dl { margin-bottom: 0.3rem }
+        .frame-code, dd { font-size: 16px; padding-left: 4ch }
+        .tb-wrapper, dl { border: 1px solid #eee }
+        .tb-header,.obj-header {
+            background: #eee; padding: 0.3rem; font-weight: bold
+        }
+        .frame-descriptor, dt { background: #e2eafb; font-size: 14px }
     """
     TRACEBACK_WRAPPER_HTML = (
         "<div class=tb-header>{exc_name}: {exc_value}</div>"
@@ -138,6 +143,11 @@ class HTMLRenderer(BaseRenderer):
         "<p class=frame-code><code>{0.line}</code>"
         "</div>"
     )
+    OBJECT_WRAPPER_HTML = (
+        "<div class=obj-header>{title}</div>"
+        "<dl class={obj_type}>{display_html}</dl>"
+    )
+    OBJECT_DISPLAY_HTML = "<dt>{key}</dt><dd><code>{value}</code></dd>"
     OUTPUT_HTML = (
         "<!DOCTYPE html><html lang=en>"
         "<meta charset=UTF-8><title>{title}</title>\n"
@@ -152,7 +162,7 @@ class HTMLRenderer(BaseRenderer):
                 title=self.title,
                 text=self.text,
                 style=self.TRACEBACK_STYLE,
-                body=self._generate_body(),
+                body=self._generate_body(full=True),
             ),
             status=self.status,
         )
@@ -163,7 +173,7 @@ class HTMLRenderer(BaseRenderer):
                 title=self.title,
                 text=self.text,
                 style=self.TRACEBACK_STYLE,
-                body="",
+                body=self._generate_body(full=False),
             ),
             status=self.status,
             headers=self.headers,
@@ -177,26 +187,48 @@ class HTMLRenderer(BaseRenderer):
     def title(self):
         return escape(f"⚠️ {super().title}")
 
-    def _generate_body(self):
-        _, exc_value, __ = sys.exc_info()
-        exceptions = []
-        while exc_value:
-            exceptions.append(self._format_exc(exc_value))
-            exc_value = exc_value.__cause__
+    def _generate_body(self, *, full):
+        lines = []
+        if full:
+            _, exc_value, __ = sys.exc_info()
+            exceptions = []
+            while exc_value:
+                exceptions.append(self._format_exc(exc_value))
+                exc_value = exc_value.__cause__
 
-        traceback_html = self.TRACEBACK_BORDER.join(reversed(exceptions))
-        appname = escape(self.request.app.name)
-        name = escape(self.exception.__class__.__name__)
-        value = escape(self.exception)
-        path = escape(self.request.path)
-        lines = [
-            f"<h2>Traceback of {appname} (most recent call last):</h2>",
-            f"{traceback_html}",
-            "<div class=summary><p>",
-            f"<b>{name}: {value}</b> while handling path <code>{path}</code>",
-            "</div>",
-        ]
+            traceback_html = self.TRACEBACK_BORDER.join(reversed(exceptions))
+            appname = escape(self.request.app.name)
+            name = escape(self.exception.__class__.__name__)
+            value = escape(self.exception)
+            path = escape(self.request.path)
+            lines += [
+                f"<h2>Traceback of {appname} " "(most recent call last):</h2>",
+                f"{traceback_html}",
+                "<div class=summary><p>",
+                f"<b>{name}: {value}</b> "
+                f"while handling path <code>{path}</code>",
+                "</div>",
+            ]
+
+        for attr, display in (("context", True), ("extra", bool(full))):
+            info = getattr(self.exception, attr, None)
+            if info and display:
+                lines.append(self._generate_object_display(info, attr))
+
         return "\n".join(lines)
+
+    def _generate_object_display(
+        self, obj: t.Dict[str, t.Any], descriptor: str
+    ) -> str:
+        display = "".join(
+            self.OBJECT_DISPLAY_HTML.format(key=key, value=value)
+            for key, value in obj.items()
+        )
+        return self.OBJECT_WRAPPER_HTML.format(
+            title=descriptor.title(),
+            display_html=display,
+            obj_type=descriptor.lower(),
+        )
 
     def _format_exc(self, exc):
         frames = extract_tb(exc.__traceback__)
@@ -224,7 +256,7 @@ class TextRenderer(BaseRenderer):
                 title=self.title,
                 text=self.text,
                 bar=("=" * len(self.title)),
-                body=self._generate_body(),
+                body=self._generate_body(full=True),
             ),
             status=self.status,
         )
@@ -235,7 +267,7 @@ class TextRenderer(BaseRenderer):
                 title=self.title,
                 text=self.text,
                 bar=("=" * len(self.title)),
-                body="",
+                body=self._generate_body(full=False),
             ),
             status=self.status,
             headers=self.headers,
@@ -245,21 +277,31 @@ class TextRenderer(BaseRenderer):
     def title(self):
         return f"⚠️ {super().title}"
 
-    def _generate_body(self):
-        _, exc_value, __ = sys.exc_info()
-        exceptions = []
+    def _generate_body(self, *, full):
+        lines = []
+        if full:
+            _, exc_value, __ = sys.exc_info()
+            exceptions = []
 
-        lines = [
-            f"{self.exception.__class__.__name__}: {self.exception} while "
-            f"handling path {self.request.path}",
-            f"Traceback of {self.request.app.name} (most recent call last):\n",
-        ]
+            lines += [
+                f"{self.exception.__class__.__name__}: {self.exception} while "
+                f"handling path {self.request.path}",
+                f"Traceback of {self.request.app.name} "
+                "(most recent call last):\n",
+            ]
 
-        while exc_value:
-            exceptions.append(self._format_exc(exc_value))
-            exc_value = exc_value.__cause__
+            while exc_value:
+                exceptions.append(self._format_exc(exc_value))
+                exc_value = exc_value.__cause__
 
-        return "\n".join(lines + exceptions[::-1])
+            lines += exceptions[::-1]
+
+        for attr, display in (("context", True), ("extra", bool(full))):
+            info = getattr(self.exception, attr, None)
+            if info and display:
+                lines += self._generate_object_display_list(info, attr)
+
+        return "\n".join(lines)
 
     def _format_exc(self, exc):
         frames = "\n\n".join(
@@ -272,6 +314,13 @@ class TextRenderer(BaseRenderer):
         )
         return f"{self.SPACER}{exc.__class__.__name__}: {exc}\n{frames}"
 
+    def _generate_object_display_list(self, obj, descriptor):
+        lines = [f"\n{descriptor.title()}"]
+        for key, value in obj.items():
+            display = self.dumps(value)
+            lines.append(f"{self.SPACER * 2}{key}: {display}")
+        return lines
+
 
 class JSONRenderer(BaseRenderer):
     """
@@ -280,11 +329,11 @@ class JSONRenderer(BaseRenderer):
 
     def full(self) -> HTTPResponse:
         output = self._generate_output(full=True)
-        return json(output, status=self.status, dumps=dumps)
+        return json(output, status=self.status, dumps=self.dumps)
 
     def minimal(self) -> HTTPResponse:
         output = self._generate_output(full=False)
-        return json(output, status=self.status, dumps=dumps)
+        return json(output, status=self.status, dumps=self.dumps)
 
     def _generate_output(self, *, full):
         output = {
@@ -292,6 +341,11 @@ class JSONRenderer(BaseRenderer):
             "status": self.status,
             "message": self.text,
         }
+
+        for attr, display in (("context", True), ("extra", bool(full))):
+            info = getattr(self.exception, attr, None)
+            if info and display:
+                output[attr] = info
 
         if full:
             _, exc_value, __ = sys.exc_info()
@@ -383,7 +437,6 @@ def exception_response(
     """
     content_type = None
 
-    print("exception_response", fallback)
     if not renderer:
         # Make sure we have something set
         renderer = base

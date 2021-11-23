@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
       - main
+    types: [review_requested, ready_for_review]
 
 jobs:
   docsLinter:

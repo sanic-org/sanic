@@ -18,6 +18,16 @@ from sanic.exceptions import (
 from sanic.response import text
 
 
+def dl_to_dict(soup, css_class):
+    keys, values = [], []
+    for dl in soup.find_all("dl", {"class": css_class}):
+        for dt in dl.find_all("dt"):
+            keys.append(dt.text.strip())
+        for dd in dl.find_all("dd"):
+            values.append(dd.text.strip())
+    return dict(zip(keys, values))
+
+
 class SanicExceptionTestException(Exception):
     pass
 
@@ -264,3 +274,110 @@ def test_exception_in_ws_logged(caplog):
     error_logs = [r for r in caplog.record_tuples if r[0] == "sanic.error"]
     assert error_logs[1][1] == logging.ERROR
     assert "Exception occurred while handling uri:" in error_logs[1][2]
+
+
+@pytest.mark.parametrize("debug", (True, False))
+def test_contextual_exception_context(debug):
+    app = Sanic(__name__)
+
+    class TeapotError(SanicException):
+        status_code = 418
+        message = "Sorry, I cannot brew coffee"
+
+    def fail():
+        raise TeapotError(context={"foo": "bar"})
+
+    app.post("/coffee/json", error_format="json")(lambda _: fail())
+    app.post("/coffee/html", error_format="html")(lambda _: fail())
+    app.post("/coffee/text", error_format="text")(lambda _: fail())
+
+    _, response = app.test_client.post("/coffee/json", debug=debug)
+    assert response.status == 418
+    assert response.json["message"] == "Sorry, I cannot brew coffee"
+    assert response.json["context"] == {"foo": "bar"}
+
+    _, response = app.test_client.post("/coffee/html", debug=debug)
+    soup = BeautifulSoup(response.body, "html.parser")
+    dl = dl_to_dict(soup, "context")
+    assert response.status == 418
+    assert "Sorry, I cannot brew coffee" in soup.find("p").text
+    assert dl == {"foo": "bar"}
+
+    _, response = app.test_client.post("/coffee/text", debug=debug)
+    lines = list(map(lambda x: x.decode(), response.body.split(b"\n")))
+    idx = lines.index("Context") + 1
+    assert response.status == 418
+    assert lines[2] == "Sorry, I cannot brew coffee"
+    assert lines[idx] == '    foo: "bar"'
+
+
+@pytest.mark.parametrize("debug", (True, False))
+def test_contextual_exception_extra(debug):
+    app = Sanic(__name__)
+
+    class TeapotError(SanicException):
+        status_code = 418
+
+        @property
+        def message(self):
+            return f"Found {self.extra['foo']}"
+
+    def fail():
+        raise TeapotError(extra={"foo": "bar"})
+
+    app.post("/coffee/json", error_format="json")(lambda _: fail())
+    app.post("/coffee/html", error_format="html")(lambda _: fail())
+    app.post("/coffee/text", error_format="text")(lambda _: fail())
+
+    _, response = app.test_client.post("/coffee/json", debug=debug)
+    assert response.status == 418
+    assert response.json["message"] == "Found bar"
+    if debug:
+        assert response.json["extra"] == {"foo": "bar"}
+    else:
+        assert "extra" not in response.json
+
+    _, response = app.test_client.post("/coffee/html", debug=debug)
+    soup = BeautifulSoup(response.body, "html.parser")
+    dl = dl_to_dict(soup, "extra")
+    assert response.status == 418
+    assert "Found bar" in soup.find("p").text
+    if debug:
+        assert dl == {"foo": "bar"}
+    else:
+        assert not dl
+
+    _, response = app.test_client.post("/coffee/text", debug=debug)
+    lines = list(map(lambda x: x.decode(), response.body.split(b"\n")))
+    assert response.status == 418
+    assert lines[2] == "Found bar"
+    if debug:
+        idx = lines.index("Extra") + 1
+        assert lines[idx] == '    foo: "bar"'
+    else:
+        assert "Extra" not in lines
+
+
+@pytest.mark.parametrize("override", (True, False))
+def test_contextual_exception_functional_message(override):
+    app = Sanic(__name__)
+
+    class TeapotError(SanicException):
+        status_code = 418
+
+        @property
+        def message(self):
+            return f"Received foo={self.context['foo']}"
+
+    @app.post("/coffee", error_format="json")
+    async def make_coffee(_):
+        error_args = {"context": {"foo": "bar"}}
+        if override:
+            error_args["message"] = "override"
+        raise TeapotError(**error_args)
+
+    _, response = app.test_client.post("/coffee", debug=True)
+    error_message = "override" if override else "Received foo=bar"
+    assert response.status == 418
+    assert response.json["message"] == error_message
+    assert response.json["context"] == {"foo": "bar"}

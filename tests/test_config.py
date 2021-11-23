@@ -1,9 +1,9 @@
 from contextlib import contextmanager
-from email import message
 from os import environ
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import dedent
+from unittest.mock import Mock
 
 import pytest
 
@@ -360,3 +360,31 @@ def test_deprecation_notice_when_setting_logo(app):
     )
     with pytest.warns(DeprecationWarning, match=message):
         app.config.LOGO = "My Custom Logo"
+
+
+def test_config_set_methods(app, monkeypatch):
+    post_set = Mock()
+    monkeypatch.setattr(Config, "_post_set", post_set)
+
+    app.config.FOO = 1
+    post_set.assert_called_once_with("FOO", 1)
+    post_set.reset_mock()
+
+    app.config["FOO"] = 2
+    post_set.assert_called_once_with("FOO", 2)
+    post_set.reset_mock()
+
+    app.config.update({"FOO": 3})
+    post_set.assert_called_once_with("FOO", 3)
+    post_set.reset_mock()
+
+    app.config.update([("FOO", 4)])
+    post_set.assert_called_once_with("FOO", 4)
+    post_set.reset_mock()
+
+    app.config.update(FOO=5)
+    post_set.assert_called_once_with("FOO", 5)
+    post_set.reset_mock()
+
+    app.config.update_config({"FOO": 6})
+    post_set.assert_called_once_with("FOO", 6)

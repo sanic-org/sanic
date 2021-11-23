@@ -191,7 +191,7 @@ class RouteMixin:
         methods: Iterable[str] = frozenset({"GET"}),
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         stream: bool = False,
         version_prefix: str = "/v",
@@ -256,7 +256,7 @@ class RouteMixin:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -293,7 +293,7 @@ class RouteMixin:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -329,7 +329,7 @@ class RouteMixin:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -364,7 +364,7 @@ class RouteMixin:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -408,7 +408,7 @@ class RouteMixin:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -453,7 +453,7 @@ class RouteMixin:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         stream=False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -498,7 +498,7 @@ class RouteMixin:
         uri: str,
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -535,7 +535,7 @@ class RouteMixin:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols: Optional[List[str]] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         apply: bool = True,
         version_prefix: str = "/v",
@@ -576,7 +576,7 @@ class RouteMixin:
         host: Optional[str] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -918,7 +918,7 @@ class RouteMixin:
 
         return route
 
-    def _determine_error_format(self, handler) -> str:
+    def _determine_error_format(self, handler) -> Optional[str]:
         if not isinstance(handler, CompositionView):
             try:
                 src = dedent(getsource(handler))
@@ -930,7 +930,7 @@ class RouteMixin:
             except (OSError, TypeError):
                 ...
 
-        return "auto"
+        return None
 
     def _get_response_types(self, node):
         types = set()

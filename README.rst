@@ -11,7 +11,7 @@ Sanic | Build fast. Run fast.
     :stub-columns: 1
 
     * - Build
-      - | |Py39Test| |Py38Test| |Py37Test| |Codecov|
+      - | |Py39Test| |Py38Test| |Py37Test|
     * - Docs
       - | |UserGuide| |Documentation|
     * - Package
@@ -27,8 +27,6 @@ Sanic | Build fast. Run fast.
    :target: https://community.sanicframework.org/
 .. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
    :target: https://discord.gg/FARQzAEMAA
-.. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/sanic-org/sanic
 .. |Py39Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml/badge.svg?branch=main
    :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
 .. |Py38Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml/badge.svg?branch=main

@@ -26,6 +26,7 @@ def protocol(app, mock_transport):
     protocol = HttpProtocol(loop=loop, app=app)
     protocol.connection_made(mock_transport)
     protocol._setup_connection()
+    protocol._http.init_for_request()
     protocol._task = Mock(spec=asyncio.Task)
     protocol._task.cancel = Mock()
     return protocol

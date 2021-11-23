@@ -3,12 +3,7 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
-    paths:
-      - sanic/*
-      - tests/*
+    types: [review_requested, ready_for_review]
 
 jobs:
   testPy37:

@@ -1,4 +1,6 @@
 from sanic import Sanic, response, text
+from sanic.handlers import ErrorHandler
+from sanic.server.async_server import AsyncioServer
 
 
 HTTP_PORT = 9999
@@ -32,20 +34,40 @@ def proxy(request, path):
     return response.redirect(url)
 
 
-@https.listener("main_process_start")
+@https.main_process_start
 async def start(app, _):
-    global http
-    app.http_server = await http.create_server(
+    http_server = await http.create_server(
         port=HTTP_PORT, return_asyncio_server=True
     )
-    app.http_server.after_start()
+    app.add_task(runner(http, http_server))
+    app.ctx.http_server = http_server
+    app.ctx.http = http
 
 
-@https.listener("main_process_stop")
+@https.main_process_stop
 async def stop(app, _):
-    app.http_server.before_stop()
-    await app.http_server.close()
-    app.http_server.after_stop()
+    await app.ctx.http_server.before_stop()
+    await app.ctx.http_server.close()
+    for connection in app.ctx.http_server.connections:
+        connection.close_if_idle()
+    await app.ctx.http_server.after_stop()
+    app.ctx.http = False
+
+
+async def runner(app: Sanic, app_server: AsyncioServer):
+    app.is_running = True
+    try:
+        app.signalize()
+        app.finalize()
+        ErrorHandler.finalize(app.error_handler)
+        app_server.init = True
+
+        await app_server.before_start()
+        await app_server.after_start()
+        await app_server.serve_forever()
+    finally:
+        app.is_running = False
+        app.is_stopping = True
 
 
 https.run(port=HTTPS_PORT, debug=True)

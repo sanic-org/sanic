@@ -109,6 +109,7 @@ class Request:
         "stream",
         "transport",
         "version",
+        "response",
     )
 
     def __init__(
@@ -149,6 +150,7 @@ class Request:
         self.parsed_not_grouped_args: DefaultDict[
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
+        self.response: Optional[BaseHTTPResponse] = None
         self.request_middleware_started = False
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
@@ -172,6 +174,11 @@ class Request:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
+        if self.response:
+            logger.warning(
+                "Another response instance was created before, please consider "
+                "re-use it rather than creating a new one."
+            )
         # This logic of determining which response to use is subject to change
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(
@@ -193,6 +200,7 @@ class Request:
             error_logger.exception(
                 "Exception occurred in one of response middleware handlers"
             )
+        self.response = response
         return response
 
     async def receive_body(self):

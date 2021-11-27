@@ -32,7 +32,7 @@ from httptools import parse_url  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import InvalidUsage, SanicException
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -175,9 +175,9 @@ class Request:
         content_type: Optional[str] = None,
     ):
         if self.response:
-            logger.warning(
-                "Another response instance was created before, please consider "
-                "re-use it rather than creating a new one."
+            raise SanicException(
+                "Another response instance was created, "
+                "creating the second response is not allowed for this request."
             )
         # This logic of determining which response to use is subject to change
         if response is None:

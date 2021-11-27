@@ -590,10 +590,6 @@ class Http(metaclass=TouchUpMeta):
 
     @property
     def send(self):
-        if self.response_func is None and self.stage == Stage.IDLE:
-            raise SanicException(
-                "Response stream was ended, no more response data is allowed to be sent."
-            )
         return self.response_func
 
     @classmethod

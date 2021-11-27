@@ -19,8 +19,9 @@ from warnings import warn
 from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
+from sanic.exceptions import SanicException
 from sanic.helpers import has_message_body, remove_entity_headers
-from sanic.http import Http
+from sanic.http import Http, Stage
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
@@ -112,8 +113,13 @@ class BaseHTTPResponse:
         """
         if data is None and end_stream is None:
             end_stream = True
-        if end_stream and not data and self.stream.send is None:
-            return
+        if self.stream.send is None:
+            if end_stream and not data:
+                return
+            elif self.stream.stage == Stage.IDLE:
+                raise SanicException(
+                    "Response stream was ended, no more response data is allowed to be sent."
+                )
         data = (
             data.encode()  # type: ignore
             if hasattr(data, "encode")

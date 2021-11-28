@@ -18,7 +18,6 @@ from sanic_routing.route import Route  # type: ignore
 if TYPE_CHECKING:
     from sanic.server import ConnInfo
     from sanic.app import Sanic
-    from sanic.http import Http
 
 import email.utils
 import uuid
@@ -32,7 +31,7 @@ from httptools import parse_url  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import InvalidUsage, SanicException
+from sanic.exceptions import InvalidUsage, ResponseException, SanicException
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -42,6 +41,7 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
+from sanic.http import Http, Stage
 from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
@@ -109,7 +109,6 @@ class Request:
         "stream",
         "transport",
         "version",
-        "response",
     )
 
     def __init__(
@@ -150,7 +149,6 @@ class Request:
         self.parsed_not_grouped_args: DefaultDict[
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
-        self.response: Optional[BaseHTTPResponse] = None
         self.request_middleware_started = False
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
@@ -166,6 +164,15 @@ class Request:
     def generate_id(*_):
         return uuid.uuid4()
 
+    def reset_response(self):
+        if isinstance(self.stream, Http):
+            if self.stream.stage in (Stage.RESPONSE, Stage.IDLE):
+                raise ResponseException(
+                    "Response can't be reset because it was already sent."
+                )
+            elif self.stream.response:
+                self.stream.response = None
+
     async def respond(
         self,
         response: Optional[BaseHTTPResponse] = None,
@@ -174,11 +181,24 @@ class Request:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
-        if self.response:
-            raise SanicException(
-                "Another response instance was created, "
-                "creating the second response is not allowed for this request."
-            )
+
+        if isinstance(self.stream, Http):
+            if self.stream.response:
+                exception = (
+                    ResponseException
+                    if self.stream.stage in (Stage.RESPONSE, Stage.IDLE)
+                    else SanicException
+                )
+                raise exception(
+                    "Another response was created for this request. "
+                    "Creating the second response is not allowed. "
+                    "The response of this request can be reset if not yet "
+                    "sent."
+                )
+            if self.stream.stage in (Stage.RESPONSE, Stage.IDLE):
+                raise ResponseException(
+                    "Cannot send response to this request twice."
+                )
         # This logic of determining which response to use is subject to change
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(
@@ -200,7 +220,6 @@ class Request:
             error_logger.exception(
                 "Exception occurred in one of response middleware handlers"
             )
-        self.response = response
         return response
 
     async def receive_body(self):

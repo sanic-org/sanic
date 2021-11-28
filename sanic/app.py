@@ -63,6 +63,7 @@ from sanic.exceptions import (
     InvalidUsage,
     SanicException,
     ServerError,
+    ShouldNotHandleException,
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
@@ -734,6 +735,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             inline=True,
             context={"request": request, "exception": exception},
         )
+
+        if isinstance(exception, ShouldNotHandleException):
+            error_logger.exception(exception)
+            return
+
+        request.reset_response()
 
         # -------------------------------------------- #
         # Request Middleware

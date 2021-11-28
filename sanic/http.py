@@ -15,7 +15,6 @@ from sanic.exceptions import (
     HeaderExpectationFailed,
     InvalidUsage,
     PayloadTooLarge,
-    SanicException,
     ServerError,
     ServiceUnavailable,
 )

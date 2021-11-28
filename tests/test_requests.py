@@ -16,7 +16,7 @@ from sanic_testing.testing import (
 
 from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import html, json, text
 
 
@@ -2174,3 +2174,32 @@ def test_handler_overload(app):
     _, response = app.test_client.post("/long/sub/route")
     assert response.status == 200
     assert response.json == {}
+
+
+def test_second_response(app):
+    @app.exception(ServerError)
+    def handler_exception(request, exception):
+        return text("Internal Server Error.", 500)
+
+    @app.get("/")
+    async def two_responses(request: Request):
+        resp1 = await request.respond()
+        resp2 = await request.respond()
+
+    request, response = app.test_client.get("/")
+    assert response.status == 500
+
+
+@pytest.mark.asyncio
+async def test_second_response_asgi(app):
+    @app.exception(ServerError)
+    def handler_exception(request, exception):
+        return text("Internal Server Error.", 500)
+
+    @app.get("/")
+    async def two_responses(request: Request):
+        resp1 = await request.respond()
+        resp2 = await request.respond()
+
+    request, response = await app.asgi_client.get("/")
+    assert response.status == 500

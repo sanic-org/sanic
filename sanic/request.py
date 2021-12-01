@@ -31,7 +31,7 @@ from httptools import parse_url  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import InvalidUsage, ResponseException, SanicException
+from sanic.exceptions import InvalidUsage
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -164,15 +164,6 @@ class Request:
     def generate_id(*_):
         return uuid.uuid4()
 
-    def reset_response(self):
-        if isinstance(self.stream, Http):
-            if self.stream.stage in (Stage.RESPONSE, Stage.IDLE):
-                raise ResponseException(
-                    "Response can't be reset because it was already sent."
-                )
-            elif self.stream.response:
-                self.stream.response = None
-
     async def respond(
         self,
         response: Optional[BaseHTTPResponse] = None,
@@ -182,14 +173,6 @@ class Request:
         content_type: Optional[str] = None,
     ):
 
-        if isinstance(self.stream, Http):
-            if self.stream.response:
-                exception = (
-                    ResponseException
-                    if self.stream.stage in (Stage.RESPONSE, Stage.IDLE)
-                    else SanicException
-                )
-                raise exception("Cannot send response to this request twice.")
         # This logic of determining which response to use is subject to change
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(

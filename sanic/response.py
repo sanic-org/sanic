@@ -19,7 +19,7 @@ from warnings import warn
 from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
-from sanic.exceptions import ResponseException, SanicException
+from sanic.exceptions import SanicException
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http, Stage
 from sanic.models.protocol_types import HTMLProtocol, Range
@@ -50,6 +50,7 @@ class BaseHTTPResponse:
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
+        self.middlewares_ran: bool = True
 
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
@@ -117,7 +118,7 @@ class BaseHTTPResponse:
             if end_stream and not data:
                 return
             elif self.stream.stage == Stage.IDLE:
-                raise ResponseException(
+                raise SanicException(
                     "Response stream was ended, no more response data is"
                     " allow ed to be sent."
                 )

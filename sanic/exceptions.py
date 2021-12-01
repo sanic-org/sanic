@@ -266,14 +266,3 @@ def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
     )
 
     raise SanicException(message=message, status_code=status_code)
-
-
-class ShouldNotHandleException(SanicException):
-    pass
-
-
-class ResponseException(ShouldNotHandleException):
-    """
-    Can be used when the response has already been sent and 500 error response
-    page won't be generated.
-    """

@@ -61,13 +61,12 @@ from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
-    ResponseException,
     SanicException,
     ServerError,
-    ShouldNotHandleException,
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.http import Http, Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
@@ -737,17 +736,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             context={"request": request, "exception": exception},
         )
 
-        if isinstance(exception, ShouldNotHandleException):
-            error_logger.exception(exception)
-            return
-        try:
-            request.reset_response()
-        except ResponseException as _:
+        if isinstance(request.stream, Http) and request.stream.stage in (
+            Stage.RESPONSE,
+            Stage.IDLE,
+        ):
             error_logger.exception(exception)
             logger.error(
-                "Server error page was not sent to the client for the "
-                "exception above because a previous response has been "
-                "sent at least partially."
+                "The error page was not sent to the client for the "
+                "exception raised above because a previous response has "
+                "already been sent at least partially."
             )
             return
 
@@ -1290,8 +1287,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return None
 
     async def _run_response_middleware(
-        self, request, response, request_name=None
+        self,
+        request: Request,
+        response: BaseHTTPResponse,
+        request_name: Optional[str] = None,
     ):  # no cov
+        if response.middlewares_ran:
+            return response
+        else:
+            response.middlewares_ran = True
         named_middleware = self.named_response_middleware.get(
             request_name, deque()
         )

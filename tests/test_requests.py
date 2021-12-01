@@ -2180,6 +2180,7 @@ def test_second_response(app):
     @app.get("/")
     async def two_responses(request: Request):
         resp1 = await request.respond()
+        resp1.send("some msg")
         resp2 = await request.respond()
 
     request, response = app.test_client.get("/")
@@ -2191,6 +2192,7 @@ async def test_second_response_asgi(app):
     @app.get("/")
     async def two_responses(request: Request):
         resp1 = await request.respond()
+        resp1.send("some msg")
         resp2 = await request.respond()
 
     request, response = await app.asgi_client.get("/")

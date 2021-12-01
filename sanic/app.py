@@ -1287,10 +1287,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return None
 
     async def _run_response_middleware(
-        self,
-        request: Request,
-        response: BaseHTTPResponse,
-        request_name: Optional[str] = None,
+        self, request, response, request_name=None
     ):  # no cov
         if response.middlewares_executed:
             return response

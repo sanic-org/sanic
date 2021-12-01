@@ -61,6 +61,7 @@ from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
     InvalidUsage,
+    ResponseException,
     SanicException,
     ServerError,
     ShouldNotHandleException,
@@ -739,8 +740,16 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         if isinstance(exception, ShouldNotHandleException):
             error_logger.exception(exception)
             return
-
-        request.reset_response()
+        try:
+            request.reset_response()
+        except ResponseException as _:
+            error_logger.exception(exception)
+            logger.error(
+                "Server error page was not sent to the client for the "
+                "exception above because a previous response has been "
+                "sent at least partially."
+            )
+            return
 
         # -------------------------------------------- #
         # Request Middleware

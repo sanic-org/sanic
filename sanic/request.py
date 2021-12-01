@@ -189,16 +189,7 @@ class Request:
                     if self.stream.stage in (Stage.RESPONSE, Stage.IDLE)
                     else SanicException
                 )
-                raise exception(
-                    "Another response was created for this request. "
-                    "Creating the second response is not allowed. "
-                    "The response of this request can be reset if not yet "
-                    "sent."
-                )
-            if self.stream.stage in (Stage.RESPONSE, Stage.IDLE):
-                raise ResponseException(
-                    "Cannot send response to this request twice."
-                )
+                raise exception("Cannot send response to this request twice.")
         # This logic of determining which response to use is subject to change
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(

@@ -2177,10 +2177,6 @@ def test_handler_overload(app):
 
 
 def test_second_response(app):
-    @app.exception(ServerError)
-    def handler_exception(request, exception):
-        return text("Internal Server Error.", 500)
-
     @app.get("/")
     async def two_responses(request: Request):
         resp1 = await request.respond()
@@ -2192,10 +2188,6 @@ def test_second_response(app):
 
 @pytest.mark.asyncio
 async def test_second_response_asgi(app):
-    @app.exception(ServerError)
-    def handler_exception(request, exception):
-        return text("Internal Server Error.", 500)
-
     @app.get("/")
     async def two_responses(request: Request):
         resp1 = await request.respond()

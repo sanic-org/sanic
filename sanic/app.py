@@ -1292,10 +1292,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         response: BaseHTTPResponse,
         request_name: Optional[str] = None,
     ):  # no cov
-        if response.middlewares_ran:
+        if response.middlewares_executed:
             return response
         else:
-            response.middlewares_ran = True
+            response.middlewares_executed = True
         named_middleware = self.named_response_middleware.get(
             request_name, deque()
         )

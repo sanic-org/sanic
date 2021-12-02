@@ -3,10 +3,11 @@ from __future__ import annotations
 from inspect import isclass
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union
 from warnings import warn
 
 from sanic.errorpages import check_error_format
+from sanic.exceptions import SanicException
 from sanic.http import Http
 from sanic.utils import load_module_from_file_location, str_to_bool
 
@@ -45,8 +46,23 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_PING_TIMEOUT": 20,
 }
 
+# These values will be removed from the Config object in v22.6 and moved
+# to the application state
+DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
+
+
+class CastRegistry(list):
+    def add(self, cast: Callable[[str], Any]) -> None:
+        if cast in self:
+            raise SanicException(
+                f"Type {cast.__name__} has already been registered"
+            )
+        self.append(cast)
+
 
 class Config(dict):
+    __registry__ = CastRegistry()
+
     ACCESS_LOG: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
@@ -268,3 +284,31 @@ class Config(dict):
         self.update(config)
 
     load = update_config
+
+    def register_type(self, *cast: Callable[[str], Any]) -> None:
+        for item in cast:
+            self.__registry__.add(item)
+        self.recast()
+
+    def recast(self):
+        registry = self.__registry__
+        for key, value in self.custom_config:
+            if isinstance(value, str):
+                for cast in registry:
+                    try:
+                        self[key] = cast(value)
+                    except ValueError:
+                        ...
+                    else:
+                        break
+
+    @property
+    def custom_config(self):
+        for key, value in self.items():
+            if (
+                key not in DEFAULT_CONFIG
+                and key not in DEPRECATED_CONFIG
+                and not key.startswith("_")
+                and key.isupper()
+            ):
+                yield (key, value)

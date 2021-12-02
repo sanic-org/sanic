@@ -221,7 +221,6 @@ class Config(dict):
 
             _, config_key = key.split(prefix, 1)
 
-            print(self.__registry__)
             for converter in self.__registry__:
                 try:
                     self[config_key] = converter(value)

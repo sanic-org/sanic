@@ -183,11 +183,12 @@ class Request:
         # Check the status of current stream and response.
         re_use_res = False
         try:
-            if self.stream.stage is Stage.IDLE:
-                raise ResponseException(
-                    "Another response was sent previously."
-                )
-            re_use_res = response is (self.stream and self.stream.response)
+            if self.stream is not None:
+                if self.stream.stage is Stage.IDLE:
+                    raise ResponseException(
+                        "Another response was sent previously."
+                    )
+                re_use_res = response is (self.stream and self.stream.response)
         except AttributeError:
             pass
 

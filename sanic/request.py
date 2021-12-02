@@ -172,8 +172,6 @@ class Request:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
-        if isinstance(self.stream, Http) and self.stream.stage is Stage.IDLE:
-            raise ResponseException("Another response was sent previously.")
         # This logic of determining which response to use is subject to change
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(
@@ -181,11 +179,18 @@ class Request:
                 headers=headers,
                 content_type=content_type,
             )
-        re_use_res = (
-            response is (self.stream and self.stream.response)
-            if isinstance(self.stream, Http)
-            else False
-        )
+        
+        # Check the status of current stream and response.
+        re_use_res = False
+        try:
+            if self.stream.stage is Stage.IDLE:
+                raise ResponseException(
+                    "Another response was sent previously."
+                )
+            re_use_res = response is (self.stream and self.stream.response)
+        except AttributeError:
+            pass
+
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)

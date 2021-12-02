@@ -743,7 +743,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             error_logger.exception(exception)
             logger.error(
                 "The error response won't be sent to the client for the exception: "
-                f"\"{exception}\" because a previous response has "
+                f'"{exception}" because a previous response has '
                 "already been sent at least partially."
             )
             return

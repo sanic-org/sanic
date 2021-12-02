@@ -299,7 +299,7 @@ def test_middleware_added_response(app):
     assert response.json["foo"] == "bar"
 
 
-def test_middleware_added_response(app):
+def test_middleware_return_response(app):
     response_middleware_run_count = 0
     request_middleware_run_count = 0
 

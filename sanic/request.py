@@ -179,7 +179,7 @@ class Request:
                 headers=headers,
                 content_type=content_type,
             )
-        
+
         # Check the status of current stream and response.
         re_use_res = False
         try:

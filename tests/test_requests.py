@@ -2174,4 +2174,3 @@ def test_handler_overload(app):
     _, response = app.test_client.post("/long/sub/route")
     assert response.status == 200
     assert response.json == {}
-

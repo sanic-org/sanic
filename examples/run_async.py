@@ -1,9 +1,8 @@
 import asyncio
 
+import uvloop
+
 from sanic import Sanic, response
-
-
-# import uvloop
 
 
 app = Sanic(__name__)
@@ -27,5 +26,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    # asyncio.set_event_loop(uvloop.new_event_loop())
+    asyncio.set_event_loop(uvloop.new_event_loop())
     asyncio.run(main())

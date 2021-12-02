@@ -50,7 +50,6 @@ class BaseHTTPResponse:
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
-        self.middlewares_executed: bool = False
 
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:

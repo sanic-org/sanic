@@ -175,26 +175,29 @@ class Request:
         if isinstance(self.stream, Http) and self.stream.stage is Stage.IDLE:
             raise ResponseException("Another response was sent previously.")
         # This logic of determining which response to use is subject to change
+        re_use_res = False
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(
                 status=status,
                 headers=headers,
                 content_type=content_type,
             )
+            re_use_res = response is (self.stream and self.stream.response)
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)
         # Run response middleware
-        try:
-            response = await self.app._run_response_middleware(
-                self, response, request_name=self.name
-            )
-        except CancelledErrors:
-            raise
-        except Exception:
-            error_logger.exception(
-                "Exception occurred in one of response middleware handlers"
-            )
+        if not re_use_res:
+            try:
+                response = await self.app._run_response_middleware(
+                    self, response, request_name=self.name
+                )
+            except CancelledErrors:
+                raise
+            except Exception:
+                error_logger.exception(
+                    "Exception occurred in one of response middleware handlers"
+                )
         return response
 
     async def receive_body(self):

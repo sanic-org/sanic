@@ -175,14 +175,17 @@ class Request:
         if isinstance(self.stream, Http) and self.stream.stage is Stage.IDLE:
             raise ResponseException("Another response was sent previously.")
         # This logic of determining which response to use is subject to change
-        re_use_res = False
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(
                 status=status,
                 headers=headers,
                 content_type=content_type,
             )
-            re_use_res = response is (self.stream and self.stream.response)
+        re_use_res = (
+            response is (self.stream and self.stream.response)
+            if isinstance(self.stream, Http)
+            else False
+        )
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)

@@ -316,8 +316,8 @@ def test_middleware_added_response(app):
     @app.get("/")
     async def handler(request):
         resp1 = await request.respond()
+        resp2 = await request.respond()
         await resp1.eof()
-        return text("")
 
     _, response = app.test_client.get("/")
     assert response_middleware_run_count == 1

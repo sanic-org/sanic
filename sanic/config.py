@@ -174,11 +174,11 @@ class Config(dict):
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
-        Looks for prefixed environment variables and applies
-        them to the configuration if present. This is called automatically when
-        Sanic starts up to load environment variables into config.
+        Looks for prefixed environment variables and applies them to the
+        configuration if present. This is called automatically when Sanic
+        starts up to load environment variables into config.
 
-        It will automatically hyrdate the following types:
+        It will automatically hydrate the following types:
 
         - ``int``
         - ``float``
@@ -186,19 +186,18 @@ class Config(dict):
 
         Anything else will be imported as a ``str``.
         """
-        for k, v in environ.items():
-            if k.startswith(prefix):
-                _, config_key = k.split(prefix, 1)
+        for key, value in environ.items():
+            if not key.startswith(prefix):
+                continue
+
+            _, config_key = key.split(prefix, 1)
+
+            for converter in (int, float, str_to_bool, str):
                 try:
-                    self[config_key] = int(v)
+                    self[config_key] = converter(value)
+                    break
                 except ValueError:
-                    try:
-                        self[config_key] = float(v)
-                    except ValueError:
-                        try:
-                            self[config_key] = str_to_bool(v)
-                        except ValueError:
-                            self[config_key] = v
+                    pass
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """

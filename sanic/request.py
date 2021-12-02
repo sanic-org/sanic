@@ -31,7 +31,7 @@ from httptools import parse_url  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import InvalidUsage, SanicException
+from sanic.exceptions import InvalidUsage, ResponseException
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -173,9 +173,7 @@ class Request:
         content_type: Optional[str] = None,
     ):
         if isinstance(self.stream, Http) and self.stream.stage is Stage.IDLE:
-            raise SanicException(
-                "Another response was sent previously."
-            )
+            raise ResponseException("Another response was sent previously.")
         # This logic of determining which response to use is subject to change
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(

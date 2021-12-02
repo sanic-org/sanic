@@ -19,7 +19,7 @@ from warnings import warn
 from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
-from sanic.exceptions import SanicException
+from sanic.exceptions import ResponseException, SanicException
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http, Stage
 from sanic.models.protocol_types import HTMLProtocol, Range
@@ -118,9 +118,9 @@ class BaseHTTPResponse:
             if end_stream and not data:
                 return
             elif self.stream.stage == Stage.IDLE:
-                raise SanicException(
+                raise ResponseException(
                     "Response stream was ended, no more response data is"
-                    " allow ed to be sent."
+                    " allowed to be sent."
                 )
             else:
                 raise SanicException("Send response function isn't available")

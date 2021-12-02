@@ -17,7 +17,7 @@ def test_custom_context(app):
 
     @app.route("/")
     def handler(request):
-        # Accessing non-existant key should fail with AttributeError
+        # Accessing non-existent key should fail with AttributeError
         try:
             invalid = request.ctx.missing
         except AttributeError as e:

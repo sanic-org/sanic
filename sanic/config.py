@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+from collections import deque
 from inspect import isclass
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Sequence,
+    Union,
+)
 from warnings import warn
 
 from sanic.errorpages import check_error_format
@@ -51,17 +60,17 @@ DEFAULT_CONFIG = {
 DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
 
 
-class CastRegistry(list):
+class CastRegistry(deque):
     def add(self, cast: Callable[[str], Any]) -> None:
         if cast in self:
             raise SanicException(
                 f"Type {cast.__name__} has already been registered"
             )
-        self.append(cast)
+        self.appendleft(cast)
 
 
 class Config(dict):
-    __registry__ = CastRegistry()
+    __registry__ = CastRegistry((int, float, str_to_bool, str))
 
     ACCESS_LOG: bool
     AUTO_RELOAD: bool
@@ -97,12 +106,16 @@ class Config(dict):
         keep_alive: Optional[bool] = None,
         *,
         app: Optional[Sanic] = None,
+        converters: Optional[Sequence[Callable[[str], Any]]] = None,
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
         self._app = app
         self._LOGO = ""
+
+        if converters:
+            self.register_type(*converters)
 
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
@@ -208,7 +221,8 @@ class Config(dict):
 
             _, config_key = key.split(prefix, 1)
 
-            for converter in (int, float, str_to_bool, str):
+            print(self.__registry__)
+            for converter in self.__registry__:
                 try:
                     self[config_key] = converter(value)
                     break
@@ -287,27 +301,3 @@ class Config(dict):
     def register_type(self, *cast: Callable[[str], Any]) -> None:
         for item in cast:
             self.__registry__.add(item)
-        self.recast()
-
-    def recast(self):
-        registry = self.__registry__
-        for key, value in self.custom_config:
-            if isinstance(value, str):
-                for cast in registry:
-                    try:
-                        self[key] = cast(value)
-                    except ValueError:
-                        ...
-                    else:
-                        break
-
-    @property
-    def custom_config(self):
-        for key, value in self.items():
-            if (
-                key not in DEFAULT_CONFIG
-                and key not in DEPRECATED_CONFIG
-                and not key.startswith("_")
-                and key.isupper()
-            ):
-                yield (key, value)

@@ -119,8 +119,8 @@ class BaseHTTPResponse:
                 return
             elif self.stream.stage == Stage.IDLE:
                 raise ResponseException(
-                    "Response stream was ended, no more response data is"
-                    " allowed to be sent."
+                    "Response stream was ended, no more response data is "
+                    "allowed to be sent."
                 )
             else:
                 raise SanicException("Send response function isn't available")

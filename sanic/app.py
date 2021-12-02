@@ -736,9 +736,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             context={"request": request, "exception": exception},
         )
 
-        if isinstance(request.stream, Http) and request.stream.stage in (
-            Stage.RESPONSE,
-            Stage.IDLE,
+        if (
+            isinstance(request.stream, Http)
+            and request.stream.stage is not Stage.HANDLER
         ):
             error_logger.exception(exception)
             logger.error(
@@ -777,6 +777,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     )
         if response is not None:
             try:
+                request.reset_response()
                 response = await request.respond(response)
             except BaseException:
                 # Skip response middleware
@@ -886,7 +887,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isawaitable(response):
                     response = await response
 
-            if response is not None:
+            if response is not None and not request.responded:
                 response = await request.respond(response)
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore

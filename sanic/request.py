@@ -104,6 +104,7 @@ class Request:
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
+        "responded",
         "request_middleware_started",
         "route",
         "stream",
@@ -155,6 +156,7 @@ class Request:
         self.stream: Optional[Http] = None
         self.route: Optional[Route] = None
         self._protocol = None
+        self.responded: bool = False
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -164,6 +166,20 @@ class Request:
     def generate_id(*_):
         return uuid.uuid4()
 
+    def reset_response(self):
+        try:
+            if (
+                self.stream is not None
+                and self.stream.stage is not Stage.HANDLER
+            ):
+                raise ResponseException(
+                    "Cannot reset response because previous response was sent."
+                )
+            self.stream.response = None
+            self.responded = False
+        except AttributeError:
+            pass
+
     async def respond(
         self,
         response: Optional[BaseHTTPResponse] = None,
@@ -172,6 +188,11 @@ class Request:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
+        try:
+            if self.stream is not None and self.stream.response:
+                raise ResponseException("Second respond call is not allowed.")
+        except AttributeError:
+            pass
         # This logic of determining which response to use is subject to change
         if response is None:
             response = (self.stream and self.stream.response) or HTTPResponse(
@@ -180,33 +201,21 @@ class Request:
                 content_type=content_type,
             )
 
-        # Check the status of current stream and response.
-        re_use_res = False
-        try:
-            if self.stream is not None:
-                if self.stream.stage is Stage.IDLE:
-                    raise ResponseException(
-                        "Another response was sent previously."
-                    )
-                re_use_res = response is (self.stream and self.stream.response)
-        except AttributeError:
-            pass
-
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)
         # Run response middleware
-        if not re_use_res:
-            try:
-                response = await self.app._run_response_middleware(
-                    self, response, request_name=self.name
-                )
-            except CancelledErrors:
-                raise
-            except Exception:
-                error_logger.exception(
-                    "Exception occurred in one of response middleware handlers"
-                )
+        try:
+            response = await self.app._run_response_middleware(
+                self, response, request_name=self.name
+            )
+        except CancelledErrors:
+            raise
+        except Exception:
+            error_logger.exception(
+                "Exception occurred in one of response middleware handlers"
+            )
+        self.responded = True
         return response
 
     async def receive_body(self):

@@ -10,6 +10,7 @@ from sanic.exceptions import ServerError
 from sanic.http import Stage
 from sanic.models.asgi import ASGIReceive, ASGIScope, ASGISend, MockTransport
 from sanic.request import Request
+from sanic.response import BaseHTTPResponse
 from sanic.server import ConnInfo
 from sanic.server.websockets.connection import WebSocketConnection
 
@@ -85,6 +86,7 @@ class ASGIApp:
     lifespan: Lifespan
     ws: Optional[WebSocketConnection]
     stage: Stage
+    response: Optional[BaseHTTPResponse]
 
     def __init__(self) -> None:
         self.ws = None
@@ -98,6 +100,7 @@ class ASGIApp:
         instance.transport = MockTransport(scope, receive, send)
         instance.transport.loop = sanic_app.loop
         instance.stage = Stage.IDLE
+        instance.response = None
         setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
         headers = Header(
@@ -168,7 +171,7 @@ class ASGIApp:
             if data:
                 yield data
 
-    def respond(self, response):
+    def respond(self, response: BaseHTTPResponse):
         if self.stage is not Stage.HANDLER:
             self.stage = Stage.FAILED
             raise RuntimeError("Response already started")

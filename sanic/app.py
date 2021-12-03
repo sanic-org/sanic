@@ -737,7 +737,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         )
 
         if (
-            isinstance(request.stream, Http)
+            request.stream is not None
             and request.stream.stage is not Stage.HANDLER
         ):
             error_logger.exception(exception)

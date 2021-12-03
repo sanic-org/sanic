@@ -7,6 +7,7 @@ import sanic.app  # noqa
 
 from sanic.compat import Header
 from sanic.exceptions import ServerError
+from sanic.http import Stage
 from sanic.models.asgi import ASGIReceive, ASGIScope, ASGISend, MockTransport
 from sanic.request import Request
 from sanic.server import ConnInfo
@@ -83,6 +84,7 @@ class ASGIApp:
     transport: MockTransport
     lifespan: Lifespan
     ws: Optional[WebSocketConnection]
+    stage: Stage
 
     def __init__(self) -> None:
         self.ws = None
@@ -95,6 +97,7 @@ class ASGIApp:
         instance.sanic_app = sanic_app
         instance.transport = MockTransport(scope, receive, send)
         instance.transport.loop = sanic_app.loop
+        instance.stage = Stage.IDLE
         setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
         headers = Header(
@@ -149,6 +152,8 @@ class ASGIApp:
         """
         Read and stream the body in chunks from an incoming ASGI message.
         """
+        if self.stage is Stage.IDLE:
+            self.stage = Stage.REQUEST
         message = await self.transport.receive()
         body = message.get("body", b"")
         if not message.get("more_body", False):
@@ -164,10 +169,14 @@ class ASGIApp:
                 yield data
 
     def respond(self, response):
+        if self.stage is not Stage.HANDLER:
+            self.stage = Stage.FAILED
+            raise RuntimeError("Response already started")
         response.stream, self.response = self, response
         return response
 
     async def send(self, data, end_stream):
+        self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
         if self.response:
             response, self.response = self.response, None
             await self.transport.send(
@@ -195,6 +204,8 @@ class ASGIApp:
         Handle the incoming request.
         """
         try:
+            self.stage = Stage.HANDLER
             await self.sanic_app.handle_request(self.request)
         except Exception as e:
+            self.stage = Stage.FAILED
             await self.sanic_app.handle_exception(self.request, e)

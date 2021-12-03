@@ -207,5 +207,5 @@ class ASGIApp:
             self.stage = Stage.HANDLER
             await self.sanic_app.handle_request(self.request)
         except Exception as e:
-            self.stage = Stage.FAILED
             await self.sanic_app.handle_exception(self.request, e)
+            self.stage = Stage.FAILED

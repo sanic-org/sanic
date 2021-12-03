@@ -31,7 +31,7 @@ from httptools import parse_url  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import InvalidUsage, ResponseException
+from sanic.exceptions import InvalidUsage, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -172,7 +172,7 @@ class Request:
                 self.stream is not None
                 and self.stream.stage is not Stage.HANDLER
             ):
-                raise ResponseException(
+                raise ServerError(
                     "Cannot reset response because previous response was sent."
                 )
             self.stream.response.stream = None
@@ -191,7 +191,7 @@ class Request:
     ):
         try:
             if self.stream is not None and self.stream.response:
-                raise ResponseException("Second respond call is not allowed.")
+                raise ServerError("Second respond call is not allowed.")
         except AttributeError:
             pass
         # This logic of determining which response to use is subject to change

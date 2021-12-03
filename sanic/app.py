@@ -740,11 +740,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             request.stream is not None
             and request.stream.stage is not Stage.HANDLER
         ):
-            error_logger.exception(exception)
+            error_logger.exception(exception, exc_info=True)
             logger.error(
-                "The error response won't be sent to the client for the "
-                f'exception: "{exception}" because a previous response has '
-                "already been sent at least partially."
+                "The error response will not be sent to the client for "
+                f'the following exception:"{exception}". A previous response '
+                "has at least partially been sent."
             )
             return
 

@@ -266,7 +266,3 @@ def abort(status_code: int, message: Optional[Union[str, bytes]] = None):
     )
 
     raise SanicException(message=message, status_code=status_code)
-
-
-class ResponseException(SanicException):
-    pass

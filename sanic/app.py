@@ -66,7 +66,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.http import Http, Stage
+from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (

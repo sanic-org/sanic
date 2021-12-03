@@ -120,13 +120,11 @@ class BaseHTTPResponse:
         if self.stream.send is None:
             if end_stream and not data:
                 return
-            elif self.stream.stage == Stage.IDLE:
+            if self.stream.stage is Stage.IDLE:
                 raise ResponseException(
                     "Response stream was ended, no more response data is "
                     "allowed to be sent."
                 )
-            else:
-                raise SanicException("Send response function isn't available")
         data = (
             data.encode()  # type: ignore
             if hasattr(data, "encode")

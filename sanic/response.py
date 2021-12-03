@@ -46,7 +46,7 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Http = None
+        self.stream: Optional[Http] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
@@ -113,6 +113,10 @@ class BaseHTTPResponse:
         """
         if data is None and end_stream is None:
             end_stream = True
+        if self.stream is None:
+            raise SanicException(
+                "Stream was disconnected with this response instance."
+            )
         if self.stream.send is None:
             if end_stream and not data:
                 return

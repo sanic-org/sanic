@@ -120,14 +120,10 @@ class BaseHTTPResponse:
         if self.stream.send is None:
             if end_stream and not data:
                 return
-            if self.stream.stage is Stage.IDLE:
-                msg = (
-                    "Response stream was ended, no more response data is "
-                    "allowed to be sent."
-                )
-            else:
-                msg = "Send response function is not available."
-            raise ServerError(msg)
+            raise ServerError(
+                "Response stream was ended, no more response data is "
+                "allowed to be sent."
+            )
         data = (
             data.encode()  # type: ignore
             if hasattr(data, "encode")

@@ -172,6 +172,8 @@ class ASGIApp:
         if self.stage is not Stage.HANDLER:
             self.stage = Stage.FAILED
             raise RuntimeError("Response already started")
+        if self.response is not None:
+            self.response.stream = None
         response.stream, self.response = self, response
         return response
 

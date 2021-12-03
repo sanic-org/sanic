@@ -175,6 +175,7 @@ class Request:
                 raise ResponseException(
                     "Cannot reset response because previous response was sent."
                 )
+            self.stream.response.stream = None
             self.stream.response = None
             self.responded = False
         except AttributeError:

@@ -65,9 +65,9 @@ class MOTDTTY(MOTD):
 
     def set_variables(self):  # no  cov
         fallback = (108, 24)
-        terminal_width = min(get_terminal_size(fallback=fallback).columns, 108)
-        if terminal_width <= 0:
-            terminal_width = fallback[0]
+        terminal_width = max(
+            get_terminal_size(fallback=fallback).columns, fallback[0]
+        )
         self.max_value_width = terminal_width - fallback[0] + 36
 
         self.key_width = 4

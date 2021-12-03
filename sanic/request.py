@@ -196,7 +196,7 @@ class Request:
             pass
         # This logic of determining which response to use is subject to change
         if response is None:
-            response = (self.stream and self.stream.response) or HTTPResponse(
+            response = HTTPResponse(
                 status=status,
                 headers=headers,
                 content_type=content_type,

@@ -213,4 +213,5 @@ class ASGIApp:
             await self.sanic_app.handle_request(self.request)
         except Exception as e:
             await self.sanic_app.handle_exception(self.request, e)
-            self.stage = Stage.FAILED
+        finally:
+            self.stage = Stage.IDLE

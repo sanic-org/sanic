@@ -101,7 +101,7 @@ class BaseHTTPResponse:
 
     async def send(
         self,
-        data: Optional[Union[AnyStr]] = None,
+        data: Optional[AnyStr] = None,
         end_stream: Optional[bool] = None,
     ) -> None:
         """

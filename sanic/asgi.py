@@ -213,6 +213,3 @@ class ASGIApp:
             await self.sanic_app.handle_request(self.request)
         except Exception as e:
             await self.sanic_app.handle_exception(self.request, e)
-        finally:
-            if self.stage == Stage.RESPONSE:
-                self.stage = Stage.IDLE

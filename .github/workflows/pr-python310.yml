@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches:
       - main
@@ -11,7 +12,8 @@ on:
       - tests/*
 
 jobs:
-  testPy39:
+  testPy310:
+    if: github.event.pull_request.draft == false
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:

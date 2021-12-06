@@ -79,7 +79,7 @@ class Blueprint(BaseSanic):
 
     :param name: unique name of the blueprint
     :param url_prefix: URL to be prefixed before all route URLs
-    :param host: IP Address of FQDN for the sanic server to use.
+    :param host: IP Address or FQDN for the sanic server to use.
     :param version: Blueprint Version
     :param strict_slashes: Enforce the API urls are requested with a
         trailing */*
@@ -112,7 +112,7 @@ class Blueprint(BaseSanic):
         self,
         name: str = None,
         url_prefix: Optional[str] = None,
-        host: Optional[str] = None,
+        host: Optional[Union[List[str], str]] = None,
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",

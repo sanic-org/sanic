@@ -23,7 +23,7 @@ def key_exist_handler(request):
     if hasattr(request.ctx, "num"):
         return text("num exist in request")
 
-    return text("num does not exist in reqeust")
+    return text("num does not exist in request")
 
 
 app.run(host="0.0.0.0", port=8000, debug=True)

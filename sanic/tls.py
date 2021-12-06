@@ -175,7 +175,7 @@ def match_hostname(
 def selector_sni_callback(
     sslobj: ssl.SSLObject, server_name: str, ctx: CertSelector
 ) -> Optional[int]:
-    """Select a certificate mathing the SNI."""
+    """Select a certificate matching the SNI."""
     # Call server_name_callback to store the SNI on sslobj
     server_name_callback(sslobj, server_name, ctx)
     # Find a new context matching the hostname

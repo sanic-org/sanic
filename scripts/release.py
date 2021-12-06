@@ -310,7 +310,7 @@ if __name__ == "__main__":
     cli.add_argument(
         "--milestone",
         "-ms",
-        help="Git Release milestone information to include in relase note",
+        help="Git Release milestone information to include in release note",
         required=False,
     )
     cli.add_argument(

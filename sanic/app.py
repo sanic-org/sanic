@@ -337,7 +337,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         """
         Method for attaching middleware to specific routes. This is mainly an
         internal tool for use by Blueprints to attach middleware to only its
-        specfic routes. But, it could be used in a more generalized fashion.
+        specific routes. But, it could be used in a more generalized fashion.
 
         :param middleware: the middleware to execute
         :param route_names: a list of the names of the endpoints
@@ -775,6 +775,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if request.stream:
                 response = request.stream.response
         if isinstance(response, BaseHTTPResponse):
+            await self.dispatch(
+                "http.lifecycle.response",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": response,
+                },
+            )
             await response.send(end_stream=True)
         else:
             raise ServerError(

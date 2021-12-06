@@ -54,7 +54,7 @@ class Router(BaseRouter):
         self, path: str, method: str, host: Optional[str]
     ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         """
-        Retrieve a `Route` object containg the details about how to handle
+        Retrieve a `Route` object containing the details about how to handle
         a response for a given request
 
         :param request: the incoming request object

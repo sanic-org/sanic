@@ -1102,6 +1102,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             register_sys_signals=register_sys_signals,
         )
 
+        if self.config.USE_UVLOOP:
+            use_uvloop()
+
         try:
             self.is_running = True
             self.is_stopping = False
@@ -1213,7 +1216,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             ssl=ssl,
             sock=sock,
             unix=unix,
-            loop=True,
+            loop=get_event_loop(),
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
@@ -1323,7 +1326,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         sock: Optional[socket] = None,
         unix: Optional[str] = None,
         workers: int = 1,
-        loop: Union[AbstractEventLoop, bool] = None,
+        loop: AbstractEventLoop = None,
         protocol: Type[Protocol] = HttpProtocol,
         backlog: int = 100,
         register_sys_signals: bool = True,
@@ -1355,13 +1358,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             # colon(:) is legal for a host only in an ipv6 address
             display_host = f"[{host}]" if ":" in host else host
             serve_location = f"{proto}://{display_host}:{port}"
-
-        if not isinstance(loop, AbstractEventLoop):
-            if self.config.USE_UVLOOP:
-                use_uvloop()
-
-            if loop is True:
-                loop = get_event_loop()
 
         ssl = process_to_context(ssl)
 
@@ -1459,8 +1455,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         details: https://asgi.readthedocs.io/en/latest
         """
         self.asgi = True
-        if self.config.USE_UVLOOP:
-            use_uvloop()
         self.motd("")
         self._asgi_app = await ASGIApp.create(self, scope, receive, send)
         asgi_app = self._asgi_app

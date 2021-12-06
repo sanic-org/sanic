@@ -440,6 +440,7 @@ def test_custom_context():
 
     assert app.ctx == ctx
 
+
 def test_uvloop_usage(app, monkeypatch):
     @app.get("/test")
     def handler(request):
@@ -457,7 +458,7 @@ def test_uvloop_usage(app, monkeypatch):
     use_uvloop.assert_called_once()
 
 
-def test_uvloop_usage_with_create_server(app, monkeypatch):
+def test_uvloop_is_ignored_with_create_server(app, monkeypatch):
     @app.get("/test")
     def handler(request):
         return text("ok")
@@ -481,7 +482,8 @@ def test_uvloop_usage_with_create_server(app, monkeypatch):
         asyncio_server_kwargs=dict(start_serving=False)
     )
     loop.run_until_complete(asyncio_srv_coro)
-    use_uvloop.assert_called_once()
+    use_uvloop.assert_not_called()
+
 
 def test_cannot_run_fast_and_workers(app):
     message = "You cannot use both fast=True and workers=X"

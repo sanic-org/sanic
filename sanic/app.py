@@ -724,7 +724,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         A handler that catches specific exceptions and outputs a response.
 
         :param request: The current request object
-        :type request: :class:`SanicASGITestClient`
+        :type request: Request
         :param exception: The exception that was raised
         :type exception: BaseException
         :raises ServerError: response 500

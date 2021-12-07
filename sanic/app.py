@@ -913,8 +913,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isawaitable(response):
                     response = await response
 
-            if response is not None and not request.responded:
-                response = await request.respond(response)
+            if response is not None:
+                if not request.responded:
+                    response = await request.respond(response)
+                else:
+                    error_logger.error(
+                        "The response object returned by the route handler "
+                        "won't be sent to client because a previous response "
+                        "was created and may have been sent the client."
+                    )
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
 

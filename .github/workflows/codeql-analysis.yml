@@ -5,12 +5,13 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-    types: [review_requested, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   schedule:
     - cron: '25 16 * * 0'
 
 jobs:
   analyze:
+    if: github.event.pull_request.draft == false
     name: Analyze
     runs-on: ubuntu-latest
 

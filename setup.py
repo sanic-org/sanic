@@ -121,6 +121,7 @@ docs_require = [
     "docutils",
     "pygments",
     "m2r2",
+    "mistune<2.0.0",
 ]
 
 dev_require = tests_require + [

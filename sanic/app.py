@@ -66,6 +66,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import _default
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
@@ -1102,7 +1103,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             register_sys_signals=register_sys_signals,
         )
 
-        if self.config.USE_UVLOOP:
+        if (
+            self.config.USE_UVLOOP is True
+            or (self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS)
+        ):
             try_use_uvloop()
 
         try:
@@ -1221,6 +1225,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             backlog=backlog,
             run_async=return_asyncio_server,
         )
+
+        if self.config.USE_UVLOOP is True:
+            error_logger.warning(
+                "You are trying to use uvloop, but this is only supported "
+                "when using the run(...) method. Sanic will now continue "
+                "to run using the default event loop."
+            )
 
         main_start = server_settings.pop("main_start", None)
         main_stop = server_settings.pop("main_stop", None)

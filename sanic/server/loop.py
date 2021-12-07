@@ -11,7 +11,14 @@ def try_use_uvloop() -> None:
     """
     Use uvloop instead of the default asyncio loop.
     """
-    if OS_IS_WINDOWS:  # uvloop is not compatible
+    if OS_IS_WINDOWS:
+        error_logger.warning(
+            "You are trying to use uvloop, but uvloop is not compatible "
+            "with your system. You can disable uvloop completely by setting "
+            "the 'USE_UVLOOP' configuration value to false, or simply not "
+            "defining it and letting Sanic handle it for you. Sanic will now "
+            "continue to run using the default event loop."
+        )
         return
 
     try:

@@ -1103,9 +1103,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             register_sys_signals=register_sys_signals,
         )
 
-        if (
-            self.config.USE_UVLOOP is True
-            or (self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS)
+        if self.config.USE_UVLOOP is True or (
+            self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
         ):
             try_use_uvloop()
 

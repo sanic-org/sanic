@@ -84,7 +84,7 @@ from sanic.response import BaseHTTPResponse, HTTPResponse
 from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
-from sanic.server import serve, serve_multiple, serve_single, use_uvloop
+from sanic.server import serve, serve_multiple, serve_single, try_use_uvloop
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
@@ -1103,7 +1103,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         )
 
         if self.config.USE_UVLOOP:
-            use_uvloop()
+            try_use_uvloop()
 
         try:
             self.is_running = True

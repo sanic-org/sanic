@@ -12,7 +12,7 @@ import pytest
 import sanic
 
 from sanic import Sanic
-from sanic.compat import UVLOOP_INSTALLED
+from sanic.compat import OS_IS_WINDOWS, UVLOOP_INSTALLED
 from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.response import text
@@ -441,48 +441,77 @@ def test_custom_context():
     assert app.ctx == ctx
 
 
-def test_uvloop_usage(app, monkeypatch):
+def test_uvloop_config(app, monkeypatch):
     @app.get("/test")
     def handler(request):
         return text("ok")
 
-    use_uvloop = Mock()
-    monkeypatch.setattr(sanic.app, "use_uvloop", use_uvloop)
+    try_use_uvloop = Mock()
+    monkeypatch.setattr(sanic.app, "try_use_uvloop", try_use_uvloop)
 
+    # Default config
+    app.test_client.get("/test")
+    if OS_IS_WINDOWS:
+        try_use_uvloop.assert_not_called()
+    else:
+        try_use_uvloop.assert_called_once()
+
+    try_use_uvloop.reset_mock()
     app.config["USE_UVLOOP"] = False
     app.test_client.get("/test")
-    use_uvloop.assert_not_called()
+    try_use_uvloop.assert_not_called()
 
+    try_use_uvloop.reset_mock()
     app.config["USE_UVLOOP"] = True
     app.test_client.get("/test")
-    use_uvloop.assert_called_once()
+    try_use_uvloop.assert_called_once()
 
 
-def test_uvloop_is_ignored_with_create_server(app, monkeypatch):
+def test_uvloop_is_never_called_with_create_server(app, caplog, monkeypatch):
     @app.get("/test")
     def handler(request):
         return text("ok")
 
-    use_uvloop = Mock()
-    monkeypatch.setattr(sanic.app, "use_uvloop", use_uvloop)
+    try_use_uvloop = Mock()
+    monkeypatch.setattr(sanic.app, "try_use_uvloop", try_use_uvloop)
 
     loop = asyncio.get_event_loop()
 
+    # Default config
+    asyncio_srv_coro = app.create_server(
+        return_asyncio_server=True,
+        asyncio_server_kwargs=dict(start_serving=False)
+    )
+    loop.run_until_complete(asyncio_srv_coro)
+    try_use_uvloop.assert_not_called()
+
     app.config["USE_UVLOOP"] = False
     asyncio_srv_coro = app.create_server(
         return_asyncio_server=True,
         asyncio_server_kwargs=dict(start_serving=False)
     )
     loop.run_until_complete(asyncio_srv_coro)
-    use_uvloop.assert_not_called()
+    try_use_uvloop.assert_not_called()
 
     app.config["USE_UVLOOP"] = True
     asyncio_srv_coro = app.create_server(
         return_asyncio_server=True,
         asyncio_server_kwargs=dict(start_serving=False)
     )
-    loop.run_until_complete(asyncio_srv_coro)
-    use_uvloop.assert_not_called()
+
+    with caplog.at_level(logging.WARNING):
+        loop.run_until_complete(asyncio_srv_coro)
+    try_use_uvloop.assert_not_called()
+
+    for record in caplog.records:
+        if record.message.startswith("You are trying to use"):
+            break
+
+    assert record.message == (
+        "You are trying to use uvloop, but this is only supported "
+        "when using the run(...) method. Sanic will now continue "
+        "to run using the default event loop."
+    )
 
 
 def test_cannot_run_fast_and_workers(app):

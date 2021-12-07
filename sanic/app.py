@@ -725,9 +725,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         A handler that catches specific exceptions and outputs a response.
 
         :param request: The current request object
-        :type request: :class:`SanicASGITestClient`
         :param exception: The exception that was raised
-        :type exception: BaseException
         :raises ServerError: response 500
         """
         await self.dispatch(
@@ -746,6 +744,34 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 f'the following exception:"{exception}". A previous response '
                 "has at least partially been sent."
             )
+
+            # ----------------- deprecated -----------------
+            if self.error_handler._lookup(
+                exception, request.name if request else None
+            ):
+                logger.warning(
+                    "An error occurs during the response process, "
+                    "Sanic no longer execute that exception handler "
+                    "beginning in v22.6 because the error page generated "
+                    "by the exception handler won't be sent to the client. "
+                    "The exception handler should only be used to generate "
+                    "the error page, and if you would like to perform any "
+                    "other action for an exception raised, please consider "
+                    "using a signal handler, like "
+                    '`@app.signal("http.lifecycle.exception")`\n'
+                    "Sanic signals detailed docs: "
+                    "https://sanicframework.org/en/guide/advanced/"
+                    "signals.html"
+                )
+                try:
+                    response = self.error_handler.response(request, exception)
+                    if isawaitable(response):
+                        response = await response
+                except BaseException as e:
+                    logger.error("An error occurs in the exception handler.")
+                    error_logger.exception(e)
+            # ----------------------------------------------
+
             return
 
         # -------------------------------------------- #

@@ -9,13 +9,7 @@ from bs4 import BeautifulSoup
 from pytest import LogCaptureFixture, MonkeyPatch
 
 from sanic import Sanic, handlers
-from sanic.exceptions import (
-    Forbidden,
-    InvalidUsage,
-    NotFound,
-    SanicException,
-    ServerError,
-)
+from sanic.exceptions import Forbidden, InvalidUsage, NotFound, ServerError
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
 from sanic.response import stream, text
@@ -269,7 +263,7 @@ def test_exception_handler_response_was_sent(
 ):
     exception_handler_ran = False
 
-    @app.exception(SanicException)
+    @app.exception(ServerError)
     def exception_handler(request, exception):
         nonlocal exception_handler_ran
         exception_handler_ran = True
@@ -279,7 +273,7 @@ def test_exception_handler_response_was_sent(
     async def handler(request: Request):
         response = await request.respond()
         await response.send("some text")
-        raise SanicException("Exception")
+        raise ServerError("Exception")
 
     with caplog.at_level(logging.WARNING):
         _, response = app.test_client.get("/")
@@ -294,6 +288,7 @@ def test_exception_handler_response_was_sent(
             "by the exception handler won't be sent to the client "
         ):
             depreciated_warning_issued = True
+            break
 
     assert depreciated_warning_issued
     assert exception_handler_ran

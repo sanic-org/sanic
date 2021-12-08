@@ -608,9 +608,8 @@ def test_multiple_responses(
 
     error_msg2 = (
         "The response object returned by the route handler "
-        "won't be sent to client because a previous response "
-        "or itself was created and may have been sent the "
-        "client. "
+        "will not be sent to client. The request has already "
+        "been responded to."
     )
 
     error_msg3 = (

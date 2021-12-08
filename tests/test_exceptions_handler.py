@@ -280,10 +280,9 @@ def test_exception_handler_response_was_sent(
     depreciated_warning_issued = False
     for record in caplog.records:
         if record.message.startswith(
-            "An error occurs during the response process, "
-            "Sanic no longer execute that exception handler "
-            "beginning in v22.6 because the error page generated "
-            "by the exception handler won't be sent to the client "
+            "An error occurred while handling the request after at ",
+            "least some part of the response was sent to the client. ",
+            "Therefore, the response from your custom exception ",
         ):
             depreciated_warning_issued = True
             break

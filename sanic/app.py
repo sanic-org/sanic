@@ -753,7 +753,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "An error occurs during the response process, "
                     "Sanic no longer execute that exception handler "
                     "beginning in v22.6 because the error page generated "
-                    "by the exception handler won't be sent to the client. "
+                    "by the exception handler won't be sent to the client "
+                    "because another response was at least partially sent "
                     "The exception handler should only be used to generate "
                     "the error page, and if you would like to perform any "
                     "other action for an exception raised, please consider "
@@ -920,7 +921,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     error_logger.error(
                         "The response object returned by the route handler "
                         "won't be sent to client because a previous response "
-                        "was created and may have been sent the client."
+                        "or itself was created and may have been sent the "
+                        "client. "
                     )
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore

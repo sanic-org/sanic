@@ -119,7 +119,7 @@ class BaseHTTPResponse:
             end_stream = True
         if self.stream is None:
             raise SanicException(
-                "Stream was disconnected with this response instance."
+                "No stream is connected to the response object instance."
             )
         if self.stream.send is None:
             if end_stream and not data:

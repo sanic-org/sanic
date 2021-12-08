@@ -62,14 +62,14 @@ def test_logs_when_install_and_runtime_config_mismatch(caplog, monkeypatch):
     with caplog.at_level(logging.INFO):
         loop.try_use_uvloop()
 
-    assert getenv.assert_called_once_with("SANIC_NO_UVLOOP", "no")
+    getenv.assert_called_once_with("SANIC_NO_UVLOOP", "no")
     assert caplog.record_tuples == []
 
     getenv.reset_mock(return_value="yes")
     with caplog.at_level(logging.INFO):
         loop.try_use_uvloop()
 
-    assert getenv.assert_called_once_with("SANIC_NO_UVLOOP", "no")
+    getenv.assert_called_once_with("SANIC_NO_UVLOOP", "no")
     for record in caplog.records:
         if record.message.startswith("You are requesting to run"):
             break

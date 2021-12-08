@@ -918,6 +918,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if not request.responded:
                     response = await request.respond(response)
                 else:
+                    response = request.stream.response
                     error_logger.error(
                         "The response object returned by the route handler "
                         "won't be sent to client because a previous response "

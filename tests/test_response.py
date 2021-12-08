@@ -598,13 +598,6 @@ def test_multiple_responses(
         await response.send("bar")
         return json_response
 
-    @app.get("/7")
-    async def handler(request: Request):
-        response = await request.respond()
-        await response.send("foo, ")
-        await response.eof()
-        await response.send("bar")
-
     error_msg0 = "Second respond call is not allowed."
 
     error_msg1 = (
@@ -669,8 +662,32 @@ def test_multiple_responses(
         assert response.headers["one"] == "one"
         assert message_in_records(caplog.records, error_msg2)
 
+
+def send_response_after_eof_should_fail(
+    app: Sanic,
+    caplog: LogCaptureFixture,
+    message_in_records: Callable[[List[LogRecord], str], bool],
+):
+    @app.get("/")
+    async def handler(request: Request):
+        response = await request.respond()
+        await response.send("foo, ")
+        await response.eof()
+        await response.send("bar")
+
+    error_msg1 = (
+        "The error response will not be sent to the client for the following "
+        'exception:"Second respond call is not allowed.". A previous '
+        "response has at least partially been sent."
+    )
+
+    error_msg2 = (
+        "Response stream was ended, no more "
+        "response data is allowed to be sent."
+    )
+
     with caplog.at_level(ERROR):
-        _, response = app.test_client.get("/7")
+        _, response = app.test_client.get("/")
         assert "foo, " in response.text
         assert message_in_records(caplog.records, error_msg1)
-        assert message_in_records(caplog.records, error_msg3)
+        assert message_in_records(caplog.records, error_msg2)

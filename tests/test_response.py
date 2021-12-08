@@ -598,6 +598,13 @@ def test_multiple_responses(
         await response.send("bar")
         return json_response
 
+    @app.get("/7")
+    async def handler(request: Request):
+        response = await request.respond()
+        await response.send("foo, ")
+        await response.eof()
+        await response.send("bar")
+
     error_msg0 = "Second respond call is not allowed."
 
     error_msg1 = (
@@ -611,6 +618,11 @@ def test_multiple_responses(
         "won't be sent to client because a previous response "
         "or itself was created and may have been sent the "
         "client. "
+    )
+
+    error_msg3 = (
+        "Response stream was ended, no more "
+        "response data is allowed to be sent."
     )
 
     with caplog.at_level(ERROR):
@@ -656,3 +668,9 @@ def test_multiple_responses(
         assert "one" in response.headers
         assert response.headers["one"] == "one"
         assert message_in_records(caplog.records, error_msg2)
+
+    with caplog.at_level(ERROR):
+        _, response = app.test_client.get("/7")
+        assert "foo, " in response.text
+        assert message_in_records(caplog.records, error_msg1)
+        assert message_in_records(caplog.records, error_msg3)

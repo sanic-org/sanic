@@ -65,7 +65,8 @@ def test_logs_when_install_and_runtime_config_mismatch(caplog, monkeypatch):
     getenv.assert_called_once_with("SANIC_NO_UVLOOP", "no")
     assert caplog.record_tuples == []
 
-    getenv.reset_mock(return_value="yes")
+    getenv = Mock(return_value="yes")
+    monkeypatch.setattr(loop, "getenv", getenv)
     with caplog.at_level(logging.INFO):
         loop.try_use_uvloop()
 
@@ -100,7 +101,7 @@ def test_sets_loop_policy_only_when_not_already_set(monkeypatch):
         # Existing policy is not uvloop.EventLoopPolicy
         loop.try_use_uvloop()
         set_event_loop_policy.assert_called_once()
-        policy = set_event_loop_policy.call_args[0]
+        policy = set_event_loop_policy.call_args.args[0]
         assert isinstance(policy, uvloop.EventLoopPolicy)
 
         get_event_loop_policy.reset_mock(return_value=policy)

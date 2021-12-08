@@ -923,9 +923,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if request.responded:
                     error_logger.error(
                         "The response object returned by the route handler "
-                        "won't be sent to client because a previous response "
-                        "or itself was created and may have been sent the "
-                        "client. "
+                        "will not be sent to client. The request has already "
+                        "been responded to."
                     )
 
             # Make sure that response is finished / run StreamingHTTP callback

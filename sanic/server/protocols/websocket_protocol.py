@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Optional, Sequence, cast
+from warnings import warn
 
 from websockets.connection import CLOSED, CLOSING, OPEN
 from websockets.server import ServerConnection
@@ -34,27 +35,24 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         if websocket_max_queue is not None and websocket_max_queue > 0:
             # TODO: Reminder remove this warning in v22.3
-            error_logger.warning(
-                DeprecationWarning(
-                    "Websocket no longer uses queueing, so websocket_max_queue"
-                    " is no longer required."
-                )
+            warn(
+                "Websocket no longer uses queueing, so websocket_max_queue"
+                " is no longer required.",
+                DeprecationWarning,
             )
         if websocket_read_limit is not None and websocket_read_limit > 0:
             # TODO: Reminder remove this warning in v22.3
-            error_logger.warning(
-                DeprecationWarning(
-                    "Websocket no longer uses read buffers, so "
-                    "websocket_read_limit is not required."
-                )
+            warn(
+                "Websocket no longer uses read buffers, so "
+                "websocket_read_limit is not required.",
+                DeprecationWarning,
             )
         if websocket_write_limit is not None and websocket_write_limit > 0:
             # TODO: Reminder remove this warning in v22.3
-            error_logger.warning(
-                DeprecationWarning(
-                    "Websocket no longer uses write buffers, so "
-                    "websocket_write_limit is not required."
-                )
+            warn(
+                "Websocket no longer uses write buffers, so "
+                "websocket_write_limit is not required.",
+                DeprecationWarning,
             )
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout

@@ -769,7 +769,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     if isawaitable(response):
                         response = await response
                 except BaseException as e:
-                    logger.error("An error occurs in the exception handler.")
+                    logger.error("An error occurred in the exception handler.")
                     error_logger.exception(e)
             # ----------------------------------------------
 

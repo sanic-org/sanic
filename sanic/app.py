@@ -746,23 +746,24 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
 
             # ----------------- deprecated -----------------
-            if self.error_handler._lookup(
+            handler = self.error_handler._lookup(
                 exception, request.name if request else None
-            ):
-                logger.warning(
-                    "An error occurs during the response process, "
-                    "Sanic no longer execute that exception handler "
-                    "beginning in v22.6 because the error page generated "
-                    "by the exception handler won't be sent to the client "
-                    "because another response was at least partially sent "
-                    "The exception handler should only be used to generate "
-                    "the error page, and if you would like to perform any "
-                    "other action for an exception raised, please consider "
-                    "using a signal handler, like "
-                    '`@app.signal("http.lifecycle.exception")`\n'
-                    "Sanic signals detailed docs: "
-                    "https://sanicframework.org/en/guide/advanced/"
-                    "signals.html"
+            )
+            if handler:
+                error_logger.warning(
+                    "An error occured while handling the request after at ",
+                    "least some part of the response was sent to the client. ",
+                    "Therefore, the response from your custom exception ",
+                    f"handler {handler.__name__} will not be sent to the ",
+                    "client. Beginning in v22.6, Sanic will stop executing ",
+                    "custom exception handlers in this scenario. Exception ",
+                    "handlers should only be used to generate the exception ",
+                    "responses. If you would like to perform any other action ",
+                    "on a raised exception, please consider using a signal ",
+                    'handler like `@app.signal("http.lifecycle.exception")`\n',
+                    "For further information, please see the docs: ",
+                    "https://sanicframework.org/en/guide/advanced/",
+                    "signals.html",
                 )
                 try:
                     response = self.error_handler.response(request, exception)
@@ -922,9 +923,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if request.responded:
                     error_logger.error(
                         "The response object returned by the route handler "
-                        "won't be sent to client because a previous response "
-                        "or itself was created and may have been sent the "
-                        "client. "
+                        "will not be sent to client. The request has already "
+                        "been responded to."
                     )
 
             # Make sure that response is finished / run StreamingHTTP callback

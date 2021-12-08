@@ -1223,11 +1223,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             run_async=return_asyncio_server,
         )
 
-        if self.config.USE_UVLOOP is True:
+        if self.config.USE_UVLOOP is not _default:
             error_logger.warning(
-                "You are trying to use uvloop, but this is only supported "
-                "when using the run(...) method. Sanic will now continue "
-                "to run using the default event loop."
+                "You are trying to configure uvloop, but this is only "
+                "supported when using the run(...) method. Sanic will now "
+                "continue to run using the existing event loop."
             )
 
         main_start = server_settings.pop("main_start", None)

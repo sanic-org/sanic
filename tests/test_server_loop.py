@@ -101,7 +101,8 @@ def test_sets_loop_policy_only_when_not_already_set(monkeypatch):
     with patch("asyncio.set_event_loop_policy") as set_event_loop_policy:
         loop.try_use_uvloop()
         set_event_loop_policy.assert_called_once()
-        policy = set_event_loop_policy.call_args.args[0]
+        args, _ = set_event_loop_policy.call_args
+        policy = args[0]
         assert isinstance(policy, uvloop.EventLoopPolicy)
 
     # Existing policy is uvloop.EventLoopPolicy

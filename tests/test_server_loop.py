@@ -92,21 +92,24 @@ def test_logs_when_install_and_runtime_config_mismatch(caplog, monkeypatch):
 def test_sets_loop_policy_only_when_not_already_set(monkeypatch):
     import uvloop  # type: ignore
 
+    # Existing policy is not uvloop.EventLoopPolicy
     get_event_loop_policy = Mock(return_value=None)
     monkeypatch.setattr(
         loop.asyncio, "get_event_loop_policy", get_event_loop_policy
     )
 
     with patch("asyncio.set_event_loop_policy") as set_event_loop_policy:
-        # Existing policy is not uvloop.EventLoopPolicy
         loop.try_use_uvloop()
         set_event_loop_policy.assert_called_once()
         policy = set_event_loop_policy.call_args.args[0]
         assert isinstance(policy, uvloop.EventLoopPolicy)
 
-        get_event_loop_policy.reset_mock(return_value=policy)
-        set_event_loop_policy.reset_mock()
+    # Existing policy is uvloop.EventLoopPolicy
+    get_event_loop_policy = Mock(return_value=policy)
+    monkeypatch.setattr(
+        loop.asyncio, "get_event_loop_policy", get_event_loop_policy
+    )
 
-        # Existing policy is uvloop.EventLoopPolicy
+    with patch("asyncio.set_event_loop_policy") as set_event_loop_policy:
         loop.try_use_uvloop()
         set_event_loop_policy.assert_not_called()

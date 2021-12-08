@@ -42,6 +42,7 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
+from warnings import filterwarnings
 
 from sanic_routing.exceptions import (  # type: ignore
     FinalizationError,
@@ -94,6 +95,8 @@ from sanic.touchup import TouchUp, TouchUpMeta
 
 if OS_IS_WINDOWS:
     enable_windows_color_support()
+
+filterwarnings("once", category=DeprecationWarning)
 
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):

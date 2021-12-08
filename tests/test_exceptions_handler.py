@@ -218,20 +218,18 @@ def test_single_arg_exception_handler_notice(exception_handler_app, caplog):
 
     exception_handler_app.error_handler = CustomErrorHandler()
 
-    with caplog.at_level(logging.WARNING):
-        _, response = exception_handler_app.test_client.get("/1")
-
-    for record in caplog.records:
-        if record.message.startswith("You are"):
-            break
-
-    assert record.message == (
+    message = (
         "You are using a deprecated error handler. The lookup method should "
         "accept two positional parameters: (exception, route_name: "
         "Optional[str]). Until you upgrade your ErrorHandler.lookup, "
         "Blueprint specific exceptions will not work properly. Beginning in "
         "v22.3, the legacy style lookup method will not work at all."
     )
+    with pytest.warns(DeprecationWarning) as record:
+        _, response = exception_handler_app.test_client.get("/1")
+
+    assert len(record) == 1
+    assert record[0].message.args[0] == message
     assert response.status == 400
 
 

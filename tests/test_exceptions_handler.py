@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from typing import Callable, List
 from unittest.mock import Mock
 
 import pytest
@@ -257,39 +258,42 @@ def test_error_handler_noisy_log(
 
 
 def test_exception_handler_response_was_sent(
-    app: Sanic, caplog: LogCaptureFixture
+    app: Sanic,
+    caplog: LogCaptureFixture,
+    message_in_records: Callable[[List[logging.LogRecord], str], bool],
 ):
     exception_handler_ran = False
 
     @app.exception(ServerError)
-    def exception_handler(request, exception):
+    async def exception_handler(request, exception):
         nonlocal exception_handler_ran
         exception_handler_ran = True
-        return text("OK")
+        return text("Error")
 
-    @app.route("/")
-    async def handler(request: Request):
+    @app.route("/1")
+    async def handler1(request: Request):
         response = await request.respond()
         await response.send("some text")
         raise ServerError("Exception")
 
+    @app.route("/2")
+    async def handler2(request: Request):
+        response = await request.respond()
+        raise ServerError("Exception")
+
     with caplog.at_level(logging.WARNING):
-        _, response = app.test_client.get("/")
+        _, response = app.test_client.get("/1")
         assert "some text" in response.text
 
-    depreciated_warning_issued = False
-    for record in caplog.records:
-        if record.message.startswith(
-            "An error occurred while handling the request after at ",
-            "least some part of the response was sent to the client. ",
-            "Therefore, the response from your custom exception ",
-        ):
-            depreciated_warning_issued = True
-            break
+    # Change to assert warning not in the records in the future version.
+    message_in_records(
+        caplog.records,
+        (
+            "An error occurred while handling the request after at "
+            "least some part of the response was sent to the client. "
+            "Therefore, the response from your custom exception "
+        ),
+    )
 
-    assert depreciated_warning_issued
-    assert exception_handler_ran
-
-    # In the future version:
-    # assert not exception_handler_ran
-    # removing asserting for the depreciated-warning
+    _, response = app.test_client.get("/2")
+    assert "Error" in response.text

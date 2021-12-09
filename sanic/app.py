@@ -754,20 +754,20 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
             if handler:
                 error_logger.warning(
-                    "An error occured while handling the request after at ",
-                    "least some part of the response was sent to the client. ",
-                    "Therefore, the response from your custom exception ",
-                    f"handler {handler.__name__} will not be sent to the ",
-                    "client. Beginning in v22.6, Sanic will stop executing ",
-                    "custom exception handlers in this scenario. Exception ",
-                    "handlers should only be used to generate the exception ",
-                    "responses. If you would like to perform any other ",
-                    "action on a raised exception, please consider using a ",
-                    "signal handler like ",
-                    '`@app.signal("http.lifecycle.exception")`\n',
-                    "For further information, please see the docs: ",
-                    "https://sanicframework.org/en/guide/advanced/",
-                    "signals.html",
+                    "An error occurred while handling the request after at "
+                    "least some part of the response was sent to the client. "
+                    "Therefore, the response from your custom exception "
+                    f"handler {handler.__name__} will not be sent to the "
+                    "client. Beginning in v22.6, Sanic will stop executing "
+                    "custom exception handlers in this scenario. Exception "
+                    "handlers should only be used to generate the exception "
+                    "responses. If you would like to perform any other "
+                    "action on a raised exception, please consider using a "
+                    "signal handler like "
+                    '`@app.signal("http.lifecycle.exception")`\n'
+                    "For further information, please see the docs: "
+                    "https://sanicframework.org/en/guide/advanced/"
+                    "signals.html"
                 )
                 try:
                     response = self.error_handler.response(request, exception)

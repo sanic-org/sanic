@@ -18,7 +18,6 @@ from sanic_routing.route import Route  # type: ignore
 if TYPE_CHECKING:
     from sanic.server import ConnInfo
     from sanic.app import Sanic
-    from sanic.http import Http
 
 import email.utils
 import uuid
@@ -32,7 +31,7 @@ from httptools import parse_url  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import InvalidUsage, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -42,6 +41,7 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
+from sanic.http import Http, Stage
 from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
@@ -104,6 +104,7 @@ class Request:
         "parsed_json",
         "parsed_forwarded",
         "raw_url",
+        "responded",
         "request_middleware_started",
         "route",
         "stream",
@@ -155,6 +156,7 @@ class Request:
         self.stream: Optional[Http] = None
         self.route: Optional[Route] = None
         self._protocol = None
+        self.responded: bool = False
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -164,6 +166,21 @@ class Request:
     def generate_id(*_):
         return uuid.uuid4()
 
+    def reset_response(self):
+        try:
+            if (
+                self.stream is not None
+                and self.stream.stage is not Stage.HANDLER
+            ):
+                raise ServerError(
+                    "Cannot reset response because previous response was sent."
+                )
+            self.stream.response.stream = None
+            self.stream.response = None
+            self.responded = False
+        except AttributeError:
+            pass
+
     async def respond(
         self,
         response: Optional[BaseHTTPResponse] = None,
@@ -172,13 +189,19 @@ class Request:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
+        try:
+            if self.stream is not None and self.stream.response:
+                raise ServerError("Second respond call is not allowed.")
+        except AttributeError:
+            pass
         # This logic of determining which response to use is subject to change
         if response is None:
-            response = (self.stream and self.stream.response) or HTTPResponse(
+            response = HTTPResponse(
                 status=status,
                 headers=headers,
                 content_type=content_type,
             )
+
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)
@@ -193,6 +216,7 @@ class Request:
             error_logger.exception(
                 "Exception occurred in one of response middleware handlers"
             )
+        self.responded = True
         return response
 
     async def receive_body(self):

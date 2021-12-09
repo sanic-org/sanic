@@ -42,7 +42,7 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import filterwarnings
+from warnings import filterwarnings, warn
 
 from sanic_routing.exceptions import (  # type: ignore
     FinalizationError,
@@ -67,6 +67,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
@@ -736,6 +737,50 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             context={"request": request, "exception": exception},
         )
 
+        if (
+            request.stream is not None
+            and request.stream.stage is not Stage.HANDLER
+        ):
+            error_logger.exception(exception, exc_info=True)
+            logger.error(
+                "The error response will not be sent to the client for "
+                f'the following exception:"{exception}". A previous response '
+                "has at least partially been sent."
+            )
+
+            # ----------------- deprecated -----------------
+            handler = self.error_handler._lookup(
+                exception, request.name if request else None
+            )
+            if handler:
+                warn(
+                    "An error occurred while handling the request after at "
+                    "least some part of the response was sent to the client. "
+                    "Therefore, the response from your custom exception "
+                    f"handler {handler.__name__} will not be sent to the "
+                    "client. Beginning in v22.6, Sanic will stop executing "
+                    "custom exception handlers in this scenario. Exception "
+                    "handlers should only be used to generate the exception "
+                    "responses. If you would like to perform any other "
+                    "action on a raised exception, please consider using a "
+                    "signal handler like "
+                    '`@app.signal("http.lifecycle.exception")`\n'
+                    "For further information, please see the docs: "
+                    "https://sanicframework.org/en/guide/advanced/"
+                    "signals.html",
+                    DeprecationWarning,
+                )
+                try:
+                    response = self.error_handler.response(request, exception)
+                    if isawaitable(response):
+                        response = await response
+                except BaseException as e:
+                    logger.error("An error occurred in the exception handler.")
+                    error_logger.exception(e)
+            # ----------------------------------------------
+
+            return
+
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
@@ -765,6 +810,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     )
         if response is not None:
             try:
+                request.reset_response()
                 response = await request.respond(response)
             except BaseException:
                 # Skip response middleware
@@ -874,7 +920,16 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 if isawaitable(response):
                     response = await response
 
-            if response is not None:
+            if request.responded:
+                if response is not None:
+                    error_logger.error(
+                        "The response object returned by the route handler "
+                        "will not be sent to client. The request has already "
+                        "been responded to."
+                    )
+                if request.stream is not None:
+                    response = request.stream.response
+            elif response is not None:
                 response = await request.respond(response)
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore

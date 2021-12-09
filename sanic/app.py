@@ -42,7 +42,7 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import filterwarnings
+from warnings import filterwarnings, warn
 
 from sanic_routing.exceptions import (  # type: ignore
     FinalizationError,
@@ -753,7 +753,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 exception, request.name if request else None
             )
             if handler:
-                error_logger.warning(
+                warn(
                     "An error occurred while handling the request after at "
                     "least some part of the response was sent to the client. "
                     "Therefore, the response from your custom exception "
@@ -767,7 +767,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     '`@app.signal("http.lifecycle.exception")`\n'
                     "For further information, please see the docs: "
                     "https://sanicframework.org/en/guide/advanced/"
-                    "signals.html"
+                    "signals.html",
+                    DeprecationWarning,
                 )
                 try:
                     response = self.error_handler.response(request, exception)

@@ -934,8 +934,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
 
-            
-
             # Make sure that response is finished / run StreamingHTTP callback
             if isinstance(response, BaseHTTPResponse):
                 await self.dispatch(

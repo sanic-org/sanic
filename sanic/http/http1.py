@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     from sanic.response import BaseHTTPResponse
 
 from asyncio import CancelledError, sleep
-from enum import Enum
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -20,27 +19,9 @@ from sanic.exceptions import (
 )
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
+from sanic.http.constants import Stage
 from sanic.log import access_logger, error_logger, logger
 from sanic.touchup import TouchUpMeta
-
-
-class Stage(Enum):
-    """
-    Enum for representing the stage of the request/response cycle
-
-    | ``IDLE``  Waiting for request
-    | ``REQUEST``  Request headers being received
-    | ``HANDLER``  Headers done, handler running
-    | ``RESPONSE``  Response headers sent, body in progress
-    | ``FAILED``  Unrecoverable state (error while sending response)
-    |
-    """
-
-    IDLE = 0  # Waiting for request
-    REQUEST = 1  # Request headers being received
-    HANDLER = 3  # Headers done, handler running
-    RESPONSE = 4  # Response headers sent, body in progress
-    FAILED = 100  # Unrecoverable state (error while sending response)
 
 
 HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"

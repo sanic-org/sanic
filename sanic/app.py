@@ -35,6 +35,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -68,6 +69,7 @@ from sanic.exceptions import (
 )
 from sanic.handlers import ErrorHandler
 from sanic.http import Stage
+from sanic.http.constants import HTTP
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
@@ -1050,6 +1052,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        version: HTTP = HTTP.VERSION_1,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -1156,6 +1159,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             protocol=protocol,
             backlog=backlog,
             register_sys_signals=register_sys_signals,
+            version=version,
         )
 
         try:
@@ -1383,6 +1387,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         backlog: int = 100,
         register_sys_signals: bool = True,
         run_async: bool = False,
+        version: Union[HTTP, Literal[1], Literal[3]] = HTTP.VERSION_1,
     ):
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
@@ -1391,6 +1396,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "https://sanic.readthedocs.io/en/latest/sanic/config.html"
                 "#proxy-configuration"
             )
+
+        if isinstance(version, int):
+            version = HTTP(version)
 
         self.debug = debug
         self.state.host = host
@@ -1425,6 +1433,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "loop": loop,
             "register_sys_signals": register_sys_signals,
             "backlog": backlog,
+            "version": version,
         }
 
         self.motd(serve_location)

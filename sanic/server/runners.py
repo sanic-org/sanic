@@ -4,6 +4,7 @@ from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
 from sanic.config import Config
+from sanic.http.constants import HTTP
 from sanic.server.events import trigger_events
 
 
@@ -19,11 +20,14 @@ from functools import partial
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 
+from aioquic.asyncio import serve as quic_serve
+
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
+from sanic.http.http3 import get_config, get_ticket_store
 from sanic.log import error_logger, logger
 from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
-from sanic.server.protocols.http_protocol import HttpProtocol
+from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
 from sanic.server.socket import (
     bind_socket,
     bind_unix_socket,
@@ -49,6 +53,7 @@ def serve(
     signal=Signal(),
     state=None,
     asyncio_server_kwargs=None,
+    version=HTTP.VERSION_1,
 ):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -84,6 +89,9 @@ def serve(
         loop.set_debug(app.debug)
 
     app.asgi = False
+
+    if version is HTTP.VERSION_3:
+        return serve_http_3(host, port, app, loop)
 
     connections = connections if connections is not None else set()
     protocol_kwargs = _build_protocol_kwargs(protocol, app.config)
@@ -183,6 +191,40 @@ def serve(
                 conn.abort()
         loop.run_until_complete(app._server_event("shutdown", "after"))
         remove_unix_socket(unix)
+
+
+def serve_http_3(host, port, app, loop):
+    protocol = partial(Http3Protocol, app=app)
+    ticket_store = get_ticket_store()
+    config = get_config()
+    coro = quic_serve(
+        host,
+        port,
+        configuration=config,
+        create_protocol=protocol,
+        session_ticket_fetcher=ticket_store.pop,
+        session_ticket_handler=ticket_store.add,
+    )
+    server = AsyncioServer(app, loop, coro, [])
+    loop.run_until_complete(server.startup())
+    loop.run_until_complete(server.before_start())
+    loop.run_until_complete(server)
+    loop.run_until_complete(server.after_start())
+
+    pid = os.getpid()
+    try:
+        logger.info("Starting worker [%s]", pid)
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        logger.info("Stopping worker [%s]", pid)
+
+        loop.run_until_complete(server.before_stop())
+
+        # DO close connections here
+
+        loop.run_until_complete(server.after_stop())
 
 
 def serve_single(server_settings):

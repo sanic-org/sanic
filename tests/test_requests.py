@@ -15,8 +15,8 @@ from sanic_testing.testing import (
 )
 
 from sanic import Blueprint, Sanic
-from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
+from sanic.exceptions import SanicException, ServerError
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
 from sanic.response import html, json, text
 
 

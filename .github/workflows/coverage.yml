@@ -11,9 +11,10 @@ on:
   pull_request:
     paths:
       - "!*.MD"
-    types: [review_requested, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
 jobs:
   test:
+    if: github.event.pull_request.draft == false
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

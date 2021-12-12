@@ -3,6 +3,7 @@ from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from typing import (
+    TYPE_CHECKING,
     Any,
     AnyStr,
     Callable,
@@ -19,10 +20,14 @@ from warnings import warn
 from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
+from sanic.exceptions import SanicException, ServerError
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
 from sanic.models.protocol_types import HTMLProtocol, Range
 
+
+if TYPE_CHECKING:
+    from sanic.asgi import ASGIApp
 
 try:
     from ujson import dumps as json_dumps
@@ -45,7 +50,7 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Http = None
+        self.stream: Optional[Union[Http, ASGIApp]] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
@@ -112,8 +117,17 @@ class BaseHTTPResponse:
         """
         if data is None and end_stream is None:
             end_stream = True
-        if end_stream and not data and self.stream.send is None:
-            return
+        if self.stream is None:
+            raise SanicException(
+                "No stream is connected to the response object instance."
+            )
+        if self.stream.send is None:
+            if end_stream and not data:
+                return
+            raise ServerError(
+                "Response stream was ended, no more response data is "
+                "allowed to be sent."
+            )
         data = (
             data.encode()  # type: ignore
             if hasattr(data, "encode")

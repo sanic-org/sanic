@@ -144,7 +144,7 @@ def import_string(module_name, package=None):
     import a module or class by string path.
 
     :module_name: str with path of module or path to import and
-    instanciate a class
+    instantiate a class
     :returns: a module object or one instance from class if
     module_name is a valid path to class
 

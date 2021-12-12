@@ -48,7 +48,7 @@ def load_module_from_file_location(
     """Returns loaded module provided as a file path.
 
     :param args:
-        Coresponds to importlib.util.spec_from_file_location location
+        Corresponds to importlib.util.spec_from_file_location location
         parameters,but with this differences:
         - It has to be of a string or bytes type.
         - You can also use here environment variables
@@ -58,10 +58,10 @@ def load_module_from_file_location(
         If location parameter is of a bytes type, then use this encoding
         to decode it into string.
     :param args:
-        Coresponds to the rest of importlib.util.spec_from_file_location
+        Corresponds to the rest of importlib.util.spec_from_file_location
         parameters.
     :param kwargs:
-        Coresponds to the rest of importlib.util.spec_from_file_location
+        Corresponds to the rest of importlib.util.spec_from_file_location
         parameters.
 
     For example You can:

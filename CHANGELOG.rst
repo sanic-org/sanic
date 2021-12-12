@@ -657,7 +657,7 @@ Improved Documentation
 Version 20.6.0
 ---------------
 
-*Released, but unintentionally ommitting PR #1880, so was replaced by 20.6.1*
+*Released, but unintentionally omitting PR #1880, so was replaced by 20.6.1*
 
 
 Version 20.3.0
@@ -1090,7 +1090,7 @@ Version 18.12
   * Fix Range header handling for static files (#1402)
   * Fix the logger and make it work (#1397)
   * Fix type pikcle->pickle in multiprocessing test
-  * Fix pickling blueprints Change the string passed in the "name" section of the namedtuples in Blueprint to match the name of the Blueprint module attribute name. This allows blueprints to be pickled and unpickled, without errors, which is a requirment of running Sanic in multiprocessing mode in Windows. Added a test for pickling and unpickling blueprints Added a test for pickling and unpickling sanic itself Added a test for enabling multiprocessing on an app with a blueprint (only useful to catch this bug if the tests are run on Windows).
+  * Fix pickling blueprints Change the string passed in the "name" section of the namedtuples in Blueprint to match the name of the Blueprint module attribute name. This allows blueprints to be pickled and unpickled, without errors, which is a requirement of running Sanic in multiprocessing mode in Windows. Added a test for pickling and unpickling blueprints Added a test for pickling and unpickling sanic itself Added a test for enabling multiprocessing on an app with a blueprint (only useful to catch this bug if the tests are run on Windows).
   * Fix document for logging
 
 Version 0.8
@@ -1129,7 +1129,7 @@ Version 0.8
   * Content-length header on 204/304 responses (Arnulfo Solís)
   * Extend WebSocketProtocol arguments and add docs (Bob Olde Hampsink, yunstanford)
   * Update development status from pre-alpha to beta (Maksim Anisenkov)
-  * KeepAlive Timout log level changed to debug (Arnulfo Solís)
+  * KeepAlive Timeout log level changed to debug (Arnulfo Solís)
   * Pin pytest to 3.3.2 because of pytest-dev/pytest#3170 (Maksim Aniskenov)
   * Install Python 3.5 and 3.6 on docker container for tests (Shahin Azad)
   * Add support for blueprint groups and nesting (Elias Tarhini)

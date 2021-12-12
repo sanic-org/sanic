@@ -584,6 +584,11 @@ class Http(metaclass=TouchUpMeta):
             self.stage = Stage.FAILED
             raise RuntimeError("Response already started")
 
+        # Disconnect any earlier but unused response object
+        if self.response is not None:
+            self.response.stream = None
+
+        # Connect and return the response
         self.response, response.stream = response, self
         return response
 

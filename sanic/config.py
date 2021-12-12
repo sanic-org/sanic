@@ -214,7 +214,23 @@ class Config(dict):
         - ``float``
         - ``bool``
 
-        Anything else will be imported as a ``str``.
+        Anything else will be imported as a ``str``. If you would like to add
+        additional types to this list, you can use
+        :meth:`sanic.config.Config.register_type`. Just make sure that they
+        are registered before you instantiate your application.
+
+        .. code-block:: python
+
+            class Foo:
+                def __init__(self, name) -> None:
+                    self.name = name
+
+
+            config = Config(converters=[Foo])
+            app = Sanic(__name__, config=config)
+
+        `See user guide re: config
+        <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
         for key, value in environ.items():
             if not key.startswith(prefix):
@@ -299,5 +315,10 @@ class Config(dict):
     load = update_config
 
     def register_type(self, *cast: Callable[[str], Any]) -> None:
+        """
+        Allows for adding custom function to cast from a string value to any
+        other type. The function should raise ValueError if it is not the
+        correct type.
+        """
         for item in cast:
             self.__registry__.add(item)

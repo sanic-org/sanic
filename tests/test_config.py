@@ -1,3 +1,5 @@
+import logging
+
 from contextlib import contextmanager
 from os import environ
 from pathlib import Path
@@ -150,6 +152,20 @@ def test_env_w_custom_converter():
     assert isinstance(app.config.TEST_ANSWER, UltimateAnswer)
     assert app.config.TEST_ANSWER.answer == 42
     del environ["SANIC_TEST_ANSWER"]
+
+
+def test_add_converter_multiple_times(caplog):
+    def converter():
+        ...
+
+    message = "Type cast 'converter' has already been registered"
+    config = Config()
+    config.register_type(converter)
+    with caplog.at_level(logging.WARNING):
+        config.register_type(converter)
+
+    assert ("sanic.error", logging.WARNING, message) in caplog.record_tuples
+    assert len(config.__registry__) == 5
 
 
 def test_load_from_file(app):

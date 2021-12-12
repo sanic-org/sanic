@@ -16,8 +16,8 @@ from typing import (
 from warnings import warn
 
 from sanic.errorpages import check_error_format
-from sanic.exceptions import SanicException
 from sanic.http import Http
+from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
@@ -63,9 +63,10 @@ DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
 class CastRegistry(deque):
     def add(self, cast: Callable[[str], Any]) -> None:
         if cast in self:
-            raise SanicException(
-                f"Type {cast.__name__} has already been registered"
+            error_logger.warning(
+                f"Type cast '{cast.__name__}' has already been registered"
             )
+            return None
         self.appendleft(cast)
 
 

@@ -152,6 +152,7 @@ def test_env_w_custom_converter():
     assert isinstance(app.config.TEST_ANSWER, UltimateAnswer)
     assert app.config.TEST_ANSWER.answer == 42
     del environ["SANIC_TEST_ANSWER"]
+    config.__registry__.remove(UltimateAnswer)
 
 
 def test_add_converter_multiple_times(caplog):
@@ -166,6 +167,7 @@ def test_add_converter_multiple_times(caplog):
 
     assert ("sanic.error", logging.WARNING, message) in caplog.record_tuples
     assert len(config.__registry__) == 5
+    config.__registry__.remove(converter)
 
 
 def test_load_from_file(app):

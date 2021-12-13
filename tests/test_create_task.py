@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from threading import Event
 
@@ -53,6 +54,7 @@ def test_create_task_with_app_arg(app):
     assert response.text == "test_create_task_with_app_arg"
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 def test_create_named_task(app):
     async def dummy():
         ...
@@ -67,6 +69,7 @@ def test_create_named_task(app):
 
         assert app._task_registry
         assert isinstance(task, asyncio.Task)
+
         assert task.get_name() == "dummy_task"
 
         app.stop()
@@ -74,6 +77,7 @@ def test_create_named_task(app):
     app.run()
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 def test_create_named_task_fails_outside_app(app):
     async def dummy():
         ...

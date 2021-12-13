@@ -1,25 +1,26 @@
+from __future__ import annotations
+
 from inspect import isclass
 from os import environ
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 from warnings import warn
 
 from sanic.errorpages import check_error_format
 from sanic.http import Http
+from sanic.utils import load_module_from_file_location, str_to_bool
 
-from .utils import load_module_from_file_location, str_to_bool
+
+if TYPE_CHECKING:  # no cov
+    from sanic import Sanic
 
 
 SANIC_PREFIX = "SANIC_"
-BASE_LOGO = """
 
-                 Sanic
-         Build Fast. Run Fast.
-
-"""
 
 DEFAULT_CONFIG = {
     "ACCESS_LOG": True,
+    "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
     "FALLBACK_ERROR_FORMAT": "auto",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
@@ -27,6 +28,9 @@ DEFAULT_CONFIG = {
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
+    "MOTD": True,
+    "MOTD_DISPLAY": {},
+    "NOISY_EXCEPTIONS": False,
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
     "REGISTER": True,
@@ -44,6 +48,7 @@ DEFAULT_CONFIG = {
 
 class Config(dict):
     ACCESS_LOG: bool
+    AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
     FALLBACK_ERROR_FORMAT: str
     FORWARDED_FOR_HEADER: str
@@ -51,6 +56,9 @@ class Config(dict):
     GRACEFUL_SHUTDOWN_TIMEOUT: float
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
+    NOISY_EXCEPTIONS: bool
+    MOTD: bool
+    MOTD_DISPLAY: Dict[str, str]
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]
     REGISTER: bool
@@ -71,11 +79,14 @@ class Config(dict):
         load_env: Optional[Union[bool, str]] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
+        *,
+        app: Optional[Sanic] = None,
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
-        self.LOGO = BASE_LOGO
+        self._app = app
+        self._LOGO = ""
 
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
@@ -97,6 +108,7 @@ class Config(dict):
 
         self._configure_header_size()
         self._check_error_format()
+        self._init = True
 
     def __getattr__(self, attr):
         try:
@@ -104,16 +116,51 @@ class Config(dict):
         except KeyError as ke:
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
-    def __setattr__(self, attr, value):
-        self[attr] = value
-        if attr in (
-            "REQUEST_MAX_HEADER_SIZE",
-            "REQUEST_BUFFER_SIZE",
-            "REQUEST_MAX_SIZE",
-        ):
-            self._configure_header_size()
-        elif attr == "FALLBACK_ERROR_FORMAT":
-            self._check_error_format()
+    def __setattr__(self, attr, value) -> None:
+        self.update({attr: value})
+
+    def __setitem__(self, attr, value) -> None:
+        self.update({attr: value})
+
+    def update(self, *other, **kwargs) -> None:
+        other_mapping = {k: v for item in other for k, v in dict(item).items()}
+        super().update(*other, **kwargs)
+        for attr, value in {**other_mapping, **kwargs}.items():
+            self._post_set(attr, value)
+
+    def _post_set(self, attr, value) -> None:
+        if self.get("_init"):
+            if attr in (
+                "REQUEST_MAX_HEADER_SIZE",
+                "REQUEST_BUFFER_SIZE",
+                "REQUEST_MAX_SIZE",
+            ):
+                self._configure_header_size()
+            elif attr == "FALLBACK_ERROR_FORMAT":
+                self._check_error_format()
+                if self.app and value != self.app.error_handler.fallback:
+                    if self.app.error_handler.fallback != "auto":
+                        warn(
+                            "Overriding non-default ErrorHandler fallback "
+                            "value. Changing from "
+                            f"{self.app.error_handler.fallback} to {value}."
+                        )
+                    self.app.error_handler.fallback = value
+            elif attr == "LOGO":
+                self._LOGO = value
+                warn(
+                    "Setting the config.LOGO is deprecated and will no longer "
+                    "be supported starting in v22.6.",
+                    DeprecationWarning,
+                )
+
+    @property
+    def app(self):
+        return self._app
+
+    @property
+    def LOGO(self):
+        return self._LOGO
 
     def _configure_header_size(self):
         Http.set_header_max_size(
@@ -127,11 +174,11 @@ class Config(dict):
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
-        Looks for prefixed environment variables and applies
-        them to the configuration if present. This is called automatically when
-        Sanic starts up to load environment variables into config.
+        Looks for prefixed environment variables and applies them to the
+        configuration if present. This is called automatically when Sanic
+        starts up to load environment variables into config.
 
-        It will automatically hyrdate the following types:
+        It will automatically hydrate the following types:
 
         - ``int``
         - ``float``
@@ -139,19 +186,18 @@ class Config(dict):
 
         Anything else will be imported as a ``str``.
         """
-        for k, v in environ.items():
-            if k.startswith(prefix):
-                _, config_key = k.split(prefix, 1)
+        for key, value in environ.items():
+            if not key.startswith(prefix):
+                continue
+
+            _, config_key = key.split(prefix, 1)
+
+            for converter in (int, float, str_to_bool, str):
                 try:
-                    self[config_key] = int(v)
+                    self[config_key] = converter(value)
+                    break
                 except ValueError:
-                    try:
-                        self[config_key] = float(v)
-                    except ValueError:
-                        try:
-                            self[config_key] = str_to_bool(v)
-                        except ValueError:
-                            self[config_key] = v
+                    pass
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """

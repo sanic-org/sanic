@@ -3,19 +3,15 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
-    paths:
-      - sanic/*
-      - tests/*
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   testPy37:
+    if: github.event.pull_request.draft == false
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         #         os: [ubuntu-latest, macos-latest]
         os: [ubuntu-latest]

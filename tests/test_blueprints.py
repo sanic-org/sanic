@@ -1088,3 +1088,31 @@ def test_bp_set_attribute_warning():
         "and will be removed in version 21.12. You should change your "
         "Blueprint instance to use instance.ctx.foo instead."
     )
+
+
+def test_early_registration(app):
+    assert len(app.router.routes) == 0
+
+    bp = Blueprint("bp")
+
+    @bp.get("/one")
+    async def one(_):
+        return text("one")
+
+    app.blueprint(bp)
+
+    assert len(app.router.routes) == 1
+
+    @bp.get("/two")
+    async def two(_):
+        return text("two")
+
+    @bp.get("/three")
+    async def three(_):
+        return text("three")
+
+    assert len(app.router.routes) == 3
+
+    for path in ("one", "two", "three"):
+        _, response = app.test_client.get(f"/{path}")
+        assert response.text == path

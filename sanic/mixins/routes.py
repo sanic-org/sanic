@@ -74,10 +74,19 @@ class RouteMixin:
         static: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteWrapper:
         """
         Decorate a function to be registered as a route
+
+
+        **Example using context kwargs**
+
+        .. code-block:: python
+
+            @app.route(..., ctx_foo="foobar")
+            async def route_handler(request: Request):
+                assert request.route.ctx.foo == "foobar"
 
         :param uri: path of the URL
         :param methods: list or tuple of methods allowed
@@ -90,6 +99,8 @@ class RouteMixin:
             body (eg. GET requests)
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: tuple of routes, decorated function
         """
 
@@ -226,6 +237,8 @@ class RouteMixin:
         :param stream: boolean specifying if the handler is a stream handler
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: function or class instance
         """
         # Handle HTTPMethodView differently
@@ -289,6 +302,8 @@ class RouteMixin:
         :param name: Unique name that can be used to identify the Route
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -327,6 +342,8 @@ class RouteMixin:
         :param name: Unique name that can be used to identify the Route
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -365,6 +382,8 @@ class RouteMixin:
         :param name: Unique name that can be used to identify the Route
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -411,6 +430,8 @@ class RouteMixin:
         :type ignore_body: bool, optional
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -457,6 +478,8 @@ class RouteMixin:
         :type ignore_body: bool, optional
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -505,6 +528,8 @@ class RouteMixin:
         :type ignore_body: bool, optional
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -543,6 +568,8 @@ class RouteMixin:
         :param name: Unique name that can be used to identify the Route
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
         return self.route(
@@ -583,6 +610,8 @@ class RouteMixin:
                      be used with :func:`url_for`
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: tuple of routes, decorated function
         """
         return self.route(
@@ -630,6 +659,8 @@ class RouteMixin:
                 be used with :func:`url_for`
         :param version_prefix: URL path that should be before the version
             value; default: ``/v``
+        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
+            will be appended to the route context (``route.ctx``)
         :return: Objected decorated by :func:`websocket`
         """
         return self.websocket(

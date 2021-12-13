@@ -124,7 +124,7 @@ class CertSelector(ssl.SSLContext):
         for i, ctx in enumerate(ctxs):
             if not ctx:
                 continue
-            names = getattr(ctx, "sanic", {}).get("names", [])
+            names = dict(getattr(ctx, "sanic", {})).get("names", [])
             all_names += names
             self.sanic_select.append(ctx)
             if i == 0:
@@ -161,7 +161,7 @@ def match_hostname(
     """Match names from CertSelector against a received hostname."""
     # Local certs are considered trusted, so this can be less pedantic
     # and thus faster than the deprecated ssl.match_hostname function is.
-    names = getattr(ctx, "sanic", {}).get("names", [])
+    names = dict(getattr(ctx, "sanic", {})).get("names", [])
     hostname = hostname.lower()
     for name in names:
         if name.startswith("*."):
@@ -175,7 +175,7 @@ def match_hostname(
 def selector_sni_callback(
     sslobj: ssl.SSLObject, server_name: str, ctx: CertSelector
 ) -> Optional[int]:
-    """Select a certificate mathing the SNI."""
+    """Select a certificate matching the SNI."""
     # Call server_name_callback to store the SNI on sslobj
     server_name_callback(sslobj, server_name, ctx)
     # Find a new context matching the hostname

@@ -14,7 +14,7 @@ class FutureRoute(NamedTuple):
     handler: str
     uri: str
     methods: Optional[Iterable[str]]
-    host: str
+    host: Union[str, List[str]]
     strict_slashes: bool
     stream: bool
     version: Optional[int]
@@ -62,3 +62,7 @@ class FutureSignal(NamedTuple):
     handler: SignalHandler
     event: str
     condition: Optional[Dict[str, str]]
+
+
+class FutureRegistry(set):
+    ...

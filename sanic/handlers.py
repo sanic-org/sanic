@@ -1,5 +1,6 @@
 from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type
+from warnings import warn
 
 from sanic.errorpages import BaseRenderer, HTMLRenderer, exception_response
 from sanic.exceptions import (
@@ -38,7 +39,14 @@ class ErrorHandler:
         self.base = base
 
     @classmethod
-    def finalize(cls, error_handler):
+    def finalize(cls, error_handler, fallback: Optional[str] = None):
+        if (
+            fallback
+            and fallback != "auto"
+            and error_handler.fallback == "auto"
+        ):
+            error_handler.fallback = fallback
+
         if not isinstance(error_handler, cls):
             error_logger.warning(
                 f"Error handler is non-conforming: {type(error_handler)}"
@@ -46,16 +54,15 @@ class ErrorHandler:
 
         sig = signature(error_handler.lookup)
         if len(sig.parameters) == 1:
-            error_logger.warning(
-                DeprecationWarning(
-                    "You are using a deprecated error handler. The lookup "
-                    "method should accept two positional parameters: "
-                    "(exception, route_name: Optional[str]). "
-                    "Until you upgrade your ErrorHandler.lookup, Blueprint "
-                    "specific exceptions will not work properly. Beginning "
-                    "in v22.3, the legacy style lookup method will not "
-                    "work at all."
-                ),
+            warn(
+                "You are using a deprecated error handler. The lookup "
+                "method should accept two positional parameters: "
+                "(exception, route_name: Optional[str]). "
+                "Until you upgrade your ErrorHandler.lookup, Blueprint "
+                "specific exceptions will not work properly. Beginning "
+                "in v22.3, the legacy style lookup method will not "
+                "work at all.",
+                DeprecationWarning,
             )
             error_handler._lookup = error_handler._legacy_lookup
 

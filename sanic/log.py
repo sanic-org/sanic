@@ -1,8 +1,11 @@
 import logging
 import sys
 
+from enum import Enum
+from typing import Any, Dict
 
-LOGGING_CONFIG_DEFAULTS = dict(
+
+LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(
     version=1,
     disable_existing_loggers=False,
     loggers={
@@ -51,6 +54,14 @@ LOGGING_CONFIG_DEFAULTS = dict(
         },
     },
 )
+
+
+class Colors(str, Enum):
+    END = "\033[0m"
+    BLUE = "\033[01;34m"
+    GREEN = "\033[01;32m"
+    YELLOW = "\033[01;33m"
+    RED = "\033[01;31m"
 
 
 logger = logging.getLogger("sanic.root")

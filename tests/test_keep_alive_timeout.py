@@ -21,7 +21,7 @@ port_counter = count()
 
 
 def get_port():
-    yield next(port_counter) + PORT
+    return next(port_counter) + PORT
 
 
 keep_alive_timeout_app_reuse = Sanic("test_ka_timeout_reuse")
@@ -69,7 +69,7 @@ def test_keep_alive_timeout_reuse():
     """If the server keep-alive timeout and client keep-alive timeout are
     both longer than the delay, the client _and_ server will successfully
     reuse the existing connection."""
-    port = next(get_port())
+    port = get_port()
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     client = ReusableClient(keep_alive_timeout_app_reuse, loop=loop, port=port)
@@ -97,7 +97,7 @@ def test_keep_alive_timeout_reuse():
 def test_keep_alive_client_timeout():
     """If the server keep-alive timeout is longer than the client
     keep-alive timeout, client will try to create a new connection here."""
-    port = next(get_port())
+    port = get_port()
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     client = ReusableClient(
@@ -125,7 +125,7 @@ def test_keep_alive_server_timeout():
     keep-alive timeout, the client will either a 'Connection reset' error
     _or_ a new connection. Depending on how the event-loop handles the
     broken server connection."""
-    port = next(get_port())
+    port = get_port()
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     client = ReusableClient(
@@ -150,7 +150,7 @@ def test_keep_alive_server_timeout():
     reason="Not testable with current client",
 )
 def test_keep_alive_connection_context():
-    port = next(get_port())
+    port = get_port()
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     client = ReusableClient(keep_alive_app_context, loop=loop, port=port)

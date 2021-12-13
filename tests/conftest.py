@@ -6,7 +6,8 @@ import string
 import sys
 import uuid
 
-from typing import Tuple
+from logging import LogRecord
+from typing import Callable, List, Tuple
 
 import pytest
 
@@ -170,3 +171,16 @@ def run_startup(caplog):
         return caplog.record_tuples
 
     return run
+
+
+@pytest.fixture(scope="function")
+def message_in_records():
+    def msg_in_log(records: List[LogRecord], msg: str):
+        error_captured = False
+        for record in records:
+            if msg in record.message:
+                error_captured = True
+                break
+        return error_captured
+
+    return msg_in_log

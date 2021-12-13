@@ -108,7 +108,7 @@ tests_require = [
     "black",
     "isort>=5.0.0",
     "bandit",
-    "mypy>=0.901",
+    "mypy>=0.901,<0.910",
     "docutils",
     "pygments",
     "uvicorn<0.15.0",
@@ -121,6 +121,7 @@ docs_require = [
     "docutils",
     "pygments",
     "m2r2",
+    "mistune<2.0.0",
 ]
 
 dev_require = tests_require + [

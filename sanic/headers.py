@@ -28,7 +28,7 @@ _host_re = re.compile(
 
 # RFC's quoted-pair escapes are mostly ignored by browsers. Chrome, Firefox and
 # curl all have different escaping, that we try to handle as well as possible,
-# even though no client espaces in a way that would allow perfect handling.
+# even though no client escapes in a way that would allow perfect handling.
 
 # For more information, consult ../tests/test_requests.py
 

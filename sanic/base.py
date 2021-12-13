@@ -11,7 +11,7 @@ from sanic.mixins.routes import RouteMixin
 from sanic.mixins.signals import SignalMixin
 
 
-VALID_NAME = re.compile(r"^[a-zA-Z][a-zA-Z0-9_\-]*$")
+VALID_NAME = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_\-]*$")
 
 
 class BaseSanic(

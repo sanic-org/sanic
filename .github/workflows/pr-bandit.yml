@@ -3,10 +3,11 @@ on:
   pull_request:
     branches:
       - main
-    types: [review_requested, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   bandit:
+    if: github.event.pull_request.draft == false
     name: type-check-${{ matrix.config.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:

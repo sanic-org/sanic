@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from warnings import warn
 
 from sanic.exceptions import SanicException
-from sanic.log import error_logger
 
 
 if TYPE_CHECKING:

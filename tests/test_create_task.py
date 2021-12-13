@@ -63,14 +63,15 @@ def test_create_named_task(app):
 
     @app.after_server_start
     async def stop(app, _):
+        task = app.get_task("dummy_task")
+
+        assert app._task_registry
+        assert isinstance(task, asyncio.Task)
+        assert task.get_name() == "dummy_task"
+
         app.stop()
 
     app.run()
-    task = app.get_task("dummy_task")
-
-    assert app._task_registry
-    assert isinstance(task, asyncio.Task)
-    assert task.get_name() == "dummy_task"
 
 
 def test_create_named_task_fails_outside_app(app):

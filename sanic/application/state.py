@@ -42,6 +42,7 @@ class ApplicationState:
     reload_dirs: Set[Path] = field(default_factory=set)
     server: Server = field(default=Server.SANIC)
     is_running: bool = field(default=False)
+    is_started: bool = field(default=False)
     is_stopping: bool = field(default=False)
     verbosity: int = field(default=0)
     workers: int = field(default=0)

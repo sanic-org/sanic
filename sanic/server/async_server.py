@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import asyncio
 
+from typing import TYPE_CHECKING
+from warnings import warn
+
 from sanic.exceptions import SanicException
+
+
+if TYPE_CHECKING:
+    from sanic import Sanic
 
 
 class AsyncioServer:
@@ -11,11 +18,11 @@ class AsyncioServer:
     a user who needs to manage the server lifecycle manually.
     """
 
-    __slots__ = ("app", "connections", "loop", "serve_coro", "server", "init")
+    __slots__ = ("app", "connections", "loop", "serve_coro", "server")
 
     def __init__(
         self,
-        app,
+        app: Sanic,
         loop,
         serve_coro,
         connections,
@@ -27,13 +34,20 @@ class AsyncioServer:
         self.loop = loop
         self.serve_coro = serve_coro
         self.server = None
-        self.init = False
+
+    @property
+    def init(self):
+        warn(
+            "AsyncioServer.init has been deprecated and will be removed "
+            "in v22.6. Use Sanic.state.is_started instead.",
+            DeprecationWarning,
+        )
+        return self.app.state.is_started
 
     def startup(self):
         """
         Trigger "before_server_start" events
         """
-        self.init = True
         return self.app._startup()
 
     def before_start(self):
@@ -77,30 +91,33 @@ class AsyncioServer:
             return task
 
     def start_serving(self):
-        if self.server:
-            try:
-                return self.server.start_serving()
-            except AttributeError:
-                raise NotImplementedError(
-                    "server.start_serving not available in this version "
-                    "of asyncio or uvloop."
-                )
+        return self._serve(self.server.start_serving)
 
     def serve_forever(self):
+        return self._serve(self.server.serve_forever)
+
+    def _serve(self, serve_func):
         if self.server:
+            if not self.app.state.is_started:
+                raise SanicException(
+                    "Cannot run Sanic server without first running "
+                    "await server.startup()"
+                )
+
             try:
-                return self.server.serve_forever()
+                return serve_func()
             except AttributeError:
+                name = serve_func.__name__
                 raise NotImplementedError(
-                    "server.serve_forever not available in this version "
+                    f"server.{name} not available in this version "
                     "of asyncio or uvloop."
                 )
 
     def _server_event(self, concern: str, action: str):
-        if not self.init:
+        if not self.app.state.is_started:
             raise SanicException(
                 "Cannot dispatch server event without "
-                "first running server.startup()"
+                "first running await server.startup()"
             )
         return self.app._server_event(concern, action, loop=self.loop)
 

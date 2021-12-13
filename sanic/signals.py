@@ -4,7 +4,7 @@ import asyncio
 
 from enum import Enum
 from inspect import isawaitable
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from sanic_routing import BaseRouter, Route, RouteGroup  # type: ignore
 from sanic_routing.exceptions import NotFound  # type: ignore
@@ -147,13 +147,14 @@ class SignalRouter(BaseRouter):
             signals = signals[::-1]
         try:
             for signal in signals:
-                trigger = params.pop("__trigger__", None)
-                kwargs = params
-                if signal.ctx.trigger:
-                    kwargs[signal.ctx.trigger] = trigger
+                params.pop("__trigger__", None)
                 if (
-                    condition is None
-                    or condition == signal.handler.__requirements__
+                    (condition is None and signal.ctx.exclusive is False)
+                    or (
+                        condition is None
+                        and not signal.handler.__requirements__
+                    )
+                    or (condition == signal.handler.__requirements__)
                 ) and (signal.ctx.trigger or event == signal.ctx.definition):
                     maybe_coroutine = signal.handler(**params)
                     if isawaitable(maybe_coroutine):
@@ -198,15 +199,16 @@ class SignalRouter(BaseRouter):
         handler: SignalHandler,
         event: str,
         condition: Optional[Dict[str, Any]] = None,
+        exclusive: bool = True,
     ) -> Signal:
         event_definition = event
         parts = self._build_event_parts(event)
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])
-            trigger = parts[2][1:-1]
+            trigger = self._clean_trigger(parts[2])
         else:
             name = event
-            trigger = None
+            trigger = ""
 
         if not trigger:
             event = ".".join([*parts[:2], "<__trigger__>"])
@@ -221,10 +223,11 @@ class SignalRouter(BaseRouter):
             append=True,
         )  # type: ignore
 
+        signal.ctx.exclusive = exclusive
         signal.ctx.trigger = trigger
         signal.ctx.definition = event_definition
 
-        return signal
+        return cast(Signal, signal)
 
     def finalize(self, do_compile: bool = True, do_optimize: bool = False):
         self.add(_blank, "sanic.__signal__.__init__")
@@ -257,3 +260,9 @@ class SignalRouter(BaseRouter):
                 "Cannot declare reserved signal event: %s" % event
             )
         return parts
+
+    def _clean_trigger(self, trigger: str) -> str:
+        trigger = trigger[1:-1]
+        if ":" in trigger:
+            trigger, _ = trigger.split(":")
+        return trigger

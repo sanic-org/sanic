@@ -117,8 +117,8 @@ argv = dict(
 @pytest.mark.parametrize(
     "runargs, mode",
     [
-        (dict(port=42102, auto_reload=True), "script"),
-        (dict(port=42103, debug=True), "module"),
+        (dict(port=42202, auto_reload=True), "script"),
+        (dict(port=42203, debug=True), "module"),
         ({}, "sanic"),
     ],
 )
@@ -149,8 +149,8 @@ async def test_reloader_live(runargs, mode):
 @pytest.mark.parametrize(
     "runargs, mode",
     [
-        (dict(port=42102, auto_reload=True), "script"),
-        (dict(port=42103, debug=True), "module"),
+        (dict(port=42302, auto_reload=True), "script"),
+        (dict(port=42303, debug=True), "module"),
         ({}, "sanic"),
     ],
 )

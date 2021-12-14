@@ -115,11 +115,13 @@ class ErrorHandler:
                 DeprecationWarning,
             )
 
-        if (
-            fallback
-            and fallback != DEFAULT_FORMAT
-            and error_handler._fallback is _default
-        ):
+        if fallback and fallback != DEFAULT_FORMAT:
+            if error_handler._fallback is not _default:
+                error_logger.warning(
+                    f"Setting the fallback value to {fallback}. This changes "
+                    "the current non-default value "
+                    f"'{error_handler._fallback}'."
+                )
             error_handler._fallback = fallback
 
         if not isinstance(error_handler, cls):

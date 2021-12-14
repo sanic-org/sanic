@@ -50,7 +50,7 @@ from sanic_routing.exceptions import (  # type: ignore
 )
 from sanic_routing.route import Route  # type: ignore
 
-from sanic import reloader_helpers
+from sanic import blueprint_group, reloader_helpers
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
@@ -535,6 +535,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         ):
             blueprint.strict_slashes = self.strict_slashes
         blueprint.register(self, options)
+
+    def _register_lazy_blueprints(self):
+        for name, reg_info in Blueprint.__pre_registry__.items():
+            blueprint = reg_info.pop("bp")
+            if name == self.name and blueprint.name not in self.blueprints:
+                self.blueprint(blueprint, **reg_info)
 
     def url_for(self, view_name: str, **kwargs):
         """Build a URL based on a view name and the values provided.
@@ -1697,6 +1703,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def _startup(self):
         self._future_registry.clear()
+        self._register_lazy_blueprints()
         self.signalize()
         self.finalize()
         ErrorHandler.finalize(

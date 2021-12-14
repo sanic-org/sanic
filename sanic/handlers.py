@@ -55,7 +55,7 @@ class ErrorHandler:
 
     @property
     def fallback(self):
-        # This id for backwards compat and can be removed in v22.6
+        # This is for backwards compat and can be removed in v22.6
         if self._fallback is _default:
             return DEFAULT_FORMAT
         return self._fallback

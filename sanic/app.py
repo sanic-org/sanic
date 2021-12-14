@@ -1683,6 +1683,31 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
 
+    @classmethod
+    def lazy(
+        cls,
+        app_name: str,
+        *,
+        name: str = None,
+        url_prefix: Optional[str] = None,
+        host: Optional[Union[List[str], str]] = None,
+        version: Optional[Union[int, str, float]] = None,
+        strict_slashes: Optional[bool] = None,
+        version_prefix: str = "/v",
+    ) -> Blueprint:
+        if not name:
+            name = f"bp{len(Blueprint.__pre_registry__)}"
+        bp = Blueprint(
+            name=name,
+            url_prefix=url_prefix,
+            host=host,
+            version=version,
+            strict_slashes=strict_slashes,
+            version_prefix=version_prefix,
+        )
+        bp.pre_register(app_name)
+        return bp
+
     # -------------------------------------------------------------------- #
     # Lifecycle
     # -------------------------------------------------------------------- #

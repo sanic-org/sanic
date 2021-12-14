@@ -9,6 +9,7 @@ from warnings import warn
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
 from sanic.helpers import _default
 from sanic.http import Http
+from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
@@ -161,12 +162,12 @@ class Config(dict, metaclass=DescriptorMeta):
 
     @FALLBACK_ERROR_FORMAT.setter
     def FALLBACK_ERROR_FORMAT(self, value):
-        self._check_error_format()
+        self._check_error_format(value)
         if (
             self._FALLBACK_ERROR_FORMAT is not _default
             and value != self._FALLBACK_ERROR_FORMAT
         ):
-            warn(
+            error_logger.warning(
                 "Setting config.FALLBACK_ERROR_FORMAT on an already "
                 "configured value may have unintended consequences."
             )
@@ -179,16 +180,16 @@ class Config(dict, metaclass=DescriptorMeta):
             self.REQUEST_MAX_SIZE,
         )
 
-    def _check_error_format(self):
-        check_error_format(self.FALLBACK_ERROR_FORMAT)
+    def _check_error_format(self, format: Optional[str] = None):
+        check_error_format(format or self.FALLBACK_ERROR_FORMAT)
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
-        Looks for prefixed environment variables and applies
-        them to the configuration if present. This is called automatically when
-        Sanic starts up to load environment variables into config.
+        Looks for prefixed environment variables and applies them to the
+        configuration if present. This is called automatically when Sanic
+        starts up to load environment variables into config.
 
-        It will automatically hyrdate the following types:
+        It will automatically hydrate the following types:
 
         - ``int``
         - ``float``
@@ -196,19 +197,18 @@ class Config(dict, metaclass=DescriptorMeta):
 
         Anything else will be imported as a ``str``.
         """
-        for k, v in environ.items():
-            if k.startswith(prefix):
-                _, config_key = k.split(prefix, 1)
+        for key, value in environ.items():
+            if not key.startswith(prefix):
+                continue
+
+            _, config_key = key.split(prefix, 1)
+
+            for converter in (int, float, str_to_bool, str):
                 try:
-                    self[config_key] = int(v)
+                    self[config_key] = converter(value)
+                    break
                 except ValueError:
-                    try:
-                        self[config_key] = float(v)
-                    except ValueError:
-                        try:
-                            self[config_key] = str_to_bool(v)
-                        except ValueError:
-                            self[config_key] = v
+                    pass
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """

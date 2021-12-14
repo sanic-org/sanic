@@ -1,19 +1,15 @@
 name: Coverage check
-# on:
-#   push:
-#     branches:
-#       - main
-#     tags:
-#       - "!*" # Do not execute on tags
-#     paths:
-#       - sanic/*
-#       - tests/*
-#   pull_request:
-#     paths:
-#       - "!*.MD"
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "!*" # Do not execute on tags
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 jobs:
   test:
+    if: github.event.pull_request.draft == false
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

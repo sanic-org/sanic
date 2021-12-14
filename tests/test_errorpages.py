@@ -280,8 +280,7 @@ def test_allow_fallback_error_format_set_main_process_start(app):
     async def start(app, _):
         app.config.FALLBACK_ERROR_FORMAT = "text"
 
-    request, response = app.test_client.get("/error")
-    assert request.app.error_handler.fallback == "text"
+    _, response = app.test_client.get("/error")
     assert response.status == 500
     assert response.content_type == "text/plain; charset=utf-8"
 
@@ -297,20 +296,6 @@ def test_setting_fallback_on_config_changes_as_expected(app):
     assert response.content_type == "text/plain; charset=utf-8"
 
 
-def test_setting_fallback_on_config_does_not_change(app):
-    app.error_handler = ErrorHandler(fallback="text")
-
-    _, response = app.test_client.get("/error")
-    assert response.content_type == "text/plain; charset=utf-8"
-
-    app.config.FALLBACK_ERROR_FORMAT = "auto"
-    _, response = app.test_client.get("/error")
-    assert response.content_type == "text/plain; charset=utf-8"
-
-    app.config.FALLBACK_ERROR_FORMAT = "json"
-    assert response.content_type == "text/plain; charset=utf-8"
-
-
 def test_allow_fallback_error_format_in_config_injection():
     class MyConfig(Config):
         FALLBACK_ERROR_FORMAT = "text"
@@ -322,7 +307,6 @@ def test_allow_fallback_error_format_in_config_injection():
         raise Exception("something went wrong")
 
     request, response = app.test_client.get("/error")
-    assert request.app.error_handler.fallback == "text"
     assert response.status == 500
     assert response.content_type == "text/plain; charset=utf-8"
 
@@ -334,6 +318,23 @@ def test_allow_fallback_error_format_in_config_replacement(app):
     app.config = MyConfig()
 
     request, response = app.test_client.get("/error")
-    assert request.app.error_handler.fallback == "text"
     assert response.status == 500
     assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_config_fallback_before_and_after_startup(app):
+    app.config.FALLBACK_ERROR_FORMAT = "json"
+
+    @app.main_process_start
+    async def start(app, _):
+        app.config.FALLBACK_ERROR_FORMAT = "text"
+
+    _, response = app.test_client.get("/error")
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_config_fallback_bad_value(app):
+    message = "Unknown format: fake"
+    with pytest.raises(SanicException, match=message):
+        app.config.FALLBACK_ERROR_FORMAT = "fake"

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type, Union
+from warnings import warn
 
 from sanic.config import Config
 from sanic.errorpages import (
@@ -70,13 +71,12 @@ class ErrorHandler:
 
     @staticmethod
     def _warn_fallback_deprecation():
-        error_logger.warning(
-            DeprecationWarning(
-                "Setting the ErrorHandler fallback value directly is "
-                "deprecated and no longer supported. This feature will "
-                "be removed in v22.6. Instead, use "
-                "app.config.FALLBACK_ERROR_FORMAT."
-            ),
+        warn(
+            "Setting the ErrorHandler fallback value directly is "
+            "deprecated and no longer supported. This feature will "
+            "be removed in v22.6. Instead, use "
+            "app.config.FALLBACK_ERROR_FORMAT.",
+            DeprecationWarning,
         )
 
     @classmethod
@@ -100,21 +100,19 @@ class ErrorHandler:
         config: Optional[Config] = None,
     ):
         if fallback:
-            error_logger.warning(
-                DeprecationWarning(
-                    "Setting the ErrorHandler fallback value via finalize() "
-                    "is deprecated and no longer supported. This feature will "
-                    "be removed in v22.6. Instead, use "
-                    "app.config.FALLBACK_ERROR_FORMAT."
-                ),
+            warn(
+                "Setting the ErrorHandler fallback value via finalize() "
+                "is deprecated and no longer supported. This feature will "
+                "be removed in v22.6. Instead, use "
+                "app.config.FALLBACK_ERROR_FORMAT.",
+                DeprecationWarning,
             )
 
         if config is None:
-            error_logger.warning(
-                DeprecationWarning(
-                    "Starting in v22.3, config will be a required argument "
-                    "for ErrorHandler.finalize()."
-                ),
+            warn(
+                "Starting in v22.3, config will be a required argument "
+                "for ErrorHandler.finalize().",
+                DeprecationWarning,
             )
 
         if (
@@ -131,16 +129,15 @@ class ErrorHandler:
 
         sig = signature(error_handler.lookup)
         if len(sig.parameters) == 1:
-            error_logger.warning(
-                DeprecationWarning(
-                    "You are using a deprecated error handler. The lookup "
-                    "method should accept two positional parameters: "
-                    "(exception, route_name: Optional[str]). "
-                    "Until you upgrade your ErrorHandler.lookup, Blueprint "
-                    "specific exceptions will not work properly. Beginning "
-                    "in v22.3, the legacy style lookup method will not "
-                    "work at all."
-                ),
+            warn(
+                "You are using a deprecated error handler. The lookup "
+                "method should accept two positional parameters: "
+                "(exception, route_name: Optional[str]). "
+                "Until you upgrade your ErrorHandler.lookup, Blueprint "
+                "specific exceptions will not work properly. Beginning "
+                "in v22.3, the legacy style lookup method will not "
+                "work at all.",
+                DeprecationWarning,
             )
             legacy_lookup = error_handler._legacy_lookup
             error_handler._lookup = legacy_lookup  # type: ignore

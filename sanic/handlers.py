@@ -65,7 +65,7 @@ class ErrorHandler:
         self._warn_fallback_deprecation()
         if not isinstance(value, str):
             raise SanicException(
-                f"Cannot set error handler fallback to: {value=}"
+                f"Cannot set error handler fallback to: value={value}"
             )
         self._fallback = value
 

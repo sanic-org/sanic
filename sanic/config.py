@@ -121,9 +121,13 @@ class Config(dict, metaclass=DescriptorMeta):
 
     def __setattr__(self, attr, value) -> None:
         if attr in self.__class__.__setters__:
-            super().__setattr__(attr, value)
-        else:
-            self.update({attr: value})
+            try:
+                super().__setattr__(attr, value)
+            except AttributeError:
+                ...
+            else:
+                return None
+        self.update({attr: value})
 
     def __setitem__(self, attr, value) -> None:
         self.update({attr: value})

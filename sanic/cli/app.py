@@ -10,7 +10,9 @@ from typing import Any, List, Union
 
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
+from sanic.blueprints import Blueprint
 from sanic.cli.arguments import Group
+from sanic.helpers import _default
 from sanic.log import error_logger
 from sanic.simple import create_simple_server
 
@@ -20,6 +22,7 @@ class SanicArgumentParser(ArgumentParser):
 
 
 class SanicCLI:
+    DEFAULT_APP_NAME = "SANIC"
     DESCRIPTION = indent(
         f"""
 {get_logo(True)}
@@ -131,7 +134,17 @@ Or, a path to a directory to run as a simple HTTP server:
 
                 app_type_name = type(app).__name__
 
-                if not isinstance(app, Sanic):
+                if isinstance(app, Blueprint):
+                    bp = app
+                    name = (
+                        bp.ctx._prereg[0]
+                        if hasattr(bp.ctx, "_prereg")
+                        else _default
+                    )
+                    if name is _default:
+                        name = self.DEFAULT_APP_NAME
+                    app = Sanic(name)
+                elif not isinstance(app, Sanic):
                     raise ValueError(
                         f"Module is not a Sanic app, it is a {app_type_name}\n"
                         f"  Perhaps you meant {self.args.module}.app?"

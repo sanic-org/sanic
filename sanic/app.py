@@ -547,6 +547,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "pre-registrations must use an application name."
                 )
 
+            if self.name in registry and _default in registry:
+                registry[_default].extend(registry.pop(self.name))
+
             registry = {
                 self.name if k is _default else k: v
                 for k, v in registry.items()
@@ -1712,7 +1715,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         version_prefix: str = "/v",
     ) -> Blueprint:
         if not name:
-            name = f"bp{len(Blueprint.__pre_registry__)}"
+            flat = [1 for x in Blueprint.__pre_registry__.values() for _ in x]
+            name = f"bp{len(flat)}"
         bp = Blueprint(
             name=name,
             url_prefix=url_prefix,

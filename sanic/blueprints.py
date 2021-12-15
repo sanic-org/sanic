@@ -472,6 +472,9 @@ class Blueprint(BaseSanic):
         strict_slashes: Optional[bool] = None,
         version_prefix: Union[str, Default] = _default,
     ) -> None:
+        if not hasattr(self.ctx, "_prereg"):
+            self.ctx._prereg = []
+        self.ctx._prereg.append(name)
         self.__class__.__pre_registry__[name].append(
             {
                 k: v

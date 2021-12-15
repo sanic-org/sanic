@@ -107,7 +107,7 @@ class Blueprint(BaseSanic):
         "version_prefix",
         "websocket_routes",
     )
-    __pre_registry__: Dict[str, Any] = {}
+    __pre_registry__: Dict[Union[str, Default], Any] = defaultdict(list)
 
     def __init__(
         self,
@@ -465,22 +465,24 @@ class Blueprint(BaseSanic):
 
     def pre_register(
         self,
-        name: str = None,
+        name: Union[str, Default],
         url_prefix: Optional[str] = None,
         host: Optional[Union[List[str], str]] = None,
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: Union[str, Default] = _default,
     ) -> None:
-        self.__class__.__pre_registry__[name] = {
-            k: v
-            for k, v in {
-                "bp": self,
-                "url_prefix": url_prefix,
-                "host": host,
-                "version": version,
-                "strict_slashes": strict_slashes,
-                "version_prefix": version_prefix,
-            }.items()
-            if v is not None and v is not _default
-        }
+        self.__class__.__pre_registry__[name].append(
+            {
+                k: v
+                for k, v in {
+                    "bp": self,
+                    "url_prefix": url_prefix,
+                    "host": host,
+                    "version": version,
+                    "strict_slashes": strict_slashes,
+                    "version_prefix": version_prefix,
+                }.items()
+                if v is not None and v is not _default
+            }
+        )

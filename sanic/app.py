@@ -50,7 +50,7 @@ from sanic_routing.exceptions import (  # type: ignore
 )
 from sanic_routing.route import Route  # type: ignore
 
-from sanic import blueprint_group, reloader_helpers
+from sanic import reloader_helpers
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
@@ -67,6 +67,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
@@ -537,10 +538,25 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         blueprint.register(self, options)
 
     def _register_lazy_blueprints(self):
-        for name, reg_info in Blueprint.__pre_registry__.items():
-            blueprint = reg_info.pop("bp")
-            if name == self.name and blueprint.name not in self.blueprints:
-                self.blueprint(blueprint, **reg_info)
+        registry = {**Blueprint.__pre_registry__}
+        if _default in Blueprint.__pre_registry__:
+            if len(Sanic._app_registry) > 1:
+                raise SanicException(
+                    "Ambiguous Blueprint pre-registration detected. When "
+                    "there are multiple Sanic application instances, all "
+                    "pre-registrations must use an application name."
+                )
+
+            registry = {
+                self.name if k is _default else k: v
+                for k, v in registry.items()
+            }
+
+        for name, registrants in registry.items():
+            for reg_info in registrants:
+                blueprint = reg_info.pop("bp")
+                if name == self.name and blueprint.name not in self.blueprints:
+                    self.blueprint(blueprint, **reg_info)
 
     def url_for(self, view_name: str, **kwargs):
         """Build a URL based on a view name and the values provided.
@@ -1686,7 +1702,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     @classmethod
     def lazy(
         cls,
-        app_name: str,
+        app_name: Union[str, Default] = _default,
         *,
         name: str = None,
         url_prefix: Optional[str] = None,

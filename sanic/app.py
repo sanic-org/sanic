@@ -53,7 +53,7 @@ from sanic_routing.exceptions import (  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
-from sanic.application.ext import cache_args, setup_ext
+from sanic.application.ext import setup_ext
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
@@ -1661,7 +1661,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     @property
     def ext(self) -> Extend:
         if not hasattr(self, "_ext"):
-            setup_ext(self)
+            setup_ext(self, fail=True)
 
         if not hasattr(self, "_ext"):
             raise RuntimeError(
@@ -1678,18 +1678,20 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         built_in_extensions: bool = True,
         config: Optional[Union[Config, Dict[str, Any]]] = None,
         **kwargs,
-    ) -> None:
+    ) -> Extend:
         if hasattr(self, "_ext"):
             raise RuntimeError(
                 "Cannot extend Sanic after Sanic Extensions has been setup."
             )
-        cache_args(
+        setup_ext(
             self,
             extensions=extensions,
             built_in_extensions=built_in_extensions,
             config=config,
+            fail=True,
             **kwargs,
         )
+        return self.ext
 
     # -------------------------------------------------------------------- #
     # Class methods

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import sys
-
+from contextlib import suppress
 from importlib import import_module
 from typing import TYPE_CHECKING, Any, Dict
 
@@ -18,7 +17,10 @@ arg_cache: Dict[str, Dict[str, Any]] = {}
 
 
 def setup_ext(app: Sanic):
-    sanic_ext = sys.modules.get("sanic_ext")
+    sanic_ext = None
+    with suppress(ModuleNotFoundError):
+        sanic_ext = import_module("sanic_ext")
+
     if sanic_ext and not getattr(app, "_ext", None):
         Ext: Extend = getattr(sanic_ext, "Extend")
 

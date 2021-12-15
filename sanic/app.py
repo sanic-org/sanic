@@ -53,7 +53,7 @@ from sanic_routing.exceptions import (  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
-from sanic.application.ext import cache_args
+from sanic.application.ext import cache_args, setup_ext
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
@@ -1404,26 +1404,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "#proxy-configuration"
             )
 
+        ssl = process_to_context(ssl)
+
         self.debug = debug
         self.state.host = host
         self.state.port = port
         self.state.workers = workers
-
-        # Serve
-        serve_location = ""
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        if unix:
-            serve_location = f"{unix} {proto}://..."
-        elif sock:
-            serve_location = f"{sock.getsockname()} {proto}://..."
-        elif host and port:
-            # colon(:) is legal for a host only in an ipv6 address
-            display_host = f"[{host}]" if ":" in host else host
-            serve_location = f"{proto}://{display_host}:{port}"
-
-        ssl = process_to_context(ssl)
+        self.state.ssl = ssl
+        self.state.unix = unix
+        self.state.sock = sock
 
         server_settings = {
             "protocol": protocol,
@@ -1439,7 +1428,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "backlog": backlog,
         }
 
-        self.motd(serve_location)
+        self.motd(self.serve_location)
 
         if sys.stdout.isatty() and not self.state.is_debug:
             error_logger.warning(
@@ -1464,6 +1453,27 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             server_settings["run_async"] = True
 
         return server_settings
+
+    @property
+    def serve_location(self) -> str:
+        serve_location = ""
+        proto = "http"
+        if self.state.ssl is not None:
+            proto = "https"
+        if self.state.unix:
+            serve_location = f"{self.state.unix} {proto}://..."
+        elif self.state.sock:
+            serve_location = f"{self.state.sock.getsockname()} {proto}://..."
+        elif self.state.host and self.state.port:
+            # colon(:) is legal for a host only in an ipv6 address
+            display_host = (
+                f"[{self.state.host}]"
+                if ":" in self.state.host
+                else self.state.host
+            )
+            serve_location = f"{proto}://{display_host}:{self.state.port}"
+
+        return serve_location
 
     def _build_endpoint_name(self, *parts):
         parts = [self.name, *parts]
@@ -1650,10 +1660,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     @property
     def ext(self) -> Extend:
-        if not self.is_running:
-            raise SanicException(
-                "Cannot access Sanic.ext property while Sanic is not running."
-            )
+        if not hasattr(self, "_ext"):
+            setup_ext(self)
+
         if not hasattr(self, "_ext"):
             raise RuntimeError(
                 "Sanic Extensions is not installed. You can add it to your "
@@ -1670,6 +1679,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         config: Optional[Union[Config, Dict[str, Any]]] = None,
         **kwargs,
     ) -> None:
+        if hasattr(self, "_ext"):
+            raise RuntimeError(
+                "Cannot extend Sanic after Sanic Extensions has been setup."
+            )
         cache_args(
             self,
             extensions=extensions,
@@ -1739,12 +1752,23 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def _startup(self):
         self._future_registry.clear()
+
+        # Startup Sanic Extensions
+        if not hasattr(self, "_ext"):
+            setup_ext(self)
+        if hasattr(self, "_ext"):
+            self.ext._display()
+
+        # Setup routers
         self.signalize()
         self.finalize()
+
+        # Startup time optimizations
         ErrorHandler.finalize(
             self.error_handler, fallback=self.config.FALLBACK_ERROR_FORMAT
         )
         TouchUp.run(self)
+
         self.state.is_started = True
 
     async def _server_event(

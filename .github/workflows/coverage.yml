@@ -5,12 +5,7 @@ on:
       - main
     tags:
       - "!*" # Do not execute on tags
-    paths:
-      - sanic/*
-      - tests/*
   pull_request:
-    paths:
-      - "!*.MD"
     types: [opened, synchronize, reopened, ready_for_review]
 jobs:
   test:

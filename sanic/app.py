@@ -194,7 +194,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.config: Config = config or Config(
             load_env=load_env,
             env_prefix=env_prefix,
-            app=self,
         )
 
         self._asgi_client: Any = None
@@ -1830,9 +1829,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._future_registry.clear()
         self.signalize()
         self.finalize()
-        ErrorHandler.finalize(
-            self.error_handler, fallback=self.config.FALLBACK_ERROR_FORMAT
-        )
+        ErrorHandler.finalize(self.error_handler, config=self.config)
         TouchUp.run(self)
         self.state.is_started = True
 

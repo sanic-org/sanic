@@ -15,6 +15,9 @@ if TYPE_CHECKING:  # no cov
 
 
 def setup_ext(app: Sanic, *, fail: bool = False, **kwargs):
+    if not app.config.AUTO_EXTEND:
+        return
+
     sanic_ext = None
     with suppress(ModuleNotFoundError):
         sanic_ext = import_module("sanic_ext")
@@ -23,8 +26,8 @@ def setup_ext(app: Sanic, *, fail: bool = False, **kwargs):
         if fail:
             raise RuntimeError(
                 "Sanic Extensions is not installed. You can add it to your "
-                "environment using:\n$ pip install sanic[ext]\nor\n$ pip install "
-                "sanic-ext"
+                "environment using:\n$ pip install sanic[ext]\nor\n$ pip "
+                "install sanic-ext"
             )
 
         return

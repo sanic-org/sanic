@@ -32,6 +32,12 @@ def starting_line(lines):
     return 0
 
 
+def read_app_info(lines):
+    for line in lines:
+        if line.startswith(b"{") and line.endswith(b"}"):
+            return json.loads(line)
+
+
 @pytest.mark.parametrize(
     "appname",
     (
@@ -199,9 +205,7 @@ def test_debug(cmd):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-
-    app_info = lines[starting_line(lines) + 9]
-    info = json.loads(app_info)
+    info = read_app_info(lines)
 
     assert info["debug"] is True
     assert info["auto_reload"] is True
@@ -212,9 +216,7 @@ def test_auto_reload(cmd):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-
-    app_info = lines[starting_line(lines) + 9]
-    info = json.loads(app_info)
+    info = read_app_info(lines)
 
     assert info["debug"] is False
     assert info["auto_reload"] is True
@@ -227,9 +229,7 @@ def test_access_logs(cmd, expected):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-
-    app_info = lines[starting_line(lines) + 8]
-    info = json.loads(app_info)
+    info = read_app_info(lines)
 
     assert info["access_log"] is expected
 
@@ -254,8 +254,6 @@ def test_noisy_exceptions(cmd, expected):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-
-    app_info = lines[starting_line(lines) + 8]
-    info = json.loads(app_info)
+    info = read_app_info(lines)
 
     assert info["noisy_exceptions"] is expected

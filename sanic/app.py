@@ -110,6 +110,8 @@ if OS_IS_WINDOWS:
 
 filterwarnings("once", category=DeprecationWarning)
 
+SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
+
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):
     """
@@ -1634,11 +1636,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 display["auto-reload"] = reload_display
 
             packages = []
-            for package_name, module_name in {
-                "sanic-routing": "sanic_routing",
-                "sanic-testing": "sanic_testing",
-                "sanic-ext": "sanic_ext",
-            }.items():
+            for package_name in SANIC_PACKAGES:
+                module_name = package_name.replace("-", "_")
                 try:
                     module = import_module(module_name)
                     packages.append(f"{package_name}=={module.__version__}")

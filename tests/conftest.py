@@ -8,6 +8,7 @@ import uuid
 
 from logging import LogRecord
 from typing import Callable, List, Tuple
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -184,3 +185,20 @@ def message_in_records():
         return error_captured
 
     return msg_in_log
+
+
+@pytest.fixture
+def ext_instance():
+    ext_instance = MagicMock()
+    ext_instance.injection = MagicMock()
+    return ext_instance
+
+
+@pytest.fixture(autouse=True)  # type: ignore
+def sanic_ext(ext_instance):  # noqa
+    sanic_ext = MagicMock(__version__="1.2.3")
+    sanic_ext.Extend = MagicMock()
+    sanic_ext.Extend.return_value = ext_instance
+    sys.modules["sanic_ext"] = sanic_ext
+    yield sanic_ext
+    del sys.modules["sanic_ext"]

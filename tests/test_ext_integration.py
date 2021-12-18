@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from sanic import Sanic
-from sanic.exceptions import SanicException
 
 
 try:
@@ -25,26 +24,15 @@ def stoppable_app(app):
     return app
 
 
-@pytest.fixture
-def ext_instance():
-    ext_instance = MagicMock()
-    ext_instance.injection = MagicMock()
-    return ext_instance
-
-
-@pytest.fixture  # type: ignore
-def sanic_ext(ext_instance):  # noqa
-    sanic_ext = MagicMock(__version__="1.2.3")
-    sanic_ext.Extend = MagicMock()
-    sanic_ext.Extend.return_value = ext_instance
-    sys.modules["sanic_ext"] = sanic_ext
-    yield sanic_ext
-    del sys.modules["sanic_ext"]
-
-
 def test_ext_is_loaded(stoppable_app: Sanic, sanic_ext):
     stoppable_app.run()
     sanic_ext.Extend.assert_called_once_with(stoppable_app)
+
+
+def test_ext_is_not_loaded(stoppable_app: Sanic, sanic_ext):
+    stoppable_app.config.AUTO_EXTEND = False
+    stoppable_app.run()
+    sanic_ext.Extend.assert_not_called()
 
 
 def test_extend_with_args(stoppable_app: Sanic, sanic_ext):
@@ -52,6 +40,22 @@ def test_extend_with_args(stoppable_app: Sanic, sanic_ext):
     stoppable_app.run()
     sanic_ext.Extend.assert_called_once_with(
         stoppable_app, built_in_extensions=False, config=None, extensions=None
+    )
+
+
+def test_access_object_sets_up_extension(app: Sanic, sanic_ext):
+    app.ext
+    sanic_ext.Extend.assert_called_once_with(app)
+
+
+def test_extend_cannot_be_called_multiple_times(app: Sanic, sanic_ext):
+    app.extend()
+
+    message = "Cannot extend Sanic after Sanic Extensions has been setup."
+    with pytest.raises(RuntimeError, match=message):
+        app.extend()
+    sanic_ext.Extend.assert_called_once_with(
+        app, extensions=None, built_in_extensions=True, config=None
     )
 
 
@@ -64,14 +68,6 @@ def test_fail_if_not_loaded(app: Sanic):
         RuntimeError, match="Sanic Extensions is not installed.*"
     ):
         app.extend(built_in_extensions=False)
-
-
-def test_cannot_access_app_ext_if_not_running(app: Sanic):
-    with pytest.raises(
-        SanicException,
-        match="Cannot access Sanic.ext property while Sanic is not running.",
-    ):
-        app.ext
 
 
 def test_can_access_app_ext_while_running(app: Sanic, sanic_ext, ext_instance):

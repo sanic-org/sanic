@@ -1291,9 +1291,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         if self.config.USE_UVLOOP is not _default:
             error_logger.warning(
-                "You are trying to configure uvloop, but this is only "
-                "supported when using the run(...) method. Sanic will now "
-                "continue to run using the existing event loop."
+                "You are trying to change the uvloop configuration, but "
+                "this is only effective when using the run(...) method. "
+                "When using the create_server(...) method Sanic will use "
+                "the already existing loop."
             )
 
         main_start = server_settings.pop("main_start", None)

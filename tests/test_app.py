@@ -545,9 +545,10 @@ def test_uvloop_is_never_called_with_create_server(app, caplog, monkeypatch):
             break
 
     assert record.message == (
-        "You are trying to configure uvloop, but this is only "
-        "supported when using the run(...) method. Sanic will now "
-        "continue to run using the existing event loop."
+        "You are trying to change the uvloop configuration, but "
+        "this is only effective when using the run(...) method. "
+        "When using the create_server(...) method Sanic will use "
+        "the already existing loop."
     )
 
 

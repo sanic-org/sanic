@@ -34,6 +34,7 @@ except ImportError:  # noqa
     from json import dumps
 
 
+DEFAULT_FORMAT = "auto"
 FALLBACK_TEXT = (
     "The server encountered an internal error and "
     "cannot complete your request."

@@ -200,9 +200,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._state: ApplicationState = ApplicationState(app=self)
         self.blueprints: Dict[str, Blueprint] = {}
         self.config: Config = config or Config(
-            load_env=load_env,
-            env_prefix=env_prefix,
-            app=self,
+            load_env=load_env, env_prefix=env_prefix
         )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
@@ -1735,9 +1733,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
         self.__class__._uvloop_setting = self.config.USE_UVLOOP
 
-        ErrorHandler.finalize(
-            self.error_handler, fallback=self.config.FALLBACK_ERROR_FORMAT
-        )
+        ErrorHandler.finalize(self.error_handler, config=self.config)
         TouchUp.run(self)
         self.state.is_started = True
 

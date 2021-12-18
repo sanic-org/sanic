@@ -7,13 +7,13 @@ import sanic.app  # noqa
 
 from sanic.compat import Header
 from sanic.exceptions import ServerError
+from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.models.asgi import ASGIReceive, ASGIScope, ASGISend, MockTransport
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse
 from sanic.server import ConnInfo
 from sanic.server.websockets.connection import WebSocketConnection
-from sanic.helpers import _default
 
 
 class Lifespan:

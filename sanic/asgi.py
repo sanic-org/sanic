@@ -13,6 +13,7 @@ from sanic.request import Request
 from sanic.response import BaseHTTPResponse
 from sanic.server import ConnInfo
 from sanic.server.websockets.connection import WebSocketConnection
+from sanic.helpers import _default
 
 
 class Lifespan:
@@ -52,6 +53,13 @@ class Lifespan:
         await self.asgi_app.sanic_app._startup()
         await self.asgi_app.sanic_app._server_event("init", "before")
         await self.asgi_app.sanic_app._server_event("init", "after")
+
+        if self.asgi_app.sanic_app.config.USE_UVLOOP is not _default:
+            warnings.warn(
+                "You have set the USE_UVLOOP configuration option, but Sanic "
+                "cannot control the event loop when running in ASGI mode."
+                "This option will be ignored."
+            )
 
     async def shutdown(self) -> None:
         """

@@ -128,6 +128,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_state",
         "_test_client",
         "_test_manager",
+        "_uvloop_setting",  # TODO: Remove in vXX.X
         "asgi",
         "auto_reload",
         "auto_reload",
@@ -157,6 +158,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     )
 
     _app_registry: Dict[str, "Sanic"] = {}
+    _uvloop_setting = _default
     test_mode = False
 
     def __init__(
@@ -223,6 +225,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.go_fast = self.run
 
         if register is not None:
+            warn(
+                "The register argument is deprecated and will stop working "
+                "in vXX.X. After vXX.X all apps will added to the Sanic app "
+                "registry.",
+                DeprecationWarning,
+            )
             self.config.REGISTER = register
         if self.config.REGISTER:
             self.__class__.register_app(self)
@@ -1713,6 +1721,19 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._future_registry.clear()
         self.signalize()
         self.finalize()
+
+        # TODO: Replace in vXX.X to check with apps in app registry
+        if (
+            self._uvloop_setting is not _default
+            and self._uvloop_setting != self.config.USE_UVLOOP
+        ):
+            error_logger.warn(
+                "It looks like you're running several apps with different "
+                "uvloop settings. This is not supported and may lead to "
+                "unintended behaviour."
+            )
+        self._uvloop_setting = self.config.USE_UVLOOP
+
         ErrorHandler.finalize(
             self.error_handler, fallback=self.config.FALLBACK_ERROR_FORMAT
         )

@@ -519,13 +519,14 @@ def test_uvloop_is_never_called_with_create_server(app, caplog, monkeypatch):
         loop.run_until_complete(asyncio_srv_coro)
 
     for record in caplog.records:
-        if record.message.startswith("You are trying to configure"):
+        if record.message.startswith("You are trying to change"):
             break
 
     assert record.message == (
-        "You are trying to configure uvloop, but this is only "
-        "supported when using the run(...) method. Sanic will now "
-        "continue to run using the existing event loop."
+        "You are trying to change the uvloop configuration, but "
+        "this is only effective when using the run(...) method. "
+        "When using the create_server(...) method Sanic will use "
+        "the already existing loop."
     )
 
     try_use_uvloop.assert_not_called()
@@ -541,7 +542,7 @@ def test_uvloop_is_never_called_with_create_server(app, caplog, monkeypatch):
     try_use_uvloop.assert_not_called()
 
     for record in caplog.records:
-        if record.message.startswith("You are trying to configure"):
+        if record.message.startswith("You are trying to change"):
             break
 
     assert record.message == (

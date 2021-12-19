@@ -6,8 +6,9 @@ import string
 import sys
 import uuid
 
+from contextlib import suppress
 from logging import LogRecord
-from typing import Callable, List, Tuple
+from typing import List, Tuple
 from unittest.mock import MagicMock
 
 import pytest
@@ -201,4 +202,5 @@ def sanic_ext(ext_instance):  # noqa
     sanic_ext.Extend.return_value = ext_instance
     sys.modules["sanic_ext"] = sanic_ext
     yield sanic_ext
-    del sys.modules["sanic_ext"]
+    with suppress(KeyError):
+        del sys.modules["sanic_ext"]

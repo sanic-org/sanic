@@ -71,7 +71,6 @@ class CastRegistry(deque):
 
 
 class Config(dict):
-    __registry__ = CastRegistry((int, float, str_to_bool, str))
 
     ACCESS_LOG: bool
     AUTO_RELOAD: bool
@@ -112,6 +111,7 @@ class Config(dict):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
+        self._cast_registry = CastRegistry((int, float, str_to_bool, str))
         self._app = app
         self._LOGO = ""
 
@@ -238,7 +238,7 @@ class Config(dict):
 
             _, config_key = key.split(prefix, 1)
 
-            for converter in self.__registry__:
+            for converter in self._cast_registry:
                 try:
                     self[config_key] = converter(value)
                     break
@@ -321,4 +321,4 @@ class Config(dict):
         correct type.
         """
         for item in cast:
-            self.__registry__.add(item)
+            self._cast_registry.add(item)

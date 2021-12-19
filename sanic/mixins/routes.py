@@ -1037,7 +1037,8 @@ class RouteMixin:
                 "Cannot use restricted route context: "
                 f"{restricted_arguments}. This limitation is only in place "
                 "until v22.3 when the restricted names will no longer be in"
-                "conflict. See ____ for more information."
+                "conflict. See https://github.com/sanic-org/sanic/issues/2303 "
+                "for more information."
             )
         if raw:
             unexpected_arguments = ", ".join(raw.keys())

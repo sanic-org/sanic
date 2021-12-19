@@ -1,7 +1,3 @@
-import sys
-
-from unittest.mock import MagicMock
-
 import pytest
 
 from sanic import Sanic
@@ -57,17 +53,6 @@ def test_extend_cannot_be_called_multiple_times(app: Sanic, sanic_ext):
     sanic_ext.Extend.assert_called_once_with(
         app, extensions=None, built_in_extensions=True, config=None
     )
-
-
-@pytest.mark.skipif(
-    SANIC_EXT_IN_ENV,
-    reason="Running tests with sanic_ext already in the environment",
-)
-def test_fail_if_not_loaded(app: Sanic):
-    with pytest.raises(
-        RuntimeError, match="Sanic Extensions is not installed.*"
-    ):
-        app.extend(built_in_extensions=False)
 
 
 def test_can_access_app_ext_while_running(app: Sanic, sanic_ext, ext_instance):

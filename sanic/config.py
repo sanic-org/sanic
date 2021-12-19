@@ -1,28 +1,26 @@
 from __future__ import annotations
 
-from inspect import isclass
+from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 from warnings import warn
 
-from sanic.errorpages import check_error_format
+from sanic.errorpages import DEFAULT_FORMAT, check_error_format
+from sanic.helpers import _default
 from sanic.http import Http
+from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
-
-
-if TYPE_CHECKING:  # no cov
-    from sanic import Sanic
 
 
 SANIC_PREFIX = "SANIC_"
 
 
 DEFAULT_CONFIG = {
+    "_FALLBACK_ERROR_FORMAT": _default,
     "ACCESS_LOG": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
-    "FALLBACK_ERROR_FORMAT": "auto",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
@@ -46,11 +44,19 @@ DEFAULT_CONFIG = {
 }
 
 
-class Config(dict):
+class DescriptorMeta(type):
+    def __init__(cls, *_):
+        cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}
+
+    @staticmethod
+    def _is_setter(member: object):
+        return isdatadescriptor(member) and hasattr(member, "setter")
+
+
+class Config(dict, metaclass=DescriptorMeta):
     ACCESS_LOG: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
-    FALLBACK_ERROR_FORMAT: str
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
@@ -79,13 +85,10 @@ class Config(dict):
         load_env: Optional[Union[bool, str]] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
-        *,
-        app: Optional[Sanic] = None,
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
-        self._app = app
         self._LOGO = ""
 
         if keep_alive is not None:
@@ -117,6 +120,13 @@ class Config(dict):
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
     def __setattr__(self, attr, value) -> None:
+        if attr in self.__class__.__setters__:
+            try:
+                super().__setattr__(attr, value)
+            except AttributeError:
+                ...
+            else:
+                return None
         self.update({attr: value})
 
     def __setitem__(self, attr, value) -> None:
@@ -136,16 +146,6 @@ class Config(dict):
                 "REQUEST_MAX_SIZE",
             ):
                 self._configure_header_size()
-            elif attr == "FALLBACK_ERROR_FORMAT":
-                self._check_error_format()
-                if self.app and value != self.app.error_handler.fallback:
-                    if self.app.error_handler.fallback != "auto":
-                        warn(
-                            "Overriding non-default ErrorHandler fallback "
-                            "value. Changing from "
-                            f"{self.app.error_handler.fallback} to {value}."
-                        )
-                    self.app.error_handler.fallback = value
             elif attr == "LOGO":
                 self._LOGO = value
                 warn(
@@ -155,12 +155,27 @@ class Config(dict):
                 )
 
     @property
-    def app(self):
-        return self._app
-
-    @property
     def LOGO(self):
         return self._LOGO
+
+    @property
+    def FALLBACK_ERROR_FORMAT(self) -> str:
+        if self._FALLBACK_ERROR_FORMAT is _default:
+            return DEFAULT_FORMAT
+        return self._FALLBACK_ERROR_FORMAT
+
+    @FALLBACK_ERROR_FORMAT.setter
+    def FALLBACK_ERROR_FORMAT(self, value):
+        self._check_error_format(value)
+        if (
+            self._FALLBACK_ERROR_FORMAT is not _default
+            and value != self._FALLBACK_ERROR_FORMAT
+        ):
+            error_logger.warning(
+                "Setting config.FALLBACK_ERROR_FORMAT on an already "
+                "configured value may have unintended consequences."
+            )
+        self._FALLBACK_ERROR_FORMAT = value
 
     def _configure_header_size(self):
         Http.set_header_max_size(
@@ -169,8 +184,8 @@ class Config(dict):
             self.REQUEST_MAX_SIZE,
         )
 
-    def _check_error_format(self):
-        check_error_format(self.FALLBACK_ERROR_FORMAT)
+    def _check_error_format(self, format: Optional[str] = None):
+        check_error_format(format or self.FALLBACK_ERROR_FORMAT)
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """

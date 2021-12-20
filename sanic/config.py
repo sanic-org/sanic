@@ -3,7 +3,7 @@ from __future__ import annotations
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 from warnings import warn
 
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
@@ -42,6 +42,10 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_PING_INTERVAL": 20,
     "WEBSOCKET_PING_TIMEOUT": 20,
 }
+
+# These values will be removed from the Config object in v22.6 and moved
+# to the application state
+DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
 
 
 class DescriptorMeta(type):
@@ -85,11 +89,18 @@ class Config(dict, metaclass=DescriptorMeta):
         load_env: Optional[Union[bool, str]] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
+        *,
+        converters: Optional[Sequence[Callable[[str], Any]]] = None,
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
+        self._converters = [str, str_to_bool, float, int]
         self._LOGO = ""
+
+        if converters:
+            for converter in converters:
+                self.register_type(converter)
 
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
@@ -199,7 +210,23 @@ class Config(dict, metaclass=DescriptorMeta):
         - ``float``
         - ``bool``
 
-        Anything else will be imported as a ``str``.
+        Anything else will be imported as a ``str``. If you would like to add
+        additional types to this list, you can use
+        :meth:`sanic.config.Config.register_type`. Just make sure that they
+        are registered before you instantiate your application.
+
+        .. code-block:: python
+
+            class Foo:
+                def __init__(self, name) -> None:
+                    self.name = name
+
+
+            config = Config(converters=[Foo])
+            app = Sanic(__name__, config=config)
+
+        `See user guide re: config
+        <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
         for key, value in environ.items():
             if not key.startswith(prefix):
@@ -207,7 +234,7 @@ class Config(dict, metaclass=DescriptorMeta):
 
             _, config_key = key.split(prefix, 1)
 
-            for converter in (int, float, str_to_bool, str):
+            for converter in reversed(self._converters):
                 try:
                     self[config_key] = converter(value)
                     break
@@ -282,3 +309,17 @@ class Config(dict, metaclass=DescriptorMeta):
         self.update(config)
 
     load = update_config
+
+    def register_type(self, converter: Callable[[str], Any]) -> None:
+        """
+        Allows for adding custom function to cast from a string value to any
+        other type. The function should raise ValueError if it is not the
+        correct type.
+        """
+        if converter in self._converters:
+            error_logger.warning(
+                f"Configuration value converter '{converter.__name__}' has "
+                "already been registered"
+            )
+            return
+        self._converters.append(converter)

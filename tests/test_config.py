@@ -1,3 +1,5 @@
+import logging
+
 from contextlib import contextmanager
 from os import environ
 from pathlib import Path
@@ -30,6 +32,11 @@ class ConfigTest:
     @property
     def another_not_for_config(self):
         return self.not_for_config
+
+
+class UltimateAnswer:
+    def __init__(self, answer):
+        self.answer = int(answer)
 
 
 def test_load_from_object(app):
@@ -135,6 +142,32 @@ def test_env_prefix_string_value():
     app = Sanic(name=__name__, env_prefix="MYAPP_")
     assert app.config.TEST_TOKEN == "somerandomtesttoken"
     del environ["MYAPP_TEST_TOKEN"]
+
+
+def test_env_w_custom_converter():
+    environ["SANIC_TEST_ANSWER"] = "42"
+
+    config = Config(converters=[UltimateAnswer])
+    app = Sanic(name=__name__, config=config)
+    assert isinstance(app.config.TEST_ANSWER, UltimateAnswer)
+    assert app.config.TEST_ANSWER.answer == 42
+    del environ["SANIC_TEST_ANSWER"]
+
+
+def test_add_converter_multiple_times(caplog):
+    def converter():
+        ...
+
+    message = (
+        "Configuration value converter 'converter' has already been registered"
+    )
+    config = Config()
+    config.register_type(converter)
+    with caplog.at_level(logging.WARNING):
+        config.register_type(converter)
+
+    assert ("sanic.error", logging.WARNING, message) in caplog.record_tuples
+    assert len(config._converters) == 5
 
 
 def test_load_from_file(app):

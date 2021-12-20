@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import deque
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
@@ -47,16 +46,6 @@ DEFAULT_CONFIG = {
 # These values will be removed from the Config object in v22.6 and moved
 # to the application state
 DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
-
-
-class CastRegistry(deque):
-    def add(self, cast: Callable[[str], Any]) -> None:
-        if cast in self:
-            error_logger.warning(
-                f"Type cast '{cast.__name__}' has already been registered"
-            )
-            return None
-        self.appendleft(cast)
 
 
 class DescriptorMeta(type):
@@ -106,11 +95,12 @@ class Config(dict, metaclass=DescriptorMeta):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
-        self._cast_registry = CastRegistry((int, float, str_to_bool, str))
+        self._converters = [str, str_to_bool, float, int]
         self._LOGO = ""
 
         if converters:
-            self.register_type(*converters)
+            for converter in converters:
+                self.register_type(converter)
 
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
@@ -244,7 +234,7 @@ class Config(dict, metaclass=DescriptorMeta):
 
             _, config_key = key.split(prefix, 1)
 
-            for converter in self._cast_registry:
+            for converter in reversed(self._converters):
                 try:
                     self[config_key] = converter(value)
                     break
@@ -320,11 +310,16 @@ class Config(dict, metaclass=DescriptorMeta):
 
     load = update_config
 
-    def register_type(self, *cast: Callable[[str], Any]) -> None:
+    def register_type(self, converter: Callable[[str], Any]) -> None:
         """
         Allows for adding custom function to cast from a string value to any
         other type. The function should raise ValueError if it is not the
         correct type.
         """
-        for item in cast:
-            self._cast_registry.add(item)
+        if converter in self._converters:
+            error_logger.warning(
+                f"Configuration value converter '{converter.__name__}' has "
+                "already been registered"
+            )
+            return
+        self._converters.append(converter)

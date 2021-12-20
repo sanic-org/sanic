@@ -1,8 +1,7 @@
 from typing import Set
 
+from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureException
-
-from .root import SanicMeta
 
 
 class ExceptionMixin(metaclass=SanicMeta):

@@ -1,11 +1,10 @@
 from enum import Enum
 from typing import Any, Callable, Dict, Optional, Set, Union
 
+from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
 from sanic.signals import Signal
-
-from .root import SanicMeta
 
 
 class HashableDict(dict):

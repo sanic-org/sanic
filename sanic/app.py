@@ -55,7 +55,7 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
 from sanic.asgi import ASGIApp
-from sanic.base import BaseSanic
+from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support

@@ -13,6 +13,7 @@ from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
 
+from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
@@ -27,8 +28,6 @@ from sanic.log import deprecation, error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
-
-from .root import SanicMeta
 
 
 RouteWrapper = Callable[

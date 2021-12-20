@@ -24,7 +24,7 @@ from typing import (
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
-from sanic.base import BaseSanic
+from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.exceptions import SanicException
 from sanic.helpers import Default, _default

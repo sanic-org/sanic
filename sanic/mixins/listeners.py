@@ -2,10 +2,9 @@ from enum import Enum, auto
 from functools import partial
 from typing import List, Optional, Union
 
+from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureListener
 from sanic.models.handler_types import ListenerType, Sanic
-
-from .root import SanicMeta
 
 
 class ListenerEvent(str, Enum):

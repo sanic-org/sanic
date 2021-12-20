@@ -1,9 +1,8 @@
 from functools import partial
 from typing import List
 
+from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureMiddleware
-
-from .root import SanicMeta
 
 
 class MiddlewareMixin(metaclass=SanicMeta):

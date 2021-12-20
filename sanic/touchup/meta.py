@@ -1,5 +1,5 @@
+from sanic.base.meta import SanicMeta
 from sanic.exceptions import SanicException
-from sanic.mixins.root import SanicMeta
 
 from .service import TouchUp
 

@@ -128,7 +128,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_state",
         "_test_client",
         "_test_manager",
-        "_uvloop_setting",  # TODO: Remove in vXX.X
+        "_uvloop_setting",  # TODO: Remove in v22.6
         "asgi",
         "auto_reload",
         "auto_reload",
@@ -1715,7 +1715,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.signalize()
         self.finalize()
 
-        # TODO: Replace in vXX.X to check with apps in app registry
+        # TODO: Replace in v22.6 to check against apps in app registry
         if (
             self.__class__._uvloop_setting is not None
             and self.__class__._uvloop_setting != self.config.USE_UVLOOP

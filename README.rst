@@ -11,7 +11,7 @@ Sanic | Build fast. Run fast.
     :stub-columns: 1
 
     * - Build
-      - | |Py39Test| |Py38Test| |Py37Test| |Codecov|
+      - | |Py310Test| |Py39Test| |Py38Test| |Py37Test|
     * - Docs
       - | |UserGuide| |Documentation|
     * - Package
@@ -27,8 +27,8 @@ Sanic | Build fast. Run fast.
    :target: https://community.sanicframework.org/
 .. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
    :target: https://discord.gg/FARQzAEMAA
-.. |Codecov| image:: https://codecov.io/gh/sanic-org/sanic/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/sanic-org/sanic
+.. |Py310Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python310.yml/badge.svg?branch=main
+   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python310.yml
 .. |Py39Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml/badge.svg?branch=main
    :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
 .. |Py38Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml/badge.svg?branch=main
@@ -77,7 +77,11 @@ The goal of the project is to provide a simple way to get up and running a highl
 Sponsor
 -------
 
-Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
+Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic. 
+
+Thanks to `Linode <https://www.linode.com>`_ for their contribution towards the development and community of Sanic.
+
+|Linode|
 
 Installation
 ------------
@@ -162,3 +166,8 @@ Contribution
 ------------
 
 We are always happy to have new contributions. We have `marked issues good for anyone looking to get started <https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner>`_, and welcome `questions on the forums <https://community.sanicframework.org/>`_. Please take a look at our `Contribution guidelines <https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst>`_.
+
+.. |Linode| image:: https://www.linode.com/wp-content/uploads/2021/01/Linode-Logo-Black.svg
+    :alt: Linode
+    :target: https://www.linode.com
+    :width: 200px

@@ -1,5 +1,6 @@
 import asyncio
 
+from enum import Enum
 from inspect import isawaitable
 
 import pytest
@@ -48,6 +49,25 @@ def test_invalid_signal(app, signal):
         @app.signal(signal)
         def handler():
             ...
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_with_enum_event(app):
+    counter = 0
+
+    class FooEnum(Enum):
+        FOO_BAR_BAZ = "foo.bar.baz"
+
+    @app.signal(FooEnum.FOO_BAR_BAZ)
+    def sync_signal(*_):
+        nonlocal counter
+
+        counter += 1
+
+    app.signal_router.finalize()
+
+    await app.dispatch("foo.bar.baz")
+    assert counter == 1
 
 
 @pytest.mark.asyncio

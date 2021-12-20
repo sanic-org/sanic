@@ -1,6 +1,4 @@
-from copy import deepcopy
-
-from sanic import Blueprint, Sanic, blueprints, response
+from sanic import Blueprint, Sanic
 from sanic.response import text
 
 

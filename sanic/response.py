@@ -18,17 +18,18 @@ from typing import (
     Union,
 )
 from urllib.parse import quote_plus
-from warnings import warn
 
 from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
+from sanic.exceptions import SanicException, ServerError
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
 if TYPE_CHECKING:
+    from sanic.asgi import ASGIApp
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
@@ -55,7 +56,7 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Http = None
+        self.stream: Optional[Union[Http, ASGIApp]] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
@@ -122,17 +123,23 @@ class BaseHTTPResponse:
         """
         if data is None and end_stream is None:
             end_stream = True
-        if end_stream and not data and self.stream.send is None:
-            return
+        if self.stream is None:
+            raise SanicException(
+                "No stream is connected to the response object instance."
+            )
+        if self.stream.send is None:
+            if end_stream and not data:
+                return
+            raise ServerError(
+                "Response stream was ended, no more response data is "
+                "allowed to be sent."
+            )
         data = (
             data.encode()  # type: ignore
             if hasattr(data, "encode")
             else data or b""
         )
         await self.stream.send(data, end_stream=end_stream)
-
-
-StreamingFunction = Callable[[BaseHTTPResponse], Coroutine[Any, Any, None]]
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -358,17 +365,29 @@ def redirect(
 
 
 class ResponseStream:
+    """
+    ResponseStream is a compat layer to bridge the gap after the deprecation
+    of StreamingHTTPResponse. In v22.6 it will be removed when:
+    - stream is removed
+    - file_stream is moved to new style streaming
+    - file and file_stream are combined into a single API
+    """
+
     __slots__ = (
         "content_type",
         "headers",
         "request",
+        "response",
         "status",
         "streaming_fn",
     )
 
     def __init__(
         self,
-        streaming_fn: StreamingFunction,
+        streaming_fn: Callable[
+            [Union[BaseHTTPResponse, ResponseStream]],
+            Coroutine[Any, Any, None],
+        ],
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
@@ -383,6 +402,8 @@ class ResponseStream:
         await self.response.send(message)
 
     async def stream(self) -> HTTPResponse:
+        if not self.request:
+            raise ServerError("Attempted response to unknown request")
         self.response = await self.request.respond(
             headers=self.headers,
             status=self.status,
@@ -462,7 +483,9 @@ async def file_stream(
 
 
 def stream(
-    streaming_fn: StreamingFunction,
+    streaming_fn: Callable[
+        [Union[BaseHTTPResponse, ResponseStream]], Coroutine[Any, Any, None]
+    ],
     status: int = 200,
     headers: Optional[Dict[str, str]] = None,
     content_type: str = "text/plain; charset=utf-8",

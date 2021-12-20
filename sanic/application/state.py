@@ -34,6 +34,7 @@ class Mode(StrEnum):
 class ApplicationState:
     app: Sanic
     asgi: bool = field(default=False)
+    coffee: bool = field(default=False)
     fast: bool = field(default=False)
     host: str = field(default="")
     mode: Mode = field(default=Mode.PRODUCTION)
@@ -41,6 +42,7 @@ class ApplicationState:
     reload_dirs: Set[Path] = field(default_factory=set)
     server: Server = field(default=Server.SANIC)
     is_running: bool = field(default=False)
+    is_started: bool = field(default=False)
     is_stopping: bool = field(default=False)
     verbosity: int = field(default=0)
     workers: int = field(default=0)

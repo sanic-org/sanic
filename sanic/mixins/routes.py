@@ -1,4 +1,5 @@
 from ast import NodeVisitor, Return, parse
+from contextlib import suppress
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
@@ -9,6 +10,7 @@ from textwrap import dedent
 from time import gmtime, strftime
 from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, Union
 from urllib.parse import unquote
+from warnings import warn
 
 from sanic_routing.route import Route  # type: ignore
 
@@ -22,7 +24,7 @@ from sanic.exceptions import (
     InvalidUsage,
 )
 from sanic.handlers import ContentRangeHandler
-from sanic.log import error_logger
+from sanic.log import deprecation, error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
@@ -51,7 +53,7 @@ class RouteMixin:
         self,
         uri: str,
         methods: Optional[Iterable[str]] = None,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
         version: Optional[Union[int, str, float]] = None,
@@ -188,9 +190,9 @@ class RouteMixin:
         handler: RouteHandler,
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         stream: bool = False,
         version_prefix: str = "/v",
@@ -245,9 +247,9 @@ class RouteMixin:
     def get(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -281,10 +283,10 @@ class RouteMixin:
     def post(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -317,10 +319,10 @@ class RouteMixin:
     def put(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -353,9 +355,9 @@ class RouteMixin:
     def head(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -397,9 +399,9 @@ class RouteMixin:
     def options(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -441,10 +443,10 @@ class RouteMixin:
     def patch(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream=False,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -487,9 +489,9 @@ class RouteMixin:
     def delete(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
@@ -523,10 +525,10 @@ class RouteMixin:
     def websocket(
         self,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols: Optional[List[str]] = None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         apply: bool = True,
         version_prefix: str = "/v",
@@ -564,10 +566,10 @@ class RouteMixin:
         self,
         handler,
         uri: str,
-        host: Optional[str] = None,
+        host: Optional[Union[str, List[str]]] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols=None,
-        version: Optional[int] = None,
+        version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
@@ -910,15 +912,13 @@ class RouteMixin:
         return route
 
     def _determine_error_format(self, handler) -> str:
-        try:
+        with suppress(OSError, TypeError):
             src = dedent(getsource(handler))
             tree = parse(src)
             http_response_types = self._get_response_types(tree)
 
             if len(http_response_types) == 1:
                 return next(iter(http_response_types))
-        except (OSError, TypeError):
-            ...
 
         return "auto"
 
@@ -929,7 +929,17 @@ class RouteMixin:
             def visit_Return(self, node: Return) -> Any:
                 nonlocal types
 
-                try:
+                with suppress(AttributeError):
+                    if node.value.func.id == "stream":  # type: ignore
+                        deprecation(
+                            "The sanic.response.stream method has been "
+                            "deprecated and will be removed in v22.6. Please "
+                            "upgrade your application to use the new style "
+                            "streaming pattern. See "
+                            "https://sanicframework.org/en/guide/advanced/streaming.html#response-streaming "
+                            "for more information.",
+                            22.6,
+                        )
                     checks = [node.value.func.id]  # type: ignore
                     if node.value.keywords:  # type: ignore
                         checks += [
@@ -941,8 +951,6 @@ class RouteMixin:
                     for check in checks:
                         if check in RESPONSE_MAPPING:
                             types.add(RESPONSE_MAPPING[check])
-                except AttributeError:
-                    ...
 
         HttpResponseVisitor().visit(node)
 

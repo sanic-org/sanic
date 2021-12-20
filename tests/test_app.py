@@ -2,12 +2,10 @@ import asyncio
 import logging
 import re
 
-from email import message
 from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch
 
-import py
 import pytest
 
 from sanic import Sanic
@@ -41,41 +39,39 @@ def test_app_loop_running(app):
 
 
 def test_create_asyncio_server(app):
-    if not uvloop_installed():
-        loop = asyncio.get_event_loop()
-        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
-        assert isawaitable(asyncio_srv_coro)
-        srv = loop.run_until_complete(asyncio_srv_coro)
-        assert srv.is_serving() is True
+    loop = asyncio.get_event_loop()
+    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    assert isawaitable(asyncio_srv_coro)
+    srv = loop.run_until_complete(asyncio_srv_coro)
+    assert srv.is_serving() is True
 
 
 def test_asyncio_server_no_start_serving(app):
-    if not uvloop_installed():
-        loop = asyncio.get_event_loop()
-        asyncio_srv_coro = app.create_server(
-            port=43123,
-            return_asyncio_server=True,
-            asyncio_server_kwargs=dict(start_serving=False),
-        )
-        srv = loop.run_until_complete(asyncio_srv_coro)
-        assert srv.is_serving() is False
+    loop = asyncio.get_event_loop()
+    asyncio_srv_coro = app.create_server(
+        port=43123,
+        return_asyncio_server=True,
+        asyncio_server_kwargs=dict(start_serving=False),
+    )
+    srv = loop.run_until_complete(asyncio_srv_coro)
+    assert srv.is_serving() is False
 
 
 def test_asyncio_server_start_serving(app):
-    if not uvloop_installed():
-        loop = asyncio.get_event_loop()
-        asyncio_srv_coro = app.create_server(
-            port=43124,
-            return_asyncio_server=True,
-            asyncio_server_kwargs=dict(start_serving=False),
-        )
-        srv = loop.run_until_complete(asyncio_srv_coro)
-        assert srv.is_serving() is False
-        loop.run_until_complete(srv.start_serving())
-        assert srv.is_serving() is True
-        wait_close = srv.close()
-        loop.run_until_complete(wait_close)
-        # Looks like we can't easily test `serve_forever()`
+    loop = asyncio.get_event_loop()
+    asyncio_srv_coro = app.create_server(
+        port=43124,
+        return_asyncio_server=True,
+        asyncio_server_kwargs=dict(start_serving=False),
+    )
+    srv = loop.run_until_complete(asyncio_srv_coro)
+    assert srv.is_serving() is False
+    loop.run_until_complete(srv.startup())
+    loop.run_until_complete(srv.start_serving())
+    assert srv.is_serving() is True
+    wait_close = srv.close()
+    loop.run_until_complete(wait_close)
+    # Looks like we can't easily test `serve_forever()`
 
 
 def test_create_server_main(app, caplog):
@@ -92,6 +88,21 @@ def test_create_server_main(app, caplog):
     ) in caplog.record_tuples
 
 
+def test_create_server_no_startup(app):
+    loop = asyncio.get_event_loop()
+    asyncio_srv_coro = app.create_server(
+        port=43124,
+        return_asyncio_server=True,
+        asyncio_server_kwargs=dict(start_serving=False),
+    )
+    srv = loop.run_until_complete(asyncio_srv_coro)
+    message = (
+        "Cannot run Sanic server without first running await server.startup()"
+    )
+    with pytest.raises(SanicException, match=message):
+        loop.run_until_complete(srv.start_serving())
+
+
 def test_create_server_main_convenience(app, caplog):
     app.main_process_start(lambda *_: ...)
     loop = asyncio.get_event_loop()
@@ -104,6 +115,19 @@ def test_create_server_main_convenience(app, caplog):
         "Listener events for the main process are not available with "
         "create_server()",
     ) in caplog.record_tuples
+
+
+def test_create_server_init(app, caplog):
+    loop = asyncio.get_event_loop()
+    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    server = loop.run_until_complete(asyncio_srv_coro)
+
+    message = (
+        "AsyncioServer.init has been deprecated and will be removed in v22.6. "
+        "Use Sanic.state.is_started instead."
+    )
+    with pytest.warns(DeprecationWarning, match=message):
+        server.init
 
 
 def test_app_loop_not_running(app):

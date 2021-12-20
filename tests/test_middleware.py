@@ -297,3 +297,27 @@ def test_middleware_added_response(app):
 
     _, response = app.test_client.get("/")
     assert response.json["foo"] == "bar"
+
+
+def test_middleware_return_response(app):
+    response_middleware_run_count = 0
+    request_middleware_run_count = 0
+
+    @app.on_response
+    def response(_, response):
+        nonlocal response_middleware_run_count
+        response_middleware_run_count += 1
+
+    @app.on_request
+    def request(_):
+        nonlocal request_middleware_run_count
+        request_middleware_run_count += 1
+
+    @app.get("/")
+    async def handler(request):
+        resp1 = await request.respond()
+        return resp1
+
+    _, response = app.test_client.get("/")
+    assert response_middleware_run_count == 1
+    assert request_middleware_run_count == 1

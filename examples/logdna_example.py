@@ -1,5 +1,6 @@
 import logging
 import socket
+
 from os import getenv
 from platform import node
 from uuid import getnode as get_mac
@@ -7,10 +8,11 @@ from uuid import getnode as get_mac
 from logdna import LogDNAHandler
 
 from sanic import Sanic
-from sanic.response import json
 from sanic.request import Request
+from sanic.response import json
 
-log = logging.getLogger('logdna')
+
+log = logging.getLogger("logdna")
 log.setLevel(logging.INFO)
 
 
@@ -30,10 +32,12 @@ logdna_options = {
     "index_meta": True,
     "hostname": node(),
     "ip": get_my_ip_address(),
-    "mac": get_mac_address()
+    "mac": get_mac_address(),
 }
 
-logdna_handler = LogDNAHandler(getenv("LOGDNA_API_KEY"), options=logdna_options)
+logdna_handler = LogDNAHandler(
+    getenv("LOGDNA_API_KEY"), options=logdna_options
+)
 
 logdna = logging.getLogger(__name__)
 logdna.setLevel(logging.INFO)
@@ -49,13 +53,8 @@ def log_request(request: Request):
 
 @app.route("/")
 def default(request):
-    return json({
-        "response": "I was here"
-    })
+    return json({"response": "I was here"})
 
 
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=getenv("PORT", 8080)
-    )
+    app.run(host="0.0.0.0", port=getenv("PORT", 8080))

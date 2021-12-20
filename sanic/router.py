@@ -54,7 +54,7 @@ class Router(BaseRouter):
         self, path: str, method: str, host: Optional[str]
     ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
         """
-        Retrieve a `Route` object containg the details about how to handle
+        Retrieve a `Route` object containing the details about how to handle
         a response for a given request
 
         :param request: the incoming request object
@@ -139,11 +139,10 @@ class Router(BaseRouter):
             route.ctx.stream = stream
             route.ctx.hosts = hosts
             route.ctx.static = static
-            route.ctx.error_format = (
-                error_format or self.ctx.app.config.FALLBACK_ERROR_FORMAT
-            )
+            route.ctx.error_format = error_format
 
-            check_error_format(route.ctx.error_format)
+            if error_format:
+                check_error_format(route.ctx.error_format)
 
             routes.append(route)
 

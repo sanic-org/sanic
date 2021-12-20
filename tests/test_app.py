@@ -397,6 +397,22 @@ def test_app_no_registry():
         Sanic.get_app("no-register")
 
 
+def test_app_no_registry_deprecation_message():
+    with pytest.warns(DeprecationWarning) as records:
+        Sanic("no-register", register=False)
+        Sanic("no-register", register=True)
+
+    message = (
+        "The register argument is deprecated and will stop working "
+        "in v22.6. After v22.6 all apps will be added to the Sanic "
+        "app registry."
+    )
+
+    assert len(records) == 2
+    for record in records:
+        assert record.message.args[0] == message
+
+
 def test_app_no_registry_env():
     environ["SANIC_REGISTER"] = "False"
     Sanic("no-register")

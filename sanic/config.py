@@ -4,12 +4,11 @@ from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
-from warnings import warn
 
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
 from sanic.helpers import _default
 from sanic.http import Http
-from sanic.log import error_logger
+from sanic.log import deprecation, error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
@@ -138,10 +137,10 @@ class Config(dict, metaclass=DescriptorMeta):
                 self._configure_header_size()
             elif attr == "LOGO":
                 self._LOGO = value
-                warn(
+                deprecation(
                     "Setting the config.LOGO is deprecated and will no longer "
                     "be supported starting in v22.6.",
-                    DeprecationWarning,
+                    22.6,
                 )
 
     @property

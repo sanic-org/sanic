@@ -42,7 +42,7 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import filterwarnings, warn
+from warnings import filterwarnings
 
 from sanic_routing.exceptions import (  # type: ignore
     FinalizationError,
@@ -68,7 +68,13 @@ from sanic.exceptions import (
 )
 from sanic.handlers import ErrorHandler
 from sanic.http import Stage
-from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
+from sanic.log import (
+    LOGGING_CONFIG_DEFAULTS,
+    Colors,
+    deprecation,
+    error_logger,
+    logger,
+)
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
     FutureException,
@@ -111,8 +117,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_run_response_middleware",
         "_run_request_middleware",
     )
-    __fake_slots__ = (
-        "_app_registry",
+    __slots__ = (
         "_asgi_app",
         "_asgi_client",
         "_blueprint_order",
@@ -127,18 +132,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_state",
         "_test_client",
         "_test_manager",
-        "asgi",
-        "auto_reload",
-        "auto_reload",
         "blueprints",
         "config",
         "configure_logging",
         "ctx",
-        "debug",
         "error_handler",
         "go_fast",
-        "is_running",
-        "is_stopping",
         "listeners",
         "name",
         "named_request_middleware",
@@ -150,7 +149,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "signal_router",
         "sock",
         "strict_slashes",
-        "test_mode",
         "websocket_enabled",
         "websocket_tasks",
     )
@@ -748,7 +746,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 exception, request.name if request else None
             )
             if handler:
-                warn(
+                deprecation(
                     "An error occurred while handling the request after at "
                     "least some part of the response was sent to the client. "
                     "Therefore, the response from your custom exception "
@@ -763,7 +761,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "For further information, please see the docs: "
                     "https://sanicframework.org/en/guide/advanced/"
                     "signals.html",
-                    DeprecationWarning,
+                    22.6,
                 )
                 try:
                     response = self.error_handler.response(request, exception)

@@ -1,9 +1,10 @@
 from sanic.exceptions import SanicException
+from sanic.mixins.root import SanicMeta
 
 from .service import TouchUp
 
 
-class TouchUpMeta(type):
+class TouchUpMeta(SanicMeta):
     def __new__(cls, name, bases, attrs, **kwargs):
         gen_class = super().__new__(cls, name, bases, attrs, **kwargs)
 

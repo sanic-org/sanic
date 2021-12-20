@@ -5,6 +5,8 @@ from typing import List, Optional, Union
 from sanic.models.futures import FutureListener
 from sanic.models.handler_types import ListenerType, Sanic
 
+from .root import SanicMeta
+
 
 class ListenerEvent(str, Enum):
     def _generate_next_value_(name: str, *args) -> str:  # type: ignore
@@ -18,7 +20,7 @@ class ListenerEvent(str, Enum):
     MAIN_PROCESS_STOP = auto()
 
 
-class ListenerMixin:
+class ListenerMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
         self._future_listeners: List[FutureListener] = []
 

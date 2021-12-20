@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type, Union
-from warnings import warn
 
 from sanic.config import Config
 from sanic.errorpages import (

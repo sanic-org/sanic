@@ -10,7 +10,6 @@ from textwrap import dedent
 from time import gmtime, strftime
 from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, Union
 from urllib.parse import unquote
-from warnings import warn
 
 from sanic_routing.route import Route  # type: ignore
 
@@ -29,13 +28,15 @@ from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
 
+from .root import SanicMeta
+
 
 RouteWrapper = Callable[
     [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
 ]
 
 
-class RouteMixin:
+class RouteMixin(metaclass=SanicMeta):
     name: str
 
     def __init__(self, *args, **kwargs) -> None:
@@ -936,8 +937,9 @@ class RouteMixin:
                             "deprecated and will be removed in v22.6. Please "
                             "upgrade your application to use the new style "
                             "streaming pattern. See "
-                            "https://sanicframework.org/en/guide/advanced/streaming.html#response-streaming "
-                            "for more information.",
+                            "https://sanicframework.org/en/guide/advanced/"
+                            "streaming.html#response-streaming for more "
+                            "information.",
                             22.6,
                         )
                     checks = [node.value.func.id]  # type: ignore

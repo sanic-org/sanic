@@ -5,13 +5,15 @@ from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
 from sanic.signals import Signal
 
+from .root import SanicMeta
+
 
 class HashableDict(dict):
     def __hash__(self):
         return hash(tuple(sorted(self.items())))
 
 
-class SignalMixin:
+class SignalMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
         self._future_signals: Set[FutureSignal] = set()
 

@@ -3,8 +3,10 @@ from typing import List
 
 from sanic.models.futures import FutureMiddleware
 
+from .root import SanicMeta
 
-class MiddlewareMixin:
+
+class MiddlewareMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
         self._future_middleware: List[FutureMiddleware] = []
 

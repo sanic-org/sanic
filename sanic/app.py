@@ -215,11 +215,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.go_fast = self.run
 
         if register is not None:
-            warn(
+            deprecation(
                 "The register argument is deprecated and will stop working "
                 "in v22.6. After v22.6 all apps will be added to the Sanic "
                 "app registry.",
-                DeprecationWarning,
+                22.6,
             )
             self.config.REGISTER = register
         if self.config.REGISTER:

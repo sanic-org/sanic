@@ -85,7 +85,7 @@ class Blueprint(BaseSanic):
         trailing */*
     """
 
-    __fake_slots__ = (
+    __slots__ = (
         "_apps",
         "_future_routes",
         "_future_statics",
@@ -98,7 +98,6 @@ class Blueprint(BaseSanic):
         "host",
         "listeners",
         "middlewares",
-        "name",
         "routes",
         "statics",
         "strict_slashes",

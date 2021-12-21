@@ -832,7 +832,7 @@ def test_static_blueprint_name(static_file_directory, file_name):
 
 @pytest.mark.parametrize("file_name", ["test.file"])
 def test_static_blueprintp_mw(app: Sanic, static_file_directory, file_name):
-    current_file = inspect.getfile(inspect.currentframe())
+    current_file = inspect.getfile(inspect.currentframe())  # type: ignore
     with open(current_file, "rb") as file:
         file.read()
 
@@ -1053,15 +1053,12 @@ def test_blueprint_registered_multiple_apps():
 
 def test_bp_set_attribute_warning():
     bp = Blueprint("bp")
-    with pytest.warns(DeprecationWarning) as record:
-        bp.foo = 1
-
-    assert len(record) == 1
-    assert record[0].message.args[0] == (
-        "Setting variables on Blueprint instances is deprecated "
-        "and will be removed in version 21.12. You should change your "
-        "Blueprint instance to use instance.ctx.foo instead."
+    message = (
+        "Setting variables on Blueprint instances is not allowed. You should "
+        "change your Blueprint instance to use instance.ctx.foo instead."
     )
+    with pytest.raises(AttributeError, match=message):
+        bp.foo = 1
 
 
 def test_early_registration(app):

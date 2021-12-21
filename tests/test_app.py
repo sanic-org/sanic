@@ -2,6 +2,7 @@ import asyncio
 import logging
 import re
 
+from email import message
 from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch
@@ -408,15 +409,12 @@ def test_app_no_registry_env():
 
 
 def test_app_set_attribute_warning(app):
-    with pytest.warns(DeprecationWarning) as record:
-        app.foo = 1
-
-    assert len(record) == 1
-    assert record[0].message.args[0] == (
-        "Setting variables on Sanic instances is deprecated "
-        "and will be removed in version 21.12. You should change your "
-        "Sanic instance to use instance.ctx.foo instead."
+    message = (
+        "Setting variables on Sanic instances is not allowed. You should "
+        "change your Sanic instance to use instance.ctx.foo instead."
     )
+    with pytest.raises(AttributeError, match=message):
+        app.foo = 1
 
 
 def test_app_set_context(app):

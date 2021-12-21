@@ -1,6 +1,6 @@
 import re
 
-from typing import Any, Tuple
+from typing import Any
 
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import SanicException
@@ -22,7 +22,7 @@ class BaseSanic(
     SignalMixin,
     metaclass=SanicMeta,
 ):
-    __fake_slots__: Tuple[str, ...]
+    __slots__ = ("name",)
 
     def __init__(self, name: str = None, *args: Any, **kwargs: Any) -> None:
         class_name = self.__class__.__name__

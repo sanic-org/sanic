@@ -16,6 +16,14 @@ if TYPE_CHECKING:
 
 
 class WebSocketProtocol(HttpProtocol):
+    __slots__ = (
+        "websocket",
+        "websocket_timeout",
+        "websocket_max_size",
+        "websocket_ping_interval",
+        "websocket_ping_timeout",
+    )
+
     def __init__(
         self,
         *args,

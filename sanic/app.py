@@ -69,6 +69,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
 from sanic.mixins.listeners import ListenerEvent
@@ -519,6 +520,30 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         ):
             blueprint.strict_slashes = self.strict_slashes
         blueprint.register(self, options)
+
+    def _register_lazy_blueprints(self):
+        registry = {**Blueprint.__pre_registry__}
+        if _default in Blueprint.__pre_registry__:
+            if len(Sanic._app_registry) > 1:
+                raise SanicException(
+                    "Ambiguous Blueprint pre-registration detected. When "
+                    "there are multiple Sanic application instances, all "
+                    "pre-registrations must use an application name."
+                )
+
+            if self.name in registry and _default in registry:
+                registry[_default].extend(registry.pop(self.name))
+
+            registry = {
+                self.name if k is _default else k: v
+                for k, v in registry.items()
+            }
+
+        for name, registrants in registry.items():
+            for reg_info in registrants:
+                blueprint = reg_info.pop("bp")
+                if name == self.name and blueprint.name not in self.blueprints:
+                    self.blueprint(blueprint, **reg_info)
 
     def url_for(self, view_name: str, **kwargs):
         """Build a URL based on a view name and the values provided.
@@ -1811,6 +1836,32 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
 
+    @classmethod
+    def lazy(
+        cls,
+        app_name: Union[str, Default] = _default,
+        *,
+        name: str = None,
+        url_prefix: Optional[str] = None,
+        host: Optional[Union[List[str], str]] = None,
+        version: Optional[Union[int, str, float]] = None,
+        strict_slashes: Optional[bool] = None,
+        version_prefix: str = "/v",
+    ) -> Blueprint:
+        if not name:
+            flat = [1 for x in Blueprint.__pre_registry__.values() for _ in x]
+            name = f"bp{len(flat)}"
+        bp = Blueprint(
+            name=name,
+            url_prefix=url_prefix,
+            host=host,
+            version=version,
+            strict_slashes=strict_slashes,
+            version_prefix=version_prefix,
+        )
+        bp.pre_register(app_name)
+        return bp
+
     # -------------------------------------------------------------------- #
     # Lifecycle
     # -------------------------------------------------------------------- #
@@ -1831,6 +1882,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def _startup(self):
         self._future_registry.clear()
+        self._register_lazy_blueprints()
         self.signalize()
         self.finalize()
         ErrorHandler.finalize(self.error_handler, config=self.config)

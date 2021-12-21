@@ -154,6 +154,7 @@ async def test_reloader_live(runargs, mode):
         ({}, "sanic"),
     ],
 )
+@pytest.mark.xfail
 async def test_reloader_live_with_dir(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")

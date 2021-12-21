@@ -920,7 +920,7 @@ class RouteMixin(metaclass=SanicMeta):
             if len(http_response_types) == 1:
                 return next(iter(http_response_types))
 
-        return "auto"
+        return ""
 
     def _get_response_types(self, node):
         types = set()

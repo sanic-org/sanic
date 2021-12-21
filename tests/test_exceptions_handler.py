@@ -64,6 +64,7 @@ def exception_handler_app():
 
     @exception_handler_app.route("/7", error_format="html")
     def handler_7(request):
+        print("HANDLER")
         raise Forbidden("go away!")
 
     @exception_handler_app.route("/8", error_format="html")
@@ -77,10 +78,12 @@ def exception_handler_app():
 
     @exception_handler_app.exception(ServerError)
     def handler_exception(request, exception):
+        print(exception)
         return text("OK")
 
     @exception_handler_app.exception(Forbidden)
     async def async_handler_exception(request, exception):
+        print("async_handler_exception")
         return stream(
             sample_streaming_fn,
             content_type="text/csv",

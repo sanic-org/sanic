@@ -3,6 +3,7 @@ import sys
 
 from enum import Enum
 from typing import Any, Dict
+from warnings import warn
 
 
 LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(
@@ -78,3 +79,11 @@ access_logger = logging.getLogger("sanic.access")
 """
 Logger used by Sanic for access logging
 """
+
+
+def deprecation(message: str, version: float):
+    version_info = f"[DEPRECATION v{version}] "
+    if sys.stdout.isatty():
+        version_info = f"{Colors.RED}{version_info}"
+        message = f"{Colors.YELLOW}{message}{Colors.END}"
+    warn(version_info + message, DeprecationWarning)

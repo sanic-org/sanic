@@ -1,6 +1,6 @@
 from sanic import Sanic
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 app.static("/", "./static")

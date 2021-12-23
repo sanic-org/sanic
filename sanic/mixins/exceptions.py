@@ -1,9 +1,10 @@
 from typing import Set
 
+from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureException
 
 
-class ExceptionMixin:
+class ExceptionMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
         self._future_exceptions: Set[FutureException] = set()
 

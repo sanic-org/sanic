@@ -1,10 +1,11 @@
 from functools import partial
 from typing import List
 
+from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureMiddleware
 
 
-class MiddlewareMixin:
+class MiddlewareMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
         self._future_middleware: List[FutureMiddleware] = []
 

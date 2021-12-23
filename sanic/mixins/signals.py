@@ -1,17 +1,14 @@
 from enum import Enum
 from typing import Any, Callable, Dict, Optional, Set, Union
 
+from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
 from sanic.signals import Signal
+from sanic.types import HashableDict
 
 
-class HashableDict(dict):
-    def __hash__(self):
-        return hash(tuple(sorted(self.items())))
-
-
-class SignalMixin:
+class SignalMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
         self._future_signals: Set[FutureSignal] = set()
 

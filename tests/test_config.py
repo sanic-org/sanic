@@ -1,3 +1,5 @@
+import logging
+
 from contextlib import contextmanager
 from os import environ
 from pathlib import Path
@@ -30,6 +32,11 @@ class ConfigTest:
     @property
     def another_not_for_config(self):
         return self.not_for_config
+
+
+class UltimateAnswer:
+    def __init__(self, answer):
+        self.answer = int(answer)
 
 
 def test_load_from_object(app):
@@ -74,46 +81,12 @@ def test_auto_bool_env_prefix():
     del environ["SANIC_TEST_ANSWER"]
 
 
-def test_dont_load_env():
-    environ["SANIC_TEST_ANSWER"] = "42"
-    app = Sanic(name=__name__, load_env=False)
-    assert getattr(app.config, "TEST_ANSWER", None) is None
-    del environ["SANIC_TEST_ANSWER"]
-
-
-@pytest.mark.parametrize("load_env", [None, False, "", "MYAPP_"])
-def test_load_env_deprecation(load_env):
-    with pytest.warns(DeprecationWarning, match=r"21\.12"):
-        _ = Sanic(name=__name__, load_env=load_env)
-
-
-def test_load_env_prefix():
-    environ["MYAPP_TEST_ANSWER"] = "42"
-    app = Sanic(name=__name__, load_env="MYAPP_")
-    assert app.config.TEST_ANSWER == 42
-    del environ["MYAPP_TEST_ANSWER"]
-
-
 @pytest.mark.parametrize("env_prefix", [None, ""])
 def test_empty_load_env_prefix(env_prefix):
     environ["SANIC_TEST_ANSWER"] = "42"
     app = Sanic(name=__name__, env_prefix=env_prefix)
     assert getattr(app.config, "TEST_ANSWER", None) is None
     del environ["SANIC_TEST_ANSWER"]
-
-
-def test_load_env_prefix_float_values():
-    environ["MYAPP_TEST_ROI"] = "2.3"
-    app = Sanic(name=__name__, load_env="MYAPP_")
-    assert app.config.TEST_ROI == 2.3
-    del environ["MYAPP_TEST_ROI"]
-
-
-def test_load_env_prefix_string_value():
-    environ["MYAPP_TEST_TOKEN"] = "somerandomtesttoken"
-    app = Sanic(name=__name__, load_env="MYAPP_")
-    assert app.config.TEST_TOKEN == "somerandomtesttoken"
-    del environ["MYAPP_TEST_TOKEN"]
 
 
 def test_env_prefix():
@@ -135,6 +108,32 @@ def test_env_prefix_string_value():
     app = Sanic(name=__name__, env_prefix="MYAPP_")
     assert app.config.TEST_TOKEN == "somerandomtesttoken"
     del environ["MYAPP_TEST_TOKEN"]
+
+
+def test_env_w_custom_converter():
+    environ["SANIC_TEST_ANSWER"] = "42"
+
+    config = Config(converters=[UltimateAnswer])
+    app = Sanic(name=__name__, config=config)
+    assert isinstance(app.config.TEST_ANSWER, UltimateAnswer)
+    assert app.config.TEST_ANSWER.answer == 42
+    del environ["SANIC_TEST_ANSWER"]
+
+
+def test_add_converter_multiple_times(caplog):
+    def converter():
+        ...
+
+    message = (
+        "Configuration value converter 'converter' has already been registered"
+    )
+    config = Config()
+    config.register_type(converter)
+    with caplog.at_level(logging.WARNING):
+        config.register_type(converter)
+
+    assert ("sanic.error", logging.WARNING, message) in caplog.record_tuples
+    assert len(config._converters) == 5
 
 
 def test_load_from_file(app):

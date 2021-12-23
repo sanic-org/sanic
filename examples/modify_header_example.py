@@ -2,27 +2,29 @@
 Modify header or status in response
 """
 
-from sanic import Sanic
-from sanic import response
-
-app = Sanic(__name__)
+from sanic import Sanic, response
 
 
-@app.route('/')
+app = Sanic("Example")
+
+
+@app.route("/")
 def handle_request(request):
     return response.json(
-        {'message': 'Hello world!'},
-        headers={'X-Served-By': 'sanic'},
-        status=200
+        {"message": "Hello world!"},
+        headers={"X-Served-By": "sanic"},
+        status=200,
     )
 
 
-@app.route('/unauthorized')
+@app.route("/unauthorized")
 def handle_request(request):
     return response.json(
-        {'message': 'You are not authorized'},
-        headers={'X-Served-By': 'sanic'},
-        status=404
+        {"message": "You are not authorized"},
+        headers={"X-Served-By": "sanic"},
+        status=404,
     )
 
-app.run(host="0.0.0.0", port=8000, debug=True)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)

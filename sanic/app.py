@@ -136,7 +136,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_task_registry",
         "_test_client",
         "_test_manager",
-        "_uvloop_setting",  # TODO: Remove in v22.6
         "blueprints",
         "config",
         "configure_logging",
@@ -159,7 +158,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     )
 
     _app_registry: Dict[str, "Sanic"] = {}
-    _uvloop_setting = None
+    _uvloop_setting = None  # TODO: Remove in v22.6
     test_mode = False
 
     def __init__(

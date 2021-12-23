@@ -3,7 +3,7 @@ from asyncio import sleep
 from sanic import Sanic, response
 
 
-app = Sanic("DelayedResponseApp", strict_slashes=True)
+app = Sanic("Example", strict_slashes=True)
 
 
 @app.get("/")

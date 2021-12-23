@@ -69,6 +69,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -94,7 +95,7 @@ from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
-from sanic.server import serve, serve_multiple, serve_single
+from sanic.server import serve, serve_multiple, serve_single, try_use_uvloop
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
@@ -135,6 +136,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_task_registry",
         "_test_client",
         "_test_manager",
+        "_uvloop_setting",  # TODO: Remove in v22.6
         "blueprints",
         "config",
         "configure_logging",
@@ -157,6 +159,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     )
 
     _app_registry: Dict[str, "Sanic"] = {}
+    _uvloop_setting = None
     test_mode = False
 
     def __init__(
@@ -1170,6 +1173,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             register_sys_signals=register_sys_signals,
         )
 
+        if self.config.USE_UVLOOP is True or (
+            self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
+        ):
+            try_use_uvloop()
+
         try:
             self.is_running = True
             self.is_stopping = False
@@ -1267,12 +1275,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
-        # if access_log is passed explicitly change config.ACCESS_LOG
-        if access_log is not None:
-            self.config.ACCESS_LOG = access_log
-
-        if noisy_exceptions is not None:
-            self.config.NOISY_EXCEPTIONS = noisy_exceptions
+        # Set explicitly passed configuration values
+        for attribute, value in {
+            "ACCESS_LOG": access_log,
+            "NOISY_EXCEPTIONS": noisy_exceptions,
+        }.items():
+            if value is not None:
+                setattr(self.config, attribute, value)
 
         server_settings = self._helper(
             host=host,
@@ -1286,6 +1295,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             backlog=backlog,
             run_async=return_asyncio_server,
         )
+
+        if self.config.USE_UVLOOP is not _default:
+            error_logger.warning(
+                "You are trying to change the uvloop configuration, but "
+                "this is only effective when using the run(...) method. "
+                "When using the create_server(...) method Sanic will use "
+                "the already existing loop."
+            )
 
         main_start = server_settings.pop("main_start", None)
         main_stop = server_settings.pop("main_stop", None)
@@ -1861,6 +1878,19 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self._future_registry.clear()
         self.signalize()
         self.finalize()
+
+        # TODO: Replace in v22.6 to check against apps in app registry
+        if (
+            self.__class__._uvloop_setting is not None
+            and self.__class__._uvloop_setting != self.config.USE_UVLOOP
+        ):
+            error_logger.warning(
+                "It looks like you're running several apps with different "
+                "uvloop settings. This is not supported and may lead to "
+                "unintended behaviour."
+            )
+        self.__class__._uvloop_setting = self.config.USE_UVLOOP
+
         ErrorHandler.finalize(self.error_handler, config=self.config)
         TouchUp.run(self)
         self.state.is_started = True

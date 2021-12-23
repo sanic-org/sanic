@@ -145,6 +145,37 @@ def test_listeners_triggered_async(app):
     assert after_server_stop
 
 
+def test_non_default_uvloop_config_raises_warning(app):
+    app.config.USE_UVLOOP = True
+
+    class CustomServer(uvicorn.Server):
+        def install_signal_handlers(self):
+            pass
+
+    config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
+    server = CustomServer(config=config)
+
+    with pytest.warns(UserWarning) as records:
+        server.run()
+
+    all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
+    for task in all_tasks:
+        task.cancel()
+
+    msg = ""
+    for record in records:
+        _msg = str(record.message)
+        if _msg.startswith("You have set the USE_UVLOOP configuration"):
+            msg = _msg
+            break
+
+    assert msg == (
+        "You have set the USE_UVLOOP configuration option, but Sanic "
+        "cannot control the event loop when running in ASGI mode."
+        "This option will be ignored."
+    )
+
+
 @pytest.mark.asyncio
 async def test_mockprotocol_events(protocol):
     assert protocol._not_paused.is_set()

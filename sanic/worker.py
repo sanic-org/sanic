@@ -7,8 +7,9 @@ import traceback
 
 from gunicorn.workers import base  # type: ignore
 
+from sanic.compat import UVLOOP_INSTALLED
 from sanic.log import logger
-from sanic.server import HttpProtocol, Signal, serve
+from sanic.server import HttpProtocol, Signal, serve, try_use_uvloop
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 
 
@@ -17,12 +18,8 @@ try:
 except ImportError:
     ssl = None  # type: ignore
 
-try:
-    import uvloop  # type: ignore
-
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-except ImportError:
-    pass
+if UVLOOP_INSTALLED:
+    try_use_uvloop()
 
 
 class GunicornWorker(base.Worker):

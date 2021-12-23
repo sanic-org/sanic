@@ -62,6 +62,7 @@ class FutureSignal(NamedTuple):
     handler: SignalHandler
     event: str
     condition: Optional[Dict[str, str]]
+    exclusive: bool
 
 
 class FutureRegistry(set):

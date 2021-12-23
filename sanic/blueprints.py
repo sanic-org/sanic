@@ -400,8 +400,9 @@ class Blueprint(BaseSanic):
         for future in self._future_signals:
             if (self, future) in app._future_registry:
                 continue
-            future.condition.update({"blueprint": self.name})
-            app._apply_signal(future)
+            future.condition.update({"__blueprint__": self.name})
+            # Force exclusive to be False
+            app._apply_signal(tuple((*future[:-1], False)))
 
         self.routes += [route for route in routes if isinstance(route, Route)]
         self.websocket_routes += [
@@ -426,7 +427,7 @@ class Blueprint(BaseSanic):
 
     async def dispatch(self, *args, **kwargs):
         condition = kwargs.pop("condition", {})
-        condition.update({"blueprint": self.name})
+        condition.update({"__blueprint__": self.name})
         kwargs["condition"] = condition
         await asyncio.gather(
             *[app.dispatch(*args, **kwargs) for app in self.apps]

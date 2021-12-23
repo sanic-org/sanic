@@ -16,7 +16,7 @@ from sanic import Blueprint, Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import NotFound, SanicException
 from sanic.request import Request
-from sanic.response import json, text
+from sanic.response import empty, json, text
 
 
 @pytest.mark.parametrize(
@@ -1230,3 +1230,41 @@ def test_routes_with_and_without_slash_definitions(app):
         _, response = app.test_client.post(f"/{term}/")
         assert response.status == 200
         assert response.text == f"{term}_with"
+
+
+def test_added_route_ctx_kwargs(app):
+    @app.route("/", ctx_foo="foo", ctx_bar=99)
+    async def handler(request: Request):
+        return empty()
+
+    request, _ = app.test_client.get("/")
+
+    assert request.route.ctx.foo == "foo"
+    assert request.route.ctx.bar == 99
+
+
+def test_added_bad_route_kwargs(app):
+    message = "Unexpected keyword arguments: foo, bar"
+    with pytest.raises(TypeError, match=message):
+
+        @app.route("/", foo="foo", bar=99)
+        async def handler(request: Request):
+            ...
+
+
+@pytest.mark.asyncio
+async def test_added_callable_route_ctx_kwargs(app):
+    def foo(*args, **kwargs):
+        return "foo"
+
+    async def bar(*args, **kwargs):
+        return 99
+
+    @app.route("/", ctx_foo=foo, ctx_bar=bar)
+    async def handler(request: Request):
+        return empty()
+
+    request, _ = await app.asgi_client.get("/")
+
+    assert request.route.ctx.foo() == "foo"
+    assert await request.route.ctx.bar() == 99

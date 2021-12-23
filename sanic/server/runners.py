@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
@@ -173,6 +175,9 @@ def serve(
         while connections and (start_shutdown < graceful):
             loop.run_until_complete(asyncio.sleep(0.1))
             start_shutdown = start_shutdown + 0.1
+
+        if sys.version_info > (3, 7):
+            app.shutdown_tasks(graceful - start_shutdown)
 
         # Force close non-idle connection after waiting for
         # graceful_shutdown_timeout

@@ -107,7 +107,7 @@ argv = dict(
         "-m",
         "sanic",
         "--port",
-        "42104",
+        "42204",
         "--debug",
         "reloader.app",
     ],
@@ -122,6 +122,7 @@ argv = dict(
         ({}, "sanic"),
     ],
 )
+@pytest.mark.xfail
 async def test_reloader_live(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")
@@ -154,6 +155,7 @@ async def test_reloader_live(runargs, mode):
         ({}, "sanic"),
     ],
 )
+@pytest.mark.xfail
 async def test_reloader_live_with_dir(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")

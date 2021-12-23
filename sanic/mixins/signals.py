@@ -5,11 +5,7 @@ from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
 from sanic.signals import Signal
-
-
-class HashableDict(dict):
-    def __hash__(self):
-        return hash(tuple(sorted(self.items())))
+from sanic.types import HashableDict
 
 
 class SignalMixin(metaclass=SanicMeta):

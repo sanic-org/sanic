@@ -347,6 +347,7 @@ class Blueprint(BaseSanic):
                 future.static,
                 version_prefix,
                 error_format,
+                future.route_context,
             )
 
             if (self, apply_route) in app._future_registry:

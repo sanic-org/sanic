@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 from warnings import warn
 
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
-from sanic.helpers import _default
+from sanic.helpers import Default, _default
 from sanic.http import Http
 from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
@@ -38,6 +38,7 @@ DEFAULT_CONFIG = {
     "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
+    "USE_UVLOOP": _default,
     "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
     "WEBSOCKET_PING_TIMEOUT": 20,
@@ -79,6 +80,7 @@ class Config(dict, metaclass=DescriptorMeta):
     REQUEST_TIMEOUT: int
     RESPONSE_TIMEOUT: int
     SERVER_NAME: str
+    USE_UVLOOP: Union[Default, bool]
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int
     WEBSOCKET_PING_TIMEOUT: int

@@ -45,7 +45,7 @@ def default_back_to_ujson():
 
 
 def test_change_encoder():
-    Sanic("...", dumps=sdumps)
+    Sanic("Test", dumps=sdumps)
     assert BaseHTTPResponse._dumps == sdumps
 
 
@@ -53,7 +53,7 @@ def test_change_encoder_to_some_custom():
     def my_custom_encoder():
         return "foo"
 
-    Sanic("...", dumps=my_custom_encoder)
+    Sanic("Test", dumps=my_custom_encoder)
     assert BaseHTTPResponse._dumps == my_custom_encoder
 
 
@@ -68,7 +68,7 @@ def test_json_response_ujson(payload):
     ):
         json(payload, dumps=sdumps)
 
-    Sanic("...", dumps=sdumps)
+    Sanic("Test", dumps=sdumps)
     with pytest.raises(
         TypeError, match="Object of type Foo is not JSON serializable"
     ):
@@ -87,6 +87,6 @@ def test_json_response_json():
     response = json(too_big_for_ujson, dumps=sdumps)
     assert sys.getsizeof(response.body) == 54
 
-    Sanic("...", dumps=sdumps)
+    Sanic("Test", dumps=sdumps)
     response = json(too_big_for_ujson)
     assert sys.getsizeof(response.body) == 54

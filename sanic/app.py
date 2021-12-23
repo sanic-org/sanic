@@ -814,6 +814,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         else:
             if request.stream:
                 response = request.stream.response
+
+        # Marked for cleanup and DRY with handle_request/handle_exception
+        # when ResponseStream is no longer supporder
         if isinstance(response, BaseHTTPResponse):
             await self.dispatch(
                 "http.lifecycle.response",
@@ -824,6 +827,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 },
             )
             await response.send(end_stream=True)
+        elif isinstance(response, ResponseStream):
+            resp = await response(request)
+            await self.dispatch(
+                "http.lifecycle.response",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": resp,
+                },
+            )
+            await response.eof()
         else:
             raise ServerError(
                 f"Invalid response type {response!r} (need HTTPResponse)"
@@ -927,7 +941,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
 
-            # Make sure that response is finished / run StreamingHTTP callback
+            # Marked for cleanup and DRY with handle_request/handle_exception
+            # when ResponseStream is no longer supporder
             if isinstance(response, BaseHTTPResponse):
                 await self.dispatch(
                     "http.lifecycle.response",

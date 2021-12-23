@@ -374,6 +374,7 @@ class ResponseStream:
     """
 
     __slots__ = (
+        "_cookies",
         "content_type",
         "headers",
         "request",
@@ -394,9 +395,10 @@ class ResponseStream:
     ):
         self.streaming_fn = streaming_fn
         self.status = status
-        self.headers = headers
+        self.headers = headers or Header()
         self.content_type = content_type
         self.request: Optional[Request] = None
+        self._cookies: Optional[CookieJar] = None
 
     async def write(self, message: str):
         await self.response.send(message)
@@ -414,6 +416,20 @@ class ResponseStream:
 
     async def eof(self) -> None:
         await self.response.eof()
+
+    @property
+    def cookies(self) -> CookieJar:
+        if self._cookies is None:
+            self._cookies = CookieJar(self.headers)
+        return self._cookies
+
+    @property
+    def processed_headers(self):
+        return self.response.processed_headers
+
+    @property
+    def body(self):
+        return self.response.body
 
     def __call__(self, request: Request) -> ResponseStream:
         self.request = request

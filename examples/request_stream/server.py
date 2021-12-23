@@ -5,8 +5,8 @@ from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
 
 
-bp = Blueprint("blueprint_request_stream")
-app = Sanic("request_stream")
+bp = Blueprint("bp_example")
+app = Sanic("Example")
 
 
 class SimpleView(HTTPMethodView):

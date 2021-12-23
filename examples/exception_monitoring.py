@@ -41,7 +41,7 @@ from sanic import Sanic
 
 
 handler = CustomHandler()
-app = Sanic(__name__, error_handler=handler)
+app = Sanic("Example", error_handler=handler)
 
 
 @app.route("/")

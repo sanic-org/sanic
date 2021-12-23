@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type, Union
-from warnings import warn
 
 from sanic.config import Config
 from sanic.errorpages import (
@@ -18,7 +17,7 @@ from sanic.exceptions import (
     SanicException,
 )
 from sanic.helpers import Default, _default
-from sanic.log import error_logger
+from sanic.log import deprecation, error_logger
 from sanic.models.handler_types import RouteHandler
 from sanic.response import text
 
@@ -71,12 +70,12 @@ class ErrorHandler:
 
     @staticmethod
     def _warn_fallback_deprecation():
-        warn(
+        deprecation(
             "Setting the ErrorHandler fallback value directly is "
             "deprecated and no longer supported. This feature will "
             "be removed in v22.6. Instead, use "
             "app.config.FALLBACK_ERROR_FORMAT.",
-            DeprecationWarning,
+            22.6,
         )
 
     @classmethod
@@ -100,19 +99,19 @@ class ErrorHandler:
         config: Optional[Config] = None,
     ):
         if fallback:
-            warn(
+            deprecation(
                 "Setting the ErrorHandler fallback value via finalize() "
                 "is deprecated and no longer supported. This feature will "
                 "be removed in v22.6. Instead, use "
                 "app.config.FALLBACK_ERROR_FORMAT.",
-                DeprecationWarning,
+                22.6,
             )
 
         if config is None:
-            warn(
+            deprecation(
                 "Starting in v22.3, config will be a required argument "
                 "for ErrorHandler.finalize().",
-                DeprecationWarning,
+                22.3,
             )
 
         if fallback and fallback != DEFAULT_FORMAT:
@@ -131,7 +130,7 @@ class ErrorHandler:
 
         sig = signature(error_handler.lookup)
         if len(sig.parameters) == 1:
-            warn(
+            deprecation(
                 "You are using a deprecated error handler. The lookup "
                 "method should accept two positional parameters: "
                 "(exception, route_name: Optional[str]). "
@@ -139,7 +138,7 @@ class ErrorHandler:
                 "specific exceptions will not work properly. Beginning "
                 "in v22.3, the legacy style lookup method will not "
                 "work at all.",
-                DeprecationWarning,
+                22.3,
             )
             legacy_lookup = error_handler._legacy_lookup
             error_handler._lookup = legacy_lookup  # type: ignore

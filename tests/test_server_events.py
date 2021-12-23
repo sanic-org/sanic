@@ -101,7 +101,7 @@ async def test_trigger_before_events_create_server(app):
 
     @app.listener("before_server_start")
     async def init_db(app, loop):
-        app.db = MySanicDb()
+        app.ctx.db = MySanicDb()
 
     srv = await app.create_server(
         debug=True, return_asyncio_server=True, port=PORT
@@ -109,8 +109,8 @@ async def test_trigger_before_events_create_server(app):
     await srv.startup()
     await srv.before_start()
 
-    assert hasattr(app, "db")
-    assert isinstance(app.db, MySanicDb)
+    assert hasattr(app.ctx, "db")
+    assert isinstance(app.ctx.db, MySanicDb)
 
 
 @pytest.mark.asyncio
@@ -122,9 +122,9 @@ async def test_trigger_before_events_create_server_missing_event(app):
 
         @app.listener
         async def init_db(app, loop):
-            app.db = MySanicDb()
+            app.ctx.db = MySanicDb()
 
-    assert not hasattr(app, "db")
+    assert not hasattr(app.ctx, "db")
 
 
 def test_create_server_trigger_events(app):

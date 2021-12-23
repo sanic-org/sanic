@@ -44,7 +44,7 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import filterwarnings, warn
+from warnings import filterwarnings
 
 from sanic_routing.exceptions import (  # type: ignore
     FinalizationError,
@@ -57,7 +57,7 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
 from sanic.asgi import ASGIApp
-from sanic.base import BaseSanic
+from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
@@ -71,7 +71,13 @@ from sanic.exceptions import (
 from sanic.handlers import ErrorHandler
 from sanic.helpers import _default
 from sanic.http import Stage
-from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
+from sanic.log import (
+    LOGGING_CONFIG_DEFAULTS,
+    Colors,
+    deprecation,
+    error_logger,
+    logger,
+)
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
     FutureException,
@@ -85,7 +91,7 @@ from sanic.models.futures import (
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
-from sanic.response import BaseHTTPResponse, HTTPResponse
+from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
@@ -114,8 +120,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_run_response_middleware",
         "_run_request_middleware",
     )
-    __fake_slots__ = (
-        "_app_registry",
+    __slots__ = (
         "_asgi_app",
         "_asgi_client",
         "_blueprint_order",
@@ -131,19 +136,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_task_registry",
         "_test_client",
         "_test_manager",
-        "_uvloop_setting",  # TODO: Remove in v22.6
-        "asgi",
-        "auto_reload",
-        "auto_reload",
         "blueprints",
         "config",
         "configure_logging",
         "ctx",
-        "debug",
         "error_handler",
         "go_fast",
-        "is_running",
-        "is_stopping",
         "listeners",
         "name",
         "named_request_middleware",
@@ -155,13 +153,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "signal_router",
         "sock",
         "strict_slashes",
-        "test_mode",
         "websocket_enabled",
         "websocket_tasks",
     )
 
     _app_registry: Dict[str, "Sanic"] = {}
-    _uvloop_setting = None
+    _uvloop_setting = None  # TODO: Remove in v22.6
     test_mode = False
 
     def __init__(
@@ -172,7 +169,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
         error_handler: Optional[ErrorHandler] = None,
-        load_env: Union[bool, str] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         request_class: Optional[Type[Request]] = None,
         strict_slashes: bool = False,
@@ -188,17 +184,16 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             dict_config = log_config or LOGGING_CONFIG_DEFAULTS
             logging.config.dictConfig(dict_config)  # type: ignore
 
-        if config and (load_env is not True or env_prefix != SANIC_PREFIX):
+        if config and env_prefix != SANIC_PREFIX:
             raise SanicException(
                 "When instantiating Sanic with config, you cannot also pass "
-                "load_env or env_prefix"
+                "env_prefix"
             )
 
-        self.config: Config = config or Config(
-            load_env=load_env,
-            env_prefix=env_prefix,
-        )
+        # First setup config
+        self.config: Config = config or Config(env_prefix=env_prefix)
 
+        # Then we can do the rest
         self._asgi_client: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
@@ -231,6 +226,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.go_fast = self.run
 
         if register is not None:
+            deprecation(
+                "The register argument is deprecated and will stop working "
+                "in v22.6. After v22.6 all apps will be added to the Sanic "
+                "app registry.",
+                22.6,
+            )
             self.config.REGISTER = register
         if self.config.REGISTER:
             self.__class__.register_app(self)
@@ -740,7 +741,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 exception, request.name if request else None
             )
             if handler:
-                warn(
+                deprecation(
                     "An error occurred while handling the request after at "
                     "least some part of the response was sent to the client. "
                     "Therefore, the response from your custom exception "
@@ -755,7 +756,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "For further information, please see the docs: "
                     "https://sanicframework.org/en/guide/advanced/"
                     "signals.html",
-                    DeprecationWarning,
+                    22.6,
                 )
                 try:
                     response = self.error_handler.response(request, exception)
@@ -808,6 +809,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         else:
             if request.stream:
                 response = request.stream.response
+
+        # Marked for cleanup and DRY with handle_request/handle_exception
+        # when ResponseStream is no longer supporder
         if isinstance(response, BaseHTTPResponse):
             await self.dispatch(
                 "http.lifecycle.response",
@@ -818,6 +822,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 },
             )
             await response.send(end_stream=True)
+        elif isinstance(response, ResponseStream):
+            resp = await response(request)
+            await self.dispatch(
+                "http.lifecycle.response",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": resp,
+                },
+            )
+            await response.eof()
         else:
             raise ServerError(
                 f"Invalid response type {response!r} (need HTTPResponse)"
@@ -921,7 +936,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
 
-            # Make sure that response is finished / run StreamingHTTP callback
+            # Marked for cleanup and DRY with handle_request/handle_exception
+            # when ResponseStream is no longer supporder
             if isinstance(response, BaseHTTPResponse):
                 await self.dispatch(
                     "http.lifecycle.response",
@@ -932,6 +948,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     },
                 )
                 await response.send(end_stream=True)
+            elif isinstance(response, ResponseStream):
+                resp = await response(request)
+                await self.dispatch(
+                    "http.lifecycle.response",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": resp,
+                    },
+                )
+                await response.eof()
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(

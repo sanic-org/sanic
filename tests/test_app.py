@@ -8,14 +8,15 @@ from os import environ
 from unittest.mock import Mock, patch
 
 import pytest
+
 import sanic
 
 from sanic import Sanic
-from sanic.compat import OS_IS_WINDOWS, UVLOOP_INSTALLED
+from sanic.compat import OS_IS_WINDOWS
 from sanic.config import Config
 from sanic.exceptions import SanicException
-from sanic.response import text
 from sanic.helpers import _default
+from sanic.response import text
 
 
 @pytest.fixture(autouse=True)
@@ -392,6 +393,22 @@ def test_app_no_registry():
         Sanic.get_app("no-register")
 
 
+def test_app_no_registry_deprecation_message():
+    with pytest.warns(DeprecationWarning) as records:
+        Sanic("no-register", register=False)
+        Sanic("yes-register", register=True)
+
+    message = (
+        "[DEPRECATION v22.6] The register argument is deprecated and will "
+        "stop working in v22.6. After v22.6 all apps will be added to the "
+        "Sanic app registry."
+    )
+
+    assert len(records) == 2
+    for record in records:
+        assert record.message.args[0] == message
+
+
 def test_app_no_registry_env():
     environ["SANIC_REGISTER"] = "False"
     Sanic("no-register")
@@ -403,15 +420,12 @@ def test_app_no_registry_env():
 
 
 def test_app_set_attribute_warning(app):
-    with pytest.warns(DeprecationWarning) as record:
-        app.foo = 1
-
-    assert len(record) == 1
-    assert record[0].message.args[0] == (
-        "Setting variables on Sanic instances is deprecated "
-        "and will be removed in version 21.12. You should change your "
-        "Sanic instance to use instance.ctx.foo instead."
+    message = (
+        "Setting variables on Sanic instances is not allowed. You should "
+        "change your Sanic instance to use instance.ctx.foo instead."
     )
+    with pytest.raises(AttributeError, match=message):
+        app.foo = 1
 
 
 def test_app_set_context(app):
@@ -433,15 +447,7 @@ def test_bad_custom_config():
         SanicException,
         match=(
             "When instantiating Sanic with config, you cannot also pass "
-            "load_env or env_prefix"
-        ),
-    ):
-        Sanic("test", config=1, load_env=1)
-    with pytest.raises(
-        SanicException,
-        match=(
-            "When instantiating Sanic with config, you cannot also pass "
-            "load_env or env_prefix"
+            "env_prefix"
         ),
     ):
         Sanic("test", config=1, env_prefix=1)
@@ -494,11 +500,7 @@ def test_uvloop_config(app, monkeypatch):
 
 
 def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
-    apps = (
-        Sanic("default-uvloop"),
-        Sanic("no-uvloop"),
-        Sanic("yes-uvloop")
-    )
+    apps = (Sanic("default-uvloop"), Sanic("no-uvloop"), Sanic("yes-uvloop"))
 
     apps[1].config.USE_UVLOOP = False
     apps[2].config.USE_UVLOOP = True
@@ -512,7 +514,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
         for app in apps:
             srv_coro = app.create_server(
                 return_asyncio_server=True,
-                asyncio_server_kwargs=dict(start_serving=False)
+                asyncio_server_kwargs=dict(start_serving=False),
             )
             loop.run_until_complete(srv_coro)
 
@@ -547,7 +549,7 @@ def test_multiple_uvloop_configs_display_warning(caplog):
         for app in (default_uvloop, no_uvloop, yes_uvloop):
             srv_coro = app.create_server(
                 return_asyncio_server=True,
-                asyncio_server_kwargs=dict(start_serving=False)
+                asyncio_server_kwargs=dict(start_serving=False),
             )
             srv = loop.run_until_complete(srv_coro)
             loop.run_until_complete(srv.startup())

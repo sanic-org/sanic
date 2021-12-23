@@ -76,8 +76,11 @@ async def test_purge_tasks(app: Sanic):
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
-def test_shutdown_tasks_on_app_stop(app: Sanic):
-    app.shutdown_tasks = Mock()
+def test_shutdown_tasks_on_app_stop():
+    class TestSanic(Sanic):
+        shutdown_tasks = Mock()
+
+    app = TestSanic("Test")
 
     @app.route("/")
     async def handler(_):

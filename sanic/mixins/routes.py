@@ -1,4 +1,5 @@
 from ast import NodeVisitor, Return, parse
+from contextlib import suppress
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
@@ -12,6 +13,7 @@ from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
 
+from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
@@ -22,12 +24,11 @@ from sanic.exceptions import (
     InvalidUsage,
 )
 from sanic.handlers import ContentRangeHandler
-from sanic.log import error_logger
+from sanic.log import deprecation, error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
 from sanic.types import HashableDict
-from sanic.views import CompositionView
 
 
 RouteWrapper = Callable[
@@ -43,7 +44,7 @@ RESTRICTED_ROUTE_CONTEXT = (
 )
 
 
-class RouteMixin:
+class RouteMixin(metaclass=SanicMeta):
     name: str
 
     def __init__(self, *args, **kwargs) -> None:
@@ -252,14 +253,6 @@ class RouteMixin:
                     methods.add(method)
                     if hasattr(_handler, "is_stream"):
                         stream = True
-
-        # handle composition view differently
-        if isinstance(handler, CompositionView):
-            methods = handler.handlers.keys()
-            for _handler in handler.handlers.values():
-                if hasattr(_handler, "is_stream"):
-                    stream = True
-                    break
 
         if strict_slashes is None:
             strict_slashes = self.strict_slashes
@@ -982,19 +975,16 @@ class RouteMixin:
 
         return route
 
-    def _determine_error_format(self, handler) -> Optional[str]:
-        if not isinstance(handler, CompositionView):
-            try:
-                src = dedent(getsource(handler))
-                tree = parse(src)
-                http_response_types = self._get_response_types(tree)
+    def _determine_error_format(self, handler) -> str:
+        with suppress(OSError, TypeError):
+            src = dedent(getsource(handler))
+            tree = parse(src)
+            http_response_types = self._get_response_types(tree)
 
-                if len(http_response_types) == 1:
-                    return next(iter(http_response_types))
-            except (OSError, TypeError):
-                ...
+            if len(http_response_types) == 1:
+                return next(iter(http_response_types))
 
-        return None
+        return ""
 
     def _get_response_types(self, node):
         types = set()
@@ -1003,7 +993,18 @@ class RouteMixin:
             def visit_Return(self, node: Return) -> Any:
                 nonlocal types
 
-                try:
+                with suppress(AttributeError):
+                    if node.value.func.id == "stream":  # type: ignore
+                        deprecation(
+                            "The sanic.response.stream method has been "
+                            "deprecated and will be removed in v22.6. Please "
+                            "upgrade your application to use the new style "
+                            "streaming pattern. See "
+                            "https://sanicframework.org/en/guide/advanced/"
+                            "streaming.html#response-streaming for more "
+                            "information.",
+                            22.6,
+                        )
                     checks = [node.value.func.id]  # type: ignore
                     if node.value.keywords:  # type: ignore
                         checks += [
@@ -1015,8 +1016,6 @@ class RouteMixin:
                     for check in checks:
                         if check in RESPONSE_MAPPING:
                             types.add(RESPONSE_MAPPING[check])
-                except AttributeError:
-                    ...
 
         HttpResponseVisitor().visit(node)
 

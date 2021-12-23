@@ -19,7 +19,7 @@ def test_route(app, handler):
 
 
 def test_bp(app, handler):
-    bp = Blueprint(__file__, version=1)
+    bp = Blueprint(__name__, version=1)
     bp.route("/")(handler)
     app.blueprint(bp)
 
@@ -28,7 +28,7 @@ def test_bp(app, handler):
 
 
 def test_bp_use_route(app, handler):
-    bp = Blueprint(__file__, version=1)
+    bp = Blueprint(__name__, version=1)
     bp.route("/", version=1.1)(handler)
     app.blueprint(bp)
 
@@ -37,7 +37,7 @@ def test_bp_use_route(app, handler):
 
 
 def test_bp_group(app, handler):
-    bp = Blueprint(__file__)
+    bp = Blueprint(__name__)
     bp.route("/")(handler)
     group = Blueprint.group(bp, version=1)
     app.blueprint(group)
@@ -47,7 +47,7 @@ def test_bp_group(app, handler):
 
 
 def test_bp_group_use_bp(app, handler):
-    bp = Blueprint(__file__, version=1.1)
+    bp = Blueprint(__name__, version=1.1)
     bp.route("/")(handler)
     group = Blueprint.group(bp, version=1)
     app.blueprint(group)
@@ -57,7 +57,7 @@ def test_bp_group_use_bp(app, handler):
 
 
 def test_bp_group_use_registration(app, handler):
-    bp = Blueprint(__file__, version=1.1)
+    bp = Blueprint(__name__, version=1.1)
     bp.route("/")(handler)
     group = Blueprint.group(bp, version=1)
     app.blueprint(group, version=1.2)
@@ -67,7 +67,7 @@ def test_bp_group_use_registration(app, handler):
 
 
 def test_bp_group_use_route(app, handler):
-    bp = Blueprint(__file__, version=1.1)
+    bp = Blueprint(__name__, version=1.1)
     bp.route("/", version=1.3)(handler)
     group = Blueprint.group(bp, version=1)
     app.blueprint(group, version=1.2)
@@ -84,7 +84,7 @@ def test_version_prefix_route(app, handler):
 
 
 def test_version_prefix_bp(app, handler):
-    bp = Blueprint(__file__, version=1, version_prefix="/api/v")
+    bp = Blueprint(__name__, version=1, version_prefix="/api/v")
     bp.route("/")(handler)
     app.blueprint(bp)
 
@@ -93,7 +93,7 @@ def test_version_prefix_bp(app, handler):
 
 
 def test_version_prefix_bp_use_route(app, handler):
-    bp = Blueprint(__file__, version=1, version_prefix="/ignore/v")
+    bp = Blueprint(__name__, version=1, version_prefix="/ignore/v")
     bp.route("/", version=1.1, version_prefix="/api/v")(handler)
     app.blueprint(bp)
 
@@ -102,7 +102,7 @@ def test_version_prefix_bp_use_route(app, handler):
 
 
 def test_version_prefix_bp_group(app, handler):
-    bp = Blueprint(__file__)
+    bp = Blueprint(__name__)
     bp.route("/")(handler)
     group = Blueprint.group(bp, version=1, version_prefix="/api/v")
     app.blueprint(group)
@@ -112,7 +112,7 @@ def test_version_prefix_bp_group(app, handler):
 
 
 def test_version_prefix_bp_group_use_bp(app, handler):
-    bp = Blueprint(__file__, version=1.1, version_prefix="/api/v")
+    bp = Blueprint(__name__, version=1.1, version_prefix="/api/v")
     bp.route("/")(handler)
     group = Blueprint.group(bp, version=1, version_prefix="/ignore/v")
     app.blueprint(group)
@@ -122,7 +122,7 @@ def test_version_prefix_bp_group_use_bp(app, handler):
 
 
 def test_version_prefix_bp_group_use_registration(app, handler):
-    bp = Blueprint(__file__, version=1.1, version_prefix="/alsoignore/v")
+    bp = Blueprint(__name__, version=1.1, version_prefix="/alsoignore/v")
     bp.route("/")(handler)
     group = Blueprint.group(bp, version=1, version_prefix="/ignore/v")
     app.blueprint(group, version=1.2, version_prefix="/api/v")
@@ -132,7 +132,7 @@ def test_version_prefix_bp_group_use_registration(app, handler):
 
 
 def test_version_prefix_bp_group_use_route(app, handler):
-    bp = Blueprint(__file__, version=1.1, version_prefix="/alsoignore/v")
+    bp = Blueprint(__name__, version=1.1, version_prefix="/alsoignore/v")
     bp.route("/", version=1.3, version_prefix="/api/v")(handler)
     group = Blueprint.group(bp, version=1, version_prefix="/ignore/v")
     app.blueprint(group, version=1.2, version_prefix="/stillignoring/v")

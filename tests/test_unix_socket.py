@@ -15,12 +15,12 @@ from sanic import Sanic
 from sanic.response import text
 
 
-httpx_version = tuple(
-    map(int, httpx.__version__.strip(ascii_lowercase).split("."))
-)
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="UNIX only")
 SOCKPATH = "/tmp/sanictest.sock"
 SOCKPATH2 = "/tmp/sanictest2.sock"
+httpx_version = tuple(
+    map(int, httpx.__version__.strip(ascii_lowercase).split("."))
+)
 
 
 @pytest.fixture(autouse=True)
@@ -222,7 +222,10 @@ async def test_zero_downtime():
         processes = [spawn()]
         while not os.path.exists(SOCKPATH):
             if processes[0].poll() is not None:
-                raise Exception("Worker did not start properly")
+                raise Exception(
+                    "Worker did not start properly. "
+                    f"stderr: {processes[0].stderr.read()}"
+                )
             await asyncio.sleep(0.0001)
         ino = os.stat(SOCKPATH).st_ino
         task = asyncio.get_event_loop().create_task(client())

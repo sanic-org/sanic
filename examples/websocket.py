@@ -2,7 +2,7 @@ from sanic import Sanic
 from sanic.response import redirect
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 app.static("index.html", "websocket.html")

@@ -11,7 +11,7 @@ from pathlib import Path
 from sanic import Sanic, response
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 @app.route("/text")

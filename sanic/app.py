@@ -42,7 +42,7 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import filterwarnings
+from warnings import filterwarnings, warn
 
 from sanic_routing.exceptions import (  # type: ignore
     FinalizationError,
@@ -215,6 +215,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.go_fast = self.run
 
         if register is not None:
+            deprecation(
+                "The register argument is deprecated and will stop working "
+                "in v22.6. After v22.6 all apps will be added to the Sanic "
+                "app registry.",
+                22.6,
+            )
             self.config.REGISTER = register
         if self.config.REGISTER:
             self.__class__.register_app(self)

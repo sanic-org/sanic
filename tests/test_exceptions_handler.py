@@ -77,7 +77,6 @@ def exception_handler_app():
 
     @exception_handler_app.exception(ServerError)
     def handler_exception(request, exception):
-        print(exception)
         return text("OK")
 
     @exception_handler_app.exception(Forbidden)

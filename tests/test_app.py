@@ -404,7 +404,7 @@ def test_app_no_registry_deprecation_message():
         Sanic("yes-register", register=True)
 
     message = (
-        "[DEPRECATION v21.6] The register argument is deprecated and will "
+        "[DEPRECATION v22.6] The register argument is deprecated and will "
         "stop working in v22.6. After v22.6 all apps will be added to the "
         "Sanic app registry."
     )

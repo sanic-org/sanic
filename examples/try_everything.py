@@ -5,7 +5,7 @@ from sanic.exceptions import ServerError
 from sanic.log import logger as log
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 @app.route("/")

@@ -8,7 +8,7 @@ from sanic import Sanic, response
 from sanic.server import AsyncioServer
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 @app.before_server_start

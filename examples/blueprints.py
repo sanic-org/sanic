@@ -2,7 +2,7 @@ from sanic import Blueprint, Sanic
 from sanic.response import file, json
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 blueprint = Blueprint("name", url_prefix="/my_blueprint")
 blueprint2 = Blueprint("name2", url_prefix="/my_blueprint2")
 blueprint3 = Blueprint("name3", url_prefix="/my_blueprint3")

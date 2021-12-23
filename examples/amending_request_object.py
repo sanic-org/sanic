@@ -4,7 +4,7 @@ from sanic import Sanic
 from sanic.response import text
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 @app.middleware("request")

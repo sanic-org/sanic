@@ -8,7 +8,7 @@ from sanic.blueprints import Blueprint
 # curl -H "Host: bp.example.com" localhost:8000/question
 # curl -H "Host: bp.example.com" localhost:8000/answer
 
-app = Sanic(__name__)
+app = Sanic("Example")
 bp = Blueprint("bp", host="bp.example.com")
 
 

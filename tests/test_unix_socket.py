@@ -21,9 +21,6 @@ httpx_version = tuple(
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="UNIX only")
 SOCKPATH = "/tmp/sanictest.sock"
 SOCKPATH2 = "/tmp/sanictest2.sock"
-httpx_version = tuple(
-    map(int, httpx.__version__.strip(ascii_lowercase).split("."))
-)
 
 
 @pytest.fixture(autouse=True)

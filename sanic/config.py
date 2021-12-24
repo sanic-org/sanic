@@ -225,7 +225,8 @@ class Config(dict, metaclass=DescriptorMeta):
             if not key.isupper():
                 deprecation(
                     "Lowercase environment variables won't be "
-                    "catch for sanic config in the future version, 22.9"
+                    "catch for sanic config in the future version, 22.9",
+                    22.9
                 )
 
             _, config_key = key.split(prefix, 1)

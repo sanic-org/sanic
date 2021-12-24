@@ -5,7 +5,7 @@ import asyncio
 from sanic import Sanic
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 async def notify_server_started_after_five_seconds():

@@ -8,6 +8,14 @@ from multidict import CIMultiDict  # type: ignore
 
 
 OS_IS_WINDOWS = os.name == "nt"
+UVLOOP_INSTALLED = False
+
+try:
+    import uvloop  # type: ignore # noqa
+
+    UVLOOP_INSTALLED = True
+except ImportError:
+    pass
 
 
 def enable_windows_color_support():

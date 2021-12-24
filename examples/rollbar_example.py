@@ -1,21 +1,22 @@
+from os import getenv
+
 import rollbar
 
-from sanic.handlers import ErrorHandler
 from sanic import Sanic
 from sanic.exceptions import SanicException
-from os import getenv
+from sanic.handlers import ErrorHandler
+
 
 rollbar.init(getenv("ROLLBAR_API_KEY"))
 
 
 class RollbarExceptionHandler(ErrorHandler):
-
     def default(self, request, exception):
         rollbar.report_message(str(exception))
         return super().default(request, exception)
 
 
-app = Sanic(__name__, error_handler=RollbarExceptionHandler())
+app = Sanic("Example", error_handler=RollbarExceptionHandler())
 
 
 @app.route("/raise")
@@ -24,7 +25,4 @@ def create_error(request):
 
 
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=getenv("PORT", 8080)
-    )
+    app.run(host="0.0.0.0", port=getenv("PORT", 8080))

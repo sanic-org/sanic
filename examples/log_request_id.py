@@ -44,7 +44,7 @@ LOG_SETTINGS = {
 }
 
 
-app = Sanic(__name__, log_config=LOG_SETTINGS)
+app = Sanic("Example", log_config=LOG_SETTINGS)
 
 
 @app.on_request

@@ -3,9 +3,9 @@ from __future__ import annotations
 import asyncio
 
 from typing import TYPE_CHECKING
-from warnings import warn
 
 from sanic.exceptions import SanicException
+from sanic.log import deprecation
 
 
 if TYPE_CHECKING:
@@ -37,10 +37,10 @@ class AsyncioServer:
 
     @property
     def init(self):
-        warn(
+        deprecation(
             "AsyncioServer.init has been deprecated and will be removed "
             "in v22.6. Use Sanic.state.is_started instead.",
-            DeprecationWarning,
+            22.6,
         )
         return self.app.state.is_started
 

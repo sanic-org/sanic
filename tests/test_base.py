@@ -1,6 +1,7 @@
 import pytest
 
 from sanic import Blueprint, Sanic
+from sanic.exceptions import SanicException
 
 
 @pytest.fixture
@@ -79,24 +80,18 @@ def test_names_okay(name):
 )
 def test_names_not_okay(name):
     app_message = (
-        f"Sanic instance named '{name}' uses a format that isdeprecated. "
-        "Starting in version 21.12, Sanic objects must be named only using "
-        "alphanumeric characters, _, or -."
+        f"Sanic instance named '{name}' uses an invalid format. Names must "
+        "begin with a character and may only contain alphanumeric "
+        "characters, _, or -."
     )
     bp_message = (
-        f"Blueprint instance named '{name}' uses a format that isdeprecated. "
-        "Starting in version 21.12, Blueprint objects must be named only using "
-        "alphanumeric characters, _, or -."
+        f"Blueprint instance named '{name}' uses an invalid format. Names "
+        "must begin with a character and may only contain alphanumeric "
+        "characters, _, or -."
     )
 
-    with pytest.warns(DeprecationWarning) as app_e:
-        app = Sanic(name)
+    with pytest.raises(SanicException, match=app_message):
+        Sanic(name)
 
-    with pytest.warns(DeprecationWarning) as bp_e:
-        bp = Blueprint(name)
-
-    assert app.name == name
-    assert bp.name == name
-
-    assert app_e[0].message.args[0] == app_message
-    assert bp_e[0].message.args[0] == bp_message
+    with pytest.raises(SanicException, match=bp_message):
+        Blueprint(name)

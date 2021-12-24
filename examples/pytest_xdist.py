@@ -32,7 +32,7 @@ def test_port(worker_id):
 
 @pytest.fixture(scope="session")
 def app():
-    app = Sanic()
+    app = Sanic("Example")
 
     @app.route("/")
     async def index(request):

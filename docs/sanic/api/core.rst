@@ -38,10 +38,3 @@ sanic.views
 .. automodule:: sanic.views
     :members:
     :show-inheritance:
-
-sanic.websocket
----------------
-
-.. automodule:: sanic.websocket
-    :members:
-    :show-inheritance:

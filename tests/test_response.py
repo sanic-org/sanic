@@ -15,6 +15,8 @@ from aiofiles import os as async_os
 from pytest import LogCaptureFixture
 
 from sanic import Request, Sanic
+from sanic.compat import Header
+from sanic.cookies import CookieJar
 from sanic.response import (
     HTTPResponse,
     empty,
@@ -277,13 +279,32 @@ def test_non_chunked_streaming_returns_correct_content(
     assert response.text == "foo,bar"
 
 
-def test_stream_response_with_cookies(app):
+def test_stream_response_with_cookies_legacy(app):
     @app.route("/")
     async def test(request: Request):
         response = stream(sample_streaming_fn, content_type="text/csv")
         response.cookies["test"] = "modified"
         response.cookies["test"] = "pass"
         return response
+
+    request, response = app.test_client.get("/")
+    assert response.cookies["test"] == "pass"
+
+
+def test_stream_response_with_cookies(app):
+    @app.route("/")
+    async def test(request: Request):
+        headers = Header()
+        cookies = CookieJar(headers)
+        cookies["test"] = "modified"
+        cookies["test"] = "pass"
+        response = await request.respond(
+            content_type="text/csv", headers=headers
+        )
+
+        await response.send("foo,")
+        await asyncio.sleep(0.001)
+        await response.send("bar")
 
     request, response = app.test_client.get("/")
     assert response.cookies["test"] == "pass"
@@ -561,37 +582,37 @@ def test_multiple_responses(
     message_in_records: Callable[[List[LogRecord], str], bool],
 ):
     @app.route("/1")
-    async def handler(request: Request):
+    async def handler1(request: Request):
         response = await request.respond()
         await response.send("foo")
         response = await request.respond()
 
     @app.route("/2")
-    async def handler(request: Request):
+    async def handler2(request: Request):
         response = await request.respond()
         response = await request.respond()
         await response.send("foo")
 
     @app.get("/3")
-    async def handler(request: Request):
+    async def handler3(request: Request):
         response = await request.respond()
         await response.send("foo,")
         response = await request.respond()
         await response.send("bar")
 
     @app.get("/4")
-    async def handler(request: Request):
+    async def handler4(request: Request):
         response = await request.respond(headers={"one": "one"})
         return json({"foo": "bar"}, headers={"one": "two"})
 
     @app.get("/5")
-    async def handler(request: Request):
+    async def handler5(request: Request):
         response = await request.respond(headers={"one": "one"})
         await response.send("foo")
         return json({"foo": "bar"}, headers={"one": "two"})
 
     @app.get("/6")
-    async def handler(request: Request):
+    async def handler6(request: Request):
         response = await request.respond(headers={"one": "one"})
         await response.send("foo, ")
         json_response = json({"foo": "bar"}, headers={"one": "two"})

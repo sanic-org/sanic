@@ -6,7 +6,7 @@ from sanic import Sanic
 from sanic.response import json
 
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 def check_request_for_authorization_status(request):

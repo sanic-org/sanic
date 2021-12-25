@@ -15,7 +15,7 @@ from typing import (
 from sanic_routing.route import Route  # type: ignore
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic.server import ConnInfo
     from sanic.app import Sanic
 

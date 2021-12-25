@@ -28,6 +28,7 @@ from ssl import SSLContext
 from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
+    TYPE_CHECKING,
     Any,
     AnyStr,
     Awaitable,
@@ -41,6 +42,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
@@ -53,6 +55,7 @@ from sanic_routing.exceptions import (  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
+from sanic.application.ext import setup_ext
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
@@ -103,10 +106,20 @@ from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
+if TYPE_CHECKING:  # no cov
+    try:
+        from sanic_ext import Extend  # type: ignore
+        from sanic_ext.extensions.base import Extension  # type: ignore
+    except ImportError:
+        Extend = TypeVar("Extend")  # type: ignore
+
+
 if OS_IS_WINDOWS:
     enable_windows_color_support()
 
 filterwarnings("once", category=DeprecationWarning)
+
+SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):
@@ -125,6 +138,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_asgi_client",
         "_blueprint_order",
         "_delayed_tasks",
+        "_ext",
         "_future_exceptions",
         "_future_listeners",
         "_future_middleware",
@@ -1421,26 +1435,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "#proxy-configuration"
             )
 
+        ssl = process_to_context(ssl)
+
         self.debug = debug
         self.state.host = host
         self.state.port = port
         self.state.workers = workers
-
-        # Serve
-        serve_location = ""
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        if unix:
-            serve_location = f"{unix} {proto}://..."
-        elif sock:
-            serve_location = f"{sock.getsockname()} {proto}://..."
-        elif host and port:
-            # colon(:) is legal for a host only in an ipv6 address
-            display_host = f"[{host}]" if ":" in host else host
-            serve_location = f"{proto}://{display_host}:{port}"
-
-        ssl = process_to_context(ssl)
+        self.state.ssl = ssl
+        self.state.unix = unix
+        self.state.sock = sock
 
         server_settings = {
             "protocol": protocol,
@@ -1456,7 +1459,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "backlog": backlog,
         }
 
-        self.motd(serve_location)
+        self.motd(self.serve_location)
 
         if sys.stdout.isatty() and not self.state.is_debug:
             error_logger.warning(
@@ -1481,6 +1484,27 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             server_settings["run_async"] = True
 
         return server_settings
+
+    @property
+    def serve_location(self) -> str:
+        serve_location = ""
+        proto = "http"
+        if self.state.ssl is not None:
+            proto = "https"
+        if self.state.unix:
+            serve_location = f"{self.state.unix} {proto}://..."
+        elif self.state.sock:
+            serve_location = f"{self.state.sock.getsockname()} {proto}://..."
+        elif self.state.host and self.state.port:
+            # colon(:) is legal for a host only in an ipv6 address
+            display_host = (
+                f"[{self.state.host}]"
+                if ":" in self.state.host
+                else self.state.host
+            )
+            serve_location = f"{proto}://{display_host}:{self.state.port}"
+
+        return serve_location
 
     def _build_endpoint_name(self, *parts):
         parts = [self.name, *parts]
@@ -1790,11 +1814,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 display["auto-reload"] = reload_display
 
             packages = []
-            for package_name, module_name in {
-                "sanic-routing": "sanic_routing",
-                "sanic-testing": "sanic_testing",
-                "sanic-ext": "sanic_ext",
-            }.items():
+            for package_name in SANIC_PACKAGES:
+                module_name = package_name.replace("-", "_")
                 try:
                     module = import_module(module_name)
                     packages.append(f"{package_name}=={module.__version__}")
@@ -1813,6 +1834,41 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 else self.config.LOGO
             )
             MOTD.output(logo, serve_location, display, extra)
+
+    @property
+    def ext(self) -> Extend:
+        if not hasattr(self, "_ext"):
+            setup_ext(self, fail=True)
+
+        if not hasattr(self, "_ext"):
+            raise RuntimeError(
+                "Sanic Extensions is not installed. You can add it to your "
+                "environment using:\n$ pip install sanic[ext]\nor\n$ pip "
+                "install sanic-ext"
+            )
+        return self._ext  # type: ignore
+
+    def extend(
+        self,
+        *,
+        extensions: Optional[List[Type[Extension]]] = None,
+        built_in_extensions: bool = True,
+        config: Optional[Union[Config, Dict[str, Any]]] = None,
+        **kwargs,
+    ) -> Extend:
+        if hasattr(self, "_ext"):
+            raise RuntimeError(
+                "Cannot extend Sanic after Sanic Extensions has been setup."
+            )
+        setup_ext(
+            self,
+            extensions=extensions,
+            built_in_extensions=built_in_extensions,
+            config=config,
+            fail=True,
+            **kwargs,
+        )
+        return self.ext
 
     # -------------------------------------------------------------------- #
     # Class methods
@@ -1875,6 +1931,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def _startup(self):
         self._future_registry.clear()
+
+        # Startup Sanic Extensions
+        if not hasattr(self, "_ext"):
+            setup_ext(self)
+        if hasattr(self, "_ext"):
+            self.ext._display()
+
+        # Setup routers
         self.signalize()
         self.finalize()
 
@@ -1890,8 +1954,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             )
         self.__class__._uvloop_setting = self.config.USE_UVLOOP
 
+        # Startup time optimizations
         ErrorHandler.finalize(self.error_handler, config=self.config)
         TouchUp.run(self)
+
         self.state.is_started = True
 
     async def _server_event(

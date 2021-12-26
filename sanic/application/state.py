@@ -5,7 +5,9 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Set, Union
+from socket import socket
+from ssl import SSLContext
+from typing import TYPE_CHECKING, Any, Optional, Set, Union
 
 from sanic.log import logger
 
@@ -37,8 +39,11 @@ class ApplicationState:
     coffee: bool = field(default=False)
     fast: bool = field(default=False)
     host: str = field(default="")
-    mode: Mode = field(default=Mode.PRODUCTION)
     port: int = field(default=0)
+    ssl: Optional[SSLContext] = field(default=None)
+    sock: Optional[socket] = field(default=None)
+    unix: Optional[str] = field(default=None)
+    mode: Mode = field(default=Mode.PRODUCTION)
     reload_dirs: Set[Path] = field(default_factory=set)
     server: Server = field(default=Server.SANIC)
     is_running: bool = field(default=False)

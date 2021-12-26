@@ -15,10 +15,10 @@ from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 
 try:
     import ssl  # type: ignore
-except ImportError:
+except ImportError:  # no cov
     ssl = None  # type: ignore
 
-if UVLOOP_INSTALLED:
+if UVLOOP_INSTALLED:  # no cov
     try_use_uvloop()
 
 

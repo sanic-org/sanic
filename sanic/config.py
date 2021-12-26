@@ -18,6 +18,7 @@ SANIC_PREFIX = "SANIC_"
 DEFAULT_CONFIG = {
     "_FALLBACK_ERROR_FORMAT": _default,
     "ACCESS_LOG": True,
+    "AUTO_EXTEND": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
@@ -59,6 +60,7 @@ class DescriptorMeta(type):
 
 class Config(dict, metaclass=DescriptorMeta):
     ACCESS_LOG: bool
+    AUTO_EXTEND: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
     FORWARDED_FOR_HEADER: str

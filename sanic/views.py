@@ -13,7 +13,7 @@ from typing import (
 from sanic.models.handler_types import RouteHandler
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic import Sanic
     from sanic.blueprints import Blueprint
 
@@ -81,6 +81,8 @@ class HTTPMethodView:
 
     def dispatch_request(self, request, *args, **kwargs):
         handler = getattr(self, request.method.lower(), None)
+        if not handler and request.method == "HEAD":
+            handler = self.get
         return handler(request, *args, **kwargs)
 
     @classmethod

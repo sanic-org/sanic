@@ -21,6 +21,7 @@ from functools import partial
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 
+from sanic.application.ext import setup_ext
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.log import error_logger, logger
 from sanic.models.server_types import Signal
@@ -116,6 +117,7 @@ def serve(
         **asyncio_server_kwargs,
     )
 
+    setup_ext(app)
     if run_async:
         return AsyncioServer(
             app=app,

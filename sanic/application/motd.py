@@ -41,9 +41,6 @@ class MOTD(ABC):
 
 
 class MOTDBasic(MOTD):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
     def display(self):
         if self.logo:
             logger.debug(self.logo)

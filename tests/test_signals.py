@@ -146,6 +146,23 @@ async def test_dispatch_signal_triggers_with_requirements(app):
 
 
 @pytest.mark.asyncio
+async def test_dispatch_signal_triggers_with_requirements_exclusive(app):
+    counter = 0
+
+    @app.signal("foo.bar.baz", condition={"one": "two"}, exclusive=False)
+    def sync_signal(*_):
+        nonlocal counter
+        counter += 1
+
+    app.signal_router.finalize()
+
+    await app.dispatch("foo.bar.baz")
+    assert counter == 1
+    await app.dispatch("foo.bar.baz", condition={"one": "two"})
+    assert counter == 2
+
+
+@pytest.mark.asyncio
 async def test_dispatch_signal_triggers_with_context(app):
     counter = 0
 
@@ -201,6 +218,24 @@ async def test_dispatch_signal_triggers_on_bp(app):
 
     await bp.dispatch("foo.bar.baz")
     assert app_counter == 1
+    assert bp_counter == 2
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_on_bp_alone(app):
+    bp = Blueprint("bp")
+
+    bp_counter = 0
+
+    @bp.signal("foo.bar.baz")
+    def bp_signal():
+        nonlocal bp_counter
+        bp_counter += 1
+
+    app.blueprint(bp)
+    app.signal_router.finalize()
+    await app.dispatch("foo.bar.baz")
+    await bp.dispatch("foo.bar.baz")
     assert bp_counter == 2
 
 

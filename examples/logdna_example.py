@@ -43,7 +43,7 @@ logdna = logging.getLogger(__name__)
 logdna.setLevel(logging.INFO)
 logdna.addHandler(logdna_handler)
 
-app = Sanic(__name__)
+app = Sanic("Example")
 
 
 @app.middleware

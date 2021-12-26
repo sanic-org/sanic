@@ -1,28 +1,26 @@
 from __future__ import annotations
 
-from inspect import isclass
+from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
-from warnings import warn
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 
-from sanic.errorpages import check_error_format
+from sanic.errorpages import DEFAULT_FORMAT, check_error_format
+from sanic.helpers import Default, _default
 from sanic.http import Http
+from sanic.log import deprecation, error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
-
-
-if TYPE_CHECKING:  # no cov
-    from sanic import Sanic
 
 
 SANIC_PREFIX = "SANIC_"
 
 
 DEFAULT_CONFIG = {
+    "_FALLBACK_ERROR_FORMAT": _default,
     "ACCESS_LOG": True,
+    "AUTO_EXTEND": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
-    "FALLBACK_ERROR_FORMAT": "auto",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
@@ -40,17 +38,31 @@ DEFAULT_CONFIG = {
     "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
+    "USE_UVLOOP": _default,
     "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
     "WEBSOCKET_PING_TIMEOUT": 20,
 }
 
+# These values will be removed from the Config object in v22.6 and moved
+# to the application state
+DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
 
-class Config(dict):
+
+class DescriptorMeta(type):
+    def __init__(cls, *_):
+        cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}
+
+    @staticmethod
+    def _is_setter(member: object):
+        return isdatadescriptor(member) and hasattr(member, "setter")
+
+
+class Config(dict, metaclass=DescriptorMeta):
     ACCESS_LOG: bool
+    AUTO_EXTEND: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
-    FALLBACK_ERROR_FORMAT: str
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
@@ -69,6 +81,7 @@ class Config(dict):
     REQUEST_TIMEOUT: int
     RESPONSE_TIMEOUT: int
     SERVER_NAME: str
+    USE_UVLOOP: Union[Default, bool]
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int
     WEBSOCKET_PING_TIMEOUT: int
@@ -76,17 +89,20 @@ class Config(dict):
     def __init__(
         self,
         defaults: Dict[str, Union[str, bool, int, float, None]] = None,
-        load_env: Optional[Union[bool, str]] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
         *,
-        app: Optional[Sanic] = None,
+        converters: Optional[Sequence[Callable[[str], Any]]] = None,
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
-        self._app = app
+        self._converters = [str, str_to_bool, float, int]
         self._LOGO = ""
+
+        if converters:
+            for converter in converters:
+                self.register_type(converter)
 
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
@@ -94,15 +110,6 @@ class Config(dict):
         if env_prefix != SANIC_PREFIX:
             if env_prefix:
                 self.load_environment_vars(env_prefix)
-        elif load_env is not True:
-            if load_env:
-                self.load_environment_vars(prefix=load_env)
-            warn(
-                "Use of load_env is deprecated and will be removed in "
-                "21.12. Modify the configuration prefix by passing "
-                "env_prefix instead.",
-                DeprecationWarning,
-            )
         else:
             self.load_environment_vars(SANIC_PREFIX)
 
@@ -117,6 +124,13 @@ class Config(dict):
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
     def __setattr__(self, attr, value) -> None:
+        if attr in self.__class__.__setters__:
+            try:
+                super().__setattr__(attr, value)
+            except AttributeError:
+                ...
+            else:
+                return None
         self.update({attr: value})
 
     def __setitem__(self, attr, value) -> None:
@@ -136,31 +150,36 @@ class Config(dict):
                 "REQUEST_MAX_SIZE",
             ):
                 self._configure_header_size()
-            elif attr == "FALLBACK_ERROR_FORMAT":
-                self._check_error_format()
-                if self.app and value != self.app.error_handler.fallback:
-                    if self.app.error_handler.fallback != "auto":
-                        warn(
-                            "Overriding non-default ErrorHandler fallback "
-                            "value. Changing from "
-                            f"{self.app.error_handler.fallback} to {value}."
-                        )
-                    self.app.error_handler.fallback = value
             elif attr == "LOGO":
                 self._LOGO = value
-                warn(
+                deprecation(
                     "Setting the config.LOGO is deprecated and will no longer "
                     "be supported starting in v22.6.",
-                    DeprecationWarning,
+                    22.6,
                 )
-
-    @property
-    def app(self):
-        return self._app
 
     @property
     def LOGO(self):
         return self._LOGO
+
+    @property
+    def FALLBACK_ERROR_FORMAT(self) -> str:
+        if self._FALLBACK_ERROR_FORMAT is _default:
+            return DEFAULT_FORMAT
+        return self._FALLBACK_ERROR_FORMAT
+
+    @FALLBACK_ERROR_FORMAT.setter
+    def FALLBACK_ERROR_FORMAT(self, value):
+        self._check_error_format(value)
+        if (
+            self._FALLBACK_ERROR_FORMAT is not _default
+            and value != self._FALLBACK_ERROR_FORMAT
+        ):
+            error_logger.warning(
+                "Setting config.FALLBACK_ERROR_FORMAT on an already "
+                "configured value may have unintended consequences."
+            )
+        self._FALLBACK_ERROR_FORMAT = value
 
     def _configure_header_size(self):
         Http.set_header_max_size(
@@ -169,8 +188,8 @@ class Config(dict):
             self.REQUEST_MAX_SIZE,
         )
 
-    def _check_error_format(self):
-        check_error_format(self.FALLBACK_ERROR_FORMAT)
+    def _check_error_format(self, format: Optional[str] = None):
+        check_error_format(format or self.FALLBACK_ERROR_FORMAT)
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
         """
@@ -184,20 +203,45 @@ class Config(dict):
         - ``float``
         - ``bool``
 
-        Anything else will be imported as a ``str``.
+        Anything else will be imported as a ``str``. If you would like to add
+        additional types to this list, you can use
+        :meth:`sanic.config.Config.register_type`. Just make sure that they
+        are registered before you instantiate your application.
+
+        .. code-block:: python
+
+            class Foo:
+                def __init__(self, name) -> None:
+                    self.name = name
+
+
+            config = Config(converters=[Foo])
+            app = Sanic(__name__, config=config)
+
+        `See user guide re: config
+        <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
+        lower_case_var_found = False
         for key, value in environ.items():
             if not key.startswith(prefix):
                 continue
+            if not key.isupper():
+                lower_case_var_found = True
 
             _, config_key = key.split(prefix, 1)
 
-            for converter in (int, float, str_to_bool, str):
+            for converter in reversed(self._converters):
                 try:
                     self[config_key] = converter(value)
                     break
                 except ValueError:
                     pass
+        if lower_case_var_found:
+            deprecation(
+                "Lowercase environment variables will not be "
+                "loaded into Sanic config beginning in v22.9.",
+                22.9,
+            )
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """
@@ -267,3 +311,17 @@ class Config(dict):
         self.update(config)
 
     load = update_config
+
+    def register_type(self, converter: Callable[[str], Any]) -> None:
+        """
+        Allows for adding custom function to cast from a string value to any
+        other type. The function should raise ValueError if it is not the
+        correct type.
+        """
+        if converter in self._converters:
+            error_logger.warning(
+                f"Configuration value converter '{converter.__name__}' has "
+                "already been registered"
+            )
+            return
+        self._converters.append(converter)

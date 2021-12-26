@@ -5,6 +5,8 @@ import platform
 import subprocess
 import sys
 
+from string import ascii_lowercase
+
 import httpcore
 import httpx
 import pytest
@@ -16,6 +18,9 @@ from sanic.response import text
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="UNIX only")
 SOCKPATH = "/tmp/sanictest.sock"
 SOCKPATH2 = "/tmp/sanictest2.sock"
+httpx_version = tuple(
+    map(int, httpx.__version__.strip(ascii_lowercase).split("."))
+)
 
 
 @pytest.fixture(autouse=True)
@@ -141,7 +146,10 @@ def test_unix_connection():
 
     @app.listener("after_server_start")
     async def client(app, loop):
-        transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
+        if httpx_version >= (0, 20):
+            transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
+        else:
+            transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
         try:
             async with httpx.AsyncClient(transport=transport) as client:
                 r = await client.get("http://myhost.invalid/")
@@ -186,7 +194,10 @@ async def test_zero_downtime():
     from time import monotonic as current_time
 
     async def client():
-        transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
+        if httpx_version >= (0, 20):
+            transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
+        else:
+            transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
         for _ in range(40):
             async with httpx.AsyncClient(transport=transport) as client:
                 r = await client.get("http://localhost/sleep/0.1")
@@ -211,7 +222,10 @@ async def test_zero_downtime():
         processes = [spawn()]
         while not os.path.exists(SOCKPATH):
             if processes[0].poll() is not None:
-                raise Exception("Worker did not start properly")
+                raise Exception(
+                    "Worker did not start properly. "
+                    f"stderr: {processes[0].stderr.read()}"
+                )
             await asyncio.sleep(0.0001)
         ino = os.stat(SOCKPATH).st_ino
         task = asyncio.get_event_loop().create_task(client())

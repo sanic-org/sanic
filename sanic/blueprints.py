@@ -24,7 +24,7 @@ from typing import (
 from sanic_routing.exceptions import NotFound  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
-from sanic.base import BaseSanic
+from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.exceptions import SanicException
 from sanic.helpers import Default, _default
@@ -36,8 +36,8 @@ from sanic.models.handler_types import (
 )
 
 
-if TYPE_CHECKING:
-    from sanic import Sanic  # noqa
+if TYPE_CHECKING:  # no cov
+    from sanic import Sanic
 
 
 def lazy(func, as_decorator=True):
@@ -85,7 +85,7 @@ class Blueprint(BaseSanic):
         trailing */*
     """
 
-    __fake_slots__ = (
+    __slots__ = (
         "_apps",
         "_future_routes",
         "_future_statics",
@@ -98,7 +98,6 @@ class Blueprint(BaseSanic):
         "host",
         "listeners",
         "middlewares",
-        "name",
         "routes",
         "statics",
         "strict_slashes",
@@ -348,6 +347,7 @@ class Blueprint(BaseSanic):
                 future.static,
                 version_prefix,
                 error_format,
+                future.route_context,
             )
 
             if (self, apply_route) in app._future_registry:
@@ -400,8 +400,9 @@ class Blueprint(BaseSanic):
         for future in self._future_signals:
             if (self, future) in app._future_registry:
                 continue
-            future.condition.update({"blueprint": self.name})
-            app._apply_signal(future)
+            future.condition.update({"__blueprint__": self.name})
+            # Force exclusive to be False
+            app._apply_signal(tuple((*future[:-1], False)))
 
         self.routes += [route for route in routes if isinstance(route, Route)]
         self.websocket_routes += [
@@ -426,7 +427,7 @@ class Blueprint(BaseSanic):
 
     async def dispatch(self, *args, **kwargs):
         condition = kwargs.pop("condition", {})
-        condition.update({"blueprint": self.name})
+        condition.update({"__blueprint__": self.name})
         kwargs["condition"] = condition
         await asyncio.gather(
             *[app.dispatch(*args, **kwargs) for app in self.apps]

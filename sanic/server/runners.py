@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
@@ -22,6 +24,7 @@ from signal import signal as signal_func
 
 from aioquic.asyncio import serve as quic_serve
 
+from sanic.application.ext import setup_ext
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.http.http3 import get_config, get_ticket_store
 from sanic.log import error_logger, logger
@@ -122,6 +125,7 @@ def serve(
         **asyncio_server_kwargs,
     )
 
+    setup_ext(app)
     if run_async:
         return AsyncioServer(
             app=app,
@@ -181,6 +185,9 @@ def serve(
         while connections and (start_shutdown < graceful):
             loop.run_until_complete(asyncio.sleep(0.1))
             start_shutdown = start_shutdown + 0.1
+
+        if sys.version_info > (3, 7):
+            app.shutdown_tasks(graceful - start_shutdown)
 
         # Force close non-idle connection after waiting for
         # graceful_shutdown_timeout

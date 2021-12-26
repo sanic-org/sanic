@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import logging.config
 import os
@@ -11,6 +12,7 @@ from asyncio import (
     AbstractEventLoop,
     CancelledError,
     Protocol,
+    Task,
     ensure_future,
     get_event_loop,
     wait_for,
@@ -26,6 +28,7 @@ from ssl import SSLContext
 from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
+    TYPE_CHECKING,
     Any,
     AnyStr,
     Awaitable,
@@ -40,10 +43,11 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import filterwarnings, warn
+from warnings import filterwarnings
 
 from sanic_routing.exceptions import (  # type: ignore
     FinalizationError,
@@ -52,11 +56,12 @@ from sanic_routing.exceptions import (  # type: ignore
 from sanic_routing.route import Route  # type: ignore
 
 from sanic import reloader_helpers
+from sanic.application.ext import setup_ext
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
 from sanic.asgi import ASGIApp
-from sanic.base import BaseSanic
+from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
@@ -68,9 +73,16 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.http.constants import HTTP
-from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, error_logger, logger
+from sanic.log import (
+    LOGGING_CONFIG_DEFAULTS,
+    Colors,
+    deprecation,
+    error_logger,
+    logger,
+)
 from sanic.mixins.listeners import ListenerEvent
 from sanic.models.futures import (
     FutureException,
@@ -84,11 +96,11 @@ from sanic.models.futures import (
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
-from sanic.response import BaseHTTPResponse, HTTPResponse
+from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server import AsyncioServer, HttpProtocol
 from sanic.server import Signal as ServerSignal
-from sanic.server import serve, serve_multiple, serve_single
+from sanic.server import serve, serve_multiple, serve_single, try_use_uvloop
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
@@ -96,10 +108,20 @@ from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
+if TYPE_CHECKING:  # no cov
+    try:
+        from sanic_ext import Extend  # type: ignore
+        from sanic_ext.extensions.base import Extension  # type: ignore
+    except ImportError:
+        Extend = TypeVar("Extend")  # type: ignore
+
+
 if OS_IS_WINDOWS:
     enable_windows_color_support()
 
 filterwarnings("once", category=DeprecationWarning)
+
+SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
 
 class Sanic(BaseSanic, metaclass=TouchUpMeta):
@@ -113,12 +135,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_run_response_middleware",
         "_run_request_middleware",
     )
-    __fake_slots__ = (
-        "_app_registry",
+    __slots__ = (
         "_asgi_app",
         "_asgi_client",
         "_blueprint_order",
         "_delayed_tasks",
+        "_ext",
         "_future_exceptions",
         "_future_listeners",
         "_future_middleware",
@@ -127,20 +149,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "_future_signals",
         "_future_statics",
         "_state",
+        "_task_registry",
         "_test_client",
         "_test_manager",
-        "asgi",
-        "auto_reload",
-        "auto_reload",
         "blueprints",
         "config",
         "configure_logging",
         "ctx",
-        "debug",
         "error_handler",
         "go_fast",
-        "is_running",
-        "is_stopping",
         "listeners",
         "name",
         "named_request_middleware",
@@ -152,12 +169,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         "signal_router",
         "sock",
         "strict_slashes",
-        "test_mode",
         "websocket_enabled",
         "websocket_tasks",
     )
 
     _app_registry: Dict[str, "Sanic"] = {}
+    _uvloop_setting = None  # TODO: Remove in v22.6
     test_mode = False
 
     def __init__(
@@ -168,7 +185,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
         error_handler: Optional[ErrorHandler] = None,
-        load_env: Union[bool, str] = True,
         env_prefix: Optional[str] = SANIC_PREFIX,
         request_class: Optional[Type[Request]] = None,
         strict_slashes: bool = False,
@@ -184,25 +200,27 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             dict_config = log_config or LOGGING_CONFIG_DEFAULTS
             logging.config.dictConfig(dict_config)  # type: ignore
 
-        if config and (load_env is not True or env_prefix != SANIC_PREFIX):
+        if config and env_prefix != SANIC_PREFIX:
             raise SanicException(
                 "When instantiating Sanic with config, you cannot also pass "
-                "load_env or env_prefix"
+                "env_prefix"
             )
 
+        # First setup config
+        self.config: Config = config or Config(env_prefix=env_prefix)
+
+        # Then we can do the rest
         self._asgi_client: Any = None
-        self._test_client: Any = None
-        self._test_manager: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
         self._future_registry: FutureRegistry = FutureRegistry()
         self._state: ApplicationState = ApplicationState(app=self)
+        self._task_registry: Dict[str, Task] = {}
+        self._test_client: Any = None
+        self._test_manager: Any = None
+        self.asgi = False
+        self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
-        self.config: Config = config or Config(
-            load_env=load_env,
-            env_prefix=env_prefix,
-            app=self,
-        )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.debug = False
@@ -224,6 +242,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         self.go_fast = self.run
 
         if register is not None:
+            deprecation(
+                "The register argument is deprecated and will stop working "
+                "in v22.6. After v22.6 all apps will be added to the Sanic "
+                "app registry.",
+                22.6,
+            )
             self.config.REGISTER = register
         if self.config.REGISTER:
             self.__class__.register_app(self)
@@ -253,32 +277,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
     # Registration
     # -------------------------------------------------------------------- #
-
-    def add_task(
-        self,
-        task: Union[Future[Any], Coroutine[Any, Any, Any], Awaitable[Any]],
-    ) -> None:
-        """
-        Schedule a task to run later, after the loop has started.
-        Different from asyncio.ensure_future in that it does not
-        also return a future, and the actual ensure_future call
-        is delayed until before server start.
-
-        `See user guide re: background tasks
-        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
-
-        :param task: future, couroutine or awaitable
-        """
-        try:
-            loop = self.loop  # Will raise SanicError if loop is not started
-            self._loop_add_task(task, self, loop)
-        except SanicException:
-            task_name = f"sanic.delayed_task.{hash(task)}"
-            if not self._delayed_tasks:
-                self.after_server_start(partial(self.dispatch_delayed_tasks))
-
-            self.signal(task_name)(partial(self.run_delayed_task, task=task))
-            self._delayed_tasks.append(task_name)
 
     def register_listener(
         self, listener: ListenerType[SanicVar], event: str
@@ -404,12 +402,16 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             websocket_handler.is_websocket = True  # type: ignore
             params["handler"] = websocket_handler
 
+        ctx = params.pop("route_context")
+
         routes = self.router.add(**params)
         if isinstance(routes, Route):
             routes = [routes]
+
         for r in routes:
             r.ctx.websocket = websocket
             r.ctx.static = params.get("static", False)
+            r.ctx.__dict__.update(ctx)
 
         return routes
 
@@ -755,7 +757,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 exception, request.name if request else None
             )
             if handler:
-                warn(
+                deprecation(
                     "An error occurred while handling the request after at "
                     "least some part of the response was sent to the client. "
                     "Therefore, the response from your custom exception "
@@ -770,7 +772,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     "For further information, please see the docs: "
                     "https://sanicframework.org/en/guide/advanced/"
                     "signals.html",
-                    DeprecationWarning,
+                    22.6,
                 )
                 try:
                     response = self.error_handler.response(request, exception)
@@ -823,6 +825,9 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         else:
             if request.stream:
                 response = request.stream.response
+
+        # Marked for cleanup and DRY with handle_request/handle_exception
+        # when ResponseStream is no longer supporder
         if isinstance(response, BaseHTTPResponse):
             await self.dispatch(
                 "http.lifecycle.response",
@@ -833,6 +838,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 },
             )
             await response.send(end_stream=True)
+        elif isinstance(response, ResponseStream):
+            resp = await response(request)
+            await self.dispatch(
+                "http.lifecycle.response",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": resp,
+                },
+            )
+            await response.eof()
         else:
             raise ServerError(
                 f"Invalid response type {response!r} (need HTTPResponse)"
@@ -936,7 +952,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
 
-            # Make sure that response is finished / run StreamingHTTP callback
+            # Marked for cleanup and DRY with handle_request/handle_exception
+            # when ResponseStream is no longer supporder
             if isinstance(response, BaseHTTPResponse):
                 await self.dispatch(
                     "http.lifecycle.response",
@@ -947,6 +964,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                     },
                 )
                 await response.send(end_stream=True)
+            elif isinstance(response, ResponseStream):
+                resp = await response(request)
+                await self.dispatch(
+                    "http.lifecycle.response",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": resp,
+                    },
+                )
+                await response.eof()
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
@@ -1162,6 +1190,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             version=version,
         )
 
+        if self.config.USE_UVLOOP is True or (
+            self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
+        ):
+            try_use_uvloop()
+
         try:
             self.is_running = True
             self.is_stopping = False
@@ -1189,6 +1222,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         This kills the Sanic
         """
         if not self.is_stopping:
+            self.shutdown_tasks(timeout=0)
             self.is_stopping = True
             get_event_loop().stop()
 
@@ -1258,12 +1292,13 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
-        # if access_log is passed explicitly change config.ACCESS_LOG
-        if access_log is not None:
-            self.config.ACCESS_LOG = access_log
-
-        if noisy_exceptions is not None:
-            self.config.NOISY_EXCEPTIONS = noisy_exceptions
+        # Set explicitly passed configuration values
+        for attribute, value in {
+            "ACCESS_LOG": access_log,
+            "NOISY_EXCEPTIONS": noisy_exceptions,
+        }.items():
+            if value is not None:
+                setattr(self.config, attribute, value)
 
         server_settings = self._helper(
             host=host,
@@ -1277,6 +1312,14 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             backlog=backlog,
             run_async=return_asyncio_server,
         )
+
+        if self.config.USE_UVLOOP is not _default:
+            error_logger.warning(
+                "You are trying to change the uvloop configuration, but "
+                "this is only effective when using the run(...) method. "
+                "When using the create_server(...) method Sanic will use "
+                "the already existing loop."
+            )
 
         main_start = server_settings.pop("main_start", None)
         main_stop = server_settings.pop("main_stop", None)
@@ -1399,27 +1442,15 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         if isinstance(version, int):
             version = HTTP(version)
+        ssl = process_to_context(ssl)
 
         self.debug = debug
         self.state.host = host
         self.state.port = port
         self.state.workers = workers
-
-        # Serve
-        serve_location = ""
-        proto = "http"
-        if ssl is not None:
-            proto = "https"
-        if unix:
-            serve_location = f"{unix} {proto}://..."
-        elif sock:
-            serve_location = f"{sock.getsockname()} {proto}://..."
-        elif host and port:
-            # colon(:) is legal for a host only in an ipv6 address
-            display_host = f"[{host}]" if ":" in host else host
-            serve_location = f"{proto}://{display_host}:{port}"
-
-        ssl = process_to_context(ssl)
+        self.state.ssl = ssl
+        self.state.unix = unix
+        self.state.sock = sock
 
         server_settings = {
             "protocol": protocol,
@@ -1436,7 +1467,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             "version": version,
         }
 
-        self.motd(serve_location)
+        self.motd(self.serve_location)
 
         if sys.stdout.isatty() and not self.state.is_debug:
             error_logger.warning(
@@ -1462,12 +1493,55 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         return server_settings
 
+    @property
+    def serve_location(self) -> str:
+        serve_location = ""
+        proto = "http"
+        if self.state.ssl is not None:
+            proto = "https"
+        if self.state.unix:
+            serve_location = f"{self.state.unix} {proto}://..."
+        elif self.state.sock:
+            serve_location = f"{self.state.sock.getsockname()} {proto}://..."
+        elif self.state.host and self.state.port:
+            # colon(:) is legal for a host only in an ipv6 address
+            display_host = (
+                f"[{self.state.host}]"
+                if ":" in self.state.host
+                else self.state.host
+            )
+            serve_location = f"{proto}://{display_host}:{self.state.port}"
+
+        return serve_location
+
     def _build_endpoint_name(self, *parts):
         parts = [self.name, *parts]
         return ".".join(parts)
 
     @classmethod
-    def _prep_task(cls, task, app, loop):
+    def _cancel_websocket_tasks(cls, app, loop):
+        for task in app.websocket_tasks:
+            task.cancel()
+
+    @staticmethod
+    async def _listener(
+        app: Sanic, loop: AbstractEventLoop, listener: ListenerType
+    ):
+        maybe_coro = listener(app, loop)
+        if maybe_coro and isawaitable(maybe_coro):
+            await maybe_coro
+
+    # -------------------------------------------------------------------- #
+    # Task management
+    # -------------------------------------------------------------------- #
+
+    @classmethod
+    def _prep_task(
+        cls,
+        task,
+        app,
+        loop,
+    ):
         if callable(task):
             try:
                 task = task(app)
@@ -1477,14 +1551,22 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         return task
 
     @classmethod
-    def _loop_add_task(cls, task, app, loop):
+    def _loop_add_task(
+        cls,
+        task,
+        app,
+        loop,
+        *,
+        name: Optional[str] = None,
+        register: bool = True,
+    ) -> Task:
         prepped = cls._prep_task(task, app, loop)
-        loop.create_task(prepped)
+        task = loop.create_task(prepped, name=name)
 
-    @classmethod
-    def _cancel_websocket_tasks(cls, app, loop):
-        for task in app.websocket_tasks:
-            task.cancel()
+        if name and register:
+            app._task_registry[name] = task
+
+        return task
 
     @staticmethod
     async def dispatch_delayed_tasks(app, loop):
@@ -1497,13 +1579,132 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         prepped = app._prep_task(task, app, loop)
         await prepped
 
-    @staticmethod
-    async def _listener(
-        app: Sanic, loop: AbstractEventLoop, listener: ListenerType
+    def add_task(
+        self,
+        task: Union[Future[Any], Coroutine[Any, Any, Any], Awaitable[Any]],
+        *,
+        name: Optional[str] = None,
+        register: bool = True,
+    ) -> Optional[Task]:
+        """
+        Schedule a task to run later, after the loop has started.
+        Different from asyncio.ensure_future in that it does not
+        also return a future, and the actual ensure_future call
+        is delayed until before server start.
+
+        `See user guide re: background tasks
+        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
+
+        :param task: future, couroutine or awaitable
+        """
+        if name and sys.version_info == (3, 7):
+            name = None
+            error_logger.warning(
+                "Cannot set a name for a task when using Python 3.7. Your "
+                "task will be created without a name."
+            )
+        try:
+            loop = self.loop  # Will raise SanicError if loop is not started
+            return self._loop_add_task(
+                task, self, loop, name=name, register=register
+            )
+        except SanicException:
+            task_name = f"sanic.delayed_task.{hash(task)}"
+            if not self._delayed_tasks:
+                self.after_server_start(partial(self.dispatch_delayed_tasks))
+
+            if name:
+                raise RuntimeError(
+                    "Cannot name task outside of a running application"
+                )
+
+            self.signal(task_name)(partial(self.run_delayed_task, task=task))
+            self._delayed_tasks.append(task_name)
+            return None
+
+    def get_task(
+        self, name: str, *, raise_exception: bool = True
+    ) -> Optional[Task]:
+        if sys.version_info == (3, 7):
+            raise RuntimeError(
+                "This feature is only supported on using Python 3.8+."
+            )
+        try:
+            return self._task_registry[name]
+        except KeyError:
+            if raise_exception:
+                raise SanicException(
+                    f'Registered task named "{name}" not found.'
+                )
+            return None
+
+    async def cancel_task(
+        self,
+        name: str,
+        msg: Optional[str] = None,
+        *,
+        raise_exception: bool = True,
+    ) -> None:
+        if sys.version_info == (3, 7):
+            raise RuntimeError(
+                "This feature is only supported on using Python 3.8+."
+            )
+        task = self.get_task(name, raise_exception=raise_exception)
+        if task and not task.cancelled():
+            args: Tuple[str, ...] = ()
+            if msg:
+                if sys.version_info >= (3, 9):
+                    args = (msg,)
+                else:
+                    raise RuntimeError(
+                        "Cancelling a task with a message is only supported "
+                        "on Python 3.9+."
+                    )
+            task.cancel(*args)
+            try:
+                await task
+            except CancelledError:
+                ...
+
+    def purge_tasks(self):
+        if sys.version_info == (3, 7):
+            raise RuntimeError(
+                "This feature is only supported on using Python 3.8+."
+            )
+        for task in self.tasks:
+            if task.done() or task.cancelled():
+                name = task.get_name()
+                self._task_registry[name] = None
+
+        self._task_registry = {
+            k: v for k, v in self._task_registry.items() if v is not None
+        }
+
+    def shutdown_tasks(
+        self, timeout: Optional[float] = None, increment: float = 0.1
     ):
-        maybe_coro = listener(app, loop)
-        if maybe_coro and isawaitable(maybe_coro):
-            await maybe_coro
+        if sys.version_info == (3, 7):
+            raise RuntimeError(
+                "This feature is only supported on using Python 3.8+."
+            )
+        for task in self.tasks:
+            task.cancel()
+
+        if timeout is None:
+            timeout = self.config.GRACEFUL_SHUTDOWN_TIMEOUT
+
+        while len(self._task_registry) and timeout:
+            self.loop.run_until_complete(asyncio.sleep(increment))
+            self.purge_tasks()
+            timeout -= increment
+
+    @property
+    def tasks(self):
+        if sys.version_info == (3, 7):
+            raise RuntimeError(
+                "This feature is only supported on using Python 3.8+."
+            )
+        return iter(self._task_registry.values())
 
     # -------------------------------------------------------------------- #
     # ASGI
@@ -1621,11 +1822,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 display["auto-reload"] = reload_display
 
             packages = []
-            for package_name, module_name in {
-                "sanic-routing": "sanic_routing",
-                "sanic-testing": "sanic_testing",
-                "sanic-ext": "sanic_ext",
-            }.items():
+            for package_name in SANIC_PACKAGES:
+                module_name = package_name.replace("-", "_")
                 try:
                     module = import_module(module_name)
                     packages.append(f"{package_name}=={module.__version__}")
@@ -1644,6 +1842,41 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 else self.config.LOGO
             )
             MOTD.output(logo, serve_location, display, extra)
+
+    @property
+    def ext(self) -> Extend:
+        if not hasattr(self, "_ext"):
+            setup_ext(self, fail=True)
+
+        if not hasattr(self, "_ext"):
+            raise RuntimeError(
+                "Sanic Extensions is not installed. You can add it to your "
+                "environment using:\n$ pip install sanic[ext]\nor\n$ pip "
+                "install sanic-ext"
+            )
+        return self._ext  # type: ignore
+
+    def extend(
+        self,
+        *,
+        extensions: Optional[List[Type[Extension]]] = None,
+        built_in_extensions: bool = True,
+        config: Optional[Union[Config, Dict[str, Any]]] = None,
+        **kwargs,
+    ) -> Extend:
+        if hasattr(self, "_ext"):
+            raise RuntimeError(
+                "Cannot extend Sanic after Sanic Extensions has been setup."
+            )
+        setup_ext(
+            self,
+            extensions=extensions,
+            built_in_extensions=built_in_extensions,
+            config=config,
+            fail=True,
+            **kwargs,
+        )
+        return self.ext
 
     # -------------------------------------------------------------------- #
     # Class methods
@@ -1706,12 +1939,34 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
     async def _startup(self):
         self._future_registry.clear()
+
+        # Startup Sanic Extensions
+        if not hasattr(self, "_ext"):
+            setup_ext(self)
+        if hasattr(self, "_ext"):
+            self.ext._display()
+
+        # Setup routers
         self.signalize()
         self.finalize()
-        ErrorHandler.finalize(
-            self.error_handler, fallback=self.config.FALLBACK_ERROR_FORMAT
-        )
+
+        # TODO: Replace in v22.6 to check against apps in app registry
+        if (
+            self.__class__._uvloop_setting is not None
+            and self.__class__._uvloop_setting != self.config.USE_UVLOOP
+        ):
+            error_logger.warning(
+                "It looks like you're running several apps with different "
+                "uvloop settings. This is not supported and may lead to "
+                "unintended behaviour."
+            )
+        self.__class__._uvloop_setting = self.config.USE_UVLOOP
+
+        # Startup time optimizations
+        ErrorHandler.finalize(self.error_handler, config=self.config)
         TouchUp.run(self)
+
+        self.state.is_started = True
 
     async def _server_event(
         self,

@@ -226,11 +226,12 @@ def test_single_arg_exception_handler_notice(
     exception_handler_app.error_handler = CustomErrorHandler()
 
     message = (
-        "You are using a deprecated error handler. The lookup method should "
-        "accept two positional parameters: (exception, route_name: "
-        "Optional[str]). Until you upgrade your ErrorHandler.lookup, "
-        "Blueprint specific exceptions will not work properly. Beginning in "
-        "v22.3, the legacy style lookup method will not work at all."
+        "[DEPRECATION v22.3] You are using a deprecated error handler. The "
+        "lookup method should accept two positional parameters: (exception, "
+        "route_name: Optional[str]). Until you upgrade your "
+        "ErrorHandler.lookup, Blueprint specific exceptions will not work "
+        "properly. Beginning in v22.3, the legacy style lookup method will "
+        "not work at all."
     )
     with pytest.warns(DeprecationWarning) as record:
         _, response = exception_handler_app.test_client.get("/1")

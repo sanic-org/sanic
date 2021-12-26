@@ -1,12 +1,11 @@
 from typing import TYPE_CHECKING, Optional, Sequence, cast
-from warnings import warn
 
 from websockets.connection import CLOSED, CLOSING, OPEN
 from websockets.server import ServerConnection
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import ServerError
-from sanic.log import error_logger
+from sanic.log import deprecation, error_logger
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol
@@ -17,6 +16,14 @@ if TYPE_CHECKING:
 
 
 class WebSocketProtocol(HttpProtocol):
+    __slots__ = (
+        "websocket",
+        "websocket_timeout",
+        "websocket_max_size",
+        "websocket_ping_interval",
+        "websocket_ping_timeout",
+    )
+
     def __init__(
         self,
         *args,
@@ -35,24 +42,24 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         if websocket_max_queue is not None and websocket_max_queue > 0:
             # TODO: Reminder remove this warning in v22.3
-            warn(
+            deprecation(
                 "Websocket no longer uses queueing, so websocket_max_queue"
                 " is no longer required.",
-                DeprecationWarning,
+                22.3,
             )
         if websocket_read_limit is not None and websocket_read_limit > 0:
             # TODO: Reminder remove this warning in v22.3
-            warn(
+            deprecation(
                 "Websocket no longer uses read buffers, so "
                 "websocket_read_limit is not required.",
-                DeprecationWarning,
+                22.3,
             )
         if websocket_write_limit is not None and websocket_write_limit > 0:
             # TODO: Reminder remove this warning in v22.3
-            warn(
+            deprecation(
                 "Websocket no longer uses write buffers, so "
                 "websocket_write_limit is not required.",
-                DeprecationWarning,
+                22.3,
             )
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout

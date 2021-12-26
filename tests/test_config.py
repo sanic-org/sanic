@@ -127,7 +127,6 @@ def test_env_lowercase():
         environ["SANIC_test_answer"] = "42"
         app = Sanic(name=__name__)
         assert app.config.test_answer == 42
-    print(record[0].message)
     assert str(record[0].message) == (
         "[DEPRECATION v22.9] Lowercase environment variables will not be "
         "loaded into Sanic config beginning in v22.9."

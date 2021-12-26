@@ -221,9 +221,12 @@ class Config(dict, metaclass=DescriptorMeta):
         `See user guide re: config
         <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
+        lower_case_var_found = False
         for key, value in environ.items():
             if not key.startswith(prefix):
                 continue
+            if not key.isupper():
+                lower_case_var_found = True
 
             _, config_key = key.split(prefix, 1)
 
@@ -233,6 +236,12 @@ class Config(dict, metaclass=DescriptorMeta):
                     break
                 except ValueError:
                     pass
+        if lower_case_var_found:
+            deprecation(
+                "Lowercase environment variables will not be "
+                "loaded into Sanic config beginning in v22.9.",
+                22.9,
+            )
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """

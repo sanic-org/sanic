@@ -9,6 +9,8 @@ from unittest.mock import Mock
 
 import pytest
 
+from pytest import MonkeyPatch
+
 from sanic import Sanic
 from sanic.config import DEFAULT_CONFIG, Config
 from sanic.exceptions import PyFileError
@@ -39,21 +41,21 @@ class UltimateAnswer:
         self.answer = int(answer)
 
 
-def test_load_from_object(app):
+def test_load_from_object(app: Sanic):
     app.config.load(ConfigTest)
     assert "CONFIG_VALUE" in app.config
     assert app.config.CONFIG_VALUE == "should be used"
     assert "not_for_config" not in app.config
 
 
-def test_load_from_object_string(app):
+def test_load_from_object_string(app: Sanic):
     app.config.load("test_config.ConfigTest")
     assert "CONFIG_VALUE" in app.config
     assert app.config.CONFIG_VALUE == "should be used"
     assert "not_for_config" not in app.config
 
 
-def test_load_from_instance(app):
+def test_load_from_instance(app: Sanic):
     app.config.load(ConfigTest())
     assert "CONFIG_VALUE" in app.config
     assert app.config.CONFIG_VALUE == "should be used"
@@ -62,7 +64,7 @@ def test_load_from_instance(app):
     assert "another_not_for_config" not in app.config
 
 
-def test_load_from_object_string_exception(app):
+def test_load_from_object_string_exception(app: Sanic):
     with pytest.raises(ImportError):
         app.config.load("test_config.Config.test")
 
@@ -120,6 +122,18 @@ def test_env_w_custom_converter():
     del environ["SANIC_TEST_ANSWER"]
 
 
+def test_env_lowercase():
+    with pytest.warns(None) as record:
+        environ["SANIC_test_answer"] = "42"
+        app = Sanic(name=__name__)
+        assert app.config.test_answer == 42
+    assert str(record[0].message) == (
+        "[DEPRECATION v22.9] Lowercase environment variables will not be "
+        "loaded into Sanic config beginning in v22.9."
+    )
+    del environ["SANIC_test_answer"]
+
+
 def test_add_converter_multiple_times(caplog):
     def converter():
         ...
@@ -136,7 +150,7 @@ def test_add_converter_multiple_times(caplog):
     assert len(config._converters) == 5
 
 
-def test_load_from_file(app):
+def test_load_from_file(app: Sanic):
     config = dedent(
         """
     VALUE = 'some value'
@@ -155,12 +169,12 @@ def test_load_from_file(app):
         assert "condition" not in app.config
 
 
-def test_load_from_missing_file(app):
+def test_load_from_missing_file(app: Sanic):
     with pytest.raises(IOError):
         app.config.load("non-existent file")
 
 
-def test_load_from_envvar(app):
+def test_load_from_envvar(app: Sanic):
     config = "VALUE = 'some value'"
     with temp_path() as config_path:
         config_path.write_text(config)
@@ -170,7 +184,7 @@ def test_load_from_envvar(app):
         assert app.config.VALUE == "some value"
 
 
-def test_load_from_missing_envvar(app):
+def test_load_from_missing_envvar(app: Sanic):
     with pytest.raises(IOError) as e:
         app.config.load("non-existent variable")
         assert str(e.value) == (
@@ -180,7 +194,7 @@ def test_load_from_missing_envvar(app):
         )
 
 
-def test_load_config_from_file_invalid_syntax(app):
+def test_load_config_from_file_invalid_syntax(app: Sanic):
     config = "VALUE = some value"
     with temp_path() as config_path:
         config_path.write_text(config)
@@ -189,7 +203,7 @@ def test_load_config_from_file_invalid_syntax(app):
             app.config.load(config_path)
 
 
-def test_overwrite_exisiting_config(app):
+def test_overwrite_exisiting_config(app: Sanic):
     app.config.DEFAULT = 1
 
     class Config:
@@ -199,7 +213,7 @@ def test_overwrite_exisiting_config(app):
     assert app.config.DEFAULT == 2
 
 
-def test_overwrite_exisiting_config_ignore_lowercase(app):
+def test_overwrite_exisiting_config_ignore_lowercase(app: Sanic):
     app.config.default = 1
 
     class Config:
@@ -209,7 +223,7 @@ def test_overwrite_exisiting_config_ignore_lowercase(app):
     assert app.config.default == 1
 
 
-def test_missing_config(app):
+def test_missing_config(app: Sanic):
     with pytest.raises(AttributeError, match="Config has no 'NON_EXISTENT'"):
         _ = app.config.NON_EXISTENT
 
@@ -277,7 +291,7 @@ def test_config_custom_defaults_with_env():
         del environ[key]
 
 
-def test_config_access_log_passing_in_run(app):
+def test_config_access_log_passing_in_run(app: Sanic):
     assert app.config.ACCESS_LOG is True
 
     @app.listener("after_server_start")
@@ -292,7 +306,7 @@ def test_config_access_log_passing_in_run(app):
 
 
 @pytest.mark.asyncio
-async def test_config_access_log_passing_in_create_server(app):
+async def test_config_access_log_passing_in_create_server(app: Sanic):
     assert app.config.ACCESS_LOG is True
 
     @app.listener("after_server_start")
@@ -341,18 +355,18 @@ _test_setting_as_module = str(
     ],
     ids=["from_dict", "from_class", "from_file"],
 )
-def test_update(app, conf_object):
+def test_update(app: Sanic, conf_object):
     app.update_config(conf_object)
     assert app.config["TEST_SETTING_VALUE"] == 1
 
 
-def test_update_from_lowercase_key(app):
+def test_update_from_lowercase_key(app: Sanic):
     d = {"test_setting_value": 1}
     app.update_config(d)
     assert "test_setting_value" not in app.config
 
 
-def test_deprecation_notice_when_setting_logo(app):
+def test_deprecation_notice_when_setting_logo(app: Sanic):
     message = (
         "Setting the config.LOGO is deprecated and will no longer be "
         "supported starting in v22.6."
@@ -361,7 +375,7 @@ def test_deprecation_notice_when_setting_logo(app):
         app.config.LOGO = "My Custom Logo"
 
 
-def test_config_set_methods(app, monkeypatch):
+def test_config_set_methods(app: Sanic, monkeypatch: MonkeyPatch):
     post_set = Mock()
     monkeypatch.setattr(Config, "_post_set", post_set)
 

@@ -25,6 +25,7 @@ from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
+from sanic.http.http3 import Http3
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
@@ -56,7 +57,7 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Optional[Union[Http, ASGIApp]] = None
+        self.stream: Optional[Union[Http, ASGIApp, Http3]] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
@@ -121,6 +122,7 @@ class BaseHTTPResponse:
         :param data: str or bytes to be written
         :param end_stream: whether to close the stream after this block
         """
+        print(f">>> BaseHTTPResponse: {data=} {end_stream=} {self.body=}")
         if data is None and end_stream is None:
             end_stream = True
         if self.stream is None:

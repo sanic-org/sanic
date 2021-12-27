@@ -83,6 +83,30 @@ class ApplicationGroup(Group):
         )
 
 
+class HTTPVersionGroup(Group):
+    name = "HTTP version"
+
+    def attach(self):
+        group = self.container.add_mutually_exclusive_group()
+        group.add_argument(
+            "--http",
+            dest="http",
+            type=int,
+            default=1,
+            help=(
+                "Which HTTP version to use: HTTP/1.1 or HTTP/3. Value should "
+                "be either 1 or 3 [default 1]"
+            ),
+        )
+        group.add_argument(
+            "-3",
+            dest="http",
+            action="store_const",
+            const=3,
+            help=("Run Sanic server using HTTP/3"),
+        )
+
+
 class SocketGroup(Group):
     name = "Socket binding"
 

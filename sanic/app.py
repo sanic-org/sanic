@@ -76,6 +76,7 @@ from sanic.handlers import ErrorHandler
 from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.http.constants import HTTP
+from sanic.http.tls import process_to_context
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
     Colors,
@@ -104,7 +105,6 @@ from sanic.server import serve, serve_multiple, serve_single, try_use_uvloop
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
-from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
@@ -1216,6 +1216,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         finally:
             self.is_running = False
         logger.info("Server Stopped")
+        print("END OF RUN")
 
     def stop(self):
         """

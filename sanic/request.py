@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from inspect import isawaitable
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -205,6 +206,9 @@ class Request:
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)
+
+            if isawaitable(response):
+                response = await response
         # Run response middleware
         try:
             response = await self.app._run_response_middleware(

@@ -26,6 +26,9 @@ DEFAULT_CONFIG = {
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
+    "LOCAL_TLS_KEY": _default,
+    "LOCAL_TLS_CERT": _default,
+    "LOCALHOST": "localhost",
     "MOTD": True,
     "MOTD_DISPLAY": {},
     "NOISY_EXCEPTIONS": False,
@@ -68,9 +71,12 @@ class Config(dict, metaclass=DescriptorMeta):
     GRACEFUL_SHUTDOWN_TIMEOUT: float
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
-    NOISY_EXCEPTIONS: bool
+    LOCAL_TLS_KEY: Union[Path, str, Default]
+    LOCAL_TLS_CERT: Union[Path, str, Default]
+    LOCALHOST: str
     MOTD: bool
     MOTD_DISPLAY: Dict[str, str]
+    NOISY_EXCEPTIONS: bool
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]
     REGISTER: bool

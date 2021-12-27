@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
 from sanic.config import Config
 from sanic.http.constants import HTTP
+from sanic.http.tls import get_ssl_context
 from sanic.server.events import trigger_events
 
 
@@ -94,7 +95,7 @@ def serve(
     app.asgi = False
 
     if version is HTTP.VERSION_3:
-        return serve_http_3(host, port, app, loop)
+        return serve_http_3(host, port, app, loop, ssl)
 
     connections = connections if connections is not None else set()
     protocol_kwargs = _build_protocol_kwargs(protocol, app.config)
@@ -200,10 +201,19 @@ def serve(
         remove_unix_socket(unix)
 
 
-def serve_http_3(host, port, app, loop):
+def serve_http_3(
+    host,
+    port,
+    app,
+    loop,
+    ssl,
+    register_sys_signals: bool = True,
+    run_multiple: bool = False,
+):
     protocol = partial(Http3Protocol, app=app)
     ticket_store = get_ticket_store()
-    config = get_config()
+    ssl_context = get_ssl_context(app, ssl)
+    config = get_config(app, ssl_context)
     coro = quic_serve(
         host,
         port,
@@ -214,6 +224,21 @@ def serve_http_3(host, port, app, loop):
     )
     server = AsyncioServer(app, loop, coro, [])
     loop.run_until_complete(server.startup())
+
+    # TODO: Cleanup the non-DRY code block
+    # Ignore SIGINT when run_multiple
+    if run_multiple:
+        signal_func(SIGINT, SIG_IGN)
+        os.environ["SANIC_WORKER_PROCESS"] = "true"
+
+    # Register signals for graceful termination
+    if register_sys_signals:
+        if OS_IS_WINDOWS:
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
+
     loop.run_until_complete(server.before_start())
     loop.run_until_complete(server)
     loop.run_until_complete(server.after_start())

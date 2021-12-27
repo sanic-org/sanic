@@ -11,6 +11,7 @@ from typing import Any, List, Union
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
+from sanic.http.constants import HTTP
 from sanic.log import error_logger
 from sanic.simple import create_simple_server
 
@@ -160,6 +161,7 @@ Or, a path to a directory to run as a simple HTTP server:
         elif len(ssl) == 1 and ssl[0] is not None:
             # Use only one cert, no TLSSelector.
             ssl = ssl[0]
+        version = HTTP(self.args.http)
         kwargs = {
             "access_log": self.args.access_log,
             "debug": self.args.debug,
@@ -172,6 +174,7 @@ Or, a path to a directory to run as a simple HTTP server:
             "unix": self.args.unix,
             "verbosity": self.args.verbosity or 0,
             "workers": self.args.workers,
+            "version": version,
         }
 
         if self.args.auto_reload:

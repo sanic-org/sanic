@@ -26,3 +26,5 @@ class HTTPMethod(str, Enum):
 
 HTTP_METHODS = tuple(HTTPMethod.__members__.values())
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+DEFAULT_LOCAL_TLS_KEY = "key.pem"
+DEFAULT_LOCAL_TLS_CERT = "cert.pem"

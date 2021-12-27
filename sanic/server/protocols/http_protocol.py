@@ -262,7 +262,7 @@ class Http3Protocol(HttpProtocolMixin, QuicConnectionProtocol):
         self.app = app
         super().__init__(*args, **kwargs)
         self._setup()
-        self._connection = None
+        self._connection: Optional[H3Connection] = None
 
     def quic_event_received(self, event: QuicEvent) -> None:
         print("[quic_event_received]:", event)
@@ -282,3 +282,7 @@ class Http3Protocol(HttpProtocolMixin, QuicConnectionProtocol):
         if self._connection is not None:
             for http_event in self._connection.handle_event(event):
                 self._http.http_event_received(http_event)
+
+    @property
+    def connection(self) -> Optional[H3Connection]:
+        return self._connection

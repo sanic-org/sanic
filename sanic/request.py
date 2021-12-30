@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from base64 import b64decode
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,7 +14,6 @@ from typing import (
 )
 
 from sanic_routing.route import Route  # type: ignore
-
 
 if TYPE_CHECKING:  # no cov
     from sanic.server import ConnInfo
@@ -52,6 +52,10 @@ try:
 except ImportError:
     from json import loads as json_loads  # type: ignore
 
+class Credentials(NamedTuple):
+    token: Optional[str]
+    username: Optional[str]
+    password: Optional[str]
 
 class RequestParameters(dict):
     """
@@ -346,6 +350,27 @@ class Request:
                     return auth_header.partition(prefix)[-1].strip()
 
         return auth_header
+
+    @property
+    def credentials(self) -> Credentials:
+        """Attempt to return the auth header value.
+
+        Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication schemas.
+
+        :return: A named tuple with token or username and password related to request
+        """
+        prefixes = ("Basic", "Bearer", "Token")
+        auth_header = self.headers.getone("authorization", None)
+
+        if auth_header is not None:
+            for prefix in prefixes:
+                if prefix in auth_header:
+                    header_value = auth_header.partition(prefix)[-1].strip()
+                    if prefix == "Basic":
+                        username, password = b64decode(header_value.encode("utf-8")).decode().split(":")
+                        return Credentials(username=username, password=password, token=None)
+                    return Credentials(token=header_value, username=None, password=None)
+        return Credentials(token=auth_header, username=None, password=None)
 
     @property
     def form(self):

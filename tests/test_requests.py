@@ -1,3 +1,4 @@
+import base64
 import logging
 
 from json import dumps as json_dumps
@@ -65,7 +66,7 @@ async def test_url_asgi(app):
     request, response = await app.asgi_client.get("/")
 
     if response.body.decode().endswith("/") and not ASGI_BASE_URL.endswith(
-        "/"
+            "/"
     ):
         response.body[:-1] == ASGI_BASE_URL.encode()
     else:
@@ -451,6 +452,125 @@ async def test_token_asgi(app):
     assert request.token is None
 
 
+def test_credentials(app):
+    @app.route("/")
+    async def handler(request):
+        return text("OK")
+
+    # uuid4 generated token.
+    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"{token}",
+    }
+
+    request, response = app.test_client.get("/", headers=headers)
+
+    assert request.credentials.token == token
+    assert request.credentials.password == request.credentials.username is None
+
+    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"Token {token}",
+    }
+
+    request, response = app.test_client.get("/", headers=headers)
+
+    assert request.credentials.token == token
+    assert request.credentials.password == request.credentials.username is None
+
+    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    request, response = app.test_client.get("/", headers=headers)
+
+    assert request.credentials.token == token
+    assert request.credentials.password == request.credentials.username is None
+
+    # Basic Auth
+    token = base64.b64encode("user@email.com:password".encode()).decode("ascii")
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"Basic {token}",
+    }
+
+    request, response = app.test_client.get("/", headers=headers)
+
+    assert request.credentials.username == "user@email.com"
+    assert request.credentials.password == "password"
+
+    # no Authorization headers
+    headers = {"content-type": "application/json"}
+
+    request, response = app.test_client.get("/", headers=headers)
+
+    assert request.credentials.username == request.credentials.password == request.credentials.token is None
+
+
+@pytest.mark.asyncio
+async def test_credentials_asgi(app):
+    @app.route("/")
+    async def handler(request):
+        return text("OK")
+
+    # uuid4 generated token.
+    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"{token}",
+    }
+
+    request, response = await app.asgi_client.get("/", headers=headers)
+
+    assert request.credentials.token == token
+    assert request.credentials.password == request.credentials.username is None
+
+    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"Token {token}",
+    }
+
+    request, response = await app.asgi_client.get("/", headers=headers)
+
+    assert request.credentials.token == token
+    assert request.credentials.password == request.credentials.username is None
+
+    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    request, response = await app.asgi_client.get("/", headers=headers)
+
+    assert request.credentials.token == token
+    assert request.credentials.password == request.credentials.username is None
+
+    # Basic Auth
+    token = base64.b64encode("user@email.com:password".encode()).decode("ascii")
+    headers = {
+        "content-type": "application/json",
+        "Authorization": f"Basic {token}",
+    }
+
+    request, response = await app.asgi_client.get("/", headers=headers)
+
+    assert request.credentials.username == "user@email.com"
+    assert request.credentials.password == "password"
+
+    # no Authorization headers
+    headers = {"content-type": "application/json"}
+
+    request, response = await app.asgi_client.get("/", headers=headers)
+
+    assert request.credentials.username == request.credentials.password == request.credentials.token is None
+
+
 def test_content_type(app):
     @app.route("/")
     async def handler(request):
@@ -577,7 +697,7 @@ def test_standard_forwarded(app):
     # Field normalization
     headers = {
         "Forwarded": 'PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";'
-        'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
+                     'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
     }
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {
@@ -692,7 +812,7 @@ async def test_standard_forwarded_asgi(app):
     # Field normalization
     headers = {
         "Forwarded": 'PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";'
-        'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
+                     'PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret'
     }
     request, response = await app.asgi_client.get("/", headers=headers)
     assert response.json == {
@@ -1173,52 +1293,52 @@ async def test_request_string_representation_asgi(app):
     "payload,filename",
     [
         (
-            "------sanic\r\n"
-            'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
-            "\r\n"
-            "OK\r\n"
-            "------sanic--\r\n",
-            "filename",
+                "------sanic\r\n"
+                'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
+                "\r\n"
+                "OK\r\n"
+                "------sanic--\r\n",
+                "filename",
         ),
         (
-            "------sanic\r\n"
-            'content-disposition: form-data; filename="filename"; name="test"\r\n'
-            "\r\n"
-            'content-type: application/json; {"field": "value"}\r\n'
-            "------sanic--\r\n",
-            "filename",
+                "------sanic\r\n"
+                'content-disposition: form-data; filename="filename"; name="test"\r\n'
+                "\r\n"
+                'content-type: application/json; {"field": "value"}\r\n'
+                "------sanic--\r\n",
+                "filename",
         ),
         (
-            "------sanic\r\n"
-            'Content-Disposition: form-data; filename=""; name="test"\r\n'
-            "\r\n"
-            "OK\r\n"
-            "------sanic--\r\n",
-            "",
+                "------sanic\r\n"
+                'Content-Disposition: form-data; filename=""; name="test"\r\n'
+                "\r\n"
+                "OK\r\n"
+                "------sanic--\r\n",
+                "",
         ),
         (
-            "------sanic\r\n"
-            'content-disposition: form-data; filename=""; name="test"\r\n'
-            "\r\n"
-            'content-type: application/json; {"field": "value"}\r\n'
-            "------sanic--\r\n",
-            "",
+                "------sanic\r\n"
+                'content-disposition: form-data; filename=""; name="test"\r\n'
+                "\r\n"
+                'content-type: application/json; {"field": "value"}\r\n'
+                "------sanic--\r\n",
+                "",
         ),
         (
-            "------sanic\r\n"
-            'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
-            "\r\n"
-            "OK\r\n"
-            "------sanic--\r\n",
-            "filename_\u00A0_test",
+                "------sanic\r\n"
+                'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+                "\r\n"
+                "OK\r\n"
+                "------sanic--\r\n",
+                "filename_\u00A0_test",
         ),
         (
-            "------sanic\r\n"
-            'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
-            "\r\n"
-            'content-type: application/json; {"field": "value"}\r\n'
-            "------sanic--\r\n",
-            "filename_\u00A0_test",
+                "------sanic\r\n"
+                'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+                "\r\n"
+                'content-type: application/json; {"field": "value"}\r\n'
+                "------sanic--\r\n",
+                "filename_\u00A0_test",
         ),
     ],
 )
@@ -1237,52 +1357,52 @@ def test_request_multipart_files(app, payload, filename):
     "payload,filename",
     [
         (
-            "------sanic\r\n"
-            'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
-            "\r\n"
-            "OK\r\n"
-            "------sanic--\r\n",
-            "filename",
+                "------sanic\r\n"
+                'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
+                "\r\n"
+                "OK\r\n"
+                "------sanic--\r\n",
+                "filename",
         ),
         (
-            "------sanic\r\n"
-            'content-disposition: form-data; filename="filename"; name="test"\r\n'
-            "\r\n"
-            'content-type: application/json; {"field": "value"}\r\n'
-            "------sanic--\r\n",
-            "filename",
+                "------sanic\r\n"
+                'content-disposition: form-data; filename="filename"; name="test"\r\n'
+                "\r\n"
+                'content-type: application/json; {"field": "value"}\r\n'
+                "------sanic--\r\n",
+                "filename",
         ),
         (
-            "------sanic\r\n"
-            'Content-Disposition: form-data; filename=""; name="test"\r\n'
-            "\r\n"
-            "OK\r\n"
-            "------sanic--\r\n",
-            "",
+                "------sanic\r\n"
+                'Content-Disposition: form-data; filename=""; name="test"\r\n'
+                "\r\n"
+                "OK\r\n"
+                "------sanic--\r\n",
+                "",
         ),
         (
-            "------sanic\r\n"
-            'content-disposition: form-data; filename=""; name="test"\r\n'
-            "\r\n"
-            'content-type: application/json; {"field": "value"}\r\n'
-            "------sanic--\r\n",
-            "",
+                "------sanic\r\n"
+                'content-disposition: form-data; filename=""; name="test"\r\n'
+                "\r\n"
+                'content-type: application/json; {"field": "value"}\r\n'
+                "------sanic--\r\n",
+                "",
         ),
         (
-            "------sanic\r\n"
-            'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
-            "\r\n"
-            "OK\r\n"
-            "------sanic--\r\n",
-            "filename_\u00A0_test",
+                "------sanic\r\n"
+                'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+                "\r\n"
+                "OK\r\n"
+                "------sanic--\r\n",
+                "filename_\u00A0_test",
         ),
         (
-            "------sanic\r\n"
-            'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
-            "\r\n"
-            'content-type: application/json; {"field": "value"}\r\n'
-            "------sanic--\r\n",
-            "filename_\u00A0_test",
+                "------sanic\r\n"
+                'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+                "\r\n"
+                'content-type: application/json; {"field": "value"}\r\n'
+                "------sanic--\r\n",
+                "filename_\u00A0_test",
         ),
     ],
 )
@@ -1587,8 +1707,8 @@ def test_request_query_args(app):
 
     # test cached value
     assert (
-        request.parsed_not_grouped_args[(False, False, "utf-8", "replace")]
-        == request.query_args
+            request.parsed_not_grouped_args[(False, False, "utf-8", "replace")]
+            == request.query_args
     )
 
     # test params directly in the url
@@ -1624,8 +1744,8 @@ async def test_request_query_args_asgi(app):
 
     # test cached value
     assert (
-        request.parsed_not_grouped_args[(False, False, "utf-8", "replace")]
-        == request.query_args
+            request.parsed_not_grouped_args[(False, False, "utf-8", "replace")]
+            == request.query_args
     )
 
     # test params directly in the url
@@ -1714,7 +1834,6 @@ async def test_request_query_args_custom_parsing_asgi(app):
 
 
 def test_request_cookies(app):
-
     cookies = {"test": "OK"}
 
     @app.get("/")
@@ -1729,7 +1848,6 @@ def test_request_cookies(app):
 
 @pytest.mark.asyncio
 async def test_request_cookies_asgi(app):
-
     cookies = {"test": "OK"}
 
     @app.get("/")
@@ -1949,11 +2067,11 @@ def test_url_for_with_forwarded_request(app):
     )
     assert app.url_for("view_name") == "/another_view"
     assert (
-        app.url_for("view_name", _external=True)
-        == "http://my-server/another_view"
+            app.url_for("view_name", _external=True)
+            == "http://my-server/another_view"
     )
     assert (
-        request.url_for("view_name") == "https://my-server:6789/another_view"
+            request.url_for("view_name") == "https://my-server:6789/another_view"
     )
 
     request, response = app.test_client.get(
@@ -2070,8 +2188,8 @@ def test_url_for_without_server_name(app):
 
     request, response = app.test_client.get("/sample")
     assert (
-        response.json["url"]
-        == f"http://127.0.0.1:{request.server_port}/url-for"
+            response.json["url"]
+            == f"http://127.0.0.1:{request.server_port}/url-for"
     )
 
 

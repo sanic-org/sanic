@@ -49,8 +49,14 @@ class OptionalDispatchEvent(BaseScheme):
                 for x in all_events.difference(events)
                 if any(x.startswith(y) for y in self.SYNC_SIGNAL_NAMESPACES)
             }
-            for event in missing:
-                app.signal(event)(self.noop)
+            if missing:
+                was_finalized = app.signal_router.finalized
+                if was_finalized:
+                    app.signal_router.reset()
+                for event in missing:
+                    app.signal(event)(self.noop)
+                if was_finalized:
+                    app.signal_router.finalize()
 
     @staticmethod
     async def noop(**_):

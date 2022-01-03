@@ -17,7 +17,7 @@ class OptionalDispatchEvent(BaseScheme):
 
         self._sync_events()
         self._registered_events = [
-            signal.path for signal in app.signal_router.routes
+            signal.name for signal in app.signal_router.routes
         ]
 
     def run(self, method, module_globals):

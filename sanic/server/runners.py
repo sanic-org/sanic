@@ -117,9 +117,7 @@ def serve(
         **asyncio_server_kwargs,
     )
 
-    # TODO
-    # - Solve for multiple execution of extensions
-    # setup_ext(app)
+    setup_ext(app)
     if run_async:
         return AsyncioServer(
             app=app,

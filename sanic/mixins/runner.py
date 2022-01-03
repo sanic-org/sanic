@@ -138,7 +138,7 @@ class RunnerMixin(metaclass=SanicMeta):
             motd_display=motd_display,
         )
 
-        RunnerMixin.serve()
+        self.__class__.serve()
 
     def prepare(
         self,
@@ -554,17 +554,19 @@ class RunnerMixin(metaclass=SanicMeta):
         apps: List[Sanic],
     ) -> None:
         for app in apps:
-            # TODO
-            # - Run main_ listeners
-            app.server_settings.pop("main_start", None)
-            app.server_settings.pop("main_stop", None)
+            if app.server_settings:
+                app.state.primary = False
+                # TODO
+                # - Run main_ listeners
+                app.server_settings.pop("main_start", None)
+                app.server_settings.pop("main_stop", None)
 
-            if not app.server_settings["loop"]:
-                app.server_settings["loop"] = get_running_loop()
+                if not app.server_settings["loop"]:
+                    app.server_settings["loop"] = get_running_loop()
 
-            server = await serve(**app.server_settings, run_async=True)
-            cls._secondary_servers.append(server)
-            primary.add_task(cls._run_server(app, server))
+                server = await serve(**app.server_settings, run_async=True)
+                cls._secondary_servers.append(server)
+                primary.add_task(cls._run_server(app, server))
 
     @classmethod
     async def _stop_servers(cls, *_) -> None:
@@ -576,10 +578,7 @@ class RunnerMixin(metaclass=SanicMeta):
     @staticmethod
     async def _run_server(app: Sanic, server: AsyncioServer) -> None:
         app.state.is_running = True
-        # app.state.is_started = True
         try:
-            # app.signalize()
-            # app.finalize()
             await server.startup()
             await server.before_start()
             await server.after_start()

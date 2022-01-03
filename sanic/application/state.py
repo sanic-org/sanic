@@ -51,6 +51,7 @@ class ApplicationState:
     is_stopping: bool = field(default=False)
     verbosity: int = field(default=0)
     workers: int = field(default=0)
+    primary: bool = field(default=True)
 
     # This property relates to the ApplicationState instance and should
     # not be changed except in the __post_init__ method

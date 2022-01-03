@@ -1493,11 +1493,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     async def _startup(self):
         self._future_registry.clear()
 
-        # Startup Sanic Extensions
-        # TODO
-        # - Fix multiple extensions
-        # if not hasattr(self, "_ext"):
-        #     setup_ext(self)
+        if not hasattr(self, "_ext"):
+            setup_ext(self)
         if hasattr(self, "_ext"):
             self.ext._display()
 
@@ -1518,8 +1515,11 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.__class__._uvloop_setting = self.config.USE_UVLOOP
 
         # Startup time optimizations
-        ErrorHandler.finalize(self.error_handler, config=self.config)
-        TouchUp.run(self)
+        if self.state.primary:
+            # TODO:
+            # - Raise warning if secondary apps have error handler config
+            ErrorHandler.finalize(self.error_handler, config=self.config)
+            TouchUp.run(self)
 
         self.state.is_started = True
 

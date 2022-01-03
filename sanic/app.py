@@ -3,15 +3,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import logging.config
-import os
-import platform
 import re
 import sys
 
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
-    Protocol,
     Task,
     ensure_future,
     get_event_loop,
@@ -20,11 +17,8 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from functools import partial
-from importlib import import_module
 from inspect import isawaitable
-from pathlib import Path
 from socket import socket
-from ssl import SSLContext
 from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
@@ -48,16 +42,10 @@ from typing import (
 from urllib.parse import urlencode, urlunparse
 from warnings import filterwarnings
 
-from sanic_routing.exceptions import (  # type: ignore
-    FinalizationError,
-    NotFound,
-)
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.exceptions import FinalizationError, NotFound
+from sanic_routing.route import Route
 
-from sanic import reloader_helpers
 from sanic.application.ext import setup_ext
-from sanic.application.logo import get_logo
-from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationState, Mode
 from sanic.asgi import ASGIApp
 from sanic.base.root import BaseSanic
@@ -72,11 +60,9 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
-    Colors,
     deprecation,
     error_logger,
     logger,
@@ -97,13 +83,8 @@ from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
-from sanic.server import AsyncioServer, HttpProtocol
-from sanic.server import Signal as ServerSignal
-from sanic.server import serve, serve_multiple, serve_single, try_use_uvloop
-from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
-from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
@@ -119,8 +100,6 @@ if OS_IS_WINDOWS:
     enable_windows_color_support()
 
 filterwarnings("once", category=DeprecationWarning)
-
-SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
 
 class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
@@ -223,7 +202,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.blueprints: Dict[str, Blueprint] = {}
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
-        self.debug = False
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
@@ -232,6 +210,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
         self.router: Router = router or Router()
+        self.server_settings: Dict[str, Any] = {}
         self.signal_router: SignalRouter = signal_router or SignalRouter()
         self.sock: Optional[socket] = None
         self.strict_slashes: bool = strict_slashes
@@ -1375,6 +1354,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
     @debug.setter
     def debug(self, value: bool):
+        deprecation(
+            "Setting the value of a Sanic application's debug value directly "
+            "is deprecated and will be removed in v21.9. Please set it using "
+            "the CLI, app.run, app.prepare, or directly set "
+            "app.state.mode to Mode.DEBUG.",
+            21.9,
+        )
         mode = Mode.DEBUG if value else Mode.PRODUCTION
         self.state.mode = mode
 
@@ -1409,62 +1395,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     @property
     def reload_dirs(self):
         return self.state.reload_dirs
-
-    def motd(self, serve_location):
-        if self.config.MOTD:
-            mode = [f"{self.state.mode},"]
-            if self.state.fast:
-                mode.append("goin' fast")
-            if self.state.asgi:
-                mode.append("ASGI")
-            else:
-                if self.state.workers == 1:
-                    mode.append("single worker")
-                else:
-                    mode.append(f"w/ {self.state.workers} workers")
-
-            display = {
-                "mode": " ".join(mode),
-                "server": self.state.server,
-                "python": platform.python_version(),
-                "platform": platform.platform(),
-            }
-            extra = {}
-            if self.config.AUTO_RELOAD:
-                reload_display = "enabled"
-                if self.state.reload_dirs:
-                    reload_display += ", ".join(
-                        [
-                            "",
-                            *(
-                                str(path.absolute())
-                                for path in self.state.reload_dirs
-                            ),
-                        ]
-                    )
-                display["auto-reload"] = reload_display
-
-            packages = []
-            for package_name in SANIC_PACKAGES:
-                module_name = package_name.replace("-", "_")
-                try:
-                    module = import_module(module_name)
-                    packages.append(f"{package_name}=={module.__version__}")
-                except ImportError:
-                    ...
-
-            if packages:
-                display["packages"] = ", ".join(packages)
-
-            if self.config.MOTD_DISPLAY:
-                extra.update(self.config.MOTD_DISPLAY)
-
-            logo = (
-                get_logo(coffee=self.state.coffee)
-                if self.config.LOGO == "" or self.config.LOGO is True
-                else self.config.LOGO
-            )
-            MOTD.output(logo, serve_location, display, extra)
 
     @property
     def ext(self) -> Extend:
@@ -1564,8 +1494,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self._future_registry.clear()
 
         # Startup Sanic Extensions
-        if not hasattr(self, "_ext"):
-            setup_ext(self)
+        # TODO
+        # - Fix multiple extensions
+        # if not hasattr(self, "_ext"):
+        #     setup_ext(self)
         if hasattr(self, "_ext"):
             self.ext._display()
 

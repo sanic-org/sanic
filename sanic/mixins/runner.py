@@ -1,20 +1,31 @@
 from __future__ import annotations
 
 import os
+import platform
 import sys
 
-from asyncio import AbstractEventLoop, Protocol, get_event_loop
+from asyncio import (
+    AbstractEventLoop,
+    Protocol,
+    get_event_loop,
+    get_running_loop,
+)
 from functools import partial
+from importlib import import_module
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 from sanic import reloader_helpers
+from sanic.application.logo import get_logo
+from sanic.application.motd import MOTD
+from sanic.application.state import Mode
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS
 from sanic.helpers import _default
 from sanic.log import Colors, error_logger, logger
+from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
@@ -25,18 +36,22 @@ from sanic.server.runners import serve, serve_multiple, serve_single
 from sanic.tls import process_to_context
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
+    from sanic import Sanic
     from sanic.application.state import ApplicationState
     from sanic.config import Config
 
+SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
+
 
 class RunnerMixin(metaclass=SanicMeta):
+    _secondary_servers: List[AsyncioServer] = []
+    _app_registry: Dict[str, Sanic]
     config: Config
+    listeners: Dict[str, List[ListenerType[Any]]]
+    server_settings: Dict[str, Any]
     state: ApplicationState
     websocket_enabled: bool
-
-    def __init__(self, *args, **kwargs) -> None:
-        self.server_settings = {}
 
     def make_coffee(self, *args, **kwargs):
         self.state.coffee = True
@@ -179,7 +194,7 @@ class RunnerMixin(metaclass=SanicMeta):
         if auto_reload or auto_reload is None and debug:
             auto_reload = True
             if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return reloader_helpers.watchdog(1.0, self)
+                return
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -354,7 +369,7 @@ class RunnerMixin(metaclass=SanicMeta):
         backlog: int = 100,
         register_sys_signals: bool = True,
         run_async: bool = False,
-    ):
+    ) -> Dict[str, Any]:
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
@@ -365,9 +380,9 @@ class RunnerMixin(metaclass=SanicMeta):
 
         ssl = process_to_context(ssl)
 
-        self.debug = debug
-        self.state.host = host
-        self.state.port = port
+        self.state.debug = Mode.DEBUG if debug else Mode.PRODUCTION
+        self.state.host = host or ""
+        self.state.port = port or 0
         self.state.workers = workers
         self.state.ssl = ssl
         self.state.unix = unix
@@ -413,6 +428,62 @@ class RunnerMixin(metaclass=SanicMeta):
 
         return server_settings
 
+    def motd(self, serve_location):
+        if self.config.MOTD:
+            mode = [f"{self.state.mode},"]
+            if self.state.fast:
+                mode.append("goin' fast")
+            if self.state.asgi:
+                mode.append("ASGI")
+            else:
+                if self.state.workers == 1:
+                    mode.append("single worker")
+                else:
+                    mode.append(f"w/ {self.state.workers} workers")
+
+            display = {
+                "mode": " ".join(mode),
+                "server": self.state.server,
+                "python": platform.python_version(),
+                "platform": platform.platform(),
+            }
+            extra = {}
+            if self.config.AUTO_RELOAD:
+                reload_display = "enabled"
+                if self.state.reload_dirs:
+                    reload_display += ", ".join(
+                        [
+                            "",
+                            *(
+                                str(path.absolute())
+                                for path in self.state.reload_dirs
+                            ),
+                        ]
+                    )
+                display["auto-reload"] = reload_display
+
+            packages = []
+            for package_name in SANIC_PACKAGES:
+                module_name = package_name.replace("-", "_")
+                try:
+                    module = import_module(module_name)
+                    packages.append(f"{package_name}=={module.__version__}")
+                except ImportError:
+                    ...
+
+            if packages:
+                display["packages"] = ", ".join(packages)
+
+            if self.config.MOTD_DISPLAY:
+                extra.update(self.config.MOTD_DISPLAY)
+
+            logo = (
+                get_logo(coffee=self.state.coffee)
+                if self.config.LOGO == "" or self.config.LOGO is True
+                else self.config.LOGO
+            )
+            MOTD.output(logo, serve_location, display, extra)
+
     @property
     def serve_location(self) -> str:
         serve_location = ""
@@ -436,11 +507,24 @@ class RunnerMixin(metaclass=SanicMeta):
 
     @classmethod
     def serve(cls) -> None:
-        primary = next(iter(cls._app_registry.values()))
+        primary, *secondary = list(cls._app_registry.values())
+        print(f"{primary=}")
+        print(f"{secondary=}")
+        primary.before_server_start(
+            partial(cls._start_servers, apps=secondary)
+        )
+        primary.before_server_stop(cls._stop_servers)
+
+        # if auto_reload or auto_reload is None and debug:
+        # TODO:
+        # - Solve for auto_reload location
+        if os.environ.get("SANIC_SERVER_RUNNING") != "true":
+            return reloader_helpers.watchdog(1.0, primary)
 
         try:
             primary.is_running = True
             primary.is_stopping = False
+
             if primary.state.workers > 1 and os.name != "posix":
                 logger.warn(
                     f"Multiprocessing is currently not supported on {os.name},"
@@ -449,6 +533,8 @@ class RunnerMixin(metaclass=SanicMeta):
                 primary.state.workers = 1
             if primary.state.workers == 1:
                 serve_single(primary.server_settings)
+            elif primary.state.workers == 0:
+                raise RuntimeError("Cannot serve with no workers")
             else:
                 serve_multiple(primary.server_settings, primary.state.workers)
         except BaseException:
@@ -459,3 +545,45 @@ class RunnerMixin(metaclass=SanicMeta):
         finally:
             primary.is_running = False
         logger.info("Server Stopped")
+
+    @classmethod
+    async def _start_servers(
+        cls,
+        primary: Sanic,
+        _,
+        apps: List[Sanic],
+    ) -> None:
+        for app in apps:
+            # TODO
+            # - Run main_ listeners
+            app.server_settings.pop("main_start", None)
+            app.server_settings.pop("main_stop", None)
+
+            if not app.server_settings["loop"]:
+                app.server_settings["loop"] = get_running_loop()
+
+            server = await serve(**app.server_settings, run_async=True)
+            cls._secondary_servers.append(server)
+            primary.add_task(cls._run_server(app, server))
+
+    @classmethod
+    async def _stop_servers(cls, *_) -> None:
+        for server in cls._secondary_servers:
+            await server.before_stop()
+            await server.close()
+            await server.after_stop()
+
+    @staticmethod
+    async def _run_server(app: Sanic, server: AsyncioServer) -> None:
+        app.state.is_running = True
+        # app.state.is_started = True
+        try:
+            # app.signalize()
+            # app.finalize()
+            await server.startup()
+            await server.before_start()
+            await server.after_start()
+            await server.serve_forever()
+        finally:
+            app.state.is_running = False
+            app.state.is_stopping = True

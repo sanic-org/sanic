@@ -137,9 +137,21 @@ class Config(dict, metaclass=DescriptorMeta):
         self.update({attr: value})
 
     def update(self, *other, **kwargs) -> None:
-        other_mapping = {k: v for item in other for k, v in dict(item).items()}
-        super().update(*other, **kwargs)
-        for attr, value in {**other_mapping, **kwargs}.items():
+        kwargs.update({k: v for item in other for k, v in dict(item).items()})
+        setters: Dict[str, Any] = {
+            k: kwargs.pop(k)
+            for k in {**kwargs}.keys()
+            if k in self.__class__.__setters__
+        }
+
+        for key, value in setters.items():
+            try:
+                super().__setattr__(key, value)
+            except AttributeError:
+                ...
+
+        super().update(**kwargs)
+        for attr, value in {**setters, **kwargs}.items():
             self._post_set(attr, value)
 
     def _post_set(self, attr, value) -> None:

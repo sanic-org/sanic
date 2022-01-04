@@ -32,7 +32,12 @@ from sanic.server.async_server import AsyncioServer
 from sanic.server.loop import try_use_uvloop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
-from sanic.server.runners import serve, serve_multiple, serve_single
+from sanic.server.runners import (
+    RunnerCache,
+    serve,
+    serve_multiple,
+    serve_single,
+)
 from sanic.tls import process_to_context
 
 
@@ -49,7 +54,6 @@ class RunnerMixin(metaclass=SanicMeta):
     _app_registry: Dict[str, Sanic]
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
-    server_settings: Dict[str, Any]
     state: ApplicationState
     websocket_enabled: bool
 
@@ -221,7 +225,7 @@ class RunnerMixin(metaclass=SanicMeta):
             except AttributeError:
                 workers = os.cpu_count() or 1
 
-        self.server_settings = self._helper(
+        server_settings = self._helper(
             host=host,
             port=port,
             debug=debug,
@@ -233,6 +237,7 @@ class RunnerMixin(metaclass=SanicMeta):
             backlog=backlog,
             register_sys_signals=register_sys_signals,
         )
+        RunnerCache.store(self, server_settings)
 
         if self.config.USE_UVLOOP is True or (
             self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
@@ -507,43 +512,45 @@ class RunnerMixin(metaclass=SanicMeta):
 
     @classmethod
     def serve(cls) -> None:
-        primary, *secondary = list(cls._app_registry.values())
-        print(f"{primary=}")
-        print(f"{secondary=}")
-        primary.before_server_start(
-            partial(cls._start_servers, apps=secondary)
+        cache = RunnerCache()
+        print(cache)
+        print(f"{cache.primary=}")
+        print(f"{cache.secondary=}")
+        primary_app, primary_settings = cache.primary
+        primary_app.before_server_start(
+            partial(cls._start_servers, apps=cache.secondary)
         )
-        primary.before_server_stop(cls._stop_servers)
+        primary_app.before_server_stop(cls._stop_servers)
 
         # if auto_reload or auto_reload is None and debug:
         # TODO:
         # - Solve for auto_reload location
         if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-            return reloader_helpers.watchdog(1.0, primary)
+            return reloader_helpers.watchdog(1.0, primary_app)
 
         try:
-            primary.is_running = True
-            primary.is_stopping = False
+            primary_app.is_running = True
+            primary_app.is_stopping = False
 
-            if primary.state.workers > 1 and os.name != "posix":
+            if primary_app.state.workers > 1 and os.name != "posix":
                 logger.warn(
                     f"Multiprocessing is currently not supported on {os.name},"
                     " using workers=1 instead"
                 )
-                primary.state.workers = 1
-            if primary.state.workers == 1:
-                serve_single(primary.server_settings)
-            elif primary.state.workers == 0:
+                primary_app.state.workers = 1
+            if primary_app.state.workers == 1:
+                serve_single(primary_settings)
+            elif primary_app.state.workers == 0:
                 raise RuntimeError("Cannot serve with no workers")
             else:
-                serve_multiple(primary.server_settings, primary.state.workers)
+                serve_multiple(primary_settings, primary_app.state.workers)
         except BaseException:
             error_logger.exception(
                 "Experienced exception while trying to serve"
             )
             raise
         finally:
-            primary.is_running = False
+            primary_app.is_running = False
         logger.info("Server Stopped")
 
     @classmethod

@@ -145,7 +145,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         "response_middleware",
         "router",
         "signal_router",
-        "server_settings",
         "sock",
         "strict_slashes",
         "websocket_enabled",
@@ -210,7 +209,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
         self.router: Router = router or Router()
-        self.server_settings: Dict[str, Any] = {}
         self.signal_router: SignalRouter = signal_router or SignalRouter()
         self.sock: Optional[socket] = None
         self.strict_slashes: bool = strict_slashes

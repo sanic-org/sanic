@@ -10,16 +10,12 @@ from asyncio import (
     get_event_loop,
     get_running_loop,
 )
-from contextlib import suppress
 from functools import partial
 from importlib import import_module
-from operator import attrgetter
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
-
-from sanic_routing.exceptions import FinalizationError
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 from sanic import reloader_helpers
 from sanic.application.logo import get_logo
@@ -33,7 +29,6 @@ from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
-from sanic.server.loop import try_use_uvloop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
@@ -524,12 +519,13 @@ class RunnerMixin(metaclass=SanicMeta):
         # TODO:
         # - Solve for auto_reload location
         # - Instead of grabbing one app, should get all of
-        #   reload dirs and pass them together so that not only one app controls
+        #   reload dirs and pass them together so that not only
+        #   one app controls
         if os.environ.get("SANIC_SERVER_RUNNING") != "true":
             return reloader_helpers.watchdog(1.0, primary)
 
-        primary.before_server_start(partial(cls._start_servers, apps=apps))
-        primary.before_server_stop(cls._stop_servers)
+        primary.before_server_start(partial(primary._start_servers, apps=apps))
+        primary.before_server_stop(primary._stop_servers)
 
         try:
             primary_server_info.is_running = True
@@ -564,9 +560,8 @@ class RunnerMixin(metaclass=SanicMeta):
             primary.is_running = False
         logger.info("Server Stopped")
 
-    @classmethod
     async def _start_servers(
-        cls,
+        self,
         primary: Sanic,
         _,
         apps: List[Sanic],
@@ -586,19 +581,24 @@ class RunnerMixin(metaclass=SanicMeta):
                     server = await serve(
                         **server_info.settings, run_async=True
                     )
-                    cls._secondary_servers.append(server)
-                    primary.add_task(cls._run_server(app, server, server_info))
+                    # cls._secondary_servers.append(server)
+                    primary.add_task(
+                        self._run_server(app, server, server_info)
+                    )
 
-    @classmethod
-    async def _stop_servers(cls, *_) -> None:
-        for server in cls._secondary_servers:
-            await server.before_stop()
-            await server.close()
-            await server.after_stop()
+    async def _stop_servers(self, *_) -> None:
+        ...
+        # for server in cls._secondary_servers:
+        #     await server.before_stop()
+        #     await server.close()
+        #     await server.after_stop()
 
-    @staticmethod
+    # @staticmethod
     async def _run_server(
-        app: Sanic, server: AsyncioServer, server_info: ApplicationServerInfo
+        self,
+        app: Sanic,
+        server: AsyncioServer,
+        server_info: ApplicationServerInfo,
     ) -> None:
         if not server_info.is_running:
             server_info.is_running = True
@@ -607,10 +607,10 @@ class RunnerMixin(metaclass=SanicMeta):
             app.state.is_running = True
             app.state.is_stopping = False
             try:
-                with suppress(FinalizationError):
+                if self != app:
                     await server.startup()
-                await server.before_start()
-                await server.after_start()
+                    await server.before_start()
+                    await server.after_start()
                 await server.serve_forever()
             finally:
                 server_info.is_running = False

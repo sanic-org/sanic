@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
 from sanic.config import Config
 from sanic.server.events import trigger_events

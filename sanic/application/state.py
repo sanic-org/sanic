@@ -7,7 +7,7 @@ from enum import Enum, auto
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
 
 from sanic.log import logger
 
@@ -33,6 +33,14 @@ class Mode(StrEnum):
 
 
 @dataclass
+class ApplicationServerInfo:
+    settings: Dict[str, Any]
+    is_running: bool = field(default=False)
+    is_started: bool = field(default=False)
+    is_stopping: bool = field(default=False)
+
+
+@dataclass
 class ApplicationState:
     app: Sanic
     asgi: bool = field(default=False)
@@ -52,6 +60,7 @@ class ApplicationState:
     verbosity: int = field(default=0)
     workers: int = field(default=0)
     primary: bool = field(default=True)
+    server_info: List[ApplicationServerInfo] = field(default_factory=list)
 
     # This property relates to the ApplicationState instance and should
     # not be changed except in the __post_init__ method

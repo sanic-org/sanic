@@ -37,7 +37,7 @@ class OptionalDispatchEvent(BaseScheme):
         all_events = set()
         app_events = {}
         for app in self.app.__class__._app_registry.values():
-            if app.server_settings:
+            if app.state.server_info:
                 app_events[app] = {
                     signal.name for signal in app.signal_router.routes
                 }

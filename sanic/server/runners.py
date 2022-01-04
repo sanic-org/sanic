@@ -34,35 +34,6 @@ from sanic.server.socket import (
 )
 
 
-class RunnerCache(list):
-    _singleton: Optional[RunnerCache] = None
-
-    def __new__(cls) -> RunnerCache:
-        if not cls._singleton:
-            cls._singleton = super().__new__(cls)
-        return cls._singleton
-
-    @classmethod
-    def store(cls, app: Sanic, server_settings: Dict[str, Any]) -> None:
-        cache = cls()
-        print(f">>> {cache=}", app, server_settings)
-        cache.append((app, server_settings))
-        print(len(cache))
-
-    @property
-    def primary(self):
-        print(f"???? {self=}", bool(self))
-        if not self:
-            return None, None
-        return self[0]
-
-    @property
-    def secondary(self):
-        if len(self) <= 1:
-            return []
-        return self[1:]
-
-
 def serve(
     host,
     port,

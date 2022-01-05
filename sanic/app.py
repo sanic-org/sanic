@@ -1552,16 +1552,17 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         name: Optional[str] = None,
         register: bool = True,
     ) -> Task:
-        prepped = cls._prep_task(task, app, loop)
-        if sys.version_info == (3, 7):
-            if name:
-                error_logger.warning(
-                    "Cannot set a name for a task when using Python 3.7. Your "
-                    "task will be created without a name."
-                )
-            task = loop.create_task(prepped)
-        else:
-            task = loop.create_task(prepped, name=name)
+        if not isinstance(task, Future):
+            prepped = cls._prep_task(task, app, loop)
+            if sys.version_info == (3, 7):
+                if name:
+                    error_logger.warning(
+                        "Cannot set a name for a task when using Python 3.7. Your "
+                        "task will be created without a name."
+                    )
+                task = loop.create_task(prepped)
+            else:
+                task = loop.create_task(prepped, name=name)
 
         if name and register and sys.version_info > (3, 7):
             app._task_registry[name] = task

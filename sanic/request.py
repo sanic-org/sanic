@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import dataclasses
+
 from base64 import b64decode
 from typing import (
     TYPE_CHECKING,
@@ -14,6 +16,7 @@ from typing import (
 )
 
 from sanic_routing.route import Route  # type: ignore
+
 
 if TYPE_CHECKING:  # no cov
     from sanic.server import ConnInfo
@@ -52,10 +55,38 @@ try:
 except ImportError:
     from json import loads as json_loads  # type: ignore
 
-class Credentials(NamedTuple):
+
+@dataclasses.dataclass()
+class Credentials:
+    _auth_type: Optional[str]
     token: Optional[str]
-    username: Optional[str]
-    password: Optional[str]
+    _username: Optional[str] = dataclasses.field(default=None)
+    _password: Optional[str] = dataclasses.field(default=None)
+
+    def __post_init__(self):
+        if self._auth_type == "Basic":
+            self._username, self._password = (
+                b64decode(self.token.encode("utf-8")).decode().split(":")
+            )
+
+    @property
+    def username(self):
+        if not self._check_auth_type:
+            raise AttributeError("Username is available for Basic Auth only")
+        return self._username
+
+    @property
+    def password(self):
+        if not self._check_auth_type:
+            raise AttributeError("Password is available for Basic Auth only")
+        return self._password
+
+    @property
+    def _check_auth_type(self) -> bool:
+        if self._auth_type == "Basic":
+            return True
+        return False
+
 
 class RequestParameters(dict):
     """
@@ -366,11 +397,8 @@ class Request:
             for prefix in prefixes:
                 if prefix in auth_header:
                     header_value = auth_header.partition(prefix)[-1].strip()
-                    if prefix == "Basic":
-                        username, password = b64decode(header_value.encode("utf-8")).decode().split(":")
-                        return Credentials(username=username, password=password, token=None)
-                    return Credentials(token=header_value, username=None, password=None)
-        return Credentials(token=auth_header, username=None, password=None)
+                    return Credentials(_auth_type=prefix, token=header_value)
+        return Credentials(_auth_type=None, token=auth_header)
 
     @property
     def form(self):

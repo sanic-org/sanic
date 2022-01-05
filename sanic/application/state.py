@@ -3,13 +3,14 @@ from __future__ import annotations
 import logging
 
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
 
 from sanic.log import logger
+from sanic.server.async_server import AsyncioServer
 
 
 if TYPE_CHECKING:
@@ -32,12 +33,17 @@ class Mode(StrEnum):
     DEBUG = auto()
 
 
+class ServerStage(IntEnum):
+    STOPPED = auto()
+    PARTIAL = auto()
+    SERVING = auto()
+
+
 @dataclass
 class ApplicationServerInfo:
     settings: Dict[str, Any]
-    is_running: bool = field(default=False)
-    is_started: bool = field(default=False)
-    is_stopping: bool = field(default=False)
+    stage: ServerStage = field(default=ServerStage.STOPPED)
+    server: Optional[AsyncioServer] = field(default=None)
 
 
 @dataclass
@@ -87,3 +93,14 @@ class ApplicationState:
     @property
     def is_debug(self):
         return self.mode is Mode.DEBUG
+
+    @property
+    def stage(self) -> ServerStage:
+        if all(info.stage is ServerStage.SERVING for info in self.server_info):
+            return ServerStage.SERVING
+        elif any(
+            info.stage is ServerStage.SERVING for info in self.server_info
+        ):
+            return ServerStage.PARTIAL
+        else:
+            return ServerStage.STOPPED

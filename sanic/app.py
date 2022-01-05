@@ -46,7 +46,7 @@ from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
-from sanic.application.state import ApplicationState, Mode
+from sanic.application.state import ApplicationState, Mode, ServerStage
 from sanic.asgi import ASGIApp
 from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -244,7 +244,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
             Only supported when using the `app.run` method.
         """
-        if not self.is_running and self.asgi is False:
+        if self.state.stage is ServerStage.STOPPED and self.asgi is False:
             raise SanicException(
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
@@ -1376,18 +1376,54 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
     @property
     def is_running(self):
+        deprecation(
+            "Use of the is_running property is no longer used by Sanic "
+            "internally. The property is now deprecated and will be removed "
+            "in version 22.9. You may continue to set the property for your "
+            "own needs until that time. If you would like to check whether "
+            "the application is operational, please use app.state.stage. More "
+            "information is available at ___.",
+            22.9,
+        )
         return self.state.is_running
 
     @is_running.setter
     def is_running(self, value: bool):
+        deprecation(
+            "Use of the is_running property is no longer used by Sanic "
+            "internally. The property is now deprecated and will be removed "
+            "in version 22.9. You may continue to set the property for your "
+            "own needs until that time. If you would like to check whether "
+            "the application is operational, please use app.state.stage. More "
+            "information is available at ___.",
+            22.9,
+        )
         self.state.is_running = value
 
     @property
     def is_stopping(self):
+        deprecation(
+            "Use of the is_stopping property is no longer used by Sanic "
+            "internally. The property is now deprecated and will be removed "
+            "in version 22.9. You may continue to set the property for your "
+            "own needs until that time. If you would like to check whether "
+            "the application is operational, please use app.state.stage. More "
+            "information is available at ___.",
+            22.9,
+        )
         return self.state.is_stopping
 
     @is_stopping.setter
     def is_stopping(self, value: bool):
+        deprecation(
+            "Use of the is_stopping property is no longer used by Sanic "
+            "internally. The property is now deprecated and will be removed "
+            "in version 22.9. You may continue to set the property for your "
+            "own needs until that time. If you would like to check whether "
+            "the application is operational, please use app.state.stage. More "
+            "information is available at ___.",
+            22.9,
+        )
         self.state.is_stopping = value
 
     @property

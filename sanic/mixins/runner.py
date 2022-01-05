@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 from sanic import reloader_helpers
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
-from sanic.application.state import ApplicationServerInfo, Mode
+from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS
 from sanic.helpers import _default
@@ -234,7 +234,6 @@ class RunnerMixin(metaclass=SanicMeta):
         self.state.server_info.append(
             ApplicationServerInfo(settings=server_settings)
         )
-        self.state.prepared = True
 
         if self.config.USE_UVLOOP is True or (
             self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
@@ -352,9 +351,8 @@ class RunnerMixin(metaclass=SanicMeta):
         """
         This kills the Sanic
         """
-        if not self.is_stopping:
+        if self.state.stage is not ServerStage.STOPPED:
             self.shutdown_tasks(timeout=0)
-            self.is_stopping = True
             get_event_loop().stop()
 
     def _helper(
@@ -484,7 +482,11 @@ class RunnerMixin(metaclass=SanicMeta):
                 if self.config.LOGO == "" or self.config.LOGO is True
                 else self.config.LOGO
             )
-            MOTD.output(logo, serve_location, display, extra)
+            # TEMP disabled
+            # TODO:
+            # - Fix that the output is displayed in the main process for
+            #   secondary applications
+            # MOTD.output(logo, serve_location, display, extra)
 
     @property
     def serve_location(self) -> str:
@@ -510,11 +512,11 @@ class RunnerMixin(metaclass=SanicMeta):
     @classmethod
     def serve(cls) -> None:
         apps = list(cls._app_registry.values())
+
         try:
-            primary = next(filter(lambda x: bool(x.state.server_info), apps))
+            primary = apps[0]
         except StopIteration:
-            raise Exception("...")
-        primary_server_info = primary.state.server_info[0]
+            raise RuntimeError("Did not find any applications.")
         # if auto_reload or auto_reload is None and debug:
         # TODO:
         # - Solve for auto_reload location
@@ -524,16 +526,12 @@ class RunnerMixin(metaclass=SanicMeta):
         if os.environ.get("SANIC_SERVER_RUNNING") != "true":
             return reloader_helpers.watchdog(1.0, primary)
 
+        primary_server_info = primary.state.server_info[0]
         primary.before_server_start(partial(primary._start_servers, apps=apps))
-        primary.before_server_stop(primary._stop_servers)
+        primary.before_server_stop(partial(primary._stop_servers, apps=apps))
 
         try:
-            primary_server_info.is_running = True
-            primary_server_info.is_stopping = False
-
-            # TEMP
-            primary.is_running = True
-            primary.is_stopping = False
+            primary_server_info.stage = ServerStage.SERVING
 
             if primary.state.workers > 1 and os.name != "posix":
                 logger.warn(
@@ -555,9 +553,7 @@ class RunnerMixin(metaclass=SanicMeta):
             )
             raise
         finally:
-            primary_server_info.is_running = False
-            # TEMP
-            primary.is_running = False
+            primary_server_info.stage = ServerStage.STOPPED
         logger.info("Server Stopped")
 
     async def _start_servers(
@@ -568,7 +564,7 @@ class RunnerMixin(metaclass=SanicMeta):
     ) -> None:
         for app in apps:
             for server_info in app.state.server_info:
-                if not server_info.is_running:
+                if server_info.stage is not ServerStage.SERVING:
                     app.state.primary = False
                     # TODO
                     # - Run main_ listeners
@@ -578,43 +574,43 @@ class RunnerMixin(metaclass=SanicMeta):
                     if not server_info.settings["loop"]:
                         server_info.settings["loop"] = get_running_loop()
 
-                    server = await serve(
+                    server_info.server = await serve(
                         **server_info.settings, run_async=True
                     )
-                    # cls._secondary_servers.append(server)
-                    primary.add_task(
-                        self._run_server(app, server, server_info)
-                    )
+                    primary.add_task(self._run_server(app, server_info))
 
-    async def _stop_servers(self, *_) -> None:
-        ...
-        # for server in cls._secondary_servers:
-        #     await server.before_stop()
-        #     await server.close()
-        #     await server.after_stop()
+    async def _stop_servers(
+        self,
+        *_,
+        apps: List[Sanic],
+    ) -> None:
+        for app in apps:
+            for server_info in app.state.server_info:
+                if (
+                    server_info.stage is ServerStage.SERVING
+                    and app is not self
+                ):
+                    if not server_info.server:
+                        raise RuntimeError("Could not locate AsyncioServer")
+                    await server_info.server.before_stop()
+                    await server_info.server.close()
+                    await server_info.server.after_stop()
 
     # @staticmethod
     async def _run_server(
         self,
         app: Sanic,
-        server: AsyncioServer,
         server_info: ApplicationServerInfo,
     ) -> None:
-        if not server_info.is_running:
-            server_info.is_running = True
-            server_info.is_stopping = False
-            # TEMP
-            app.state.is_running = True
-            app.state.is_stopping = False
-            try:
-                if self != app:
-                    await server.startup()
-                    await server.before_start()
-                    await server.after_start()
-                await server.serve_forever()
-            finally:
-                server_info.is_running = False
-                server_info.is_stopping = True
-                # TEMP
-                app.state.is_running = False
-                app.state.is_stopping = True
+
+        try:
+            if not server_info.server:
+                raise RuntimeError("Could not locate AsyncioServer")
+            if app.state.stage is ServerStage.STOPPED:
+                server_info.stage = ServerStage.SERVING
+                await server_info.server.startup()
+                await server_info.server.before_start()
+                await server_info.server.after_start()
+            await server_info.server.serve_forever()
+        finally:
+            server_info.stage = ServerStage.STOPPED

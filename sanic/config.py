@@ -124,13 +124,6 @@ class Config(dict, metaclass=DescriptorMeta):
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
     def __setattr__(self, attr, value) -> None:
-        if attr in self.__class__.__setters__:
-            try:
-                super().__setattr__(attr, value)
-            except AttributeError:
-                ...
-            else:
-                return None
         self.update({attr: value})
 
     def __setitem__(self, attr, value) -> None:

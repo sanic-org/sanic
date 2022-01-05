@@ -394,5 +394,15 @@ def test_config_set_methods(app, monkeypatch):
     )
     post_set.reset_mock()
 
-    app.config.update_config({"FOO": 8})
-    post_set.assert_called_once_with("FOO", 8)
+    app.config.update({"FOO": 8}, BAR=9)
+    post_set.assert_has_calls(
+        calls=[
+            call("FOO", 8),
+            call("BAR", 9),
+        ],
+        any_order=True,
+    )
+    post_set.reset_mock()
+
+    app.config.update_config({"FOO": 10})
+    post_set.assert_called_once_with("FOO", 10)

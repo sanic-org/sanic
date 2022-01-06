@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
-
-from base64 import b64decode
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,6 +13,8 @@ from typing import (
 )
 
 from sanic_routing.route import Route  # type: ignore
+
+from sanic.models.http_types import Credentials
 
 
 if TYPE_CHECKING:  # no cov
@@ -40,6 +39,7 @@ from sanic.headers import (
     Options,
     parse_accept,
     parse_content_header,
+    parse_credentials,
     parse_forwarded,
     parse_host,
     parse_xforwarded,
@@ -54,38 +54,6 @@ try:
     from ujson import loads as json_loads  # type: ignore
 except ImportError:
     from json import loads as json_loads  # type: ignore
-
-
-@dataclasses.dataclass()
-class Credentials:
-    _auth_type: Optional[str]
-    token: Optional[str]
-    _username: Optional[str] = dataclasses.field(default=None)
-    _password: Optional[str] = dataclasses.field(default=None)
-
-    def __post_init__(self):
-        if self._auth_type == "Basic":
-            self._username, self._password = (
-                b64decode(self.token.encode("utf-8")).decode().split(":")
-            )
-
-    @property
-    def username(self):
-        if not self._check_auth_type:
-            raise AttributeError("Username is available for Basic Auth only")
-        return self._username
-
-    @property
-    def password(self):
-        if not self._check_auth_type:
-            raise AttributeError("Password is available for Basic Auth only")
-        return self._password
-
-    @property
-    def _check_auth_type(self) -> bool:
-        if self._auth_type == "Basic":
-            return True
-        return False
 
 
 class RequestParameters(dict):
@@ -133,11 +101,13 @@ class Request:
         "method",
         "parsed_accept",
         "parsed_args",
-        "parsed_not_grouped_args",
+        "parsed_credentials",
         "parsed_files",
         "parsed_form",
-        "parsed_json",
         "parsed_forwarded",
+        "parsed_json",
+        "parsed_not_grouped_args",
+        "parsed_token",
         "raw_url",
         "responded",
         "request_middleware_started",
@@ -157,6 +127,7 @@ class Request:
         app: Sanic,
         head: bytes = b"",
     ):
+
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
@@ -176,9 +147,11 @@ class Request:
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
         self.parsed_accept: Optional[AcceptContainer] = None
+        self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
+        self.parsed_token: Optional[str] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters
         ] = defaultdict(RequestParameters)
@@ -367,20 +340,18 @@ class Request:
         return self.parsed_accept
 
     @property
-    def token(self):
+    def token(self) -> str:
         """Attempt to return the auth header token.
 
         :return: token related to request
         """
-        prefixes = ("Bearer", "Token")
-        auth_header = self.headers.getone("authorization", None)
-
-        if auth_header is not None:
-            for prefix in prefixes:
-                if prefix in auth_header:
-                    return auth_header.partition(prefix)[-1].strip()
-
-        return auth_header
+        if self.parsed_token is None:
+            prefixes = ("Bearer", "Token")
+            _, token = parse_credentials(
+                self.headers.getone("authorization", None), prefixes
+            )
+            self.parsed_token = token
+        return self.parsed_token
 
     @property
     def credentials(self) -> Credentials:
@@ -390,15 +361,14 @@ class Request:
 
         :return: A named tuple with token or username and password related to request
         """
-        prefixes = ("Basic", "Bearer", "Token")
-        auth_header = self.headers.getone("authorization", None)
-
-        if auth_header is not None:
-            for prefix in prefixes:
-                if prefix in auth_header:
-                    header_value = auth_header.partition(prefix)[-1].strip()
-                    return Credentials(_auth_type=prefix, token=header_value)
-        return Credentials(_auth_type=None, token=auth_header)
+        if self.parsed_credentials is None:
+            prefix, credentials = parse_credentials(
+                self.headers.getone("authorization", None)
+            )
+            self.parsed_credentials = Credentials(
+                auth_type=prefix, token=credentials
+            )
+        return self.parsed_credentials
 
     @property
     def form(self):

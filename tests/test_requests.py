@@ -467,7 +467,7 @@ def test_credentials(app, capfd):
     request, response = app.test_client.get("/", headers=headers)
 
     assert request.credentials.token == token
-    assert request.credentials._auth_type is None
+    assert request.credentials.auth_type is None
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
         request.credentials.password
@@ -483,7 +483,7 @@ def test_credentials(app, capfd):
 
     request, response = app.test_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == "Token"
+    assert request.credentials.auth_type == "Token"
     assert request.credentials.token == token
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
@@ -500,7 +500,7 @@ def test_credentials(app, capfd):
 
     request, response = app.test_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == "Bearer"
+    assert request.credentials.auth_type == "Bearer"
     assert request.credentials.token == token
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
@@ -519,7 +519,7 @@ def test_credentials(app, capfd):
 
     request, response = app.test_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == "Basic"
+    assert request.credentials.auth_type == "Basic"
     assert request.credentials.token == token
     assert request.credentials.username == "user@email.com"
     assert request.credentials.password == "password"
@@ -529,7 +529,7 @@ def test_credentials(app, capfd):
 
     request, response = app.test_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == request.credentials.token is None
+    assert request.credentials.auth_type == request.credentials.token is None
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
         request.credentials.password
@@ -553,7 +553,7 @@ async def test_credentials_asgi(app, capfd):
 
     request, response = await app.asgi_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == None
+    assert request.credentials.auth_type == None
     assert request.credentials.token == token
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
@@ -570,7 +570,7 @@ async def test_credentials_asgi(app, capfd):
 
     request, response = await app.asgi_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == "Token"
+    assert request.credentials.auth_type == "Token"
     assert request.credentials.token == token
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
@@ -587,7 +587,7 @@ async def test_credentials_asgi(app, capfd):
 
     request, response = await app.asgi_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == "Bearer"
+    assert request.credentials.auth_type == "Bearer"
     assert request.credentials.token == token
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
@@ -607,7 +607,7 @@ async def test_credentials_asgi(app, capfd):
 
     request, response = await app.asgi_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == "Basic"
+    assert request.credentials.auth_type == "Basic"
     assert request.credentials.token == token
     assert request.credentials.username == "user@email.com"
     assert request.credentials.password == "password"
@@ -617,7 +617,7 @@ async def test_credentials_asgi(app, capfd):
 
     request, response = await app.asgi_client.get("/", headers=headers)
 
-    assert request.credentials._auth_type == request.credentials.token is None
+    assert request.credentials.auth_type == request.credentials.token is None
     with pytest.raises(AttributeError):
         _, err = capfd.readouterr()
         request.credentials.password

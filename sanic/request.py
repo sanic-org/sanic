@@ -357,9 +357,11 @@ class Request:
     def credentials(self) -> Optional[Credentials]:
         """Attempt to return the auth header value.
 
-        Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication schemas.
+        Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication
+        schemas.
 
-        :return: A named tuple with token or username and password related to request
+        :return: A named tuple with token or username and password related
+                 to request
         """
         if self.parsed_credentials is None:
             try:

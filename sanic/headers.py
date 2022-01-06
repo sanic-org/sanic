@@ -400,7 +400,7 @@ def parse_credentials(
     header: Optional[str],
     prefixes: Union[List, Tuple, Set] = None,
 ) -> Tuple[Optional[str], Optional[str]]:
-    """Parses any passed header with the aim to retrieve any credentials from it."""
+    """Parses any header with the aim to retrieve any credentials from it."""
     if not prefixes or not isinstance(prefixes, (list, tuple, set)):
         prefixes = ("Basic", "Bearer", "Token")
     if header is not None:

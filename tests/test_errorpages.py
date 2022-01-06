@@ -334,6 +334,22 @@ def test_config_fallback_before_and_after_startup(app):
     assert response.content_type == "text/plain; charset=utf-8"
 
 
+def test_config_fallback_using_update_dict(app):
+    app.config.update({"FALLBACK_ERROR_FORMAT": "text"})
+
+    _, response = app.test_client.get("/error")
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_config_fallback_using_update_kwarg(app):
+    app.config.update(FALLBACK_ERROR_FORMAT="text")
+
+    _, response = app.test_client.get("/error")
+    assert response.status == 500
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
 def test_config_fallback_bad_value(app):
     message = "Unknown format: fake"
     with pytest.raises(SanicException, match=message):

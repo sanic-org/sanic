@@ -2,6 +2,7 @@ import asyncio
 import sys
 
 from threading import Event
+from unittest.mock import Mock
 
 import pytest
 
@@ -75,6 +76,25 @@ def test_create_named_task(app):
         app.stop()
 
     app.run()
+
+
+def test_named_task_called(app):
+    e = Event()
+
+    async def coro():
+        e.set()
+
+    @app.route("/")
+    async def isset(request):
+        await asyncio.sleep(0.05)
+        return text(str(e.is_set()))
+
+    @app.before_server_start
+    async def setup(app, _):
+        app.add_task(coro, name="dummy_task")
+
+    request, response = app.test_client.get("/")
+    assert response.body == b"True"
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")

@@ -5,7 +5,7 @@ from os import environ
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import dedent
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -399,5 +399,24 @@ def test_config_set_methods(app: Sanic, monkeypatch: MonkeyPatch):
     post_set.assert_called_once_with("FOO", 5)
     post_set.reset_mock()
 
-    app.config.update_config({"FOO": 6})
-    post_set.assert_called_once_with("FOO", 6)
+    app.config.update({"FOO": 6}, {"BAR": 7})
+    post_set.assert_has_calls(
+        calls=[
+            call("FOO", 6),
+            call("BAR", 7),
+        ]
+    )
+    post_set.reset_mock()
+
+    app.config.update({"FOO": 8}, BAR=9)
+    post_set.assert_has_calls(
+        calls=[
+            call("FOO", 8),
+            call("BAR", 9),
+        ],
+        any_order=True,
+    )
+    post_set.reset_mock()
+
+    app.config.update_config({"FOO": 10})
+    post_set.assert_called_once_with("FOO", 10)

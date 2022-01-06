@@ -62,19 +62,15 @@ def test_streaming_body_requests(app):
 
     data = ["hello", "world"]
 
-    class Data(AsyncByteStream):
-        def __init__(self, data):
-            self.data = data
-
-        async def __aiter__(self):
-            for value in self.data:
-                yield value.encode("utf-8")
-
     client = ReusableClient(app, port=1234)
 
+    async def stream(data):
+        for value in data:
+            yield value.encode("utf-8")
+
     with client:
-        _, response1 = client.post("/", data=Data(data))
-        _, response2 = client.post("/", data=Data(data))
+        _, response1 = client.post("/", data=stream(data))
+        _, response2 = client.post("/", data=stream(data))
 
     assert response1.status == response2.status == 200
     assert response1.json["data"] == response2.json["data"] == data

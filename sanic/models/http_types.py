@@ -13,7 +13,7 @@ class Credentials:
     _password: Optional[str] = field(default=None)
 
     def __post_init__(self):
-        if self.auth_type == "Basic":
+        if self._auth_is_basic:
             self._username, self._password = (
                 b64decode(self.token.encode("utf-8")).decode().split(":")
             )
@@ -32,6 +32,4 @@ class Credentials:
 
     @property
     def _auth_is_basic(self) -> bool:
-        if self.auth_type == "Basic":
-            return True
-        return False
+        return self.auth_type == "Basic"

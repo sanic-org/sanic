@@ -362,12 +362,16 @@ class Request:
         :return: A named tuple with token or username and password related to request
         """
         if self.parsed_credentials is None:
-            prefix, credentials = parse_credentials(
-                self.headers.getone("authorization", None)
-            )
-            self.parsed_credentials = Credentials(
-                auth_type=prefix, token=credentials
-            )
+            try:
+                prefix, credentials = parse_credentials(
+                    self.headers.getone("authorization", None)
+                )
+                if credentials:
+                    self.parsed_credentials = Credentials(
+                        auth_type=prefix, token=credentials
+                    )
+            except ValueError:
+                pass
         return self.parsed_credentials
 
     @property

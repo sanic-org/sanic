@@ -1,4 +1,3 @@
-import base64
 import logging
 
 from json import dumps as json_dumps
@@ -16,9 +15,10 @@ from sanic_testing.testing import (
 )
 
 from sanic import Blueprint, Sanic
-from sanic.exceptions import SanicException, ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, Request, RequestParameters
+from sanic.exceptions import ServerError
+from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
 from sanic.response import html, json, text
+from tests.conftest import encode_basic_auth_credentials
 
 
 # ------------------------------------------------------------ #
@@ -363,267 +363,95 @@ async def test_uri_template_asgi(app):
     assert request.uri_template == "/foo/<id:int>/bar/<name:[A-z]+>"
 
 
-def test_token(app):
+@pytest.mark.parametrize(
+    ("auth_type", "token"),
+    [
+        # uuid4 generated token set in "Authorization" header
+        (None, "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"),
+        # uuid4 generated token with API Token authorization
+        ("Token", "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"),
+        # uuid4 generated token with Bearer Token authorization
+        ("Bearer", "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"),
+        # no Authorization header
+        (None, None),
+    ],
+)
+def test_token(app, auth_type, token):
     @app.route("/")
     async def handler(request):
         return text("OK")
 
-    # uuid4 generated token.
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"{token}",
-    }
+    if token:
+        headers = {
+            "content-type": "application/json",
+            "Authorization": f"{auth_type} {token}"
+            if auth_type
+            else f"{token}",
+        }
+    else:
+        headers = {"content-type": "application/json"}
 
     request, response = app.test_client.get("/", headers=headers)
-
     assert request.token == token
 
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Token {token}",
-    }
 
-    request, response = app.test_client.get("/", headers=headers)
-
-    assert request.token == token
-
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Bearer {token}",
-    }
-
-    request, response = app.test_client.get("/", headers=headers)
-
-    assert request.token == token
-
-    # no Authorization headers
-    headers = {"content-type": "application/json"}
-
-    request, response = app.test_client.get("/", headers=headers)
-
-    assert request.token is None
-
-
-@pytest.mark.asyncio
-async def test_token_asgi(app):
+@pytest.mark.parametrize(
+    ("auth_type", "token", "username", "password"),
+    [
+        # uuid4 generated token set in "Authorization" header
+        (None, "a1d895e0-553a-421a-8e22-5ff8ecb48cbf", None, None),
+        # uuid4 generated token with API Token authorization
+        ("Token", "a1d895e0-553a-421a-8e22-5ff8ecb48cbf", None, None),
+        # uuid4 generated token with Bearer Token authorization
+        ("Bearer", "a1d895e0-553a-421a-8e22-5ff8ecb48cbf", None, None),
+        # username and password with Basic Auth authorization
+        (
+            "Basic",
+            encode_basic_auth_credentials("some_username", "some_pass"),
+            "some_username",
+            "some_pass",
+        ),
+        # no Authorization header
+        (None, None, None, None),
+    ],
+)
+def test_credentials(app, capfd, auth_type, token, username, password):
     @app.route("/")
     async def handler(request):
         return text("OK")
 
-    # uuid4 generated token.
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"{token}",
-    }
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.token == token
-
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Token {token}",
-    }
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.token == token
-
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Bearer {token}",
-    }
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.token == token
-
-    # no Authorization headers
-    headers = {"content-type": "application/json"}
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.token is None
-
-
-def test_credentials(app, capfd):
-    @app.route("/")
-    async def handler(request):
-        return text("OK")
-
-    # uuid4 generated token.
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"{token}",
-    }
+    if token:
+        headers = {
+            "content-type": "application/json",
+            "Authorization": f"{auth_type} {token}"
+            if auth_type
+            else f"{token}",
+        }
+    else:
+        headers = {"content-type": "application/json"}
 
     request, response = app.test_client.get("/", headers=headers)
 
-    assert request.credentials.token == token
-    assert request.credentials.auth_type is None
-    with pytest.raises(AttributeError):
+    if auth_type == "Basic":
+        assert request.credentials.username == username
+        assert request.credentials.password == password
+    else:
         _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
+        with pytest.raises(AttributeError):
+            request.credentials.password
+            assert "Password is available for Basic Auth only" in err
+            request.credentials.username
+            assert "Username is available for Basic Auth only" in err
 
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Token {token}",
-    }
-
-    request, response = app.test_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == "Token"
-    assert request.credentials.token == token
-    with pytest.raises(AttributeError):
-        _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
-
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Bearer {token}",
-    }
-
-    request, response = app.test_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == "Bearer"
-    assert request.credentials.token == token
-    with pytest.raises(AttributeError):
-        _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
-    # Basic Auth
-    token = base64.b64encode("user@email.com:password".encode()).decode(
-        "ascii"
-    )
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Basic {token}",
-    }
-
-    request, response = app.test_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == "Basic"
-    assert request.credentials.token == token
-    assert request.credentials.username == "user@email.com"
-    assert request.credentials.password == "password"
-
-    # no Authorization headers
-    headers = {"content-type": "application/json"}
-
-    request, response = app.test_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == request.credentials.token is None
-    with pytest.raises(AttributeError):
-        _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
-
-
-@pytest.mark.asyncio
-async def test_credentials_asgi(app, capfd):
-    @app.route("/")
-    async def handler(request):
-        return text("OK")
-
-    # uuid4 generated token.
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"{token}",
-    }
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == None
-    assert request.credentials.token == token
-    with pytest.raises(AttributeError):
-        _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
-
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Token {token}",
-    }
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == "Token"
-    assert request.credentials.token == token
-    with pytest.raises(AttributeError):
-        _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
-
-    token = "a1d895e0-553a-421a-8e22-5ff8ecb48cbf"
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Bearer {token}",
-    }
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == "Bearer"
-    assert request.credentials.token == token
-    with pytest.raises(AttributeError):
-        _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
-
-    # Basic Auth
-    token = base64.b64encode("user@email.com:password".encode()).decode(
-        "ascii"
-    )
-    headers = {
-        "content-type": "application/json",
-        "Authorization": f"Basic {token}",
-    }
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == "Basic"
-    assert request.credentials.token == token
-    assert request.credentials.username == "user@email.com"
-    assert request.credentials.password == "password"
-
-    # no Authorization headers
-    headers = {"content-type": "application/json"}
-
-    request, response = await app.asgi_client.get("/", headers=headers)
-
-    assert request.credentials.auth_type == request.credentials.token is None
-    with pytest.raises(AttributeError):
-        _, err = capfd.readouterr()
-        request.credentials.password
-        assert "Password is available for Basic Auth only" in err
-        request.credentials.username
-        assert "Username is available for Basic Auth only" in err
+    if token:
+        assert request.credentials.token == token
+        assert request.credentials.auth_type == auth_type
+    else:
+        assert request.credentials is None
+        assert not hasattr(request.credentials, "token")
+        assert not hasattr(request.credentials, "auth_type")
+        assert not hasattr(request.credentials, "_username")
+        assert not hasattr(request.credentials, "_password")
 
 
 def test_content_type(app):

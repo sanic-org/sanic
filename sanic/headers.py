@@ -398,8 +398,8 @@ def parse_accept(accept: str) -> AcceptContainer:
 
 def parse_credentials(
     header: Optional[str],
-    prefixes: Union[List[str, ...], Tuple[str, ...], Set[str, ...]] = None,
-) -> Tuple[Optional[str], str]:
+    prefixes: Union[List, Tuple, Set] = None,
+) -> Tuple[Optional[str], Optional[str]]:
     """Parses any passed header with the aim to retrieve any credentials from it."""
     if not prefixes or not isinstance(prefixes, (list, tuple, set)):
         prefixes = ("Basic", "Bearer", "Token")

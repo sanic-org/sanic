@@ -340,7 +340,7 @@ class Request:
         return self.parsed_accept
 
     @property
-    def token(self) -> str:
+    def token(self) -> Optional[str]:
         """Attempt to return the auth header token.
 
         :return: token related to request
@@ -354,7 +354,7 @@ class Request:
         return self.parsed_token
 
     @property
-    def credentials(self) -> Credentials:
+    def credentials(self) -> Optional[Credentials]:
         """Attempt to return the auth header value.
 
         Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication schemas.

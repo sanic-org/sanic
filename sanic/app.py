@@ -101,7 +101,7 @@ from sanic.server import Signal as ServerSignal
 from sanic.server import serve, serve_multiple, serve_single, try_use_uvloop
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.websockets.impl import ConnectionClosed
-from sanic.signals import Signal, SignalRouter
+from sanic.signals import RESERVED_NAMESPACES, Signal, SignalRouter
 from sanic.tls import process_to_context
 from sanic.touchup import TouchUp, TouchUpMeta
 
@@ -443,6 +443,11 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         inline: bool = False,
         reverse: bool = False,
     ) -> Coroutine[Any, Any, Awaitable[Any]]:
+        if self.config.get("SKIP_TOUCHUP", False):
+            event_ns = event.split(".", 1)[0]
+            if event_ns in RESERVED_NAMESPACES:
+                fail_not_found = False
+
         return self.signal_router.dispatch(
             event,
             context=context,
@@ -1976,7 +1981,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         # Startup time optimizations
         ErrorHandler.finalize(self.error_handler, config=self.config)
-        TouchUp.run(self)
+        if not self.config.get("SKIP_TOUCHUP", False):
+            TouchUp.run(self)
 
         self.state.is_started = True
 

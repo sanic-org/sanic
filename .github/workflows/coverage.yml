@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - "*LTS"
     tags:
       - "!*" # Do not execute on tags
   pull_request:

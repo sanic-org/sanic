@@ -14,6 +14,8 @@ from typing import (
 
 from sanic_routing.route import Route  # type: ignore
 
+from sanic.models.http_types import Credentials
+
 
 if TYPE_CHECKING:  # no cov
     from sanic.server import ConnInfo
@@ -37,6 +39,7 @@ from sanic.headers import (
     Options,
     parse_accept,
     parse_content_header,
+    parse_credentials,
     parse_forwarded,
     parse_host,
     parse_xforwarded,
@@ -98,11 +101,13 @@ class Request:
         "method",
         "parsed_accept",
         "parsed_args",
-        "parsed_not_grouped_args",
+        "parsed_credentials",
         "parsed_files",
         "parsed_form",
-        "parsed_json",
         "parsed_forwarded",
+        "parsed_json",
+        "parsed_not_grouped_args",
+        "parsed_token",
         "raw_url",
         "responded",
         "request_middleware_started",
@@ -122,6 +127,7 @@ class Request:
         app: Sanic,
         head: bytes = b"",
     ):
+
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
         self._parsed_url = parse_url(url_bytes)
@@ -141,9 +147,11 @@ class Request:
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
         self.parsed_accept: Optional[AcceptContainer] = None
+        self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
         self.parsed_form = None
         self.parsed_files = None
+        self.parsed_token: Optional[str] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters
         ] = defaultdict(RequestParameters)
@@ -332,20 +340,41 @@ class Request:
         return self.parsed_accept
 
     @property
-    def token(self):
+    def token(self) -> Optional[str]:
         """Attempt to return the auth header token.
 
         :return: token related to request
         """
-        prefixes = ("Bearer", "Token")
-        auth_header = self.headers.getone("authorization", None)
+        if self.parsed_token is None:
+            prefixes = ("Bearer", "Token")
+            _, token = parse_credentials(
+                self.headers.getone("authorization", None), prefixes
+            )
+            self.parsed_token = token
+        return self.parsed_token
 
-        if auth_header is not None:
-            for prefix in prefixes:
-                if prefix in auth_header:
-                    return auth_header.partition(prefix)[-1].strip()
+    @property
+    def credentials(self) -> Optional[Credentials]:
+        """Attempt to return the auth header value.
 
-        return auth_header
+        Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication
+        schemas.
+
+        :return: A named tuple with token or username and password related
+                 to request
+        """
+        if self.parsed_credentials is None:
+            try:
+                prefix, credentials = parse_credentials(
+                    self.headers.getone("authorization", None)
+                )
+                if credentials:
+                    self.parsed_credentials = Credentials(
+                        auth_type=prefix, token=credentials
+                    )
+            except ValueError:
+                pass
+        return self.parsed_credentials
 
     @property
     def form(self):

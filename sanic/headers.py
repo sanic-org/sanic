@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 from urllib.parse import unquote
 
 from sanic.exceptions import InvalidHeader
@@ -394,3 +394,17 @@ def parse_accept(accept: str) -> AcceptContainer:
     return AcceptContainer(
         sorted(accept_list, key=_sort_accept_value, reverse=True)
     )
+
+
+def parse_credentials(
+    header: Optional[str],
+    prefixes: Union[List, Tuple, Set] = None,
+) -> Tuple[Optional[str], Optional[str]]:
+    """Parses any header with the aim to retrieve any credentials from it."""
+    if not prefixes or not isinstance(prefixes, (list, tuple, set)):
+        prefixes = ("Basic", "Bearer", "Token")
+    if header is not None:
+        for prefix in prefixes:
+            if prefix in header:
+                return prefix, header.partition(prefix)[-1].strip()
+    return None, header

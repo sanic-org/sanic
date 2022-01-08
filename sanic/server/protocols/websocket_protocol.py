@@ -5,7 +5,7 @@ from websockets.server import ServerConnection
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import ServerError
-from sanic.log import deprecation, error_logger
+from sanic.log import error_logger
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol

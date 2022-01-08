@@ -216,31 +216,6 @@ def test_exception_handler_processed_request_middleware(
     assert response.text == "Done."
 
 
-def test_single_arg_exception_handler_notice(
-    exception_handler_app: Sanic, caplog: LogCaptureFixture
-):
-    class CustomErrorHandler(ErrorHandler):
-        def lookup(self, exception):
-            return super().lookup(exception, None)
-
-    exception_handler_app.error_handler = CustomErrorHandler()
-
-    message = (
-        "[DEPRECATION v22.3] You are using a deprecated error handler. The "
-        "lookup method should accept two positional parameters: (exception, "
-        "route_name: Optional[str]). Until you upgrade your "
-        "ErrorHandler.lookup, Blueprint specific exceptions will not work "
-        "properly. Beginning in v22.3, the legacy style lookup method will "
-        "not work at all."
-    )
-    with pytest.warns(DeprecationWarning) as record:
-        _, response = exception_handler_app.test_client.get("/1")
-
-    assert len(record) == 1
-    assert record[0].message.args[0] == message
-    assert response.status == 400
-
-
 def test_error_handler_noisy_log(
     exception_handler_app: Sanic, monkeypatch: MonkeyPatch
 ):
@@ -279,7 +254,7 @@ def test_exception_handler_response_was_sent(
 
     @app.route("/2")
     async def handler2(request: Request):
-        response = await request.respond()
+        await request.respond()
         raise ServerError("Exception")
 
     with caplog.at_level(logging.WARNING):

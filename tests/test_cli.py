@@ -103,7 +103,7 @@ def test_tls_wrong_options(cmd):
     assert not out
     lines = err.decode().split("\n")
 
-    errmsg = lines[8]
+    errmsg = lines[6]
     assert errmsg == "TLS certificates must be specified by either of:"
 
 
@@ -200,8 +200,20 @@ def test_num_workers(num, cmd):
     assert len(worker_lines) == num * 2, f"Lines found: {lines}"
 
 
-@pytest.mark.parametrize("cmd", ("--debug", "-d"))
+@pytest.mark.parametrize("cmd", ("--debug",))
 def test_debug(cmd):
+    command = ["sanic", "fake.server.app", cmd]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+    info = read_app_info(lines)
+
+    assert info["debug"] is True
+    assert info["auto_reload"] is False
+    assert "dev" not in info
+
+
+@pytest.mark.parametrize("cmd", ("--dev", "-d"))
+def test_dev(cmd):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -220,6 +232,7 @@ def test_auto_reload(cmd):
 
     assert info["debug"] is False
     assert info["auto_reload"] is True
+    assert "dev" not in info
 
 
 @pytest.mark.parametrize(

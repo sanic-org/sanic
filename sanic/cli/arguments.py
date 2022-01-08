@@ -180,19 +180,18 @@ class DevelopmentGroup(Group):
             "--debug",
             dest="debug",
             action="store_true",
-            help="Run the server in debug mode",
+            help=(
+                "Run the server in DEBUG mode. It includes DEBUG logging, "
+                "additional context on exceptions, and other settings "
+                "not-safe for PRODUCTION, but helpful for debugging problems."
+            ),
         )
         self.container.add_argument(
             "-d",
             "--dev",
-            dest="debug",
+            dest="dev",
             action="store_true",
-            help=(
-                "Currently is an alias for --debug. But starting in v22.3, \n"
-                "--debug will no longer automatically trigger auto_restart. \n"
-                "However, --dev will continue, effectively making it the \n"
-                "same as debug + auto_reload."
-            ),
+            help=("Debug + auto_reload."),
         )
         self.container.add_argument(
             "-r",

@@ -1374,10 +1374,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     def debug(self, value: bool):
         deprecation(
             "Setting the value of a Sanic application's debug value directly "
-            "is deprecated and will be removed in v21.9. Please set it using "
+            "is deprecated and will be removed in v22.9. Please set it using "
             "the CLI, app.run, app.prepare, or directly set "
             "app.state.mode to Mode.DEBUG.",
-            21.9,
+            22.9,
         )
         mode = Mode.DEBUG if value else Mode.PRODUCTION
         self.state.mode = mode

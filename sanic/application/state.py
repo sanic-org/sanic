@@ -59,6 +59,7 @@ class ApplicationState:
     unix: Optional[str] = field(default=None)
     mode: Mode = field(default=Mode.PRODUCTION)
     reload_dirs: Set[Path] = field(default_factory=set)
+    auto_reload: bool = field(default=False)
     server: Server = field(default=Server.SANIC)
     is_running: bool = field(default=False)
     is_started: bool = field(default=False)

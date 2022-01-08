@@ -15,7 +15,7 @@ from importlib import import_module
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, Union
 
 from sanic import reloader_helpers
 from sanic.application.logo import get_logo
@@ -60,6 +60,7 @@ class RunnerMixin(metaclass=SanicMeta):
         host: Optional[str] = None,
         port: Optional[int] = None,
         *,
+        dev: bool = False,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
@@ -117,6 +118,7 @@ class RunnerMixin(metaclass=SanicMeta):
         self.prepare(
             host=host,
             port=port,
+            dev=dev,
             debug=debug,
             auto_reload=auto_reload,
             ssl=ssl,
@@ -143,6 +145,7 @@ class RunnerMixin(metaclass=SanicMeta):
         host: Optional[str] = None,
         port: Optional[int] = None,
         *,
+        dev: bool = False,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
@@ -161,7 +164,13 @@ class RunnerMixin(metaclass=SanicMeta):
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
     ) -> None:
+        if dev:
+            debug = True
+            auto_reload = True
+
         self.state.verbosity = verbosity
+        if not self.state.auto_reload:
+            self.state.auto_reload = bool(auto_reload)
 
         if fast and workers != 1:
             raise RuntimeError("You cannot use both fast=True and workers=X")
@@ -189,10 +198,11 @@ class RunnerMixin(metaclass=SanicMeta):
                 "#asynchronous-support"
             )
 
-        if auto_reload or auto_reload is None and debug:
-            auto_reload = True
-            if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return
+        if (
+            self.__class__.should_auto_reload()
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):
+            return
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000
@@ -380,7 +390,11 @@ class RunnerMixin(metaclass=SanicMeta):
 
         ssl = process_to_context(ssl)
 
-        self.state.debug = Mode.DEBUG if debug else Mode.PRODUCTION
+        if not self.state.is_debug:
+            self.state.mode = Mode.DEBUG if debug else Mode.PRODUCTION
+
+        # TODO:
+        # - These fields shoudl be made getters of the primary server_info
         self.state.host = host or ""
         self.state.port = port or 0
         self.state.workers = workers
@@ -482,11 +496,11 @@ class RunnerMixin(metaclass=SanicMeta):
                 if self.config.LOGO == "" or self.config.LOGO is True
                 else self.config.LOGO
             )
-            # TEMP disabled
+
             # TODO:
             # - Fix that the output is displayed in the main process for
             #   secondary applications
-            # MOTD.output(logo, serve_location, display, extra)
+            MOTD.output(logo, serve_location, display, extra)
 
     @property
     def serve_location(self) -> str:
@@ -510,6 +524,10 @@ class RunnerMixin(metaclass=SanicMeta):
         return serve_location
 
     @classmethod
+    def should_auto_reload(cls) -> bool:
+        return any(app.state.auto_reload for app in cls._app_registry.values())
+
+    @classmethod
     def serve(cls) -> None:
         apps = list(cls._app_registry.values())
 
@@ -517,14 +535,16 @@ class RunnerMixin(metaclass=SanicMeta):
             primary = apps[0]
         except StopIteration:
             raise RuntimeError("Did not find any applications.")
-        # if auto_reload or auto_reload is None and debug:
-        # TODO:
-        # - Solve for auto_reload location
-        # - Instead of grabbing one app, should get all of
-        #   reload dirs and pass them together so that not only
-        #   one app controls
-        if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-            return reloader_helpers.watchdog(1.0, primary)
+
+        # We want to run auto_reload if ANY of the applications have it enabled
+        if (
+            cls.should_auto_reload()
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):
+            reload_dirs: Set[Path] = primary.state.reload_dirs.union(
+                *(app.state.reload_dirs for app in apps)
+            )
+            return reloader_helpers.watchdog(1.0, reload_dirs)
 
         primary_server_info = primary.state.server_info[0]
         primary.before_server_start(partial(primary._start_servers, apps=apps))

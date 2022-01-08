@@ -360,8 +360,8 @@ class Request:
         Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication
         schemas.
 
-        :return: A named tuple with token or username and password related
-                 to request
+        :return: A Credentials object with token, or username and password
+                 related to the request
         """
         if self.parsed_credentials is None:
             try:

@@ -1061,6 +1061,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         host: Optional[str] = None,
         port: Optional[int] = None,
         *,
+        dev: bool = False,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
@@ -1143,10 +1144,12 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
                 "#asynchronous-support"
             )
 
-        if auto_reload or auto_reload is None and debug:
+        if dev:
+            debug = True
             auto_reload = True
-            if os.environ.get("SANIC_SERVER_RUNNING") != "true":
-                return reloader_helpers.watchdog(1.0, self)
+
+        if auto_reload and os.environ.get("SANIC_SERVER_RUNNING") != "true":
+            return reloader_helpers.watchdog(1.0, self)
 
         if sock is None:
             host, port = host or "127.0.0.1", port or 8000

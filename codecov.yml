@@ -16,6 +16,7 @@ ignore:
   - "sanic/reloader_helpers.py"
   - "sanic/simple.py"
   - "sanic/utils.py"
+  - "sanic/cli"
   - ".github/"
   - "changelogs/"
   - "docker/"

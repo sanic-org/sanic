@@ -97,11 +97,14 @@ class ApplicationState:
 
     @property
     def stage(self) -> ServerStage:
+        if not self.server_info:
+            return ServerStage.STOPPED
+
         if all(info.stage is ServerStage.SERVING for info in self.server_info):
             return ServerStage.SERVING
         elif any(
             info.stage is ServerStage.SERVING for info in self.server_info
         ):
             return ServerStage.PARTIAL
-        else:
-            return ServerStage.STOPPED
+
+        return ServerStage.STOPPED

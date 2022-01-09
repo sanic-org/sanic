@@ -573,7 +573,8 @@ class RunnerMixin(metaclass=SanicMeta):
             )
             raise
         finally:
-            primary_server_info.stage = ServerStage.STOPPED
+            for app in apps:
+                app.state.server_info.clear()
         logger.info("Server Stopped")
 
     async def _start_servers(

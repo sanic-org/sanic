@@ -1,0 +1,19 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+  require_ci_to_pass: false
+ignore:
+  - "sanic/__main__.py"
+  - "sanic/reloader_helpers.py"
+  - "sanic/simple.py"
+  - "sanic/utils.py"
+  - ".github/"
+  - "changelogs/"
+  - "docker/"
+  - "docs/"
+  - "examples/"
+  - "scripts/"
+  - "tests/"

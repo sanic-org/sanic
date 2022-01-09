@@ -4,6 +4,7 @@ source = sanic
 omit =
     site-packages
     sanic/__main__.py
+    sanic/compat.py
     sanic/reloader_helpers.py
     sanic/simple.py
     sanic/utils.py
@@ -22,6 +23,7 @@ exclude_lines =
 omit =
     site-packages
     sanic/__main__.py
+    sanic/compat.py
     sanic/reloader_helpers.py
     sanic/simple.py
     sanic/utils.py

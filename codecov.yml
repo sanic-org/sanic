@@ -13,6 +13,7 @@ codecov:
   require_ci_to_pass: false
 ignore:
   - "sanic/__main__.py"
+  - "sanic/compat.py"
   - "sanic/reloader_helpers.py"
   - "sanic/simple.py"
   - "sanic/utils.py"

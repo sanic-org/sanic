@@ -32,6 +32,7 @@ jobs:
       - name: Run coverage
         run: tox -e coverage
       - uses: codecov/codecov-action@v2
+        if: succeeded() || failed()
         with:
           files: ./coverage.xml
           fail_ci_if_error: false

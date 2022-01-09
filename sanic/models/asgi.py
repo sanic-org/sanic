@@ -13,7 +13,7 @@ ASGISend = Callable[[ASGIMessage], Awaitable[None]]
 ASGIReceive = Callable[[], Awaitable[ASGIMessage]]
 
 
-class MockProtocol:
+class MockProtocol:  # no cov
     def __init__(self, transport: "MockTransport", loop):
         # This should be refactored when < 3.8 support is dropped
         self.transport = transport
@@ -56,7 +56,7 @@ class MockProtocol:
         await self._not_paused.wait()
 
 
-class MockTransport:
+class MockTransport:  # no cov
     _protocol: Optional[MockProtocol]
 
     def __init__(

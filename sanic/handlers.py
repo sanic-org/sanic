@@ -53,14 +53,14 @@ class ErrorHandler:
             self._warn_fallback_deprecation()
 
     @property
-    def fallback(self):
+    def fallback(self):  # no cov
         # This is for backwards compat and can be removed in v22.6
         if self._fallback is _default:
             return DEFAULT_FORMAT
         return self._fallback
 
     @fallback.setter
-    def fallback(self, value: str):
+    def fallback(self, value: str):  # no cov
         self._warn_fallback_deprecation()
         if not isinstance(value, str):
             raise SanicException(
@@ -236,7 +236,7 @@ class ErrorHandler:
         except Exception:
             try:
                 url = repr(request.url)
-            except AttributeError:
+            except AttributeError:  # no cov
                 url = "unknown"
             response_message = (
                 "Exception raised in exception handler " '"%s" for uri: %s'
@@ -281,7 +281,7 @@ class ErrorHandler:
         if quiet is False or noisy is True:
             try:
                 url = repr(request.url)
-            except AttributeError:
+            except AttributeError:  # no cov
                 url = "unknown"
 
             error_logger.exception(

@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import logging
 import random
 import re
@@ -205,7 +204,3 @@ def sanic_ext(ext_instance):  # noqa
     yield sanic_ext
     with suppress(KeyError):
         del sys.modules["sanic_ext"]
-
-
-def encode_basic_auth_credentials(username, password):
-    return base64.b64encode(f"{username}:{password}".encode()).decode("ascii")

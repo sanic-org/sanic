@@ -96,7 +96,7 @@ if TYPE_CHECKING:  # no cov
         Extend = TypeVar("Extend")  # type: ignore
 
 
-if OS_IS_WINDOWS:
+if OS_IS_WINDOWS:  # no cov
     enable_windows_color_support()
 
 filterwarnings("once", category=DeprecationWarning)
@@ -1162,7 +1162,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     ) -> Task:
         if not isinstance(task, Future):
             prepped = cls._prep_task(task, app, loop)
-            if sys.version_info < (3, 8):
+            if sys.version_info < (3, 8):  # no cov
                 if name:
                     error_logger.warning(
                         "Cannot set a name for a task when using Python 3.7. "
@@ -1206,7 +1206,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
         :param task: future, couroutine or awaitable
         """
-        if name and sys.version_info == (3, 7):
+        if name and sys.version_info < (3, 8):  # no cov
             name = None
             error_logger.warning(
                 "Cannot set a name for a task when using Python 3.7. Your "
@@ -1234,7 +1234,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     def get_task(
         self, name: str, *, raise_exception: bool = True
     ) -> Optional[Task]:
-        if sys.version_info < (3, 8):
+        if sys.version_info < (3, 8):  # no cov
             error_logger.warning(
                 "This feature (get_task) is only supported on using "
                 "Python 3.8+."
@@ -1256,7 +1256,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         *,
         raise_exception: bool = True,
     ) -> None:
-        if sys.version_info < (3, 8):
+        if sys.version_info < (3, 8):  # no cov
             error_logger.warning(
                 "This feature (cancel_task) is only supported on using "
                 "Python 3.8+."
@@ -1268,7 +1268,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             if msg:
                 if sys.version_info >= (3, 9):
                     args = (msg,)
-                else:
+                else:  # no cov
                     raise RuntimeError(
                         "Cancelling a task with a message is only supported "
                         "on Python 3.9+."
@@ -1280,7 +1280,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 ...
 
     def purge_tasks(self):
-        if sys.version_info < (3, 8):
+        if sys.version_info < (3, 8):  # no cov
             error_logger.warning(
                 "This feature (purge_tasks) is only supported on using "
                 "Python 3.8+."
@@ -1317,7 +1317,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
     @property
     def tasks(self):
-        if sys.version_info < (3, 8):
+        if sys.version_info < (3, 8):  # no cov
             error_logger.warning(
                 "This feature (tasks) is only supported on using "
                 "Python 3.8+."

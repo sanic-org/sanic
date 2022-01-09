@@ -33,4 +33,4 @@ jobs:
       - uses: codecov/codecov-action@v2
         with:
           files: ./coverage.xml
-          verbose: true
+          fail_ci_if_error: false

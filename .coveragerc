@@ -7,6 +7,7 @@ omit =
     sanic/reloader_helpers.py
     sanic/simple.py
     sanic/utils.py
+    sanic/cli
 
 [html]
 directory = coverage
@@ -24,4 +25,5 @@ omit =
     sanic/reloader_helpers.py
     sanic/simple.py
     sanic/utils.py
+    sanic/cli
 skip_empty = True

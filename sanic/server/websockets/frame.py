@@ -9,7 +9,7 @@ from websockets.typing import Data
 from sanic.exceptions import ServerError
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from .impl import WebsocketImplProtocol
 
 UTF8Decoder = codecs.getincrementaldecoder("utf-8")

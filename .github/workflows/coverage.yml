@@ -31,8 +31,8 @@ jobs:
           pip install tox
       - name: Run coverage
         run: tox -e coverage
+        continue-on-error: true
       - uses: codecov/codecov-action@v2
-        if: succeeded() || failed()
         with:
           files: ./coverage.xml
           fail_ci_if_error: false

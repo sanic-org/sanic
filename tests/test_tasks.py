@@ -2,12 +2,14 @@ import asyncio
 import sys
 
 from asyncio.tasks import Task
-from unittest.mock import Mock, call
+from unittest.mock import AsyncMock, Mock, call
 
 import pytest
 
 from sanic.app import Sanic
+from sanic.application.state import ApplicationServerInfo, ServerStage
 from sanic.response import empty
+from sanic.server.async_server import AsyncioServer
 
 
 pytestmark = pytest.mark.asyncio
@@ -20,8 +22,12 @@ async def dummy(n=0):
 
 
 @pytest.fixture(autouse=True)
-def mark_app_running(app):
-    app.is_running = True
+def mark_app_running(app: Sanic):
+    app.state.server_info.append(
+        ApplicationServerInfo(
+            stage=ServerStage.SERVING, settings={}, server=AsyncMock()
+        )
+    )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")

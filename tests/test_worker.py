@@ -57,12 +57,14 @@ def gunicorn_worker_with_env_var():
     return worker
 
 
+@pytest.mark.skip
 def test_gunicorn_worker(gunicorn_worker):
     with urllib.request.urlopen(f"http://localhost:{PORT}/") as f:
         res = json.loads(f.read(100).decode())
     assert res["test"]
 
 
+@pytest.mark.skip
 def test_gunicorn_worker_no_logs(gunicorn_worker_with_env_var):
     """
     if SANIC_ACCESS_LOG was set to False do not show access logs
@@ -78,6 +80,7 @@ def test_gunicorn_worker_no_logs(gunicorn_worker_with_env_var):
         assert len(logs) == 0
 
 
+@pytest.mark.skip
 def test_gunicorn_worker_with_logs(gunicorn_worker_with_access_logs):
     """
     default - show access logs
@@ -105,6 +108,7 @@ def worker():
     return GunicornTestWorker()
 
 
+@pytest.mark.skip
 def test_worker_init_process(worker):
     with mock.patch("sanic.worker.asyncio") as mock_asyncio:
         try:
@@ -117,12 +121,14 @@ def test_worker_init_process(worker):
         assert mock_asyncio.set_event_loop.called
 
 
+@pytest.mark.skip
 def test_worker_init_signals(worker):
     worker.loop = mock.Mock()
     worker.init_signals()
     assert worker.loop.add_signal_handler.called
 
 
+@pytest.mark.skip
 def test_handle_abort(worker):
     with mock.patch("sanic.worker.sys") as mock_sys:
         worker.handle_abort(object(), object())
@@ -131,6 +137,7 @@ def test_handle_abort(worker):
         mock_sys.exit.assert_called_with(1)
 
 
+@pytest.mark.skip
 def test_handle_quit(worker):
     worker.handle_quit(object(), object())
     assert not worker.alive
@@ -141,6 +148,7 @@ async def _a_noop(*a, **kw):
     pass
 
 
+@pytest.mark.skip
 def test_run_max_requests_exceeded(worker):
     loop = asyncio.new_event_loop()
     worker.ppid = 1
@@ -170,6 +178,7 @@ def test_run_max_requests_exceeded(worker):
     )
 
 
+@pytest.mark.skip
 def test_worker_close(worker):
     loop = asyncio.new_event_loop()
     asyncio.sleep = mock.Mock(wraps=_a_noop)

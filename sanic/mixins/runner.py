@@ -138,7 +138,7 @@ class RunnerMixin(metaclass=SanicMeta):
             motd_display=motd_display,
         )
 
-        self.__class__.serve()
+        self.__class__.serve(primary=self)
 
     def prepare(
         self,
@@ -528,13 +528,14 @@ class RunnerMixin(metaclass=SanicMeta):
         return any(app.state.auto_reload for app in cls._app_registry.values())
 
     @classmethod
-    def serve(cls) -> None:
+    def serve(cls, primary: Optional[Sanic] = None) -> None:
         apps = list(cls._app_registry.values())
 
-        try:
-            primary = apps[0]
-        except StopIteration:
-            raise RuntimeError("Did not find any applications.")
+        if not primary:
+            try:
+                primary = apps[0]
+            except StopIteration:
+                raise RuntimeError("Did not find any applications.")
 
         # We want to run auto_reload if ANY of the applications have it enabled
         if (
@@ -620,7 +621,7 @@ class RunnerMixin(metaclass=SanicMeta):
     # @staticmethod
     async def _run_server(
         self,
-        app: Sanic,
+        app: RunnerMixin,
         server_info: ApplicationServerInfo,
     ) -> None:
 

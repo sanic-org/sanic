@@ -301,6 +301,9 @@ def test_config_access_log_passing_in_run(app: Sanic):
     app.run(port=1340, access_log=False)
     assert app.config.ACCESS_LOG is False
 
+    app.router.reset()
+    app.signal_router.reset()
+
     app.run(port=1340, access_log=True)
     assert app.config.ACCESS_LOG is True
 

@@ -204,3 +204,8 @@ def sanic_ext(ext_instance):  # noqa
     yield sanic_ext
     with suppress(KeyError):
         del sys.modules["sanic_ext"]
+
+
+@pytest.fixture(autouse=True)
+def clean_app_registry():
+    Sanic._app_registry = {}

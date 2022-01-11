@@ -1,5 +1,7 @@
 import logging
 
+from unittest.mock import AsyncMock
+
 import pytest
 
 from sanic import Sanic
@@ -75,3 +77,29 @@ def test_serve_multiple_apps(app_one, app_two, run_multi):
         logging.INFO,
         "Goin' Fast @ http://127.0.0.1:23457",
     ) in logs
+
+
+def test_listeners_on_secondary_app(app_one, app_two, run_multi):
+    app_one.prepare(port=23456)
+    app_two.prepare(port=23457)
+
+    before_start = AsyncMock()
+    after_start = AsyncMock()
+    before_stop = AsyncMock()
+    after_stop = AsyncMock()
+
+    # app_two.before_server_start(before_start)
+    # app_two.after_server_start(after_start)
+    # app_two.before_server_stop(before_stop)
+    # app_two.after_server_stop(after_stop)
+
+    @app_two.before_server_start
+    async def before_server_start(*_):
+        print(">>>> before_server_start")
+
+    run_multi(app_one)
+
+    # before_start.assert_awaited_once()
+    # after_start.assert_awaited_once()
+    # before_stop.assert_awaited_once()
+    # after_stop.assert_awaited_once()

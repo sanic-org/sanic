@@ -72,14 +72,12 @@ def test_unix_socket_creation(caplog):
     assert not os.path.exists(SOCKPATH)
 
 
-def test_invalid_paths():
+@pytest.mark.parametrize("path", (".", "no-such-directory/sanictest.sock"))
+def test_invalid_paths(path):
     app = Sanic(name=__name__)
 
-    with pytest.raises(FileExistsError):
-        app.run(unix=".")
-
-    with pytest.raises(FileNotFoundError):
-        app.run(unix="no-such-directory/sanictest.sock")
+    with pytest.raises((FileExistsError, FileNotFoundError)):
+        app.run(unix=path)
 
 
 def test_dont_replace_file():
@@ -201,7 +199,7 @@ async def test_zero_downtime():
         for _ in range(40):
             async with httpx.AsyncClient(transport=transport) as client:
                 r = await client.get("http://localhost/sleep/0.1")
-                assert r.status_code == 200
+                assert r.status_code == 200, r.content
                 assert r.text == "Slept 0.1 seconds.\n"
 
     def spawn():
@@ -209,6 +207,7 @@ async def test_zero_downtime():
             sys.executable,
             "-m",
             "sanic",
+            "--debug",
             "--unix",
             SOCKPATH,
             "examples.delayed_response.app",

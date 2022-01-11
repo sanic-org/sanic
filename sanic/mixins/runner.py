@@ -139,7 +139,7 @@ class RunnerMixin(metaclass=SanicMeta):
             motd_display=motd_display,
         )
 
-        self.__class__.serve(primary=self)
+        self.__class__.serve(primary=self)  # type: ignore
 
     def prepare(
         self,

@@ -1,3 +1,13 @@
+Version 20.12.4
+===============
+
+Bugfixes
+********
+
+  *
+   `#2366 <https://github.com/sanic-org/sanic/pull/2366>`_
+   websocket dependency for websockets 9.1 security fix
+
 Version 20.12.0
 ===============
 

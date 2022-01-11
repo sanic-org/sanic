@@ -12,10 +12,12 @@ from asyncio import (
     Task,
     ensure_future,
     get_event_loop,
+    get_running_loop,
     wait_for,
 )
 from asyncio.futures import Future
 from collections import defaultdict, deque
+from contextlib import suppress
 from functools import partial
 from inspect import isawaitable
 from socket import socket
@@ -1305,13 +1307,16 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             )
             return
         for task in self.tasks:
-            task.cancel()
+            if task.get_name() != "RunServer":
+                task.cancel()
 
         if timeout is None:
             timeout = self.config.GRACEFUL_SHUTDOWN_TIMEOUT
 
         while len(self._task_registry) and timeout:
-            self.loop.run_until_complete(asyncio.sleep(increment))
+            with suppress(RuntimeError):
+                running_loop = get_running_loop()
+                running_loop.run_until_complete(asyncio.sleep(increment))
             self.purge_tasks()
             timeout -= increment
 

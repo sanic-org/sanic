@@ -6,7 +6,9 @@ import sys
 
 from asyncio import (
     AbstractEventLoop,
+    CancelledError,
     Protocol,
+    all_tasks,
     get_event_loop,
     get_running_loop,
 )
@@ -44,7 +46,6 @@ SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
 
 class RunnerMixin(metaclass=SanicMeta):
-    _secondary_servers: List[AsyncioServer] = []
     _app_registry: Dict[str, Sanic]
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
@@ -363,6 +364,9 @@ class RunnerMixin(metaclass=SanicMeta):
         """
         if self.state.stage is not ServerStage.STOPPED:
             self.shutdown_tasks(timeout=0)
+            for task in all_tasks():
+                if task.get_name() == "RunServer":
+                    task.cancel()
             get_event_loop().stop()
 
     def _helper(
@@ -547,9 +551,12 @@ class RunnerMixin(metaclass=SanicMeta):
             )
             return reloader_helpers.watchdog(1.0, reload_dirs)
 
+        if not primary.state.server_info:
+            for app in apps:
+                app.state.server_info.clear()
+            return
         primary_server_info = primary.state.server_info[0]
         primary.before_server_start(partial(primary._start_servers, apps=apps))
-        primary.before_server_stop(partial(primary._stop_servers, apps=apps))
 
         try:
             primary_server_info.stage = ServerStage.SERVING
@@ -574,9 +581,10 @@ class RunnerMixin(metaclass=SanicMeta):
             )
             raise
         finally:
-            for app in apps:
-                app.state.server_info.clear()
+            primary_server_info.stage = ServerStage.STOPPED
         logger.info("Server Stopped")
+        for app in apps:
+            app.state.server_info.clear()
 
     async def _start_servers(
         self,
@@ -599,26 +607,10 @@ class RunnerMixin(metaclass=SanicMeta):
                     server_info.server = await serve(
                         **server_info.settings, run_async=True
                     )
-                    primary.add_task(self._run_server(app, server_info))
+                    primary.add_task(
+                        self._run_server(app, server_info), name="RunServer"
+                    )
 
-    async def _stop_servers(
-        self,
-        *_,
-        apps: List[Sanic],
-    ) -> None:
-        for app in apps:
-            for server_info in app.state.server_info:
-                if (
-                    server_info.stage is ServerStage.SERVING
-                    and app is not self
-                ):
-                    if not server_info.server:
-                        raise RuntimeError("Could not locate AsyncioServer")
-                    await server_info.server.before_stop()
-                    await server_info.server.close()
-                    await server_info.server.after_stop()
-
-    # @staticmethod
     async def _run_server(
         self,
         app: RunnerMixin,
@@ -634,5 +626,12 @@ class RunnerMixin(metaclass=SanicMeta):
                 await server_info.server.before_start()
                 await server_info.server.after_start()
             await server_info.server.serve_forever()
+        except CancelledError:
+            if not server_info.server:
+                raise RuntimeError("Could not locate AsyncioServer")
+            await server_info.server.before_stop()
+            await server_info.server.close()
+            await server_info.server.after_stop()
         finally:
             server_info.stage = ServerStage.STOPPED
+            server_info.server = None

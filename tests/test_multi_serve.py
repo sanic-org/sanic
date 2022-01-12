@@ -157,9 +157,9 @@ def test_no_applications():
         Sanic.serve()
 
 
-def test_serve_multiple_workers_warning(app_one, app_two, run_multi, capfd):
+def test_oserror_warning(app_one, app_two, run_multi, capfd):
     orig = AsyncioServer.__await__
-    AsyncioServer.__await__ = Mock(side_effect=OSError)
+    AsyncioServer.__await__ = Mock(side_effect=OSError("foo"))
     app_one.prepare(port=23456, workers=2)
     app_two.prepare(port=23457, workers=2)
 
@@ -167,12 +167,35 @@ def test_serve_multiple_workers_warning(app_one, app_two, run_multi, capfd):
 
     captured = capfd.readouterr()
     assert (
-        "An OSError was detected on startup, and one or "
-        "more servers will NOT start. Running multiple "
-        "Sanic applications with multiple workers is not "
-        "supported. Only one secondary application will "
-        "be started. See ___ for more details. \n"
-        "The encountered error was: "
+        "An OSError was detected on startup. The encountered error was: foo"
     ) in captured.err
 
     AsyncioServer.__await__ = orig
+
+
+def test_running_multiple_offset_warning(app_one, app_two, run_multi, capfd):
+    app_one.prepare(port=23456, workers=2)
+    app_two.prepare(port=23457)
+
+    run_multi(app_one)
+
+    captured = capfd.readouterr()
+    assert (
+        f"The primary application {repr(app_one)} is running "
+        "with 2 worker(s). All "
+        "application instances will run with the same number. "
+        f"You requested {repr(app_two)} to run with "
+        "1 worker(s), which will be ignored "
+        "in favor of the primary application."
+    ) in captured.err
+
+
+def test_running_multiple_secondary(app_one, app_two, run_multi, capfd):
+    app_one.prepare(port=23456, workers=2)
+    app_two.prepare(port=23457)
+
+    before_start = AsyncMock()
+    app_two.before_server_start(before_start)
+    run_multi(app_one)
+
+    before_start.await_count == 2

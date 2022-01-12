@@ -594,6 +594,28 @@ class RunnerMixin(metaclass=SanicMeta):
         apps: List[Sanic],
     ) -> None:
         for app in apps:
+            if (
+                app.name is not primary.name
+                and app.state.workers != primary.state.workers
+                and app.state.server_info
+            ):
+                message = (
+                    f"The primary application {repr(primary)} is running "
+                    f"with {primary.state.workers} worker(s). All "
+                    "application instances will run with the same number. "
+                    f"You requested {repr(app)} to run with "
+                    f"{app.state.workers} worker(s), which will be ignored "
+                    "in favor of the primary application."
+                )
+                if sys.stdout.isatty():
+                    message = "".join(
+                        [
+                            Colors.YELLOW,
+                            message,
+                            Colors.END,
+                        ]
+                    )
+                error_logger.warning(message, exc_info=True)
             for server_info in app.state.server_info:
                 if server_info.stage is not ServerStage.SERVING:
                     app.state.primary = False
@@ -616,19 +638,17 @@ class RunnerMixin(metaclass=SanicMeta):
 
                     try:
                         server_info.server = await serve(
-                            **server_info.settings, run_async=True
+                            **server_info.settings,
+                            run_async=True,
+                            reuse_port=bool(primary.state.workers - 1),
                         )
-                    except OSError as e:
+                    except OSError as e:  # no cov
                         first_message = (
-                            "An OSError was detected on startup, and one or "
-                            "more servers will NOT start. Running multiple "
-                            "Sanic applications with multiple workers is not "
-                            "supported. Only one secondary application will "
-                            "be started. See ___ for more details. \n"
+                            "An OSError was detected on startup. "
                             "The encountered error was: "
                         )
                         second_message = str(e)
-                        if sys.stdout.isatty():  # no cov
+                        if sys.stdout.isatty():
                             message_parts = [
                                 Colors.YELLOW,
                                 first_message,

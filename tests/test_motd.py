@@ -1,11 +1,10 @@
 import logging
 import os
 import platform
-import signal
 
 from unittest.mock import Mock
 
-from sanic import __version__
+from sanic import Sanic, __version__
 from sanic.application.logo import BASE_LOGO
 from sanic.application.motd import MOTD, MOTDTTY
 
@@ -87,7 +86,7 @@ def test_motd_display(caplog):
     )
 
 
-def test_reload_dirs(app, run_multi):
+def test_reload_dirs(app):
     app.config.LOGO = None
     app.config.AUTO_RELOAD = True
     app.prepare(reload_dir="./", auto_reload=True, motd_display={"foo": "bar"})
@@ -105,3 +104,4 @@ def test_reload_dirs(app, run_multi):
     assert MOTD.output.call_args.args[3] == {"foo": "bar"}
 
     MOTD.output = existing
+    Sanic._app_registry = {}

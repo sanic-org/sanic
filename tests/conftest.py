@@ -176,13 +176,13 @@ def run_startup(caplog):
 
 
 @pytest.fixture
-def run_multi(caplog):
+def run_multi(caplog, level=logging.DEBUG):
     def run(app):
         @app.after_server_start
         async def stop(app, _):
             app.stop()
 
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(level):
             Sanic.serve()
 
         return caplog.record_tuples

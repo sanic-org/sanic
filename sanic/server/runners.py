@@ -129,7 +129,6 @@ def serve(
     loop.run_until_complete(app._startup())
     loop.run_until_complete(app._server_event("init", "before"))
 
-    print(f"{server_coroutine=}")
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except BaseException:

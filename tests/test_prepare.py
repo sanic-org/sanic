@@ -15,6 +15,7 @@ def no_skip():
     should_auto_reload = Sanic.should_auto_reload
     Sanic.should_auto_reload = Mock(return_value=False)
     yield
+    Sanic._app_registry = {}
     Sanic.should_auto_reload = should_auto_reload
 
 
@@ -33,6 +34,7 @@ def test_motd_display(app: Sanic):
     app.prepare(motd_display={"foo": "bar"})
 
     assert app.config.MOTD_DISPLAY["foo"] == "bar"
+    del app.config.MOTD_DISPLAY["foo"]
 
 
 @pytest.mark.parametrize("dirs", ("./foo", ("./foo", "./bar")))
@@ -63,6 +65,6 @@ def test_fast(app: Sanic, run_multi):
     assert app.state.fast
     assert app.state.workers == workers
 
-    logs = run_multi(app)
+    logs = run_multi(app, logging.INFO)
 
     assert logs[2][2] == f"mode: production, goin' fast w/ {workers} workers"

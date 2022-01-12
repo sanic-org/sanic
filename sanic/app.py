@@ -1212,12 +1212,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
         :param task: future, couroutine or awaitable
         """
-        if name and sys.version_info < (3, 8):  # no cov
-            # name = None
-            error_logger.warning(
-                "Cannot set a name for a task when using Python 3.7. Your "
-                "task will be created without a name."
-            )
         try:
             loop = self.loop  # Will raise SanicError if loop is not started
             return self._loop_add_task(
@@ -1240,12 +1234,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     def get_task(
         self, name: str, *, raise_exception: bool = True
     ) -> Optional[Task]:
-        if sys.version_info < (3, 8):  # no cov
-            error_logger.warning(
-                "This feature (get_task) is only supported on using "
-                "Python 3.8+."
-            )
-            return
         try:
             return self._task_registry[name]
         except KeyError:
@@ -1262,12 +1250,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         *,
         raise_exception: bool = True,
     ) -> None:
-        if sys.version_info < (3, 8):  # no cov
-            error_logger.warning(
-                "This feature (cancel_task) is only supported on using "
-                "Python 3.8+."
-            )
-            return
         task = self.get_task(name, raise_exception=raise_exception)
         if task and not task.cancelled():
             args: Tuple[str, ...] = ()
@@ -1286,12 +1268,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 ...
 
     def purge_tasks(self):
-        if sys.version_info < (3, 8):  # no cov
-            error_logger.warning(
-                "This feature (purge_tasks) is only supported on using "
-                "Python 3.8+."
-            )
-            return
         for task in self.tasks:
             if task.done() or task.cancelled():
                 name = task.get_name()
@@ -1304,12 +1280,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     def shutdown_tasks(
         self, timeout: Optional[float] = None, increment: float = 0.1
     ):
-        if sys.version_info < (3, 8):
-            error_logger.warning(
-                "This feature (shutdown_tasks) is only supported on using "
-                "Python 3.8+."
-            )
-            return
         for task in self.tasks:
             if task.get_name() != "RunServer":
                 task.cancel()
@@ -1326,12 +1296,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
     @property
     def tasks(self):
-        if sys.version_info < (3, 8):  # no cov
-            error_logger.warning(
-                "This feature (tasks) is only supported on using "
-                "Python 3.8+."
-            )
-            return
         return iter(self._task_registry.values())
 
     # -------------------------------------------------------------------- #

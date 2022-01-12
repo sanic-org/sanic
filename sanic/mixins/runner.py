@@ -612,9 +612,33 @@ class RunnerMixin(metaclass=SanicMeta):
                     if not server_info.settings["loop"]:
                         server_info.settings["loop"] = get_running_loop()
 
-                    server_info.server = await serve(
-                        **server_info.settings, run_async=True
-                    )
+                    try:
+                        server_info.server = await serve(
+                            **server_info.settings, run_async=True
+                        )
+                    except OSError as e:
+                        first_message = (
+                            "An OSError was detected on startup, and one or "
+                            "more servers will NOT start. Running multiple "
+                            "Sanic applications with multiple workers is not "
+                            "supported. Only one secondary application will "
+                            "be started. See ___ for more details. \n"
+                            "The encountered error was: "
+                        )
+                        second_message = str(e)
+                        if sys.stdout.isatty():
+                            message_parts = [
+                                Colors.YELLOW,
+                                first_message,
+                                Colors.RED,
+                                second_message,
+                                Colors.END,
+                            ]
+                        else:
+                            message_parts = [first_message, second_message]
+                        message = "".join(message_parts)
+                        error_logger.warning(message, exc_info=True)
+                        continue
                     primary.add_task(
                         self._run_server(app, server_info), name="RunServer"
                     )

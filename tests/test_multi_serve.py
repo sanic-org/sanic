@@ -1,11 +1,12 @@
 import logging
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from sanic import Sanic
 from sanic.response import text
+from sanic.server.async_server import AsyncioServer
 from sanic.signals import Event
 from sanic.touchup.schemes.ode import OptionalDispatchEvent
 
@@ -147,3 +148,24 @@ def test_no_applications():
     message = "Did not find any applications."
     with pytest.raises(RuntimeError, match=message):
         Sanic.serve()
+
+
+def test_serve_multiple_workers_warning(app_one, app_two, run_multi, capfd):
+    orig = AsyncioServer.__await__
+    AsyncioServer.__await__ = Mock(side_effect=OSError)
+    app_one.prepare(port=23456, workers=2)
+    app_two.prepare(port=23457, workers=2)
+
+    run_multi(app_one)
+
+    captured = capfd.readouterr()
+    assert (
+        "An OSError was detected on startup, and one or "
+        "more servers will NOT start. Running multiple "
+        "Sanic applications with multiple workers is not "
+        "supported. Only one secondary application will "
+        "be started. See ___ for more details. \n"
+        "The encountered error was: "
+    ) in captured.err
+
+    AsyncioServer.__await__ = orig

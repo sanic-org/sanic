@@ -1168,12 +1168,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if not isinstance(task, Future):
             prepped = cls._prep_task(task, app, loop)
             if sys.version_info < (3, 8):  # no cov
+                task = loop.create_task(prepped)
                 if name:
                     error_logger.warning(
                         "Cannot set a name for a task when using Python 3.7. "
                         "Your task will be created without a name."
                     )
-                task = loop.create_task(prepped)
+                task.get_name = lambda: name
             else:
                 task = loop.create_task(prepped, name=name)
 
@@ -1212,7 +1213,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         :param task: future, couroutine or awaitable
         """
         if name and sys.version_info < (3, 8):  # no cov
-            name = None
+            # name = None
             error_logger.warning(
                 "Cannot set a name for a task when using Python 3.7. Your "
                 "task will be created without a name."

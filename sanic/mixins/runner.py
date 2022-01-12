@@ -12,6 +12,7 @@ from asyncio import (
     get_event_loop,
     get_running_loop,
 )
+from contextlib import suppress
 from functools import partial
 from importlib import import_module
 from pathlib import Path
@@ -365,8 +366,9 @@ class RunnerMixin(metaclass=SanicMeta):
         if self.state.stage is not ServerStage.STOPPED:
             self.shutdown_tasks(timeout=0)
             for task in all_tasks():
-                if task.get_name() == "RunServer":
-                    task.cancel()
+                with suppress(AttributeError):
+                    if task.get_name() == "RunServer":
+                        task.cancel()
             get_event_loop().stop()
 
     def _helper(

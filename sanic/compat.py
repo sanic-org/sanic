@@ -2,7 +2,8 @@ import asyncio
 import os
 import signal
 
-from sys import argv
+from asyncio import Task
+from sys import argv, version_info
 
 from multidict import CIMultiDict  # type: ignore
 
@@ -65,6 +66,20 @@ else:
         return aio_open(file, mode, **kwargs)
 
     CancelledErrors = tuple([asyncio.CancelledError])
+
+
+if version_info < (3, 8):
+
+    class NamedTask(Task):
+        def get_name(self):
+            return "foo"
+
+    try:
+        import _asyncio
+    except ImportError:
+        asyncio.tasks.Task = NamedTask
+    else:
+        _asyncio.Task = NamedTask
 
 
 def ctrlc_workaround_for_windows(app):

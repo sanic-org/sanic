@@ -2,15 +2,19 @@ import asyncio
 import sys
 
 from asyncio.tasks import Task
-from unittest.mock import AsyncMock, Mock, call
+from unittest.mock import Mock, call
 
 import pytest
 
 from sanic.app import Sanic
 from sanic.application.state import ApplicationServerInfo, ServerStage
 from sanic.response import empty
-from sanic.server.async_server import AsyncioServer
 
+
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    ...
 
 pytestmark = pytest.mark.asyncio
 
@@ -22,6 +26,9 @@ async def dummy(n=0):
 
 
 @pytest.fixture(autouse=True)
+@pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
+)
 def mark_app_running(app: Sanic):
     app.state.server_info.append(
         ApplicationServerInfo(

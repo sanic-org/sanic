@@ -228,7 +228,7 @@ class RunnerMixin(metaclass=SanicMeta):
             self.state.fast = True
             try:
                 workers = len(os.sched_getaffinity(0))
-            except AttributeError:
+            except AttributeError:  # no cov
                 workers = os.cpu_count() or 1
 
         server_settings = self._helper(
@@ -628,7 +628,7 @@ class RunnerMixin(metaclass=SanicMeta):
                             "The encountered error was: "
                         )
                         second_message = str(e)
-                        if sys.stdout.isatty():
+                        if sys.stdout.isatty():  # no cov
                             message_parts = [
                                 Colors.YELLOW,
                                 first_message,

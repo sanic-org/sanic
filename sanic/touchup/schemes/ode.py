@@ -51,15 +51,15 @@ class OptionalDispatchEvent(BaseScheme):
             }
             if missing:
                 was_finalized = app.signal_router.finalized
-                if was_finalized:
+                if was_finalized:  # no cov
                     app.signal_router.reset()
                 for event in missing:
                     app.signal(event)(self.noop)
-                if was_finalized:
+                if was_finalized:  # no cov
                     app.signal_router.finalize()
 
     @staticmethod
-    async def noop(**_):
+    async def noop(**_):  # no cov
         ...
 
 

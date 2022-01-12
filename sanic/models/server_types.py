@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-from asyncio import AbstractEventLoop, Protocol
-from dataclasses import dataclass, field
-from socket import socket
-from ssl import SSLContext, SSLObject
+from ssl import SSLObject
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional
 
-from sanic.models.handler_types import ListenerType
 from sanic.models.protocol_types import TransportProtocol
-
-
-if TYPE_CHECKING:
-    from sanic import Sanic
 
 
 class Signal:

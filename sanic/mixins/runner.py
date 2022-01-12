@@ -585,6 +585,8 @@ class RunnerMixin(metaclass=SanicMeta):
         logger.info("Server Stopped")
         for app in apps:
             app.state.server_info.clear()
+            app.router.reset()
+            app.signal_router.reset()
 
     async def _start_servers(
         self,

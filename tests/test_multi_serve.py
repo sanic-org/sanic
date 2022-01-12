@@ -6,6 +6,8 @@ import pytest
 
 from sanic import Sanic
 from sanic.response import text
+from sanic.signals import Event
+from sanic.touchup.schemes.ode import OptionalDispatchEvent
 
 
 @pytest.fixture
@@ -88,18 +90,47 @@ def test_listeners_on_secondary_app(app_one, app_two, run_multi):
     before_stop = AsyncMock()
     after_stop = AsyncMock()
 
-    # app_two.before_server_start(before_start)
-    # app_two.after_server_start(after_start)
-    # app_two.before_server_stop(before_stop)
-    # app_two.after_server_stop(after_stop)
-
-    @app_two.before_server_start
-    async def before_server_start(*_):
-        print(">>>> before_server_start")
+    app_two.before_server_start(before_start)
+    app_two.after_server_start(after_start)
+    app_two.before_server_stop(before_stop)
+    app_two.after_server_stop(after_stop)
 
     run_multi(app_one)
 
-    # before_start.assert_awaited_once()
-    # after_start.assert_awaited_once()
-    # before_stop.assert_awaited_once()
-    # after_stop.assert_awaited_once()
+    before_start.assert_awaited_once()
+    after_start.assert_awaited_once()
+    before_stop.assert_awaited_once()
+    after_stop.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    "events",
+    (
+        (Event.HTTP_LIFECYCLE_BEGIN,),
+        (Event.HTTP_LIFECYCLE_BEGIN, Event.HTTP_LIFECYCLE_COMPLETE),
+        (
+            Event.HTTP_LIFECYCLE_BEGIN,
+            Event.HTTP_LIFECYCLE_COMPLETE,
+            Event.HTTP_LIFECYCLE_REQUEST,
+        ),
+    ),
+)
+def test_signal_synchronization(app_one, app_two, run_multi, events):
+    app_one.prepare(port=23456)
+    app_two.prepare(port=23457)
+
+    for event in events:
+        app_one.signal(event)(AsyncMock())
+
+    run_multi(app_one)
+
+    assert len(app_two.signal_router.routes) == len(events) + 1
+
+    signal_handlers = {
+        signal.handler
+        for signal in app_two.signal_router.routes
+        if signal.name.startswith("http")
+    }
+
+    assert len(signal_handlers) == 1
+    assert list(signal_handlers)[0] is OptionalDispatchEvent.noop

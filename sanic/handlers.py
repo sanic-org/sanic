@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from inspect import signature
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 from sanic.config import Config
 from sanic.errorpages import (
     DEFAULT_FORMAT,
     BaseRenderer,
-    HTMLRenderer,
+    TextRenderer,
     exception_response,
 )
 from sanic.exceptions import (
@@ -35,13 +34,11 @@ class ErrorHandler:
 
     """
 
-    # Beginning in v22.3, the base renderer will be TextRenderer
     def __init__(
         self,
         fallback: Union[str, Default] = _default,
-        base: Type[BaseRenderer] = HTMLRenderer,
+        base: Type[BaseRenderer] = TextRenderer,
     ):
-        self.handlers: List[Tuple[Type[BaseException], RouteHandler]] = []
         self.cached_handlers: Dict[
             Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
         ] = {}
@@ -95,8 +92,8 @@ class ErrorHandler:
     def finalize(
         cls,
         error_handler: ErrorHandler,
+        config: Config,
         fallback: Optional[str] = None,
-        config: Optional[Config] = None,
     ):
         if fallback:
             deprecation(
@@ -107,14 +104,10 @@ class ErrorHandler:
                 22.6,
             )
 
-        if config is None:
-            deprecation(
-                "Starting in v22.3, config will be a required argument "
-                "for ErrorHandler.finalize().",
-                22.3,
-            )
+        if not fallback:
+            fallback = config.FALLBACK_ERROR_FORMAT
 
-        if fallback and fallback != DEFAULT_FORMAT:
+        if fallback != DEFAULT_FORMAT:
             if error_handler._fallback is not _default:
                 error_logger.warning(
                     f"Setting the fallback value to {fallback}. This changes "
@@ -128,26 +121,8 @@ class ErrorHandler:
                 f"Error handler is non-conforming: {type(error_handler)}"
             )
 
-        sig = signature(error_handler.lookup)
-        if len(sig.parameters) == 1:
-            deprecation(
-                "You are using a deprecated error handler. The lookup "
-                "method should accept two positional parameters: "
-                "(exception, route_name: Optional[str]). "
-                "Until you upgrade your ErrorHandler.lookup, Blueprint "
-                "specific exceptions will not work properly. Beginning "
-                "in v22.3, the legacy style lookup method will not "
-                "work at all.",
-                22.3,
-            )
-            legacy_lookup = error_handler._legacy_lookup
-            error_handler._lookup = legacy_lookup  # type: ignore
-
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)
-
-    def _legacy_lookup(self, exception, route_name: Optional[str] = None):
-        return self.lookup(exception)
 
     def add(self, exception, handler, route_names: Optional[List[str]] = None):
         """
@@ -162,9 +137,6 @@ class ErrorHandler:
 
         :return: None
         """
-        # self.handlers is deprecated and will be removed in version 22.3
-        self.handlers.append((exception, handler))
-
         if route_names:
             for route in route_names:
                 self.cached_handlers[(exception, route)] = handler

@@ -1,7 +1,7 @@
 import re
 
 from asyncio import Event, Queue, TimeoutError
-from unittest.mock import AsyncMock, Mock, call
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -9,6 +9,12 @@ from websockets.frames import CTRL_OPCODES, DATA_OPCODES, Frame
 
 from sanic.exceptions import ServerError
 from sanic.server.websockets.frame import WebsocketFrameAssembler
+
+
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from asyncmock import AsyncMock  # type: ignore
 
 
 @pytest.mark.asyncio

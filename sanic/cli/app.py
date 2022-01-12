@@ -79,13 +79,6 @@ Or, a path to a directory to run as a simple HTTP server:
             error_logger.exception("Failed to run app")
 
     def _precheck(self):
-        if self.args.debug and self.main_process:
-            error_logger.warning(
-                "Starting in v22.3, --debug will no "
-                "longer automatically run the auto-reloader.\n  Switch to "
-                "--dev to continue using that functionality."
-            )
-
         # # Custom TLS mismatch handling for better diagnostics
         if self.main_process and (
             # one of cert/key missing
@@ -174,8 +167,9 @@ Or, a path to a directory to run as a simple HTTP server:
             "workers": self.args.workers,
         }
 
-        if self.args.auto_reload:
-            kwargs["auto_reload"] = True
+        for maybe_arg in ("auto_reload", "dev"):
+            if getattr(self.args, maybe_arg, False):
+                kwargs[maybe_arg] = True
 
         if self.args.path:
             if self.args.auto_reload or self.args.debug:

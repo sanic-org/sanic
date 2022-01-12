@@ -1,11 +1,13 @@
 import logging
+import os
 import platform
+import signal
 
 from unittest.mock import Mock
 
 from sanic import __version__
 from sanic.application.logo import BASE_LOGO
-from sanic.application.motd import MOTDTTY
+from sanic.application.motd import MOTD, MOTDTTY
 
 
 def test_logo_base(app, run_startup):
@@ -83,3 +85,23 @@ def test_motd_display(caplog):
   └───────────────────────┴────────┘
 """
     )
+
+
+def test_reload_dirs(app, run_multi):
+    app.config.LOGO = None
+    app.config.AUTO_RELOAD = True
+    app.prepare(reload_dir="./", auto_reload=True, motd_display={"foo": "bar"})
+
+    existing = MOTD.output
+    MOTD.output = Mock()
+
+    app.motd("foo")
+
+    MOTD.output.assert_called_once()
+    assert (
+        MOTD.output.call_args.args[2]["auto-reload"]
+        == f"enabled, {os.getcwd()}"
+    )
+    assert MOTD.output.call_args.args[3] == {"foo": "bar"}
+
+    MOTD.output = existing

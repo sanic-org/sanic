@@ -423,3 +423,15 @@ def test_config_set_methods(app: Sanic, monkeypatch: MonkeyPatch):
 
     app.config.update_config({"FOO": 10})
     post_set.assert_called_once_with("FOO", 10)
+
+
+def test_negative_proxy_count(app: Sanic):
+    app.config.PROXIES_COUNT = -1
+
+    message = (
+        "PROXIES_COUNT cannot be negative. "
+        "https://sanic.readthedocs.io/en/latest/sanic/config.html"
+        "#proxy-configuration"
+    )
+    with pytest.raises(ValueError, match=message):
+        app.prepare()

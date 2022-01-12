@@ -32,21 +32,6 @@ def app_two():
     return app
 
 
-@pytest.fixture
-def run_multi(caplog):
-    def run(app):
-        @app.after_server_start
-        async def stop(app, _):
-            app.stop()
-
-        with caplog.at_level(logging.DEBUG):
-            Sanic.serve()
-
-        return caplog.record_tuples
-
-    return run
-
-
 def test_serve_same_app_multiple_tuples(app_one, run_multi):
     app_one.prepare(port=23456)
     app_one.prepare(port=23457)
@@ -156,3 +141,9 @@ def test_warning_main_process_listeners_on_secondary(
     )
 
     assert ("sanic.error", logging.WARNING, message) in log
+
+
+def test_no_applications():
+    message = "Did not find any applications."
+    with pytest.raises(RuntimeError, match=message):
+        Sanic.serve()

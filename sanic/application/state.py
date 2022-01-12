@@ -13,7 +13,7 @@ from sanic.log import logger
 from sanic.server.async_server import AsyncioServer
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic import Sanic
 
 

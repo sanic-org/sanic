@@ -569,3 +569,8 @@ def test_cannot_run_fast_and_workers(app):
     message = "You cannot use both fast=True and workers=X"
     with pytest.raises(RuntimeError, match=message):
         app.run(fast=True, workers=4)
+
+
+def test_no_workers(app):
+    with pytest.raises(RuntimeError, match="Cannot serve with no workers"):
+        app.run(workers=0)

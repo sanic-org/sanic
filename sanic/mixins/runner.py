@@ -202,7 +202,7 @@ class RunnerMixin(metaclass=SanicMeta):
         if (
             self.__class__.should_auto_reload()
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
+        ):  # no cov
             return
 
         if sock is None:
@@ -397,8 +397,6 @@ class RunnerMixin(metaclass=SanicMeta):
         if not self.state.is_debug:
             self.state.mode = Mode.DEBUG if debug else Mode.PRODUCTION
 
-        # TODO:
-        # - These fields shoudl be made getters of the primary server_info
         self.state.host = host or ""
         self.state.port = port or 0
         self.state.workers = workers
@@ -501,9 +499,6 @@ class RunnerMixin(metaclass=SanicMeta):
                 else self.config.LOGO
             )
 
-            # TODO:
-            # - Fix that the output is displayed in the main process for
-            #   secondary applications
             MOTD.output(logo, serve_location, display, extra)
 
     @property
@@ -538,7 +533,7 @@ class RunnerMixin(metaclass=SanicMeta):
         if not primary:
             try:
                 primary = apps[0]
-            except StopIteration:
+            except IndexError:
                 raise RuntimeError("Did not find any applications.")
 
         # We want to run auto_reload if ANY of the applications have it enabled
@@ -551,7 +546,8 @@ class RunnerMixin(metaclass=SanicMeta):
             )
             return reloader_helpers.watchdog(1.0, reload_dirs)
 
-        if not primary.state.server_info:
+        # This exists primarily for unit testing
+        if not primary.state.server_info:  # no cov
             for app in apps:
                 app.state.server_info.clear()
             return
@@ -562,7 +558,7 @@ class RunnerMixin(metaclass=SanicMeta):
         try:
             primary_server_info.stage = ServerStage.SERVING
 
-            if primary.state.workers > 1 and os.name != "posix":
+            if primary.state.workers > 1 and os.name != "posix":  # no cov
                 logger.warn(
                     f"Multiprocessing is currently not supported on {os.name},"
                     " using workers=1 instead"
@@ -630,7 +626,9 @@ class RunnerMixin(metaclass=SanicMeta):
     ) -> None:
 
         try:
-            if not server_info.server:
+            # We should never get to this point without a server
+            # This is primarily to keep mypy happy
+            if not server_info.server:  # no cov
                 raise RuntimeError("Could not locate AsyncioServer")
             if app.state.stage is ServerStage.STOPPED:
                 server_info.stage = ServerStage.SERVING
@@ -639,7 +637,9 @@ class RunnerMixin(metaclass=SanicMeta):
                 await server_info.server.after_start()
             await server_info.server.serve_forever()
         except CancelledError:
-            if not server_info.server:
+            # We should never get to this point without a server
+            # This is primarily to keep mypy happy
+            if not server_info.server:  # no cov
                 raise RuntimeError("Could not locate AsyncioServer")
             await server_info.server.before_stop()
             await server_info.server.close()

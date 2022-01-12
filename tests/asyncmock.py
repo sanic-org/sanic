@@ -1,43 +1,34 @@
-"""for 3.7 compat"""
+"""
+For 3.7 compat
+
+"""
 
 
-class AsyncMock:
-    """A mock that acts like an async def function."""
+from unittest.mock import Mock
 
-    def __init__(self, return_value=None, return_values=None):
-        if return_values is not None:
-            self._return_value = return_values
-            self._index = 0
-        else:
-            self._return_value = return_value
-            self._index = None
-        self._call_count = 0
-        self._call_args = None
-        self._call_kwargs = None
 
-    @property
-    def call_args(self):
-        return self._call_args
+class AsyncMock(Mock):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.await_count = 0
 
-    @property
-    def call_kwargs(self):
-        return self._call_kwargs
+    def __call__(self, *args, **kwargs):
+        self.call_count += 1
+        parent = super(AsyncMock, self)
 
-    @property
-    def called(self):
-        return self._call_count > 0
+        async def dummy():
+            self.await_count += 1
+            return parent.__call__(*args, **kwargs)
 
-    @property
-    def call_count(self):
-        return self._call_count
+        return dummy()
 
-    async def __call__(self, *args, **kwargs):
-        self._call_args = args
-        self._call_kwargs = kwargs
-        self._call_count += 1
-        if self._index is not None:
-            return_index = self._index
-            self._index += 1
-            return self._return_value[return_index]
-        else:
-            return self._return_value
+    def __await__(self):
+        return self().__await__()
+
+    def assert_awaited_once(self):
+        if not self.await_count == 1:
+            msg = (
+                f"Expected to have been awaited once."
+                f" Awaited {self.await_count} times."
+            )
+            raise AssertionError(msg)

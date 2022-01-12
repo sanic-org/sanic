@@ -1,5 +1,4 @@
 import logging
-import sys
 
 from unittest.mock import Mock
 
@@ -15,7 +14,7 @@ from sanic.touchup.schemes.ode import OptionalDispatchEvent
 try:
     from unittest.mock import AsyncMock
 except ImportError:
-    ...
+    from asyncmock import AsyncMock  # type: ignore
 
 
 @pytest.fixture
@@ -108,9 +107,6 @@ def test_listeners_on_secondary_app(app_one, app_two, run_multi):
         ),
     ),
 )
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 def test_signal_synchronization(app_one, app_two, run_multi, events):
     app_one.prepare(port=23456)
     app_two.prepare(port=23457)
@@ -132,9 +128,6 @@ def test_signal_synchronization(app_one, app_two, run_multi, events):
     assert list(signal_handlers)[0] is OptionalDispatchEvent.noop
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 def test_warning_main_process_listeners_on_secondary(
     app_one, app_two, run_multi
 ):

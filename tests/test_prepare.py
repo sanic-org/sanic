@@ -38,7 +38,7 @@ def test_motd_display(app: Sanic):
 
 
 @pytest.mark.parametrize("dirs", ("./foo", ("./foo", "./bar")))
-def test_reload_dir(app: Sanic, dirs, caplog, run_multi):
+def test_reload_dir(app: Sanic, dirs, caplog):
     messages = []
     with caplog.at_level(logging.WARNING):
         app.prepare(reload_dir=dirs)
@@ -67,4 +67,5 @@ def test_fast(app: Sanic, run_multi):
 
     logs = run_multi(app, logging.INFO)
 
-    assert logs[2][2] == f"mode: production, goin' fast w/ {workers} workers"
+    messages = [m[2] for m in logs]
+    assert f"mode: production, goin' fast w/ {workers} workers" in messages

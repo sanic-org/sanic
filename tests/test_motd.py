@@ -1,8 +1,11 @@
 import logging
 import os
 import platform
+import sys
 
 from unittest.mock import Mock
+
+import pytest
 
 from sanic import Sanic, __version__
 from sanic.application.logo import BASE_LOGO
@@ -86,6 +89,7 @@ def test_motd_display(caplog):
     )
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not on 3.7")
 def test_reload_dirs(app):
     app.config.LOGO = None
     app.config.AUTO_RELOAD = True

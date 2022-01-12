@@ -1,5 +1,4 @@
 import re
-import sys
 
 from asyncio import Event, Queue, TimeoutError
 from unittest.mock import Mock, call
@@ -15,13 +14,10 @@ from sanic.server.websockets.frame import WebsocketFrameAssembler
 try:
     from unittest.mock import AsyncMock
 except ImportError:
-    ...
+    from asyncmock import AsyncMock  # type: ignore
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_message_incomplete_timeout_0():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete = AsyncMock(spec=Event)
@@ -47,9 +43,6 @@ async def test_ws_frame_get_message_in_progress():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_message_incomplete():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete.wait = AsyncMock(return_value=True)
@@ -61,9 +54,6 @@ async def test_ws_frame_get_message_incomplete():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_message():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete.wait = AsyncMock(return_value=True)
@@ -75,9 +65,6 @@ async def test_ws_frame_get_message():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_message_with_timeout():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete.wait = AsyncMock(return_value=True)
@@ -90,9 +77,6 @@ async def test_ws_frame_get_message_with_timeout():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_message_with_timeouterror():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete.wait = AsyncMock(return_value=True)
@@ -106,9 +90,6 @@ async def test_ws_frame_get_message_with_timeouterror():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_not_completed():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete = AsyncMock(spec=Event)
@@ -119,9 +100,6 @@ async def test_ws_frame_get_not_completed():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_not_completed_start():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete = AsyncMock(spec=Event)
@@ -132,9 +110,6 @@ async def test_ws_frame_get_not_completed_start():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_paused():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete = AsyncMock(spec=Event)
@@ -147,9 +122,6 @@ async def test_ws_frame_get_paused():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_get_data():
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_complete = AsyncMock(spec=Event)
@@ -211,9 +183,6 @@ async def test_ws_frame_put_not_fetched(opcode):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("opcode", DATA_OPCODES)
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_put_fetched(opcode):
     assembler = WebsocketFrameAssembler(Mock())
     assembler.message_fetched = AsyncMock()
@@ -240,9 +209,6 @@ async def test_ws_frame_put_message_complete(opcode):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("opcode", DATA_OPCODES)
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="AsyncMock was introduced in 3.8"
-)
 async def test_ws_frame_put_message_into_queue(opcode):
     assembler = WebsocketFrameAssembler(Mock())
     assembler.chunks_queue = AsyncMock(spec=Queue)

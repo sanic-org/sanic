@@ -176,8 +176,8 @@ def run_startup(caplog):
 
 
 @pytest.fixture
-def run_multi(caplog, level=logging.DEBUG):
-    def run(app):
+def run_multi(caplog):
+    def run(app, level=logging.DEBUG):
         @app.after_server_start
         async def stop(app, _):
             app.stop()

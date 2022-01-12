@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from sanic import Sanic
+from sanic import Sanic, response
 from sanic.response import text
 from sanic.server.async_server import AsyncioServer
 from sanic.signals import Event
@@ -145,6 +145,7 @@ def test_warning_main_process_listeners_on_secondary(
 
 
 def test_no_applications():
+    Sanic._app_registry = {}
     message = "Did not find any applications."
     with pytest.raises(RuntimeError, match=message):
         Sanic.serve()

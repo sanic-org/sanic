@@ -134,3 +134,25 @@ def test_signal_synchronization(app_one, app_two, run_multi, events):
 
     assert len(signal_handlers) == 1
     assert list(signal_handlers)[0] is OptionalDispatchEvent.noop
+
+
+def test_warning_main_process_listeners_on_secondary(
+    app_one, app_two, run_multi
+):
+    app_two.main_process_start(AsyncMock())
+    app_two.main_process_stop(AsyncMock())
+    app_one.prepare(port=23456)
+    app_two.prepare(port=23457)
+
+    log = run_multi(app_one)
+
+    message = (
+        f"Sanic found 2 listener(s) on "
+        "secondary applications attached to the main "
+        "process. These will be ignored since main "
+        "process listeners can only be attached to your "
+        "primary application: "
+        f"{repr(app_one)}"
+    )
+
+    assert ("sanic.error", logging.WARNING, message) in log

@@ -555,6 +555,7 @@ class RunnerMixin(metaclass=SanicMeta):
             for app in apps:
                 app.state.server_info.clear()
             return
+
         primary_server_info = primary.state.server_info[0]
         primary.before_server_start(partial(primary._start_servers, apps=apps))
 
@@ -598,10 +599,19 @@ class RunnerMixin(metaclass=SanicMeta):
             for server_info in app.state.server_info:
                 if server_info.stage is not ServerStage.SERVING:
                     app.state.primary = False
-                    # TODO
-                    # - Run main_ listeners
-                    server_info.settings.pop("main_start", None)
-                    server_info.settings.pop("main_stop", None)
+                    handlers = [
+                        *server_info.settings.pop("main_start", []),
+                        *server_info.settings.pop("main_stop", []),
+                    ]
+                    if handlers:
+                        error_logger.warning(
+                            f"Sanic found {len(handlers)} listener(s) on "
+                            "secondary applications attached to the main "
+                            "process. These will be ignored since main "
+                            "process listeners can only be attached to your "
+                            "primary application: "
+                            f"{repr(primary)}"
+                        )
 
                     if not server_info.settings["loop"]:
                         server_info.settings["loop"] = get_running_loop()

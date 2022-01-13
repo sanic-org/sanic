@@ -197,7 +197,7 @@ def test_num_workers(num, cmd):
         expected = (f"mode: production, w/ {num} workers").encode()
 
     assert exitcode != 1
-    assert expected in lines, f"Expected {expected=}\nLines found: {lines}"
+    assert expected in lines, f"Expected {expected}\nLines found: {lines}"
 
 
 @pytest.mark.parametrize("cmd", ("--debug",))

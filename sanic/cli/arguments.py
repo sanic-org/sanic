@@ -181,17 +181,10 @@ class DevelopmentGroup(Group):
             dest="debug",
             action="store_true",
             help=(
-                "Run the server in DEBUG mode. It includes DEBUG logging, "
-                "additional context on exceptions, and other settings "
+                "Run the server in DEBUG mode. It includes DEBUG logging,\n"
+                "additional context on exceptions, and other settings\n"
                 "not-safe for PRODUCTION, but helpful for debugging problems."
             ),
-        )
-        self.container.add_argument(
-            "-d",
-            "--dev",
-            dest="dev",
-            action="store_true",
-            help=("Debug + auto_reload."),
         )
         self.container.add_argument(
             "-r",
@@ -210,6 +203,13 @@ class DevelopmentGroup(Group):
             dest="path",
             action="append",
             help="Extra directories to watch and reload on changes",
+        )
+        self.container.add_argument(
+            "-d",
+            "--dev",
+            dest="dev",
+            action="store_true",
+            help=("debug + auto reload."),
         )
 
 

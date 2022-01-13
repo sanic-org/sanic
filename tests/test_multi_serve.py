@@ -39,6 +39,12 @@ def app_two():
     return app
 
 
+@pytest.fixture(autouse=True)
+def clean():
+    Sanic._app_registry = {}
+    yield
+
+
 def test_serve_same_app_multiple_tuples(app_one, run_multi):
     app_one.prepare(port=23456)
     app_one.prepare(port=23457)

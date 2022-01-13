@@ -169,10 +169,10 @@ def test_host_port_ipv6_loopback(cmd):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
-    firstline = lines[starting_line(lines) + 1]
+    expected = b"Goin' Fast @ http://[::1]:9999"
 
     assert exitcode != 1
-    assert firstline == b"Goin' Fast @ http://[::1]:9999"
+    assert expected in lines
 
 
 @pytest.mark.parametrize(
@@ -191,13 +191,13 @@ def test_num_workers(num, cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
 
-    worker_lines = [
-        line
-        for line in lines
-        if b"Starting worker" in line or b"Stopping worker" in line
-    ]
+    if num == 1:
+        expected = b"mode: production, single worker"
+    else:
+        expected = (f"mode: production, w/ {num} workers").encode()
+
     assert exitcode != 1
-    assert len(worker_lines) == num * 2, f"Lines found: {lines}"
+    assert expected in lines, f"Expected {expected=}\nLines found: {lines}"
 
 
 @pytest.mark.parametrize("cmd", ("--debug",))

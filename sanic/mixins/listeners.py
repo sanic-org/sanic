@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from functools import partial
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union, overload
 
 from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureListener
@@ -26,12 +26,33 @@ class ListenerMixin(metaclass=SanicMeta):
     def _apply_listener(self, listener: FutureListener):
         raise NotImplementedError  # noqa
 
+    @overload
+    def listener(
+        self,
+        listener_or_event: ListenerType[Sanic],
+        event_or_none: str,
+        apply: bool = True,
+    ) -> ListenerType[Sanic]:
+        ...
+
+    @overload
+    def listener(
+        self,
+        listener_or_event: str,
+        event_or_none: None = None,
+        apply: bool = True,
+    ) -> Callable[[ListenerType[Sanic]], ListenerType[Sanic]]:
+        ...
+
     def listener(
         self,
         listener_or_event: Union[ListenerType[Sanic], str],
         event_or_none: Optional[str] = None,
         apply: bool = True,
-    ) -> ListenerType[Sanic]:
+    ) -> Union[
+        ListenerType[Sanic],
+        Callable[[ListenerType[Sanic]], ListenerType[Sanic]],
+    ]:
         """
         Create a listener from a decorated function.
 
@@ -49,7 +70,9 @@ class ListenerMixin(metaclass=SanicMeta):
         :param event: event to listen to
         """
 
-        def register_listener(listener, event):
+        def register_listener(
+            listener: ListenerType[Sanic], event: str
+        ) -> ListenerType[Sanic]:
             nonlocal apply
 
             future_listener = FutureListener(listener, event)
@@ -59,6 +82,8 @@ class ListenerMixin(metaclass=SanicMeta):
             return listener
 
         if callable(listener_or_event):
+            if TYPE_CHECKING:
+                assert event_or_none is not None
             return register_listener(listener_or_event, event_or_none)
         else:
             return partial(register_listener, event=listener_or_event)

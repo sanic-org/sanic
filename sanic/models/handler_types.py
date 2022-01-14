@@ -1,11 +1,13 @@
 from asyncio.events import AbstractEventLoop
 from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
 
+import sanic
+
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
 
-Sanic = TypeVar("Sanic")
+Sanic = TypeVar("Sanic", bound="sanic.Sanic")
 
 MiddlewareResponse = Union[
     Optional[HTTPResponse], Coroutine[Any, Any, Optional[HTTPResponse]]

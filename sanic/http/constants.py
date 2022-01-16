@@ -21,5 +21,6 @@ class Stage(Enum):
 
 
 class HTTP(Enum):
+    AUTO = 0
     VERSION_1 = 1
     VERSION_3 = 3

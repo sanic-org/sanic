@@ -102,7 +102,7 @@ def test_logging_pass_customer_logconfig():
 
 @pytest.mark.parametrize("debug", (True, False))
 def test_log_connection_lost(app, debug, monkeypatch):
-    """ Should not log Connection lost exception on non debug """
+    """Should not log Connection lost exception on non debug"""
     stream = StringIO()
     root = logging.getLogger("sanic.root")
     root.addHandler(logging.StreamHandler(stream))

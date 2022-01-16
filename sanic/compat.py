@@ -20,7 +20,6 @@ if use_trio:
     def stat_async(path):
         return Path(path).stat()
 
-
 else:
     from aiofiles import open as aio_open  # type: ignore
     from aiofiles.os import stat as stat_async  # type: ignore  # noqa: F401

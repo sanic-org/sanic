@@ -1,6 +1,3 @@
-import asyncio
-import sys
-
 from collections import deque, namedtuple
 
 import pytest
@@ -82,14 +79,6 @@ def test_listeners_triggered(app):
     with pytest.warns(UserWarning):
         server.run()
 
-    all_tasks = (
-        asyncio.Task.all_tasks()
-        if sys.version_info < (3, 7)
-        else asyncio.all_tasks(asyncio.get_event_loop())
-    )
-    for task in all_tasks:
-        task.cancel()
-
     assert before_server_start
     assert after_server_start
     assert before_server_stop
@@ -131,14 +120,6 @@ def test_listeners_triggered_async(app):
 
     with pytest.warns(UserWarning):
         server.run()
-
-    all_tasks = (
-        asyncio.Task.all_tasks()
-        if sys.version_info < (3, 7)
-        else asyncio.all_tasks(asyncio.get_event_loop())
-    )
-    for task in all_tasks:
-        task.cancel()
 
     assert before_server_start
     assert after_server_start

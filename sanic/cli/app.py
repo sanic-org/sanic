@@ -172,12 +172,6 @@ Or, a path to a directory to run as a simple HTTP server:
                 kwargs[maybe_arg] = True
 
         if self.args.path:
-            if self.args.auto_reload or self.args.debug:
-                kwargs["reload_dir"] = self.args.path
-            else:
-                error_logger.warning(
-                    "Ignoring '--reload-dir' since auto reloading was not "
-                    "enabled. If you would like to watch directories for "
-                    "changes, consider using --debug or --auto-reload."
-                )
+            kwargs["auto_reload"] = True
+            kwargs["reload_dir"] = self.args.path
         return kwargs

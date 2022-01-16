@@ -1,5 +1,4 @@
 import asyncio
-import sys
 
 from asyncio.tasks import Task
 from unittest.mock import Mock, call
@@ -7,8 +6,14 @@ from unittest.mock import Mock, call
 import pytest
 
 from sanic.app import Sanic
+from sanic.application.state import ApplicationServerInfo, ServerStage
 from sanic.response import empty
 
+
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from asyncmock import AsyncMock  # type: ignore
 
 pytestmark = pytest.mark.asyncio
 
@@ -20,11 +25,14 @@ async def dummy(n=0):
 
 
 @pytest.fixture(autouse=True)
-def mark_app_running(app):
-    app.is_running = True
+def mark_app_running(app: Sanic):
+    app.state.server_info.append(
+        ApplicationServerInfo(
+            stage=ServerStage.SERVING, settings={}, server=AsyncMock()
+        )
+    )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 async def test_add_task_returns_task(app: Sanic):
     task = app.add_task(dummy())
 
@@ -32,7 +40,6 @@ async def test_add_task_returns_task(app: Sanic):
     assert len(app._task_registry) == 0
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 async def test_add_task_with_name(app: Sanic):
     task = app.add_task(dummy(), name="dummy")
 
@@ -44,7 +51,6 @@ async def test_add_task_with_name(app: Sanic):
         assert task in app._task_registry.values()
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 async def test_cancel_task(app: Sanic):
     task = app.add_task(dummy(3), name="dummy")
 
@@ -62,7 +68,6 @@ async def test_cancel_task(app: Sanic):
     assert task.cancelled()
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 async def test_purge_tasks(app: Sanic):
     app.add_task(dummy(3), name="dummy")
 
@@ -75,7 +80,6 @@ async def test_purge_tasks(app: Sanic):
     assert len(app._task_registry) == 0
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 def test_shutdown_tasks_on_app_stop():
     class TestSanic(Sanic):
         shutdown_tasks = Mock()

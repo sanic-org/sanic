@@ -197,7 +197,7 @@ def test_app_enable_websocket(app, websocket_enabled, enable):
     assert app.websocket_enabled == True
 
 
-@patch("sanic.app.WebSocketProtocol")
+@patch("sanic.mixins.runner.WebSocketProtocol")
 def test_app_websocket_parameters(websocket_protocol_mock, app):
     app.config.WEBSOCKET_MAX_SIZE = 44
     app.config.WEBSOCKET_PING_TIMEOUT = 48
@@ -473,13 +473,14 @@ def test_custom_context():
     assert app.ctx == ctx
 
 
-def test_uvloop_config(app, monkeypatch):
+@pytest.mark.parametrize("use", (False, True))
+def test_uvloop_config(app, monkeypatch, use):
     @app.get("/test")
     def handler(request):
         return text("ok")
 
     try_use_uvloop = Mock()
-    monkeypatch.setattr(sanic.app, "try_use_uvloop", try_use_uvloop)
+    monkeypatch.setattr(sanic.mixins.runner, "try_use_uvloop", try_use_uvloop)
 
     # Default config
     app.test_client.get("/test")
@@ -489,14 +490,13 @@ def test_uvloop_config(app, monkeypatch):
         try_use_uvloop.assert_called_once()
 
     try_use_uvloop.reset_mock()
-    app.config["USE_UVLOOP"] = False
+    app.config["USE_UVLOOP"] = use
     app.test_client.get("/test")
-    try_use_uvloop.assert_not_called()
 
-    try_use_uvloop.reset_mock()
-    app.config["USE_UVLOOP"] = True
-    app.test_client.get("/test")
-    try_use_uvloop.assert_called_once()
+    if use:
+        try_use_uvloop.assert_called_once()
+    else:
+        try_use_uvloop.assert_not_called()
 
 
 def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
@@ -506,7 +506,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
     apps[2].config.USE_UVLOOP = True
 
     try_use_uvloop = Mock()
-    monkeypatch.setattr(sanic.app, "try_use_uvloop", try_use_uvloop)
+    monkeypatch.setattr(sanic.mixins.runner, "try_use_uvloop", try_use_uvloop)
 
     loop = asyncio.get_event_loop()
 
@@ -569,3 +569,8 @@ def test_cannot_run_fast_and_workers(app):
     message = "You cannot use both fast=True and workers=X"
     with pytest.raises(RuntimeError, match=message):
         app.run(fast=True, workers=4)
+
+
+def test_no_workers(app):
+    with pytest.raises(RuntimeError, match="Cannot serve with no workers"):
+        app.run(workers=0)

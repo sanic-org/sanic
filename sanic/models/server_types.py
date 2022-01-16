@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ssl import SSLObject
 from types import SimpleNamespace
 from typing import Any, Dict, Optional

@@ -175,6 +175,21 @@ def run_startup(caplog):
     return run
 
 
+@pytest.fixture
+def run_multi(caplog):
+    def run(app, level=logging.DEBUG):
+        @app.after_server_start
+        async def stop(app, _):
+            app.stop()
+
+        with caplog.at_level(level):
+            Sanic.serve()
+
+        return caplog.record_tuples
+
+    return run
+
+
 @pytest.fixture(scope="function")
 def message_in_records():
     def msg_in_log(records: List[LogRecord], msg: str):

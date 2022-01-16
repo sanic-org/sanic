@@ -77,7 +77,7 @@ def _check_file(filename, mtimes):
     return need_reload
 
 
-def watchdog(sleep_interval, app):
+def watchdog(sleep_interval, reload_dirs):
     """Watch project files, restart worker process if a change happened.
 
     :param sleep_interval: interval in second.
@@ -100,7 +100,7 @@ def watchdog(sleep_interval, app):
             changed = set()
             for filename in itertools.chain(
                 _iter_module_files(),
-                *(d.glob("**/*") for d in app.reload_dirs),
+                *(d.glob("**/*") for d in reload_dirs),
             ):
                 try:
                     if _check_file(filename, mtimes):

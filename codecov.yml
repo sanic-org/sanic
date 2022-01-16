@@ -1,0 +1,27 @@
+coverage:
+  status:
+    patch:
+      default:
+        target: auto
+        threshold: 0.75
+    project:
+      default:
+        target: auto
+        threshold: 0.5
+  precision: 3
+codecov:
+  require_ci_to_pass: false
+ignore:
+  - "sanic/__main__.py"
+  - "sanic/compat.py"
+  - "sanic/reloader_helpers.py"
+  - "sanic/simple.py"
+  - "sanic/utils.py"
+  - "sanic/cli"
+  - ".github/"
+  - "changelogs/"
+  - "docker/"
+  - "docs/"
+  - "examples/"
+  - "scripts/"
+  - "tests/"

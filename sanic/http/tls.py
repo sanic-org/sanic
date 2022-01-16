@@ -11,10 +11,10 @@ from ssl import SSLContext
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Union
 
-from sanic.application.state import Mode
+from sanic.application.constants import Mode
 from sanic.constants import DEFAULT_LOCAL_TLS_CERT, DEFAULT_LOCAL_TLS_KEY
 from sanic.exceptions import SanicException
-from sanic.helpers import Default, _default
+from sanic.helpers import Default
 from sanic.log import logger
 
 

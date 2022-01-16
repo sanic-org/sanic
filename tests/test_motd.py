@@ -1,11 +1,15 @@
 import logging
+import os
 import platform
+import sys
 
 from unittest.mock import Mock
 
-from sanic import __version__
+import pytest
+
+from sanic import Sanic, __version__
 from sanic.application.logo import BASE_LOGO
-from sanic.application.motd import MOTDTTY
+from sanic.application.motd import MOTD, MOTDTTY
 
 
 def test_logo_base(app, run_startup):
@@ -83,3 +87,25 @@ def test_motd_display(caplog):
   └───────────────────────┴────────┘
 """
     )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="Not on 3.7")
+def test_reload_dirs(app):
+    app.config.LOGO = None
+    app.config.AUTO_RELOAD = True
+    app.prepare(reload_dir="./", auto_reload=True, motd_display={"foo": "bar"})
+
+    existing = MOTD.output
+    MOTD.output = Mock()
+
+    app.motd("foo")
+
+    MOTD.output.assert_called_once()
+    assert (
+        MOTD.output.call_args.args[2]["auto-reload"]
+        == f"enabled, {os.getcwd()}"
+    )
+    assert MOTD.output.call_args.args[3] == {"foo": "bar"}
+
+    MOTD.output = existing
+    Sanic._app_registry = {}

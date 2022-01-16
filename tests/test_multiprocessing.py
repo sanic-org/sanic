@@ -132,11 +132,11 @@ def test_main_process_event(app, caplog):
         logger.info("main_process_stop")
 
     @app.main_process_start
-    def main_process_start(app, loop):
+    def main_process_start2(app, loop):
         logger.info("main_process_start")
 
     @app.main_process_stop
-    def main_process_stop(app, loop):
+    def main_process_stop2(app, loop):
         logger.info("main_process_stop")
 
     with caplog.at_level(logging.INFO):

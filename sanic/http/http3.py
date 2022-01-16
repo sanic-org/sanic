@@ -3,9 +3,8 @@ from __future__ import annotations
 import asyncio
 
 from abc import ABC
-from ast import Mod
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Callable, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Union
 
 from aioquic.h0.connection import H0_ALPN, H0Connection
 from aioquic.h3.connection import H3_ALPN, H3Connection

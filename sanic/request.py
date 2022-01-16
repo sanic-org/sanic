@@ -50,7 +50,7 @@ class StreamBuffer:
         self._queue = asyncio.Queue(buffer_size)
 
     async def read(self):
-        """ Stop reading when gets None """
+        """Stop reading when gets None"""
         payload = await self._queue.get()
         self._queue.task_done()
         return payload

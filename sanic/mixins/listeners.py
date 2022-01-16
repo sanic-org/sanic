@@ -1,8 +1,9 @@
 from enum import Enum, auto
 from functools import partial
-from typing import TYPE_CHECKING, Callable, List, Optional, Union, overload
+from typing import Callable, List, Optional, Union, overload
 
 from sanic.base.meta import SanicMeta
+from sanic.exceptions import InvalidUsage
 from sanic.models.futures import FutureListener
 from sanic.models.handler_types import ListenerType, Sanic
 
@@ -31,7 +32,7 @@ class ListenerMixin(metaclass=SanicMeta):
         self,
         listener_or_event: ListenerType[Sanic],
         event_or_none: str,
-        apply: bool = True,
+        apply: bool = ...,
     ) -> ListenerType[Sanic]:
         ...
 
@@ -39,8 +40,8 @@ class ListenerMixin(metaclass=SanicMeta):
     def listener(
         self,
         listener_or_event: str,
-        event_or_none: None = None,
-        apply: bool = True,
+        event_or_none: None = ...,
+        apply: bool = ...,
     ) -> Callable[[ListenerType[Sanic]], ListenerType[Sanic]]:
         ...
 
@@ -82,8 +83,10 @@ class ListenerMixin(metaclass=SanicMeta):
             return listener
 
         if callable(listener_or_event):
-            if TYPE_CHECKING:
-                assert event_or_none is not None
+            if event_or_none is None:
+                raise InvalidUsage(
+                    "Invalid event registration: Missing event name."
+                )
             return register_listener(listener_or_event, event_or_none)
         else:
             return partial(register_listener, event=listener_or_event)

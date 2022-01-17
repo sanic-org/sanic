@@ -1179,6 +1179,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 task = loop.create_task(prepped, name=name)
 
         if name and register and sys.version_info > (3, 7):
+            if isinstance(task, Task):
+                task.set_name(name)
             app._task_registry[name] = task
 
         return task

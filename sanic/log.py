@@ -6,7 +6,7 @@ from typing import Any, Dict
 from warnings import warn
 
 
-LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(
+LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     version=1,
     disable_existing_loggers=False,
     loggers={
@@ -57,7 +57,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(
 )
 
 
-class Colors(str, Enum):
+class Colors(str, Enum):  # no cov
     END = "\033[0m"
     BLUE = "\033[01;34m"
     GREEN = "\033[01;32m"
@@ -65,23 +65,23 @@ class Colors(str, Enum):
     RED = "\033[01;31m"
 
 
-logger = logging.getLogger("sanic.root")
+logger = logging.getLogger("sanic.root")  # no cov
 """
 General Sanic logger
 """
 
-error_logger = logging.getLogger("sanic.error")
+error_logger = logging.getLogger("sanic.error")  # no cov
 """
 Logger used by Sanic for error logging
 """
 
-access_logger = logging.getLogger("sanic.access")
+access_logger = logging.getLogger("sanic.access")  # no cov
 """
 Logger used by Sanic for access logging
 """
 
 
-def deprecation(message: str, version: float):
+def deprecation(message: str, version: float):  # no cov
     version_info = f"[DEPRECATION v{version}] "
     if sys.stdout.isatty():
         version_info = f"{Colors.RED}{version_info}"

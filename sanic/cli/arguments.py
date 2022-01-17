@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser, _ArgumentGroup
+from os import getpid
 from typing import List, Optional, Type, Union
 
 from sanic_routing import __version__ as __routing_version__  # type: ignore
@@ -37,6 +38,9 @@ class Group:
         group.add_argument(
             "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
         )
+
+    def prepare(self, args) -> None:
+        ...
 
 
 class GeneralGroup(Group):
@@ -91,20 +95,32 @@ class HTTPVersionGroup(Group):
         group.add_argument(
             "--http",
             dest="http",
+            action="append",
             type=int,
-            default=1,
+            default=0,
             help=(
-                "Which HTTP version to use: HTTP/1.1 or HTTP/3. Value should "
-                "be either 1 or 3 [default 1]"
+                "Which HTTP version to use: HTTP/1.1 or HTTP/3. Value should\n"
+                "be either 0, 1, or 3, where '0' means use whatever versions\n"
+                "are available [default 0]"
             ),
+        )
+        group.add_argument(
+            "-1",
+            dest="http",
+            action="append_const",
+            const=1,
+            help=("Run Sanic server using HTTP/1.1"),
         )
         group.add_argument(
             "-3",
             dest="http",
-            action="store_const",
+            action="append_const",
             const=3,
             help=("Run Sanic server using HTTP/3"),
         )
+
+    def prepare(self, args):
+        print(args.http)
 
 
 class SocketGroup(Group):

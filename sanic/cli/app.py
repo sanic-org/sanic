@@ -59,10 +59,13 @@ Or, a path to a directory to run as a simple HTTP server:
             os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
         )
         self.args: List[Any] = []
+        self.groups: List[Group] = []
 
     def attach(self):
         for group in Group._registry:
-            group.create(self.parser).attach()
+            instance = group.create(self.parser)
+            instance.attach()
+            self.groups.append(instance)
 
     def run(self):
         # This is to provide backwards compat -v to display version
@@ -142,6 +145,8 @@ Or, a path to a directory to run as a simple HTTP server:
         return app
 
     def _build_run_kwargs(self):
+        for group in self.groups:
+            group.prepare(self.args)
         ssl: Union[None, dict, str, list] = []
         if self.args.tlshost:
             ssl.append(None)

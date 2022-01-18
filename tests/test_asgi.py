@@ -82,8 +82,7 @@ def test_listeners_triggered():
     config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
     server = CustomServer(config=config)
 
-    with pytest.warns(UserWarning):
-        server.run()
+    server.run()
 
     all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
     for task in all_tasks:
@@ -132,8 +131,7 @@ def test_listeners_triggered_async(app):
     config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
     server = CustomServer(config=config)
 
-    with pytest.warns(UserWarning):
-        server.run()
+    server.run()
 
     all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
     for task in all_tasks:

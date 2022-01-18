@@ -1,14 +1,15 @@
+from __future__ import annotations
+
 import warnings
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from urllib.parse import quote
-
-import sanic.app  # noqa
 
 from sanic.compat import Header
 from sanic.exceptions import ServerError
 from sanic.helpers import _default
 from sanic.http import Stage
+from sanic.log import logger
 from sanic.models.asgi import ASGIReceive, ASGIScope, ASGISend, MockTransport
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse
@@ -16,30 +17,35 @@ from sanic.server import ConnInfo
 from sanic.server.websockets.connection import WebSocketConnection
 
 
+if TYPE_CHECKING:  # no cov
+    from sanic import Sanic
+
+
 class Lifespan:
-    def __init__(self, asgi_app: "ASGIApp") -> None:
+    def __init__(self, asgi_app: ASGIApp) -> None:
         self.asgi_app = asgi_app
 
-        if (
-            "server.init.before"
-            in self.asgi_app.sanic_app.signal_router.name_index
-        ):
-            warnings.warn(
-                'You have set a listener for "before_server_start" '
-                "in ASGI mode. "
-                "It will be executed as early as possible, but not before "
-                "the ASGI server is started."
-            )
-        if (
-            "server.shutdown.after"
-            in self.asgi_app.sanic_app.signal_router.name_index
-        ):
-            warnings.warn(
-                'You have set a listener for "after_server_stop" '
-                "in ASGI mode. "
-                "It will be executed as late as possible, but not after "
-                "the ASGI server is stopped."
-            )
+        if self.asgi_app.sanic_app.state.verbosity > 0:
+            if (
+                "server.init.before"
+                in self.asgi_app.sanic_app.signal_router.name_index
+            ):
+                logger.debug(
+                    'You have set a listener for "before_server_start" '
+                    "in ASGI mode. "
+                    "It will be executed as early as possible, but not before "
+                    "the ASGI server is started."
+                )
+            if (
+                "server.shutdown.after"
+                in self.asgi_app.sanic_app.signal_router.name_index
+            ):
+                logger.debug(
+                    'You have set a listener for "after_server_stop" '
+                    "in ASGI mode. "
+                    "It will be executed as late as possible, but not after "
+                    "the ASGI server is stopped."
+                )
 
     async def startup(self) -> None:
         """
@@ -88,7 +94,7 @@ class Lifespan:
 
 
 class ASGIApp:
-    sanic_app: "sanic.app.Sanic"
+    sanic_app: Sanic
     request: Request
     transport: MockTransport
     lifespan: Lifespan

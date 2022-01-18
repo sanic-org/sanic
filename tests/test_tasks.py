@@ -79,16 +79,6 @@ async def test_purge_tasks(app: Sanic):
 
     assert len(app._task_registry) == 0
 
-async def test_purge_tasks_when_create_task(app: Sanic):
-    app.add_task(asyncio.create_task(dummy(3)), name="dummy")
-
-    await app.cancel_task("dummy")
-
-    assert len(app._task_registry) == 1
-
-    app.purge_tasks()
-
-    assert len(app._task_registry) == 0
 
 def test_shutdown_tasks_on_app_stop():
     class TestSanic(Sanic):

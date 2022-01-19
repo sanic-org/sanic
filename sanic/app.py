@@ -89,7 +89,7 @@ from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
-from sanic.signals import RESERVED_NAMESPACES, Signal, SignalRouter
+from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 
 

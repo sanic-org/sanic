@@ -35,7 +35,7 @@ def create_listener(listener_name, in_list):
 
 def start_stop_app(random_name_app, **run_kwargs):
     def stop_on_alarm(signum, frame):
-        raise KeyboardInterrupt("SIGINT for sanic to stop gracefully")
+        random_name_app.stop()
 
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(1)
@@ -130,6 +130,9 @@ async def test_trigger_before_events_create_server_missing_event(app):
 def test_create_server_trigger_events(app):
     """Test if create_server can trigger server events"""
 
+    def stop_on_alarm(signum, frame):
+        raise KeyboardInterrupt("...")
+
     flag1 = False
     flag2 = False
     flag3 = False
@@ -137,8 +140,7 @@ def test_create_server_trigger_events(app):
     async def stop(app, loop):
         nonlocal flag1
         flag1 = True
-        await asyncio.sleep(0.1)
-        app.stop()
+        signal.alarm(1)
 
     async def before_stop(app, loop):
         nonlocal flag2
@@ -155,6 +157,8 @@ def test_create_server_trigger_events(app):
     loop = asyncio.get_event_loop()
 
     # Use random port for tests
+
+    signal.signal(signal.SIGALRM, stop_on_alarm)
     with closing(socket()) as sock:
         sock.bind(("127.0.0.1", 0))
 

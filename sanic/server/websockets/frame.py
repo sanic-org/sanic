@@ -9,7 +9,7 @@ from websockets.typing import Data
 from sanic.exceptions import ServerError
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from .impl import WebsocketImplProtocol
 
 UTF8Decoder = codecs.getincrementaldecoder("utf-8")
@@ -37,7 +37,7 @@ class WebsocketFrameAssembler:
         "get_id",
         "put_id",
     )
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # no cov
         protocol: "WebsocketImplProtocol"
         read_mutex: asyncio.Lock
         write_mutex: asyncio.Lock
@@ -131,7 +131,7 @@ class WebsocketFrameAssembler:
             if self.paused:
                 self.protocol.resume_frames()
                 self.paused = False
-            if not self.get_in_progress:
+            if not self.get_in_progress:  # no cov
                 # This should be guarded against with the read_mutex,
                 # exception is here as a failsafe
                 raise ServerError(
@@ -204,7 +204,7 @@ class WebsocketFrameAssembler:
             if self.paused:
                 self.protocol.resume_frames()
                 self.paused = False
-            if not self.get_in_progress:
+            if not self.get_in_progress:  # no cov
                 # This should be guarded against with the read_mutex,
                 # exception is here as a failsafe
                 raise ServerError(
@@ -212,7 +212,7 @@ class WebsocketFrameAssembler:
                     "asynchronous get was in progress."
                 )
             self.get_in_progress = False
-            if not self.message_complete.is_set():
+            if not self.message_complete.is_set():  # no cov
                 # This should be guarded against with the read_mutex,
                 # exception is here as a failsafe
                 raise ServerError(
@@ -220,7 +220,7 @@ class WebsocketFrameAssembler:
                     "message was complete."
                 )
             self.message_complete.clear()
-            if self.message_fetched.is_set():
+            if self.message_fetched.is_set():  # no cov
                 # This should be guarded against with the read_mutex,
                 # and get_in_progress check, this exception is
                 # here as a failsafe

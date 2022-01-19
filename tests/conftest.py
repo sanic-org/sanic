@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import logging
 import random
 import re
@@ -176,6 +175,21 @@ def run_startup(caplog):
     return run
 
 
+@pytest.fixture
+def run_multi(caplog):
+    def run(app, level=logging.DEBUG):
+        @app.after_server_start
+        async def stop(app, _):
+            app.stop()
+
+        with caplog.at_level(level):
+            Sanic.serve()
+
+        return caplog.record_tuples
+
+    return run
+
+
 @pytest.fixture(scope="function")
 def message_in_records():
     def msg_in_log(records: List[LogRecord], msg: str):
@@ -205,7 +219,3 @@ def sanic_ext(ext_instance):  # noqa
     yield sanic_ext
     with suppress(KeyError):
         del sys.modules["sanic_ext"]
-
-
-def encode_basic_auth_credentials(username, password):
-    return base64.b64encode(f"{username}:{password}".encode()).decode("ascii")

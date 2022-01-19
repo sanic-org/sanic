@@ -1,3 +1,4 @@
+import base64
 import logging
 
 from json import dumps as json_dumps
@@ -18,7 +19,10 @@ from sanic import Blueprint, Sanic
 from sanic.exceptions import ServerError
 from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
 from sanic.response import html, json, text
-from tests.conftest import encode_basic_auth_credentials
+
+
+def encode_basic_auth_credentials(username, password):
+    return base64.b64encode(f"{username}:{password}".encode()).decode("ascii")
 
 
 # ------------------------------------------------------------ #

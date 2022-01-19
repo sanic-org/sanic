@@ -520,7 +520,7 @@ class WebsocketImplProtocol:
             self.recv_cancel = asyncio.Future()
             tasks = (
                 self.recv_cancel,
-                asyncio.create_task(self.assembler.get(timeout)),
+                asyncio.ensure_future(self.assembler.get(timeout)),
             )
             done, pending = await asyncio.wait(
                 tasks,
@@ -576,7 +576,7 @@ class WebsocketImplProtocol:
             while True:
                 tasks = (
                     self.recv_cancel,
-                    asyncio.create_task(self.assembler.get(timeout=0)),
+                    asyncio.ensure_future(self.assembler.get(timeout=0)),
                 )
                 done, pending = await asyncio.wait(
                     tasks,

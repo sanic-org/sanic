@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser, _ArgumentGroup
-from os import getpid
 from typing import List, Optional, Type, Union
 
 from sanic_routing import __version__ as __routing_version__  # type: ignore
 
 from sanic import __version__
+from sanic.http.constants import HTTP
 
 
 class Group:
@@ -91,27 +91,27 @@ class HTTPVersionGroup(Group):
     name = "HTTP version"
 
     def attach(self):
-        group = self.container.add_mutually_exclusive_group()
-        group.add_argument(
+        http_values = [http.value for http in HTTP.__members__.values()]
+
+        self.container.add_argument(
             "--http",
             dest="http",
             action="append",
+            choices=http_values,
             type=int,
-            default=0,
             help=(
                 "Which HTTP version to use: HTTP/1.1 or HTTP/3. Value should\n"
-                "be either 0, 1, or 3, where '0' means use whatever versions\n"
-                "are available [default 0]"
+                "be either 1, or 3. [default 1]"
             ),
         )
-        group.add_argument(
+        self.container.add_argument(
             "-1",
             dest="http",
             action="append_const",
             const=1,
             help=("Run Sanic server using HTTP/1.1"),
         )
-        group.add_argument(
+        self.container.add_argument(
             "-3",
             dest="http",
             action="append_const",
@@ -120,7 +120,9 @@ class HTTPVersionGroup(Group):
         )
 
     def prepare(self, args):
-        print(args.http)
+        if not args.http:
+            args.http = [1]
+        args.http = tuple(sorted(set(map(HTTP, args.http)), reverse=True))
 
 
 class SocketGroup(Group):

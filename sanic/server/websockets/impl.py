@@ -518,8 +518,12 @@ class WebsocketImplProtocol:
             )
         try:
             self.recv_cancel = asyncio.Future()
+            tasks = (
+                self.recv_cancel,
+                asyncio.ensure_future(self.assembler.get(timeout)),
+            )
             done, pending = await asyncio.wait(
-                (self.recv_cancel, self.assembler.get(timeout)),
+                tasks,
                 return_when=asyncio.FIRST_COMPLETED,
             )
             done_task = next(iter(done))
@@ -570,8 +574,12 @@ class WebsocketImplProtocol:
             self.can_pause = False
             self.recv_cancel = asyncio.Future()
             while True:
+                tasks = (
+                    self.recv_cancel,
+                    asyncio.ensure_future(self.assembler.get(timeout=0)),
+                )
                 done, pending = await asyncio.wait(
-                    (self.recv_cancel, self.assembler.get(timeout=0)),
+                    tasks,
                     return_when=asyncio.FIRST_COMPLETED,
                 )
                 done_task = next(iter(done))

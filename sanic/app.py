@@ -443,11 +443,6 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         inline: bool = False,
         reverse: bool = False,
     ) -> Coroutine[Any, Any, Awaitable[Any]]:
-        if self.config.get("SKIP_TOUCHUP", False):
-            event_ns = event.split(".", 1)[0]
-            if event_ns in RESERVED_NAMESPACES:
-                fail_not_found = False
-
         return self.signal_router.dispatch(
             event,
             context=context,
@@ -1947,7 +1942,8 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             if not Sanic.test_mode:
                 raise e
 
-    def signalize(self):
+    def signalize(self, allow_fail_builtin=True):
+        self.signal_router.allow_fail_builtin = allow_fail_builtin
         try:
             self.signal_router.finalize()
         except FinalizationError as e:
@@ -1964,7 +1960,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
             self.ext._display()
 
         # Setup routers
-        self.signalize()
+        self.signalize(not self.config.SKIP_TOUCHUP)
         self.finalize()
 
         # TODO: Replace in v22.6 to check against apps in app registry
@@ -1981,7 +1977,7 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
 
         # Startup time optimizations
         ErrorHandler.finalize(self.error_handler, config=self.config)
-        if not self.config.get("SKIP_TOUCHUP", False):
+        if not self.config.SKIP_TOUCHUP:
             TouchUp.run(self)
 
         self.state.is_started = True

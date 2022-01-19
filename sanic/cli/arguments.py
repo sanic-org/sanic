@@ -189,9 +189,9 @@ class DevelopmentGroup(Group):
             action="store_true",
             help=(
                 "Currently is an alias for --debug. But starting in v22.3, \n"
-                "--debug will no longer automatically trigger auto_restart. \n"
-                "However, --dev will continue, effectively making it the \n"
-                "same as debug + auto_reload."
+                "--debug will no longer automatically trigger auto_restart or "
+                "runtime code optimization.\n--dev will continue, effectively "
+                "making it the same as debug + auto_reload + optimization."
             ),
         )
         self.container.add_argument(

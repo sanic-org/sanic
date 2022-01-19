@@ -81,9 +81,9 @@ Or, a path to a directory to run as a simple HTTP server:
     def _precheck(self):
         if self.args.debug and self.main_process:
             error_logger.warning(
-                "Starting in v22.3, --debug will no "
-                "longer automatically run the auto-reloader.\n  Switch to "
-                "--dev to continue using that functionality."
+                "Starting in v22.3, --debug will no longer automatically run "
+                "the auto-reloader or perform runtime code optimization.\n"
+                "Switch to --dev to continue using that functionality."
             )
 
         # # Custom TLS mismatch handling for better diagnostics

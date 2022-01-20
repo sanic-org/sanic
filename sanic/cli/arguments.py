@@ -134,7 +134,6 @@ class SocketGroup(Group):
             "--host",
             dest="host",
             type=str,
-            default="127.0.0.1",
             help="Host address [default 127.0.0.1]",
         )
         self.container.add_argument(
@@ -142,7 +141,6 @@ class SocketGroup(Group):
             "--port",
             dest="port",
             type=int,
-            default=8000,
             help="Port to serve on [default 8000]",
         )
         self.container.add_argument(

@@ -143,6 +143,7 @@ Or, a path to a directory to run as a simple HTTP server:
                     "  Example File: project/sanic_server.py -> app\n"
                     "  Example Module: project.sanic_server.app"
                 )
+                sys.exit(1)
             else:
                 raise e
         return app

@@ -23,3 +23,9 @@ class Stage(Enum):
 class HTTP(IntEnum):
     VERSION_1 = 1
     VERSION_3 = 3
+
+    def display(self) -> str:
+        value = str(self.value)
+        if value == 1:
+            value = "1.1"
+        return f"HTTP/{value}"

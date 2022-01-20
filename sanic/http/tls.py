@@ -3,15 +3,16 @@ from __future__ import annotations
 import os
 import ssl
 import subprocess
+import sys
 
 from contextlib import suppress
-from inspect import currentframe, getframeinfo
 from pathlib import Path
 from ssl import SSLContext
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Union
 
 from sanic.application.constants import Mode
+from sanic.application.spinner import loading
 from sanic.constants import DEFAULT_LOCAL_TLS_CERT, DEFAULT_LOCAL_TLS_KEY
 from sanic.exceptions import SanicException
 from sanic.helpers import Default
@@ -283,15 +284,32 @@ def generate_local_certificate(
 ):
     check_mkcert()
 
-    cmd = [
-        "mkcert",
-        "-key-file",
-        str(key_path),
-        "-cert-file",
-        str(cert_path),
-        localhost,
-    ]
-    subprocess.run(cmd, check=True)
+    if not key_path.parent.exists() or not cert_path.parent.exists():
+        raise SanicException(
+            f"Cannot generate certificate at [{key_path}, {cert_path}]. One "
+            "or more of the directories does not exist."
+        )
+
+    message = "Generating TLS certificate"
+    with loading(message):
+        cmd = [
+            "mkcert",
+            "-key-file",
+            str(key_path),
+            "-cert-file",
+            str(cert_path),
+            localhost,
+        ]
+        resp = subprocess.run(
+            cmd,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    sys.stdout.write("\r" + " " * (len(message) + 4))
+    sys.stdout.flush()
+    sys.stdout.write(resp.stdout)
 
 
 def check_mkcert():

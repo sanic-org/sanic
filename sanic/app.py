@@ -142,7 +142,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         "error_handler",
         "go_fast",
         "listeners",
-        "name",
         "named_request_middleware",
         "named_response_middleware",
         "request_class",

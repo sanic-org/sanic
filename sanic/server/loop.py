@@ -10,7 +10,8 @@ def strtobool(query: str) -> bool:
     """
     reimplement strtobool per PEP 632 and python 3.12 deprecation
 
-    True values are y, yes, t, true, on and 1; false values are n, no, f, false, off and 0. Raises ValueError if val is anything else.
+    True values are y, yes, t, true, on and 1; false values are n, no, f,
+    false, off and 0. Raises ValueError if val is anything else.
     """
     if query.lower() in ["y", "yes", "t", "true", "on", "1"]:
         return True

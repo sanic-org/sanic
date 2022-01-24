@@ -6,10 +6,23 @@ import os
 import re
 import sys
 
-from distutils.util import strtobool
-
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
+
+
+def strtobool(query: str) -> bool:
+    """
+    reimplement strtobool per PEP 632 and python 3.12 deprecation
+
+    True values are y, yes, t, true, on and 1; false values are n, no, f,
+    false, off and 0. Raises ValueError if val is anything else.
+    """
+    if query.lower() in ["y", "yes", "t", "true", "on", "1"]:
+        return True
+    elif query.lower() in ["n", "no", "f", "false", "off", "0"]:
+        return False
+    else:
+        raise ValueError
 
 
 class PyTest(TestCommand):

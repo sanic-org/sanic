@@ -22,8 +22,7 @@ def strtobool(query: str) -> bool:
     elif query.lower() in ["n", "no", "f", "false", "off", "0"]:
         return False
     else:
-        raise ValueError
-
+        raise ValueError(f'String value {query} cannot be converted to bool')
 
 class PyTest(TestCommand):
     """

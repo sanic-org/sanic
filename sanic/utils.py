@@ -11,35 +11,18 @@ from sanic.helpers import import_string
 
 
 def str_to_bool(val: str) -> bool:
-    """Takes string and tries to turn it into bool as human would do.
+    """
+    reimplement strtobool per PEP 632 and python 3.12 deprecation
 
-    If val is in case insensitive (
-        "y", "yes", "yep", "yup", "t",
-        "true", "on", "enable", "enabled", "1"
-    ) returns True.
-    If val is in case insensitive (
-        "n", "no", "f", "false", "off", "disable", "disabled", "0"
-    ) returns False.
-    Else Raise ValueError."""
-
-    val = val.lower()
-    if val in {
-        "y",
-        "yes",
-        "yep",
-        "yup",
-        "t",
-        "true",
-        "on",
-        "enable",
-        "enabled",
-        "1",
-    }:
+    True values are y, yes, t, true, on and 1; false values are n, no, f,
+    false, off and 0. Raises ValueError if val is anything else.
+    """
+    if val.lower() in ["y", "yes", "t", "true", "on", "1"]:
         return True
-    elif val in {"n", "no", "f", "false", "off", "disable", "disabled", "0"}:
+    elif val.lower() in ["n", "no", "f", "false", "off", "0"]:
         return False
     else:
-        raise ValueError(f"Invalid truth value {val}")
+        raise ValueError(f'String value {val} cannot be converted to bool')
 
 
 def load_module_from_file_location(

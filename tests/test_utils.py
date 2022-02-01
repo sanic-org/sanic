@@ -6,6 +6,7 @@ import pytest
 
 from sanic.exceptions import LoadFileException
 from sanic.utils import load_module_from_file_location
+from sanic.utils import str_to_bool as strtobool
 
 
 @pytest.mark.parametrize(
@@ -48,3 +49,20 @@ def test_load_module_from_file_location_using_env():
     module = load_module_from_file_location(location)
 
     assert isinstance(module, ModuleType)
+
+
+@pytest.mark.parametrize(
+    "valid,values",
+    (
+        (True, ["y", "yes", "t", "true", "on", "1", "Y", "yEs", "True"]),
+        (False, ["n", "no", "f", "false", "off", "0", "N", "No", "False"]),
+        (None, ["yyy", "foo"]),
+    ),
+)
+def test_strtobool(valid, values):
+    for value in values:
+        if valid is None:
+            with pytest.raises(ValueError):
+                strtobool(value)
+        else:
+            assert strtobool(value) is valid

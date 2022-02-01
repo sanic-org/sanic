@@ -22,7 +22,7 @@ def str_to_bool(val: str) -> bool:
     elif val.lower() in ["n", "no", "f", "false", "off", "0"]:
         return False
     else:
-        raise ValueError(f'String value {val} cannot be converted to bool')
+        raise ValueError(f"String value {val} cannot be converted to bool")
 
 
 def load_module_from_file_location(

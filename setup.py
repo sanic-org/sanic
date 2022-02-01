@@ -9,8 +9,6 @@ import sys
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
-from sanic.utils import str_to_bool as strtobool
-
 
 class PyTest(TestCommand):
     """
@@ -59,7 +57,7 @@ setup_kwargs = {
         "Build fast. Run fast."
     ),
     "long_description": long_description,
-    "packages": find_packages(),
+    "packages": find_packages(include=[]),
     "package_data": {"sanic": ["py.typed"]},
     "platforms": "any",
     "python_requires": ">=3.7",
@@ -127,6 +125,24 @@ dev_require = tests_require + [
 ]
 
 all_require = list(set(dev_require + docs_require))
+
+# trying to self-refernce this from within sanic prior to install is
+# problematic
+def strtobool(val: str) -> bool:
+    """
+    reimplement strtobool per PEP 632 and python 3.12 deprecation
+
+    True values are y, yes, t, true, on and 1; false values are n, no, f,
+    false, off and 0. Raises ValueError if val is anything else.
+    """
+    if val.lower() in ["y", "yes", "t", "true", "on", "1"]:
+        return True
+    elif val.lower() in ["n", "no", "f", "false", "off", "0"]:
+        return False
+    else:
+        raise ValueError(f'String value {val} cannot be converted to bool')
+
+
 
 if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")

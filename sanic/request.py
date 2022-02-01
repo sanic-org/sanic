@@ -30,6 +30,7 @@ from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
+from httptools.parser.errors import HttpParserInvalidURLError
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
@@ -130,7 +131,12 @@ class Request:
 
         self.raw_url = url_bytes
         # TODO: Content-Encoding detection
-        self._parsed_url = parse_url(url_bytes)
+        try:
+            self._parsed_url = parse_url(url_bytes)
+        except HttpParserInvalidURLError as InvalidURLError:
+            raise InvalidUsage(
+                f"URL is invalid or malformed"
+            ) from InvalidURLError
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
         self.app = app

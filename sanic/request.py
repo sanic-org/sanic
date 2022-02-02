@@ -30,7 +30,7 @@ from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
-from httptools.parser.errors import HttpParserInvalidURLError
+from httptools.parser.errors import HttpParserInvalidURLError # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE

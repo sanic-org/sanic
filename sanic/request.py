@@ -135,7 +135,7 @@ class Request:
             self._parsed_url = parse_url(url_bytes)
         except HttpParserInvalidURLError as InvalidURLError:
             raise InvalidUsage(
-                f"URL is invalid or malformed"
+                "URL is invalid or malformed"
             ) from InvalidURLError
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None

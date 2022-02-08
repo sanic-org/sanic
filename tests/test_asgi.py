@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from collections import deque, namedtuple
 
@@ -6,6 +7,7 @@ import pytest
 import uvicorn
 
 from sanic import Sanic
+from sanic.application.state import Mode
 from sanic.asgi import MockTransport
 from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
 from sanic.request import Request
@@ -44,7 +46,7 @@ def protocol(transport):
     return transport.get_protocol()
 
 
-def test_listeners_triggered():
+def test_listeners_triggered(caplog):
     app = Sanic("app")
     before_server_start = False
     after_server_start = False
@@ -82,8 +84,30 @@ def test_listeners_triggered():
     config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
     server = CustomServer(config=config)
 
-    with pytest.warns(UserWarning):
+    start_message = (
+        'You have set a listener for "before_server_start" in ASGI mode. '
+        "It will be executed as early as possible, but not before the ASGI "
+        "server is started."
+    )
+    stop_message = (
+        'You have set a listener for "after_server_stop" in ASGI mode. '
+        "It will be executed as late as possible, but not after the ASGI "
+        "server is stopped."
+    )
+
+    with caplog.at_level(logging.DEBUG):
         server.run()
+
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        start_message,
+    ) not in caplog.record_tuples
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        stop_message,
+    ) not in caplog.record_tuples
 
     all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
     for task in all_tasks:
@@ -94,8 +118,38 @@ def test_listeners_triggered():
     assert before_server_stop
     assert after_server_stop
 
+    app.state.mode = Mode.DEBUG
+    with caplog.at_level(logging.DEBUG):
+        server.run()
 
-def test_listeners_triggered_async(app):
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        start_message,
+    ) not in caplog.record_tuples
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        stop_message,
+    ) not in caplog.record_tuples
+
+    app.state.verbosity = 2
+    with caplog.at_level(logging.DEBUG):
+        server.run()
+
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        start_message,
+    ) in caplog.record_tuples
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        stop_message,
+    ) in caplog.record_tuples
+
+
+def test_listeners_triggered_async(app, caplog):
     before_server_start = False
     after_server_start = False
     before_server_stop = False
@@ -132,8 +186,30 @@ def test_listeners_triggered_async(app):
     config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
     server = CustomServer(config=config)
 
-    with pytest.warns(UserWarning):
+    start_message = (
+        'You have set a listener for "before_server_start" in ASGI mode. '
+        "It will be executed as early as possible, but not before the ASGI "
+        "server is started."
+    )
+    stop_message = (
+        'You have set a listener for "after_server_stop" in ASGI mode. '
+        "It will be executed as late as possible, but not after the ASGI "
+        "server is stopped."
+    )
+
+    with caplog.at_level(logging.DEBUG):
         server.run()
+
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        start_message,
+    ) not in caplog.record_tuples
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        stop_message,
+    ) not in caplog.record_tuples
 
     all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
     for task in all_tasks:
@@ -143,6 +219,36 @@ def test_listeners_triggered_async(app):
     assert after_server_start
     assert before_server_stop
     assert after_server_stop
+
+    app.state.mode = Mode.DEBUG
+    with caplog.at_level(logging.DEBUG):
+        server.run()
+
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        start_message,
+    ) not in caplog.record_tuples
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        stop_message,
+    ) not in caplog.record_tuples
+
+    app.state.verbosity = 2
+    with caplog.at_level(logging.DEBUG):
+        server.run()
+
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        start_message,
+    ) in caplog.record_tuples
+    assert (
+        "sanic.root",
+        logging.DEBUG,
+        stop_message,
+    ) in caplog.record_tuples
 
 
 def test_non_default_uvloop_config_raises_warning(app):

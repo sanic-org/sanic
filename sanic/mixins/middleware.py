@@ -63,7 +63,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
 
         This is the same as *@app.middleware('response')*.
 
-        :param: middleware: A callable that takes in a response.
+        :param: middleware: A callable that takes in a request and its response.
         """
         if callable(middleware):
             return self.middleware(middleware, "response")

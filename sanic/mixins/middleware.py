@@ -17,7 +17,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
     ):
         """
         Decorate and register middleware to be called before a request
-        is handled or a response sent. Can either be called as
+        is handled or after a response is created. Can either be called as
         *@app.middleware* or *@app.middleware('request')*.
 
         `See user guide re: middleware
@@ -59,7 +59,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
             return partial(self.middleware, attach_to="request")
 
     def on_response(self, middleware=None):
-        """Register a middleware to be called before a response is sent.
+        """Register a middleware to be called after a response is created.
 
         This is the same as *@app.middleware('response')*.
 

@@ -169,7 +169,11 @@ class HttpProtocol(asyncio.Protocol):
         self.request_class = self.app.request_class or Request
         self.is_request_stream = self.app.is_request_stream
         self._is_stream_handler = False
-        self._not_paused = asyncio.Event(loop=deprecated_loop)
+        self._not_paused = (
+            asyncio.Event()
+            if sys.version_info >= (3, 10)
+            else asyncio.Event(loop=deprecated_loop)
+        )
         self._total_request_size = 0
         self._request_timeout_handler = None
         self._response_timeout_handler = None

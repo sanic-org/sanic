@@ -2,6 +2,7 @@ import logging
 import logging.config
 import os
 import re
+import sys
 
 from asyncio import CancelledError, Protocol, ensure_future, get_event_loop
 from collections import defaultdict, deque
@@ -64,6 +65,18 @@ class Sanic:
         # logging
         if configure_logging:
             logging.config.dictConfig(log_config or LOGGING_CONFIG_DEFAULTS)
+
+        if sys.version_info >= (3, 10):
+            error_logger.error(
+                "Unsupported version of Python has been detected.\n\nPython "
+                f"version {sys.version} is not supported by this version of "
+                "Sanic. There is a security advisory that has been issued for "
+                "Sanic v20.12 while running Python 3.10+. You should either "
+                "use a supported version of Python (v3.6 - v3.9) or upgrade "
+                "Sanic to v21+.\n\nPlease see https://github.com/sanic-org/"
+                "sanic/security/advisories/GHSA-7p79-6x2v-5h88 for "
+                "more information.\n"
+            )
 
         self.name = name
         self.asgi = False

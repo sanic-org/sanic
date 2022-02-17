@@ -185,7 +185,9 @@ class RunnerMixin(metaclass=SanicMeta):
     ) -> None:
         if version == 3 and self.state.server_info:
             raise RuntimeError(
-                "Serving multiple HTTP/3 instances is not supported."
+                "Serving HTTP/3 instances as a secondary server is "
+                "not supported. There can only be a single HTTP/3 worker "
+                "and it must be prepared first."
             )
 
         if dev:

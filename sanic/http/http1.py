@@ -333,6 +333,12 @@ class Http(metaclass=TouchUpMeta):
             self.response_func = self.head_response_ignored
 
         headers["connection"] = "keep-alive" if self.keep_alive else "close"
+
+        # This header may be removed or modified by the AltSvcCheck Touchup
+        # service. At server start, we either remove this header from ever
+        # being assigned, or we change the value as required.
+        headers["alt-svc"] = ""
+
         ret = format_http1_response(status, res.processed_headers)
         if data:
             ret += data

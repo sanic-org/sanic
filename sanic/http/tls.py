@@ -234,7 +234,7 @@ def get_ssl_context(app: Sanic, ssl: Optional[SSLContext]) -> SSLContext:
 
     if app.state.mode is Mode.PRODUCTION:
         raise SanicException(
-            "Cannot run Sanic as an HTTP/3 server in PRODUCTION mode "
+            "Cannot run Sanic as an HTTPS server in PRODUCTION mode "
             "without passing a TLS certificate. If you are developing "
             "locally, please enable DEVELOPMENT mode and Sanic will "
             "generate a localhost TLS certificate. For more information "

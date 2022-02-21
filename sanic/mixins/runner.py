@@ -95,6 +95,7 @@ class RunnerMixin(metaclass=SanicMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        auto_cert: bool = False,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -154,6 +155,7 @@ class RunnerMixin(metaclass=SanicMeta):
             fast=fast,
             verbosity=verbosity,
             motd_display=motd_display,
+            auto_cert=auto_cert,
         )
 
         self.__class__.serve(primary=self)  # type: ignore
@@ -182,6 +184,7 @@ class RunnerMixin(metaclass=SanicMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        auto_cert: bool = False,
     ) -> None:
         if version == 3 and self.state.server_info:
             raise RuntimeError(
@@ -267,6 +270,7 @@ class RunnerMixin(metaclass=SanicMeta):
             protocol=protocol,
             backlog=backlog,
             register_sys_signals=register_sys_signals,
+            auto_cert=auto_cert,
         )
         self.state.server_info.append(
             ApplicationServerInfo(settings=server_settings)
@@ -411,6 +415,7 @@ class RunnerMixin(metaclass=SanicMeta):
         backlog: int = 100,
         register_sys_signals: bool = True,
         run_async: bool = False,
+        auto_cert: bool = False,
     ) -> Dict[str, Any]:
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
@@ -427,9 +432,7 @@ class RunnerMixin(metaclass=SanicMeta):
             version = HTTP(version)
 
         ssl = process_to_context(ssl)
-        if version is HTTP.VERSION_3:
-            # TODO:
-            # - Add API option to allow localhost TLS also on HTTP/1.1
+        if version is HTTP.VERSION_3 or auto_cert:
             if TYPE_CHECKING:
                 self = cast(Sanic, self)
             ssl = get_ssl_context(self, ssl)

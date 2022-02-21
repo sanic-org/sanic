@@ -249,7 +249,16 @@ class DevelopmentGroup(Group):
             "--dev",
             dest="dev",
             action="store_true",
-            help=("debug + auto reload."),
+            help=("debug + auto reload"),
+        )
+        self.container.add_argument(
+            "--auto-cert",
+            dest="auto_cert",
+            action="store_true",
+            help=(
+                "Create a temporary TLS certificate for local development "
+                "(requires mkcert)"
+            ),
         )
 
 

@@ -175,6 +175,7 @@ Or, a path to a directory to run as a simple HTTP server:
             "unix": self.args.unix,
             "verbosity": self.args.verbosity or 0,
             "workers": self.args.workers,
+            "auto_cert": self.args.auto_cert,
         }
 
         for maybe_arg in ("auto_reload", "dev"):
@@ -184,4 +185,5 @@ Or, a path to a directory to run as a simple HTTP server:
         if self.args.path:
             kwargs["auto_reload"] = True
             kwargs["reload_dir"] = self.args.path
+
         return kwargs

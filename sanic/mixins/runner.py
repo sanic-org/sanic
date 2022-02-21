@@ -565,35 +565,13 @@ class RunnerMixin(metaclass=SanicMeta):
 
     @property
     def serve_location(self) -> str:
-        # TODO:
-        # - Will show only the primary server information. The state needs to
-        #   reflect only the first server_info.
-        # - Deprecate this property in favor of getter
-        serve_location = ""
-        proto = "http"
-        if self.state.ssl is not None:
-            proto = "https"
-        if self.state.unix:
-            serve_location = f"{self.state.unix} {proto}://..."
-        elif self.state.sock:
-            serve_location = f"{self.state.sock.getsockname()} {proto}://..."
-        elif self.state.host and self.state.port:
-            # colon(:) is legal for a host only in an ipv6 address
-            display_host = (
-                f"[{self.state.host}]"
-                if ":" in self.state.host
-                else self.state.host
-            )
-            serve_location = f"{proto}://{display_host}:{self.state.port}"
-
-        return serve_location
+        server_settings = self.state.server_info[0].settings
+        return self.get_server_location(server_settings)
 
     @staticmethod
     def get_server_location(
         server_settings: Optional[Dict[str, Any]] = None
     ) -> str:
-        # TODO:
-        # - Update server_settings to an obj
         serve_location = ""
         proto = "http"
         if not server_settings:

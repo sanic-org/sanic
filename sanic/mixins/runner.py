@@ -41,7 +41,7 @@ from sanic.compat import OS_IS_WINDOWS
 from sanic.helpers import _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
-from sanic.log import Colors, error_logger, logger
+from sanic.log import Colors, deprecation, error_logger, logger
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
@@ -491,8 +491,11 @@ class RunnerMixin(metaclass=SanicMeta):
         server_settings: Optional[Dict[str, Any]] = None,
     ):
         if serve_location:
-            # TODO: Deprecation warning
-            ...
+            deprecation(
+                "Specifying a serve_location in the MOTD is deprecated and "
+                "will be removed.",
+                22.9,
+            )
         else:
             serve_location = self.get_server_location(server_settings)
         if self.config.MOTD:

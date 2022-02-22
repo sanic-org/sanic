@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
       - main
+      - "*LTS"
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
@@ -15,7 +16,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         config:
-          - { python-version: 3.7, tox-env: type-checking}
+          # - { python-version: 3.7, tox-env: type-checking}
           - { python-version: 3.8, tox-env: type-checking}
           - { python-version: 3.9, tox-env: type-checking}
           - { python-version: "3.10", tox-env: type-checking}

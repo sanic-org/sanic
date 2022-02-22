@@ -21,10 +21,8 @@ class TouchUp:
 
             module = getmodule(target)
             module_globals = dict(getmembers(module))
-
-            for scheme in BaseScheme._registry:
-                modified = scheme(app)(method, module_globals)
-                setattr(target, method_name, modified)
+            modified = BaseScheme.build(method, module_globals, app)
+            setattr(target, method_name, modified)
 
             target.__touched__ = True
 

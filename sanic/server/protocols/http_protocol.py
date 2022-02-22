@@ -8,7 +8,7 @@ from sanic.http.http3 import Http3
 from sanic.touchup.meta import TouchUpMeta
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic.app import Sanic
 
 from asyncio import CancelledError

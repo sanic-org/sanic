@@ -95,8 +95,47 @@ def serve(
     app.asgi = False
 
     if version is HTTP.VERSION_3:
-        return serve_http_3(host, port, app, loop, ssl)
+        return _serve_http_3(host, port, app, loop, ssl)
+    return _serve_http_1(
+        host,
+        port,
+        app,
+        ssl,
+        sock,
+        unix,
+        reuse_port,
+        loop,
+        protocol,
+        backlog,
+        register_sys_signals,
+        run_multiple,
+        run_async,
+        connections,
+        signal,
+        state,
+        asyncio_server_kwargs,
+    )
 
+
+def _serve_http_1(
+    host,
+    port,
+    app,
+    ssl,
+    sock,
+    unix,
+    reuse_port,
+    loop,
+    protocol,
+    backlog,
+    register_sys_signals,
+    run_multiple,
+    run_async,
+    connections,
+    signal,
+    state,
+    asyncio_server_kwargs,
+):
     connections = connections if connections is not None else set()
     protocol_kwargs = _build_protocol_kwargs(protocol, app.config)
     server = partial(
@@ -141,7 +180,7 @@ def serve(
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except BaseException:
-        error_logger.exception("Unable to start server")
+        error_logger.exception("Unable to start server", exc_info=True)
         return
 
     # Ignore SIGINT when run_multiple
@@ -201,7 +240,7 @@ def serve(
         remove_unix_socket(unix)
 
 
-def serve_http_3(
+def _serve_http_3(
     host,
     port,
     app,

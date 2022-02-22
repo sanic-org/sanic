@@ -1,5 +1,4 @@
 import logging
-import warnings
 
 import pytest
 
@@ -34,6 +33,7 @@ class SanicExceptionTestException(Exception):
 @pytest.fixture(scope="module")
 def exception_app():
     app = Sanic("test_exceptions")
+    app.config.FALLBACK_ERROR_FORMAT = "html"
 
     @app.route("/")
     def handler(request):

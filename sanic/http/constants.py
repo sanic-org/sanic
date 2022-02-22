@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class Stage(Enum):
@@ -20,7 +20,7 @@ class Stage(Enum):
     FAILED = 100  # Unrecoverable state (error while sending response)
 
 
-class HTTP(Enum):
+class HTTP(IntEnum):
     VERSION_1 = 1
     VERSION_3 = 3
 

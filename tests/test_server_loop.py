@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from sanic.server import loop
 from sanic.compat import OS_IS_WINDOWS, UVLOOP_INSTALLED
+from sanic.server import loop
 
 
 @pytest.mark.skipif(

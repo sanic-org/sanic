@@ -175,7 +175,6 @@ Or, a path to a directory to run as a simple HTTP server:
             "unix": self.args.unix,
             "verbosity": self.args.verbosity or 0,
             "workers": self.args.workers,
-            "version": version,
             "auto_tls": self.args.auto_tls,
         }
 

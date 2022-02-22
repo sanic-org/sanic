@@ -57,6 +57,20 @@ def test_server_run(appname):
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
+def test_error_with_function_as_instance_with_no_factory():
+    command = ["sanic", "fake.factory.run"]
+    out, err, exitcode = capture(command)
+    assert b"try: sanic fake.factory.run --factory" in err
+    assert exitcode != 1
+
+
+def test_error_with_path_as_instance_without_simple():
+    command = ["sanic", "./fake/"]
+    out, err, exitcode = capture(command)
+    assert b"Please attach --simple to run your app from a directory." in err
+    assert exitcode != 1
+
+
 @pytest.mark.parametrize(
     "cmd",
     (
@@ -249,6 +263,8 @@ def test_access_logs(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     info = read_app_info(lines)
+
+    print(lines)
 
     assert (
         info["access_log"] is expected

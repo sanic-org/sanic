@@ -76,7 +76,12 @@ Or, a path to a directory to run as a simple HTTP server:
             kwargs = self._build_run_kwargs()
             app.run(**kwargs)
         except ValueError:
-            error_logger.exception("Failed to run app")
+            if os.path.isdir(self.args.module):
+                error_logger.exception(
+                    "Please attach --simple to run your app from a directory."
+                )
+            else:
+                error_logger.exception("Failed to run app")
 
     def _precheck(self):
         # # Custom TLS mismatch handling for better diagnostics
@@ -125,9 +130,18 @@ Or, a path to a directory to run as a simple HTTP server:
                 app_type_name = type(app).__name__
 
                 if not isinstance(app, Sanic):
+                    if hasattr(app, "__call__"):
+                        solution = f"sanic {self.args.module} --factory"
+                        raise ValueError(
+                            "Module is not a Sanic app, it is a"
+                            f"{app_type_name}\n"
+                            "  If your function returns a"
+                            f"Sanic instance try: {solution}"
+                        )
+
                     raise ValueError(
                         f"Module is not a Sanic app, it is a {app_type_name}\n"
-                        f"  Perhaps you meant {self.args.module}.app?"
+                        f"  Perhaps you meant {self.args.module}:app?"
                     )
         except ImportError as e:
             if module_name.startswith(e.name):

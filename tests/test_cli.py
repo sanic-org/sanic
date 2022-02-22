@@ -57,14 +57,14 @@ def test_server_run(appname):
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
-def test_error_with_function_as_instance_with_no_factory():
+def test_error_with_function_as_instance_without_factory_arg():
     command = ["sanic", "fake.factory.run"]
     out, err, exitcode = capture(command)
     assert b"try: sanic fake.factory.run --factory" in err
     assert exitcode != 1
 
 
-def test_error_with_path_as_instance_without_simple():
+def test_error_with_path_as_instance_without_simple_arg():
     command = ["sanic", "./fake/"]
     out, err, exitcode = capture(command)
     assert b"Please attach --simple to run your app from a directory." in err

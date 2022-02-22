@@ -264,8 +264,6 @@ def test_access_logs(cmd, expected):
     lines = out.split(b"\n")
     info = read_app_info(lines)
 
-    print(lines)
-
     assert (
         info["access_log"] is expected
     ), f"Lines found: {lines}\nErr output: {err}"

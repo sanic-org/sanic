@@ -207,18 +207,6 @@ class DevelopmentGroup(Group):
             help="Run the server in debug mode",
         )
         self.container.add_argument(
-            "-d",
-            "--dev",
-            dest="debug",
-            action="store_true",
-            help=(
-                "Currently is an alias for --debug. But starting in v22.3, \n"
-                "--debug will no longer automatically trigger auto_restart. \n"
-                "However, --dev will continue, effectively making it the \n"
-                "same as debug + auto_reload."
-            ),
-        )
-        self.container.add_argument(
             "-r",
             "--reload",
             "--auto-reload",
@@ -235,6 +223,22 @@ class DevelopmentGroup(Group):
             dest="path",
             action="append",
             help="Extra directories to watch and reload on changes",
+        )
+        self.container.add_argument(
+            "-d",
+            "--dev",
+            dest="dev",
+            action="store_true",
+            help=("debug + auto reload"),
+        )
+        self.container.add_argument(
+            "--auto-tls",
+            dest="auto_tls",
+            action="store_true",
+            help=(
+                "Create a temporary TLS certificate for local development "
+                "(requires mkcert)"
+            ),
         )
 
 

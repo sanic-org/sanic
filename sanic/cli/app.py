@@ -175,6 +175,7 @@ Or, a path to a directory to run as a simple HTTP server:
             "verbosity": self.args.verbosity or 0,
             "workers": self.args.workers,
             "version": version,
+            "auto_tls": self.args.auto_tls,
         }
 
         if self.args.auto_reload:

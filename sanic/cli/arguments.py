@@ -6,6 +6,7 @@ from typing import List, Optional, Type, Union
 from sanic_routing import __version__ as __routing_version__  # type: ignore
 
 from sanic import __version__
+from sanic.http.constants import HTTP
 
 
 class Group:
@@ -37,6 +38,9 @@ class Group:
         group.add_argument(
             "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
         )
+
+    def prepare(self, args) -> None:
+        ...
 
 
 class GeneralGroup(Group):
@@ -87,24 +91,38 @@ class HTTPVersionGroup(Group):
     name = "HTTP version"
 
     def attach(self):
-        group = self.container.add_mutually_exclusive_group()
-        group.add_argument(
+        http_values = [http.value for http in HTTP.__members__.values()]
+
+        self.container.add_argument(
             "--http",
             dest="http",
+            action="append",
+            choices=http_values,
             type=int,
-            default=1,
             help=(
-                "Which HTTP version to use: HTTP/1.1 or HTTP/3. Value should "
-                "be either 1 or 3 [default 1]"
+                "Which HTTP version to use: HTTP/1.1 or HTTP/3. Value should\n"
+                "be either 1, or 3. [default 1]"
             ),
         )
-        group.add_argument(
+        self.container.add_argument(
+            "-1",
+            dest="http",
+            action="append_const",
+            const=1,
+            help=("Run Sanic server using HTTP/1.1"),
+        )
+        self.container.add_argument(
             "-3",
             dest="http",
-            action="store_const",
+            action="append_const",
             const=3,
             help=("Run Sanic server using HTTP/3"),
         )
+
+    def prepare(self, args):
+        if not args.http:
+            args.http = [1]
+        args.http = tuple(sorted(set(map(HTTP, args.http)), reverse=True))
 
 
 class SocketGroup(Group):
@@ -116,7 +134,6 @@ class SocketGroup(Group):
             "--host",
             dest="host",
             type=str,
-            default="127.0.0.1",
             help="Host address [default 127.0.0.1]",
         )
         self.container.add_argument(
@@ -124,7 +141,6 @@ class SocketGroup(Group):
             "--port",
             dest="port",
             type=int,
-            default=8000,
             help="Port to serve on [default 8000]",
         )
         self.container.add_argument(
@@ -233,7 +249,16 @@ class DevelopmentGroup(Group):
             "--dev",
             dest="dev",
             action="store_true",
-            help=("debug + auto reload."),
+            help=("debug + auto reload"),
+        )
+        self.container.add_argument(
+            "--auto-cert",
+            dest="auto_cert",
+            action="store_true",
+            help=(
+                "Create a temporary TLS certificate for local development "
+                "(requires mkcert)"
+            ),
         )
 
 

@@ -26,8 +26,10 @@ from typing import (
     Literal,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
+    cast,
 )
 
 from sanic import reloader_helpers
@@ -38,8 +40,8 @@ from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS
 from sanic.helpers import _default
 from sanic.http.constants import HTTP
-from sanic.http.tls import process_to_context
-from sanic.log import Colors, error_logger, logger
+from sanic.http.tls import get_ssl_context, process_to_context
+from sanic.log import Colors, deprecation, error_logger, logger
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
@@ -93,6 +95,7 @@ class RunnerMixin(metaclass=SanicMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        auto_cert: bool = False,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -152,6 +155,7 @@ class RunnerMixin(metaclass=SanicMeta):
             fast=fast,
             verbosity=verbosity,
             motd_display=motd_display,
+            auto_cert=auto_cert,
         )
 
         self.__class__.serve(primary=self)  # type: ignore
@@ -180,7 +184,15 @@ class RunnerMixin(metaclass=SanicMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        auto_cert: bool = False,
     ) -> None:
+        if version == 3 and self.state.server_info:
+            raise RuntimeError(
+                "Serving HTTP/3 instances as a secondary server is "
+                "not supported. There can only be a single HTTP/3 worker "
+                "and it must be prepared first."
+            )
+
         if dev:
             debug = True
             auto_reload = True
@@ -222,7 +234,7 @@ class RunnerMixin(metaclass=SanicMeta):
             return
 
         if sock is None:
-            host, port = host or "127.0.0.1", port or 8000
+            host, port = self.get_address(host, port, version)
 
         if protocol is None:
             protocol = (
@@ -258,6 +270,7 @@ class RunnerMixin(metaclass=SanicMeta):
             protocol=protocol,
             backlog=backlog,
             register_sys_signals=register_sys_signals,
+            auto_cert=auto_cert,
         )
         self.state.server_info.append(
             ApplicationServerInfo(settings=server_settings)
@@ -327,7 +340,7 @@ class RunnerMixin(metaclass=SanicMeta):
         """
 
         if sock is None:
-            host, port = host or "127.0.0.1", port or 8000
+            host, port = host, port = self.get_address(host, port)
 
         if protocol is None:
             protocol = (
@@ -402,6 +415,7 @@ class RunnerMixin(metaclass=SanicMeta):
         backlog: int = 100,
         register_sys_signals: bool = True,
         run_async: bool = False,
+        auto_cert: bool = False,
     ) -> Dict[str, Any]:
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
@@ -411,13 +425,17 @@ class RunnerMixin(metaclass=SanicMeta):
                 "#proxy-configuration"
             )
 
+        if not self.state.is_debug:
+            self.state.mode = Mode.DEBUG if debug else Mode.PRODUCTION
+
         if isinstance(version, int):
             version = HTTP(version)
 
         ssl = process_to_context(ssl)
-
-        if not self.state.is_debug:
-            self.state.mode = Mode.DEBUG if debug else Mode.PRODUCTION
+        if version is HTTP.VERSION_3 or auto_cert:
+            if TYPE_CHECKING:
+                self = cast(Sanic, self)
+            ssl = get_ssl_context(self, ssl)
 
         self.state.host = host or ""
         self.state.port = port or 0
@@ -441,7 +459,7 @@ class RunnerMixin(metaclass=SanicMeta):
             "backlog": backlog,
         }
 
-        self.motd(self.serve_location)
+        self.motd(server_settings=server_settings)
 
         if sys.stdout.isatty() and not self.state.is_debug:
             error_logger.warning(
@@ -467,7 +485,19 @@ class RunnerMixin(metaclass=SanicMeta):
 
         return server_settings
 
-    def motd(self, serve_location):
+    def motd(
+        self,
+        serve_location: str = "",
+        server_settings: Optional[Dict[str, Any]] = None,
+    ):
+        if serve_location:
+            deprecation(
+                "Specifying a serve_location in the MOTD is deprecated and "
+                "will be removed.",
+                22.9,
+            )
+        else:
+            serve_location = self.get_server_location(server_settings)
         if self.config.MOTD:
             mode = [f"{self.state.mode},"]
             if self.state.fast:
@@ -480,9 +510,16 @@ class RunnerMixin(metaclass=SanicMeta):
                 else:
                     mode.append(f"w/ {self.state.workers} workers")
 
+            server = ", ".join(
+                (
+                    self.state.server,
+                    server_settings["version"].display(),  # type: ignore
+                )
+            )
+
             display = {
                 "mode": " ".join(mode),
-                "server": self.state.server,
+                "server": server,
                 "python": platform.python_version(),
                 "platform": platform.platform(),
             }
@@ -506,7 +543,9 @@ class RunnerMixin(metaclass=SanicMeta):
                 module_name = package_name.replace("-", "_")
                 try:
                     module = import_module(module_name)
-                    packages.append(f"{package_name}=={module.__version__}")
+                    packages.append(
+                        f"{package_name}=={module.__version__}"  # type: ignore
+                    )
                 except ImportError:
                     ...
 
@@ -526,24 +565,48 @@ class RunnerMixin(metaclass=SanicMeta):
 
     @property
     def serve_location(self) -> str:
+        server_settings = self.state.server_info[0].settings
+        return self.get_server_location(server_settings)
+
+    @staticmethod
+    def get_server_location(
+        server_settings: Optional[Dict[str, Any]] = None
+    ) -> str:
         serve_location = ""
         proto = "http"
-        if self.state.ssl is not None:
+        if not server_settings:
+            return serve_location
+
+        if server_settings["ssl"] is not None:
             proto = "https"
-        if self.state.unix:
-            serve_location = f"{self.state.unix} {proto}://..."
-        elif self.state.sock:
-            serve_location = f"{self.state.sock.getsockname()} {proto}://..."
-        elif self.state.host and self.state.port:
+        if server_settings["unix"]:
+            serve_location = f'{server_settings["unix"]} {proto}://...'
+        elif server_settings["sock"]:
+            serve_location = (
+                f'{server_settings["sock"].getsockname()} {proto}://...'
+            )
+        elif server_settings["host"] and server_settings["port"]:
             # colon(:) is legal for a host only in an ipv6 address
             display_host = (
-                f"[{self.state.host}]"
-                if ":" in self.state.host
-                else self.state.host
+                f'[{server_settings["host"]}]'
+                if ":" in server_settings["host"]
+                else server_settings["host"]
             )
-            serve_location = f"{proto}://{display_host}:{self.state.port}"
+            serve_location = (
+                f'{proto}://{display_host}:{server_settings["port"]}'
+            )
 
         return serve_location
+
+    @staticmethod
+    def get_address(
+        host: Optional[str],
+        port: Optional[int],
+        version: HTTPVersion = HTTP.VERSION_1,
+    ) -> Tuple[str, int]:
+        host = host or "127.0.0.1"
+        port = port or (8443 if version == 3 else 8000)
+        return host, port
 
     @classmethod
     def should_auto_reload(cls) -> bool:

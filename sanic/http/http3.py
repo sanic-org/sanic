@@ -188,9 +188,10 @@ def get_config(app: Sanic, ssl: SSLContext):
         is_client=False,
         max_datagram_frame_size=65536,
     )
-    # TODO:
-    # - add password kwarg, read from config.TLS_CERT_PASSWORD
-    config.load_cert_chain(ssl.sanic["cert"], ssl.sanic["key"])
+    password = app.config.TLS_CERT_PASSWORD or None
+    config.load_cert_chain(
+        ssl.sanic["cert"], ssl.sanic["key"], password=password
+    )
 
     return config
 

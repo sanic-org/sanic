@@ -114,8 +114,8 @@ Or, a path to a directory to run as a simple HTTP server:
                 module_name, app_name = self.args.module.rsplit(delimiter, 1)
 
                 if module_name == "" and os.path.isdir(self.args.module):
-                    raise ValueError("App not found."
-                    "   Please use --simple if you are passing a directory to sanic."
+                    raise ValueError("App not found.\n"
+                    "   Please use --simple if you are passing a directory to sanic.\n"
                     f"   eg. sanic {self.args.module} --simple"
                     )
 
@@ -136,8 +136,8 @@ Or, a path to a directory to run as a simple HTTP server:
                         raise ValueError(
                             "Module is not a Sanic app, it is a"
                             f"{app_type_name}\n"
-                            "  If your function returns a"
-                            f"Sanic instance try: {solution}"
+                            "  If this callable returns a"
+                            f"Sanic instance try: \n{solution}"
                         )
 
                     raise ValueError(

@@ -13,8 +13,9 @@ from typing import (
     Union,
 )
 
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.route import Route
 
+from sanic.http.http3 import HTTPReceiver  # type: ignore
 from sanic.models.http_types import Credentials
 
 
@@ -91,6 +92,7 @@ class Request:
         "_protocol",
         "_remote_addr",
         "_socket",
+        "_stream_id",
         "_match_info",
         "_name",
         "app",
@@ -127,6 +129,7 @@ class Request:
         transport: TransportProtocol,
         app: Sanic,
         head: bytes = b"",
+        stream_id: int = 0,
     ):
 
         self.raw_url = url_bytes
@@ -134,6 +137,7 @@ class Request:
         self._parsed_url = parse_url(url_bytes)
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
+        self._stream_id = stream_id
         self.app = app
 
         self.headers = Header(headers)
@@ -162,7 +166,9 @@ class Request:
         self.request_middleware_started = False
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
-        self.stream: Optional[Http] = None
+        # TODO:
+        # - Create an ABC (called Stream) for Http and HTTPReceiver to subclass
+        self.stream: Optional[Union[Http, HTTPReceiver]] = None
         self.route: Optional[Route] = None
         self._protocol = None
         self.responded: bool = False
@@ -174,6 +180,10 @@ class Request:
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
+
+    @property
+    def stream_id(self):
+        return self._stream_id
 
     def reset_response(self):
         try:

@@ -62,7 +62,8 @@ class Colors(str, Enum):  # no cov
     BLUE = "\033[01;34m"
     GREEN = "\033[01;32m"
     YELLOW = "\033[01;33m"
-    RED = "\033[01;31m"
+    RED = "\033[01;34m"
+    PURPLE = "\033[01;35m"
 
 
 logger = logging.getLogger("sanic.root")  # no cov

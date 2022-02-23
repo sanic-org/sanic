@@ -20,7 +20,7 @@ from aioquic.quic.events import ProtocolNegotiated, QuicEvent
 
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
-from sanic.log import error_logger, logger
+from sanic.log import Colors, error_logger, logger
 from sanic.models.server_types import ConnInfo
 from sanic.request import Request
 from sanic.server.protocols.base_protocol import SanicProtocol
@@ -265,7 +265,9 @@ class Http3Protocol(HttpProtocolMixin, QuicConnectionProtocol):
         self._connection: Optional[H3Connection] = None
 
     def quic_event_received(self, event: QuicEvent) -> None:
-        print("[quic_event_received]:", event)
+        print(
+            f"{Colors.BLUE}[quic_event_received]: {Colors.PURPLE}{event}{Colors.END}"
+        )
         if isinstance(event, ProtocolNegotiated):
             self._setup_connection(transmit=self.transmit)
             if event.alpn_protocol in H3_ALPN:

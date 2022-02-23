@@ -60,7 +60,7 @@ def test_server_run(appname):
 def test_error_with_function_as_instance_without_factory_arg():
     command = ["sanic", "fake.factory.run"]
     out, err, exitcode = capture(command)
-    assert b"try: sanic fake.factory.run --factory" in err
+    assert b"try: \nsanic fake.factory.run --factory" in err
     assert exitcode != 1
 
 

@@ -67,7 +67,9 @@ def test_error_with_function_as_instance_without_factory_arg():
 def test_error_with_path_as_instance_without_simple_arg():
     command = ["sanic", "./fake/"]
     out, err, exitcode = capture(command)
-    assert b"Please use --simple if you are passing a directory to sanic." in err
+    assert (
+        b"Please use --simple if you are passing a directory to sanic." in err
+    )
     assert exitcode != 1
 
 

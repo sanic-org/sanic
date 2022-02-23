@@ -114,9 +114,10 @@ Or, a path to a directory to run as a simple HTTP server:
                 module_name, app_name = self.args.module.rsplit(delimiter, 1)
 
                 if module_name == "" and os.path.isdir(self.args.module):
-                    raise ValueError("App not found.\n"
-                    "   Please use --simple if you are passing a directory to sanic.\n"
-                    f"   eg. sanic {self.args.module} --simple"
+                    raise ValueError(
+                        "App not found.\n"
+                        "   Please use --simple if you are passing a directory to sanic.\n"
+                        f"   eg. sanic {self.args.module} --simple"
                     )
 
                 if app_name.endswith("()"):

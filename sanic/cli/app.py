@@ -131,7 +131,7 @@ Or, a path to a directory to run as a simple HTTP server:
                 app_type_name = type(app).__name__
 
                 if not isinstance(app, Sanic):
-                    if hasattr(app, "__call__"):
+                    if callable(app):
                         solution = f"sanic {self.args.module} --factory"
                         raise ValueError(
                             "Module is not a Sanic app, it is a"

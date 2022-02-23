@@ -76,12 +76,7 @@ Or, a path to a directory to run as a simple HTTP server:
             kwargs = self._build_run_kwargs()
             app.run(**kwargs)
         except ValueError:
-            if os.path.isdir(self.args.module):
-                error_logger.exception(
-                    "Please attach --simple to run your app from a directory."
-                )
-            else:
-                error_logger.exception("Failed to run app")
+            error_logger.exception("Failed to run app")
 
     def _precheck(self):
         # # Custom TLS mismatch handling for better diagnostics
@@ -117,6 +112,12 @@ Or, a path to a directory to run as a simple HTTP server:
             else:
                 delimiter = ":" if ":" in self.args.module else "."
                 module_name, app_name = self.args.module.rsplit(delimiter, 1)
+
+                if module_name == "" and os.path.isdir(self.args.module):
+                    raise ValueError("App not found."
+                    "   Please use --simple if you are passing a directory to sanic."
+                    f"   eg. sanic {self.args.module} --simple"
+                    )
 
                 if app_name.endswith("()"):
                     self.args.factory = True

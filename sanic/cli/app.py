@@ -120,7 +120,10 @@ Or, a path to a directory to run as a simple HTTP server:
                 module = import_module(module_name)
                 app = getattr(module, app_name, None)
                 if self.args.factory:
-                    app = app()
+                    try:
+                        app = app(self.args)
+                    except TypeError:
+                        app = app()
 
                 app_type_name = type(app).__name__
 

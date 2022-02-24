@@ -4,8 +4,7 @@ import asyncio
 
 from abc import ABC, abstractmethod
 from ssl import SSLContext
-from sys import exc_info
-from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 from aioquic.h0.connection import H0_ALPN, H0Connection
 from aioquic.h3.connection import H3_ALPN, H3Connection
@@ -17,30 +16,22 @@ from aioquic.h3.events import (
     WebTransportStreamDataReceived,
 )
 from aioquic.quic.configuration import QuicConfiguration
-
-# from aioquic.quic.events import (
-#     DatagramFrameReceived,
-#     ProtocolNegotiated,
-#     QuicEvent,
-# )
 from aioquic.tls import SessionTicket
 
 from sanic.compat import Header
 from sanic.exceptions import SanicException
+from sanic.helpers import has_message_body
 from sanic.http.tls import CertSimple
 
 
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.request import Request
-    from sanic.response import BaseHTTPResponse, HTTPResponse
+    from sanic.response import BaseHTTPResponse
     from sanic.server.protocols.http_protocol import Http3Protocol
 
-# from sanic.compat import Header
 from sanic.http.constants import Stage
-
-# from sanic.application.state import Mode
-from sanic.log import Colors, error_logger, logger
+from sanic.log import Colors, logger
 
 
 HttpConnection = Union[H0Connection, H3Connection]
@@ -51,6 +42,8 @@ class Transport:
 
 
 class Receiver(ABC):
+    future: asyncio.Future
+
     def __init__(self, transmit, protocol, request: Request) -> None:
         self.transmit = transmit
         self.protocol = protocol
@@ -69,10 +62,11 @@ class HTTPReceiver(Receiver):
         self.request_body = None
         self.stage = Stage.IDLE
         self.headers_sent = False
-        self.response = None
+        self.response: Optional[BaseHTTPResponse] = None
 
     async def run(self):
         self.stage = Stage.HANDLER
+        self.head_only = self.request.method.upper() == "HEAD"
 
         try:
             logger.info(f">>> Request received: {self.request}")
@@ -82,26 +76,57 @@ class HTTPReceiver(Receiver):
             # - Handler errors
             raise
         else:
-            self.stage = Stage.RESPONSE
+            self.stage = Stage.IDLE
+
+    def _prepare_headers(
+        self, response: BaseHTTPResponse
+    ) -> List[Tuple[bytes, bytes]]:
+        size = len(response.body) if response.body else 0
+        headers = response.headers
+        status = response.status
+
+        if not has_message_body(status) and (
+            size
+            or "content-length" in headers
+            or "transfer-encoding" in headers
+        ):
+            headers.pop("content-length", None)
+            headers.pop("transfer-encoding", None)
+            logger.warning(
+                f"Message body set in response on {self.request.path}. "
+                f"A {status} response may only have headers, no body."
+            )
+        elif "content-length" not in headers:
+            if size:
+                headers["content-length"] = size
+            else:
+                headers["transfer-encoding"] = "chunked"
+
+        headers = [
+            (b":status", str(response.status).encode()),
+            *response.processed_headers,
+        ]
+        return headers
 
     def send_headers(self) -> None:
         print(f"{Colors.RED}SEND HEADERS{Colors.END}")
-        response = self.request.stream.response
+        if not self.response:
+            raise Exception("no response")
+
+        response = self.response
+        headers = self._prepare_headers(response)
+
         self.protocol.connection.send_headers(
             stream_id=self.request.stream_id,
-            headers=[
-                (b":status", str(response.status).encode()),
-                *(
-                    (k.encode(), v.encode())
-                    for k, v in response.headers.items()
-                ),
-            ],
+            headers=headers,
         )
         self.headers_sent = True
         self.stage = Stage.RESPONSE
 
-        if self.response.body:
+        if self.response.body and not self.head_only:
             self._send(self.response.body, False)
+        elif self.head_only:
+            self.future.cancel()
 
     def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
         print(f"{Colors.BLUE}[respond]: {Colors.GREEN}{response=}{Colors.END}")
@@ -120,7 +145,8 @@ class HTTPReceiver(Receiver):
 
     async def send(self, data: bytes, end_stream: bool) -> None:
         print(
-            f"{Colors.BLUE}[send]: {Colors.GREEN}{data=} {end_stream=}{Colors.END}"
+            f"{Colors.BLUE}[send]: {Colors.GREEN}{data=} "
+            f"{end_stream=}{Colors.END}"
         )
         self._send(data, end_stream)
 
@@ -133,15 +159,19 @@ class HTTPReceiver(Receiver):
         print(f"{data=}")
 
         # Chunked
-        size = len(data)
-        if end_stream:
-            data = (
-                b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
-                if size
-                else b"0\r\n\r\n"
-            )
-        elif size:
-            data = b"%x\r\n%b\r\n" % (size, data)
+        if (
+            self.response
+            and self.response.headers.get("transfer-encoding") == "chunked"
+        ):
+            size = len(data)
+            if end_stream:
+                data = (
+                    b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
+                    if size
+                    else b"0\r\n\r\n"
+                )
+            elif size:
+                data = b"%x\r\n%b\r\n" % (size, data)
 
         print(f"{Colors.RED}TRANSMITTING{Colors.END}")
         self.protocol.connection.send_data(
@@ -193,7 +223,7 @@ class Http3:
         print(f"{receiver=}")
 
         if isinstance(event, HeadersReceived) and created_new:
-            asyncio.ensure_future(receiver.run())
+            receiver.future = asyncio.ensure_future(receiver.run())
         elif isinstance(event, DataReceived):
             # event.stream_ended
             # TEMP

@@ -226,7 +226,7 @@ class Request:
             response = self.stream.respond(response)
 
             if isawaitable(response):
-                response = await response
+                response = await response  # type: ignore
         # Run response middleware
         try:
             response = await self.app._run_response_middleware(

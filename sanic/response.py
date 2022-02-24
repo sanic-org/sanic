@@ -25,12 +25,12 @@ from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
-from sanic.http.http3 import Http3
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
 if TYPE_CHECKING:
     from sanic.asgi import ASGIApp
+    from sanic.http.http3 import HTTPReceiver
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
@@ -57,7 +57,7 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Optional[Union[Http, ASGIApp, Http3]] = None
+        self.stream: Optional[Union[Http, ASGIApp, HTTPReceiver]] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
@@ -141,7 +141,10 @@ class BaseHTTPResponse:
             if hasattr(data, "encode")
             else data or b""
         )
-        await self.stream.send(data, end_stream=end_stream)
+        await self.stream.send(
+            data,  # type: ignore
+            end_stream=end_stream or False,
+        )
 
 
 class HTTPResponse(BaseHTTPResponse):

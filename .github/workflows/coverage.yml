@@ -7,10 +7,11 @@ on:
     tags:
       - "!*" # Do not execute on tags
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+      - "*LTS"
 jobs:
   test:
-    if: github.event.pull_request.draft == false
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -30,6 +31,7 @@ jobs:
           pip install tox
       - name: Run coverage
         run: tox -e coverage
+        continue-on-error: true
       - uses: codecov/codecov-action@v2
         with:
           files: ./coverage.xml

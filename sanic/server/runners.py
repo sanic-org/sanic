@@ -132,7 +132,7 @@ def serve(
     try:
         http_server = loop.run_until_complete(server_coroutine)
     except BaseException:
-        error_logger.exception("Unable to start server")
+        error_logger.exception("Unable to start server", exc_info=True)
         return
 
     # Ignore SIGINT when run_multiple

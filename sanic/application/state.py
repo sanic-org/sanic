@@ -3,16 +3,17 @@ from __future__ import annotations
 import logging
 
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
 
 from sanic.log import logger
+from sanic.server.async_server import AsyncioServer
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic import Sanic
 
 
@@ -32,6 +33,19 @@ class Mode(StrEnum):
     DEBUG = auto()
 
 
+class ServerStage(IntEnum):
+    STOPPED = auto()
+    PARTIAL = auto()
+    SERVING = auto()
+
+
+@dataclass
+class ApplicationServerInfo:
+    settings: Dict[str, Any]
+    stage: ServerStage = field(default=ServerStage.STOPPED)
+    server: Optional[AsyncioServer] = field(default=None)
+
+
 @dataclass
 class ApplicationState:
     app: Sanic
@@ -45,12 +59,15 @@ class ApplicationState:
     unix: Optional[str] = field(default=None)
     mode: Mode = field(default=Mode.PRODUCTION)
     reload_dirs: Set[Path] = field(default_factory=set)
+    auto_reload: bool = field(default=False)
     server: Server = field(default=Server.SANIC)
     is_running: bool = field(default=False)
     is_started: bool = field(default=False)
     is_stopping: bool = field(default=False)
     verbosity: int = field(default=0)
     workers: int = field(default=0)
+    primary: bool = field(default=True)
+    server_info: List[ApplicationServerInfo] = field(default_factory=list)
 
     # This property relates to the ApplicationState instance and should
     # not be changed except in the __post_init__ method
@@ -77,3 +94,17 @@ class ApplicationState:
     @property
     def is_debug(self):
         return self.mode is Mode.DEBUG
+
+    @property
+    def stage(self) -> ServerStage:
+        if not self.server_info:
+            return ServerStage.STOPPED
+
+        if all(info.stage is ServerStage.SERVING for info in self.server_info):
+            return ServerStage.SERVING
+        elif any(
+            info.stage is ServerStage.SERVING for info in self.server_info
+        ):
+            return ServerStage.PARTIAL
+
+        return ServerStage.STOPPED

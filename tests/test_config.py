@@ -301,6 +301,9 @@ def test_config_access_log_passing_in_run(app: Sanic):
     app.run(port=1340, access_log=False)
     assert app.config.ACCESS_LOG is False
 
+    app.router.reset()
+    app.signal_router.reset()
+
     app.run(port=1340, access_log=True)
     assert app.config.ACCESS_LOG is True
 
@@ -420,3 +423,15 @@ def test_config_set_methods(app: Sanic, monkeypatch: MonkeyPatch):
 
     app.config.update_config({"FOO": 10})
     post_set.assert_called_once_with("FOO", 10)
+
+
+def test_negative_proxy_count(app: Sanic):
+    app.config.PROXIES_COUNT = -1
+
+    message = (
+        "PROXIES_COUNT cannot be negative. "
+        "https://sanic.readthedocs.io/en/latest/sanic/config.html"
+        "#proxy-configuration"
+    )
+    with pytest.raises(ValueError, match=message):
+        app.prepare()

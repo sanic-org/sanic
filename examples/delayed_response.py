@@ -11,7 +11,7 @@ async def handler(request):
     return response.redirect("/sleep/3")
 
 
-@app.get("/sleep/<t:number>")
+@app.get("/sleep/<t:float>")
 async def handler2(request, t=0.3):
     await sleep(t)
     return response.text(f"Slept {t:.1f} seconds.\n")

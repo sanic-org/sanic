@@ -122,7 +122,7 @@ class BaseHTTPResponse:
         :param data: str or bytes to be written
         :param end_stream: whether to close the stream after this block
         """
-        print(f">>> BaseHTTPResponse: {data=} {end_stream=} {self.body=}")
+        print(f">>> BaseHTTPResponse: {data=} {end_stream=}")
         if data is None and end_stream is None:
             end_stream = True
         if self.stream is None:

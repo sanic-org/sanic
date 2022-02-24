@@ -920,6 +920,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 if isawaitable(response):
                     response = await response
 
+            print(f"{response=}", request.responded)
             if request.responded:
                 if response is not None:
                     error_logger.error(
@@ -945,6 +946,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                         "response": response,
                     },
                 )
+                ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
                 resp = await response(request)

@@ -44,11 +44,8 @@ from typing import (
 from urllib.parse import urlencode, urlunparse
 from warnings import filterwarnings
 
-from sanic_routing.exceptions import (  # type: ignore
-    FinalizationError,
-    NotFound,
-)
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.exceptions import FinalizationError, NotFound
+from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
 from sanic.application.state import ApplicationState, Mode, ServerStage

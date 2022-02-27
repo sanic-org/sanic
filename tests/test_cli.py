@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from pyparsing import line
 from sanic_routing import __version__ as __routing_version__
 
 from sanic import __version__
@@ -52,8 +53,10 @@ def test_server_run(appname):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     firstline = lines[starting_line(lines) + 1]
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
     assert exitcode != 1
+    assert lines, error_message
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
@@ -80,6 +83,9 @@ def test_tls_options(cmd):
     out, err, exitcode = capture(command)
     assert exitcode != 1
     lines = out.split(b"\n")
+    error_message = f"Lines found: {lines}\nErr output: {err}"
+
+    assert lines, error_message
     firstline = lines[starting_line(lines) + 1]
     assert firstline == b"Goin' Fast @ https://127.0.0.1:9999"
 
@@ -102,7 +108,9 @@ def test_tls_wrong_options(cmd):
     assert exitcode == 1
     assert not out
     lines = err.decode().split("\n")
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
+    assert lines, error_message
     errmsg = lines[6]
     assert errmsg == "TLS certificates must be specified by either of:"
 
@@ -119,9 +127,11 @@ def test_host_port_localhost(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     expected = b"Goin' Fast @ http://localhost:9999"
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
     assert exitcode != 1
-    assert expected in lines, f"Lines found: {lines}\nErr output: {err}"
+    assert lines, error_message
+    assert expected in lines, error_message
 
 
 @pytest.mark.parametrize(
@@ -136,9 +146,11 @@ def test_host_port_ipv4(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     expected = b"Goin' Fast @ http://127.0.0.127:9999"
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
     assert exitcode != 1
-    assert expected in lines, f"Lines found: {lines}\nErr output: {err}"
+    assert lines, error_message
+    assert expected in lines, error_message
 
 
 @pytest.mark.parametrize(
@@ -153,9 +165,11 @@ def test_host_port_ipv6_any(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     expected = b"Goin' Fast @ http://[::]:9999"
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
     assert exitcode != 1
-    assert expected in lines, f"Lines found: {lines}\nErr output: {err}"
+    assert lines, error_message
+    assert expected in lines, error_message
 
 
 @pytest.mark.parametrize(
@@ -170,9 +184,11 @@ def test_host_port_ipv6_loopback(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     expected = b"Goin' Fast @ http://[::1]:9999"
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
     assert exitcode != 1
-    assert expected in lines, f"Lines found: {lines}\nErr output: {err}"
+    assert lines, error_message
+    assert expected in lines, error_message
 
 
 @pytest.mark.parametrize(
@@ -206,12 +222,12 @@ def test_debug(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     info = read_app_info(lines)
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
-    assert info["debug"] is True, f"Lines found: {lines}\nErr output: {err}"
-    assert (
-        info["auto_reload"] is False
-    ), f"Lines found: {lines}\nErr output: {err}"
-    assert "dev" not in info, f"Lines found: {lines}\nErr output: {err}"
+    assert info, error_message
+    assert info["debug"] is True, error_message
+    assert info["auto_reload"] is False, error_message
+    assert "dev" not in info, error_message
 
 
 @pytest.mark.parametrize("cmd", ("--dev", "-d"))
@@ -220,11 +236,11 @@ def test_dev(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     info = read_app_info(lines)
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
-    assert info["debug"] is True, f"Lines found: {lines}\nErr output: {err}"
-    assert (
-        info["auto_reload"] is True
-    ), f"Lines found: {lines}\nErr output: {err}"
+    assert info, error_message
+    assert info["debug"] is True, error_message
+    assert info["auto_reload"] is True, error_message
 
 
 @pytest.mark.parametrize("cmd", ("--auto-reload", "-r"))
@@ -233,12 +249,12 @@ def test_auto_reload(cmd):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     info = read_app_info(lines)
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
-    assert info["debug"] is False, f"Lines found: {lines}\nErr output: {err}"
-    assert (
-        info["auto_reload"] is True
-    ), f"Lines found: {lines}\nErr output: {err}"
-    assert "dev" not in info, f"Lines found: {lines}\nErr output: {err}"
+    assert info, error_message
+    assert info["debug"] is False, error_message
+    assert info["auto_reload"] is True, error_message
+    assert "dev" not in info, error_message
 
 
 @pytest.mark.parametrize(
@@ -249,10 +265,10 @@ def test_access_logs(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     info = read_app_info(lines)
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
-    assert (
-        info["access_log"] is expected
-    ), f"Lines found: {lines}\nErr output: {err}"
+    assert info, error_message
+    assert info["access_log"] is expected, error_message
 
 
 @pytest.mark.parametrize("cmd", ("--version", "-v"))
@@ -276,7 +292,7 @@ def test_noisy_exceptions(cmd, expected):
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     info = read_app_info(lines)
+    error_message = f"Lines found: {lines}\nErr output: {err}"
 
-    assert (
-        info["noisy_exceptions"] is expected
-    ), f"Lines found: {lines}\nErr output: {err}"
+    assert info, error_message
+    assert info["noisy_exceptions"] is expected, error_message

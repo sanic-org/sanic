@@ -50,6 +50,16 @@ class BaseHTTPResponse:
     The base class for all HTTP Responses
     """
 
+    __slots__ = (
+        "asgi",
+        "body",
+        "content_type",
+        "stream",
+        "status",
+        "headers",
+        "_cookies",
+    )
+
     _dumps = json_dumps
 
     def __init__(self):
@@ -156,7 +166,7 @@ class HTTPResponse(BaseHTTPResponse):
     :type content_type: Optional[str]
     """
 
-    __slots__ = ("body", "status", "content_type", "headers", "_cookies")
+    __slots__ = ()
 
     def __init__(
         self,

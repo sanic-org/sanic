@@ -196,7 +196,22 @@ class Request:
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
-    ):
+    ) -> BaseHTTPResponse:
+        """Respond to the request without returning.
+
+        This method can only be called once, as you can only respond once.
+        It is useful if you wish to respond to the request without returning
+        from the handler.
+
+        If `response` is not passed, a response will be created from the
+        `status`, `headers` and `content_type` keyword arguments.
+
+        :param response: response instance to send
+        :param status: status code to return in the response
+        :param headers: headers to return in the response
+        :param content_type: Content-Type of the response
+        :return: final response sent (may have changed because of middlewares)
+        """
         try:
             if self.stream is not None and self.stream.response:
                 raise ServerError("Second respond call is not allowed.")

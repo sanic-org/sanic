@@ -196,7 +196,7 @@ class Request:
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
-    ):
+    ) -> HTTPResponse:
         """Respond to the request without returning.
 
         This method can only be called once, as you can only respond once.

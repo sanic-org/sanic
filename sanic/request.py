@@ -196,15 +196,29 @@ class Request:
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
-    ) -> HTTPResponse:
+    ):
         """Respond to the request without returning.
 
         This method can only be called once, as you can only respond once.
         It is useful if you wish to respond to the request without returning
-        from the handler.
+        from the handler. In this case, you should be responsible for sending
+        data back to the client directly.
 
-        If `response` is not passed, a response will be created from the
-        `status`, `headers` and `content_type` keyword arguments.
+        .. code-block:: python
+
+            response = await request.respond(content_type="text/csv")
+            await response.send("foo,")
+            await response.send("bar")
+
+        You can control the completion of the response using ``eof()``.
+
+        .. code-block:: python
+
+            await response.eof()
+
+        If ``response` is not passed ``respond`` (like in the previous
+        example), a response object will be created from the ``status``,
+        ``headers`` and ``content_type`` keyword arguments.
 
         :param response: response instance to send
         :param status: status code to return in the response

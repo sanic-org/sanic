@@ -11,6 +11,7 @@ from asyncio import (
     all_tasks,
     get_event_loop,
     get_running_loop,
+    new_event_loop,
 )
 from contextlib import suppress
 from functools import partial
@@ -32,6 +33,7 @@ from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
+from sanic.server.events import trigger_events
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
@@ -538,15 +540,21 @@ class RunnerMixin(metaclass=SanicMeta):
             except IndexError:
                 raise RuntimeError("Did not find any applications.")
 
+        reloader_start = primary.listeners.get("reload_process_start")
+        reloader_stop = primary.listeners.get("reload_process_stop")
         # We want to run auto_reload if ANY of the applications have it enabled
         if (
             cls.should_auto_reload()
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
+        ):  # no cov
+            loop = new_event_loop()
+            trigger_events(reloader_start, loop)
             reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                 *(app.state.reload_dirs for app in apps)
             )
-            return reloader_helpers.watchdog(1.0, reload_dirs)
+            reloader_helpers.watchdog(1.0, reload_dirs)
+            trigger_events(reloader_stop, loop)
+            return
 
         # This exists primarily for unit testing
         if not primary.state.server_info:  # no cov

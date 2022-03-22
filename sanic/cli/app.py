@@ -116,7 +116,8 @@ Or, a path to a directory to run as a simple HTTP server:
                 if module_name == "" and os.path.isdir(self.args.module):
                     raise ValueError(
                         "App not found.\n"
-                        "   Please use --simple if you are passing a directory to sanic.\n"
+                        "   Please use --simple if you are passing a "
+                        "directory to sanic.\n"
                         f"   eg. sanic {self.args.module} --simple"
                     )
 

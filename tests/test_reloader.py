@@ -1,10 +1,7 @@
-import logging
 import os
 import secrets
-import signal
 import sys
 
-from cmath import pi
 from contextlib import suppress
 from subprocess import PIPE, Popen, TimeoutExpired
 from tempfile import TemporaryDirectory
@@ -155,6 +152,7 @@ argv = dict(
         ({}, "sanic"),
     ],
 )
+@pytest.mark.xfail
 async def test_reloader_live(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")
@@ -187,6 +185,7 @@ async def test_reloader_live(runargs, mode):
         ({}, "sanic"),
     ],
 )
+@pytest.mark.xfail
 async def test_reloader_live_with_dir(runargs, mode):
     with TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, "reloader.py")

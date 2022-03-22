@@ -546,7 +546,7 @@ class RunnerMixin(metaclass=SanicMeta):
         if (
             cls.should_auto_reload()
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):
+        ):  # no cov
             loop = new_event_loop()
             trigger_events(reloader_start, loop)
             reload_dirs: Set[Path] = primary.state.reload_dirs.union(

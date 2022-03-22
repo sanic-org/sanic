@@ -17,6 +17,8 @@ class ListenerEvent(str, Enum):
     AFTER_SERVER_STOP = "server.shutdown.after"
     MAIN_PROCESS_START = auto()
     MAIN_PROCESS_STOP = auto()
+    RELOAD_PROCESS_START = auto()
+    RELOAD_PROCESS_STOP = auto()
 
 
 class ListenerMixin(metaclass=SanicMeta):
@@ -72,6 +74,16 @@ class ListenerMixin(metaclass=SanicMeta):
         self, listener: ListenerType[Sanic]
     ) -> ListenerType[Sanic]:
         return self.listener(listener, "main_process_stop")
+
+    def reload_process_start(
+        self, listener: ListenerType[Sanic]
+    ) -> ListenerType[Sanic]:
+        return self.listener(listener, "reload_process_start")
+
+    def reload_process_stop(
+        self, listener: ListenerType[Sanic]
+    ) -> ListenerType[Sanic]:
+        return self.listener(listener, "reload_process_stop")
 
     def before_server_start(
         self, listener: ListenerType[Sanic]

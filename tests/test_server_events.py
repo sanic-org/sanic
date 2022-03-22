@@ -199,3 +199,16 @@ async def test_missing_startup_raises_exception(app):
 
     with pytest.raises(SanicException):
         await srv.before_start()
+
+
+def test_reload_listeners_attached(app):
+    async def dummy(*_):
+        ...
+
+    app.reload_process_start(dummy)
+    app.reload_process_stop(dummy)
+    app.listener("reload_process_start")(dummy)
+    app.listener("reload_process_stop")(dummy)
+
+    assert len(app.listeners.get("reload_process_start")) == 2
+    assert len(app.listeners.get("reload_process_stop")) == 2

@@ -57,6 +57,22 @@ def test_server_run(appname):
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
+def test_error_with_function_as_instance_without_factory_arg():
+    command = ["sanic", "fake.factory.run"]
+    out, err, exitcode = capture(command)
+    assert b"try: \nsanic fake.factory.run --factory" in err
+    assert exitcode != 1
+
+
+def test_error_with_path_as_instance_without_simple_arg():
+    command = ["sanic", "./fake/"]
+    out, err, exitcode = capture(command)
+    assert (
+        b"Please use --simple if you are passing a directory to sanic." in err
+    )
+    assert exitcode != 1
+
+
 @pytest.mark.parametrize(
     "cmd",
     (

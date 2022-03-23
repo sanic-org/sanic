@@ -548,12 +548,12 @@ class RunnerMixin(metaclass=SanicMeta):
             and os.environ.get("SANIC_SERVER_RUNNING") != "true"
         ):  # no cov
             loop = new_event_loop()
-            trigger_events(reloader_start, loop)
+            trigger_events(reloader_start, loop, primary)
             reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                 *(app.state.reload_dirs for app in apps)
             )
             reloader_helpers.watchdog(1.0, reload_dirs)
-            trigger_events(reloader_stop, loop)
+            trigger_events(reloader_stop, loop, primary)
             return
 
         # This exists primarily for unit testing

@@ -33,6 +33,14 @@ def create_listener(listener_name, in_list):
     return _listener
 
 
+def create_listener_no_loop(listener_name, in_list):
+    async def _listener(app):
+        print(f"DEBUG MESSAGE FOR PYTEST for {listener_name}")
+        in_list.insert(0, app.name + listener_name)
+
+    return _listener
+
+
 def start_stop_app(random_name_app, **run_kwargs):
     def stop_on_alarm(signum, frame):
         random_name_app.stop()
@@ -52,6 +60,17 @@ def test_single_listener(app, listener_name):
     output = []
     # Register listener
     app.listener(listener_name)(create_listener(listener_name, output))
+    start_stop_app(app)
+    assert app.name + listener_name == output.pop()
+
+
+@skipif_no_alarm
+@pytest.mark.parametrize("listener_name", AVAILABLE_LISTENERS)
+def test_single_listener_no_loop(app, listener_name):
+    """Test that listeners on their own work"""
+    output = []
+    # Register listener
+    app.listener(listener_name)(create_listener_no_loop(listener_name, output))
     start_stop_app(app)
     assert app.name + listener_name == output.pop()
 

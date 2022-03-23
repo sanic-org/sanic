@@ -1,8 +1,18 @@
+from __future__ import annotations
+
 from inspect import isawaitable
-from typing import Any, Callable, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional
 
 
-def trigger_events(events: Optional[Iterable[Callable[..., Any]]], loop):
+if TYPE_CHECKING:  # no cov
+    from sanic import Sanic
+
+
+def trigger_events(
+    events: Optional[Iterable[Callable[..., Any]]],
+    loop,
+    app: Optional[Sanic] = None,
+):
     """
     Trigger event callbacks (functions or async)
 
@@ -11,6 +21,9 @@ def trigger_events(events: Optional[Iterable[Callable[..., Any]]], loop):
     """
     if events:
         for event in events:
-            result = event(loop)
+            try:
+                result = event() if not app else event(app)
+            except TypeError:
+                result = event(loop) if not app else event(app, loop)
             if isawaitable(result):
                 loop.run_until_complete(result)

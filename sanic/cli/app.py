@@ -113,6 +113,14 @@ Or, a path to a directory to run as a simple HTTP server:
                 delimiter = ":" if ":" in self.args.module else "."
                 module_name, app_name = self.args.module.rsplit(delimiter, 1)
 
+                if module_name == "" and os.path.isdir(self.args.module):
+                    raise ValueError(
+                        "App not found.\n"
+                        "   Please use --simple if you are passing a "
+                        "directory to sanic.\n"
+                        f"   eg. sanic {self.args.module} --simple"
+                    )
+
                 if app_name.endswith("()"):
                     self.args.factory = True
                     app_name = app_name[:-2]
@@ -125,9 +133,18 @@ Or, a path to a directory to run as a simple HTTP server:
                 app_type_name = type(app).__name__
 
                 if not isinstance(app, Sanic):
+                    if callable(app):
+                        solution = f"sanic {self.args.module} --factory"
+                        raise ValueError(
+                            "Module is not a Sanic app, it is a"
+                            f"{app_type_name}\n"
+                            "  If this callable returns a"
+                            f"Sanic instance try: \n{solution}"
+                        )
+
                     raise ValueError(
                         f"Module is not a Sanic app, it is a {app_type_name}\n"
-                        f"  Perhaps you meant {self.args.module}.app?"
+                        f"  Perhaps you meant {self.args.module}:app?"
                     )
         except ImportError as e:
             if module_name.startswith(e.name):

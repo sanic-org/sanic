@@ -142,7 +142,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         "error_handler",
         "go_fast",
         "listeners",
-        "name",
         "named_request_middleware",
         "named_response_middleware",
         "request_class",
@@ -1132,7 +1131,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     async def _listener(
         app: Sanic, loop: AbstractEventLoop, listener: ListenerType
     ):
-        maybe_coro = listener(app, loop)
+        try:
+            maybe_coro = listener(app)  # type: ignore
+        except TypeError:
+            maybe_coro = listener(app, loop)  # type: ignore
         if maybe_coro and isawaitable(maybe_coro):
             await maybe_coro
 
@@ -1268,10 +1270,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 ...
 
     def purge_tasks(self):
-        for task in self.tasks:
+        for key, task in self._task_registry.items():
             if task.done() or task.cancelled():
-                name = task.get_name()
-                self._task_registry[name] = None
+                self._task_registry[key] = None
 
         self._task_registry = {
             k: v for k, v in self._task_registry.items() if v is not None

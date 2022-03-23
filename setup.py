@@ -112,6 +112,7 @@ tests_require = [
     "docutils",
     "pygments",
     "uvicorn<0.15.0",
+    "slotscheck>=0.8.0,<1",
     types_ujson,
 ]
 

@@ -140,6 +140,7 @@ To maintain the code consistency, Sanic uses following tools.
 #. `isort <https://github.com/timothycrosley/isort>`_
 #. `black <https://github.com/python/black>`_
 #. `flake8 <https://github.com/PyCQA/flake8>`_
+#. `slotscheck <https://github.com/ariebovenberg/slotscheck>`_
 
 isort
 *****
@@ -167,7 +168,13 @@ flake8
 #. pycodestyle
 #. Ned Batchelder's McCabe script
 
-``isort``\ , ``black`` and ``flake8`` checks are performed during ``tox`` lint checks.
+slotscheck
+**********
+
+``slotscheck`` ensures that there are no problems with ``__slots__``
+(e.g. overlaps, or missing slots in base classes).
+
+``isort``\ , ``black``\ , ``flake8`` and ``slotscheck`` checks are performed during ``tox`` lint checks.
 
 The **easiest** way to make your code conform is to run the following before committing.
 

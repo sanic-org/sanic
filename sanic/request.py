@@ -197,6 +197,53 @@ class Request:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
+        """Respond to the request without returning.
+
+        This method can only be called once, as you can only respond once.
+        If no ``response`` argument is passed, one will be created from the
+        ``status``, ``headers`` and ``content_type`` arguments.
+
+        **The first typical usecase** is if you wish to respond to the
+        request without returning from the handler:
+
+        .. code-block:: python
+
+            @app.get("/")
+            async def handler(request: Request):
+                data = ...  # Process something
+
+                json_response = json({"data": data})
+                await request.respond(json_response)
+
+                # You are now free to continue executing other code
+                ...
+
+            @app.on_response
+            async def add_header(_, response: HTTPResponse):
+                # Middlewares still get executed as expected
+                response.headers["one"] = "two"
+
+        **The second possible usecase** is for when you want to directly
+        respond to the request:
+
+        .. code-block:: python
+
+            response = await request.respond(content_type="text/csv")
+            await response.send("foo,")
+            await response.send("bar")
+
+            # You can control the completion of the response by calling
+            # the 'eof()' method:
+            await response.eof()
+
+        :param response: response instance to send
+        :param status: status code to return in the response
+        :param headers: headers to return in the response
+        :param content_type: Content-Type header of the response
+        :return: final response being sent (may be different from the
+            ``response`` parameter because of middlewares) which can be
+            used to manually send data
+        """
         try:
             if self.stream is not None and self.stream.response:
                 raise ServerError("Second respond call is not allowed.")

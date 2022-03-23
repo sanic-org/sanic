@@ -90,7 +90,7 @@ requirements = [
     ujson,
     "aiofiles>=0.6.0",
     "websockets>=10.0",
-    "multidict>=5.0,<6.0",
+    "multidict>=5.0,<7.0",
 ]
 
 tests_require = [

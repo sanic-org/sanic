@@ -1131,7 +1131,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     async def _listener(
         app: Sanic, loop: AbstractEventLoop, listener: ListenerType
     ):
-        maybe_coro = listener(app, loop)
+        try:
+            maybe_coro = listener(app)  # type: ignore
+        except TypeError:
+            maybe_coro = listener(app, loop)  # type: ignore
         if maybe_coro and isawaitable(maybe_coro):
             await maybe_coro
 

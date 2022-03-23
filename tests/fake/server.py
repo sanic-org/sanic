@@ -34,3 +34,12 @@ async def shutdown(app: Sanic, _):
 
 def create_app():
     return app
+
+
+def create_app_with_args(args):
+    try:
+        print(f"foo={args.foo}")
+    except AttributeError:
+        print(f"module={args.module}")
+
+    return app

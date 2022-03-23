@@ -39,16 +39,17 @@ def read_app_info(lines):
 
 
 @pytest.mark.parametrize(
-    "appname",
+    "appname,extra",
     (
-        "fake.server.app",
-        "fake.server:app",
-        "fake.server:create_app()",
-        "fake.server.create_app()",
+        ("fake.server.app", None),
+        ("fake.server:create_app", "--factory"),
+        ("fake.server.create_app()", None),
     ),
 )
-def test_server_run(appname):
+def test_server_run(appname, extra):
     command = ["sanic", appname]
+    if extra:
+        command.append(extra)
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
     firstline = lines[starting_line(lines) + 1]
@@ -57,10 +58,37 @@ def test_server_run(appname):
     assert firstline == b"Goin' Fast @ http://127.0.0.1:8000"
 
 
-def test_error_with_function_as_instance_without_factory_arg():
-    command = ["sanic", "fake.factory.run"]
+def test_server_run_factory_with_args():
+    command = [
+        "sanic",
+        "fake.server.create_app_with_args",
+        "--factory",
+    ]
     out, err, exitcode = capture(command)
-    assert b"try: \nsanic fake.factory.run --factory" in err
+    lines = out.split(b"\n")
+
+    assert exitcode != 1, lines
+    assert b"module=fake.server.create_app_with_args" in lines
+
+
+def test_server_run_factory_with_args_arbitrary():
+    command = [
+        "sanic",
+        "fake.server.create_app_with_args",
+        "--factory",
+        "--foo=bar",
+    ]
+    out, err, exitcode = capture(command)
+    lines = out.split(b"\n")
+
+    assert exitcode != 1, lines
+    assert b"foo=bar" in lines
+
+
+def test_error_with_function_as_instance_without_factory_arg():
+    command = ["sanic", "fake.server.create_app"]
+    out, err, exitcode = capture(command)
+    assert b"try: \nsanic fake.server.create_app --factory" in err
     assert exitcode != 1
 
 

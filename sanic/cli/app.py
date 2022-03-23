@@ -68,6 +68,13 @@ Or, a path to a directory to run as a simple HTTP server:
         legacy_version = len(sys.argv) == 2 and sys.argv[-1] == "-v"
         parse_args = ["--version"] if legacy_version else None
 
+        if not parse_args:
+            parsed, unknown = self.parser.parse_known_args()
+            if unknown and parsed.factory:
+                for arg in unknown:
+                    if arg.startswith("--"):
+                        self.parser.add_argument(arg.split("=")[0])
+
         self.args = self.parser.parse_args(args=parse_args)
         self._precheck()
 
@@ -128,7 +135,10 @@ Or, a path to a directory to run as a simple HTTP server:
                 module = import_module(module_name)
                 app = getattr(module, app_name, None)
                 if self.args.factory:
-                    app = app()
+                    try:
+                        app = app(self.args)
+                    except TypeError:
+                        app = app()
 
                 app_type_name = type(app).__name__
 

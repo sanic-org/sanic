@@ -4,7 +4,7 @@ from inspect import isawaitable
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # no cov
     from sanic import Sanic
 
 

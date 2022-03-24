@@ -1511,7 +1511,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             if not Sanic.test_mode:
                 raise e
 
-    def signalize(self):
+    def signalize(self, allow_fail_builtin=True):
+        self.signal_router.allow_fail_builtin = allow_fail_builtin
         try:
             self.signal_router.finalize()
         except FinalizationError as e:
@@ -1526,8 +1527,11 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if hasattr(self, "_ext"):
             self.ext._display()
 
+        if self.state.is_debug:
+            self.config.TOUCHUP = False
+
         # Setup routers
-        self.signalize()
+        self.signalize(self.config.TOUCHUP)
         self.finalize()
 
         # TODO: Replace in v22.6 to check against apps in app registry
@@ -1547,7 +1551,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             # TODO:
             # - Raise warning if secondary apps have error handler config
             ErrorHandler.finalize(self.error_handler, config=self.config)
-            TouchUp.run(self)
+            if self.config.TOUCHUP:
+                TouchUp.run(self)
 
         self.state.is_started = True
 

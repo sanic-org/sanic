@@ -38,6 +38,7 @@ DEFAULT_CONFIG = {
     "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
+    "TOUCHUP": True,
     "USE_UVLOOP": _default,
     "WEBSOCKET_MAX_SIZE": 2**20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
@@ -81,6 +82,7 @@ class Config(dict, metaclass=DescriptorMeta):
     REQUEST_TIMEOUT: int
     RESPONSE_TIMEOUT: int
     SERVER_NAME: str
+    TOUCHUP: bool
     USE_UVLOOP: Union[Default, bool]
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int

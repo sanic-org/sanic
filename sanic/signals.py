@@ -80,6 +80,7 @@ class SignalRouter(BaseRouter):
             group_class=SignalGroup,
             stacking=True,
         )
+        self.allow_fail_builtin = True
         self.ctx.loop = None
 
     def get(  # type: ignore
@@ -129,7 +130,8 @@ class SignalRouter(BaseRouter):
         try:
             group, handlers, params = self.get(event, condition=condition)
         except NotFound as e:
-            if fail_not_found:
+            is_reserved = event.split(".", 1)[0] in RESERVED_NAMESPACES
+            if fail_not_found and (not is_reserved or self.allow_fail_builtin):
                 raise e
             else:
                 if self.ctx.app.debug and self.ctx.app.state.verbosity >= 1:

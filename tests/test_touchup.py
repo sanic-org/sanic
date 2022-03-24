@@ -34,7 +34,7 @@ async def test_ode_removes_dispatch_events(app, caplog, verbosity, result):
 
 @pytest.mark.parametrize("skip_it,result", ((False, True), (True, False)))
 async def test_skip_touchup(app, caplog, skip_it, result):
-    app.config.TOUCHUP = (not skip_it)
+    app.config.TOUCHUP = not skip_it
     with caplog.at_level(logging.DEBUG, logger="sanic.root"):
         app.state.verbosity = 2
         await app._startup()
@@ -62,11 +62,12 @@ async def test_skip_touchup(app, caplog, skip_it, result):
 
 @pytest.mark.parametrize("skip_it,result", ((False, True), (True, True)))
 async def test_skip_touchup_non_reserved(app, caplog, skip_it, result):
-    app.config.SKIP_TOUCHUP = skip_it
+    app.config.TOUCHUP = not skip_it
 
     @app.signal("foo.bar.one")
     def sync_signal(*_):
         ...
+
     await app._startup()
     assert app.signal_router.allow_fail_builtin is (not skip_it)
     not_found_exception = False

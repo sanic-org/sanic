@@ -34,7 +34,7 @@ async def test_ode_removes_dispatch_events(app, caplog, verbosity, result):
 
 @pytest.mark.parametrize("skip_it,result", ((False, True), (True, False)))
 async def test_skip_touchup(app, caplog, skip_it, result):
-    app.config.SKIP_TOUCHUP = skip_it
+    app.config.TOUCHUP = (not skip_it)
     with caplog.at_level(logging.DEBUG, logger="sanic.root"):
         app.state.verbosity = 2
         await app._startup()

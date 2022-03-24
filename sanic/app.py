@@ -1526,8 +1526,11 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if hasattr(self, "_ext"):
             self.ext._display()
 
+        if self.state.is_debug:
+            self.config.TOUCHUP = False
+
         # Setup routers
-        self.signalize(not self.config.SKIP_TOUCHUP)
+        self.signalize(self.config.TOUCHUP)
         self.finalize()
 
         # TODO: Replace in v22.6 to check against apps in app registry
@@ -1547,7 +1550,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             # TODO:
             # - Raise warning if secondary apps have error handler config
             ErrorHandler.finalize(self.error_handler, config=self.config)
-            if not self.config.SKIP_TOUCHUP:
+            if self.config.TOUCHUP:
                 TouchUp.run(self)
 
         self.state.is_started = True

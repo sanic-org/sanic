@@ -16,9 +16,9 @@ class MiddlewareMixin(metaclass=SanicMeta):
         self, middleware_or_request, attach_to="request", apply=True
     ):
         """
-        Decorate and register middleware to be called before a request.
-        Can either be called as *@app.middleware* or
-        *@app.middleware('request')*
+        Decorate and register middleware to be called before a request
+        is handled or after a response is created. Can either be called as
+        *@app.middleware* or *@app.middleware('request')*.
 
         `See user guide re: middleware
         <https://sanicframework.org/guide/basics/middleware.html>`__
@@ -47,12 +47,25 @@ class MiddlewareMixin(metaclass=SanicMeta):
             )
 
     def on_request(self, middleware=None):
+        """Register a middleware to be called before a request is handled.
+
+        This is the same as *@app.middleware('request')*.
+
+        :param: middleware: A callable that takes in request.
+        """
         if callable(middleware):
             return self.middleware(middleware, "request")
         else:
             return partial(self.middleware, attach_to="request")
 
     def on_response(self, middleware=None):
+        """Register a middleware to be called after a response is created.
+
+        This is the same as *@app.middleware('response')*.
+
+        :param: middleware:
+            A callable that takes in a request and its response.
+        """
         if callable(middleware):
             return self.middleware(middleware, "response")
         else:

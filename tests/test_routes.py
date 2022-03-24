@@ -1,8 +1,6 @@
 import asyncio
 import re
 
-from unittest.mock import Mock
-
 import pytest
 
 from sanic_routing.exceptions import (

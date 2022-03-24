@@ -40,7 +40,7 @@ DEFAULT_CONFIG = {
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
     "TOUCHUP": True,
     "USE_UVLOOP": _default,
-    "WEBSOCKET_MAX_SIZE": 2 ** 20,  # 1 megabyte
+    "WEBSOCKET_MAX_SIZE": 2**20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
     "WEBSOCKET_PING_TIMEOUT": 20,
 }

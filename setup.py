@@ -90,7 +90,7 @@ requirements = [
     ujson,
     "aiofiles>=0.6.0",
     "websockets>=10.0",
-    "multidict>=5.0,<6.0",
+    "multidict>=5.0,<7.0",
 ]
 
 tests_require = [
@@ -112,6 +112,7 @@ tests_require = [
     "docutils",
     "pygments",
     "uvicorn<0.15.0",
+    "slotscheck>=0.8.0,<1",
     types_ujson,
 ]
 

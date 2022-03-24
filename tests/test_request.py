@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from sanic import Sanic, response
+from sanic.exceptions import BadURL
 from sanic.request import Request, uuid
 from sanic.server import HttpProtocol
 
@@ -176,3 +177,17 @@ def test_request_accept():
         "text/x-dvi; q=0.8",
         "text/plain; q=0.5",
     ]
+
+
+def test_bad_url_parse():
+    message = "Bad URL: my.redacted-domain.com:443"
+    with pytest.raises(BadURL, match=message):
+        Request(
+            b"my.redacted-domain.com:443",
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+        )

@@ -8,6 +8,7 @@ from sanic.touchup.meta import TouchUpMeta
 if TYPE_CHECKING:  # no cov
     from sanic.app import Sanic
 
+import sys
 from asyncio import CancelledError
 from time import monotonic as current_time
 
@@ -168,6 +169,9 @@ class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
                     / 2
                 )
                 self.loop.call_later(max(0.1, interval), self.check_timeouts)
+                return
+            if sys.version_info >= (3, 9):
+                self._task.cancel("Cancel connection task with a timeout")
                 return
             self._task.cancel()
         except Exception:

@@ -9,6 +9,7 @@ if TYPE_CHECKING:  # no cov
     from sanic.app import Sanic
 
 import sys
+
 from asyncio import CancelledError
 from time import monotonic as current_time
 

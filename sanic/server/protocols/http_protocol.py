@@ -171,7 +171,10 @@ class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
                 )
                 self.loop.call_later(max(0.1, interval), self.check_timeouts)
                 return
-            self._task.cancel()
+            cancel_msg_args = ()
+            if sys.version_info >= (3, 9):
+                cancel_msg_args("Cancel connection task with a timeout",)
+            self._task.cancel(*cancel_msg_args)
         except Exception:
             error_logger.exception("protocol.check_timeouts")
 

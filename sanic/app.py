@@ -11,7 +11,7 @@ from asyncio import (
     CancelledError,
     Task,
     ensure_future,
-    get_event_loop,
+    get_event_loop_policy,
     get_running_loop,
     wait_for,
 )
@@ -253,7 +253,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
             )
-        return get_event_loop()
+        return get_event_loop_policy().get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration

@@ -10,6 +10,7 @@ import pytest
 from sanic_testing.testing import HOST, PORT
 
 from sanic.compat import ctrlc_workaround_for_windows
+from sanic.exceptions import InvalidUsage
 from sanic.response import HTTPResponse
 
 
@@ -108,3 +109,17 @@ def test_windows_workaround():
     assert res == "OK"
     res = loop.run_until_complete(atest(True))
     assert res == "OK"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="May hang CI on py38/windows")
+def test_signals_with_invalid_invocation(app):
+    """Test if sanic register fails with invalid invocation"""
+
+    @app.route("/hello")
+    async def hello_route(request):
+        return HTTPResponse()
+
+    with pytest.raises(
+        InvalidUsage, match="Invalid event registration: Missing event name"
+    ):
+        app.listener(stop)

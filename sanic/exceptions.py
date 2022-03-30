@@ -51,6 +51,10 @@ class InvalidUsage(SanicException):
     quiet = True
 
 
+class BadURL(InvalidUsage):
+    ...
+
+
 class MethodNotSupported(SanicException):
     """
     **Status**: 405 Method Not Allowed

@@ -11,7 +11,6 @@ from asyncio import (
     CancelledError,
     Task,
     ensure_future,
-    get_event_loop,
     get_event_loop_policy,
     get_running_loop,
     wait_for,

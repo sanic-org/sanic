@@ -199,7 +199,7 @@ async def test_zero_downtime():
         for _ in range(40):
             async with httpx.AsyncClient(transport=transport) as client:
                 r = await client.get("http://localhost/sleep/0.1")
-                assert r.status_code == 200, r.content
+                assert r.status_code == 200, r.text
                 assert r.text == "Slept 0.1 seconds.\n"
 
     def spawn():

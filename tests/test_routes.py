@@ -254,7 +254,7 @@ def test_route_strict_slash(app):
 
 
 def test_route_invalid_parameter_syntax(app):
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidUsage):
 
         @app.get("/get/<:str>", strict_slashes=True)
         def handler(request):

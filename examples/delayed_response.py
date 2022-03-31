@@ -4,6 +4,7 @@ from sanic import Sanic, response
 
 
 app = Sanic("DelayedResponseApp", strict_slashes=True)
+app.config.AUTO_EXTEND = False
 
 
 @app.get("/")

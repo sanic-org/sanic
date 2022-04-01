@@ -12,8 +12,8 @@ from enum import Enum
 
 from sanic.compat import Header
 from sanic.exceptions import (
-    ExpectationFailed,
     BadRequest,
+    ExpectationFailed,
     PayloadTooLarge,
     ServerError,
     ServiceUnavailable,

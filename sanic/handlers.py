@@ -10,9 +10,9 @@ from sanic.errorpages import (
     exception_response,
 )
 from sanic.exceptions import (
-    RangeNotSatisfiable,
     HeaderNotFound,
     InvalidRangeType,
+    RangeNotSatisfiable,
     SanicException,
 )
 from sanic.helpers import Default, _default

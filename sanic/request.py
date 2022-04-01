@@ -34,7 +34,7 @@ from httptools.parser.errors import HttpParserInvalidURLError  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import BadURL, BadRequest, ServerError
+from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,

@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from sanic import Sanic
 from sanic.exceptions import (
     Forbidden,
-    InvalidUsage,
+    BadRequest,
     NotFound,
     SanicException,
     ServerError,
@@ -77,7 +77,7 @@ def exception_app():
 
     @app.route("/invalid")
     def handler_invalid(request):
-        raise InvalidUsage("OK")
+        raise BadRequest("OK")
 
     @app.route("/abort/401")
     def handler_401_error(request):
@@ -136,7 +136,7 @@ def test_server_error_exception(exception_app):
 
 
 def test_invalid_usage_exception(exception_app):
-    """Test the built-in InvalidUsage exception works"""
+    """Test the built-in BadRequest exception works"""
     request, response = exception_app.test_client.get("/invalid")
     assert response.status == 400
 

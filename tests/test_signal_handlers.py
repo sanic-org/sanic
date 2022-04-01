@@ -10,7 +10,7 @@ import pytest
 from sanic_testing.testing import HOST, PORT
 
 from sanic.compat import ctrlc_workaround_for_windows
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import BadRequest
 from sanic.response import HTTPResponse
 
 
@@ -120,6 +120,6 @@ def test_signals_with_invalid_invocation(app):
         return HTTPResponse()
 
     with pytest.raises(
-        InvalidUsage, match="Invalid event registration: Missing event name"
+        BadRequest, match="Invalid event registration: Missing event name"
     ):
         app.listener(stop)

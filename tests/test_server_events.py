@@ -8,7 +8,7 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
-from sanic.exceptions import InvalidUsage, SanicException
+from sanic.exceptions import BadRequest, SanicException
 
 
 AVAILABLE_LISTENERS = [
@@ -137,7 +137,7 @@ async def test_trigger_before_events_create_server_missing_event(app):
     class MySanicDb:
         pass
 
-    with pytest.raises(InvalidUsage):
+    with pytest.raises(BadRequest):
 
         @app.listener
         async def init_db(app, loop):

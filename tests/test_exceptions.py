@@ -6,9 +6,16 @@ from bs4 import BeautifulSoup
 
 from sanic import Sanic
 from sanic.exceptions import (
-    Forbidden,
     BadRequest,
+    ContentRangeError,
+    ExpectationFailed,
+    Forbidden,
+    HeaderExpectationFailed,
+    InvalidUsage,
+    MethodNotAllowed,
+    MethodNotSupported,
     NotFound,
+    RangeNotSatisfiable,
     SanicException,
     ServerError,
     Unauthorized,
@@ -375,3 +382,10 @@ def test_contextual_exception_functional_message(override):
     assert response.status == 418
     assert response.json["message"] == error_message
     assert response.json["context"] == {"foo": "bar"}
+
+
+def test_exception_aliases():
+    assert InvalidUsage is BadRequest
+    assert MethodNotSupported is MethodNotAllowed
+    assert ContentRangeError is RangeNotSatisfiable
+    assert HeaderExpectationFailed is ExpectationFailed

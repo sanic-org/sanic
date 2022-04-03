@@ -252,7 +252,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
             )
-        return get_running_loop()
+        try:
+            return get_running_loop()
+        except RuntimeError:
+            if sys.version_info > (3, 10):
+                return asyncio.get_event_loop_policy().get_event_loop()
+            else:
+                return asyncio.get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration

@@ -14,6 +14,7 @@ from typing import (
 
 from sanic_routing.route import Route  # type: ignore
 
+from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
 
@@ -818,6 +819,15 @@ class Request:
         return self.app.url_for(
             view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs
         )
+
+    @property
+    def scope(self) -> Optional[ASGIScope]:
+        """
+        :return: the URL
+        :rtype: str
+        """
+
+        return self.app._asgi_app.transport.scope if self.app._asgi_app else None
 
 
 class File(NamedTuple):

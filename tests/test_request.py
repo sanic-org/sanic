@@ -1,9 +1,11 @@
+import logging
 from unittest.mock import Mock
 from uuid import UUID, uuid4
 
 import pytest
+import uvicorn
 
-from sanic import Sanic, response
+from sanic import Sanic, response, text
 from sanic.exceptions import BadURL
 from sanic.request import Request, uuid
 from sanic.server import HttpProtocol
@@ -191,3 +193,15 @@ def test_bad_url_parse():
             Mock(),
             Mock(),
         )
+
+def test_request_scope_is_none_when_no_asgi():
+    app = Sanic("no_asgi")
+
+    @app.get("/")
+    async def get(request):
+        return response.empty()
+
+    request, _ = app.test_client.get(
+        "/"
+    )
+    assert request.scope == None

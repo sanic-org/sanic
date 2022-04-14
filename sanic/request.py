@@ -827,7 +827,7 @@ class Request:
         :rtype: str
         """
 
-        return self.app._asgi_app.transport.scope if self.app._asgi_app else None
+        return self.app._asgi_app.transport.scope if self.app.asgi else None
 
 
 class File(NamedTuple):

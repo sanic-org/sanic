@@ -92,7 +92,6 @@ class Request:
         "_protocol",
         "_remote_addr",
         "_socket",
-        "_scope",
         "_match_info",
         "_name",
         "app",
@@ -169,7 +168,6 @@ class Request:
         self.stream: Optional[Http] = None
         self.route: Optional[Route] = None
         self._protocol = None
-        self._scope: Optional[ASGIScope] = None
         self.responded: bool = False
 
     def __repr__(self):
@@ -829,7 +827,7 @@ class Request:
         :rtype: str
         """
 
-        return self._scope
+        return self.transport.scope if self.app.asgi else None
 
 
 class File(NamedTuple):

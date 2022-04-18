@@ -60,12 +60,12 @@ def test_name_from_set():
 
 
 @pytest.mark.parametrize(
-        "request_id,expected_type",
-        (
-                (99, int),
-                (uuid4(), UUID),
-                ("foo", str),
-        ),
+    "request_id,expected_type",
+    (
+        (99, int),
+        (uuid4(), UUID),
+        ("foo", str),
+    ),
 )
 def test_request_id(request_id, expected_type):
     app = Sanic("req-generator")
@@ -75,7 +75,7 @@ def test_request_id(request_id, expected_type):
         return response.empty()
 
     request, _ = app.test_client.get(
-            "/", headers={"X-REQUEST-ID": f"{request_id}"}
+        "/", headers={"X-REQUEST-ID": f"{request_id}"}
     )
     assert request.id == request_id
     assert type(request.id) == expected_type
@@ -96,7 +96,7 @@ def test_custom_generator():
         return response.empty()
 
     request, _ = app.test_client.get(
-            "/", headers={"SOME-OTHER-REQUEST-ID": f"{REQUEST_ID}"}
+        "/", headers={"SOME-OTHER-REQUEST-ID": f"{REQUEST_ID}"}
     )
     assert request.id == REQUEST_ID * 2
 
@@ -129,10 +129,10 @@ def test_ipv6_address_is_not_wrapped(app):
     @app.get("/")
     async def get(request):
         return response.json(
-                {
-                    "client_ip": request.conn_info.client_ip,
-                    "client": request.conn_info.client,
-                }
+            {
+                "client_ip": request.conn_info.client_ip,
+                "client": request.conn_info.client,
+            }
         )
 
     request, resp = app.test_client.get("/", host="::1")
@@ -151,10 +151,10 @@ def test_request_accept():
         return response.empty()
 
     request, _ = app.test_client.get(
-            "/",
-            headers={
-                "Accept": "text/*, text/plain, text/plain;format=flowed, */*"
-            },
+        "/",
+        headers={
+            "Accept": "text/*, text/plain, text/plain;format=flowed, */*"
+        },
     )
     assert request.accept == [
         "text/plain;format=flowed",
@@ -164,12 +164,12 @@ def test_request_accept():
     ]
 
     request, _ = app.test_client.get(
-            "/",
-            headers={
-                "Accept": (
-                    "text/plain; q=0.5, text/html, text/x-dvi; q=0.8, text/x-c"
-                )
-            },
+        "/",
+        headers={
+            "Accept": (
+                "text/plain; q=0.5, text/html, text/x-dvi; q=0.8, text/x-c"
+            )
+        },
     )
     assert request.accept == [
         "text/html",
@@ -183,13 +183,13 @@ def test_bad_url_parse():
     message = "Bad URL: my.redacted-domain.com:443"
     with pytest.raises(BadURL, match=message):
         Request(
-                b"my.redacted-domain.com:443",
-                Mock(),
-                Mock(),
-                Mock(),
-                Mock(),
-                Mock(),
-                Mock(),
+            b"my.redacted-domain.com:443",
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
         )
 
 

@@ -201,7 +201,7 @@ def test_request_scope_is_none_when_no_asgi():
         return response.empty()
 
     request, _ = app.test_client.get("/")
-    assert request.scope == None
+    assert request.scope is None
 
 
 @pytest.mark.asyncio
@@ -211,6 +211,7 @@ async def test_request_scope_is_not_none_when_runnin_in_asgi(app):
         return response.empty()
 
     request, _ = await app.asgi_client.get("/")
-    assert request.scope != None
+
+    assert request.scope is not None
     assert request.scope["method"].lower() == "get"
     assert request.scope["path"].lower() == "/"

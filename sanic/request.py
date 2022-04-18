@@ -823,8 +823,8 @@ class Request:
     @property
     def scope(self) -> Optional[ASGIScope]:
         """
-        :return: the URL
-        :rtype: str
+        :return: The ASGI scope of the request. If the app isn't an ASGI app, then returns None.
+        :rtype: Optional[ASGIScope]
         """
 
         return self.transport.scope if self.app.asgi else None

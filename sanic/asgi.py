@@ -162,6 +162,7 @@ class ASGIApp:
             instance.request.stream = instance
             instance.request_body = True
             instance.request.conn_info = ConnInfo(instance.transport)
+            instance.request._scope = scope
 
         return instance
 

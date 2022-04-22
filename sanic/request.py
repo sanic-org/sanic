@@ -146,7 +146,7 @@ class Request:
         self.head = head
 
         # enforce existing behavior prior to issue #2427
-        self._keep_blank_form_values = False
+        self.keep_blank_values = False
 
         # Init but do not inhale
         self.body = b""

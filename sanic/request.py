@@ -431,6 +431,13 @@ class Request:
         return self.parsed_credentials
 
     @property
+    def keep_blank_values(self) -> bool:
+        """Getter for preserving blank form values
+        """
+        return self._keep_blank_form_values
+
+
+    @keep_blank_values.setter
     def keep_blank_values(self, keep_blank_values: bool = False):
         """Setter for preserving blank form values
 
@@ -438,11 +445,6 @@ class Request:
         """
         self._keep_blank_form_values = keep_blank_values
 
-    @property
-    def keep_blank_values(self) -> bool:
-        """Getter for preserving blank form values
-        """
-        return self._keep_blank_form_values
 
     @property
     def form(self):

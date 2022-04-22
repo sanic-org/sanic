@@ -432,14 +432,20 @@ class Request:
 
     @property
     def keep_blank_values(self, keep_blank_values: bool = False):
+        """Setter for preserving blank form values
+
+        Defaults to false
+        """
         self._keep_blank_form_values = keep_blank_values
 
     @property
     def keep_blank_values(self) -> bool:
+        """Getter for preserving blank form values
+        """
         return self._keep_blank_form_values
 
     @property
-    def form(self) -> RequestParameters:
+    def form(self):
         if self.parsed_form is None:
             self.parsed_form = RequestParameters()
             self.parsed_files = RequestParameters()

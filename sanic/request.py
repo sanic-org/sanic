@@ -427,7 +427,7 @@ class Request:
         return self.parsed_credentials
 
     @property
-    def form(self):
+    def form(self, keep_blank_values: bool = False):
         if self.parsed_form is None:
             self.parsed_form = RequestParameters()
             self.parsed_files = RequestParameters()
@@ -438,7 +438,7 @@ class Request:
             try:
                 if content_type == "application/x-www-form-urlencoded":
                     self.parsed_form = RequestParameters(
-                        parse_qs(self.body.decode("utf-8"))
+                        parse_qs(self.body.decode("utf-8"), keep_blank_values)
                     )
                 elif content_type == "multipart/form-data":
                     # TODO: Stream this instead of reading to/from memory

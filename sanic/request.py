@@ -436,7 +436,6 @@ class Request:
         """
         return self._keep_blank_form_values
 
-
     @keep_blank_values.setter
     def keep_blank_values(self, keep_blank_values: bool = False):
         """Setter for preserving blank form values
@@ -444,7 +443,6 @@ class Request:
         Defaults to false
         """
         self._keep_blank_form_values = keep_blank_values
-
 
     @property
     def form(self):
@@ -458,7 +456,8 @@ class Request:
             try:
                 if content_type == "application/x-www-form-urlencoded":
                     self.parsed_form = RequestParameters(
-                        parse_qs(self.body.decode("utf-8"), self.keep_blank_values)
+                        parse_qs(self.body.decode("utf-8"),
+                            self.keep_blank_values)
                     )
                 elif content_type == "multipart/form-data":
                     # TODO: Stream this instead of reading to/from memory

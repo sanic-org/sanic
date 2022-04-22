@@ -1030,7 +1030,7 @@ def test_post_form_urlencoded_keep_blanks(app):
         "/", data=payload, headers=headers
     )
 
-    assert request.form(keep_blank_values=True).get("test") == ""
+    assert request.form.get("test") == ""
     assert request.form.get("test") == ""  # For request.parsed_form
 
 

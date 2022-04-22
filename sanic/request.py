@@ -146,7 +146,7 @@ class Request:
         self.head = head
 
         # enforce existing behavior prior to issue #2427
-        self.keep_blank_values = False
+        self.keep_blank_form_values = False
 
         # Init but do not inhale
         self.body = b""
@@ -431,17 +431,12 @@ class Request:
         return self.parsed_credentials
 
     @property
-    def keep_blank_values(self) -> bool:
-        """Getter for preserving blank form values"""
+    def keep_blank_form_values(self) -> bool:
         return self._keep_blank_form_values
 
-    @keep_blank_values.setter
-    def keep_blank_values(self, keep_blank_values: bool = False):
-        """Setter for preserving blank form values
-
-        Defaults to false
-        """
-        self._keep_blank_form_values = keep_blank_values
+    @keep_blank_form_values.setter
+    def keep_blank_values(self, keep_blank_form_values: bool = False):
+        self._keep_blank_form_values = keep_blank_form_values
 
     @property
     def form(self):
@@ -456,7 +451,7 @@ class Request:
                 if content_type == "application/x-www-form-urlencoded":
                     self.parsed_form = RequestParameters(
                         parse_qs(
-                            self.body.decode("utf-8"), self.keep_blank_values
+                            self.body.decode("utf-8"), self.keep_blank_form_values
                         )
                     )
                 elif content_type == "multipart/form-data":

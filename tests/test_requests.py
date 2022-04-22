@@ -1020,7 +1020,7 @@ async def test_post_form_urlencoded_asgi(app):
 def test_post_form_urlencoded_keep_blanks(app):
     @app.route("/", methods=["POST"])
     async def handler(request):
-        request.keep_blank_values = True
+        request.keep_blank_form_values = True
         return text("OK")
 
     payload = "test="
@@ -1038,7 +1038,7 @@ def test_post_form_urlencoded_keep_blanks(app):
 async def test_post_form_urlencoded_keep_blanks_asgi(app):
     @app.route("/", methods=["POST"])
     async def handler(request):
-        request.keep_blank_values = True
+        request.keep_blank_form_values = True
         return text("OK")
 
     payload = "test="

@@ -310,14 +310,14 @@ class Blueprint(BaseSanic):
             # Prepend the blueprint URI prefix if available
             uri = url_prefix + future.uri if url_prefix else future.uri
 
-            version_prefix = self.version_prefix
-            for prefix in (
-                future.version_prefix,
-                opt_version_prefix,
-            ):
-                if prefix and prefix != "/v":
-                    version_prefix = prefix
-                    break
+            version_prefix = next(
+                (
+                    prefix
+                    for prefix in (future.version_prefix, opt_version_prefix)
+                    if prefix and prefix != "/v"
+                ),
+                self.version_prefix,
+            )
 
             version = self._extract_value(
                 future.version, opt_version, self.version
@@ -449,16 +449,11 @@ class Blueprint(BaseSanic):
 
     @staticmethod
     def _extract_value(*values):
-        value = values[-1]
-        for v in values:
-            if v is not None:
-                value = v
-                break
-        return value
+        return next((v for v in values if v is not None), values[-1])
 
     @staticmethod
     def register_futures(
         apps: Set[Sanic], bp: Blueprint, futures: Sequence[Tuple[Any, ...]]
     ):
         for app in apps:
-            app._future_registry.update(set((bp, item) for item in futures))
+            app._future_registry.update({(bp, item) for item in futures})

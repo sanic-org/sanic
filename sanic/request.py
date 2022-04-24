@@ -821,13 +821,15 @@ class Request:
         )
 
     @property
-    def scope(self) -> Optional[ASGIScope]:
+    def scope(self) -> ASGIScope:
         """
-        :return: The ASGI scope of the request. If the app isn't an ASGI app, then returns None.
+        :return: The ASGI scope of the request. If the app isn't an ASGI app, then raises an exception.
         :rtype: Optional[ASGIScope]
         """
+        if not self.app.asgi:
+            raise NotImplementedError("App isn't running in ASGI mode. Scope is only available for ASGI apps.")
 
-        return self.transport.scope if self.app.asgi else None
+        return self.transport.scope
 
 
 class File(NamedTuple):

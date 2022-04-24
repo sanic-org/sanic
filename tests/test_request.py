@@ -193,19 +193,19 @@ def test_bad_url_parse():
         )
 
 
-def test_request_scope_is_none_when_no_asgi():
+def test_request_scope_raises_exception_when_no_asgi():
     app = Sanic("no_asgi")
 
     @app.get("/")
     async def get(request):
-        return response.empty()
+        return request.scope
 
-    request, _ = app.test_client.get("/")
-    assert request.scope is None
+    _, response = app.test_client.get("/")
+    assert response.status == 500
 
 
 @pytest.mark.asyncio
-async def test_request_scope_is_not_none_when_runnin_in_asgi(app):
+async def test_request_scope_is_not_none_when_running_in_asgi(app):
     @app.get("/")
     async def get(request):
         return response.empty()

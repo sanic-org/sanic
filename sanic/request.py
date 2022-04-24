@@ -426,7 +426,9 @@ class Request:
                 pass
         return self.parsed_credentials
 
-    def get_form(self, keep_blank_values: bool = False) -> RequestParameters:
+    def get_form(
+        self, keep_blank_values: bool = False
+    ) -> Optional[RequestParameters]:
         self.parsed_form = RequestParameters()
         self.parsed_files = RequestParameters()
         content_type = self.headers.getone(

@@ -14,6 +14,7 @@ __all__ = (
     "HTTPMethod",
     "HTTPResponse",
     "Request",
+    "Websocket",
     "html",
     "json",
     "text",

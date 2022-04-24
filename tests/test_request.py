@@ -200,8 +200,10 @@ def test_request_scope_raises_exception_when_no_asgi():
     async def get(request):
         return request.scope
 
-    _, response = app.test_client.get("/")
+    request, response = app.test_client.get("/")
     assert response.status == 500
+    with pytest.raises(NotImplementedError):
+        _ = request.scope
 
 
 @pytest.mark.asyncio

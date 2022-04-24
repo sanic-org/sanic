@@ -443,7 +443,7 @@ class Request:
                 )
             elif content_type == "multipart/form-data":
                 # TODO: Stream this instead of reading to/from memory
-                boundary = parameters["boundary"].encode("utf-8")
+                boundary = parameters["boundary"].encode("utf-8")  # type: ignore
                 self.parsed_form, self.parsed_files = parse_multipart_form(
                     self.body, boundary
                 )

@@ -823,11 +823,13 @@ class Request:
     @property
     def scope(self) -> ASGIScope:
         """
-        :return: The ASGI scope of the request. If the app isn't an ASGI app, then raises an exception.
+        :return: The ASGI scope of the request.
+                 If the app isn't an ASGI app, then raises an exception.
         :rtype: Optional[ASGIScope]
         """
         if not self.app.asgi:
-            raise NotImplementedError("App isn't running in ASGI mode. Scope is only available for ASGI apps.")
+            raise NotImplementedError("App isn't running in ASGI mode. "
+                                      "Scope is only available for ASGI apps.")
 
         return self.transport.scope
 

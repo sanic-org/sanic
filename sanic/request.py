@@ -426,7 +426,7 @@ class Request:
                 pass
         return self.parsed_credentials
 
-    def get_form(self, keep_blank_values: bool = False):
+    def get_form(self, keep_blank_values: bool = False) -> RequestParameters:
         self.parsed_form = RequestParameters()
         self.parsed_files = RequestParameters()
         content_type = self.headers.getone(
@@ -451,6 +451,8 @@ class Request:
                 )
         except Exception:
             error_logger.exception("Failed when parsing form")
+
+        return self.parsed_form
 
     @property
     def form(self):

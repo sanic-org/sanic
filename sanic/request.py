@@ -153,7 +153,7 @@ class Request:
         self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
         self.parsed_form: Optional[RequestParameters] = None
-        self.parsed_files = None
+        self.parsed_files: Optional[RequestParameters] = None
         self.parsed_token: Optional[str] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters

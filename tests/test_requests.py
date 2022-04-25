@@ -1016,6 +1016,72 @@ async def test_post_form_urlencoded_asgi(app):
     assert request.form.get("test") == "OK"  # For request.parsed_form
 
 
+def test_post_form_urlencoded_keep_blanks(app):
+    @app.route("/", methods=["POST"])
+    async def handler(request):
+        request.get_form(keep_blank_values=True)
+        return text("OK")
+
+    payload = "test="
+    headers = {"content-type": "application/x-www-form-urlencoded"}
+
+    request, response = app.test_client.post(
+        "/", data=payload, headers=headers
+    )
+
+    assert request.form.get("test") == ""
+    assert request.form.get("test") == ""  # For request.parsed_form
+
+
+@pytest.mark.asyncio
+async def test_post_form_urlencoded_keep_blanks_asgi(app):
+    @app.route("/", methods=["POST"])
+    async def handler(request):
+        request.get_form(keep_blank_values=True)
+        return text("OK")
+
+    payload = "test="
+    headers = {"content-type": "application/x-www-form-urlencoded"}
+
+    request, response = await app.asgi_client.post(
+        "/", data=payload, headers=headers
+    )
+
+    assert request.form.get("test") == ""
+    assert request.form.get("test") == ""  # For request.parsed_form
+
+
+
+def test_post_form_urlencoded_drop_blanks(app):
+    @app.route("/", methods=["POST"])
+    async def handler(request):
+        return text("OK")
+
+    payload = "test="
+    headers = {"content-type": "application/x-www-form-urlencoded"}
+
+    request, response = app.test_client.post(
+        "/", data=payload, headers=headers
+    )
+
+    assert "test" not in request.form.keys()
+
+@pytest.mark.asyncio
+async def test_post_form_urlencoded_drop_blanks_asgi(app):
+    @app.route("/", methods=["POST"])
+    async def handler(request):
+        return text("OK")
+
+    payload = "test="
+    headers = {"content-type": "application/x-www-form-urlencoded"}
+
+    request, response = await app.asgi_client.post(
+        "/", data=payload, headers=headers
+    )
+
+    assert "test" not in request.form.keys()
+
+
 @pytest.mark.parametrize(
     "payload",
     [

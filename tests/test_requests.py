@@ -1051,7 +1051,6 @@ async def test_post_form_urlencoded_keep_blanks_asgi(app):
     assert request.form.get("test") == ""  # For request.parsed_form
 
 
-
 def test_post_form_urlencoded_drop_blanks(app):
     @app.route("/", methods=["POST"])
     async def handler(request):
@@ -1065,6 +1064,7 @@ def test_post_form_urlencoded_drop_blanks(app):
     )
 
     assert "test" not in request.form.keys()
+
 
 @pytest.mark.asyncio
 async def test_post_form_urlencoded_drop_blanks_asgi(app):

@@ -192,7 +192,7 @@ class SignalRouter(BaseRouter):
         if inline:
             return await dispatch
 
-        task = asyncio.get_running_loop().create_task(dispatch)
+        task = asyncio.get_running_loop().create_task(dispatch, name="signal")
         await asyncio.sleep(0)
         return task
 

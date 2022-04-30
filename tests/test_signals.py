@@ -402,3 +402,15 @@ def test_signal_reservation(app, event, expected):
             app.signal(event)(lambda: ...)
     else:
         app.signal(event)(lambda: ...)
+
+
+@pytest.mark.asyncio
+async def test_signal_handler_task_name(app):
+    @app.signal("foo.bar.baz")
+    def sync_signal(*_):
+        ...
+
+    app.signal_router.finalize()
+
+    signal_handler_task = await app.dispatch("foo.bar.baz")
+    assert signal_handler_task.get_name() == "signal"

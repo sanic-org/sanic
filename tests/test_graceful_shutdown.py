@@ -46,3 +46,36 @@ def test_no_exceptions_when_cancel_pending_request(app, caplog):
                 "Transport is closed."
             )
     assert info == 11
+
+
+def test_no_exceptions_when_cancel_signal_handlers(app, caplog):
+    @app.signal("foo.bar.baz")
+    async def async_signal(*_):
+        await asyncio.sleep(5)
+
+    @app.get("/")
+    async def handler(request):
+        request.app.dispatch("foo.bar.baz")
+
+    def ping():
+        httpx.get("http://127.0.0.1:8000")
+
+    p = Process(target=ping)
+    p.start()
+
+    with caplog.at_level(logging.INFO):
+        app.run()
+
+    p.kill()
+
+    info = 0
+    for record in caplog.record_tuples:
+        assert record[1] != logging.ERROR
+
+        if record[1] == logging.INFO and (
+            record[2] == "Cancelling signal handlers"
+            or record[2] == "Signal handlers cancelled"
+        ):
+            info += 1
+
+    assert info == 2

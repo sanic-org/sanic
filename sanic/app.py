@@ -1300,6 +1300,48 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             self.purge_tasks()
             timeout -= increment
 
+    def shutdown_signal_handlers(
+        self, timeout: Optional[float] = None, increment: float = 0.1
+    ) -> None:
+        """Cancel running signal handler tasks.
+
+        Any running ``asyncio.Task`` with a name starting with "signal" will be
+        cancelled. If a :param:`timeout` is not provided, it will be set to the
+        ``GRACEFUL_SHUTDOWN_TIMEOUT`` config.
+
+        :param timeout: the max amount of time to wait for the tasks to be
+            cancelled. Defaults to None.
+        :type timeout: Optional[float], optional
+        :param increment: the amount of time to wait between checking that the
+            tasks have been cancelled. Defaults to 0.1.
+        :type increment: float, optional
+        """
+        logger.info("Cancelling signal handlers")
+
+        if timeout is None:
+            timeout = self.config.GRACEFUL_SHUTDOWN_TIMEOUT
+
+        signal_handlers = [
+            task
+            for task in asyncio.all_tasks(self.loop)
+            if task.get_name().startswith("signal")
+        ]
+
+        logger.debug("%d signal handlers found", len(signal_handlers))
+
+        for handler in signal_handlers:
+            logger.debug("Cancelling signal handler: %s", handler.get_name())
+            handler.cancel()
+
+        with suppress(RuntimeError):
+            while timeout and not all(
+                [handler.done() for handler in signal_handlers]
+            ):
+                self.loop.run_until_complete(asyncio.sleep(increment))
+                timeout -= increment
+
+        logger.info("Signal handlers cancelled")
+
     @property
     def tasks(self):
         return iter(self._task_registry.values())

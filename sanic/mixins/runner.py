@@ -367,6 +367,7 @@ class RunnerMixin(metaclass=SanicMeta):
         """
         if self.state.stage is not ServerStage.STOPPED:
             self.shutdown_tasks(timeout=0)
+            self.shutdown_signal_handlers()
             for task in all_tasks():
                 with suppress(AttributeError):
                     if task.get_name() == "RunServer":

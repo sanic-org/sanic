@@ -1,0 +1,40 @@
+from json import loads as sloads
+
+import pytest
+
+
+try:
+    from ujson import loads as uloads
+
+    NO_UJSON = False
+    DEFAULT_LOADS = uloads
+except ModuleNotFoundError:
+    NO_UJSON = True
+    DEFAULT_LOADS = sloads
+
+from sanic import Request, Sanic
+
+
+@pytest.fixture(autouse=True)
+def default_back_to_ujson():
+    yield
+    Request._loads = DEFAULT_LOADS
+
+
+def test_change_decoder():
+    Sanic("Test", loads=sloads)
+    assert Request._loads == sloads
+
+
+def test_change_decoder_to_some_custom():
+    def my_custom_decoder(some_str: str):
+        return "foo"
+
+    Sanic("Test", loads=my_custom_decoder)
+    assert Request._loads == my_custom_decoder
+
+
+@pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
+def test_default_decoder():
+    Sanic("Test")
+    assert Request._loads == uloads

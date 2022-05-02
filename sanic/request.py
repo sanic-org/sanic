@@ -118,6 +118,8 @@ class Request:
         "version",
     )
 
+    _loads = json_loads
+
     def __init__(
         self,
         url_bytes: bytes,
@@ -372,7 +374,7 @@ class Request:
 
         return self.parsed_json
 
-    def load_json(self, loads=json_loads):
+    def load_json(self, loads=_loads):
         try:
             self.parsed_json = loads(self.body)
         except Exception:

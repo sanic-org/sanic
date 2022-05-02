@@ -173,6 +173,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         configure_logging: bool = True,
         register: Optional[bool] = None,
         dumps: Optional[Callable[..., AnyStr]] = None,
+        loads: Optional[Callable[[AnyStr], ...]] = None,
     ) -> None:
         super().__init__(name=name)
 
@@ -237,6 +238,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
         if dumps:
             BaseHTTPResponse._dumps = dumps  # type: ignore
+        if loads:
+            Request._loads = loads  # type: ignore
 
     @property
     def loop(self):

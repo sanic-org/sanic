@@ -374,8 +374,11 @@ class Request:
 
         return self.parsed_json
 
-    def load_json(self, loads=_loads):
+    def load_json(self, loads=None):
         try:
+            if not loads:
+                loads = self.__class__._loads
+
             self.parsed_json = loads(self.body)
         except Exception:
             if not self.body:

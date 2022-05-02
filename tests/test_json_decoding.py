@@ -12,7 +12,7 @@ except ModuleNotFoundError:
     NO_UJSON = True
     DEFAULT_LOADS = sloads
 
-from sanic import Request, Sanic
+from sanic import Request, Sanic, json
 
 
 @pytest.fixture(autouse=True)
@@ -28,10 +28,23 @@ def test_change_decoder():
 
 def test_change_decoder_to_some_custom():
     def my_custom_decoder(some_str: str):
-        return "foo"
+        print ("decoding")
+        dict =  sloads(some_str)
+        dict["some_key"] = "new_value"
+        return dict
 
-    Sanic("Test", loads=my_custom_decoder)
+    app = Sanic("Test", loads=my_custom_decoder)
     assert Request._loads == my_custom_decoder
+
+    req_body = {'some_key':'some_value'}
+
+    @app.post("/test")
+    def handler(request):
+        new_json = request.json
+        return json(new_json)
+
+    req, res = app.test_client.post("/test", json=req_body)
+    assert sloads(res.body) == {'some_key':'new_value'}
 
 
 @pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")

@@ -173,7 +173,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         configure_logging: bool = True,
         register: Optional[bool] = None,
         dumps: Optional[Callable[..., AnyStr]] = None,
-        loads: Optional[Callable[[AnyStr], ...]] = None,
+        loads: Optional[Callable[[AnyStr], Optional[Dict]]] = None,
     ) -> None:
         super().__init__(name=name)
 

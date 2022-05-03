@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import os
+
+from datetime import datetime
 from functools import partial
 from mimetypes import guess_type
+from numbers import Number
 from os import path
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -309,6 +313,9 @@ async def file(
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
+    last_modified: Optional[datetime] = None,
+    max_age: Optional[Number] = None,
+    auto_cache_headers: bool = True,
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
@@ -324,6 +331,19 @@ async def file(
         headers.setdefault(
             "Content-Disposition", f'attachment; filename="{filename}"'
         )
+    if auto_cache_headers:
+        stat = os.stat(location)
+        if not last_modified:
+            last_modified = stat.st_mtime
+        if not max_age:
+            max_age = 10  # Should change this (default) value to configable?
+        headers.setdefault("file_size", stat.st_size)
+
+    if last_modified:
+        headers.setdefault("last_modified", last_modified)
+    if max_age:
+        headers.setdefault("max_age", max_age)
+
     filename = filename or path.split(location)[-1]
 
     async with await open_async(location, mode="rb") as f:

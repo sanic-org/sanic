@@ -424,7 +424,7 @@ class RunnerMixin(metaclass=SanicMeta):
 
         self.motd(self.serve_location)
 
-        if sys.stdout.isatty() and not self.state.is_debug:
+        if sys.stdout and sys.stdout.isatty() and not self.state.is_debug:
             error_logger.warning(
                 f"{Colors.YELLOW}Sanic is running in PRODUCTION mode. "
                 "Consider using '--debug' or '--dev' while actively "

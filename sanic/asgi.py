@@ -163,6 +163,13 @@ class ASGIApp:
             instance.request_body = True
             instance.request.conn_info = ConnInfo(instance.transport)
 
+            await sanic_app.dispatch(
+                "http.lifecycle.request",
+                inline=True,
+                context={"request": instance.request},
+                fail_not_found=False,
+            )
+
         return instance
 
     async def read(self) -> Optional[bytes]:

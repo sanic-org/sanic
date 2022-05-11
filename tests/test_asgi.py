@@ -10,6 +10,7 @@ from sanic import Sanic
 from sanic.application.state import Mode
 from sanic.asgi import MockTransport
 from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
+from sanic.log import VerbosityFilter
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection
@@ -221,6 +222,7 @@ def test_listeners_triggered_async(app, caplog):
     assert after_server_stop
 
     app.state.mode = Mode.DEBUG
+    app.state.verbosity = 0
     with caplog.at_level(logging.DEBUG):
         server.run()
 

@@ -66,17 +66,30 @@ class Colors(str, Enum):  # no cov
     PURPLE = "\033[01;35m"
 
 
+class VerbosityFilter(logging.Filter):
+    verbosity: int = 0
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        verbosity = getattr(record, "verbosity", 0)
+        return verbosity <= self.verbosity
+
+
+_verbosity_filter = VerbosityFilter()
+
 logger = logging.getLogger("sanic.root")  # no cov
+logger.addFilter(_verbosity_filter)
 """
 General Sanic logger
 """
 
 error_logger = logging.getLogger("sanic.error")  # no cov
+error_logger.addFilter(_verbosity_filter)
 """
 Logger used by Sanic for error logging
 """
 
 access_logger = logging.getLogger("sanic.access")  # no cov
+access_logger.addFilter(_verbosity_filter)
 """
 Logger used by Sanic for access logging
 """

@@ -109,7 +109,9 @@ class HTTPReceiver(Receiver):
         return headers
 
     def send_headers(self) -> None:
-        print(f"{Colors.RED}SEND HEADERS{Colors.END}")
+        logger.debug(
+            f"{Colors.RED}SEND HEADERS{Colors.END}", extra={"verbosity": 2}
+        )
         if not self.response:
             raise Exception("no response")
 

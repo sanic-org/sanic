@@ -59,11 +59,12 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
 
 class Colors(str, Enum):  # no cov
     END = "\033[0m"
-    RED = "\033[01;31m"
-    GREEN = "\033[01;32m"
-    YELLOW = "\033[01;33m"
     BLUE = "\033[01;34m"
+    GREEN = "\033[01;32m"
     PURPLE = "\033[01;35m"
+    RED = "\033[01;31m"
+    SANIC = "\033[38;2;255;13;104m"
+    YELLOW = "\033[01;33m"
 
 
 class VerbosityFilter(logging.Filter):

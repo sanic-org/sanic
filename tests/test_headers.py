@@ -164,11 +164,12 @@ def test_raw_headers(app):
         },
     )
 
-    assert request.raw_headers == (
-        b"Host: example.com\r\nAccept: */*\r\nAccept-Encoding: gzip, "
-        b"deflate\r\nConnection: keep-alive\r\nUser-Agent: "
-        b"Sanic-Testing\r\nFOO: bar"
-    )
+    assert b"Host: example.com" in request.raw_headers
+    assert b"Accept: */*" in request.raw_headers
+    assert b"Accept-Encoding: gzip, deflate" in request.raw_headers
+    assert b"Connection: keep-alive" in request.raw_headers
+    assert b"User-Agent: Sanic-Testing" in request.raw_headers
+    assert b"FOO: bar" in request.raw_headers
 
 
 def test_request_line(app):

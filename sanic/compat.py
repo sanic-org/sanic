@@ -25,10 +25,6 @@ def enable_windows_color_support():
     kernel.SetConsoleMode(kernel.GetStdHandle(-11), 7)
 
 
-def is_atty():
-    return stdout and stdout.isatty()
-
-
 class Header(CIMultiDict):
     """
     Container used for both request and response headers. It is a subclass of
@@ -93,3 +89,7 @@ def ctrlc_workaround_for_windows(app):
     die = False
     signal.signal(signal.SIGINT, ctrlc_handler)
     app.add_task(stay_active)
+
+
+def is_atty():
+    return stdout and stdout.isatty()

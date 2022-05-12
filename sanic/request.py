@@ -14,6 +14,7 @@ from typing import (
 
 from sanic_routing.route import Route  # type: ignore
 
+from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
 
@@ -152,8 +153,8 @@ class Request:
         self.parsed_accept: Optional[AcceptContainer] = None
         self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
-        self.parsed_form = None
-        self.parsed_files = None
+        self.parsed_form: Optional[RequestParameters] = None
+        self.parsed_files: Optional[RequestParameters] = None
         self.parsed_token: Optional[str] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters
@@ -426,28 +427,40 @@ class Request:
                 pass
         return self.parsed_credentials
 
+    def get_form(
+        self, keep_blank_values: bool = False
+    ) -> Optional[RequestParameters]:
+        self.parsed_form = RequestParameters()
+        self.parsed_files = RequestParameters()
+        content_type = self.headers.getone(
+            "content-type", DEFAULT_HTTP_CONTENT_TYPE
+        )
+        content_type, parameters = parse_content_header(content_type)
+        try:
+            if content_type == "application/x-www-form-urlencoded":
+                self.parsed_form = RequestParameters(
+                    parse_qs(
+                        self.body.decode("utf-8"),
+                        keep_blank_values=keep_blank_values,
+                    )
+                )
+            elif content_type == "multipart/form-data":
+                # TODO: Stream this instead of reading to/from memory
+                boundary = parameters["boundary"].encode(  # type: ignore
+                    "utf-8"
+                )  # type: ignore
+                self.parsed_form, self.parsed_files = parse_multipart_form(
+                    self.body, boundary
+                )
+        except Exception:
+            error_logger.exception("Failed when parsing form")
+
+        return self.parsed_form
+
     @property
     def form(self):
         if self.parsed_form is None:
-            self.parsed_form = RequestParameters()
-            self.parsed_files = RequestParameters()
-            content_type = self.headers.getone(
-                "content-type", DEFAULT_HTTP_CONTENT_TYPE
-            )
-            content_type, parameters = parse_content_header(content_type)
-            try:
-                if content_type == "application/x-www-form-urlencoded":
-                    self.parsed_form = RequestParameters(
-                        parse_qs(self.body.decode("utf-8"))
-                    )
-                elif content_type == "multipart/form-data":
-                    # TODO: Stream this instead of reading to/from memory
-                    boundary = parameters["boundary"].encode("utf-8")
-                    self.parsed_form, self.parsed_files = parse_multipart_form(
-                        self.body, boundary
-                    )
-            except Exception:
-                error_logger.exception("Failed when parsing form")
+            self.get_form()
 
         return self.parsed_form
 
@@ -818,6 +831,21 @@ class Request:
         return self.app.url_for(
             view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs
         )
+
+    @property
+    def scope(self) -> ASGIScope:
+        """
+        :return: The ASGI scope of the request.
+                 If the app isn't an ASGI app, then raises an exception.
+        :rtype: Optional[ASGIScope]
+        """
+        if not self.app.asgi:
+            raise NotImplementedError(
+                "App isn't running in ASGI mode. "
+                "Scope is only available for ASGI apps."
+            )
+
+        return self.transport.scope
 
 
 class File(NamedTuple):

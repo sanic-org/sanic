@@ -78,7 +78,7 @@ class ErrorHandler:
     @classmethod
     def _get_fallback_value(cls, error_handler: ErrorHandler, config: Config):
         if error_handler._fallback is not _default:
-            if config._FALLBACK_ERROR_FORMAT is _default:
+            if config._FALLBACK_ERROR_FORMAT == error_handler._fallback:
                 return error_handler.fallback
 
             error_logger.warning(

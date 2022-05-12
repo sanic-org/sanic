@@ -3,6 +3,7 @@ import os
 import signal
 
 from queue import Queue
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -74,11 +75,12 @@ def test_windows_workaround():
     # Windows...
     class MockApp:
         def __init__(self):
-            self.is_stopping = False
+            self.state = SimpleNamespace()
+            self.state.is_stopping = False
 
         def stop(self):
-            assert not self.is_stopping
-            self.is_stopping = True
+            assert not self.state.is_stopping
+            self.state.is_stopping = True
 
         def add_task(self, func):
             loop = asyncio.get_event_loop()
@@ -91,11 +93,11 @@ def test_windows_workaround():
         if stop_first:
             app.stop()
             await asyncio.sleep(0.2)
-        assert app.is_stopping == stop_first
+        assert app.state.is_stopping == stop_first
         # First Ctrl+C: should call app.stop() within 0.1 seconds
         os.kill(os.getpid(), signal.SIGINT)
         await asyncio.sleep(0.2)
-        assert app.is_stopping
+        assert app.state.is_stopping
         assert app.stay_active_task.result() is None
         # Second Ctrl+C should raise
         with pytest.raises(KeyboardInterrupt):

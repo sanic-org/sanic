@@ -93,6 +93,7 @@ class Request:
         "_port",
         "_protocol",
         "_remote_addr",
+        "_scheme",
         "_socket",
         "_stream_id",
         "_match_info",
@@ -725,23 +726,25 @@ class Request:
         :return: http|https|ws|wss or arbitrary value given by the headers.
         :rtype: str
         """
-        if "//" in self.app.config.get("SERVER_NAME", ""):
-            return self.app.config.SERVER_NAME.split("//")[0]
-        if "proto" in self.forwarded:
-            return str(self.forwarded["proto"])
+        if not hasattr(self, "_scheme"):
+            if "//" in self.app.config.get("SERVER_NAME", ""):
+                return self.app.config.SERVER_NAME.split("//")[0]
+            if "proto" in self.forwarded:
+                return str(self.forwarded["proto"])
 
-        if (
-            self.app.websocket_enabled
-            and self.headers.getone("upgrade", "").lower() == "websocket"
-        ):
-            scheme = "ws"
-        else:
-            scheme = "http"
+            if (
+                self.app.websocket_enabled
+                and self.headers.getone("upgrade", "").lower() == "websocket"
+            ):
+                scheme = "ws"
+            else:
+                scheme = "http"
 
-        if self.transport.get_extra_info("sslcontext"):
-            scheme += "s"
+            if self.transport.get_extra_info("sslcontext"):
+                scheme += "s"
+            self._scheme = scheme
 
-        return scheme
+        return self._scheme
 
     @property
     def host(self) -> str:

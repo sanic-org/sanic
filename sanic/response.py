@@ -72,6 +72,10 @@ class BaseHTTPResponse:
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
 
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return f"<{class_name}: {self.status} {self.content_type}>"
+
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
             return b""
@@ -132,7 +136,6 @@ class BaseHTTPResponse:
         :param data: str or bytes to be written
         :param end_stream: whether to close the stream after this block
         """
-        print(f">>> BaseHTTPResponse: {data=} {end_stream=}")
         if data is None and end_stream is None:
             end_stream = True
         if self.stream is None:

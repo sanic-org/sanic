@@ -924,7 +924,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 if isawaitable(response):
                     response = await response
 
-            print(f"{response=}", request.responded)
             if request.responded:
                 if response is not None:
                     error_logger.error(

@@ -59,6 +59,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
 
 class Colors(str, Enum):  # no cov
     END = "\033[0m"
+    BLUE = "\033[01;34m"
     GREEN = "\033[01;32m"
     PURPLE = "\033[01;35m"
     RED = "\033[01;31m"

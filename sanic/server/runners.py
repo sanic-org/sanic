@@ -27,7 +27,7 @@ from aioquic.asyncio import serve as quic_serve
 
 from sanic.application.ext import setup_ext
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
-from sanic.http.http3 import get_config, get_ticket_store
+from sanic.http.http3 import SessionTicketStore, get_config
 from sanic.log import error_logger, logger
 from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
@@ -250,7 +250,7 @@ def _serve_http_3(
     run_multiple: bool = False,
 ):
     protocol = partial(Http3Protocol, app=app)
-    ticket_store = get_ticket_store()
+    ticket_store = SessionTicketStore()
     ssl_context = get_ssl_context(app, ssl)
     config = get_config(app, ssl_context)
     coro = quic_serve(

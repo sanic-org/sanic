@@ -4,7 +4,16 @@ import asyncio
 
 from abc import ABC, abstractmethod
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from aioquic.h0.connection import H0_ALPN, H0Connection
 from aioquic.h3.connection import H3_ALPN, H3Connection
@@ -19,7 +28,7 @@ from aioquic.quic.configuration import QuicConfiguration
 from aioquic.tls import SessionTicket
 
 from sanic.compat import Header
-from sanic.exceptions import SanicException
+from sanic.exceptions import PayloadTooLarge, SanicException
 from sanic.helpers import has_message_body
 from sanic.http.tls import CertSimple
 
@@ -63,20 +72,56 @@ class HTTPReceiver(Receiver):
         self.stage = Stage.IDLE
         self.headers_sent = False
         self.response: Optional[BaseHTTPResponse] = None
+        self.request_max_size = self.protocol.request_max_size
+        self.request_bytes = 0
 
-    async def run(self):
+    async def run(self, exception: Optional[Exception] = None):
         self.stage = Stage.HANDLER
         self.head_only = self.request.method.upper() == "HEAD"
 
-        try:
-            logger.info(f">>> Request received: {self.request}")
-            await self.protocol.request_handler(self.request)
-        except Exception:
-            # TODO:
-            # - Handler errors
-            raise
+        if exception:
+            logger.info(
+                f"{Colors.BLUE}[exception]: "
+                f"{Colors.RED}{exception}{Colors.END}",
+                exc_info=True,
+                extra={"verbosity": 1},
+            )
+            await self.error_response(exception)
         else:
-            self.stage = Stage.IDLE
+            try:
+                logger.info(
+                    f"{Colors.BLUE}[request]:{Colors.END} {self.request}",
+                    extra={"verbosity": 1},
+                )
+                await self.protocol.request_handler(self.request)
+            except Exception as e:
+                # This should largely be handled within the request handler.
+                # But, just in case...
+                await self.run(e)
+        self.stage = Stage.IDLE
+
+    async def error_response(self, exception: Exception) -> None:
+        """
+        Handle response when exception encountered
+        """
+        # Disconnect after an error if in any other state than handler
+        # if self.stage is not Stage.HANDLER:
+        #     self.keep_alive = False
+
+        # TODO:
+        # - Do we need this?
+        # Request failure? Respond but then disconnect
+        if self.stage is Stage.REQUEST:
+            self.stage = Stage.HANDLER
+
+        # From request and handler states we can respond, otherwise be silent
+        if self.stage is Stage.HANDLER:
+            app = self.protocol.app
+
+            # if self.request is None:
+            #     self.create_empty_request()
+
+            await app.handle_exception(self.request, exception)
 
     def _prepare_headers(
         self, response: BaseHTTPResponse
@@ -110,7 +155,8 @@ class HTTPReceiver(Receiver):
 
     def send_headers(self) -> None:
         logger.debug(
-            f"{Colors.RED}SEND HEADERS{Colors.END}", extra={"verbosity": 2}
+            f"{Colors.BLUE}[send]: {Colors.GREEN}HEADERS{Colors.END}",
+            extra={"verbosity": 2},
         )
         if not self.response:
             raise Exception("no response")
@@ -131,7 +177,10 @@ class HTTPReceiver(Receiver):
             self.future.cancel()
 
     def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
-        print(f"{Colors.BLUE}[respond]: {Colors.GREEN}{response=}{Colors.END}")
+        logger.debug(
+            f"{Colors.BLUE}[respond]:{Colors.END} {response}",
+            extra={"verbosity": 2},
+        )
 
         if self.stage is not Stage.HANDLER:
             self.stage = Stage.FAILED
@@ -145,10 +194,18 @@ class HTTPReceiver(Receiver):
 
         return response
 
+    def receive_body(self, data: bytes) -> None:
+        self.request_bytes += len(data)
+        if self.request_bytes > self.request_max_size:
+            raise PayloadTooLarge("Request body exceeds the size limit")
+
+        self.request.body = data
+
     async def send(self, data: bytes, end_stream: bool) -> None:
-        print(
+        logger.debug(
             f"{Colors.BLUE}[send]: {Colors.GREEN}{data=} "
-            f"{end_stream=}{Colors.END}"
+            f"{end_stream=}{Colors.END}",
+            extra={"verbosity": 2},
         )
         self._send(data, end_stream)
 
@@ -157,8 +214,6 @@ class HTTPReceiver(Receiver):
             self.send_headers()
         if self.stage is not Stage.RESPONSE:
             raise Exception(f"not ready to send: {self.stage}")
-
-        print(f"{data=}")
 
         # Chunked
         if (
@@ -175,7 +230,10 @@ class HTTPReceiver(Receiver):
             elif size:
                 data = b"%x\r\n%b\r\n" % (size, data)
 
-        print(f"{Colors.RED}TRANSMITTING{Colors.END}")
+        logger.debug(
+            f"{Colors.BLUE}[transmitting]{Colors.END}",
+            extra={"verbosity": 2},
+        )
         self.protocol.connection.send_data(
             stream_id=self.request.stream_id,
             data=data,
@@ -210,28 +268,32 @@ class Http3:
         protocol: Http3Protocol,
         transmit: Callable[[], None],
     ) -> None:
-        # self.request_body = None
-        # self.request: Optional[Request] = None
         self.protocol = protocol
         self.transmit = transmit
         self.receivers: Dict[int, Receiver] = {}
 
     def http_event_received(self, event: H3Event) -> None:
-        print(
+        logger.debug(
             f"{Colors.BLUE}[http_event_received]: "
-            f"{Colors.YELLOW}{event}{Colors.END}"
+            f"{Colors.YELLOW}{event}{Colors.END}",
+            extra={"verbosity": 2},
         )
         receiver, created_new = self.get_or_make_receiver(event)
-        print(f"{receiver=}")
+        receiver = cast(HTTPReceiver, receiver)
 
         if isinstance(event, HeadersReceived) and created_new:
             receiver.future = asyncio.ensure_future(receiver.run())
         elif isinstance(event, DataReceived):
-            # event.stream_ended
-            # TEMP
-            receiver.request.body = event.data
+            try:
+                receiver.receive_body(event.data)
+            except Exception as e:
+                receiver.future.cancel()
+                receiver.future = asyncio.ensure_future(receiver.run(e))
         else:
-            print(f"{Colors.RED}DOING NOTHING{Colors.END}")
+            logger.debug(
+                f"{Colors.RED}DOING NOTHING{Colors.END}",
+                extra={"verbosity": 2},
+            )
 
     def get_or_make_receiver(self, event: H3Event) -> Tuple[Receiver, bool]:
         if (
@@ -257,12 +319,9 @@ class Http3:
         method = method_header[1].decode()
         path = path_header[1]
         scheme = headers.pop(":scheme")
+
         authority = headers.pop(":authority")
-        print(f"{headers=}")
-        print(f"{method=}")
-        print(f"{path=}")
-        print(f"{scheme=}")
-        print(f"{authority=}")
+
         if authority:
             headers["host"] = authority
 
@@ -270,7 +329,8 @@ class Http3:
             path, headers, "3", method, Transport(), self.protocol.app, b""
         )
         request._stream_id = event.stream_id
-        print(f"{request=}")
+        request._scheme = scheme
+
         return request
 
 
@@ -304,7 +364,3 @@ def get_config(app: Sanic, ssl: SSLContext):
     )
 
     return config
-
-
-def get_ticket_store():
-    return SessionTicketStore()

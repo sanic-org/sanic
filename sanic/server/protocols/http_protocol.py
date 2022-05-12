@@ -15,7 +15,8 @@ from asyncio import CancelledError
 from time import monotonic as current_time
 
 from aioquic.asyncio import QuicConnectionProtocol
-from aioquic.h3.events import H3Event
+
+# from aioquic.h3.events import H3Event
 from aioquic.quic.events import ProtocolNegotiated, QuicEvent
 
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
@@ -265,8 +266,10 @@ class Http3Protocol(HttpProtocolMixin, QuicConnectionProtocol):
         self._connection: Optional[H3Connection] = None
 
     def quic_event_received(self, event: QuicEvent) -> None:
-        print(
-            f"{Colors.BLUE}[quic_event_received]: {Colors.PURPLE}{event}{Colors.END}"
+        logger.debug(
+            f"{Colors.BLUE}[quic_event_received]: "
+            f"{Colors.PURPLE}{event}{Colors.END}",
+            extra={"verbosity": 2},
         )
         if isinstance(event, ProtocolNegotiated):
             self._setup_connection(transmit=self.transmit)

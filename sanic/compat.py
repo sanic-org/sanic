@@ -2,7 +2,7 @@ import asyncio
 import os
 import signal
 
-from sys import argv
+from sys import argv, stdout
 
 from multidict import CIMultiDict  # type: ignore
 
@@ -23,6 +23,10 @@ def enable_windows_color_support():
 
     kernel = ctypes.windll.kernel32
     kernel.SetConsoleMode(kernel.GetStdHandle(-11), 7)
+
+
+def is_atty():
+    return stdout and stdout.isatty()
 
 
 class Header(CIMultiDict):

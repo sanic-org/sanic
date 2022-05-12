@@ -6,6 +6,7 @@ from textwrap import indent, wrap
 from typing import Dict, Optional
 
 from sanic import __version__
+from sanic.compat import is_atty
 from sanic.log import logger
 
 
@@ -36,7 +37,7 @@ class MOTD(ABC):
         data: Dict[str, str],
         extra: Dict[str, str],
     ) -> None:
-        motd_class = MOTDTTY if sys.stdout and sys.stdout.isatty() else MOTDBasic
+        motd_class = MOTDTTY if is_atty() else MOTDBasic
         motd_class(logo, serve_location, data, extra).display()
 
 

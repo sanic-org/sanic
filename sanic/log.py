@@ -83,7 +83,7 @@ Logger used by Sanic for access logging
 
 def deprecation(message: str, version: float):  # no cov
     version_info = f"[DEPRECATION v{version}] "
-    if sys.stdout.isatty():
+    if sys.stdout and sys.stdout.isatty():
         version_info = f"{Colors.RED}{version_info}"
         message = f"{Colors.YELLOW}{message}{Colors.END}"
     warn(version_info + message, DeprecationWarning)

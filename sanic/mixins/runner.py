@@ -615,7 +615,7 @@ class RunnerMixin(metaclass=SanicMeta):
                     f"{app.state.workers} worker(s), which will be ignored "
                     "in favor of the primary application."
                 )
-                if sys.stdout.isatty():
+                if sys.stdout and sys.stdout.isatty():
                     message = "".join(
                         [
                             Colors.YELLOW,
@@ -656,7 +656,7 @@ class RunnerMixin(metaclass=SanicMeta):
                             "The encountered error was: "
                         )
                         second_message = str(e)
-                        if sys.stdout.isatty():
+                        if sys.stdout and sys.stdout.isatty():
                             message_parts = [
                                 Colors.YELLOW,
                                 first_message,

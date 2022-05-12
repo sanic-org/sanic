@@ -36,7 +36,7 @@ class MOTD(ABC):
         data: Dict[str, str],
         extra: Dict[str, str],
     ) -> None:
-        motd_class = MOTDTTY if sys.stdout.isatty() else MOTDBasic
+        motd_class = MOTDTTY if sys.stdout and sys.stdout.isatty() else MOTDBasic
         motd_class(logo, serve_location, data, extra).display()
 
 

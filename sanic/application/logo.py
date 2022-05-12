@@ -44,7 +44,7 @@ ansi_pattern = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 def get_logo(full=False, coffee=False):
     logo = (
         (FULL_COLOR_LOGO if full else (COFFEE_LOGO if coffee else COLOR_LOGO))
-        if sys.stdout.isatty()
+        if sys.stdout and sys.stdout.isatty()
         else BASE_LOGO
     )
 

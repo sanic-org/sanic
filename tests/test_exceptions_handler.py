@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from pytest import LogCaptureFixture, MonkeyPatch
 
 from sanic import Sanic, handlers
-from sanic.exceptions import Forbidden, InvalidUsage, NotFound, ServerError
+from sanic.exceptions import Forbidden, BadRequest, NotFound, ServerError
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
 from sanic.response import stream, text
@@ -32,7 +32,7 @@ def exception_handler_app():
 
     @exception_handler_app.route("/1", error_format="html")
     def handler_1(request):
-        raise InvalidUsage("OK")
+        raise BadRequest("OK")
 
     @exception_handler_app.route("/2", error_format="html")
     def handler_2(request):

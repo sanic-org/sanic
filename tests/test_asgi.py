@@ -9,7 +9,7 @@ import uvicorn
 from sanic import Sanic
 from sanic.application.state import Mode
 from sanic.asgi import MockTransport
-from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
+from sanic.exceptions import Forbidden, BadRequest, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection
@@ -392,7 +392,7 @@ async def test_websocket_accept_with_multiple_subprotocols(
 
 
 def test_improper_websocket_connection(transport, send, receive):
-    with pytest.raises(InvalidUsage):
+    with pytest.raises(BadRequest):
         transport.get_websocket_connection()
 
     transport.create_websocket_connection(send, receive)

@@ -18,10 +18,10 @@ from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
 from sanic.exceptions import (
-    ContentRangeError,
+    BadRequest,
     FileNotFound,
     HeaderNotFound,
-    InvalidUsage,
+    RangeNotSatisfiable,
 )
 from sanic.handlers import ContentRangeHandler
 from sanic.log import deprecation, error_logger
@@ -778,7 +778,7 @@ class RouteMixin(metaclass=SanicMeta):
         # Using this to determine if the URL is trying to break out of the path
         # served.  os.path.realpath seems to be very slow
         if __file_uri__ and "../" in __file_uri__:
-            raise InvalidUsage("Invalid URL")
+            raise BadRequest("Invalid URL")
         # Merge served directory and requested file if provided
         # Strip all / that in the beginning of the URL to help prevent python
         # from herping a derp and treating the uri as an absolute path
@@ -865,7 +865,7 @@ class RouteMixin(metaclass=SanicMeta):
                             file_path, headers=headers, _range=_range
                         )
                 return await file(file_path, headers=headers, _range=_range)
-        except ContentRangeError:
+        except RangeNotSatisfiable:
             raise
         except FileNotFoundError:
             raise FileNotFound(

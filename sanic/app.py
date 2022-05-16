@@ -58,7 +58,7 @@ from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
-    InvalidUsage,
+    BadRequest,
     SanicException,
     ServerError,
     URLBuildError,
@@ -281,7 +281,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             valid = ", ".join(
                 map(lambda x: x.lower(), ListenerEvent.__members__.keys())
             )
-            raise InvalidUsage(f"Invalid event: {event}. Use one of: {valid}")
+            raise BadRequest(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
             self.signal(_event.value)(

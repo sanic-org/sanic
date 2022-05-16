@@ -19,7 +19,7 @@ import typing as t
 from functools import partial
 from traceback import extract_tb
 
-from sanic.exceptions import InvalidUsage, SanicException
+from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
@@ -506,7 +506,7 @@ def exception_response(
                         # $ curl localhost:8000 -d '{"foo": "bar"}'
                         # And provide them with JSONRenderer
                         renderer = JSONRenderer if request.json else base
-                    except InvalidUsage:
+                    except BadRequest:
                         renderer = base
             else:
                 renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)

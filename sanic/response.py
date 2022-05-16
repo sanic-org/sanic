@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import os
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
 from numbers import Number
 from os import path
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from time import time
 from typing import (
     TYPE_CHECKING,
@@ -321,7 +321,7 @@ async def file(
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
-    last_modified: Optional[datetime] = None,
+    last_modified: Optional[Union[datetime, Number]] = None,
     max_age: Optional[Number] = None,
     auto_cache_headers: bool = True,
     _range: Optional[Range] = None,
@@ -339,6 +339,8 @@ async def file(
         headers.setdefault(
             "Content-Disposition", f'attachment; filename="{filename}"'
         )
+    if isinstance(last_modified, datetime):
+        last_modified = last_modified.timestamp()
     if auto_cache_headers:
         stat = os.stat(location)
         if not last_modified:

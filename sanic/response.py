@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import os
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from email.utils import format_datetime
 from functools import partial
 from mimetypes import guess_type
 from numbers import Number
 from os import path
 from pathlib import Path, PurePath
+from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -62,6 +64,7 @@ class BaseHTTPResponse:
         "status",
         "headers",
         "_cookies",
+        "auto_content_length",
     )
 
     _dumps = json_dumps
@@ -74,6 +77,7 @@ class BaseHTTPResponse:
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
+        self.auto_content_length = False
 
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
@@ -153,6 +157,8 @@ class BaseHTTPResponse:
             if hasattr(data, "encode")
             else data or b""
         )
+        if self.auto_content_length and "content-length" not in self.headers:
+            self.headers["content-length"] = len(data)
         await self.stream.send(data, end_stream=end_stream)
 
 
@@ -178,6 +184,7 @@ class HTTPResponse(BaseHTTPResponse):
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
+        auto_content_length: bool = False,
     ):
         super().__init__()
 
@@ -186,6 +193,7 @@ class HTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
+        self.auto_content_length = auto_content_length
 
     async def eof(self):
         await self.send("", True)
@@ -334,15 +342,25 @@ async def file(
     if auto_cache_headers:
         stat = os.stat(location)
         if not last_modified:
-            last_modified = stat.st_mtime
+            last_modified = datetime.fromtimestamp(
+                stat.st_mtime, tz=timezone.utc
+            )
         if not max_age:
             max_age = 10  # Should change this (default) value to configable?
-        headers.setdefault("file_size", stat.st_size)
 
     if last_modified:
-        headers.setdefault("last_modified", last_modified)
+        headers.setdefault(
+            "last-modified", format_datetime(last_modified, usegmt=True)
+        )
     if max_age:
-        headers.setdefault("max_age", max_age)
+        headers.setdefault("cache-control", f"max-age={max_age}")
+        headers.setdefault(
+            "expires",
+            format_datetime(
+                datetime.now(tz=timezone.utc) + timedelta(seconds=max_age),
+                usegmt=True,
+            ),
+        )
 
     filename = filename or path.split(location)[-1]
 
@@ -363,6 +381,7 @@ async def file(
         status=status,
         headers=headers,
         content_type=mime_type,
+        auto_content_length=True,
     )
 
 

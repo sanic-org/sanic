@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 from datetime import datetime, timedelta, timezone
-from email.utils import format_datetime
+from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
 from numbers import Number
@@ -342,22 +342,18 @@ async def file(
     if auto_cache_headers:
         stat = os.stat(location)
         if not last_modified:
-            last_modified = datetime.fromtimestamp(
-                stat.st_mtime, tz=timezone.utc
-            )
+            last_modified = formatdate(stat.st_mtime, usegmt=True)
         if not max_age:
             max_age = 10  # Should change this (default) value to configable?
 
     if last_modified:
-        headers.setdefault(
-            "last-modified", format_datetime(last_modified, usegmt=True)
-        )
+        headers.setdefault("last-modified", last_modified)
     if max_age:
         headers.setdefault("cache-control", f"max-age={max_age}")
         headers.setdefault(
             "expires",
-            format_datetime(
-                datetime.now(tz=timezone.utc) + timedelta(seconds=max_age),
+            formatdate(
+                time() + max_age,
                 usegmt=True,
             ),
         )

@@ -342,12 +342,14 @@ async def file(
         last_modified = last_modified.timestamp()
 
     if last_modified is None:
-        last_modified = formatdate(Path(location).stat().st_mtime, usegmt=True)
+        last_modified = Path(location).stat().st_mtime
     if max_age is _default:
         max_age = 0  # Should change this (default) value to configable?
 
     if last_modified:
-        headers.setdefault("last-modified", last_modified)
+        headers.setdefault(
+            "last-modified", formatdate(last_modified, usegmt=True)
+        )
     if max_age:
         headers.setdefault("cache-control", f"max-age={max_age}")
         headers.setdefault(

@@ -3,8 +3,11 @@ import inspect
 import os
 
 from collections import namedtuple
+from datetime import datetime
+from email.utils import formatdate
 from logging import ERROR, LogRecord
 from mimetypes import guess_type
+from pathlib import Path
 from random import choice
 from typing import Callable, List
 from urllib.parse import unquote
@@ -711,3 +714,40 @@ def send_response_after_eof_should_fail(
         assert "foo, " in response.text
         assert message_in_records(caplog.records, error_msg1)
         assert message_in_records(caplog.records, error_msg2)
+
+
+@pytest.mark.parametrize(
+    "file_name", ["test.file", "decode me.txt", "python.png"]
+)
+def test_file_response_headers(
+    app: Sanic, file_name: str, static_file_directory: str
+):
+    test_last_modified = datetime.now()
+    test_max_age = 10
+    test_expires = test_last_modified.timestamp() + test_max_age
+
+    @app.route("/files/<filename>", methods=["GET"])
+    def file_route(request, filename):
+        file_path = (Path(static_file_directory) / file_name).absolute()
+        return file(
+            file_path, max_age=test_max_age, last_modified=test_last_modified
+        )
+
+    _, response = app.test_client.get(f"/files/{file_name}")
+    assert response.body == get_file_content(static_file_directory, file_name)
+    headers = response.headers
+    print(headers)
+    assert "Content-Disposition" not in headers
+    assert "content-length" in headers
+    assert (
+        "cache-control" in headers
+        and headers.get("cache-control") == f"max-age={test_max_age}"
+    )
+    assert (
+        "expires" in headers
+        and headers.get("expires")[:-5]
+        == formatdate(test_expires, usegmt=True)[:-5] # [:-5] to ignore the second digit difference
+    )
+    assert "last-modified" in headers and headers.get(
+        "last-modified"
+    ) == formatdate(test_last_modified.timestamp(), usegmt=True)

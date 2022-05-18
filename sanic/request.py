@@ -620,7 +620,7 @@ class Request:
         :rtype: str
         """
         if "//" in self.app.config.get("SERVER_NAME", ""):
-            return self.app.config.SERVER_NAME.split("//")[0]
+            return self.app.config.SERVER_NAME.split("//")[0].rstrip(":")
         if "proto" in self.forwarded:
             return str(self.forwarded["proto"])
 

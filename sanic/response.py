@@ -342,7 +342,7 @@ async def file(
         last_modified = last_modified.timestamp()
 
     if last_modified is None:
-        last_modified = formatdate(Path(location).stat.st_mtime, usegmt=True)
+        last_modified = formatdate(Path(location).stat().st_mtime, usegmt=True)
     if max_age is _default:
         max_age = 0  # Should change this (default) value to configable?
 

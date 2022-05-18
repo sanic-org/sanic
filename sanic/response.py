@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import os
-
 from datetime import datetime
 from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
 from numbers import Number
 from os import path
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from time import time
 from typing import (
     TYPE_CHECKING,
@@ -29,7 +27,7 @@ from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import has_message_body, remove_entity_headers
+from sanic.helpers import _default, has_message_body, remove_entity_headers
 from sanic.http import Http
 from sanic.models.protocol_types import HTMLProtocol, Range
 
@@ -322,8 +320,7 @@ async def file(
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
     last_modified: Optional[Union[datetime, Number]] = None,
-    max_age: Optional[Number] = None,
-    auto_cache_headers: bool = True,
+    max_age: Optional[Number] = _default,
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
@@ -332,6 +329,8 @@ async def file(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
+    :param last_modified: The last moditied date and time of the file.
+    :param max_age: Max age for cache control.
     :param _range:
     """
     headers = headers or {}
@@ -341,12 +340,11 @@ async def file(
         )
     if isinstance(last_modified, datetime):
         last_modified = last_modified.timestamp()
-    if auto_cache_headers:
-        stat = os.stat(location)
-        if not last_modified:
-            last_modified = formatdate(stat.st_mtime, usegmt=True)
-        if not max_age:
-            max_age = 10  # Should change this (default) value to configable?
+
+    if last_modified is None:
+        last_modified = formatdate(Path(location).stat.st_mtime, usegmt=True)
+    if max_age is _default:
+        max_age = 0  # Should change this (default) value to configable?
 
     if last_modified:
         headers.setdefault("last-modified", last_modified)

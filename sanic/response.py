@@ -27,7 +27,12 @@ from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import _default, has_message_body, remove_entity_headers
+from sanic.helpers import (
+    Default,
+    _default,
+    has_message_body,
+    remove_entity_headers,
+)
 from sanic.http import Http
 from sanic.models.protocol_types import HTMLProtocol, Range
 
@@ -156,7 +161,7 @@ class BaseHTTPResponse:
             else data or b""
         )
         if self.auto_content_length and "content-length" not in self.headers:
-            self.headers["content-length"] = len(data)
+            self.headers["content-length"] = str(len(data))  # type: ignore
         await self.stream.send(data, end_stream=end_stream)
 
 
@@ -319,8 +324,8 @@ async def file(
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
-    last_modified: Optional[Union[datetime, Number]] = None,
-    max_age: Optional[Number] = _default,
+    last_modified: Optional[Union[datetime, float, int]] = None,
+    max_age: Optional[Union[float, int, Default]] = _default,
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
@@ -343,7 +348,7 @@ async def file(
 
     if last_modified is None:
         last_modified = Path(location).stat().st_mtime
-    if max_age is _default:
+    if isinstance(max_age, Default):
         max_age = 0  # Should change this (default) value to configable?
 
     if last_modified:

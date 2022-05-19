@@ -4,7 +4,6 @@ from datetime import datetime
 from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
-from numbers import Number
 from os import path
 from pathlib import Path, PurePath
 from time import time

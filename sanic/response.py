@@ -159,8 +159,12 @@ class BaseHTTPResponse:
             if hasattr(data, "encode")
             else data or b""
         )
-        if self.auto_content_length and "content-length" not in self.headers:
-            self.headers["content-length"] = str(len(data))  # type: ignore
+        if (
+            self.auto_content_length
+            and "content-length" not in self.headers
+            and data is not None
+        ):
+            self.headers["content-length"] = str(len(data))
         await self.stream.send(data, end_stream=end_stream)
 
 

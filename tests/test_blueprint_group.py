@@ -5,7 +5,7 @@ from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.exceptions import (
     Forbidden,
-    InvalidUsage,
+    BadRequest,
     SanicException,
     ServerError,
 )
@@ -104,7 +104,7 @@ def test_bp_group(app: Sanic):
 
     @blueprint_1.route("/invalid")
     def blueprint_1_error(request: Request):
-        raise InvalidUsage("Invalid")
+        raise BadRequest("Invalid")
 
     @blueprint_2.route("/")
     def blueprint_2_default_route(request):
@@ -120,7 +120,7 @@ def test_bp_group(app: Sanic):
 
     blueprint_3 = Blueprint("blueprint_3", url_prefix="/bp3")
 
-    @blueprint_group_1.exception(InvalidUsage)
+    @blueprint_group_1.exception(BadRequest)
     def handle_group_exception(request, exception):
         return text("BP1_ERR_OK")
 

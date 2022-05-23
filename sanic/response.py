@@ -66,7 +66,6 @@ class BaseHTTPResponse:
         "status",
         "headers",
         "_cookies",
-        "auto_content_length",
     )
 
     _dumps = json_dumps
@@ -79,7 +78,6 @@ class BaseHTTPResponse:
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
-        self.auto_content_length = False
 
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
@@ -159,12 +157,6 @@ class BaseHTTPResponse:
             if hasattr(data, "encode")
             else data or b""
         )
-        if (
-            self.auto_content_length
-            and "content-length" not in self.headers
-            and data is not None
-        ):
-            self.headers["content-length"] = str(len(data))
         await self.stream.send(data, end_stream=end_stream)
 
 
@@ -190,7 +182,6 @@ class HTTPResponse(BaseHTTPResponse):
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
-        auto_content_length: bool = False,
     ):
         super().__init__()
 
@@ -199,7 +190,6 @@ class HTTPResponse(BaseHTTPResponse):
         self.status = status
         self.headers = Header(headers or {})
         self._cookies = None
-        self.auto_content_length = auto_content_length
 
     async def eof(self):
         await self.send("", True)
@@ -387,7 +377,6 @@ async def file(
         status=status,
         headers=headers,
         content_type=mime_type,
-        auto_content_length=True,
     )
 
 

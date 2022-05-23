@@ -317,7 +317,7 @@ async def file(
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
-    last_modified: Optional[Union[datetime, float, int]] = None,
+    last_modified: Optional[Union[datetime, float, int, Default]] = _default,
     max_age: Optional[Union[float, int, Default]] = _default,
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
@@ -336,11 +336,12 @@ async def file(
         headers.setdefault(
             "Content-Disposition", f'attachment; filename="{filename}"'
         )
+
     if isinstance(last_modified, datetime):
         last_modified = last_modified.timestamp()
-
-    if last_modified is None:
+    elif isinstance(last_modified, Default):
         last_modified = Path(location).stat().st_mtime
+
     if isinstance(max_age, Default):
         max_age = 0  # Should change this (default) value to configable?
 

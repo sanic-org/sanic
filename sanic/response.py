@@ -25,12 +25,12 @@ from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
-from sanic.http.http3 import Http3
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
 if TYPE_CHECKING:
     from sanic.asgi import ASGIApp
+    from sanic.http.http3 import HTTPReceiver
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
@@ -51,16 +51,30 @@ class BaseHTTPResponse:
     The base class for all HTTP Responses
     """
 
+    __slots__ = (
+        "asgi",
+        "body",
+        "content_type",
+        "stream",
+        "status",
+        "headers",
+        "_cookies",
+    )
+
     _dumps = json_dumps
 
     def __init__(self):
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Optional[Union[Http, ASGIApp, Http3]] = None
+        self.stream: Optional[Union[Http, ASGIApp, HTTPReceiver]] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return f"<{class_name}: {self.status} {self.content_type}>"
 
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
@@ -122,7 +136,6 @@ class BaseHTTPResponse:
         :param data: str or bytes to be written
         :param end_stream: whether to close the stream after this block
         """
-        print(f">>> BaseHTTPResponse: {data=} {end_stream=} {self.body=}")
         if data is None and end_stream is None:
             end_stream = True
         if self.stream is None:
@@ -141,7 +154,10 @@ class BaseHTTPResponse:
             if hasattr(data, "encode")
             else data or b""
         )
-        await self.stream.send(data, end_stream=end_stream)
+        await self.stream.send(
+            data,  # type: ignore
+            end_stream=end_stream or False,
+        )
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -158,7 +174,7 @@ class HTTPResponse(BaseHTTPResponse):
     :type content_type: Optional[str]
     """
 
-    __slots__ = ("body", "status", "content_type", "headers", "_cookies")
+    __slots__ = ()
 
     def __init__(
         self,

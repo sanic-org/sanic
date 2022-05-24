@@ -5,7 +5,7 @@ from websockets.server import ServerConnection
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import ServerError
-from sanic.log import error_logger
+from sanic.log import logger
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol
@@ -104,7 +104,7 @@ class WebSocketProtocol(HttpProtocol):
                 max_size=self.websocket_max_size,
                 subprotocols=subprotocols,
                 state=OPEN,
-                logger=error_logger,
+                logger=logger,
             )
             resp: "http11.Response" = ws_conn.accept(request)
         except Exception:

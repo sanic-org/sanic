@@ -11,8 +11,8 @@ from asyncio import CancelledError, sleep
 
 from sanic.compat import Header
 from sanic.exceptions import (
-    HeaderExpectationFailed,
-    InvalidUsage,
+    BadRequest,
+    ExpectationFailed,
     PayloadTooLarge,
     ServerError,
     ServiceUnavailable,
@@ -34,14 +34,14 @@ class Http(metaclass=TouchUpMeta):
     :raises ServerError:
     :raises PayloadTooLarge:
     :raises Exception:
-    :raises InvalidUsage:
-    :raises HeaderExpectationFailed:
+    :raises BadRequest:
+    :raises ExpectationFailed:
     :raises RuntimeError:
     :raises ServerError:
     :raises ServerError:
-    :raises InvalidUsage:
-    :raises InvalidUsage:
-    :raises InvalidUsage:
+    :raises BadRequest:
+    :raises BadRequest:
+    :raises BadRequest:
     :raises PayloadTooLarge:
     :raises RuntimeError:
     """
@@ -229,7 +229,7 @@ class Http(metaclass=TouchUpMeta):
 
                 headers.append(h)
         except Exception:
-            raise InvalidUsage("Bad Request")
+            raise BadRequest("Bad Request")
 
         headers_instance = Header(headers)
         self.upgrade_websocket = (
@@ -262,7 +262,7 @@ class Http(metaclass=TouchUpMeta):
                 if expect.lower() == "100-continue":
                     self.expecting_continue = True
                 else:
-                    raise HeaderExpectationFailed(f"Unknown Expect: {expect}")
+                    raise ExpectationFailed(f"Unknown Expect: {expect}")
 
             if headers.getone("transfer-encoding", None) == "chunked":
                 self.request_body = "chunked"
@@ -497,7 +497,7 @@ class Http(metaclass=TouchUpMeta):
 
                 if len(buf) > 64:
                     self.keep_alive = False
-                    raise InvalidUsage("Bad chunked encoding")
+                    raise BadRequest("Bad chunked encoding")
 
                 await self._receive_more()
 
@@ -505,14 +505,14 @@ class Http(metaclass=TouchUpMeta):
                 size = int(buf[2:pos].split(b";", 1)[0].decode(), 16)
             except Exception:
                 self.keep_alive = False
-                raise InvalidUsage("Bad chunked encoding")
+                raise BadRequest("Bad chunked encoding")
 
             if size <= 0:
                 self.request_body = None
 
                 if size < 0:
                     self.keep_alive = False
-                    raise InvalidUsage("Bad chunked encoding")
+                    raise BadRequest("Bad chunked encoding")
 
                 # Consume CRLF, chunk size 0 and the two CRLF that follow
                 pos += 4

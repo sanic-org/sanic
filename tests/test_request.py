@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from sanic import Sanic, response
+from sanic.exceptions import BadURL
 from sanic.request import Request, uuid
 from sanic.server import HttpProtocol
 
@@ -176,3 +177,43 @@ def test_request_accept():
         "text/x-dvi; q=0.8",
         "text/plain; q=0.5",
     ]
+
+
+def test_bad_url_parse():
+    message = "Bad URL: my.redacted-domain.com:443"
+    with pytest.raises(BadURL, match=message):
+        Request(
+            b"my.redacted-domain.com:443",
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+            Mock(),
+        )
+
+
+def test_request_scope_raises_exception_when_no_asgi():
+    app = Sanic("no_asgi")
+
+    @app.get("/")
+    async def get(request):
+        return request.scope
+
+    request, response = app.test_client.get("/")
+    assert response.status == 500
+    with pytest.raises(NotImplementedError):
+        _ = request.scope
+
+
+@pytest.mark.asyncio
+async def test_request_scope_is_not_none_when_running_in_asgi(app):
+    @app.get("/")
+    async def get(request):
+        return response.empty()
+
+    request, _ = await app.asgi_client.get("/")
+
+    assert request.scope is not None
+    assert request.scope["method"].lower() == "get"
+    assert request.scope["path"].lower() == "/"

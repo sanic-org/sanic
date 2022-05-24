@@ -1,8 +1,9 @@
 from enum import Enum, auto
 from functools import partial
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union, overload
 
 from sanic.base.meta import SanicMeta
+from sanic.exceptions import BadRequest
 from sanic.models.futures import FutureListener
 from sanic.models.handler_types import ListenerType, Sanic
 
@@ -17,6 +18,8 @@ class ListenerEvent(str, Enum):
     AFTER_SERVER_STOP = "server.shutdown.after"
     MAIN_PROCESS_START = auto()
     MAIN_PROCESS_STOP = auto()
+    RELOAD_PROCESS_START = auto()
+    RELOAD_PROCESS_STOP = auto()
 
 
 class ListenerMixin(metaclass=SanicMeta):
@@ -26,12 +29,33 @@ class ListenerMixin(metaclass=SanicMeta):
     def _apply_listener(self, listener: FutureListener):
         raise NotImplementedError  # noqa
 
+    @overload
+    def listener(
+        self,
+        listener_or_event: ListenerType[Sanic],
+        event_or_none: str,
+        apply: bool = ...,
+    ) -> ListenerType[Sanic]:
+        ...
+
+    @overload
+    def listener(
+        self,
+        listener_or_event: str,
+        event_or_none: None = ...,
+        apply: bool = ...,
+    ) -> Callable[[ListenerType[Sanic]], ListenerType[Sanic]]:
+        ...
+
     def listener(
         self,
         listener_or_event: Union[ListenerType[Sanic], str],
         event_or_none: Optional[str] = None,
         apply: bool = True,
-    ) -> ListenerType[Sanic]:
+    ) -> Union[
+        ListenerType[Sanic],
+        Callable[[ListenerType[Sanic]], ListenerType[Sanic]],
+    ]:
         """
         Create a listener from a decorated function.
 
@@ -49,7 +73,9 @@ class ListenerMixin(metaclass=SanicMeta):
         :param event: event to listen to
         """
 
-        def register_listener(listener, event):
+        def register_listener(
+            listener: ListenerType[Sanic], event: str
+        ) -> ListenerType[Sanic]:
             nonlocal apply
 
             future_listener = FutureListener(listener, event)
@@ -59,6 +85,10 @@ class ListenerMixin(metaclass=SanicMeta):
             return listener
 
         if callable(listener_or_event):
+            if event_or_none is None:
+                raise BadRequest(
+                    "Invalid event registration: Missing event name."
+                )
             return register_listener(listener_or_event, event_or_none)
         else:
             return partial(register_listener, event=listener_or_event)
@@ -72,6 +102,16 @@ class ListenerMixin(metaclass=SanicMeta):
         self, listener: ListenerType[Sanic]
     ) -> ListenerType[Sanic]:
         return self.listener(listener, "main_process_stop")
+
+    def reload_process_start(
+        self, listener: ListenerType[Sanic]
+    ) -> ListenerType[Sanic]:
+        return self.listener(listener, "reload_process_start")
+
+    def reload_process_stop(
+        self, listener: ListenerType[Sanic]
+    ) -> ListenerType[Sanic]:
+        return self.listener(listener, "reload_process_stop")
 
     def before_server_start(
         self, listener: ListenerType[Sanic]

@@ -13,8 +13,10 @@ from typing import (
     Union,
 )
 
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.route import Route
 
+from sanic.http.http3 import HTTPReceiver  # type: ignore
+from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
 
@@ -31,10 +33,11 @@ from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
 from httptools import parse_url  # type: ignore
+from httptools.parser.errors import HttpParserInvalidURLError  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import InvalidUsage, ServerError
+from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -90,7 +93,9 @@ class Request:
         "_port",
         "_protocol",
         "_remote_addr",
+        "_scheme",
         "_socket",
+        "_stream_id",
         "_match_info",
         "_name",
         "app",
@@ -127,13 +132,17 @@ class Request:
         transport: TransportProtocol,
         app: Sanic,
         head: bytes = b"",
+        stream_id: int = 0,
     ):
 
         self.raw_url = url_bytes
-        # TODO: Content-Encoding detection
-        self._parsed_url = parse_url(url_bytes)
+        try:
+            self._parsed_url = parse_url(url_bytes)
+        except HttpParserInvalidURLError:
+            raise BadURL(f"Bad URL: {url_bytes.decode()}")
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
+        self._stream_id = stream_id
         self.app = app
 
         self.headers = Header(headers)
@@ -150,8 +159,8 @@ class Request:
         self.parsed_accept: Optional[AcceptContainer] = None
         self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
-        self.parsed_form = None
-        self.parsed_files = None
+        self.parsed_form: Optional[RequestParameters] = None
+        self.parsed_files: Optional[RequestParameters] = None
         self.parsed_token: Optional[str] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters
@@ -162,7 +171,9 @@ class Request:
         self.request_middleware_started = False
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
-        self.stream: Optional[Http] = None
+        # TODO:
+        # - Create an ABC (called Stream) for Http and HTTPReceiver to subclass
+        self.stream: Optional[Union[Http, HTTPReceiver]] = None
         self.route: Optional[Route] = None
         self._protocol = None
         self.responded: bool = False
@@ -174,6 +185,10 @@ class Request:
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
+
+    @property
+    def stream_id(self):
+        return self._stream_id
 
     def reset_response(self):
         try:
@@ -198,6 +213,53 @@ class Request:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
+        """Respond to the request without returning.
+
+        This method can only be called once, as you can only respond once.
+        If no ``response`` argument is passed, one will be created from the
+        ``status``, ``headers`` and ``content_type`` arguments.
+
+        **The first typical usecase** is if you wish to respond to the
+        request without returning from the handler:
+
+        .. code-block:: python
+
+            @app.get("/")
+            async def handler(request: Request):
+                data = ...  # Process something
+
+                json_response = json({"data": data})
+                await request.respond(json_response)
+
+                # You are now free to continue executing other code
+                ...
+
+            @app.on_response
+            async def add_header(_, response: HTTPResponse):
+                # Middlewares still get executed as expected
+                response.headers["one"] = "two"
+
+        **The second possible usecase** is for when you want to directly
+        respond to the request:
+
+        .. code-block:: python
+
+            response = await request.respond(content_type="text/csv")
+            await response.send("foo,")
+            await response.send("bar")
+
+            # You can control the completion of the response by calling
+            # the 'eof()' method:
+            await response.eof()
+
+        :param response: response instance to send
+        :param status: status code to return in the response
+        :param headers: headers to return in the response
+        :param content_type: Content-Type header of the response
+        :return: final response being sent (may be different from the
+            ``response`` parameter because of middlewares) which can be
+            used to manually send data
+        """
         try:
             if self.stream is not None and self.stream.response:
                 raise ServerError("Second respond call is not allowed.")
@@ -216,7 +278,7 @@ class Request:
             response = self.stream.respond(response)
 
             if isawaitable(response):
-                response = await response
+                response = await response  # type: ignore
         # Run response middleware
         try:
             response = await self.app._run_response_middleware(
@@ -332,7 +394,7 @@ class Request:
         except Exception:
             if not self.body:
                 return None
-            raise InvalidUsage("Failed when parsing body as json")
+            raise BadRequest("Failed when parsing body as json")
 
         return self.parsed_json
 
@@ -380,28 +442,40 @@ class Request:
                 pass
         return self.parsed_credentials
 
+    def get_form(
+        self, keep_blank_values: bool = False
+    ) -> Optional[RequestParameters]:
+        self.parsed_form = RequestParameters()
+        self.parsed_files = RequestParameters()
+        content_type = self.headers.getone(
+            "content-type", DEFAULT_HTTP_CONTENT_TYPE
+        )
+        content_type, parameters = parse_content_header(content_type)
+        try:
+            if content_type == "application/x-www-form-urlencoded":
+                self.parsed_form = RequestParameters(
+                    parse_qs(
+                        self.body.decode("utf-8"),
+                        keep_blank_values=keep_blank_values,
+                    )
+                )
+            elif content_type == "multipart/form-data":
+                # TODO: Stream this instead of reading to/from memory
+                boundary = parameters["boundary"].encode(  # type: ignore
+                    "utf-8"
+                )  # type: ignore
+                self.parsed_form, self.parsed_files = parse_multipart_form(
+                    self.body, boundary
+                )
+        except Exception:
+            error_logger.exception("Failed when parsing form")
+
+        return self.parsed_form
+
     @property
     def form(self):
         if self.parsed_form is None:
-            self.parsed_form = RequestParameters()
-            self.parsed_files = RequestParameters()
-            content_type = self.headers.getone(
-                "content-type", DEFAULT_HTTP_CONTENT_TYPE
-            )
-            content_type, parameters = parse_content_header(content_type)
-            try:
-                if content_type == "application/x-www-form-urlencoded":
-                    self.parsed_form = RequestParameters(
-                        parse_qs(self.body.decode("utf-8"))
-                    )
-                elif content_type == "multipart/form-data":
-                    # TODO: Stream this instead of reading to/from memory
-                    boundary = parameters["boundary"].encode("utf-8")
-                    self.parsed_form, self.parsed_files = parse_multipart_form(
-                        self.body, boundary
-                    )
-            except Exception:
-                error_logger.exception("Failed when parsing form")
+            self.get_form()
 
         return self.parsed_form
 
@@ -652,23 +726,25 @@ class Request:
         :return: http|https|ws|wss or arbitrary value given by the headers.
         :rtype: str
         """
-        if "//" in self.app.config.get("SERVER_NAME", ""):
-            return self.app.config.SERVER_NAME.split("//")[0]
-        if "proto" in self.forwarded:
-            return str(self.forwarded["proto"])
+        if not hasattr(self, "_scheme"):
+            if "//" in self.app.config.get("SERVER_NAME", ""):
+                return self.app.config.SERVER_NAME.split("//")[0]
+            if "proto" in self.forwarded:
+                return str(self.forwarded["proto"])
 
-        if (
-            self.app.websocket_enabled
-            and self.headers.getone("upgrade", "").lower() == "websocket"
-        ):
-            scheme = "ws"
-        else:
-            scheme = "http"
+            if (
+                self.app.websocket_enabled
+                and self.headers.getone("upgrade", "").lower() == "websocket"
+            ):
+                scheme = "ws"
+            else:
+                scheme = "http"
 
-        if self.transport.get_extra_info("sslcontext"):
-            scheme += "s"
+            if self.transport.get_extra_info("sslcontext"):
+                scheme += "s"
+            self._scheme = scheme
 
-        return scheme
+        return self._scheme
 
     @property
     def host(self) -> str:
@@ -772,6 +848,21 @@ class Request:
         return self.app.url_for(
             view_name, _external=True, _scheme=scheme, _server=netloc, **kwargs
         )
+
+    @property
+    def scope(self) -> ASGIScope:
+        """
+        :return: The ASGI scope of the request.
+                 If the app isn't an ASGI app, then raises an exception.
+        :rtype: Optional[ASGIScope]
+        """
+        if not self.app.asgi:
+            raise NotImplementedError(
+                "App isn't running in ASGI mode. "
+                "Scope is only available for ASGI apps."
+            )
+
+        return self.transport.scope
 
 
 class File(NamedTuple):

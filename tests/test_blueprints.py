@@ -8,7 +8,7 @@ from sanic.app import Sanic
 from sanic.blueprints import Blueprint
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import (
-    InvalidUsage,
+    BadRequest,
     NotFound,
     SanicException,
     ServerError,
@@ -448,7 +448,7 @@ def test_bp_exception_handler(app):
 
     @blueprint.route("/1")
     def handler_1(request):
-        raise InvalidUsage("OK")
+        raise BadRequest("OK")
 
     @blueprint.route("/2")
     def handler_2(request):

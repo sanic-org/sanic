@@ -72,7 +72,7 @@ def ctrlc_workaround_for_windows(app):
         """Asyncio wakeups to allow receiving SIGINT in Python"""
         while not die:
             # If someone else stopped the app, just exit
-            if app.is_stopping:
+            if app.state.is_stopping:
                 return
             # Windows Python blocks signal handlers while the event loop is
             # waiting for I/O. Frequent wakeups keep interrupts flowing.

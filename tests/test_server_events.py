@@ -8,7 +8,7 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
-from sanic.exceptions import InvalidUsage, SanicException
+from sanic.exceptions import BadRequest, SanicException
 
 
 AVAILABLE_LISTENERS = [
@@ -27,6 +27,14 @@ skipif_no_alarm = pytest.mark.skipif(
 
 def create_listener(listener_name, in_list):
     async def _listener(app, loop):
+        print(f"DEBUG MESSAGE FOR PYTEST for {listener_name}")
+        in_list.insert(0, app.name + listener_name)
+
+    return _listener
+
+
+def create_listener_no_loop(listener_name, in_list):
+    async def _listener(app):
         print(f"DEBUG MESSAGE FOR PYTEST for {listener_name}")
         in_list.insert(0, app.name + listener_name)
 
@@ -52,6 +60,17 @@ def test_single_listener(app, listener_name):
     output = []
     # Register listener
     app.listener(listener_name)(create_listener(listener_name, output))
+    start_stop_app(app)
+    assert app.name + listener_name == output.pop()
+
+
+@skipif_no_alarm
+@pytest.mark.parametrize("listener_name", AVAILABLE_LISTENERS)
+def test_single_listener_no_loop(app, listener_name):
+    """Test that listeners on their own work"""
+    output = []
+    # Register listener
+    app.listener(listener_name)(create_listener_no_loop(listener_name, output))
     start_stop_app(app)
     assert app.name + listener_name == output.pop()
 
@@ -118,7 +137,7 @@ async def test_trigger_before_events_create_server_missing_event(app):
     class MySanicDb:
         pass
 
-    with pytest.raises(InvalidUsage):
+    with pytest.raises(BadRequest):
 
         @app.listener
         async def init_db(app, loop):
@@ -199,3 +218,16 @@ async def test_missing_startup_raises_exception(app):
 
     with pytest.raises(SanicException):
         await srv.before_start()
+
+
+def test_reload_listeners_attached(app):
+    async def dummy(*_):
+        ...
+
+    app.reload_process_start(dummy)
+    app.reload_process_stop(dummy)
+    app.listener("reload_process_start")(dummy)
+    app.listener("reload_process_stop")(dummy)
+
+    assert len(app.listeners.get("reload_process_start")) == 2
+    assert len(app.listeners.get("reload_process_stop")) == 2

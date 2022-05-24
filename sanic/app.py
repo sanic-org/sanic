@@ -11,7 +11,6 @@ from asyncio import (
     CancelledError,
     Task,
     ensure_future,
-    get_event_loop,
     get_running_loop,
     wait_for,
 )
@@ -59,12 +58,13 @@ from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
-    InvalidUsage,
+    BadRequest,
     SanicException,
     ServerError,
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -142,7 +142,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         "error_handler",
         "go_fast",
         "listeners",
-        "name",
         "named_request_middleware",
         "named_response_middleware",
         "request_class",
@@ -254,7 +253,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
             )
-        return get_event_loop()
+        try:
+            return get_running_loop()
+        except RuntimeError:
+            if sys.version_info > (3, 10):
+                return asyncio.get_event_loop_policy().get_event_loop()
+            else:
+                return asyncio.get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration
@@ -277,7 +282,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             valid = ", ".join(
                 map(lambda x: x.lower(), ListenerEvent.__members__.keys())
             )
-            raise InvalidUsage(f"Invalid event: {event}. Use one of: {valid}")
+            raise BadRequest(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
             self.signal(_event.value)(
@@ -945,6 +950,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                         "response": response,
                     },
                 )
+                ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
                 resp = await response(request)
@@ -988,10 +994,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         cancelled = False
         try:
             await fut
-        except Exception as e:
-            self.error_handler.log(request, e)
         except (CancelledError, ConnectionClosed):
             cancelled = True
+        except Exception as e:
+            self.error_handler.log(request, e)
         finally:
             self.websocket_tasks.remove(fut)
             if cancelled:
@@ -1132,7 +1138,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     async def _listener(
         app: Sanic, loop: AbstractEventLoop, listener: ListenerType
     ):
-        maybe_coro = listener(app, loop)
+        try:
+            maybe_coro = listener(app)  # type: ignore
+        except TypeError:
+            maybe_coro = listener(app, loop)  # type: ignore
         if maybe_coro and isawaitable(maybe_coro):
             await maybe_coro
 
@@ -1509,7 +1518,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             if not Sanic.test_mode:
                 raise e
 
-    def signalize(self):
+    def signalize(self, allow_fail_builtin=True):
+        self.signal_router.allow_fail_builtin = allow_fail_builtin
         try:
             self.signal_router.finalize()
         except FinalizationError as e:
@@ -1524,8 +1534,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if hasattr(self, "_ext"):
             self.ext._display()
 
+        if self.state.is_debug and self.config.TOUCHUP is not True:
+            self.config.TOUCHUP = False
+        elif self.config.TOUCHUP is _default:
+            self.config.TOUCHUP = True
+
         # Setup routers
-        self.signalize()
+        self.signalize(self.config.TOUCHUP)
         self.finalize()
 
         # TODO: Replace in v22.6 to check against apps in app registry
@@ -1545,7 +1560,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             # TODO:
             # - Raise warning if secondary apps have error handler config
             ErrorHandler.finalize(self.error_handler, config=self.config)
-            TouchUp.run(self)
+            if self.config.TOUCHUP:
+                TouchUp.run(self)
 
         self.state.is_started = True
 
@@ -1561,8 +1577,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             "shutdown",
         ):
             raise SanicException(f"Invalid server event: {event}")
-        if self.state.verbosity >= 1:
-            logger.debug(f"Triggering server events: {event}")
+        logger.debug(
+            f"Triggering server events: {event}", extra={"verbosity": 1}
+        )
         reverse = concern == "shutdown"
         if loop is None:
             loop = self.loop

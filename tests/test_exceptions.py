@@ -6,9 +6,16 @@ from bs4 import BeautifulSoup
 
 from sanic import Sanic
 from sanic.exceptions import (
+    BadRequest,
+    ContentRangeError,
+    ExpectationFailed,
     Forbidden,
+    HeaderExpectationFailed,
     InvalidUsage,
+    MethodNotAllowed,
+    MethodNotSupported,
     NotFound,
+    RangeNotSatisfiable,
     SanicException,
     ServerError,
     Unauthorized,
@@ -77,7 +84,7 @@ def exception_app():
 
     @app.route("/invalid")
     def handler_invalid(request):
-        raise InvalidUsage("OK")
+        raise BadRequest("OK")
 
     @app.route("/abort/401")
     def handler_401_error(request):
@@ -136,7 +143,7 @@ def test_server_error_exception(exception_app):
 
 
 def test_invalid_usage_exception(exception_app):
-    """Test the built-in InvalidUsage exception works"""
+    """Test the built-in BadRequest exception works"""
     request, response = exception_app.test_client.get("/invalid")
     assert response.status == 400
 
@@ -375,3 +382,10 @@ def test_contextual_exception_functional_message(override):
     assert response.status == 418
     assert response.json["message"] == error_message
     assert response.json["context"] == {"foo": "bar"}
+
+
+def test_exception_aliases():
+    assert InvalidUsage is BadRequest
+    assert MethodNotSupported is MethodNotAllowed
+    assert ContentRangeError is RangeNotSatisfiable
+    assert HeaderExpectationFailed is ExpectationFailed

@@ -42,7 +42,7 @@ DEFAULT_CONFIG = {
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
     "TLS_CERT_PASSWORD": "",
-    "TOUCHUP": True,
+    "TOUCHUP": _default,
     "USE_UVLOOP": _default,
     "WEBSOCKET_MAX_SIZE": 2**20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
@@ -90,7 +90,7 @@ class Config(dict, metaclass=DescriptorMeta):
     RESPONSE_TIMEOUT: int
     SERVER_NAME: str
     TLS_CERT_PASSWORD: str
-    TOUCHUP: bool
+    TOUCHUP: Union[Default, bool]
     USE_UVLOOP: Union[Default, bool]
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int

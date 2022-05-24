@@ -64,6 +64,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -1533,8 +1534,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if hasattr(self, "_ext"):
             self.ext._display()
 
-        if self.state.is_debug:
+        if self.state.is_debug and self.config.TOUCHUP is not True:
             self.config.TOUCHUP = False
+        elif self.config.TOUCHUP is _default:
+            self.config.TOUCHUP = True
 
         # Setup routers
         self.signalize(self.config.TOUCHUP)

@@ -314,13 +314,17 @@ class Http3:
         return self.receivers[stream_id]
 
     def _make_request(self, event: HeadersReceived) -> Request:
-        method_header, path_header, *rem = event.headers
-        headers = Header(((k.decode(), v.decode()) for k, v in rem))
-        method = method_header[1].decode()
-        path = path_header[1]
-        scheme = headers.pop(":scheme")
+        # TODO:
+        # Cleanup
+        # method_header, path_header, *rem = event.headers
+        headers = Header(((k.decode(), v.decode()) for k, v in event.headers))
+        # method = method_header[1].decode()
+        # path = path_header[1]
+        method = headers[":method"]
+        path = headers[":path"].encode()
+        scheme = headers.pop(":scheme", "")
 
-        authority = headers.pop(":authority")
+        authority = headers.pop(":authority", "")
 
         if authority:
             headers["host"] = authority

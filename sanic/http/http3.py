@@ -28,9 +28,9 @@ from aioquic.quic.configuration import QuicConfiguration
 from aioquic.tls import SessionTicket
 
 from sanic.compat import Header
-from sanic.exceptions import PayloadTooLarge, SanicException
+from sanic.exceptions import PayloadTooLarge
 from sanic.helpers import has_message_body
-from sanic.http.tls import CertSimple
+from sanic.http.tls.context import SanicSSLContext
 
 
 if TYPE_CHECKING:
@@ -353,10 +353,7 @@ class SessionTicketStore:
         return self.tickets.pop(label, None)
 
 
-def get_config(app: Sanic, ssl: SSLContext):
-    if not isinstance(ssl, CertSimple):
-        raise SanicException("SSLContext is not CertSimple")
-
+def get_config(app: Sanic, ssl: SanicSSLContext):
     config = QuicConfiguration(
         alpn_protocols=H3_ALPN + H0_ALPN + ["siduck"],
         is_client=False,

@@ -318,7 +318,8 @@ async def file(
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
     last_modified: Optional[Union[datetime, float, int, Default]] = _default,
-    max_age: Optional[Union[float, int, Default]] = _default,
+    max_age: Optional[Union[float, int]] = None,
+    no_store: Optional[bool] = None,
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
@@ -327,8 +328,9 @@ async def file(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
-    :param last_modified: The last moditied date and time of the file.
+    :param last_modified: The last modified date and time of the file.
     :param max_age: Max age for cache control.
+    :param no_store: Any cache should not store this response.
     :param _range:
     """
     headers = headers or {}
@@ -342,15 +344,15 @@ async def file(
     elif isinstance(last_modified, Default):
         last_modified = Path(location).stat().st_mtime
 
-    if isinstance(max_age, Default):
-        max_age = 0  # Should change this (default) value to configable?
-
     if last_modified:
         headers.setdefault(
             "last-modified", formatdate(last_modified, usegmt=True)
         )
-    if max_age:
-        headers.setdefault("cache-control", f"max-age={max_age}")
+
+    if no_store:
+        cache_control = "no-store"
+    elif max_age:
+        cache_control = f"public, max-age={max_age}"
         headers.setdefault(
             "expires",
             formatdate(
@@ -358,6 +360,10 @@ async def file(
                 usegmt=True,
             ),
         )
+    else:
+        cache_control = "no-cache"
+
+    headers.setdefault("cache-control", cache_control)
 
     filename = filename or path.split(location)[-1]
 

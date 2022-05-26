@@ -114,7 +114,7 @@ Hello World Example
     from sanic import Sanic
     from sanic.response import json
 
-    app = Sanic("My Hello, world app")
+    app = Sanic("my-hello-world-app")
 
     @app.route('/')
     async def test(request):

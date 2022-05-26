@@ -779,9 +779,9 @@ def test_file_response_headers(
         == formatdate(test_expires, usegmt=True)[:-6]
         # [:-6] to allow at most 1 min difference
         # It's minimal for cases like:
-        # Thu, 26 May 2022 05:36:49
+        # Thu, 26 May 2022 05:36:49 GMT
         # AND
-        # Thu, 26 May 2022 05:36:50
+        # Thu, 26 May 2022 05:36:50 GMT
     )
 
     assert "last-modified" in headers and headers.get(

@@ -9,7 +9,7 @@ import uvicorn
 from sanic import Sanic
 from sanic.application.state import Mode
 from sanic.asgi import MockTransport
-from sanic.exceptions import Forbidden, BadRequest, ServiceUnavailable
+from sanic.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection

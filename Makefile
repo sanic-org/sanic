@@ -66,15 +66,15 @@ ifdef include_tests
 	isort -rc sanic tests
 else
 	$(info Sorting Imports)
-	isort -rc sanic tests  --profile=black
+	isort -rc sanic tests
 endif
 endif
 
 black:
-	black --config ./.black.toml sanic tests
+	black sanic tests
 
 isort:
-	isort sanic tests --profile=black
+	isort sanic tests
 
 pretty: black isort
 

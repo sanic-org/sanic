@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from pytest import LogCaptureFixture, MonkeyPatch
 
 from sanic import Sanic, handlers
-from sanic.exceptions import Forbidden, BadRequest, NotFound, ServerError
+from sanic.exceptions import BadRequest, Forbidden, NotFound, ServerError
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
 from sanic.response import stream, text

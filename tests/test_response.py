@@ -9,7 +9,7 @@ from logging import ERROR, LogRecord
 from mimetypes import guess_type
 from pathlib import Path
 from random import choice
-from typing import Callable, List
+from typing import Callable, List, Union
 from urllib.parse import unquote
 
 import pytest
@@ -331,10 +331,25 @@ def static_file_directory():
     return static_directory
 
 
-def get_file_content(static_file_directory, file_name):
+def path_str_to_path_obj(static_file_directory: Union[Path, str]):
+    if isinstance(static_file_directory, str):
+        static_file_directory = Path(static_file_directory)
+    return static_file_directory
+
+
+def get_file_content(static_file_directory: Union[Path, str], file_name: str):
     """The content of the static file to check"""
-    with open(os.path.join(static_file_directory, file_name), "rb") as file:
+    static_file_directory = path_str_to_path_obj(static_file_directory)
+    with open(static_file_directory / file_name, "rb") as file:
         return file.read()
+
+
+def get_file_last_modified_timestamp(
+    static_file_directory: Union[Path, str], file_name: str
+):
+    """The content of the static file to check"""
+    static_file_directory = path_str_to_path_obj(static_file_directory)
+    return (static_file_directory / file_name).stat().st_mtime
 
 
 @pytest.mark.parametrize(
@@ -726,28 +741,72 @@ def test_file_response_headers(
     test_max_age = 10
     test_expires = test_last_modified.timestamp() + test_max_age
 
-    @app.route("/files/<filename>", methods=["GET"])
-    def file_route(request, filename):
+    @app.route("/files/cached/<filename>", methods=["GET"])
+    def file_route_cache(request, filename):
         file_path = (Path(static_file_directory) / file_name).absolute()
         return file(
             file_path, max_age=test_max_age, last_modified=test_last_modified
         )
 
-    _, response = app.test_client.get(f"/files/{file_name}")
+    @app.route(
+        "/files/cached_default_last_modified/<filename>", methods=["GET"]
+    )
+    def file_route_cache_default_last_modified(request, filename):
+        file_path = (Path(static_file_directory) / file_name).absolute()
+        return file(file_path, max_age=test_max_age)
+
+    @app.route("/files/no_cache/<filename>", methods=["GET"])
+    def file_route_no_cache(request, filename):
+        file_path = (Path(static_file_directory) / file_name).absolute()
+        return file(file_path)
+
+    @app.route("/files/no_store/<filename>", methods=["GET"])
+    def file_route_no_store(request, filename):
+        file_path = (Path(static_file_directory) / file_name).absolute()
+        return file(file_path, no_store=True)
+
+    _, response = app.test_client.get(f"/files/cached/{file_name}")
     assert response.body == get_file_content(static_file_directory, file_name)
     headers = response.headers
-    print(headers)
-    assert "Content-Disposition" not in headers
-    assert "content-length" in headers
     assert (
         "cache-control" in headers
-        and headers.get("cache-control") == f"max-age={test_max_age}"
+        and f"max-age={test_max_age}" in headers.get("cache-control")
+        and f"public" in headers.get("cache-control")
     )
     assert (
         "expires" in headers
-        and headers.get("expires")[:-5]
-        == formatdate(test_expires, usegmt=True)[:-5] # [:-5] to ignore the second digit difference
+        and headers.get("expires")[:-6]
+        == formatdate(test_expires, usegmt=True)[:-6]
+        # [:-6] to allow at most 1 min difference
+        # It's minimal for cases like:
+        # Thu, 26 May 2022 05:36:49
+        # AND
+        # Thu, 26 May 2022 05:36:50
     )
+
     assert "last-modified" in headers and headers.get(
         "last-modified"
     ) == formatdate(test_last_modified.timestamp(), usegmt=True)
+
+    _, response = app.test_client.get(
+        f"/files/cached_default_last_modified/{file_name}"
+    )
+    file_last_modified = get_file_last_modified_timestamp(
+        static_file_directory, file_name
+    )
+    headers = response.headers
+    assert "last-modified" in headers and headers.get(
+        "last-modified"
+    ) == formatdate(file_last_modified, usegmt=True)
+
+    _, response = app.test_client.get(f"/files/no_cache/{file_name}")
+    headers = response.headers
+    assert "cache-control" in headers and f"no-cache" == headers.get(
+        "cache-control"
+    )
+
+    _, response = app.test_client.get(f"/files/no_store/{file_name}")
+    headers = response.headers
+    assert "cache-control" in headers and f"no-store" == headers.get(
+        "cache-control"
+    )

@@ -20,6 +20,7 @@ from sanic.exceptions import (
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
 from sanic.http.constants import Stage
+from sanic.http.stream import Stream
 from sanic.log import access_logger, error_logger, logger
 from sanic.touchup import TouchUpMeta
 
@@ -27,7 +28,7 @@ from sanic.touchup import TouchUpMeta
 HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 
-class Http(metaclass=TouchUpMeta):
+class Http(Stream, metaclass=TouchUpMeta):
     """
     Internal helper for managing the HTTP request/response cycle
 

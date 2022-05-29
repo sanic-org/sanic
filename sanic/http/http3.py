@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 
 from abc import ABC, abstractmethod
-from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -30,6 +29,7 @@ from aioquic.tls import SessionTicket
 from sanic.compat import Header
 from sanic.exceptions import PayloadTooLarge
 from sanic.helpers import has_message_body
+from sanic.http.stream import Stream
 from sanic.http.tls.context import SanicSSLContext
 
 
@@ -63,7 +63,7 @@ class Receiver(ABC):
         ...
 
 
-class HTTPReceiver(Receiver):
+class HTTPReceiver(Receiver, Stream):
     stage: Stage
 
     def __init__(self, *args, **kwargs) -> None:

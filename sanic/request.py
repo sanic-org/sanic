@@ -15,7 +15,7 @@ from typing import (
 
 from sanic_routing.route import Route
 
-from sanic.http.http3 import HTTPReceiver  # type: ignore
+from sanic.http.stream import Stream
 from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
@@ -48,7 +48,7 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
-from sanic.http import Http, Stage
+from sanic.http import Stage
 from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
@@ -169,14 +169,12 @@ class Request:
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
         self.request_middleware_started = False
+        self.responded: bool = False
+        self.route: Optional[Route] = None
+        self.stream: Optional[Stream] = None
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
-        # TODO:
-        # - Create an ABC (called Stream) for Http and HTTPReceiver to subclass
-        self.stream: Optional[Union[Http, HTTPReceiver]] = None
-        self.route: Optional[Route] = None
         self._protocol = None
-        self.responded: bool = False
 
     def __repr__(self):
         class_name = self.__class__.__name__

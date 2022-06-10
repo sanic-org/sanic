@@ -2,6 +2,7 @@ import json
 import subprocess
 
 from pathlib import Path
+from typing import List
 
 import pytest
 
@@ -25,14 +26,14 @@ def capture(command):
     return out, err, proc.returncode
 
 
-def starting_line(lines):
+def starting_line(lines: List[str]):
     for idx, line in enumerate(lines):
         if line.strip().startswith(b"Sanic v"):
             return idx
     return 0
 
 
-def read_app_info(lines):
+def read_app_info(lines: List[str]):
     for line in lines:
         if line.startswith(b"{") and line.endswith(b"}"):
             return json.loads(line)

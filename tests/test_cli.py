@@ -18,7 +18,7 @@ def capture(command):
         cwd=Path(__file__).parent,
     )
     try:
-        out, err = proc.communicate(timeout=1)
+        out, err = proc.communicate(timeout=10)
     except subprocess.TimeoutExpired:
         proc.kill()
         out, err = proc.communicate()

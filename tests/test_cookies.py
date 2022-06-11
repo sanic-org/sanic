@@ -234,6 +234,7 @@ def test_cookie_expires(app: Sanic, expires: datetime):
         response = text("pass")
         response.cookies["test"] = "pass"
         response.cookies["test"]["expires"] = expires
+        print(response.cookies)
         return response
 
     request, response = app.test_client.get(

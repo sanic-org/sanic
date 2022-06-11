@@ -3,6 +3,7 @@ from http.cookies import SimpleCookie
 
 import pytest
 
+from sanic import Sanic
 from sanic.cookies import Cookie
 from sanic.response import text
 
@@ -224,7 +225,7 @@ def test_cookie_bad_max_age(app, max_age):
 @pytest.mark.parametrize(
     "expires", [datetime.utcnow() + timedelta(seconds=60)]
 )
-def test_cookie_expires(app, expires):
+def test_cookie_expires(app: Sanic, expires: datetime):
     expires = expires.replace(microsecond=0)
     cookies = {"test": "wait"}
 
@@ -238,6 +239,8 @@ def test_cookie_expires(app, expires):
     request, response = app.test_client.get(
         "/", cookies=cookies, raw_cookies=True
     )
+    print(response.raw_cookies)
+
     cookie_expires = datetime.utcfromtimestamp(
         response.raw_cookies["test"].expires
     ).replace(microsecond=0)

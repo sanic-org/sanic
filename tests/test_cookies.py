@@ -234,13 +234,11 @@ def test_cookie_expires(app: Sanic, expires: datetime):
         response = text("pass")
         response.cookies["test"] = "pass"
         response.cookies["test"]["expires"] = expires
-        print(response.cookies)
         return response
 
     request, response = app.test_client.get(
         "/", cookies=cookies, raw_cookies=True
     )
-    print(response.raw_cookies)
 
     cookie_expires = datetime.utcfromtimestamp(
         response.raw_cookies["test"].expires

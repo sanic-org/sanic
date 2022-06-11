@@ -170,4 +170,4 @@ We are always happy to have new contributions. We have `marked issues good for a
 .. |Linode| image:: https://www.linode.com/wp-content/uploads/2021/01/Linode-Logo-Black.svg
     :alt: Linode
     :target: https://www.linode.com
-    :width: 200px
+    :width: 200px 

@@ -1,5 +1,3 @@
-import sys
-
 from abc import ABC, abstractmethod
 from shutil import get_terminal_size
 from textwrap import indent, wrap

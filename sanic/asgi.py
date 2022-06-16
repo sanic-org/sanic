@@ -25,27 +25,28 @@ class Lifespan:
     def __init__(self, asgi_app: ASGIApp) -> None:
         self.asgi_app = asgi_app
 
-        if self.asgi_app.sanic_app.state.verbosity > 0:
-            if (
-                "server.init.before"
-                in self.asgi_app.sanic_app.signal_router.name_index
-            ):
-                logger.debug(
-                    'You have set a listener for "before_server_start" '
-                    "in ASGI mode. "
-                    "It will be executed as early as possible, but not before "
-                    "the ASGI server is started."
-                )
-            if (
-                "server.shutdown.after"
-                in self.asgi_app.sanic_app.signal_router.name_index
-            ):
-                logger.debug(
-                    'You have set a listener for "after_server_stop" '
-                    "in ASGI mode. "
-                    "It will be executed as late as possible, but not after "
-                    "the ASGI server is stopped."
-                )
+        if (
+            "server.init.before"
+            in self.asgi_app.sanic_app.signal_router.name_index
+        ):
+            logger.debug(
+                'You have set a listener for "before_server_start" '
+                "in ASGI mode. "
+                "It will be executed as early as possible, but not before "
+                "the ASGI server is started.",
+                extra={"verbosity": 1},
+            )
+        if (
+            "server.shutdown.after"
+            in self.asgi_app.sanic_app.signal_router.name_index
+        ):
+            logger.debug(
+                'You have set a listener for "after_server_stop" '
+                "in ASGI mode. "
+                "It will be executed as late as possible, but not after "
+                "the ASGI server is stopped.",
+                extra={"verbosity": 1},
+            )
 
     async def startup(self) -> None:
         """

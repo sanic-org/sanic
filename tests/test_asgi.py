@@ -222,6 +222,7 @@ def test_listeners_triggered_async(app, caplog):
     assert after_server_stop
 
     app.state.mode = Mode.DEBUG
+    app.state.verbosity = 0
     with caplog.at_level(logging.DEBUG):
         server.run()
 

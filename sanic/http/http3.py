@@ -30,7 +30,7 @@ from aioquic.tls import SessionTicket
 from sanic.compat import Header
 from sanic.exceptions import PayloadTooLarge, SanicException
 from sanic.helpers import has_message_body
-from sanic.http.tls import CertSimple
+from sanic.http.tls import CertSelector, CertSimple
 
 
 if TYPE_CHECKING:
@@ -354,6 +354,10 @@ class SessionTicketStore:
 
 
 def get_config(app: Sanic, ssl: SSLContext):
+    # TODO:
+    # - proper selection needed if servince with multiple certs
+    if isinstance(ssl, CertSelector):
+        ssl = ssl.sanic_select[0]
     if not isinstance(ssl, CertSimple):
         raise SanicException("SSLContext is not CertSimple")
 

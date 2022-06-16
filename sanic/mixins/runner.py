@@ -512,12 +512,15 @@ class RunnerMixin(metaclass=SanicMeta):
                 else:
                     mode.append(f"w/ {self.state.workers} workers")
 
-            server = ", ".join(
-                (
-                    self.state.server,
-                    server_settings["version"].display(),  # type: ignore
+            if server_settings:
+                server = ", ".join(
+                    (
+                        self.state.server,
+                        server_settings["version"].display(),  # type: ignore
+                    )
                 )
-            )
+            else:
+                server = ""
 
             display = {
                 "mode": " ".join(mode),

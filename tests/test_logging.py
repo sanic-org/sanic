@@ -163,7 +163,7 @@ def test_logging_modified_root_logger_config():
 
 def test_access_log_client_ip_remote_addr(monkeypatch):
     access = Mock()
-    monkeypatch.setattr(sanic.http, "access_logger", access)
+    monkeypatch.setattr(sanic.http.http1, "access_logger", access)
 
     app = Sanic("test_logging")
     app.config.PROXIES_COUNT = 2
@@ -190,7 +190,7 @@ def test_access_log_client_ip_remote_addr(monkeypatch):
 
 def test_access_log_client_ip_reqip(monkeypatch):
     access = Mock()
-    monkeypatch.setattr(sanic.http, "access_logger", access)
+    monkeypatch.setattr(sanic.http.http1, "access_logger", access)
 
     app = Sanic("test_logging")
 

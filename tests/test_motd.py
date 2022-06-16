@@ -53,7 +53,7 @@ def test_motd_with_expected_info(app, run_startup):
 
     assert logs[1][2] == f"Sanic v{__version__}"
     assert logs[3][2] == "mode: debug, single worker"
-    assert logs[4][2] == "server: sanic"
+    assert logs[4][2] == "server: sanic, HTTP/1.1"
     assert logs[5][2] == f"python: {platform.python_version()}"
     assert logs[6][2] == f"platform: {platform.platform()}"
 

@@ -115,7 +115,7 @@ def test_full_message(client):
         """
     )
     response = client.recv()
-    assert len(response) == 140
+    assert len(response) == 151
     assert b"200 OK" in response
 
 

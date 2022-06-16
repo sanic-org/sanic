@@ -10,9 +10,9 @@ from sanic.errorpages import (
     exception_response,
 )
 from sanic.exceptions import (
-    ContentRangeError,
     HeaderNotFound,
     InvalidRangeType,
+    RangeNotSatisfiable,
     SanicException,
 )
 from sanic.helpers import Default, _default
@@ -296,18 +296,18 @@ class ContentRangeHandler:
         try:
             self.start = int(start_b) if start_b else None
         except ValueError:
-            raise ContentRangeError(
+            raise RangeNotSatisfiable(
                 "'%s' is invalid for Content Range" % (start_b,), self
             )
         try:
             self.end = int(end_b) if end_b else None
         except ValueError:
-            raise ContentRangeError(
+            raise RangeNotSatisfiable(
                 "'%s' is invalid for Content Range" % (end_b,), self
             )
         if self.end is None:
             if self.start is None:
-                raise ContentRangeError(
+                raise RangeNotSatisfiable(
                     "Invalid for Content Range parameters", self
                 )
             else:
@@ -319,7 +319,7 @@ class ContentRangeHandler:
                 self.start = self.total - self.end
                 self.end = self.total - 1
         if self.start >= self.end:
-            raise ContentRangeError(
+            raise RangeNotSatisfiable(
                 "Invalid for Content Range parameters", self
             )
         self.size = self.end - self.start + 1

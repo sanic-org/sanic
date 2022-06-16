@@ -9,11 +9,11 @@ import uvicorn
 from sanic import Sanic
 from sanic.application.state import Mode
 from sanic.asgi import MockTransport
-from sanic.exceptions import Forbidden, InvalidUsage, ServiceUnavailable
-from sanic.log import VerbosityFilter
+from sanic.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection
+from sanic.signals import RESERVED_NAMESPACES
 
 
 @pytest.fixture
@@ -394,7 +394,7 @@ async def test_websocket_accept_with_multiple_subprotocols(
 
 
 def test_improper_websocket_connection(transport, send, receive):
-    with pytest.raises(InvalidUsage):
+    with pytest.raises(BadRequest):
         transport.get_websocket_connection()
 
     transport.create_websocket_connection(send, receive)
@@ -515,3 +515,34 @@ async def test_request_exception_suppressed_by_middleware(app):
 
     _, response = await app.asgi_client.get("/error-prone")
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_signals_triggered(app):
+    @app.get("/test_signals_triggered")
+    async def _request(request):
+        return text("test_signals_triggered")
+
+    signals_triggered = []
+    signals_expected = [
+        # "http.lifecycle.begin",
+        # "http.lifecycle.read_head",
+        "http.lifecycle.request",
+        "http.lifecycle.handle",
+        "http.routing.before",
+        "http.routing.after",
+        "http.lifecycle.response",
+        # "http.lifecycle.send",
+        # "http.lifecycle.complete",
+    ]
+
+    def signal_handler(signal):
+        return lambda *a, **kw: signals_triggered.append(signal)
+
+    for signal in RESERVED_NAMESPACES["http"]:
+        app.signal(signal)(signal_handler(signal))
+
+    _, response = await app.asgi_client.get("/test_signals_triggered")
+    assert response.status_code == 200
+    assert response.text == "test_signals_triggered"
+    assert signals_triggered == signals_expected

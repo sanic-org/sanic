@@ -7,12 +7,7 @@ import pytest
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
 from sanic.constants import HTTP_METHODS
-from sanic.exceptions import (
-    BadRequest,
-    NotFound,
-    SanicException,
-    ServerError,
-)
+from sanic.exceptions import BadRequest, NotFound, SanicException, ServerError
 from sanic.request import Request
 from sanic.response import json, text
 

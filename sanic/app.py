@@ -97,7 +97,7 @@ if TYPE_CHECKING:  # no cov
         from sanic_ext import Extend  # type: ignore
         from sanic_ext.extensions.base import Extension  # type: ignore
     except ImportError:
-        Extend = TypeVar("Extend")  # type: ignore
+        Extend = TypeVar("Extend", Type)  # type: ignore
 
 
 if OS_IS_WINDOWS:  # no cov
@@ -1573,8 +1573,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             "shutdown",
         ):
             raise SanicException(f"Invalid server event: {event}")
-        if self.state.verbosity >= 1:
-            logger.debug(f"Triggering server events: {event}")
+        logger.debug(
+            f"Triggering server events: {event}", extra={"verbosity": 1}
+        )
         reverse = concern == "shutdown"
         if loop is None:
             loop = self.loop

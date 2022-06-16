@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
+from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
 from os import path
-from pathlib import PurePath
+from pathlib import Path, PurePath
+from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -23,7 +26,12 @@ from sanic.compat import Header, open_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import has_message_body, remove_entity_headers
+from sanic.helpers import (
+    Default,
+    _default,
+    has_message_body,
+    remove_entity_headers,
+)
 from sanic.http import Http
 from sanic.models.protocol_types import HTMLProtocol, Range
 
@@ -309,6 +317,9 @@ async def file(
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
+    last_modified: Optional[Union[datetime, float, int, Default]] = _default,
+    max_age: Optional[Union[float, int]] = None,
+    no_store: Optional[bool] = None,
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
@@ -317,6 +328,9 @@ async def file(
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
     :param filename: Override filename.
+    :param last_modified: The last modified date and time of the file.
+    :param max_age: Max age for cache control.
+    :param no_store: Any cache should not store this response.
     :param _range:
     """
     headers = headers or {}
@@ -324,6 +338,33 @@ async def file(
         headers.setdefault(
             "Content-Disposition", f'attachment; filename="{filename}"'
         )
+
+    if isinstance(last_modified, datetime):
+        last_modified = last_modified.timestamp()
+    elif isinstance(last_modified, Default):
+        last_modified = Path(location).stat().st_mtime
+
+    if last_modified:
+        headers.setdefault(
+            "last-modified", formatdate(last_modified, usegmt=True)
+        )
+
+    if no_store:
+        cache_control = "no-store"
+    elif max_age:
+        cache_control = f"public, max-age={max_age}"
+        headers.setdefault(
+            "expires",
+            formatdate(
+                time() + max_age,
+                usegmt=True,
+            ),
+        )
+    else:
+        cache_control = "no-cache"
+
+    headers.setdefault("cache-control", cache_control)
+
     filename = filename or path.split(location)[-1]
 
     async with await open_async(location, mode="rb") as f:

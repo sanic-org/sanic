@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextvars import ContextVar
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -35,7 +36,7 @@ from httptools.parser.errors import HttpParserInvalidURLError  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import BadRequest, BadURL, ServerError
+from sanic.exceptions import BadRequest, BadURL, SanicException, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -81,6 +82,8 @@ class Request:
     """
     Properties of an HTTP request such as URL, headers, etc.
     """
+
+    _current: ContextVar[Request] = ContextVar("request")
 
     __slots__ = (
         "__weakref__",
@@ -173,6 +176,13 @@ class Request:
     def __repr__(self):
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.method} {self.path}>"
+
+    @classmethod
+    def get_current(cls) -> Request:
+        request = cls._current.get(None)
+        if not request:
+            raise SanicException("No current request")
+        return request
 
     @classmethod
     def generate_id(*_):

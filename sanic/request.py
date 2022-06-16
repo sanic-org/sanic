@@ -35,7 +35,7 @@ from httptools.parser.errors import HttpParserInvalidURLError  # type: ignore
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import BadURL, InvalidUsage, ServerError
+from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -379,7 +379,7 @@ class Request:
         except Exception:
             if not self.body:
                 return None
-            raise InvalidUsage("Failed when parsing body as json")
+            raise BadRequest("Failed when parsing body as json")
 
         return self.parsed_json
 

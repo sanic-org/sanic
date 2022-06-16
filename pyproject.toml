@@ -1,3 +1,18 @@
 [build-system]
 requires = ["setuptools<60.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 79
+
+[tool.isort]
+atomic = true
+default_section = "THIRDPARTY"
+include_trailing_comma = true
+known_first_party = "sanic"
+known_third_party = "pytest"
+line_length = 79
+lines_after_imports = 2
+lines_between_types = 1
+multi_line_output = 3
+profile = "black"

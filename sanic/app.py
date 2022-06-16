@@ -1573,8 +1573,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             "shutdown",
         ):
             raise SanicException(f"Invalid server event: {event}")
-        if self.state.verbosity >= 1:
-            logger.debug(f"Triggering server events: {event}")
+        logger.debug(
+            f"Triggering server events: {event}", extra={"verbosity": 1}
+        )
         reverse = concern == "shutdown"
         if loop is None:
             loop = self.loop

@@ -249,18 +249,21 @@ class TrustmeCreator(CertCreator):
 
     def generate_cert(self, localhost: str) -> ssl.SSLContext:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        sanic_context = SanicSSLContext.create_from_ssl_context(context)
+        sanic_context.sanic = {
+            "cert": self.cert_path.absolute(),
+            "key": self.key_path.absolute(),
+        }
         ca = trustme.CA()
         server_cert = ca.issue_cert(localhost)
-        server_cert.configure_cert(context)
+        server_cert.configure_cert(sanic_context)
+        ca.configure_trust(context)
 
         ca.cert_pem.write_to_path(str(self.cert_path.absolute()))
         server_cert.private_key_and_cert_chain_pem.write_to_path(
             str(self.key_path.absolute())
         )
 
-        cert = SanicSSLContext.create_from_ssl_context(context)
-        cert.sanic = {
-            "cert": self.cert_path,
-            "key": self.key_path,
-        }
+        sanic_context.verify_mode = False
+
         return context

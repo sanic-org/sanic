@@ -27,7 +27,8 @@ from aioquic.quic.configuration import QuicConfiguration
 from aioquic.tls import SessionTicket
 
 from sanic.compat import Header
-from sanic.exceptions import PayloadTooLarge
+from sanic.constants import LocalCertCreator
+from sanic.exceptions import PayloadTooLarge, SanicException
 from sanic.helpers import has_message_body
 from sanic.http.stream import Stream
 from sanic.http.tls.context import SanicSSLContext
@@ -360,6 +361,15 @@ def get_config(app: Sanic, ssl: SanicSSLContext):
         max_datagram_frame_size=65536,
     )
     password = app.config.TLS_CERT_PASSWORD or None
+
+    if app.config.LOCAL_CERT_CREATOR is LocalCertCreator.TRUSTME:
+        raise SanicException(
+            "Sorry, you cannot currently use trustme as a local certificate "
+            "generator for an HTTP/3 server. This is not yet supported. You "
+            "should be able to use mkcert instead. For more information, see: "
+            "https://github.com/aiortc/aioquic/issues/295."
+        )
+
     config.load_cert_chain(
         ssl.sanic["cert"], ssl.sanic["key"], password=password
     )

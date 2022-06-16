@@ -265,6 +265,7 @@ class Http(metaclass=TouchUpMeta):
             transport=self.protocol.transport,
             app=self.protocol.app,
         )
+        self.protocol.request_class._current.set(request)
         await self.dispatch(
             "http.lifecycle.request",
             inline=True,

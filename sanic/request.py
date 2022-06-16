@@ -173,8 +173,6 @@ class Request:
         self._protocol = None
         self.responded: bool = False
 
-        Request._current.set(self)
-
     def __repr__(self):
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.method} {self.path}>"

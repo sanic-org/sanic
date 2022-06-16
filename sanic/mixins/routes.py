@@ -8,7 +8,17 @@ from pathlib import PurePath
 from re import sub
 from textwrap import dedent
 from time import gmtime, strftime
-from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 from urllib.parse import unquote
 
 from sanic_routing.route import Route  # type: ignore
@@ -283,7 +293,7 @@ class RouteMixin(metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs,
-    ) -> RouteWrapper:
+    ) -> RouteHandler:
         """
         Add an API URL under the **GET** *HTTP* method
 
@@ -299,17 +309,20 @@ class RouteMixin(metaclass=SanicMeta):
             will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
-        return self.route(
-            uri,
-            methods=frozenset({"GET"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-            version_prefix=version_prefix,
-            error_format=error_format,
-            **ctx_kwargs,
+        return cast(
+            RouteHandler,
+            self.route(
+                uri,
+                methods=frozenset({"GET"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+                ignore_body=ignore_body,
+                version_prefix=version_prefix,
+                error_format=error_format,
+                **ctx_kwargs,
+            ),
         )
 
     def post(
@@ -323,7 +336,7 @@ class RouteMixin(metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs,
-    ) -> RouteWrapper:
+    ) -> RouteHandler:
         """
         Add an API URL under the **POST** *HTTP* method
 
@@ -339,17 +352,20 @@ class RouteMixin(metaclass=SanicMeta):
             will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
-        return self.route(
-            uri,
-            methods=frozenset({"POST"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-            version_prefix=version_prefix,
-            error_format=error_format,
-            **ctx_kwargs,
+        return cast(
+            RouteHandler,
+            self.route(
+                uri,
+                methods=frozenset({"POST"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                stream=stream,
+                version=version,
+                name=name,
+                version_prefix=version_prefix,
+                error_format=error_format,
+                **ctx_kwargs,
+            ),
         )
 
     def put(
@@ -363,7 +379,7 @@ class RouteMixin(metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs,
-    ) -> RouteWrapper:
+    ) -> RouteHandler:
         """
         Add an API URL under the **PUT** *HTTP* method
 
@@ -379,17 +395,20 @@ class RouteMixin(metaclass=SanicMeta):
             will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
-        return self.route(
-            uri,
-            methods=frozenset({"PUT"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-            version_prefix=version_prefix,
-            error_format=error_format,
-            **ctx_kwargs,
+        return cast(
+            RouteHandler,
+            self.route(
+                uri,
+                methods=frozenset({"PUT"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                stream=stream,
+                version=version,
+                name=name,
+                version_prefix=version_prefix,
+                error_format=error_format,
+                **ctx_kwargs,
+            ),
         )
 
     def head(
@@ -403,7 +422,7 @@ class RouteMixin(metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs,
-    ) -> RouteWrapper:
+    ) -> RouteHandler:
         """
         Add an API URL under the **HEAD** *HTTP* method
 
@@ -427,17 +446,20 @@ class RouteMixin(metaclass=SanicMeta):
             will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
-        return self.route(
-            uri,
-            methods=frozenset({"HEAD"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-            version_prefix=version_prefix,
-            error_format=error_format,
-            **ctx_kwargs,
+        return cast(
+            RouteHandler,
+            self.route(
+                uri,
+                methods=frozenset({"HEAD"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+                ignore_body=ignore_body,
+                version_prefix=version_prefix,
+                error_format=error_format,
+                **ctx_kwargs,
+            ),
         )
 
     def options(
@@ -451,7 +473,7 @@ class RouteMixin(metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs,
-    ) -> RouteWrapper:
+    ) -> RouteHandler:
         """
         Add an API URL under the **OPTIONS** *HTTP* method
 
@@ -475,17 +497,20 @@ class RouteMixin(metaclass=SanicMeta):
             will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
-        return self.route(
-            uri,
-            methods=frozenset({"OPTIONS"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-            version_prefix=version_prefix,
-            error_format=error_format,
-            **ctx_kwargs,
+        return cast(
+            RouteHandler,
+            self.route(
+                uri,
+                methods=frozenset({"OPTIONS"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+                ignore_body=ignore_body,
+                version_prefix=version_prefix,
+                error_format=error_format,
+                **ctx_kwargs,
+            ),
         )
 
     def patch(
@@ -499,7 +524,7 @@ class RouteMixin(metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs,
-    ) -> RouteWrapper:
+    ) -> RouteHandler:
         """
         Add an API URL under the **PATCH** *HTTP* method
 
@@ -525,17 +550,20 @@ class RouteMixin(metaclass=SanicMeta):
             will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
-        return self.route(
-            uri,
-            methods=frozenset({"PATCH"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            stream=stream,
-            version=version,
-            name=name,
-            version_prefix=version_prefix,
-            error_format=error_format,
-            **ctx_kwargs,
+        return cast(
+            RouteHandler,
+            self.route(
+                uri,
+                methods=frozenset({"PATCH"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                stream=stream,
+                version=version,
+                name=name,
+                version_prefix=version_prefix,
+                error_format=error_format,
+                **ctx_kwargs,
+            ),
         )
 
     def delete(
@@ -549,7 +577,7 @@ class RouteMixin(metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs,
-    ) -> RouteWrapper:
+    ) -> RouteHandler:
         """
         Add an API URL under the **DELETE** *HTTP* method
 
@@ -565,17 +593,20 @@ class RouteMixin(metaclass=SanicMeta):
             will be appended to the route context (``route.ctx``)
         :return: Object decorated with :func:`route` method
         """
-        return self.route(
-            uri,
-            methods=frozenset({"DELETE"}),
-            host=host,
-            strict_slashes=strict_slashes,
-            version=version,
-            name=name,
-            ignore_body=ignore_body,
-            version_prefix=version_prefix,
-            error_format=error_format,
-            **ctx_kwargs,
+        return cast(
+            RouteHandler,
+            self.route(
+                uri,
+                methods=frozenset({"DELETE"}),
+                host=host,
+                strict_slashes=strict_slashes,
+                version=version,
+                name=name,
+                ignore_body=ignore_body,
+                version_prefix=version_prefix,
+                error_format=error_format,
+                **ctx_kwargs,
+            ),
         )
 
     def websocket(

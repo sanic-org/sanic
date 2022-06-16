@@ -9,7 +9,7 @@ from socket import socket
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
 
-from sanic.log import logger
+from sanic.log import VerbosityFilter, logger
 from sanic.server.async_server import AsyncioServer
 
 
@@ -90,6 +90,9 @@ class ApplicationState:
             self.app.error_handler.debug = self.app.debug
         if getattr(self.app, "configure_logging", False) and self.app.debug:
             logger.setLevel(logging.DEBUG)
+
+    def set_verbosity(self, value: int):
+        VerbosityFilter.verbosity = value
 
     @property
     def is_debug(self):

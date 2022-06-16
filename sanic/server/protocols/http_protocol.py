@@ -30,6 +30,8 @@ from sanic.server.protocols.base_protocol import SanicProtocol
 
 
 class HttpProtocolMixin:
+    __slots__ = ()
+
     def _setup_connection(self, *args, **kwargs):
         self._http = self.HTTP_CLASS(self, *args, **kwargs)
         self._time = current_time()

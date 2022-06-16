@@ -5,6 +5,7 @@ from os import environ
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
+from sanic.constants import LocalCertCreator
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
 from sanic.helpers import Default, _default
 from sanic.http import Http
@@ -26,6 +27,7 @@ DEFAULT_CONFIG = {
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
+    "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
     "LOCAL_TLS_KEY": _default,
     "LOCAL_TLS_CERT": _default,
     "LOCALHOST": "localhost",
@@ -73,6 +75,7 @@ class Config(dict, metaclass=DescriptorMeta):
     GRACEFUL_SHUTDOWN_TIMEOUT: float
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
+    LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]
     LOCAL_TLS_KEY: Union[Path, str, Default]
     LOCAL_TLS_CERT: Union[Path, str, Default]
     LOCALHOST: str
@@ -172,6 +175,12 @@ class Config(dict, metaclass=DescriptorMeta):
                     "be supported starting in v22.6.",
                     22.6,
                 )
+            elif attr == "LOCAL_CERT_CREATOR" and not isinstance(
+                self.LOCAL_CERT_CREATOR, LocalCertCreator
+            ):
+                self.LOCAL_CERT_CREATOR = LocalCertCreator[
+                    self.LOCAL_CERT_CREATOR.upper()
+                ]
 
     @property
     def LOGO(self):

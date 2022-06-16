@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 
 from abc import ABC, abstractmethod
-from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -28,9 +27,11 @@ from aioquic.quic.configuration import QuicConfiguration
 from aioquic.tls import SessionTicket
 
 from sanic.compat import Header
+from sanic.constants import LocalCertCreator
 from sanic.exceptions import PayloadTooLarge, SanicException
 from sanic.helpers import has_message_body
-from sanic.http.tls import CertSelector, CertSimple
+from sanic.http.stream import Stream
+from sanic.http.tls.context import CertSelector, CertSimple, SanicSSLContext
 
 
 if TYPE_CHECKING:
@@ -63,7 +64,7 @@ class Receiver(ABC):
         ...
 
 
-class HTTPReceiver(Receiver):
+class HTTPReceiver(Receiver, Stream):
     stage: Stage
 
     def __init__(self, *args, **kwargs) -> None:
@@ -353,11 +354,11 @@ class SessionTicketStore:
         return self.tickets.pop(label, None)
 
 
-def get_config(app: Sanic, ssl: SSLContext):
+def get_config(app: Sanic, ssl: Union[SanicSSLContext, CertSelector]):
     # TODO:
     # - proper selection needed if servince with multiple certs
     if isinstance(ssl, CertSelector):
-        ssl = ssl.sanic_select[0]
+        ssl = cast(SanicSSLContext, ssl.sanic_select[0])
     if not isinstance(ssl, CertSimple):
         raise SanicException("SSLContext is not CertSimple")
 
@@ -367,6 +368,15 @@ def get_config(app: Sanic, ssl: SSLContext):
         max_datagram_frame_size=65536,
     )
     password = app.config.TLS_CERT_PASSWORD or None
+
+    if app.config.LOCAL_CERT_CREATOR is LocalCertCreator.TRUSTME:
+        raise SanicException(
+            "Sorry, you cannot currently use trustme as a local certificate "
+            "generator for an HTTP/3 server. This is not yet supported. You "
+            "should be able to use mkcert instead. For more information, see: "
+            "https://github.com/aiortc/aioquic/issues/295."
+        )
+
     config.load_cert_chain(
         ssl.sanic["cert"], ssl.sanic["key"], password=password
     )

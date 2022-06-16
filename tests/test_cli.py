@@ -147,8 +147,7 @@ def test_tls_wrong_options(cmd):
     assert not out
     lines = err.decode().split("\n")
 
-    errmsg = lines[6]
-    assert errmsg == "TLS certificates must be specified by either of:"
+    assert "TLS certificates must be specified by either of:" in lines
 
 
 @pytest.mark.parametrize(

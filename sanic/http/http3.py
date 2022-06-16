@@ -31,7 +31,7 @@ from sanic.constants import LocalCertCreator
 from sanic.exceptions import PayloadTooLarge, SanicException
 from sanic.helpers import has_message_body
 from sanic.http.stream import Stream
-from sanic.http.tls.context import SanicSSLContext
+from sanic.http.tls.context import CertSelector, CertSimple, SanicSSLContext
 
 
 if TYPE_CHECKING:
@@ -354,7 +354,14 @@ class SessionTicketStore:
         return self.tickets.pop(label, None)
 
 
-def get_config(app: Sanic, ssl: SanicSSLContext):
+def get_config(app: Sanic, ssl: Union[SanicSSLContext, CertSelector]):
+    # TODO:
+    # - proper selection needed if servince with multiple certs
+    if isinstance(ssl, CertSelector):
+        ssl = cast(SanicSSLContext, ssl.sanic_select[0])
+    if not isinstance(ssl, CertSimple):
+        raise SanicException("SSLContext is not CertSimple")
+
     config = QuicConfiguration(
         alpn_protocols=H3_ALPN + H0_ALPN + ["siduck"],
         is_client=False,

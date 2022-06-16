@@ -97,7 +97,7 @@ if TYPE_CHECKING:  # no cov
         from sanic_ext import Extend  # type: ignore
         from sanic_ext.extensions.base import Extension  # type: ignore
     except ImportError:
-        Extend = TypeVar("Extend")  # type: ignore
+        Extend = TypeVar("Extend", Type)  # type: ignore
 
 
 if OS_IS_WINDOWS:  # no cov

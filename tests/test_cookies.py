@@ -222,9 +222,7 @@ def test_cookie_bad_max_age(app, max_age):
     assert response.status == 500
 
 
-@pytest.mark.parametrize(
-    "expires", [timedelta(seconds=60)]
-)
+@pytest.mark.parametrize("expires", [timedelta(seconds=60)])
 def test_cookie_expires(app: Sanic, expires: timedelta):
     expires_time = datetime.utcnow().replace(microsecond=0) + expires
     cookies = {"test": "wait"}

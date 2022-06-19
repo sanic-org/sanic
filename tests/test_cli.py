@@ -2,7 +2,7 @@ import json
 import subprocess
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional, Tuple
 
 import pytest
 
@@ -11,7 +11,7 @@ from sanic_routing import __version__ as __routing_version__
 from sanic import __version__
 
 
-def capture(command):
+def capture(command: List[str]):
     proc = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -47,7 +47,7 @@ def read_app_info(lines: List[str]):
         ("fake.server.create_app()", None),
     ),
 )
-def test_server_run(appname, extra):
+def test_server_run(appname: str, extra: Optional[str]):
     command = ["sanic", appname]
     if extra:
         command.append(extra)
@@ -120,7 +120,7 @@ def test_error_with_path_as_instance_without_simple_arg():
         ),
     ),
 )
-def test_tls_options(cmd):
+def test_tls_options(cmd: Tuple[str]):
     command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
     out, err, exitcode = capture(command)
     assert exitcode != 1
@@ -141,7 +141,7 @@ def test_tls_options(cmd):
         ("--tls-strict-host",),
     ),
 )
-def test_tls_wrong_options(cmd):
+def test_tls_wrong_options(cmd: Tuple[str]):
     command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
     out, err, exitcode = capture(command)
     assert exitcode == 1
@@ -159,7 +159,7 @@ def test_tls_wrong_options(cmd):
         ("-H", "localhost", "-p", "9999"),
     ),
 )
-def test_host_port_localhost(cmd):
+def test_host_port_localhost(cmd: Tuple[str]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -176,7 +176,7 @@ def test_host_port_localhost(cmd):
         ("-H", "127.0.0.127", "-p", "9999"),
     ),
 )
-def test_host_port_ipv4(cmd):
+def test_host_port_ipv4(cmd: Tuple[str]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -193,7 +193,7 @@ def test_host_port_ipv4(cmd):
         ("-H", "::", "-p", "9999"),
     ),
 )
-def test_host_port_ipv6_any(cmd):
+def test_host_port_ipv6_any(cmd: Tuple[str]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -210,7 +210,7 @@ def test_host_port_ipv6_any(cmd):
         ("-H", "::1", "-p", "9999"),
     ),
 )
-def test_host_port_ipv6_loopback(cmd):
+def test_host_port_ipv6_loopback(cmd: Tuple[str]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -231,7 +231,7 @@ def test_host_port_ipv6_loopback(cmd):
         (4, ("-w", "4")),
     ),
 )
-def test_num_workers(num, cmd):
+def test_num_workers(num: int, cmd: Tuple[str]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -246,7 +246,7 @@ def test_num_workers(num, cmd):
 
 
 @pytest.mark.parametrize("cmd", ("--debug",))
-def test_debug(cmd):
+def test_debug(cmd: str):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -260,7 +260,7 @@ def test_debug(cmd):
 
 
 @pytest.mark.parametrize("cmd", ("--dev", "-d"))
-def test_dev(cmd):
+def test_dev(cmd: str):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -273,7 +273,7 @@ def test_dev(cmd):
 
 
 @pytest.mark.parametrize("cmd", ("--auto-reload", "-r"))
-def test_auto_reload(cmd):
+def test_auto_reload(cmd: str):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -289,7 +289,7 @@ def test_auto_reload(cmd):
 @pytest.mark.parametrize(
     "cmd,expected", (("--access-log", True), ("--no-access-log", False))
 )
-def test_access_logs(cmd, expected):
+def test_access_logs(cmd: str, expected: bool):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -301,7 +301,7 @@ def test_access_logs(cmd, expected):
 
 
 @pytest.mark.parametrize("cmd", ("--version", "-v"))
-def test_version(cmd):
+def test_version(cmd: str):
     command = ["sanic", cmd]
     out, err, exitcode = capture(command)
     version_string = f"Sanic {__version__}; Routing {__routing_version__}\n"
@@ -316,7 +316,7 @@ def test_version(cmd):
         ("--no-noisy-exceptions", False),
     ),
 )
-def test_noisy_exceptions(cmd, expected):
+def test_noisy_exceptions(cmd: str, expected: bool):
     command = ["sanic", "fake.server.app", cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")

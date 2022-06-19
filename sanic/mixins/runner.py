@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import platform
-import sys
 
 from asyncio import (
     AbstractEventLoop,
@@ -26,7 +25,7 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
-from sanic.compat import OS_IS_WINDOWS
+from sanic.compat import OS_IS_WINDOWS, is_atty
 from sanic.helpers import _default
 from sanic.log import Colors, error_logger, logger
 from sanic.models.handler_types import ListenerType
@@ -424,7 +423,7 @@ class RunnerMixin(metaclass=SanicMeta):
 
         self.motd(self.serve_location)
 
-        if sys.stdout.isatty() and not self.state.is_debug:
+        if is_atty() and not self.state.is_debug:
             error_logger.warning(
                 f"{Colors.YELLOW}Sanic is running in PRODUCTION mode. "
                 "Consider using '--debug' or '--dev' while actively "
@@ -615,7 +614,7 @@ class RunnerMixin(metaclass=SanicMeta):
                     f"{app.state.workers} worker(s), which will be ignored "
                     "in favor of the primary application."
                 )
-                if sys.stdout.isatty():
+                if is_atty():
                     message = "".join(
                         [
                             Colors.YELLOW,
@@ -656,7 +655,7 @@ class RunnerMixin(metaclass=SanicMeta):
                             "The encountered error was: "
                         )
                         second_message = str(e)
-                        if sys.stdout.isatty():
+                        if is_atty():
                             message_parts = [
                                 Colors.YELLOW,
                                 first_message,

@@ -5,6 +5,8 @@ from enum import Enum
 from typing import Any, Dict
 from warnings import warn
 
+from sanic.compat import is_atty
+
 
 LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     version=1,
@@ -98,7 +100,7 @@ Logger used by Sanic for access logging
 
 def deprecation(message: str, version: float):  # no cov
     version_info = f"[DEPRECATION v{version}] "
-    if sys.stdout.isatty():
+    if is_atty():
         version_info = f"{Colors.RED}{version_info}"
         message = f"{Colors.YELLOW}{message}{Colors.END}"
     warn(version_info + message, DeprecationWarning)

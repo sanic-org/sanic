@@ -3,6 +3,8 @@ import sys
 
 from os import environ
 
+from sanic.compat import is_atty
+
 
 BASE_LOGO = """
 
@@ -44,7 +46,7 @@ ansi_pattern = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 def get_logo(full=False, coffee=False):
     logo = (
         (FULL_COLOR_LOGO if full else (COFFEE_LOGO if coffee else COLOR_LOGO))
-        if sys.stdout.isatty()
+        if is_atty()
         else BASE_LOGO
     )
 

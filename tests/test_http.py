@@ -9,8 +9,7 @@ from sanic_testing.reusable import ReusableClient
 
 from sanic import json, text
 from sanic.app import Sanic
-
-from .client import RawClient
+from tests.client import RawClient
 
 
 parent_dir = Path(__file__).parent

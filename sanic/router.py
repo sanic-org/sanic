@@ -14,7 +14,7 @@ from sanic_routing.route import Route  # type: ignore
 
 from sanic.constants import HTTP_METHODS
 from sanic.errorpages import check_error_format
-from sanic.exceptions import MethodNotSupported, NotFound, SanicException
+from sanic.exceptions import MethodNotAllowed, NotFound, SanicException
 from sanic.models.handler_types import RouteHandler
 
 
@@ -43,7 +43,7 @@ class Router(BaseRouter):
         except RoutingNotFound as e:
             raise NotFound("Requested URL {} not found".format(e.path))
         except NoMethod as e:
-            raise MethodNotSupported(
+            raise MethodNotAllowed(
                 "Method {} not allowed for URL {}".format(method, path),
                 method=method,
                 allowed_methods=e.allowed_methods,

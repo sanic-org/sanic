@@ -42,7 +42,7 @@ class NotFound(SanicException):
     quiet = True
 
 
-class InvalidUsage(SanicException):
+class BadRequest(SanicException):
     """
     **Status**: 400 Bad Request
     """
@@ -51,11 +51,14 @@ class InvalidUsage(SanicException):
     quiet = True
 
 
-class BadURL(InvalidUsage):
+InvalidUsage = BadRequest
+
+
+class BadURL(BadRequest):
     ...
 
 
-class MethodNotSupported(SanicException):
+class MethodNotAllowed(SanicException):
     """
     **Status**: 405 Method Not Allowed
     """
@@ -66,6 +69,9 @@ class MethodNotSupported(SanicException):
     def __init__(self, message, method, allowed_methods):
         super().__init__(message)
         self.headers = {"Allow": ", ".join(allowed_methods)}
+
+
+MethodNotSupported = MethodNotAllowed
 
 
 class ServerError(SanicException):
@@ -129,19 +135,19 @@ class PayloadTooLarge(SanicException):
     quiet = True
 
 
-class HeaderNotFound(InvalidUsage):
+class HeaderNotFound(BadRequest):
     """
     **Status**: 400 Bad Request
     """
 
 
-class InvalidHeader(InvalidUsage):
+class InvalidHeader(BadRequest):
     """
     **Status**: 400 Bad Request
     """
 
 
-class ContentRangeError(SanicException):
+class RangeNotSatisfiable(SanicException):
     """
     **Status**: 416 Range Not Satisfiable
     """
@@ -154,13 +160,19 @@ class ContentRangeError(SanicException):
         self.headers = {"Content-Range": f"bytes */{content_range.total}"}
 
 
-class HeaderExpectationFailed(SanicException):
+ContentRangeError = RangeNotSatisfiable
+
+
+class ExpectationFailed(SanicException):
     """
     **Status**: 417 Expectation Failed
     """
 
     status_code = 417
     quiet = True
+
+
+HeaderExpectationFailed = ExpectationFailed
 
 
 class Forbidden(SanicException):
@@ -172,7 +184,7 @@ class Forbidden(SanicException):
     quiet = True
 
 
-class InvalidRangeType(ContentRangeError):
+class InvalidRangeType(RangeNotSatisfiable):
     """
     **Status**: 416 Range Not Satisfiable
     """

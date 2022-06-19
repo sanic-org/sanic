@@ -58,7 +58,7 @@ from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
-    InvalidUsage,
+    BadRequest,
     SanicException,
     ServerError,
     URLBuildError,
@@ -97,7 +97,7 @@ if TYPE_CHECKING:  # no cov
         from sanic_ext import Extend  # type: ignore
         from sanic_ext.extensions.base import Extension  # type: ignore
     except ImportError:
-        Extend = TypeVar("Extend")  # type: ignore
+        Extend = TypeVar("Extend", Type)  # type: ignore
 
 
 if OS_IS_WINDOWS:  # no cov
@@ -255,7 +255,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 "Loop can only be retrieved after the app has started "
                 "running. Not supported with `create_server` function"
             )
-        return get_running_loop()
+        try:
+            return get_running_loop()
+        except RuntimeError:
+            if sys.version_info > (3, 10):
+                return asyncio.get_event_loop_policy().get_event_loop()
+            else:
+                return asyncio.get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration
@@ -278,7 +284,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             valid = ", ".join(
                 map(lambda x: x.lower(), ListenerEvent.__members__.keys())
             )
-            raise InvalidUsage(f"Invalid event: {event}. Use one of: {valid}")
+            raise BadRequest(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
             self.signal(_event.value)(
@@ -989,10 +995,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         cancelled = False
         try:
             await fut
-        except Exception as e:
-            self.error_handler.log(request, e)
         except (CancelledError, ConnectionClosed):
             cancelled = True
+        except Exception as e:
+            self.error_handler.log(request, e)
         finally:
             self.websocket_tasks.remove(fut)
             if cancelled:
@@ -1570,8 +1576,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             "shutdown",
         ):
             raise SanicException(f"Invalid server event: {event}")
-        if self.state.verbosity >= 1:
-            logger.debug(f"Triggering server events: {event}")
+        logger.debug(
+            f"Triggering server events: {event}", extra={"verbosity": 1}
+        )
         reverse = concern == "shutdown"
         if loop is None:
             loop = self.loop

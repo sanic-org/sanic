@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from sanic import Sanic, response
-from sanic.exceptions import BadURL
+from sanic.exceptions import BadURL, SanicException
 from sanic.request import Request, uuid
 from sanic.server import HttpProtocol
 
@@ -191,3 +191,43 @@ def test_bad_url_parse():
             Mock(),
             Mock(),
         )
+
+
+def test_request_scope_raises_exception_when_no_asgi():
+    app = Sanic("no_asgi")
+
+    @app.get("/")
+    async def get(request):
+        return request.scope
+
+    request, response = app.test_client.get("/")
+    assert response.status == 500
+    with pytest.raises(NotImplementedError):
+        _ = request.scope
+
+
+@pytest.mark.asyncio
+async def test_request_scope_is_not_none_when_running_in_asgi(app):
+    @app.get("/")
+    async def get(request):
+        return response.empty()
+
+    request, _ = await app.asgi_client.get("/")
+
+    assert request.scope is not None
+    assert request.scope["method"].lower() == "get"
+    assert request.scope["path"].lower() == "/"
+
+
+def test_cannot_get_request_outside_of_cycle():
+    with pytest.raises(SanicException, match="No current request"):
+        Request.get_current()
+
+
+def test_get_current_request(app):
+    @app.get("/")
+    async def get(request):
+        return response.json({"same": request is Request.get_current()})
+
+    _, resp = app.test_client.get("/")
+    assert resp.json["same"]

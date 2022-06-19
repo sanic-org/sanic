@@ -2,6 +2,8 @@ import sys
 
 from typing import Any, AnyStr, TypeVar, Union
 
+from sanic.models.asgi import ASGIScope
+
 
 if sys.version_info < (3, 8):
     from asyncio import BaseTransport
@@ -17,6 +19,8 @@ else:
     from typing import Protocol
 
     class TransportProtocol(Protocol):
+        scope: ASGIScope
+
         def get_protocol(self):
             ...
 

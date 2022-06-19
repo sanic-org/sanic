@@ -3,7 +3,7 @@ from functools import partial
 from typing import Callable, List, Optional, Union, overload
 
 from sanic.base.meta import SanicMeta
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import BadRequest
 from sanic.models.futures import FutureListener
 from sanic.models.handler_types import ListenerType, Sanic
 
@@ -86,7 +86,7 @@ class ListenerMixin(metaclass=SanicMeta):
 
         if callable(listener_or_event):
             if event_or_none is None:
-                raise InvalidUsage(
+                raise BadRequest(
                     "Invalid event registration: Missing event name."
                 )
             return register_listener(listener_or_event, event_or_none)

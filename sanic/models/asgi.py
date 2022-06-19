@@ -3,7 +3,7 @@ import sys
 
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 
-from sanic.exceptions import InvalidUsage
+from sanic.exceptions import BadRequest
 from sanic.server.websockets.connection import WebSocketConnection
 
 
@@ -84,7 +84,7 @@ class MockTransport:  # no cov
         try:
             return self._websocket_connection
         except AttributeError:
-            raise InvalidUsage("Improper websocket connection.")
+            raise BadRequest("Improper websocket connection.")
 
     def create_websocket_connection(
         self, send: ASGISend, receive: ASGIReceive

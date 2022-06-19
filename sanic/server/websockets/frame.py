@@ -9,7 +9,7 @@ from websockets.typing import Data
 from sanic.exceptions import ServerError
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from .impl import WebsocketImplProtocol
 
 UTF8Decoder = codecs.getincrementaldecoder("utf-8")
@@ -37,7 +37,7 @@ class WebsocketFrameAssembler:
         "get_id",
         "put_id",
     )
-    if TYPE_CHECKING:  # no cov
+    if TYPE_CHECKING:
         protocol: "WebsocketImplProtocol"
         read_mutex: asyncio.Lock
         write_mutex: asyncio.Lock

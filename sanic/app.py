@@ -93,7 +93,7 @@ from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     try:
         from sanic_ext import Extend  # type: ignore
         from sanic_ext.extensions.base import Extension  # type: ignore

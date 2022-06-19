@@ -158,6 +158,7 @@ def test_http3_events(app):
     receiver = http3.receivers[1]
 
     assert len(http3.receivers) == 1
+    assert receiver.request.stream_id == 1
     assert receiver.request.path == "/location"
     assert receiver.request.method == "GET"
     assert receiver.request.headers["foo"] == "bar"

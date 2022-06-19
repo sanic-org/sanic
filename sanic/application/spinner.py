@@ -8,7 +8,7 @@ from queue import Queue
 from threading import Thread
 
 
-if os.name == "nt":
+if os.name == "nt":  # noqa
     import ctypes
     import msvcrt
 
@@ -16,7 +16,7 @@ if os.name == "nt":
         _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
 
 
-class Spinner:
+class Spinner:  # noqa
     def __init__(self, message: str) -> None:
         self.message = message
         self.queue: Queue[int] = Queue()
@@ -81,7 +81,7 @@ class Spinner:
 
 
 @contextmanager
-def loading(message: str = "Loading"):
+def loading(message: str = "Loading"):  # noqa
     spinner = Spinner(message)
     spinner.start()
     yield

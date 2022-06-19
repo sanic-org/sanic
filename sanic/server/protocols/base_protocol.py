@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import asyncio

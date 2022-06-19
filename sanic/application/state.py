@@ -13,7 +13,7 @@ from sanic.log import VerbosityFilter, logger
 from sanic.server.async_server import AsyncioServer
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
 
 

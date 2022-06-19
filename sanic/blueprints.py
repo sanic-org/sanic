@@ -36,7 +36,7 @@ from sanic.models.handler_types import (
 )
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
 
 

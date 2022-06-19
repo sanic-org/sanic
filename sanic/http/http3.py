@@ -34,7 +34,7 @@ from sanic.http.stream import Stream
 from sanic.http.tls.context import CertSelector, CertSimple, SanicSSLContext
 
 
-if TYPE_CHECKING:  # noqa
+if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse

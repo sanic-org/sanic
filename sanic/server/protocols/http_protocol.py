@@ -8,7 +8,7 @@ from sanic.http.http3 import Http3
 from sanic.touchup.meta import TouchUpMeta
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import sys

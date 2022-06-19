@@ -21,7 +21,7 @@ from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic.server import ConnInfo
     from sanic.app import Sanic
 

@@ -13,7 +13,7 @@ from typing import (
 from sanic.models.handler_types import RouteHandler
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.blueprints import Blueprint
 

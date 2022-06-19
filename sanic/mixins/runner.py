@@ -52,7 +52,7 @@ from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.application.state import ApplicationState
     from sanic.config import Config
@@ -434,7 +434,7 @@ class RunnerMixin(metaclass=SanicMeta):
 
         ssl = process_to_context(ssl)
         if version is HTTP.VERSION_3 or auto_tls:
-            if TYPE_CHECKING:  # no cov
+            if TYPE_CHECKING:
                 self = cast(Sanic, self)
             ssl = get_ssl_context(self, ssl)
 

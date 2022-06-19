@@ -20,6 +20,7 @@ exclude_lines =
     noqa
     NOQA
     pragma: no cover
+    TYPE_CHECKING
 omit =
     site-packages
     sanic/__main__.py

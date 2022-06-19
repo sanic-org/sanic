@@ -5,7 +5,7 @@ from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Union
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic.blueprints import Blueprint
 
 

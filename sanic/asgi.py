@@ -17,7 +17,7 @@ from sanic.server import ConnInfo
 from sanic.server.websockets.connection import WebSocketConnection
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
 
 

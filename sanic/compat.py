@@ -90,5 +90,5 @@ def ctrlc_workaround_for_windows(app):
     app.add_task(stay_active)
 
 
-def is_atty():
-    return sys.stdout and sys.stdout.isatty()
+def is_atty() -> bool:
+    return bool(sys.stdout and sys.stdout.isatty())

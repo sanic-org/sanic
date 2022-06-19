@@ -34,7 +34,7 @@ from sanic.http.stream import Stream
 from sanic.http.tls.context import CertSelector, CertSimple, SanicSSLContext
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # noqa
     from sanic import Sanic
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse
@@ -60,7 +60,7 @@ class Receiver(ABC):
         self.request = request
 
     @abstractmethod
-    async def run(self):
+    async def run(self):  # no cov
         ...
 
 
@@ -95,7 +95,7 @@ class HTTPReceiver(Receiver, Stream):
                     extra={"verbosity": 1},
                 )
                 await self.protocol.request_handler(self.request)
-            except Exception as e:
+            except Exception as e:  # no cov
                 # This should largely be handled within the request handler.
                 # But, just in case...
                 await self.run(e)
@@ -200,7 +200,7 @@ class HTTPReceiver(Receiver, Stream):
         if self.request_bytes > self.request_max_size:
             raise PayloadTooLarge("Request body exceeds the size limit")
 
-        self.request.body = data
+        self.request.body += data
 
     async def send(self, data: bytes, end_stream: bool) -> None:
         logger.debug(
@@ -246,12 +246,12 @@ class HTTPReceiver(Receiver, Stream):
             self.stage = Stage.IDLE
 
 
-class WebsocketReceiver(Receiver):
+class WebsocketReceiver(Receiver):  # noqa
     async def run(self):
         ...
 
 
-class WebTransportReceiver(Receiver):
+class WebTransportReceiver(Receiver):  # noqa
     async def run(self):
         ...
 
@@ -356,7 +356,8 @@ class SessionTicketStore:
 
 def get_config(app: Sanic, ssl: Union[SanicSSLContext, CertSelector]):
     # TODO:
-    # - proper selection needed if servince with multiple certs
+    # - proper selection needed if servince with multiple certs insted of
+    #   just taking the first
     if isinstance(ssl, CertSelector):
         ssl = cast(SanicSSLContext, ssl.sanic_select[0])
     if not isinstance(ssl, CertSimple):

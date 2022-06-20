@@ -150,6 +150,7 @@ def app(request):
     yield app
     for target, method_name in TouchUp._registry:
         setattr(target, method_name, CACHE[method_name])
+    Sanic._app_registry.clear()
 
 
 @pytest.fixture(scope="function")

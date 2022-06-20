@@ -552,7 +552,7 @@ def test_streaming_new_api(app):
 
 def test_streaming_echo():
     """2-way streaming chat between server and client."""
-    app = Sanic(name=__name__)
+    app = Sanic(name="Test")
 
     @app.post("/echo", stream=True)
     async def handler(request):

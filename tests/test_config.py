@@ -454,3 +454,4 @@ def test_convert_local_cert_creator(passed, expected):
     os.environ["SANIC_LOCAL_CERT_CREATOR"] = passed
     app = Sanic("Test")
     assert app.config.LOCAL_CERT_CREATOR is expected
+    del os.environ["SANIC_LOCAL_CERT_CREATOR"]

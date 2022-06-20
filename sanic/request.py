@@ -14,7 +14,7 @@ from typing import (
     Union,
 )
 
-from sanic_routing.route import Route
+from sanic_routing.route import Route  # type: ignore
 
 from sanic.http.stream import Stream
 from sanic.models.asgi import ASGIScope

@@ -23,7 +23,7 @@ from sanic.http.tls.context import CertSimple, SanicSSLContext
 
 
 try:
-    import trustme
+    import trustme  # type: ignore
 
     TRUSTME_INSTALLED = True  # noqa
 except (ImportError, ModuleNotFoundError):

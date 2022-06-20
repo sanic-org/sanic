@@ -3,14 +3,12 @@ import sys
 import time
 
 from contextlib import contextmanager
-from curses.ascii import SP
 from queue import Queue
 from threading import Thread
 
 
 if os.name == "nt":  # noqa
-    import ctypes
-    import msvcrt
+    import ctypes  # noqa
 
     class _CursorInfo(ctypes.Structure):
         _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from sanic.compat import Header
 from sanic.http.constants import Stage
@@ -16,6 +16,9 @@ class Stream:
     response: Optional[BaseHTTPResponse]
     protocol: HttpProtocol
     url: Optional[str]
+    request_body: Optional[bytes]
+    request_max_size: Union[int, float]
+
     __version__ = "unknown"
     __touchup__: Tuple[str, ...] = tuple()
     __slots__ = ()

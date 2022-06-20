@@ -168,19 +168,19 @@ class Config(dict, metaclass=DescriptorMeta):
                 "REQUEST_MAX_SIZE",
             ):
                 self._configure_header_size()
-            elif attr == "LOGO":
-                self._LOGO = value
-                deprecation(
-                    "Setting the config.LOGO is deprecated and will no longer "
-                    "be supported starting in v22.6.",
-                    22.6,
-                )
-            elif attr == "LOCAL_CERT_CREATOR" and not isinstance(
-                self.LOCAL_CERT_CREATOR, LocalCertCreator
-            ):
-                self.LOCAL_CERT_CREATOR = LocalCertCreator[
-                    self.LOCAL_CERT_CREATOR.upper()
-                ]
+        if attr == "LOGO":
+            self._LOGO = value
+            deprecation(
+                "Setting the config.LOGO is deprecated and will no longer "
+                "be supported starting in v22.6.",
+                22.6,
+            )
+        elif attr == "LOCAL_CERT_CREATOR" and not isinstance(
+            self.LOCAL_CERT_CREATOR, LocalCertCreator
+        ):
+            self.LOCAL_CERT_CREATOR = LocalCertCreator[
+                self.LOCAL_CERT_CREATOR.upper()
+            ]
 
     @property
     def LOGO(self):

@@ -69,8 +69,6 @@ class HTTPReceiver(Receiver, Stream):
     stage: Stage
     request: Request
 
-    __version__ = "3"
-
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.request_body = None
@@ -112,9 +110,6 @@ class HTTPReceiver(Receiver, Stream):
         # From request and handler states we can respond, otherwise be silent
         app = self.protocol.app
 
-        if self.request is None:
-            self.create_empty_request()
-
         await app.handle_exception(self.request, exception)
 
     def _prepare_headers(
@@ -153,7 +148,7 @@ class HTTPReceiver(Receiver, Stream):
             extra={"verbosity": 2},
         )
         if not self.response:
-            raise Exception("no response")
+            raise RuntimeError("no response")
 
         response = self.response
         headers = self._prepare_headers(response)
@@ -313,7 +308,6 @@ class Http3:
         path = headers[":path"]
         scheme = headers.pop(":scheme", "")
         authority = headers.pop(":authority", "")
-        self.url = path
 
         if authority:
             headers["host"] = authority

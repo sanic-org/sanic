@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from aioquic.h3.connection import H3Connection
 from aioquic.h3.events import DataReceived, HeadersReceived
 from aioquic.quic.configuration import QuicConfiguration
 from aioquic.quic.connection import QuicConnection
@@ -13,7 +14,7 @@ from sanic.config import DEFAULT_CONFIG
 from sanic.exceptions import PayloadTooLarge
 from sanic.http.constants import Stage
 from sanic.http.http3 import Http3, HTTPReceiver
-from sanic.response import empty
+from sanic.response import empty, json
 from sanic.server.protocols.http_protocol import Http3Protocol
 
 
@@ -116,8 +117,10 @@ def test_http_receiver_respond(app: Sanic, http_request: Request):
         receiver.respond(response)
 
     receiver.stage = Stage.HANDLER
+    receiver.response = Mock()
     resp = receiver.respond(response)
 
+    assert receiver.response is resp
     assert resp is response
     assert response.stream is receiver
 
@@ -163,3 +166,40 @@ def test_http3_events(app):
     assert receiver.request.method == "GET"
     assert receiver.request.headers["foo"] == "bar"
     assert receiver.request.body == b"foobar"
+
+
+async def test_send_headers(app: Sanic, http_request: Request):
+    send_headers_mock = Mock()
+    existing_send_headers = H3Connection.send_headers
+    receiver = generate_http_receiver(app, http_request)
+    receiver.protocol.quic_event_received(
+        ProtocolNegotiated(alpn_protocol="h3")
+    )
+
+    def send_headers(*args, **kwargs):
+        send_headers_mock(*args, **kwargs)
+        return existing_send_headers(
+            receiver.protocol.connection, *args, **kwargs
+        )
+
+    receiver.protocol.connection.send_headers = send_headers
+    receiver.head_only = False
+    response = json({}, status=201, headers={"foo": "bar"})
+
+    with pytest.raises(RuntimeError, match="no response"):
+        receiver.send_headers()
+
+    receiver.response = response
+    receiver.send_headers()
+
+    assert receiver.headers_sent
+    assert receiver.stage is Stage.RESPONSE
+    send_headers_mock.assert_called_once_with(
+        stream_id=0,
+        headers=[
+            (b":status", b"201"),
+            (b"foo", b"bar"),
+            (b"content-length", b"2"),
+            (b"content-type", b"application/json"),
+        ],
+    )

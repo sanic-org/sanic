@@ -12,9 +12,13 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
+import sanic.http.tls.creators
+
 from sanic import Sanic
+from sanic.exceptions import SanicException
 from sanic.helpers import _default
-from sanic.http.tls.creators import MkcertCreator
+from sanic.http.tls.context import SanicSSLContext
+from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
 from sanic.response import text
 
 
@@ -26,6 +30,31 @@ localhost_cert = os.path.join(localhost_dir, "fullchain.pem")
 localhost_key = os.path.join(localhost_dir, "privkey.pem")
 sanic_cert = os.path.join(sanic_dir, "fullchain.pem")
 sanic_key = os.path.join(sanic_dir, "privkey.pem")
+
+
+@pytest.fixture
+def server_cert():
+    return Mock()
+
+
+@pytest.fixture
+def issue_cert(server_cert):
+    mock = Mock(return_value=server_cert)
+    return mock
+
+
+@pytest.fixture
+def ca(issue_cert):
+    ca = Mock()
+    ca.issue_cert = issue_cert
+    return ca
+
+
+@pytest.fixture
+def trustme(ca):
+    module = Mock()
+    module.CA = Mock(return_value=ca)
+    return module
 
 
 @contextmanager
@@ -390,6 +419,16 @@ def test_mk_cert_creator_is_supported(app):
         )
 
 
+def test_mk_cert_creator_is_not_supported(app):
+    cert_creator = MkcertCreator(app, _default, _default)
+    with patch("subprocess.run") as run:
+        run.side_effect = Exception("")
+        with pytest.raises(
+            SanicException, match="Sanic is attempting to use mkcert"
+        ):
+            cert_creator.check_supported()
+
+
 def test_mk_cert_creator_generate_cert_default(app):
     cert_creator = MkcertCreator(app, _default, _default)
     with patch("subprocess.run") as run:
@@ -407,3 +446,53 @@ def test_mk_cert_creator_generate_cert_localhost(app):
         with patch("sanic.http.tls.creators.CertSimple"):
             cert_creator.generate_cert("localhost")
             run.assert_not_called()
+
+
+def test_trustme_creator_default(app: Sanic):
+    cert_creator = TrustmeCreator(app, _default, _default)
+    assert isinstance(cert_creator.tmpdir, Path)
+    assert cert_creator.tmpdir.exists()
+
+
+def test_trustme_creator_is_supported(app, monkeypatch):
+    monkeypatch.setattr(sanic.http.tls.creators, "TRUSTME_INSTALLED", True)
+    cert_creator = TrustmeCreator(app, _default, _default)
+    cert_creator.check_supported()
+
+
+def test_trustme_creator_is_not_supported(app, monkeypatch):
+    monkeypatch.setattr(sanic.http.tls.creators, "TRUSTME_INSTALLED", False)
+    cert_creator = TrustmeCreator(app, _default, _default)
+    with pytest.raises(
+        SanicException, match="Sanic is attempting to use trustme"
+    ):
+        cert_creator.check_supported()
+
+
+def test_trustme_creator_generate_cert_default(
+    app, monkeypatch, trustme, issue_cert, server_cert, ca
+):
+    monkeypatch.setattr(sanic.http.tls.creators, "trustme", trustme)
+    cert_creator = TrustmeCreator(app, _default, _default)
+    cert = cert_creator.generate_cert("localhost")
+
+    assert isinstance(cert, SanicSSLContext)
+    trustme.CA.assert_called_once_with()
+    issue_cert.assert_called_once_with("localhost")
+    server_cert.configure_cert.assert_called_once()
+    ca.configure_trust.assert_called_once()
+    ca.cert_pem.write_to_path.assert_called_once_with(str(cert.sanic["cert"]))
+    write_to_path = server_cert.private_key_and_cert_chain_pem.write_to_path
+    write_to_path.assert_called_once_with(str(cert.sanic["key"]))
+
+
+def test_trustme_creator_generate_cert_localhost(
+    app, monkeypatch, trustme, server_cert, ca
+):
+    monkeypatch.setattr(sanic.http.tls.creators, "trustme", trustme)
+    cert_creator = TrustmeCreator(app, localhost_key, localhost_cert)
+    cert_creator.generate_cert("localhost")
+
+    ca.cert_pem.write_to_path.assert_called_once_with(localhost_cert)
+    write_to_path = server_cert.private_key_and_cert_chain_pem.write_to_path
+    write_to_path.assert_called_once_with(localhost_key)

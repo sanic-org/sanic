@@ -25,7 +25,7 @@ from sanic.http.tls.context import CertSimple, SanicSSLContext
 try:
     import trustme
 
-    TRUSTME_INSTALLED = True
+    TRUSTME_INSTALLED = True  # noqa
 except (ImportError, ModuleNotFoundError):
     TRUSTME_INSTALLED = False
 
@@ -108,11 +108,11 @@ class CertCreator(ABC):
         self.cert_path = _make_path(cert, self.tmpdir)
 
     @abstractmethod
-    def check_supported(self) -> None:
+    def check_supported(self) -> None:  # no cov
         ...
 
     @abstractmethod
-    def generate_cert(self, localhost: str) -> ssl.SSLContext:
+    def generate_cert(self, localhost: str) -> ssl.SSLContext:  # no cov
         ...
 
     @classmethod
@@ -230,7 +230,7 @@ class MkcertCreator(CertCreator):
         finally:
 
             @self.app.main_process_stop
-            async def cleanup(*_):
+            async def cleanup(*_):  # no cov
                 if self.tmpdir:
                     with suppress(FileNotFoundError):
                         self.key_path.unlink()

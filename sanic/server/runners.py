@@ -117,6 +117,45 @@ def serve(
     )
 
 
+def _setup_system_signals(
+    app: Sanic,
+    run_multiple: bool,
+    register_sys_signals: bool,
+    loop: asyncio.AbstractEventLoop,
+) -> None:
+    # Ignore SIGINT when run_multiple
+    if run_multiple:
+        signal_func(SIGINT, SIG_IGN)
+        os.environ["SANIC_WORKER_PROCESS"] = "true"
+
+    # Register signals for graceful termination
+    if register_sys_signals:
+        if OS_IS_WINDOWS:
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
+
+
+def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
+    pid = os.getpid()
+    try:
+        logger.info("Starting worker [%s]", pid)
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        logger.info("Stopping worker [%s]", pid)
+
+        loop.run_until_complete(before_stop())
+
+        if cleanup:
+            cleanup()
+
+        loop.run_until_complete(after_stop())
+        remove_unix_socket(unix)
+
+
 def _serve_http_1(
     host,
     port,
@@ -183,30 +222,7 @@ def _serve_http_1(
         error_logger.exception("Unable to start server", exc_info=True)
         return
 
-    # Ignore SIGINT when run_multiple
-    if run_multiple:
-        signal_func(SIGINT, SIG_IGN)
-        os.environ["SANIC_WORKER_PROCESS"] = "true"
-
-    # Register signals for graceful termination
-    if register_sys_signals:
-        if OS_IS_WINDOWS:
-            ctrlc_workaround_for_windows(app)
-        else:
-            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
-                loop.add_signal_handler(_signal, app.stop)
-
-    loop.run_until_complete(app._server_event("init", "after"))
-    pid = os.getpid()
-    try:
-        logger.info("Starting worker [%s]", pid)
-        loop.run_forever()
-    finally:
-        logger.info("Stopping worker [%s]", pid)
-
-        # Run the on_stop function if provided
-        loop.run_until_complete(app._server_event("shutdown", "before"))
-
+    def _cleanup():
         # Wait for event loop to finish and all connections to drain
         http_server.close()
         loop.run_until_complete(http_server.wait_closed())
@@ -236,8 +252,16 @@ def _serve_http_1(
                 conn.websocket.fail_connection(code=1001)
             else:
                 conn.abort()
-        loop.run_until_complete(app._server_event("shutdown", "after"))
-        remove_unix_socket(unix)
+
+    _setup_system_signals(app, run_multiple, register_sys_signals, loop)
+    loop.run_until_complete(app._server_event("init", "after"))
+    _run_server_forever(
+        loop,
+        partial(app._server_event, "shutdown", "before"),
+        partial(app._server_event, "shutdown", "after"),
+        _cleanup,
+        unix,
+    )
 
 
 def _serve_http_3(
@@ -263,39 +287,16 @@ def _serve_http_3(
     )
     server = AsyncioServer(app, loop, coro, [])
     loop.run_until_complete(server.startup())
-
-    # TODO: Cleanup the non-DRY code block
-    # Ignore SIGINT when run_multiple
-    if run_multiple:
-        signal_func(SIGINT, SIG_IGN)
-        os.environ["SANIC_WORKER_PROCESS"] = "true"
-
-    # Register signals for graceful termination
-    if register_sys_signals:
-        if OS_IS_WINDOWS:
-            ctrlc_workaround_for_windows(app)
-        else:
-            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
-                loop.add_signal_handler(_signal, app.stop)
-
     loop.run_until_complete(server.before_start())
     loop.run_until_complete(server)
+    _setup_system_signals(app, run_multiple, register_sys_signals, loop)
     loop.run_until_complete(server.after_start())
 
-    pid = os.getpid()
-    try:
-        logger.info("Starting worker [%s]", pid)
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        logger.info("Stopping worker [%s]", pid)
-
-        loop.run_until_complete(server.before_stop())
-
-        # DO close connections here
-
-        loop.run_until_complete(server.after_stop())
+    # TODO: Create connection cleanup and graceful shutdown
+    cleanup = None
+    _run_server_forever(
+        loop, server.before_stop, server.after_stop, cleanup, None
+    )
 
 
 def serve_single(server_settings):

@@ -272,6 +272,4 @@ class TrustmeCreator(CertCreator):
             str(self.key_path.absolute())
         )
 
-        sanic_context.verify_mode = False
-
         return context

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from abc import ABC, abstractmethod
+from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -347,7 +348,9 @@ class SessionTicketStore:
         return self.tickets.pop(label, None)
 
 
-def get_config(app: Sanic, ssl: Union[SanicSSLContext, CertSelector]):
+def get_config(
+    app: Sanic, ssl: Union[SanicSSLContext, CertSelector, SSLContext]
+):
     # TODO:
     # - proper selection needed if servince with multiple certs insted of
     #   just taking the first

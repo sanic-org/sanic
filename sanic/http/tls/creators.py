@@ -27,6 +27,7 @@ try:
 
     TRUSTME_INSTALLED = True  # noqa
 except (ImportError, ModuleNotFoundError):
+    trustme = None  # type: ignore
     TRUSTME_INSTALLED = False
 
 if TYPE_CHECKING:
@@ -185,7 +186,7 @@ class CertCreator(ABC):
 class MkcertCreator(CertCreator):
     def check_supported(self) -> None:
         try:
-            subprocess.run(
+            subprocess.run(  # nosec B603 B607
                 ["mkcert", "-help"],
                 check=True,
                 stderr=subprocess.DEVNULL,
@@ -208,6 +209,7 @@ class MkcertCreator(CertCreator):
         try:
             if not self.cert_path.exists():
                 message = "Generating TLS certificate"
+                # TODO: Validate input for security
                 with loading(message):
                     cmd = [
                         "mkcert",
@@ -217,7 +219,7 @@ class MkcertCreator(CertCreator):
                         str(self.cert_path),
                         localhost,
                     ]
-                    resp = subprocess.run(
+                    resp = subprocess.run(  # nosec B603
                         cmd,
                         check=True,
                         stdout=subprocess.PIPE,

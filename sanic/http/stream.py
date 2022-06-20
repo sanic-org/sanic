@@ -21,5 +21,7 @@ class Stream:
     __touchup__: Tuple[str, ...] = tuple()
     __slots__ = ()
 
-    def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
+    def respond(
+        self, response: BaseHTTPResponse
+    ) -> BaseHTTPResponse:  # no cov
         raise NotImplementedError("Not implemented")

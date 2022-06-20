@@ -203,3 +203,41 @@ async def test_send_headers(app: Sanic, http_request: Request):
             (b"content-type", b"application/json"),
         ],
     )
+
+
+def test_multiple_streams(app):
+    protocol = generate_protocol(app)
+    http3 = Http3(protocol, protocol.transmit)
+    http3.http_event_received(
+        HeadersReceived(
+            [
+                (b":method", b"GET"),
+                (b":path", b"/location"),
+                (b":scheme", b"https"),
+                (b":authority", b"localhost:8443"),
+                (b"foo", b"bar"),
+            ],
+            1,
+            False,
+        )
+    )
+    http3.http_event_received(
+        HeadersReceived(
+            [
+                (b":method", b"GET"),
+                (b":path", b"/location"),
+                (b":scheme", b"https"),
+                (b":authority", b"localhost:8443"),
+                (b"foo", b"bar"),
+            ],
+            2,
+            False,
+        )
+    )
+
+    receiver1 = http3.get_receiver_by_stream_id(1)
+    receiver2 = http3.get_receiver_by_stream_id(2)
+    assert len(http3.receivers) == 2
+    assert isinstance(receiver1, HTTPReceiver)
+    assert isinstance(receiver2, HTTPReceiver)
+    assert receiver1 is not receiver2

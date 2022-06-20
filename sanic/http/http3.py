@@ -83,7 +83,7 @@ class HTTPReceiver(Receiver, Stream):
         self.head_only = self.request.method.upper() == "HEAD"
 
         if exception:
-            logger.info(
+            logger.info(  # no cov
                 f"{Colors.BLUE}[exception]: "
                 f"{Colors.RED}{exception}{Colors.END}",
                 exc_info=True,
@@ -92,7 +92,7 @@ class HTTPReceiver(Receiver, Stream):
             await self.error_response(exception)
         else:
             try:
-                logger.info(
+                logger.info(  # no cov
                     f"{Colors.BLUE}[request]:{Colors.END} {self.request}",
                     extra={"verbosity": 1},
                 )
@@ -126,7 +126,7 @@ class HTTPReceiver(Receiver, Stream):
         ):
             headers.pop("content-length", None)
             headers.pop("transfer-encoding", None)
-            logger.warning(
+            logger.warning(  # no cov
                 f"Message body set in response on {self.request.path}. "
                 f"A {status} response may only have headers, no body."
             )
@@ -143,7 +143,7 @@ class HTTPReceiver(Receiver, Stream):
         return headers
 
     def send_headers(self) -> None:
-        logger.debug(
+        logger.debug(  # no cov
             f"{Colors.BLUE}[send]: {Colors.GREEN}HEADERS{Colors.END}",
             extra={"verbosity": 2},
         )
@@ -166,7 +166,7 @@ class HTTPReceiver(Receiver, Stream):
             self.future.cancel()
 
     def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
-        logger.debug(
+        logger.debug(  # no cov
             f"{Colors.BLUE}[respond]:{Colors.END} {response}",
             extra={"verbosity": 2},
         )
@@ -191,7 +191,7 @@ class HTTPReceiver(Receiver, Stream):
         self.request.body += data
 
     async def send(self, data: bytes, end_stream: bool) -> None:
-        logger.debug(
+        logger.debug(  # no cov
             f"{Colors.BLUE}[send]: {Colors.GREEN}{data=} "
             f"{end_stream=}{Colors.END}",
             extra={"verbosity": 2},
@@ -219,7 +219,7 @@ class HTTPReceiver(Receiver, Stream):
             elif size:
                 data = b"%x\r\n%b\r\n" % (size, data)
 
-        logger.debug(
+        logger.debug(  # no cov
             f"{Colors.BLUE}[transmitting]{Colors.END}",
             extra={"verbosity": 2},
         )
@@ -262,7 +262,7 @@ class Http3:
         self.receivers: Dict[int, Receiver] = {}
 
     def http_event_received(self, event: H3Event) -> None:
-        logger.debug(
+        logger.debug(  # no cov
             f"{Colors.BLUE}[http_event_received]: "
             f"{Colors.YELLOW}{event}{Colors.END}",
             extra={"verbosity": 2},
@@ -279,7 +279,7 @@ class Http3:
                 receiver.future.cancel()
                 receiver.future = asyncio.ensure_future(receiver.run(e))
         else:
-            logger.debug(
+            logger.debug(  # no cov
                 f"{Colors.RED}DOING NOTHING{Colors.END}",
                 extra={"verbosity": 2},
             )
@@ -350,6 +350,13 @@ def get_config(
     #   just taking the first
     if isinstance(ssl, CertSelector):
         ssl = cast(SanicSSLContext, ssl.sanic_select[0])
+    if app.config.LOCAL_CERT_CREATOR is LocalCertCreator.TRUSTME:
+        raise SanicException(
+            "Sorry, you cannot currently use trustme as a local certificate "
+            "generator for an HTTP/3 server. This is not yet supported. You "
+            "should be able to use mkcert instead. For more information, see: "
+            "https://github.com/aiortc/aioquic/issues/295."
+        )
     if not isinstance(ssl, CertSimple):
         raise SanicException("SSLContext is not CertSimple")
 
@@ -359,14 +366,6 @@ def get_config(
         max_datagram_frame_size=65536,
     )
     password = app.config.TLS_CERT_PASSWORD or None
-
-    if app.config.LOCAL_CERT_CREATOR is LocalCertCreator.TRUSTME:
-        raise SanicException(
-            "Sorry, you cannot currently use trustme as a local certificate "
-            "generator for an HTTP/3 server. This is not yet supported. You "
-            "should be able to use mkcert instead. For more information, see: "
-            "https://github.com/aiortc/aioquic/issues/295."
-        )
 
     config.load_cert_chain(
         ssl.sanic["cert"], ssl.sanic["key"], password=password

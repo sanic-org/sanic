@@ -66,6 +66,9 @@ class Receiver(ABC):
 
 class HTTPReceiver(Receiver, Stream):
     stage: Stage
+    request: Request
+
+    __version__ = "3"
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -105,24 +108,13 @@ class HTTPReceiver(Receiver, Stream):
         """
         Handle response when exception encountered
         """
-        # Disconnect after an error if in any other state than handler
-        # if self.stage is not Stage.HANDLER:
-        #     self.keep_alive = False
-
-        # TODO:
-        # - Do we need this?
-        # Request failure? Respond but then disconnect
-        if self.stage is Stage.REQUEST:
-            self.stage = Stage.HANDLER
-
         # From request and handler states we can respond, otherwise be silent
-        if self.stage is Stage.HANDLER:
-            app = self.protocol.app
+        app = self.protocol.app
 
-            # if self.request is None:
-            #     self.create_empty_request()
+        if self.request is None:
+            self.create_empty_request()
 
-            await app.handle_exception(self.request, exception)
+        await app.handle_exception(self.request, exception)
 
     def _prepare_headers(
         self, response: BaseHTTPResponse
@@ -315,23 +307,24 @@ class Http3:
         return self.receivers[stream_id]
 
     def _make_request(self, event: HeadersReceived) -> Request:
-        # TODO:
-        # Cleanup
-        # method_header, path_header, *rem = event.headers
         headers = Header(((k.decode(), v.decode()) for k, v in event.headers))
-        # method = method_header[1].decode()
-        # path = path_header[1]
         method = headers[":method"]
-        path = headers[":path"].encode()
+        path = headers[":path"]
         scheme = headers.pop(":scheme", "")
-
         authority = headers.pop(":authority", "")
+        self.url = path
 
         if authority:
             headers["host"] = authority
 
         request = self.protocol.request_class(
-            path, headers, "3", method, Transport(), self.protocol.app, b""
+            path.encode(),
+            headers,
+            "3",
+            method,
+            Transport(),
+            self.protocol.app,
+            b"",
         )
         request._stream_id = event.stream_id
         request._scheme = scheme

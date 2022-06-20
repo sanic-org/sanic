@@ -49,7 +49,7 @@ class Http(Stream, metaclass=TouchUpMeta):
 
     HEADER_CEILING = 16_384
     HEADER_MAX_SIZE = 0
-
+    __version__ = "1.1"
     __touchup__ = (
         "http1_request_header",
         "http1_response_header",
@@ -426,24 +426,6 @@ class Http(Stream, metaclass=TouchUpMeta):
                 self.create_empty_request()
 
             await app.handle_exception(self.request, exception)
-
-    def create_empty_request(self) -> None:
-        """
-        Current error handling code needs a request object that won't exist
-        if an error occurred during before a request was received. Create a
-        bogus response for error handling use.
-        """
-
-        # FIXME: Avoid this by refactoring error handling and response code
-        self.request = self.protocol.request_class(
-            url_bytes=self.url.encode() if self.url else b"*",
-            headers=Header({}),
-            version="1.1",
-            method="NONE",
-            transport=self.protocol.transport,
-            app=self.protocol.app,
-        )
-        self.request.stream = self
 
     def log_response(self) -> None:
         """

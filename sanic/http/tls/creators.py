@@ -142,9 +142,15 @@ class CertCreator(ABC):
                 local_tls_key,
                 local_tls_cert,
             )
+            if creator:
+                break
 
         if not creator:
-            raise SanicException("...")
+            raise SanicException(
+                "Sanic could not find package to create a TLS certificate. "
+                "You must have either mkcert or trustme installed. See "
+                "_____ for more details."
+            )
 
         return creator
 
@@ -170,6 +176,8 @@ class CertCreator(ABC):
         except SanicException:
             if creator_requested is creator_requirement:
                 raise
+            else:
+                return None
 
         return instance
 

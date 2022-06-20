@@ -15,10 +15,16 @@ from sanic_testing.testing import HOST, PORT
 import sanic.http.tls.creators
 
 from sanic import Sanic
+from sanic.application.constants import Mode
+from sanic.constants import LocalCertCreator
 from sanic.exceptions import SanicException
 from sanic.helpers import _default
 from sanic.http.tls.context import SanicSSLContext
-from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
+from sanic.http.tls.creators import (
+    MkcertCreator,
+    TrustmeCreator,
+    get_ssl_context,
+)
 from sanic.response import text
 
 
@@ -55,6 +61,34 @@ def trustme(ca):
     module = Mock()
     module.CA = Mock(return_value=ca)
     return module
+
+
+@pytest.fixture
+def MockMkcertCreator():
+    class Creator(MkcertCreator):
+        SUPPORTED = True
+
+        def check_supported(self):
+            if not self.SUPPORTED:
+                raise SanicException("Nope")
+
+        generate_cert = Mock()
+
+    return Creator
+
+
+@pytest.fixture
+def MockTrustmeCreator():
+    class Creator(TrustmeCreator):
+        SUPPORTED = True
+
+        def check_supported(self):
+            if not self.SUPPORTED:
+                raise SanicException("Nope")
+
+        generate_cert = Mock()
+
+    return Creator
 
 
 @contextmanager
@@ -496,3 +530,81 @@ def test_trustme_creator_generate_cert_localhost(
     ca.cert_pem.write_to_path.assert_called_once_with(localhost_cert)
     write_to_path = server_cert.private_key_and_cert_chain_pem.write_to_path
     write_to_path.assert_called_once_with(localhost_key)
+
+
+def test_get_ssl_context_with_ssl_context(app):
+    mock_context = Mock()
+    context = get_ssl_context(app, mock_context)
+    assert context is mock_context
+
+
+def test_get_ssl_context_in_production(app):
+    app.state.mode = Mode.PRODUCTION
+    with pytest.raises(
+        SanicException,
+        match="Cannot run Sanic as an HTTPS server in PRODUCTION mode",
+    ):
+        get_ssl_context(app, None)
+
+
+@pytest.mark.parametrize(
+    "requirement,mk_supported,trustme_supported,mk_called,trustme_called,err",
+    (
+        (LocalCertCreator.AUTO, True, False, True, False, None),
+        (LocalCertCreator.AUTO, True, True, True, False, None),
+        (LocalCertCreator.AUTO, False, True, False, True, None),
+        (
+            LocalCertCreator.AUTO,
+            False,
+            False,
+            False,
+            False,
+            "Sanic could not find package to create a TLS certificate",
+        ),
+        (LocalCertCreator.MKCERT, True, False, True, False, None),
+        (LocalCertCreator.MKCERT, True, True, True, False, None),
+        (LocalCertCreator.MKCERT, False, True, False, False, "Nope"),
+        (LocalCertCreator.MKCERT, False, False, False, False, "Nope"),
+        (LocalCertCreator.TRUSTME, True, False, False, False, "Nope"),
+        (LocalCertCreator.TRUSTME, True, True, False, True, None),
+        (LocalCertCreator.TRUSTME, False, True, False, True, None),
+        (LocalCertCreator.TRUSTME, False, False, False, False, "Nope"),
+    ),
+)
+def test_get_ssl_context_only_mkcert(
+    app,
+    monkeypatch,
+    MockMkcertCreator,
+    MockTrustmeCreator,
+    requirement,
+    mk_supported,
+    trustme_supported,
+    mk_called,
+    trustme_called,
+    err,
+):
+    app.state.mode = Mode.DEBUG
+    app.config.LOCAL_CERT_CREATOR = requirement
+    monkeypatch.setattr(
+        sanic.http.tls.creators, "MkcertCreator", MockMkcertCreator
+    )
+    monkeypatch.setattr(
+        sanic.http.tls.creators, "TrustmeCreator", MockTrustmeCreator
+    )
+    MockMkcertCreator.SUPPORTED = mk_supported
+    MockTrustmeCreator.SUPPORTED = trustme_supported
+
+    if err:
+        with pytest.raises(SanicException, match=err):
+            get_ssl_context(app, None)
+    else:
+        get_ssl_context(app, None)
+
+    if mk_called:
+        MockMkcertCreator.generate_cert.assert_called_once_with("localhost")
+    else:
+        MockMkcertCreator.generate_cert.assert_not_called()
+    if trustme_called:
+        MockTrustmeCreator.generate_cert.assert_called_once_with("localhost")
+    else:
+        MockTrustmeCreator.generate_cert.assert_not_called()

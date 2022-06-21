@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from asyncio import Event
 from pathlib import Path
@@ -6,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from sanic import Sanic
+from sanic.compat import UVLOOP_INSTALLED
 from sanic.http.constants import HTTP
 
 
@@ -14,6 +16,10 @@ localhost_dir = parent_dir / "certs/localhost"
 
 
 @pytest.mark.parametrize("version", (3, HTTP.VERSION_3))
+@pytest.mark.skipif(
+    sys.version_info < (3, 8) and not UVLOOP_INSTALLED,
+    reason="In 3.7 w/o uvloop the port is not always released",
+)
 def test_server_starts_http3(app: Sanic, version, caplog):
     ev = Event()
 
@@ -39,6 +45,10 @@ def test_server_starts_http3(app: Sanic, version, caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 8) and not UVLOOP_INSTALLED,
+    reason="In 3.7 w/o uvloop the port is not always released",
+)
 def test_server_starts_http1_and_http3(app: Sanic, caplog):
     @app.after_server_start
     def shutdown(*_):
@@ -73,6 +83,10 @@ def test_server_starts_http1_and_http3(app: Sanic, caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 8) and not UVLOOP_INSTALLED,
+    reason="In 3.7 w/o uvloop the port is not always released",
+)
 def test_server_starts_http1_and_http3_bad_order(app: Sanic, caplog):
     @app.after_server_start
     def shutdown(*_):

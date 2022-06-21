@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -18,6 +18,11 @@ from sanic.models.server_types import ConnInfo
 from sanic.response import empty, json
 from sanic.server.protocols.http_protocol import Http3Protocol
 
+
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from tests.asyncmock import AsyncMock  # type: ignore
 
 pytestmark = pytest.mark.asyncio
 

@@ -213,7 +213,7 @@ class HTTPReceiver(Receiver, Stream):
     async def send(self, data: bytes, end_stream: bool) -> None:
         logger.debug(  # no cov
             f"{Colors.BLUE}[send]: {Colors.GREEN}data={data.decode()} "
-            f"{end_stream=}{Colors.END}",
+            f"end_stream={end_stream}{Colors.END}",
             extra={"verbosity": 2},
         )
         self._send(data, end_stream)

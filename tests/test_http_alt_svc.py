@@ -1,4 +1,8 @@
+import sys
+
 from pathlib import Path
+
+import pytest
 
 from sanic.app import Sanic
 from sanic.response import empty
@@ -11,6 +15,7 @@ localhost_dir = parent_dir / "certs/localhost"
 PORT = 12344
 
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported in 3.7")
 def test_http1_response_has_alt_svc():
     Sanic._app_registry.clear()
     app = Sanic("TestAltSvc")

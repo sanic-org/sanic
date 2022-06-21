@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
+import sys
 
 from asyncio import (
     AbstractEventLoop,
@@ -23,7 +24,6 @@ from typing import (
     Any,
     Dict,
     List,
-    Literal,
     Optional,
     Set,
     Tuple,
@@ -58,7 +58,13 @@ if TYPE_CHECKING:
     from sanic.config import Config
 
 SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
-HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
+
+if sys.version_info < (3, 8):
+    HTTPVersion = Union[HTTP, int]
+else:
+    from typing import Literal
+
+    HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
 
 
 class RunnerMixin(metaclass=SanicMeta):

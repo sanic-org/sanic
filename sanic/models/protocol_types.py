@@ -1,12 +1,12 @@
 import sys
 
+from asyncio import BaseTransport
 from typing import Any, AnyStr, TypeVar, Union
 
 from sanic.models.asgi import ASGIScope
 
 
 if sys.version_info < (3, 8):
-    from asyncio import BaseTransport
 
     # from sanic.models.asgi import MockTransport
     MockTransport = TypeVar("MockTransport")
@@ -18,14 +18,9 @@ else:
     # Protocol is a 3.8+ feature
     from typing import Protocol
 
-    class TransportProtocol(Protocol):
+    class TransportProtocol(BaseTransport):
         scope: ASGIScope
-
-        def get_protocol(self):
-            ...
-
-        def get_extra_info(self, info: str) -> Union[str, bool, None]:
-            ...
+        __slots__ = ()
 
     class HTMLProtocol(Protocol):
         def __html__(self) -> AnyStr:

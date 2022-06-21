@@ -14,6 +14,7 @@ from sanic.config import DEFAULT_CONFIG
 from sanic.exceptions import PayloadTooLarge
 from sanic.http.constants import Stage
 from sanic.http.http3 import Http3, HTTPReceiver
+from sanic.models.server_types import ConnInfo
 from sanic.response import empty, json
 from sanic.server.protocols.http_protocol import Http3Protocol
 
@@ -241,3 +242,46 @@ def test_multiple_streams(app):
     assert isinstance(receiver1, HTTPReceiver)
     assert isinstance(receiver2, HTTPReceiver)
     assert receiver1 is not receiver2
+
+
+def test_request_stream_id(app):
+    protocol = generate_protocol(app)
+    http3 = Http3(protocol, protocol.transmit)
+    http3.http_event_received(
+        HeadersReceived(
+            [
+                (b":method", b"GET"),
+                (b":path", b"/location"),
+                (b":scheme", b"https"),
+                (b":authority", b"localhost:8443"),
+                (b"foo", b"bar"),
+            ],
+            1,
+            False,
+        )
+    )
+    receiver = http3.get_receiver_by_stream_id(1)
+
+    assert isinstance(receiver.request, Request)
+    assert receiver.request.stream_id == 1
+
+
+def test_request_conn_info(app):
+    protocol = generate_protocol(app)
+    http3 = Http3(protocol, protocol.transmit)
+    http3.http_event_received(
+        HeadersReceived(
+            [
+                (b":method", b"GET"),
+                (b":path", b"/location"),
+                (b":scheme", b"https"),
+                (b":authority", b"localhost:8443"),
+                (b"foo", b"bar"),
+            ],
+            1,
+            False,
+        )
+    )
+    receiver = http3.get_receiver_by_stream_id(1)
+
+    assert isinstance(receiver.request.conn_info, ConnInfo)

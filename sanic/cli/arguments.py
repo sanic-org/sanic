@@ -253,7 +253,7 @@ class DevelopmentGroup(Group):
             action="store_true",
             help=(
                 "Create a temporary TLS certificate for local development "
-                "(requires mkcert)"
+                "(requires mkcert or trustme)"
             ),
         )
 

@@ -681,6 +681,10 @@ class Request:
         """
         return self._parsed_url.path.decode("utf-8")
 
+    @property
+    def network_paths(self):
+        return self.conn_info.network_paths
+
     # Proxy properties (using SERVER_NAME/forwarded/request/transport info)
 
     @property

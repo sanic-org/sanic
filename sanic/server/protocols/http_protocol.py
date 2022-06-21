@@ -51,6 +51,12 @@ class HttpProtocolMixin:
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE
         self.request_class = self.app.request_class or Request
 
+    @property
+    def http(self):
+        if not hasattr(self, "_http"):
+            return None
+        return self._http
+
 
 class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
     """

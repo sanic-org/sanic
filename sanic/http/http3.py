@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     Dict,
     List,
@@ -31,8 +32,12 @@ from sanic.compat import Header
 from sanic.constants import LocalCertCreator
 from sanic.exceptions import PayloadTooLarge, SanicException
 from sanic.helpers import has_message_body
+from sanic.http.constants import Stage
 from sanic.http.stream import Stream
 from sanic.http.tls.context import CertSelector, CertSimple, SanicSSLContext
+from sanic.log import Colors, logger
+from sanic.models.protocol_types import TransportProtocol
+from sanic.models.server_types import ConnInfo
 
 
 if TYPE_CHECKING:
@@ -41,15 +46,30 @@ if TYPE_CHECKING:
     from sanic.response import BaseHTTPResponse
     from sanic.server.protocols.http_protocol import Http3Protocol
 
-from sanic.http.constants import Stage
-from sanic.log import Colors, logger
-
 
 HttpConnection = Union[H0Connection, H3Connection]
 
 
-class Transport:
-    ...
+class HTTP3Transport(TransportProtocol):
+    __slots__ = ("_protocol",)
+
+    def __init__(self, protocol: Http3Protocol):
+        self._protocol = protocol
+
+    def get_protocol(self) -> Http3Protocol:
+        return self._protocol
+
+    def get_extra_info(self, info: str, default: Any = None) -> Any:
+        if (
+            info in ("socket", "sockname", "peername")
+            and self._protocol._transport
+        ):
+            return self._protocol._transport.get_extra_info(info, default)
+        elif info == "network_paths":
+            return self._protocol._quic._network_paths
+        elif info == "ssl_context":
+            return self._protocol.app.state.ssl
+        return default
 
 
 class Receiver(ABC):
@@ -192,7 +212,7 @@ class HTTPReceiver(Receiver, Stream):
 
     async def send(self, data: bytes, end_stream: bool) -> None:
         logger.debug(  # no cov
-            f"{Colors.BLUE}[send]: {Colors.GREEN}{data=} "
+            f"{Colors.BLUE}[send]: {Colors.GREEN}data={data.decode()} "
             f"{end_stream=}{Colors.END}",
             extra={"verbosity": 2},
         )
@@ -312,15 +332,17 @@ class Http3:
         if authority:
             headers["host"] = authority
 
+        transport = HTTP3Transport(self.protocol)
         request = self.protocol.request_class(
             path.encode(),
             headers,
             "3",
             method,
-            Transport(),
+            transport,
             self.protocol.app,
             b"",
         )
+        request.conn_info = ConnInfo(transport)
         request._stream_id = event.stream_id
         request._scheme = scheme
 

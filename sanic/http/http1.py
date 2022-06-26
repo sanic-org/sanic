@@ -49,7 +49,6 @@ class Http(Stream, metaclass=TouchUpMeta):
 
     HEADER_CEILING = 16_384
     HEADER_MAX_SIZE = 0
-    __version__ = "1.1"
     __touchup__ = (
         "http1_request_header",
         "http1_response_header",

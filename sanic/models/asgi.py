@@ -76,7 +76,7 @@ class MockTransport(TransportProtocol):  # no cov
 
     def get_extra_info(
         self, info: str, default=None
-    ) -> Union[str, bool, None]:
+    ) -> Optional[Union[str, bool]]:
         if info == "peername":
             return self.scope.get("client")
         elif info == "sslcontext":

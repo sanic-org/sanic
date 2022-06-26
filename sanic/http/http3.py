@@ -30,7 +30,7 @@ from aioquic.tls import SessionTicket
 
 from sanic.compat import Header
 from sanic.constants import LocalCertCreator
-from sanic.exceptions import PayloadTooLarge, SanicException
+from sanic.exceptions import PayloadTooLarge, SanicException, ServerError
 from sanic.helpers import has_message_body
 from sanic.http.constants import Stage
 from sanic.http.stream import Stream
@@ -222,7 +222,7 @@ class HTTPReceiver(Receiver, Stream):
         if not self.headers_sent:
             self.send_headers()
         if self.stage is not Stage.RESPONSE:
-            raise Exception(f"not ready to send: {self.stage}")
+            raise ServerError(f"not ready to send: {self.stage}")
 
         # Chunked
         if (
@@ -299,6 +299,7 @@ class Http3:
                 receiver.future.cancel()
                 receiver.future = asyncio.ensure_future(receiver.run(e))
         else:
+            ...  # Intentionally here to help out Touchup
             logger.debug(  # no cov
                 f"{Colors.RED}DOING NOTHING{Colors.END}",
                 extra={"verbosity": 2},

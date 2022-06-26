@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from pathlib import Path
 from tempfile import mkdtemp
+from types import ModuleType
 from typing import TYPE_CHECKING, Optional, Tuple, Type, Union, cast
 
 from sanic.application.constants import Mode
@@ -23,11 +24,11 @@ from sanic.http.tls.context import CertSimple, SanicSSLContext
 
 
 try:
-    import trustme  # type: ignore
+    import trustme
 
-    TRUSTME_INSTALLED = True  # noqa
+    TRUSTME_INSTALLED = True
 except (ImportError, ModuleNotFoundError):
-    trustme = None  # type: ignore
+    trustme = ModuleType("trustme")
     TRUSTME_INSTALLED = False
 
 if TYPE_CHECKING:

@@ -342,7 +342,8 @@ async def file(
     if isinstance(last_modified, datetime):
         last_modified = last_modified.replace(microsecond=0).timestamp()
     elif isinstance(last_modified, Default):
-        last_modified = (await stat_async(location)).st_mtime
+        stat = await stat_async(location)
+        last_modified = stat.st_mtime
 
     if last_modified:
         headers.setdefault(

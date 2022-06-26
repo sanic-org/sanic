@@ -21,7 +21,7 @@ from typing import (
 )
 from urllib.parse import unquote
 
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.route import Route
 
 from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async

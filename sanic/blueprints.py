@@ -21,8 +21,8 @@ from typing import (
     Union,
 )
 
-from sanic_routing.exceptions import NotFound  # type: ignore
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.exceptions import NotFound
+from sanic_routing.route import Route
 
 from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup

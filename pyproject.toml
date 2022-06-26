@@ -20,5 +20,6 @@ profile = "black"
 [[tool.mypy.overrides]]
 module = [
     "trustme.*",
+    "sanic_routing.*",
 ]
 ignore_missing_imports = true

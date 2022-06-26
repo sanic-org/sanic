@@ -146,9 +146,9 @@ Or, a path to a directory to run as a simple HTTP server:
                     if callable(app):
                         solution = f"sanic {self.args.module} --factory"
                         raise ValueError(
-                            "Module is not a Sanic app, it is a"
+                            "Module is not a Sanic app, it is a "
                             f"{app_type_name}\n"
-                            "  If this callable returns a"
+                            "  If this callable returns a "
                             f"Sanic instance try: \n{solution}"
                         )
 

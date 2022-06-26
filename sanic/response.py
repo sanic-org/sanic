@@ -5,7 +5,7 @@ from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
 from os import path
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from time import time
 from typing import (
     TYPE_CHECKING,

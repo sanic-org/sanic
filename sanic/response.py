@@ -5,7 +5,7 @@ from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
 from os import path
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from time import time
 from typing import (
     TYPE_CHECKING,
@@ -22,7 +22,7 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
-from sanic.compat import Header, open_async
+from sanic.compat import Header, open_async, stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
@@ -340,9 +340,10 @@ async def file(
         )
 
     if isinstance(last_modified, datetime):
-        last_modified = last_modified.timestamp()
+        last_modified = last_modified.replace(microsecond=0).timestamp()
     elif isinstance(last_modified, Default):
-        last_modified = Path(location).stat().st_mtime
+        stat = await stat_async(location)
+        last_modified = stat.st_mtime
 
     if last_modified:
         headers.setdefault(

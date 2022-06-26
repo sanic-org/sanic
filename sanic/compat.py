@@ -3,6 +3,8 @@ import os
 import signal
 import sys
 
+from typing import Awaitable
+
 from multidict import CIMultiDict  # type: ignore
 
 
@@ -51,7 +53,7 @@ use_trio = sys.argv[0].endswith("hypercorn") and "trio" in sys.argv
 if use_trio:  # pragma: no cover
     import trio  # type: ignore
 
-    def stat_async(path):
+    def stat_async(path) -> Awaitable[os.stat_result]:
         return trio.Path(path).stat()
 
     open_async = trio.open_file

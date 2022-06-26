@@ -231,3 +231,15 @@ def test_get_current_request(app):
 
     _, resp = app.test_client.get("/")
     assert resp.json["same"]
+
+
+def test_request_stream_id(app):
+    @app.get("/")
+    async def get(request):
+        try:
+            request.stream_id
+        except Exception as e:
+            return response.text(str(e))
+
+    _, resp = app.test_client.get("/")
+    assert resp.text == "Stream ID is only a property of a HTTP/3 request"

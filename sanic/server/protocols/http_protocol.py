@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 from aioquic.h3.connection import H3_ALPN, H3Connection
 
+from sanic.http.constants import HTTP
 from sanic.http.http3 import Http3
 from sanic.touchup.meta import TouchUpMeta
 
@@ -17,9 +18,11 @@ from asyncio import CancelledError
 from time import monotonic as current_time
 
 from aioquic.asyncio import QuicConnectionProtocol
-
-# from aioquic.h3.events import H3Event
-from aioquic.quic.events import ProtocolNegotiated, QuicEvent
+from aioquic.quic.events import (
+    DatagramFrameReceived,
+    ProtocolNegotiated,
+    QuicEvent,
+)
 
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
@@ -31,6 +34,7 @@ from sanic.server.protocols.base_protocol import SanicProtocol
 
 class HttpProtocolMixin:
     __slots__ = ()
+    __version__: HTTP
 
     def _setup_connection(self, *args, **kwargs):
         self._http = self.HTTP_CLASS(self, *args, **kwargs)
@@ -57,6 +61,10 @@ class HttpProtocolMixin:
             return None
         return self._http
 
+    @property
+    def version(self):
+        return self.__class__.__version__
+
 
 class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
     """
@@ -70,6 +78,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
         "send",
         "connection_task",
     )
+    __version__ = HTTP.VERSION_1
     __slots__ = (
         # request params
         "request",
@@ -271,6 +280,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
 
 class Http3Protocol(HttpProtocolMixin, QuicConnectionProtocol):
     HTTP_CLASS = Http3
+    __version__ = HTTP.VERSION_3
 
     def __init__(self, *args, app: Sanic, **kwargs) -> None:
         self.app = app
@@ -290,11 +300,9 @@ class Http3Protocol(HttpProtocolMixin, QuicConnectionProtocol):
                 self._connection = H3Connection(
                     self._quic, enable_webtransport=True
                 )
-        #     elif event.alpn_protocol in H0_ALPN:
-        #         self._http = H0Connection(self._quic)
-        # elif isinstance(event, DatagramFrameReceived):
-        #     if event.data == b"quack":
-        #         self._quic.send_datagram_frame(b"quack-ack")
+        elif isinstance(event, DatagramFrameReceived):
+            if event.data == b"quack":
+                self._quic.send_datagram_frame(b"quack-ack")
 
         #  pass event to the HTTP layer
         if self._connection is not None:

@@ -14,8 +14,9 @@ from typing import (
     Union,
 )
 
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.route import Route
 
+from sanic.http.constants import HTTP  # type: ignore
 from sanic.http.stream import Stream
 from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
@@ -196,6 +197,10 @@ class Request:
 
     @property
     def stream_id(self):
+        if self.protocol.version is not HTTP.VERSION_3:
+            raise ServerError(
+                "Stream ID is only a property of a HTTP/3 request"
+            )
         return self._stream_id
 
     def reset_response(self):

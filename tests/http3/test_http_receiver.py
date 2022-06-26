@@ -182,6 +182,8 @@ async def test_send_headers(app: Sanic, http_request: Request):
         ProtocolNegotiated(alpn_protocol="h3")
     )
 
+    http_request._protocol = receiver.protocol
+
     def send_headers(*args, **kwargs):
         send_headers_mock(*args, **kwargs)
         return existing_send_headers(

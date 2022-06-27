@@ -251,6 +251,10 @@ def test_exception_handler_response_was_sent(
         await request.respond()
         raise ServerError("Exception")
 
+    with caplog.at_level(logging.WARNING):
+        _, response = app.test_client.get("/1")
+        assert "some text" in response.text
+
     message_in_records(
         caplog.records,
         (

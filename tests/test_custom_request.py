@@ -17,7 +17,7 @@ class CustomRequest(Request):
 
 
 def test_custom_request():
-    app = Sanic(name=__name__, request_class=CustomRequest)
+    app = Sanic(name="Test", request_class=CustomRequest)
 
     @app.route("/post", methods=["POST"])
     async def post_handler(request):

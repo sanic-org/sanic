@@ -14,7 +14,7 @@ from sanic.touchup.schemes.ode import OptionalDispatchEvent
 try:
     from unittest.mock import AsyncMock
 except ImportError:
-    from asyncmock import AsyncMock  # type: ignore
+    from tests.asyncmock import AsyncMock  # type: ignore
 
 
 @pytest.fixture

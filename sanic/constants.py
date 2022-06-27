@@ -24,5 +24,16 @@ class HTTPMethod(str, Enum):
     DELETE = auto()
 
 
+class LocalCertCreator(str, Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name.upper()
+
+    AUTO = auto()
+    TRUSTME = auto()
+    MKCERT = auto()
+
+
 HTTP_METHODS = tuple(HTTPMethod.__members__.values())
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
+DEFAULT_LOCAL_TLS_KEY = "key.pem"
+DEFAULT_LOCAL_TLS_CERT = "cert.pem"

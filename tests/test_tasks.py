@@ -13,7 +13,7 @@ from sanic.response import empty
 try:
     from unittest.mock import AsyncMock
 except ImportError:
-    from asyncmock import AsyncMock  # type: ignore
+    from tests.asyncmock import AsyncMock  # type: ignore
 
 pytestmark = pytest.mark.asyncio
 

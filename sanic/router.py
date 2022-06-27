@@ -5,12 +5,10 @@ from inspect import signature
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from uuid import UUID
 
-from sanic_routing import BaseRouter  # type: ignore
-from sanic_routing.exceptions import NoMethod  # type: ignore
-from sanic_routing.exceptions import (
-    NotFound as RoutingNotFound,  # type: ignore
-)
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing import BaseRouter
+from sanic_routing.exceptions import NoMethod
+from sanic_routing.exceptions import NotFound as RoutingNotFound
+from sanic_routing.route import Route
 
 from sanic.constants import HTTP_METHODS
 from sanic.errorpages import check_error_format

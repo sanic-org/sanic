@@ -1,4 +1,5 @@
 import logging
+import os
 
 from contextlib import contextmanager
 from os import environ
@@ -13,6 +14,7 @@ from pytest import MonkeyPatch
 
 from sanic import Sanic
 from sanic.config import DEFAULT_CONFIG, Config
+from sanic.constants import LocalCertCreator
 from sanic.exceptions import PyFileError
 
 
@@ -49,7 +51,7 @@ def test_load_from_object(app: Sanic):
 
 
 def test_load_from_object_string(app: Sanic):
-    app.config.load("test_config.ConfigTest")
+    app.config.load("tests.test_config.ConfigTest")
     assert "CONFIG_VALUE" in app.config
     assert app.config.CONFIG_VALUE == "should be used"
     assert "not_for_config" not in app.config
@@ -71,14 +73,14 @@ def test_load_from_object_string_exception(app: Sanic):
 
 def test_auto_env_prefix():
     environ["SANIC_TEST_ANSWER"] = "42"
-    app = Sanic(name=__name__)
+    app = Sanic(name="Test")
     assert app.config.TEST_ANSWER == 42
     del environ["SANIC_TEST_ANSWER"]
 
 
 def test_auto_bool_env_prefix():
     environ["SANIC_TEST_ANSWER"] = "True"
-    app = Sanic(name=__name__)
+    app = Sanic(name="Test")
     assert app.config.TEST_ANSWER is True
     del environ["SANIC_TEST_ANSWER"]
 
@@ -86,28 +88,28 @@ def test_auto_bool_env_prefix():
 @pytest.mark.parametrize("env_prefix", [None, ""])
 def test_empty_load_env_prefix(env_prefix):
     environ["SANIC_TEST_ANSWER"] = "42"
-    app = Sanic(name=__name__, env_prefix=env_prefix)
+    app = Sanic(name="Test", env_prefix=env_prefix)
     assert getattr(app.config, "TEST_ANSWER", None) is None
     del environ["SANIC_TEST_ANSWER"]
 
 
 def test_env_prefix():
     environ["MYAPP_TEST_ANSWER"] = "42"
-    app = Sanic(name=__name__, env_prefix="MYAPP_")
+    app = Sanic(name="Test", env_prefix="MYAPP_")
     assert app.config.TEST_ANSWER == 42
     del environ["MYAPP_TEST_ANSWER"]
 
 
 def test_env_prefix_float_values():
     environ["MYAPP_TEST_ROI"] = "2.3"
-    app = Sanic(name=__name__, env_prefix="MYAPP_")
+    app = Sanic(name="Test", env_prefix="MYAPP_")
     assert app.config.TEST_ROI == 2.3
     del environ["MYAPP_TEST_ROI"]
 
 
 def test_env_prefix_string_value():
     environ["MYAPP_TEST_TOKEN"] = "somerandomtesttoken"
-    app = Sanic(name=__name__, env_prefix="MYAPP_")
+    app = Sanic(name="Test", env_prefix="MYAPP_")
     assert app.config.TEST_TOKEN == "somerandomtesttoken"
     del environ["MYAPP_TEST_TOKEN"]
 
@@ -116,7 +118,7 @@ def test_env_w_custom_converter():
     environ["SANIC_TEST_ANSWER"] = "42"
 
     config = Config(converters=[UltimateAnswer])
-    app = Sanic(name=__name__, config=config)
+    app = Sanic(name="Test", config=config)
     assert isinstance(app.config.TEST_ANSWER, UltimateAnswer)
     assert app.config.TEST_ANSWER.answer == 42
     del environ["SANIC_TEST_ANSWER"]
@@ -125,7 +127,7 @@ def test_env_w_custom_converter():
 def test_env_lowercase():
     with pytest.warns(None) as record:
         environ["SANIC_test_answer"] = "42"
-        app = Sanic(name=__name__)
+        app = Sanic(name="Test")
         assert app.config.test_answer == 42
     assert str(record[0].message) == (
         "[DEPRECATION v22.9] Lowercase environment variables will not be "
@@ -435,3 +437,21 @@ def test_negative_proxy_count(app: Sanic):
     )
     with pytest.raises(ValueError, match=message):
         app.prepare()
+
+
+@pytest.mark.parametrize(
+    "passed,expected",
+    (
+        ("auto", LocalCertCreator.AUTO),
+        ("mkcert", LocalCertCreator.MKCERT),
+        ("trustme", LocalCertCreator.TRUSTME),
+        ("AUTO", LocalCertCreator.AUTO),
+        ("MKCERT", LocalCertCreator.MKCERT),
+        ("TRUSTME", LocalCertCreator.TRUSTME),
+    ),
+)
+def test_convert_local_cert_creator(passed, expected):
+    os.environ["SANIC_LOCAL_CERT_CREATOR"] = passed
+    app = Sanic("Test")
+    assert app.config.LOCAL_CERT_CREATOR is expected
+    del os.environ["SANIC_LOCAL_CERT_CREATOR"]

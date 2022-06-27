@@ -6,6 +6,8 @@ from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
 from sanic.config import Config
+from sanic.http.constants import HTTP
+from sanic.http.tls import get_ssl_context
 from sanic.server.events import trigger_events
 
 
@@ -21,12 +23,15 @@ from functools import partial
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 
+from aioquic.asyncio import serve as quic_serve
+
 from sanic.application.ext import setup_ext
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
+from sanic.http.http3 import SessionTicketStore, get_config
 from sanic.log import error_logger, logger
 from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
-from sanic.server.protocols.http_protocol import HttpProtocol
+from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
 from sanic.server.socket import (
     bind_socket,
     bind_unix_socket,
@@ -52,6 +57,7 @@ def serve(
     signal=Signal(),
     state=None,
     asyncio_server_kwargs=None,
+    version=HTTP.VERSION_1,
 ):
     """Start asynchronous HTTP Server on an individual process.
 
@@ -88,6 +94,87 @@ def serve(
 
     app.asgi = False
 
+    if version is HTTP.VERSION_3:
+        return _serve_http_3(host, port, app, loop, ssl)
+    return _serve_http_1(
+        host,
+        port,
+        app,
+        ssl,
+        sock,
+        unix,
+        reuse_port,
+        loop,
+        protocol,
+        backlog,
+        register_sys_signals,
+        run_multiple,
+        run_async,
+        connections,
+        signal,
+        state,
+        asyncio_server_kwargs,
+    )
+
+
+def _setup_system_signals(
+    app: Sanic,
+    run_multiple: bool,
+    register_sys_signals: bool,
+    loop: asyncio.AbstractEventLoop,
+) -> None:
+    # Ignore SIGINT when run_multiple
+    if run_multiple:
+        signal_func(SIGINT, SIG_IGN)
+        os.environ["SANIC_WORKER_PROCESS"] = "true"
+
+    # Register signals for graceful termination
+    if register_sys_signals:
+        if OS_IS_WINDOWS:
+            ctrlc_workaround_for_windows(app)
+        else:
+            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+                loop.add_signal_handler(_signal, app.stop)
+
+
+def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
+    pid = os.getpid()
+    try:
+        logger.info("Starting worker [%s]", pid)
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        logger.info("Stopping worker [%s]", pid)
+
+        loop.run_until_complete(before_stop())
+
+        if cleanup:
+            cleanup()
+
+        loop.run_until_complete(after_stop())
+        remove_unix_socket(unix)
+
+
+def _serve_http_1(
+    host,
+    port,
+    app,
+    ssl,
+    sock,
+    unix,
+    reuse_port,
+    loop,
+    protocol,
+    backlog,
+    register_sys_signals,
+    run_multiple,
+    run_async,
+    connections,
+    signal,
+    state,
+    asyncio_server_kwargs,
+):
     connections = connections if connections is not None else set()
     protocol_kwargs = _build_protocol_kwargs(protocol, app.config)
     server = partial(
@@ -135,30 +222,7 @@ def serve(
         error_logger.exception("Unable to start server", exc_info=True)
         return
 
-    # Ignore SIGINT when run_multiple
-    if run_multiple:
-        signal_func(SIGINT, SIG_IGN)
-        os.environ["SANIC_WORKER_PROCESS"] = "true"
-
-    # Register signals for graceful termination
-    if register_sys_signals:
-        if OS_IS_WINDOWS:
-            ctrlc_workaround_for_windows(app)
-        else:
-            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
-                loop.add_signal_handler(_signal, app.stop)
-
-    loop.run_until_complete(app._server_event("init", "after"))
-    pid = os.getpid()
-    try:
-        logger.info("Starting worker [%s]", pid)
-        loop.run_forever()
-    finally:
-        logger.info("Stopping worker [%s]", pid)
-
-        # Run the on_stop function if provided
-        loop.run_until_complete(app._server_event("shutdown", "before"))
-
+    def _cleanup():
         # Wait for event loop to finish and all connections to drain
         http_server.close()
         loop.run_until_complete(http_server.wait_closed())
@@ -188,8 +252,51 @@ def serve(
                 conn.websocket.fail_connection(code=1001)
             else:
                 conn.abort()
-        loop.run_until_complete(app._server_event("shutdown", "after"))
-        remove_unix_socket(unix)
+
+    _setup_system_signals(app, run_multiple, register_sys_signals, loop)
+    loop.run_until_complete(app._server_event("init", "after"))
+    _run_server_forever(
+        loop,
+        partial(app._server_event, "shutdown", "before"),
+        partial(app._server_event, "shutdown", "after"),
+        _cleanup,
+        unix,
+    )
+
+
+def _serve_http_3(
+    host,
+    port,
+    app,
+    loop,
+    ssl,
+    register_sys_signals: bool = True,
+    run_multiple: bool = False,
+):
+    protocol = partial(Http3Protocol, app=app)
+    ticket_store = SessionTicketStore()
+    ssl_context = get_ssl_context(app, ssl)
+    config = get_config(app, ssl_context)
+    coro = quic_serve(
+        host,
+        port,
+        configuration=config,
+        create_protocol=protocol,
+        session_ticket_fetcher=ticket_store.pop,
+        session_ticket_handler=ticket_store.add,
+    )
+    server = AsyncioServer(app, loop, coro, [])
+    loop.run_until_complete(server.startup())
+    loop.run_until_complete(server.before_start())
+    loop.run_until_complete(server)
+    _setup_system_signals(app, run_multiple, register_sys_signals, loop)
+    loop.run_until_complete(server.after_start())
+
+    # TODO: Create connection cleanup and graceful shutdown
+    cleanup = None
+    _run_server_forever(
+        loop, server.before_stop, server.after_stop, cleanup, None
+    )
 
 
 def serve_single(server_settings):

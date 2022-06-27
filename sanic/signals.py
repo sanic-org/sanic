@@ -6,9 +6,9 @@ from enum import Enum
 from inspect import isawaitable
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-from sanic_routing import BaseRouter, Route, RouteGroup  # type: ignore
-from sanic_routing.exceptions import NotFound  # type: ignore
-from sanic_routing.utils import path_to_parts  # type: ignore
+from sanic_routing import BaseRouter, Route, RouteGroup
+from sanic_routing.exceptions import NotFound
+from sanic_routing.utils import path_to_parts
 
 from sanic.exceptions import InvalidSignal
 from sanic.log import error_logger, logger

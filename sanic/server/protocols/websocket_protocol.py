@@ -11,7 +11,7 @@ from sanic.server import HttpProtocol
 from ..websockets.impl import WebsocketImplProtocol
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from websockets import http11
 
 

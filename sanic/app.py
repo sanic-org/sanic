@@ -43,11 +43,8 @@ from typing import (
 from urllib.parse import urlencode, urlunparse
 from warnings import filterwarnings
 
-from sanic_routing.exceptions import (  # type: ignore
-    FinalizationError,
-    NotFound,
-)
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.exceptions import FinalizationError, NotFound
+from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
 from sanic.application.state import ApplicationState, Mode, ServerStage
@@ -64,6 +61,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -92,7 +90,7 @@ from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     try:
         from sanic_ext import Extend  # type: ignore
         from sanic_ext.extensions.base import Extension  # type: ignore
@@ -949,6 +947,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                         "response": response,
                     },
                 )
+                ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
                 resp = await response(request)
@@ -1532,8 +1531,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if hasattr(self, "_ext"):
             self.ext._display()
 
-        if self.state.is_debug:
+        if self.state.is_debug and self.config.TOUCHUP is not True:
             self.config.TOUCHUP = False
+        elif self.config.TOUCHUP is _default:
+            self.config.TOUCHUP = True
 
         # Setup routers
         self.signalize(self.config.TOUCHUP)

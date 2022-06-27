@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
+from inspect import isawaitable
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,13 +14,15 @@ from typing import (
     Union,
 )
 
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.route import Route
 
+from sanic.http.constants import HTTP  # type: ignore
+from sanic.http.stream import Stream
 from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic.server import ConnInfo
     from sanic.app import Sanic
 
@@ -47,7 +50,7 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
-from sanic.http import Http, Stage
+from sanic.http import Stage
 from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
@@ -94,7 +97,9 @@ class Request:
         "_port",
         "_protocol",
         "_remote_addr",
+        "_scheme",
         "_socket",
+        "_stream_id",
         "_match_info",
         "_name",
         "app",
@@ -131,6 +136,7 @@ class Request:
         transport: TransportProtocol,
         app: Sanic,
         head: bytes = b"",
+        stream_id: int = 0,
     ):
 
         self.raw_url = url_bytes
@@ -140,6 +146,7 @@ class Request:
             raise BadURL(f"Bad URL: {url_bytes.decode()}")
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
+        self._stream_id = stream_id
         self.app = app
 
         self.headers = Header(headers)
@@ -166,12 +173,12 @@ class Request:
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
         self.request_middleware_started = False
+        self.responded: bool = False
+        self.route: Optional[Route] = None
+        self.stream: Optional[Stream] = None
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
-        self.stream: Optional[Http] = None
-        self.route: Optional[Route] = None
         self._protocol = None
-        self.responded: bool = False
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -187,6 +194,14 @@ class Request:
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
+
+    @property
+    def stream_id(self):
+        if self.protocol.version is not HTTP.VERSION_3:
+            raise ServerError(
+                "Stream ID is only a property of a HTTP/3 request"
+            )
+        return self._stream_id
 
     def reset_response(self):
         try:
@@ -274,6 +289,9 @@ class Request:
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)
+
+            if isawaitable(response):
+                response = await response  # type: ignore
         # Run response middleware
         try:
             response = await self.app._run_response_middleware(
@@ -668,6 +686,10 @@ class Request:
         """
         return self._parsed_url.path.decode("utf-8")
 
+    @property
+    def network_paths(self):
+        return self.conn_info.network_paths
+
     # Proxy properties (using SERVER_NAME/forwarded/request/transport info)
 
     @property
@@ -721,23 +743,25 @@ class Request:
         :return: http|https|ws|wss or arbitrary value given by the headers.
         :rtype: str
         """
-        if "//" in self.app.config.get("SERVER_NAME", ""):
-            return self.app.config.SERVER_NAME.split("//")[0]
-        if "proto" in self.forwarded:
-            return str(self.forwarded["proto"])
+        if not hasattr(self, "_scheme"):
+            if "//" in self.app.config.get("SERVER_NAME", ""):
+                return self.app.config.SERVER_NAME.split("//")[0]
+            if "proto" in self.forwarded:
+                return str(self.forwarded["proto"])
 
-        if (
-            self.app.websocket_enabled
-            and self.headers.getone("upgrade", "").lower() == "websocket"
-        ):
-            scheme = "ws"
-        else:
-            scheme = "http"
+            if (
+                self.app.websocket_enabled
+                and self.headers.getone("upgrade", "").lower() == "websocket"
+            ):
+                scheme = "ws"
+            else:
+                scheme = "http"
 
-        if self.transport.get_extra_info("sslcontext"):
-            scheme += "s"
+            if self.transport.get_extra_info("sslcontext"):
+                scheme += "s"
+            self._scheme = scheme
 
-        return scheme
+        return self._scheme
 
     @property
     def host(self) -> str:

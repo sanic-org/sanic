@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse
 
 from asyncio import CancelledError, sleep
-from enum import Enum
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -20,33 +19,16 @@ from sanic.exceptions import (
 )
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
+from sanic.http.constants import Stage
+from sanic.http.stream import Stream
 from sanic.log import access_logger, error_logger, logger
 from sanic.touchup import TouchUpMeta
-
-
-class Stage(Enum):
-    """
-    Enum for representing the stage of the request/response cycle
-
-    | ``IDLE``  Waiting for request
-    | ``REQUEST``  Request headers being received
-    | ``HANDLER``  Headers done, handler running
-    | ``RESPONSE``  Response headers sent, body in progress
-    | ``FAILED``  Unrecoverable state (error while sending response)
-    |
-    """
-
-    IDLE = 0  # Waiting for request
-    REQUEST = 1  # Request headers being received
-    HANDLER = 3  # Headers done, handler running
-    RESPONSE = 4  # Response headers sent, body in progress
-    FAILED = 100  # Unrecoverable state (error while sending response)
 
 
 HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 
-class Http(metaclass=TouchUpMeta):
+class Http(Stream, metaclass=TouchUpMeta):
     """
     Internal helper for managing the HTTP request/response cycle
 
@@ -67,7 +49,6 @@ class Http(metaclass=TouchUpMeta):
 
     HEADER_CEILING = 16_384
     HEADER_MAX_SIZE = 0
-
     __touchup__ = (
         "http1_request_header",
         "http1_response_header",
@@ -353,6 +334,12 @@ class Http(metaclass=TouchUpMeta):
             self.response_func = self.head_response_ignored
 
         headers["connection"] = "keep-alive" if self.keep_alive else "close"
+
+        # This header may be removed or modified by the AltSvcCheck Touchup
+        # service. At server start, we either remove this header from ever
+        # being assigned, or we change the value as required.
+        headers["alt-svc"] = ""
+
         ret = format_http1_response(status, res.processed_headers)
         if data:
             ret += data

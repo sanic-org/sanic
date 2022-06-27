@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
+import sys
 
 from asyncio import (
     AbstractEventLoop,
@@ -18,7 +19,18 @@ from importlib import import_module
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 from sanic import reloader_helpers
 from sanic.application.logo import get_logo
@@ -27,7 +39,9 @@ from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS, is_atty
 from sanic.helpers import _default
-from sanic.log import Colors, error_logger, logger
+from sanic.http.constants import HTTP
+from sanic.http.tls import get_ssl_context, process_to_context
+from sanic.log import Colors, deprecation, error_logger, logger
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
@@ -36,15 +50,21 @@ from sanic.server.events import trigger_events
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
-from sanic.tls import process_to_context
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.application.state import ApplicationState
     from sanic.config import Config
 
 SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
+
+if sys.version_info < (3, 8):
+    HTTPVersion = Union[HTTP, int]
+else:
+    from typing import Literal
+
+    HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
 
 
 class RunnerMixin(metaclass=SanicMeta):
@@ -66,6 +86,7 @@ class RunnerMixin(metaclass=SanicMeta):
         dev: bool = False,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
+        version: HTTPVersion = HTTP.VERSION_1,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
@@ -81,6 +102,7 @@ class RunnerMixin(metaclass=SanicMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        auto_tls: bool = False,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -124,6 +146,7 @@ class RunnerMixin(metaclass=SanicMeta):
             dev=dev,
             debug=debug,
             auto_reload=auto_reload,
+            version=version,
             ssl=ssl,
             sock=sock,
             workers=workers,
@@ -139,6 +162,7 @@ class RunnerMixin(metaclass=SanicMeta):
             fast=fast,
             verbosity=verbosity,
             motd_display=motd_display,
+            auto_tls=auto_tls,
         )
 
         self.__class__.serve(primary=self)  # type: ignore
@@ -151,6 +175,7 @@ class RunnerMixin(metaclass=SanicMeta):
         dev: bool = False,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
+        version: HTTPVersion = HTTP.VERSION_1,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
@@ -166,7 +191,15 @@ class RunnerMixin(metaclass=SanicMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        auto_tls: bool = False,
     ) -> None:
+        if version == 3 and self.state.server_info:
+            raise RuntimeError(
+                "Serving HTTP/3 instances as a secondary server is "
+                "not supported. There can only be a single HTTP/3 worker "
+                "and it must be the first instance prepared."
+            )
+
         if dev:
             debug = True
             auto_reload = True
@@ -208,7 +241,7 @@ class RunnerMixin(metaclass=SanicMeta):
             return
 
         if sock is None:
-            host, port = host or "127.0.0.1", port or 8000
+            host, port = self.get_address(host, port, version, auto_tls)
 
         if protocol is None:
             protocol = (
@@ -236,6 +269,7 @@ class RunnerMixin(metaclass=SanicMeta):
             host=host,
             port=port,
             debug=debug,
+            version=version,
             ssl=ssl,
             sock=sock,
             unix=unix,
@@ -243,6 +277,7 @@ class RunnerMixin(metaclass=SanicMeta):
             protocol=protocol,
             backlog=backlog,
             register_sys_signals=register_sys_signals,
+            auto_tls=auto_tls,
         )
         self.state.server_info.append(
             ApplicationServerInfo(settings=server_settings)
@@ -312,7 +347,7 @@ class RunnerMixin(metaclass=SanicMeta):
         """
 
         if sock is None:
-            host, port = host or "127.0.0.1", port or 8000
+            host, port = host, port = self.get_address(host, port)
 
         if protocol is None:
             protocol = (
@@ -377,6 +412,7 @@ class RunnerMixin(metaclass=SanicMeta):
         host: Optional[str] = None,
         port: Optional[int] = None,
         debug: bool = False,
+        version: HTTPVersion = HTTP.VERSION_1,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         unix: Optional[str] = None,
@@ -386,6 +422,7 @@ class RunnerMixin(metaclass=SanicMeta):
         backlog: int = 100,
         register_sys_signals: bool = True,
         run_async: bool = False,
+        auto_tls: bool = False,
     ) -> Dict[str, Any]:
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
@@ -395,10 +432,17 @@ class RunnerMixin(metaclass=SanicMeta):
                 "#proxy-configuration"
             )
 
-        ssl = process_to_context(ssl)
-
         if not self.state.is_debug:
             self.state.mode = Mode.DEBUG if debug else Mode.PRODUCTION
+
+        if isinstance(version, int):
+            version = HTTP(version)
+
+        ssl = process_to_context(ssl)
+        if version is HTTP.VERSION_3 or auto_tls:
+            if TYPE_CHECKING:
+                self = cast(Sanic, self)
+            ssl = get_ssl_context(self, ssl)
 
         self.state.host = host or ""
         self.state.port = port or 0
@@ -411,6 +455,7 @@ class RunnerMixin(metaclass=SanicMeta):
             "protocol": protocol,
             "host": host,
             "port": port,
+            "version": version,
             "sock": sock,
             "unix": unix,
             "ssl": ssl,
@@ -421,7 +466,7 @@ class RunnerMixin(metaclass=SanicMeta):
             "backlog": backlog,
         }
 
-        self.motd(self.serve_location)
+        self.motd(server_settings=server_settings)
 
         if is_atty() and not self.state.is_debug:
             error_logger.warning(
@@ -447,7 +492,19 @@ class RunnerMixin(metaclass=SanicMeta):
 
         return server_settings
 
-    def motd(self, serve_location):
+    def motd(
+        self,
+        serve_location: str = "",
+        server_settings: Optional[Dict[str, Any]] = None,
+    ):
+        if serve_location:
+            deprecation(
+                "Specifying a serve_location in the MOTD is deprecated and "
+                "will be removed.",
+                22.9,
+            )
+        else:
+            serve_location = self.get_server_location(server_settings)
         if self.config.MOTD:
             mode = [f"{self.state.mode},"]
             if self.state.fast:
@@ -460,9 +517,19 @@ class RunnerMixin(metaclass=SanicMeta):
                 else:
                     mode.append(f"w/ {self.state.workers} workers")
 
+            if server_settings:
+                server = ", ".join(
+                    (
+                        self.state.server,
+                        server_settings["version"].display(),  # type: ignore
+                    )
+                )
+            else:
+                server = ""
+
             display = {
                 "mode": " ".join(mode),
-                "server": self.state.server,
+                "server": server,
                 "python": platform.python_version(),
                 "platform": platform.platform(),
             }
@@ -486,7 +553,9 @@ class RunnerMixin(metaclass=SanicMeta):
                 module_name = package_name.replace("-", "_")
                 try:
                     module = import_module(module_name)
-                    packages.append(f"{package_name}=={module.__version__}")
+                    packages.append(
+                        f"{package_name}=={module.__version__}"  # type: ignore
+                    )
                 except ImportError:
                     ...
 
@@ -506,24 +575,49 @@ class RunnerMixin(metaclass=SanicMeta):
 
     @property
     def serve_location(self) -> str:
+        server_settings = self.state.server_info[0].settings
+        return self.get_server_location(server_settings)
+
+    @staticmethod
+    def get_server_location(
+        server_settings: Optional[Dict[str, Any]] = None
+    ) -> str:
         serve_location = ""
         proto = "http"
-        if self.state.ssl is not None:
+        if not server_settings:
+            return serve_location
+
+        if server_settings["ssl"] is not None:
             proto = "https"
-        if self.state.unix:
-            serve_location = f"{self.state.unix} {proto}://..."
-        elif self.state.sock:
-            serve_location = f"{self.state.sock.getsockname()} {proto}://..."
-        elif self.state.host and self.state.port:
+        if server_settings["unix"]:
+            serve_location = f'{server_settings["unix"]} {proto}://...'
+        elif server_settings["sock"]:
+            serve_location = (
+                f'{server_settings["sock"].getsockname()} {proto}://...'
+            )
+        elif server_settings["host"] and server_settings["port"]:
             # colon(:) is legal for a host only in an ipv6 address
             display_host = (
-                f"[{self.state.host}]"
-                if ":" in self.state.host
-                else self.state.host
+                f'[{server_settings["host"]}]'
+                if ":" in server_settings["host"]
+                else server_settings["host"]
             )
-            serve_location = f"{proto}://{display_host}:{self.state.port}"
+            serve_location = (
+                f'{proto}://{display_host}:{server_settings["port"]}'
+            )
 
         return serve_location
+
+    @staticmethod
+    def get_address(
+        host: Optional[str],
+        port: Optional[int],
+        version: HTTPVersion = HTTP.VERSION_1,
+        auto_tls: bool = False,
+    ) -> Tuple[str, int]:
+        host = host or "127.0.0.1"
+        port = port or (8443 if (version == 3 or auto_tls) else 8000)
+        return host, port
 
     @classmethod
     def should_auto_reload(cls) -> bool:

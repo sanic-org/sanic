@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
 import ssl
 
-from typing import Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
 
 from sanic.log import logger
 
@@ -77,65 +79,6 @@ def load_cert_dir(p: str) -> ssl.SSLContext:
     return CertSimple(certfile, keyfile)
 
 
-class CertSimple(ssl.SSLContext):
-    """A wrapper for creating SSLContext with a sanic attribute."""
-
-    def __new__(cls, cert, key, **kw):
-        # try common aliases, rename to cert/key
-        certfile = kw["cert"] = kw.pop("certificate", None) or cert
-        keyfile = kw["key"] = kw.pop("keyfile", None) or key
-        password = kw.pop("password", None)
-        if not certfile or not keyfile:
-            raise ValueError("SSL dict needs filenames for cert and key.")
-        subject = {}
-        if "names" not in kw:
-            cert = ssl._ssl._test_decode_cert(certfile)  # type: ignore
-            kw["names"] = [
-                name
-                for t, name in cert["subjectAltName"]
-                if t in ["DNS", "IP Address"]
-            ]
-            subject = {k: v for item in cert["subject"] for k, v in item}
-        self = create_context(certfile, keyfile, password)
-        self.__class__ = cls
-        self.sanic = {**subject, **kw}
-        return self
-
-    def __init__(self, cert, key, **kw):
-        pass  # Do not call super().__init__ because it is already initialized
-
-
-class CertSelector(ssl.SSLContext):
-    """Automatically select SSL certificate based on the hostname that the
-    client is trying to access, via SSL SNI. Paths to certificate folders
-    with privkey.pem and fullchain.pem in them should be provided, and
-    will be matched in the order given whenever there is a new connection.
-    """
-
-    def __new__(cls, ctxs):
-        return super().__new__(cls)
-
-    def __init__(self, ctxs: Iterable[Optional[ssl.SSLContext]]):
-        super().__init__()
-        self.sni_callback = selector_sni_callback  # type: ignore
-        self.sanic_select = []
-        self.sanic_fallback = None
-        all_names = []
-        for i, ctx in enumerate(ctxs):
-            if not ctx:
-                continue
-            names = dict(getattr(ctx, "sanic", {})).get("names", [])
-            all_names += names
-            self.sanic_select.append(ctx)
-            if i == 0:
-                self.sanic_fallback = ctx
-        if not all_names:
-            raise ValueError(
-                "No certificates with SubjectAlternativeNames found."
-            )
-        logger.info(f"Certificate vhosts: {', '.join(all_names)}")
-
-
 def find_cert(self: CertSelector, server_name: str):
     """Find the first certificate that matches the given SNI.
 
@@ -194,3 +137,73 @@ def server_name_callback(
 ) -> None:
     """Store the received SNI as sslobj.sanic_server_name."""
     sslobj.sanic_server_name = server_name  # type: ignore
+
+
+class SanicSSLContext(ssl.SSLContext):
+    sanic: Dict[str, os.PathLike]
+
+    @classmethod
+    def create_from_ssl_context(cls, context: ssl.SSLContext):
+        context.__class__ = cls
+        return context
+
+
+class CertSimple(SanicSSLContext):
+    """A wrapper for creating SSLContext with a sanic attribute."""
+
+    sanic: Dict[str, Any]
+
+    def __new__(cls, cert, key, **kw):
+        # try common aliases, rename to cert/key
+        certfile = kw["cert"] = kw.pop("certificate", None) or cert
+        keyfile = kw["key"] = kw.pop("keyfile", None) or key
+        password = kw.pop("password", None)
+        if not certfile or not keyfile:
+            raise ValueError("SSL dict needs filenames for cert and key.")
+        subject = {}
+        if "names" not in kw:
+            cert = ssl._ssl._test_decode_cert(certfile)  # type: ignore
+            kw["names"] = [
+                name
+                for t, name in cert["subjectAltName"]
+                if t in ["DNS", "IP Address"]
+            ]
+            subject = {k: v for item in cert["subject"] for k, v in item}
+        self = create_context(certfile, keyfile, password)
+        self.__class__ = cls
+        self.sanic = {**subject, **kw}
+        return self
+
+    def __init__(self, cert, key, **kw):
+        pass  # Do not call super().__init__ because it is already initialized
+
+
+class CertSelector(ssl.SSLContext):
+    """Automatically select SSL certificate based on the hostname that the
+    client is trying to access, via SSL SNI. Paths to certificate folders
+    with privkey.pem and fullchain.pem in them should be provided, and
+    will be matched in the order given whenever there is a new connection.
+    """
+
+    def __new__(cls, ctxs):
+        return super().__new__(cls)
+
+    def __init__(self, ctxs: Iterable[Optional[ssl.SSLContext]]):
+        super().__init__()
+        self.sni_callback = selector_sni_callback  # type: ignore
+        self.sanic_select = []
+        self.sanic_fallback = None
+        all_names = []
+        for i, ctx in enumerate(ctxs):
+            if not ctx:
+                continue
+            names = dict(getattr(ctx, "sanic", {})).get("names", [])
+            all_names += names
+            self.sanic_select.append(ctx)
+            if i == 0:
+                self.sanic_fallback = ctx
+        if not all_names:
+            raise ValueError(
+                "No certificates with SubjectAlternativeNames found."
+            )
+        logger.info(f"Certificate vhosts: {', '.join(all_names)}")

@@ -259,7 +259,7 @@ def test_custom_exception_default_message(exception_app):
 
 
 def test_exception_in_ws_logged(caplog):
-    app = Sanic(__name__)
+    app = Sanic("Test")
 
     @app.websocket("/feed")
     async def feed(request, ws):
@@ -279,7 +279,7 @@ def test_exception_in_ws_logged(caplog):
 
 @pytest.mark.parametrize("debug", (True, False))
 def test_contextual_exception_context(debug):
-    app = Sanic(__name__)
+    app = Sanic("Test")
 
     class TeapotError(SanicException):
         status_code = 418
@@ -314,7 +314,7 @@ def test_contextual_exception_context(debug):
 
 @pytest.mark.parametrize("debug", (True, False))
 def test_contextual_exception_extra(debug):
-    app = Sanic(__name__)
+    app = Sanic("Test")
 
     class TeapotError(SanicException):
         status_code = 418
@@ -361,7 +361,7 @@ def test_contextual_exception_extra(debug):
 
 @pytest.mark.parametrize("override", (True, False))
 def test_contextual_exception_functional_message(override):
-    app = Sanic(__name__)
+    app = Sanic("Test")
 
     class TeapotError(SanicException):
         status_code = 418

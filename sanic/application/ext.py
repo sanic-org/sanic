@@ -5,7 +5,7 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
 
     try:

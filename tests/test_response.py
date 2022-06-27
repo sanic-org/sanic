@@ -101,11 +101,12 @@ def test_response_header(app):
         return json({"ok": True}, headers={"CONTENT-TYPE": "application/json"})
 
     request, response = app.test_client.get("/")
-    assert dict(response.headers) == {
+    for key, value in {
         "connection": "keep-alive",
         "content-length": "11",
         "content-type": "application/json",
-    }
+    }.items():
+        assert response.headers[key] == value
 
 
 def test_response_content_length(app):

@@ -1,7 +1,5 @@
-from ast import Attribute, Await, Dict, Expr, NodeTransformer, parse
-from inspect import getsource
-from textwrap import dedent
-from typing import Any
+from ast import Attribute, Await, Expr, NodeTransformer
+from typing import Any, List
 
 from sanic.log import logger
 
@@ -20,16 +18,8 @@ class OptionalDispatchEvent(BaseScheme):
             signal.name for signal in app.signal_router.routes
         ]
 
-    def run(self, method, module_globals):
-        raw_source = getsource(method)
-        src = dedent(raw_source)
-        tree = parse(src)
-        node = RemoveDispatch(self._registered_events).visit(tree)
-        compiled_src = compile(node, method.__name__, "exec")
-        exec_locals: Dict[str, Any] = {}
-        exec(compiled_src, module_globals, exec_locals)  # nosec
-
-        return exec_locals[method.__name__]
+    def visitors(self) -> List[NodeTransformer]:
+        return [RemoveDispatch(self._registered_events)]
 
     def _sync_events(self):
         all_events = set()

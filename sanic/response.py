@@ -38,6 +38,7 @@ from sanic.models.protocol_types import HTMLProtocol, Range
 
 if TYPE_CHECKING:
     from sanic.asgi import ASGIApp
+    from sanic.http.http3 import HTTPReceiver
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
@@ -74,10 +75,14 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Optional[Union[Http, ASGIApp]] = None
+        self.stream: Optional[Union[Http, ASGIApp, HTTPReceiver]] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return f"<{class_name}: {self.status} {self.content_type}>"
 
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
@@ -157,7 +162,10 @@ class BaseHTTPResponse:
             if hasattr(data, "encode")
             else data or b""
         )
-        await self.stream.send(data, end_stream=end_stream)
+        await self.stream.send(
+            data,  # type: ignore
+            end_stream=end_stream or False,
+        )
 
 
 class HTTPResponse(BaseHTTPResponse):

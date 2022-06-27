@@ -16,3 +16,10 @@ lines_after_imports = 2
 lines_between_types = 1
 multi_line_output = 3
 profile = "black"
+
+[[tool.mypy.overrides]]
+module = [
+    "trustme.*",
+    "sanic_routing.*",
+]
+ignore_missing_imports = true

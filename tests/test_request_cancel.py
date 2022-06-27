@@ -3,7 +3,7 @@ import contextlib
 
 import pytest
 
-from sanic.response import stream, text
+from sanic.response import text
 
 
 @pytest.mark.asyncio
@@ -43,18 +43,16 @@ async def test_stream_request_cancel_when_conn_lost(app):
     async def post(request, id):
         assert isinstance(request.stream, asyncio.Queue)
 
-        async def streaming(response):
-            while True:
-                body = await request.stream.get()
-                if body is None:
-                    break
-                await response.write(body.decode("utf-8"))
+        response = await request.respond()
 
         await asyncio.sleep(1.0)
         # at this point client is already disconnected
         app.ctx.still_serving_cancelled_request = True
-
-        return stream(streaming)
+        while True:
+            body = await request.stream.get()
+            if body is None:
+                break
+            await response.send(body.decode("utf-8"))
 
     # schedule client call
     loop = asyncio.get_event_loop()

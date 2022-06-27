@@ -371,15 +371,6 @@ def test_update_from_lowercase_key(app: Sanic):
     assert "test_setting_value" not in app.config
 
 
-def test_deprecation_notice_when_setting_logo(app: Sanic):
-    message = (
-        "Setting the config.LOGO is deprecated and will no longer be "
-        "supported starting in v22.6."
-    )
-    with pytest.warns(DeprecationWarning, match=message):
-        app.config.LOGO = "My Custom Logo"
-
-
 def test_config_set_methods(app: Sanic, monkeypatch: MonkeyPatch):
     post_set = Mock()
     monkeypatch.setattr(Config, "_post_set", post_set)

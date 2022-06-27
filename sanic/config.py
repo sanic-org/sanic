@@ -36,7 +36,6 @@ DEFAULT_CONFIG = {
     "NOISY_EXCEPTIONS": False,
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
-    "REGISTER": True,
     "REQUEST_BUFFER_SIZE": 65536,  # 64 KiB
     "REQUEST_MAX_HEADER_SIZE": 8192,  # 8 KiB, but cannot exceed 16384
     "REQUEST_ID_HEADER": "X-Request-ID",
@@ -84,7 +83,6 @@ class Config(dict, metaclass=DescriptorMeta):
     NOISY_EXCEPTIONS: bool
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]
-    REGISTER: bool
     REQUEST_BUFFER_SIZE: int
     REQUEST_MAX_HEADER_SIZE: int
     REQUEST_ID_HEADER: str
@@ -111,7 +109,6 @@ class Config(dict, metaclass=DescriptorMeta):
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
         self._converters = [str, str_to_bool, float, int]
-        self._LOGO = ""
 
         if converters:
             for converter in converters:
@@ -168,23 +165,13 @@ class Config(dict, metaclass=DescriptorMeta):
                 "REQUEST_MAX_SIZE",
             ):
                 self._configure_header_size()
-        if attr == "LOGO":
-            self._LOGO = value
-            deprecation(
-                "Setting the config.LOGO is deprecated and will no longer "
-                "be supported starting in v22.6.",
-                22.6,
-            )
-        elif attr == "LOCAL_CERT_CREATOR" and not isinstance(
+
+        if attr == "LOCAL_CERT_CREATOR" and not isinstance(
             self.LOCAL_CERT_CREATOR, LocalCertCreator
         ):
             self.LOCAL_CERT_CREATOR = LocalCertCreator[
                 self.LOCAL_CERT_CREATOR.upper()
             ]
-
-    @property
-    def LOGO(self):
-        return self._LOGO
 
     @property
     def FALLBACK_ERROR_FORMAT(self) -> str:

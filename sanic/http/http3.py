@@ -42,7 +42,7 @@ try:
     from aioquic.tls import SessionTicket
 
     HTTP3_AVAILABLE = True
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # no cov
     HTTP3_AVAILABLE = False
 
 if TYPE_CHECKING:

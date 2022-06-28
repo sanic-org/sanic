@@ -42,7 +42,7 @@ try:
     from aioquic.asyncio import serve as quic_serve
 
     HTTP3_AVAILABLE = True
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # no cov
     HTTP3_AVAILABLE = False
 
 

@@ -34,7 +34,7 @@ try:
     )
 
     ConnectionProtocol = QuicConnectionProtocol
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # no cov
     ...
 
 

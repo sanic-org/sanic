@@ -16,10 +16,3 @@ sanic.server
     :members:
     :show-inheritance:
 
-
-sanic.worker
-------------
-
-.. automodule:: sanic.worker
-    :members:
-    :show-inheritance:

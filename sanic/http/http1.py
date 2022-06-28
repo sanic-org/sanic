@@ -30,7 +30,7 @@ HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 class Http(Stream, metaclass=TouchUpMeta):
     """
-    Internal helper for managing the HTTP request/response cycle
+    Internal helper for managing the HTTP/1.1 request/response cycle
 
     :raises ServerError:
     :raises PayloadTooLarge:

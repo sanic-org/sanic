@@ -265,6 +265,10 @@ class WebTransportReceiver(Receiver):  # noqa
 
 
 class Http3:
+    """
+    Internal helper for managing the HTTP/3 request/response cycle
+    """
+
     HANDLER_PROPERTY_MAPPING = {
         DataReceived: "stream_id",
         HeadersReceived: "stream_id",

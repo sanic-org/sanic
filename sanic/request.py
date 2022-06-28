@@ -34,12 +34,12 @@ from http.cookies import SimpleCookie
 from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
-from httptools import parse_url  # type: ignore
-from httptools.parser.errors import HttpParserInvalidURLError  # type: ignore
+from httptools import parse_url
+from httptools.parser.errors import HttpParserInvalidURLError
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import BadRequest, BadURL, SanicException, ServerError
+from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -186,9 +186,27 @@ class Request:
 
     @classmethod
     def get_current(cls) -> Request:
+        """
+        Retrieve the currrent request object
+
+        This implements `Context Variables
+        <https://docs.python.org/3/library/contextvars.html>`_
+        to allow for accessing the current request from anywhere.
+
+        Raises :exc:`sanic.exceptions.ServerError` if it is outside of
+        a request lifecycle.
+
+        .. code-block:: python
+
+            from sanic import Request
+
+            current_request = Request.get_current()
+
+        :return: the current :class:`sanic.request.Request`
+        """
         request = cls._current.get(None)
         if not request:
-            raise SanicException("No current request")
+            raise ServerError("No current request")
         return request
 
     @classmethod
@@ -197,6 +215,12 @@ class Request:
 
     @property
     def stream_id(self):
+        """
+        Access the HTTP/3 stream ID.
+
+        Raises :exc:`sanic.exceptions.ServerError` if it is not an
+        HTTP/3 request.
+        """
         if self.protocol.version is not HTTP.VERSION_3:
             raise ServerError(
                 "Stream ID is only a property of a HTTP/3 request"
@@ -319,7 +343,19 @@ class Request:
             self.body = b"".join([data async for data in self.stream])
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
+        """
+        The route name
+
+        In the following pattern:
+
+        .. code-block::
+
+            <AppName>.[<BlueprintName>.]<HandlerName>
+
+        :return: Route name
+        :rtype: Optional[str]
+        """
         if self._name:
             return self._name
         elif self.route:
@@ -327,26 +363,47 @@ class Request:
         return None
 
     @property
-    def endpoint(self):
+    def endpoint(self) -> Optional[str]:
+        """
+        :return: Alias of :attr:`sanic.request.Request.name`
+        :rtype: Optional[str]
+        """
         return self.name
 
     @property
-    def uri_template(self):
-        return f"/{self.route.path}"
+    def uri_template(self) -> Optional[str]:
+        """
+        :return: The defined URI template
+        :rtype: Optional[str]
+        """
+        if self.route:
+            return f"/{self.route.path}"
+        return None
 
     @property
     def protocol(self):
+        """
+        :return: The HTTP protocol instance
+        """
         if not self._protocol:
             self._protocol = self.transport.get_protocol()
         return self._protocol
 
     @property
-    def raw_headers(self):
+    def raw_headers(self) -> bytes:
+        """
+        :return: The unparsed HTTP headers
+        :rtype: bytes
+        """
         _, headers = self.head.split(b"\r\n", 1)
         return bytes(headers)
 
     @property
-    def request_line(self):
+    def request_line(self) -> bytes:
+        """
+        :return: The first line of a HTTP request
+        :rtype: bytes
+        """
         reqline, _ = self.head.split(b"\r\n", 1)
         return bytes(reqline)
 
@@ -395,7 +452,11 @@ class Request:
         return self._id  # type: ignore
 
     @property
-    def json(self):
+    def json(self) -> Any:
+        """
+        :return: The request body parsed as JSON
+        :rtype: Any
+        """
         if self.parsed_json is None:
             self.load_json()
 
@@ -413,6 +474,10 @@ class Request:
 
     @property
     def accept(self) -> AcceptContainer:
+        """
+        :return: The ``Accept`` header parsed
+        :rtype: AcceptContainer
+        """
         if self.parsed_accept is None:
             accept_header = self.headers.getone("accept", "")
             self.parsed_accept = parse_accept(accept_header)
@@ -458,6 +523,15 @@ class Request:
     def get_form(
         self, keep_blank_values: bool = False
     ) -> Optional[RequestParameters]:
+        """
+        Method to extract and parse the form data from a request.
+
+        :param keep_blank_values:
+            Whether to discard blank values from the form data
+        :type keep_blank_values: bool
+        :return: the parsed form data
+        :rtype: Optional[RequestParameters]
+        """
         self.parsed_form = RequestParameters()
         self.parsed_files = RequestParameters()
         content_type = self.headers.getone(
@@ -487,6 +561,9 @@ class Request:
 
     @property
     def form(self):
+        """
+        :return: The request body parsed as form data
+        """
         if self.parsed_form is None:
             self.get_form()
 
@@ -494,6 +571,9 @@ class Request:
 
     @property
     def files(self):
+        """
+        :return: The request body parsed as uploaded files
+        """
         if self.parsed_files is None:
             self.form  # compute form to get files
 
@@ -507,8 +587,8 @@ class Request:
         errors: str = "replace",
     ) -> RequestParameters:
         """
-        Method to parse `query_string` using `urllib.parse.parse_qs`.
-        This methods is used by `args` property.
+        Method to parse ``query_string`` using ``urllib.parse.parse_qs``.
+        This methods is used by ``args`` property.
         Can be used directly if you need to change default parameters.
 
         :param keep_blank_values:
@@ -557,6 +637,10 @@ class Request:
         ]
 
     args = property(get_args)
+    """
+    Convenience property to access :meth:`Request.get_args` with
+    default values.
+    """
 
     def get_query_args(
         self,
@@ -676,6 +760,9 @@ class Request:
 
     @property
     def socket(self):
+        """
+        :return: Information about the connected socket if available
+        """
         return self.conn_info.peername if self.conn_info else (None, None)
 
     @property
@@ -688,6 +775,9 @@ class Request:
 
     @property
     def network_paths(self):
+        """
+        Access the network paths if available
+        """
         return self.conn_info.network_paths
 
     # Proxy properties (using SERVER_NAME/forwarded/request/transport info)

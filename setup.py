@@ -122,6 +122,7 @@ docs_require = [
     "docutils",
     "pygments",
     "m2r2",
+    "enum-tools[sphinx]",
     "mistune<2.0.0",
 ]
 

@@ -24,7 +24,11 @@ import sanic
 
 # -- General configuration ------------------------------------------------
 
-extensions = ["sphinx.ext.autodoc", "m2r2"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "m2r2",
+    "enum_tools.autoenum",
+]
 
 templates_path = ["_templates"]
 

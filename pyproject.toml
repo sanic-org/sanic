@@ -19,6 +19,7 @@ profile = "black"
 
 [[tool.mypy.overrides]]
 module = [
+    "httptools.*",
     "trustme.*",
     "sanic_routing.*",
 ]

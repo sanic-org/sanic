@@ -17,6 +17,14 @@ sanic.handlers
     :show-inheritance:
 
 
+sanic.headers
+--------------
+
+.. automodule:: sanic.headers
+    :members:
+    :show-inheritance:
+
+
 sanic.request
 -------------
 

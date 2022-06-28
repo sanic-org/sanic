@@ -1344,7 +1344,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.config.AUTO_RELOAD = value
 
     @property
-    def state(self):
+    def state(self) -> ApplicationState:  # type: ignore
+        """
+        :return: The application state
+        """
         return self._state
 
     @property

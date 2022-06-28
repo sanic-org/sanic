@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from aioquic.h3.connection import H3_ALPN, H3Connection
-
 from sanic.http.constants import HTTP
 from sanic.http.http3 import Http3
 from sanic.touchup.meta import TouchUpMeta
@@ -17,19 +15,27 @@ import sys
 from asyncio import CancelledError
 from time import monotonic as current_time
 
-from aioquic.asyncio import QuicConnectionProtocol
-from aioquic.quic.events import (
-    DatagramFrameReceived,
-    ProtocolNegotiated,
-    QuicEvent,
-)
-
 from sanic.exceptions import RequestTimeout, ServiceUnavailable
 from sanic.http import Http, Stage
 from sanic.log import Colors, error_logger, logger
 from sanic.models.server_types import ConnInfo
 from sanic.request import Request
 from sanic.server.protocols.base_protocol import SanicProtocol
+
+
+ConnectionProtocol = type("ConnectionProtocol", (), {})
+try:
+    from aioquic.asyncio import QuicConnectionProtocol
+    from aioquic.h3.connection import H3_ALPN, H3Connection
+    from aioquic.quic.events import (
+        DatagramFrameReceived,
+        ProtocolNegotiated,
+        QuicEvent,
+    )
+
+    ConnectionProtocol = QuicConnectionProtocol
+except ModuleNotFoundError:  # no cov
+    ...
 
 
 class HttpProtocolMixin:
@@ -278,7 +284,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
             error_logger.exception("protocol.data_received")
 
 
-class Http3Protocol(HttpProtocolMixin, QuicConnectionProtocol):
+class Http3Protocol(HttpProtocolMixin, ConnectionProtocol):  # type: ignore
     HTTP_CLASS = Http3
     __version__ = HTTP.VERSION_3
 

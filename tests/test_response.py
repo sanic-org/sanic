@@ -27,7 +27,6 @@ from sanic.response import (
     file_stream,
     json,
     raw,
-    stream,
     text,
 )
 
@@ -49,10 +48,13 @@ def test_response_body_not_a_string(app):
     assert b"Internal Server Error" in response.body
 
 
-async def sample_streaming_fn(response):
-    await response.write("foo,")
+async def sample_streaming_fn(request, response=None):
+    if not response:
+        response = await request.respond(content_type="text/csv")
+    await response.send("foo,")
     await asyncio.sleep(0.001)
-    await response.write("bar")
+    await response.send("bar")
+    await response.eof()
 
 
 def test_method_not_allowed():
@@ -217,10 +219,7 @@ def test_no_content(json_app):
 def streaming_app(app):
     @app.route("/")
     async def test(request: Request):
-        return stream(
-            sample_streaming_fn,
-            content_type="text/csv",
-        )
+        await sample_streaming_fn(request)
 
     return app
 
@@ -229,11 +228,11 @@ def streaming_app(app):
 def non_chunked_streaming_app(app):
     @app.route("/")
     async def test(request: Request):
-        return stream(
-            sample_streaming_fn,
+        response = await request.respond(
             headers={"Content-Length": "7"},
             content_type="text/csv",
         )
+        await sample_streaming_fn(request, response)
 
     return app
 
@@ -283,18 +282,6 @@ def test_non_chunked_streaming_returns_correct_content(
     assert response.text == "foo,bar"
 
 
-def test_stream_response_with_cookies_legacy(app):
-    @app.route("/")
-    async def test(request: Request):
-        response = stream(sample_streaming_fn, content_type="text/csv")
-        response.cookies["test"] = "modified"
-        response.cookies["test"] = "pass"
-        return response
-
-    request, response = app.test_client.get("/")
-    assert response.cookies["test"] == "pass"
-
-
 def test_stream_response_with_cookies(app):
     @app.route("/")
     async def test(request: Request):
@@ -317,7 +304,7 @@ def test_stream_response_with_cookies(app):
 def test_stream_response_without_cookies(app):
     @app.route("/")
     async def test(request: Request):
-        return stream(sample_streaming_fn, content_type="text/csv")
+        await sample_streaming_fn(request)
 
     request, response = app.test_client.get("/")
     assert response.cookies == {}

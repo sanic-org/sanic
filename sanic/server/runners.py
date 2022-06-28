@@ -6,6 +6,7 @@ from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
 from sanic.config import Config
+from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context
 from sanic.server.events import trigger_events
@@ -23,8 +24,6 @@ from functools import partial
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 
-from aioquic.asyncio import serve as quic_serve
-
 from sanic.application.ext import setup_ext
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.http.http3 import SessionTicketStore, get_config
@@ -37,6 +36,14 @@ from sanic.server.socket import (
     bind_unix_socket,
     remove_unix_socket,
 )
+
+
+try:
+    from aioquic.asyncio import serve as quic_serve
+
+    HTTP3_AVAILABLE = True
+except ModuleNotFoundError:  # no cov
+    HTTP3_AVAILABLE = False
 
 
 def serve(
@@ -273,6 +280,10 @@ def _serve_http_3(
     register_sys_signals: bool = True,
     run_multiple: bool = False,
 ):
+    if not HTTP3_AVAILABLE:
+        raise ServerError(
+            "Cannot run HTTP/3 server without aioquic installed. "
+        )
     protocol = partial(Http3Protocol, app=app)
     ticket_store = SessionTicketStore()
     ssl_context = get_ssl_context(app, ssl)

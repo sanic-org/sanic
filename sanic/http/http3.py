@@ -16,18 +16,6 @@ from typing import (
     cast,
 )
 
-from aioquic.h0.connection import H0_ALPN, H0Connection
-from aioquic.h3.connection import H3_ALPN, H3Connection
-from aioquic.h3.events import (
-    DatagramReceived,
-    DataReceived,
-    H3Event,
-    HeadersReceived,
-    WebTransportStreamDataReceived,
-)
-from aioquic.quic.configuration import QuicConfiguration
-from aioquic.tls import SessionTicket
-
 from sanic.compat import Header
 from sanic.constants import LocalCertCreator
 from sanic.exceptions import PayloadTooLarge, SanicException, ServerError
@@ -40,14 +28,30 @@ from sanic.models.protocol_types import TransportProtocol
 from sanic.models.server_types import ConnInfo
 
 
+try:
+    from aioquic.h0.connection import H0_ALPN, H0Connection
+    from aioquic.h3.connection import H3_ALPN, H3Connection
+    from aioquic.h3.events import (
+        DatagramReceived,
+        DataReceived,
+        H3Event,
+        HeadersReceived,
+        WebTransportStreamDataReceived,
+    )
+    from aioquic.quic.configuration import QuicConfiguration
+    from aioquic.tls import SessionTicket
+
+    HTTP3_AVAILABLE = True
+except ModuleNotFoundError:  # no cov
+    HTTP3_AVAILABLE = False
+
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse
     from sanic.server.protocols.http_protocol import Http3Protocol
 
-
-HttpConnection = Union[H0Connection, H3Connection]
+    HttpConnection = Union[H0Connection, H3Connection]
 
 
 class HTTP3Transport(TransportProtocol):
@@ -269,12 +273,13 @@ class Http3:
     Internal helper for managing the HTTP/3 request/response cycle
     """
 
-    HANDLER_PROPERTY_MAPPING = {
-        DataReceived: "stream_id",
-        HeadersReceived: "stream_id",
-        DatagramReceived: "flow_id",
-        WebTransportStreamDataReceived: "session_id",
-    }
+    if HTTP3_AVAILABLE:
+        HANDLER_PROPERTY_MAPPING = {
+            DataReceived: "stream_id",
+            HeadersReceived: "stream_id",
+            DatagramReceived: "flow_id",
+            WebTransportStreamDataReceived: "session_id",
+        }
 
     def __init__(
         self,

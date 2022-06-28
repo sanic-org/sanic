@@ -5,7 +5,6 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from sanic.exceptions import SanicException
-from sanic.log import deprecation
 
 
 if TYPE_CHECKING:
@@ -34,15 +33,6 @@ class AsyncioServer:
         self.loop = loop
         self.serve_coro = serve_coro
         self.server = None
-
-    @property
-    def init(self):
-        deprecation(
-            "AsyncioServer.init has been deprecated and will be removed "
-            "in v22.6. Use Sanic.state.is_started instead.",
-            22.6,
-        )
-        return self.app.state.is_started
 
     def startup(self):
         """

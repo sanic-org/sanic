@@ -34,7 +34,7 @@ from sanic.exceptions import (
     RangeNotSatisfiable,
 )
 from sanic.handlers import ContentRangeHandler
-from sanic.log import deprecation, error_logger
+from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream
@@ -1025,17 +1025,6 @@ class RouteMixin(metaclass=SanicMeta):
                 nonlocal types
 
                 with suppress(AttributeError):
-                    if node.value.func.id == "stream":  # type: ignore
-                        deprecation(
-                            "The sanic.response.stream method has been "
-                            "deprecated and will be removed in v22.6. Please "
-                            "upgrade your application to use the new style "
-                            "streaming pattern. See "
-                            "https://sanicframework.org/en/guide/advanced/"
-                            "streaming.html#response-streaming for more "
-                            "information.",
-                            22.6,
-                        )
                     checks = [node.value.func.id]  # type: ignore
                     if node.value.keywords:  # type: ignore
                         checks += [
@@ -1066,7 +1055,7 @@ class RouteMixin(metaclass=SanicMeta):
             raise AttributeError(
                 "Cannot use restricted route context: "
                 f"{restricted_arguments}. This limitation is only in place "
-                "until v22.3 when the restricted names will no longer be in"
+                "until v22.9 when the restricted names will no longer be in"
                 "conflict. See https://github.com/sanic-org/sanic/issues/2303 "
                 "for more information."
             )

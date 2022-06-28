@@ -565,11 +565,7 @@ class RunnerMixin(metaclass=SanicMeta):
             if self.config.MOTD_DISPLAY:
                 extra.update(self.config.MOTD_DISPLAY)
 
-            logo = (
-                get_logo(coffee=self.state.coffee)
-                if self.config.LOGO == "" or self.config.LOGO is True
-                else self.config.LOGO
-            )
+            logo = get_logo(coffee=self.state.coffee)
 
             MOTD.output(logo, serve_location, display, extra)
 

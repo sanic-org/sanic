@@ -427,8 +427,7 @@ def redirect(
 class ResponseStream:
     """
     ResponseStream is a compat layer to bridge the gap after the deprecation
-    of StreamingHTTPResponse. In v22.6 it will be removed when:
-    - stream is removed
+    of StreamingHTTPResponse. It will be removed when:
     - file_stream is moved to new style streaming
     - file and file_stream are combined into a single API
     """
@@ -555,39 +554,4 @@ async def file_stream(
         status=status,
         headers=headers,
         content_type=mime_type,
-    )
-
-
-def stream(
-    streaming_fn: Callable[
-        [Union[BaseHTTPResponse, ResponseStream]], Coroutine[Any, Any, None]
-    ],
-    status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
-    content_type: str = "text/plain; charset=utf-8",
-) -> ResponseStream:
-    """Accepts a coroutine `streaming_fn` which can be used to
-    write chunks to a streaming response. Returns a `ResponseStream`.
-
-    Example usage::
-
-        @app.route("/")
-        async def index(request):
-            async def streaming_fn(response):
-                await response.write('foo')
-                await response.write('bar')
-
-            return stream(streaming_fn, content_type='text/plain')
-
-    :param streaming_fn: A coroutine accepts a response and
-        writes content to that response.
-    :param status: HTTP status.
-    :param content_type: Specific content_type.
-    :param headers: Custom Headers.
-    """
-    return ResponseStream(
-        streaming_fn,
-        headers=headers,
-        content_type=content_type,
-        status=status,
     )

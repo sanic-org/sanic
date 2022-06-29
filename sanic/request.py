@@ -87,6 +87,7 @@ class Request:
     """
 
     _current: ContextVar[Request] = ContextVar("request")
+    _loads = json_loads
 
     __slots__ = (
         "__weakref__",
@@ -126,8 +127,6 @@ class Request:
         "transport",
         "version",
     )
-
-    _loads = json_loads
 
     def __init__(
         self,

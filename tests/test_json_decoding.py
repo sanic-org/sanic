@@ -28,15 +28,14 @@ def test_change_decoder():
 
 def test_change_decoder_to_some_custom():
     def my_custom_decoder(some_str: str):
-        print ("decoding")
-        dict =  sloads(some_str)
+        dict = sloads(some_str)
         dict["some_key"] = "new_value"
         return dict
 
     app = Sanic("Test", loads=my_custom_decoder)
     assert Request._loads == my_custom_decoder
 
-    req_body = {'some_key':'some_value'}
+    req_body = {"some_key": "some_value"}
 
     @app.post("/test")
     def handler(request):
@@ -44,7 +43,7 @@ def test_change_decoder_to_some_custom():
         return json(new_json)
 
     req, res = app.test_client.post("/test", json=req_body)
-    assert sloads(res.body) == {'some_key':'new_value'}
+    assert sloads(res.body) == {"some_key": "new_value"}
 
 
 @pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")

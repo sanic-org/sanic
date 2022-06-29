@@ -1935,8 +1935,9 @@ def test_server_name_and_url_for(app):
     assert request.scheme == "https"
     # These two currently fail, because SERVER_NAME’s path is not
     # taken into account.
-    #assert request.path == path
-    #assert request.url == url
+    # assert request.path == path
+    # assert request.url == url
+
 
 def test_url_for_with_forwarded_request(app):
     @app.get("/")

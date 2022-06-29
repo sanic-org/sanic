@@ -5,6 +5,7 @@ from os import environ
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
+from sanic.constants import LocalCertCreator
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
 from sanic.helpers import Default, _default
 from sanic.http import Http
@@ -26,19 +27,23 @@ DEFAULT_CONFIG = {
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
+    "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
+    "LOCAL_TLS_KEY": _default,
+    "LOCAL_TLS_CERT": _default,
+    "LOCALHOST": "localhost",
     "MOTD": True,
     "MOTD_DISPLAY": {},
     "NOISY_EXCEPTIONS": False,
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
-    "REGISTER": True,
     "REQUEST_BUFFER_SIZE": 65536,  # 64 KiB
     "REQUEST_MAX_HEADER_SIZE": 8192,  # 8 KiB, but cannot exceed 16384
     "REQUEST_ID_HEADER": "X-Request-ID",
     "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
-    "TOUCHUP": True,
+    "TLS_CERT_PASSWORD": "",
+    "TOUCHUP": _default,
     "USE_UVLOOP": _default,
     "WEBSOCKET_MAX_SIZE": 2**20,  # 1 megabyte
     "WEBSOCKET_PING_INTERVAL": 20,
@@ -69,12 +74,15 @@ class Config(dict, metaclass=DescriptorMeta):
     GRACEFUL_SHUTDOWN_TIMEOUT: float
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
-    NOISY_EXCEPTIONS: bool
+    LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]
+    LOCAL_TLS_KEY: Union[Path, str, Default]
+    LOCAL_TLS_CERT: Union[Path, str, Default]
+    LOCALHOST: str
     MOTD: bool
     MOTD_DISPLAY: Dict[str, str]
+    NOISY_EXCEPTIONS: bool
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]
-    REGISTER: bool
     REQUEST_BUFFER_SIZE: int
     REQUEST_MAX_HEADER_SIZE: int
     REQUEST_ID_HEADER: str
@@ -82,7 +90,8 @@ class Config(dict, metaclass=DescriptorMeta):
     REQUEST_TIMEOUT: int
     RESPONSE_TIMEOUT: int
     SERVER_NAME: str
-    TOUCHUP: bool
+    TLS_CERT_PASSWORD: str
+    TOUCHUP: Union[Default, bool]
     USE_UVLOOP: Union[Default, bool]
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int
@@ -100,7 +109,6 @@ class Config(dict, metaclass=DescriptorMeta):
         super().__init__({**DEFAULT_CONFIG, **defaults})
 
         self._converters = [str, str_to_bool, float, int]
-        self._LOGO = ""
 
         if converters:
             for converter in converters:
@@ -157,17 +165,13 @@ class Config(dict, metaclass=DescriptorMeta):
                 "REQUEST_MAX_SIZE",
             ):
                 self._configure_header_size()
-            elif attr == "LOGO":
-                self._LOGO = value
-                deprecation(
-                    "Setting the config.LOGO is deprecated and will no longer "
-                    "be supported starting in v22.6.",
-                    22.6,
-                )
 
-    @property
-    def LOGO(self):
-        return self._LOGO
+        if attr == "LOCAL_CERT_CREATOR" and not isinstance(
+            self.LOCAL_CERT_CREATOR, LocalCertCreator
+        ):
+            self.LOCAL_CERT_CREATOR = LocalCertCreator[
+                self.LOCAL_CERT_CREATOR.upper()
+            ]
 
     @property
     def FALLBACK_ERROR_FORMAT(self) -> str:

@@ -53,7 +53,7 @@ def test_unix_socket_creation(caplog):
     assert os.path.exists(SOCKPATH)
     ino = os.stat(SOCKPATH).st_ino
 
-    app = Sanic(name=__name__)
+    app = Sanic(name="test")
 
     @app.listener("after_server_start")
     def running(app, loop):
@@ -74,7 +74,7 @@ def test_unix_socket_creation(caplog):
 
 @pytest.mark.parametrize("path", (".", "no-such-directory/sanictest.sock"))
 def test_invalid_paths(path):
-    app = Sanic(name=__name__)
+    app = Sanic(name="test")
 
     with pytest.raises((FileExistsError, FileNotFoundError)):
         app.run(unix=path)
@@ -84,7 +84,7 @@ def test_dont_replace_file():
     with open(SOCKPATH, "w") as f:
         f.write("File, not socket")
 
-    app = Sanic(name=__name__)
+    app = Sanic(name="test")
 
     @app.listener("after_server_start")
     def stop(app, loop):
@@ -101,7 +101,7 @@ def test_dont_follow_symlink():
         sock.bind(SOCKPATH2)
     os.symlink(SOCKPATH2, SOCKPATH)
 
-    app = Sanic(name=__name__)
+    app = Sanic(name="test")
 
     @app.listener("after_server_start")
     def stop(app, loop):
@@ -112,7 +112,7 @@ def test_dont_follow_symlink():
 
 
 def test_socket_deleted_while_running():
-    app = Sanic(name=__name__)
+    app = Sanic(name="test")
 
     @app.listener("after_server_start")
     async def hack(app, loop):
@@ -123,7 +123,7 @@ def test_socket_deleted_while_running():
 
 
 def test_socket_replaced_with_file():
-    app = Sanic(name=__name__)
+    app = Sanic(name="test")
 
     @app.listener("after_server_start")
     async def hack(app, loop):
@@ -136,7 +136,7 @@ def test_socket_replaced_with_file():
 
 
 def test_unix_connection():
-    app = Sanic(name=__name__)
+    app = Sanic(name="test")
 
     @app.get("/")
     def handler(request):
@@ -159,7 +159,7 @@ def test_unix_connection():
     app.run(host="myhost.invalid", unix=SOCKPATH)
 
 
-app_multi = Sanic(name=__name__)
+app_multi = Sanic(name="test")
 
 
 def handler(request):

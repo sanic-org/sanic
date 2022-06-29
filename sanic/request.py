@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
+from inspect import isawaitable
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,13 +14,15 @@ from typing import (
     Union,
 )
 
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.route import Route
 
+from sanic.http.constants import HTTP  # type: ignore
+from sanic.http.stream import Stream
 from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic.server import ConnInfo
     from sanic.app import Sanic
 
@@ -31,12 +34,12 @@ from http.cookies import SimpleCookie
 from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
-from httptools import parse_url  # type: ignore
-from httptools.parser.errors import HttpParserInvalidURLError  # type: ignore
+from httptools import parse_url
+from httptools.parser.errors import HttpParserInvalidURLError
 
 from sanic.compat import CancelledErrors, Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import BadRequest, BadURL, SanicException, ServerError
+from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
     AcceptContainer,
     Options,
@@ -47,7 +50,7 @@ from sanic.headers import (
     parse_host,
     parse_xforwarded,
 )
-from sanic.http import Http, Stage
+from sanic.http import Stage
 from sanic.log import error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
@@ -94,7 +97,9 @@ class Request:
         "_port",
         "_protocol",
         "_remote_addr",
+        "_scheme",
         "_socket",
+        "_stream_id",
         "_match_info",
         "_name",
         "app",
@@ -133,6 +138,7 @@ class Request:
         transport: TransportProtocol,
         app: Sanic,
         head: bytes = b"",
+        stream_id: int = 0,
     ):
 
         self.raw_url = url_bytes
@@ -142,6 +148,7 @@ class Request:
             raise BadURL(f"Bad URL: {url_bytes.decode()}")
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
+        self._stream_id = stream_id
         self.app = app
 
         self.headers = Header(headers)
@@ -168,12 +175,12 @@ class Request:
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
         self.request_middleware_started = False
+        self.responded: bool = False
+        self.route: Optional[Route] = None
+        self.stream: Optional[Stream] = None
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
-        self.stream: Optional[Http] = None
-        self.route: Optional[Route] = None
         self._protocol = None
-        self.responded: bool = False
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -181,14 +188,46 @@ class Request:
 
     @classmethod
     def get_current(cls) -> Request:
+        """
+        Retrieve the currrent request object
+
+        This implements `Context Variables
+        <https://docs.python.org/3/library/contextvars.html>`_
+        to allow for accessing the current request from anywhere.
+
+        Raises :exc:`sanic.exceptions.ServerError` if it is outside of
+        a request lifecycle.
+
+        .. code-block:: python
+
+            from sanic import Request
+
+            current_request = Request.get_current()
+
+        :return: the current :class:`sanic.request.Request`
+        """
         request = cls._current.get(None)
         if not request:
-            raise SanicException("No current request")
+            raise ServerError("No current request")
         return request
 
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
+
+    @property
+    def stream_id(self):
+        """
+        Access the HTTP/3 stream ID.
+
+        Raises :exc:`sanic.exceptions.ServerError` if it is not an
+        HTTP/3 request.
+        """
+        if self.protocol.version is not HTTP.VERSION_3:
+            raise ServerError(
+                "Stream ID is only a property of a HTTP/3 request"
+            )
+        return self._stream_id
 
     def reset_response(self):
         try:
@@ -276,6 +315,9 @@ class Request:
         # Connect the response
         if isinstance(response, BaseHTTPResponse) and self.stream:
             response = self.stream.respond(response)
+
+            if isawaitable(response):
+                response = await response  # type: ignore
         # Run response middleware
         try:
             response = await self.app._run_response_middleware(
@@ -303,7 +345,19 @@ class Request:
             self.body = b"".join([data async for data in self.stream])
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
+        """
+        The route name
+
+        In the following pattern:
+
+        .. code-block::
+
+            <AppName>.[<BlueprintName>.]<HandlerName>
+
+        :return: Route name
+        :rtype: Optional[str]
+        """
         if self._name:
             return self._name
         elif self.route:
@@ -311,26 +365,47 @@ class Request:
         return None
 
     @property
-    def endpoint(self):
+    def endpoint(self) -> Optional[str]:
+        """
+        :return: Alias of :attr:`sanic.request.Request.name`
+        :rtype: Optional[str]
+        """
         return self.name
 
     @property
-    def uri_template(self):
-        return f"/{self.route.path}"
+    def uri_template(self) -> Optional[str]:
+        """
+        :return: The defined URI template
+        :rtype: Optional[str]
+        """
+        if self.route:
+            return f"/{self.route.path}"
+        return None
 
     @property
     def protocol(self):
+        """
+        :return: The HTTP protocol instance
+        """
         if not self._protocol:
             self._protocol = self.transport.get_protocol()
         return self._protocol
 
     @property
-    def raw_headers(self):
+    def raw_headers(self) -> bytes:
+        """
+        :return: The unparsed HTTP headers
+        :rtype: bytes
+        """
         _, headers = self.head.split(b"\r\n", 1)
         return bytes(headers)
 
     @property
-    def request_line(self):
+    def request_line(self) -> bytes:
+        """
+        :return: The first line of a HTTP request
+        :rtype: bytes
+        """
         reqline, _ = self.head.split(b"\r\n", 1)
         return bytes(reqline)
 
@@ -379,7 +454,11 @@ class Request:
         return self._id  # type: ignore
 
     @property
-    def json(self):
+    def json(self) -> Any:
+        """
+        :return: The request body parsed as JSON
+        :rtype: Any
+        """
         if self.parsed_json is None:
             self.load_json()
 
@@ -400,6 +479,10 @@ class Request:
 
     @property
     def accept(self) -> AcceptContainer:
+        """
+        :return: The ``Accept`` header parsed
+        :rtype: AcceptContainer
+        """
         if self.parsed_accept is None:
             accept_header = self.headers.getone("accept", "")
             self.parsed_accept = parse_accept(accept_header)
@@ -445,6 +528,15 @@ class Request:
     def get_form(
         self, keep_blank_values: bool = False
     ) -> Optional[RequestParameters]:
+        """
+        Method to extract and parse the form data from a request.
+
+        :param keep_blank_values:
+            Whether to discard blank values from the form data
+        :type keep_blank_values: bool
+        :return: the parsed form data
+        :rtype: Optional[RequestParameters]
+        """
         self.parsed_form = RequestParameters()
         self.parsed_files = RequestParameters()
         content_type = self.headers.getone(
@@ -474,6 +566,9 @@ class Request:
 
     @property
     def form(self):
+        """
+        :return: The request body parsed as form data
+        """
         if self.parsed_form is None:
             self.get_form()
 
@@ -481,6 +576,9 @@ class Request:
 
     @property
     def files(self):
+        """
+        :return: The request body parsed as uploaded files
+        """
         if self.parsed_files is None:
             self.form  # compute form to get files
 
@@ -494,8 +592,8 @@ class Request:
         errors: str = "replace",
     ) -> RequestParameters:
         """
-        Method to parse `query_string` using `urllib.parse.parse_qs`.
-        This methods is used by `args` property.
+        Method to parse ``query_string`` using ``urllib.parse.parse_qs``.
+        This methods is used by ``args`` property.
         Can be used directly if you need to change default parameters.
 
         :param keep_blank_values:
@@ -544,6 +642,10 @@ class Request:
         ]
 
     args = property(get_args)
+    """
+    Convenience property to access :meth:`Request.get_args` with
+    default values.
+    """
 
     def get_query_args(
         self,
@@ -663,6 +765,9 @@ class Request:
 
     @property
     def socket(self):
+        """
+        :return: Information about the connected socket if available
+        """
         return self.conn_info.peername if self.conn_info else (None, None)
 
     @property
@@ -672,6 +777,13 @@ class Request:
         :rtype: str
         """
         return self._parsed_url.path.decode("utf-8")
+
+    @property
+    def network_paths(self):
+        """
+        Access the network paths if available
+        """
+        return self.conn_info.network_paths
 
     # Proxy properties (using SERVER_NAME/forwarded/request/transport info)
 
@@ -726,23 +838,25 @@ class Request:
         :return: http|https|ws|wss or arbitrary value given by the headers.
         :rtype: str
         """
-        if "//" in self.app.config.get("SERVER_NAME", ""):
-            return self.app.config.SERVER_NAME.split("//")[0]
-        if "proto" in self.forwarded:
-            return str(self.forwarded["proto"])
+        if not hasattr(self, "_scheme"):
+            if "//" in self.app.config.get("SERVER_NAME", ""):
+                return self.app.config.SERVER_NAME.split("//")[0]
+            if "proto" in self.forwarded:
+                return str(self.forwarded["proto"])
 
-        if (
-            self.app.websocket_enabled
-            and self.headers.getone("upgrade", "").lower() == "websocket"
-        ):
-            scheme = "ws"
-        else:
-            scheme = "http"
+            if (
+                self.app.websocket_enabled
+                and self.headers.getone("upgrade", "").lower() == "websocket"
+            ):
+                scheme = "ws"
+            else:
+                scheme = "http"
 
-        if self.transport.get_extra_info("sslcontext"):
-            scheme += "s"
+            if self.transport.get_extra_info("sslcontext"):
+                scheme += "s"
+            self._scheme = scheme
 
-        return scheme
+        return self._scheme
 
     @property
     def host(self) -> str:

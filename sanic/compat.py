@@ -1,8 +1,9 @@
 import asyncio
 import os
 import signal
+import sys
 
-from sys import argv
+from typing import Awaitable
 
 from multidict import CIMultiDict  # type: ignore
 
@@ -47,12 +48,12 @@ class Header(CIMultiDict):
         return self.getall(key, default=[])
 
 
-use_trio = argv[0].endswith("hypercorn") and "trio" in argv
+use_trio = sys.argv[0].endswith("hypercorn") and "trio" in sys.argv
 
 if use_trio:  # pragma: no cover
     import trio  # type: ignore
 
-    def stat_async(path):
+    def stat_async(path) -> Awaitable[os.stat_result]:
         return trio.Path(path).stat()
 
     open_async = trio.open_file
@@ -89,3 +90,7 @@ def ctrlc_workaround_for_windows(app):
     die = False
     signal.signal(signal.SIGINT, ctrlc_handler)
     app.add_task(stay_active)
+
+
+def is_atty() -> bool:
+    return bool(sys.stdout and sys.stdout.isatty())

@@ -43,11 +43,8 @@ from typing import (
 from urllib.parse import urlencode, urlunparse
 from warnings import filterwarnings
 
-from sanic_routing.exceptions import (  # type: ignore
-    FinalizationError,
-    NotFound,
-)
-from sanic_routing.route import Route  # type: ignore
+from sanic_routing.exceptions import FinalizationError, NotFound
+from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
 from sanic.application.state import ApplicationState, Mode, ServerStage
@@ -64,6 +61,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -92,7 +90,7 @@ from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     try:
         from sanic_ext import Extend  # type: ignore
         from sanic_ext.extensions.base import Extension  # type: ignore
@@ -171,7 +169,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         strict_slashes: bool = False,
         log_config: Optional[Dict[str, Any]] = None,
         configure_logging: bool = True,
-        register: Optional[bool] = None,
         dumps: Optional[Callable[..., AnyStr]] = None,
         loads: Optional[Callable[[AnyStr], Optional[Dict]]] = None,
     ) -> None:
@@ -221,20 +218,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
         # Register alternative method names
         self.go_fast = self.run
-
-        if register is not None:
-            deprecation(
-                "The register argument is deprecated and will stop working "
-                "in v22.6. After v22.6 all apps will be added to the Sanic "
-                "app registry.",
-                22.6,
-            )
-            self.config.REGISTER = register
-        if self.config.REGISTER:
-            self.__class__.register_app(self)
-
         self.router.ctx.app = self
         self.signal_router.ctx.app = self
+        self.__class__.register_app(self)
 
         if dumps:
             BaseHTTPResponse._dumps = dumps  # type: ignore
@@ -741,37 +727,24 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 "has at least partially been sent."
             )
 
-            # ----------------- deprecated -----------------
             handler = self.error_handler._lookup(
                 exception, request.name if request else None
             )
             if handler:
-                deprecation(
+                logger.warning(
                     "An error occurred while handling the request after at "
                     "least some part of the response was sent to the client. "
-                    "Therefore, the response from your custom exception "
-                    f"handler {handler.__name__} will not be sent to the "
-                    "client. Beginning in v22.6, Sanic will stop executing "
-                    "custom exception handlers in this scenario. Exception "
-                    "handlers should only be used to generate the exception "
-                    "responses. If you would like to perform any other "
-                    "action on a raised exception, please consider using a "
+                    "The response from your custom exception handler "
+                    f"{handler.__name__} will not be sent to the client."
+                    "Exception handlers should only be used to generate the "
+                    "exception responses. If you would like to perform any "
+                    "other action on a raised exception, consider using a "
                     "signal handler like "
                     '`@app.signal("http.lifecycle.exception")`\n'
                     "For further information, please see the docs: "
                     "https://sanicframework.org/en/guide/advanced/"
                     "signals.html",
-                    22.6,
                 )
-                try:
-                    response = self.error_handler.response(request, exception)
-                    if isawaitable(response):
-                        response = await response
-                except BaseException as e:
-                    logger.error("An error occurred in the exception handler.")
-                    error_logger.exception(e)
-            # ----------------------------------------------
-
             return
 
         # -------------------------------------------- #
@@ -952,6 +925,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                         "response": response,
                     },
                 )
+                ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
                 resp = await response(request)
@@ -1373,7 +1347,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.config.AUTO_RELOAD = value
 
     @property
-    def state(self):
+    def state(self) -> ApplicationState:  # type: ignore
+        """
+        :return: The application state
+        """
         return self._state
 
     @property
@@ -1535,8 +1512,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if hasattr(self, "_ext"):
             self.ext._display()
 
-        if self.state.is_debug:
+        if self.state.is_debug and self.config.TOUCHUP is not True:
             self.config.TOUCHUP = False
+        elif self.config.TOUCHUP is _default:
+            self.config.TOUCHUP = True
 
         # Setup routers
         self.signalize(self.config.TOUCHUP)
@@ -1558,7 +1537,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if self.state.primary:
             # TODO:
             # - Raise warning if secondary apps have error handler config
-            ErrorHandler.finalize(self.error_handler, config=self.config)
             if self.config.TOUCHUP:
                 TouchUp.run(self)
 

@@ -13,13 +13,7 @@ from sanic import Sanic, handlers
 from sanic.exceptions import BadRequest, Forbidden, NotFound, ServerError
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
-from sanic.response import stream, text
-
-
-async def sample_streaming_fn(response):
-    await response.write("foo,")
-    await asyncio.sleep(0.001)
-    await response.write("bar")
+from sanic.response import text
 
 
 class ErrorWithRequestCtx(ServerError):
@@ -81,10 +75,10 @@ def exception_handler_app():
 
     @exception_handler_app.exception(Forbidden)
     async def async_handler_exception(request, exception):
-        return stream(
-            sample_streaming_fn,
-            content_type="text/csv",
-        )
+        response = await request.respond(content_type="text/csv")
+        await response.send("foo,")
+        await asyncio.sleep(0.001)
+        await response.send("bar")
 
     @exception_handler_app.middleware
     async def some_request_middleware(request):
@@ -183,7 +177,7 @@ def test_exception_handler_lookup(exception_handler_app: Sanic):
         class ModuleNotFoundError(ImportError):
             pass
 
-    handler = ErrorHandler("auto")
+    handler = ErrorHandler()
     handler.add(ImportError, import_error_handler)
     handler.add(CustomError, custom_error_handler)
     handler.add(ServerError, server_error_handler)
@@ -261,7 +255,6 @@ def test_exception_handler_response_was_sent(
         _, response = app.test_client.get("/1")
         assert "some text" in response.text
 
-    # Change to assert warning not in the records in the future version.
     message_in_records(
         caplog.records,
         (

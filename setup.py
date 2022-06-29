@@ -122,6 +122,7 @@ docs_require = [
     "docutils",
     "pygments",
     "m2r2",
+    "enum-tools[sphinx]",
     "mistune<2.0.0",
 ]
 
@@ -149,6 +150,7 @@ extras_require = {
     "docs": docs_require,
     "all": all_require,
     "ext": ["sanic-ext"],
+    "http3": ["aioquic"],
 }
 
 setup_kwargs["install_requires"] = requirements

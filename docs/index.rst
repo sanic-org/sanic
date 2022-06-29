@@ -9,7 +9,7 @@ API
 ===
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    👥 User Guide <https://sanicframework.org/guide/>
    sanic/api_reference

@@ -3,40 +3,18 @@ from __future__ import annotations
 import logging
 
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum, auto
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
 
+from sanic.application.constants import Mode, Server, ServerStage
 from sanic.log import VerbosityFilter, logger
 from sanic.server.async_server import AsyncioServer
 
 
-if TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from sanic import Sanic
-
-
-class StrEnum(str, Enum):
-    def _generate_next_value_(name: str, *args) -> str:  # type: ignore
-        return name.lower()
-
-
-class Server(StrEnum):
-    SANIC = auto()
-    ASGI = auto()
-    GUNICORN = auto()
-
-
-class Mode(StrEnum):
-    PRODUCTION = auto()
-    DEBUG = auto()
-
-
-class ServerStage(IntEnum):
-    STOPPED = auto()
-    PARTIAL = auto()
-    SERVING = auto()
 
 
 @dataclass

@@ -1,21 +1,13 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type
 
-from sanic.config import Config
-from sanic.errorpages import (
-    DEFAULT_FORMAT,
-    BaseRenderer,
-    TextRenderer,
-    exception_response,
-)
+from sanic.errorpages import BaseRenderer, TextRenderer, exception_response
 from sanic.exceptions import (
     HeaderNotFound,
     InvalidRangeType,
     RangeNotSatisfiable,
-    SanicException,
 )
-from sanic.helpers import Default, _default
 from sanic.log import deprecation, error_logger
 from sanic.models.handler_types import RouteHandler
 from sanic.response import text
@@ -36,90 +28,21 @@ class ErrorHandler:
 
     def __init__(
         self,
-        fallback: Union[str, Default] = _default,
         base: Type[BaseRenderer] = TextRenderer,
     ):
         self.cached_handlers: Dict[
             Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
         ] = {}
         self.debug = False
-        self._fallback = fallback
         self.base = base
 
-        if fallback is not _default:
-            self._warn_fallback_deprecation()
-
-    @property
-    def fallback(self):  # no cov
-        # This is for backwards compat and can be removed in v22.6
-        if self._fallback is _default:
-            return DEFAULT_FORMAT
-        return self._fallback
-
-    @fallback.setter
-    def fallback(self, value: str):  # no cov
-        self._warn_fallback_deprecation()
-        if not isinstance(value, str):
-            raise SanicException(
-                f"Cannot set error handler fallback to: value={value}"
-            )
-        self._fallback = value
-
-    @staticmethod
-    def _warn_fallback_deprecation():
+    @classmethod
+    def finalize(cls, *args, **kwargs):
         deprecation(
-            "Setting the ErrorHandler fallback value directly is "
-            "deprecated and no longer supported. This feature will "
-            "be removed in v22.6. Instead, use "
-            "app.config.FALLBACK_ERROR_FORMAT.",
-            22.6,
+            "ErrorHandler.finalize is deprecated and no longer needed. "
+            "Please remove update your code to remove it. ",
+            22.12,
         )
-
-    @classmethod
-    def _get_fallback_value(cls, error_handler: ErrorHandler, config: Config):
-        if error_handler._fallback is not _default:
-            if config._FALLBACK_ERROR_FORMAT == error_handler._fallback:
-                return error_handler.fallback
-
-            error_logger.warning(
-                "Conflicting error fallback values were found in the "
-                "error handler and in the app.config while handling an "
-                "exception. Using the value from app.config."
-            )
-        return config.FALLBACK_ERROR_FORMAT
-
-    @classmethod
-    def finalize(
-        cls,
-        error_handler: ErrorHandler,
-        config: Config,
-        fallback: Optional[str] = None,
-    ):
-        if fallback:
-            deprecation(
-                "Setting the ErrorHandler fallback value via finalize() "
-                "is deprecated and no longer supported. This feature will "
-                "be removed in v22.6. Instead, use "
-                "app.config.FALLBACK_ERROR_FORMAT.",
-                22.6,
-            )
-
-        if not fallback:
-            fallback = config.FALLBACK_ERROR_FORMAT
-
-        if fallback != DEFAULT_FORMAT:
-            if error_handler._fallback is not _default:
-                error_logger.warning(
-                    f"Setting the fallback value to {fallback}. This changes "
-                    "the current non-default value "
-                    f"'{error_handler._fallback}'."
-                )
-            error_handler._fallback = fallback
-
-        if not isinstance(error_handler, cls):
-            error_logger.warning(
-                f"Error handler is non-conforming: {type(error_handler)}"
-            )
 
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)
@@ -237,7 +160,7 @@ class ErrorHandler:
         :return:
         """
         self.log(request, exception)
-        fallback = ErrorHandler._get_fallback_value(self, request.app.config)
+        fallback = request.app.config.FALLBACK_ERROR_FORMAT
         return exception_response(
             request,
             exception,

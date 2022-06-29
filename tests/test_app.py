@@ -4,7 +4,6 @@ import re
 
 from collections import Counter
 from inspect import isawaitable
-from os import environ
 from unittest.mock import Mock, patch
 
 import pytest
@@ -111,19 +110,6 @@ def test_create_server_main_convenience(app, caplog):
         "Listener events for the main process are not available with "
         "create_server()",
     ) in caplog.record_tuples
-
-
-def test_create_server_init(app, caplog):
-    loop = asyncio.get_event_loop()
-    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
-    server = loop.run_until_complete(asyncio_srv_coro)
-
-    message = (
-        "AsyncioServer.init has been deprecated and will be removed in v22.6. "
-        "Use Sanic.state.is_started instead."
-    )
-    with pytest.warns(DeprecationWarning, match=message):
-        server.init
 
 
 def test_app_loop_not_running(app):
@@ -383,40 +369,6 @@ def test_get_app_default_ambiguous():
         ),
     ):
         Sanic.get_app()
-
-
-def test_app_no_registry():
-    Sanic("no-register", register=False)
-    with pytest.raises(
-        SanicException, match='Sanic app name "no-register" not found.'
-    ):
-        Sanic.get_app("no-register")
-
-
-def test_app_no_registry_deprecation_message():
-    with pytest.warns(DeprecationWarning) as records:
-        Sanic("no-register", register=False)
-        Sanic("yes-register", register=True)
-
-    message = (
-        "[DEPRECATION v22.6] The register argument is deprecated and will "
-        "stop working in v22.6. After v22.6 all apps will be added to the "
-        "Sanic app registry."
-    )
-
-    assert len(records) == 2
-    for record in records:
-        assert record.message.args[0] == message
-
-
-def test_app_no_registry_env():
-    environ["SANIC_REGISTER"] = "False"
-    Sanic("no-register")
-    with pytest.raises(
-        SanicException, match='Sanic app name "no-register" not found.'
-    ):
-        Sanic.get_app("no-register")
-    del environ["SANIC_REGISTER"]
 
 
 def test_app_set_attribute_warning(app):

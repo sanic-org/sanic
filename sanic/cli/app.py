@@ -58,10 +58,13 @@ Or, a path to a directory to run as a simple HTTP server:
             os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
         )
         self.args: List[Any] = []
+        self.groups: List[Group] = []
 
     def attach(self):
         for group in Group._registry:
-            group.create(self.parser).attach()
+            instance = group.create(self.parser)
+            instance.attach()
+            self.groups.append(instance)
 
     def run(self):
         # This is to provide backwards compat -v to display version
@@ -81,9 +84,13 @@ Or, a path to a directory to run as a simple HTTP server:
         try:
             app = self._get_app()
             kwargs = self._build_run_kwargs()
-            app.run(**kwargs)
         except ValueError:
             error_logger.exception("Failed to run app")
+        else:
+            for http_version in self.args.http:
+                app.prepare(**kwargs, version=http_version)
+
+            Sanic.serve()
 
     def _precheck(self):
         # # Custom TLS mismatch handling for better diagnostics
@@ -146,9 +153,9 @@ Or, a path to a directory to run as a simple HTTP server:
                     if callable(app):
                         solution = f"sanic {self.args.module} --factory"
                         raise ValueError(
-                            "Module is not a Sanic app, it is a"
+                            "Module is not a Sanic app, it is a "
                             f"{app_type_name}\n"
-                            "  If this callable returns a"
+                            "  If this callable returns a "
                             f"Sanic instance try: \n{solution}"
                         )
 
@@ -163,11 +170,14 @@ Or, a path to a directory to run as a simple HTTP server:
                     "  Example File: project/sanic_server.py -> app\n"
                     "  Example Module: project.sanic_server.app"
                 )
+                sys.exit(1)
             else:
                 raise e
         return app
 
     def _build_run_kwargs(self):
+        for group in self.groups:
+            group.prepare(self.args)
         ssl: Union[None, dict, str, list] = []
         if self.args.tlshost:
             ssl.append(None)
@@ -192,6 +202,7 @@ Or, a path to a directory to run as a simple HTTP server:
             "unix": self.args.unix,
             "verbosity": self.args.verbosity or 0,
             "workers": self.args.workers,
+            "auto_tls": self.args.auto_tls,
         }
 
         for maybe_arg in ("auto_reload", "dev"):
@@ -201,4 +212,5 @@ Or, a path to a directory to run as a simple HTTP server:
         if self.args.path:
             kwargs["auto_reload"] = True
             kwargs["reload_dir"] = self.args.path
+
         return kwargs

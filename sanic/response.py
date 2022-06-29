@@ -5,7 +5,7 @@ from email.utils import formatdate
 from functools import partial
 from mimetypes import guess_type
 from os import path
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from time import time
 from typing import (
     TYPE_CHECKING,
@@ -22,7 +22,7 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
-from sanic.compat import Header, open_async
+from sanic.compat import Header, open_async, stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
@@ -38,6 +38,7 @@ from sanic.models.protocol_types import HTMLProtocol, Range
 
 if TYPE_CHECKING:
     from sanic.asgi import ASGIApp
+    from sanic.http.http3 import HTTPReceiver
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
@@ -74,10 +75,14 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: Optional[bytes] = None
         self.content_type: Optional[str] = None
-        self.stream: Optional[Union[Http, ASGIApp]] = None
+        self.stream: Optional[Union[Http, ASGIApp, HTTPReceiver]] = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: Optional[CookieJar] = None
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return f"<{class_name}: {self.status} {self.content_type}>"
 
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
@@ -157,7 +162,10 @@ class BaseHTTPResponse:
             if hasattr(data, "encode")
             else data or b""
         )
-        await self.stream.send(data, end_stream=end_stream)
+        await self.stream.send(
+            data,  # type: ignore
+            end_stream=end_stream or False,
+        )
 
 
 class HTTPResponse(BaseHTTPResponse):
@@ -340,9 +348,10 @@ async def file(
         )
 
     if isinstance(last_modified, datetime):
-        last_modified = last_modified.timestamp()
+        last_modified = last_modified.replace(microsecond=0).timestamp()
     elif isinstance(last_modified, Default):
-        last_modified = Path(location).stat().st_mtime
+        stat = await stat_async(location)
+        last_modified = stat.st_mtime
 
     if last_modified:
         headers.setdefault(
@@ -418,8 +427,7 @@ def redirect(
 class ResponseStream:
     """
     ResponseStream is a compat layer to bridge the gap after the deprecation
-    of StreamingHTTPResponse. In v22.6 it will be removed when:
-    - stream is removed
+    of StreamingHTTPResponse. It will be removed when:
     - file_stream is moved to new style streaming
     - file and file_stream are combined into a single API
     """
@@ -546,39 +554,4 @@ async def file_stream(
         status=status,
         headers=headers,
         content_type=mime_type,
-    )
-
-
-def stream(
-    streaming_fn: Callable[
-        [Union[BaseHTTPResponse, ResponseStream]], Coroutine[Any, Any, None]
-    ],
-    status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
-    content_type: str = "text/plain; charset=utf-8",
-) -> ResponseStream:
-    """Accepts a coroutine `streaming_fn` which can be used to
-    write chunks to a streaming response. Returns a `ResponseStream`.
-
-    Example usage::
-
-        @app.route("/")
-        async def index(request):
-            async def streaming_fn(response):
-                await response.write('foo')
-                await response.write('bar')
-
-            return stream(streaming_fn, content_type='text/plain')
-
-    :param streaming_fn: A coroutine accepts a response and
-        writes content to that response.
-    :param status: HTTP status.
-    :param content_type: Specific content_type.
-    :param headers: Custom Headers.
-    """
-    return ResponseStream(
-        streaming_fn,
-        headers=headers,
-        content_type=content_type,
-        status=status,
     )

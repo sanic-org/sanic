@@ -5,6 +5,8 @@ from enum import Enum
 from typing import Any, Dict
 from warnings import warn
 
+from sanic.compat import is_atty
+
 
 LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     version=1,
@@ -55,6 +57,9 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
         },
     },
 )
+"""
+Defult logging configuration
+"""
 
 
 class Colors(str, Enum):  # no cov
@@ -78,27 +83,27 @@ class VerbosityFilter(logging.Filter):
 _verbosity_filter = VerbosityFilter()
 
 logger = logging.getLogger("sanic.root")  # no cov
-logger.addFilter(_verbosity_filter)
 """
 General Sanic logger
 """
+logger.addFilter(_verbosity_filter)
 
 error_logger = logging.getLogger("sanic.error")  # no cov
-error_logger.addFilter(_verbosity_filter)
 """
 Logger used by Sanic for error logging
 """
+error_logger.addFilter(_verbosity_filter)
 
 access_logger = logging.getLogger("sanic.access")  # no cov
-access_logger.addFilter(_verbosity_filter)
 """
 Logger used by Sanic for access logging
 """
+access_logger.addFilter(_verbosity_filter)
 
 
 def deprecation(message: str, version: float):  # no cov
     version_info = f"[DEPRECATION v{version}] "
-    if sys.stdout.isatty():
+    if is_atty():
         version_info = f"{Colors.RED}{version_info}"
         message = f"{Colors.YELLOW}{message}{Colors.END}"
     warn(version_info + message, DeprecationWarning)

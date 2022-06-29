@@ -14,7 +14,7 @@ from sanic.server.websockets.frame import WebsocketFrameAssembler
 try:
     from unittest.mock import AsyncMock
 except ImportError:
-    from asyncmock import AsyncMock  # type: ignore
+    from tests.asyncmock import AsyncMock  # type: ignore
 
 
 @pytest.mark.asyncio

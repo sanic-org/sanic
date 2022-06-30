@@ -840,3 +840,9 @@ class WebsocketImplProtocol:
         self.abort_pings()
         if self.connection_lost_waiter:
             self.connection_lost_waiter.set_result(None)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        return await self.recv()

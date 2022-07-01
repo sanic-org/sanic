@@ -359,11 +359,6 @@ Version 20.12.0 🔹
     `#1993 <https://github.com/sanic-org/sanic/pull/1993>`_
     Add disable app registry
 
-Version 20.12.0 🔹
------------------
-
-**Features**
-
   *
     `#1945 <https://github.com/sanic-org/sanic/pull/1945>`_
     Static route more verbose if file not found

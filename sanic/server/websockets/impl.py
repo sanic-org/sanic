@@ -2,6 +2,7 @@ import asyncio
 import random
 import struct
 
+from contextlib import suppress
 from typing import (
     AsyncIterator,
     Dict,
@@ -846,8 +847,6 @@ class WebsocketImplProtocol:
             self.connection_lost_waiter.set_result(None)
 
     async def __aiter__(self):
-        while True:
-            try:
+        with suppress(ConnectionClosedOK):
+            while True:
                 yield await self.recv()
-            except ConnectionClosedOK:
-                return

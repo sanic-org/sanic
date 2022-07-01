@@ -13,7 +13,11 @@ from typing import (
 )
 
 from websockets.connection import CLOSED, CLOSING, OPEN, Event
-from websockets.exceptions import ConnectionClosed, ConnectionClosedError
+from websockets.exceptions import (
+    ConnectionClosed,
+    ConnectionClosedError,
+    ConnectionClosedOK,
+)
 from websockets.frames import Frame, Opcode
 from websockets.server import ServerConnection
 from websockets.typing import Data
@@ -841,8 +845,9 @@ class WebsocketImplProtocol:
         if self.connection_lost_waiter:
             self.connection_lost_waiter.set_result(None)
 
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        return await self.recv()
+    async def __aiter__(self):
+        while True:
+            try:
+                yield await self.recv()
+            except ConnectionClosedOK:
+                return

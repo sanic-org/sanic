@@ -167,7 +167,7 @@ class RouteMixin(metaclass=SanicMeta):
                 # subprotocol is unordered, keep it unordered
                 subprotocols = frozenset(subprotocols)
 
-            if not error_format or error_format == "auto":
+            if error_format == "auto":
                 error_format = self._determine_error_format(handler)
 
             route = FutureRoute(

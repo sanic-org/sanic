@@ -811,14 +811,15 @@ class RouteMixin(metaclass=SanicMeta):
         root_path = file_path = unquote(file_or_directory)
 
         if __file_uri__:
-            unquoted_file_uri = unquote(__file_uri__)
-            file_path = path.join(
-                file_or_directory, unquoted_file_uri.lstrip("/")
-            )
+            unquoted_file_uri = unquote(__file_uri__).lstrip("/")
 
-        pure_file_path = PurePath(file_path)
-        if any(part == ".." for part in pure_file_path.parts):
-            raise BadRequest("Invalid URL")
+            file_uri_pp = PurePath(file_path)
+            if any(part == ".." for part in file_uri_pp.parts):
+                raise BadRequest("Invalid URL")
+
+            file_path = path.join(
+                file_or_directory, unquoted_file_uri
+            )
 
         # URL decode the path sent by the browser otherwise we won't be able to
         # match filenames which got encoded (filenames with spaces etc)

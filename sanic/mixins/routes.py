@@ -813,7 +813,7 @@ class RouteMixin(metaclass=SanicMeta):
         if __file_uri__:
             unquoted_file_uri = unquote(__file_uri__).lstrip("/")
 
-            file_uri_pp = PurePath(file_path)
+            file_uri_pp = PurePath(unquoted_file_uri)
             if any(part == ".." for part in file_uri_pp.parts):
                 raise BadRequest("Invalid URL")
 

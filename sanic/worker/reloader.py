@@ -1,12 +1,15 @@
 import os
 import sys
 
+from asyncio import new_event_loop
 from itertools import chain
 from multiprocessing.connection import Connection
 from pathlib import Path
 from signal import SIGINT, SIGTERM
 from signal import signal as signal_func
 from typing import Dict, Set
+
+from sanic.server.events import trigger_events
 
 
 class Reloader:
@@ -19,9 +22,19 @@ class Reloader:
         self.run = True
 
     def __call__(self) -> None:
+        from sanic import Sanic
+
         signal_func(SIGINT, self.stop)
         signal_func(SIGTERM, self.stop)
         mtimes: Dict[str, float] = {}
+
+        apps = apps = list(Sanic._app_registry.values())
+        primary = apps[0]
+        primary.listeners.get("reload_process_start")
+        reloader_start = primary.listeners.get("reload_process_start")
+        reloader_stop = primary.listeners.get("reload_process_stop")
+        loop = new_event_loop()
+        trigger_events(reloader_start, loop, primary)
 
         while self.run:
             changed = set()
@@ -38,6 +51,8 @@ class Reloader:
                     continue
             if changed:
                 self.reload(",".join(changed) if changed else "unknown")
+        else:
+            trigger_events(reloader_stop, loop, primary)
 
     def stop(self, *_):
         self.run = False

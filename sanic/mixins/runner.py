@@ -656,7 +656,7 @@ class RunnerMixin(metaclass=SanicMeta):
                 primary.state.workers,
                 worker_serve,
                 kwargs,
-                get_context("spawn"),
+                get_context(),
                 pub,
                 sub,
             )

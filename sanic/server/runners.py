@@ -5,6 +5,7 @@ import sys
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
+from sanic.application.constants import ServerStage
 from sanic.config import Config
 from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
@@ -91,15 +92,17 @@ def serve(
                                   create_server method
     :return: Nothing
     """
-    if not run_async and not loop:
-        # create new event_loop after fork
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # if not run_async and not loop:
+    #     # create new event_loop after fork
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     if app.debug:
         loop.set_debug(app.debug)
 
     app.asgi = False
+    primary_server_info = app.state.server_info[0]
+    primary_server_info.stage = ServerStage.SERVING
 
     if version is HTTP.VERSION_3:
         return _serve_http_3(host, port, app, loop, ssl)
@@ -221,7 +224,7 @@ def _serve_http_1(
         )
 
     loop.run_until_complete(app._startup())
-    loop.run_until_complete(app._server_event("init", "before"))
+    # loop.run_until_complete(app._server_event("init", "before"))
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -261,7 +264,7 @@ def _serve_http_1(
                 conn.abort()
 
     _setup_system_signals(app, run_multiple, register_sys_signals, loop)
-    loop.run_until_complete(app._server_event("init", "after"))
+    # loop.run_until_complete(app._server_event("init", "after"))
     _run_server_forever(
         loop,
         partial(app._server_event, "shutdown", "before"),

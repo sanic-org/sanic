@@ -6,7 +6,7 @@ import socket
 import stat
 
 from ipaddress import ip_address
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
@@ -85,3 +85,22 @@ def remove_unix_socket(path: Optional[str]) -> None:
                     os.unlink(path)
     except FileNotFoundError:
         pass
+
+
+def configure_socket(server_settings: Dict[str, Any]) -> socket.SocketType:
+    # Create a listening socket or use the one in settings
+    sock = server_settings.get("sock")
+    unix = server_settings["unix"]
+    backlog = server_settings["backlog"]
+    if unix:
+        sock = bind_unix_socket(unix, backlog=backlog)
+        server_settings["unix"] = unix
+    if sock is None:
+        sock = bind_socket(
+            server_settings["host"], server_settings["port"], backlog=backlog
+        )
+        sock.set_inheritable(True)
+        server_settings["sock"] = sock
+        server_settings["host"] = None
+        server_settings["port"] = None
+    return sock

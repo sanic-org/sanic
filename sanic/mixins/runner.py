@@ -11,7 +11,6 @@ from asyncio import (
     all_tasks,
     get_event_loop,
     get_running_loop,
-    new_event_loop,
 )
 from contextlib import suppress
 from functools import partial
@@ -33,7 +32,6 @@ from typing import (
     cast,
 )
 
-from sanic import reloader_helpers
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
@@ -47,11 +45,11 @@ from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
-from sanic.server.events import trigger_events
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
-from sanic.server.runners import serve, serve_multiple, serve_single
-from sanic.worker.manager import WorkerManager, fake_serve
+from sanic.server.runners import serve
+from sanic.server.socket import configure_socket
+from sanic.worker.manager import WorkerManager
 
 
 if TYPE_CHECKING:
@@ -631,6 +629,9 @@ class RunnerMixin(metaclass=SanicMeta):
             except IndexError:
                 raise RuntimeError("Did not find any applications.")
 
+        # TODO:
+        # - Catch when not main process to either stop or error
+
         # reloader_start = primary.listeners.get("reload_process_start")
         # reloader_stop = primary.listeners.get("reload_process_stop")
         # # We want to run auto_reload if ANY of the applications have it enabled
@@ -680,10 +681,13 @@ class RunnerMixin(metaclass=SanicMeta):
         #     raise
         # finally:
         #     primary_server_info.stage = ServerStage.STOPPED
-
+        main_start = primary_server_info.settings.pop("main_start", None)
+        main_stop = primary_server_info.settings.pop("main_stop", None)
+        sock = configure_socket(primary_server_info.settings)
+        primary_server_info.settings["run_multiple"] = True
         manager = WorkerManager(
             primary.state.workers,
-            fake_serve,
+            serve,
             primary_server_info.settings,
             get_context(None),
         )
@@ -694,6 +698,10 @@ class RunnerMixin(metaclass=SanicMeta):
             app.state.server_info.clear()
             app.router.reset()
             app.signal_router.reset()
+
+        sock.close()
+        # loop.close()
+        # remove_unix_socket(unix)
 
     async def _start_servers(
         self,

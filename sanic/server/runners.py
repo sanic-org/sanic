@@ -146,6 +146,7 @@ def worker_serve(
     state=None,
     asyncio_server_kwargs=None,
     version=HTTP.VERSION_1,
+    config=None,
 ):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -157,6 +158,8 @@ def worker_serve(
     app.multiplexer = WorkerMultiplexer(restart_flag)
     primary_server_info = app.state.server_info[0]
     primary_server_info.stage = ServerStage.SERVING
+    if config:
+        app.update_config(config)
 
     if version is HTTP.VERSION_3:
         return _serve_http_3(host, port, app, loop, ssl)

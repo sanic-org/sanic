@@ -3,4 +3,4 @@ class WorkerMultiplexer:
         self._publisher = publisher
 
     def restart(self):
-        self._publisher.send(1)
+        self._publisher.send(True)

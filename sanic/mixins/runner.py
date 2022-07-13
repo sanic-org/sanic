@@ -26,6 +26,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Set,
     Tuple,
     Type,
     Union,
@@ -680,15 +681,16 @@ class RunnerMixin(metaclass=SanicMeta):
                 primary.state.workers,
                 worker_serve,
                 kwargs,
-                get_context("fork"),
+                get_context("spawn"),
                 pub,
                 sub,
             )
             if cls.should_auto_reload():
-                reloader = Reloader(sub)
-                manager.manage(
-                    "Reloader", reloader, {"foo": "bar"}, transient=False
+                reload_dirs: Set[Path] = primary.state.reload_dirs.union(
+                    *(app.state.reload_dirs for app in apps)
                 )
+                reloader = Reloader(pub, 1.0, reload_dirs)
+                manager.manage("Reloader", reloader, {}, transient=False)
 
             manager.run()
         except BaseException:

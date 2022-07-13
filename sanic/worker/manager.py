@@ -1,31 +1,11 @@
 import os
 
-from signal import SIG_IGN, SIGINT, SIGTERM, Signals
+from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from time import sleep
 from typing import List
 
 from sanic.log import logger
 from sanic.worker.process import ProcessState, Worker
-
-
-def fake_serve(**kwargs):
-    run = True
-    logger.info(kwargs)
-
-    def stop(*_):
-        nonlocal run
-        run = False
-
-    pid = os.getpid()
-    n = 0
-    signal_func(SIGINT, SIG_IGN)
-    signal_func(SIGTERM, stop)
-
-    while run:
-        n += 1
-        logger.info(pid)
-        sleep(1)
 
 
 class WorkerManager:
@@ -82,17 +62,17 @@ class WorkerManager:
         for process in self.processes:
             process.terminate()
 
-    def restart(self):
+    def restart(self, **kwargs):
         for process in self.transient_processes:
-            process.restart()
+            process.restart(**kwargs)
 
     def monitor(self):
         while True:
-            flag = self.restart_subscriber.recv()
+            reloaded_files = self.restart_subscriber.recv()
 
-            if not flag:
+            if not reloaded_files:
                 break
-            self.restart()
+            self.restart(reloaded_files=reloaded_files)
 
     @property
     def workers(self):
@@ -111,7 +91,7 @@ class WorkerManager:
                 yield process
 
     def kill(self, signal, frame):
-        self.restart_publisher.send(0)
+        self.restart_publisher.send(None)
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         for process in self.processes:
             if process.is_alive():

@@ -5,7 +5,6 @@ omit =
     site-packages
     sanic/__main__.py
     sanic/compat.py
-    sanic/reloader_helpers.py
     sanic/simple.py
     sanic/utils.py
     sanic/cli
@@ -25,7 +24,6 @@ omit =
     site-packages
     sanic/__main__.py
     sanic/compat.py
-    sanic/reloader_helpers.py
     sanic/simple.py
     sanic/utils.py
     sanic/cli

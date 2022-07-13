@@ -244,12 +244,6 @@ class RunnerMixin(metaclass=SanicMeta):
                 "#asynchronous-support"
             )
 
-        # if (
-        #     self.__class__.should_auto_reload()
-        #     and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        # ):  # no cov
-        #     return
-
         if sock is None:
             host, port = self.get_address(host, port, version, auto_tls)
 
@@ -638,25 +632,6 @@ class RunnerMixin(metaclass=SanicMeta):
                 primary = apps[0]
             except IndexError:
                 raise RuntimeError("Did not find any applications.")
-
-        # TODO:
-        # - Catch when not main process to either stop or error
-
-        # reloader_start = primary.listeners.get("reload_process_start")
-        # reloader_stop = primary.listeners.get("reload_process_stop")
-        # We want to run auto_reload if ANY of the applications have it enabled
-        # if (
-        #     cls.should_auto_reload()
-        #     and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        # ):  # no cov
-        #     loop = new_event_loop()
-        #     trigger_events(reloader_start, loop, primary)
-        #     reload_dirs: Set[Path] = primary.state.reload_dirs.union(
-        #         *(app.state.reload_dirs for app in apps)
-        #     )
-        #     reloader_helpers.watchdog(1.0, reload_dirs)
-        #     trigger_events(reloader_stop, loop, primary)
-        #     return
 
         # This exists primarily for unit testing
         if not primary.state.server_info:  # no cov

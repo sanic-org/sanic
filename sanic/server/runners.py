@@ -52,7 +52,6 @@ def serve(
     host,
     port,
     app: Sanic,
-    restart_flag,
     ssl: Optional[SSLContext] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
@@ -94,8 +93,60 @@ def serve(
                                   create_server method
     :return: Nothing
     """
-    # if not run_async and not loop:
-    #     # create new event_loop after fork
+    if not run_async and not loop:
+        # create new event_loop after fork
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    if app.debug:
+        loop.set_debug(app.debug)
+
+    app.asgi = False
+
+    if version is HTTP.VERSION_3:
+        return _serve_http_3(host, port, app, loop, ssl)
+    return _serve_http_1(
+        host,
+        port,
+        app,
+        ssl,
+        sock,
+        unix,
+        reuse_port,
+        loop,
+        protocol,
+        backlog,
+        register_sys_signals,
+        run_multiple,
+        run_async,
+        connections,
+        signal,
+        state,
+        asyncio_server_kwargs,
+    )
+
+
+def worker_serve(
+    host,
+    port,
+    app: Sanic,
+    restart_flag,
+    ssl: Optional[SSLContext] = None,
+    sock: Optional[socket.socket] = None,
+    unix: Optional[str] = None,
+    reuse_port: bool = False,
+    loop=None,
+    protocol: Type[asyncio.Protocol] = HttpProtocol,
+    backlog: int = 100,
+    register_sys_signals: bool = True,
+    run_multiple: bool = False,
+    run_async: bool = False,
+    connections=None,
+    signal=Signal(),
+    state=None,
+    asyncio_server_kwargs=None,
+    version=HTTP.VERSION_1,
+):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 

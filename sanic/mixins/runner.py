@@ -48,7 +48,7 @@ from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
-from sanic.server.runners import serve
+from sanic.server.runners import serve, worker_serve
 from sanic.server.socket import configure_socket
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
@@ -674,13 +674,11 @@ class RunnerMixin(metaclass=SanicMeta):
 
             sock = configure_socket(primary_server_info.settings)
             primary_server_info.settings["run_multiple"] = True
-            kwargs = {**primary_server_info.settings}
-            # queue: Queue[bool] = Queue()
             sub, pub = Pipe()
-            kwargs["restart_flag"] = pub
+            kwargs = {**primary_server_info.settings, "restart_flag": pub}
             manager = WorkerManager(
                 primary.state.workers,
-                serve,
+                worker_serve,
                 kwargs,
                 get_context("fork"),
                 pub,

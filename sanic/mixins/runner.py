@@ -16,6 +16,7 @@ from asyncio import (
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
+from multiprocessing import get_context
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
@@ -50,6 +51,7 @@ from sanic.server.events import trigger_events
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
+from sanic.worker.manager import WorkerManager, fake_serve
 
 
 if TYPE_CHECKING:
@@ -234,11 +236,11 @@ class RunnerMixin(metaclass=SanicMeta):
                 "#asynchronous-support"
             )
 
-        if (
-            self.__class__.should_auto_reload()
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):  # no cov
-            return
+        # if (
+        #     self.__class__.should_auto_reload()
+        #     and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        # ):  # no cov
+        #     return
 
         if sock is None:
             host, port = self.get_address(host, port, version, auto_tls)
@@ -629,21 +631,21 @@ class RunnerMixin(metaclass=SanicMeta):
             except IndexError:
                 raise RuntimeError("Did not find any applications.")
 
-        reloader_start = primary.listeners.get("reload_process_start")
-        reloader_stop = primary.listeners.get("reload_process_stop")
-        # We want to run auto_reload if ANY of the applications have it enabled
-        if (
-            cls.should_auto_reload()
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):  # no cov
-            loop = new_event_loop()
-            trigger_events(reloader_start, loop, primary)
-            reload_dirs: Set[Path] = primary.state.reload_dirs.union(
-                *(app.state.reload_dirs for app in apps)
-            )
-            reloader_helpers.watchdog(1.0, reload_dirs)
-            trigger_events(reloader_stop, loop, primary)
-            return
+        # reloader_start = primary.listeners.get("reload_process_start")
+        # reloader_stop = primary.listeners.get("reload_process_stop")
+        # # We want to run auto_reload if ANY of the applications have it enabled
+        # if (
+        #     cls.should_auto_reload()
+        #     and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        # ):  # no cov
+        #     loop = new_event_loop()
+        #     trigger_events(reloader_start, loop, primary)
+        #     reload_dirs: Set[Path] = primary.state.reload_dirs.union(
+        #         *(app.state.reload_dirs for app in apps)
+        #     )
+        #     reloader_helpers.watchdog(1.0, reload_dirs)
+        #     trigger_events(reloader_stop, loop, primary)
+        #     return
 
         # This exists primarily for unit testing
         if not primary.state.server_info:  # no cov
@@ -654,30 +656,39 @@ class RunnerMixin(metaclass=SanicMeta):
         primary_server_info = primary.state.server_info[0]
         primary.before_server_start(partial(primary._start_servers, apps=apps))
 
-        try:
-            primary_server_info.stage = ServerStage.SERVING
+        # try:
+        #     primary_server_info.stage = ServerStage.SERVING
 
-            if primary.state.workers > 1 and os.name != "posix":  # no cov
-                logger.warn(
-                    f"Multiprocessing is currently not supported on {os.name},"
-                    " using workers=1 instead"
-                )
-                primary.state.workers = 1
-            if primary.state.workers == 1:
-                serve_single(primary_server_info.settings)
-            elif primary.state.workers == 0:
-                raise RuntimeError("Cannot serve with no workers")
-            else:
-                serve_multiple(
-                    primary_server_info.settings, primary.state.workers
-                )
-        except BaseException:
-            error_logger.exception(
-                "Experienced exception while trying to serve"
-            )
-            raise
-        finally:
-            primary_server_info.stage = ServerStage.STOPPED
+        #     if primary.state.workers > 1 and os.name != "posix":  # no cov
+        #         logger.warn(
+        #             f"Multiprocessing is currently not supported on {os.name},"
+        #             " using workers=1 instead"
+        #         )
+        #         primary.state.workers = 1
+        #     if primary.state.workers == 1:
+        #         serve_single(primary_server_info.settings)
+        #     elif primary.state.workers == 0:
+        #         raise RuntimeError("Cannot serve with no workers")
+        #     else:
+        #         serve_multiple(
+        #             primary_server_info.settings, primary.state.workers
+        #         )
+        # except BaseException:
+        #     error_logger.exception(
+        #         "Experienced exception while trying to serve"
+        #     )
+        #     raise
+        # finally:
+        #     primary_server_info.stage = ServerStage.STOPPED
+
+        manager = WorkerManager(
+            primary.state.workers,
+            fake_serve,
+            primary_server_info.settings,
+            get_context(None),
+        )
+        manager.run()
+
         logger.info("Server Stopped")
         for app in apps:
             app.state.server_info.clear()

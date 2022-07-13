@@ -11,11 +11,12 @@ from asyncio import (
     all_tasks,
     get_event_loop,
     get_running_loop,
+    new_event_loop,
 )
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
-from multiprocessing import get_context
+from multiprocessing import Pipe, get_context
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
@@ -25,7 +26,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Set,
     Tuple,
     Type,
     Union,
@@ -45,11 +45,14 @@ from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
+from sanic.server.events import trigger_events
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve
 from sanic.server.socket import configure_socket
 from sanic.worker.manager import WorkerManager
+from sanic.worker.multiplexer import WorkerMultiplexer
+from sanic.worker.reloader import Reloader
 
 
 if TYPE_CHECKING:
@@ -73,6 +76,12 @@ class RunnerMixin(metaclass=SanicMeta):
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
     websocket_enabled: bool
+    multiplexer: WorkerMultiplexer
+
+    @property
+    def m(self) -> WorkerMultiplexer:
+        """Interface for interacting with the worker processes"""
+        return self.multiplexer
 
     def make_coffee(self, *args, **kwargs):
         self.state.coffee = True
@@ -634,7 +643,7 @@ class RunnerMixin(metaclass=SanicMeta):
 
         # reloader_start = primary.listeners.get("reload_process_start")
         # reloader_stop = primary.listeners.get("reload_process_stop")
-        # # We want to run auto_reload if ANY of the applications have it enabled
+        # We want to run auto_reload if ANY of the applications have it enabled
         # if (
         #     cls.should_auto_reload()
         #     and os.environ.get("SANIC_SERVER_RUNNING") != "true"
@@ -657,51 +666,49 @@ class RunnerMixin(metaclass=SanicMeta):
         primary_server_info = primary.state.server_info[0]
         primary.before_server_start(partial(primary._start_servers, apps=apps))
 
-        # try:
-        #     primary_server_info.stage = ServerStage.SERVING
+        try:
+            main_start = primary_server_info.settings.pop("main_start", None)
+            main_stop = primary_server_info.settings.pop("main_stop", None)
+            loop = new_event_loop()
+            trigger_events(main_start, loop, primary)
 
-        #     if primary.state.workers > 1 and os.name != "posix":  # no cov
-        #         logger.warn(
-        #             f"Multiprocessing is currently not supported on {os.name},"
-        #             " using workers=1 instead"
-        #         )
-        #         primary.state.workers = 1
-        #     if primary.state.workers == 1:
-        #         serve_single(primary_server_info.settings)
-        #     elif primary.state.workers == 0:
-        #         raise RuntimeError("Cannot serve with no workers")
-        #     else:
-        #         serve_multiple(
-        #             primary_server_info.settings, primary.state.workers
-        #         )
-        # except BaseException:
-        #     error_logger.exception(
-        #         "Experienced exception while trying to serve"
-        #     )
-        #     raise
-        # finally:
-        #     primary_server_info.stage = ServerStage.STOPPED
-        main_start = primary_server_info.settings.pop("main_start", None)
-        main_stop = primary_server_info.settings.pop("main_stop", None)
-        sock = configure_socket(primary_server_info.settings)
-        primary_server_info.settings["run_multiple"] = True
-        manager = WorkerManager(
-            primary.state.workers,
-            serve,
-            primary_server_info.settings,
-            get_context(None),
-        )
-        manager.run()
+            sock = configure_socket(primary_server_info.settings)
+            primary_server_info.settings["run_multiple"] = True
+            kwargs = {**primary_server_info.settings}
+            # queue: Queue[bool] = Queue()
+            sub, pub = Pipe()
+            kwargs["restart_flag"] = pub
+            manager = WorkerManager(
+                primary.state.workers,
+                serve,
+                kwargs,
+                get_context("fork"),
+                pub,
+                sub,
+            )
+            if cls.should_auto_reload():
+                reloader = Reloader(sub)
+                manager.manage(
+                    "Reloader", reloader, {"foo": "bar"}, transient=False
+                )
 
-        logger.info("Server Stopped")
-        for app in apps:
-            app.state.server_info.clear()
-            app.router.reset()
-            app.signal_router.reset()
+            manager.run()
+        except BaseException:
+            error_logger.exception(
+                "Experienced exception while trying to serve"
+            )
+            raise
+        finally:
+            logger.info("Server Stopped")
+            for app in apps:
+                app.state.server_info.clear()
+                app.router.reset()
+                app.signal_router.reset()
 
-        sock.close()
-        # loop.close()
-        # remove_unix_socket(unix)
+            sock.close()
+            # loop.close()
+            # remove_unix_socket(unix)
+            trigger_events(main_stop, loop, primary)
 
     async def _start_servers(
         self,

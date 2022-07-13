@@ -8,6 +8,8 @@ import stat
 from ipaddress import ip_address
 from typing import Any, Dict, Optional
 
+from sanic.exceptions import ServerError
+
 
 def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     """Create TCP server socket.
@@ -96,9 +98,20 @@ def configure_socket(server_settings: Dict[str, Any]) -> socket.SocketType:
         sock = bind_unix_socket(unix, backlog=backlog)
         server_settings["unix"] = unix
     if sock is None:
-        sock = bind_socket(
-            server_settings["host"], server_settings["port"], backlog=backlog
-        )
+        try:
+            sock = bind_socket(
+                server_settings["host"],
+                server_settings["port"],
+                backlog=backlog,
+            )
+        except OSError as e:
+            raise ServerError(
+                f"Sanic server could not start: {e}.\n"
+                "This may have happened if you are running Sanic in the "
+                "global scope and not inside of a "
+                '`if __name__ == "__main__"` block. See more information: '
+                "____."
+            ) from e
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None

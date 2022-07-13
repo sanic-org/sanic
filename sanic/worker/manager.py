@@ -3,6 +3,7 @@ import os
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import sleep
+from typing import List
 
 from sanic.log import logger
 from sanic.worker.process import ProcessState, Worker
@@ -28,17 +29,33 @@ def fake_serve(**kwargs):
 
 
 class WorkerManager:
-    def __init__(self, number: int, serve, server_settings, context):
-        self.workers = [
-            Worker(i, serve, server_settings, context) for i in range(number)
+    def __init__(
+        self,
+        number: int,
+        serve,
+        server_settings,
+        context,
+        restart_publisher,
+        restart_subscriber,
+    ):
+        self.context = context
+        self.transient: List[Worker] = [
+            Worker(f"Worker-{i}", serve, server_settings, context)
+            for i in range(number)
         ]
-        self.monitoring = False
+        self.durable: List[Worker] = []
+        self.restart_publisher = restart_publisher
+        self.restart_subscriber = restart_subscriber
         signal_func(SIGINT, self.kill)
         signal_func(SIGTERM, self.kill)
 
+    def manage(self, ident, func, kwargs, transient=True):
+        container = self.transient if transient else self.durable
+        container.append(Worker(ident, func, kwargs, self.context))
+
     def run(self):
         self.start()
-        # self.monitor()
+        self.monitor()
         self.join()
         self.terminate()
 
@@ -65,11 +82,21 @@ class WorkerManager:
         for process in self.processes:
             process.terminate()
 
-    # def monitor(self):
-    #     self.monitoring = True
-    #     while self.monitoring:
-    #         for worker in self.workers:
-    #             worker.check()
+    def restart(self):
+        for process in self.transient_processes:
+            process.restart()
+
+    def monitor(self):
+        while True:
+            flag = self.restart_subscriber.recv()
+
+            if not flag:
+                break
+            self.restart()
+
+    @property
+    def workers(self):
+        return self.transient + self.durable
 
     @property
     def processes(self):
@@ -77,8 +104,14 @@ class WorkerManager:
             for process in worker.processes:
                 yield process
 
+    @property
+    def transient_processes(self):
+        for worker in self.transient:
+            for process in worker.processes:
+                yield process
+
     def kill(self, signal, frame):
-        self.monitoring = False
+        self.restart_publisher.send(0)
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         for process in self.processes:
             if process.is_alive():

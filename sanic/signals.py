@@ -4,6 +4,7 @@ import asyncio
 
 from enum import Enum
 from inspect import isawaitable
+from os import getpid
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from sanic_routing import BaseRouter, Route, RouteGroup
@@ -150,13 +151,13 @@ class SignalRouter(BaseRouter):
         try:
             for signal in signals:
                 params.pop("__trigger__", None)
+                requirements = getattr(
+                    signal.handler, "__requirements__", None
+                )
                 if (
                     (condition is None and signal.ctx.exclusive is False)
-                    or (
-                        condition is None
-                        and not signal.handler.__requirements__
-                    )
-                    or (condition == signal.handler.__requirements__)
+                    or (condition is None and not requirements)
+                    or (condition == requirements)
                 ) and (signal.ctx.trigger or event == signal.ctx.definition):
                     maybe_coroutine = signal.handler(**params)
                     if isawaitable(maybe_coroutine):

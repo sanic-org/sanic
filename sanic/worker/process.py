@@ -1,4 +1,5 @@
 from enum import IntEnum, auto
+from multiprocessing.context import BaseContext
 
 # from multiprocessing import Queue
 from typing import Set
@@ -14,10 +15,14 @@ class ProcessState(IntEnum):
 
 
 class WorkerProcess:
-    def __init__(self, process):
+    def __init__(self, factory, name, target, kwargs):
         self.state = ProcessState.IDLE
-        self.misses = 0
-        self._process = process
+        # self.misses = 0
+        self.factory = factory
+        self.name = name
+        self.target = target
+        self.kwargs = kwargs
+        self.spawn()
 
     def set_state(self, state: ProcessState, force=False):
         if not force and state < self.state:
@@ -25,7 +30,7 @@ class WorkerProcess:
         self.state = state
 
     def start(self):
-        logger.debug("Starting a process")
+        logger.debug("Starting a process: %s", self.name)
         self.set_state(ProcessState.STARTED)
         self._process.start()
 
@@ -34,15 +39,32 @@ class WorkerProcess:
         self._process.join()
 
     def terminate(self):
-        logger.debug(f"Terminating {self.pid}")
+        logger.debug("Terminating a process: %s [%s]", self.name, self.pid)
         self.set_state(ProcessState.TERMINATED, force=True)
         self._process.terminate()
+
+    def restart(self):
+        logger.debug("Restarting a process: %s [%s]", self.name, self.pid)
+        self._process.terminate()
+        self.set_state(ProcessState.IDLE, force=True)
+        self.spawn()
+        self.start()
 
     def is_alive(self):
         return self._process.is_alive()
 
-    def missed(self):
-        self.misses += 1
+    def spawn(self):
+        if self.state is not ProcessState.IDLE:
+            raise Exception("Cannot spawn a worker process until it is idle.")
+        self._process = self.factory(
+            name=self.name,
+            target=self.target,
+            kwargs=self.kwargs,
+        )
+        self._process.daemon = True
+
+    # def missed(self):
+    #     self.misses += 1
 
     @property
     def pid(self):
@@ -50,7 +72,9 @@ class WorkerProcess:
 
 
 class Worker:
-    def __init__(self, ident: int, serve, server_settings, context):
+    def __init__(
+        self, ident: str, serve, server_settings, context: BaseContext
+    ):
         self.ident = ident
         self.context = context
         self.serve = serve
@@ -60,14 +84,14 @@ class Worker:
         self.create_process()
 
     def create_process(self) -> WorkerProcess:
-        subprocess = self.context.Process(
+        process = WorkerProcess(
+            factory=self.context.Process,
+            name=f"Sanic-{self.ident}",
             target=self.serve,
             kwargs={
                 **self.server_settings,
                 # "health_queue": self.health_queue,
             },
         )
-        subprocess.daemon = True
-        process = WorkerProcess(subprocess)
         self.processes.add(process)
         return process

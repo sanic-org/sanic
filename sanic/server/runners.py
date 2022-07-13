@@ -11,6 +11,7 @@ from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context
 from sanic.server.events import trigger_events
+from sanic.worker.multiplexer import WorkerMultiplexer
 
 
 if TYPE_CHECKING:
@@ -51,6 +52,7 @@ def serve(
     host,
     port,
     app: Sanic,
+    restart_flag,
     ssl: Optional[SSLContext] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
@@ -101,6 +103,7 @@ def serve(
         loop.set_debug(app.debug)
 
     app.asgi = False
+    app.multiplexer = WorkerMultiplexer(restart_flag)
     primary_server_info = app.state.server_info[0]
     primary_server_info.stage = ServerStage.SERVING
 
@@ -224,7 +227,7 @@ def _serve_http_1(
         )
 
     loop.run_until_complete(app._startup())
-    # loop.run_until_complete(app._server_event("init", "before"))
+    loop.run_until_complete(app._server_event("init", "before"))
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -264,7 +267,7 @@ def _serve_http_1(
                 conn.abort()
 
     _setup_system_signals(app, run_multiple, register_sys_signals, loop)
-    # loop.run_until_complete(app._server_event("init", "after"))
+    loop.run_until_complete(app._server_event("init", "after"))
     _run_server_forever(
         loop,
         partial(app._server_event, "shutdown", "before"),

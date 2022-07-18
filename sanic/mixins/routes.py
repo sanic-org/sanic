@@ -806,23 +806,21 @@ class RouteMixin(metaclass=SanicMeta):
         __file_uri__=None,
     ):
         # Merge served directory and requested file if provided
-        # Strip all / that in the beginning of the URL to help prevent python
-        # from herping a derp and treating the uri as an absolute path
         root_path = file_path = unquote(file_or_directory)
 
         if __file_uri__:
+            # Strip all / that in the beginning of the URL to help prevent python
+            # from herping a derp and treating the uri as an absolute path
             unquoted_file_uri = unquote(__file_uri__).lstrip("/")
 
-            file_uri_pp = PurePath(unquoted_file_uri)
-            if any(part == ".." for part in file_uri_pp.parts):
+            segments = unquoted_file_uri.split("/")
+            if any(segment == ".." for segment in segments):
                 raise BadRequest("Invalid URL")
 
             file_path = path.join(
                 file_or_directory, unquoted_file_uri
             )
 
-        # URL decode the path sent by the browser otherwise we won't be able to
-        # match filenames which got encoded (filenames with spaces etc)
         file_path = path.abspath(file_path)
         if not file_path.startswith(path.abspath(root_path)):
             error_logger.exception(

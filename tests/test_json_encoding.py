@@ -3,11 +3,16 @@ import sys
 from dataclasses import asdict, dataclass
 from functools import partial
 from json import dumps as sdumps
+from typing import Dict
 
 import pytest
 
+from packaging import version
+
 
 try:
+    import ujson
+
     from ujson import dumps as udumps
 
     NO_UJSON = False
@@ -34,7 +39,7 @@ def foo():
 
 
 @pytest.fixture
-def payload(foo):
+def payload(foo: Foo):
     return {"foo": foo}
 
 
@@ -58,7 +63,7 @@ def test_change_encoder_to_some_custom():
 
 
 @pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
-def test_json_response_ujson(payload):
+def test_json_response_ujson(payload: Dict[str, Foo]):
     """ujson will look at __json__"""
     response = json(payload)
     assert response.body == b'{"foo":{"bar":"bar"}}'
@@ -75,7 +80,14 @@ def test_json_response_ujson(payload):
         json(payload)
 
 
-@pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
+@pytest.mark.skipif(
+    NO_UJSON is True
+    or version.parse(ujson.__version__) >= version.parse("5.4.0"),
+    reason=(
+        "ujson not installed or newer than 5.4.0, "
+        "which can handle arbitrary size integers"
+    ),
+)
 def test_json_response_json():
     """One of the easiest ways to tell the difference is that ujson cannot
     serialize over 64 bits"""

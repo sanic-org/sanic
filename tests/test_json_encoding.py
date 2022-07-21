@@ -3,11 +3,10 @@ import sys
 from dataclasses import asdict, dataclass
 from functools import partial
 from json import dumps as sdumps
+from string import ascii_lowercase
 from typing import Dict
 
 import pytest
-
-from packaging import version
 
 
 try:
@@ -15,11 +14,16 @@ try:
 
     from ujson import dumps as udumps
 
+    ujson_version = tuple(
+        map(int, ujson.__version__.strip(ascii_lowercase).split("."))
+    )
+
     NO_UJSON = False
     DEFAULT_DUMPS = udumps
 except ModuleNotFoundError:
     NO_UJSON = True
     DEFAULT_DUMPS = partial(sdumps, separators=(",", ":"))
+    ujson_version = None
 
 from sanic import Sanic
 from sanic.response import BaseHTTPResponse, json
@@ -81,10 +85,9 @@ def test_json_response_ujson(payload: Dict[str, Foo]):
 
 
 @pytest.mark.skipif(
-    NO_UJSON is True
-    or version.parse(ujson.__version__) >= version.parse("5.4.0"),
+    NO_UJSON is True or ujson_version >= (5, 4, 0),
     reason=(
-        "ujson not installed or newer than 5.4.0, "
+        "ujson not installed or version is 5.4.0 or newer, "
         "which can handle arbitrary size integers"
     ),
 )

@@ -229,7 +229,7 @@ async def test_zero_downtime():
         ino = os.stat(SOCKPATH).st_ino
         task = asyncio.get_event_loop().create_task(client())
         start_time = current_time()
-        while current_time() < start_time + 4:
+        while current_time() < start_time + 6:
             # Start a new one and wait until the socket is replaced
             processes.append(spawn())
             while ino == os.stat(SOCKPATH).st_ino:

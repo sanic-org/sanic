@@ -71,9 +71,9 @@ To execute only unittests, run ``tox`` with environment like so:
 
 .. code-block:: bash
 
-   tox -e py36 -v -- tests/test_config.py
-   # or
    tox -e py37 -v -- tests/test_config.py
+   # or
+   tox -e py310 -v -- tests/test_config.py
 
 Run lint checks
 ---------------

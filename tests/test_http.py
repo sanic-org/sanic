@@ -2,6 +2,7 @@ import json as stdjson
 
 from collections import namedtuple
 from pathlib import Path
+from sys import version_info
 
 import pytest
 
@@ -35,7 +36,7 @@ def test_app(app: Sanic):
 
 
 @pytest.fixture
-def runner(test_app):
+def runner(test_app: Sanic):
     client = ReusableClient(test_app, port=PORT)
     client.run()
     yield client
@@ -43,7 +44,7 @@ def runner(test_app):
 
 
 @pytest.fixture
-def client(runner):
+def client(runner: ReusableClient):
     client = namedtuple("Client", ("raw", "send", "recv"))
 
     raw = RawClient(runner.host, runner.port)
@@ -74,7 +75,10 @@ def test_full_message(client):
         """
     )
     response = client.recv()
-    assert len(response) == 151
+
+    # AltSvcCheck touchup removes the Alt-Svc header from the 
+    # response in the Python 3.9+ in this case
+    assert len(response) == (151 if version_info < (3, 9) else 140)
     assert b"200 OK" in response
 
 

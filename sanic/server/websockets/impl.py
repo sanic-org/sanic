@@ -252,7 +252,7 @@ class WebsocketImplProtocol:
 
     def _force_disconnect(self) -> bool:
         """
-        Internal methdod used by end_connection and fail_connection
+        Internal method used by end_connection and fail_connection
         only when the graceful auto-closer cannot be used
         """
         if self.auto_closer_task and not self.auto_closer_task.done():

@@ -69,6 +69,7 @@ else:
     from typing import Literal
 
     HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
+try_use_uvloop()
 
 
 class RunnerMixin(metaclass=SanicMeta):
@@ -287,10 +288,10 @@ class RunnerMixin(metaclass=SanicMeta):
             ApplicationServerInfo(settings=server_settings)
         )
 
-        if self.config.USE_UVLOOP is True or (
-            self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
-        ):
-            try_use_uvloop()
+        # if self.config.USE_UVLOOP is True or (
+        #     self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
+        # ):
+        #     try_use_uvloop()
 
     async def create_server(
         self,
@@ -652,6 +653,13 @@ class RunnerMixin(metaclass=SanicMeta):
             primary_server_info.settings["run_multiple"] = True
             sub, pub = Pipe()
             kwargs = {**primary_server_info.settings, "restart_flag": pub}
+
+            # TODO:
+            # - use spawn for Windows, fork for Linus
+            # - make sure to install loop in global scope
+            #     - uvloop or the Window policy
+            # - on windows need to use socket.share, socket.fromshare pattern
+
             manager = WorkerManager(
                 primary.state.workers,
                 worker_serve,

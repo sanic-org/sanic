@@ -28,7 +28,7 @@ def test_ws_handler(
     simple_ws_mimic_client: MimicClientType,
 ):
     @app.websocket("/ws")
-    async def echo_handler(request: Request, ws: Websocket):
+    async def ws_echo_handler(request: Request, ws: Websocket):
         while True:
             msg = await ws.recv()
             await ws.send(msg)
@@ -45,7 +45,7 @@ def test_ws_handler_async_for(
     simple_ws_mimic_client: MimicClientType,
 ):
     @app.websocket("/ws")
-    async def forever_echo_handler(request: Request, ws: Websocket):
+    async def ws_echo_handler(request: Request, ws: Websocket):
         async for msg in ws:
             await ws.send(msg)
 

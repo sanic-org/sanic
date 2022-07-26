@@ -809,17 +809,16 @@ class RouteMixin(metaclass=SanicMeta):
         root_path = file_path = unquote(file_or_directory)
 
         if __file_uri__:
-            # Strip all / that in the beginning of the URL to help prevent python
-            # from herping a derp and treating the uri as an absolute path
+            # Strip all / that in the beginning of the URL to help prevent
+            # python from herping a derp and treating the uri as an
+            # absolute path
             unquoted_file_uri = unquote(__file_uri__).lstrip("/")
 
             segments = unquoted_file_uri.split("/")
-            if any(segment == ".." for segment in segments):
+            if ".." in segments:
                 raise BadRequest("Invalid URL")
 
-            file_path = path.join(
-                file_or_directory, unquoted_file_uri
-            )
+            file_path = path.join(file_or_directory, unquoted_file_uri)
 
         file_path = path.abspath(file_path)
         if not file_path.startswith(path.abspath(root_path)):

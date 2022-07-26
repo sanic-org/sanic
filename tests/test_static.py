@@ -578,3 +578,18 @@ def test_resource_type_dir(app, static_file_directory):
 def test_resource_type_unknown(app, static_file_directory, caplog):
     with pytest.raises(ValueError):
         app.static("/static", static_file_directory, resource_type="unknown")
+
+
+def test_dotted_dir_ok(app, static_file_directory):
+    app.static("/foo", static_file_directory)
+
+    _, response = app.test_client.get("/foo/dotted../dot.txt")
+    assert response.status == 200
+    assert response.body == b"DOT\n"
+
+
+def test_breakout(app, static_file_directory):
+    app.static("/foo", static_file_directory)
+
+    _, response = app.test_client.get("/foo/..%2Fstatic/test.file")
+    assert response.status == 400

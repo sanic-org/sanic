@@ -999,7 +999,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     def asgi_client(self):  # noqa
         """
         A testing client that uses ASGI to reach into the application to
-        execute hanlers.
+        execute handlers.
 
         :return: testing client
         :rtype: :class:`SanicASGITestClient`
@@ -1194,7 +1194,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         `See user guide re: background tasks
         <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
 
-        :param task: future, couroutine or awaitable
+        :param task: future, coroutine or awaitable
         """
         try:
             loop = self.loop  # Will raise SanicError if loop is not started

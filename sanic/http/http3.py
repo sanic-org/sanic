@@ -378,7 +378,7 @@ def get_config(
     app: Sanic, ssl: Union[SanicSSLContext, CertSelector, SSLContext]
 ):
     # TODO:
-    # - proper selection needed if servince with multiple certs insted of
+    # - proper selection needed if service with multiple certs insted of
     #   just taking the first
     if isinstance(ssl, CertSelector):
         ssl = cast(SanicSSLContext, ssl.sanic_select[0])

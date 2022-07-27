@@ -815,7 +815,7 @@ class RouteMixin(metaclass=SanicMeta):
             unquoted_file_uri = unquote(__file_uri__).lstrip("/")
 
             segments = unquoted_file_uri.split("/")
-            if ".." in segments or any(sep in segment for segment in segments):
+            if any(segment == ".." or sep in segment for segment in segments):
                 raise BadRequest("Invalid URL")
 
             file_path = path.join(file_or_directory, unquoted_file_uri)

@@ -806,7 +806,7 @@ class RouteMixin(metaclass=SanicMeta):
         __file_uri__=None,
     ):
         # Merge served directory and requested file if provided
-        root_path = file_path = unquote(file_or_directory)
+        root_path = file_path = path.abspath(unquote(file_or_directory))
 
         if __file_uri__:
             # Strip all / that in the beginning of the URL to help prevent
@@ -819,9 +819,9 @@ class RouteMixin(metaclass=SanicMeta):
                 raise BadRequest("Invalid URL")
 
             file_path = path.join(file_or_directory, unquoted_file_uri)
+            file_path = path.abspath(file_path)
 
-        file_path = path.abspath(file_path)
-        if not file_path.startswith(path.abspath(root_path)):
+        if not file_path.startswith(root_path):
             error_logger.exception(
                 f"File not found: path={file_or_directory}, "
                 f"relative_url={__file_uri__}"

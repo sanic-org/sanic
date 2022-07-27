@@ -29,10 +29,13 @@ def double_dotted_directory_file(static_file_directory: str):
         raise Exception("Windows doesn't support double dotted directories")
 
     file_path = Path(static_file_directory) / "dotted.." / "dot.txt"
-    Path.mkdir(file_path.parent, exist_ok=True)
+    double_dotted_dir = file_path.parent
+    Path.mkdir(double_dotted_dir, exist_ok=True)
     with open(file_path, "w") as f:
         f.write("DOT\n")
     yield file_path
+    Path.unlink(file_path)
+    Path.rmdir(double_dotted_dir)
 
 
 def get_file_path(static_file_directory, file_name):

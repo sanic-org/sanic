@@ -3,7 +3,7 @@ from contextlib import suppress
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
-from os import path
+from os import path, sep
 from pathlib import PurePath
 from textwrap import dedent
 from time import gmtime, strftime
@@ -815,7 +815,7 @@ class RouteMixin(metaclass=SanicMeta):
             unquoted_file_uri = unquote(__file_uri__).lstrip("/")
 
             segments = unquoted_file_uri.split("/")
-            if ".." in segments:
+            if ".." in segments or any(sep in segment for segment in segments):
                 raise BadRequest("Invalid URL")
 
             file_path = path.join(file_or_directory, unquoted_file_uri)

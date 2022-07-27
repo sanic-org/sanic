@@ -594,7 +594,7 @@ def test_resource_type_unknown(app, static_file_directory, caplog):
         app.static("/static", static_file_directory, resource_type="unknown")
 
 
-@pytest.skipif(
+@pytest.mark.skipif(
     sys.platform == "win32",
     reason="Windows does not support double dotted directories",
 )
@@ -602,7 +602,7 @@ def test_dotted_dir_ok(
     app: Sanic, static_file_directory: str, double_dotted_directory_file: Path
 ):
     app.static("/foo", static_file_directory)
-    double_dotted_directory_file = double_dotted_directory_file.lstrip(
+    double_dotted_directory_file = str(double_dotted_directory_file).lstrip(
         static_file_directory
     )
     _, response = app.test_client.get("/foo/" + double_dotted_directory_file)

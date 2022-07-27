@@ -620,8 +620,12 @@ def test_breakout(app: Sanic, static_file_directory: str):
     assert response.status == 400
 
 
-@pytest.mark.skipif(sys.platform != "win32")
-def test_double_backslash_prohibited_on_win32(app: Sanic, static_file_directory: str):
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="Block backslash on Windows only"
+)
+def test_double_backslash_prohibited_on_win32(
+    app: Sanic, static_file_directory: str
+):
     app.static("/foo", static_file_directory)
 
     _, response = app.test_client.get("/foo/static/..\\static/test.file")

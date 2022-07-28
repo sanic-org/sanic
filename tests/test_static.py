@@ -616,6 +616,9 @@ def test_dotted_dir_ok(
 def test_breakout(app: Sanic, static_file_directory: str):
     app.static("/foo", static_file_directory)
 
+    _, response = app.test_client.get("/foo/..%2Ffake/server.py")
+    assert response.status == 400
+
     _, response = app.test_client.get("/foo/..%2Fstatic/test.file")
     assert response.status == 400
 

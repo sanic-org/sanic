@@ -3,8 +3,8 @@ from contextlib import suppress
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
-from os import path, sep
-from pathlib import PurePath
+from os import path
+from pathlib import Path, PurePath
 from textwrap import dedent
 from time import gmtime, strftime
 from typing import (
@@ -806,22 +806,25 @@ class RouteMixin(metaclass=SanicMeta):
         __file_uri__=None,
     ):
         # Merge served directory and requested file if provided
-        root_path = file_path = path.abspath(unquote(file_or_directory))
+        file_path_raw = Path(unquote(file_or_directory))
+        root_path = file_path = file_path_raw.resolve()
 
         if __file_uri__:
             # Strip all / that in the beginning of the URL to help prevent
             # python from herping a derp and treating the uri as an
             # absolute path
             unquoted_file_uri = unquote(__file_uri__).lstrip("/")
-
-            segments = unquoted_file_uri.split("/")
-            if ".." in segments or any(sep in segment for segment in segments):
+            file_path_raw = Path(file_or_directory, unquoted_file_uri)
+            file_path = file_path_raw.resolve()
+            if (
+                file_path < root_path and not file_path_raw.is_symlink()
+            ) or file_path_raw.match("../**/*"):
                 raise BadRequest("Invalid URL")
 
-            file_path = path.join(file_or_directory, unquoted_file_uri)
-            file_path = path.abspath(file_path)
-
-        if not file_path.startswith(root_path):
+        if (
+            not file_path.is_relative_to(root_path)
+            and not file_path_raw.is_symlink()
+        ):
             error_logger.exception(
                 f"File not found: path={file_or_directory}, "
                 f"relative_url={__file_uri__}"

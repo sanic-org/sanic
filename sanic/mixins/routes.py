@@ -825,15 +825,15 @@ class RouteMixin(metaclass=SanicMeta):
                 )
                 raise not_found
 
-        if (
-            not file_path.is_relative_to(root_path)
-            and not file_path_raw.is_symlink()
-        ):
-            error_logger.exception(
-                f"File not found: path={file_or_directory}, "
-                f"relative_url={__file_uri__}"
-            )
-            raise not_found
+        try:
+            file_path.relative_to(root_path)
+        except ValueError:
+            if not file_path_raw.is_symlink():
+                error_logger.exception(
+                    f"File not found: path={file_or_directory}, "
+                    f"relative_url={__file_uri__}"
+                )
+                raise not_found
         try:
             headers = {}
             # Check if the client has been sent this file before

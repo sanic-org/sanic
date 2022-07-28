@@ -605,10 +605,10 @@ def test_dotted_dir_ok(
     app: Sanic, static_file_directory: str, double_dotted_directory_file: Path
 ):
     app.static("/foo", static_file_directory)
-    double_dotted_directory_file = str(double_dotted_directory_file).lstrip(
-        static_file_directory
+    dot_relative_path = str(
+        double_dotted_directory_file.relative_to(static_file_directory)
     )
-    _, response = app.test_client.get("/foo/" + double_dotted_directory_file)
+    _, response = app.test_client.get("/foo/" + dot_relative_path)
     assert response.status == 200
     assert response.body == b"DOT\n"
 

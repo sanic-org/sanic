@@ -3,9 +3,8 @@ from contextlib import suppress
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
-from os import path
+from os import path, sep
 from pathlib import PurePath
-from re import sub
 from textwrap import dedent
 from time import gmtime, strftime
 from typing import (
@@ -806,23 +805,23 @@ class RouteMixin(metaclass=SanicMeta):
         content_type=None,
         __file_uri__=None,
     ):
-        # Using this to determine if the URL is trying to break out of the path
-        # served.  os.path.realpath seems to be very slow
-        if __file_uri__ and "../" in __file_uri__:
-            raise BadRequest("Invalid URL")
         # Merge served directory and requested file if provided
-        # Strip all / that in the beginning of the URL to help prevent python
-        # from herping a derp and treating the uri as an absolute path
-        root_path = file_path = file_or_directory
-        if __file_uri__:
-            file_path = path.join(
-                file_or_directory, sub("^[/]*", "", __file_uri__)
-            )
+        root_path = file_path = path.abspath(unquote(file_or_directory))
 
-        # URL decode the path sent by the browser otherwise we won't be able to
-        # match filenames which got encoded (filenames with spaces etc)
-        file_path = path.abspath(unquote(file_path))
-        if not file_path.startswith(path.abspath(unquote(root_path))):
+        if __file_uri__:
+            # Strip all / that in the beginning of the URL to help prevent
+            # python from herping a derp and treating the uri as an
+            # absolute path
+            unquoted_file_uri = unquote(__file_uri__).lstrip("/")
+
+            segments = unquoted_file_uri.split("/")
+            if ".." in segments or any(sep in segment for segment in segments):
+                raise BadRequest("Invalid URL")
+
+            file_path = path.join(file_or_directory, unquoted_file_uri)
+            file_path = path.abspath(file_path)
+
+        if not file_path.startswith(root_path):
             error_logger.exception(
                 f"File not found: path={file_or_directory}, "
                 f"relative_url={__file_uri__}"

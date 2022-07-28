@@ -26,12 +26,7 @@ from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
-from sanic.exceptions import (
-    BadRequest,
-    FileNotFound,
-    HeaderNotFound,
-    RangeNotSatisfiable,
-)
+from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
@@ -808,6 +803,11 @@ class RouteMixin(metaclass=SanicMeta):
         # Merge served directory and requested file if provided
         file_path_raw = Path(unquote(file_or_directory))
         root_path = file_path = file_path_raw.resolve()
+        not_found = FileNotFound(
+            "File not found",
+            path=file_or_directory,
+            relative_url=__file_uri__,
+        )
 
         if __file_uri__:
             # Strip all / that in the beginning of the URL to help prevent
@@ -819,7 +819,11 @@ class RouteMixin(metaclass=SanicMeta):
             if (
                 file_path < root_path and not file_path_raw.is_symlink()
             ) or file_path_raw.match("../**/*"):
-                raise BadRequest("Invalid URL")
+                error_logger.exception(
+                    f"File not found: path={file_or_directory}, "
+                    f"relative_url={__file_uri__}"
+                )
+                raise not_found
 
         if (
             not file_path.is_relative_to(root_path)
@@ -829,11 +833,7 @@ class RouteMixin(metaclass=SanicMeta):
                 f"File not found: path={file_or_directory}, "
                 f"relative_url={__file_uri__}"
             )
-            raise FileNotFound(
-                "File not found",
-                path=file_or_directory,
-                relative_url=__file_uri__,
-            )
+            raise not_found
         try:
             headers = {}
             # Check if the client has been sent this file before
@@ -901,11 +901,7 @@ class RouteMixin(metaclass=SanicMeta):
         except RangeNotSatisfiable:
             raise
         except FileNotFoundError:
-            raise FileNotFound(
-                "File not found",
-                path=file_or_directory,
-                relative_url=__file_uri__,
-            )
+            raise not_found
         except Exception:
             error_logger.exception(
                 f"Exception in static request handler: "

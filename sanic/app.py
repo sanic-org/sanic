@@ -1004,10 +1004,10 @@ class Sanic(BaseSanic, metaclass=TouchUpMeta):
         cancelled = False
         try:
             await fut
-        except Exception as e:
-            self.error_handler.log(request, e)
         except (CancelledError, ConnectionClosed):
             cancelled = True
+        except Exception as e:
+            self.error_handler.log(request, e)
         finally:
             self.websocket_tasks.remove(fut)
             if cancelled:

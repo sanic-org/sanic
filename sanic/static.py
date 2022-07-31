@@ -1,7 +1,6 @@
 from functools import partial, wraps
 from mimetypes import guess_type
-from os import path
-from re import sub
+from os import path, sep
 from time import gmtime, strftime
 from urllib.parse import unquote
 
@@ -26,28 +25,33 @@ async def _static_request_handler(
     content_type=None,
     file_uri=None,
 ):
-    # Using this to determine if the URL is trying to break out of the path
-    # served.  os.path.realpath seems to be very slow
-    if file_uri and "../" in file_uri:
-        raise InvalidUsage("Invalid URL")
     # Merge served directory and requested file if provided
-    # Strip all / that in the beginning of the URL to help prevent python
-    # from herping a derp and treating the uri as an absolute path
-    root_path = file_path = file_or_directory
-    if file_uri:
-        file_path = path.join(file_or_directory, sub("^[/]*", "", file_uri))
+    root_path = file_path = path.abspath(unquote(file_or_directory))
 
-    # URL decode the path sent by the browser otherwise we won't be able to
-    # match filenames which got encoded (filenames with spaces etc)
-    file_path = path.abspath(unquote(file_path))
-    if not file_path.startswith(path.abspath(unquote(root_path))):
+    if file_uri:
+        # Strip all / that in the beginning of the URL to help prevent
+        # python from herping a derp and treating the uri as an
+        # absolute path
+        unquoted_file_uri = unquote(file_uri).lstrip("/")
+
+        segments = unquoted_file_uri.split("/")
+        if ".." in segments or any(sep in segment for segment in segments):
+            raise InvalidUsage("Invalid URL")
+
+        file_path = path.join(file_or_directory, unquoted_file_uri)
+        file_path = path.abspath(file_path)
+
+    if not file_path.startswith(root_path):
         error_logger.exception(
             f"File not found: path={file_or_directory}, "
             f"relative_url={file_uri}"
         )
         raise FileNotFound(
-            "File not found", path=file_or_directory, relative_url=file_uri
+            "File not found",
+            path=file_or_directory,
+            relative_url=file_uri,
         )
+
     try:
         headers = {}
         # Check if the client has been sent this file before

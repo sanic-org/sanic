@@ -5,13 +5,17 @@ import platform
 import subprocess
 import sys
 
+from asyncio import AbstractEventLoop
 from string import ascii_lowercase
 
 import httpcore
 import httpx
 import pytest
 
+from pytest import LogCaptureFixture
+
 from sanic import Sanic
+from sanic.request import Request
 from sanic.response import text
 
 
@@ -45,7 +49,7 @@ def socket_cleanup():
         pass
 
 
-def test_unix_socket_creation(caplog):
+def test_unix_socket_creation(caplog: LogCaptureFixture):
     from socket import AF_UNIX, socket
 
     with socket(AF_UNIX) as sock:
@@ -56,7 +60,7 @@ def test_unix_socket_creation(caplog):
     app = Sanic(name="test")
 
     @app.listener("after_server_start")
-    def running(app, loop):
+    def running(app: Sanic, loop: AbstractEventLoop):
         assert os.path.exists(SOCKPATH)
         assert ino != os.stat(SOCKPATH).st_ino
         app.stop()
@@ -73,7 +77,7 @@ def test_unix_socket_creation(caplog):
 
 
 @pytest.mark.parametrize("path", (".", "no-such-directory/sanictest.sock"))
-def test_invalid_paths(path):
+def test_invalid_paths(path: str):
     app = Sanic(name="test")
 
     with pytest.raises((FileExistsError, FileNotFoundError)):
@@ -87,7 +91,7 @@ def test_dont_replace_file():
     app = Sanic(name="test")
 
     @app.listener("after_server_start")
-    def stop(app, loop):
+    def stop(app: Sanic, loop: AbstractEventLoop):
         app.stop()
 
     with pytest.raises(FileExistsError):
@@ -104,7 +108,7 @@ def test_dont_follow_symlink():
     app = Sanic(name="test")
 
     @app.listener("after_server_start")
-    def stop(app, loop):
+    def stop(app: Sanic, loop: AbstractEventLoop):
         app.stop()
 
     with pytest.raises(FileExistsError):
@@ -115,7 +119,7 @@ def test_socket_deleted_while_running():
     app = Sanic(name="test")
 
     @app.listener("after_server_start")
-    async def hack(app, loop):
+    async def hack(app: Sanic, loop: AbstractEventLoop):
         os.unlink(SOCKPATH)
         app.stop()
 
@@ -126,7 +130,7 @@ def test_socket_replaced_with_file():
     app = Sanic(name="test")
 
     @app.listener("after_server_start")
-    async def hack(app, loop):
+    async def hack(app: Sanic, loop: AbstractEventLoop):
         os.unlink(SOCKPATH)
         with open(SOCKPATH, "w") as f:
             f.write("Not a socket")
@@ -139,11 +143,11 @@ def test_unix_connection():
     app = Sanic(name="test")
 
     @app.get("/")
-    def handler(request):
+    def handler(request: Request):
         return text(f"{request.conn_info.server}")
 
     @app.listener("after_server_start")
-    async def client(app, loop):
+    async def client(app: Sanic, loop: AbstractEventLoop):
         if httpx_version >= (0, 20):
             transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
         else:
@@ -162,11 +166,11 @@ def test_unix_connection():
 app_multi = Sanic(name="test")
 
 
-def handler(request):
+def handler(request: Request):
     return text(f"{request.conn_info.server}")
 
 
-async def client(app, loop):
+async def client(app: Sanic, loop: AbstractEventLoop):
     try:
         async with httpx.AsyncClient(uds=SOCKPATH) as client:
             r = await client.get("http://myhost.invalid/")
@@ -229,7 +233,7 @@ async def test_zero_downtime():
         ino = os.stat(SOCKPATH).st_ino
         task = asyncio.get_event_loop().create_task(client())
         start_time = current_time()
-        while current_time() < start_time + 4:
+        while current_time() < start_time + 6:
             # Start a new one and wait until the socket is replaced
             processes.append(spawn())
             while ino == os.stat(SOCKPATH).st_ino:

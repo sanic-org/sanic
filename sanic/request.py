@@ -188,7 +188,7 @@ class Request:
     @classmethod
     def get_current(cls) -> Request:
         """
-        Retrieve the currrent request object
+        Retrieve the current request object
 
         This implements `Context Variables
         <https://docs.python.org/3/library/contextvars.html>`_

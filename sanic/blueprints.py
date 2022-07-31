@@ -308,7 +308,13 @@ class Blueprint(BaseSanic):
             # prefixed properly in the router
             future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
-            uri = url_prefix + future.uri if url_prefix else future.uri
+            uri = future.uri
+            if url_prefix:
+                uri = url_prefix
+                if future.uri.startswith("/") and url_prefix.endswith("/"):
+                    uri += future.uri[1:]
+                else:
+                    uri += future.uri
 
             version_prefix = self.version_prefix
             for prefix in (

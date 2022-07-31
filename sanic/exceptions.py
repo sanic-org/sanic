@@ -4,6 +4,10 @@ from typing import Any, Dict, Optional, Union
 from sanic.helpers import STATUS_CODES
 
 
+class RequestCancelled(CancelledError):
+    quiet = True
+
+
 class SanicException(Exception):
     message: str = ""
 
@@ -32,10 +36,6 @@ class SanicException(Exception):
         # quiet=None/False/True with None meaning choose by status
         if quiet or quiet is None and status_code not in (None, 500):
             self.quiet = True
-
-
-class RequestCancelled(CancelledError, SanicException):
-    quiet = True
 
 
 class NotFound(SanicException):

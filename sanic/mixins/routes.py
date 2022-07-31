@@ -16,7 +16,7 @@ from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
-from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
+from sanic.exceptions import ContentRangeError, FileNotFound, HeaderNotFound
 from sanic.handlers import ContentRangeHandler
 from sanic.log import deprecation, error_logger
 from sanic.models.futures import FutureRoute, FutureStatic

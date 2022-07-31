@@ -147,7 +147,7 @@ class Http(Stream, metaclass=TouchUpMeta):
                 self.exception = None
                 self.keep_alive = False
                 await self.error_response(e)
-            except BaseException as e:
+            except Exception as e:
                 # Write an error response
                 await self.error_response(e)
 

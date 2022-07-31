@@ -466,7 +466,6 @@ class Blueprint(BaseSanic):
             else:
                 uri += base
 
-        print(f"{base=}", f"{prefix=}", f"{uri=}")
         return uri[1:] if uri.startswith("//") else uri
 
     @staticmethod

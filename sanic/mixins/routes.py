@@ -3,8 +3,8 @@ from contextlib import suppress
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
-from os import path, sep
-from pathlib import PurePath
+from os import path
+from pathlib import Path, PurePath
 from textwrap import dedent
 from time import gmtime, strftime
 from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, Union
@@ -16,12 +16,7 @@ from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
-from sanic.exceptions import (
-    ContentRangeError,
-    FileNotFound,
-    HeaderNotFound,
-    InvalidUsage,
-)
+from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.log import deprecation, error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
@@ -774,39 +769,40 @@ class RouteMixin(metaclass=SanicMeta):
         content_type=None,
         __file_uri__=None,
     ):
-<<<<<<< HEAD
-        # Using this to determine if the URL is trying to break out of the path
-        # served.  os.path.realpath seems to be very slow
-        if __file_uri__ and "../" in __file_uri__:
-            raise InvalidUsage("Invalid URL")
-=======
->>>>>>> 9d415e4 (Prevent directory traversion with static files (#2495))
         # Merge served directory and requested file if provided
-        root_path = file_path = path.abspath(unquote(file_or_directory))
+        file_path_raw = Path(unquote(file_or_directory))
+        root_path = file_path = file_path_raw.resolve()
+        not_found = FileNotFound(
+            "File not found",
+            path=file_or_directory,
+            relative_url=__file_uri__,
+        )
 
         if __file_uri__:
             # Strip all / that in the beginning of the URL to help prevent
             # python from herping a derp and treating the uri as an
             # absolute path
             unquoted_file_uri = unquote(__file_uri__).lstrip("/")
+            file_path_raw = Path(file_or_directory, unquoted_file_uri)
+            file_path = file_path_raw.resolve()
+            if (
+                file_path < root_path and not file_path_raw.is_symlink()
+            ) or file_path_raw.match("../**/*"):
+                error_logger.exception(
+                    f"File not found: path={file_or_directory}, "
+                    f"relative_url={__file_uri__}"
+                )
+                raise not_found
 
-            segments = unquoted_file_uri.split("/")
-            if ".." in segments or any(sep in segment for segment in segments):
-                raise BadRequest("Invalid URL")
-
-            file_path = path.join(file_or_directory, unquoted_file_uri)
-            file_path = path.abspath(file_path)
-
-        if not file_path.startswith(root_path):
-            error_logger.exception(
-                f"File not found: path={file_or_directory}, "
-                f"relative_url={__file_uri__}"
-            )
-            raise FileNotFound(
-                "File not found",
-                path=file_or_directory,
-                relative_url=__file_uri__,
-            )
+        try:
+            file_path.relative_to(root_path)
+        except ValueError:
+            if not file_path_raw.is_symlink():
+                error_logger.exception(
+                    f"File not found: path={file_or_directory}, "
+                    f"relative_url={__file_uri__}"
+                )
+                raise not_found
         try:
             headers = {}
             # Check if the client has been sent this file before
@@ -874,11 +870,7 @@ class RouteMixin(metaclass=SanicMeta):
         except ContentRangeError:
             raise
         except FileNotFoundError:
-            raise FileNotFound(
-                "File not found",
-                path=file_or_directory,
-                relative_url=__file_uri__,
-            )
+            raise not_found
         except Exception:
             error_logger.exception(
                 f"Exception in static request handler: "

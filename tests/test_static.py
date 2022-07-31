@@ -404,11 +404,10 @@ def test_dotted_dir_ok(
     app: Sanic, static_file_directory: str, double_dotted_directory_file: Path
 ):
     app.static("/foo", static_file_directory)
-    url = (
-        "/foo"
-        + str(double_dotted_directory_file)[len(static_file_directory) :]
+    dot_relative_path = str(
+        double_dotted_directory_file.relative_to(static_file_directory)
     )
-    _, response = app.test_client.get(url)
+    _, response = app.test_client.get("/foo/" + dot_relative_path)
     assert response.status == 200
     assert response.body == b"DOT\n"
 
@@ -416,8 +415,11 @@ def test_dotted_dir_ok(
 def test_breakout(app: Sanic, static_file_directory: str):
     app.static("/foo", static_file_directory)
 
+    _, response = app.test_client.get("/foo/..%2Ffake/server.py")
+    assert response.status == 404
+
     _, response = app.test_client.get("/foo/..%2Fstatic/test.file")
-    assert response.status == 400
+    assert response.status == 404
 
 
 @pytest.mark.skipif(
@@ -429,6 +431,6 @@ def test_double_backslash_prohibited_on_win32(
     app.static("/foo", static_file_directory)
 
     _, response = app.test_client.get("/foo/static/..\\static/test.file")
-    assert response.status == 400
+    assert response.status == 404
     _, response = app.test_client.get("/foo/static\\../static/test.file")
-    assert response.status == 400
+    assert response.status == 404

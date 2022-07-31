@@ -1,6 +1,7 @@
 from functools import partial, wraps
 from mimetypes import guess_type
 from os import path, sep
+from pathlib import Path
 from time import gmtime, strftime
 from urllib.parse import unquote
 
@@ -26,31 +27,39 @@ async def _static_request_handler(
     file_uri=None,
 ):
     # Merge served directory and requested file if provided
-    root_path = file_path = path.abspath(unquote(file_or_directory))
+    file_path_raw = Path(unquote(file_or_directory))
+    root_path = file_path = file_path_raw.resolve()
+    not_found = FileNotFound(
+        "File not found",
+        path=file_or_directory,
+        relative_url=file_uri,
+    )
 
     if file_uri:
         # Strip all / that in the beginning of the URL to help prevent
         # python from herping a derp and treating the uri as an
         # absolute path
         unquoted_file_uri = unquote(file_uri).lstrip("/")
+        file_path_raw = Path(file_or_directory, unquoted_file_uri)
+        file_path = file_path_raw.resolve()
+        if (
+            file_path < root_path and not file_path_raw.is_symlink()
+        ) or ".." in file_path_raw.parts:
+            error_logger.exception(
+                f"File not found: path={file_or_directory}, "
+                f"relative_url={file_uri}"
+            )
+            raise not_found
 
-        segments = unquoted_file_uri.split("/")
-        if ".." in segments or any(sep in segment for segment in segments):
-            raise InvalidUsage("Invalid URL")
-
-        file_path = path.join(file_or_directory, unquoted_file_uri)
-        file_path = path.abspath(file_path)
-
-    if not file_path.startswith(root_path):
-        error_logger.exception(
-            f"File not found: path={file_or_directory}, "
-            f"relative_url={file_uri}"
-        )
-        raise FileNotFound(
-            "File not found",
-            path=file_or_directory,
-            relative_url=file_uri,
-        )
+    try:
+        file_path.relative_to(root_path)
+    except ValueError:
+        if not file_path_raw.is_symlink():
+            error_logger.exception(
+                f"File not found: path={file_or_directory}, "
+                f"relative_url={file_uri}"
+            )
+            raise not_found
 
     try:
         headers = {}

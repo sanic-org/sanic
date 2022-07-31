@@ -818,7 +818,7 @@ class RouteMixin(metaclass=SanicMeta):
             file_path = file_path_raw.resolve()
             if (
                 file_path < root_path and not file_path_raw.is_symlink()
-            ) or file_path_raw.match("../**/*"):
+            ) or ".." in file_path_raw.parts:
                 error_logger.exception(
                     f"File not found: path={file_or_directory}, "
                     f"relative_url={__file_uri__}"

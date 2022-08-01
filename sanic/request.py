@@ -983,21 +983,27 @@ class Request:
     @property
     def is_safe(self) -> bool:
         """
-        See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.1
+        :return: Whether the HTTP method is safe.
+            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.1
+        :rtype: bool
         """
         return self.method in SAFE_HTTP_METHODS
 
     @property
     def is_idempotent(self) -> bool:
         """
-        See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.2
+        :return: Whether the HTTP method is iempotent.
+            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.2
+        :rtype: bool
         """
         return self.method in IDEMPOTENT_HTTP_METHODS
 
     @property
     def is_cacheable(self) -> bool:
         """
-        See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.3
+        :return: Whether the HTTP method is cacheable.
+            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.3
+        :rtype: bool
         """
         return self.method in CACHEABLE_HTTP_METHODS
 

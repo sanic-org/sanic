@@ -873,12 +873,6 @@ class StartupMixin(metaclass=SanicMeta):
         apps: List[Sanic],
     ) -> None:
         for app in apps:
-            print(f"[_start_servers] {app}")
-            print("app.name is not primary.name", app.name is not primary.name)
-            print(
-                "app.state.workers != primary.state.workers",
-                app.state.workers != primary.state.workers,
-            )
             if (
                 app.name is not primary.name
                 and app.state.workers != primary.state.workers
@@ -902,7 +896,6 @@ class StartupMixin(metaclass=SanicMeta):
                     )
                 error_logger.warning(message, exc_info=True)
             for server_info in app.state.server_info:
-                print(f"[_start_servers] {server_info}")
                 if server_info.stage is not ServerStage.SERVING:
                     app.state.primary = False
                     handlers = [

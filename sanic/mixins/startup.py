@@ -17,6 +17,7 @@ from contextlib import suppress
 from functools import partial
 from importlib import import_module
 from multiprocessing import Pipe, get_context
+from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
@@ -591,24 +592,20 @@ class StartupMixin(metaclass=SanicMeta):
         if not server_settings:
             return serve_location
 
+        host = server_settings["host"]
+        port = server_settings["port"]
+
         if server_settings["ssl"] is not None:
             proto = "https"
         if server_settings["unix"]:
             serve_location = f'{server_settings["unix"]} {proto}://...'
         elif server_settings["sock"]:
-            serve_location = (
-                f'{server_settings["sock"].getsockname()} {proto}://...'
-            )
-        elif server_settings["host"] and server_settings["port"]:
+            host, port, *_ = server_settings["sock"].getsockname()
+
+        if not serve_location and host and port:
             # colon(:) is legal for a host only in an ipv6 address
-            display_host = (
-                f'[{server_settings["host"]}]'
-                if ":" in server_settings["host"]
-                else server_settings["host"]
-            )
-            serve_location = (
-                f'{proto}://{display_host}:{server_settings["port"]}'
-            )
+            display_host = f"[{host}]" if ":" in host else host
+            serve_location = f"{proto}://{display_host}:{port}"
 
         return serve_location
 
@@ -626,6 +623,15 @@ class StartupMixin(metaclass=SanicMeta):
     @classmethod
     def should_auto_reload(cls) -> bool:
         return any(app.state.auto_reload for app in cls._app_registry.values())
+
+    @classmethod
+    def _get_context(cls) -> BaseContext:
+        method = (
+            "spawn"
+            if "linux" not in sys.platform or cls.should_auto_reload()
+            else "fork"
+        )
+        return get_context(method)
 
     @classmethod
     def serve(cls, primary: Optional[Sanic] = None) -> None:
@@ -665,32 +671,21 @@ class StartupMixin(metaclass=SanicMeta):
             # - make sure to install loop in global scope
             #     - uvloop or the Window policy
             # - on windows need to use socket.share, socket.fromshare pattern
-
-            # TODO:
-            # - Solve for the below pattern:
-            #   Cannot pass the Sanic object as an arg to subprocess because
-            #   the object will be pickled and if attributes are removed on
-            #   reload, it will raise an AttributeError as it no longer exists
-            #   Instead, pass the app name, and hydrate that into an object
-            #   inside `worker_serve`. As a POC, moved the class to be passed
-            #   since it cannot be imported at runtime in runners.py currently
-            #   HOWEVER... app.state.server_info does need to be passed since
-            #   it is set in app.prepare. If app.prepare is inside if __name__
-            #   block, then it will not be on the refreshed instance.
-            # - REMOVE app from server_info
-            # - pass any other info from prepare
             kwargs["app_name"] = app.name
             kwargs["server_info"] = primary_server_info
+            kwargs["passthru"] = {
+                "state": {"verbosity": app.state.verbosity},
+                "config": {
+                    "ACCESS_LOG": app.config.ACCESS_LOG,
+                    "NOISY_EXCEPTIONS": app.config.NOISY_EXCEPTIONS,
+                },
+            }
 
-            # TODO:
-            # - Select context:
-            #   if Linux and no reload: fork
-            #   else: spawn
             manager = WorkerManager(
                 primary.state.workers,
                 worker_serve,
                 kwargs,
-                get_context("spawn"),
+                cls._get_context(),
                 pub,
                 sub,
             )

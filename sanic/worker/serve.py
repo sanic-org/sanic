@@ -3,7 +3,7 @@ import socket
 
 from multiprocessing.connection import Connection
 from ssl import SSLContext
-from typing import Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from sanic.application.constants import ServerStage
 from sanic.application.state import ApplicationServerInfo
@@ -36,13 +36,14 @@ def worker_serve(
     asyncio_server_kwargs=None,
     version=HTTP.VERSION_1,
     config=None,
+    passthru: Optional[Dict[str, Any]] = None,
 ):
     from sanic import Sanic
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    app = Sanic.get_app(app_name).refresh(server_info)
+    app = Sanic.get_app(app_name).refresh(server_info, passthru)
 
     if restart_flag:
         app.multiplexer = WorkerMultiplexer(restart_flag)

@@ -1576,7 +1576,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             },
         )
 
-    def refresh(self, server_info: Optional[ApplicationServerInfo] = None):
+    def refresh(
+        self,
+        server_info: Optional[ApplicationServerInfo] = None,
+        passthru: Optional[Dict[str, Any]] = None,
+    ):
         name = "__mp_main__" if self.name == "__main__" else self.name
         registered = self.__class__.get_app(name)
         if self is not registered:
@@ -1587,4 +1591,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             if not server_info.settings.get("app"):
                 server_info.settings["app"] = self
             self.state.server_info.append(server_info)
+        if passthru:
+            for attr, info in passthru.items():
+                for key, value in info.items():
+                    setattr(getattr(self, attr), key, value)
         return self

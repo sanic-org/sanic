@@ -116,6 +116,7 @@ class StartupMixin(metaclass=SanicMeta):
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
         auto_tls: bool = False,
+        single_process: bool = False,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -176,9 +177,15 @@ class StartupMixin(metaclass=SanicMeta):
             verbosity=verbosity,
             motd_display=motd_display,
             auto_tls=auto_tls,
+            single_process=single_process,
         )
 
-        self.__class__.serve(primary=self)  # type: ignore
+        serve = (
+            self.__class__.serve_single
+            if single_process
+            else self.__class__.serve
+        )
+        serve(primary=self)  # type: ignore
 
     def prepare(
         self,
@@ -205,6 +212,7 @@ class StartupMixin(metaclass=SanicMeta):
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
         auto_tls: bool = False,
+        single_process: bool = False,
     ) -> None:
         if version == 3 and self.state.server_info:
             raise RuntimeError(
@@ -223,6 +231,12 @@ class StartupMixin(metaclass=SanicMeta):
 
         if fast and workers != 1:
             raise RuntimeError("You cannot use both fast=True and workers=X")
+
+        if single_process and (fast or (workers > 1) or auto_reload):
+            raise RuntimeError(
+                "Single process cannot be run with multiple workers "
+                "or auto-reload"
+            )
 
         if motd_display:
             self.config.MOTD_DISPLAY.update(motd_display)
@@ -718,8 +732,6 @@ class StartupMixin(metaclass=SanicMeta):
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:
         apps = list(cls._app_registry.values())
 
-        # TODO:
-        # - Support using nth app
         if not primary:
             try:
                 primary = apps[0]
@@ -733,8 +745,7 @@ class StartupMixin(metaclass=SanicMeta):
             return
 
         primary_server_info = primary.state.server_info[0]
-        # primary.before_server_start(
-        # partial(primary._start_servers, apps=apps))
+        primary.before_server_start(partial(primary._start_servers, apps=apps))
         kwargs = {
             k: v
             for k, v in primary_server_info.settings.items()
@@ -742,8 +753,10 @@ class StartupMixin(metaclass=SanicMeta):
             not in (
                 "main_start",
                 "main_stop",
+                "app",
             )
         }
+        kwargs["app_name"] = primary.name
         sock = configure_socket(kwargs)
 
         try:
@@ -755,10 +768,10 @@ class StartupMixin(metaclass=SanicMeta):
             raise
         finally:
             logger.info("Server Stopped")
-            # for app in apps:
-            #     app.state.server_info.clear()
-            #     app.router.reset()
-            #     app.signal_router.reset()
+            for app in apps:
+                app.state.server_info.clear()
+                app.router.reset()
+                app.signal_router.reset()
 
             sock.close()
 

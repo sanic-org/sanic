@@ -421,10 +421,8 @@ RESPONSE_MAPPING = {
 
 
 def check_error_format(format):
-    ...
-    # TODO
-    # if format not in RENDERERS_BY_CONFIG and format != "auto":
-    #     raise SanicException(f"Unknown format: {format}")
+    if format not in RENDERERS_BY_CONFIG and format != "auto":
+        raise SanicException(f"Unknown format: {format}")
 
 
 def exception_response(

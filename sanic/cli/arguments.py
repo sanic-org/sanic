@@ -207,6 +207,12 @@ class WorkerGroup(Group):
             action="store_true",
             help="Set the number of workers to max allowed",
         )
+        group.add_argument(
+            "--single-process",
+            dest="single",
+            action="store_true",
+            help="Do not use multiprocessing, run server in a single process",
+        )
         self.add_bool_arguments(
             "--access-logs", dest="access_log", help="display access logs"
         )

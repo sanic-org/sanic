@@ -90,7 +90,8 @@ Or, a path to a directory to run as a simple HTTP server:
             for http_version in self.args.http:
                 app.prepare(**kwargs, version=http_version)
 
-            Sanic.serve()
+            serve = Sanic.serve_single if self.args.single else Sanic.serve
+            serve()
 
     def _precheck(self):
         # # Custom TLS mismatch handling for better diagnostics
@@ -203,6 +204,7 @@ Or, a path to a directory to run as a simple HTTP server:
             "verbosity": self.args.verbosity or 0,
             "workers": self.args.workers,
             "auto_tls": self.args.auto_tls,
+            "single_process": self.args.single,
         }
 
         for maybe_arg in ("auto_reload", "dev"):

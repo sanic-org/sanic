@@ -671,16 +671,19 @@ class StartupMixin(metaclass=SanicMeta):
             return
 
         primary_server_info = primary.state.server_info[0]
-        primary.before_server_start(partial(primary._start_servers, apps=apps))
 
         try:
             main_start = primary_server_info.settings.pop("main_start", None)
             main_stop = primary_server_info.settings.pop("main_stop", None)
-            app = primary_server_info.settings.pop("app", None)
+            app = primary_server_info.settings.pop("app")
             loop = new_event_loop()
             trigger_events(main_start, loop, primary)
 
-            sock = configure_socket(primary_server_info.settings)
+            socks = [
+                configure_socket(server_info.settings)
+                for app in apps
+                for server_info in app.state.server_info
+            ]
             primary_server_info.settings["run_multiple"] = True
             sub, pub = Pipe()
             kwargs: Dict[str, Any] = {
@@ -693,7 +696,16 @@ class StartupMixin(metaclass=SanicMeta):
             #     - uvloop or the Window policy
             # - on windows need to use socket.share, socket.fromshare pattern
             kwargs["app_name"] = app.name
-            kwargs["server_info"] = primary_server_info
+            kwargs["server_info"] = {}
+            for app in apps:
+                kwargs["server_info"][app.name] = []
+                for server_info in app.state.server_info:
+                    server_info.settings = {
+                        k: v
+                        for k, v in server_info.settings.items()
+                        if k not in ("main_start", "main_stop", "app")
+                    }
+                    kwargs["server_info"][app.name].append(server_info)
             kwargs["passthru"] = {
                 "state": {"verbosity": app.state.verbosity},
                 "config": {
@@ -730,8 +742,9 @@ class StartupMixin(metaclass=SanicMeta):
                 app.router.reset()
                 app.signal_router.reset()
 
-            sock.close()
-            # loop.close()
+            for sock in socks:
+                sock.close()
+            loop.close()
             # remove_unix_socket(unix)
             trigger_events(main_stop, loop, primary)
 
@@ -860,6 +873,12 @@ class StartupMixin(metaclass=SanicMeta):
         apps: List[Sanic],
     ) -> None:
         for app in apps:
+            print(f"[_start_servers] {app}")
+            print("app.name is not primary.name", app.name is not primary.name)
+            print(
+                "app.state.workers != primary.state.workers",
+                app.state.workers != primary.state.workers,
+            )
             if (
                 app.name is not primary.name
                 and app.state.workers != primary.state.workers
@@ -883,6 +902,7 @@ class StartupMixin(metaclass=SanicMeta):
                     )
                 error_logger.warning(message, exc_info=True)
             for server_info in app.state.server_info:
+                print(f"[_start_servers] {server_info}")
                 if server_info.stage is not ServerStage.SERVING:
                     app.state.primary = False
                     handlers = [

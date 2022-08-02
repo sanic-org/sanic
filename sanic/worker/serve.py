@@ -1,9 +1,10 @@
 import asyncio
 import socket
 
+from functools import partial
 from multiprocessing.connection import Connection
 from ssl import SSLContext
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from sanic.application.constants import ServerStage
 from sanic.application.state import ApplicationServerInfo
@@ -19,7 +20,7 @@ def worker_serve(
     port,
     app_name: str,
     restart_flag: Optional[Connection],
-    server_info: Optional[ApplicationServerInfo] = None,
+    server_info: Optional[Dict[str, List[ApplicationServerInfo]]] = None,
     ssl: Optional[SSLContext] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
@@ -43,10 +44,22 @@ def worker_serve(
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    app = Sanic.get_app(app_name).refresh(server_info, passthru)
+    app = Sanic.get_app(app_name).refresh(passthru)
+
+    if server_info:
+        for app_name, server_info_objects in server_info.items():
+            a = Sanic.get_app(app_name)
+            if not a.state.server_info:
+                a.state.server_info = []
+                for info in server_info_objects:
+                    if not info.settings.get("app"):
+                        info.settings["app"] = a
+                    a.state.server_info.append(info)
 
     if restart_flag:
         app.multiplexer = WorkerMultiplexer(restart_flag)
+        apps = list(Sanic._app_registry.values())
+        app.before_server_start(partial(app._start_servers, apps=apps))
 
     if app.debug:
         loop.set_debug(app.debug)

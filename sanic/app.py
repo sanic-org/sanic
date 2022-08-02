@@ -47,12 +47,7 @@ from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
-from sanic.application.state import (
-    ApplicationServerInfo,
-    ApplicationState,
-    Mode,
-    ServerStage,
-)
+from sanic.application.state import ApplicationState, Mode, ServerStage
 from sanic.asgi import ASGIApp
 from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -1486,6 +1481,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         try:
             return cls._app_registry[name]
         except KeyError:
+            if name == "__main__":
+                return cls.get_app("__mp_main__", force_create=force_create)
             if force_create:
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
@@ -1578,19 +1575,13 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
     def refresh(
         self,
-        server_info: Optional[ApplicationServerInfo] = None,
         passthru: Optional[Dict[str, Any]] = None,
     ):
-        name = "__mp_main__" if self.name == "__main__" else self.name
-        registered = self.__class__.get_app(name)
+        registered = self.__class__.get_app(self.name)
         if self is not registered:
             if not registered.state.server_info:
                 registered.state.server_info = self.state.server_info
             self = registered
-        if not self.state.server_info and server_info:
-            if not server_info.settings.get("app"):
-                server_info.settings["app"] = self
-            self.state.server_info.append(server_info)
         if passthru:
             for attr, info in passthru.items():
                 for key, value in info.items():

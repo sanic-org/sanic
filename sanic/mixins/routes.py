@@ -4,8 +4,7 @@ from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
 from os import path
-from pathlib import PurePath
-from re import sub
+from pathlib import Path, PurePath
 from textwrap import dedent
 from time import gmtime, strftime
 from typing import (
@@ -27,12 +26,7 @@ from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
-from sanic.exceptions import (
-    BadRequest,
-    FileNotFound,
-    HeaderNotFound,
-    RangeNotSatisfiable,
-)
+from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
@@ -231,7 +225,7 @@ class RouteMixin(metaclass=SanicMeta):
         stream: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """A helper method to register class instance or
         functions as a handler to the application url
@@ -292,7 +286,7 @@ class RouteMixin(metaclass=SanicMeta):
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """
         Add an API URL under the **GET** *HTTP* method
@@ -335,7 +329,7 @@ class RouteMixin(metaclass=SanicMeta):
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """
         Add an API URL under the **POST** *HTTP* method
@@ -378,7 +372,7 @@ class RouteMixin(metaclass=SanicMeta):
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """
         Add an API URL under the **PUT** *HTTP* method
@@ -421,7 +415,7 @@ class RouteMixin(metaclass=SanicMeta):
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """
         Add an API URL under the **HEAD** *HTTP* method
@@ -472,7 +466,7 @@ class RouteMixin(metaclass=SanicMeta):
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """
         Add an API URL under the **OPTIONS** *HTTP* method
@@ -523,7 +517,7 @@ class RouteMixin(metaclass=SanicMeta):
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """
         Add an API URL under the **PATCH** *HTTP* method
@@ -576,7 +570,7 @@ class RouteMixin(metaclass=SanicMeta):
         ignore_body: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ) -> RouteHandler:
         """
         Add an API URL under the **DELETE** *HTTP* method
@@ -620,7 +614,7 @@ class RouteMixin(metaclass=SanicMeta):
         apply: bool = True,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ):
         """
         Decorate a function to be registered as a websocket route
@@ -664,7 +658,7 @@ class RouteMixin(metaclass=SanicMeta):
         name: Optional[str] = None,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
-        **ctx_kwargs,
+        **ctx_kwargs: Any,
     ):
         """
         A helper method to register a function as a websocket route.
@@ -701,18 +695,18 @@ class RouteMixin(metaclass=SanicMeta):
 
     def static(
         self,
-        uri,
+        uri: str,
         file_or_directory: Union[str, bytes, PurePath],
-        pattern=r"/?.+",
-        use_modified_since=True,
-        use_content_range=False,
-        stream_large_files=False,
-        name="static",
-        host=None,
-        strict_slashes=None,
-        content_type=None,
-        apply=True,
-        resource_type=None,
+        pattern: str = r"/?.+",
+        use_modified_since: bool = True,
+        use_content_range: bool = False,
+        stream_large_files: bool = False,
+        name: str = "static",
+        host: Optional[str] = None,
+        strict_slashes: Optional[bool] = None,
+        content_type: Optional[bool] = None,
+        apply: bool = True,
+        resource_type: Optional[str] = None,
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -806,32 +800,40 @@ class RouteMixin(metaclass=SanicMeta):
         content_type=None,
         __file_uri__=None,
     ):
-        # Using this to determine if the URL is trying to break out of the path
-        # served.  os.path.realpath seems to be very slow
-        if __file_uri__ and "../" in __file_uri__:
-            raise BadRequest("Invalid URL")
         # Merge served directory and requested file if provided
-        # Strip all / that in the beginning of the URL to help prevent python
-        # from herping a derp and treating the uri as an absolute path
-        root_path = file_path = file_or_directory
-        if __file_uri__:
-            file_path = path.join(
-                file_or_directory, sub("^[/]*", "", __file_uri__)
-            )
+        file_path_raw = Path(unquote(file_or_directory))
+        root_path = file_path = file_path_raw.resolve()
+        not_found = FileNotFound(
+            "File not found",
+            path=file_or_directory,
+            relative_url=__file_uri__,
+        )
 
-        # URL decode the path sent by the browser otherwise we won't be able to
-        # match filenames which got encoded (filenames with spaces etc)
-        file_path = path.abspath(unquote(file_path))
-        if not file_path.startswith(path.abspath(unquote(root_path))):
-            error_logger.exception(
-                f"File not found: path={file_or_directory}, "
-                f"relative_url={__file_uri__}"
-            )
-            raise FileNotFound(
-                "File not found",
-                path=file_or_directory,
-                relative_url=__file_uri__,
-            )
+        if __file_uri__:
+            # Strip all / that in the beginning of the URL to help prevent
+            # python from herping a derp and treating the uri as an
+            # absolute path
+            unquoted_file_uri = unquote(__file_uri__).lstrip("/")
+            file_path_raw = Path(file_or_directory, unquoted_file_uri)
+            file_path = file_path_raw.resolve()
+            if (
+                file_path < root_path and not file_path_raw.is_symlink()
+            ) or ".." in file_path_raw.parts:
+                error_logger.exception(
+                    f"File not found: path={file_or_directory}, "
+                    f"relative_url={__file_uri__}"
+                )
+                raise not_found
+
+        try:
+            file_path.relative_to(root_path)
+        except ValueError:
+            if not file_path_raw.is_symlink():
+                error_logger.exception(
+                    f"File not found: path={file_or_directory}, "
+                    f"relative_url={__file_uri__}"
+                )
+                raise not_found
         try:
             headers = {}
             # Check if the client has been sent this file before
@@ -899,11 +901,7 @@ class RouteMixin(metaclass=SanicMeta):
         except RangeNotSatisfiable:
             raise
         except FileNotFoundError:
-            raise FileNotFound(
-                "File not found",
-                path=file_or_directory,
-                relative_url=__file_uri__,
-            )
+            raise not_found
         except Exception:
             error_logger.exception(
                 f"Exception in static request handler: "

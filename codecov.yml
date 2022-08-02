@@ -4,6 +4,7 @@ coverage:
       default:
         target: auto
         threshold: 0.75
+        informational: true
     project:
       default:
         target: auto

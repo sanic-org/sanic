@@ -64,7 +64,7 @@ class DescriptorMeta(type):
         return isdatadescriptor(member) and hasattr(member, "setter")
 
 
-class Config(dict[str, Any], metaclass=DescriptorMeta):
+class Config(dict, metaclass=DescriptorMeta):
     ACCESS_LOG: bool
     AUTO_EXTEND: bool
     AUTO_RELOAD: bool

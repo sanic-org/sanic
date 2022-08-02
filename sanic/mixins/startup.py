@@ -48,9 +48,10 @@ from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
+from sanic.server.legacy import watchdog
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
-from sanic.server.runners import serve
+from sanic.server.runners import serve, serve_multiple, serve_single
 from sanic.server.socket import configure_socket
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
@@ -117,6 +118,7 @@ class StartupMixin(metaclass=SanicMeta):
         motd_display: Optional[Dict[str, str]] = None,
         auto_tls: bool = False,
         single_process: bool = False,
+        legacy: bool = False,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -178,13 +180,14 @@ class StartupMixin(metaclass=SanicMeta):
             motd_display=motd_display,
             auto_tls=auto_tls,
             single_process=single_process,
+            legacy=legacy,
         )
 
-        serve = (
-            self.__class__.serve_single
-            if single_process
-            else self.__class__.serve
-        )
+        serve = self.__class__.serve
+        if single_process:
+            serve = self.__class__.serve_single
+        elif legacy:
+            serve = self.__class__.serve_legacy
         serve(primary=self)  # type: ignore
 
     def prepare(
@@ -213,6 +216,7 @@ class StartupMixin(metaclass=SanicMeta):
         motd_display: Optional[Dict[str, str]] = None,
         auto_tls: bool = False,
         single_process: bool = False,
+        legacy: bool = False,
     ) -> None:
         if version == 3 and self.state.server_info:
             raise RuntimeError(
@@ -237,6 +241,9 @@ class StartupMixin(metaclass=SanicMeta):
                 "Single process cannot be run with multiple workers "
                 "or auto-reload"
             )
+
+        if single_process and legacy:
+            raise RuntimeError("Cannot run single process and legacy mode")
 
         if motd_display:
             self.config.MOTD_DISPLAY.update(motd_display)
@@ -774,6 +781,77 @@ class StartupMixin(metaclass=SanicMeta):
                 app.signal_router.reset()
 
             sock.close()
+
+    @classmethod
+    def serve_legacy(cls, primary: Optional[Sanic] = None) -> None:
+        apps = list(cls._app_registry.values())
+
+        if not primary:
+            try:
+                primary = apps[0]
+            except IndexError:
+                raise RuntimeError("Did not find any applications.")
+
+        reloader_start = primary.listeners.get("reload_process_start")
+        reloader_stop = primary.listeners.get("reload_process_stop")
+        # We want to run auto_reload if ANY of the applications have it enabled
+        if (
+            cls.should_auto_reload()
+            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
+        ):  # no cov
+            loop = new_event_loop()
+            trigger_events(reloader_start, loop, primary)
+            reload_dirs: Set[Path] = primary.state.reload_dirs.union(
+                *(app.state.reload_dirs for app in apps)
+            )
+            watchdog(1.0, reload_dirs)
+            trigger_events(reloader_stop, loop, primary)
+            return
+
+        # This exists primarily for unit testing
+        if not primary.state.server_info:  # no cov
+            for app in apps:
+                app.state.server_info.clear()
+            return
+
+        primary_server_info = primary.state.server_info[0]
+        primary.before_server_start(partial(primary._start_servers, apps=apps))
+
+        deprecation(
+            f"{Colors.YELLOW}Running {Colors.SANIC}Sanic {Colors.YELLOW}w/ "
+            f"LEGACY manager.{Colors.END} Support for will be dropped in "
+            "version 23.3.",
+            23.3,
+        )
+        try:
+            primary_server_info.stage = ServerStage.SERVING
+
+            if primary.state.workers > 1 and os.name != "posix":  # no cov
+                logger.warn(
+                    f"Multiprocessing is currently not supported on {os.name},"
+                    " using workers=1 instead"
+                )
+                primary.state.workers = 1
+            if primary.state.workers == 1:
+                serve_single(primary_server_info.settings)
+            elif primary.state.workers == 0:
+                raise RuntimeError("Cannot serve with no workers")
+            else:
+                serve_multiple(
+                    primary_server_info.settings, primary.state.workers
+                )
+        except BaseException:
+            error_logger.exception(
+                "Experienced exception while trying to serve"
+            )
+            raise
+        finally:
+            primary_server_info.stage = ServerStage.STOPPED
+        logger.info("Server Stopped")
+        for app in apps:
+            app.state.server_info.clear()
+            app.router.reset()
+            app.signal_router.reset()
 
     async def _start_servers(
         self,

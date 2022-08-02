@@ -213,6 +213,11 @@ class WorkerGroup(Group):
             action="store_true",
             help="Do not use multiprocessing, run server in a single process",
         )
+        self.container.add_argument(
+            "--legacy",
+            action="store_true",
+            help="Use the legacy server manager",
+        )
         self.add_bool_arguments(
             "--access-logs", dest="access_log", help="display access logs"
         )

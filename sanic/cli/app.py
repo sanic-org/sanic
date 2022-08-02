@@ -90,7 +90,10 @@ Or, a path to a directory to run as a simple HTTP server:
             for http_version in self.args.http:
                 app.prepare(**kwargs, version=http_version)
 
-            serve = Sanic.serve_single if self.args.single else Sanic.serve
+            if self.args.single:
+                serve = Sanic.serve_single
+            elif self.args.legacy:
+                serve = Sanic.serve_legacy
             serve()
 
     def _precheck(self):
@@ -205,6 +208,7 @@ Or, a path to a directory to run as a simple HTTP server:
             "workers": self.args.workers,
             "auto_tls": self.args.auto_tls,
             "single_process": self.args.single,
+            "legacy": self.args.legacy,
         }
 
         for maybe_arg in ("auto_reload", "dev"):

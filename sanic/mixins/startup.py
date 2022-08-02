@@ -678,9 +678,14 @@ class StartupMixin(metaclass=SanicMeta):
             #   it is set in app.prepare. If app.prepare is inside if __name__
             #   block, then it will not be on the refreshed instance.
             # - REMOVE app from server_info
+            # - pass any other info from prepare
             kwargs["app_name"] = app.name
             kwargs["server_info"] = primary_server_info
 
+            # TODO:
+            # - Select context:
+            #   if Linux and no reload: fork
+            #   else: spawn
             manager = WorkerManager(
                 primary.state.workers,
                 worker_serve,

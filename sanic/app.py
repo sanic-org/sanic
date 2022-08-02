@@ -1184,7 +1184,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         *,
         name: Optional[str] = None,
         register: bool = True,
-    ) -> Optional[Task]:
+    ) -> Optional[Task[Any]]:
         """
         Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not

@@ -5,13 +5,11 @@ import sys
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
-from sanic.application.constants import ServerStage
 from sanic.config import Config
 from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context
 from sanic.server.events import trigger_events
-from sanic.worker.multiplexer import WorkerMultiplexer
 
 
 if TYPE_CHECKING:
@@ -102,64 +100,6 @@ def serve(
         loop.set_debug(app.debug)
 
     app.asgi = False
-
-    if version is HTTP.VERSION_3:
-        return _serve_http_3(host, port, app, loop, ssl)
-    return _serve_http_1(
-        host,
-        port,
-        app,
-        ssl,
-        sock,
-        unix,
-        reuse_port,
-        loop,
-        protocol,
-        backlog,
-        register_sys_signals,
-        run_multiple,
-        run_async,
-        connections,
-        signal,
-        state,
-        asyncio_server_kwargs,
-    )
-
-
-def worker_serve(
-    host,
-    port,
-    app: Sanic,
-    restart_flag,
-    ssl: Optional[SSLContext] = None,
-    sock: Optional[socket.socket] = None,
-    unix: Optional[str] = None,
-    reuse_port: bool = False,
-    loop=None,
-    protocol: Type[asyncio.Protocol] = HttpProtocol,
-    backlog: int = 100,
-    register_sys_signals: bool = True,
-    run_multiple: bool = False,
-    run_async: bool = False,
-    connections=None,
-    signal=Signal(),
-    state=None,
-    asyncio_server_kwargs=None,
-    version=HTTP.VERSION_1,
-    config=None,
-):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    if app.debug:
-        loop.set_debug(app.debug)
-
-    app.asgi = False
-    app.multiplexer = WorkerMultiplexer(restart_flag)
-    primary_server_info = app.state.server_info[0]
-    primary_server_info.stage = ServerStage.SERVING
-    if config:
-        app.update_config(config)
 
     if version is HTTP.VERSION_3:
         return _serve_http_3(host, port, app, loop, ssl)

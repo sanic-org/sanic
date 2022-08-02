@@ -4,7 +4,6 @@ import asyncio
 
 from enum import Enum
 from inspect import isawaitable
-from os import getpid
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from sanic_routing import BaseRouter, Route, RouteGroup
@@ -188,7 +187,7 @@ class SignalRouter(BaseRouter):
             fail_not_found=fail_not_found and inline,
             reverse=reverse,
         )
-        logger.debug(f"Dispatching signal: {event}")
+        logger.debug(f"Dispatching signal: {event}", extra={"verbosity": 1})
 
         if inline:
             return await dispatch

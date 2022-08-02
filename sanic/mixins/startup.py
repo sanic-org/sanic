@@ -37,7 +37,7 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
-from sanic.compat import OS_IS_WINDOWS, is_atty
+from sanic.compat import is_atty
 from sanic.helpers import _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
@@ -49,11 +49,12 @@ from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
-from sanic.server.runners import serve, worker_serve
+from sanic.server.runners import serve
 from sanic.server.socket import configure_socket
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
+from sanic.worker.serve import worker_serve
 
 
 if TYPE_CHECKING:
@@ -72,7 +73,7 @@ else:
 try_use_uvloop()
 
 
-class RunnerMixin(metaclass=SanicMeta):
+class StartupMixin(metaclass=SanicMeta):
     _app_registry: Dict[str, Sanic]
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
@@ -502,6 +503,8 @@ class RunnerMixin(metaclass=SanicMeta):
         serve_location: str = "",
         server_settings: Optional[Dict[str, Any]] = None,
     ):
+        if os.environ.get("SANIC_WORKER_PROCESS"):
+            return
         if serve_location:
             deprecation(
                 "Specifying a serve_location in the MOTD is deprecated and "
@@ -646,25 +649,43 @@ class RunnerMixin(metaclass=SanicMeta):
         try:
             main_start = primary_server_info.settings.pop("main_start", None)
             main_stop = primary_server_info.settings.pop("main_stop", None)
+            app = primary_server_info.settings.pop("app", None)
             loop = new_event_loop()
             trigger_events(main_start, loop, primary)
 
             sock = configure_socket(primary_server_info.settings)
             primary_server_info.settings["run_multiple"] = True
             sub, pub = Pipe()
-            kwargs = {**primary_server_info.settings, "restart_flag": pub}
+            kwargs: Dict[str, Any] = {
+                **primary_server_info.settings,
+                "restart_flag": pub,
+            }
 
             # TODO:
-            # - use spawn for Windows, fork for Linus
             # - make sure to install loop in global scope
             #     - uvloop or the Window policy
             # - on windows need to use socket.share, socket.fromshare pattern
+
+            # TODO:
+            # - Solve for the below pattern:
+            #   Cannot pass the Sanic object as an arg to subprocess because
+            #   the object will be pickled and if attributes are removed on
+            #   reload, it will raise an AttributeError as it no longer exists
+            #   Instead, pass the app name, and hydrate that into an object
+            #   inside `worker_serve`. As a POC, moved the class to be passed
+            #   since it cannot be imported at runtime in runners.py currently
+            #   HOWEVER... app.state.server_info does need to be passed since
+            #   it is set in app.prepare. If app.prepare is inside if __name__
+            #   block, then it will not be on the refreshed instance.
+            # - REMOVE app from server_info
+            kwargs["app_name"] = app.name
+            kwargs["server_info"] = primary_server_info
 
             manager = WorkerManager(
                 primary.state.workers,
                 worker_serve,
                 kwargs,
-                get_context(),
+                get_context("spawn"),
                 pub,
                 sub,
             )
@@ -692,6 +713,54 @@ class RunnerMixin(metaclass=SanicMeta):
             # loop.close()
             # remove_unix_socket(unix)
             trigger_events(main_stop, loop, primary)
+
+    @classmethod
+    def serve_single(cls, primary: Optional[Sanic] = None) -> None:
+        apps = list(cls._app_registry.values())
+
+        # TODO:
+        # - Support using nth app
+        if not primary:
+            try:
+                primary = apps[0]
+            except IndexError:
+                raise RuntimeError("Did not find any applications.")
+
+        # This exists primarily for unit testing
+        if not primary.state.server_info:  # no cov
+            for app in apps:
+                app.state.server_info.clear()
+            return
+
+        primary_server_info = primary.state.server_info[0]
+        # primary.before_server_start(
+        # partial(primary._start_servers, apps=apps))
+        kwargs = {
+            k: v
+            for k, v in primary_server_info.settings.items()
+            if k
+            not in (
+                "main_start",
+                "main_stop",
+            )
+        }
+        sock = configure_socket(kwargs)
+
+        try:
+            worker_serve(restart_flag=None, **kwargs)
+        except BaseException:
+            error_logger.exception(
+                "Experienced exception while trying to serve"
+            )
+            raise
+        finally:
+            logger.info("Server Stopped")
+            # for app in apps:
+            #     app.state.server_info.clear()
+            #     app.router.reset()
+            #     app.signal_router.reset()
+
+            sock.close()
 
     async def _start_servers(
         self,
@@ -773,7 +842,7 @@ class RunnerMixin(metaclass=SanicMeta):
 
     async def _run_server(
         self,
-        app: RunnerMixin,
+        app: StartupMixin,
         server_info: ApplicationServerInfo,
     ) -> None:
 

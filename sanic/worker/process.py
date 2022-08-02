@@ -2,7 +2,7 @@ from enum import IntEnum, auto
 from multiprocessing.context import BaseContext
 from typing import Set
 
-from sanic.log import logger
+from sanic.log import Colors, logger
 
 
 class ProcessState(IntEnum):
@@ -28,7 +28,10 @@ class WorkerProcess:
         self.state = state
 
     def start(self):
-        logger.debug("Starting a process: %s", self.name)
+        logger.debug(
+            f"{Colors.BLUE}Starting a process: {Colors.SANIC}%s{Colors.END}",
+            self.name,
+        )
         self.set_state(ProcessState.STARTED)
         self._process.start()
 
@@ -37,19 +40,32 @@ class WorkerProcess:
         self._process.join()
 
     def terminate(self):
-        logger.debug("Terminating a process: %s [%s]", self.name, self.pid)
+        logger.debug(
+            f"{Colors.BLUE}Terminating a process:{Colors.SANIC}%s "
+            f"[%s]{Colors.END}",
+            self.name,
+            self.pid,
+        )
         self.set_state(ProcessState.TERMINATED, force=True)
         self._process.terminate()
 
     def restart(self, **kwargs):
-        logger.debug("Restarting a process: %s [%s]", self.name, self.pid)
+        logger.debug(
+            f"{Colors.BLUE}Restarting a process: {Colors.SANIC}%s "
+            f"[%s]{Colors.END}",
+            self.name,
+            self.pid,
+        )
         self._process.terminate()
         self.set_state(ProcessState.IDLE, force=True)
         self.kwargs.update(
             {"config": {k.upper(): v for k, v in kwargs.items()}}
         )
-        self.spawn()
-        self.start()
+        try:
+            self.spawn()
+            self.start()
+        except AttributeError:
+            print("Got here")
 
     def is_alive(self):
         return self._process.is_alive()
@@ -61,8 +77,8 @@ class WorkerProcess:
             name=self.name,
             target=self.target,
             kwargs=self.kwargs,
+            # daemon = True
         )
-        self._process.daemon = True
 
     # def missed(self):
     #     self.misses += 1

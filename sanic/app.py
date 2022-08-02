@@ -47,7 +47,12 @@ from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
-from sanic.application.state import ApplicationState, Mode, ServerStage
+from sanic.application.state import (
+    ApplicationServerInfo,
+    ApplicationState,
+    Mode,
+    ServerStage,
+)
 from sanic.asgi import ASGIApp
 from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -70,7 +75,7 @@ from sanic.log import (
     logger,
 )
 from sanic.mixins.listeners import ListenerEvent
-from sanic.mixins.runner import RunnerMixin
+from sanic.mixins.startup import StartupMixin
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -104,7 +109,7 @@ if OS_IS_WINDOWS:  # no cov
 filterwarnings("once", category=DeprecationWarning)
 
 
-class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
+class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     """
     The main application instance
     """
@@ -174,7 +179,6 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         loads: Optional[Callable[..., Any]] = None,
     ) -> None:
         super().__init__(name=name)
-
         # logging
         if configure_logging:
             dict_config = log_config or LOGGING_CONFIG_DEFAULTS
@@ -1571,3 +1575,16 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 "loop": loop,
             },
         )
+
+    def refresh(self, server_info: Optional[ApplicationServerInfo] = None):
+        name = "__mp_main__" if self.name == "__main__" else self.name
+        registered = self.__class__.get_app(name)
+        if self is not registered:
+            if not registered.state.server_info:
+                registered.state.server_info = self.state.server_info
+            self = registered
+        if not self.state.server_info and server_info:
+            if not server_info.settings.get("app"):
+                server_info.settings["app"] = self
+            self.state.server_info.append(server_info)
+        return self

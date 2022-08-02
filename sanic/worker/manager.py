@@ -41,7 +41,9 @@ class WorkerManager:
 
     def start(self):
         for process in self.processes:
+            os.environ["SANIC_WORKER_PROCESS"] = process.name
             process.start()
+        del os.environ["SANIC_WORKER_PROCESS"]
 
     def join(self):
         logger.debug("Joining processes", extra={"verbosity": 1})
@@ -69,7 +71,6 @@ class WorkerManager:
     def monitor(self):
         while True:
             reloaded_files = self.restart_subscriber.recv()
-
             if not reloaded_files:
                 break
             self.restart(reloaded_files=reloaded_files)

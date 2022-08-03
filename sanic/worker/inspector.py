@@ -32,19 +32,19 @@ class Inspector:
 
         logger.info(f"Inspector started on: {sock.getsockname()}")
         sock.settimeout(0.5)
-        while self.run:
-            try:
-                conn, _ = sock.accept()
-            except timeout:
-                ...
-            else:
-                data = dumps(self.state_to_json())
-                conn.send(data.encode())
-                conn.close()
-
-        logger.info(dumps(self.state_to_json()))
-        logger.debug("Inspector closing")
-        sock.close()
+        try:
+            while self.run:
+                try:
+                    conn, _ = sock.accept()
+                except timeout:
+                    ...
+                else:
+                    data = dumps(self.state_to_json())
+                    conn.send(data.encode())
+                    conn.close()
+        finally:
+            logger.debug("Inspector closing")
+            sock.close()
 
     def stop(self, *_):
         self.run = False

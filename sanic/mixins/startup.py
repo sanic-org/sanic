@@ -751,6 +751,9 @@ class StartupMixin(metaclass=SanicMeta):
             primary._inspector = inspector
             primary._manager = manager
 
+            ready = primary.listeners["main_process_ready"]
+            trigger_events(ready, loop, primary)
+
             manager.run()
         except BaseException:
             error_logger.exception(

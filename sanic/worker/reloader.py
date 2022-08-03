@@ -33,6 +33,8 @@ class Reloader:
         primary.listeners.get("reload_process_start")
         reloader_start = primary.listeners.get("reload_process_start")
         reloader_stop = primary.listeners.get("reload_process_stop")
+        before_trigger = primary.listeners.get("before_reload_trigger")
+        after_trigger = primary.listeners.get("after_reload_trigger")
         loop = new_event_loop()
         trigger_events(reloader_start, loop, primary)
 
@@ -50,7 +52,11 @@ class Reloader:
                 except OSError:
                     continue
             if changed:
+                if before_trigger:
+                    trigger_events(before_trigger, loop, primary)
                 self.reload(",".join(changed) if changed else "unknown")
+                if after_trigger:
+                    trigger_events(after_trigger, loop, primary)
         else:
             trigger_events(reloader_stop, loop, primary)
 

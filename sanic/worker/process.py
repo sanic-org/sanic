@@ -1,8 +1,16 @@
+import os
+
+from datetime import datetime, timezone
 from enum import IntEnum, auto
 from multiprocessing.context import BaseContext
-from typing import Set
+from typing import Any, Dict, Set
 
 from sanic.log import Colors, logger
+
+
+def get_now():
+    now = datetime.now(tz=timezone.utc)
+    return now
 
 
 class ProcessState(IntEnum):
@@ -13,13 +21,14 @@ class ProcessState(IntEnum):
 
 
 class WorkerProcess:
-    def __init__(self, factory, name, target, kwargs):
+    def __init__(self, factory, name, target, kwargs, worker_state):
         self.state = ProcessState.IDLE
         # self.misses = 0
         self.factory = factory
         self.name = name
         self.target = target
         self.kwargs = kwargs
+        self.worker_state = worker_state
         self.spawn()
 
     def set_state(self, state: ProcessState, force=False):
@@ -28,12 +37,20 @@ class WorkerProcess:
         self.state = state
 
     def start(self):
+        os.environ["SANIC_WORKER_PROCESS"] = self.name
         logger.debug(
             f"{Colors.BLUE}Starting a process: {Colors.SANIC}%s{Colors.END}",
             self.name,
         )
         self.set_state(ProcessState.STARTED)
         self._process.start()
+        if self.name not in self.worker_state:
+            self.worker_state[self.name] = {
+                "pid": self.pid,
+                "start_at": get_now(),
+                "starts": 1,
+            }
+        del os.environ["SANIC_WORKER_PROCESS"]
 
     def join(self):
         self.set_state(ProcessState.JOINED)
@@ -41,18 +58,19 @@ class WorkerProcess:
 
     def terminate(self):
         logger.debug(
-            f"{Colors.BLUE}Terminating a process:{Colors.SANIC}%s "
-            f"[%s]{Colors.END}",
+            f"{Colors.BLUE}Terminating a process: {Colors.SANIC}%s "
+            f"{Colors.BLUE}[%s]{Colors.END}",
             self.name,
             self.pid,
         )
         self.set_state(ProcessState.TERMINATED, force=True)
         self._process.terminate()
+        del self.worker_state[self.name]
 
     def restart(self, **kwargs):
         logger.debug(
             f"{Colors.BLUE}Restarting a process: {Colors.SANIC}%s "
-            f"[%s]{Colors.END}",
+            f"{Colors.BLUE}[%s]{Colors.END}",
             self.name,
             self.pid,
         )
@@ -65,7 +83,14 @@ class WorkerProcess:
             self.spawn()
             self.start()
         except AttributeError:
-            print("Got here")
+            raise RuntimeError("Restart failed")
+
+        self.worker_state[self.name] = {
+            **self.worker_state[self.name],
+            "pid": self.pid,
+            "starts": self.worker_state[self.name]["starts"] + 1,
+            "restart_at": get_now(),
+        }
 
     def is_alive(self):
         return self._process.is_alive()
@@ -90,12 +115,18 @@ class WorkerProcess:
 
 class Worker:
     def __init__(
-        self, ident: str, serve, server_settings, context: BaseContext
+        self,
+        ident: str,
+        serve,
+        server_settings,
+        context: BaseContext,
+        worker_state: Dict[str, Any],
     ):
         self.ident = ident
         self.context = context
         self.serve = serve
         self.server_settings = server_settings
+        self.worker_state = worker_state
         self.processes: Set[WorkerProcess] = set()
         # self.health_queue: Queue[int] = Queue(maxsize=1)
         self.create_process()
@@ -109,6 +140,7 @@ class Worker:
                 **self.server_settings,
                 # "health_queue": self.health_queue,
             },
+            worker_state=self.worker_state,
         )
         self.processes.add(process)
         return process

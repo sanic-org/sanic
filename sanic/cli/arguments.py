@@ -67,7 +67,8 @@ class ApplicationGroup(Group):
     name = "Application"
 
     def attach(self):
-        self.container.add_argument(
+        group = self.container.add_mutually_exclusive_group()
+        group.add_argument(
             "--factory",
             action="store_true",
             help=(
@@ -75,7 +76,7 @@ class ApplicationGroup(Group):
                 "i.e. a () -> <Sanic app> callable"
             ),
         )
-        self.container.add_argument(
+        group.add_argument(
             "-s",
             "--simple",
             dest="simple",
@@ -84,6 +85,12 @@ class ApplicationGroup(Group):
                 "Run Sanic as a Simple Server, and serve the contents of "
                 "a directory\n(module arg should be a path)"
             ),
+        )
+        group.add_argument(
+            "--inspect",
+            dest="inspect",
+            action="store_true",
+            help=("Inspect the state of a running instance"),
         )
 
 

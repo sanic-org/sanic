@@ -13,6 +13,7 @@ from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
 from sanic.log import error_logger
 from sanic.simple import create_simple_server
+from sanic.worker.inspector import inspect
 
 
 class SanicArgumentParser(ArgumentParser):
@@ -87,8 +88,15 @@ Or, a path to a directory to run as a simple HTTP server:
         except ValueError:
             error_logger.exception("Failed to run app")
         else:
+            if self.args.inspect:
+                os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
             for http_version in self.args.http:
                 app.prepare(**kwargs, version=http_version)
+
+            if self.args.inspect:
+                inspect(app.config.INSPECTOR_HOST, app.config.INSPECTOR_PORT)
+                del os.environ["SANIC_IGNORE_PRODUCTION_WARNING"]
+                return
 
             if self.args.single:
                 serve = Sanic.serve_single

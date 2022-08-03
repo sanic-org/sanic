@@ -16,7 +16,7 @@ from asyncio import (
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
-from multiprocessing import Pipe, get_context
+from multiprocessing import Manager, Pipe, get_context
 from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import socket
@@ -53,6 +53,7 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 from sanic.server.socket import configure_socket
+from sanic.worker.inspector import Inspector
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
@@ -496,7 +497,11 @@ class StartupMixin(metaclass=SanicMeta):
 
         self.motd(server_settings=server_settings)
 
-        if is_atty() and not self.state.is_debug:
+        if (
+            is_atty()
+            and not self.state.is_debug
+            and not os.environ.get("SANIC_IGNORE_PRODUCTION_WARNING")
+        ):
             error_logger.warning(
                 f"{Colors.YELLOW}Sanic is running in PRODUCTION mode. "
                 "Consider using '--debug' or '--dev' while actively "
@@ -672,6 +677,7 @@ class StartupMixin(metaclass=SanicMeta):
 
         primary_server_info = primary.state.server_info[0]
 
+        socks = []
         try:
             main_start = primary_server_info.settings.pop("main_start", None)
             main_stop = primary_server_info.settings.pop("main_stop", None)
@@ -686,9 +692,12 @@ class StartupMixin(metaclass=SanicMeta):
             ]
             primary_server_info.settings["run_multiple"] = True
             sub, pub = Pipe()
+            sync_manager = Manager()
+            worker_state: Dict[str, Any] = sync_manager.dict()
             kwargs: Dict[str, Any] = {
                 **primary_server_info.settings,
-                "restart_flag": pub,
+                "restart_publisher": pub,
+                "worker_state": worker_state,
             }
 
             # TODO:
@@ -712,6 +721,7 @@ class StartupMixin(metaclass=SanicMeta):
                     "ACCESS_LOG": app.config.ACCESS_LOG,
                     "NOISY_EXCEPTIONS": app.config.NOISY_EXCEPTIONS,
                 },
+                "shared_ctx": app.shared_ctx.__dict__,
             }
 
             manager = WorkerManager(
@@ -719,8 +729,8 @@ class StartupMixin(metaclass=SanicMeta):
                 worker_serve,
                 kwargs,
                 cls._get_context(),
-                pub,
-                sub,
+                (pub, sub),
+                worker_state,
             )
             if cls.should_auto_reload():
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(
@@ -728,6 +738,18 @@ class StartupMixin(metaclass=SanicMeta):
                 )
                 reloader = Reloader(pub, 1.0, reload_dirs)
                 manager.manage("Reloader", reloader, {}, transient=False)
+
+            inspector = None
+            if primary.config.INSPECTOR:
+                inspector = Inspector(
+                    worker_state,
+                    primary.config.INSPECTOR_HOST,
+                    primary.config.INSPECTOR_PORT,
+                )
+                manager.manage("Inspector", inspector, {}, transient=False)
+
+            primary._inspector = inspector
+            primary._manager = manager
 
             manager.run()
         except BaseException:
@@ -780,7 +802,7 @@ class StartupMixin(metaclass=SanicMeta):
         sock = configure_socket(kwargs)
 
         try:
-            worker_serve(restart_flag=None, **kwargs)
+            worker_serve(restart_publisher=None, **kwargs)
         except BaseException:
             error_logger.exception(
                 "Experienced exception while trying to serve"

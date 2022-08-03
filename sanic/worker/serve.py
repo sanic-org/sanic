@@ -1,4 +1,5 @@
 import asyncio
+import os
 import socket
 
 from functools import partial
@@ -19,7 +20,8 @@ def worker_serve(
     host,
     port,
     app_name: str,
-    restart_flag: Optional[Connection],
+    restart_publisher: Optional[Connection],
+    worker_state: Optional[Dict[str, Any]] = None,
     server_info: Optional[Dict[str, List[ApplicationServerInfo]]] = None,
     ssl: Optional[SSLContext] = None,
     sock: Optional[socket.socket] = None,
@@ -46,18 +48,26 @@ def worker_serve(
 
     app = Sanic.get_app(app_name).refresh(passthru)
 
-    if server_info:
-        for app_name, server_info_objects in server_info.items():
-            a = Sanic.get_app(app_name)
-            if not a.state.server_info:
-                a.state.server_info = []
-                for info in server_info_objects:
-                    if not info.settings.get("app"):
-                        info.settings["app"] = a
-                    a.state.server_info.append(info)
+    # When in a worker process, do some init
+    if os.environ.get("SANIC_WORKER_PROCESS"):
+        # Hydrate apps with any passed server info
+        if server_info:
+            for app_name, server_info_objects in server_info.items():
+                a = Sanic.get_app(app_name)
+                if not a.state.server_info:
+                    a.state.server_info = []
+                    for info in server_info_objects:
+                        if not info.settings.get("app"):
+                            info.settings["app"] = a
+                        a.state.server_info.append(info)
 
-    if restart_flag:
-        app.multiplexer = WorkerMultiplexer(restart_flag)
+        if restart_publisher is None:
+            raise RuntimeError("No restart publisher found in worker process")
+        if worker_state is None:
+            raise RuntimeError("No worker state found in worker process")
+        app.multiplexer = WorkerMultiplexer(restart_publisher, worker_state)
+
+        # Run secondary servers
         apps = list(Sanic._app_registry.values())
         app.before_server_start(partial(app._start_servers, apps=apps))
 

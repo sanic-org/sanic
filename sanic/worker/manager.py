@@ -15,23 +15,25 @@ class WorkerManager:
         serve,
         server_settings,
         context,
-        restart_publisher,
-        restart_subscriber,
+        restart_pubsub,
+        worker_state,
     ):
         self.context = context
-        self.transient: List[Worker] = [
-            Worker(f"Worker-{i}", serve, server_settings, context)
-            for i in range(number)
-        ]
+        self.transient: List[Worker] = []
         self.durable: List[Worker] = []
-        self.restart_publisher = restart_publisher
-        self.restart_subscriber = restart_subscriber
+        self.restart_publisher, self.restart_subscriber = restart_pubsub
+        self.worker_state = worker_state
         signal_func(SIGINT, self.kill)
         signal_func(SIGTERM, self.kill)
+        self.worker_state["Sanic-Main"] = {"pid": self.pid}
+        for i in range(number):
+            self.manage(f"Worker-{i}", serve, server_settings)
 
     def manage(self, ident, func, kwargs, transient=True):
         container = self.transient if transient else self.durable
-        container.append(Worker(ident, func, kwargs, self.context))
+        container.append(
+            Worker(ident, func, kwargs, self.context, self.worker_state)
+        )
 
     def run(self):
         self.start()
@@ -41,9 +43,7 @@ class WorkerManager:
 
     def start(self):
         for process in self.processes:
-            os.environ["SANIC_WORKER_PROCESS"] = process.name
             process.start()
-        del os.environ["SANIC_WORKER_PROCESS"]
 
     def join(self):
         logger.debug("Joining processes", extra={"verbosity": 1})

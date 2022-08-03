@@ -19,6 +19,7 @@ from collections import defaultdict, deque
 from contextlib import suppress
 from functools import partial
 from inspect import isawaitable
+from os import environ
 from socket import socket
 from traceback import format_exc
 from types import SimpleNamespace
@@ -88,6 +89,9 @@ from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
+from sanic.types.shared_ctx import SharedContext
+from sanic.worker.inspector import Inspector
+from sanic.worker.manager import WorkerManager
 
 
 if TYPE_CHECKING:
@@ -128,6 +132,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "_future_routes",
         "_future_signals",
         "_future_statics",
+        "_inspector",
+        "_manager",
         "_state",
         "_task_registry",
         "_test_client",
@@ -146,6 +152,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "request_middleware",
         "response_middleware",
         "router",
+        "shared_ctx",
         "signal_router",
         "sock",
         "strict_slashes",
@@ -172,6 +179,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         configure_logging: bool = True,
         dumps: Optional[Callable[..., AnyStr]] = None,
         loads: Optional[Callable[..., Any]] = None,
+        inspector: bool = False,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -187,12 +195,16 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         # First setup config
         self.config: Config = config or Config(env_prefix=env_prefix)
+        if inspector:
+            self.config.INSPECTOR = inspector
 
         # Then we can do the rest
         self._asgi_client: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
         self._future_registry: FutureRegistry = FutureRegistry()
+        self._inspector: Optional[Inspector] = None
+        self._manager: Optional[WorkerManager] = None
         self._state: ApplicationState = ApplicationState(app=self)
         self._task_registry: Dict[str, Task] = {}
         self._test_client: Any = None
@@ -210,6 +222,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
         self.router: Router = router or Router()
+        self.shared_ctx: SharedContext = SharedContext()
         self.signal_router: SignalRouter = signal_router or SignalRouter()
         self.sock: Optional[socket] = None
         self.strict_slashes: bool = strict_slashes
@@ -1573,6 +1586,10 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             },
         )
 
+    # -------------------------------------------------------------------- #
+    # Process Management
+    # -------------------------------------------------------------------- #
+
     def refresh(
         self,
         passthru: Optional[Dict[str, Any]] = None,
@@ -1586,4 +1603,21 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             for attr, info in passthru.items():
                 for key, value in info.items():
                     setattr(getattr(self, attr), key, value)
+        self.shared_ctx.lock()
         return self
+
+    @property
+    def inspector(self):
+        if environ.get("SANIC_WORKER_PROCESS") or not self._inspector:
+            raise SanicException(
+                "Can only access the inspector from the main process"
+            )
+        return self._inspector
+
+    @property
+    def manager(self):
+        if environ.get("SANIC_WORKER_PROCESS") or not self._manager:
+            raise SanicException(
+                "Can only access the manager from the main process"
+            )
+        return self._manager

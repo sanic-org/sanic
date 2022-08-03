@@ -49,7 +49,7 @@ def worker_serve(
     app = Sanic.get_app(app_name).refresh(passthru)
 
     # When in a worker process, do some init
-    if os.environ.get("SANIC_WORKER_PROCESS"):
+    if os.environ.get("SANIC_WORKER_NAME"):
         # Hydrate apps with any passed server info
         if server_info:
             for app_name, server_info_objects in server_info.items():

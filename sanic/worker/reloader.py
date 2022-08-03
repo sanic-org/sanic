@@ -64,7 +64,8 @@ class Reloader:
         self.run = False
 
     def reload(self, reloaded_files):
-        self._publisher.send(reloaded_files)
+        message = f"__ALL_PROCESSES__:{reloaded_files}"
+        self._publisher.send(message)
 
     def files(self):
         return chain(

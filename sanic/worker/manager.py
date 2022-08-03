@@ -2,7 +2,7 @@ import os
 
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from typing import List
+from typing import List, Optional
 
 from sanic.log import logger
 from sanic.worker.process import ProcessState, Worker
@@ -23,13 +23,15 @@ class WorkerManager:
         self.durable: List[Worker] = []
         self.restart_publisher, self.restart_subscriber = restart_pubsub
         self.worker_state = worker_state
+        self.worker_state["Sanic-Main"] = {"pid": self.pid}
+
+        for i in range(number):
+            self.manage(f"Worker-{i}", serve, server_settings, transient=True)
+
         signal_func(SIGINT, self.kill)
         signal_func(SIGTERM, self.kill)
-        self.worker_state["Sanic-Main"] = {"pid": self.pid}
-        for i in range(number):
-            self.manage(f"Worker-{i}", serve, server_settings)
 
-    def manage(self, ident, func, kwargs, transient=True):
+    def manage(self, ident, func, kwargs, transient=False):
         container = self.transient if transient else self.durable
         container.append(
             Worker(ident, func, kwargs, self.context, self.worker_state)
@@ -64,16 +66,24 @@ class WorkerManager:
         for process in self.processes:
             process.terminate()
 
-    def restart(self, **kwargs):
+    def restart(self, process_names: Optional[List[str]] = None, **kwargs):
         for process in self.transient_processes:
-            process.restart(**kwargs)
+            if not process_names or process.name in process_names:
+                process.restart(**kwargs)
 
     def monitor(self):
         while True:
-            reloaded_files = self.restart_subscriber.recv()
-            if not reloaded_files:
-                break
-            self.restart(reloaded_files=reloaded_files)
+            if self.restart_subscriber.poll(0.1):
+                message = self.restart_subscriber.recv()
+                if not message:
+                    break
+                processes, *reloaded_files = message.split(":", 1)
+                process_names = [name.strip() for name in processes.split(",")]
+                if "__ALL_PROCESSES__" in process_names:
+                    process_names = None
+                self.restart(
+                    process_names=process_names, reloaded_files=reloaded_files
+                )
 
     @property
     def workers(self):

@@ -690,13 +690,13 @@ class StartupMixin(metaclass=SanicMeta):
                 for app in apps
                 for server_info in app.state.server_info
             ]
-            primary_server_info.settings["run_multiple"] = True
-            sub, pub = Pipe()
             sync_manager = Manager()
+            primary_server_info.settings["run_multiple"] = True
+            restart_sub, restart_pub = Pipe(True)
             worker_state: Dict[str, Any] = sync_manager.dict()
             kwargs: Dict[str, Any] = {
                 **primary_server_info.settings,
-                "restart_publisher": pub,
+                "restart_publisher": restart_pub,
                 "worker_state": worker_state,
             }
 
@@ -706,6 +706,14 @@ class StartupMixin(metaclass=SanicMeta):
             # - on windows need to use socket.share, socket.fromshare pattern
             kwargs["app_name"] = app.name
             kwargs["server_info"] = {}
+            kwargs["passthru"] = {
+                "state": {"verbosity": app.state.verbosity},
+                "config": {
+                    "ACCESS_LOG": app.config.ACCESS_LOG,
+                    "NOISY_EXCEPTIONS": app.config.NOISY_EXCEPTIONS,
+                },
+                "shared_ctx": app.shared_ctx.__dict__,
+            }
             for app in apps:
                 kwargs["server_info"][app.name] = []
                 for server_info in app.state.server_info:
@@ -715,28 +723,20 @@ class StartupMixin(metaclass=SanicMeta):
                         if k not in ("main_start", "main_stop", "app")
                     }
                     kwargs["server_info"][app.name].append(server_info)
-            kwargs["passthru"] = {
-                "state": {"verbosity": app.state.verbosity},
-                "config": {
-                    "ACCESS_LOG": app.config.ACCESS_LOG,
-                    "NOISY_EXCEPTIONS": app.config.NOISY_EXCEPTIONS,
-                },
-                "shared_ctx": app.shared_ctx.__dict__,
-            }
 
             manager = WorkerManager(
                 primary.state.workers,
                 worker_serve,
                 kwargs,
                 cls._get_context(),
-                (pub, sub),
+                (restart_pub, restart_sub),
                 worker_state,
             )
             if cls.should_auto_reload():
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                     *(app.state.reload_dirs for app in apps)
                 )
-                reloader = Reloader(pub, 1.0, reload_dirs)
+                reloader = Reloader(restart_pub, 1.0, reload_dirs)
                 manager.manage("Reloader", reloader, {}, transient=False)
 
             inspector = None

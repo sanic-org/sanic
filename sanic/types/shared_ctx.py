@@ -18,7 +18,7 @@ class SharedContext(SimpleNamespace):
             raise RuntimeError(
                 f"Cannot set {name} on locked SharedContext object"
             )
-        if not os.environ.get("SANIC_WORKER_PROCESS"):
+        if not os.environ.get("SANIC_WORKER_NAME"):
             to_check: Iterable[Any]
             if not isinstance(value, (tuple, frozenset)):
                 to_check = [value]

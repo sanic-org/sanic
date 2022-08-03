@@ -12,16 +12,17 @@ class WorkerMultiplexer:
         self._restart_publisher = restart_publisher
         self._worker_state = worker_state
 
-    def restart(self):
-        self._restart_publisher.send(True)
+    def restart(self, name: str = ""):
+        if not name:
+            name = self.name
+        self._restart_publisher.send(name)
 
-    @property
     def pid(self) -> int:
         return getpid()
 
     @property
     def name(self) -> str:
-        return environ.get("SANIC_WORKER_PROCESS", "")
+        return environ.get("SANIC_WORKER_NAME", "")
 
     @property
     def workers(self) -> Dict[str, Any]:

@@ -23,7 +23,6 @@ class ProcessState(IntEnum):
 class WorkerProcess:
     def __init__(self, factory, name, target, kwargs, worker_state):
         self.state = ProcessState.IDLE
-        # self.misses = 0
         self.factory = factory
         self.name = name
         self.target = target
@@ -37,7 +36,7 @@ class WorkerProcess:
         self.state = state
 
     def start(self):
-        os.environ["SANIC_WORKER_PROCESS"] = self.name
+        os.environ["SANIC_WORKER_NAME"] = self.name
         logger.debug(
             f"{Colors.BLUE}Starting a process: {Colors.SANIC}%s{Colors.END}",
             self.name,
@@ -50,7 +49,7 @@ class WorkerProcess:
                 "start_at": get_now(),
                 "starts": 1,
             }
-        del os.environ["SANIC_WORKER_PROCESS"]
+        del os.environ["SANIC_WORKER_NAME"]
 
     def join(self):
         self.set_state(ProcessState.JOINED)
@@ -105,9 +104,6 @@ class WorkerProcess:
             # daemon = True
         )
 
-    # def missed(self):
-    #     self.misses += 1
-
     @property
     def pid(self):
         return self._process.pid
@@ -128,17 +124,15 @@ class Worker:
         self.server_settings = server_settings
         self.worker_state = worker_state
         self.processes: Set[WorkerProcess] = set()
-        # self.health_queue: Queue[int] = Queue(maxsize=1)
         self.create_process()
 
     def create_process(self) -> WorkerProcess:
         process = WorkerProcess(
             factory=self.context.Process,
-            name=f"Sanic-{self.ident}",
+            name=f"Sanic-{self.ident}-{len(self.processes)}",
             target=self.serve,
             kwargs={
                 **self.server_settings,
-                # "health_queue": self.health_queue,
             },
             worker_state=self.worker_state,
         )

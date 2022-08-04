@@ -17,6 +17,7 @@ class WorkerMultiplexer:
             name = self.name
         self._restart_publisher.send(name)
 
+    @property
     def pid(self) -> int:
         return getpid()
 

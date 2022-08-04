@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from distutils.util import strtobool
 from os import getenv
@@ -47,3 +48,19 @@ def try_use_uvloop() -> None:
 
     if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+
+def try_windows_loop():
+    if not OS_IS_WINDOWS:
+        error_logger.warning(
+            "You are trying to use an event loop policy that is not "
+            "compatible with your system. You can simply let Sanic handle "
+            "selecting the best loop for you. Sanic will now continue to run "
+            "using the default event loop."
+        )
+        return
+
+    if sys.version_info >= (3, 8) and not isinstance(
+        asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
+    ):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

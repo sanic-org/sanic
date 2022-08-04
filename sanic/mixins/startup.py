@@ -38,7 +38,7 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
-from sanic.compat import is_atty
+from sanic.compat import OS_IS_WINDOWS, is_atty
 from sanic.helpers import _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
@@ -49,6 +49,7 @@ from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
 from sanic.server.legacy import watchdog
+from sanic.server.loop import try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
@@ -73,16 +74,25 @@ else:
     from typing import Literal
 
     HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
-try_use_uvloop()
 
 
 class StartupMixin(metaclass=SanicMeta):
     _app_registry: Dict[str, Sanic]
+    asgi: bool
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
+
+    def __init__(self):
+        if not self.asgi:
+            if self.config.USE_UVLOOP is True or (
+                self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
+            ):
+                try_use_uvloop()
+            elif OS_IS_WINDOWS:
+                try_windows_loop()
 
     @property
     def m(self) -> WorkerMultiplexer:

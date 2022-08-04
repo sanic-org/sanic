@@ -65,11 +65,12 @@ def worker_serve(
             raise RuntimeError("No restart publisher found in worker process")
         if worker_state is None:
             raise RuntimeError("No worker state found in worker process")
-        app.multiplexer = WorkerMultiplexer(restart_publisher, worker_state)
 
         # Run secondary servers
         apps = list(Sanic._app_registry.values())
         app.before_server_start(partial(app._start_servers, apps=apps))
+        for a in apps:
+            a.multiplexer = WorkerMultiplexer(restart_publisher, worker_state)
 
     if app.debug:
         loop.set_debug(app.debug)

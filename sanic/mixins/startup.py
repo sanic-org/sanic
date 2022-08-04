@@ -78,7 +78,6 @@ else:
 
 class StartupMixin(metaclass=SanicMeta):
     _app_registry: Dict[str, Sanic]
-    asgi: bool
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
@@ -540,7 +539,9 @@ class StartupMixin(metaclass=SanicMeta):
         serve_location: str = "",
         server_settings: Optional[Dict[str, Any]] = None,
     ):
-        if os.environ.get("SANIC_WORKER_PROCESS"):
+        if os.environ.get("SANIC_WORKER_PROCESS") or os.environ.get(
+            "SANIC_SERVER_RUNNING"
+        ):
             return
         if serve_location:
             deprecation(

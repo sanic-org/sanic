@@ -77,7 +77,11 @@ class WorkerManager:
                 message = self.restart_subscriber.recv()
                 if not message:
                     break
-                processes, *reloaded_files = message.split(":", 1)
+                split_message = message.split(":", 1)
+                processes = split_message[0]
+                reloaded_files = (
+                    split_message[1] if len(split_message) > 1 else None
+                )
                 process_names = [name.strip() for name in processes.split(",")]
                 if "__ALL_PROCESSES__" in process_names:
                     process_names = None

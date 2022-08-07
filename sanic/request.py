@@ -51,7 +51,7 @@ from sanic.headers import (
     parse_xforwarded,
 )
 from sanic.http import Stage
-from sanic.log import error_logger, logger
+from sanic.log import deprecation, error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
@@ -98,6 +98,7 @@ class Request:
         "_port",
         "_protocol",
         "_remote_addr",
+        "_request_middleware_started",
         "_scheme",
         "_socket",
         "_stream_id",
@@ -121,7 +122,6 @@ class Request:
         "parsed_token",
         "raw_url",
         "responded",
-        "request_middleware_started",
         "route",
         "stream",
         "transport",
@@ -173,7 +173,7 @@ class Request:
         self.parsed_not_grouped_args: DefaultDict[
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
-        self.request_middleware_started = False
+        self._request_middleware_started = False
         self.responded: bool = False
         self.route: Optional[Route] = None
         self.stream: Optional[Stream] = None
@@ -213,6 +213,16 @@ class Request:
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
+
+    @property
+    def request_middleware_started(self):
+        deprecation(
+            "Request.request_middleware_started has been deprecated and will"
+            "be removed. You should set a flag on the request context using"
+            "either middleware or signals if you need this feature.",
+            22.3,
+        )
+        return self._request_middleware_started
 
     @property
     def stream_id(self):
@@ -319,9 +329,10 @@ class Request:
                 response = await response  # type: ignore
         # Run response middleware
         try:
-            response = await self.app._run_response_middleware(
-                self, response, request_name=self.name
-            )
+            if self.route and self.route.extra.response_middleware:
+                response = await self.app._run_response_middleware(
+                    self, response
+                )
         except CancelledErrors:
             raise
         except Exception:

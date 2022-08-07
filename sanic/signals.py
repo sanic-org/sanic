@@ -187,7 +187,7 @@ class SignalRouter(BaseRouter):
             fail_not_found=fail_not_found and inline,
             reverse=reverse,
         )
-        logger.debug(f"Dispatching signal: {event}")
+        logger.debug(f"Dispatching signal: {event}", extra={"verbosity": 1})
 
         if inline:
             return await dispatch

@@ -84,7 +84,7 @@ class StartupMixin(metaclass=SanicMeta):
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
 
-    def __init__(self):
+    def setup_loop(self):
         if not self.asgi:
             if self.config.USE_UVLOOP is True or (
                 self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
@@ -693,6 +693,7 @@ class StartupMixin(metaclass=SanicMeta):
             main_start = primary_server_info.settings.pop("main_start", None)
             main_stop = primary_server_info.settings.pop("main_stop", None)
             app = primary_server_info.settings.pop("app")
+            app.setup_loop()
             loop = new_event_loop()
             trigger_events(main_start, loop, primary)
 
@@ -711,10 +712,6 @@ class StartupMixin(metaclass=SanicMeta):
                 "worker_state": worker_state,
             }
 
-            # TODO:
-            # - make sure to install loop in global scope
-            #     - uvloop or the Window policy
-            # - on windows need to use socket.share, socket.fromshare pattern
             kwargs["app_name"] = app.name
             kwargs["server_info"] = {}
             kwargs["passthru"] = {

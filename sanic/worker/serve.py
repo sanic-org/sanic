@@ -43,10 +43,11 @@ def worker_serve(
 ):
     from sanic import Sanic
 
+    app = Sanic.get_app(app_name).refresh(passthru)
+    app.setup_loop()
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
-    app = Sanic.get_app(app_name).refresh(passthru)
 
     # When in a worker process, do some init
     if os.environ.get("SANIC_WORKER_NAME"):

@@ -18,6 +18,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     :param backlog: Maximum number of connections to queue
     :return: socket.socket object
     """
+    # socket.share, socket.fromshare
     try:  # IP address: family must be specified for IPv6 at least
         ip = ip_address(host)
         host = str(ip)

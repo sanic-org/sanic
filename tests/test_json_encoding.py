@@ -3,18 +3,27 @@ import sys
 from dataclasses import asdict, dataclass
 from functools import partial
 from json import dumps as sdumps
+from string import ascii_lowercase
+from typing import Dict
 
 import pytest
 
 
 try:
+    import ujson
+
     from ujson import dumps as udumps
+
+    ujson_version = tuple(
+        map(int, ujson.__version__.strip(ascii_lowercase).split("."))
+    )
 
     NO_UJSON = False
     DEFAULT_DUMPS = udumps
 except ModuleNotFoundError:
     NO_UJSON = True
     DEFAULT_DUMPS = partial(sdumps, separators=(",", ":"))
+    ujson_version = None
 
 from sanic import Sanic
 from sanic.response import BaseHTTPResponse, json
@@ -34,7 +43,7 @@ def foo():
 
 
 @pytest.fixture
-def payload(foo):
+def payload(foo: Foo):
     return {"foo": foo}
 
 
@@ -58,7 +67,7 @@ def test_change_encoder_to_some_custom():
 
 
 @pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
-def test_json_response_ujson(payload):
+def test_json_response_ujson(payload: Dict[str, Foo]):
     """ujson will look at __json__"""
     response = json(payload)
     assert response.body == b'{"foo":{"bar":"bar"}}'
@@ -75,7 +84,13 @@ def test_json_response_ujson(payload):
         json(payload)
 
 
-@pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
+@pytest.mark.skipif(
+    NO_UJSON is True or ujson_version >= (5, 4, 0),
+    reason=(
+        "ujson not installed or version is 5.4.0 or newer, "
+        "which can handle arbitrary size integers"
+    ),
+)
 def test_json_response_json():
     """One of the easiest ways to tell the difference is that ujson cannot
     serialize over 64 bits"""

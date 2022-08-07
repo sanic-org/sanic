@@ -16,6 +16,8 @@ class MiddlewareLocation(IntEnum):
 class Middleware:
     counter = count()
 
+    __slots__ = ("func", "priority", "location", "definition")
+
     def __init__(
         self,
         func: MiddlewareType,

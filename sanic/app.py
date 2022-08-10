@@ -1521,6 +1521,18 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.signalize(self.config.TOUCHUP)
         self.finalize()
 
+        route_names = [route.name for route in self.router.routes]
+        duplicates = {
+            name for name in route_names if route_names.count(name) > 1
+        }
+        if duplicates:
+            names = ", ".join(duplicates)
+            deprecation(
+                f"Duplicate route names detected: {names}. In the future, "
+                "Sanic will enforce uniqueness in route naming.",
+                23.3,
+            )
+
         # TODO: Replace in v22.6 to check against apps in app registry
         if (
             self.__class__._uvloop_setting is not None

@@ -38,7 +38,12 @@ from httptools import parse_url
 from httptools.parser.errors import HttpParserInvalidURLError
 
 from sanic.compat import CancelledErrors, Header
-from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
+from sanic.constants import (
+    CACHEABLE_HTTP_METHODS,
+    DEFAULT_HTTP_CONTENT_TYPE,
+    IDEMPOTENT_HTTP_METHODS,
+    SAFE_HTTP_METHODS,
+)
 from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
     AcceptContainer,
@@ -974,6 +979,33 @@ class Request:
             )
 
         return self.transport.scope
+
+    @property
+    def is_safe(self) -> bool:
+        """
+        :return: Whether the HTTP method is safe.
+            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.1
+        :rtype: bool
+        """
+        return self.method in SAFE_HTTP_METHODS
+
+    @property
+    def is_idempotent(self) -> bool:
+        """
+        :return: Whether the HTTP method is iempotent.
+            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.2
+        :rtype: bool
+        """
+        return self.method in IDEMPOTENT_HTTP_METHODS
+
+    @property
+    def is_cacheable(self) -> bool:
+        """
+        :return: Whether the HTTP method is cacheable.
+            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.3
+        :rtype: bool
+        """
+        return self.method in CACHEABLE_HTTP_METHODS
 
 
 class File(NamedTuple):

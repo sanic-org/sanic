@@ -210,7 +210,7 @@ class HTTPResponse(BaseHTTPResponse):
 
 
 def empty(
-    status=204, headers: Optional[Dict[str, str]] = None
+    status: int = 204, headers: Optional[Dict[str, str]] = None
 ) -> HTTPResponse:
     """
     Returns an empty response to the client.
@@ -227,7 +227,7 @@ def json(
     headers: Optional[Dict[str, str]] = None,
     content_type: str = "application/json",
     dumps: Optional[Callable[..., str]] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> HTTPResponse:
     """
     Returns response object with body in json format.

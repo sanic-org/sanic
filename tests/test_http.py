@@ -2,6 +2,7 @@ import json as stdjson
 
 from collections import namedtuple
 from pathlib import Path
+from sys import version_info
 
 import pytest
 
@@ -74,7 +75,10 @@ def test_full_message(client):
         """
     )
     response = client.recv()
-    assert len(response) == 151
+
+    # AltSvcCheck touchup removes the Alt-Svc header from the
+    # response in the Python 3.9+ in this case
+    assert len(response) == (151 if version_info < (3, 9) else 140)
     assert b"200 OK" in response
 
 

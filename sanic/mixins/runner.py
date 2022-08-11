@@ -526,7 +526,7 @@ class RunnerMixin(metaclass=SanicMeta):
                     )
                 )
             else:
-                server = "ASGI" if self.asgi else "unknown"
+                server = "ASGI" if self.asgi else "unknown"  # type: ignore
 
             display = {
                 "mode": " ".join(mode),
@@ -576,7 +576,7 @@ class RunnerMixin(metaclass=SanicMeta):
             server_settings = self.state.server_info[0].settings
             return self.get_server_location(server_settings)
         except IndexError:
-            location = "ASGI" if self.asgi else "unknown"
+            location = "ASGI" if self.asgi else "unknown"  # type: ignore
             return f"http://<{location}>"
 
     @staticmethod

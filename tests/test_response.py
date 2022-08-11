@@ -801,7 +801,7 @@ def test_file_response_headers(
     )
 
 
-def test_file_response_headers(app: Sanic, static_file_directory: str):
+def test_file_validate(app: Sanic, static_file_directory: str):
     file_name = "test_validate.txt"
     static_file_directory = Path(static_file_directory)
     file_path = static_file_directory / file_name
@@ -811,7 +811,7 @@ def test_file_response_headers(app: Sanic, static_file_directory: str):
     with open(file_path, "w+") as f:
         f.write("foo\n")
 
-    @app.route("/", methods=["GET"])
+    @app.route("/validate", methods=["GET"])
     def file_route_cache(request: Request):
         return file(
             file_path,
@@ -819,13 +819,13 @@ def test_file_response_headers(app: Sanic, static_file_directory: str):
             max_age=test_max_age,
         )
 
-    _, response = app.test_client.get("/")
+    _, response = app.test_client.get("/validate")
 
     assert response.status == 200
     last_modified = response.headers["Last-Modified"]
 
     _, response = app.test_client.get(
-        "/", headers={"If-Modified-Since": last_modified}
+        "/validate", headers={"If-Modified-Since": last_modified}
     )
     assert response.status == 304
 
@@ -834,7 +834,7 @@ def test_file_response_headers(app: Sanic, static_file_directory: str):
         f.write("bar\n")
 
     _, response = app.test_client.get(
-        "/", headers={"If-Modified-Since": last_modified}
+        "/validate", headers={"If-Modified-Since": last_modified}
     )
 
     assert response.status == 200

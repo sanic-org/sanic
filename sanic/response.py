@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
-from email.utils import formatdate
+from datetime import datetime, timezone
+from email.utils import formatdate, parsedate_to_datetime
 from functools import partial
 from mimetypes import guess_type
+from numbers import Number
 from os import path
 from pathlib import PurePath
 from time import time
@@ -319,9 +320,31 @@ def html(
     )
 
 
+async def validate_file(
+    request_headers: Header, last_modified: Union[datetime, Number]
+):
+    try:
+        if_modified_since = parsedate_to_datetime(
+            request_headers.get(
+                "If-Modified-Since",
+                request_headers.get("if-modified-since"),
+            )
+        )
+        if isinstance(last_modified, Number):
+            last_modified = datetime.fromtimestamp(
+                last_modified, tz=timezone.utc
+            ).replace(microsecond=0)
+        if last_modified <= if_modified_since:
+            return HTTPResponse(status=304)
+    except ValueError:
+        pass
+
+
 async def file(
     location: Union[str, PurePath],
     status: int = 200,
+    request_headers: Optional[Header] = None,
+    validate_when_requested: bool = True,
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
@@ -341,11 +364,6 @@ async def file(
     :param no_store: Any cache should not store this response.
     :param _range:
     """
-    headers = headers or {}
-    if filename:
-        headers.setdefault(
-            "Content-Disposition", f'attachment; filename="{filename}"'
-        )
 
     if isinstance(last_modified, datetime):
         last_modified = last_modified.replace(microsecond=0).timestamp()
@@ -353,9 +371,20 @@ async def file(
         stat = await stat_async(location)
         last_modified = stat.st_mtime
 
+    if validate_when_requested and request_headers is not None:
+        response = await validate_file(request_headers, last_modified)
+        if response:
+            return response
+
+    headers = headers or {}
     if last_modified:
         headers.setdefault(
-            "last-modified", formatdate(last_modified, usegmt=True)
+            "Last-Modified", formatdate(last_modified, usegmt=True)
+        )
+
+    if filename:
+        headers.setdefault(
+            "Content-Disposition", f'attachment; filename="{filename}"'
         )
 
     if no_store:

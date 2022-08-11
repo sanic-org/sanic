@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import os
+import time
 
 from collections import namedtuple
 from datetime import datetime
@@ -767,9 +768,9 @@ def test_file_response_headers(
         == formatdate(test_expires, usegmt=True)[:-6]
         # [:-6] to allow at most 1 min difference
         # It's minimal for cases like:
-        # Thu, 26 May 2022 05:36:49 GMT
+        # Thu, 26 May 2022 05:36:59 GMT
         # AND
-        # Thu, 26 May 2022 05:36:50 GMT
+        # Thu, 26 May 2022 05:37:00 GMT
     )
 
     assert "last-modified" in headers and headers.get(
@@ -798,3 +799,43 @@ def test_file_response_headers(
     assert "cache-control" in headers and f"no-store" == headers.get(
         "cache-control"
     )
+
+
+def test_file_response_headers(app: Sanic, static_file_directory: str):
+    file_name = "test_validate.txt"
+    static_file_directory = Path(static_file_directory)
+    file_path = static_file_directory / file_name
+    file_path = file_path.absolute()
+    test_max_age = 10
+
+    with open(file_path, "w+") as f:
+        f.write("foo\n")
+
+    @app.route("/", methods=["GET"])
+    def file_route_cache(request: Request):
+        return file(
+            file_path,
+            request_headers=request.headers,
+            max_age=test_max_age,
+        )
+
+    _, response = app.test_client.get("/")
+
+    assert response.status == 200
+    last_modified = response.headers["Last-Modified"]
+
+    _, response = app.test_client.get(
+        "/", headers={"If-Modified-Since": last_modified}
+    )
+    assert response.status == 304
+
+    time.sleep(1)
+    with open(file_path, "a") as f:
+        f.write("bar\n")
+
+    _, response = app.test_client.get(
+        "/", headers={"If-Modified-Since": last_modified}
+    )
+
+    assert response.status == 200
+    file_path.unlink()

@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from email.utils import formatdate, parsedate_to_datetime
 from functools import partial
 from mimetypes import guess_type
-from numbers import Number
 from os import path
 from pathlib import PurePath
 from time import time
@@ -321,7 +320,7 @@ def html(
 
 
 async def validate_file(
-    request_headers: Header, last_modified: Union[datetime, Number]
+    request_headers: Header, last_modified: Union[datetime, float, int]
 ):
     try:
         if_modified_since = parsedate_to_datetime(
@@ -330,9 +329,9 @@ async def validate_file(
                 request_headers.get("if-modified-since"),
             )
         )
-        if isinstance(last_modified, Number):
+        if not isinstance(last_modified, datetime):
             last_modified = datetime.fromtimestamp(
-                last_modified, tz=timezone.utc
+                float(last_modified), tz=timezone.utc
             ).replace(microsecond=0)
         if last_modified <= if_modified_since:
             return HTTPResponse(status=304)
@@ -371,7 +370,11 @@ async def file(
         stat = await stat_async(location)
         last_modified = stat.st_mtime
 
-    if validate_when_requested and request_headers is not None:
+    if (
+        validate_when_requested
+        and request_headers is not None
+        and last_modified
+    ):
         response = await validate_file(request_headers, last_modified)
         if response:
             return response

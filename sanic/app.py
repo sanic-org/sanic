@@ -1315,7 +1315,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.config.update_config(config)
 
     @property
-    def asgi(self):
+    def asgi(self) -> bool:
         return self.state.asgi
 
     @asgi.setter

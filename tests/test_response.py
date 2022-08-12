@@ -848,4 +848,10 @@ def test_file_validate(app: Sanic, static_file_directory: str):
         "/validate", headers={"if-modified-since": last_modified}
     )
     assert response.status == 304
+
+    _, response = app.test_client.get(
+        "/validate", headers={"if-modified-since": ""}
+    )
+    assert response.status == 200
+
     file_path.unlink()

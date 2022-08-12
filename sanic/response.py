@@ -335,7 +335,7 @@ async def validate_file(
             ).replace(microsecond=0)
         if last_modified <= if_modified_since:
             return HTTPResponse(status=304)
-    except:
+    except Exception:
         pass
 
 

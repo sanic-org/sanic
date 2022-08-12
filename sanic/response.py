@@ -322,10 +322,7 @@ def html(
 async def validate_file(
     request_headers: Header, last_modified: Union[datetime, float, int]
 ):
-    if_modified_since = request_headers.get(
-        "If-Modified-Since",
-        request_headers.get("if-modified-since"),
-    )
+    if_modified_since = request_headers.get("If-Modified-Since")
     if not if_modified_since:
         return
     if_modified_since = parsedate_to_datetime(if_modified_since)

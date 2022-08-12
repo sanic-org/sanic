@@ -328,8 +328,6 @@ async def validate_file(
             "If-Modified-Since",
             request_headers.get("if-modified-since"),
         )
-        print(if_modified_since)
-        print(type(if_modified_since))
         if_modified_since = parsedate_to_datetime(if_modified_since)
         if not isinstance(last_modified, datetime):
             last_modified = datetime.fromtimestamp(
@@ -337,7 +335,7 @@ async def validate_file(
             ).replace(microsecond=0)
         if last_modified <= if_modified_since:
             return HTTPResponse(status=304)
-    except ValueError:
+    except:
         pass
 
 

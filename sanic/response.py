@@ -323,12 +323,14 @@ async def validate_file(
     request_headers: Header, last_modified: Union[datetime, float, int]
 ):
     try:
-        if_modified_since = parsedate_to_datetime(
-            request_headers.get(
-                "If-Modified-Since",
-                request_headers.get("if-modified-since"),
-            )
+
+        if_modified_since = request_headers.get(
+            "If-Modified-Since",
+            request_headers.get("if-modified-since"),
         )
+        print(if_modified_since)
+        print(type(if_modified_since))
+        if_modified_since = parsedate_to_datetime(if_modified_since)
         if not isinstance(last_modified, datetime):
             last_modified = datetime.fromtimestamp(
                 float(last_modified), tz=timezone.utc

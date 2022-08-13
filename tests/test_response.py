@@ -834,11 +834,13 @@ def test_file_validate(app: Sanic, static_file_directory: str):
         "/validate", headers={"If-Modified-Since": last_modified}
     )
     assert response.status == 304
+    assert response.body == b""
 
     _, response = app.test_client.get(
         "/validate", headers={"if-modified-since": last_modified}
     )
     assert response.status == 304
+    assert response.body == b""
 
     time.sleep(1)
     with open(file_path, "a") as f:
@@ -865,5 +867,6 @@ def test_file_validate(app: Sanic, static_file_directory: str):
         "/validate", headers={"if-modified-since": last_modified}
     )
     assert response.status == 304
+    assert response.body == b""
 
     file_path.unlink()

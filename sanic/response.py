@@ -348,7 +348,12 @@ async def file(
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
-
+    :param status: HTTP response code. Won't enforce the passed in
+        status if only a part of the content will be sent (206)
+        or file is being validated (304).
+    :param request_headers: The request headers.
+    :param validate_when_requested: If True, will validate the
+        file when requested.
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.

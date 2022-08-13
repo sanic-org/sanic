@@ -817,7 +817,7 @@ def test_file_validate(app: Sanic, static_file_directory: str):
             file_path,
             request_headers=request.headers,
             max_age=test_max_age,
-            validate_when_requested=True
+            validate_when_requested=True,
         )
 
     _, response = app.test_client.get("/validate")

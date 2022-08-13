@@ -338,7 +338,7 @@ async def file(
     location: Union[str, PurePath],
     status: int = 200,
     request_headers: Optional[Header] = None,
-    validate_when_requested: bool = True,
+    validate_when_requested: bool = False,
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,

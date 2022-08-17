@@ -104,13 +104,39 @@ class MiddlewareMixin(metaclass=SanicMeta):
                 self.named_response_middleware.get(route.name, deque()),
                 location=MiddlewareLocation.RESPONSE,
             )
-            route.extra.request_middleware = sorted(
+            route.extra.request_middleware = deque(
+                sorted(
+                    request_middleware,
+                    key=attrgetter("order"),
+                    reverse=True,
+                )
+            )
+            route.extra.response_middleware = deque(
+                sorted(
+                    response_middleware,
+                    key=attrgetter("order"),
+                    reverse=True,
+                )[::-1]
+            )
+        request_middleware = Middleware.convert(
+            self.request_middleware,
+            location=MiddlewareLocation.REQUEST,
+        )
+        response_middleware = Middleware.convert(
+            self.response_middleware,
+            location=MiddlewareLocation.RESPONSE,
+        )
+        self.request_middleware = deque(
+            sorted(
                 request_middleware,
                 key=attrgetter("order"),
                 reverse=True,
             )
-            route.extra.response_middleware = sorted(
+        )
+        self.response_middleware = deque(
+            sorted(
                 response_middleware,
                 key=attrgetter("order"),
                 reverse=True,
             )[::-1]
+        )

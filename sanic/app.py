@@ -754,12 +754,11 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
-        if (
-            run_middleware
-            and request.route
-            and request.route.extra.request_middleware
-        ):
-            response = await self._run_request_middleware(request)
+        if run_middleware:
+            middleware = (
+                request.route and request.route.extra.request_middleware
+            ) or self.request_middleware
+            response = await self._run_request_middleware(request, middleware)
         # No middleware results
         if not response:
             try:
@@ -845,6 +844,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 Coroutine[Any, Any, Optional[BaseHTTPResponse]],
             ]
         ] = None
+        run_middleware = True
         try:
 
             await self.dispatch(
@@ -889,8 +889,11 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
+            run_middleware = False
             if request.route.extra.request_middleware:
-                response = await self._run_request_middleware(request)
+                response = await self._run_request_middleware(
+                    request, request.route.extra.request_middleware
+                )
 
             # No middleware results
             if not response:
@@ -960,7 +963,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             raise
         except Exception as e:
             # Response Generation Failed
-            await self.handle_exception(request, e, run_middleware=False)
+            await self.handle_exception(
+                request, e, run_middleware=run_middleware
+            )
 
     async def _websocket_handler(
         self, handler, request, *args, subprotocols=None, **kwargs
@@ -1028,10 +1033,12 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     # Execution
     # -------------------------------------------------------------------- #
 
-    async def _run_request_middleware(self, request):  # no cov
+    async def _run_request_middleware(
+        self, request, middleware_collection
+    ):  # no cov
         request._request_middleware_started = True
 
-        for middleware in request.route.extra.request_middleware:
+        for middleware in middleware_collection:
             await self.dispatch(
                 "http.middleware.before",
                 inline=True,
@@ -1060,8 +1067,10 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 return response
         return None
 
-    async def _run_response_middleware(self, request, response):  # no cov
-        for middleware in request.route.extra.response_middleware:
+    async def _run_response_middleware(
+        self, request, response, middleware_collection
+    ):  # no cov
+        for middleware in middleware_collection:
             await self.dispatch(
                 "http.middleware.before",
                 inline=True,

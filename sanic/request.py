@@ -334,9 +334,12 @@ class Request:
                 response = await response  # type: ignore
         # Run response middleware
         try:
-            if self.route and self.route.extra.response_middleware:
+            middleware = (
+                self.route and self.route.extra.response_middleware
+            ) or self.app.response_middleware
+            if middleware:
                 response = await self.app._run_response_middleware(
-                    self, response
+                    self, response, middleware
                 )
         except CancelledErrors:
             raise

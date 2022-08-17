@@ -243,3 +243,54 @@ def test_request_stream_id(app):
 
     _, resp = app.test_client.get("/")
     assert resp.text == "Stream ID is only a property of a HTTP/3 request"
+
+
+@pytest.mark.parametrize(
+    "method,safe",
+    (
+        ("DELETE", False),
+        ("GET", True),
+        ("HEAD", True),
+        ("OPTIONS", True),
+        ("PATCH", False),
+        ("POST", False),
+        ("PUT", False),
+    ),
+)
+def test_request_safe(method, safe):
+    request = Request(b"/", {}, None, method, None, None)
+    assert request.is_safe is safe
+
+
+@pytest.mark.parametrize(
+    "method,idempotent",
+    (
+        ("DELETE", True),
+        ("GET", True),
+        ("HEAD", True),
+        ("OPTIONS", True),
+        ("PATCH", False),
+        ("POST", False),
+        ("PUT", True),
+    ),
+)
+def test_request_idempotent(method, idempotent):
+    request = Request(b"/", {}, None, method, None, None)
+    assert request.is_idempotent is idempotent
+
+
+@pytest.mark.parametrize(
+    "method,cacheable",
+    (
+        ("DELETE", False),
+        ("GET", True),
+        ("HEAD", True),
+        ("OPTIONS", False),
+        ("PATCH", False),
+        ("POST", False),
+        ("PUT", False),
+    ),
+)
+def test_request_cacheable(method, cacheable):
+    request = Request(b"/", {}, None, method, None, None)
+    assert request.is_cacheable is cacheable

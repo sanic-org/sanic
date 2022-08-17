@@ -47,9 +47,7 @@ class Middleware:
     @classmethod
     def convert(
         cls,
-        *middleware_collections: Sequence[
-            Optional[Union[Middleware, MiddlewareType]]
-        ],
+        *middleware_collections: Sequence[Union[Middleware, MiddlewareType]],
         location: MiddlewareLocation,
     ) -> Deque[Middleware]:
         return deque(

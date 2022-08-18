@@ -329,6 +329,11 @@ async def validate_file(
     try:
         if_modified_since = parsedate_to_datetime(if_modified_since)
     except (TypeError, ValueError):
+        logger.warning(
+            "Ignorning invalid If-Modified-Since header received: "
+            "'%s'",
+            if_modified_since
+        )
         return
     if not isinstance(last_modified, datetime):
         last_modified = datetime.fromtimestamp(

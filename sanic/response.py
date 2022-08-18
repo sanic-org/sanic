@@ -33,6 +33,7 @@ from sanic.helpers import (
     remove_entity_headers,
 )
 from sanic.http import Http
+from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
@@ -330,9 +331,8 @@ async def validate_file(
         if_modified_since = parsedate_to_datetime(if_modified_since)
     except (TypeError, ValueError):
         logger.warning(
-            "Ignorning invalid If-Modified-Since header received: "
-            "'%s'",
-            if_modified_since
+            "Ignorning invalid If-Modified-Since header received: " "'%s'",
+            if_modified_since,
         )
         return
     if not isinstance(last_modified, datetime):

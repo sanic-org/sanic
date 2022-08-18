@@ -838,7 +838,6 @@ def test_file_validate(app: Sanic, static_file_directory: str):
     assert response.body == b"foo\n"
     last_modified = response.headers["Last-Modified"]
 
-
     time.sleep(1)
     with open(file_path, "a") as f:
         f.write("bar\n")
@@ -848,7 +847,6 @@ def test_file_validate(app: Sanic, static_file_directory: str):
     )
     assert response.status == 200
     assert response.body == b"foo\nbar\n"
-
 
     last_modified = response.headers["Last-Modified"]
     _, response = app.test_client.get(
@@ -895,7 +893,6 @@ def test_file_validating_invalid_header(
     assert response.body == get_file_content(static_file_directory, file_name)
 
 
-
 @pytest.mark.parametrize(
     "file_name", ["test.file", "decode me.txt", "python.png"]
 )
@@ -919,7 +916,8 @@ def test_file_validating_304_response(
     assert response.body == get_file_content(static_file_directory, file_name)
 
     _, response = app.test_client.get(
-        f"/files/{file_name}", headers={"if-modified-since": response.headers["Last-Modified"]}
+        f"/files/{file_name}",
+        headers={"if-modified-since": response.headers["Last-Modified"]},
     )
     assert response.status == 304
     assert response.body == b""

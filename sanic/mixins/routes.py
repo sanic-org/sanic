@@ -873,8 +873,7 @@ class RouteMixin(metaclass=SanicMeta):
                         pass
                     else:
                         del headers["Content-Length"]
-                        for key, value in _range.headers.items():
-                            headers[key] = value
+                        headers.update(_range.headers)
 
             if "content-type" not in headers:
                 content_type = (

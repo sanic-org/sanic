@@ -845,7 +845,7 @@ def test_file_validate(app: Sanic, static_file_directory: str):
     _, response = app.test_client.get(
         "/validate", headers={"If-Modified-Since": last_modified}
     )
-    
+
     assert response.status == 200
     assert response.body == b"foo\nbar\n"
 

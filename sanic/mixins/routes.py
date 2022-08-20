@@ -7,7 +7,6 @@ from mimetypes import guess_type
 from os import path
 from pathlib import Path, PurePath
 from textwrap import dedent
-from time import gmtime, strftime
 from typing import (
     Any,
     Callable,

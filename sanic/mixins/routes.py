@@ -1,6 +1,5 @@
 from ast import NodeVisitor, Return, parse
 from contextlib import suppress
-from email.utils import formatdate
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
@@ -32,7 +31,7 @@ from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
-from sanic.response import HTTPResponse, file, file_stream, validate_file
+from sanic.response import HTTPResponse, file, file_stream
 from sanic.types import HashableDict
 
 

@@ -571,7 +571,7 @@ class StartupMixin(metaclass=SanicMeta):
                     )
                 )
             else:
-                server = ""
+                server = "ASGI" if self.asgi else "unknown"  # type: ignore
 
             display = {
                 "mode": " ".join(mode),
@@ -617,8 +617,12 @@ class StartupMixin(metaclass=SanicMeta):
 
     @property
     def serve_location(self) -> str:
-        server_settings = self.state.server_info[0].settings
-        return self.get_server_location(server_settings)
+        try:
+            server_settings = self.state.server_info[0].settings
+            return self.get_server_location(server_settings)
+        except IndexError:
+            location = "ASGI" if self.asgi else "unknown"  # type: ignore
+            return f"http://<{location}>"
 
     @staticmethod
     def get_server_location(

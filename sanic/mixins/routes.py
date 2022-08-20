@@ -1,5 +1,6 @@
 from ast import NodeVisitor, Return, parse
 from contextlib import suppress
+from email.utils import formatdate
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
@@ -31,7 +32,7 @@ from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
-from sanic.response import HTTPResponse, file, file_stream
+from sanic.response import HTTPResponse, file, file_stream, validate_file
 from sanic.types import HashableDict
 
 
@@ -790,24 +791,9 @@ class RouteMixin(metaclass=SanicMeta):
 
         return name
 
-    async def _static_request_handler(
-        self,
-        file_or_directory,
-        use_modified_since,
-        use_content_range,
-        stream_large_files,
-        request,
-        content_type=None,
-        __file_uri__=None,
-    ):
-        # Merge served directory and requested file if provided
+    async def get_file_path(self, file_or_directory, __file_uri__, not_found):
         file_path_raw = Path(unquote(file_or_directory))
         root_path = file_path = file_path_raw.resolve()
-        not_found = FileNotFound(
-            "File not found",
-            path=file_or_directory,
-            relative_url=__file_uri__,
-        )
 
         if __file_uri__:
             # Strip all / that in the beginning of the URL to help prevent
@@ -834,6 +820,29 @@ class RouteMixin(metaclass=SanicMeta):
                     f"relative_url={__file_uri__}"
                 )
                 raise not_found
+        return file_path
+
+    async def _static_request_handler(
+        self,
+        file_or_directory,
+        use_modified_since,
+        use_content_range,
+        stream_large_files,
+        request,
+        content_type=None,
+        __file_uri__=None,
+    ):
+        not_found = FileNotFound(
+            "File not found",
+            path=file_or_directory,
+            relative_url=__file_uri__,
+        )
+
+        # Merge served directory and requested file if provided
+        file_path = await self.get_file_path(
+            file_or_directory, __file_uri__, not_found
+        )
+
         try:
             headers = {}
             # Check if the client has been sent this file before

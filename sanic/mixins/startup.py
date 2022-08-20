@@ -552,68 +552,74 @@ class StartupMixin(metaclass=SanicMeta):
         else:
             serve_location = self.get_server_location(server_settings)
         if self.config.MOTD:
-            mode = [f"{self.state.mode},"]
-            if self.state.fast:
-                mode.append("goin' fast")
-            if self.state.asgi:
-                mode.append("ASGI")
-            else:
-                if self.state.workers == 1:
-                    mode.append("single worker")
-                else:
-                    mode.append(f"w/ {self.state.workers} workers")
-
-            if server_settings:
-                server = ", ".join(
-                    (
-                        self.state.server,
-                        server_settings["version"].display(),  # type: ignore
-                    )
-                )
-            else:
-                server = "ASGI" if self.asgi else "unknown"  # type: ignore
-
-            display = {
-                "mode": " ".join(mode),
-                "server": server,
-                "python": platform.python_version(),
-                "platform": platform.platform(),
-            }
-            extra = {}
-            if self.config.AUTO_RELOAD:
-                reload_display = "enabled"
-                if self.state.reload_dirs:
-                    reload_display += ", ".join(
-                        [
-                            "",
-                            *(
-                                str(path.absolute())
-                                for path in self.state.reload_dirs
-                            ),
-                        ]
-                    )
-                display["auto-reload"] = reload_display
-
-            packages = []
-            for package_name in SANIC_PACKAGES:
-                module_name = package_name.replace("-", "_")
-                try:
-                    module = import_module(module_name)
-                    packages.append(
-                        f"{package_name}=={module.__version__}"  # type: ignore
-                    )
-                except ImportError:
-                    ...
-
-            if packages:
-                display["packages"] = ", ".join(packages)
-
-            if self.config.MOTD_DISPLAY:
-                extra.update(self.config.MOTD_DISPLAY)
-
             logo = get_logo(coffee=self.state.coffee)
+            display, extra = self.get_motd_data(server_settings)
 
             MOTD.output(logo, serve_location, display, extra)
+
+    def get_motd_data(
+        self, server_settings: Optional[Dict[str, Any]] = None
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        mode = [f"{self.state.mode},"]
+        if self.state.fast:
+            mode.append("goin' fast")
+        if self.state.asgi:
+            mode.append("ASGI")
+        else:
+            if self.state.workers == 1:
+                mode.append("single worker")
+            else:
+                mode.append(f"w/ {self.state.workers} workers")
+
+        if server_settings:
+            server = ", ".join(
+                (
+                    self.state.server,
+                    server_settings["version"].display(),  # type: ignore
+                )
+            )
+        else:
+            server = "ASGI" if self.asgi else "unknown"  # type: ignore
+
+        display = {
+            "mode": " ".join(mode),
+            "server": server,
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+        }
+        extra = {}
+        if self.config.AUTO_RELOAD:
+            reload_display = "enabled"
+            if self.state.reload_dirs:
+                reload_display += ", ".join(
+                    [
+                        "",
+                        *(
+                            str(path.absolute())
+                            for path in self.state.reload_dirs
+                        ),
+                    ]
+                )
+            display["auto-reload"] = reload_display
+
+        packages = []
+        for package_name in SANIC_PACKAGES:
+            module_name = package_name.replace("-", "_")
+            try:
+                module = import_module(module_name)
+                packages.append(
+                    f"{package_name}=={module.__version__}"  # type: ignore
+                )
+            except ImportError:
+                ...
+
+        if packages:
+            display["packages"] = ", ".join(packages)
+
+        if self.config.MOTD_DISPLAY:
+            extra.update(self.config.MOTD_DISPLAY)
+
+        return display, extra
 
     @property
     def serve_location(self) -> str:
@@ -753,7 +759,19 @@ class StartupMixin(metaclass=SanicMeta):
 
             inspector = None
             if primary.config.INSPECTOR:
+                display, extra = primary.get_motd_data()
+                packages = [
+                    pkg.strip() for pkg in display["packages"].split(",")
+                ]
+                module = import_module("sanic")
+                sanic_version = f"sanic=={module.__version__}"  # type: ignore
+                app_info = {
+                    **display,
+                    "packages": [sanic_version, *packages],
+                    "extra": extra,
+                }
                 inspector = Inspector(
+                    app_info,
                     worker_state,
                     primary.config.INSPECTOR_HOST,
                     primary.config.INSPECTOR_PORT,

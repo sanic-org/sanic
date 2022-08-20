@@ -38,7 +38,8 @@ class WorkerProcess:
     def start(self):
         os.environ["SANIC_WORKER_NAME"] = self.name
         logger.debug(
-            f"{Colors.BLUE}Starting a process: {Colors.SANIC}%s{Colors.END}",
+            f"{Colors.BLUE}Starting a process: {Colors.BOLD}"
+            f"{Colors.SANIC}%s{Colors.END}",
             self.name,
         )
         self.set_state(ProcessState.STARTED)
@@ -57,8 +58,8 @@ class WorkerProcess:
 
     def terminate(self):
         logger.debug(
-            f"{Colors.BLUE}Terminating a process: {Colors.SANIC}%s "
-            f"{Colors.BLUE}[%s]{Colors.END}",
+            f"{Colors.BLUE}Terminating a process: {Colors.BOLD}{Colors.SANIC}"
+            f"%s {Colors.BLUE}[%s]{Colors.END}",
             self.name,
             self.pid,
         )
@@ -68,8 +69,8 @@ class WorkerProcess:
 
     def restart(self, **kwargs):
         logger.debug(
-            f"{Colors.BLUE}Restarting a process: {Colors.SANIC}%s "
-            f"{Colors.BLUE}[%s]{Colors.END}",
+            f"{Colors.BLUE}Restarting a process: {Colors.BOLD}{Colors.SANIC}"
+            f"%s {Colors.BLUE}[%s]{Colors.END}",
             self.name,
             self.pid,
         )

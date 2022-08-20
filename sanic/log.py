@@ -64,10 +64,11 @@ Defult logging configuration
 
 class Colors(str, Enum):  # no cov
     END = "\033[0m"
-    BLUE = "\033[01;34m"
-    GREEN = "\033[01;32m"
-    PURPLE = "\033[01;35m"
-    RED = "\033[01;31m"
+    BOLD = "\033[1m"
+    BLUE = "\033[34m"
+    GREEN = "\033[32m"
+    PURPLE = "\033[35m"
+    RED = "\033[31m"
     SANIC = "\033[38;2;255;13;104m"
     YELLOW = "\033[01;33m"
 

@@ -4,8 +4,11 @@ from datetime import datetime
 from signal import SIGINT, SIGTERM
 from signal import signal as signal_func
 from socket import AF_INET, SOCK_STREAM, socket, timeout
+from textwrap import indent
 from typing import Any, Dict
 
+from sanic.application.logo import get_logo
+from sanic.application.motd import MOTDTTY
 from sanic.log import Colors, error_logger, logger
 from sanic.server.socket import configure_socket
 
@@ -17,8 +20,15 @@ except ModuleNotFoundError:
 
 
 class Inspector:
-    def __init__(self, worker_state: Dict[str, Any], host: str, port: int):
+    def __init__(
+        self,
+        app_info: Dict[str, Any],
+        worker_state: Dict[str, Any],
+        host: str,
+        port: int,
+    ):
         self.run = True
+        self.app_info = app_info
         self.worker_state = worker_state
         self.host = host
         self.port = port
@@ -50,7 +60,9 @@ class Inspector:
         self.run = False
 
     def state_to_json(self):
-        return self._make_safe(dict(self.worker_state))
+        output = {"info": self.app_info}
+        output["workers"] = self._make_safe(dict(self.worker_state))
+        return output
 
     def _make_safe(self, obj: Dict[str, Any]) -> Dict[str, Any]:
         for key, value in obj.items():
@@ -61,8 +73,8 @@ class Inspector:
         return obj
 
 
-def inspect(host: str, port: int):
-    logger.info(f"Inspecting on {Colors.YELLOW}{(host, port)}{Colors.END}")
+def inspect(host: str, port: int, raw: bool):
+    out = sys.stdout.write
     with socket(AF_INET, SOCK_STREAM) as sock:
         try:
             sock.connect((host, port))
@@ -75,6 +87,33 @@ def inspect(host: str, port: int):
             )
             sys.exit(1)
         data = sock.recv(4096)
-    loaded = loads(data)
-    output = "\n" + dumps(loaded, indent=4)
-    logger.info(output)
+    if raw:
+        sys.stdout.write(data.decode())
+    else:
+        loaded = loads(data)
+        display = loaded.pop("info")
+        extra = display.pop("extra", {})
+        display["packages"] = ", ".join(display["packages"])
+        MOTDTTY(get_logo(), f"{host}:{port}", display, extra).display(
+            version=False,
+            action="Inspecting",
+            out=out,
+        )
+        for name, info in loaded["workers"].items():
+            info = "\n".join(
+                f"\t{key}: {Colors.BLUE}{value}{Colors.END}"
+                for key, value in info.items()
+            )
+            out(
+                "\n"
+                + indent(
+                    "\n".join(
+                        [
+                            f"{Colors.BOLD}{Colors.SANIC}{name}{Colors.END}",
+                            info,
+                        ]
+                    ),
+                    "  ",
+                )
+                + "\n"
+            )

@@ -90,7 +90,13 @@ class ApplicationGroup(Group):
             "--inspect",
             dest="inspect",
             action="store_true",
-            help=("Inspect the state of a running instance"),
+            help=("Inspect the state of a running instance, human readable"),
+        )
+        group.add_argument(
+            "--inspect-raw",
+            dest="inspect_raw",
+            action="store_true",
+            help=("Inspect the state of a running instance, as JSON output"),
         )
 
 

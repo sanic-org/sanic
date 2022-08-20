@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -88,13 +89,18 @@ Or, a path to a directory to run as a simple HTTP server:
         except ValueError:
             error_logger.exception("Failed to run app")
         else:
-            if self.args.inspect:
+            if self.args.inspect or self.args.inspect_raw:
                 os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
-            for http_version in self.args.http:
-                app.prepare(**kwargs, version=http_version)
+            else:
+                for http_version in self.args.http:
+                    app.prepare(**kwargs, version=http_version)
 
-            if self.args.inspect:
-                inspect(app.config.INSPECTOR_HOST, app.config.INSPECTOR_PORT)
+            if self.args.inspect or self.args.inspect_raw:
+                inspect(
+                    app.config.INSPECTOR_HOST,
+                    app.config.INSPECTOR_PORT,
+                    self.args.inspect_raw,
+                )
                 del os.environ["SANIC_IGNORE_PRODUCTION_WARNING"]
                 return
 
@@ -105,7 +111,7 @@ Or, a path to a directory to run as a simple HTTP server:
             serve()
 
     def _precheck(self):
-        # # Custom TLS mismatch handling for better diagnostics
+        # Custom TLS mismatch handling for better diagnostics
         if self.main_process and (
             # one of cert/key missing
             bool(self.args.cert) != bool(self.args.key)
@@ -125,6 +131,8 @@ Or, a path to a directory to run as a simple HTTP server:
             )
             error_logger.error(message)
             sys.exit(1)
+        if self.args.inspect or self.args.inspect_raw:
+            logging.disable(logging.CRITICAL)
 
     def _get_app(self):
         try:

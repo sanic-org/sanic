@@ -150,8 +150,11 @@ def test_app_route_raise_value_error(app):
 
 
 def test_app_handle_request_handler_is_none(app, monkeypatch):
+    mock = Mock()
+    mock.handler = None
+
     def mockreturn(*args, **kwargs):
-        return Mock(), None, {}
+        return mock, None, {}
 
     # Not sure how to make app.router.get() return None, so use mock here.
     monkeypatch.setattr(app.router, "get", mockreturn)

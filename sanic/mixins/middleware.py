@@ -4,6 +4,7 @@ from operator import attrgetter
 from typing import List
 
 from sanic.base.meta import SanicMeta
+from sanic.handlers import RequestHandler
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.models.futures import FutureMiddleware
 from sanic.router import Router
@@ -104,19 +105,23 @@ class MiddlewareMixin(metaclass=SanicMeta):
                 self.named_response_middleware.get(route.name, deque()),
                 location=MiddlewareLocation.RESPONSE,
             )
-            route.extra.request_middleware = deque(
-                sorted(
-                    request_middleware,
-                    key=attrgetter("order"),
-                    reverse=True,
-                )
-            )
-            route.extra.response_middleware = deque(
-                sorted(
-                    response_middleware,
-                    key=attrgetter("order"),
-                    reverse=True,
-                )[::-1]
+
+            route.handler = RequestHandler(
+                route.handler,
+                deque(
+                    sorted(
+                        request_middleware,
+                        key=attrgetter("order"),
+                        reverse=True,
+                    )
+                ),
+                deque(
+                    sorted(
+                        response_middleware,
+                        key=attrgetter("order"),
+                        reverse=True,
+                    )[::-1]
+                ),
             )
         request_middleware = Middleware.convert(
             self.request_middleware,

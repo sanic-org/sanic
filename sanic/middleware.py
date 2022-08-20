@@ -33,9 +33,10 @@ class Middleware:
         return self.func(*args, **kwargs)
 
     def __repr__(self) -> str:
+        name = getattr(self.func, "__name__", str(self.func))
         return (
             f"{self.__class__.__name__}("
-            f"func=<function {self.func.__name__}>, "
+            f"func=<function {name}>, "
             f"priority={self.priority}, "
             f"location={self.location.name})"
         )

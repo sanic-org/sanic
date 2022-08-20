@@ -1,4 +1,3 @@
-from httpx import AsyncByteStream
 from sanic_testing.reusable import ReusableClient
 
 from sanic.response import json, text

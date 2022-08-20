@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from sanic.handlers import RequestManager
 from sanic.http.constants import HTTP
 from sanic.http.http3 import Http3
 from sanic.touchup.meta import TouchUpMeta
@@ -53,7 +54,7 @@ class HttpProtocolMixin:
     def _setup(self):
         self.request: Optional[Request] = None
         self.access_log = self.app.config.ACCESS_LOG
-        self.request_handler = self.app.handle_request
+        self.request_handler = RequestManager
         self.error_handler = self.app.error_handler
         self.request_timeout = self.app.config.REQUEST_TIMEOUT
         self.response_timeout = self.app.config.RESPONSE_TIMEOUT

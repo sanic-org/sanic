@@ -7,6 +7,7 @@ from urllib.parse import quote
 
 from sanic.compat import Header
 from sanic.exceptions import ServerError
+from sanic.handlers import RequestManager
 from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import logger
@@ -230,8 +231,9 @@ class ASGIApp:
         """
         Handle the incoming request.
         """
+        manager = RequestManager.create(self.request)
         try:
             self.stage = Stage.HANDLER
-            await self.sanic_app.handle_request(self.request)
+            await manager.handle()
         except Exception as e:
-            await self.sanic_app.handle_exception(self.request, e)
+            await manager.error(e)

@@ -60,7 +60,7 @@ from sanic.exceptions import (
     ServerError,
     URLBuildError,
 )
-from sanic.handlers import ErrorHandler
+from sanic.handlers import ErrorHandler, RequestManager
 from sanic.helpers import _default
 from sanic.http import Stage
 from sanic.log import (
@@ -706,6 +706,14 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         exception: BaseException,
         run_middleware: bool = True,
     ):  # no cov
+        raise NotImplementedError
+
+    async def _handle_exception(
+        self,
+        request: Request,
+        exception: BaseException,
+        run_middleware: bool = True,
+    ):  # no cov
         """
         A handler that catches specific exceptions and outputs a response.
 
@@ -830,6 +838,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         :param request: HTTP Request object
         :return: Nothing
         """
+
+    async def _handle_request(self, request: Request):  # no cov
         await self.dispatch(
             "http.lifecycle.handle",
             inline=True,

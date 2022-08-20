@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
+from functools import partial
 from inspect import isawaitable
 from typing import (
     TYPE_CHECKING,
@@ -23,6 +24,7 @@ from sanic.models.http_types import Credentials
 
 
 if TYPE_CHECKING:
+    from sanic.handlers import RequestManager
     from sanic.server import ConnInfo
     from sanic.app import Sanic
 
@@ -37,7 +39,7 @@ from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 from httptools import parse_url
 from httptools.parser.errors import HttpParserInvalidURLError
 
-from sanic.compat import CancelledErrors, Header
+from sanic.compat import Header
 from sanic.constants import (
     CACHEABLE_HTTP_METHODS,
     DEFAULT_HTTP_CONTENT_TYPE,
@@ -99,6 +101,7 @@ class Request:
         "_cookies",
         "_id",
         "_ip",
+        "_manager",
         "_parsed_url",
         "_port",
         "_protocol",
@@ -182,6 +185,7 @@ class Request:
         self.responded: bool = False
         self.route: Optional[Route] = None
         self.stream: Optional[Stream] = None
+        self._manager: Optional[RequestManager] = None
         self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
         self._protocol = None
@@ -242,6 +246,10 @@ class Request:
                 "Stream ID is only a property of a HTTP/3 request"
             )
         return self._stream_id
+
+    @property
+    def manager(self):
+        return self._manager
 
     def reset_response(self):
         try:
@@ -333,19 +341,13 @@ class Request:
             if isawaitable(response):
                 response = await response  # type: ignore
         # Run response middleware
-        try:
-            middleware = (
-                self.route and self.route.extra.response_middleware
-            ) or self.app.response_middleware
-            if middleware:
-                response = await self.app._run_response_middleware(
-                    self, response, middleware
-                )
-        except CancelledErrors:
-            raise
-        except Exception:
-            error_logger.exception(
-                "Exception occurred in one of response middleware handlers"
+        if (
+            self._manager
+            and not self._manager.response_middleware_run
+            and self._manager.response_middleware
+        ):
+            response = await self._manager.run(
+                partial(self._manager.run_response_middleware, response)
             )
         self.responded = True
         return response

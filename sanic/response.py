@@ -328,7 +328,9 @@ async def validate_file(
     except KeyError:
         return
     try:
-        if_modified_since = parsedate_to_datetime(if_modified_since)
+        if_modified_since = parsedate_to_datetime(if_modified_since).replace(
+            tzinfo=timezone.utc
+        )
     except (TypeError, ValueError):
         logger.warning(
             "Ignorning invalid If-Modified-Since header received: " "'%s'",

@@ -1,5 +1,6 @@
 from ast import NodeVisitor, Return, parse
 from contextlib import suppress
+from email.utils import formatdate
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
@@ -31,7 +32,7 @@ from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
-from sanic.response import HTTPResponse, file, file_stream
+from sanic.response import HTTPResponse, file, file_stream, validate_file
 from sanic.types import HashableDict
 
 
@@ -849,15 +850,13 @@ class RouteMixin(metaclass=SanicMeta):
             stats = None
             if use_modified_since:
                 stats = await stat_async(file_path)
-                modified_since = strftime(
-                    "%a, %d %b %Y %H:%M:%S GMT", gmtime(stats.st_mtime)
+                modified_since = stats.st_mtime
+                response = await validate_file(request.headers, modified_since)
+                if response:
+                    return response
+                headers["Last-Modified"] = formatdate(
+                    modified_since, usegmt=True
                 )
-                if (
-                    request.headers.getone("if-modified-since", None)
-                    == modified_since
-                ):
-                    return HTTPResponse(status=304)
-                headers["Last-Modified"] = modified_since
             _range = None
             if use_content_range:
                 _range = None

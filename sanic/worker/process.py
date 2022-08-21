@@ -65,7 +65,10 @@ class WorkerProcess:
         )
         self.set_state(ProcessState.TERMINATED, force=True)
         self._process.terminate()
-        del self.worker_state[self.name]
+        try:
+            del self.worker_state[self.name]
+        except KeyError:
+            ...
 
     def restart(self, **kwargs):
         logger.debug(
@@ -93,7 +96,10 @@ class WorkerProcess:
         }
 
     def is_alive(self):
-        return self._process.is_alive()
+        try:
+            return self._process.is_alive()
+        except AssertionError:
+            return False
 
     def spawn(self):
         if self.state is not ProcessState.IDLE:

@@ -1358,6 +1358,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     @auto_reload.setter
     def auto_reload(self, value: bool):
         self.config.AUTO_RELOAD = value
+        self.state.auto_reload = value
 
     @property
     def state(self) -> ApplicationState:  # type: ignore
@@ -1613,9 +1614,13 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             self = registered
         if passthru:
             for attr, info in passthru.items():
-                for key, value in info.items():
-                    setattr(getattr(self, attr), key, value)
-        self.shared_ctx.lock()
+                if isinstance(info, dict):
+                    for key, value in info.items():
+                        setattr(getattr(self, attr), key, value)
+                else:
+                    setattr(self, attr, info)
+        if hasattr(self, "multiplexer"):
+            self.shared_ctx.lock()
         return self
 
     @property

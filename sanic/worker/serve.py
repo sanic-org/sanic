@@ -13,6 +13,7 @@ from sanic.http.constants import HTTP
 from sanic.models.server_types import Signal
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.runners import _serve_http_1, _serve_http_3
+from sanic.worker.loader import AppLoader
 from sanic.worker.multiplexer import WorkerMultiplexer
 
 
@@ -20,7 +21,8 @@ def worker_serve(
     host,
     port,
     app_name: str,
-    restart_publisher: Optional[Connection],
+    monitor_publisher: Optional[Connection],
+    app_loader: AppLoader,
     worker_state: Optional[Dict[str, Any]] = None,
     server_info: Optional[Dict[str, List[ApplicationServerInfo]]] = None,
     ssl: Optional[SSLContext] = None,
@@ -43,7 +45,11 @@ def worker_serve(
 ):
     from sanic import Sanic
 
-    app = Sanic.get_app(app_name).refresh(passthru)
+    if app_loader:
+        app = app_loader.load()
+    else:
+        app = Sanic.get_app(app_name)
+    app.refresh(passthru)
     app.setup_loop()
 
     loop = asyncio.new_event_loop()
@@ -62,7 +68,7 @@ def worker_serve(
                             info.settings["app"] = a
                         a.state.server_info.append(info)
 
-        if restart_publisher is None:
+        if monitor_publisher is None:
             raise RuntimeError("No restart publisher found in worker process")
         if worker_state is None:
             raise RuntimeError("No worker state found in worker process")
@@ -71,7 +77,7 @@ def worker_serve(
         apps = list(Sanic._app_registry.values())
         app.before_server_start(partial(app._start_servers, apps=apps))
         for a in apps:
-            a.multiplexer = WorkerMultiplexer(restart_publisher, worker_state)
+            a.multiplexer = WorkerMultiplexer(monitor_publisher, worker_state)
 
     if app.debug:
         loop.set_debug(app.debug)

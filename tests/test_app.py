@@ -153,7 +153,6 @@ def test_app_handle_request_handler_is_none(app, monkeypatch):
     def mockreturn(*args, **kwargs):
         return Mock(), None, {}
 
-    # Not sure how to make app.router.get() return None, so use mock here.
     monkeypatch.setattr(app.router, "get", mockreturn)
 
     @app.get("/test")
@@ -180,10 +179,10 @@ def test_app_enable_websocket(app, websocket_enabled, enable):
     async def handler(request, ws):
         await ws.send("test")
 
-    assert app.websocket_enabled == True
+    assert app.websocket_enabled is True
 
 
-@patch("sanic.mixins.runner.WebSocketProtocol")
+@patch("sanic.mixins.startup.WebSocketProtocol")
 def test_app_websocket_parameters(websocket_protocol_mock, app):
     app.config.WEBSOCKET_MAX_SIZE = 44
     app.config.WEBSOCKET_PING_TIMEOUT = 48
@@ -194,9 +193,10 @@ def test_app_websocket_parameters(websocket_protocol_mock, app):
         await ws.send("test")
 
     try:
-        # This will fail because WebSocketProtocol is mocked and only the call kwargs matter
+        # This will fail because WebSocketProtocol is mocked and only the
+        # call kwargs matter
         app.test_client.get("/ws")
-    except:
+    except Exception:
         pass
 
     websocket_protocol_call_args = websocket_protocol_mock.call_args
@@ -216,7 +216,6 @@ def test_handle_request_with_nested_exception(app, monkeypatch):
 
     err_msg = "Mock Exception"
 
-    # Not sure how to raise an exception in app.error_handler.response(), use mock here
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
@@ -237,7 +236,6 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
 
     err_msg = "Mock Exception"
 
-    # Not sure how to raise an exception in app.error_handler.response(), use mock here
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
@@ -252,13 +250,12 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
     request, response = app.test_client.get("/", debug=True)
     assert response.status == 500
     assert response.text.startswith(
-        f"Error while handling error: {err_msg}\nStack: Traceback (most recent call last):\n"
+        f"Error while handling error: {err_msg}\n"
+        "Stack: Traceback (most recent call last):\n"
     )
 
 
 def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
-
-    # Not sure how to raise an exception in app.error_handler.response(), use mock here
     def mock_error_handler_response(*args, **kwargs):
         raise SanicException("Mock SanicException")
 
@@ -432,7 +429,7 @@ def test_uvloop_config(app, monkeypatch, use):
         return text("ok")
 
     try_use_uvloop = Mock()
-    monkeypatch.setattr(sanic.mixins.runner, "try_use_uvloop", try_use_uvloop)
+    monkeypatch.setattr(sanic.mixins.startup, "try_use_uvloop", try_use_uvloop)
 
     # Default config
     app.test_client.get("/test")
@@ -458,7 +455,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
     apps[2].config.USE_UVLOOP = True
 
     try_use_uvloop = Mock()
-    monkeypatch.setattr(sanic.mixins.runner, "try_use_uvloop", try_use_uvloop)
+    monkeypatch.setattr(sanic.mixins.startup, "try_use_uvloop", try_use_uvloop)
 
     loop = asyncio.get_event_loop()
 

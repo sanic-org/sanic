@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 
@@ -10,33 +12,36 @@ from signal import signal as signal_func
 from typing import Dict, Set
 
 from sanic.server.events import trigger_events
+from sanic.worker.loader import AppLoader
 
 
 class Reloader:
     def __init__(
-        self, publisher: Connection, interval: float, reload_dirs: Set[Path]
+        self,
+        publisher: Connection,
+        interval: float,
+        reload_dirs: Set[Path],
+        app_loader: AppLoader,
     ):
         self._publisher = publisher
         self.interval = interval
         self.reload_dirs = reload_dirs
         self.run = True
+        self.app_loader = app_loader
 
     def __call__(self) -> None:
-        from sanic import Sanic
-
+        app = self.app_loader.load()
         signal_func(SIGINT, self.stop)
         signal_func(SIGTERM, self.stop)
         mtimes: Dict[str, float] = {}
 
-        apps = apps = list(Sanic._app_registry.values())
-        primary = apps[0]
-        primary.listeners.get("reload_process_start")
-        reloader_start = primary.listeners.get("reload_process_start")
-        reloader_stop = primary.listeners.get("reload_process_stop")
-        before_trigger = primary.listeners.get("before_reload_trigger")
-        after_trigger = primary.listeners.get("after_reload_trigger")
+        reloader_start = app.listeners.get("reload_process_start")
+        reloader_stop = app.listeners.get("reload_process_stop")
+        before_trigger = app.listeners.get("before_reload_trigger")
+        after_trigger = app.listeners.get("after_reload_trigger")
         loop = new_event_loop()
-        trigger_events(reloader_start, loop, primary)
+        if reloader_start:
+            trigger_events(reloader_start, loop, app)
 
         while self.run:
             changed = set()
@@ -53,12 +58,13 @@ class Reloader:
                     continue
             if changed:
                 if before_trigger:
-                    trigger_events(before_trigger, loop, primary)
+                    trigger_events(before_trigger, loop, app)
                 self.reload(",".join(changed) if changed else "unknown")
                 if after_trigger:
-                    trigger_events(after_trigger, loop, primary)
+                    trigger_events(after_trigger, loop, app)
         else:
-            trigger_events(reloader_stop, loop, primary)
+            if reloader_stop:
+                trigger_events(reloader_stop, loop, app)
 
     def stop(self, *_):
         self.run = False

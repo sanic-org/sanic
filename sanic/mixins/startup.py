@@ -24,6 +24,7 @@ from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     List,
     Optional,
@@ -55,6 +56,7 @@ from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 from sanic.server.socket import configure_socket
 from sanic.worker.inspector import Inspector
+from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
@@ -193,11 +195,12 @@ class StartupMixin(metaclass=SanicMeta):
             legacy=legacy,
         )
 
-        serve = self.__class__.serve
         if single_process:
             serve = self.__class__.serve_single
         elif legacy:
             serve = self.__class__.serve_legacy
+        else:
+            serve = self.__class__.serve
         serve(primary=self)  # type: ignore
 
     def prepare(
@@ -433,17 +436,19 @@ class StartupMixin(metaclass=SanicMeta):
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
 
-    def stop(self):
+    def stop(self, terminate: bool = True):
         """
         This kills the Sanic
         """
         if self.state.stage is not ServerStage.STOPPED:
-            self.shutdown_tasks(timeout=0)
+            self.shutdown_tasks(timeout=0)  # type: ignore
             for task in all_tasks():
                 with suppress(AttributeError):
                     if task.get_name() == "RunServer":
                         task.cancel()
             get_event_loop().stop()
+            if terminate and hasattr(self, "multiplexer"):
+                self.multiplexer.terminate()
 
     def _helper(
         self,
@@ -539,8 +544,11 @@ class StartupMixin(metaclass=SanicMeta):
         serve_location: str = "",
         server_settings: Optional[Dict[str, Any]] = None,
     ):
-        if os.environ.get("SANIC_WORKER_PROCESS") or os.environ.get(
-            "SANIC_SERVER_RUNNING"
+        if (
+            os.environ.get("SANIC_WORKER_NAME")
+            or os.environ.get("SANIC_MOTD_OUTPUT")
+            or os.environ.get("SANIC_WORKER_PROCESS")
+            or os.environ.get("SANIC_SERVER_RUNNING")
         ):
             return
         if serve_location:
@@ -556,6 +564,7 @@ class StartupMixin(metaclass=SanicMeta):
             display, extra = self.get_motd_data(server_settings)
 
             MOTD.output(logo, serve_location, display, extra)
+            os.environ["SANIC_MOTD_OUTPUT"] = "true"
 
     def get_motd_data(
         self, server_settings: Optional[Dict[str, Any]] = None
@@ -681,22 +690,39 @@ class StartupMixin(metaclass=SanicMeta):
         return get_context(method)
 
     @classmethod
-    def serve(cls, primary: Optional[Sanic] = None) -> None:
+    def serve(
+        cls,
+        primary: Optional[Sanic] = None,
+        *,
+        app_loader: Optional[AppLoader] = None,
+        factory: Optional[Callable[[], Sanic]] = None,
+    ) -> None:
         apps = list(cls._app_registry.values())
+        if factory:
+            primary = factory()
+        else:
+            if not primary:
+                try:
+                    primary = apps[0]
+                except IndexError:
+                    raise RuntimeError(
+                        "Did not find any applications."
+                    ) from None
 
-        if not primary:
-            try:
-                primary = apps[0]
-            except IndexError:
-                raise RuntimeError("Did not find any applications.")
+            # This exists primarily for unit testing
+            if not primary.state.server_info:  # no cov
+                for app in apps:
+                    app.state.server_info.clear()
+                return
 
-        # This exists primarily for unit testing
-        if not primary.state.server_info:  # no cov
-            for app in apps:
-                app.state.server_info.clear()
-            return
-
-        primary_server_info = primary.state.server_info[0]
+        try:
+            primary_server_info = primary.state.server_info[0]
+        except IndexError:
+            raise RuntimeError(
+                f"No server information found for {primary.name}. Perhaps you "
+                "need to run app.prepare(...)?\n"
+                "See ____ for more information."
+            ) from None
 
         socks = []
         try:
@@ -714,18 +740,30 @@ class StartupMixin(metaclass=SanicMeta):
             ]
             sync_manager = Manager()
             primary_server_info.settings["run_multiple"] = True
-            restart_sub, restart_pub = Pipe(True)
+            monitor_sub, monitor_pub = Pipe(True)
             worker_state: Dict[str, Any] = sync_manager.dict()
             kwargs: Dict[str, Any] = {
                 **primary_server_info.settings,
-                "restart_publisher": restart_pub,
+                "monitor_publisher": monitor_pub,
                 "worker_state": worker_state,
             }
 
+            if not app_loader:
+                if factory:
+                    app_loader = AppLoader(factory=factory)
+                else:
+                    app_loader = AppLoader(
+                        factory=partial(cls.get_app, app.name)  # type: ignore
+                    )
             kwargs["app_name"] = app.name
+            kwargs["app_loader"] = app_loader
             kwargs["server_info"] = {}
             kwargs["passthru"] = {
-                "state": {"verbosity": app.state.verbosity},
+                "auto_reload": app.auto_reload,
+                "state": {
+                    "verbosity": app.state.verbosity,
+                    "mode": app.state.mode,
+                },
                 "config": {
                     "ACCESS_LOG": app.config.ACCESS_LOG,
                     "NOISY_EXCEPTIONS": app.config.NOISY_EXCEPTIONS,
@@ -747,14 +785,14 @@ class StartupMixin(metaclass=SanicMeta):
                 worker_serve,
                 kwargs,
                 cls._get_context(),
-                (restart_pub, restart_sub),
+                (monitor_pub, monitor_sub),
                 worker_state,
             )
             if cls.should_auto_reload():
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                     *(app.state.reload_dirs for app in apps)
                 )
-                reloader = Reloader(restart_pub, 1.0, reload_dirs)
+                reloader = Reloader(monitor_pub, 1.0, reload_dirs, app_loader)
                 manager.manage("Reloader", reloader, {}, transient=False)
 
             inspector = None
@@ -832,10 +870,11 @@ class StartupMixin(metaclass=SanicMeta):
             )
         }
         kwargs["app_name"] = primary.name
+        kwargs["app_loader"] = None
         sock = configure_socket(kwargs)
 
         try:
-            worker_serve(restart_publisher=None, **kwargs)
+            worker_serve(monitor_publisher=None, **kwargs)
         except BaseException:
             error_logger.exception(
                 "Experienced exception while trying to serve"
@@ -849,6 +888,9 @@ class StartupMixin(metaclass=SanicMeta):
                 app.signal_router.reset()
 
             sock.close()
+
+            if app.name in cls._app_registry:
+                del cls._app_registry[app.name]
 
     @classmethod
     def serve_legacy(cls, primary: Optional[Sanic] = None) -> None:

@@ -141,7 +141,9 @@ def _setup_system_signals(
             ctrlc_workaround_for_windows(app)
         else:
             for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
-                loop.add_signal_handler(_signal, app.stop)
+                loop.add_signal_handler(
+                    _signal, partial(app.stop, terminate=False)
+                )
 
 
 def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):

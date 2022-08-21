@@ -1,6 +1,6 @@
 import os
 
-from signal import SIGINT, SIGTERM, Signals
+from signal import SIGINT, SIGKILL, SIGTERM, Signals
 from signal import signal as signal_func
 from typing import List, Optional
 
@@ -15,15 +15,19 @@ class WorkerManager:
         serve,
         server_settings,
         context,
-        restart_pubsub,
+        monitor_pubsub,
         worker_state,
     ):
         self.context = context
         self.transient: List[Worker] = []
         self.durable: List[Worker] = []
-        self.restart_publisher, self.restart_subscriber = restart_pubsub
+        self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
         self.worker_state["Sanic-Main"] = {"pid": self.pid}
+        self.terminated = False
+
+        if number == 0:
+            raise RuntimeError("Cannot serve with no workers")
 
         for i in range(number):
             self.manage(f"Worker-{i}", serve, server_settings, transient=True)
@@ -42,6 +46,7 @@ class WorkerManager:
         self.monitor()
         self.join()
         self.terminate()
+        # self.force_kill()
 
     def start(self):
         for process in self.processes:
@@ -63,8 +68,10 @@ class WorkerManager:
             self.join()
 
     def terminate(self):
-        for process in self.processes:
-            process.terminate()
+        if not self.terminated:
+            for process in self.processes:
+                process.terminate()
+        self.terminated = True
 
     def restart(self, process_names: Optional[List[str]] = None, **kwargs):
         for process in self.transient_processes:
@@ -72,10 +79,17 @@ class WorkerManager:
                 process.restart(**kwargs)
 
     def monitor(self):
+        terminate = False
         while True:
-            if self.restart_subscriber.poll(0.1):
-                message = self.restart_subscriber.recv()
+            if self.monitor_subscriber.poll(0.1):
+                message = self.monitor_subscriber.recv()
+                logger.debug(
+                    f"Monitor message: {message}", extra={"verbosity": 2}
+                )
                 if not message:
+                    break
+                elif message == "__TERMINATE__":
+                    terminate = True
                     break
                 split_message = message.split(":", 1)
                 processes = split_message[0]
@@ -88,6 +102,8 @@ class WorkerManager:
                 self.restart(
                     process_names=process_names, reloaded_files=reloaded_files
                 )
+        if terminate:
+            self.shutdown()
 
     @property
     def workers(self):
@@ -106,11 +122,18 @@ class WorkerManager:
                 yield process
 
     def kill(self, signal, frame):
-        self.restart_publisher.send(None)
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
+        self.monitor_publisher.send(None)
+        self.shutdown()
+
+    def shutdown(self):
         for process in self.processes:
             if process.is_alive():
                 os.kill(process.pid, SIGTERM)
+
+    def force_kill(self):
+        for process in self.processes:
+            os.kill(process.pid, SIGKILL)
 
     @property
     def pid(self):

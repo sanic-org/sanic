@@ -6,16 +6,19 @@ from typing import Any, Dict
 class WorkerMultiplexer:
     def __init__(
         self,
-        restart_publisher: Connection,
+        monitor_publisher: Connection,
         worker_state: Dict[str, Any],
     ):
-        self._restart_publisher = restart_publisher
+        self._monitor_publisher = monitor_publisher
         self._worker_state = worker_state
 
     def restart(self, name: str = ""):
         if not name:
             name = self.name
-        self._restart_publisher.send(name)
+        self._monitor_publisher.send(name)
+
+    def terminate(self):
+        self._monitor_publisher.send("__TERMINATE__")
 
     @property
     def pid(self) -> int:

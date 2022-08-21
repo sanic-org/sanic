@@ -1,4 +1,5 @@
 import json
+import os
 
 from sanic import Sanic, text
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
@@ -16,7 +17,7 @@ async def handler(request):
     return text(request.ip)
 
 
-@app.before_server_start
+@app.main_process_start
 async def app_info_dump(app: Sanic, _):
     app_data = {
         "access_log": app.config.ACCESS_LOG,
@@ -29,7 +30,8 @@ async def app_info_dump(app: Sanic, _):
 
 @app.after_server_start
 async def shutdown(app: Sanic, _):
-    app.stop()
+    if os.environ.get("SANIC_WORKER_NAME") == "Sanic-Worker-0-0":
+        app.stop()
 
 
 def create_app():

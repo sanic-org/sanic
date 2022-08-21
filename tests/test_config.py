@@ -293,21 +293,16 @@ def test_config_custom_defaults_with_env():
         del environ[key]
 
 
-def test_config_access_log_passing_in_run(app: Sanic):
+@pytest.mark.parametrize("access_log", (True, False))
+def test_config_access_log_passing_in_run(app: Sanic, access_log):
     assert app.config.ACCESS_LOG is True
 
     @app.listener("after_server_start")
     async def _request(sanic, loop):
         app.stop()
 
-    app.run(port=1340, access_log=False)
-    assert app.config.ACCESS_LOG is False
-
-    app.router.reset()
-    app.signal_router.reset()
-
-    app.run(port=1340, access_log=True)
-    assert app.config.ACCESS_LOG is True
+    app.run(port=1340, access_log=access_log, single_process=True)
+    assert app.config.ACCESS_LOG is access_log
 
 
 @pytest.mark.asyncio

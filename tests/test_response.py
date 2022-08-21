@@ -936,7 +936,11 @@ def test_file_validating_304_response(
     last_modified += timedelta(seconds=1)
     _, response = app.test_client.get(
         "/static",
-        headers={"if-modified-since": formatdate(last_modified.timestamp())},
+        headers={
+            "if-modified-since": formatdate(
+                last_modified.timestamp(), usegmt=True
+            )
+        },
     )
     assert response.status == 304
     assert response.body == b""

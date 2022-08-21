@@ -665,13 +665,11 @@ def test_multiple_responses(
 
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/4")
-        print(response.json)
         assert response.status == 200
         assert "foo" not in response.text
         assert "one" in response.headers
         assert response.headers["one"] == "one"
 
-        print(response.headers)
         assert message_in_records(caplog.records, error_msg2)
 
     with caplog.at_level(ERROR):
@@ -841,7 +839,6 @@ def test_file_validate(app: Sanic, static_file_directory: str):
     time.sleep(1)
     with open(file_path, "a") as f:
         f.write("bar\n")
-    print(last_modified)
     _, response = app.test_client.get(
         "/validate", headers={"If-Modified-Since": last_modified}
     )

@@ -1,7 +1,7 @@
 import json
-import os
 
 from sanic import Sanic, text
+from sanic.config import Config
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
 
 
@@ -28,10 +28,16 @@ async def app_info_dump(app: Sanic, _):
     logger.info(json.dumps(app_data))
 
 
+@app.main_process_stop
+async def app_cleanup(app: Sanic, _):
+    app.auto_reload = False
+    app.debug = False
+    app.config = Config()
+
+
 @app.after_server_start
 async def shutdown(app: Sanic, _):
-    if os.environ.get("SANIC_WORKER_NAME") == "Sanic-Worker-0-0":
-        app.stop()
+    app.stop()
 
 
 def create_app():
@@ -40,8 +46,8 @@ def create_app():
 
 def create_app_with_args(args):
     try:
-        print(f"foo={args.foo}")
+        logger.info(f"foo={args.foo}")
     except AttributeError:
-        print(f"module={args.module}")
+        logger.info(f"module={args.module}")
 
     return app

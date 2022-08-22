@@ -184,7 +184,7 @@ def run_multi(caplog):
             app.stop()
 
         with caplog.at_level(level):
-            Sanic.serve()
+            Sanic.serve_single()
 
         return caplog.record_tuples
 

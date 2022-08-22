@@ -242,6 +242,9 @@ class StartupMixin(metaclass=SanicMeta):
             debug = True
             auto_reload = True
 
+        if debug and access_log is None:
+            access_log = True
+
         self.state.verbosity = verbosity
         if not self.state.auto_reload:
             self.state.auto_reload = bool(auto_reload)
@@ -440,6 +443,9 @@ class StartupMixin(metaclass=SanicMeta):
         """
         This kills the Sanic
         """
+        if terminate and hasattr(self, "multiplexer"):
+            self.multiplexer.terminate()
+            return
         if self.state.stage is not ServerStage.STOPPED:
             self.shutdown_tasks(timeout=0)  # type: ignore
             for task in all_tasks():
@@ -447,8 +453,6 @@ class StartupMixin(metaclass=SanicMeta):
                     if task.get_name() == "RunServer":
                         task.cancel()
             get_event_loop().stop()
-            if terminate and hasattr(self, "multiplexer"):
-                self.multiplexer.terminate()
 
     def _helper(
         self,
@@ -835,11 +839,15 @@ class StartupMixin(metaclass=SanicMeta):
                 app.router.reset()
                 app.signal_router.reset()
 
+            sync_manager.shutdown()
             for sock in socks:
                 sock.close()
-            loop.close()
-            # remove_unix_socket(unix)
+            socks = []
             trigger_events(main_stop, loop, primary)
+            loop.close()
+            cls._cleanup_env_vars()
+            cls._cleanup_apps()
+            # remove_unix_socket(unix)
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:
@@ -889,8 +897,8 @@ class StartupMixin(metaclass=SanicMeta):
 
             sock.close()
 
-            if app.name in cls._app_registry:
-                del cls._app_registry[app.name]
+            cls._cleanup_env_vars()
+            cls._cleanup_apps()
 
     @classmethod
     def serve_legacy(cls, primary: Optional[Sanic] = None) -> None:
@@ -958,10 +966,9 @@ class StartupMixin(metaclass=SanicMeta):
         finally:
             primary_server_info.stage = ServerStage.STOPPED
         logger.info("Server Stopped")
-        for app in apps:
-            app.state.server_info.clear()
-            app.router.reset()
-            app.signal_router.reset()
+
+        cls._cleanup_env_vars()
+        cls._cleanup_apps()
 
     async def _start_servers(
         self,
@@ -1069,3 +1076,26 @@ class StartupMixin(metaclass=SanicMeta):
         finally:
             server_info.stage = ServerStage.STOPPED
             server_info.server = None
+
+    @staticmethod
+    def _cleanup_env_vars():
+        variables = (
+            "SANIC_RELOADER_PROCESS",
+            "SANIC_IGNORE_PRODUCTION_WARNING",
+            "SANIC_WORKER_NAME",
+            "SANIC_MOTD_OUTPUT",
+            "SANIC_WORKER_PROCESS",
+            "SANIC_SERVER_RUNNING",
+        )
+        for var in variables:
+            try:
+                del os.environ[var]
+            except KeyError:
+                ...
+
+    @classmethod
+    def _cleanup_apps(cls):
+        for app in cls._app_registry.values():
+            app.state.server_info.clear()
+            app.router.reset()
+            app.signal_router.reset()

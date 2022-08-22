@@ -1,266 +1,266 @@
-import asyncio
-import logging
-import os
-import platform
-import subprocess
-import sys
+# import asyncio
+# import logging
+# import os
+# import platform
+# import subprocess
+# import sys
 
-from asyncio import AbstractEventLoop
-from string import ascii_lowercase
+# from asyncio import AbstractEventLoop
+# from string import ascii_lowercase
 
-import httpcore
-import httpx
-import pytest
+# import httpcore
+# import httpx
+# import pytest
 
-from pytest import LogCaptureFixture
+# from pytest import LogCaptureFixture
 
-from sanic import Sanic
-from sanic.request import Request
-from sanic.response import text
-
-
-pytestmark = pytest.mark.skipif(os.name != "posix", reason="UNIX only")
-SOCKPATH = "/tmp/sanictest.sock"
-SOCKPATH2 = "/tmp/sanictest2.sock"
-httpx_version = tuple(
-    map(int, httpx.__version__.strip(ascii_lowercase).split("."))
-)
+# from sanic import Sanic
+# from sanic.request import Request
+# from sanic.response import text
 
 
-@pytest.fixture(autouse=True)
-def socket_cleanup():
-    try:
-        os.unlink(SOCKPATH)
-    except FileNotFoundError:
-        pass
-    try:
-        os.unlink(SOCKPATH2)
-    except FileNotFoundError:
-        pass
-    # Run test function
-    yield
-    try:
-        os.unlink(SOCKPATH2)
-    except FileNotFoundError:
-        pass
-    try:
-        os.unlink(SOCKPATH)
-    except FileNotFoundError:
-        pass
+# pytestmark = pytest.mark.skipif(os.name != "posix", reason="UNIX only")
+# SOCKPATH = "/tmp/sanictest.sock"
+# SOCKPATH2 = "/tmp/sanictest2.sock"
+# httpx_version = tuple(
+#     map(int, httpx.__version__.strip(ascii_lowercase).split("."))
+# )
 
 
-def test_unix_socket_creation(caplog: LogCaptureFixture):
-    from socket import AF_UNIX, socket
-
-    with socket(AF_UNIX) as sock:
-        sock.bind(SOCKPATH)
-    assert os.path.exists(SOCKPATH)
-    ino = os.stat(SOCKPATH).st_ino
-
-    app = Sanic(name="test")
-
-    @app.listener("after_server_start")
-    def running(app: Sanic, loop: AbstractEventLoop):
-        assert os.path.exists(SOCKPATH)
-        assert ino != os.stat(SOCKPATH).st_ino
-        app.stop()
-
-    with caplog.at_level(logging.INFO):
-        app.run(unix=SOCKPATH)
-
-    assert (
-        "sanic.root",
-        logging.INFO,
-        f"Goin' Fast @ {SOCKPATH} http://...",
-    ) in caplog.record_tuples
-    assert not os.path.exists(SOCKPATH)
+# @pytest.fixture(autouse=True)
+# def socket_cleanup():
+#     try:
+#         os.unlink(SOCKPATH)
+#     except FileNotFoundError:
+#         pass
+#     try:
+#         os.unlink(SOCKPATH2)
+#     except FileNotFoundError:
+#         pass
+#     # Run test function
+#     yield
+#     try:
+#         os.unlink(SOCKPATH2)
+#     except FileNotFoundError:
+#         pass
+#     try:
+#         os.unlink(SOCKPATH)
+#     except FileNotFoundError:
+#         pass
 
 
-@pytest.mark.parametrize("path", (".", "no-such-directory/sanictest.sock"))
-def test_invalid_paths(path: str):
-    app = Sanic(name="test")
+# def test_unix_socket_creation(caplog: LogCaptureFixture):
+#     from socket import AF_UNIX, socket
 
-    with pytest.raises((FileExistsError, FileNotFoundError)):
-        app.run(unix=path)
+#     with socket(AF_UNIX) as sock:
+#         sock.bind(SOCKPATH)
+#     assert os.path.exists(SOCKPATH)
+#     ino = os.stat(SOCKPATH).st_ino
 
+#     app = Sanic(name="test")
 
-def test_dont_replace_file():
-    with open(SOCKPATH, "w") as f:
-        f.write("File, not socket")
+#     @app.listener("after_server_start")
+#     def running(app: Sanic, loop: AbstractEventLoop):
+#         assert os.path.exists(SOCKPATH)
+#         assert ino != os.stat(SOCKPATH).st_ino
+#         app.stop()
 
-    app = Sanic(name="test")
+#     with caplog.at_level(logging.INFO):
+#         app.run(unix=SOCKPATH)
 
-    @app.listener("after_server_start")
-    def stop(app: Sanic, loop: AbstractEventLoop):
-        app.stop()
-
-    with pytest.raises(FileExistsError):
-        app.run(unix=SOCKPATH)
-
-
-def test_dont_follow_symlink():
-    from socket import AF_UNIX, socket
-
-    with socket(AF_UNIX) as sock:
-        sock.bind(SOCKPATH2)
-    os.symlink(SOCKPATH2, SOCKPATH)
-
-    app = Sanic(name="test")
-
-    @app.listener("after_server_start")
-    def stop(app: Sanic, loop: AbstractEventLoop):
-        app.stop()
-
-    with pytest.raises(FileExistsError):
-        app.run(unix=SOCKPATH)
+#     assert (
+#         "sanic.root",
+#         logging.INFO,
+#         f"Goin' Fast @ {SOCKPATH} http://...",
+#     ) in caplog.record_tuples
+#     assert not os.path.exists(SOCKPATH)
 
 
-def test_socket_deleted_while_running():
-    app = Sanic(name="test")
+# @pytest.mark.parametrize("path", (".", "no-such-directory/sanictest.sock"))
+# def test_invalid_paths(path: str):
+#     app = Sanic(name="test")
 
-    @app.listener("after_server_start")
-    async def hack(app: Sanic, loop: AbstractEventLoop):
-        os.unlink(SOCKPATH)
-        app.stop()
-
-    app.run(host="myhost.invalid", unix=SOCKPATH)
+#     with pytest.raises((FileExistsError, FileNotFoundError)):
+#         app.run(unix=path)
 
 
-def test_socket_replaced_with_file():
-    app = Sanic(name="test")
+# def test_dont_replace_file():
+#     with open(SOCKPATH, "w") as f:
+#         f.write("File, not socket")
 
-    @app.listener("after_server_start")
-    async def hack(app: Sanic, loop: AbstractEventLoop):
-        os.unlink(SOCKPATH)
-        with open(SOCKPATH, "w") as f:
-            f.write("Not a socket")
-        app.stop()
+#     app = Sanic(name="test")
 
-    app.run(host="myhost.invalid", unix=SOCKPATH)
+#     @app.listener("after_server_start")
+#     def stop(app: Sanic, loop: AbstractEventLoop):
+#         app.stop()
 
-
-def test_unix_connection():
-    app = Sanic(name="test")
-
-    @app.get("/")
-    def handler(request: Request):
-        return text(f"{request.conn_info.server}")
-
-    @app.listener("after_server_start")
-    async def client(app: Sanic, loop: AbstractEventLoop):
-        if httpx_version >= (0, 20):
-            transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
-        else:
-            transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
-        try:
-            async with httpx.AsyncClient(transport=transport) as client:
-                r = await client.get("http://myhost.invalid/")
-                assert r.status_code == 200
-                assert r.text == os.path.abspath(SOCKPATH)
-        finally:
-            app.stop()
-
-    app.run(host="myhost.invalid", unix=SOCKPATH)
+#     with pytest.raises(FileExistsError):
+#         app.run(unix=SOCKPATH)
 
 
-app_multi = Sanic(name="test")
+# def test_dont_follow_symlink():
+#     from socket import AF_UNIX, socket
+
+#     with socket(AF_UNIX) as sock:
+#         sock.bind(SOCKPATH2)
+#     os.symlink(SOCKPATH2, SOCKPATH)
+
+#     app = Sanic(name="test")
+
+#     @app.listener("after_server_start")
+#     def stop(app: Sanic, loop: AbstractEventLoop):
+#         app.stop()
+
+#     with pytest.raises(FileExistsError):
+#         app.run(unix=SOCKPATH)
 
 
-def handler(request: Request):
-    return text(f"{request.conn_info.server}")
+# def test_socket_deleted_while_running():
+#     app = Sanic(name="test")
+
+#     @app.listener("after_server_start")
+#     async def hack(app: Sanic, loop: AbstractEventLoop):
+#         os.unlink(SOCKPATH)
+#         app.stop()
+
+#     app.run(host="myhost.invalid", unix=SOCKPATH)
 
 
-async def client(app: Sanic, loop: AbstractEventLoop):
-    try:
-        async with httpx.AsyncClient(uds=SOCKPATH) as client:
-            r = await client.get("http://myhost.invalid/")
-            assert r.status_code == 200
-            assert r.text == os.path.abspath(SOCKPATH)
-    finally:
-        app.stop()
+# def test_socket_replaced_with_file():
+#     app = Sanic(name="test")
+
+#     @app.listener("after_server_start")
+#     async def hack(app: Sanic, loop: AbstractEventLoop):
+#         os.unlink(SOCKPATH)
+#         with open(SOCKPATH, "w") as f:
+#             f.write("Not a socket")
+#         app.stop()
+
+#     app.run(host="myhost.invalid", unix=SOCKPATH)
 
 
-def test_unix_connection_multiple_workers():
-    app_multi.get("/")(handler)
-    app_multi.listener("after_server_start")(client)
-    app_multi.run(host="myhost.invalid", unix=SOCKPATH, workers=2)
+# def test_unix_connection():
+#     app = Sanic(name="test")
+
+#     @app.get("/")
+#     def handler(request: Request):
+#         return text(f"{request.conn_info.server}")
+
+#     @app.listener("after_server_start")
+#     async def client(app: Sanic, loop: AbstractEventLoop):
+#         if httpx_version >= (0, 20):
+#             transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
+#         else:
+#             transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
+#         try:
+#             async with httpx.AsyncClient(transport=transport) as client:
+#                 r = await client.get("http://myhost.invalid/")
+#                 assert r.status_code == 200
+#                 assert r.text == os.path.abspath(SOCKPATH)
+#         finally:
+#             app.stop()
+
+#     app.run(host="myhost.invalid", unix=SOCKPATH)
 
 
-@pytest.mark.xfail(
-    condition=platform.system() != "Linux",
-    reason="Flaky Test on Non Linux Infra",
-)
-async def test_zero_downtime():
-    """Graceful server termination and socket replacement on restarts"""
-    from signal import SIGINT
-    from time import monotonic as current_time
+# app_multi = Sanic(name="test")
 
-    async def client():
-        if httpx_version >= (0, 20):
-            transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
-        else:
-            transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
-        for _ in range(40):
-            async with httpx.AsyncClient(transport=transport) as client:
-                r = await client.get("http://localhost/sleep/0.1")
-                assert r.status_code == 200, r.text
-                assert r.text == "Slept 0.1 seconds.\n"
 
-    def spawn():
-        command = [
-            sys.executable,
-            "-m",
-            "sanic",
-            "--debug",
-            "--unix",
-            SOCKPATH,
-            "examples.delayed_response.app",
-        ]
-        DN = subprocess.DEVNULL
-        return subprocess.Popen(
-            command, stdin=DN, stdout=DN, stderr=subprocess.PIPE
-        )
+# def handler(request: Request):
+#     return text(f"{request.conn_info.server}")
 
-    try:
-        processes = [spawn()]
-        while not os.path.exists(SOCKPATH):
-            if processes[0].poll() is not None:
-                raise Exception(
-                    "Worker did not start properly. "
-                    f"stderr: {processes[0].stderr.read()}"
-                )
-            await asyncio.sleep(0.0001)
-        ino = os.stat(SOCKPATH).st_ino
-        task = asyncio.get_event_loop().create_task(client())
-        start_time = current_time()
-        while current_time() < start_time + 6:
-            # Start a new one and wait until the socket is replaced
-            processes.append(spawn())
-            while ino == os.stat(SOCKPATH).st_ino:
-                await asyncio.sleep(0.001)
-            ino = os.stat(SOCKPATH).st_ino
-            # Graceful termination of the previous one
-            processes[-2].send_signal(SIGINT)
-        # Wait until client has completed all requests
-        await task
-        processes[-1].send_signal(SIGINT)
-        for worker in processes:
-            try:
-                worker.wait(1.0)
-            except subprocess.TimeoutExpired:
-                raise Exception(
-                    f"Worker would not terminate:\n{worker.stderr}"
-                )
-    finally:
-        for worker in processes:
-            worker.kill()
-    # Test for clean run and termination
-    return_codes = [worker.poll() for worker in processes]
 
-    # Removing last process which seems to be flappy
-    return_codes.pop()
-    assert len(processes) > 5
-    assert all(code == 0 for code in return_codes)
+# async def client(app: Sanic, loop: AbstractEventLoop):
+#     try:
+#         async with httpx.AsyncClient(uds=SOCKPATH) as client:
+#             r = await client.get("http://myhost.invalid/")
+#             assert r.status_code == 200
+#             assert r.text == os.path.abspath(SOCKPATH)
+#     finally:
+#         app.stop()
 
-    # Removing this check that seems to be flappy
-    # assert not os.path.exists(SOCKPATH)
+
+# def test_unix_connection_multiple_workers():
+#     app_multi.get("/")(handler)
+#     app_multi.listener("after_server_start")(client)
+#     app_multi.run(host="myhost.invalid", unix=SOCKPATH, workers=2)
+
+
+# @pytest.mark.xfail(
+#     condition=platform.system() != "Linux",
+#     reason="Flaky Test on Non Linux Infra",
+# )
+# async def test_zero_downtime():
+#     """Graceful server termination and socket replacement on restarts"""
+#     from signal import SIGINT
+#     from time import monotonic as current_time
+
+#     async def client():
+#         if httpx_version >= (0, 20):
+#             transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
+#         else:
+#             transport = httpcore.AsyncConnectionPool(uds=SOCKPATH)
+#         for _ in range(40):
+#             async with httpx.AsyncClient(transport=transport) as client:
+#                 r = await client.get("http://localhost/sleep/0.1")
+#                 assert r.status_code == 200, r.text
+#                 assert r.text == "Slept 0.1 seconds.\n"
+
+#     def spawn():
+#         command = [
+#             sys.executable,
+#             "-m",
+#             "sanic",
+#             "--debug",
+#             "--unix",
+#             SOCKPATH,
+#             "examples.delayed_response.app",
+#         ]
+#         DN = subprocess.DEVNULL
+#         return subprocess.Popen(
+#             command, stdin=DN, stdout=DN, stderr=subprocess.PIPE
+#         )
+
+#     try:
+#         processes = [spawn()]
+#         while not os.path.exists(SOCKPATH):
+#             if processes[0].poll() is not None:
+#                 raise Exception(
+#                     "Worker did not start properly. "
+#                     f"stderr: {processes[0].stderr.read()}"
+#                 )
+#             await asyncio.sleep(0.0001)
+#         ino = os.stat(SOCKPATH).st_ino
+#         task = asyncio.get_event_loop().create_task(client())
+#         start_time = current_time()
+#         while current_time() < start_time + 6:
+#             # Start a new one and wait until the socket is replaced
+#             processes.append(spawn())
+#             while ino == os.stat(SOCKPATH).st_ino:
+#                 await asyncio.sleep(0.001)
+#             ino = os.stat(SOCKPATH).st_ino
+#             # Graceful termination of the previous one
+#             processes[-2].send_signal(SIGINT)
+#         # Wait until client has completed all requests
+#         await task
+#         processes[-1].send_signal(SIGINT)
+#         for worker in processes:
+#             try:
+#                 worker.wait(1.0)
+#             except subprocess.TimeoutExpired:
+#                 raise Exception(
+#                     f"Worker would not terminate:\n{worker.stderr}"
+#                 )
+#     finally:
+#         for worker in processes:
+#             worker.kill()
+#     # Test for clean run and termination
+#     return_codes = [worker.poll() for worker in processes]
+
+#     # Removing last process which seems to be flappy
+#     return_codes.pop()
+#     assert len(processes) > 5
+#     assert all(code == 0 for code in return_codes)
+
+#     # Removing this check that seems to be flappy
+#     # assert not os.path.exists(SOCKPATH)

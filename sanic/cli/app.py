@@ -67,13 +67,17 @@ Or, a path to a directory to run as a simple HTTP server:
             instance.attach()
             self.groups.append(instance)
 
-    def run(self):
-        # This is to provide backwards compat -v to display version
-        legacy_version = len(sys.argv) == 2 and sys.argv[-1] == "-v"
-        parse_args = ["--version"] if legacy_version else None
-
+    def run(self, parse_args=None):
+        legacy_version = False
         if not parse_args:
-            parsed, unknown = self.parser.parse_known_args()
+            # This is to provide backwards compat -v to display version
+            legacy_version = len(sys.argv) == 2 and sys.argv[-1] == "-v"
+            parse_args = ["--version"] if legacy_version else None
+        elif parse_args == ["-v"]:
+            parse_args = ["--version"]
+
+        if not legacy_version:
+            parsed, unknown = self.parser.parse_known_args(args=parse_args)
             if unknown and parsed.factory:
                 for arg in unknown:
                     if arg.startswith("--"):
@@ -91,8 +95,8 @@ Or, a path to a directory to run as a simple HTTP server:
         try:
             app = self._get_app(app_loader)
             kwargs = self._build_run_kwargs()
-        except ValueError:
-            error_logger.exception("Failed to run app")
+        except ValueError as e:
+            error_logger.exception(f"Failed to run app: {e}")
         else:
             if self.args.inspect or self.args.inspect_raw:
                 os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
@@ -171,6 +175,7 @@ Or, a path to a directory to run as a simple HTTP server:
         elif len(ssl) == 1 and ssl[0] is not None:
             # Use only one cert, no TLSSelector.
             ssl = ssl[0]
+
         kwargs = {
             "access_log": self.args.access_log,
             "debug": self.args.debug,

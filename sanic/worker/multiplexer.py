@@ -18,7 +18,9 @@ class WorkerMultiplexer:
         self._monitor_publisher.send(name)
 
     def terminate(self):
+        print("Wairing to send")
         self._monitor_publisher.send("__TERMINATE__")
+        print("sent")
 
     @property
     def pid(self) -> int:

@@ -6,10 +6,10 @@ if OS_IS_WINDOWS:
     enable_windows_color_support()
 
 
-def main():
+def main(args=None):
     cli = SanicCLI()
     cli.attach()
-    cli.run()
+    cli.run(args)
 
 
 if __name__ == "__main__":

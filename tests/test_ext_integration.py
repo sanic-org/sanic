@@ -25,19 +25,19 @@ def stoppable_app(app):
 
 
 def test_ext_is_loaded(stoppable_app: Sanic, sanic_ext):
-    stoppable_app.run()
+    stoppable_app.run(single_process=True)
     sanic_ext.Extend.assert_called_once_with(stoppable_app)
 
 
 def test_ext_is_not_loaded(stoppable_app: Sanic, sanic_ext):
     stoppable_app.config.AUTO_EXTEND = False
-    stoppable_app.run()
+    stoppable_app.run(single_process=True)
     sanic_ext.Extend.assert_not_called()
 
 
 def test_extend_with_args(stoppable_app: Sanic, sanic_ext):
     stoppable_app.extend(built_in_extensions=False)
-    stoppable_app.run()
+    stoppable_app.run(single_process=True)
     sanic_ext.Extend.assert_called_once_with(
         stoppable_app, built_in_extensions=False, config=None, extensions=None
     )
@@ -80,5 +80,5 @@ def test_can_access_app_ext_while_running(app: Sanic, sanic_ext, ext_instance):
         app.ext.injection(IceCream)
         app.stop()
 
-    app.run()
+    app.run(single_process=True)
     ext_instance.injection.assert_called_with(IceCream)

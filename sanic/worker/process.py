@@ -57,18 +57,20 @@ class WorkerProcess:
         self._process.join()
 
     def terminate(self):
-        logger.debug(
-            f"{Colors.BLUE}Terminating a process: {Colors.BOLD}{Colors.SANIC}"
-            f"%s {Colors.BLUE}[%s]{Colors.END}",
-            self.name,
-            self.pid,
-        )
-        self.set_state(ProcessState.TERMINATED, force=True)
-        self._process.terminate()
-        try:
-            del self.worker_state[self.name]
-        except KeyError:
-            ...
+        if self.state is not ProcessState.TERMINATED:
+            logger.warning(
+                f"{Colors.BLUE}Terminating a process: "
+                f"{Colors.BOLD}{Colors.SANIC}"
+                f"%s {Colors.BLUE}[%s]{Colors.END}",
+                self.name,
+                self.pid,
+            )
+            self.set_state(ProcessState.TERMINATED, force=True)
+            try:
+                self._process.terminate()
+                del self.worker_state[self.name]
+            except (KeyError, AttributeError):
+                ...
 
     def restart(self, **kwargs):
         logger.debug(
@@ -105,10 +107,7 @@ class WorkerProcess:
         if self.state is not ProcessState.IDLE:
             raise Exception("Cannot spawn a worker process until it is idle.")
         self._process = self.factory(
-            name=self.name,
-            target=self.target,
-            kwargs=self.kwargs,
-            # daemon = True
+            name=self.name, target=self.target, kwargs=self.kwargs, daemon=True
         )
 
     @property

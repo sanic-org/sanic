@@ -163,6 +163,7 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
 
         loop.run_until_complete(after_stop())
         remove_unix_socket(unix)
+        loop.close()
 
 
 def _serve_http_1(

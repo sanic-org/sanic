@@ -54,7 +54,6 @@ def worker_serve(
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
     # When in a worker process, do some init
     if os.environ.get("SANIC_WORKER_NAME"):
         # Hydrate apps with any passed server info

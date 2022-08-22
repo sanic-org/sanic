@@ -2,6 +2,7 @@ import os
 
 from signal import SIGINT, SIGKILL, SIGTERM, Signals
 from signal import signal as signal_func
+from time import sleep
 from typing import List, Optional
 
 from sanic.log import logger
@@ -32,8 +33,8 @@ class WorkerManager:
         for i in range(number):
             self.manage(f"Worker-{i}", serve, server_settings, transient=True)
 
-        signal_func(SIGINT, self.kill)
-        signal_func(SIGTERM, self.kill)
+        signal_func(SIGINT, self.shutdown_signal)
+        signal_func(SIGTERM, self.shutdown_signal)
 
     def manage(self, ident, func, kwargs, transient=False):
         container = self.transient if transient else self.durable
@@ -46,7 +47,7 @@ class WorkerManager:
         self.monitor()
         self.join()
         self.terminate()
-        # self.force_kill()
+        self.kill()
 
     def start(self):
         for process in self.processes:
@@ -79,7 +80,7 @@ class WorkerManager:
                 process.restart(**kwargs)
 
     def monitor(self):
-        terminate = False
+        sleep(1)
         while True:
             if self.monitor_subscriber.poll(0.1):
                 message = self.monitor_subscriber.recv()
@@ -89,7 +90,7 @@ class WorkerManager:
                 if not message:
                     break
                 elif message == "__TERMINATE__":
-                    terminate = True
+                    self.shutdown()
                     break
                 split_message = message.split(":", 1)
                 processes = split_message[0]
@@ -102,8 +103,6 @@ class WorkerManager:
                 self.restart(
                     process_names=process_names, reloaded_files=reloaded_files
                 )
-        if terminate:
-            self.shutdown()
 
     @property
     def workers(self):
@@ -121,7 +120,12 @@ class WorkerManager:
             for process in worker.processes:
                 yield process
 
-    def kill(self, signal, frame):
+    def kill(self):
+        for process in self.processes:
+            logger.info(process.name)
+            os.kill(process.pid, SIGKILL)
+
+    def shutdown_signal(self, signal, frame):
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         self.monitor_publisher.send(None)
         self.shutdown()
@@ -129,11 +133,7 @@ class WorkerManager:
     def shutdown(self):
         for process in self.processes:
             if process.is_alive():
-                os.kill(process.pid, SIGTERM)
-
-    def force_kill(self):
-        for process in self.processes:
-            os.kill(process.pid, SIGKILL)
+                process.terminate()
 
     @property
     def pid(self):

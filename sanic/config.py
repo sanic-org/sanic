@@ -18,7 +18,7 @@ SANIC_PREFIX = "SANIC_"
 
 DEFAULT_CONFIG = {
     "_FALLBACK_ERROR_FORMAT": _default,
-    "ACCESS_LOG": True,
+    "ACCESS_LOG": False,
     "AUTO_EXTEND": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,

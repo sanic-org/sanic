@@ -30,7 +30,7 @@ class Group:
         instance = cls(parser, cls.name)
         return instance
 
-    def add_bool_arguments(self, *args, **kwargs):
+    def add_bool_arguments(self, *args, nullable=False, **kwargs):
         group = self.container.add_mutually_exclusive_group()
         kwargs["help"] = kwargs["help"].capitalize()
         group.add_argument(*args, action="store_true", **kwargs)
@@ -38,6 +38,9 @@ class Group:
         group.add_argument(
             "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
         )
+        if nullable:
+            params = {args[0][2:].replace("-", "_"): None}
+            group.set_defaults(**params)
 
     def prepare(self, args) -> None:
         ...
@@ -232,7 +235,10 @@ class WorkerGroup(Group):
             help="Use the legacy server manager",
         )
         self.add_bool_arguments(
-            "--access-logs", dest="access_log", help="display access logs"
+            "--access-logs",
+            dest="access_log",
+            help="display access logs",
+            default=None,
         )
 
 

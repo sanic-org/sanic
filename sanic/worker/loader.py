@@ -72,7 +72,11 @@ class AppLoader:
 
                 app_type_name = type(app).__name__
 
-                if not isinstance(app, Sanic):
+                if (
+                    not isinstance(app, Sanic)
+                    and self.args
+                    and hasattr(self.args, "module")
+                ):
                     if callable(app):
                         solution = f"sanic {self.args.module} --factory"
                         raise ValueError(

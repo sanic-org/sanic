@@ -295,7 +295,7 @@ def test_config_custom_defaults_with_env():
 
 @pytest.mark.parametrize("access_log", (True, False))
 def test_config_access_log_passing_in_run(app: Sanic, access_log):
-    assert app.config.ACCESS_LOG is True
+    assert app.config.ACCESS_LOG is False
 
     @app.listener("after_server_start")
     async def _request(sanic, loop):
@@ -307,7 +307,7 @@ def test_config_access_log_passing_in_run(app: Sanic, access_log):
 
 @pytest.mark.asyncio
 async def test_config_access_log_passing_in_create_server(app: Sanic):
-    assert app.config.ACCESS_LOG is True
+    assert app.config.ACCESS_LOG is False
 
     @app.listener("after_server_start")
     async def _request(sanic, loop):

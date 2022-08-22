@@ -83,4 +83,4 @@ def test_reload_dirs(app):
     assert mock.call_args.args[2]["auto-reload"] == f"enabled, {os.getcwd()}"
     assert mock.call_args.args[3] == {"foo": "bar"}
 
-    Sanic._app_registry = {}
+    # Sanic._app_registry = {}

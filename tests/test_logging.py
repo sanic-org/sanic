@@ -166,6 +166,7 @@ def test_access_log_client_ip_remote_addr(monkeypatch):
     monkeypatch.setattr(sanic.http.http1, "access_logger", access)
 
     app = Sanic("test_logging")
+    app.config.ACCESS_LOG = True
     app.config.PROXIES_COUNT = 2
 
     @app.route("/")
@@ -193,6 +194,7 @@ def test_access_log_client_ip_reqip(monkeypatch):
     monkeypatch.setattr(sanic.http.http1, "access_logger", access)
 
     app = Sanic("test_logging")
+    app.config.ACCESS_LOG = True
 
     @app.route("/")
     async def handler(request):

@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timezone
 from enum import IntEnum, auto
 from multiprocessing.context import BaseContext
+from signal import SIGINT
 from typing import Any, Dict, Set
 
 from sanic.log import Colors, logger
@@ -58,7 +59,7 @@ class WorkerProcess:
 
     def terminate(self):
         if self.state is not ProcessState.TERMINATED:
-            logger.warning(
+            logger.debug(
                 f"{Colors.BLUE}Terminating a process: "
                 f"{Colors.BOLD}{Colors.SANIC}"
                 f"%s {Colors.BLUE}[%s]{Colors.END}",
@@ -67,9 +68,10 @@ class WorkerProcess:
             )
             self.set_state(ProcessState.TERMINATED, force=True)
             try:
-                self._process.terminate()
+                # self._process.terminate()
+                os.kill(self.pid, SIGINT)
                 del self.worker_state[self.name]
-            except (KeyError, AttributeError):
+            except (KeyError, AttributeError, ProcessLookupError):
                 ...
 
     def restart(self, **kwargs):
@@ -107,7 +109,10 @@ class WorkerProcess:
         if self.state is not ProcessState.IDLE:
             raise Exception("Cannot spawn a worker process until it is idle.")
         self._process = self.factory(
-            name=self.name, target=self.target, kwargs=self.kwargs, daemon=True
+            name=self.name,
+            target=self.target,
+            kwargs=self.kwargs,
+            daemon=True,
         )
 
     @property

@@ -47,7 +47,7 @@ class WorkerManager:
         self.monitor()
         self.join()
         self.terminate()
-        self.kill()
+        # self.kill()
 
     def start(self):
         for process in self.processes:
@@ -122,7 +122,6 @@ class WorkerManager:
 
     def kill(self):
         for process in self.processes:
-            logger.info(process.name)
             os.kill(process.pid, SIGKILL)
 
     def shutdown_signal(self, signal, frame):

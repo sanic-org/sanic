@@ -54,18 +54,21 @@ def worker_serve(
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+
+    # Hydrate server info if needed
+    if server_info:
+        for app_name, server_info_objects in server_info.items():
+            a = Sanic.get_app(app_name)
+            if not a.state.server_info:
+                a.state.server_info = []
+                for info in server_info_objects:
+                    if not info.settings.get("app"):
+                        info.settings["app"] = a
+                    a.state.server_info.append(info)
+
     # When in a worker process, do some init
     if os.environ.get("SANIC_WORKER_NAME"):
         # Hydrate apps with any passed server info
-        if server_info:
-            for app_name, server_info_objects in server_info.items():
-                a = Sanic.get_app(app_name)
-                if not a.state.server_info:
-                    a.state.server_info = []
-                    for info in server_info_objects:
-                        if not info.settings.get("app"):
-                            info.settings["app"] = a
-                        a.state.server_info.append(info)
 
         if monitor_publisher is None:
             raise RuntimeError("No restart publisher found in worker process")

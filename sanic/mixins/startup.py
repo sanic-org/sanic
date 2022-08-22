@@ -261,6 +261,12 @@ class StartupMixin(metaclass=SanicMeta):
         if single_process and legacy:
             raise RuntimeError("Cannot run single process and legacy mode")
 
+        if register_sys_signals is False and not (single_process or legacy):
+            raise RuntimeError(
+                "Cannot run Sanic.serve with register_sys_signals=False. "
+                "Use either Sanic.serve_single or Sanic.serve_legacy."
+            )
+
         if motd_display:
             self.config.MOTD_DISPLAY.update(motd_display)
 
@@ -445,7 +451,6 @@ class StartupMixin(metaclass=SanicMeta):
         """
         if terminate and hasattr(self, "multiplexer"):
             self.multiplexer.terminate()
-            return
         if self.state.stage is not ServerStage.STOPPED:
             self.shutdown_tasks(timeout=0)  # type: ignore
             for task in all_tasks():
@@ -729,6 +734,7 @@ class StartupMixin(metaclass=SanicMeta):
             ) from None
 
         socks = []
+        sync_manager = Manager()
         try:
             main_start = primary_server_info.settings.pop("main_start", None)
             main_stop = primary_server_info.settings.pop("main_stop", None)
@@ -742,7 +748,6 @@ class StartupMixin(metaclass=SanicMeta):
                 for app in apps
                 for server_info in app.state.server_info
             ]
-            sync_manager = Manager()
             primary_server_info.settings["run_multiple"] = True
             monitor_sub, monitor_pub = Pipe(True)
             worker_state: Dict[str, Any] = sync_manager.dict()
@@ -880,6 +885,16 @@ class StartupMixin(metaclass=SanicMeta):
         kwargs["app_name"] = primary.name
         kwargs["app_loader"] = None
         sock = configure_socket(kwargs)
+
+        kwargs["server_info"] = {}
+        kwargs["server_info"][primary.name] = []
+        for server_info in primary.state.server_info:
+            server_info.settings = {
+                k: v
+                for k, v in server_info.settings.items()
+                if k not in ("main_start", "main_stop", "app")
+            }
+            kwargs["server_info"][primary.name].append(server_info)
 
         try:
             worker_serve(monitor_publisher=None, **kwargs)

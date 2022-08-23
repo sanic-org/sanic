@@ -1037,6 +1037,7 @@ class StartupMixin(metaclass=SanicMeta):
                     try:
                         server_info.server = await serve(
                             **server_info.settings,
+                            app=app,
                             run_async=True,
                             reuse_port=bool(primary.state.workers - 1),
                         )

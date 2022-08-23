@@ -17,6 +17,7 @@ def get_now():
 class ProcessState(IntEnum):
     IDLE = auto()
     STARTED = auto()
+    ACKED = auto()
     JOINED = auto()
     TERMINATED = auto()
 
@@ -29,12 +30,18 @@ class WorkerProcess:
         self.target = target
         self.kwargs = kwargs
         self.worker_state = worker_state
+        if self.name not in self.worker_state:
+            self.worker_state[self.name] = {}
         self.spawn()
 
     def set_state(self, state: ProcessState, force=False):
         if not force and state < self.state:
             raise Exception("...")
         self.state = state
+        self.worker_state[self.name] = {
+            **self.worker_state[self.name],
+            "state": self.state.name,
+        }
 
     def start(self):
         os.environ["SANIC_WORKER_NAME"] = self.name
@@ -45,8 +52,9 @@ class WorkerProcess:
         )
         self.set_state(ProcessState.STARTED)
         self._process.start()
-        if self.name not in self.worker_state:
+        if not self.worker_state[self.name].get("starts"):
             self.worker_state[self.name] = {
+                **self.worker_state[self.name],
                 "pid": self.pid,
                 "start_at": get_now(),
                 "starts": 1,
@@ -142,9 +150,7 @@ class Worker:
             factory=self.context.Process,
             name=f"Sanic-{self.ident}-{len(self.processes)}",
             target=self.serve,
-            kwargs={
-                **self.server_settings,
-            },
+            kwargs={**self.server_settings},
             worker_state=self.worker_state,
         )
         self.processes.add(process)

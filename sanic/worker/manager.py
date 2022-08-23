@@ -1,15 +1,18 @@
 import os
+import sys
 
 from signal import SIGINT, SIGKILL, SIGTERM, Signals
 from signal import signal as signal_func
 from time import sleep
 from typing import List, Optional
 
-from sanic.log import logger
+from sanic.log import error_logger, logger
 from sanic.worker.process import ProcessState, Worker
 
 
 class WorkerManager:
+    THRESHOLD = 50
+
     def __init__(
         self,
         number: int,
@@ -19,6 +22,7 @@ class WorkerManager:
         monitor_pubsub,
         worker_state,
     ):
+        self.num_server = number
         self.context = context
         self.transient: List[Worker] = []
         self.durable: List[Worker] = []
@@ -31,7 +35,7 @@ class WorkerManager:
             raise RuntimeError("Cannot serve with no workers")
 
         for i in range(number):
-            self.manage(f"Worker-{i}", serve, server_settings, transient=True)
+            self.manage(f"Server-{i}", serve, server_settings, transient=True)
 
         signal_func(SIGINT, self.shutdown_signal)
         signal_func(SIGTERM, self.shutdown_signal)
@@ -80,7 +84,7 @@ class WorkerManager:
                 process.restart(**kwargs)
 
     def monitor(self):
-        sleep(1)
+        self.wait_for_ack()
         while True:
             if self.monitor_subscriber.poll(0.1):
                 message = self.monitor_subscriber.recv()
@@ -103,6 +107,16 @@ class WorkerManager:
                 self.restart(
                     process_names=process_names, reloaded_files=reloaded_files
                 )
+
+    def wait_for_ack(self):
+        misses = 0
+        while not self._all_workers_ack():
+            sleep(0.1)
+            misses += 1
+            if misses > self.THRESHOLD:
+                error_logger.error("Not all workers are ack. Shutting down.")
+                self.kill()
+                sys.exit(1)
 
     @property
     def workers(self):
@@ -137,3 +151,11 @@ class WorkerManager:
     @property
     def pid(self):
         return os.getpid()
+
+    def _all_workers_ack(self):
+        acked = [
+            worker_state.get("state") == ProcessState.ACKED.name
+            for worker_state in self.worker_state.values()
+            if worker_state.get("server")
+        ]
+        return all(acked) and len(acked) == self.num_server

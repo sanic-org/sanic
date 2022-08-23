@@ -8,7 +8,6 @@ import uuid
 
 from contextlib import suppress
 from logging import LogRecord
-from os import environ
 from typing import List, Tuple
 from unittest.mock import MagicMock
 
@@ -127,7 +126,7 @@ def sanic_router(app):
             except RouteExists:
                 pass
         router.finalize()
-        return router, added_router
+        return router, tuple(added_router)
 
     return _setup
 

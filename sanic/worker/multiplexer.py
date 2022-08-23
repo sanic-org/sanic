@@ -2,6 +2,10 @@ from multiprocessing.connection import Connection
 from os import environ, getpid
 from typing import Any, Dict
 
+from rich.pretty import pprint
+
+from sanic.worker.process import ProcessState
+
 
 class WorkerMultiplexer:
     def __init__(
@@ -11,6 +15,13 @@ class WorkerMultiplexer:
     ):
         self._monitor_publisher = monitor_publisher
         self._worker_state = worker_state
+        self._worker_state[self.name] = {
+            **self._worker_state[self.name],
+            "state": ProcessState.ACKED.name,
+            "server": True,
+        }
+
+        pprint(dict(self._worker_state))
 
     def restart(self, name: str = ""):
         if not name:

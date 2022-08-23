@@ -573,7 +573,6 @@ class StartupMixin(metaclass=SanicMeta):
             display, extra = self.get_motd_data(server_settings)
 
             MOTD.output(logo, serve_location, display, extra)
-            os.environ["SANIC_MOTD_OUTPUT"] = "true"
 
     def get_motd_data(
         self, server_settings: Optional[Dict[str, Any]] = None
@@ -706,6 +705,7 @@ class StartupMixin(metaclass=SanicMeta):
         app_loader: Optional[AppLoader] = None,
         factory: Optional[Callable[[], Sanic]] = None,
     ) -> None:
+        os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())
         if factory:
             primary = factory()
@@ -744,9 +744,13 @@ class StartupMixin(metaclass=SanicMeta):
             trigger_events(main_start, loop, primary)
 
             socks = [
-                configure_socket(server_info.settings)
-                for app in apps
-                for server_info in app.state.server_info
+                sock
+                for sock in [
+                    configure_socket(server_info.settings)
+                    for app in apps
+                    for server_info in app.state.server_info
+                ]
+                if sock
             ]
             primary_server_info.settings["run_multiple"] = True
             monitor_sub, monitor_pub = Pipe(True)
@@ -785,9 +789,11 @@ class StartupMixin(metaclass=SanicMeta):
                     server_info.settings = {
                         k: v
                         for k, v in server_info.settings.items()
-                        if k not in ("main_start", "main_stop", "app")
+                        if k not in ("main_start", "main_stop", "app", "ssl")
                     }
                     kwargs["server_info"][app.name].append(server_info)
+            if "ssl" in kwargs:
+                kwargs["ssl"] = kwargs["ssl"].sanic
 
             manager = WorkerManager(
                 primary.state.workers,
@@ -856,6 +862,7 @@ class StartupMixin(metaclass=SanicMeta):
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:
+        os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())
 
         if not primary:
@@ -910,7 +917,8 @@ class StartupMixin(metaclass=SanicMeta):
                 app.router.reset()
                 app.signal_router.reset()
 
-            sock.close()
+            if sock:
+                sock.close()
 
             cls._cleanup_env_vars()
             cls._cleanup_apps()
@@ -1034,13 +1042,15 @@ class StartupMixin(metaclass=SanicMeta):
                     if not server_info.settings["loop"]:
                         server_info.settings["loop"] = get_running_loop()
 
+                    serve_args: Dict[str, Any] = {
+                        **server_info.settings,
+                        "run_async": True,
+                        "reuse_port": bool(primary.state.workers - 1),
+                    }
+                    if "app" not in serve_args:
+                        serve_args["app"] = app
                     try:
-                        server_info.server = await serve(
-                            **server_info.settings,
-                            app=app,
-                            run_async=True,
-                            reuse_port=bool(primary.state.workers - 1),
-                        )
+                        server_info.server = await serve(**serve_args)
                     except OSError as e:  # no cov
                         first_message = (
                             "An OSError was detected on startup. "

@@ -240,7 +240,11 @@ class MkcertCreator(CertCreator):
                         self.cert_path.unlink()
                     self.tmpdir.rmdir()
 
-        return CertSimple(self.cert_path, self.key_path)
+        context = CertSimple(self.cert_path, self.key_path)
+        context.sanic["creator"] = "mkcert"
+        context.sanic["localhost"] = localhost
+
+        return context
 
 
 class TrustmeCreator(CertCreator):
@@ -274,5 +278,7 @@ class TrustmeCreator(CertCreator):
         server_cert.private_key_and_cert_chain_pem.write_to_path(
             str(self.key_path.absolute())
         )
+        context.sanic["creator"] = "trustme"
+        context.sanic["localhost"] = localhost
 
         return context

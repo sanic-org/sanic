@@ -9,6 +9,7 @@ from ipaddress import ip_address
 from typing import Any, Dict, Optional
 
 from sanic.exceptions import ServerError
+from sanic.http.constants import HTTP
 
 
 def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
@@ -18,6 +19,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     :param backlog: Maximum number of connections to queue
     :return: socket.socket object
     """
+    location = (host, port)
     # socket.share, socket.fromshare
     try:  # IP address: family must be specified for IPv6 at least
         ip = ip_address(host)
@@ -28,7 +30,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     except ValueError:  # Hostname, may become AF_INET or AF_INET6
         sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((host, port))
+    sock.bind(location)
     sock.listen(backlog)
     return sock
 
@@ -90,8 +92,12 @@ def remove_unix_socket(path: Optional[str]) -> None:
         pass
 
 
-def configure_socket(server_settings: Dict[str, Any]) -> socket.SocketType:
+def configure_socket(
+    server_settings: Dict[str, Any]
+) -> Optional[socket.SocketType]:
     # Create a listening socket or use the one in settings
+    if server_settings["version"] is HTTP.VERSION_3:
+        return None
     sock = server_settings.get("sock")
     unix = server_settings["unix"]
     backlog = server_settings["backlog"]

@@ -5,7 +5,9 @@ import sys
 
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type, Union
+
+from sanic.http.tls.creators import CertCreator, MkcertCreator, TrustmeCreator
 
 
 if TYPE_CHECKING:
@@ -91,3 +93,24 @@ class AppLoader:
                         f"  Perhaps you meant {self.args.module}:app?"
                     )
         return app
+
+
+class CertLoader:
+    _creator_class: Type[CertCreator]
+
+    def __init__(self, ssl_data: Dict[str, Union[str, os.PathLike]]):
+        creator_name = ssl_data.get("creator")
+        if creator_name not in ("mkcert", "trustme"):
+            raise RuntimeError(f"Unknown certificate creator: {creator_name}")
+        elif creator_name == "mkcert":
+            self._creator_class = MkcertCreator
+        elif creator_name == "trustme":
+            self._creator_class = TrustmeCreator
+
+        self._key = ssl_data["key"]
+        self._cert = ssl_data["cert"]
+        self._localhost = ssl_data["localhost"]
+
+    def load(self, app: SanicApp):
+        creator = self._creator_class(app, self._key, self._cert)
+        return creator.generate_cert(self._localhost)

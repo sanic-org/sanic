@@ -5,7 +5,7 @@ import socket
 from functools import partial
 from multiprocessing.connection import Connection
 from ssl import SSLContext
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
 from sanic.application.constants import ServerStage
 from sanic.application.state import ApplicationServerInfo
@@ -13,7 +13,7 @@ from sanic.http.constants import HTTP
 from sanic.models.server_types import Signal
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.runners import _serve_http_1, _serve_http_3
-from sanic.worker.loader import AppLoader
+from sanic.worker.loader import AppLoader, CertLoader
 from sanic.worker.multiplexer import WorkerMultiplexer
 
 
@@ -25,7 +25,9 @@ def worker_serve(
     app_loader: AppLoader,
     worker_state: Optional[Dict[str, Any]] = None,
     server_info: Optional[Dict[str, List[ApplicationServerInfo]]] = None,
-    ssl: Optional[SSLContext] = None,
+    ssl: Optional[
+        Union[SSLContext, Dict[str, Union[str, os.PathLike]]]
+    ] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
     reuse_port: bool = False,
@@ -49,6 +51,14 @@ def worker_serve(
         app = app_loader.load()
     else:
         app = Sanic.get_app(app_name)
+
+    hydrate_ssl = False
+
+    if isinstance(ssl, dict):
+        cert_loader = CertLoader(ssl)
+        ssl = cert_loader.load(app)
+        hydrate_ssl = True
+
     app.refresh(passthru)
     app.setup_loop()
 
@@ -65,6 +75,8 @@ def worker_serve(
                     if not info.settings.get("app"):
                         info.settings["app"] = a
                     a.state.server_info.append(info)
+            if hydrate_ssl:
+                info.settings["ssl"] = ssl
 
     # When in a worker process, do some init
     if os.environ.get("SANIC_WORKER_NAME"):

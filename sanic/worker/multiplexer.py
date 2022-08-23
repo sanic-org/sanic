@@ -2,8 +2,6 @@ from multiprocessing.connection import Connection
 from os import environ, getpid
 from typing import Any, Dict
 
-from rich.pretty import pprint
-
 from sanic.worker.process import ProcessState
 
 
@@ -20,8 +18,6 @@ class WorkerMultiplexer:
             "state": ProcessState.ACKED.name,
             "server": True,
         }
-
-        pprint(dict(self._worker_state))
 
     def restart(self, name: str = ""):
         if not name:

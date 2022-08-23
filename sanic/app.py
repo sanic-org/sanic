@@ -1570,6 +1570,9 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         self.state.is_started = True
 
+        if hasattr(self, "multiplexer"):
+            self.multiplexer.ack()
+
     async def _server_event(
         self,
         concern: str,

@@ -13,10 +13,11 @@ class WorkerMultiplexer:
     ):
         self._monitor_publisher = monitor_publisher
         self._worker_state = worker_state
+
+    def ack(self):
         self._worker_state[self.name] = {
             **self._worker_state[self.name],
             "state": ProcessState.ACKED.name,
-            "server": True,
         }
 
     def restart(self, name: str = ""):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from socket import SHUT_RD, socket
 from typing import TYPE_CHECKING, Optional
 
 

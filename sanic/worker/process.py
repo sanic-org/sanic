@@ -23,6 +23,8 @@ class ProcessState(IntEnum):
 
 
 class WorkerProcess:
+    SERVER_LABEL = "Server"
+
     def __init__(self, factory, name, target, kwargs, worker_state):
         self.state = ProcessState.IDLE
         self.factory = factory
@@ -31,7 +33,9 @@ class WorkerProcess:
         self.kwargs = kwargs
         self.worker_state = worker_state
         if self.name not in self.worker_state:
-            self.worker_state[self.name] = {}
+            self.worker_state[self.name] = {
+                "server": self.SERVER_LABEL in self.name
+            }
         self.spawn()
 
     def set_state(self, state: ProcessState, force=False):

@@ -7,7 +7,7 @@ from time import sleep
 from typing import List, Optional
 
 from sanic.log import error_logger, logger
-from sanic.worker.process import ProcessState, Worker
+from sanic.worker.process import ProcessState, Worker, WorkerProcess
 
 
 class WorkerManager:
@@ -35,7 +35,12 @@ class WorkerManager:
             raise RuntimeError("Cannot serve with no workers")
 
         for i in range(number):
-            self.manage(f"Server-{i}", serve, server_settings, transient=True)
+            self.manage(
+                f"{WorkerProcess.SERVER_LABEL}-{i}",
+                serve,
+                server_settings,
+                transient=True,
+            )
 
         signal_func(SIGINT, self.shutdown_signal)
         signal_func(SIGTERM, self.shutdown_signal)

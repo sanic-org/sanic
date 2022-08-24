@@ -43,6 +43,7 @@ from sanic.compat import OS_IS_WINDOWS, is_atty
 from sanic.helpers import _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
+from sanic.http.tls.context import SanicSSLContext
 from sanic.log import Colors, deprecation, error_logger, logger
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
@@ -792,7 +793,10 @@ class StartupMixin(metaclass=SanicMeta):
                         if k not in ("main_start", "main_stop", "app", "ssl")
                     }
                     kwargs["server_info"][app.name].append(server_info)
-            if "ssl" in kwargs:
+
+            ssl = kwargs.get("ssl")
+            print(f"{ssl=}", type(ssl))
+            if isinstance(ssl, SanicSSLContext):
                 kwargs["ssl"] = kwargs["ssl"].sanic
 
             manager = WorkerManager(

@@ -389,8 +389,8 @@ def get_config(
             "should be able to use mkcert instead. For more information, see: "
             "https://github.com/aiortc/aioquic/issues/295."
         )
-    if not isinstance(ssl, CertSimple):
-        raise SanicException("SSLContext is not CertSimple")
+    if not isinstance(ssl, SanicSSLContext):
+        raise SanicException("SSLContext is not SanicSSLContext")
 
     config = QuicConfiguration(
         alpn_protocols=H3_ALPN + H0_ALPN + ["siduck"],

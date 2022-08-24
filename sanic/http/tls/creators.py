@@ -243,6 +243,7 @@ class MkcertCreator(CertCreator):
         context = CertSimple(self.cert_path, self.key_path)
         context.sanic["creator"] = "mkcert"
         context.sanic["localhost"] = localhost
+        SanicSSLContext.create_from_ssl_context(context)
 
         return context
 
@@ -263,15 +264,16 @@ class TrustmeCreator(CertCreator):
             )
 
     def generate_cert(self, localhost: str) -> ssl.SSLContext:
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        sanic_context = SanicSSLContext.create_from_ssl_context(context)
-        sanic_context.sanic = {
+        context = SanicSSLContext.create_from_ssl_context(
+            ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        )
+        context.sanic = {
             "cert": self.cert_path.absolute(),
             "key": self.key_path.absolute(),
         }
         ca = trustme.CA()
         server_cert = ca.issue_cert(localhost)
-        server_cert.configure_cert(sanic_context)
+        server_cert.configure_cert(context)
         ca.configure_trust(context)
 
         ca.cert_pem.write_to_path(str(self.cert_path.absolute()))

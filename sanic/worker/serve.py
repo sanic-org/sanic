@@ -52,13 +52,6 @@ def worker_serve(
     else:
         app = Sanic.get_app(app_name)
 
-    hydrate_ssl = False
-
-    if isinstance(ssl, dict):
-        cert_loader = CertLoader(ssl)
-        ssl = cert_loader.load(app)
-        hydrate_ssl = True
-
     app.refresh(passthru)
     app.setup_loop()
 
@@ -75,8 +68,12 @@ def worker_serve(
                     if not info.settings.get("app"):
                         info.settings["app"] = a
                     a.state.server_info.append(info)
-            if hydrate_ssl:
-                info.settings["ssl"] = ssl
+
+    if isinstance(ssl, dict):
+        cert_loader = CertLoader(ssl)
+        ssl = cert_loader.load(app)
+        for info in app.state.server_info:
+            info.settings["ssl"] = ssl
 
     # When in a worker process, do some init
     if os.environ.get("SANIC_WORKER_NAME"):

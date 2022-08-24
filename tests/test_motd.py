@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from sanic import Sanic, __version__
+from sanic import __version__
 from sanic.application.logo import BASE_LOGO
 from sanic.application.motd import MOTD, MOTDTTY
 
@@ -78,9 +78,6 @@ def test_reload_dirs(app):
         app.prepare(
             reload_dir="./", auto_reload=True, motd_display={"foo": "bar"}
         )
-        app.motd("foo")
-    mock.assert_called_once()
+    mock.assert_called()
     assert mock.call_args.args[2]["auto-reload"] == f"enabled, {os.getcwd()}"
     assert mock.call_args.args[3] == {"foo": "bar"}
-
-    # Sanic._app_registry = {}

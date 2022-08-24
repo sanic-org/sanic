@@ -17,7 +17,10 @@ def no_skip():
     yield
     Sanic._app_registry = {}
     Sanic.should_auto_reload = should_auto_reload
-    del os.environ["SANIC_MOTD_OUTPUT"]
+    try:
+        del os.environ["SANIC_MOTD_OUTPUT"]
+    except KeyError:
+        ...
 
 
 def get_primary(app: Sanic) -> ApplicationServerInfo:

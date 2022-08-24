@@ -1,6 +1,7 @@
 import json
 
 from sanic import Sanic, text
+from sanic.application.constants import Mode
 from sanic.config import Config
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
 
@@ -30,8 +31,8 @@ async def app_info_dump(app: Sanic, _):
 
 @app.main_process_stop
 async def app_cleanup(app: Sanic, _):
-    app.auto_reload = False
-    app.debug = False
+    app.state.auto_reload = False
+    app.state.mode = Mode.PRODUCTION
     app.config = Config()
 
 

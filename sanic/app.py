@@ -459,7 +459,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     def blueprint(
         self,
         blueprint: Union[
-            Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup
+            Blueprint, List[Blueprint], Tuple[Blueprint, ...], BlueprintGroup
         ],
         **options: Any,
     ):

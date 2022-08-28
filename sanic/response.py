@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
-from email.utils import formatdate
+from datetime import datetime, timezone
+from email.utils import formatdate, parsedate_to_datetime
 from functools import partial
 from mimetypes import guess_type
 from os import path
@@ -33,6 +33,7 @@ from sanic.helpers import (
     remove_entity_headers,
 )
 from sanic.http import Http
+from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
@@ -319,9 +320,34 @@ def html(
     )
 
 
+async def validate_file(
+    request_headers: Header, last_modified: Union[datetime, float, int]
+):
+    try:
+        if_modified_since = request_headers.getone("If-Modified-Since")
+    except KeyError:
+        return
+    try:
+        if_modified_since = parsedate_to_datetime(if_modified_since)
+    except (TypeError, ValueError):
+        logger.warning(
+            "Ignorning invalid If-Modified-Since header received: " "'%s'",
+            if_modified_since,
+        )
+        return
+    if not isinstance(last_modified, datetime):
+        last_modified = datetime.fromtimestamp(
+            float(last_modified), tz=timezone.utc
+        ).replace(microsecond=0)
+    if last_modified <= if_modified_since:
+        return HTTPResponse(status=304)
+
+
 async def file(
     location: Union[str, PurePath],
     status: int = 200,
+    request_headers: Optional[Header] = None,
+    validate_when_requested: bool = True,
     mime_type: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     filename: Optional[str] = None,
@@ -331,7 +357,12 @@ async def file(
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
-
+    :param status: HTTP response code. Won't enforce the passed in
+        status if only a part of the content will be sent (206)
+        or file is being validated (304).
+    :param request_headers: The request headers.
+    :param validate_when_requested: If True, will validate the
+        file when requested.
     :param location: Location of file on system.
     :param mime_type: Specific mime_type.
     :param headers: Custom Headers.
@@ -341,11 +372,6 @@ async def file(
     :param no_store: Any cache should not store this response.
     :param _range:
     """
-    headers = headers or {}
-    if filename:
-        headers.setdefault(
-            "Content-Disposition", f'attachment; filename="{filename}"'
-        )
 
     if isinstance(last_modified, datetime):
         last_modified = last_modified.replace(microsecond=0).timestamp()
@@ -353,9 +379,24 @@ async def file(
         stat = await stat_async(location)
         last_modified = stat.st_mtime
 
+    if (
+        validate_when_requested
+        and request_headers is not None
+        and last_modified
+    ):
+        response = await validate_file(request_headers, last_modified)
+        if response:
+            return response
+
+    headers = headers or {}
     if last_modified:
         headers.setdefault(
-            "last-modified", formatdate(last_modified, usegmt=True)
+            "Last-Modified", formatdate(last_modified, usegmt=True)
+        )
+
+    if filename:
+        headers.setdefault(
+            "Content-Disposition", f'attachment; filename="{filename}"'
         )
 
     if no_store:

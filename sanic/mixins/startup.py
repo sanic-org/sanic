@@ -459,6 +459,7 @@ class StartupMixin(metaclass=SanicMeta):
                     if task.get_name() == "RunServer":
                         task.cancel()
             get_event_loop().stop()
+        self.__class__.unregister_app(self)  # type: ignore
 
     def _helper(
         self,

@@ -1477,6 +1477,18 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         cls._app_registry[name] = app
 
     @classmethod
+    def unregister_app(cls, app: "Sanic") -> None:
+        """
+        Unregister a Sanic instance
+        """
+        if not isinstance(app, cls):
+            raise SanicException("Registered app must be an instance of Sanic")
+
+        name = app.name
+        if name in cls._app_registry:
+            del cls._app_registry[name]
+
+    @classmethod
     def get_app(
         cls, name: Optional[str] = None, *, force_create: bool = False
     ) -> "Sanic":

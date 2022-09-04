@@ -796,7 +796,7 @@ class StartupMixin(metaclass=SanicMeta):
                     kwargs["server_info"][app.name].append(server_info)
 
             ssl = kwargs.get("ssl")
-            print(f"{ssl=}", type(ssl))
+
             if isinstance(ssl, SanicSSLContext):
                 kwargs["ssl"] = kwargs["ssl"].sanic
 
@@ -829,6 +829,7 @@ class StartupMixin(metaclass=SanicMeta):
                     "extra": extra,
                 }
                 inspector = Inspector(
+                    monitor_pub,
                     app_info,
                     worker_state,
                     primary.config.INSPECTOR_HOST,

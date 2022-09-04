@@ -99,7 +99,21 @@ class ApplicationGroup(Group):
             "--inspect-raw",
             dest="inspect_raw",
             action="store_true",
-            help=("Inspect the state of a running instance, as JSON output"),
+            help=("Inspect the state of a running instance, JSON output"),
+        )
+        group.add_argument(
+            "--trigger-reload",
+            dest="trigger",
+            action="store_const",
+            const="reload",
+            help=("Trigger worker processes to reload"),
+        )
+        group.add_argument(
+            "--trigger-shutdown",
+            dest="trigger",
+            action="store_const",
+            const="shutdown",
+            help=("Trigger all processes to shutdown"),
         )
 
 

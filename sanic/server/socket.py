@@ -96,7 +96,7 @@ def configure_socket(
     server_settings: Dict[str, Any]
 ) -> Optional[socket.SocketType]:
     # Create a listening socket or use the one in settings
-    if server_settings["version"] is HTTP.VERSION_3:
+    if server_settings.get("version") is HTTP.VERSION_3:
         return None
     sock = server_settings.get("sock")
     unix = server_settings["unix"]

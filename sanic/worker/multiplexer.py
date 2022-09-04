@@ -25,6 +25,8 @@ class WorkerMultiplexer:
             name = self.name
         self._monitor_publisher.send(name)
 
+    reload = restart
+
     def terminate(self):
         self._monitor_publisher.send("__TERMINATE__")
 

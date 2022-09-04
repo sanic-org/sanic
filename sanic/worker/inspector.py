@@ -1,6 +1,7 @@
 import sys
 
 from datetime import datetime
+from multiprocessing.connection import Connection
 from signal import SIGINT, SIGTERM
 from signal import signal as signal_func
 from socket import AF_INET, SOCK_STREAM, socket, timeout
@@ -22,11 +23,13 @@ except ModuleNotFoundError:
 class Inspector:
     def __init__(
         self,
+        publisher: Connection,
         app_info: Dict[str, Any],
         worker_state: Dict[str, Any],
         host: str,
         port: int,
     ):
+        self._publisher = publisher
         self.run = True
         self.app_info = app_info
         self.worker_state = worker_state
@@ -37,6 +40,7 @@ class Inspector:
         sock = configure_socket(
             {"host": self.host, "port": self.port, "unix": None, "backlog": 1}
         )
+        assert sock
         signal_func(SIGINT, self.stop)
         signal_func(SIGTERM, self.stop)
 
@@ -49,9 +53,17 @@ class Inspector:
                 except timeout:
                     ...
                 else:
-                    data = dumps(self.state_to_json())
-                    conn.send(data.encode())
-                    conn.close()
+                    action = conn.recv(64)
+                    if action == b"reload":
+                        conn.send(b"\n")
+                        self.reload()
+                    elif action == b"shutdown":
+                        conn.send(b"\n")
+                        self.shutdown()
+                    else:
+                        data = dumps(self.state_to_json())
+                        conn.send(data.encode())
+                        conn.close()
         finally:
             logger.debug("Inspector closing")
             sock.close()
@@ -64,6 +76,14 @@ class Inspector:
         output["workers"] = self._make_safe(dict(self.worker_state))
         return output
 
+    def reload(self):
+        message = "__ALL_PROCESSES__:"
+        self._publisher.send(message)
+
+    def shutdown(self):
+        message = "__TERMINATE__"
+        self._publisher.send(message)
+
     def _make_safe(self, obj: Dict[str, Any]) -> Dict[str, Any]:
         for key, value in obj.items():
             if isinstance(value, dict):
@@ -73,7 +93,7 @@ class Inspector:
         return obj
 
 
-def inspect(host: str, port: int, raw: bool):
+def inspect(host: str, port: int, action: str):
     out = sys.stdout.write
     with socket(AF_INET, SOCK_STREAM) as sock:
         try:
@@ -85,11 +105,13 @@ def inspect(host: str, port: int, raw: bool):
                 "Either the application is not running, or it did not start "
                 "an inspector instance."
             )
+            sock.close()
             sys.exit(1)
+        sock.sendall(action.encode())
         data = sock.recv(4096)
-    if raw:
+    if action == "raw":
         sys.stdout.write(data.decode())
-    else:
+    elif action == "pretty":
         loaded = loads(data)
         display = loaded.pop("info")
         extra = display.pop("extra", {})

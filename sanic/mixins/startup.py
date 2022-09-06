@@ -446,7 +446,7 @@ class StartupMixin(metaclass=SanicMeta):
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
 
-    def stop(self, terminate: bool = True):
+    def stop(self, terminate: bool = True, unregister: bool = False):
         """
         This kills the Sanic
         """
@@ -459,7 +459,9 @@ class StartupMixin(metaclass=SanicMeta):
                     if task.get_name() == "RunServer":
                         task.cancel()
             get_event_loop().stop()
-        self.__class__.unregister_app(self)  # type: ignore
+
+        if unregister:
+            self.__class__.unregister_app(self)  # type: ignore
 
     def _helper(
         self,
@@ -661,11 +663,11 @@ class StartupMixin(metaclass=SanicMeta):
         host = server_settings["host"]
         port = server_settings["port"]
 
-        if server_settings["ssl"] is not None:
+        if server_settings.get("ssl") is not None:
             proto = "https"
-        if server_settings["unix"]:
+        if server_settings.get("unix"):
             serve_location = f'{server_settings["unix"]} {proto}://...'
-        elif server_settings["sock"]:
+        elif server_settings.get("sock"):
             host, port, *_ = server_settings["sock"].getsockname()
 
         if not serve_location and host and port:

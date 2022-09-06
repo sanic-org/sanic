@@ -94,8 +94,10 @@ def worker_serve(
         loop.set_debug(app.debug)
 
     app.asgi = False
-    primary_server_info = app.state.server_info[0]
-    primary_server_info.stage = ServerStage.SERVING
+
+    if app.state.server_info:
+        primary_server_info = app.state.server_info[0]
+        primary_server_info.stage = ServerStage.SERVING
     if config:
         app.update_config(config)
 

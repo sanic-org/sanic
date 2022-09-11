@@ -14,7 +14,7 @@ from sanic.log import Colors, error_logger, logger
 from sanic.server.socket import configure_socket
 
 
-try:
+try:  # no cov
     from ujson import dumps, loads
 except ModuleNotFoundError:
     from json import dumps, loads  # type: ignore
@@ -110,7 +110,7 @@ def inspect(host: str, port: int, action: str):
         sock.sendall(action.encode())
         data = sock.recv(4096)
     if action == "raw":
-        sys.stdout.write(data.decode())
+        out(data.decode())
     elif action == "pretty":
         loaded = loads(data)
         display = loaded.pop("info")

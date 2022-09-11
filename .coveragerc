@@ -6,6 +6,7 @@ omit =
     sanic/__main__.py
     sanic/__init__.py
     sanic/__version__.py
+    sanic/server/legacy.py
     sanic/compat.py
     sanic/simple.py
     sanic/utils.py
@@ -29,6 +30,7 @@ omit =
     sanic/__main__.py
     sanic/__init__.py
     sanic/__version__.py
+    sanic/server/legacy.py
     sanic/compat.py
     sanic/simple.py
     sanic/utils.py

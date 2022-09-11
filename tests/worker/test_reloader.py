@@ -100,7 +100,7 @@ def test_triggered(app_loader):
 
     def check_file(filename, mtimes):
         if (isinstance(filename, Path) and (filename.name == "server.py")) or (
-            isinstance(filename, str) and "app.py" in filename
+            isinstance(filename, str) and "sanic/app.py" in filename
         ):
             paths.add(str(filename))
             return True

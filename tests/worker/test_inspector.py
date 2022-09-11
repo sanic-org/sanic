@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from logging import ERROR, INFO
 from socket import AF_INET, SOCK_STREAM
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 

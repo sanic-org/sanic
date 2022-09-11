@@ -896,7 +896,17 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                     )
 
                 # Run response handler
+                await self.dispatch(
+                    "http.handler.before",
+                    inline=True,
+                    context={"request": request},
+                )
                 response = handler(request, **request.match_info)
+                await self.dispatch(
+                    "http.handler.after",
+                    inline=True,
+                    context={"request": request},
+                )
                 if isawaitable(response):
                     response = await response
 

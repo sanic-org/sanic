@@ -263,6 +263,12 @@ class OutputGroup(Group):
 
     def attach(self):
         self.add_bool_arguments(
+            "--coffee",
+            dest="coffee",
+            default=False,
+            help="Uhm, coffee?",
+        )
+        self.add_bool_arguments(
             "--motd",
             dest="motd",
             default=True,

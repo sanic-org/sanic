@@ -5,7 +5,16 @@ import sys
 
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Type,
+    Union,
+    cast,
+)
 
 from sanic.http.tls.creators import CertCreator, MkcertCreator, TrustmeCreator
 
@@ -109,7 +118,7 @@ class CertLoader:
 
         self._key = ssl_data["key"]
         self._cert = ssl_data["cert"]
-        self._localhost = ssl_data["localhost"]
+        self._localhost = cast(str, ssl_data["localhost"])
 
     def load(self, app: SanicApp):
         creator = self._creator_class(app, self._key, self._cert)

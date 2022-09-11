@@ -16,7 +16,7 @@ from sanic.server.socket import configure_socket
 
 try:  # no cov
     from ujson import dumps, loads
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # no cov
     from json import dumps, loads  # type: ignore
 
 
@@ -51,7 +51,7 @@ class Inspector:
                 try:
                     conn, _ = sock.accept()
                 except timeout:
-                    ...
+                    continue
                 else:
                     action = conn.recv(64)
                     if action == b"reload":

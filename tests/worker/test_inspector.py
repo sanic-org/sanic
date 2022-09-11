@@ -2,7 +2,7 @@ import json
 
 from datetime import datetime
 from logging import ERROR, INFO
-from socket import AF_INET, SOCK_STREAM
+from socket import AF_INET, SOCK_STREAM, timeout
 from unittest.mock import Mock, patch
 
 import pytest
@@ -21,6 +21,13 @@ DATA = {
     "workers": {"Worker-Name": {"some": "state"}},
 }
 SERIALIZED = json.dumps(DATA)
+
+
+def test_inspector_stop():
+    inspector = Inspector(Mock(), {}, {}, "", 1)
+    assert inspector.run is True
+    inspector.stop()
+    assert inspector.run is False
 
 
 @patch("sanic.worker.inspector.sys.stdout.write")
@@ -106,6 +113,28 @@ def test_run_inspector(configure_socket: Mock, action: bytes):
         inspector.reload.assert_not_called()
         inspector.shutdown.assert_not_called()
         inspector.state_to_json.assert_called()
+
+
+@patch("sanic.worker.inspector.configure_socket")
+def test_accept_timeout(configure_socket: Mock):
+    sock = Mock()
+    configure_socket.return_value = sock
+    inspector = Inspector(Mock(), {}, {}, "localhost", 9999)
+    inspector.reload = Mock()  # type: ignore
+    inspector.shutdown = Mock()  # type: ignore
+    inspector.state_to_json = Mock(return_value="foo")  # type: ignore
+
+    def accept():
+        inspector.run = False
+        raise timeout
+
+    sock.accept = accept
+
+    inspector()
+
+    inspector.reload.assert_not_called()
+    inspector.shutdown.assert_not_called()
+    inspector.state_to_json.assert_not_called()
 
 
 def test_state_to_json():

@@ -113,7 +113,7 @@ class WorkerManager:
                     process_names=process_names, reloaded_files=reloaded_files
                 )
 
-    def wait_for_ack(self):
+    def wait_for_ack(self):  # no cov
         misses = 0
         while not self._all_workers_ack():
             sleep(0.1)

@@ -256,7 +256,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             )
         try:
             return get_running_loop()
-        except RuntimeError:
+        except RuntimeError:  # no cov
             if sys.version_info > (3, 10):
                 return asyncio.get_event_loop_policy().get_event_loop()
             else:

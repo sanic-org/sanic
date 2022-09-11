@@ -4,6 +4,7 @@ import re
 
 from collections import Counter
 from inspect import isawaitable
+from os import environ
 from unittest.mock import Mock, patch
 
 import pytest
@@ -15,6 +16,7 @@ from sanic.compat import OS_IS_WINDOWS
 from sanic.config import Config
 from sanic.exceptions import SanicException
 from sanic.helpers import _default
+from sanic.log import LOGGING_CONFIG_DEFAULTS
 from sanic.response import text
 
 
@@ -298,8 +300,12 @@ def test_app_has_test_mode_sync():
 
 
 def test_app_registry():
+    assert len(Sanic._app_registry) == 0
     instance = Sanic("test")
+    assert len(Sanic._app_registry) == 1
     assert Sanic._app_registry["test"] is instance
+    Sanic.unregister_app(instance)
+    assert len(Sanic._app_registry) == 0
 
 
 def test_app_registry_wrong_type():
@@ -523,3 +529,70 @@ def test_cannot_run_fast_and_workers(app):
 def test_no_workers(app):
     with pytest.raises(RuntimeError, match="Cannot serve with no workers"):
         app.run(workers=0)
+
+
+def test_default_configure_logging():
+    with patch("sanic.app.logging") as mock:
+        Sanic("Test")
+
+    mock.config.dictConfig.assert_called_with(LOGGING_CONFIG_DEFAULTS)
+
+
+def test_custom_configure_logging():
+    with patch("sanic.app.logging") as mock:
+        Sanic("Test", log_config={"foo": "bar"})
+
+    mock.config.dictConfig.assert_called_with({"foo": "bar"})
+
+
+def test_disable_configure_logging():
+    with patch("sanic.app.logging") as mock:
+        Sanic("Test", configure_logging=False)
+
+    mock.config.dictConfig.assert_not_called()
+
+
+@pytest.mark.parametrize("inspector", (True, False))
+def test_inspector(inspector):
+    app = Sanic("Test", inspector=inspector)
+    assert app.config.INSPECTOR is inspector
+
+
+def test_build_endpoint_name():
+    app = Sanic("Test")
+    name = app._build_endpoint_name("foo", "bar")
+    assert name == "Test.foo.bar"
+
+
+def test_manager_in_main_process_only(app):
+    message = "Can only access the manager from the main process"
+
+    with pytest.raises(SanicException, match=message):
+        app.manager
+
+    app._manager = 1
+    environ["SANIC_WORKER_PROCESS"] = "ok"
+
+    with pytest.raises(SanicException, match=message):
+        app.manager
+
+    del environ["SANIC_WORKER_PROCESS"]
+
+    assert app.manager == 1
+
+
+def test_inspector_in_main_process_only(app):
+    message = "Can only access the inspector from the main process"
+
+    with pytest.raises(SanicException, match=message):
+        app.inspector
+
+    app._inspector = 1
+    environ["SANIC_WORKER_PROCESS"] = "ok"
+
+    with pytest.raises(SanicException, match=message):
+        app.inspector
+
+    del environ["SANIC_WORKER_PROCESS"]
+
+    assert app.inspector == 1

@@ -4,14 +4,11 @@ source = sanic
 omit =
     site-packages
     sanic/__main__.py
-    sanic/__init__.py
-    sanic/__version__.py
     sanic/server/legacy.py
     sanic/compat.py
     sanic/simple.py
     sanic/utils.py
     sanic/cli
-    **/constants.py
 
 [html]
 directory = coverage
@@ -24,16 +21,4 @@ exclude_lines =
     NOQA
     pragma: no cover
     TYPE_CHECKING
-    import
-omit =
-    site-packages
-    sanic/__main__.py
-    sanic/__init__.py
-    sanic/__version__.py
-    sanic/server/legacy.py
-    sanic/compat.py
-    sanic/simple.py
-    sanic/utils.py
-    sanic/cli
-    **/constants.py
 skip_empty = True

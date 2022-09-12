@@ -55,7 +55,7 @@ from sanic.server.loop import try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
-from sanic.server.socket import configure_socket
+from sanic.server.socket import configure_socket, remove_unix_socket
 from sanic.worker.inspector import Inspector
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
@@ -869,7 +869,9 @@ class StartupMixin(metaclass=SanicMeta):
             loop.close()
             cls._cleanup_env_vars()
             cls._cleanup_apps()
-            # remove_unix_socket(unix)
+            unix = kwargs.get("unix")
+            if unix:
+                remove_unix_socket(unix)
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:

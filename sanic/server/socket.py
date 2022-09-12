@@ -41,7 +41,7 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     :param backlog: Maximum number of connections to queue
     :return: socket.socket object
     """
-    """Open or atomically replace existing socket with zero downtime."""
+
     # Sanitise and pre-verify socket path
     path = os.path.abspath(path)
     folder = os.path.dirname(path)

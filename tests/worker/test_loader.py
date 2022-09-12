@@ -82,9 +82,6 @@ def test_input_is_module():
         loader.load()
 
 
-# 111-121, 124-125
-
-
 @pytest.mark.parametrize("creator", ("mkcert", "trustme"))
 @patch("sanic.worker.loader.TrustmeCreator")
 @patch("sanic.worker.loader.MkcertCreator")

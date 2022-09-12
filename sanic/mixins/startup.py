@@ -854,6 +854,7 @@ class StartupMixin(metaclass=SanicMeta):
 
             manager.run()
         except BaseException:
+            kwargs = primary_server_info.settings
             error_logger.exception(
                 "Experienced exception while trying to serve"
             )

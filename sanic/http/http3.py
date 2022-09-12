@@ -22,7 +22,7 @@ from sanic.exceptions import PayloadTooLarge, SanicException, ServerError
 from sanic.helpers import has_message_body
 from sanic.http.constants import Stage
 from sanic.http.stream import Stream
-from sanic.http.tls.context import CertSelector, CertSimple, SanicSSLContext
+from sanic.http.tls.context import CertSelector, SanicSSLContext
 from sanic.log import Colors, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.models.server_types import ConnInfo

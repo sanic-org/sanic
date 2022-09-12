@@ -111,7 +111,7 @@ def configure_socket(
                 server_settings["port"],
                 backlog=backlog,
             )
-        except OSError as e:
+        except OSError as e:  # no cov
             raise ServerError(
                 f"Sanic server could not start: {e}.\n"
                 "This may have happened if you are running Sanic in the "

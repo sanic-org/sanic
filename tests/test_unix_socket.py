@@ -61,8 +61,8 @@ def test_unix_socket_creation(caplog: LogCaptureFixture):
 
     app = Sanic(name="test")
 
-    @app.listener("after_server_start")
-    def running(app: Sanic, loop: AbstractEventLoop):
+    @app.after_server_start
+    def running(app: Sanic):
         assert os.path.exists(SOCKPATH)
         assert ino != os.stat(SOCKPATH).st_ino
         app.stop()
@@ -92,8 +92,8 @@ def test_dont_replace_file():
 
     app = Sanic(name="test")
 
-    @app.listener("after_server_start")
-    def stop(app: Sanic, loop: AbstractEventLoop):
+    @app.after_server_start
+    def stop(app: Sanic):
         app.stop()
 
     with pytest.raises(FileExistsError):
@@ -109,8 +109,8 @@ def test_dont_follow_symlink():
 
     app = Sanic(name="test")
 
-    @app.listener("after_server_start")
-    def stop(app: Sanic, loop: AbstractEventLoop):
+    @app.after_server_start
+    def stop(app: Sanic):
         app.stop()
 
     with pytest.raises(FileExistsError):
@@ -120,8 +120,8 @@ def test_dont_follow_symlink():
 def test_socket_deleted_while_running():
     app = Sanic(name="test")
 
-    @app.listener("after_server_start")
-    async def hack(app: Sanic, loop: AbstractEventLoop):
+    @app.after_server_start
+    async def hack(app: Sanic):
         os.unlink(SOCKPATH)
         app.stop()
 
@@ -131,8 +131,8 @@ def test_socket_deleted_while_running():
 def test_socket_replaced_with_file():
     app = Sanic(name="test")
 
-    @app.listener("after_server_start")
-    async def hack(app: Sanic, loop: AbstractEventLoop):
+    @app.after_server_start
+    async def hack(app: Sanic):
         os.unlink(SOCKPATH)
         with open(SOCKPATH, "w") as f:
             f.write("Not a socket")
@@ -148,8 +148,8 @@ def test_unix_connection():
     def handler(request: Request):
         return text(f"{request.conn_info.server}")
 
-    @app.listener("after_server_start")
-    async def client(app: Sanic, loop: AbstractEventLoop):
+    @app.after_server_start
+    async def client(app: Sanic):
         if httpx_version >= (0, 20):
             transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
         else:

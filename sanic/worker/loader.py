@@ -43,12 +43,13 @@ class AppLoader:
 
         if module_input:
             delimiter = ":" if ":" in module_input else "."
-            module_name, app_name = module_input.rsplit(delimiter, 1)
-            self.module_name = module_name
-            self.app_name = app_name
-            if self.app_name.endswith("()"):
-                self.as_factory = True
-                self.app_name = self.app_name[:-2]
+            if module_input.count(delimiter):
+                module_name, app_name = module_input.rsplit(delimiter, 1)
+                self.module_name = module_name
+                self.app_name = app_name
+                if self.app_name.endswith("()"):
+                    self.as_factory = True
+                    self.app_name = self.app_name[:-2]
 
     def load(self) -> SanicApp:
         module_path = os.path.abspath(self.cwd)

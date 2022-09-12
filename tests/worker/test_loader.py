@@ -11,6 +11,9 @@ from sanic.app import Sanic
 from sanic.worker.loader import AppLoader, CertLoader
 
 
+STATIC = Path.cwd() / "tests" / "static"
+
+
 @pytest.mark.parametrize(
     "module_input", ("tests.fake.server:app", "tests.fake.server.app")
 )
@@ -31,7 +34,7 @@ def test_load_app_factory(module_input):
 
 
 def test_load_app_simple():
-    loader = AppLoader("./tests/static", as_simple=True)
+    loader = AppLoader(str(STATIC), as_simple=True)
     app = loader.load()
     assert isinstance(app, Sanic)
 
@@ -48,10 +51,10 @@ def test_cwd_in_path():
 
 
 def test_input_is_dir():
-    loader = AppLoader("./tests/static")
+    loader = AppLoader(str(STATIC))
     message = (
         "App not found.\n   Please use --simple if you are passing a "
-        "directory to sanic.\n   eg. sanic ./tests/static --simple"
+        f"directory to sanic.\n   eg. sanic {str(STATIC)} --simple"
     )
     with pytest.raises(ValueError, match=message):
         loader.load()

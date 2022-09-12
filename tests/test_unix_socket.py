@@ -68,7 +68,7 @@ def test_unix_socket_creation(caplog: LogCaptureFixture):
         app.stop()
 
     with caplog.at_level(logging.INFO):
-        app.run(unix=SOCKPATH)
+        app.run(unix=SOCKPATH, single_process=True)
 
     assert (
         "sanic.root",
@@ -83,7 +83,7 @@ def test_invalid_paths(path: str):
     app = Sanic(name="test")
     #
     with pytest.raises((FileExistsError, FileNotFoundError)):
-        app.run(unix=path)
+        app.run(unix=path, single_process=True)
 
 
 def test_dont_replace_file():
@@ -97,7 +97,7 @@ def test_dont_replace_file():
         app.stop()
 
     with pytest.raises(FileExistsError):
-        app.run(unix=SOCKPATH)
+        app.run(unix=SOCKPATH, single_process=True)
 
 
 def test_dont_follow_symlink():
@@ -114,7 +114,7 @@ def test_dont_follow_symlink():
         app.stop()
 
     with pytest.raises(FileExistsError):
-        app.run(unix=SOCKPATH)
+        app.run(unix=SOCKPATH, single_process=True)
 
 
 def test_socket_deleted_while_running():
@@ -125,7 +125,7 @@ def test_socket_deleted_while_running():
         os.unlink(SOCKPATH)
         app.stop()
 
-    app.run(host="myhost.invalid", unix=SOCKPATH)
+    app.run(host="myhost.invalid", unix=SOCKPATH, single_process=True)
 
 
 def test_socket_replaced_with_file():
@@ -138,7 +138,7 @@ def test_socket_replaced_with_file():
             f.write("Not a socket")
         app.stop()
 
-    app.run(host="myhost.invalid", unix=SOCKPATH)
+    app.run(host="myhost.invalid", unix=SOCKPATH, single_process=True)
 
 
 def test_unix_connection():
@@ -162,7 +162,7 @@ def test_unix_connection():
         finally:
             app.stop()
 
-    app.run(host="myhost.invalid", unix=SOCKPATH)
+    app.run(host="myhost.invalid", unix=SOCKPATH, single_process=True)
 
 
 def handler(request: Request):

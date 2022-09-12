@@ -129,7 +129,7 @@ def _setup_system_signals(
     run_multiple: bool,
     register_sys_signals: bool,
     loop: asyncio.AbstractEventLoop,
-) -> None:
+) -> None:  # no cov
     # Ignore SIGINT when run_multiple
     if run_multiple:
         signal_func(SIGINT, SIG_IGN)

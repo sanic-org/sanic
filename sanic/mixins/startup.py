@@ -71,9 +71,9 @@ if TYPE_CHECKING:
 
 SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
-if sys.version_info < (3, 8):
+if sys.version_info < (3, 8):  # no cov
     HTTPVersion = Union[HTTP, int]
-else:
+else:  # no cov
     from typing import Literal
 
     HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
@@ -631,7 +631,7 @@ class StartupMixin(metaclass=SanicMeta):
                 packages.append(
                     f"{package_name}=={module.__version__}"  # type: ignore
                 )
-            except ImportError:
+            except ImportError:  # no cov
                 ...
 
         if packages:
@@ -715,12 +715,15 @@ class StartupMixin(metaclass=SanicMeta):
             primary = factory()
         else:
             if not primary:
-                try:
-                    primary = apps[0]
-                except IndexError:
-                    raise RuntimeError(
-                        "Did not find any applications."
-                    ) from None
+                if app_loader:
+                    primary = app_loader.load()
+                if not primary:
+                    try:
+                        primary = apps[0]
+                    except IndexError:
+                        raise RuntimeError(
+                            "Did not find any applications."
+                        ) from None
 
             # This exists primarily for unit testing
             if not primary.state.server_info:  # no cov
@@ -1037,7 +1040,7 @@ class StartupMixin(metaclass=SanicMeta):
                         *server_info.settings.pop("main_start", []),
                         *server_info.settings.pop("main_stop", []),
                     ]
-                    if handlers:
+                    if handlers:  # no cov
                         error_logger.warning(
                             f"Sanic found {len(handlers)} listener(s) on "
                             "secondary applications attached to the main "
@@ -1086,7 +1089,7 @@ class StartupMixin(metaclass=SanicMeta):
         self,
         app: StartupMixin,
         server_info: ApplicationServerInfo,
-    ) -> None:
+    ) -> None:  # no cov
 
         try:
             # We should never get to this point without a server

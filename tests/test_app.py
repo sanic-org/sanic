@@ -25,7 +25,7 @@ def clear_app_registry():
     Sanic._app_registry = {}
 
 
-def test_app_loop_running(app):
+def test_app_loop_running(app: Sanic):
     @app.get("/test")
     async def handler(request):
         assert isinstance(app.loop, asyncio.AbstractEventLoop)
@@ -35,7 +35,7 @@ def test_app_loop_running(app):
     assert response.text == "pass"
 
 
-def test_create_asyncio_server(app):
+def test_create_asyncio_server(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(return_asyncio_server=True)
     assert isawaitable(asyncio_srv_coro)
@@ -43,7 +43,7 @@ def test_create_asyncio_server(app):
     assert srv.is_serving() is True
 
 
-def test_asyncio_server_no_start_serving(app):
+def test_asyncio_server_no_start_serving(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
         port=43123,
@@ -54,7 +54,7 @@ def test_asyncio_server_no_start_serving(app):
     assert srv.is_serving() is False
 
 
-def test_asyncio_server_start_serving(app):
+def test_asyncio_server_start_serving(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
         port=43124,
@@ -71,7 +71,7 @@ def test_asyncio_server_start_serving(app):
     # Looks like we can't easily test `serve_forever()`
 
 
-def test_create_server_main(app, caplog):
+def test_create_server_main(app: Sanic, caplog):
     app.listener("main_process_start")(lambda *_: ...)
     loop = asyncio.get_event_loop()
     with caplog.at_level(logging.INFO):
@@ -85,7 +85,7 @@ def test_create_server_main(app, caplog):
     ) in caplog.record_tuples
 
 
-def test_create_server_no_startup(app):
+def test_create_server_no_startup(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
         port=43124,
@@ -100,7 +100,7 @@ def test_create_server_no_startup(app):
         loop.run_until_complete(srv.start_serving())
 
 
-def test_create_server_main_convenience(app, caplog):
+def test_create_server_main_convenience(app: Sanic, caplog):
     app.main_process_start(lambda *_: ...)
     loop = asyncio.get_event_loop()
     with caplog.at_level(logging.INFO):
@@ -114,7 +114,7 @@ def test_create_server_main_convenience(app, caplog):
     ) in caplog.record_tuples
 
 
-def test_app_loop_not_running(app):
+def test_app_loop_not_running(app: Sanic):
     with pytest.raises(SanicException) as excinfo:
         app.loop
 
@@ -124,7 +124,7 @@ def test_app_loop_not_running(app):
     )
 
 
-def test_app_run_raise_type_error(app):
+def test_app_run_raise_type_error(app: Sanic):
 
     with pytest.raises(TypeError) as excinfo:
         app.run(loop="loop")
@@ -137,7 +137,7 @@ def test_app_run_raise_type_error(app):
     )
 
 
-def test_app_route_raise_value_error(app):
+def test_app_route_raise_value_error(app: Sanic):
 
     with pytest.raises(ValueError) as excinfo:
 
@@ -151,7 +151,7 @@ def test_app_route_raise_value_error(app):
     )
 
 
-def test_app_handle_request_handler_is_none(app, monkeypatch):
+def test_app_handle_request_handler_is_none(app: Sanic, monkeypatch):
     def mockreturn(*args, **kwargs):
         return Mock(), None, {}
 
@@ -171,7 +171,7 @@ def test_app_handle_request_handler_is_none(app, monkeypatch):
 
 @pytest.mark.parametrize("websocket_enabled", [True, False])
 @pytest.mark.parametrize("enable", [True, False])
-def test_app_enable_websocket(app, websocket_enabled, enable):
+def test_app_enable_websocket(app: Sanic, websocket_enabled, enable):
     app.websocket_enabled = websocket_enabled
     app.enable_websocket(enable=enable)
 
@@ -185,7 +185,7 @@ def test_app_enable_websocket(app, websocket_enabled, enable):
 
 
 @patch("sanic.mixins.startup.WebSocketProtocol")
-def test_app_websocket_parameters(websocket_protocol_mock, app):
+def test_app_websocket_parameters(websocket_protocol_mock, app: Sanic):
     app.config.WEBSOCKET_MAX_SIZE = 44
     app.config.WEBSOCKET_PING_TIMEOUT = 48
     app.config.WEBSOCKET_PING_INTERVAL = 50
@@ -214,7 +214,7 @@ def test_app_websocket_parameters(websocket_protocol_mock, app):
     )
 
 
-def test_handle_request_with_nested_exception(app, monkeypatch):
+def test_handle_request_with_nested_exception(app: Sanic, monkeypatch):
 
     err_msg = "Mock Exception"
 
@@ -234,7 +234,7 @@ def test_handle_request_with_nested_exception(app, monkeypatch):
     assert response.text == "An error occurred while handling an error"
 
 
-def test_handle_request_with_nested_exception_debug(app, monkeypatch):
+def test_handle_request_with_nested_exception_debug(app: Sanic, monkeypatch):
 
     err_msg = "Mock Exception"
 
@@ -257,7 +257,9 @@ def test_handle_request_with_nested_exception_debug(app, monkeypatch):
     )
 
 
-def test_handle_request_with_nested_sanic_exception(app, monkeypatch, caplog):
+def test_handle_request_with_nested_sanic_exception(
+    app: Sanic, monkeypatch, caplog
+):
     def mock_error_handler_response(*args, **kwargs):
         raise SanicException("Mock SanicException")
 
@@ -374,7 +376,7 @@ def test_get_app_default_ambiguous():
         Sanic.get_app()
 
 
-def test_app_set_attribute_warning(app):
+def test_app_set_attribute_warning(app: Sanic):
     message = (
         "Setting variables on Sanic instances is not allowed. You should "
         "change your Sanic instance to use instance.ctx.foo instead."
@@ -383,7 +385,7 @@ def test_app_set_attribute_warning(app):
         app.foo = 1
 
 
-def test_app_set_context(app):
+def test_app_set_context(app: Sanic):
     app.ctx.foo = 1
 
     retrieved = Sanic.get_app(app.name)
@@ -429,7 +431,7 @@ def test_custom_context():
 
 
 @pytest.mark.parametrize("use", (False, True))
-def test_uvloop_config(app, monkeypatch, use):
+def test_uvloop_config(app: Sanic, monkeypatch, use):
     @app.get("/test")
     def handler(request):
         return text("ok")
@@ -520,15 +522,48 @@ def test_multiple_uvloop_configs_display_warning(caplog):
     assert counter[(logging.WARNING, message)] == 2
 
 
-def test_cannot_run_fast_and_workers(app):
+def test_cannot_run_fast_and_workers(app: Sanic):
     message = "You cannot use both fast=True and workers=X"
     with pytest.raises(RuntimeError, match=message):
         app.run(fast=True, workers=4)
 
 
-def test_no_workers(app):
+def test_no_workers(app: Sanic):
     with pytest.raises(RuntimeError, match="Cannot serve with no workers"):
         app.run(workers=0)
+
+
+@pytest.mark.parametrize(
+    "extra",
+    (
+        {"fast": True},
+        {"workers": 2},
+        {"auto_reload": True},
+    ),
+)
+def test_cannot_run_single_process_and_workers_or_auto_reload(
+    app: Sanic, extra
+):
+    message = (
+        "Single process cannot be run with multiple workers or auto-reload"
+    )
+    with pytest.raises(RuntimeError, match=message):
+        app.run(single_process=True, **extra)
+
+
+def test_cannot_run_single_process_and_legacy(app: Sanic):
+    message = "Cannot run single process and legacy mode"
+    with pytest.raises(RuntimeError, match=message):
+        app.run(single_process=True, legacy=True)
+
+
+def test_cannot_run_without_sys_signals_with_workers(app: Sanic):
+    message = (
+        "Cannot run Sanic.serve with register_sys_signals=False. "
+        "Use either Sanic.serve_single or Sanic.serve_legacy."
+    )
+    with pytest.raises(RuntimeError, match=message):
+        app.run(register_sys_signals=False, single_process=False, legacy=False)
 
 
 def test_default_configure_logging():
@@ -564,7 +599,7 @@ def test_build_endpoint_name():
     assert name == "Test.foo.bar"
 
 
-def test_manager_in_main_process_only(app):
+def test_manager_in_main_process_only(app: Sanic):
     message = "Can only access the manager from the main process"
 
     with pytest.raises(SanicException, match=message):
@@ -581,7 +616,7 @@ def test_manager_in_main_process_only(app):
     assert app.manager == 1
 
 
-def test_inspector_in_main_process_only(app):
+def test_inspector_in_main_process_only(app: Sanic):
     message = "Can only access the inspector from the main process"
 
     with pytest.raises(SanicException, match=message):
@@ -596,3 +631,24 @@ def test_inspector_in_main_process_only(app):
     del environ["SANIC_WORKER_PROCESS"]
 
     assert app.inspector == 1
+
+
+def test_stop_trigger_terminate(app: Sanic):
+    app.multiplexer = Mock()
+
+    app.stop()
+
+    app.multiplexer.terminate.assert_called_once()
+    app.multiplexer.reset_mock()
+    assert len(Sanic._app_registry) == 1
+    Sanic._app_registry.clear()
+
+    app.stop(terminate=True)
+
+    app.multiplexer.terminate.assert_called_once()
+    app.multiplexer.reset_mock()
+    assert len(Sanic._app_registry) == 0
+    Sanic._app_registry.clear()
+
+    app.stop(unregister=False)
+    app.multiplexer.terminate.assert_called_once()

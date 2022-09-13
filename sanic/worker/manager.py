@@ -11,7 +11,7 @@ from sanic.log import error_logger, logger
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
 
 
-if OS_IS_WINDOWS:
+if not OS_IS_WINDOWS:
     from signal import SIGKILL
 else:
     SIGKILL = SIGINT

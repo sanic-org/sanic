@@ -114,11 +114,14 @@ class WorkerManager:
                     reloaded_files = (
                         split_message[1] if len(split_message) > 1 else None
                     )
-                    process_names = [name.strip() for name in processes.split(",")]
+                    process_names = [
+                        name.strip() for name in processes.split(",")
+                    ]
                     if "__ALL_PROCESSES__" in process_names:
                         process_names = None
                     self.restart(
-                        process_names=process_names, reloaded_files=reloaded_files
+                        process_names=process_names,
+                        reloaded_files=reloaded_files,
                     )
             except InterruptedError:
                 if not OS_IS_WINDOWS:

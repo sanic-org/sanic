@@ -98,27 +98,32 @@ class WorkerManager:
     def monitor(self):
         self.wait_for_ack()
         while True:
-            if self.monitor_subscriber.poll(0.1):
-                message = self.monitor_subscriber.recv()
-                logger.debug(
-                    f"Monitor message: {message}", extra={"verbosity": 2}
-                )
-                if not message:
-                    break
-                elif message == "__TERMINATE__":
-                    self.shutdown()
-                    break
-                split_message = message.split(":", 1)
-                processes = split_message[0]
-                reloaded_files = (
-                    split_message[1] if len(split_message) > 1 else None
-                )
-                process_names = [name.strip() for name in processes.split(",")]
-                if "__ALL_PROCESSES__" in process_names:
-                    process_names = None
-                self.restart(
-                    process_names=process_names, reloaded_files=reloaded_files
-                )
+            try:
+                if self.monitor_subscriber.poll(0.1):
+                    message = self.monitor_subscriber.recv()
+                    logger.debug(
+                        f"Monitor message: {message}", extra={"verbosity": 2}
+                    )
+                    if not message:
+                        break
+                    elif message == "__TERMINATE__":
+                        self.shutdown()
+                        break
+                    split_message = message.split(":", 1)
+                    processes = split_message[0]
+                    reloaded_files = (
+                        split_message[1] if len(split_message) > 1 else None
+                    )
+                    process_names = [name.strip() for name in processes.split(",")]
+                    if "__ALL_PROCESSES__" in process_names:
+                        process_names = None
+                    self.restart(
+                        process_names=process_names, reloaded_files=reloaded_files
+                    )
+            except InterruptedError:
+                if not OS_IS_WINDOWS:
+                    raise
+                break
 
     def wait_for_ack(self):  # no cov
         misses = 0

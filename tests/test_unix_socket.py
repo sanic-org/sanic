@@ -51,6 +51,9 @@ def socket_cleanup():
         pass
 
 
+@pytest.mark.xfail(
+    reason="Flaky Test on Non Linux Infra",
+)
 def test_unix_socket_creation(caplog: LogCaptureFixture):
     from socket import AF_UNIX, socket
 

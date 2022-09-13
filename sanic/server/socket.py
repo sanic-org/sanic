@@ -32,6 +32,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(location)
     sock.listen(backlog)
+    sock.set_inheritable(True)
     return sock
 
 

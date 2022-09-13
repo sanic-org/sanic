@@ -458,9 +458,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
     def blueprint(
         self,
-        blueprint: Union[
-            Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup
-        ],
+        blueprint: Union[Blueprint, Iterable[Blueprint], BlueprintGroup],
         **options: Any,
     ):
         """Register a blueprint on the application.
@@ -469,7 +467,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         :param options: option dictionary with blueprint defaults
         :return: Nothing
         """
-        if isinstance(blueprint, (list, tuple, BlueprintGroup)):
+        if isinstance(blueprint, (Iterable, BlueprintGroup)):
             for item in blueprint:
                 params = {**options}
                 if isinstance(blueprint, BlueprintGroup):

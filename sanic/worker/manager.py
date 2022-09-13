@@ -1,13 +1,20 @@
 import os
 import sys
 
-from signal import SIGINT, SIGKILL, SIGTERM, Signals
+from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
 from time import sleep
 from typing import List, Optional
 
+from sanic.compat import OS_IS_WINDOWS
 from sanic.log import error_logger, logger
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
+
+
+if OS_IS_WINDOWS:
+    from signal import SIGKILL
+else:
+    SIGKILL = SIGINT
 
 
 class WorkerManager:

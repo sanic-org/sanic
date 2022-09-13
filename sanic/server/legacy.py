@@ -51,7 +51,7 @@ def restart_with_reloader(changed=None):
     this one.
     """
     reloaded = ",".join(changed) if changed else ""
-    return subprocess.Popen(
+    return subprocess.Popen(  # nosec B603
         _get_args_for_reloading(),
         env={
             **os.environ,

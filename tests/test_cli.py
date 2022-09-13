@@ -116,7 +116,7 @@ def test_error_with_path_as_instance_without_simple_arg(caplog):
         ),
     ),
 )
-def test_tls_options(cmd: Tuple[str], caplog):
+def test_tls_options(cmd: Tuple[str, ...], caplog):
     command = ["fake.server.app", *cmd, "--port=9999", "--debug"]
     lines = capture(command, caplog)
     assert "Goin' Fast @ https://127.0.0.1:9999" in lines
@@ -134,7 +134,7 @@ def test_tls_options(cmd: Tuple[str], caplog):
         ("--tls-strict-host",),
     ),
 )
-def test_tls_wrong_options(cmd: Tuple[str], caplog):
+def test_tls_wrong_options(cmd: Tuple[str, ...], caplog):
     command = ["fake.server.app", *cmd, "-p=9999", "--debug"]
     lines = capture(command, caplog)
 
@@ -152,7 +152,7 @@ def test_tls_wrong_options(cmd: Tuple[str], caplog):
         ("-H", "localhost", "-p", "9999"),
     ),
 )
-def test_host_port_localhost(cmd: Tuple[str], caplog):
+def test_host_port_localhost(cmd: Tuple[str, ...], caplog):
     command = ["fake.server.app", *cmd]
     lines = capture(command, caplog)
     expected = "Goin' Fast @ http://localhost:9999"
@@ -185,7 +185,7 @@ def test_host_port_localhost(cmd: Tuple[str], caplog):
         (("-H", "::1", "-p", "9999"), "Goin' Fast @ http://[::1]:9999"),
     ),
 )
-def test_host_port(cmd: Tuple[str], expected: str, caplog):
+def test_host_port(cmd: Tuple[str, ...], expected: str, caplog):
     command = ["fake.server.app", *cmd]
     lines = capture(command, caplog)
 
@@ -203,7 +203,7 @@ def test_host_port(cmd: Tuple[str], expected: str, caplog):
         (4, ("-w", "4")),
     ),
 )
-def test_num_workers(num: int, cmd: Tuple[str], caplog):
+def test_num_workers(num: int, cmd: Tuple[str, ...], caplog):
     command = ["fake.server.app", *cmd]
     lines = capture(command, caplog)
 

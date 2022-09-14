@@ -3,6 +3,7 @@ from os import environ, getpid
 from typing import Any, Dict
 
 from sanic.worker.process import ProcessState
+from sanic.worker.state import WorkerState
 
 
 class WorkerMultiplexer:
@@ -12,11 +13,11 @@ class WorkerMultiplexer:
         worker_state: Dict[str, Any],
     ):
         self._monitor_publisher = monitor_publisher
-        self._worker_state = worker_state
+        self._state = WorkerState(worker_state, self.name)
 
     def ack(self):
-        self._worker_state[self.name] = {
-            **self._worker_state[self.name],
+        self._state._state[self.name] = {
+            **self._state._state[self.name],
             "state": ProcessState.ACKED.name,
         }
 
@@ -39,5 +40,9 @@ class WorkerMultiplexer:
         return environ.get("SANIC_WORKER_NAME", "")
 
     @property
+    def state(self):
+        return self._state
+
+    @property
     def workers(self) -> Dict[str, Any]:
-        return self._worker_state
+        return self.state.full()

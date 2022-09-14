@@ -7,6 +7,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.worker.multiplexer import WorkerMultiplexer
+from sanic.worker.state import WorkerState
 
 
 @pytest.fixture
@@ -22,6 +23,7 @@ def worker_state():
 @pytest.fixture
 def m(monitor_publisher, worker_state):
     environ["SANIC_WORKER_NAME"] = "Test"
+    worker_state["Test"] = {}
     yield WorkerMultiplexer(monitor_publisher, worker_state)
     del environ["SANIC_WORKER_NAME"]
 
@@ -113,3 +115,5 @@ def test_properties(
     assert m.pid == getpid()
     assert m.name == "Test"
     assert m.workers == worker_state
+    assert m.state == worker_state["Test"]
+    assert isinstance(m.state, WorkerState)

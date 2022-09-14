@@ -4,22 +4,32 @@ from sanic.helpers import STATUS_CODES
 
 
 class SanicException(Exception):
+    status_code: int
+    quiet: Optional[bool]
+    headers: Dict[str, str]
     message: str = ""
 
     def __init__(
         self,
         message: Optional[Union[str, bytes]] = None,
+        *,
         status_code: Optional[int] = None,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.context = context
         self.extra = extra
+        status_code = status_code or getattr(
+            self.__class__, "status_code", None
+        )
+        quiet = quiet or getattr(self.__class__, "quiet", None)
+        headers = headers or getattr(self.__class__, "headers", {})
         if message is None:
             if self.message:
                 message = self.message
-            elif status_code is not None:
+            elif status_code:
                 msg: bytes = STATUS_CODES.get(status_code, b"")
                 message = msg.decode("utf8")
 
@@ -66,8 +76,8 @@ class MethodNotAllowed(SanicException):
     status_code = 405
     quiet = True
 
-    def __init__(self, message, method, allowed_methods):
-        super().__init__(message)
+    def __init__(self, message, method, allowed_methods, **kwargs):
+        super().__init__(message, **kwargs)
         self.headers = {"Allow": ", ".join(allowed_methods)}
 
 
@@ -107,8 +117,8 @@ class FileNotFound(NotFound):
     **Status**: 404 Not Found
     """
 
-    def __init__(self, message, path, relative_url):
-        super().__init__(message)
+    def __init__(self, message, path, relative_url, **kwargs):
+        super().__init__(message, **kwargs)
         self.path = path
         self.relative_url = relative_url
 
@@ -155,8 +165,8 @@ class RangeNotSatisfiable(SanicException):
     status_code = 416
     quiet = True
 
-    def __init__(self, message, content_range):
-        super().__init__(message)
+    def __init__(self, message, content_range, **kwargs):
+        super().__init__(message, **kwargs)
         self.headers = {"Content-Range": f"bytes */{content_range.total}"}
 
 
@@ -194,8 +204,8 @@ class InvalidRangeType(RangeNotSatisfiable):
 
 
 class PyFileError(Exception):
-    def __init__(self, file):
-        super().__init__("could not execute config file %s", file)
+    def __init__(self, file, **kwargs):
+        super().__init__("could not execute config file %s" % file, **kwargs)
 
 
 class Unauthorized(SanicException):
@@ -237,7 +247,7 @@ class Unauthorized(SanicException):
     quiet = True
 
     def __init__(self, message, status_code=None, scheme=None, **kwargs):
-        super().__init__(message, status_code)
+        super().__init__(message, status_code, **kwargs)
 
         # if auth-scheme is specified, set "WWW-Authenticate" header
         if scheme is not None:

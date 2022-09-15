@@ -120,7 +120,7 @@ def test_error_with_path_as_instance_without_simple_arg():
         ),
     ),
 )
-def test_tls_options(cmd: Tuple[str]):
+def test_tls_options(cmd: Tuple[str, ...]):
     command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
     out, err, exitcode = capture(command)
     assert exitcode != 1
@@ -141,7 +141,7 @@ def test_tls_options(cmd: Tuple[str]):
         ("--tls-strict-host",),
     ),
 )
-def test_tls_wrong_options(cmd: Tuple[str]):
+def test_tls_wrong_options(cmd: Tuple[str, ...]):
     command = ["sanic", "fake.server.app", *cmd, "-p=9999", "--debug"]
     out, err, exitcode = capture(command)
     assert exitcode == 1
@@ -158,7 +158,7 @@ def test_tls_wrong_options(cmd: Tuple[str]):
         ("-H", "localhost", "-p", "9999"),
     ),
 )
-def test_host_port_localhost(cmd: Tuple[str]):
+def test_host_port_localhost(cmd: Tuple[str, ...]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -175,7 +175,7 @@ def test_host_port_localhost(cmd: Tuple[str]):
         ("-H", "127.0.0.127", "-p", "9999"),
     ),
 )
-def test_host_port_ipv4(cmd: Tuple[str]):
+def test_host_port_ipv4(cmd: Tuple[str, ...]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -192,7 +192,7 @@ def test_host_port_ipv4(cmd: Tuple[str]):
         ("-H", "::", "-p", "9999"),
     ),
 )
-def test_host_port_ipv6_any(cmd: Tuple[str]):
+def test_host_port_ipv6_any(cmd: Tuple[str, ...]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -209,7 +209,7 @@ def test_host_port_ipv6_any(cmd: Tuple[str]):
         ("-H", "::1", "-p", "9999"),
     ),
 )
-def test_host_port_ipv6_loopback(cmd: Tuple[str]):
+def test_host_port_ipv6_loopback(cmd: Tuple[str, ...]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")
@@ -230,7 +230,7 @@ def test_host_port_ipv6_loopback(cmd: Tuple[str]):
         (4, ("-w", "4")),
     ),
 )
-def test_num_workers(num: int, cmd: Tuple[str]):
+def test_num_workers(num: int, cmd: Tuple[str, ...]):
     command = ["sanic", "fake.server.app", *cmd]
     out, err, exitcode = capture(command)
     lines = out.split(b"\n")

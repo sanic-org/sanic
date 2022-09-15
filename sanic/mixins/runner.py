@@ -191,6 +191,7 @@ class RunnerMixin(metaclass=SanicMeta):
         fast: bool = False,
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
+        coffee: bool = False,
         auto_tls: bool = False,
     ) -> None:
         if version == 3 and self.state.server_info:
@@ -264,6 +265,9 @@ class RunnerMixin(metaclass=SanicMeta):
                 workers = len(os.sched_getaffinity(0))
             except AttributeError:  # no cov
                 workers = os.cpu_count() or 1
+
+        if coffee:
+            self.state.coffee = True
 
         server_settings = self._helper(
             host=host,

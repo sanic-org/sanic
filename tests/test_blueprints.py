@@ -17,7 +17,7 @@ from sanic.response import json, text
 # ------------------------------------------------------------ #
 
 
-def test_bp(app):
+def test_bp(app: Sanic):
     bp = Blueprint("test_text")
 
     @bp.route("/")
@@ -30,7 +30,7 @@ def test_bp(app):
     assert response.text == "Hello"
 
 
-def test_bp_app_access(app):
+def test_bp_app_access(app: Sanic):
     bp = Blueprint("test")
 
     with pytest.raises(
@@ -87,7 +87,7 @@ def test_versioned_routes_get(app, method):
     assert response.status == 200
 
 
-def test_bp_strict_slash(app):
+def test_bp_strict_slash(app: Sanic):
     bp = Blueprint("test_text")
 
     @bp.get("/get", strict_slashes=True)
@@ -114,7 +114,7 @@ def test_bp_strict_slash(app):
     assert response.status == 404
 
 
-def test_bp_strict_slash_default_value(app):
+def test_bp_strict_slash_default_value(app: Sanic):
     bp = Blueprint("test_text", strict_slashes=True)
 
     @bp.get("/get")
@@ -134,7 +134,7 @@ def test_bp_strict_slash_default_value(app):
     assert response.status == 404
 
 
-def test_bp_strict_slash_without_passing_default_value(app):
+def test_bp_strict_slash_without_passing_default_value(app: Sanic):
     bp = Blueprint("test_text")
 
     @bp.get("/get")
@@ -154,7 +154,7 @@ def test_bp_strict_slash_without_passing_default_value(app):
     assert response.text == "OK"
 
 
-def test_bp_strict_slash_default_value_can_be_overwritten(app):
+def test_bp_strict_slash_default_value_can_be_overwritten(app: Sanic):
     bp = Blueprint("test_text", strict_slashes=True)
 
     @bp.get("/get", strict_slashes=False)
@@ -174,7 +174,7 @@ def test_bp_strict_slash_default_value_can_be_overwritten(app):
     assert response.text == "OK"
 
 
-def test_bp_with_url_prefix(app):
+def test_bp_with_url_prefix(app: Sanic):
     bp = Blueprint("test_text", url_prefix="/test1")
 
     @bp.route("/")
@@ -187,7 +187,7 @@ def test_bp_with_url_prefix(app):
     assert response.text == "Hello"
 
 
-def test_several_bp_with_url_prefix(app):
+def test_several_bp_with_url_prefix(app: Sanic):
     bp = Blueprint("test_text", url_prefix="/test1")
     bp2 = Blueprint("test_text2", url_prefix="/test2")
 
@@ -208,7 +208,7 @@ def test_several_bp_with_url_prefix(app):
     assert response.text == "Hello2"
 
 
-def test_bp_with_host(app):
+def test_bp_with_host(app: Sanic):
     bp = Blueprint("test_bp_host", url_prefix="/test1", host="example.com")
 
     @bp.route("/")
@@ -230,7 +230,7 @@ def test_bp_with_host(app):
     assert response.body == b"Hello subdomain!"
 
 
-def test_several_bp_with_host(app):
+def test_several_bp_with_host(app: Sanic):
     bp = Blueprint(
         "test_text",
         url_prefix="/test",
@@ -274,7 +274,7 @@ def test_several_bp_with_host(app):
     assert response.text == "Hello3"
 
 
-def test_bp_with_host_list(app):
+def test_bp_with_host_list(app: Sanic):
     bp = Blueprint(
         "test_bp_host",
         url_prefix="/test1",
@@ -304,7 +304,7 @@ def test_bp_with_host_list(app):
     assert response.text == "Hello subdomain!"
 
 
-def test_several_bp_with_host_list(app):
+def test_several_bp_with_host_list(app: Sanic):
     bp = Blueprint(
         "test_text",
         url_prefix="/test",
@@ -356,7 +356,7 @@ def test_several_bp_with_host_list(app):
     assert response.text == "Hello3"
 
 
-def test_bp_middleware(app):
+def test_bp_middleware(app: Sanic):
     blueprint = Blueprint("test_bp_middleware")
 
     @blueprint.middleware("response")
@@ -375,7 +375,7 @@ def test_bp_middleware(app):
     assert response.text == "FAIL"
 
 
-def test_bp_middleware_with_route(app):
+def test_bp_middleware_with_route(app: Sanic):
     blueprint = Blueprint("test_bp_middleware")
 
     @blueprint.middleware("response")
@@ -398,7 +398,7 @@ def test_bp_middleware_with_route(app):
     assert response.text == "OK"
 
 
-def test_bp_middleware_order(app):
+def test_bp_middleware_order(app: Sanic):
     blueprint = Blueprint("test_bp_middleware_order")
     order = []
 
@@ -438,7 +438,7 @@ def test_bp_middleware_order(app):
     assert order == [1, 2, 3, 4, 5, 6]
 
 
-def test_bp_exception_handler(app):
+def test_bp_exception_handler(app: Sanic):
     blueprint = Blueprint("test_middleware")
 
     @blueprint.route("/1")
@@ -470,7 +470,7 @@ def test_bp_exception_handler(app):
     assert response.status == 200
 
 
-def test_bp_exception_handler_applied(app):
+def test_bp_exception_handler_applied(app: Sanic):
     class Error(Exception):
         pass
 
@@ -500,7 +500,7 @@ def test_bp_exception_handler_applied(app):
     assert response.status == 500
 
 
-def test_bp_exception_handler_not_applied(app):
+def test_bp_exception_handler_not_applied(app: Sanic):
     class Error(Exception):
         pass
 
@@ -522,7 +522,7 @@ def test_bp_exception_handler_not_applied(app):
     assert response.status == 500
 
 
-def test_bp_listeners(app):
+def test_bp_listeners(app: Sanic):
     app.route("/")(lambda x: x)
     blueprint = Blueprint("test_middleware")
 
@@ -559,7 +559,7 @@ def test_bp_listeners(app):
     assert order == [1, 2, 3, 4, 5, 6]
 
 
-def test_bp_static(app):
+def test_bp_static(app: Sanic):
     current_file = inspect.getfile(inspect.currentframe())
     with open(current_file, "rb") as file:
         current_file_contents = file.read()
@@ -597,7 +597,7 @@ def test_bp_static_content_type(app, file_name):
     assert response.headers["Content-Type"] == "text/html; charset=utf-8"
 
 
-def test_bp_shorthand(app):
+def test_bp_shorthand(app: Sanic):
     blueprint = Blueprint("test_shorhand_routes")
     ev = asyncio.Event()
 
@@ -682,7 +682,7 @@ def test_bp_shorthand(app):
     assert ev.is_set()
 
 
-def test_bp_group(app):
+def test_bp_group(app: Sanic):
     deep_0 = Blueprint("deep_0", url_prefix="/deep")
     deep_1 = Blueprint("deep_1", url_prefix="/deep1")
 
@@ -722,7 +722,7 @@ def test_bp_group(app):
     assert response.text == "D1B_OK"
 
 
-def test_bp_group_with_default_url_prefix(app):
+def test_bp_group_with_default_url_prefix(app: Sanic):
     from sanic.response import json
 
     bp_resources = Blueprint("bp_resources")
@@ -873,7 +873,7 @@ def test_websocket_route(app: Sanic):
     assert event.is_set()
 
 
-def test_duplicate_blueprint(app):
+def test_duplicate_blueprint(app: Sanic):
     bp_name = "bp"
     bp = Blueprint(bp_name)
     bp1 = Blueprint(bp_name)
@@ -1056,7 +1056,7 @@ def test_bp_set_attribute_warning():
         bp.foo = 1
 
 
-def test_early_registration(app):
+def test_early_registration(app: Sanic):
     assert len(app.router.routes) == 0
 
     bp = Blueprint("bp")
@@ -1082,3 +1082,29 @@ def test_early_registration(app):
     for path in ("one", "two", "three"):
         _, response = app.test_client.get(f"/{path}")
         assert response.text == path
+
+
+def test_remove_double_slashes_defined_on_bp(app: Sanic):
+    bp = Blueprint("bp", url_prefix="/foo/", strict_slashes=True)
+
+    @bp.get("/")
+    async def handler(_):
+        ...
+
+    app.blueprint(bp)
+    app.router.finalize()
+
+    assert app.router.routes[0].path == "foo/"
+
+
+def test_remove_double_slashes_defined_on_register(app: Sanic):
+    bp = Blueprint("bp")
+
+    @bp.get("/")
+    async def index(_):
+        ...
+
+    app.blueprint(bp, url_prefix="/foo/", strict_slashes=True)
+    app.router.finalize()
+
+    assert app.router.routes[0].path == "foo/"

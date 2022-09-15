@@ -958,6 +958,7 @@ class RouteMixin(metaclass=SanicMeta):
         # serve from the folder
         if not static.resource_type:
             if not path.isfile(file_or_directory):
+                uri = uri.rstrip("/")
                 uri += "/<__file_uri__:path>"
         elif static.resource_type == "dir":
             if path.isfile(file_or_directory):
@@ -965,6 +966,7 @@ class RouteMixin(metaclass=SanicMeta):
                     "Resource type improperly identified as directory. "
                     f"'{file_or_directory}'"
                 )
+            uri = uri.rstrip("/")
             uri += "/<__file_uri__:path>"
         elif static.resource_type == "file" and not path.isfile(
             file_or_directory

@@ -16,7 +16,7 @@ from sanic.log import deprecation, error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
-if sys.version_info > (3, 7):
+if sys.version_info >= (3, 8):
     from typing import Literal
 
     FilterWarningType = Union[

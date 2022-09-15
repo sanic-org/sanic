@@ -5,7 +5,7 @@ import sys
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
-from typing import Any, Callable, Dict, Literal, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 from warnings import filterwarnings
 
 from sanic.constants import LocalCertCreator
@@ -17,6 +17,8 @@ from sanic.utils import load_module_from_file_location, str_to_bool
 
 
 if sys.version_info > (3, 7):
+    from typing import Literal
+
     FilterWarningType = Union[
         Literal["default"],
         Literal["error"],

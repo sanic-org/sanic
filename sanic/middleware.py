@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import deque
 from enum import IntEnum, auto
 from itertools import count
-from typing import Deque, Optional, Sequence, Union
+from typing import Deque, Sequence, Union
 
 from sanic.models.handler_types import MiddlewareType
 
@@ -21,7 +21,7 @@ class Middleware:
     def __init__(
         self,
         func: MiddlewareType,
-        location: MiddlewareLocation,
+        location: MiddlewareLocation = MiddlewareLocation.REQUEST,
         priority: int = 0,
     ) -> None:
         self.func = func

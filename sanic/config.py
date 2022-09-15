@@ -127,19 +127,19 @@ class Config(dict, metaclass=DescriptorMeta):
         self._check_error_format()
         self._init = True
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: Any):
         try:
             return self[attr]
         except KeyError as ke:
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
-    def __setattr__(self, attr, value) -> None:
+    def __setattr__(self, attr: str, value: Any) -> None:
         self.update({attr: value})
 
-    def __setitem__(self, attr, value) -> None:
+    def __setitem__(self, attr: str, value: Any) -> None:
         self.update({attr: value})
 
-    def update(self, *other, **kwargs) -> None:
+    def update(self, *other: Any, **kwargs: Any) -> None:
         kwargs.update({k: v for item in other for k, v in dict(item).items()})
         setters: Dict[str, Any] = {
             k: kwargs.pop(k)

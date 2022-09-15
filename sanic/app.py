@@ -458,9 +458,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
     def blueprint(
         self,
-        blueprint: Union[
-            Blueprint, List[Blueprint], Tuple[Blueprint], BlueprintGroup
-        ],
+        blueprint: Union[Blueprint, Iterable[Blueprint], BlueprintGroup],
         **options: Any,
     ):
         """Register a blueprint on the application.
@@ -469,7 +467,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         :param options: option dictionary with blueprint defaults
         :return: Nothing
         """
-        if isinstance(blueprint, (list, tuple, BlueprintGroup)):
+        if isinstance(blueprint, (Iterable, BlueprintGroup)):
             for item in blueprint:
                 params = {**options}
                 if isinstance(blueprint, BlueprintGroup):
@@ -1184,7 +1182,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         *,
         name: Optional[str] = None,
         register: bool = True,
-    ) -> Optional[Task]:
+    ) -> Optional[Task[Any]]:
         """
         Schedule a task to run later, after the loop has started.
         Different from asyncio.ensure_future in that it does not
@@ -1315,7 +1313,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.config.update_config(config)
 
     @property
-    def asgi(self):
+    def asgi(self) -> bool:
         return self.state.asgi
 
     @asgi.setter
@@ -1520,6 +1518,18 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         # Setup routers
         self.signalize(self.config.TOUCHUP)
         self.finalize()
+
+        route_names = [route.name for route in self.router.routes]
+        duplicates = {
+            name for name in route_names if route_names.count(name) > 1
+        }
+        if duplicates:
+            names = ", ".join(duplicates)
+            deprecation(
+                f"Duplicate route names detected: {names}. In the future, "
+                "Sanic will enforce uniqueness in route naming.",
+                23.3,
+            )
 
         # TODO: Replace in v22.6 to check against apps in app registry
         if (

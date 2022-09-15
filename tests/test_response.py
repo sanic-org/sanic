@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import os
+import time
 
 from collections import namedtuple
 from datetime import datetime
@@ -730,8 +731,10 @@ def test_file_response_headers(
     test_expires = test_last_modified.timestamp() + test_max_age
 
     @app.route("/files/cached/<filename>", methods=["GET"])
-    def file_route_cache(request, filename):
-        file_path = (Path(static_file_directory) / file_name).absolute()
+    def file_route_cache(request: Request, filename: str):
+        file_path = (
+            Path(static_file_directory) / unquote(filename)
+        ).absolute()
         return file(
             file_path, max_age=test_max_age, last_modified=test_last_modified
         )
@@ -739,18 +742,26 @@ def test_file_response_headers(
     @app.route(
         "/files/cached_default_last_modified/<filename>", methods=["GET"]
     )
-    def file_route_cache_default_last_modified(request, filename):
-        file_path = (Path(static_file_directory) / file_name).absolute()
+    def file_route_cache_default_last_modified(
+        request: Request, filename: str
+    ):
+        file_path = (
+            Path(static_file_directory) / unquote(filename)
+        ).absolute()
         return file(file_path, max_age=test_max_age)
 
     @app.route("/files/no_cache/<filename>", methods=["GET"])
-    def file_route_no_cache(request, filename):
-        file_path = (Path(static_file_directory) / file_name).absolute()
+    def file_route_no_cache(request: Request, filename: str):
+        file_path = (
+            Path(static_file_directory) / unquote(filename)
+        ).absolute()
         return file(file_path)
 
     @app.route("/files/no_store/<filename>", methods=["GET"])
-    def file_route_no_store(request, filename):
-        file_path = (Path(static_file_directory) / file_name).absolute()
+    def file_route_no_store(request: Request, filename: str):
+        file_path = (
+            Path(static_file_directory) / unquote(filename)
+        ).absolute()
         return file(file_path, no_store=True)
 
     _, response = app.test_client.get(f"/files/cached/{file_name}")
@@ -767,11 +778,11 @@ def test_file_response_headers(
         == formatdate(test_expires, usegmt=True)[:-6]
         # [:-6] to allow at most 1 min difference
         # It's minimal for cases like:
-        # Thu, 26 May 2022 05:36:49 GMT
+        # Thu, 26 May 2022 05:36:59 GMT
         # AND
-        # Thu, 26 May 2022 05:36:50 GMT
+        # Thu, 26 May 2022 05:37:00 GMT
     )
-
+    assert response.status == 200
     assert "last-modified" in headers and headers.get(
         "last-modified"
     ) == formatdate(test_last_modified.timestamp(), usegmt=True)
@@ -786,15 +797,127 @@ def test_file_response_headers(
     assert "last-modified" in headers and headers.get(
         "last-modified"
     ) == formatdate(file_last_modified, usegmt=True)
+    assert response.status == 200
 
     _, response = app.test_client.get(f"/files/no_cache/{file_name}")
     headers = response.headers
     assert "cache-control" in headers and f"no-cache" == headers.get(
         "cache-control"
     )
+    assert response.status == 200
 
     _, response = app.test_client.get(f"/files/no_store/{file_name}")
     headers = response.headers
     assert "cache-control" in headers and f"no-store" == headers.get(
         "cache-control"
     )
+    assert response.status == 200
+
+
+def test_file_validate(app: Sanic, static_file_directory: str):
+    file_name = "test_validate.txt"
+    static_file_directory = Path(static_file_directory)
+    file_path = static_file_directory / file_name
+    file_path = file_path.absolute()
+    test_max_age = 10
+
+    with open(file_path, "w+") as f:
+        f.write("foo\n")
+
+    @app.route("/validate", methods=["GET"])
+    def file_route_cache(request: Request):
+        return file(
+            file_path,
+            request_headers=request.headers,
+            max_age=test_max_age,
+            validate_when_requested=True,
+        )
+
+    _, response = app.test_client.get("/validate")
+    assert response.status == 200
+    assert response.body == b"foo\n"
+    last_modified = response.headers["Last-Modified"]
+
+    time.sleep(1)
+    with open(file_path, "a") as f:
+        f.write("bar\n")
+
+    _, response = app.test_client.get(
+        "/validate", headers={"If-Modified-Since": last_modified}
+    )
+    assert response.status == 200
+    assert response.body == b"foo\nbar\n"
+
+    last_modified = response.headers["Last-Modified"]
+    _, response = app.test_client.get(
+        "/validate", headers={"if-modified-since": last_modified}
+    )
+    assert response.status == 304
+    assert response.body == b""
+
+    file_path.unlink()
+
+
+@pytest.mark.parametrize(
+    "file_name", ["test.file", "decode me.txt", "python.png"]
+)
+def test_file_validating_invalid_header(
+    app: Sanic, file_name: str, static_file_directory: str
+):
+    @app.route("/files/<filename>", methods=["GET"])
+    def file_route(request: Request, filename: str):
+        handler_file_path = (
+            Path(static_file_directory) / unquote(filename)
+        ).absolute()
+
+        return file(
+            handler_file_path,
+            request_headers=request.headers,
+            validate_when_requested=True,
+        )
+
+    _, response = app.test_client.get(f"/files/{file_name}")
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+    _, response = app.test_client.get(
+        f"/files/{file_name}", headers={"if-modified-since": "invalid-value"}
+    )
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+    _, response = app.test_client.get(
+        f"/files/{file_name}", headers={"if-modified-since": ""}
+    )
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name", ["test.file", "decode me.txt", "python.png"]
+)
+def test_file_validating_304_response(
+    app: Sanic, file_name: str, static_file_directory: str
+):
+    @app.route("/files/<filename>", methods=["GET"])
+    def file_route(request: Request, filename: str):
+        handler_file_path = (
+            Path(static_file_directory) / unquote(filename)
+        ).absolute()
+
+        return file(
+            handler_file_path,
+            request_headers=request.headers,
+            validate_when_requested=True,
+        )
+
+    _, response = app.test_client.get(f"/files/{file_name}")
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+    _, response = app.test_client.get(
+        f"/files/{file_name}",
+        headers={"if-modified-since": response.headers["Last-Modified"]},
+    )
+    assert response.status == 304
+    assert response.body == b""

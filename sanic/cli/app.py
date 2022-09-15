@@ -192,6 +192,7 @@ Or, a path to a directory to run as a simple HTTP server:
             ssl = ssl[0]
         kwargs = {
             "access_log": self.args.access_log,
+            "coffee": self.args.coffee,
             "debug": self.args.debug,
             "fast": self.args.fast,
             "host": self.args.host,

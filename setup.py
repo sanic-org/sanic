@@ -61,7 +61,7 @@ setup_kwargs = {
         "Build fast. Run fast."
     ),
     "long_description": long_description,
-    "packages": find_packages(),
+    "packages": find_packages(exclude=("tests", "tests.*")),
     "package_data": {"sanic": ["py.typed"]},
     "platforms": "any",
     "python_requires": ">=3.7",

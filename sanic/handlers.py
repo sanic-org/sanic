@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple, Type
 
-from sanic_routing.exceptions import RouteExists
-
 from sanic.errorpages import BaseRenderer, TextRenderer, exception_response
 from sanic.exceptions import (
     HeaderNotFound,

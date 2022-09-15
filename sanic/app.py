@@ -902,13 +902,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                     context={"request": request},
                 )
                 response = handler(request, **request.match_info)
+                if isawaitable(response):
+                    response = await response
                 await self.dispatch(
                     "http.handler.after",
                     inline=True,
                     context={"request": request},
                 )
-                if isawaitable(response):
-                    response = await response
 
             if request.responded:
                 if response is not None:

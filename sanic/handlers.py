@@ -47,6 +47,28 @@ class ErrorHandler:
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)
 
+    def _add(
+        self,
+        key: Tuple[Type[BaseException], Optional[str]],
+        handler: RouteHandler,
+    ) -> None:
+        if key in self.cached_handlers:
+            exc, name = key
+            if name is None:
+                name = "__ALL_ROUTES__"
+
+            error_logger.warning(
+                f"Duplicate exception handler definition on: route={name} "
+                f"and exception={exc}"
+            )
+            deprecation(
+                "A duplicate exception handler definition was discovered. "
+                "This may cause unintended consequences. A warning has been "
+                "issued now, but it will not be allowed starting in v23.3.",
+                23.3,
+            )
+        self.cached_handlers[key] = handler
+
     def add(self, exception, handler, route_names: Optional[List[str]] = None):
         """
         Add a new exception handler to an already existing handler object.
@@ -62,9 +84,9 @@ class ErrorHandler:
         """
         if route_names:
             for route in route_names:
-                self.cached_handlers[(exception, route)] = handler
+                self._add((exception, route), handler)
         else:
-            self.cached_handlers[(exception, None)] = handler
+            self._add((exception, None), handler)
 
     def lookup(self, exception, route_name: Optional[str] = None):
         """

@@ -666,7 +666,7 @@ class RunnerMixin(metaclass=SanicMeta):
             primary_server_info.stage = ServerStage.SERVING
 
             if primary.state.workers > 1 and os.name != "posix":  # no cov
-                logger.warn(
+                logger.warning(
                     f"Multiprocessing is currently not supported on {os.name},"
                     " using workers=1 instead"
                 )

@@ -30,6 +30,8 @@ class Event(Enum):
     HTTP_LIFECYCLE_RESPONSE = "http.lifecycle.response"
     HTTP_ROUTING_AFTER = "http.routing.after"
     HTTP_ROUTING_BEFORE = "http.routing.before"
+    HTTP_HANDLER_AFTER = "http.handler.after"
+    HTTP_HANDLER_BEFORE = "http.handler.before"
     HTTP_LIFECYCLE_SEND = "http.lifecycle.send"
     HTTP_MIDDLEWARE_AFTER = "http.middleware.after"
     HTTP_MIDDLEWARE_BEFORE = "http.middleware.before"
@@ -53,6 +55,8 @@ RESERVED_NAMESPACES = {
         Event.HTTP_LIFECYCLE_RESPONSE.value,
         Event.HTTP_ROUTING_AFTER.value,
         Event.HTTP_ROUTING_BEFORE.value,
+        Event.HTTP_HANDLER_AFTER.value,
+        Event.HTTP_HANDLER_BEFORE.value,
         Event.HTTP_LIFECYCLE_SEND.value,
         Event.HTTP_MIDDLEWARE_AFTER.value,
         Event.HTTP_MIDDLEWARE_BEFORE.value,

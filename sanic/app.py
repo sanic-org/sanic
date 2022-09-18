@@ -42,7 +42,6 @@ from typing import (
     Union,
 )
 from urllib.parse import urlencode, urlunparse
-from warnings import filterwarnings
 
 from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
@@ -104,8 +103,6 @@ if TYPE_CHECKING:
 
 if OS_IS_WINDOWS:  # no cov
     enable_windows_color_support()
-
-filterwarnings("once", category=DeprecationWarning)
 
 
 class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):

@@ -568,7 +568,7 @@ def test_streaming_echo():
     @app.listener("after_server_start")
     async def client_task(app, loop):
         try:
-            reader, writer = await asyncio.open_connection(*addr)
+            reader, writer = await asyncio.open_connection("localhost", 8000)
             await client(app, reader, writer)
         finally:
             writer.close()
@@ -576,7 +576,7 @@ def test_streaming_echo():
 
     async def client(app, reader, writer):
         # Unfortunately httpx does not support 2-way streaming, so do it by hand.
-        host = f"host: {addr[0]}:{addr[1]}\r\n".encode()
+        host = f"host: localhost:8000\r\n".encode()
         writer.write(
             b"POST /echo HTTP/1.1\r\n" + host + b"content-length: 2\r\n"
             b"content-type: text/plain; charset=utf-8\r\n"
@@ -625,6 +625,4 @@ def test_streaming_echo():
 
     # Use random port for tests
     with closing(socket()) as sock:
-        sock.bind(("127.0.0.1", 0))
-        addr = sock.getsockname()
-        app.run(sock=sock, access_log=False)
+        app.run(access_log=False)

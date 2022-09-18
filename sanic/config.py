@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import sys
+
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Union
+from warnings import filterwarnings
 
 from sanic.constants import LocalCertCreator
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
@@ -13,18 +16,36 @@ from sanic.log import deprecation, error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+
+    FilterWarningType = Union[
+        Literal["default"],
+        Literal["error"],
+        Literal["ignore"],
+        Literal["always"],
+        Literal["module"],
+        Literal["once"],
+    ]
+else:
+    FilterWarningType = str
+
 SANIC_PREFIX = "SANIC_"
 
 
 DEFAULT_CONFIG = {
     "_FALLBACK_ERROR_FORMAT": _default,
-    "ACCESS_LOG": True,
+    "ACCESS_LOG": False,
     "AUTO_EXTEND": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
+    "DEPRECATION_FILTER": "once",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
+    "INSPECTOR": False,
+    "INSPECTOR_HOST": "localhost",
+    "INSPECTOR_PORT": 6457,
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
     "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
@@ -69,9 +90,13 @@ class Config(dict, metaclass=DescriptorMeta):
     AUTO_EXTEND: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
+    DEPRECATION_FILTER: FilterWarningType
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
+    INSPECTOR: bool
+    INSPECTOR_HOST: str
+    INSPECTOR_PORT: int
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
     LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]
@@ -124,22 +149,23 @@ class Config(dict, metaclass=DescriptorMeta):
             self.load_environment_vars(SANIC_PREFIX)
 
         self._configure_header_size()
+        self._configure_warnings()
         self._check_error_format()
         self._init = True
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: Any):
         try:
             return self[attr]
         except KeyError as ke:
             raise AttributeError(f"Config has no '{ke.args[0]}'")
 
-    def __setattr__(self, attr, value) -> None:
+    def __setattr__(self, attr: str, value: Any) -> None:
         self.update({attr: value})
 
-    def __setitem__(self, attr, value) -> None:
+    def __setitem__(self, attr: str, value: Any) -> None:
         self.update({attr: value})
 
-    def update(self, *other, **kwargs) -> None:
+    def update(self, *other: Any, **kwargs: Any) -> None:
         kwargs.update({k: v for item in other for k, v in dict(item).items()})
         setters: Dict[str, Any] = {
             k: kwargs.pop(k)
@@ -172,6 +198,8 @@ class Config(dict, metaclass=DescriptorMeta):
             self.LOCAL_CERT_CREATOR = LocalCertCreator[
                 self.LOCAL_CERT_CREATOR.upper()
             ]
+        elif attr == "DEPRECATION_FILTER":
+            self._configure_warnings()
 
     @property
     def FALLBACK_ERROR_FORMAT(self) -> str:
@@ -197,6 +225,13 @@ class Config(dict, metaclass=DescriptorMeta):
             self.REQUEST_MAX_HEADER_SIZE,
             self.REQUEST_BUFFER_SIZE - 4096,
             self.REQUEST_MAX_SIZE,
+        )
+
+    def _configure_warnings(self):
+        filterwarnings(
+            self.DEPRECATION_FILTER,
+            category=DeprecationWarning,
+            module=r"sanic.*",
         )
 
     def _check_error_format(self, format: Optional[str] = None):

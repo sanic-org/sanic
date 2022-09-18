@@ -129,7 +129,7 @@ def _setup_system_signals(
     run_multiple: bool,
     register_sys_signals: bool,
     loop: asyncio.AbstractEventLoop,
-) -> None:
+) -> None:  # no cov
     # Ignore SIGINT when run_multiple
     if run_multiple:
         signal_func(SIGINT, SIG_IGN)
@@ -141,7 +141,9 @@ def _setup_system_signals(
             ctrlc_workaround_for_windows(app)
         else:
             for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
-                loop.add_signal_handler(_signal, app.stop)
+                loop.add_signal_handler(
+                    _signal, partial(app.stop, terminate=False)
+                )
 
 
 def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
@@ -161,6 +163,7 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
 
         loop.run_until_complete(after_stop())
         remove_unix_socket(unix)
+        loop.close()
 
 
 def _serve_http_1(
@@ -197,8 +200,12 @@ def _serve_http_1(
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
     )
+    if OS_IS_WINDOWS:
+        pid = os.getpid()
+        sock = sock.share(pid)
+        sock = socket.fromshare(sock)
     # UNIX sockets are always bound by us (to preserve semantics between modes)
-    if unix:
+    elif unix:
         sock = bind_unix_socket(unix, backlog=backlog)
     server_coroutine = loop.create_server(
         server,

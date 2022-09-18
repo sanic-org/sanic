@@ -9,7 +9,6 @@ from time import sleep
 
 def _iter_module_files():
     """This iterates over all relevant Python files.
-
     It goes through all
     loaded files from modules, all files in folders of already loaded modules
     as well as all files reachable through a package.
@@ -52,7 +51,7 @@ def restart_with_reloader(changed=None):
     this one.
     """
     reloaded = ",".join(changed) if changed else ""
-    return subprocess.Popen(
+    return subprocess.Popen(  # nosec B603
         _get_args_for_reloading(),
         env={
             **os.environ,
@@ -79,7 +78,6 @@ def _check_file(filename, mtimes):
 
 def watchdog(sleep_interval, reload_dirs):
     """Watch project files, restart worker process if a change happened.
-
     :param sleep_interval: interval in second.
     :return: Nothing
     """

@@ -1266,3 +1266,22 @@ async def test_added_callable_route_ctx_kwargs(app):
 
     assert request.route.ctx.foo() == "foo"
     assert await request.route.ctx.bar() == 99
+
+
+@pytest.mark.asyncio
+async def test_duplicate_route_deprecation(app):
+    @app.route("/foo", name="duped")
+    async def handler_foo(request):
+        return text("...")
+
+    @app.route("/bar", name="duped")
+    async def handler_bar(request):
+        return text("...")
+
+    message = (
+        r"\[DEPRECATION v23\.3\] Duplicate route names detected: "
+        r"test_duplicate_route_deprecation\.duped\. In the future, "
+        r"Sanic will enforce uniqueness in route naming\."
+    )
+    with pytest.warns(DeprecationWarning, match=message):
+        await app._startup()

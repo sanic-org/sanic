@@ -531,6 +531,8 @@ async def test_signals_triggered(app):
         "http.lifecycle.handle",
         "http.routing.before",
         "http.routing.after",
+        "http.handler.before",
+        "http.handler.after",
         "http.lifecycle.response",
         # "http.lifecycle.send",
         # "http.lifecycle.complete",
@@ -546,3 +548,13 @@ async def test_signals_triggered(app):
     assert response.status_code == 200
     assert response.text == "test_signals_triggered"
     assert signals_triggered == signals_expected
+
+
+@pytest.mark.asyncio
+async def test_asgi_serve_location(app):
+    @app.get("/")
+    def _request(request: Request):
+        return text(request.app.serve_location)
+
+    _, response = await app.asgi_client.get("/")
+    assert response.text == "http://<ASGI>"

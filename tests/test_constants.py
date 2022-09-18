@@ -1,15 +1,24 @@
+import pytest
+
 from sanic import Sanic, text
+from sanic.application.constants import Mode, Server, ServerStage
 from sanic.constants import HTTP_METHODS, HTTPMethod
 
 
-def test_string_compat():
-    assert "GET" == HTTPMethod.GET
-    assert "GET" in HTTP_METHODS
-    assert "get" == HTTPMethod.GET
-    assert "get" in HTTP_METHODS
+@pytest.mark.parametrize("enum", (HTTPMethod, Server, Mode))
+def test_string_compat(enum):
+    for key in enum.__members__.keys():
+        assert key.upper() == getattr(enum, key).upper()
+        assert key.lower() == getattr(enum, key).lower()
 
-    assert HTTPMethod.GET.lower() == "get"
-    assert HTTPMethod.GET.upper() == "GET"
+
+def test_http_methods():
+    for value in HTTPMethod.__members__.values():
+        assert value in HTTP_METHODS
+
+
+def test_server_stage():
+    assert ServerStage.SERVING > ServerStage.PARTIAL > ServerStage.STOPPED
 
 
 def test_use_in_routes(app: Sanic):

@@ -1,10 +1,10 @@
+import logging
 import os
 import shutil
 import sys
 
 from argparse import ArgumentParser, RawTextHelpFormatter
-from importlib import import_module
-from pathlib import Path
+from functools import partial
 from textwrap import indent
 from typing import Any, List, Union
 
@@ -12,7 +12,8 @@ from sanic.app import Sanic
 from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
 from sanic.log import error_logger
-from sanic.simple import create_simple_server
+from sanic.worker.inspector import inspect
+from sanic.worker.loader import AppLoader
 
 
 class SanicArgumentParser(ArgumentParser):
@@ -66,13 +67,17 @@ Or, a path to a directory to run as a simple HTTP server:
             instance.attach()
             self.groups.append(instance)
 
-    def run(self):
-        # This is to provide backwards compat -v to display version
-        legacy_version = len(sys.argv) == 2 and sys.argv[-1] == "-v"
-        parse_args = ["--version"] if legacy_version else None
-
+    def run(self, parse_args=None):
+        legacy_version = False
         if not parse_args:
-            parsed, unknown = self.parser.parse_known_args()
+            # This is to provide backwards compat -v to display version
+            legacy_version = len(sys.argv) == 2 and sys.argv[-1] == "-v"
+            parse_args = ["--version"] if legacy_version else None
+        elif parse_args == ["-v"]:
+            parse_args = ["--version"]
+
+        if not legacy_version:
+            parsed, unknown = self.parser.parse_known_args(args=parse_args)
             if unknown and parsed.factory:
                 for arg in unknown:
                     if arg.startswith("--"):
@@ -80,20 +85,47 @@ Or, a path to a directory to run as a simple HTTP server:
 
         self.args = self.parser.parse_args(args=parse_args)
         self._precheck()
+        app_loader = AppLoader(
+            self.args.module,
+            self.args.factory,
+            self.args.simple,
+            self.args,
+        )
 
         try:
-            app = self._get_app()
+            app = self._get_app(app_loader)
             kwargs = self._build_run_kwargs()
-        except ValueError:
-            error_logger.exception("Failed to run app")
+        except ValueError as e:
+            error_logger.exception(f"Failed to run app: {e}")
         else:
-            for http_version in self.args.http:
-                app.prepare(**kwargs, version=http_version)
+            if self.args.inspect or self.args.inspect_raw or self.args.trigger:
+                os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
+            else:
+                for http_version in self.args.http:
+                    app.prepare(**kwargs, version=http_version)
 
-            Sanic.serve()
+            if self.args.inspect or self.args.inspect_raw or self.args.trigger:
+                action = self.args.trigger or (
+                    "raw" if self.args.inspect_raw else "pretty"
+                )
+                inspect(
+                    app.config.INSPECTOR_HOST,
+                    app.config.INSPECTOR_PORT,
+                    action,
+                )
+                del os.environ["SANIC_IGNORE_PRODUCTION_WARNING"]
+                return
+
+            if self.args.single:
+                serve = Sanic.serve_single
+            elif self.args.legacy:
+                serve = Sanic.serve_legacy
+            else:
+                serve = partial(Sanic.serve, app_loader=app_loader)
+            serve(app)
 
     def _precheck(self):
-        # # Custom TLS mismatch handling for better diagnostics
+        # Custom TLS mismatch handling for better diagnostics
         if self.main_process and (
             # one of cert/key missing
             bool(self.args.cert) != bool(self.args.key)
@@ -113,58 +145,14 @@ Or, a path to a directory to run as a simple HTTP server:
             )
             error_logger.error(message)
             sys.exit(1)
+        if self.args.inspect or self.args.inspect_raw:
+            logging.disable(logging.CRITICAL)
 
-    def _get_app(self):
+    def _get_app(self, app_loader: AppLoader):
         try:
-            module_path = os.path.abspath(os.getcwd())
-            if module_path not in sys.path:
-                sys.path.append(module_path)
-
-            if self.args.simple:
-                path = Path(self.args.module)
-                app = create_simple_server(path)
-            else:
-                delimiter = ":" if ":" in self.args.module else "."
-                module_name, app_name = self.args.module.rsplit(delimiter, 1)
-
-                if module_name == "" and os.path.isdir(self.args.module):
-                    raise ValueError(
-                        "App not found.\n"
-                        "   Please use --simple if you are passing a "
-                        "directory to sanic.\n"
-                        f"   eg. sanic {self.args.module} --simple"
-                    )
-
-                if app_name.endswith("()"):
-                    self.args.factory = True
-                    app_name = app_name[:-2]
-
-                module = import_module(module_name)
-                app = getattr(module, app_name, None)
-                if self.args.factory:
-                    try:
-                        app = app(self.args)
-                    except TypeError:
-                        app = app()
-
-                app_type_name = type(app).__name__
-
-                if not isinstance(app, Sanic):
-                    if callable(app):
-                        solution = f"sanic {self.args.module} --factory"
-                        raise ValueError(
-                            "Module is not a Sanic app, it is a "
-                            f"{app_type_name}\n"
-                            "  If this callable returns a "
-                            f"Sanic instance try: \n{solution}"
-                        )
-
-                    raise ValueError(
-                        f"Module is not a Sanic app, it is a {app_type_name}\n"
-                        f"  Perhaps you meant {self.args.module}:app?"
-                    )
+            app = app_loader.load()
         except ImportError as e:
-            if module_name.startswith(e.name):
+            if app_loader.module_name.startswith(e.name):  # type: ignore
                 error_logger.error(
                     f"No module named {e.name} found.\n"
                     "  Example File: project/sanic_server.py -> app\n"
@@ -190,6 +178,7 @@ Or, a path to a directory to run as a simple HTTP server:
         elif len(ssl) == 1 and ssl[0] is not None:
             # Use only one cert, no TLSSelector.
             ssl = ssl[0]
+
         kwargs = {
             "access_log": self.args.access_log,
             "coffee": self.args.coffee,
@@ -204,6 +193,8 @@ Or, a path to a directory to run as a simple HTTP server:
             "verbosity": self.args.verbosity or 0,
             "workers": self.args.workers,
             "auto_tls": self.args.auto_tls,
+            "single_process": self.args.single,
+            "legacy": self.args.legacy,
         }
 
         for maybe_arg in ("auto_reload", "dev"):

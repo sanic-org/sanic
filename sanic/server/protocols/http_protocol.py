@@ -265,7 +265,6 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
             error_logger.exception("protocol.connect_made")
 
     def data_received(self, data: bytes):
-
         try:
             self._time = current_time()
             if not data:

@@ -6,7 +6,10 @@ import socket
 import stat
 
 from ipaddress import ip_address
-from typing import Optional
+from typing import Any, Dict, Optional
+
+from sanic.exceptions import ServerError
+from sanic.http.constants import HTTP
 
 
 def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
@@ -16,6 +19,8 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     :param backlog: Maximum number of connections to queue
     :return: socket.socket object
     """
+    location = (host, port)
+    # socket.share, socket.fromshare
     try:  # IP address: family must be specified for IPv6 at least
         ip = ip_address(host)
         host = str(ip)
@@ -25,8 +30,9 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     except ValueError:  # Hostname, may become AF_INET or AF_INET6
         sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((host, port))
+    sock.bind(location)
     sock.listen(backlog)
+    sock.set_inheritable(True)
     return sock
 
 
@@ -36,7 +42,7 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     :param backlog: Maximum number of connections to queue
     :return: socket.socket object
     """
-    """Open or atomically replace existing socket with zero downtime."""
+
     # Sanitise and pre-verify socket path
     path = os.path.abspath(path)
     folder = os.path.dirname(path)
@@ -85,3 +91,37 @@ def remove_unix_socket(path: Optional[str]) -> None:
                     os.unlink(path)
     except FileNotFoundError:
         pass
+
+
+def configure_socket(
+    server_settings: Dict[str, Any]
+) -> Optional[socket.SocketType]:
+    # Create a listening socket or use the one in settings
+    if server_settings.get("version") is HTTP.VERSION_3:
+        return None
+    sock = server_settings.get("sock")
+    unix = server_settings["unix"]
+    backlog = server_settings["backlog"]
+    if unix:
+        sock = bind_unix_socket(unix, backlog=backlog)
+        server_settings["unix"] = unix
+    if sock is None:
+        try:
+            sock = bind_socket(
+                server_settings["host"],
+                server_settings["port"],
+                backlog=backlog,
+            )
+        except OSError as e:  # no cov
+            raise ServerError(
+                f"Sanic server could not start: {e}.\n"
+                "This may have happened if you are running Sanic in the "
+                "global scope and not inside of a "
+                '`if __name__ == "__main__"` block. See more information: '
+                "____."
+            ) from e
+        sock.set_inheritable(True)
+        server_settings["sock"] = sock
+        server_settings["host"] = None
+        server_settings["port"] = None
+    return sock

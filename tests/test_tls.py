@@ -610,24 +610,24 @@ def test_get_ssl_context_only_mkcert(
         MockTrustmeCreator.generate_cert.assert_not_called()
 
 
-def test_no_http3_with_trustme(
-    app,
-    monkeypatch,
-    MockTrustmeCreator,
-):
-    monkeypatch.setattr(
-        sanic.http.tls.creators, "TrustmeCreator", MockTrustmeCreator
-    )
-    MockTrustmeCreator.SUPPORTED = True
-    app.config.LOCAL_CERT_CREATOR = "TRUSTME"
-    with pytest.raises(
-        SanicException,
-        match=(
-            "Sorry, you cannot currently use trustme as a local certificate "
-            "generator for an HTTP/3 server"
-        ),
-    ):
-        app.run(version=3, debug=True)
+# def test_no_http3_with_trustme(
+#     app,
+#     monkeypatch,
+#     MockTrustmeCreator,
+# ):
+#     monkeypatch.setattr(
+#         sanic.http.tls.creators, "TrustmeCreator", MockTrustmeCreator
+#     )
+#     MockTrustmeCreator.SUPPORTED = True
+#     app.config.LOCAL_CERT_CREATOR = "TRUSTME"
+#     with pytest.raises(
+#         SanicException,
+#         match=(
+#             "Sorry, you cannot currently use trustme as a local certificate "
+#             "generator for an HTTP/3 server"
+#         ),
+#     ):
+#         app.run(version=3, debug=True)
 
 
 def test_sanic_ssl_context_create():

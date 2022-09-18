@@ -126,7 +126,7 @@ def sanic_router(app):
             except RouteExists:
                 pass
         router.finalize()
-        return router, added_router
+        return router, tuple(added_router)
 
     return _setup
 

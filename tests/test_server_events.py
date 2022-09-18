@@ -18,12 +18,6 @@ AVAILABLE_LISTENERS = [
     "after_server_stop",
 ]
 
-skipif_no_alarm = pytest.mark.skipif(
-    not hasattr(signal, "SIGALRM"),
-    reason="SIGALRM is not implemented for this platform, we have to come "
-    "up with another timeout strategy to test these",
-)
-
 
 def create_listener(listener_name, in_list):
     async def _listener(app, loop):
@@ -42,18 +36,17 @@ def create_listener_no_loop(listener_name, in_list):
 
 
 def start_stop_app(random_name_app, **run_kwargs):
-    def stop_on_alarm(signum, frame):
-        random_name_app.stop()
+    @random_name_app.after_server_start
+    async def shutdown(app):
+        await asyncio.sleep(1.1)
+        app.stop()
 
-    signal.signal(signal.SIGALRM, stop_on_alarm)
-    signal.alarm(1)
     try:
-        random_name_app.run(HOST, PORT, **run_kwargs)
+        random_name_app.run(HOST, PORT, single_process=True, **run_kwargs)
     except KeyboardInterrupt:
         pass
 
 
-@skipif_no_alarm
 @pytest.mark.parametrize("listener_name", AVAILABLE_LISTENERS)
 def test_single_listener(app, listener_name):
     """Test that listeners on their own work"""
@@ -64,7 +57,6 @@ def test_single_listener(app, listener_name):
     assert app.name + listener_name == output.pop()
 
 
-@skipif_no_alarm
 @pytest.mark.parametrize("listener_name", AVAILABLE_LISTENERS)
 def test_single_listener_no_loop(app, listener_name):
     """Test that listeners on their own work"""
@@ -75,7 +67,6 @@ def test_single_listener_no_loop(app, listener_name):
     assert app.name + listener_name == output.pop()
 
 
-@skipif_no_alarm
 @pytest.mark.parametrize("listener_name", AVAILABLE_LISTENERS)
 def test_register_listener(app, listener_name):
     """
@@ -90,7 +81,6 @@ def test_register_listener(app, listener_name):
     assert app.name + listener_name == output.pop()
 
 
-@skipif_no_alarm
 def test_all_listeners(app):
     output = []
     for listener_name in AVAILABLE_LISTENERS:
@@ -101,7 +91,6 @@ def test_all_listeners(app):
         assert app.name + listener_name == output.pop()
 
 
-@skipif_no_alarm
 def test_all_listeners_as_convenience(app):
     output = []
     for listener_name in AVAILABLE_LISTENERS:
@@ -159,7 +148,6 @@ def test_create_server_trigger_events(app):
     async def stop(app, loop):
         nonlocal flag1
         flag1 = True
-        signal.alarm(1)
 
     async def before_stop(app, loop):
         nonlocal flag2
@@ -178,10 +166,13 @@ def test_create_server_trigger_events(app):
     # Use random port for tests
 
     signal.signal(signal.SIGALRM, stop_on_alarm)
+    signal.alarm(1)
     with closing(socket()) as sock:
         sock.bind(("127.0.0.1", 0))
 
-        serv_coro = app.create_server(return_asyncio_server=True, sock=sock)
+        serv_coro = app.create_server(
+            return_asyncio_server=True, sock=sock, debug=True
+        )
         serv_task = asyncio.ensure_future(serv_coro, loop=loop)
         server = loop.run_until_complete(serv_task)
         loop.run_until_complete(server.startup())
@@ -199,7 +190,6 @@ def test_create_server_trigger_events(app):
             loop.run_until_complete(close_task)
 
             # Complete all tasks on the loop
-            signal.stopped = True
             for connection in server.connections:
                 connection.close_if_idle()
             loop.run_until_complete(server.after_stop())

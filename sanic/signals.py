@@ -154,13 +154,13 @@ class SignalRouter(BaseRouter):
         try:
             for signal in signals:
                 params.pop("__trigger__", None)
+                requirements = getattr(
+                    signal.handler, "__requirements__", None
+                )
                 if (
                     (condition is None and signal.ctx.exclusive is False)
-                    or (
-                        condition is None
-                        and not signal.handler.__requirements__
-                    )
-                    or (condition == signal.handler.__requirements__)
+                    or (condition is None and not requirements)
+                    or (condition == requirements)
                 ) and (signal.ctx.trigger or event == signal.ctx.definition):
                     maybe_coroutine = signal.handler(**params)
                     if isawaitable(maybe_coroutine):
@@ -191,7 +191,7 @@ class SignalRouter(BaseRouter):
             fail_not_found=fail_not_found and inline,
             reverse=reverse,
         )
-        logger.debug(f"Dispatching signal: {event}")
+        logger.debug(f"Dispatching signal: {event}", extra={"verbosity": 1})
 
         if inline:
             return await dispatch

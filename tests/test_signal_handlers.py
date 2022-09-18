@@ -33,6 +33,7 @@ def set_loop(app, loop):
 
 
 def after(app, loop):
+    print("...")
     calledq.put(mock.called)
 
 
@@ -48,8 +49,29 @@ def test_register_system_signals(app):
     app.listener("before_server_start")(set_loop)
     app.listener("after_server_stop")(after)
 
-    app.run(HOST, PORT)
+    app.run(HOST, PORT, single_process=True)
     assert calledq.get() is True
+
+
+@pytest.mark.skipif(os.name == "nt", reason="May hang CI on py38/windows")
+def test_no_register_system_signals_fails(app):
+    """Test if sanic don't register system signals"""
+
+    @app.route("/hello")
+    async def hello_route(request):
+        return HTTPResponse()
+
+    app.listener("after_server_start")(stop)
+    app.listener("before_server_start")(set_loop)
+    app.listener("after_server_stop")(after)
+
+    message = (
+        "Cannot run Sanic.serve with register_sys_signals=False. Use "
+        "either Sanic.serve_single or Sanic.serve_legacy."
+    )
+    with pytest.raises(RuntimeError, match=message):
+        app.prepare(HOST, PORT, register_sys_signals=False)
+    assert calledq.empty()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="May hang CI on py38/windows")
@@ -64,7 +86,7 @@ def test_dont_register_system_signals(app):
     app.listener("before_server_start")(set_loop)
     app.listener("after_server_stop")(after)
 
-    app.run(HOST, PORT, register_sys_signals=False)
+    app.run(HOST, PORT, register_sys_signals=False, single_process=True)
     assert calledq.get() is False
 
 

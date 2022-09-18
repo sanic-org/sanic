@@ -16,12 +16,15 @@ from asyncio import (
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
+from multiprocessing import Manager, Pipe, get_context
+from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     List,
     Optional,
@@ -32,7 +35,6 @@ from typing import (
     cast,
 )
 
-from sanic import reloader_helpers
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
@@ -41,15 +43,25 @@ from sanic.compat import OS_IS_WINDOWS, is_atty
 from sanic.helpers import _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
+from sanic.http.tls.context import SanicSSLContext
 from sanic.log import Colors, deprecation, error_logger, logger
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
+from sanic.server.legacy import watchdog
+from sanic.server.loop import try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
+from sanic.server.socket import configure_socket, remove_unix_socket
+from sanic.worker.inspector import Inspector
+from sanic.worker.loader import AppLoader
+from sanic.worker.manager import WorkerManager
+from sanic.worker.multiplexer import WorkerMultiplexer
+from sanic.worker.reloader import Reloader
+from sanic.worker.serve import worker_serve
 
 
 if TYPE_CHECKING:
@@ -59,20 +71,35 @@ if TYPE_CHECKING:
 
 SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
-if sys.version_info < (3, 8):
+if sys.version_info < (3, 8):  # no cov
     HTTPVersion = Union[HTTP, int]
-else:
+else:  # no cov
     from typing import Literal
 
     HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
 
 
-class RunnerMixin(metaclass=SanicMeta):
+class StartupMixin(metaclass=SanicMeta):
     _app_registry: Dict[str, Sanic]
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
     websocket_enabled: bool
+    multiplexer: WorkerMultiplexer
+
+    def setup_loop(self):
+        if not self.asgi:
+            if self.config.USE_UVLOOP is True or (
+                self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
+            ):
+                try_use_uvloop()
+            elif OS_IS_WINDOWS:
+                try_windows_loop()
+
+    @property
+    def m(self) -> WorkerMultiplexer:
+        """Interface for interacting with the worker processes"""
+        return self.multiplexer
 
     def make_coffee(self, *args, **kwargs):
         self.state.coffee = True
@@ -103,6 +130,8 @@ class RunnerMixin(metaclass=SanicMeta):
         verbosity: int = 0,
         motd_display: Optional[Dict[str, str]] = None,
         auto_tls: bool = False,
+        single_process: bool = False,
+        legacy: bool = False,
     ) -> None:
         """
         Run the HTTP Server and listen until keyboard interrupt or term
@@ -163,9 +192,17 @@ class RunnerMixin(metaclass=SanicMeta):
             verbosity=verbosity,
             motd_display=motd_display,
             auto_tls=auto_tls,
+            single_process=single_process,
+            legacy=legacy,
         )
 
-        self.__class__.serve(primary=self)  # type: ignore
+        if single_process:
+            serve = self.__class__.serve_single
+        elif legacy:
+            serve = self.__class__.serve_legacy
+        else:
+            serve = self.__class__.serve
+        serve(primary=self)  # type: ignore
 
     def prepare(
         self,
@@ -193,6 +230,8 @@ class RunnerMixin(metaclass=SanicMeta):
         motd_display: Optional[Dict[str, str]] = None,
         coffee: bool = False,
         auto_tls: bool = False,
+        single_process: bool = False,
+        legacy: bool = False,
     ) -> None:
         if version == 3 and self.state.server_info:
             raise RuntimeError(
@@ -205,12 +244,30 @@ class RunnerMixin(metaclass=SanicMeta):
             debug = True
             auto_reload = True
 
+        if debug and access_log is None:
+            access_log = True
+
         self.state.verbosity = verbosity
         if not self.state.auto_reload:
             self.state.auto_reload = bool(auto_reload)
 
         if fast and workers != 1:
             raise RuntimeError("You cannot use both fast=True and workers=X")
+
+        if single_process and (fast or (workers > 1) or auto_reload):
+            raise RuntimeError(
+                "Single process cannot be run with multiple workers "
+                "or auto-reload"
+            )
+
+        if single_process and legacy:
+            raise RuntimeError("Cannot run single process and legacy mode")
+
+        if register_sys_signals is False and not (single_process or legacy):
+            raise RuntimeError(
+                "Cannot run Sanic.serve with register_sys_signals=False. "
+                "Use either Sanic.serve_single or Sanic.serve_legacy."
+            )
 
         if motd_display:
             self.config.MOTD_DISPLAY.update(motd_display)
@@ -234,12 +291,6 @@ class RunnerMixin(metaclass=SanicMeta):
                 "https://sanic.readthedocs.io/en/latest/sanic/deploying.html"
                 "#asynchronous-support"
             )
-
-        if (
-            self.__class__.should_auto_reload()
-            and os.environ.get("SANIC_SERVER_RUNNING") != "true"
-        ):  # no cov
-            return
 
         if sock is None:
             host, port = self.get_address(host, port, version, auto_tls)
@@ -287,10 +338,10 @@ class RunnerMixin(metaclass=SanicMeta):
             ApplicationServerInfo(settings=server_settings)
         )
 
-        if self.config.USE_UVLOOP is True or (
-            self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
-        ):
-            try_use_uvloop()
+        # if self.config.USE_UVLOOP is True or (
+        #     self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
+        # ):
+        #     try_use_uvloop()
 
     async def create_server(
         self,
@@ -399,17 +450,22 @@ class RunnerMixin(metaclass=SanicMeta):
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
 
-    def stop(self):
+    def stop(self, terminate: bool = True, unregister: bool = False):
         """
         This kills the Sanic
         """
+        if terminate and hasattr(self, "multiplexer"):
+            self.multiplexer.terminate()
         if self.state.stage is not ServerStage.STOPPED:
-            self.shutdown_tasks(timeout=0)
+            self.shutdown_tasks(timeout=0)  # type: ignore
             for task in all_tasks():
                 with suppress(AttributeError):
                     if task.get_name() == "RunServer":
                         task.cancel()
             get_event_loop().stop()
+
+        if unregister:
+            self.__class__.unregister_app(self)  # type: ignore
 
     def _helper(
         self,
@@ -472,7 +528,11 @@ class RunnerMixin(metaclass=SanicMeta):
 
         self.motd(server_settings=server_settings)
 
-        if is_atty() and not self.state.is_debug:
+        if (
+            is_atty()
+            and not self.state.is_debug
+            and not os.environ.get("SANIC_IGNORE_PRODUCTION_WARNING")
+        ):
             error_logger.warning(
                 f"{Colors.YELLOW}Sanic is running in PRODUCTION mode. "
                 "Consider using '--debug' or '--dev' while actively "
@@ -501,6 +561,13 @@ class RunnerMixin(metaclass=SanicMeta):
         serve_location: str = "",
         server_settings: Optional[Dict[str, Any]] = None,
     ):
+        if (
+            os.environ.get("SANIC_WORKER_NAME")
+            or os.environ.get("SANIC_MOTD_OUTPUT")
+            or os.environ.get("SANIC_WORKER_PROCESS")
+            or os.environ.get("SANIC_SERVER_RUNNING")
+        ):
+            return
         if serve_location:
             deprecation(
                 "Specifying a serve_location in the MOTD is deprecated and "
@@ -510,68 +577,74 @@ class RunnerMixin(metaclass=SanicMeta):
         else:
             serve_location = self.get_server_location(server_settings)
         if self.config.MOTD:
-            mode = [f"{self.state.mode},"]
-            if self.state.fast:
-                mode.append("goin' fast")
-            if self.state.asgi:
-                mode.append("ASGI")
-            else:
-                if self.state.workers == 1:
-                    mode.append("single worker")
-                else:
-                    mode.append(f"w/ {self.state.workers} workers")
-
-            if server_settings:
-                server = ", ".join(
-                    (
-                        self.state.server,
-                        server_settings["version"].display(),  # type: ignore
-                    )
-                )
-            else:
-                server = "ASGI" if self.asgi else "unknown"  # type: ignore
-
-            display = {
-                "mode": " ".join(mode),
-                "server": server,
-                "python": platform.python_version(),
-                "platform": platform.platform(),
-            }
-            extra = {}
-            if self.config.AUTO_RELOAD:
-                reload_display = "enabled"
-                if self.state.reload_dirs:
-                    reload_display += ", ".join(
-                        [
-                            "",
-                            *(
-                                str(path.absolute())
-                                for path in self.state.reload_dirs
-                            ),
-                        ]
-                    )
-                display["auto-reload"] = reload_display
-
-            packages = []
-            for package_name in SANIC_PACKAGES:
-                module_name = package_name.replace("-", "_")
-                try:
-                    module = import_module(module_name)
-                    packages.append(
-                        f"{package_name}=={module.__version__}"  # type: ignore
-                    )
-                except ImportError:
-                    ...
-
-            if packages:
-                display["packages"] = ", ".join(packages)
-
-            if self.config.MOTD_DISPLAY:
-                extra.update(self.config.MOTD_DISPLAY)
-
             logo = get_logo(coffee=self.state.coffee)
+            display, extra = self.get_motd_data(server_settings)
 
             MOTD.output(logo, serve_location, display, extra)
+
+    def get_motd_data(
+        self, server_settings: Optional[Dict[str, Any]] = None
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        mode = [f"{self.state.mode},"]
+        if self.state.fast:
+            mode.append("goin' fast")
+        if self.state.asgi:
+            mode.append("ASGI")
+        else:
+            if self.state.workers == 1:
+                mode.append("single worker")
+            else:
+                mode.append(f"w/ {self.state.workers} workers")
+
+        if server_settings:
+            server = ", ".join(
+                (
+                    self.state.server,
+                    server_settings["version"].display(),  # type: ignore
+                )
+            )
+        else:
+            server = "ASGI" if self.asgi else "unknown"  # type: ignore
+
+        display = {
+            "mode": " ".join(mode),
+            "server": server,
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+        }
+        extra = {}
+        if self.config.AUTO_RELOAD:
+            reload_display = "enabled"
+            if self.state.reload_dirs:
+                reload_display += ", ".join(
+                    [
+                        "",
+                        *(
+                            str(path.absolute())
+                            for path in self.state.reload_dirs
+                        ),
+                    ]
+                )
+            display["auto-reload"] = reload_display
+
+        packages = []
+        for package_name in SANIC_PACKAGES:
+            module_name = package_name.replace("-", "_")
+            try:
+                module = import_module(module_name)
+                packages.append(
+                    f"{package_name}=={module.__version__}"  # type: ignore
+                )
+            except ImportError:  # no cov
+                ...
+
+        if packages:
+            display["packages"] = ", ".join(packages)
+
+        if self.config.MOTD_DISPLAY:
+            extra.update(self.config.MOTD_DISPLAY)
+
+        return display, extra
 
     @property
     def serve_location(self) -> str:
@@ -591,24 +664,20 @@ class RunnerMixin(metaclass=SanicMeta):
         if not server_settings:
             return serve_location
 
-        if server_settings["ssl"] is not None:
+        host = server_settings["host"]
+        port = server_settings["port"]
+
+        if server_settings.get("ssl") is not None:
             proto = "https"
-        if server_settings["unix"]:
+        if server_settings.get("unix"):
             serve_location = f'{server_settings["unix"]} {proto}://...'
-        elif server_settings["sock"]:
-            serve_location = (
-                f'{server_settings["sock"].getsockname()} {proto}://...'
-            )
-        elif server_settings["host"] and server_settings["port"]:
+        elif server_settings.get("sock"):
+            host, port, *_ = server_settings["sock"].getsockname()
+
+        if not serve_location and host and port:
             # colon(:) is legal for a host only in an ipv6 address
-            display_host = (
-                f'[{server_settings["host"]}]'
-                if ":" in server_settings["host"]
-                else server_settings["host"]
-            )
-            serve_location = (
-                f'{proto}://{display_host}:{server_settings["port"]}'
-            )
+            display_host = f"[{host}]" if ":" in host else host
+            serve_location = f"{proto}://{display_host}:{port}"
 
         return serve_location
 
@@ -628,7 +697,252 @@ class RunnerMixin(metaclass=SanicMeta):
         return any(app.state.auto_reload for app in cls._app_registry.values())
 
     @classmethod
-    def serve(cls, primary: Optional[Sanic] = None) -> None:
+    def _get_context(cls) -> BaseContext:
+        method = (
+            "spawn"
+            if "linux" not in sys.platform or cls.should_auto_reload()
+            else "fork"
+        )
+        return get_context(method)
+
+    @classmethod
+    def serve(
+        cls,
+        primary: Optional[Sanic] = None,
+        *,
+        app_loader: Optional[AppLoader] = None,
+        factory: Optional[Callable[[], Sanic]] = None,
+    ) -> None:
+        os.environ["SANIC_MOTD_OUTPUT"] = "true"
+        apps = list(cls._app_registry.values())
+        if factory:
+            primary = factory()
+        else:
+            if not primary:
+                if app_loader:
+                    primary = app_loader.load()
+                if not primary:
+                    try:
+                        primary = apps[0]
+                    except IndexError:
+                        raise RuntimeError(
+                            "Did not find any applications."
+                        ) from None
+
+            # This exists primarily for unit testing
+            if not primary.state.server_info:  # no cov
+                for app in apps:
+                    app.state.server_info.clear()
+                return
+
+        try:
+            primary_server_info = primary.state.server_info[0]
+        except IndexError:
+            raise RuntimeError(
+                f"No server information found for {primary.name}. Perhaps you "
+                "need to run app.prepare(...)?\n"
+                "See ____ for more information."
+            ) from None
+
+        socks = []
+        sync_manager = Manager()
+        try:
+            main_start = primary_server_info.settings.pop("main_start", None)
+            main_stop = primary_server_info.settings.pop("main_stop", None)
+            app = primary_server_info.settings.pop("app")
+            app.setup_loop()
+            loop = new_event_loop()
+            trigger_events(main_start, loop, primary)
+
+            socks = [
+                sock
+                for sock in [
+                    configure_socket(server_info.settings)
+                    for app in apps
+                    for server_info in app.state.server_info
+                ]
+                if sock
+            ]
+            primary_server_info.settings["run_multiple"] = True
+            monitor_sub, monitor_pub = Pipe(True)
+            worker_state: Dict[str, Any] = sync_manager.dict()
+            kwargs: Dict[str, Any] = {
+                **primary_server_info.settings,
+                "monitor_publisher": monitor_pub,
+                "worker_state": worker_state,
+            }
+
+            if not app_loader:
+                if factory:
+                    app_loader = AppLoader(factory=factory)
+                else:
+                    app_loader = AppLoader(
+                        factory=partial(cls.get_app, app.name)  # type: ignore
+                    )
+            kwargs["app_name"] = app.name
+            kwargs["app_loader"] = app_loader
+            kwargs["server_info"] = {}
+            kwargs["passthru"] = {
+                "auto_reload": app.auto_reload,
+                "state": {
+                    "verbosity": app.state.verbosity,
+                    "mode": app.state.mode,
+                },
+                "config": {
+                    "ACCESS_LOG": app.config.ACCESS_LOG,
+                    "NOISY_EXCEPTIONS": app.config.NOISY_EXCEPTIONS,
+                },
+                "shared_ctx": app.shared_ctx.__dict__,
+            }
+            for app in apps:
+                kwargs["server_info"][app.name] = []
+                for server_info in app.state.server_info:
+                    server_info.settings = {
+                        k: v
+                        for k, v in server_info.settings.items()
+                        if k not in ("main_start", "main_stop", "app", "ssl")
+                    }
+                    kwargs["server_info"][app.name].append(server_info)
+
+            ssl = kwargs.get("ssl")
+
+            if isinstance(ssl, SanicSSLContext):
+                kwargs["ssl"] = kwargs["ssl"].sanic
+
+            manager = WorkerManager(
+                primary.state.workers,
+                worker_serve,
+                kwargs,
+                cls._get_context(),
+                (monitor_pub, monitor_sub),
+                worker_state,
+            )
+            if cls.should_auto_reload():
+                reload_dirs: Set[Path] = primary.state.reload_dirs.union(
+                    *(app.state.reload_dirs for app in apps)
+                )
+                reloader = Reloader(monitor_pub, 1.0, reload_dirs, app_loader)
+                manager.manage("Reloader", reloader, {}, transient=False)
+
+            inspector = None
+            if primary.config.INSPECTOR:
+                display, extra = primary.get_motd_data()
+                packages = [
+                    pkg.strip() for pkg in display["packages"].split(",")
+                ]
+                module = import_module("sanic")
+                sanic_version = f"sanic=={module.__version__}"  # type: ignore
+                app_info = {
+                    **display,
+                    "packages": [sanic_version, *packages],
+                    "extra": extra,
+                }
+                inspector = Inspector(
+                    monitor_pub,
+                    app_info,
+                    worker_state,
+                    primary.config.INSPECTOR_HOST,
+                    primary.config.INSPECTOR_PORT,
+                )
+                manager.manage("Inspector", inspector, {}, transient=False)
+
+            primary._inspector = inspector
+            primary._manager = manager
+
+            ready = primary.listeners["main_process_ready"]
+            trigger_events(ready, loop, primary)
+
+            manager.run()
+        except BaseException:
+            kwargs = primary_server_info.settings
+            error_logger.exception(
+                "Experienced exception while trying to serve"
+            )
+            raise
+        finally:
+            logger.info("Server Stopped")
+            for app in apps:
+                app.state.server_info.clear()
+                app.router.reset()
+                app.signal_router.reset()
+
+            sync_manager.shutdown()
+            for sock in socks:
+                sock.close()
+            socks = []
+            trigger_events(main_stop, loop, primary)
+            loop.close()
+            cls._cleanup_env_vars()
+            cls._cleanup_apps()
+            unix = kwargs.get("unix")
+            if unix:
+                remove_unix_socket(unix)
+
+    @classmethod
+    def serve_single(cls, primary: Optional[Sanic] = None) -> None:
+        os.environ["SANIC_MOTD_OUTPUT"] = "true"
+        apps = list(cls._app_registry.values())
+
+        if not primary:
+            try:
+                primary = apps[0]
+            except IndexError:
+                raise RuntimeError("Did not find any applications.")
+
+        # This exists primarily for unit testing
+        if not primary.state.server_info:  # no cov
+            for app in apps:
+                app.state.server_info.clear()
+            return
+
+        primary_server_info = primary.state.server_info[0]
+        primary.before_server_start(partial(primary._start_servers, apps=apps))
+        kwargs = {
+            k: v
+            for k, v in primary_server_info.settings.items()
+            if k
+            not in (
+                "main_start",
+                "main_stop",
+                "app",
+            )
+        }
+        kwargs["app_name"] = primary.name
+        kwargs["app_loader"] = None
+        sock = configure_socket(kwargs)
+
+        kwargs["server_info"] = {}
+        kwargs["server_info"][primary.name] = []
+        for server_info in primary.state.server_info:
+            server_info.settings = {
+                k: v
+                for k, v in server_info.settings.items()
+                if k not in ("main_start", "main_stop", "app")
+            }
+            kwargs["server_info"][primary.name].append(server_info)
+
+        try:
+            worker_serve(monitor_publisher=None, **kwargs)
+        except BaseException:
+            error_logger.exception(
+                "Experienced exception while trying to serve"
+            )
+            raise
+        finally:
+            logger.info("Server Stopped")
+            for app in apps:
+                app.state.server_info.clear()
+                app.router.reset()
+                app.signal_router.reset()
+
+            if sock:
+                sock.close()
+
+            cls._cleanup_env_vars()
+            cls._cleanup_apps()
+
+    @classmethod
+    def serve_legacy(cls, primary: Optional[Sanic] = None) -> None:
         apps = list(cls._app_registry.values())
 
         if not primary:
@@ -649,7 +963,7 @@ class RunnerMixin(metaclass=SanicMeta):
             reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                 *(app.state.reload_dirs for app in apps)
             )
-            reloader_helpers.watchdog(1.0, reload_dirs)
+            watchdog(1.0, reload_dirs)
             trigger_events(reloader_stop, loop, primary)
             return
 
@@ -662,11 +976,17 @@ class RunnerMixin(metaclass=SanicMeta):
         primary_server_info = primary.state.server_info[0]
         primary.before_server_start(partial(primary._start_servers, apps=apps))
 
+        deprecation(
+            f"{Colors.YELLOW}Running {Colors.SANIC}Sanic {Colors.YELLOW}w/ "
+            f"LEGACY manager.{Colors.END} Support for will be dropped in "
+            "version 23.3.",
+            23.3,
+        )
         try:
             primary_server_info.stage = ServerStage.SERVING
 
             if primary.state.workers > 1 and os.name != "posix":  # no cov
-                logger.warn(
+                logger.warning(
                     f"Multiprocessing is currently not supported on {os.name},"
                     " using workers=1 instead"
                 )
@@ -687,10 +1007,9 @@ class RunnerMixin(metaclass=SanicMeta):
         finally:
             primary_server_info.stage = ServerStage.STOPPED
         logger.info("Server Stopped")
-        for app in apps:
-            app.state.server_info.clear()
-            app.router.reset()
-            app.signal_router.reset()
+
+        cls._cleanup_env_vars()
+        cls._cleanup_apps()
 
     async def _start_servers(
         self,
@@ -728,7 +1047,7 @@ class RunnerMixin(metaclass=SanicMeta):
                         *server_info.settings.pop("main_start", []),
                         *server_info.settings.pop("main_stop", []),
                     ]
-                    if handlers:
+                    if handlers:  # no cov
                         error_logger.warning(
                             f"Sanic found {len(handlers)} listener(s) on "
                             "secondary applications attached to the main "
@@ -741,12 +1060,15 @@ class RunnerMixin(metaclass=SanicMeta):
                     if not server_info.settings["loop"]:
                         server_info.settings["loop"] = get_running_loop()
 
+                    serve_args: Dict[str, Any] = {
+                        **server_info.settings,
+                        "run_async": True,
+                        "reuse_port": bool(primary.state.workers - 1),
+                    }
+                    if "app" not in serve_args:
+                        serve_args["app"] = app
                     try:
-                        server_info.server = await serve(
-                            **server_info.settings,
-                            run_async=True,
-                            reuse_port=bool(primary.state.workers - 1),
-                        )
+                        server_info.server = await serve(**serve_args)
                     except OSError as e:  # no cov
                         first_message = (
                             "An OSError was detected on startup. "
@@ -772,9 +1094,9 @@ class RunnerMixin(metaclass=SanicMeta):
 
     async def _run_server(
         self,
-        app: RunnerMixin,
+        app: StartupMixin,
         server_info: ApplicationServerInfo,
-    ) -> None:
+    ) -> None:  # no cov
 
         try:
             # We should never get to this point without a server
@@ -798,3 +1120,26 @@ class RunnerMixin(metaclass=SanicMeta):
         finally:
             server_info.stage = ServerStage.STOPPED
             server_info.server = None
+
+    @staticmethod
+    def _cleanup_env_vars():
+        variables = (
+            "SANIC_RELOADER_PROCESS",
+            "SANIC_IGNORE_PRODUCTION_WARNING",
+            "SANIC_WORKER_NAME",
+            "SANIC_MOTD_OUTPUT",
+            "SANIC_WORKER_PROCESS",
+            "SANIC_SERVER_RUNNING",
+        )
+        for var in variables:
+            try:
+                del os.environ[var]
+            except KeyError:
+                ...
+
+    @classmethod
+    def _cleanup_apps(cls):
+        for app in cls._app_registry.values():
+            app.state.server_info.clear()
+            app.router.reset()
+            app.signal_router.reset()

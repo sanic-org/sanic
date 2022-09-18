@@ -30,7 +30,7 @@ class Group:
         instance = cls(parser, cls.name)
         return instance
 
-    def add_bool_arguments(self, *args, **kwargs):
+    def add_bool_arguments(self, *args, nullable=False, **kwargs):
         group = self.container.add_mutually_exclusive_group()
         kwargs["help"] = kwargs["help"].capitalize()
         group.add_argument(*args, action="store_true", **kwargs)
@@ -38,6 +38,9 @@ class Group:
         group.add_argument(
             "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
         )
+        if nullable:
+            params = {args[0][2:].replace("-", "_"): None}
+            group.set_defaults(**params)
 
     def prepare(self, args) -> None:
         ...
@@ -67,7 +70,8 @@ class ApplicationGroup(Group):
     name = "Application"
 
     def attach(self):
-        self.container.add_argument(
+        group = self.container.add_mutually_exclusive_group()
+        group.add_argument(
             "--factory",
             action="store_true",
             help=(
@@ -75,7 +79,7 @@ class ApplicationGroup(Group):
                 "i.e. a () -> <Sanic app> callable"
             ),
         )
-        self.container.add_argument(
+        group.add_argument(
             "-s",
             "--simple",
             dest="simple",
@@ -84,6 +88,32 @@ class ApplicationGroup(Group):
                 "Run Sanic as a Simple Server, and serve the contents of "
                 "a directory\n(module arg should be a path)"
             ),
+        )
+        group.add_argument(
+            "--inspect",
+            dest="inspect",
+            action="store_true",
+            help=("Inspect the state of a running instance, human readable"),
+        )
+        group.add_argument(
+            "--inspect-raw",
+            dest="inspect_raw",
+            action="store_true",
+            help=("Inspect the state of a running instance, JSON output"),
+        )
+        group.add_argument(
+            "--trigger-reload",
+            dest="trigger",
+            action="store_const",
+            const="reload",
+            help=("Trigger worker processes to reload"),
+        )
+        group.add_argument(
+            "--trigger-shutdown",
+            dest="trigger",
+            action="store_const",
+            const="shutdown",
+            help=("Trigger all processes to shutdown"),
         )
 
 
@@ -207,8 +237,22 @@ class WorkerGroup(Group):
             action="store_true",
             help="Set the number of workers to max allowed",
         )
+        group.add_argument(
+            "--single-process",
+            dest="single",
+            action="store_true",
+            help="Do not use multiprocessing, run server in a single process",
+        )
+        self.container.add_argument(
+            "--legacy",
+            action="store_true",
+            help="Use the legacy server manager",
+        )
         self.add_bool_arguments(
-            "--access-logs", dest="access_log", help="display access logs"
+            "--access-logs",
+            dest="access_log",
+            help="display access logs",
+            default=None,
         )
 
 

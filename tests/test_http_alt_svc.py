@@ -61,6 +61,6 @@ def test_http1_response_has_alt_svc():
         version=1,
         port=PORT,
     )
-    Sanic.serve()
+    Sanic.serve_single(app)
 
     assert f'alt-svc: h3=":{PORT}"\r\n'.encode() in response

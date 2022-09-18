@@ -80,20 +80,23 @@ class MOTDTTY(MOTD):
         )
         self.display_length = self.key_width + self.value_width + 2
 
-    def display(self):
-        version = f"Sanic v{__version__}".center(self.centering_length)
+    def display(self, version=True, action="Goin' Fast", out=None):
+        if not out:
+            out = logger.info
+        header = "Sanic"
+        if version:
+            header += f" v{__version__}"
+        header = header.center(self.centering_length)
         running = (
-            f"Goin' Fast @ {self.serve_location}"
-            if self.serve_location
-            else ""
+            f"{action} @ {self.serve_location}" if self.serve_location else ""
         ).center(self.centering_length)
-        length = len(version) + 2 - self.logo_line_length
+        length = len(header) + 2 - self.logo_line_length
         first_filler = "─" * (self.logo_line_length - 1)
         second_filler = "─" * length
         display_filler = "─" * (self.display_length + 2)
         lines = [
             f"\n┌{first_filler}─{second_filler}┐",
-            f"│ {version} │",
+            f"│ {header} │",
             f"│ {running} │",
             f"├{first_filler}┬{second_filler}┤",
         ]
@@ -107,7 +110,7 @@ class MOTDTTY(MOTD):
         self._render_fill(lines)
 
         lines.append(f"└{first_filler}┴{second_filler}┘\n")
-        logger.info(indent("\n".join(lines), "  "))
+        out(indent("\n".join(lines), "  "))
 
     def _render_data(self, lines, data, start):
         offset = 0

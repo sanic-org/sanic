@@ -19,6 +19,7 @@ from collections import defaultdict, deque
 from contextlib import suppress
 from functools import partial
 from inspect import isawaitable
+from os import environ
 from socket import socket
 from traceback import format_exc
 from types import SimpleNamespace
@@ -70,7 +71,7 @@ from sanic.log import (
     logger,
 )
 from sanic.mixins.listeners import ListenerEvent
-from sanic.mixins.runner import RunnerMixin
+from sanic.mixins.startup import StartupMixin
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -88,6 +89,9 @@ from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
+from sanic.types.shared_ctx import SharedContext
+from sanic.worker.inspector import Inspector
+from sanic.worker.manager import WorkerManager
 
 
 if TYPE_CHECKING:
@@ -104,7 +108,7 @@ if OS_IS_WINDOWS:  # no cov
 filterwarnings("once", category=DeprecationWarning)
 
 
-class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
+class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     """
     The main application instance
     """
@@ -128,6 +132,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         "_future_routes",
         "_future_signals",
         "_future_statics",
+        "_inspector",
+        "_manager",
         "_state",
         "_task_registry",
         "_test_client",
@@ -139,12 +145,14 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         "error_handler",
         "go_fast",
         "listeners",
+        "multiplexer",
         "named_request_middleware",
         "named_response_middleware",
         "request_class",
         "request_middleware",
         "response_middleware",
         "router",
+        "shared_ctx",
         "signal_router",
         "sock",
         "strict_slashes",
@@ -171,9 +179,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         configure_logging: bool = True,
         dumps: Optional[Callable[..., AnyStr]] = None,
         loads: Optional[Callable[..., Any]] = None,
+        inspector: bool = False,
     ) -> None:
         super().__init__(name=name)
-
         # logging
         if configure_logging:
             dict_config = log_config or LOGGING_CONFIG_DEFAULTS
@@ -187,12 +195,16 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
         # First setup config
         self.config: Config = config or Config(env_prefix=env_prefix)
+        if inspector:
+            self.config.INSPECTOR = inspector
 
         # Then we can do the rest
         self._asgi_client: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
         self._future_registry: FutureRegistry = FutureRegistry()
+        self._inspector: Optional[Inspector] = None
+        self._manager: Optional[WorkerManager] = None
         self._state: ApplicationState = ApplicationState(app=self)
         self._task_registry: Dict[str, Task] = {}
         self._test_client: Any = None
@@ -210,6 +222,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         self.request_middleware: Deque[MiddlewareType] = deque()
         self.response_middleware: Deque[MiddlewareType] = deque()
         self.router: Router = router or Router()
+        self.shared_ctx: SharedContext = SharedContext()
         self.signal_router: SignalRouter = signal_router or SignalRouter()
         self.sock: Optional[socket] = None
         self.strict_slashes: bool = strict_slashes
@@ -243,7 +256,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             )
         try:
             return get_running_loop()
-        except RuntimeError:
+        except RuntimeError:  # no cov
             if sys.version_info > (3, 10):
                 return asyncio.get_event_loop_policy().get_event_loop()
             else:
@@ -1353,6 +1366,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     @auto_reload.setter
     def auto_reload(self, value: bool):
         self.config.AUTO_RELOAD = value
+        self.state.auto_reload = value
 
     @property
     def state(self) -> ApplicationState:  # type: ignore
@@ -1471,6 +1485,18 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         cls._app_registry[name] = app
 
     @classmethod
+    def unregister_app(cls, app: "Sanic") -> None:
+        """
+        Unregister a Sanic instance
+        """
+        if not isinstance(app, cls):
+            raise SanicException("Registered app must be an instance of Sanic")
+
+        name = app.name
+        if name in cls._app_registry:
+            del cls._app_registry[name]
+
+    @classmethod
     def get_app(
         cls, name: Optional[str] = None, *, force_create: bool = False
     ) -> "Sanic":
@@ -1489,6 +1515,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         try:
             return cls._app_registry[name]
         except KeyError:
+            if name == "__main__":
+                return cls.get_app("__mp_main__", force_create=force_create)
             if force_create:
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
@@ -1562,6 +1590,9 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
         self.state.is_started = True
 
+        if hasattr(self, "multiplexer"):
+            self.multiplexer.ack()
+
     async def _server_event(
         self,
         concern: str,
@@ -1590,3 +1621,43 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 "loop": loop,
             },
         )
+
+    # -------------------------------------------------------------------- #
+    # Process Management
+    # -------------------------------------------------------------------- #
+
+    def refresh(
+        self,
+        passthru: Optional[Dict[str, Any]] = None,
+    ):
+        registered = self.__class__.get_app(self.name)
+        if self is not registered:
+            if not registered.state.server_info:
+                registered.state.server_info = self.state.server_info
+            self = registered
+        if passthru:
+            for attr, info in passthru.items():
+                if isinstance(info, dict):
+                    for key, value in info.items():
+                        setattr(getattr(self, attr), key, value)
+                else:
+                    setattr(self, attr, info)
+        if hasattr(self, "multiplexer"):
+            self.shared_ctx.lock()
+        return self
+
+    @property
+    def inspector(self):
+        if environ.get("SANIC_WORKER_PROCESS") or not self._inspector:
+            raise SanicException(
+                "Can only access the inspector from the main process"
+            )
+        return self._inspector
+
+    @property
+    def manager(self):
+        if environ.get("SANIC_WORKER_PROCESS") or not self._manager:
+            raise SanicException(
+                "Can only access the manager from the main process"
+            )
+        return self._manager

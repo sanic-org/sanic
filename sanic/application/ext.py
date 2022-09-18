@@ -22,7 +22,7 @@ def setup_ext(app: Sanic, *, fail: bool = False, **kwargs):
     with suppress(ModuleNotFoundError):
         sanic_ext = import_module("sanic_ext")
 
-    if not sanic_ext:
+    if not sanic_ext:  # no cov
         if fail:
             raise RuntimeError(
                 "Sanic Extensions is not installed. You can add it to your "

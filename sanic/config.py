@@ -18,13 +18,16 @@ SANIC_PREFIX = "SANIC_"
 
 DEFAULT_CONFIG = {
     "_FALLBACK_ERROR_FORMAT": _default,
-    "ACCESS_LOG": True,
+    "ACCESS_LOG": False,
     "AUTO_EXTEND": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
+    "INSPECTOR": False,
+    "INSPECTOR_HOST": "localhost",
+    "INSPECTOR_PORT": 6457,
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
     "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
@@ -72,6 +75,9 @@ class Config(dict, metaclass=DescriptorMeta):
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
+    INSPECTOR: bool
+    INSPECTOR_HOST: str
+    INSPECTOR_PORT: int
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
     LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]

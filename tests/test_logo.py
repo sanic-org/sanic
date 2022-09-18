@@ -30,9 +30,12 @@ def test_get_logo_returns_expected_logo(tty, full, expected):
 
 
 def test_get_logo_returns_no_colors_on_apple_terminal():
+    platform = sys.platform
+    sys.platform = "darwin"
+    os.environ["TERM_PROGRAM"] = "Apple_Terminal"
     with patch("sys.stdout.isatty") as isatty:
         isatty.return_value = False
-        sys.platform = "darwin"
-        os.environ["TERM_PROGRAM"] = "Apple_Terminal"
         logo = get_logo()
     assert "\033" not in logo
+    sys.platform = platform
+    del os.environ["TERM_PROGRAM"]

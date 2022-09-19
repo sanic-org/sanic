@@ -132,7 +132,7 @@ class Http(Stream, metaclass=TouchUpMeta):
 
                 if self.stage is Stage.RESPONSE:
                     await self.response.send(end_stream=True)
-            except (CancelledError, RequestCancelled) as exc:
+            except CancelledError as exc:
                 # Write an appropriate response before exiting
                 if not self.protocol.transport:
                     logger.info(
@@ -140,10 +140,11 @@ class Http(Stream, metaclass=TouchUpMeta):
                         "stopped. Transport is closed."
                     )
                     return
-                if self.protocol.conn_info.lost:
-                    e = RequestCancelled
-                else:
-                    e = self.exception or exc
+                e = (
+                    RequestCancelled()
+                    if self.protocol.conn_info.lost
+                    else (self.exception or exc)
+                )
                 self.exception = None
                 self.keep_alive = False
                 await self.error_response(e)

@@ -15,7 +15,11 @@ import sys
 from asyncio import CancelledError
 from time import monotonic as current_time
 
-from sanic.exceptions import RequestTimeout, ServiceUnavailable
+from sanic.exceptions import (
+    RequestCancelled,
+    RequestTimeout,
+    ServiceUnavailable,
+)
 from sanic.http import Http, Stage
 from sanic.log import Colors, error_logger, logger
 from sanic.models.server_types import ConnInfo
@@ -225,7 +229,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
         """
         await self._can_write.wait()
         if self.transport.is_closing():
-            raise CancelledError
+            raise RequestCancelled
         await self.app.dispatch(
             "http.lifecycle.send",
             inline=True,

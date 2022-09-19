@@ -4,10 +4,18 @@ from asyncio import CancelledError
 from itertools import count
 from unittest.mock import Mock
 
+import pytest
+
 from sanic.exceptions import NotFound
-from sanic.middleware import Middleware, MiddlewareLocation
+from sanic.middleware import Middleware
 from sanic.request import Request
 from sanic.response import HTTPResponse, json, text
+
+
+@pytest.fixture(autouse=True)
+def reset_middleware():
+    yield
+    Middleware.reset_count()
 
 
 # ------------------------------------------------------------ #
@@ -185,7 +193,7 @@ def test_middleware_response_raise_exception(app, caplog):
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get("/fail")
 
-    assert response.status == 404
+    assert response.status == 500
     # 404 errors are not logged
     assert (
         "sanic.error",

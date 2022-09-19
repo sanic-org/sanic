@@ -13,6 +13,7 @@ from sanic_routing.route import Route
 from sanic.constants import HTTP_METHODS
 from sanic.errorpages import check_error_format
 from sanic.exceptions import MethodNotAllowed, NotFound, SanicException
+from sanic.handlers import RequestHandler
 from sanic.models.handler_types import RouteHandler
 
 
@@ -31,9 +32,11 @@ class Router(BaseRouter):
 
     def _get(
         self, path: str, method: str, host: Optional[str]
-    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
+    ) -> Tuple[Route, RequestHandler, Dict[str, Any]]:
         try:
-            return self.resolve(
+            # We know this will always be RequestHandler, so we can ignore
+            # typing issue here
+            return self.resolve(  # type: ignore
                 path=path,
                 method=method,
                 extra={"host": host} if host else None,
@@ -50,7 +53,7 @@ class Router(BaseRouter):
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def get(  # type: ignore
         self, path: str, method: str, host: Optional[str]
-    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
+    ) -> Tuple[Route, RequestHandler, Dict[str, Any]]:
         """
         Retrieve a `Route` object containing the details about how to handle
         a response for a given request
@@ -59,7 +62,7 @@ class Router(BaseRouter):
         :type request: Request
         :return: details needed for handling the request and returning the
             correct response
-        :rtype: Tuple[ Route, RouteHandler, Dict[str, Any]]
+        :rtype: Tuple[ Route, RequestHandler, Dict[str, Any]]
         """
         return self._get(path, method, host)
 
@@ -114,7 +117,7 @@ class Router(BaseRouter):
 
         params = dict(
             path=uri,
-            handler=handler,
+            handler=RequestHandler(handler, [], []),
             methods=frozenset(map(str, methods)) if methods else None,
             name=name,
             strict=strict_slashes,

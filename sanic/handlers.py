@@ -20,11 +20,12 @@ from sanic.log import deprecation, error_logger, logger
 from sanic.models.handler_types import RouteHandler
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream, text
+from sanic.touchup import TouchUpMeta
 
 
 class RequestHandler:
     def __init__(self, func, request_middleware, response_middleware):
-        self.func = func
+        self.func = func.func if isinstance(func, RequestHandler) else func
         self.request_middleware = request_middleware
         self.response_middleware = response_middleware
 
@@ -32,7 +33,20 @@ class RequestHandler:
         return self.func(*args, **kwargs)
 
 
-class RequestManager:
+class RequestManager(metaclass=TouchUpMeta):
+    __touchup__ = (
+        "cleanup",
+        "run_request_middleware",
+        "run_response_middleware",
+    )
+    __slots__ = (
+        "handler",
+        "request_middleware_run",
+        "request_middleware",
+        "request",
+        "response_middleware_run",
+        "response_middleware",
+    )
     request: Request
 
     def __init__(self, request: Request):
@@ -76,28 +90,35 @@ class RequestManager:
             partial(self.handler, self.request, **self.request.match_info)
         )
 
-    async def lifecycle(self, handler):
+    async def lifecycle(self, handler, raise_exception: bool = False):
         response: Optional[BaseHTTPResponse] = None
         if not self.request_middleware_run and self.request_middleware:
-            response = await self.run(self.run_request_middleware)
+            response = await self.run(
+                self.run_request_middleware, raise_exception
+            )
 
         if not response:
             # Run response handler
-            response = await self.run(handler)
+            response = await self.run(handler, raise_exception)
 
         if not self.response_middleware_run and self.response_middleware:
             response = await self.run(
-                partial(self.run_response_middleware, response)
+                partial(self.run_response_middleware, response),
+                raise_exception,
             )
 
         await self.cleanup(response)
 
-    async def run(self, operation) -> Optional[BaseHTTPResponse]:
+    async def run(
+        self, operation, raise_exception: bool = False
+    ) -> Optional[BaseHTTPResponse]:
         try:
             response = operation()
             if isawaitable(response):
                 response = await response
         except Exception as e:
+            if raise_exception:
+                raise
             response = await self.error(e)
         return response
 
@@ -136,12 +157,9 @@ class RequestManager:
 
         try:
             await self.lifecycle(
-                partial(error_handler.response, self.request, exception)
+                partial(error_handler.response, self.request, exception), True
             )
         except Exception as e:
-            await self.lifecycle(
-                partial(error_handler.default, self.request, e)
-            )
             if isinstance(e, SanicException):
                 response = error_handler.default(self.request, e)
             elif self.request.app.debug:
@@ -153,6 +171,7 @@ class RequestManager:
                     status=500,
                 )
             else:
+                error_logger.exception(e)
                 response = HTTPResponse(
                     "An error occurred while handling an error", status=500
                 )
@@ -175,30 +194,21 @@ class RequestManager:
         elif not hasattr(self.handler, "is_websocket"):
             response = self.request.stream.response  # type: ignore
 
-        # Marked for cleanup and DRY with handle_request/handle_exception
-        # when ResponseStream is no longer supporder
         if isinstance(response, BaseHTTPResponse):
-            # await self.dispatch(
-            #     "http.lifecycle.response",
-            #     inline=True,
-            #     context={
-            #         "request": self.request,
-            #         "response": response,
-            #     },
-            # )
-            ...
+            await self.request.app.dispatch(
+                "http.lifecycle.response",
+                inline=True,
+                context={"request": self.request, "response": response},
+            )
             await response.send(end_stream=True)
         elif isinstance(response, ResponseStream):
             await response(self.request)  # type: ignore
-            # await self.dispatch(
-            #     "http.lifecycle.response",
-            #     inline=True,
-            #     context={
-            #         "request": self.request,
-            #         "response": resp,
-            #     },
-            # )
             await response.eof()  # type: ignore
+            await self.request.app.dispatch(
+                "http.lifecycle.response",
+                inline=True,
+                context={"request": self.request, "response": response},
+            )
         else:
             if not hasattr(self.handler, "is_websocket"):
                 raise ServerError(
@@ -219,27 +229,27 @@ class RequestManager:
         self.request_middleware_run = True
 
         for middleware in self.request_middleware:
-            # await self.dispatch(
-            #     "http.middleware.before",
-            #     inline=True,
-            #     context={
-            #         "request": request,
-            #         "response": None,
-            #     },
-            #     condition={"attach_to": "request"},
-            # )
+            await self.request.app.dispatch(
+                "http.middleware.before",
+                inline=True,
+                context={"request": self.request, "response": None},
+                condition={"attach_to": "request"},
+            )
 
-            response = await self.run(partial(middleware, self.request))
+            try:
+                response = await self.run(partial(middleware, self.request))
+            except Exception:
+                error_logger.exception(
+                    "Exception occurred in one of request middleware handlers"
+                )
+                raise
 
-            # await self.dispatch(
-            #     "http.middleware.after",
-            #     inline=True,
-            #     context={
-            #         "request": request,
-            #         "response": None,
-            #     },
-            #     condition={"attach_to": "request"},
-            # )
+            await self.request.app.dispatch(
+                "http.middleware.after",
+                inline=True,
+                context={"request": self.request, "response": None},
+                condition={"attach_to": "request"},
+            )
 
             if response:
                 return response
@@ -250,46 +260,34 @@ class RequestManager:
     ) -> BaseHTTPResponse:
         self.response_middleware_run = True
         for middleware in self.response_middleware:
-            # await self.dispatch(
-            #     "http.middleware.before",
-            #     inline=True,
-            #     context={
-            #         "request": request,
-            #         "response": None,
-            #     },
-            #     condition={"attach_to": "request"},
-            # )
+            await self.request.app.dispatch(
+                "http.middleware.before",
+                inline=True,
+                context={"request": self.request, "response": None},
+                condition={"attach_to": "request"},
+            )
 
-            resp = await self.run(partial(middleware, self.request, response))
+            try:
+                resp = await self.run(
+                    partial(middleware, self.request, response), True
+                )
+            except Exception as e:
+                error_logger.exception(
+                    "Exception occurred in one of response middleware handlers"
+                )
+                await self.error(e)
+                resp = None
 
-            # await self.dispatch(
-            #     "http.middleware.after",
-            #     inline=True,
-            #     context={
-            #         "request": request,
-            #         "response": None,
-            #     },
-            #     condition={"attach_to": "request"},
-            # )
+            await self.request.app.dispatch(
+                "http.middleware.after",
+                inline=True,
+                context={"request": self.request, "response": None},
+                condition={"attach_to": "request"},
+            )
 
             if resp:
                 return resp
         return response
-        # try:
-        #     middleware = (
-        #         self.route and self.route.extra.response_middleware
-        #     ) or self.app.response_middleware
-        #     if middleware:
-        #         response = await self.app._run_response_middleware(
-        #             self, response, middleware
-        #         )
-        # except CancelledErrors:
-        #     raise
-        # except Exception:
-        #     error_logger.exception(
-        #         "Exception occurred in one of response middleware handlers"
-        #     )
-        # return None
 
     def resolve_route(self) -> Route:
         # Fetch handler from router
@@ -303,11 +301,11 @@ class RequestManager:
         self.request.route = route
         self.handler = handler
 
-        if route.handler and route.handler.request_middleware:
-            self.request_middleware = route.handler.request_middleware
+        if handler and handler.request_middleware:
+            self.request_middleware = handler.request_middleware
 
-        if route.handler and route.handler.response_middleware:
-            self.response_middleware = route.handler.response_middleware
+        if handler and handler.response_middleware:
+            self.response_middleware = handler.response_middleware
 
         return route
 

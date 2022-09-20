@@ -3,6 +3,7 @@ from functools import partial
 import pytest
 
 from sanic import Sanic
+from sanic.middleware import Middleware
 from sanic.response import json
 
 
@@ -31,6 +32,12 @@ PRIORITY_TEST_CASES = (
     ([2, 1, 0], [1, 2, 3]),
     ([2, 1, 0], [None, 1, 2]),
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_middleware():
+    yield
+    Middleware.reset_count()
 
 
 @pytest.mark.parametrize(

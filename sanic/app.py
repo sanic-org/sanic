@@ -759,48 +759,50 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 )
             return
 
-        # -------------------------------------------- #
-        # Request Middleware
-        # -------------------------------------------- #
-        if run_middleware:
-            middleware = (
-                request.route and request.route.extra.request_middleware
-            ) or self.request_middleware
-            response = await self._run_request_middleware(request, middleware)
-        # No middleware results
-        if not response:
-            try:
+        try:
+            # -------------------------------------------- #
+            # Request Middleware
+            # -------------------------------------------- #
+            if run_middleware:
+                middleware = (
+                    request.route and request.route.extra.request_middleware
+                ) or self.request_middleware
+                response = await self._run_request_middleware(
+                    request, middleware
+                )
+            # No middleware results
+            if not response:
                 response = self.error_handler.response(request, exception)
                 if isawaitable(response):
                     response = await response
-            except Exception as e:
-                if isinstance(e, SanicException):
-                    response = self.error_handler.default(request, e)
-                elif self.debug:
-                    response = HTTPResponse(
-                        (
-                            f"Error while handling error: {e}\n"
-                            f"Stack: {format_exc()}"
-                        ),
-                        status=500,
-                    )
-                else:
-                    response = HTTPResponse(
-                        "An error occurred while handling an error", status=500
-                    )
-        if response is not None:
-            try:
-                request.reset_response()
-                response = await request.respond(response)
-            except BaseException:
-                # Skip response middleware
+            if response is not None:
+                try:
+                    request.reset_response()
+                    response = await request.respond(response)
+                except BaseException:
+                    # Skip response middleware
+                    if request.stream:
+                        request.stream.respond(response)
+                    await response.send(end_stream=True)
+                    raise
+            else:
                 if request.stream:
-                    request.stream.respond(response)
-                await response.send(end_stream=True)
-                raise
-        else:
-            if request.stream:
-                response = request.stream.response
+                    response = request.stream.response
+        except Exception as e:
+            if isinstance(e, SanicException):
+                response = self.error_handler.default(request, e)
+            elif self.debug:
+                response = HTTPResponse(
+                    (
+                        f"Error while handling error: {e}\n"
+                        f"Stack: {format_exc()}"
+                    ),
+                    status=500,
+                )
+            else:
+                response = HTTPResponse(
+                    "An error occurred while handling an error", status=500
+                )
 
         # Marked for cleanup and DRY with handle_request/handle_exception
         # when ResponseStream is no longer supporder
@@ -980,6 +982,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         except CancelledError:
             raise
         except Exception as e:
+            print(f">>>>>>>>>>>>>>>>> {run_middleware=}")
             # Response Generation Failed
             await self.handle_exception(
                 request, e, run_middleware=run_middleware

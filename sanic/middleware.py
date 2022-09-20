@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import deque
 from enum import IntEnum, auto
 from itertools import count
-from typing import Deque, Optional, Sequence, Union
+from typing import Deque, Sequence, Union
 
 from sanic.models.handler_types import MiddlewareType
 
@@ -14,7 +14,7 @@ class MiddlewareLocation(IntEnum):
 
 
 class Middleware:
-    counter = count()
+    _counter = count()
 
     __slots__ = ("func", "priority", "location", "definition")
 
@@ -27,7 +27,7 @@ class Middleware:
         self.func = func
         self.priority = priority
         self.location = location
-        self.definition = next(Middleware.counter)
+        self.definition = next(Middleware._counter)
 
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
@@ -59,3 +59,8 @@ class Middleware:
                 for middleware in collection
             ]
         )
+
+    @classmethod
+    def reset_count(cls):
+        cls._counter = count()
+        cls.count = next(cls._counter)

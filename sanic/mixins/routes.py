@@ -790,7 +790,7 @@ class RouteMixin(metaclass=SanicMeta):
 
         return name
 
-    async def get_file_path(self, file_or_directory, __file_uri__, not_found):
+    async def _get_file_path(self, file_or_directory, __file_uri__, not_found):
         file_path_raw = Path(unquote(file_or_directory))
         root_path = file_path = file_path_raw.resolve()
 
@@ -838,7 +838,7 @@ class RouteMixin(metaclass=SanicMeta):
         )
 
         # Merge served directory and requested file if provided
-        file_path = await self.get_file_path(
+        file_path = await self._get_file_path(
             file_or_directory, __file_uri__, not_found
         )
 

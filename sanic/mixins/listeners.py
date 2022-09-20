@@ -17,9 +17,12 @@ class ListenerEvent(str, Enum):
     BEFORE_SERVER_STOP = "server.shutdown.before"
     AFTER_SERVER_STOP = "server.shutdown.after"
     MAIN_PROCESS_START = auto()
+    MAIN_PROCESS_READY = auto()
     MAIN_PROCESS_STOP = auto()
     RELOAD_PROCESS_START = auto()
     RELOAD_PROCESS_STOP = auto()
+    BEFORE_RELOAD_TRIGGER = auto()
+    AFTER_RELOAD_TRIGGER = auto()
 
 
 class ListenerMixin(metaclass=SanicMeta):
@@ -98,6 +101,11 @@ class ListenerMixin(metaclass=SanicMeta):
     ) -> ListenerType[Sanic]:
         return self.listener(listener, "main_process_start")
 
+    def main_process_ready(
+        self, listener: ListenerType[Sanic]
+    ) -> ListenerType[Sanic]:
+        return self.listener(listener, "main_process_ready")
+
     def main_process_stop(
         self, listener: ListenerType[Sanic]
     ) -> ListenerType[Sanic]:
@@ -112,6 +120,16 @@ class ListenerMixin(metaclass=SanicMeta):
         self, listener: ListenerType[Sanic]
     ) -> ListenerType[Sanic]:
         return self.listener(listener, "reload_process_stop")
+
+    def before_reload_trigger(
+        self, listener: ListenerType[Sanic]
+    ) -> ListenerType[Sanic]:
+        return self.listener(listener, "before_reload_trigger")
+
+    def after_reload_trigger(
+        self, listener: ListenerType[Sanic]
+    ) -> ListenerType[Sanic]:
+        return self.listener(listener, "after_reload_trigger")
 
     def before_server_start(
         self, listener: ListenerType[Sanic]

@@ -166,7 +166,7 @@ def test_middleware_response_raise_cancelled_error(app, caplog):
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get("/")
 
-        assert response.status == 503
+        assert response.status == 500
         assert (
             "sanic.error",
             logging.ERROR,

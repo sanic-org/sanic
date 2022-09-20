@@ -1,6 +1,11 @@
+from asyncio import CancelledError
 from typing import Any, Dict, Optional, Union
 
 from sanic.helpers import STATUS_CODES
+
+
+class RequestCancelled(CancelledError):
+    quiet = True
 
 
 class SanicException(Exception):

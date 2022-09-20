@@ -4,8 +4,8 @@ source = sanic
 omit =
     site-packages
     sanic/__main__.py
+    sanic/server/legacy.py
     sanic/compat.py
-    sanic/reloader_helpers.py
     sanic/simple.py
     sanic/utils.py
     sanic/cli
@@ -21,12 +21,4 @@ exclude_lines =
     NOQA
     pragma: no cover
     TYPE_CHECKING
-omit =
-    site-packages
-    sanic/__main__.py
-    sanic/compat.py
-    sanic/reloader_helpers.py
-    sanic/simple.py
-    sanic/utils.py
-    sanic/cli
 skip_empty = True

@@ -353,7 +353,7 @@ def test_config_fallback_before_and_after_startup(app):
 
     _, response = app.test_client.get("/error")
     assert response.status == 500
-    assert response.content_type == "text/plain; charset=utf-8"
+    assert response.content_type == "application/json"
 
 
 def test_config_fallback_using_update_dict(app):

@@ -22,7 +22,7 @@ from sanic.exceptions import PayloadTooLarge, SanicException, ServerError
 from sanic.helpers import has_message_body
 from sanic.http.constants import Stage
 from sanic.http.stream import Stream
-from sanic.http.tls.context import CertSelector, CertSimple, SanicSSLContext
+from sanic.http.tls.context import CertSelector, SanicSSLContext
 from sanic.log import Colors, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.models.server_types import ConnInfo
@@ -389,8 +389,8 @@ def get_config(
             "should be able to use mkcert instead. For more information, see: "
             "https://github.com/aiortc/aioquic/issues/295."
         )
-    if not isinstance(ssl, CertSimple):
-        raise SanicException("SSLContext is not CertSimple")
+    if not isinstance(ssl, SanicSSLContext):
+        raise SanicException("SSLContext is not SanicSSLContext")
 
     config = QuicConfiguration(
         alpn_protocols=H3_ALPN + H0_ALPN + ["siduck"],

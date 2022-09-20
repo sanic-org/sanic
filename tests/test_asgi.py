@@ -531,6 +531,8 @@ async def test_signals_triggered(app):
         "http.lifecycle.handle",
         "http.routing.before",
         "http.routing.after",
+        "http.handler.before",
+        "http.handler.after",
         "http.lifecycle.response",
         # "http.lifecycle.send",
         # "http.lifecycle.complete",

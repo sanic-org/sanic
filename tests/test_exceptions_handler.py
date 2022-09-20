@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from bs4 import BeautifulSoup
-from pytest import LogCaptureFixture, MonkeyPatch
+from pytest import LogCaptureFixture, MonkeyPatch, WarningsRecorder
 
 from sanic import Sanic, handlers
 from sanic.exceptions import BadRequest, Forbidden, NotFound, ServerError
@@ -266,3 +266,22 @@ def test_exception_handler_response_was_sent(
 
     _, response = app.test_client.get("/2")
     assert "Error" in response.text
+
+
+def test_warn_on_duplicate(
+    app: Sanic, caplog: LogCaptureFixture, recwarn: WarningsRecorder
+):
+    @app.exception(ServerError)
+    async def exception_handler_1(request, exception):
+        ...
+
+    @app.exception(ServerError)
+    async def exception_handler_2(request, exception):
+        ...
+
+    assert len(caplog.records) == 1
+    assert len(recwarn) == 1
+    assert caplog.records[0].message == (
+        "Duplicate exception handler definition on: route=__ALL_ROUTES__ and "
+        "exception=<class 'sanic.exceptions.ServerError'>"
+    )

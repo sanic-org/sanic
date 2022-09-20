@@ -21,6 +21,7 @@ class ConnInfo:
         "client",
         "client_ip",
         "ctx",
+        "lost",
         "peername",
         "server_port",
         "server",
@@ -33,6 +34,7 @@ class ConnInfo:
 
     def __init__(self, transport: TransportProtocol, unix=None):
         self.ctx = SimpleNamespace()
+        self.lost = False
         self.peername = None
         self.server = self.client = ""
         self.server_port = self.client_port = 0

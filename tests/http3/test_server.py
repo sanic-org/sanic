@@ -35,6 +35,7 @@ def test_server_starts_http3(app: Sanic, version, caplog):
                 "cert": localhost_dir / "fullchain.pem",
                 "key": localhost_dir / "privkey.pem",
             },
+            single_process=True,
         )
 
     assert ev.is_set()
@@ -69,7 +70,7 @@ def test_server_starts_http1_and_http3(app: Sanic, caplog):
         },
     )
     with caplog.at_level(logging.INFO):
-        Sanic.serve()
+        Sanic.serve_single()
 
     assert (
         "sanic.root",

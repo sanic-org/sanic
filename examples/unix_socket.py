@@ -1,6 +1,3 @@
-import os
-import socket
-
 from sanic import Sanic, response
 
 
@@ -13,13 +10,4 @@ async def test(request):
 
 
 if __name__ == "__main__":
-    server_address = "./uds_socket"
-    # Make sure the socket does not already exist
-    try:
-        os.unlink(server_address)
-    except OSError:
-        if os.path.exists(server_address):
-            raise
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.bind(server_address)
-    app.run(sock=sock)
+    app.run(unix="./uds_socket")

@@ -308,7 +308,7 @@ class Blueprint(BaseSanic):
             # prefixed properly in the router
             future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
-            uri = url_prefix + future.uri if url_prefix else future.uri
+            uri = self._setup_uri(future.uri, url_prefix)
 
             version_prefix = self.version_prefix
             for prefix in (
@@ -333,7 +333,7 @@ class Blueprint(BaseSanic):
 
             apply_route = FutureRoute(
                 future.handler,
-                uri[1:] if uri.startswith("//") else uri,
+                uri,
                 future.methods,
                 host,
                 strict_slashes,
@@ -363,7 +363,7 @@ class Blueprint(BaseSanic):
         # Static Files
         for future in self._future_statics:
             # Prepend the blueprint URI prefix if available
-            uri = url_prefix + future.uri if url_prefix else future.uri
+            uri = self._setup_uri(future.uri, url_prefix)
             apply_route = FutureStatic(uri, *future[1:])
 
             if (self, apply_route) in app._future_registry:
@@ -455,6 +455,18 @@ class Blueprint(BaseSanic):
                 value = v
                 break
         return value
+
+    @staticmethod
+    def _setup_uri(base: str, prefix: Optional[str]):
+        uri = base
+        if prefix:
+            uri = prefix
+            if base.startswith("/") and prefix.endswith("/"):
+                uri += base[1:]
+            else:
+                uri += base
+
+        return uri[1:] if uri.startswith("//") else uri
 
     @staticmethod
     def register_futures(

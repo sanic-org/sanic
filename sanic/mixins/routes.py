@@ -1,12 +1,12 @@
 from ast import NodeVisitor, Return, parse
 from contextlib import suppress
+from email.utils import formatdate
 from functools import partial, wraps
 from inspect import getsource, signature
 from mimetypes import guess_type
 from os import path
 from pathlib import Path, PurePath
 from textwrap import dedent
-from time import gmtime, strftime
 from typing import (
     Any,
     Callable,
@@ -31,7 +31,7 @@ from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
-from sanic.response import HTTPResponse, file, file_stream
+from sanic.response import HTTPResponse, file, file_stream, validate_file
 from sanic.types import HashableDict
 
 
@@ -790,24 +790,9 @@ class RouteMixin(metaclass=SanicMeta):
 
         return name
 
-    async def _static_request_handler(
-        self,
-        file_or_directory,
-        use_modified_since,
-        use_content_range,
-        stream_large_files,
-        request,
-        content_type=None,
-        __file_uri__=None,
-    ):
-        # Merge served directory and requested file if provided
+    async def _get_file_path(self, file_or_directory, __file_uri__, not_found):
         file_path_raw = Path(unquote(file_or_directory))
         root_path = file_path = file_path_raw.resolve()
-        not_found = FileNotFound(
-            "File not found",
-            path=file_or_directory,
-            relative_url=__file_uri__,
-        )
 
         if __file_uri__:
             # Strip all / that in the beginning of the URL to help prevent
@@ -834,6 +819,29 @@ class RouteMixin(metaclass=SanicMeta):
                     f"relative_url={__file_uri__}"
                 )
                 raise not_found
+        return file_path
+
+    async def _static_request_handler(
+        self,
+        file_or_directory,
+        use_modified_since,
+        use_content_range,
+        stream_large_files,
+        request,
+        content_type=None,
+        __file_uri__=None,
+    ):
+        not_found = FileNotFound(
+            "File not found",
+            path=file_or_directory,
+            relative_url=__file_uri__,
+        )
+
+        # Merge served directory and requested file if provided
+        file_path = await self._get_file_path(
+            file_or_directory, __file_uri__, not_found
+        )
+
         try:
             headers = {}
             # Check if the client has been sent this file before
@@ -841,15 +849,13 @@ class RouteMixin(metaclass=SanicMeta):
             stats = None
             if use_modified_since:
                 stats = await stat_async(file_path)
-                modified_since = strftime(
-                    "%a, %d %b %Y %H:%M:%S GMT", gmtime(stats.st_mtime)
+                modified_since = stats.st_mtime
+                response = await validate_file(request.headers, modified_since)
+                if response:
+                    return response
+                headers["Last-Modified"] = formatdate(
+                    modified_since, usegmt=True
                 )
-                if (
-                    request.headers.getone("if-modified-since", None)
-                    == modified_since
-                ):
-                    return HTTPResponse(status=304)
-                headers["Last-Modified"] = modified_since
             _range = None
             if use_content_range:
                 _range = None
@@ -864,8 +870,7 @@ class RouteMixin(metaclass=SanicMeta):
                         pass
                     else:
                         del headers["Content-Length"]
-                        for key, value in _range.headers.items():
-                            headers[key] = value
+                        headers.update(_range.headers)
 
             if "content-type" not in headers:
                 content_type = (

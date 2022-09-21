@@ -4,8 +4,8 @@ import os
 import time
 
 from collections import namedtuple
-from datetime import datetime
-from email.utils import formatdate
+from datetime import datetime, timedelta
+from email.utils import formatdate, parsedate_to_datetime
 from logging import ERROR, LogRecord
 from mimetypes import guess_type
 from pathlib import Path
@@ -665,13 +665,11 @@ def test_multiple_responses(
 
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/4")
-        print(response.json)
         assert response.status == 200
         assert "foo" not in response.text
         assert "one" in response.headers
         assert response.headers["one"] == "one"
 
-        print(response.headers)
         assert message_in_records(caplog.records, error_msg2)
 
     with caplog.at_level(ERROR):
@@ -841,10 +839,10 @@ def test_file_validate(app: Sanic, static_file_directory: str):
     time.sleep(1)
     with open(file_path, "a") as f:
         f.write("bar\n")
-
     _, response = app.test_client.get(
         "/validate", headers={"If-Modified-Since": last_modified}
     )
+
     assert response.status == 200
     assert response.body == b"foo\nbar\n"
 
@@ -918,6 +916,31 @@ def test_file_validating_304_response(
     _, response = app.test_client.get(
         f"/files/{file_name}",
         headers={"if-modified-since": response.headers["Last-Modified"]},
+    )
+    assert response.status == 304
+    assert response.body == b""
+
+
+@pytest.mark.parametrize(
+    "file_name", ["test.file", "decode me.txt", "python.png"]
+)
+def test_file_validating_304_response(
+    app: Sanic, file_name: str, static_file_directory: str
+):
+    app.static("static", Path(static_file_directory) / file_name)
+
+    _, response = app.test_client.get("/static")
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+    last_modified = parsedate_to_datetime(response.headers["Last-Modified"])
+    last_modified += timedelta(seconds=1)
+    _, response = app.test_client.get(
+        "/static",
+        headers={
+            "if-modified-since": formatdate(
+                last_modified.timestamp(), usegmt=True
+            )
+        },
     )
     assert response.status == 304
     assert response.body == b""

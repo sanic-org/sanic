@@ -234,4 +234,7 @@ class ASGIApp:
             self.stage = Stage.HANDLER
             await self.sanic_app.handle_request(self.request)
         except Exception as e:
-            await self.sanic_app.handle_exception(self.request, e)
+            try:
+                await self.sanic_app.handle_exception(self.request, e)
+            except Exception as exc:
+                await self.sanic_app.handle_exception(self.request, exc, False)

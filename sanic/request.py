@@ -225,7 +225,7 @@ class Request:
             "Request.request_middleware_started has been deprecated and will"
             "be removed. You should set a flag on the request context using"
             "either middleware or signals if you need this feature.",
-            22.3,
+            23.3,
         )
         return self._request_middleware_started
 

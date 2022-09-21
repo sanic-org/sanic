@@ -2,10 +2,20 @@ import logging
 
 from asyncio import CancelledError
 from itertools import count
+from unittest.mock import Mock
+
+import pytest
 
 from sanic.exceptions import NotFound
+from sanic.middleware import Middleware
 from sanic.request import Request
 from sanic.response import HTTPResponse, json, text
+
+
+@pytest.fixture(autouse=True)
+def reset_middleware():
+    yield
+    Middleware.reset_count()
 
 
 # ------------------------------------------------------------ #
@@ -183,7 +193,7 @@ def test_middleware_response_raise_exception(app, caplog):
     with caplog.at_level(logging.ERROR):
         reqrequest, response = app.test_client.get("/fail")
 
-    assert response.status == 404
+    assert response.status == 500
     # 404 errors are not logged
     assert (
         "sanic.error",
@@ -318,6 +328,15 @@ def test_middleware_return_response(app):
         resp1 = await request.respond()
         return resp1
 
-    _, response = app.test_client.get("/")
+    app.test_client.get("/")
     assert response_middleware_run_count == 1
     assert request_middleware_run_count == 1
+
+
+def test_middleware_object():
+    mock = Mock()
+    middleware = Middleware(mock)
+    middleware(1, 2, 3, answer=42)
+
+    mock.assert_called_once_with(1, 2, 3, answer=42)
+    assert middleware.order == (0, 0)

@@ -21,7 +21,6 @@ from functools import partial
 from inspect import isawaitable
 from os import environ
 from socket import socket
-from traceback import format_exc
 from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
@@ -54,12 +53,7 @@ from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
-from sanic.exceptions import (
-    BadRequest,
-    SanicException,
-    ServerError,
-    URLBuildError,
-)
+from sanic.exceptions import BadRequest, SanicException, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.helpers import _default
 from sanic.http import Stage
@@ -83,7 +77,7 @@ from sanic.models.futures import (
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
-from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
+from sanic.response import BaseHTTPResponse
 from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
@@ -709,265 +703,15 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
 
     async def handle_exception(
-        self, request: Request, exception: BaseException
+        self,
+        request: Request,
+        exception: BaseException,
+        run_middleware: bool = True,
     ):  # no cov
-        """
-        A handler that catches specific exceptions and outputs a response.
-
-        :param request: The current request object
-        :param exception: The exception that was raised
-        :raises ServerError: response 500
-        """
-        await self.dispatch(
-            "http.lifecycle.exception",
-            inline=True,
-            context={"request": request, "exception": exception},
-        )
-
-        if (
-            request.stream is not None
-            and request.stream.stage is not Stage.HANDLER
-        ):
-            error_logger.exception(exception, exc_info=True)
-            logger.error(
-                "The error response will not be sent to the client for "
-                f'the following exception:"{exception}". A previous response '
-                "has at least partially been sent."
-            )
-
-            handler = self.error_handler._lookup(
-                exception, request.name if request else None
-            )
-            if handler:
-                logger.warning(
-                    "An error occurred while handling the request after at "
-                    "least some part of the response was sent to the client. "
-                    "The response from your custom exception handler "
-                    f"{handler.__name__} will not be sent to the client."
-                    "Exception handlers should only be used to generate the "
-                    "exception responses. If you would like to perform any "
-                    "other action on a raised exception, consider using a "
-                    "signal handler like "
-                    '`@app.signal("http.lifecycle.exception")`\n'
-                    "For further information, please see the docs: "
-                    "https://sanicframework.org/en/guide/advanced/"
-                    "signals.html",
-                )
-            return
-
-        # -------------------------------------------- #
-        # Request Middleware
-        # -------------------------------------------- #
-        response = await self._run_request_middleware(
-            request, request_name=None
-        )
-        # No middleware results
-        if not response:
-            try:
-                response = self.error_handler.response(request, exception)
-                if isawaitable(response):
-                    response = await response
-            except Exception as e:
-                if isinstance(e, SanicException):
-                    response = self.error_handler.default(request, e)
-                elif self.debug:
-                    response = HTTPResponse(
-                        (
-                            f"Error while handling error: {e}\n"
-                            f"Stack: {format_exc()}"
-                        ),
-                        status=500,
-                    )
-                else:
-                    response = HTTPResponse(
-                        "An error occurred while handling an error", status=500
-                    )
-        if response is not None:
-            try:
-                request.reset_response()
-                response = await request.respond(response)
-            except BaseException:
-                # Skip response middleware
-                if request.stream:
-                    request.stream.respond(response)
-                await response.send(end_stream=True)
-                raise
-        else:
-            if request.stream:
-                response = request.stream.response
-
-        # Marked for cleanup and DRY with handle_request/handle_exception
-        # when ResponseStream is no longer supporder
-        if isinstance(response, BaseHTTPResponse):
-            await self.dispatch(
-                "http.lifecycle.response",
-                inline=True,
-                context={
-                    "request": request,
-                    "response": response,
-                },
-            )
-            await response.send(end_stream=True)
-        elif isinstance(response, ResponseStream):
-            resp = await response(request)
-            await self.dispatch(
-                "http.lifecycle.response",
-                inline=True,
-                context={
-                    "request": request,
-                    "response": resp,
-                },
-            )
-            await response.eof()
-        else:
-            raise ServerError(
-                f"Invalid response type {response!r} (need HTTPResponse)"
-            )
+        raise NotImplementedError
 
     async def handle_request(self, request: Request):  # no cov
-        """Take a request from the HTTP Server and return a response object
-        to be sent back The HTTP Server only expects a response object, so
-        exception handling must be done here
-
-        :param request: HTTP Request object
-        :return: Nothing
-        """
-        await self.dispatch(
-            "http.lifecycle.handle",
-            inline=True,
-            context={"request": request},
-        )
-
-        # Define `response` var here to remove warnings about
-        # allocation before assignment below.
-        response = None
-        try:
-
-            await self.dispatch(
-                "http.routing.before",
-                inline=True,
-                context={"request": request},
-            )
-            # Fetch handler from router
-            route, handler, kwargs = self.router.get(
-                request.path,
-                request.method,
-                request.headers.getone("host", None),
-            )
-
-            request._match_info = {**kwargs}
-            request.route = route
-
-            await self.dispatch(
-                "http.routing.after",
-                inline=True,
-                context={
-                    "request": request,
-                    "route": route,
-                    "kwargs": kwargs,
-                    "handler": handler,
-                },
-            )
-
-            if (
-                request.stream
-                and request.stream.request_body
-                and not route.ctx.ignore_body
-            ):
-
-                if hasattr(handler, "is_stream"):
-                    # Streaming handler: lift the size limit
-                    request.stream.request_max_size = float("inf")
-                else:
-                    # Non-streaming handler: preload body
-                    await request.receive_body()
-
-            # -------------------------------------------- #
-            # Request Middleware
-            # -------------------------------------------- #
-            response = await self._run_request_middleware(
-                request, request_name=route.name
-            )
-
-            # No middleware results
-            if not response:
-                # -------------------------------------------- #
-                # Execute Handler
-                # -------------------------------------------- #
-
-                if handler is None:
-                    raise ServerError(
-                        (
-                            "'None' was returned while requesting a "
-                            "handler from the router"
-                        )
-                    )
-
-                # Run response handler
-                await self.dispatch(
-                    "http.handler.before",
-                    inline=True,
-                    context={"request": request},
-                )
-                response = handler(request, **request.match_info)
-                if isawaitable(response):
-                    response = await response
-                await self.dispatch(
-                    "http.handler.after",
-                    inline=True,
-                    context={"request": request},
-                )
-
-            if request.responded:
-                if response is not None:
-                    error_logger.error(
-                        "The response object returned by the route handler "
-                        "will not be sent to client. The request has already "
-                        "been responded to."
-                    )
-                if request.stream is not None:
-                    response = request.stream.response
-            elif response is not None:
-                response = await request.respond(response)
-            elif not hasattr(handler, "is_websocket"):
-                response = request.stream.response  # type: ignore
-
-            # Marked for cleanup and DRY with handle_request/handle_exception
-            # when ResponseStream is no longer supporder
-            if isinstance(response, BaseHTTPResponse):
-                await self.dispatch(
-                    "http.lifecycle.response",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": response,
-                    },
-                )
-                ...
-                await response.send(end_stream=True)
-            elif isinstance(response, ResponseStream):
-                resp = await response(request)
-                await self.dispatch(
-                    "http.lifecycle.response",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": resp,
-                    },
-                )
-                await response.eof()
-            else:
-                if not hasattr(handler, "is_websocket"):
-                    raise ServerError(
-                        f"Invalid response type {response!r} "
-                        "(need HTTPResponse)"
-                    )
-
-        except CancelledError:
-            raise
-        except Exception as e:
-            # Response Generation Failed
-            await self.handle_exception(request, e)
+        raise NotImplementedError
 
     async def _websocket_handler(
         self, handler, request, *args, subprotocols=None, **kwargs
@@ -1036,86 +780,72 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
 
     async def _run_request_middleware(
-        self, request, request_name=None
+        self, request, middleware_collection
     ):  # no cov
-        # The if improves speed.  I don't know why
-        named_middleware = self.named_request_middleware.get(
-            request_name, deque()
-        )
-        applicable_middleware = self.request_middleware + named_middleware
+        request._request_middleware_started = True
 
-        # request.request_middleware_started is meant as a stop-gap solution
-        # until RFC 1630 is adopted
-        if applicable_middleware and not request.request_middleware_started:
-            request.request_middleware_started = True
+        for middleware in middleware_collection:
+            await self.dispatch(
+                "http.middleware.before",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": None,
+                },
+                condition={"attach_to": "request"},
+            )
 
-            for middleware in applicable_middleware:
-                await self.dispatch(
-                    "http.middleware.before",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": None,
-                    },
-                    condition={"attach_to": "request"},
-                )
+            response = middleware(request)
+            if isawaitable(response):
+                response = await response
 
-                response = middleware(request)
-                if isawaitable(response):
-                    response = await response
+            await self.dispatch(
+                "http.middleware.after",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": None,
+                },
+                condition={"attach_to": "request"},
+            )
 
-                await self.dispatch(
-                    "http.middleware.after",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": None,
-                    },
-                    condition={"attach_to": "request"},
-                )
-
-                if response:
-                    return response
+            if response:
+                return response
         return None
 
     async def _run_response_middleware(
-        self, request, response, request_name=None
+        self, request, response, middleware_collection
     ):  # no cov
-        named_middleware = self.named_response_middleware.get(
-            request_name, deque()
-        )
-        applicable_middleware = self.response_middleware + named_middleware
-        if applicable_middleware:
-            for middleware in applicable_middleware:
-                await self.dispatch(
-                    "http.middleware.before",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": response,
-                    },
-                    condition={"attach_to": "response"},
-                )
+        for middleware in middleware_collection:
+            await self.dispatch(
+                "http.middleware.before",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": response,
+                },
+                condition={"attach_to": "response"},
+            )
 
-                _response = middleware(request, response)
-                if isawaitable(_response):
-                    _response = await _response
+            _response = middleware(request, response)
+            if isawaitable(_response):
+                _response = await _response
 
-                await self.dispatch(
-                    "http.middleware.after",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": _response if _response else response,
-                    },
-                    condition={"attach_to": "response"},
-                )
+            await self.dispatch(
+                "http.middleware.after",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": _response if _response else response,
+                },
+                condition={"attach_to": "response"},
+            )
 
-                if _response:
-                    response = _response
-                    if isinstance(response, BaseHTTPResponse):
-                        response = request.stream.respond(response)
-                    break
+            if _response:
+                response = _response
+                if isinstance(response, BaseHTTPResponse):
+                    response = request.stream.respond(response)
+                break
         return response
 
     def _build_endpoint_name(self, *parts):
@@ -1528,6 +1258,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         except FinalizationError as e:
             if not Sanic.test_mode:
                 raise e
+        self.finalize_middleware()
 
     def signalize(self, allow_fail_builtin=True):
         self.signal_router.allow_fail_builtin = allow_fail_builtin

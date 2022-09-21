@@ -152,8 +152,11 @@ def test_app_route_raise_value_error(app: Sanic):
 
 
 def test_app_handle_request_handler_is_none(app: Sanic, monkeypatch):
+    mock = Mock()
+    mock.handler = None
+
     def mockreturn(*args, **kwargs):
-        return Mock(), None, {}
+        return mock, None, {}
 
     monkeypatch.setattr(app.router, "get", mockreturn)
 

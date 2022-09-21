@@ -84,7 +84,7 @@ ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.5.3" + env_dependency
 types_ujson = "types-ujson" + env_dependency
 requirements = [
-    "sanic-routing>=22.3.0,<22.6.0",
+    "sanic-routing>=22.8.0",
     "httptools>=0.0.10",
     uvloop,
     ujson,

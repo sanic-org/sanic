@@ -124,7 +124,8 @@ class Http(Stream, metaclass=TouchUpMeta):
 
                 self.stage = Stage.HANDLER
                 self.request.conn_info = self.protocol.conn_info
-                await self.protocol.request_handler(self.request)
+
+                await self.request.manager.handle()
 
                 # Handler finished, response should've been sent
                 if self.stage is Stage.HANDLER and not self.upgrade_websocket:
@@ -250,6 +251,7 @@ class Http(Stream, metaclass=TouchUpMeta):
             transport=self.protocol.transport,
             app=self.protocol.app,
         )
+        self.protocol.request_handler.create(request)
         self.protocol.request_class._current.set(request)
         await self.dispatch(
             "http.lifecycle.request",
@@ -423,12 +425,11 @@ class Http(Stream, metaclass=TouchUpMeta):
 
         # From request and handler states we can respond, otherwise be silent
         if self.stage is Stage.HANDLER:
-            app = self.protocol.app
-
             if self.request is None:
                 self.create_empty_request()
+                self.protocol.request_handler.create(self.request)
 
-            await app.handle_exception(self.request, exception)
+            await self.request.manager.error(exception)
 
     def create_empty_request(self) -> None:
         """

@@ -73,7 +73,7 @@ class Inspector:
 
     def state_to_json(self):
         output = {"info": self.app_info}
-        output["workers"] = self._make_safe(dict(self.worker_state))
+        output["workers"] = self.make_safe(dict(self.worker_state))
         return output
 
     def reload(self):
@@ -84,10 +84,11 @@ class Inspector:
         message = "__TERMINATE__"
         self._publisher.send(message)
 
-    def _make_safe(self, obj: Dict[str, Any]) -> Dict[str, Any]:
+    @staticmethod
+    def make_safe(obj: Dict[str, Any]) -> Dict[str, Any]:
         for key, value in obj.items():
             if isinstance(value, dict):
-                obj[key] = self._make_safe(value)
+                obj[key] = Inspector.make_safe(value)
             elif isinstance(value, datetime):
                 obj[key] = value.isoformat()
         return obj

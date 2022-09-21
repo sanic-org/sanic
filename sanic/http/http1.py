@@ -428,7 +428,10 @@ class Http(Stream, metaclass=TouchUpMeta):
             if self.request is None:
                 self.create_empty_request()
 
-            await app.handle_exception(self.request, exception)
+            try:
+                await app.handle_exception(self.request, exception)
+            except Exception as e:
+                await app.handle_exception(self.request, e, False)
 
     def create_empty_request(self) -> None:
         """

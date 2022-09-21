@@ -18,6 +18,7 @@ from sanic.exceptions import SanicException
 from sanic.helpers import _default
 from sanic.log import LOGGING_CONFIG_DEFAULTS
 from sanic.response import text
+from sanic.router import Route
 
 
 @pytest.fixture(autouse=True)
@@ -152,8 +153,13 @@ def test_app_route_raise_value_error(app: Sanic):
 
 
 def test_app_handle_request_handler_is_none(app: Sanic, monkeypatch):
+    app.config.TOUCHUP = False
+    route = Mock(spec=Route)
+    route.extra.request_middleware = []
+    route.extra.response_middleware = []
+
     def mockreturn(*args, **kwargs):
-        return Mock(), None, {}
+        return route, None, {}
 
     monkeypatch.setattr(app.router, "get", mockreturn)
 

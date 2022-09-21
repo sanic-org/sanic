@@ -709,7 +709,10 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
 
     async def handle_exception(
-        self, request: Request, exception: BaseException
+        self,
+        request: Request,
+        exception: BaseException,
+        run_middleware: bool = True,
     ):  # no cov
         """
         A handler that catches specific exceptions and outputs a response.
@@ -718,6 +721,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         :param exception: The exception that was raised
         :raises ServerError: response 500
         """
+        response = None
         await self.dispatch(
             "http.lifecycle.exception",
             inline=True,
@@ -758,9 +762,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         # -------------------------------------------- #
         # Request Middleware
         # -------------------------------------------- #
-        response = await self._run_request_middleware(
-            request, request_name=None
-        )
+        if run_middleware:
+            middleware = (
+                request.route and request.route.extra.request_middleware
+            ) or self.request_middleware
+            response = await self._run_request_middleware(request, middleware)
         # No middleware results
         if not response:
             try:
@@ -840,7 +846,13 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
-        response = None
+        response: Optional[
+            Union[
+                BaseHTTPResponse,
+                Coroutine[Any, Any, Optional[BaseHTTPResponse]],
+            ]
+        ] = None
+        run_middleware = True
         try:
 
             await self.dispatch(
@@ -885,9 +897,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             # -------------------------------------------- #
             # Request Middleware
             # -------------------------------------------- #
-            response = await self._run_request_middleware(
-                request, request_name=route.name
-            )
+            run_middleware = False
+            if request.route.extra.request_middleware:
+                response = await self._run_request_middleware(
+                    request, request.route.extra.request_middleware
+                )
 
             # No middleware results
             if not response:
@@ -928,7 +942,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 if request.stream is not None:
                     response = request.stream.response
             elif response is not None:
-                response = await request.respond(response)
+                response = await request.respond(response)  # type: ignore
             elif not hasattr(handler, "is_websocket"):
                 response = request.stream.response  # type: ignore
 
@@ -946,7 +960,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
-                resp = await response(request)
+                resp = await response(request)  # type: ignore
                 await self.dispatch(
                     "http.lifecycle.response",
                     inline=True,
@@ -955,7 +969,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                         "response": resp,
                     },
                 )
-                await response.eof()
+                await response.eof()  # type: ignore
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
@@ -967,7 +981,9 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             raise
         except Exception as e:
             # Response Generation Failed
-            await self.handle_exception(request, e)
+            await self.handle_exception(
+                request, e, run_middleware=run_middleware
+            )
 
     async def _websocket_handler(
         self, handler, request, *args, subprotocols=None, **kwargs
@@ -1036,86 +1052,72 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
 
     async def _run_request_middleware(
-        self, request, request_name=None
+        self, request, middleware_collection
     ):  # no cov
-        # The if improves speed.  I don't know why
-        named_middleware = self.named_request_middleware.get(
-            request_name, deque()
-        )
-        applicable_middleware = self.request_middleware + named_middleware
+        request._request_middleware_started = True
 
-        # request.request_middleware_started is meant as a stop-gap solution
-        # until RFC 1630 is adopted
-        if applicable_middleware and not request.request_middleware_started:
-            request.request_middleware_started = True
+        for middleware in middleware_collection:
+            await self.dispatch(
+                "http.middleware.before",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": None,
+                },
+                condition={"attach_to": "request"},
+            )
 
-            for middleware in applicable_middleware:
-                await self.dispatch(
-                    "http.middleware.before",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": None,
-                    },
-                    condition={"attach_to": "request"},
-                )
+            response = middleware(request)
+            if isawaitable(response):
+                response = await response
 
-                response = middleware(request)
-                if isawaitable(response):
-                    response = await response
+            await self.dispatch(
+                "http.middleware.after",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": None,
+                },
+                condition={"attach_to": "request"},
+            )
 
-                await self.dispatch(
-                    "http.middleware.after",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": None,
-                    },
-                    condition={"attach_to": "request"},
-                )
-
-                if response:
-                    return response
+            if response:
+                return response
         return None
 
     async def _run_response_middleware(
-        self, request, response, request_name=None
+        self, request, response, middleware_collection
     ):  # no cov
-        named_middleware = self.named_response_middleware.get(
-            request_name, deque()
-        )
-        applicable_middleware = self.response_middleware + named_middleware
-        if applicable_middleware:
-            for middleware in applicable_middleware:
-                await self.dispatch(
-                    "http.middleware.before",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": response,
-                    },
-                    condition={"attach_to": "response"},
-                )
+        for middleware in middleware_collection:
+            await self.dispatch(
+                "http.middleware.before",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": response,
+                },
+                condition={"attach_to": "response"},
+            )
 
-                _response = middleware(request, response)
-                if isawaitable(_response):
-                    _response = await _response
+            _response = middleware(request, response)
+            if isawaitable(_response):
+                _response = await _response
 
-                await self.dispatch(
-                    "http.middleware.after",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": _response if _response else response,
-                    },
-                    condition={"attach_to": "response"},
-                )
+            await self.dispatch(
+                "http.middleware.after",
+                inline=True,
+                context={
+                    "request": request,
+                    "response": _response if _response else response,
+                },
+                condition={"attach_to": "response"},
+            )
 
-                if _response:
-                    response = _response
-                    if isinstance(response, BaseHTTPResponse):
-                        response = request.stream.respond(response)
-                    break
+            if _response:
+                response = _response
+                if isinstance(response, BaseHTTPResponse):
+                    response = request.stream.respond(response)
+                break
         return response
 
     def _build_endpoint_name(self, *parts):
@@ -1528,6 +1530,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         except FinalizationError as e:
             if not Sanic.test_mode:
                 raise e
+        self.finalize_middleware()
 
     def signalize(self, allow_fail_builtin=True):
         self.signal_router.allow_fail_builtin = allow_fail_builtin

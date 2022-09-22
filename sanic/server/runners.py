@@ -27,7 +27,7 @@ from signal import signal as signal_func
 from sanic.application.ext import setup_ext
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.http.http3 import SessionTicketStore, get_config
-from sanic.log import error_logger, logger
+from sanic.log import error_logger, server_logger
 from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
 from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
@@ -149,12 +149,12 @@ def _setup_system_signals(
 def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
     pid = os.getpid()
     try:
-        logger.info("Starting worker [%s]", pid)
+        server_logger.info("Starting worker [%s]", pid)
         loop.run_forever()
     except KeyboardInterrupt:
         pass
     finally:
-        logger.info("Stopping worker [%s]", pid)
+        server_logger.info("Stopping worker [%s]", pid)
 
         loop.run_until_complete(before_stop())
 
@@ -372,7 +372,9 @@ def serve_multiple(server_settings, workers):
     processes = []
 
     def sig_handler(signal, frame):
-        logger.info("Received signal %s. Shutting down.", Signals(signal).name)
+        server_logger.info(
+            "Received signal %s. Shutting down.", Signals(signal).name
+        )
         for process in processes:
             os.kill(process.pid, SIGTERM)
 

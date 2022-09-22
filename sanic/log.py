@@ -25,6 +25,12 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
             "propagate": True,
             "qualname": "sanic.access",
         },
+        "sanic.server": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": True,
+            "qualname": "sanic.server",
+        },
     },
     handlers={
         "console": {
@@ -100,6 +106,12 @@ access_logger = logging.getLogger("sanic.access")  # no cov
 Logger used by Sanic for access logging
 """
 access_logger.addFilter(_verbosity_filter)
+
+server_logger = logging.getLogger("sanic.server")  # no cov
+"""
+Logger used by Sanic for server related messages
+"""
+logger.addFilter(_verbosity_filter)
 
 
 def deprecation(message: str, version: float):  # no cov

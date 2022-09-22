@@ -35,6 +35,7 @@ from typing import (
     cast,
 )
 
+from sanic.application.ext import setup_ext
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
@@ -746,9 +747,12 @@ class StartupMixin(metaclass=SanicMeta):
 
         socks = []
         sync_manager = Manager()
+        setup_ext(primary)
         try:
-            main_start = primary_server_info.settings.pop("main_start", None)
-            main_stop = primary_server_info.settings.pop("main_stop", None)
+            primary_server_info.settings.pop("main_start", None)
+            primary_server_info.settings.pop("main_stop", None)
+            main_start = primary.listeners.get("main_process_start")
+            main_stop = primary.listeners.get("main_process_stop")
             app = primary_server_info.settings.pop("app")
             app.setup_loop()
             loop = new_event_loop()

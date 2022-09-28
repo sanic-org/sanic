@@ -39,14 +39,6 @@ from sanic.types import HashableDict
 RouteWrapper = Callable[
     [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
 ]
-RESTRICTED_ROUTE_CONTEXT = (
-    "ignore_body",
-    "stream",
-    "hosts",
-    "static",
-    "error_format",
-    "websocket",
-)
 
 
 class RouteMixin(metaclass=SanicMeta):

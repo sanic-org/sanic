@@ -559,7 +559,6 @@ class StartupMixin(metaclass=SanicMeta):
 
     def motd(
         self,
-        serve_location: str = "",
         server_settings: Optional[Dict[str, Any]] = None,
     ):
         if (
@@ -569,14 +568,7 @@ class StartupMixin(metaclass=SanicMeta):
             or os.environ.get("SANIC_SERVER_RUNNING")
         ):
             return
-        if serve_location:
-            deprecation(
-                "Specifying a serve_location in the MOTD is deprecated and "
-                "will be removed.",
-                22.9,
-            )
-        else:
-            serve_location = self.get_server_location(server_settings)
+        serve_location = self.get_server_location(server_settings)
         if self.config.MOTD:
             logo = get_logo(coffee=self.state.coffee)
             display, extra = self.get_motd_data(server_settings)

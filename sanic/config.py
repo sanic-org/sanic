@@ -12,7 +12,7 @@ from sanic.constants import LocalCertCreator
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
 from sanic.helpers import Default, _default
 from sanic.http import Http
-from sanic.log import deprecation, error_logger
+from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
@@ -71,10 +71,6 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_PING_TIMEOUT": 20,
 }
 
-# These values will be removed from the Config object in v22.6 and moved
-# to the application state
-DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
-
 
 class DescriptorMeta(type):
     def __init__(cls, *_):
@@ -132,6 +128,7 @@ class Config(dict, metaclass=DescriptorMeta):
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
+        self._configure_warnings()
 
         self._converters = [str, str_to_bool, float, int]
 
@@ -149,7 +146,6 @@ class Config(dict, metaclass=DescriptorMeta):
             self.load_environment_vars(SANIC_PREFIX)
 
         self._configure_header_size()
-        self._configure_warnings()
         self._check_error_format()
         self._init = True
 
@@ -241,7 +237,9 @@ class Config(dict, metaclass=DescriptorMeta):
         """
         Looks for prefixed environment variables and applies them to the
         configuration if present. This is called automatically when Sanic
-        starts up to load environment variables into config.
+        starts up to load environment variables into config. Environment
+        variables should start with the defined prefix and should only
+        contain uppercase letters.
 
         It will automatically hydrate the following types:
 
@@ -267,12 +265,9 @@ class Config(dict, metaclass=DescriptorMeta):
         `See user guide re: config
         <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
-        lower_case_var_found = False
         for key, value in environ.items():
-            if not key.startswith(prefix):
+            if not key.startswith(prefix) or not key.isupper():
                 continue
-            if not key.isupper():
-                lower_case_var_found = True
 
             _, config_key = key.split(prefix, 1)
 
@@ -282,12 +277,6 @@ class Config(dict, metaclass=DescriptorMeta):
                     break
                 except ValueError:
                     pass
-        if lower_case_var_found:
-            deprecation(
-                "Lowercase environment variables will not be "
-                "loaded into Sanic config beginning in v22.9.",
-                22.9,
-            )
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """

@@ -448,8 +448,8 @@ def exception_response(
             # from the route
             if request.route:
                 try:
-                    if request.route.ctx.error_format:
-                        render_format = request.route.ctx.error_format
+                    if request.route.extra.error_format:
+                        render_format = request.route.extra.error_format
                 except AttributeError:
                     ...
 

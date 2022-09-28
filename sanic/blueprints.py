@@ -406,7 +406,7 @@ class Blueprint(BaseSanic):
 
         self.routes += [route for route in routes if isinstance(route, Route)]
         self.websocket_routes += [
-            route for route in self.routes if route.ctx.websocket
+            route for route in self.routes if route.extra.websocket
         ]
         self.middlewares += middleware
         self.exceptions += exception_handlers

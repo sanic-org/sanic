@@ -10,6 +10,7 @@ from textwrap import dedent
 from typing import (
     Any,
     Callable,
+    Dict,
     Iterable,
     List,
     Optional,
@@ -38,14 +39,6 @@ from sanic.types import HashableDict
 RouteWrapper = Callable[
     [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
 ]
-RESTRICTED_ROUTE_CONTEXT = (
-    "ignore_body",
-    "stream",
-    "hosts",
-    "static",
-    "error_format",
-    "websocket",
-)
 
 
 class RouteMixin(metaclass=SanicMeta):
@@ -1046,24 +1039,12 @@ class RouteMixin(metaclass=SanicMeta):
 
         return types
 
-    def _build_route_context(self, raw):
+    def _build_route_context(self, raw: Dict[str, Any]) -> HashableDict:
         ctx_kwargs = {
             key.replace("ctx_", ""): raw.pop(key)
             for key in {**raw}.keys()
             if key.startswith("ctx_")
         }
-        restricted = [
-            key for key in ctx_kwargs.keys() if key in RESTRICTED_ROUTE_CONTEXT
-        ]
-        if restricted:
-            restricted_arguments = ", ".join(restricted)
-            raise AttributeError(
-                "Cannot use restricted route context: "
-                f"{restricted_arguments}. This limitation is only in place "
-                "until v22.9 when the restricted names will no longer be in"
-                "conflict. See https://github.com/sanic-org/sanic/issues/2303 "
-                "for more information."
-            )
         if raw:
             unexpected_arguments = ", ".join(raw.keys())
             raise TypeError(

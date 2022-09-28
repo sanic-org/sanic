@@ -525,7 +525,7 @@ def test_multiple_uvloop_configs_display_warning(caplog):
 
     counter = Counter([(r[1], r[2]) for r in caplog.record_tuples])
 
-    assert counter[(logging.WARNING, message)] == 2
+    assert counter[(logging.WARNING, message)] == 3
 
 
 def test_cannot_run_fast_and_workers(app: Sanic):

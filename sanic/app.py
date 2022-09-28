@@ -47,7 +47,7 @@ from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
-from sanic.application.state import ApplicationState, Mode, ServerStage
+from sanic.application.state import ApplicationState, ServerStage
 from sanic.asgi import ASGIApp
 from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
@@ -158,7 +158,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     )
 
     _app_registry: Dict[str, "Sanic"] = {}
-    _uvloop_setting = None  # TODO: Remove in v22.6
     test_mode = False
 
     def __init__(
@@ -394,8 +393,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             routes = [routes]
 
         for r in routes:
-            r.ctx.websocket = websocket
-            r.ctx.static = params.get("static", False)
+            r.extra.websocket = websocket
+            r.extra.static = params.get("static", False)
             r.ctx.__dict__.update(ctx)
 
         return routes
@@ -589,7 +588,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         uri = route.path
 
-        if getattr(route.ctx, "static", None):
+        if getattr(route.extra, "static", None):
             filename = kwargs.pop("filename", "")
             # it's static folder
             if "__file_uri__" in uri:
@@ -622,18 +621,18 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         host = kwargs.pop("_host", None)
         external = kwargs.pop("_external", False) or bool(host)
         scheme = kwargs.pop("_scheme", "")
-        if route.ctx.hosts and external:
-            if not host and len(route.ctx.hosts) > 1:
+        if route.extra.hosts and external:
+            if not host and len(route.extra.hosts) > 1:
                 raise ValueError(
-                    f"Host is ambiguous: {', '.join(route.ctx.hosts)}"
+                    f"Host is ambiguous: {', '.join(route.extra.hosts)}"
                 )
-            elif host and host not in route.ctx.hosts:
+            elif host and host not in route.extra.hosts:
                 raise ValueError(
                     f"Requested host ({host}) is not available for this "
-                    f"route: {route.ctx.hosts}"
+                    f"route: {route.extra.hosts}"
                 )
             elif not host:
-                host = list(route.ctx.hosts)[0]
+                host = list(route.extra.hosts)[0]
 
         if scheme and not external:
             raise ValueError("When specifying _scheme, _external must be True")
@@ -884,7 +883,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             if (
                 request.stream
                 and request.stream.request_body
-                and not route.ctx.ignore_body
+                and not route.extra.ignore_body
             ):
 
                 if hasattr(handler, "is_stream"):
@@ -1346,18 +1345,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     def debug(self):
         return self.state.is_debug
 
-    @debug.setter
-    def debug(self, value: bool):
-        deprecation(
-            "Setting the value of a Sanic application's debug value directly "
-            "is deprecated and will be removed in v22.9. Please set it using "
-            "the CLI, app.run, app.prepare, or directly set "
-            "app.state.mode to Mode.DEBUG.",
-            22.9,
-        )
-        mode = Mode.DEBUG if value else Mode.PRODUCTION
-        self.state.mode = mode
-
     @property
     def auto_reload(self):
         return self.config.AUTO_RELOAD
@@ -1373,58 +1360,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         :return: The application state
         """
         return self._state
-
-    @property
-    def is_running(self):
-        deprecation(
-            "Use of the is_running property is no longer used by Sanic "
-            "internally. The property is now deprecated and will be removed "
-            "in version 22.9. You may continue to set the property for your "
-            "own needs until that time. If you would like to check whether "
-            "the application is operational, please use app.state.stage. More "
-            "information is available at ___.",
-            22.9,
-        )
-        return self.state.is_running
-
-    @is_running.setter
-    def is_running(self, value: bool):
-        deprecation(
-            "Use of the is_running property is no longer used by Sanic "
-            "internally. The property is now deprecated and will be removed "
-            "in version 22.9. You may continue to set the property for your "
-            "own needs until that time. If you would like to check whether "
-            "the application is operational, please use app.state.stage. More "
-            "information is available at ___.",
-            22.9,
-        )
-        self.state.is_running = value
-
-    @property
-    def is_stopping(self):
-        deprecation(
-            "Use of the is_stopping property is no longer used by Sanic "
-            "internally. The property is now deprecated and will be removed "
-            "in version 22.9. You may continue to set the property for your "
-            "own needs until that time. If you would like to check whether "
-            "the application is operational, please use app.state.stage. More "
-            "information is available at ___.",
-            22.9,
-        )
-        return self.state.is_stopping
-
-    @is_stopping.setter
-    def is_stopping(self, value: bool):
-        deprecation(
-            "Use of the is_stopping property is no longer used by Sanic "
-            "internally. The property is now deprecated and will be removed "
-            "in version 22.9. You may continue to set the property for your "
-            "own needs until that time. If you would like to check whether "
-            "the application is operational, please use app.state.stage. More "
-            "information is available at ___.",
-            22.9,
-        )
-        self.state.is_stopping = value
 
     @property
     def reload_dirs(self):
@@ -1520,6 +1455,16 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
 
+    @classmethod
+    def _check_uvloop_conflict(cls) -> None:
+        values = {app.config.USE_UVLOOP for app in cls._app_registry.values()}
+        if len(values) > 1:
+            error_logger.warning(
+                "It looks like you're running several apps with different "
+                "uvloop settings. This is not supported and may lead to "
+                "unintended behaviour."
+            )
+
     # -------------------------------------------------------------------- #
     # Lifecycle
     # -------------------------------------------------------------------- #
@@ -1569,17 +1514,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 23.3,
             )
 
-        # TODO: Replace in v22.6 to check against apps in app registry
-        if (
-            self.__class__._uvloop_setting is not None
-            and self.__class__._uvloop_setting != self.config.USE_UVLOOP
-        ):
-            error_logger.warning(
-                "It looks like you're running several apps with different "
-                "uvloop settings. This is not supported and may lead to "
-                "unintended behaviour."
-            )
-        self.__class__._uvloop_setting = self.config.USE_UVLOOP
+        Sanic._check_uvloop_conflict()
 
         # Startup time optimizations
         if self.state.primary:

@@ -158,7 +158,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     )
 
     _app_registry: Dict[str, "Sanic"] = {}
-    _uvloop_setting = None  # TODO: Remove in v22.6
     test_mode = False
 
     def __init__(

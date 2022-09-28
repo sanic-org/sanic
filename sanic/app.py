@@ -1456,6 +1456,16 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 return cls(name)
             raise SanicException(f'Sanic app name "{name}" not found.')
 
+    @classmethod
+    def _check_uvloop_conflict(cls) -> None:
+        values = {app.config.USE_UVLOOP for app in cls._app_registry.values()}
+        if len(values) > 1:
+            error_logger.warning(
+                "It looks like you're running several apps with different "
+                "uvloop settings. This is not supported and may lead to "
+                "unintended behaviour."
+            )
+
     # -------------------------------------------------------------------- #
     # Lifecycle
     # -------------------------------------------------------------------- #
@@ -1505,17 +1515,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 23.3,
             )
 
-        # TODO: Replace in v22.6 to check against apps in app registry
-        if (
-            self.__class__._uvloop_setting is not None
-            and self.__class__._uvloop_setting != self.config.USE_UVLOOP
-        ):
-            error_logger.warning(
-                "It looks like you're running several apps with different "
-                "uvloop settings. This is not supported and may lead to "
-                "unintended behaviour."
-            )
-        self.__class__._uvloop_setting = self.config.USE_UVLOOP
+        Sanic._check_uvloop_conflict()
 
         # Startup time optimizations
         if self.state.primary:

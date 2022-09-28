@@ -71,10 +71,6 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_PING_TIMEOUT": 20,
 }
 
-# These values will be removed from the Config object in v22.6 and moved
-# to the application state
-DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
-
 
 class DescriptorMeta(type):
     def __init__(cls, *_):

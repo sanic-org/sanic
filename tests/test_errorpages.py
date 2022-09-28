@@ -97,15 +97,15 @@ def test_auto_fallback_with_content_type(app):
 def test_route_error_format_set_on_auto(app):
     @app.get("/text")
     def text_response(request):
-        return text(request.route.ctx.error_format)
+        return text(request.route.extra.error_format)
 
     @app.get("/json")
     def json_response(request):
-        return json({"format": request.route.ctx.error_format})
+        return json({"format": request.route.extra.error_format})
 
     @app.get("/html")
     def html_response(request):
-        return html(request.route.ctx.error_format)
+        return html(request.route.extra.error_format)
 
     _, response = app.test_client.get("/text")
     assert response.text == "text"

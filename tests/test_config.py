@@ -125,14 +125,9 @@ def test_env_w_custom_converter():
 
 
 def test_env_lowercase():
-    with pytest.warns(None) as record:
-        environ["SANIC_test_answer"] = "42"
-        app = Sanic(name="Test")
-        assert app.config.test_answer == 42
-    assert str(record[0].message) == (
-        "[DEPRECATION v22.9] Lowercase environment variables will not be "
-        "loaded into Sanic config beginning in v22.9."
-    )
+    environ["SANIC_test_answer"] = "42"
+    app = Sanic(name="Test")
+    assert "test_answer" not in app.config
     del environ["SANIC_test_answer"]
 
 

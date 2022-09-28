@@ -1045,4 +1045,9 @@ class RouteMixin(metaclass=SanicMeta):
             for key in {**raw}.keys()
             if key.startswith("ctx_")
         }
+        if raw:
+            unexpected_arguments = ", ".join(raw.keys())
+            raise TypeError(
+                f"Unexpected keyword arguments: {unexpected_arguments}"
+            )
         return HashableDict(ctx_kwargs)

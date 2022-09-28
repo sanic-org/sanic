@@ -2,3 +2,12 @@
 .wy-nav-top {
   background: #444444;
 }
+
+#changelog section {
+  padding-left: 3rem;
+}
+
+#changelog section h2,
+#changelog section h3 {
+  margin-left: -3rem;
+}

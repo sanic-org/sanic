@@ -304,7 +304,6 @@ class StartupMixin(metaclass=SanicMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
-
         # Set explicitly passed configuration values
         for attribute, value in {
             "ACCESS_LOG": access_log,
@@ -822,7 +821,12 @@ class StartupMixin(metaclass=SanicMeta):
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                     *(app.state.reload_dirs for app in apps)
                 )
-                reloader = Reloader(monitor_pub, primary.config.AUTO_RELOAD_INTERVAL, reload_dirs, app_loader)
+                reloader = Reloader(
+                    monitor_pub,
+                    primary.config.AUTO_RELOAD_INTERVAL,
+                    reload_dirs,
+                    app_loader,
+                )
                 manager.manage("Reloader", reloader, {}, transient=False)
 
             inspector = None

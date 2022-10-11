@@ -278,6 +278,15 @@ class DevelopmentGroup(Group):
             ),
         )
         self.container.add_argument(
+            "-i",
+            "--interval",
+            "--auto-reload-interval",
+            dest="auto_reload_interval",
+            default=1.0,
+            type=float,
+            help="Interval in seconds to check for file changes [default 1.0]",
+        )
+        self.container.add_argument(
             "-R",
             "--reload-dir",
             dest="path",

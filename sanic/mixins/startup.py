@@ -114,6 +114,7 @@ class StartupMixin(metaclass=SanicMeta):
         dev: bool = False,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
+        auto_reload_interval: Optional[Union[int, float]] = None,
         version: HTTPVersion = HTTP.VERSION_1,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
@@ -176,6 +177,7 @@ class StartupMixin(metaclass=SanicMeta):
             dev=dev,
             debug=debug,
             auto_reload=auto_reload,
+            auto_reload_interval=auto_reload_interval,
             version=version,
             ssl=ssl,
             sock=sock,
@@ -213,6 +215,7 @@ class StartupMixin(metaclass=SanicMeta):
         dev: bool = False,
         debug: bool = False,
         auto_reload: Optional[bool] = None,
+        auto_reload_interval: Optional[Union[int, float]] = None,
         version: HTTPVersion = HTTP.VERSION_1,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
@@ -301,10 +304,12 @@ class StartupMixin(metaclass=SanicMeta):
                 WebSocketProtocol if self.websocket_enabled else HttpProtocol
             )
 
+
         # Set explicitly passed configuration values
         for attribute, value in {
             "ACCESS_LOG": access_log,
             "AUTO_RELOAD": auto_reload,
+            "AUTO_RELOAD_INTERVAL": auto_reload_interval,
             "MOTD": motd,
             "NOISY_EXCEPTIONS": noisy_exceptions,
         }.items():

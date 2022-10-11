@@ -181,6 +181,7 @@ Or, a path to a directory to run as a simple HTTP server:
 
         kwargs = {
             "access_log": self.args.access_log,
+            "auto_reload_interval": self.args.auto_reload_interval,
             "coffee": self.args.coffee,
             "debug": self.args.debug,
             "fast": self.args.fast,

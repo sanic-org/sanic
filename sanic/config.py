@@ -38,6 +38,7 @@ DEFAULT_CONFIG = {
     "ACCESS_LOG": False,
     "AUTO_EXTEND": True,
     "AUTO_RELOAD": False,
+    "AUTO_RELOAD_INTERVAL": 1.0,
     "EVENT_AUTOREGISTER": False,
     "DEPRECATION_FILTER": "once",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
@@ -85,6 +86,7 @@ class Config(dict, metaclass=DescriptorMeta):
     ACCESS_LOG: bool
     AUTO_EXTEND: bool
     AUTO_RELOAD: bool
+    AUTO_RELOAD_INTERVAL: Union[int, float]
     EVENT_AUTOREGISTER: bool
     DEPRECATION_FILTER: FilterWarningType
     FORWARDED_FOR_HEADER: str

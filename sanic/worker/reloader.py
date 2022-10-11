@@ -9,8 +9,8 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from signal import SIGINT, SIGTERM
 from signal import signal as signal_func
-from time import sleep
-from typing import Dict, Set, Union
+from threading import Event
+from typing import Dict, Optional, Set, Union
 
 from sanic.server.events import trigger_events
 from sanic.worker.loader import AppLoader
@@ -24,10 +24,10 @@ class Reloader:
         reload_dirs: Set[Path],
         app_loader: AppLoader,
     ):
+        self._stop: Optional[Event] = None
         self._publisher = publisher
         self.interval = float(interval)
         self.reload_dirs = reload_dirs
-        self.run = True
         self.app_loader = app_loader
 
     def __call__(self) -> None:
@@ -41,10 +41,11 @@ class Reloader:
         before_trigger = app.listeners.get("before_reload_trigger")
         after_trigger = app.listeners.get("after_reload_trigger")
         loop = new_event_loop()
+        self._stop = Event()
         if reloader_start:
             trigger_events(reloader_start, loop, app)
 
-        while self.run:
+        while not self._stop.is_set():
             changed = set()
             for filename in self.files():
                 try:
@@ -63,13 +64,13 @@ class Reloader:
                 self.reload(",".join(changed) if changed else "unknown")
                 if after_trigger:
                     trigger_events(after_trigger, loop, app)
-            sleep(self.interval)
+            self._stop.wait(self.interval)
         else:
             if reloader_stop:
                 trigger_events(reloader_stop, loop, app)
 
     def stop(self, *_):
-        self.run = False
+        self._stop.set()
 
     def reload(self, reloaded_files):
         message = f"__ALL_PROCESSES__:{reloaded_files}"

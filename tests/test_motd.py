@@ -79,5 +79,20 @@ def test_reload_dirs(app):
             reload_dir="./", auto_reload=True, motd_display={"foo": "bar"}
         )
     mock.assert_called()
-    assert mock.call_args.args[2]["auto-reload"] == f"enabled, {os.getcwd()}"
+    assert (
+        mock.call_args.args[2]["auto-reload"]
+        == f"enabled [1.0s], {os.getcwd()}"
+    )
     assert mock.call_args.args[3] == {"foo": "bar"}
+
+
+def test_reload_interval(app):
+    app.config.LOGO = None
+    app.config.MOTD = True
+    app.config.AUTO_RELOAD = True
+    app.config.AUTO_RELOAD_INTERVAL = 5.0
+
+    with patch.object(MOTD, "output") as mock:
+        app.prepare()
+    mock.assert_called()
+    assert mock.call_args.args[2]["auto-reload"] == "enabled [5.0s]"

@@ -246,6 +246,18 @@ def test_auto_reload(cmd: str, caplog):
 
 
 @pytest.mark.parametrize(
+    "cmd",
+    (("--auto-reload-interval=5.0",), ("--interval=5.0",), ("-i", "5.0")),
+)
+def test_auto_reload_interval(cmd: str, caplog):
+    command = ["fake.server.app", *cmd]
+    lines = capture(command, caplog)
+    info = read_app_info(lines)
+
+    assert info["auto_reload_interval"] == 5.0
+
+
+@pytest.mark.parametrize(
     "cmd,expected",
     (
         ("", False),

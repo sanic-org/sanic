@@ -30,7 +30,7 @@ from sanic.response import (
     raw,
     text,
 )
-from sanic.response.models import JSONResponse
+from sanic.response.types import JSONResponse
 
 
 JSON_DATA = {"ok": True}

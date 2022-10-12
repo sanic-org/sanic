@@ -200,7 +200,7 @@ class HTTPResponse(BaseHTTPResponse):
 
 class JsonResponse(HTTPResponse):
     __slots__ = (
-        "_dumps",
+        "_dumps_method",
         "_dumps_kwargs",
         "_raw_body",
     )
@@ -214,11 +214,13 @@ class JsonResponse(HTTPResponse):
         dumps: Optional[Callable[..., str]] = None,
         **kwargs: Any,
     ):
-        self._dumps = dumps or self.__class__._dumps
+        if not dumps:
+            dumps = HTTPResponse._dumps
+        self._dumps_method = dumps
         self._dumps_kwargs = kwargs
         self._raw_body = body
         super().__init__(
-            self._dumps(body, **kwargs),
+            self._dumps_method(body, **kwargs),
             headers=headers,
             status=status,
             content_type=content_type,
@@ -233,7 +235,7 @@ class JsonResponse(HTTPResponse):
         self.set_json(value)
 
     def set_json(self, new_json: Any, dumps: Optional[Callable[..., str]] = None, **kwargs: Any):
-        dumps_ = dumps or self._dumps
+        dumps_ = dumps or self._dumps_method
         kwargs_ = kwargs if kwargs else self._dumps_kwargs
 
         self._raw_body = new_json

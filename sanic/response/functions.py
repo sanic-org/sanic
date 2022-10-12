@@ -27,7 +27,7 @@ from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
-from .models import BaseHTTPResponse, HTTPResponse, JsonResponse, ResponseStream
+from .models import HTTPResponse, JsonResponse, ResponseStream
 
 
 try:
@@ -74,7 +74,8 @@ def json(
         status=status,
         headers=headers,
         content_type=content_type,
-        dumps=dumps
+        dumps=dumps,
+        **kwargs,
     )
 
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from email.utils import formatdate, parsedate_to_datetime
-from functools import partial
 from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
@@ -16,17 +15,7 @@ from sanic.helpers import Default, _default
 from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
 
-from .models import HTTPResponse, JSONResponse, ResponseStream
-
-
-try:
-    from ujson import dumps as json_dumps
-except ImportError:
-    # This is done in order to ensure that the JSON response is
-    # kept consistent across both ujson and inbuilt json usage.
-    from json import dumps
-
-    json_dumps = partial(dumps, separators=(",", ":"))
+from .types import HTTPResponse, JSONResponse, ResponseStream
 
 
 def empty(

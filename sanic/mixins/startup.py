@@ -612,6 +612,12 @@ class StartupMixin(metaclass=SanicMeta):
         extra = {}
         if self.config.AUTO_RELOAD:
             reload_display = "enabled"
+
+            if self.config.AUTO_RELOAD_INTERVAL:
+                reload_display += " [{:.1f}s]".format(
+                    self.config.AUTO_RELOAD_INTERVAL
+                )
+
             if self.state.reload_dirs:
                 reload_display += ", ".join(
                     [
@@ -622,6 +628,7 @@ class StartupMixin(metaclass=SanicMeta):
                         ),
                     ]
                 )
+
             display["auto-reload"] = reload_display
 
         packages = []

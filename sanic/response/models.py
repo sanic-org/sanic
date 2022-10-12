@@ -18,10 +18,7 @@ from typing import (
 from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import (
-    has_message_body,
-    remove_entity_headers,
-)
+from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
 
 
@@ -198,7 +195,7 @@ class HTTPResponse(BaseHTTPResponse):
         await self.eof()
 
 
-class JsonResponse(HTTPResponse):
+class JSONResponse(HTTPResponse):
     __slots__ = (
         "_dumps_method",
         "_dumps_kwargs",
@@ -234,7 +231,12 @@ class JsonResponse(HTTPResponse):
     def raw_body(self, value: Any):
         self.set_json(value)
 
-    def set_json(self, new_json: Any, dumps: Optional[Callable[..., str]] = None, **kwargs: Any):
+    def set_json(
+        self,
+        new_json: Any,
+        dumps: Optional[Callable[..., str]] = None,
+        **kwargs: Any,
+    ):
         dumps_ = dumps or self._dumps_method
         kwargs_ = kwargs if kwargs else self._dumps_kwargs
 

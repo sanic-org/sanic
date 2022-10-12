@@ -7,27 +7,16 @@ from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from time import time
-from typing import (
-    Any,
-    AnyStr,
-    Callable,
-    Dict,
-    Optional,
-    Union,
-)
+from typing import Any, AnyStr, Callable, Dict, Optional, Union
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.helpers import (
-    Default,
-    _default,
-)
+from sanic.helpers import Default, _default
 from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
 
-
-from .models import HTTPResponse, JsonResponse, ResponseStream
+from .models import HTTPResponse, JSONResponse, ResponseStream
 
 
 try:
@@ -69,7 +58,7 @@ def json(
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
 
-    return JsonResponse(
+    return JSONResponse(
         body,
         status=status,
         headers=headers,

@@ -11,12 +11,13 @@ from .functions import (
 )
 
 
-from .models import BaseHTTPResponse, HTTPResponse, ResponseStream, json_dumps
+from .models import BaseHTTPResponse, HTTPResponse, JSONResponse, ResponseStream, json_dumps
 
 
 __all__ = (
     "BaseHTTPResponse",
     "HTTPResponse",
+    "JSONResponse",
     "ResponseStream",
     "empty",
     "json",

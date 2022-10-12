@@ -27,7 +27,7 @@ from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
 
 
-from .models import BaseHTTPResponse, HTTPResponse, ResponseStream
+from .models import BaseHTTPResponse, HTTPResponse, JsonResponse, ResponseStream
 
 
 try:
@@ -68,13 +68,13 @@ def json(
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
-    if not dumps:
-        dumps = BaseHTTPResponse._dumps
-    return HTTPResponse(
-        dumps(body, **kwargs),
-        headers=headers,
+
+    return JsonResponse(
+        body,
         status=status,
+        headers=headers,
         content_type=content_type,
+        dumps=dumps
     )
 
 

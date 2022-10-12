@@ -15,8 +15,6 @@ from typing import (
     Union,
 )
 
-from django.shortcuts import HttpResponse
-
 from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
@@ -177,7 +175,7 @@ class HTTPResponse(BaseHTTPResponse):
 
     def __init__(
         self,
-        body: Optional[AnyStr] = None,
+        body: Optional[Any] = None,
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
@@ -198,6 +196,48 @@ class HTTPResponse(BaseHTTPResponse):
 
     async def __aexit__(self, *_):
         await self.eof()
+
+
+class JsonResponse(HTTPResponse):
+    __slots__ = (
+        "_dumps",
+        "_dumps_kwargs",
+        "_raw_body",
+    )
+
+    def __init__(
+        self,
+        body: Optional[Any] = None,
+        status: int = 200,
+        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        content_type: Optional[str] = None,
+        dumps: Optional[Callable[..., str]] = None,
+        **kwargs: Any,
+    ):
+        self._dumps = dumps or self.__class__._dumps
+        self._dumps_kwargs = kwargs
+        self._raw_body = body
+        super().__init__(
+            self._dumps(body, **kwargs),
+            headers=headers,
+            status=status,
+            content_type=content_type,
+        )
+
+    @property
+    def raw_body(self) -> Optional[Any]:
+        return self._raw_body
+
+    @raw_body.setter
+    def raw_body(self, value: Any):
+        self.set_json(value)
+
+    def set_json(self, new_json: Any, dumps: Optional[Callable[..., str]] = None, **kwargs: Any):
+        dumps_ = dumps or self._dumps
+        kwargs_ = kwargs if kwargs else self._dumps_kwargs
+
+        self._raw_body = new_json
+        self.body = self._encode_body(dumps_(new_json, **kwargs_))
 
 
 class ResponseStream:

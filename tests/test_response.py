@@ -30,6 +30,7 @@ from sanic.response import (
     raw,
     text,
 )
+from sanic.response.models import JSONResponse
 
 
 JSON_DATA = {"ok": True}
@@ -185,11 +186,22 @@ def json_app(app):
 
 def test_json_response(json_app):
     from sanic.response import json_dumps
+    NEW_RESP = {"foo": "bar"}
+
+    @json_app.middleware("response")
+    async def check_types(request: Request, response: JSONResponse):
+        assert isinstance(response, JSONResponse)
+        assert response.raw_body == JSON_DATA
+        assert response.body == json_dumps(JSON_DATA).encode("utf-8")
+
+        response.set_json(NEW_RESP)
+        assert response.raw_body == NEW_RESP
+        assert response.body == json_dumps(NEW_RESP).encode("utf-8")
 
     request, response = json_app.test_client.get("/")
     assert response.status == 200
-    assert response.text == json_dumps(JSON_DATA)
-    assert response.json == JSON_DATA
+    assert response.text == json_dumps(NEW_RESP)
+    assert response.json == NEW_RESP
 
 
 def test_no_content(json_app):

@@ -282,7 +282,6 @@ class DevelopmentGroup(Group):
             "--interval",
             "--auto-reload-interval",
             dest="auto_reload_interval",
-            default=1.0,
             type=float,
             help="Interval in seconds to check for file changes [default 1.0]",
         )

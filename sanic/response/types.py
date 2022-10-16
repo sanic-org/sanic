@@ -196,6 +196,23 @@ class HTTPResponse(BaseHTTPResponse):
 
 
 class JSONResponse(HTTPResponse):
+    """
+    HTTP response to be sent back to the client, when the response
+    is of json type. Offers several utilities to manipulate common
+    json data types.
+
+    :param body: the body content to be returned
+    :type body: Optional[Any]
+    :param status: HTTP response number. **Default=200**
+    :type status: int
+    :param headers: headers to be returned
+    :type headers: Optional
+    :param content_type: content type to be returned (as a header)
+    :type content_type: Optional[str]
+    :param dumps: json.dumps function to use
+    :type dumps: Optional[Callable]
+    """
+
     __slots__ = (
         "_dumps_method",
         "_dumps_kwargs",

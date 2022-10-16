@@ -215,8 +215,8 @@ class JSONResponse(HTTPResponse):
 
     __slots__ = (
         "_dumps_method",
-        "_dumps_kwargs",
         "_raw_body",
+        "dumps_kwargs",
     )
 
     def __init__(
@@ -231,8 +231,8 @@ class JSONResponse(HTTPResponse):
         if not dumps:
             dumps = HTTPResponse._dumps
         self._dumps_method = dumps
-        self._dumps_kwargs = kwargs
         self._raw_body = body
+        self.dumps_kwargs = kwargs
         super().__init__(
             self._dumps_method(body, **kwargs),
             headers=headers,
@@ -255,7 +255,7 @@ class JSONResponse(HTTPResponse):
         **kwargs: Any,
     ):
         dumps_ = dumps or self._dumps_method
-        kwargs_ = kwargs if kwargs else self._dumps_kwargs
+        kwargs_ = kwargs if kwargs else self.dumps_kwargs
 
         self._raw_body = new_json
         self.body = self._encode_body(dumps_(new_json, **kwargs_))

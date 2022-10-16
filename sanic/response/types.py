@@ -248,6 +248,20 @@ class JSONResponse(HTTPResponse):
     def raw_body(self, value: Any):
         self.set_json(value)
 
+    def append(self, value: Any):
+        """Append a value to the json response list."""
+
+        if not isinstance(self._raw_body, list):
+            raise ValueError("Cannot append to non-list response")
+        self._raw_body.append(value)
+
+    def extend(self, value: Any):
+        """Extend the json response list."""
+
+        if not isinstance(self._raw_body, list):
+            raise ValueError("Cannot extend non-list response")
+        self._raw_body.extend(value)
+
     def set_json(
         self,
         new_json: Any,
@@ -259,6 +273,13 @@ class JSONResponse(HTTPResponse):
 
         self._raw_body = new_json
         self.body = self._encode_body(dumps_(new_json, **kwargs_))
+
+    def update(self, *args, **kwargs) -> None:
+        """Update the json response dict."""
+
+        if not isinstance(self._raw_body, dict):
+            raise TypeError("Cannot update a non-dict response")
+        self._raw_body.update(*args, **kwargs)
 
 
 class ResponseStream:

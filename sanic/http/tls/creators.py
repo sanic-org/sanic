@@ -20,11 +20,7 @@ from sanic.constants import (
 )
 from sanic.exceptions import SanicException
 from sanic.helpers import Default
-from sanic.http.tls.context import (
-    CertSimple,
-    SanicSSLContext,
-    process_to_context,
-)
+from sanic.http.tls.context import CertSimple, SanicSSLContext
 
 
 try:
@@ -287,18 +283,4 @@ class TrustmeCreator(CertCreator):
         context.sanic["creator"] = "trustme"
         context.sanic["localhost"] = localhost
 
-        return context
-
-
-class GenericCreator(CertCreator):
-    def check_supported(self) -> None:
-        ...
-
-    def generate_cert(self, _) -> ssl.SSLContext:
-        ssldef = {"cert": self.cert, "key": self.key}
-        context = process_to_context(ssldef)
-        if not context:  # no cov
-            raise RuntimeError(
-                f"No SSL context could be loaded using {ssldef}"
-            )
         return context

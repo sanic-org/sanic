@@ -16,12 +16,8 @@ from typing import (
     cast,
 )
 
-from sanic.http.tls.creators import (
-    CertCreator,
-    GenericCreator,
-    MkcertCreator,
-    TrustmeCreator,
-)
+from sanic.http.tls.context import process_to_context
+from sanic.http.tls.creators import CertCreator, MkcertCreator, TrustmeCreator
 
 
 if TYPE_CHECKING:
@@ -114,9 +110,11 @@ class CertLoader:
     _creator_class: Type[CertCreator]
 
     def __init__(self, ssl_data: Dict[str, Union[str, os.PathLike]]):
+        self._ssl_data = ssl_data
+
         creator_name = ssl_data.get("creator")
         if not creator_name:
-            self._creator_class = GenericCreator
+            return
         else:
             if creator_name not in ("mkcert", "trustme"):
                 raise RuntimeError(
@@ -129,8 +127,11 @@ class CertLoader:
 
         self._key = ssl_data["key"]
         self._cert = ssl_data["cert"]
-        self._localhost = cast(str, ssl_data.get("localhost", ""))
+        self._localhost = cast(str, ssl_data["localhost"])
 
     def load(self, app: SanicApp):
+        if not hasattr(self, "_creator_class"):
+            return process_to_context(self._ssl_data)
+
         creator = self._creator_class(app, self._key, self._cert)
         return creator.generate_cert(self._localhost)

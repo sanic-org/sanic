@@ -639,7 +639,8 @@ def test_sanic_ssl_context_create():
     assert isinstance(sanic_context, SanicSSLContext)
 
 
-def test_ssl_in_multiprocess_mode(app: Sanic):
+def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
+
     ssl_dict = {"cert": localhost_cert, "key": localhost_key}
     event = Event()
 
@@ -653,5 +654,12 @@ def test_ssl_in_multiprocess_mode(app: Sanic):
         app.stop()
 
     assert not event.is_set()
-    app.run(ssl=ssl_dict)
+    with caplog.at_level(logging.INFO):
+        app.run(ssl=ssl_dict)
     assert event.is_set()
+
+    assert (
+        "sanic.root",
+        logging.INFO,
+        "Goin' Fast @ https://127.0.0.1:8000",
+    ) in caplog.record_tuples

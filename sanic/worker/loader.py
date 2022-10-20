@@ -107,7 +107,10 @@ class AppLoader:
 
 
 class CertLoader:
-    _creator_class: Type[CertCreator]
+    _creators = {
+        "mkcert": MkcertCreator,
+        "trustme": TrustmeCreator,
+    }
 
     def __init__(self, ssl_data: Dict[str, Union[str, os.PathLike]]):
         self._ssl_data = ssl_data
@@ -115,15 +118,12 @@ class CertLoader:
         creator_name = ssl_data.get("creator")
         if not creator_name:
             return
-        else:
-            if creator_name not in ("mkcert", "trustme"):
-                raise RuntimeError(
-                    f"Unknown certificate creator: {creator_name}"
-                )
-            elif creator_name == "mkcert":
-                self._creator_class = MkcertCreator
-            elif creator_name == "trustme":
-                self._creator_class = TrustmeCreator
+
+        # Assertion is to make type hints happy
+        assert isinstance(creator_name, str)  # nosec B101
+        self._creator_class = self._creators.get(creator_name)
+        if not self._creator_class:
+            raise RuntimeError(f"Unknown certificate creator: {creator_name}")
 
         self._key = ssl_data["key"]
         self._cert = ssl_data["cert"]
@@ -133,5 +133,7 @@ class CertLoader:
         if not hasattr(self, "_creator_class"):
             return process_to_context(self._ssl_data)
 
+        # Assertion is to make type hints happy
+        assert self._creator_class  # nosec B101
         creator = self._creator_class(app, self._key, self._cert)
         return creator.generate_cert(self._localhost)

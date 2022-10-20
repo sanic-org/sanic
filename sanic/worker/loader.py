@@ -115,13 +115,12 @@ class CertLoader:
     def __init__(self, ssl_data: Dict[str, Union[str, os.PathLike]]):
         self._ssl_data = ssl_data
 
-        creator_name = ssl_data.get("creator")
+        creator_name = cast(str, ssl_data.get("creator"))
+
+        self._creator_class = self._creators.get(creator_name)
         if not creator_name:
             return
 
-        # Assertion is to make type hints happy
-        assert isinstance(creator_name, str)  # nosec B101
-        self._creator_class = self._creators.get(creator_name)
         if not self._creator_class:
             raise RuntimeError(f"Unknown certificate creator: {creator_name}")
 
@@ -130,10 +129,8 @@ class CertLoader:
         self._localhost = cast(str, ssl_data["localhost"])
 
     def load(self, app: SanicApp):
-        if not hasattr(self, "_creator_class"):
+        if not self._creator_class:
             return process_to_context(self._ssl_data)
 
-        # Assertion is to make type hints happy
-        assert self._creator_class  # nosec B101
         creator = self._creator_class(app, self._key, self._cert)
         return creator.generate_cert(self._localhost)

@@ -214,9 +214,12 @@ class JSONResponse(HTTPResponse):
     """
 
     __slots__ = (
-        "_dumps_method",
+        "_body",
+        "_body_set",
+        "_initialized",
         "_raw_body",
-        "dumps_kwargs",
+        "_use_dumps",
+        "_use_dumps_kwargs",
     )
 
     def __init__(
@@ -228,58 +231,57 @@ class JSONResponse(HTTPResponse):
         dumps: Optional[Callable[..., str]] = None,
         **kwargs: Any,
     ):
+        self._initialized = False
         if not dumps:
             dumps = HTTPResponse._dumps
-        self._dumps_method = dumps
+
+        self._use_dumps = dumps
+        self._use_dumps_kwargs = kwargs
+
         self._raw_body = body
-        self.dumps_kwargs = kwargs
+
         super().__init__(
-            self._dumps_method(body, **kwargs),
+            None,
             headers=headers,
             status=status,
             content_type=content_type,
         )
+        self._initialized = True
+
+    def _check_body_not_manually_set(self):
+        if self._body_set:
+            raise SanicException(
+                "Cannot use raw_body after body has been manually set."
+            )
 
     @property
     def raw_body(self) -> Optional[Any]:
+        self._check_body_not_manually_set()
         return self._raw_body
 
     @raw_body.setter
     def raw_body(self, value: Any):
-        self.set_json(value)
+        self._check_body_not_manually_set()
+        self._raw_body = value
 
-    def append(self, value: Any):
-        """Append a value to the json response list."""
+    @property
+    def body(self) -> bytes:
+        if self._body_set:
+            return self._body
+        return self._encode_body(
+            self._use_dumps(self._raw_body, **self._use_dumps_kwargs)
+        )
 
-        if not isinstance(self._raw_body, list):
-            raise ValueError("Cannot append to non-list response")
-        self._raw_body.append(value)
+    @body.setter
+    def body(self, value: bytes):
+        # When calling super().__init__, the body will be set,
+        # but we don't need to save it, since we will be dumping
+        # it on-the-fly from raw_body.
+        if not self._initialized:
+            return
 
-    def extend(self, value: Any):
-        """Extend the json response list."""
-
-        if not isinstance(self._raw_body, list):
-            raise ValueError("Cannot extend non-list response")
-        self._raw_body.extend(value)
-
-    def set_json(
-        self,
-        new_json: Any,
-        dumps: Optional[Callable[..., str]] = None,
-        **kwargs: Any,
-    ):
-        dumps_ = dumps or self._dumps_method
-        kwargs_ = kwargs if kwargs else self.dumps_kwargs
-
-        self._raw_body = new_json
-        self.body = self._encode_body(dumps_(new_json, **kwargs_))
-
-    def update(self, *args, **kwargs) -> None:
-        """Update the json response dict."""
-
-        if not isinstance(self._raw_body, dict):
-            raise TypeError("Cannot update a non-dict response")
-        self._raw_body.update(*args, **kwargs)
+        self._body = value
+        self._body_set = True
 
 
 class ResponseStream:

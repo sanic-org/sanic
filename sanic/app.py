@@ -1455,7 +1455,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 return cls(name)
             raise SanicException(
                 f"Sanic app name '{name}' not found.\n"
-                "App instantiation must occur outside if __name__ == '__main__' "
+                "App instantiation must occur outside "
+                "if __name__ == '__main__' "
                 "block or by using an AppLoader."
             )
 

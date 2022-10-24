@@ -1457,7 +1457,9 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 f"Sanic app name '{name}' not found.\n"
                 "App instantiation must occur outside "
                 "if __name__ == '__main__' "
-                "block or by using an AppLoader."
+                "block or by using an AppLoader.\nSee "
+                "https://sanic.dev/en/guide/deployment/app-loader.html"
+                " for more details."
             )
 
     @classmethod

@@ -1453,7 +1453,14 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 return cls.get_app("__mp_main__", force_create=force_create)
             if force_create:
                 return cls(name)
-            raise SanicException(f'Sanic app name "{name}" not found.')
+            raise SanicException(
+                f"Sanic app name '{name}' not found.\n"
+                "App instantiation must occur outside "
+                "if __name__ == '__main__' "
+                "block or by using an AppLoader.\nSee "
+                "https://sanic.dev/en/guide/deployment/app-loader.html"
+                " for more details."
+            )
 
     @classmethod
     def _check_uvloop_conflict(cls) -> None:

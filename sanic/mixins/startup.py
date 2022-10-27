@@ -41,7 +41,7 @@ from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS, is_atty
-from sanic.helpers import _default
+from sanic.helpers import Default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
 from sanic.http.tls.context import SanicSSLContext
@@ -91,7 +91,8 @@ class StartupMixin(metaclass=SanicMeta):
     def setup_loop(self):
         if not self.asgi:
             if self.config.USE_UVLOOP is True or (
-                self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
+                isinstance(self.config.USE_UVLOOP, Default)
+                and not OS_IS_WINDOWS
             ):
                 try_use_uvloop()
             elif OS_IS_WINDOWS:
@@ -431,7 +432,7 @@ class StartupMixin(metaclass=SanicMeta):
             run_async=return_asyncio_server,
         )
 
-        if self.config.USE_UVLOOP is not _default:
+        if not isinstance(self.config.USE_UVLOOP, Default):
             error_logger.warning(
                 "You are trying to change the uvloop configuration, but "
                 "this is only effective when using the run(...) method. "

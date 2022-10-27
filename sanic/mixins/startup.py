@@ -432,7 +432,7 @@ class StartupMixin(metaclass=SanicMeta):
             run_async=return_asyncio_server,
         )
 
-        if isinstance(self.config.USE_UVLOOP, Default):
+        if not isinstance(self.config.USE_UVLOOP, Default):
             error_logger.warning(
                 "You are trying to change the uvloop configuration, but "
                 "this is only effective when using the run(...) method. "

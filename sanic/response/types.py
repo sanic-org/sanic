@@ -215,7 +215,7 @@ class JSONResponse(HTTPResponse):
 
     __slots__ = (
         "_body",
-        "_body_set",
+        "_body_manually_set",
         "_initialized",
         "_raw_body",
         "_use_dumps",
@@ -232,24 +232,24 @@ class JSONResponse(HTTPResponse):
         **kwargs: Any,
     ):
         self._initialized = False
-        if not dumps:
-            dumps = HTTPResponse._dumps
+        self._body_manually_set = False
 
-        self._use_dumps = dumps
+        self._use_dumps = dumps or BaseHTTPResponse._dumps
         self._use_dumps_kwargs = kwargs
 
         self._raw_body = body
 
         super().__init__(
-            None,
+            self._encode_body(self._use_dumps(body, **self._use_dumps_kwargs)),
             headers=headers,
             status=status,
             content_type=content_type,
         )
+
         self._initialized = True
 
     def _check_body_not_manually_set(self):
-        if self._body_set:
+        if self._body_manually_set:
             raise SanicException(
                 "Cannot use raw_body after body has been manually set."
             )
@@ -261,27 +261,38 @@ class JSONResponse(HTTPResponse):
 
     @raw_body.setter
     def raw_body(self, value: Any):
-        self._check_body_not_manually_set()
+        self._body_manually_set = False
+        self._body = self._encode_body(
+            self._use_dumps(value, **self._use_dumps_kwargs)
+        )
         self._raw_body = value
 
     @property
-    def body(self) -> bytes:
-        if self._body_set:
-            return self._body
-        return self._encode_body(
-            self._use_dumps(self._raw_body, **self._use_dumps_kwargs)
-        )
+    def body(self) -> Optional[bytes]:
+        return self._body
 
     @body.setter
-    def body(self, value: bytes):
-        # When calling super().__init__, the body will be set,
-        # but we don't need to save it, since we will be dumping
-        # it on-the-fly from raw_body.
+    def body(self, value: Optional[bytes]):
+        self._body = value
         if not self._initialized:
             return
+        self._body_manually_set = True
 
-        self._body = value
-        self._body_set = True
+    def set_body(
+        self,
+        body: Any,
+        dumps: Optional[Callable[..., str]] = None,
+        **dumps_kwargs: Any,
+    ) -> None:
+        """Sets a new response body."""
+
+        self._body_manually_set = False
+        self._raw_body = body
+
+        use_dumps = dumps or self._use_dumps
+        use_dumps_kwargs = {**self._use_dumps_kwargs, **dumps_kwargs}
+
+        self._body = self._encode_body(use_dumps(body, **use_dumps_kwargs))
 
 
 class ResponseStream:

@@ -9,6 +9,7 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from signal import SIGINT, SIGTERM
 from signal import signal as signal_func
+from time import sleep
 from typing import Dict, Set
 
 from sanic.server.events import trigger_events
@@ -62,6 +63,7 @@ class Reloader:
                 self.reload(",".join(changed) if changed else "unknown")
                 if after_trigger:
                     trigger_events(after_trigger, loop, app)
+            sleep(self.interval)
         else:
             if reloader_stop:
                 trigger_events(reloader_stop, loop, app)

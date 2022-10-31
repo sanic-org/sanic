@@ -199,7 +199,7 @@ class Config(dict, metaclass=DescriptorMeta):
 
     @property
     def FALLBACK_ERROR_FORMAT(self) -> str:
-        if self._FALLBACK_ERROR_FORMAT is _default:
+        if isinstance(self._FALLBACK_ERROR_FORMAT, Default):
             return DEFAULT_FORMAT
         return self._FALLBACK_ERROR_FORMAT
 
@@ -207,7 +207,7 @@ class Config(dict, metaclass=DescriptorMeta):
     def FALLBACK_ERROR_FORMAT(self, value):
         self._check_error_format(value)
         if (
-            self._FALLBACK_ERROR_FORMAT is not _default
+            not isinstance(self._FALLBACK_ERROR_FORMAT, Default)
             and value != self._FALLBACK_ERROR_FORMAT
         ):
             error_logger.warning(

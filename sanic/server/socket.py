@@ -113,13 +113,16 @@ def configure_socket(
                 backlog=backlog,
             )
         except OSError as e:  # no cov
-            raise ServerError(
-                f"Sanic server could not start: {e}.\n"
+            error = ServerError(
+                f"Sanic server could not start: {e}.\n\n"
                 "This may have happened if you are running Sanic in the "
                 "global scope and not inside of a "
-                '`if __name__ == "__main__"` block. See more information: '
-                "____."
-            ) from e
+                '`if __name__ == "__main__"` block.\n\nSee more information: '
+                "https://sanic.dev/en/guide/deployment/manager.html#"
+                "how-sanic-server-starts-processes\n"
+            )
+            error.quiet = True
+            raise error
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None

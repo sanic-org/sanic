@@ -86,6 +86,10 @@ def test_input_is_module():
 @patch("sanic.worker.loader.TrustmeCreator")
 @patch("sanic.worker.loader.MkcertCreator")
 def test_cert_loader(MkcertCreator: Mock, TrustmeCreator: Mock, creator: str):
+    CertLoader._creators = {
+        "mkcert": MkcertCreator,
+        "trustme": TrustmeCreator,
+    }
     MkcertCreator.return_value = MkcertCreator
     TrustmeCreator.return_value = TrustmeCreator
     data = {

@@ -734,8 +734,7 @@ class StartupMixin(metaclass=SanicMeta):
         except IndexError:
             raise RuntimeError(
                 f"No server information found for {primary.name}. Perhaps you "
-                "need to run app.prepare(...)?\n"
-                "See ____ for more information."
+                "need to run app.prepare(...)?"
             ) from None
 
         socks = []

@@ -323,3 +323,20 @@ def test_bp_group_properties():
     assert "api/v1/grouped/bp2/" in routes
     assert "api/v1/primary/grouped/bp1" in routes
     assert "api/v1/primary/grouped/bp2" in routes
+
+
+def test_nested_bp_group_properties():
+    one = Blueprint("one", url_prefix="/one")
+    two = Blueprint.group(one)
+    three = Blueprint.group(two, url_prefix="/three")
+
+    @one.route("/four")
+    def handler(request):
+        return text("pi")
+
+    app = Sanic("PropTest")
+    app.blueprint(three)
+    app.router.finalize()
+
+    routes = [route.path for route in app.router.routes]
+    assert routes == ["three/one/four"]

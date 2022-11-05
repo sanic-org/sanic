@@ -61,7 +61,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.helpers import _default
+from sanic.helpers import Default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -480,17 +480,16 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             for item in blueprint:
                 params = {**options}
                 if isinstance(blueprint, BlueprintGroup):
-                    if blueprint.url_prefix:
-                        merge_from = [
-                            options.get("url_prefix", ""),
-                            blueprint.url_prefix,
-                        ]
-                        if not isinstance(item, BlueprintGroup):
-                            merge_from.append(item.url_prefix or "")
-                        merged_prefix = "/".join(
-                            u.strip("/") for u in merge_from
-                        ).rstrip("/")
-                        params["url_prefix"] = f"/{merged_prefix}"
+                    merge_from = [
+                        options.get("url_prefix", ""),
+                        blueprint.url_prefix or "",
+                    ]
+                    if not isinstance(item, BlueprintGroup):
+                        merge_from.append(item.url_prefix or "")
+                    merged_prefix = "/".join(
+                        u.strip("/") for u in merge_from if u
+                    ).rstrip("/")
+                    params["url_prefix"] = f"/{merged_prefix}"
 
                     for _attr in ["version", "strict_slashes"]:
                         if getattr(item, _attr) is None:
@@ -1453,7 +1452,14 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 return cls.get_app("__mp_main__", force_create=force_create)
             if force_create:
                 return cls(name)
-            raise SanicException(f'Sanic app name "{name}" not found.')
+            raise SanicException(
+                f"Sanic app name '{name}' not found.\n"
+                "App instantiation must occur outside "
+                "if __name__ == '__main__' "
+                "block or by using an AppLoader.\nSee "
+                "https://sanic.dev/en/guide/deployment/app-loader.html"
+                " for more details."
+            )
 
     @classmethod
     def _check_uvloop_conflict(cls) -> None:
@@ -1495,7 +1501,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         if self.state.is_debug and self.config.TOUCHUP is not True:
             self.config.TOUCHUP = False
-        elif self.config.TOUCHUP is _default:
+        elif isinstance(self.config.TOUCHUP, Default):
             self.config.TOUCHUP = True
 
         # Setup routers

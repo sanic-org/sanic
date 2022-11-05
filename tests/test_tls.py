@@ -4,6 +4,7 @@ import ssl
 import subprocess
 
 from contextlib import contextmanager
+from multiprocessing import Event
 from pathlib import Path
 from unittest.mock import Mock, patch
 from urllib.parse import urlparse
@@ -636,3 +637,29 @@ def test_sanic_ssl_context_create():
 
     assert sanic_context is context
     assert isinstance(sanic_context, SanicSSLContext)
+
+
+def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
+
+    ssl_dict = {"cert": localhost_cert, "key": localhost_key}
+    event = Event()
+
+    @app.main_process_start
+    async def main_start(app: Sanic):
+        app.shared_ctx.event = event
+
+    @app.after_server_start
+    async def shutdown(app):
+        app.shared_ctx.event.set()
+        app.stop()
+
+    assert not event.is_set()
+    with caplog.at_level(logging.INFO):
+        app.run(ssl=ssl_dict)
+    assert event.is_set()
+
+    assert (
+        "sanic.root",
+        logging.INFO,
+        "Goin' Fast @ https://127.0.0.1:8000",
+    ) in caplog.record_tuples

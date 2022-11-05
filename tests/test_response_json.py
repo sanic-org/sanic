@@ -1,6 +1,7 @@
 import json
 
 from functools import partial
+from unittest.mock import Mock
 
 import pytest
 
@@ -108,13 +109,32 @@ def test_set_body_method_after_body_set(json_app: Sanic):
     assert resp.body == json_dumps(new_new_body).encode()
 
 
-def test_default_dumps_and_kwargs():
-    ...
+def test_custom_dumps_and_kwargs(json_app: Sanic):
+    custom_dumps = Mock(return_value="custom")
+
+    @json_app.get("/json-custom")
+    async def handle_custom(request: Request):
+        return json_response(JSON_BODY, dumps=custom_dumps, prry="platypus")
+
+    _, resp = json_app.test_client.get("/json-custom")
+    assert resp.body == "custom".encode()
+    custom_dumps.assert_called_once_with(JSON_BODY, prry="platypus")
 
 
-def test_custom_dumps_and_kwargs():
-    ...
+def test_override_dumps_and_kwargs(json_app: Sanic):
+    custom_dumps_1 = Mock(return_value="custom1")
+    custom_dumps_2 = Mock(return_value="custom2")
 
+    @json_app.get("/json-custom")
+    async def handle_custom(request: Request):
+        return json_response(JSON_BODY, dumps=custom_dumps_1, prry="platypus")
 
-def test_override_dumps_and_kwargs():
-    ...
+    @json_app.on_response
+    def set_body(request: Request, response: JSONResponse):
+        response.set_body(JSON_BODY, dumps=custom_dumps_2, platypus="prry")
+
+    _, resp = json_app.test_client.get("/json-custom")
+
+    assert resp.body == "custom2".encode()
+    custom_dumps_1.assert_called_once_with(JSON_BODY, prry="platypus")
+    custom_dumps_2.assert_called_once_with(JSON_BODY, platypus="prry")

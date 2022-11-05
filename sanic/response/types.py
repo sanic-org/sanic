@@ -290,7 +290,7 @@ class JSONResponse(HTTPResponse):
         self._raw_body = body
 
         use_dumps = dumps or self._use_dumps
-        use_dumps_kwargs = {**self._use_dumps_kwargs, **dumps_kwargs}
+        use_dumps_kwargs = dumps_kwargs if dumps else self._use_dumps_kwargs
 
         self._body = self._encode_body(use_dumps(body, **use_dumps_kwargs))
 

@@ -267,12 +267,12 @@ class JSONResponse(HTTPResponse):
         )
         self._raw_body = value
 
-    @property
-    def body(self) -> Optional[Any]:
+    @property  # type: ignore
+    def body(self) -> Optional[bytes]:  # type: ignore
         return self._body
 
     @body.setter
-    def body(self, value: Optional[Any]):
+    def body(self, value: Optional[bytes]):
         self._body = value
         if not self._initialized:
             return

@@ -94,7 +94,7 @@ requirements = [
 ]
 
 tests_require = [
-    "sanic-testing>=22.9.0b2",
+    "sanic-testing>=22.9.0",
     "pytest==7.1.*",
     "coverage",
     "beautifulsoup4",

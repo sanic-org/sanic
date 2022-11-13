@@ -256,6 +256,16 @@ class JSONResponse(HTTPResponse):
 
     @property
     def raw_body(self) -> Optional[Any]:
+        """Returns the raw body, as long as body has not been manually
+        set previously.
+
+        NOTE: This object should not be mutated, as it will not be
+        reflected in the response body. If you need to mutate the
+        response body, consider using one of the provided methods in
+        this class or alternatively call set_body() with the mutated
+        object afterwards or set the raw_body property to it.
+        """
+
         self._check_body_not_manually_set()
         return self._raw_body
 

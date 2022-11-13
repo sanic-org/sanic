@@ -294,6 +294,54 @@ class JSONResponse(HTTPResponse):
 
         self._body = self._encode_body(use_dumps(body, **use_dumps_kwargs))
 
+    def append(self, value: Any) -> None:
+        """Appends a value to the response body."""
+
+        self._check_body_not_manually_set()
+
+        if not isinstance(self._raw_body, list):
+            raise SanicException("Cannot append to a non-list object.")
+
+        self._raw_body.append(value)
+        self.raw_body = self._raw_body
+
+    def extend(self, value: Any) -> None:
+        """Extends the response body."""
+
+        self._check_body_not_manually_set()
+
+        if not isinstance(self._raw_body, list):
+            raise SanicException("Cannot extend a non-list object.")
+
+        self._raw_body.extend(value)
+        self.raw_body = self._raw_body
+
+    def update(self, *args, **kwargs) -> None:
+        """Updates the response body."""
+
+        self._check_body_not_manually_set()
+
+        if not isinstance(self._raw_body, dict):
+            raise SanicException("Cannot update a non-dict object.")
+
+        self._raw_body.update(*args, **kwargs)
+        self.raw_body = self._raw_body
+
+    def pop(self, key: Any) -> Any:
+        """Pops a key from the response body."""
+
+        self._check_body_not_manually_set()
+
+        if not isinstance(self._raw_body, (list, dict)):
+            raise SanicException(
+                "Cannot pop from a non-list and non-dict object."
+            )
+
+        value = self._raw_body.pop(key)
+        self.raw_body = self._raw_body
+
+        return value
+
 
 class ResponseStream:
     """

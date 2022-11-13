@@ -138,3 +138,70 @@ def test_override_dumps_and_kwargs(json_app: Sanic):
     assert resp.body == "custom2".encode()
     custom_dumps_1.assert_called_once_with(JSON_BODY, prry="platypus")
     custom_dumps_2.assert_called_once_with(JSON_BODY, platypus="prry")
+
+
+def test_append(json_app: Sanic):
+    @json_app.get("/json-append")
+    async def handler_append(request: Request):
+        return json_response(["a", "b"], status=200)
+
+    @json_app.on_response
+    def do_append(request: Request, response: JSONResponse):
+        response.append("c")
+
+    _, resp = json_app.test_client.get("/json-append")
+    assert resp.body == json_dumps(["a", "b", "c"]).encode()
+
+
+def test_extend(json_app: Sanic):
+    @json_app.get("/json-extend")
+    async def handler_extend(request: Request):
+        return json_response(["a", "b"], status=200)
+
+    @json_app.on_response
+    def do_extend(request: Request, response: JSONResponse):
+        response.extend(["c", "d"])
+
+    _, resp = json_app.test_client.get("/json-extend")
+    assert resp.body == json_dumps(["a", "b", "c", "d"]).encode()
+
+
+def test_update(json_app: Sanic):
+    @json_app.get("/json-update")
+    async def handler_update(request: Request):
+        return json_response({"a": "b"}, status=200)
+
+    @json_app.on_response
+    def do_update(request: Request, response: JSONResponse):
+        response.update({"c": "d"}, e="f")
+
+    _, resp = json_app.test_client.get("/json-update")
+    assert resp.body == json_dumps({"a": "b", "c": "d", "e": "f"}).encode()
+
+
+def test_pop_dict(json_app: Sanic):
+    @json_app.get("/json-pop")
+    async def handler_pop(request: Request):
+        return json_response({"a": "b", "c": "d"}, status=200)
+
+    @json_app.on_response
+    def do_pop(request: Request, response: JSONResponse):
+        val = response.pop("c")
+        assert val == "d"
+
+    _, resp = json_app.test_client.get("/json-pop")
+    assert resp.body == json_dumps({"a": "b"}).encode()
+
+
+def test_pop_list(json_app: Sanic):
+    @json_app.get("/json-pop")
+    async def handler_pop(request: Request):
+        return json_response(["a", "b"], status=200)
+
+    @json_app.on_response
+    def do_pop(request: Request, response: JSONResponse):
+        val = response.pop(0)
+        assert val == "a"
+
+    _, resp = json_app.test_client.get("/json-pop")
+    assert resp.body == json_dumps(["b"]).encode()

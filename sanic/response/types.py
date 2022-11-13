@@ -284,7 +284,10 @@ class JSONResponse(HTTPResponse):
         dumps: Optional[Callable[..., str]] = None,
         **dumps_kwargs: Any,
     ) -> None:
-        """Sets a new response body."""
+        """Sets a new response body using the given dumps function
+        and kwargs, or falling back to the defaults given when
+        creating the object if none are specified.
+        """
 
         self._body_manually_set = False
         self._raw_body = body
@@ -295,7 +298,10 @@ class JSONResponse(HTTPResponse):
         self._body = self._encode_body(use_dumps(body, **use_dumps_kwargs))
 
     def append(self, value: Any) -> None:
-        """Appends a value to the response body."""
+        """Appends a value to the response raw_body, ensuring that
+        body is kept up to date. This can only be used if raw_body
+        is a list.
+        """
 
         self._check_body_not_manually_set()
 
@@ -306,7 +312,10 @@ class JSONResponse(HTTPResponse):
         self.raw_body = self._raw_body
 
     def extend(self, value: Any) -> None:
-        """Extends the response body."""
+        """Extends the response's raw_body with the given values, ensuring
+        that body is kept up to date. This can only be used if raw_body is
+        a list.
+        """
 
         self._check_body_not_manually_set()
 
@@ -317,7 +326,10 @@ class JSONResponse(HTTPResponse):
         self.raw_body = self._raw_body
 
     def update(self, *args, **kwargs) -> None:
-        """Updates the response body."""
+        """Updates the response's raw_body with the given values, ensuring
+        that body is kept up to date. This can only be used if raw_body is
+        a dict.
+        """
 
         self._check_body_not_manually_set()
 
@@ -328,7 +340,10 @@ class JSONResponse(HTTPResponse):
         self.raw_body = self._raw_body
 
     def pop(self, key: Any) -> Any:
-        """Pops a key from the response body."""
+        """Pops a key from the response's raw_body, ensuring that body is
+        kept up to date. This can only be used if raw_body is a dict or a
+        list.
+        """
 
         self._check_body_not_manually_set()
 

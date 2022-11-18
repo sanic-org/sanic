@@ -700,8 +700,7 @@ class WebsocketImplProtocol:
 
     @staticmethod
     def broadcast(
-        websockets: "Iterable[WebsocketImplProtocol]",
-        message: Union[Data, Iterable[Data]],
+        websockets: "Iterable[WebsocketImplProtocol]", message: Data
     ) -> None:
         if isinstance(message, str):
             op = Opcode.TEXT
@@ -713,12 +712,6 @@ class WebsocketImplProtocol:
         elif isinstance(message, Mapping):
             # Catch a common mistake -- passing a dict to send().
             raise TypeError("data is a dict-like object")
-
-        elif isinstance(message, Iterable):
-            # Fragmented message -- regular iterator.
-            raise NotImplementedError(
-                "Fragmented websocket messages are not supported."
-            )
 
         for websocket in websockets:
             if websocket.connection.state is not OPEN:

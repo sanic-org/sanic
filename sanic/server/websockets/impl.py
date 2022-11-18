@@ -711,7 +711,8 @@ class WebsocketImplProtocol:
         .. _Binary frame: https://tools.ietf.org/html/rfc6455#section-5.6
         :meth:`send` also accepts an iterable of strings, bytestrings, or
         bytes-like objects.
-        :meth:`broadcast` rejects dict-like objects because this is often an error.
+        :meth:`broadcast` rejects dict-like objects because this is often
+        an error.
         If you wish to send the keys of a dict-like object as fragments, call
         its :meth:`~dict.keys` method and pass the result to :meth:`broadcast`.
         :raises TypeError: for unsupported inputs

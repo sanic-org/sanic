@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from websockets.connection import CLOSED, CLOSING, OPEN, Event
+from websockets.connection import CLIENT, CLOSED, CLOSING, OPEN, Event
 from websockets.exceptions import (
     ConnectionClosed,
     ConnectionClosedError,
@@ -697,6 +697,39 @@ class WebsocketImplProtocol:
                 )
             else:
                 raise TypeError("Websocket data must be bytes, str.")
+
+    @staticmethod
+    def broadcast(
+        websockets: "Iterable[WebsocketImplProtocol]",
+        message: Union[Data, Iterable[Data]],
+    ) -> None:
+        if isinstance(message, str):
+            op = Opcode.TEXT
+            message = message.encode("utf-8")
+
+        elif isinstance(message, (bytes, bytearray, memoryview)):
+            op = Opcode.BINARY
+
+        elif isinstance(message, Mapping):
+            # Catch a common mistake -- passing a dict to send().
+            raise TypeError("data is a dict-like object")
+
+        elif isinstance(message, Iterable):
+            # Fragmented message -- regular iterator.
+            raise NotImplementedError(
+                "Fragmented websocket messages are not supported."
+            )
+
+        for websocket in websockets:
+            if websocket.connection.state is not OPEN:
+                continue
+
+            websocket.io_proto.send_sync(  # type: ignore
+                Frame(op, message, True).serialize(  # type: ignore
+                    mask=websocket.connection.side is CLIENT,
+                    extensions=websocket.connection.extensions,
+                ),
+            )
 
     async def ping(self, data: Optional[Data] = None) -> asyncio.Future:
         """

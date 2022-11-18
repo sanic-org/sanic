@@ -74,6 +74,13 @@ class SanicProtocol(asyncio.Protocol):
         self.transport.write(data)
         self._time = current_time()
 
+    def send_sync(self, data):
+        """
+        Generic data write implementation without backpressure control.
+        """
+        self.transport.write(data)
+        self._time = current_time()
+
     async def receive_more(self):
         """
         Wait until more data is received into the Server protocol's buffer

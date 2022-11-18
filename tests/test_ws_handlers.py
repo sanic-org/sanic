@@ -54,3 +54,20 @@ def test_ws_handler_async_for(
     )
     assert ws_proxy.client_sent == ["test 1", "test 2", ""]
     assert ws_proxy.client_received == ["test 1", "test 2"]
+
+
+def test_ws_handler_broadcast(
+    app: Sanic,
+    simple_ws_mimic_client: MimicClientType,
+):
+    @app.websocket("/ws")
+    async def ws_echo_handler(request: Request, ws: Websocket):
+        while True:
+            msg = await ws.recv()
+            Websocket.broadcast([ws], msg)
+
+    _, ws_proxy = app.test_client.websocket(
+        "/ws", mimic=simple_ws_mimic_client
+    )
+    assert ws_proxy.client_sent == ["test 1", "test 2", ""]
+    assert ws_proxy.client_received == ["test 1", "test 2"]

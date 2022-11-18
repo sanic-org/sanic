@@ -727,6 +727,9 @@ class WebsocketImplProtocol:
             # Catch a common mistake -- passing a dict to send().
             raise TypeError("data is a dict-like object")
 
+        else:
+            raise TypeError("Websocket data must be bytes, str.")
+
         for websocket in websockets:
             if websocket.connection.state is not OPEN:
                 continue

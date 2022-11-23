@@ -120,7 +120,7 @@ class ASGIApp:
 
         headers = Header(
             [
-                (key.decode("latin-1"), value.decode("latin-1"))
+                (key.decode(errors="surrogateescape"), value.decode(errors="surrogateescape"))
                 for key, value in scope.get("headers", [])
             ]
         )

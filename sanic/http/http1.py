@@ -202,7 +202,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         # Parse header content
         try:
             head = buf[:pos]
-            raw_headers = head.decode(errors="surrogateescape")
+            raw_headers = head.decode("latin-1", errors="surrogateescape")
             reqline, *split_headers = raw_headers.split("\r\n")
             method, self.url, protocol = reqline.split(" ")
 

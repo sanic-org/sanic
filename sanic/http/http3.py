@@ -333,7 +333,7 @@ class Http3:
         return self.receivers[stream_id]
 
     def _make_request(self, event: HeadersReceived) -> Request:
-        headers = Header(((k.decode(), v.decode()) for k, v in event.headers))
+        headers = Header(((k.decode("latin-1"), v.decode("latin-1")) for k, v in event.headers))
         method = headers[":method"]
         path = headers[":path"]
         scheme = headers.pop(":scheme", "")

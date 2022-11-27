@@ -1,7 +1,13 @@
 from typing import TYPE_CHECKING, Optional, Sequence, cast
 
-from websockets.connection import CLOSED, CLOSING, OPEN
-from websockets.server import ServerConnection
+
+try:  # websockets < 11.0
+    from websockets.connection import CLOSED, CLOSING, OPEN
+    from websockets.server import ServerConnection as ServerProtocol
+except ImportError:  # websockets >= 11.0
+    from websockets.protocol import CLOSED, CLOSING, OPEN
+    from websockets.server import ServerProtocol
+
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import ServerError
@@ -90,7 +96,7 @@ class WebSocketProtocol(HttpProtocol):
         try:
             if subprotocols is not None:
                 # subprotocols can be a set or frozenset,
-                # but ServerConnection needs a list
+                # but ServerProtocol needs a list
                 subprotocols = cast(
                     Optional[Sequence[Subprotocol]],
                     list(
@@ -100,13 +106,13 @@ class WebSocketProtocol(HttpProtocol):
                         ]
                     ),
                 )
-            ws_conn = ServerConnection(
+            ws_proto = ServerProtocol(
                 max_size=self.websocket_max_size,
                 subprotocols=subprotocols,
                 state=OPEN,
                 logger=logger,
             )
-            resp: "http11.Response" = ws_conn.accept(request)
+            resp: "http11.Response" = ws_proto.accept(request)
         except Exception:
             msg = (
                 "Failed to open a WebSocket connection.\n"
@@ -129,7 +135,7 @@ class WebSocketProtocol(HttpProtocol):
         else:
             raise ServerError(resp.body, resp.status_code)
         self.websocket = WebsocketImplProtocol(
-            ws_conn,
+            ws_proto,
             ping_interval=self.websocket_ping_interval,
             ping_timeout=self.websocket_ping_timeout,
             close_timeout=self.websocket_timeout,

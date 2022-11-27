@@ -12,14 +12,21 @@ from typing import (
     Union,
 )
 
-from websockets.connection import CLOSED, CLOSING, OPEN, Event
 from websockets.exceptions import (
     ConnectionClosed,
     ConnectionClosedError,
     ConnectionClosedOK,
 )
 from websockets.frames import Frame, Opcode
-from websockets.server import ServerConnection
+
+
+try:  # websockets < 11.0
+    from websockets.connection import CLOSED, CLOSING, OPEN, Event
+    from websockets.server import ServerConnection as ServerProtocol
+except ImportError:  # websockets >= 11.0
+    from websockets.protocol import CLOSED, CLOSING, OPEN, Event
+    from websockets.server import ServerProtocol
+
 from websockets.typing import Data
 
 from sanic.log import error_logger, logger
@@ -30,7 +37,7 @@ from .frame import WebsocketFrameAssembler
 
 
 class WebsocketImplProtocol:
-    connection: ServerConnection
+    connection: ServerProtocol
     io_proto: Optional[SanicProtocol]
     loop: Optional[asyncio.AbstractEventLoop]
     max_queue: int

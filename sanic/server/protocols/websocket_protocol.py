@@ -5,8 +5,8 @@ try:  # websockets < 11.0
     from websockets.connection import State
     from websockets.server import ServerConnection as ServerProtocol
 except ImportError:  # websockets >= 11.0
-    from websockets.protocol import State
-    from websockets.server import ServerProtocol
+    from websockets.protocol import State  # type: ignore
+    from websockets.server import ServerProtocol  # type: ignore
 
 from websockets.typing import Subprotocol
 

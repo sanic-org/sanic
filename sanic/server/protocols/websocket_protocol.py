@@ -80,7 +80,7 @@ class WebSocketProtocol(HttpProtocol):
         # Called by Sanic Server when shutting down
         # If we've upgraded to websocket, shut it down
         if self.websocket is not None:
-            if self.websocket.connection.state in (CLOSING, CLOSED):
+            if self.websocket.ws_proto.state in (CLOSING, CLOSED):
                 return True
             elif self.websocket.loop is not None:
                 self.websocket.loop.create_task(self.websocket.close(1001))

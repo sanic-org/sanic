@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING, Optional, Sequence, cast
 
 
 try:  # websockets < 11.0
-    from websockets.connection import CLOSED, CLOSING, OPEN
+    from websockets.connection import State
     from websockets.server import ServerConnection as ServerProtocol
 except ImportError:  # websockets >= 11.0
-    from websockets.protocol import CLOSED, CLOSING, OPEN
+    from websockets.protocol import State
     from websockets.server import ServerProtocol
 
 from websockets.typing import Subprotocol
@@ -19,6 +19,11 @@ from ..websockets.impl import WebsocketImplProtocol
 
 if TYPE_CHECKING:
     from websockets import http11
+
+
+OPEN = State.OPEN
+CLOSING = State.CLOSING
+CLOSED = State.CLOSED
 
 
 class WebSocketProtocol(HttpProtocol):

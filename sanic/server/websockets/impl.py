@@ -21,10 +21,10 @@ from websockets.frames import Frame, Opcode
 
 
 try:  # websockets < 11.0
-    from websockets.connection import CLOSED, CLOSING, OPEN, Event
+    from websockets.connection import Event, State
     from websockets.server import ServerConnection as ServerProtocol
 except ImportError:  # websockets >= 11.0
-    from websockets.protocol import CLOSED, CLOSING, OPEN, Event
+    from websockets.protocol import Event, State
     from websockets.server import ServerProtocol
 
 from websockets.typing import Data
@@ -34,6 +34,11 @@ from sanic.server.protocols.base_protocol import SanicProtocol
 
 from ...exceptions import ServerError, WebsocketClosed
 from .frame import WebsocketFrameAssembler
+
+
+OPEN = State.OPEN
+CLOSING = State.CLOSING
+CLOSED = State.CLOSED
 
 
 class WebsocketImplProtocol:

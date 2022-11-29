@@ -265,6 +265,7 @@ def test_cert_sni_list(app):
         assert response.text == "sanic.example"
 
 
+@pytest.mark.xfail
 def test_missing_sni(app):
     """The sanic cert does not list 127.0.0.1 and httpx does not send
     IP as SNI anyway."""
@@ -283,6 +284,7 @@ def test_missing_sni(app):
     assert "Request and response object expected" in str(exc.value)
 
 
+@pytest.mark.xfail
 def test_no_matching_cert(app):
     """The sanic cert does not list 127.0.0.1 and httpx does not send
     IP as SNI anyway."""
@@ -302,6 +304,7 @@ def test_no_matching_cert(app):
     assert "Request and response object expected" in str(exc.value)
 
 
+@pytest.mark.xfail
 def test_wildcards(app):
     ssl_list = [None, localhost_dir, sanic_dir]
 

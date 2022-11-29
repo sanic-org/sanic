@@ -5,6 +5,7 @@ from signal import signal as signal_func
 from typing import List, Optional
 
 from sanic.compat import OS_IS_WINDOWS
+from sanic.exceptions import ServerKilled
 from sanic.log import error_logger, logger
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
 
@@ -16,7 +17,7 @@ else:
 
 
 class WorkerManager:
-    THRESHOLD = 50
+    THRESHOLD = 300  # == 30 seconds
 
     def __init__(
         self,
@@ -128,28 +129,34 @@ class WorkerManager:
 
     def wait_for_ack(self):  # no cov
         misses = 0
-        terminated = False
+        message = (
+            "It seems that one or more of your workers failed to come "
+            "online in the allowed time. Sanic is shutting down to avoid a "
+            f"deadlock. The current threshold is {self.THRESHOLD / 10}s.\n"
+            "If this problem persists, please check out the documentation "
+            "___."
+        )
         while not self._all_workers_ack():
             if (
                 self.monitor_subscriber.poll(0.1)
                 and self.monitor_subscriber.recv() == "__TERMINATE__"
             ):
                 misses = self.THRESHOLD
-                terminated = True
+                message = (
+                    "One of your worker processes terminated before startup "
+                    "was completed. Please solve any errors experienced "
+                    "during startup. If you do not see an exception traceback "
+                    "in your error logs, try running Sanic in in a single "
+                    "process using --single-process or single_process=True. "
+                    "Once you are confident that the server is able to start "
+                    "without errors you can switch back to multiprocess mode."
+                )
             misses += 1
             if misses > self.THRESHOLD:
-                message = "Not all workers are ack. Shutting down."
-                if not terminated:
-                    message += (
-                        "\n\nIt seems that one or more of your workers failed "
-                        "to come online in the allowed time. The current "
-                        f"threshold is {self.THRESHOLD / 10}s.\nIf this "
-                        "problem persists, please checkout the documentation "
-                        "___."
-                    )
-                error_logger.error(message)
+                error_logger.error(
+                    "Not all workers are ack. Shutting down.\n\n" + message
+                )
                 self.kill()
-                os._exit(1)
 
     @property
     def workers(self):
@@ -169,7 +176,9 @@ class WorkerManager:
 
     def kill(self):
         for process in self.processes:
+            logger.info("Killing %s [%s]", process.name, process.pid)
             os.kill(process.pid, SIGKILL)
+        raise ServerKilled
 
     def shutdown_signal(self, signal, frame):
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)

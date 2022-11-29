@@ -8,6 +8,10 @@ class RequestCancelled(CancelledError):
     quiet = True
 
 
+class ServerKilled(Exception):
+    ...
+
+
 class SanicException(Exception):
     message: str = ""
 

@@ -1,6 +1,7 @@
 import asyncio
 import os
 import socket
+import warnings
 
 from functools import partial
 from multiprocessing.connection import Connection
@@ -129,6 +130,7 @@ def worker_serve(
             asyncio_server_kwargs,
         )
     except Exception as e:
+        warnings.simplefilter("ignore", category=RuntimeWarning)
         if monitor_publisher:
             error_logger.exception(e)
             multiplexer = WorkerMultiplexer(monitor_publisher, {})

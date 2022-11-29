@@ -86,8 +86,6 @@ class SignalRouter(BaseRouter):
         )
         self.allow_fail_builtin = True
         self.ctx.loop = None
-        self.triggers: Dict[SignalHandler, str] = dict()
-        self.conditions: Dict[SignalHandler, Optional[dict]] = dict()
 
     def get(  # type: ignore
         self,
@@ -156,7 +154,7 @@ class SignalRouter(BaseRouter):
         try:
             for signal in signals:
                 params.pop("__trigger__", None)
-                requirements = self.conditions.get(signal.handler, None)
+                requirements = signal.extra.requirements
                 if (
                     (condition is None and signal.ctx.exclusive is False)
                     or (condition is None and not requirements)
@@ -219,8 +217,11 @@ class SignalRouter(BaseRouter):
         if not trigger:
             event = ".".join([*parts[:2], "<__trigger__>"])
 
-        self.conditions[handler] = condition
-        self.triggers[handler] = trigger
+        try:
+            handler.__requirements__ = condition # type: ignore
+            handler.__trigger__ = trigger # type: ignore
+        except AttributeError:
+            pass
 
         signal = super().add(
             event,
@@ -232,6 +233,7 @@ class SignalRouter(BaseRouter):
         signal.ctx.exclusive = exclusive
         signal.ctx.trigger = trigger
         signal.ctx.definition = event_definition
+        signal.extra.requirements = condition
 
         return cast(Signal, signal)
 

@@ -19,7 +19,7 @@ from importlib import import_module
 from multiprocessing import Manager, Pipe, get_context
 from multiprocessing.context import BaseContext
 from pathlib import Path
-from socket import socket
+from socket import SHUT_RDWR, socket
 from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
@@ -864,6 +864,7 @@ class StartupMixin(metaclass=SanicMeta):
 
             sync_manager.shutdown()
             for sock in socks:
+                sock.shutdown(SHUT_RDWR)
                 sock.close()
             socks = []
             trigger_events(main_stop, loop, primary)

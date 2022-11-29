@@ -1,9 +1,7 @@
 import os
-import sys
 
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from time import sleep
 from typing import List, Optional
 
 from sanic.compat import OS_IS_WINDOWS
@@ -130,13 +128,28 @@ class WorkerManager:
 
     def wait_for_ack(self):  # no cov
         misses = 0
+        terminated = False
         while not self._all_workers_ack():
-            sleep(0.1)
+            if (
+                self.monitor_subscriber.poll(0.1)
+                and self.monitor_subscriber.recv() == "__TERMINATE__"
+            ):
+                misses = self.THRESHOLD
+                terminated = True
             misses += 1
             if misses > self.THRESHOLD:
-                error_logger.error("Not all workers are ack. Shutting down.")
+                message = "Not all workers are ack. Shutting down."
+                if not terminated:
+                    message += (
+                        "\n\nIt seems that one or more of your workers failed "
+                        "to come online in the allowed time. The current "
+                        f"threshold is {self.THRESHOLD / 10}s.\nIf this "
+                        "problem persists, please checkout the documentation "
+                        "___."
+                    )
+                error_logger.error(message)
                 self.kill()
-                sys.exit(1)
+                os._exit(1)
 
     @property
     def workers(self):

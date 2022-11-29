@@ -2,10 +2,21 @@ import logging
 import sys
 
 from enum import Enum
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 from warnings import warn
 
 from sanic.compat import is_atty
+
+
+# Python 3.11 changed the way Enum formatting works for mixed-in types.
+if sys.version_info < (3, 11, 0):
+
+    class StrEnum(str, Enum):
+        pass
+
+else:
+    if not TYPE_CHECKING:
+        from enum import StrEnum
 
 
 LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
@@ -68,7 +79,7 @@ Defult logging configuration
 """
 
 
-class Colors(str, Enum):  # no cov
+class Colors(StrEnum):  # no cov
     END = "\033[0m"
     BOLD = "\033[1m"
     BLUE = "\033[34m"

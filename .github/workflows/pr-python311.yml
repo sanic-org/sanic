@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
-  testPy310:
+  testPy311:
     if: github.event.pull_request.draft == false
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}

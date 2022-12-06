@@ -134,6 +134,6 @@ def worker_serve(
         if monitor_publisher:
             error_logger.exception(e)
             multiplexer = WorkerMultiplexer(monitor_publisher, {})
-            multiplexer.terminate()
+            multiplexer.terminate(True)
         else:
             raise e

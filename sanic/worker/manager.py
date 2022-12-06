@@ -137,10 +137,11 @@ class WorkerManager:
             "___."
         )
         while not self._all_workers_ack():
-            if (
-                self.monitor_subscriber.poll(0.1)
-                and self.monitor_subscriber.recv() == "__TERMINATE__"
-            ):
+            if self.monitor_subscriber.poll(0.1):
+                monitor_msg = self.monitor_subscriber.recv()
+                if monitor_msg != "__TERMINATE_EARLY__":
+                    self.monitor_publisher.send(monitor_msg)
+                    continue
                 misses = self.THRESHOLD
                 message = (
                     "One of your worker processes terminated before startup "

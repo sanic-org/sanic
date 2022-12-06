@@ -132,7 +132,7 @@ class WorkerManager:
         message = (
             "It seems that one or more of your workers failed to come "
             "online in the allowed time. Sanic is shutting down to avoid a "
-            f"deadlock. The current threshold is {self.THRESHOLD / 10}s.\n"
+            f"deadlock. The current threshold is {self.THRESHOLD / 10}s. "
             "If this problem persists, please check out the documentation "
             "___."
         )
@@ -155,7 +155,8 @@ class WorkerManager:
             misses += 1
             if misses > self.THRESHOLD:
                 error_logger.error(
-                    "Not all workers are ack. Shutting down.\n\n" + message
+                    "Not all workers acknowledged a successful startup. "
+                    "Shutting down.\n\n" + message
                 )
                 self.kill()
 

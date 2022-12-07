@@ -64,7 +64,8 @@ class Inspector:
                     else:
                         data = dumps(self.state_to_json())
                         conn.send(data.encode())
-                        conn.close()
+                conn.send(b"\r\n\r\n")
+                conn.close()
         finally:
             logger.debug("Inspector closing")
             sock.close()
@@ -110,7 +111,13 @@ def inspect(host: str, port: int, action: str):
             sock.close()
             sys.exit(1)
         sock.sendall(action.encode())
-        data = sock.recv(4096)
+        more = True
+        data = b""
+        while more:
+            received = sock.recv(4096)
+            if received.endswith(b"\r\n\r\n"):
+                more = False
+            data += received
     if action == "raw":
         out(data.decode())
     elif action == "pretty":

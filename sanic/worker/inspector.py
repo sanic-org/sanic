@@ -44,7 +44,8 @@ class Inspector:
         signal_func(SIGINT, self.stop)
         signal_func(SIGTERM, self.stop)
 
-        logger.info(f"Inspector started on: {sock.getsockname()}")
+        host, port = sock.getsockname()
+        logger.info(f"Inspector started @ {host}:{port}")
         sock.settimeout(0.5)
         try:
             while self.run:

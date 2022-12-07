@@ -92,29 +92,20 @@ Or, a path to a directory to run as a simple HTTP server:
             self.args,
         )
 
+        inspector_command = (
+            self.args.inspect or self.args.inspect_raw or self.args.trigger
+        )
+        if inspector_command:
+            self._inspector(app_loader)
+            return
         try:
             app = self._get_app(app_loader)
             kwargs = self._build_run_kwargs()
         except ValueError as e:
             error_logger.exception(f"Failed to run app: {e}")
         else:
-            if self.args.inspect or self.args.inspect_raw or self.args.trigger:
-                os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
-            else:
-                for http_version in self.args.http:
-                    app.prepare(**kwargs, version=http_version)
-
-            if self.args.inspect or self.args.inspect_raw or self.args.trigger:
-                action = self.args.trigger or (
-                    "raw" if self.args.inspect_raw else "pretty"
-                )
-                inspect(
-                    app.config.INSPECTOR_HOST,
-                    app.config.INSPECTOR_PORT,
-                    action,
-                )
-                del os.environ["SANIC_IGNORE_PRODUCTION_WARNING"]
-                return
+            for http_version in self.args.http:
+                app.prepare(**kwargs, version=http_version)
 
             if self.args.single:
                 serve = Sanic.serve_single
@@ -123,6 +114,23 @@ Or, a path to a directory to run as a simple HTTP server:
             else:
                 serve = partial(Sanic.serve, app_loader=app_loader)
             serve(app)
+
+    def _inspector(self, app_loader: AppLoader):
+        os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
+        host = port = None
+        if ":" in self.args.module:
+            maybe_host, maybe_port = self.args.module.split(":", 1)
+            if maybe_port.isnumeric():
+                host, port = maybe_host, int(maybe_port)
+        if not host:
+            app = self._get_app(app_loader)
+            host, port = app.config.INSPECTOR_HOST, app.config.INSPECTOR_PORT
+
+        action = self.args.trigger or (
+            "raw" if self.args.inspect_raw else "pretty"
+        )
+        inspect(host, port, action)
+        del os.environ["SANIC_IGNORE_PRODUCTION_WARNING"]
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics

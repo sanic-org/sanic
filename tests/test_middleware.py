@@ -1,6 +1,6 @@
 import logging
 
-from asyncio import CancelledError
+from asyncio import CancelledError, sleep
 from itertools import count
 
 from sanic.exceptions import NotFound
@@ -318,6 +318,32 @@ def test_middleware_return_response(app):
         resp1 = await request.respond()
         return resp1
 
-    _, response = app.test_client.get("/")
+    app.test_client.get("/")
     assert response_middleware_run_count == 1
     assert request_middleware_run_count == 1
+
+
+def test_middleware_run_on_timeout(app):
+    app.config.RESPONSE_TIMEOUT = 0.1
+    response_middleware_run_count = 0
+    request_middleware_run_count = 0
+
+    @app.on_response
+    def response(_, response):
+        nonlocal response_middleware_run_count
+        response_middleware_run_count += 1
+
+    @app.on_request
+    def request(_):
+        nonlocal request_middleware_run_count
+        request_middleware_run_count += 1
+
+    @app.get("/")
+    async def handler(request):
+        resp1 = await request.respond()
+        await sleep(1)
+        return resp1
+
+    app.test_client.get("/")
+    assert request_middleware_run_count == 1
+    assert response_middleware_run_count == 1

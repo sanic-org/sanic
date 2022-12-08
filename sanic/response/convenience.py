@@ -37,7 +37,7 @@ def json(
     content_type: str = "application/json",
     dumps: Optional[Callable[..., str]] = None,
     **kwargs: Any,
-) -> HTTPResponse:
+) -> JSONResponse:
     """
     Returns response object with body in json format.
 

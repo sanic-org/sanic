@@ -18,6 +18,7 @@ else:
 
 class WorkerManager:
     THRESHOLD = 300  # == 30 seconds
+    MAIN_IDENT = "Sanic-Main"
 
     def __init__(
         self,
@@ -34,7 +35,7 @@ class WorkerManager:
         self.durable: List[Worker] = []
         self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
-        self.worker_state["Sanic-Main"] = {"pid": self.pid}
+        self.worker_state[self.MAIN_IDENT] = {"pid": self.pid}
         self.terminated = False
 
         if number == 0:
@@ -122,10 +123,17 @@ class WorkerManager:
                         process_names=process_names,
                         reloaded_files=reloaded_files,
                     )
+                self._sync_states()
             except InterruptedError:
                 if not OS_IS_WINDOWS:
                     raise
                 break
+
+    def _sync_states(self):
+        for process in self.processes:
+            state = self.worker_state[process.name]["state"]
+            if process.state.name != state:
+                process.set_state(ProcessState[state], True)
 
     def wait_for_ack(self):  # no cov
         misses = 0

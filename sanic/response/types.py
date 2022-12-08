@@ -370,7 +370,7 @@ class JSONResponse(HTTPResponse):
         if isinstance(default, Default):
             value = self._raw_body.pop(key)
         elif isinstance(self._raw_body, list):
-            raise TypeError("pop doesn't accept a default for lists")
+            raise TypeError("pop doesn't accept a default argument for lists")
         else:
             value = self._raw_body.pop(key, default)
 

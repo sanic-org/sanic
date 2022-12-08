@@ -28,8 +28,9 @@ class WorkerMultiplexer:
 
     reload = restart  # no cov
 
-    def terminate(self):
-        self._monitor_publisher.send("__TERMINATE__")
+    def terminate(self, early: bool = False):
+        message = "__TERMINATE_EARLY__" if early else "__TERMINATE__"
+        self._monitor_publisher.send(message)
 
     @property
     def pid(self) -> int:

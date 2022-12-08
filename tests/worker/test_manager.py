@@ -3,6 +3,7 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
+from sanic.exceptions import ServerKilled
 from sanic.worker.manager import WorkerManager
 
 
@@ -76,7 +77,8 @@ def test_kill(os_mock: Mock):
         (Mock(), Mock()),
         {},
     )
-    manager.kill()
+    with pytest.raises(ServerKilled):
+        manager.kill()
     os_mock.kill.assert_called_once_with(1234, SIGKILL)
 
 

@@ -2,7 +2,7 @@
 import logging
 import os
 
-from asyncio import AbstractEventLoop
+from asyncio import AbstractEventLoop, sleep
 from string import ascii_lowercase
 
 import httpcore
@@ -179,6 +179,7 @@ async def client(app: Sanic, loop: AbstractEventLoop):
             assert r.status_code == 200
             assert r.text == os.path.abspath(SOCKPATH)
     finally:
+        await sleep(0.2)
         app.stop()
 
 

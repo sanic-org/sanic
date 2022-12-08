@@ -1,3 +1,5 @@
+import logging
+
 from os import environ
 from unittest.mock import Mock, patch
 
@@ -37,7 +39,7 @@ def test_config_app(mock_app: Mock):
     mock_app.update_config.assert_called_once_with({"FOO": "BAR"})
 
 
-def test_bad_process(mock_app: Mock):
+def test_bad_process(mock_app: Mock, caplog):
     environ["SANIC_WORKER_NAME"] = "FOO"
 
     message = "No restart publisher found in worker process"
@@ -45,8 +47,12 @@ def test_bad_process(mock_app: Mock):
         worker_serve(**args(mock_app))
 
     message = "No worker state found in worker process"
-    with pytest.raises(RuntimeError, match=message):
-        worker_serve(**args(mock_app, monitor_publisher=Mock()))
+    publisher = Mock()
+    with caplog.at_level(logging.ERROR):
+        worker_serve(**args(mock_app, monitor_publisher=publisher))
+
+    assert ("sanic.error", logging.ERROR, message) in caplog.record_tuples
+    publisher.send.assert_called_once_with("__TERMINATE_EARLY__")
 
     del environ["SANIC_WORKER_NAME"]
 

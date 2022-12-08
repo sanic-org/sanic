@@ -63,7 +63,6 @@ class WorkerManager:
         self.monitor()
         self.join()
         self.terminate()
-        # self.kill()
 
     def start(self):
         for process in self.processes:

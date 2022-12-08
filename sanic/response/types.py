@@ -363,7 +363,7 @@ class JSONResponse(HTTPResponse):
                 "Cannot pop from a non-list and non-dict object."
             )
 
-        if isinstance(self._raw_body, list) or isinstance(default, Default):
+        if isinstance(default, Default):
             value = self._raw_body.pop(key)
         else:
             value = self._raw_body.pop(key, default)

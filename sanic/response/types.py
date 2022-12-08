@@ -18,9 +18,13 @@ from typing import (
 from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import has_message_body, remove_entity_headers
+from sanic.helpers import (
+    Default,
+    _default,
+    has_message_body,
+    remove_entity_headers,
+)
 from sanic.http import Http
-from sanic.helpers import Default, _default
 
 
 if TYPE_CHECKING:

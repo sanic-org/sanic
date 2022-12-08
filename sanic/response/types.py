@@ -20,6 +20,7 @@ from sanic.cookies import CookieJar
 from sanic.exceptions import SanicException, ServerError
 from sanic.helpers import has_message_body, remove_entity_headers
 from sanic.http import Http
+from sanic.helpers import Default, _default
 
 
 if TYPE_CHECKING:
@@ -349,7 +350,7 @@ class JSONResponse(HTTPResponse):
         self._raw_body.update(*args, **kwargs)
         self.raw_body = self._raw_body
 
-    def pop(self, key: Any) -> Any:
+    def pop(self, key: Any, default: Any = _default) -> Any:
         """Pops a key from the response's raw_body, ensuring that body is
         kept up to date. This can only be used if raw_body is a dict or a
         list.
@@ -362,7 +363,11 @@ class JSONResponse(HTTPResponse):
                 "Cannot pop from a non-list and non-dict object."
             )
 
-        value = self._raw_body.pop(key)
+        if isinstance(self._raw_body, list) or isinstance(default, Default):
+            value = self._raw_body.pop(key)
+        else:
+            value = self._raw_body.pop(key, default)
+
         self.raw_body = self._raw_body
 
         return value

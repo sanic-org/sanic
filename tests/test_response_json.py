@@ -189,6 +189,9 @@ def test_pop_dict(json_app: Sanic):
         val = response.pop("c")
         assert val == "d"
 
+        val_default = response.pop("e", "f")
+        assert val_default == "f"
+
     _, resp = json_app.test_client.get("/json-pop")
     assert resp.body == json_dumps({"a": "b"}).encode()
 
@@ -202,6 +205,11 @@ def test_pop_list(json_app: Sanic):
     def do_pop(request: Request, response: JSONResponse):
         val = response.pop(0)
         assert val == "a"
+
+        with pytest.raises(
+            TypeError, match="pop doesn't accept a default argument for lists"
+        ):
+            response.pop(21, "nah nah")
 
     _, resp = json_app.test_client.get("/json-pop")
     assert resp.body == json_dumps(["b"]).encode()

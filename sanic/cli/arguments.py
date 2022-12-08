@@ -115,6 +115,12 @@ class ApplicationGroup(Group):
             const="shutdown",
             help=("Trigger all processes to shutdown"),
         )
+        self.container.add_argument(
+            "--secure",
+            dest="secure",
+            action="store_true",
+            help=("Whether to connect to the inspector over a TLS connection"),
+        )
 
 
 class HTTPVersionGroup(Group):

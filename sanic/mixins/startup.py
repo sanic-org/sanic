@@ -841,6 +841,8 @@ class StartupMixin(metaclass=SanicMeta):
                     worker_state,
                     primary.config.INSPECTOR_HOST,
                     primary.config.INSPECTOR_PORT,
+                    primary.config.INSPECTOR_TLS_KEY,
+                    primary.config.INSPECTOR_TLS_CERT,
                 )
                 manager.manage("Inspector", inspector, {}, transient=False)
 

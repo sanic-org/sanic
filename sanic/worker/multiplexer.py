@@ -28,7 +28,7 @@ class WorkerMultiplexer:
                 " all_workers=True"
             )
         if not name:
-            name = "__ALL_PROCESSES__" if all_workers else self.name
+            name = "__ALL_PROCESSES__:" if all_workers else self.name
         self._monitor_publisher.send(name)
 
     reload = restart  # no cov

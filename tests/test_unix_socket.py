@@ -12,7 +12,7 @@ import pytest
 from pytest import LogCaptureFixture
 
 from sanic import Sanic
-from sanic.helpers import _default
+from sanic.compat import use_context
 from sanic.request import Request
 from sanic.response import text
 
@@ -185,12 +185,11 @@ async def client(app: Sanic, loop: AbstractEventLoop):
 
 
 def test_unix_connection_multiple_workers():
-    Sanic.start_method = "fork"
-    app_multi = Sanic(name="test")
-    app_multi.get("/")(handler)
-    app_multi.listener("after_server_start")(client)
-    app_multi.run(host="myhost.invalid", unix=SOCKPATH, workers=2)
-    Sanic.start_method = _default
+    with use_context("fork"):
+        app_multi = Sanic(name="test")
+        app_multi.get("/")(handler)
+        app_multi.listener("after_server_start")(client)
+        app_multi.run(host="myhost.invalid", unix=SOCKPATH, workers=2)
 
 
 # @pytest.mark.xfail(

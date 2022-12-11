@@ -40,7 +40,7 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
-from sanic.compat import OS_IS_WINDOWS, is_atty
+from sanic.compat import OS_IS_WINDOWS, StartMethod, is_atty
 from sanic.exceptions import ServerKilled
 from sanic.helpers import Default, _default
 from sanic.http.constants import HTTP
@@ -75,14 +75,10 @@ SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
 if sys.version_info < (3, 8):  # no cov
     HTTPVersion = Union[HTTP, int]
-    StartMethod = Union[Default, str]
 else:  # no cov
     from typing import Literal
 
     HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
-    StartMethod = Union[
-        Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]
-    ]
 
 
 class StartupMixin(metaclass=SanicMeta):

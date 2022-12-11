@@ -17,6 +17,7 @@ from sanic_routing.exceptions import RouteExists
 from sanic_testing.testing import PORT
 
 from sanic import Sanic
+from sanic.compat import use_context
 from sanic.constants import HTTP_METHODS
 from sanic.helpers import _default
 from sanic.router import Router
@@ -148,12 +149,12 @@ def app(request):
         for target, method_name in TouchUp._registry:
             CACHE[method_name] = getattr(target, method_name)
     app = Sanic(slugify.sub("-", request.node.name))
-    Sanic.start_method = "fork"
-    yield app
-    for target, method_name in TouchUp._registry:
-        setattr(target, method_name, CACHE[method_name])
-    Sanic._app_registry.clear()
-    Sanic.start_method = _default
+
+    with use_context("fork"):
+        yield app
+        for target, method_name in TouchUp._registry:
+            setattr(target, method_name, CACHE[method_name])
+        Sanic._app_registry.clear()
 
 
 @pytest.fixture(scope="function")

@@ -50,7 +50,7 @@ class AppLoader:
         if module_path not in sys.path:
             sys.path.append(module_path)
 
-        if self.clear_apps and self.factory or self.as_factory:
+        if self.clear_apps and (self.factory or self.as_factory):
             from sanic import Sanic
 
             Sanic._app_registry = {}

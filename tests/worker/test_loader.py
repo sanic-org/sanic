@@ -45,6 +45,26 @@ def test_create_with_factory():
     assert isinstance(app, Sanic)
 
 
+def test_create_with_factory_clears():
+    Sanic("Test")
+    mode = Sanic.test_mode
+    Sanic.test_mode = False
+    loader = AppLoader(factory=lambda: Sanic("Test"))
+    app = loader.load()
+    assert isinstance(app, Sanic)
+    Sanic.test_mode = mode
+
+
+def test_create_with_as_factory_clears():
+    Sanic("Test")
+    mode = Sanic.test_mode
+    Sanic.test_mode = False
+    loader = AppLoader("tests.fake.server:create_app", as_factory=True)
+    app = loader.load()
+    assert isinstance(app, Sanic)
+    Sanic.test_mode = mode
+
+
 def test_cwd_in_path():
     AppLoader("tests.fake.server:app").load()
     assert getcwd() in sys.path

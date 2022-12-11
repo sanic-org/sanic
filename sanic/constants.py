@@ -1,19 +1,9 @@
-from enum import Enum, auto
+from enum import auto
+
+from sanic.compat import UpperStrEnum
 
 
-class HTTPMethod(str, Enum):
-    def _generate_next_value_(name, start, count, last_values):
-        return name.upper()
-
-    def __eq__(self, value: object) -> bool:
-        value = str(value).upper()
-        return super().__eq__(value)
-
-    def __hash__(self) -> int:
-        return hash(self.value)
-
-    def __str__(self) -> str:
-        return self.value
+class HTTPMethod(UpperStrEnum):
 
     GET = auto()
     POST = auto()
@@ -24,13 +14,17 @@ class HTTPMethod(str, Enum):
     DELETE = auto()
 
 
-class LocalCertCreator(str, Enum):
-    def _generate_next_value_(name, start, count, last_values):
-        return name.upper()
+class LocalCertCreator(UpperStrEnum):
 
     AUTO = auto()
     TRUSTME = auto()
     MKCERT = auto()
+
+
+class RestartOrder(UpperStrEnum):
+
+    SHUTDOWN_FIRST = auto()
+    STARTUP_FIRST = auto()
 
 
 HTTP_METHODS = tuple(HTTPMethod.__members__.values())

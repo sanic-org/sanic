@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 from warnings import filterwarnings
 
-from sanic.constants import LocalCertCreator
+from sanic.constants import LocalCertCreator, RestartOrder
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
 from sanic.helpers import Default, _default
 from sanic.http import Http
@@ -63,6 +63,7 @@ DEFAULT_CONFIG = {
     "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
     "REQUEST_TIMEOUT": 60,  # 60 seconds
     "RESPONSE_TIMEOUT": 60,  # 60 seconds
+    "RESTART_ORDER": RestartOrder.SHUTDOWN_FIRST,
     "TLS_CERT_PASSWORD": "",
     "TOUCHUP": _default,
     "USE_UVLOOP": _default,
@@ -110,6 +111,7 @@ class Config(dict, metaclass=DescriptorMeta):
     REQUEST_MAX_SIZE: int
     REQUEST_TIMEOUT: int
     RESPONSE_TIMEOUT: int
+    RESTART_ORDER: Union[str, RestartOrder]
     SERVER_NAME: str
     TLS_CERT_PASSWORD: str
     TOUCHUP: Union[Default, bool]
@@ -194,6 +196,10 @@ class Config(dict, metaclass=DescriptorMeta):
             self.LOCAL_CERT_CREATOR = LocalCertCreator[
                 self.LOCAL_CERT_CREATOR.upper()
             ]
+        elif attr == "RESTART_ORDER" and not isinstance(
+            self.RESTART_ORDER, RestartOrder
+        ):
+            self.RESTART_ORDER = RestartOrder[self.RESTART_ORDER.upper()]
         elif attr == "DEPRECATION_FILTER":
             self._configure_warnings()
 

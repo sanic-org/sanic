@@ -5,6 +5,7 @@ from signal import signal as signal_func
 from typing import List, Optional
 
 from sanic.compat import OS_IS_WINDOWS
+from sanic.constants import RestartOrder
 from sanic.exceptions import ServerKilled
 from sanic.log import error_logger, logger
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
@@ -28,6 +29,7 @@ class WorkerManager:
         context,
         monitor_pubsub,
         worker_state,
+        restart_order: RestartOrder,
     ):
         self.num_server = number
         self.context = context
@@ -37,6 +39,7 @@ class WorkerManager:
         self.worker_state = worker_state
         self.worker_state[self.MAIN_IDENT] = {"pid": self.pid}
         self.terminated = False
+        self.restart_order = restart_order
 
         if number == 0:
             raise RuntimeError("Cannot serve with no workers")
@@ -55,7 +58,14 @@ class WorkerManager:
     def manage(self, ident, func, kwargs, transient=False):
         container = self.transient if transient else self.durable
         container.append(
-            Worker(ident, func, kwargs, self.context, self.worker_state)
+            Worker(
+                ident,
+                func,
+                kwargs,
+                self.context,
+                self.worker_state,
+                self.restart_order,
+            )
         )
 
     def run(self):

@@ -71,8 +71,7 @@ if TYPE_CHECKING:
     from sanic.application.state import ApplicationState
     from sanic.config import Config
 
-# SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
-SANIC_PACKAGES = ("sanic-routing", "sanic-ext")
+SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
 if sys.version_info < (3, 8):  # no cov
     HTTPVersion = Union[HTTP, int]

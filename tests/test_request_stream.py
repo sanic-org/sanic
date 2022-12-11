@@ -7,6 +7,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.blueprints import Blueprint
+from sanic.helpers import _default
 from sanic.response import json, text
 from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
@@ -623,6 +624,8 @@ def test_streaming_echo():
         res = await read_chunk()
         assert res == None
 
+    Sanic.start_method = "fork"
     # Use random port for tests
     with closing(socket()) as sock:
         app.run(access_log=False)
+    Sanic.start_method = _default

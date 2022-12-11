@@ -693,7 +693,7 @@ class StartupMixin(metaclass=SanicMeta):
         return any(app.state.auto_reload for app in cls._app_registry.values())
 
     @classmethod
-    def _get_startup_method(cls) -> BaseContext:
+    def _get_startup_method(cls) -> str:
         return (
             cls.start_method
             if not isinstance(cls.start_method, Default)

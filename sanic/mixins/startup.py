@@ -702,13 +702,11 @@ class StartupMixin(metaclass=SanicMeta):
             cls.start_method
             if not isinstance(cls.start_method, Default)
             else "spawn"
-            if "linux" not in sys.platform or cls.should_auto_reload()
-            else "fork"
         )
 
     @classmethod
-    def _get_context(cls, force_spawn: bool = False) -> BaseContext:
-        method = "spawn" if force_spawn else cls._get_startup_method()
+    def _get_context(cls) -> BaseContext:
+        method = cls._get_startup_method()
         logger.debug("Creating multiprocessing context using '%s'", method)
         return get_context(method)
 
@@ -782,12 +780,10 @@ class StartupMixin(metaclass=SanicMeta):
                 "worker_state": worker_state,
             }
 
-            force_spawn = True
             if not app_loader:
                 if factory:
                     app_loader = AppLoader(factory=factory)
                 else:
-                    force_spawn = False
                     app_loader = AppLoader(
                         factory=partial(cls.get_app, app.name)  # type: ignore
                     )
@@ -825,7 +821,7 @@ class StartupMixin(metaclass=SanicMeta):
                 primary.state.workers,
                 worker_serve,
                 kwargs,
-                cls._get_context(force_spawn),
+                cls._get_context(),
                 (monitor_pub, monitor_sub),
                 worker_state,
             )

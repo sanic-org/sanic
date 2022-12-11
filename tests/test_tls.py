@@ -17,6 +17,7 @@ import sanic.http.tls.creators
 
 from sanic import Sanic
 from sanic.application.constants import Mode
+from sanic.compat import use_context
 from sanic.constants import LocalCertCreator
 from sanic.exceptions import SanicException
 from sanic.helpers import _default
@@ -426,7 +427,10 @@ def test_logger_vhosts(caplog):
         app.stop()
 
     with caplog.at_level(logging.INFO):
-        app.run(host="127.0.0.1", port=42102, ssl=[localhost_dir, sanic_dir])
+        with use_context("fork"):
+            app.run(
+                host="127.0.0.1", port=42102, ssl=[localhost_dir, sanic_dir]
+            )
 
     logmsg = [
         m for s, l, m in caplog.record_tuples if m.startswith("Certificate")

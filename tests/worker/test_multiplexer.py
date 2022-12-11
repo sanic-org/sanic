@@ -1,6 +1,6 @@
 from multiprocessing import Event
 from os import environ, getpid
-from typing import Any, Dict
+from typing import Any, Dict, Type, Union
 from unittest.mock import Mock
 
 import pytest
@@ -117,3 +117,26 @@ def test_properties(
     assert m.workers == worker_state
     assert m.state == worker_state["Test"]
     assert isinstance(m.state, WorkerState)
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    (
+        ({}, "Test"),
+        ({"name": "foo"}, "foo"),
+        ({"all_workers": True}, "__ALL_PROCESSES__:"),
+        ({"name": "foo", "all_workers": True}, ValueError),
+    ),
+)
+def test_restart_params(
+    monitor_publisher: Mock,
+    m: WorkerMultiplexer,
+    params: Dict[str, Any],
+    expected: Union[str, Type[Exception]],
+):
+    if isinstance(expected, str):
+        m.restart(**params)
+        monitor_publisher.send.assert_called_once_with(expected)
+    else:
+        with pytest.raises(expected):
+            m.restart(**params)

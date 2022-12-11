@@ -23,7 +23,6 @@ class AppLoader:
         as_simple: bool = False,
         args: Any = None,
         factory: Optional[Callable[[], SanicApp]] = None,
-        clear_apps_on_factory: bool = True,
     ) -> None:
         self.module_input = module_input
         self.module_name = ""
@@ -32,7 +31,6 @@ class AppLoader:
         self.as_simple = as_simple
         self.args = args
         self.factory = factory
-        self.clear_apps = clear_apps_on_factory
         self.cwd = os.getcwd()
 
         if module_input:
@@ -49,11 +47,6 @@ class AppLoader:
         module_path = os.path.abspath(self.cwd)
         if module_path not in sys.path:
             sys.path.append(module_path)
-
-        if self.clear_apps and (self.factory or self.as_factory):
-            from sanic import Sanic
-
-            Sanic._app_registry = {}
 
         if self.factory:
             return self.factory()

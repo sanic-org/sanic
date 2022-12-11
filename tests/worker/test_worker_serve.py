@@ -29,7 +29,10 @@ def args(app, **kwargs):
     params.setdefault("port", 9999)
     params.setdefault("app_name", "test_config_app")
     params.setdefault("monitor_publisher", None)
-    params.setdefault("app_loader", AppLoader(factory=lambda: app))
+    params.setdefault(
+        "app_loader",
+        AppLoader(factory=lambda: app, clear_apps_on_factory=False),
+    )
     return params
 
 

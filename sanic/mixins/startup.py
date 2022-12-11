@@ -707,8 +707,8 @@ class StartupMixin(metaclass=SanicMeta):
         )
 
     @classmethod
-    def _get_context(cls) -> BaseContext:
-        method = cls._get_startup_method()
+    def _get_context(cls, force_spawn: bool = False) -> BaseContext:
+        method = "spawn" if force_spawn else cls._get_startup_method()
         logger.debug("Creating multiprocessing context using '%s'", method)
         return get_context(method)
 
@@ -782,13 +782,14 @@ class StartupMixin(metaclass=SanicMeta):
                 "worker_state": worker_state,
             }
 
+            force_spawn = True
             if not app_loader:
                 if factory:
                     app_loader = AppLoader(factory=factory)
                 else:
+                    force_spawn = False
                     app_loader = AppLoader(
-                        factory=partial(cls.get_app, app.name),  # type: ignore
-                        clear_apps_on_factory=False,
+                        factory=partial(cls.get_app, app.name)  # type: ignore
                     )
             kwargs["app_name"] = app.name
             kwargs["app_loader"] = app_loader
@@ -824,7 +825,7 @@ class StartupMixin(metaclass=SanicMeta):
                 primary.state.workers,
                 worker_serve,
                 kwargs,
-                cls._get_context(),
+                cls._get_context(force_spawn),
                 (monitor_pub, monitor_sub),
                 worker_state,
             )

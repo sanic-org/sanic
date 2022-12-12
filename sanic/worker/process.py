@@ -108,7 +108,7 @@ class WorkerProcess:
         )
         self.set_state(ProcessState.RESTARTING, force=True)
         if self.restart_order is RestartOrder.SHUTDOWN_FIRST:
-            self._current_process.terminate()
+            self._terminate_now()
         else:
             self._old_process = self._current_process
         self.kwargs.update(
@@ -121,8 +121,7 @@ class WorkerProcess:
             raise RuntimeError("Restart failed")
 
         if self.restart_order is RestartOrder.STARTUP_FIRST:
-            termination_thread = Thread(target=self.wait_to_terminate)
-            termination_thread.start()
+            self._terminate_soon()
 
         self.worker_state[self.name] = {
             **self.worker_state[self.name],
@@ -131,7 +130,28 @@ class WorkerProcess:
             "restart_at": get_now(),
         }
 
-    def wait_to_terminate(self):
+    def _terminate_now(self):
+        logger.debug(
+            f"{Colors.BLUE}Begin restart termination: "
+            f"{Colors.BOLD}{Colors.SANIC}"
+            f"%s {Colors.BLUE}[%s]{Colors.END}",
+            self.name,
+            self._current_process.pid,
+        )
+        self._current_process.terminate()
+
+    def _terminate_soon(self):
+        logger.debug(
+            f"{Colors.BLUE}Begin restart termination: "
+            f"{Colors.BOLD}{Colors.SANIC}"
+            f"%s {Colors.BLUE}[%s]{Colors.END}",
+            self.name,
+            self._current_process.pid,
+        )
+        termination_thread = Thread(target=self._wait_to_terminate)
+        termination_thread.start()
+
+    def _wait_to_terminate(self):
         # TODO: Add a timeout?
         while self.state is not ProcessState.ACKED:
             ...

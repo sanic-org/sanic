@@ -5,7 +5,7 @@ import threading
 from asyncio import Event
 from logging import DEBUG
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -70,6 +70,64 @@ def test_iter_files():
     len_total_files = len(list(reloader.files()))
     assert len_static_files > 0
     assert len_total_files == len_python_files + len_static_files
+
+
+@pytest.mark.parametrize(
+    "order,expected",
+    (
+        (
+            "shutdown_first",
+            [
+                "Restarting a process",
+                "Begin restart termination",
+                "Starting a process",
+            ],
+        ),
+        (
+            "startup_first",
+            [
+                "Restarting a process",
+                "Starting a process",
+                "Begin restart termination",
+                "Waiting for process to be acked",
+                "Process acked. Terminating",
+            ],
+        ),
+    ),
+)
+def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
+
+    current_process = Mock()
+    worker_process = WorkerProcess(
+        lambda **_: current_process,
+        "Test",
+        lambda **_: ...,
+        {},
+        {},
+        RestartOrder[order.upper()],
+    )
+
+    def start(self):
+        worker_process.set_state(ProcessState.ACKED)
+        self._target()
+
+    orig = threading.Thread.start
+    monkeypatch.setattr(threading.Thread, "start", start)
+
+    with caplog.at_level(DEBUG):
+        worker_process.restart()
+
+    ansi = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+    def clean(msg: str):
+        msg, _ = ansi.sub("", msg).split(":", 1)
+        return msg
+
+    debug = [clean(record[2]) for record in caplog.record_tuples]
+    assert debug == expected
+    current_process.start.assert_called_once()
+    current_process.terminate.assert_called_once()
+    monkeypatch.setattr(threading.Thread, "start", orig)
 
 
 def test_reloader_triggers_start_stop_listeners(
@@ -159,58 +217,3 @@ def test_check_file(tmp_path):
     assert Reloader.check_file(current, mtimes) is False
     mtimes[current] = mtimes[current] - 1
     assert Reloader.check_file(current, mtimes) is True
-
-
-@pytest.mark.parametrize(
-    "order,expected",
-    (
-        (
-            "shutdown_first",
-            [
-                "Restarting a process",
-                "Begin restart termination",
-                "Starting a process",
-            ],
-        ),
-        (
-            "startup_first",
-            [
-                "Restarting a process",
-                "Starting a process",
-                "Begin restart termination",
-                "Process acked. Terminating",
-            ],
-        ),
-    ),
-)
-def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
-
-    current_process = Mock()
-    worker_process = WorkerProcess(
-        lambda **_: current_process,
-        "Test",
-        lambda **_: ...,
-        {},
-        {},
-        RestartOrder[order.upper()],
-    )
-
-    def start(self):
-        worker_process.set_state(ProcessState.ACKED)
-        self._target()
-
-    monkeypatch.setattr(threading.Thread, "start", start)
-
-    with caplog.at_level(DEBUG):
-        worker_process.restart()
-
-    ansi = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
-
-    def clean(msg: str):
-        msg, _ = ansi.sub("", msg).split(":", 1)
-        return msg
-
-    debug = [clean(record[2]) for record in caplog.record_tuples]
-    assert debug == expected
-    current_process.start.assert_called_once()
-    current_process.terminate.assert_called_once()

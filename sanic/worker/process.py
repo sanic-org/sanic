@@ -152,6 +152,13 @@ class WorkerProcess:
         termination_thread.start()
 
     def _wait_to_terminate(self):
+        logger.debug(
+            f"{Colors.BLUE}Waiting for process to be acked: "
+            f"{Colors.BOLD}{Colors.SANIC}"
+            f"%s {Colors.BLUE}[%s]{Colors.END}",
+            self.name,
+            self._old_process.pid,
+        )
         # TODO: Add a timeout?
         while self.state is not ProcessState.ACKED:
             ...

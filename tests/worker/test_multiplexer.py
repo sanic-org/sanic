@@ -108,6 +108,11 @@ def test_terminate(monitor_publisher: Mock, m: WorkerMultiplexer):
     monitor_publisher.send.assert_called_once_with("__TERMINATE__")
 
 
+def test_scale(monitor_publisher: Mock, m: WorkerMultiplexer):
+    m.scale(99)
+    monitor_publisher.send.assert_called_once_with("__SCALE__:99")
+
+
 def test_properties(
     monitor_publisher: Mock, worker_state: Dict[str, Any], m: WorkerMultiplexer
 ):

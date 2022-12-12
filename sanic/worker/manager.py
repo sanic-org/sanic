@@ -125,6 +125,9 @@ class WorkerManager:
                 process.restart(**kwargs)
 
     def scale(self, num_worker: int):
+        if num_worker <= 0:
+            raise ValueError("Cannot scale to 0 workers.")
+
         change = num_worker - self.num_server
         if change == 0:
             logger.info(

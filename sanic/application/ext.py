@@ -33,7 +33,7 @@ def setup_ext(app: Sanic, *, fail: bool = False, **kwargs):
         return
 
     if not getattr(app, "_ext", None):
-        Ext: Extend = getattr(sanic_ext, "Extend")
+        Ext = getattr(sanic_ext, "Extend")
         app._ext = Ext(app, **kwargs)
 
         return app.ext

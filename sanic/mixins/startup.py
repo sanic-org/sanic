@@ -41,6 +41,7 @@ from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS, is_atty
+from sanic.constants import RestartOrder
 from sanic.exceptions import ServerKilled
 from sanic.helpers import Default
 from sanic.http.constants import HTTP
@@ -814,7 +815,7 @@ class StartupMixin(metaclass=SanicMeta):
                 cls._get_context(),
                 (monitor_pub, monitor_sub),
                 worker_state,
-                primary.config.RESTART_ORDER,
+                cast(RestartOrder, primary.config.RESTART_ORDER),
             )
             if cls.should_auto_reload():
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(

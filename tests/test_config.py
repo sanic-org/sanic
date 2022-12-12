@@ -14,7 +14,7 @@ from pytest import MonkeyPatch
 
 from sanic import Sanic
 from sanic.config import DEFAULT_CONFIG, Config
-from sanic.constants import LocalCertCreator
+from sanic.constants import LocalCertCreator, RestartOrder
 from sanic.exceptions import PyFileError
 
 
@@ -436,3 +436,19 @@ def test_convert_local_cert_creator(passed, expected):
     app = Sanic("Test")
     assert app.config.LOCAL_CERT_CREATOR is expected
     del os.environ["SANIC_LOCAL_CERT_CREATOR"]
+
+
+@pytest.mark.parametrize(
+    "passed,expected",
+    (
+        ("shutdown_first", RestartOrder.SHUTDOWN_FIRST),
+        ("startup_first", RestartOrder.STARTUP_FIRST),
+        ("SHUTDOWN_FIRST", RestartOrder.SHUTDOWN_FIRST),
+        ("STARTUP_FIRST", RestartOrder.STARTUP_FIRST),
+    ),
+)
+def test_convert_restart_order(passed, expected):
+    os.environ["SANIC_RESTART_ORDER"] = passed
+    app = Sanic("Test")
+    assert app.config.RESTART_ORDER is expected
+    del os.environ["SANIC_RESTART_ORDER"]

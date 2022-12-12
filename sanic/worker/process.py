@@ -188,7 +188,7 @@ class WorkerProcess:
 
 
 class Worker:
-    WORKER_PREFIX = "SANIC-"
+    WORKER_PREFIX = "Sanic-"
 
     def __init__(
         self,

@@ -29,7 +29,7 @@ class WorkerManager:
         context,
         monitor_pubsub,
         worker_state,
-        restart_order: RestartOrder,
+        restart_order: RestartOrder = RestartOrder.SHUTDOWN_FIRST,
     ):
         self.num_server = number
         self.context = context
@@ -141,8 +141,8 @@ class WorkerManager:
 
     def _sync_states(self):
         for process in self.processes:
-            state = self.worker_state[process.name]["state"]
-            if process.state.name != state:
+            state = self.worker_state[process.name].get("state")
+            if state and process.state.name != state:
                 process.set_state(ProcessState[state], True)
 
     def wait_for_ack(self):  # no cov

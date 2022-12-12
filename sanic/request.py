@@ -104,6 +104,7 @@ class Request:
         "_protocol",
         "_remote_addr",
         "_request_middleware_started",
+        "_response_middleware_started",
         "_scheme",
         "_socket",
         "_stream_id",
@@ -179,6 +180,7 @@ class Request:
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
         self._request_middleware_started = False
+        self._response_middleware_started = False
         self.responded: bool = False
         self.route: Optional[Route] = None
         self.stream: Optional[Stream] = None
@@ -337,7 +339,8 @@ class Request:
             middleware = (
                 self.route and self.route.extra.response_middleware
             ) or self.app.response_middleware
-            if middleware:
+            if middleware and not self._response_middleware_started:
+                self._response_middleware_started = True
                 response = await self.app._run_response_middleware(
                     self, response, middleware
                 )

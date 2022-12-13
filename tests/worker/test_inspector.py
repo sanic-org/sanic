@@ -86,7 +86,7 @@ def test_run_inspector(configure_socket: Mock, action: bytes):
     inspector.reload = Mock()  # type: ignore
     inspector.shutdown = Mock()  # type: ignore
     inspector.scale = Mock()  # type: ignore
-    inspector.state_to_json = Mock(return_value="foo")  # type: ignore
+    inspector._state_to_json = Mock(return_value="foo")  # type: ignore
 
     def accept():
         inspector.run = False
@@ -106,22 +106,22 @@ def test_run_inspector(configure_socket: Mock, action: bytes):
         inspector.reload.assert_called()
         inspector.shutdown.assert_not_called()
         inspector.scale.assert_not_called()
-        inspector.state_to_json.assert_not_called()
+        inspector._state_to_json.assert_not_called()
     elif action == b"shutdown":
         inspector.reload.assert_not_called()
         inspector.shutdown.assert_called()
         inspector.scale.assert_not_called()
-        inspector.state_to_json.assert_not_called()
+        inspector._state_to_json.assert_not_called()
     elif action.startswith(b"scale"):
         inspector.reload.assert_not_called()
         inspector.shutdown.assert_not_called()
         inspector.scale.assert_called_once_with(5)
-        inspector.state_to_json.assert_not_called()
+        inspector._state_to_json.assert_not_called()
     else:
         inspector.reload.assert_not_called()
         inspector.shutdown.assert_not_called()
         inspector.scale.assert_not_called()
-        inspector.state_to_json.assert_called()
+        inspector._state_to_json.assert_called()
 
 
 @patch("sanic.worker.inspector.configure_socket")
@@ -131,7 +131,7 @@ def test_accept_timeout(configure_socket: Mock):
     inspector = Inspector(Mock(), {}, {}, "localhost", 9999)
     inspector.reload = Mock()  # type: ignore
     inspector.shutdown = Mock()  # type: ignore
-    inspector.state_to_json = Mock(return_value="foo")  # type: ignore
+    inspector._state_to_json = Mock(return_value="foo")  # type: ignore
 
     def accept():
         inspector.run = False
@@ -143,7 +143,7 @@ def test_accept_timeout(configure_socket: Mock):
 
     inspector.reload.assert_not_called()
     inspector.shutdown.assert_not_called()
-    inspector.state_to_json.assert_not_called()
+    inspector._state_to_json.assert_not_called()
 
 
 def test_state_to_json():
@@ -152,7 +152,7 @@ def test_state_to_json():
     app_info = {"app": "hello"}
     worker_state = {"Test": {"now": now, "nested": {"foo": now}}}
     inspector = Inspector(Mock(), app_info, worker_state, "", 0)
-    state = inspector.state_to_json()
+    state = inspector._state_to_json()
 
     assert state == {
         "info": app_info,

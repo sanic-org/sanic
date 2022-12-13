@@ -46,16 +46,11 @@ class Inspector:
         self.tls_key = tls_key
         self.tls_cert = tls_cert
 
-    def setup(self):
-        self.app.get("/")(self.info)
-        self.app.post("/<action:str>")(self.action)
-        environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
-
     def __call__(self, **_) -> None:
         from sanic import Sanic
 
         self.app = Sanic("Inspector")
-        self.setup()
+        self._setup()
         self.app.run(
             host=self.host,
             port=self.port,
@@ -66,58 +61,66 @@ class Inspector:
             else None,
         )
 
-    async def info(self, request: Request):
-        return await self.respond(request, self.state_to_json())
+    def _setup(self):
+        self.app.get("/")(self._info)
+        self.app.post("/<action:str>")(self._action)
+        environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
 
-    async def action(self, request: Request, action: str):
+    async def _action(self, request: Request, action: str):
         logger.info("Incoming inspector action: %s", action)
         output: Any = None
-        method = getattr(self, f"do_{action}", None)
+        method = getattr(self, action, None)
         if method:
-            output = method(request)
+            kwargs = {}
+            if request.body:
+                kwargs = request.json
+            output = method(**kwargs)
             if isawaitable(output):
                 output = await output
 
-        return await self.respond(request, output)
+        return await self._respond(request, output)
 
-    async def respond(self, request: Request, output: Any):
+    async def _info(self, request: Request):
+        return await self._respond(request, self._state_to_json())
+
+    async def _respond(self, request: Request, output: Any):
         name = request.match_info.get("action", "info")
         return json(
             {"meta": {"action": name}, "result": output},
             escape_forward_slashes=False,
         )
 
-    def state_to_json(self) -> Dict[str, Any]:
+    def _state_to_json(self) -> Dict[str, Any]:
         output = {"info": self.app_info}
-        output["workers"] = self.make_safe(dict(self.worker_state))
+        output["workers"] = self._make_safe(dict(self.worker_state))
         return output
 
-    def do_reload(self, _) -> None:
+    @staticmethod
+    def _make_safe(obj: Dict[str, Any]) -> Dict[str, Any]:
+        for key, value in obj.items():
+            if isinstance(value, dict):
+                obj[key] = Inspector._make_safe(value)
+            elif isinstance(value, datetime):
+                obj[key] = value.isoformat()
+        return obj
+
+    def reload(self) -> None:
         message = "__ALL_PROCESSES__:"
         self._publisher.send(message)
 
-    def do_scale(self, request: Request) -> str:
+    def scale(self, replicas) -> str:
         num_workers = 1
-        if request.body:
-            num_workers = request.json.get("replicas")
+        if replicas:
+            num_workers = int(replicas)
         log_msg = f"Scaling to {num_workers}"
         logger.info(log_msg)
         message = f"__SCALE__:{num_workers}"
         self._publisher.send(message)
         return log_msg
 
-    def do_shutdown(self, _) -> None:
+    def shutdown(self) -> None:
         message = "__TERMINATE__"
         self._publisher.send(message)
-
-    @staticmethod
-    def make_safe(obj: Dict[str, Any]) -> Dict[str, Any]:
-        for key, value in obj.items():
-            if isinstance(value, dict):
-                obj[key] = Inspector.make_safe(value)
-            elif isinstance(value, datetime):
-                obj[key] = value.isoformat()
-        return obj
 
 
 class InspectorClient:

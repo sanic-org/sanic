@@ -1293,6 +1293,24 @@ async def test_request_string_representation_asgi(app):
             "------sanic--\r\n",
             "filename_\u00A0_test",
         ),
+        # Umlaut using NFC normalization (Windows, Linux, Android)
+        (
+            "------sanic\r\n"
+            'content-disposition: form-data; filename*="utf-8\'\'filename_%C3%A4_test"; name="test"\r\n'
+            "\r\n"
+            "OK\r\n"
+            "------sanic--\r\n",
+            "filename_\u00E4_test",
+        ),
+        # Umlaut using NFD normalization (MacOS client)
+        (
+            "------sanic\r\n"
+            'content-disposition: form-data; filename*="utf-8\'\'filename_a%CC%88_test"; name="test"\r\n'
+            "\r\n"
+            "OK\r\n"
+            "------sanic--\r\n",
+            "filename_\u00E4_test",  # Sanic should normalize to NFC
+        ),
     ],
 )
 def test_request_multipart_files(app, payload, filename):

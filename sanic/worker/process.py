@@ -133,6 +133,8 @@ class WorkerProcess:
 
 
 class Worker:
+    WORKER_PREFIX = "Sanic-"
+
     def __init__(
         self,
         ident: str,
@@ -152,7 +154,7 @@ class Worker:
     def create_process(self) -> WorkerProcess:
         process = WorkerProcess(
             factory=self.context.Process,
-            name=f"Sanic-{self.ident}-{len(self.processes)}",
+            name=f"{self.WORKER_PREFIX}{self.ident}-{len(self.processes)}",
             target=self.serve,
             kwargs={**self.server_settings},
             worker_state=self.worker_state,

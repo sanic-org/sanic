@@ -41,6 +41,7 @@ from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS, is_atty
+from sanic.exceptions import ServerKilled
 from sanic.helpers import Default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
@@ -740,6 +741,7 @@ class StartupMixin(metaclass=SanicMeta):
         socks = []
         sync_manager = Manager()
         setup_ext(primary)
+        exit_code = 0
         try:
             primary_server_info.settings.pop("main_start", None)
             primary_server_info.settings.pop("main_stop", None)
@@ -849,6 +851,8 @@ class StartupMixin(metaclass=SanicMeta):
             trigger_events(ready, loop, primary)
 
             manager.run()
+        except ServerKilled:
+            exit_code = 1
         except BaseException:
             kwargs = primary_server_info.settings
             error_logger.exception(
@@ -874,6 +878,8 @@ class StartupMixin(metaclass=SanicMeta):
             unix = kwargs.get("unix")
             if unix:
                 remove_unix_socket(unix)
+        if exit_code:
+            os._exit(exit_code)
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:

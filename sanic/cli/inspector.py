@@ -20,7 +20,8 @@ class InspectorSubParser(ArgumentParser):
         super().__init__(*args, **kwargs)
         _add_shared(self)
         if not self.description:
-            self.description = get_logo(True)
+            self.description = ""
+        self.description = get_logo(True) + self.description
 
 
 def make_inspector_parser(parser: ArgumentParser) -> None:
@@ -64,5 +65,7 @@ def make_inspector_parser(parser: ArgumentParser) -> None:
         formatter_class=SanicHelpFormatter,
     )
     custom.add_argument(
-        "positional", nargs="*", help="Add one or more non-keyword args"
+        "positional",
+        nargs="*",
+        help="Add one or more non-keyword args to your custom command",
     )

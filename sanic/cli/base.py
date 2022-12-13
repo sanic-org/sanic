@@ -1,4 +1,5 @@
 from argparse import (
+    SUPPRESS,
     Action,
     ArgumentParser,
     RawTextHelpFormatter,
@@ -15,7 +16,12 @@ class SanicArgumentParser(ArgumentParser):
 
 
 class SanicHelpFormatter(RawTextHelpFormatter):
-    ...
+    def add_usage(self, usage, actions, groups, prefix=None):
+        if not usage:
+            usage = SUPPRESS
+            # Add one linebreak, but not two
+            self.add_text("\x1b[1A'")
+        super().add_usage(usage, actions, groups, prefix)
 
 
 class SanicSubParsersAction(_SubParsersAction):

@@ -33,6 +33,10 @@ class WorkerMultiplexer:
 
     reload = restart  # no cov
 
+    def scale(self, num_workers: int):
+        message = f"__SCALE__:{num_workers}"
+        self._monitor_publisher.send(message)
+
     def terminate(self, early: bool = False):
         message = "__TERMINATE_EARLY__" if early else "__TERMINATE__"
         self._monitor_publisher.send(message)

@@ -1,8 +1,10 @@
 import os
 
+from itertools import count
+from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
@@ -30,32 +32,60 @@ class WorkerManager:
     ):
         self.num_server = number
         self.context = context
-        self.transient: List[Worker] = []
-        self.durable: List[Worker] = []
+        self.transient: Dict[str, Worker] = {}
+        self.durable: Dict[str, Worker] = {}
         self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
         self.worker_state["Sanic-Main"] = {"pid": self.pid}
         self.terminated = False
+        self._serve = serve
+        self._server_settings = server_settings
+        self._server_count = count()
 
         if number == 0:
             raise RuntimeError("Cannot serve with no workers")
 
-        for i in range(number):
-            self.manage(
-                f"{WorkerProcess.SERVER_LABEL}-{i}",
-                serve,
-                server_settings,
-                transient=True,
-            )
+        for _ in range(number):
+            self.create_server()
 
         signal_func(SIGINT, self.shutdown_signal)
         signal_func(SIGTERM, self.shutdown_signal)
 
-    def manage(self, ident, func, kwargs, transient=False):
+    def manage(self, ident, func, kwargs, transient=False) -> Worker:
         container = self.transient if transient else self.durable
-        container.append(
-            Worker(ident, func, kwargs, self.context, self.worker_state)
+        worker = Worker(ident, func, kwargs, self.context, self.worker_state)
+        container[worker.ident] = worker
+        return worker
+
+    def create_server(self) -> Worker:
+        server_number = next(self._server_count)
+        return self.manage(
+            f"{WorkerProcess.SERVER_LABEL}-{server_number}",
+            self._serve,
+            self._server_settings,
+            transient=True,
         )
+
+    def shutdown_server(self, ident: Optional[str] = None) -> None:
+        if not ident:
+            servers = [
+                worker
+                for worker in self.transient.values()
+                if worker.ident.startswith(WorkerProcess.SERVER_LABEL)
+            ]
+            if not servers:
+                error_logger.error(
+                    "Server shutdown failed because a server was not found."
+                )
+                return
+            worker = choice(servers)  # nosec B311
+        else:
+            worker = self.transient[ident]
+
+        for process in worker.processes:
+            process.terminate()
+
+        del self.transient[worker.ident]
 
     def run(self):
         self.start()
@@ -94,6 +124,28 @@ class WorkerManager:
             if not process_names or process.name in process_names:
                 process.restart(**kwargs)
 
+    def scale(self, num_worker: int):
+        if num_worker <= 0:
+            raise ValueError("Cannot scale to 0 workers.")
+
+        change = num_worker - self.num_server
+        if change == 0:
+            logger.info(
+                f"No change needed. There are already {num_worker} workers."
+            )
+            return
+
+        logger.info(f"Scaling from {self.num_server} to {num_worker} workers")
+        if change > 0:
+            for _ in range(change):
+                worker = self.create_server()
+                for process in worker.processes:
+                    process.start()
+        else:
+            for _ in range(abs(change)):
+                self.shutdown_server()
+        self.num_server = num_worker
+
     def monitor(self):
         self.wait_for_ack()
         while True:
@@ -109,6 +161,9 @@ class WorkerManager:
                         self.shutdown()
                         break
                     split_message = message.split(":", 1)
+                    if message.startswith("__SCALE__"):
+                        self.scale(int(split_message[-1]))
+                        continue
                     processes = split_message[0]
                     reloaded_files = (
                         split_message[1] if len(split_message) > 1 else None
@@ -161,8 +216,8 @@ class WorkerManager:
                 self.kill()
 
     @property
-    def workers(self):
-        return self.transient + self.durable
+    def workers(self) -> List[Worker]:
+        return list(self.transient.values()) + list(self.durable.values())
 
     @property
     def processes(self):
@@ -172,7 +227,7 @@ class WorkerManager:
 
     @property
     def transient_processes(self):
-        for worker in self.transient:
+        for worker in self.transient.values():
             for process in worker.processes:
                 yield process
 

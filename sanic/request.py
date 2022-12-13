@@ -1086,10 +1086,12 @@ def parse_multipart_form(body, boundary):
                     )
                     file_name = unquote(value, encoding=encoding)
 
-                # Normalize to NFC (Apple MacOS/iOS compatibility because they send NFD)
+                # Normalize to NFC (Apple MacOS/iOS send NFD)
                 # Notes:
-                # - No effect for Windows, Linux or Android clients which already send NFC
-                # - Python open() is tricky (creates files in NFC no matter which form you use)
+                # - No effect for Windows, Linux or Android clients which
+                #   already send NFC
+                # - Python open() is tricky (creates files in NFC no matter
+                #   which form you use)
                 if file_name is not None:
                     file_name = unicodedata.normalize("NFC", file_name)
 

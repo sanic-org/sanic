@@ -58,7 +58,6 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 from sanic.server.socket import configure_socket, remove_unix_socket
-from sanic.worker.inspector import Inspector
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
@@ -835,14 +834,16 @@ class StartupMixin(metaclass=SanicMeta):
                     "packages": [sanic_version, *packages],
                     "extra": extra,
                 }
-                inspector = Inspector(
+                inspector = primary.inspector_class(
                     monitor_pub,
                     app_info,
                     worker_state,
                     primary.config.INSPECTOR_HOST,
                     primary.config.INSPECTOR_PORT,
+                    primary.config.INSPECTOR_TLS_KEY,
+                    primary.config.INSPECTOR_TLS_CERT,
                 )
-                manager.manage("Inspector", inspector, {}, transient=False)
+                manager.manage("Inspector", inspector, {}, transient=True)
 
             primary._inspector = inspector
             primary._manager = manager

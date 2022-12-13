@@ -115,12 +115,6 @@ class ApplicationGroup(Group):
             const="shutdown",
             help=("Trigger all processes to shutdown"),
         )
-        group.add_argument(
-            "--scale",
-            dest="scale",
-            type=int,
-            help=("Scale number of workers"),
-        )
 
 
 class HTTPVersionGroup(Group):

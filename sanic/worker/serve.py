@@ -17,6 +17,7 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.runners import _serve_http_1, _serve_http_3
 from sanic.worker.loader import AppLoader, CertLoader
 from sanic.worker.multiplexer import WorkerMultiplexer
+from sanic.worker.process import Worker, WorkerProcess
 
 
 def worker_serve(
@@ -79,7 +80,10 @@ def worker_serve(
                 info.settings["ssl"] = ssl
 
         # When in a worker process, do some init
-        if os.environ.get("SANIC_WORKER_NAME"):
+        worker_name = os.environ.get("SANIC_WORKER_NAME")
+        if worker_name and worker_name.startswith(
+            Worker.WORKER_PREFIX + WorkerProcess.SERVER_LABEL
+        ):
             # Hydrate apps with any passed server info
 
             if monitor_publisher is None:

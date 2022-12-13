@@ -3,7 +3,6 @@ import os
 import shutil
 import sys
 
-from argparse import ArgumentParser, RawTextHelpFormatter
 from functools import partial
 from textwrap import indent
 from typing import Any, List, Union
@@ -11,13 +10,11 @@ from typing import Any, List, Union
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
-from sanic.log import error_logger
-from sanic.worker.inspector import inspect
+from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
+from sanic.cli.inspector import make_inspector_parser
+from sanic.log import Colors, error_logger
+from sanic.worker.inspector import InspectorClient
 from sanic.worker.loader import AppLoader
-
-
-class SanicArgumentParser(ArgumentParser):
-    ...
 
 
 class SanicCLI:
@@ -46,7 +43,7 @@ Or, a path to a directory to run as a simple HTTP server:
         self.parser = SanicArgumentParser(
             prog="sanic",
             description=self.DESCRIPTION,
-            formatter_class=lambda prog: RawTextHelpFormatter(
+            formatter_class=lambda prog: SanicHelpFormatter(
                 prog,
                 max_help_position=36 if width > 96 else 24,
                 indent_increment=4,
@@ -60,14 +57,25 @@ Or, a path to a directory to run as a simple HTTP server:
         )
         self.args: List[Any] = []
         self.groups: List[Group] = []
+        self.inspecting = False
 
     def attach(self):
+        if sys.argv[1] == "inspect":
+            self.inspecting = True
+            self.parser.description = get_logo(True)
+            make_inspector_parser(self.parser)
+            return
+
         for group in Group._registry:
             instance = group.create(self.parser)
             instance.attach()
             self.groups.append(instance)
 
     def run(self, parse_args=None):
+        if self.inspecting:
+            self._inspector()
+            return
+
         legacy_version = False
         if not parse_args:
             # This is to provide backwards compat -v to display version
@@ -76,7 +84,7 @@ Or, a path to a directory to run as a simple HTTP server:
         elif parse_args == ["-v"]:
             parse_args = ["--version"]
 
-        if not legacy_version:
+        if not legacy_version and not self.inspecting:
             parsed, unknown = self.parser.parse_known_args(args=parse_args)
             if unknown and parsed.factory:
                 for arg in unknown:
@@ -86,11 +94,12 @@ Or, a path to a directory to run as a simple HTTP server:
         self.args = self.parser.parse_args(args=parse_args)
         self._precheck()
         app_loader = AppLoader(
-            self.args.module,
-            self.args.factory,
-            self.args.simple,
-            self.args,
+            self.args.module, self.args.factory, self.args.simple, self.args
         )
+
+        if self.args.inspect or self.args.inspect_raw or self.args.trigger:
+            self._inspector_legacy(app_loader)
+            return
 
         try:
             app = self._get_app(app_loader)
@@ -98,40 +107,8 @@ Or, a path to a directory to run as a simple HTTP server:
         except ValueError as e:
             error_logger.exception(f"Failed to run app: {e}")
         else:
-            if (
-                self.args.inspect
-                or self.args.inspect_raw
-                or self.args.trigger
-                or self.args.scale is not None
-            ):
-                os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
-            else:
-                for http_version in self.args.http:
-                    app.prepare(**kwargs, version=http_version)
-
-            if (
-                self.args.inspect
-                or self.args.inspect_raw
-                or self.args.trigger
-                or self.args.scale is not None
-            ):
-                if self.args.scale is not None:
-                    if self.args.scale <= 0:
-                        error_logger.error("There must be at least 1 worker")
-                        sys.exit(1)
-                    action = f"scale={self.args.scale}"
-                else:
-                    action = self.args.trigger or (
-                        "raw" if self.args.inspect_raw else "pretty"
-                    )
-                inspect(
-                    app.config.INSPECTOR_HOST,
-                    app.config.INSPECTOR_PORT,
-                    action,
-                )
-                del os.environ["SANIC_IGNORE_PRODUCTION_WARNING"]
-                return
-
+            for http_version in self.args.http:
+                app.prepare(**kwargs, version=http_version)
             if self.args.single:
                 serve = Sanic.serve_single
             elif self.args.legacy:
@@ -139,6 +116,49 @@ Or, a path to a directory to run as a simple HTTP server:
             else:
                 serve = partial(Sanic.serve, app_loader=app_loader)
             serve(app)
+
+    def _inspector_legacy(self, app_loader: AppLoader):
+        host = port = None
+        if ":" in self.args.module:
+            maybe_host, maybe_port = self.args.module.rsplit(":", 1)
+            if maybe_port.isnumeric():
+                host, port = maybe_host, int(maybe_port)
+        if not host:
+            app = self._get_app(app_loader)
+            host, port = app.config.INSPECTOR_HOST, app.config.INSPECTOR_PORT
+
+        action = self.args.trigger or "info"
+
+        InspectorClient(host, port, False, self.args.inspect_raw).do(action)
+        sys.stdout.write(
+            f"\n{Colors.BOLD}{Colors.YELLOW}WARNING:{Colors.END} "
+            "You are using the legacy CLI command that will be removed in "
+            f"{Colors.RED}v23.3{Colors.END}. See ___ or checkout the new "
+            "style commands:\n\n\t"
+            f"{Colors.YELLOW}sanic inspect --help{Colors.END}\n"
+        )
+
+    def _inspector(self):
+        args = sys.argv[2:]
+        self.args, unknown = self.parser.parse_known_args(args=args)
+        if unknown:
+            for arg in unknown:
+                if arg.startswith("--"):
+                    key, value = arg.split("=")
+                    setattr(self.args, key.strip("-"), value)
+
+        kwargs = {**self.args.__dict__}
+        host = kwargs.pop("host")
+        port = kwargs.pop("port")
+        secure = kwargs.pop("secure")
+        raw = kwargs.pop("raw")
+        action = kwargs.pop("action") or "info"
+        positional = kwargs.pop("positional", None)
+        if action == "<custom>" and positional:
+            action = positional[0]
+            if len(positional) > 1:
+                kwargs["args"] = positional[1:]
+        InspectorClient(host, port, secure, raw).do(action, **kwargs)
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics

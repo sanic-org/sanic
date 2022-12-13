@@ -24,14 +24,16 @@ def create_context(
     certfile: Optional[str] = None,
     keyfile: Optional[str] = None,
     password: Optional[str] = None,
+    purpose: ssl.Purpose = ssl.Purpose.CLIENT_AUTH,
 ) -> ssl.SSLContext:
     """Create a context with secure crypto and HTTP/1.1 in protocols."""
-    context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+    context = ssl.create_default_context(purpose=purpose)
     context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.set_ciphers(":".join(CIPHERS_TLS12))
     context.set_alpn_protocols(["http/1.1"])
-    context.sni_callback = server_name_callback
-    if certfile and keyfile:
+    if purpose is ssl.Purpose.CLIENT_AUTH:
+        context.sni_callback = server_name_callback
+    if certfile or keyfile:
         context.load_cert_chain(certfile, keyfile, password)
     return context
 

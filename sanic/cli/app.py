@@ -3,9 +3,10 @@ import os
 import shutil
 import sys
 
+from argparse import Namespace
 from functools import partial
 from textwrap import indent
-from typing import Any, List, Union
+from typing import List, Union, cast
 
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
@@ -55,7 +56,7 @@ Or, a path to a directory to run as a simple HTTP server:
         self.main_process = (
             os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
         )
-        self.args: List[Any] = []
+        self.args: Namespace = Namespace()
         self.groups: List[Group] = []
         self.inspecting = False
 
@@ -119,8 +120,9 @@ Or, a path to a directory to run as a simple HTTP server:
 
     def _inspector_legacy(self, app_loader: AppLoader):
         host = port = None
-        if ":" in self.args.module:
-            maybe_host, maybe_port = self.args.module.rsplit(":", 1)
+        module = cast(str, self.args.module)
+        if ":" in module:
+            maybe_host, maybe_port = module.rsplit(":", 1)
             if maybe_port.isnumeric():
                 host, port = maybe_host, int(maybe_port)
         if not host:
@@ -129,7 +131,9 @@ Or, a path to a directory to run as a simple HTTP server:
 
         action = self.args.trigger or "info"
 
-        InspectorClient(host, port, False, self.args.inspect_raw).do(action)
+        InspectorClient(
+            str(host), int(port or 6457), False, self.args.inspect_raw, ""
+        ).do(action)
         sys.stdout.write(
             f"\n{Colors.BOLD}{Colors.YELLOW}WARNING:{Colors.END} "
             "You are using the legacy CLI command that will be removed in "

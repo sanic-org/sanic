@@ -204,7 +204,7 @@ class InspectorClient:
 
     def request(self, action: str, method: str = "POST", **kwargs: Any) -> Any:
         url = f"{self.base_url}/{action}"
-        params = {"method": method, "headers": {}}
+        params: Dict[str, Any] = {"method": method, "headers": {}}
         if kwargs:
             params["data"] = dumps(kwargs).encode()
             params["headers"]["content-type"] = "application/json"

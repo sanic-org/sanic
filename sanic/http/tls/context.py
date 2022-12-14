@@ -33,7 +33,7 @@ def create_context(
     context.set_alpn_protocols(["http/1.1"])
     if purpose is ssl.Purpose.CLIENT_AUTH:
         context.sni_callback = server_name_callback
-    if certfile or keyfile:
+    if certfile and keyfile:
         context.load_cert_chain(certfile, keyfile, password)
     return context
 

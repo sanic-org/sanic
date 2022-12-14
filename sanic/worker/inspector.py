@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 from datetime import datetime
@@ -40,7 +42,6 @@ class Inspector:
         tls_cert: Union[Path, str, Default],
     ):
         self._publisher = publisher
-        self.run = True
         self.app_info = app_info
         self.worker_state = worker_state
         self.host = host
@@ -49,20 +50,22 @@ class Inspector:
         self.tls_key = tls_key
         self.tls_cert = tls_cert
 
-    def __call__(self, **_) -> None:
+    def __call__(self, run=True, **_) -> Inspector:
         from sanic import Sanic
 
         self.app = Sanic("Inspector")
         self._setup()
-        self.app.run(
-            host=self.host,
-            port=self.port,
-            single_process=True,
-            ssl={"key": self.tls_key, "cert": self.tls_cert}
-            if not isinstance(self.tls_key, Default)
-            and not isinstance(self.tls_cert, Default)
-            else None,
-        )
+        if run:
+            self.app.run(
+                host=self.host,
+                port=self.port,
+                single_process=True,
+                ssl={"key": self.tls_key, "cert": self.tls_cert}
+                if not isinstance(self.tls_key, Default)
+                and not isinstance(self.tls_cert, Default)
+                else None,
+            )
+        return self
 
     def _setup(self):
         self.app.get("/")(self._info)
@@ -169,7 +172,7 @@ class InspectorClient:
     def info(self) -> None:
         out = sys.stdout.write
         response = self.request("", "GET")
-        if self.raw:
+        if self.raw or not response:
             return
         data = response["result"]
         display = data.pop("info")

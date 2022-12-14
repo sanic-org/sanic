@@ -1,11 +1,18 @@
 from logging import ERROR, INFO
-from signal import SIGINT, SIGKILL
+from signal import SIGINT
 from unittest.mock import Mock, call, patch
 
 import pytest
 
+from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
 from sanic.worker.manager import WorkerManager
+
+
+if not OS_IS_WINDOWS:
+    from signal import SIGKILL
+else:
+    SIGKILL = SIGINT
 
 
 def fake_serve():

@@ -1,6 +1,7 @@
 # import asyncio
 import logging
 import os
+import sys
 
 from asyncio import AbstractEventLoop, sleep
 from string import ascii_lowercase
@@ -175,7 +176,9 @@ def handler(request: Request):
 
 async def client(app: Sanic, loop: AbstractEventLoop):
     try:
-        async with httpx.AsyncClient(uds=SOCKPATH) as client:
+
+        transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
+        async with httpx.AsyncClient(transport=transport) as client:
             r = await client.get("http://myhost.invalid/")
             assert r.status_code == 200
             assert r.text == os.path.abspath(SOCKPATH)
@@ -184,6 +187,10 @@ async def client(app: Sanic, loop: AbstractEventLoop):
         app.stop()
 
 
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
 def test_unix_connection_multiple_workers():
     with use_context("fork"):
         app_multi = Sanic(name="test")

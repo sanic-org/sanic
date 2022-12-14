@@ -1,14 +1,9 @@
 import asyncio
 
-from contextlib import closing
-from socket import socket
-
 import pytest
 
 from sanic import Sanic
 from sanic.blueprints import Blueprint
-from sanic.compat import use_context
-from sanic.helpers import _default
 from sanic.response import json, text
 from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
@@ -625,7 +620,4 @@ def test_streaming_echo():
         res = await read_chunk()
         assert res == None
 
-    with use_context("fork"):
-        # Use random port for tests
-        with closing(socket()) as sock:
-            app.run(access_log=False)
+    app.run(access_log=False, single_process=True)

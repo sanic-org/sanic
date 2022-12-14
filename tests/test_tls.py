@@ -2,6 +2,7 @@ import logging
 import os
 import ssl
 import subprocess
+import sys
 
 from contextlib import contextmanager
 from multiprocessing import Event
@@ -427,10 +428,12 @@ def test_logger_vhosts(caplog):
         app.stop()
 
     with caplog.at_level(logging.INFO):
-        with use_context("fork"):
-            app.run(
-                host="127.0.0.1", port=42102, ssl=[localhost_dir, sanic_dir]
-            )
+        app.run(
+            host="127.0.0.1",
+            port=42102,
+            ssl=[localhost_dir, sanic_dir],
+            single_process=True,
+        )
 
     logmsg = [
         m for s, l, m in caplog.record_tuples if m.startswith("Certificate")
@@ -646,6 +649,10 @@ def test_sanic_ssl_context_create():
     assert isinstance(sanic_context, SanicSSLContext)
 
 
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
 def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
 
     ssl_dict = {"cert": localhost_cert, "key": localhost_key}
@@ -661,8 +668,9 @@ def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
         app.stop()
 
     assert not event.is_set()
-    with caplog.at_level(logging.INFO):
-        app.run(ssl=ssl_dict)
+    with use_context("fork"):
+        with caplog.at_level(logging.INFO):
+            app.run(ssl=ssl_dict)
     assert event.is_set()
 
     assert (

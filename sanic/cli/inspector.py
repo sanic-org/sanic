@@ -8,6 +8,7 @@ def _add_shared(parser: ArgumentParser) -> None:
     parser.add_argument("--host", "-H", default="localhost")
     parser.add_argument("--port", "-p", default=6457, type=int)
     parser.add_argument("--secure", "-s", action="store_true")
+    parser.add_argument("--api-key", "-k")
     parser.add_argument(
         "--raw",
         action="store_true",

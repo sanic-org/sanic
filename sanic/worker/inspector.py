@@ -7,13 +7,14 @@ from multiprocessing.connection import Connection
 from os import environ
 from pathlib import Path
 from textwrap import indent
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 from urllib.error import URLError
 from urllib.request import Request as URequest
 from urllib.request import urlopen
 
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTDTTY
+from sanic.exceptions import Unauthorized
 from sanic.helpers import Default
 from sanic.log import Colors, logger
 from sanic.request import Request
@@ -34,6 +35,7 @@ class Inspector:
         worker_state: Dict[str, Any],
         host: str,
         port: int,
+        api_key: str,
         tls_key: Union[Path, str, Default],
         tls_cert: Union[Path, str, Default],
     ):
@@ -43,6 +45,7 @@ class Inspector:
         self.worker_state = worker_state
         self.host = host
         self.port = port
+        self.api_key = api_key
         self.tls_key = tls_key
         self.tls_cert = tls_cert
 
@@ -64,7 +67,13 @@ class Inspector:
     def _setup(self):
         self.app.get("/")(self._info)
         self.app.post("/<action:str>")(self._action)
+        if self.api_key:
+            self.app.on_request(self._authentication)
         environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
+
+    def _authentication(self, request: Request) -> None:
+        if request.token != self.api_key:
+            raise Unauthorized("Bad API key")
 
     async def _action(self, request: Request, action: str):
         logger.info("Incoming inspector action: %s", action)
@@ -124,11 +133,19 @@ class Inspector:
 
 
 class InspectorClient:
-    def __init__(self, host: str, port: int, secure: bool, raw: bool) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        secure: bool,
+        raw: bool,
+        api_key: Optional[str],
+    ) -> None:
         self.scheme = "https" if secure else "http"
         self.host = host
         self.port = port
         self.raw = raw
+        self.api_key = api_key
 
         for scheme in ("http", "https"):
             full = f"{scheme}://"
@@ -184,10 +201,12 @@ class InspectorClient:
 
     def request(self, action: str, method: str = "POST", **kwargs: Any) -> Any:
         url = f"{self.base_url}/{action}"
-        params = {"method": method}
+        params = {"method": method, "headers": {}}
         if kwargs:
             params["data"] = dumps(kwargs).encode()
-            params["headers"] = {"content-type": "application/json"}
+            params["headers"]["content-type"] = "application/json"
+        if self.api_key:
+            params["headers"]["authorization"] = f"Bearer {self.api_key}"
         request = URequest(url, **params)
 
         try:

@@ -153,12 +153,13 @@ Or, a path to a directory to run as a simple HTTP server:
         secure = kwargs.pop("secure")
         raw = kwargs.pop("raw")
         action = kwargs.pop("action") or "info"
+        api_key = kwargs.pop("api_key")
         positional = kwargs.pop("positional", None)
         if action == "<custom>" and positional:
             action = positional[0]
             if len(positional) > 1:
                 kwargs["args"] = positional[1:]
-        InspectorClient(host, port, secure, raw).do(action, **kwargs)
+        InspectorClient(host, port, secure, raw, api_key).do(action, **kwargs)
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics

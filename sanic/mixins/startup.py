@@ -840,6 +840,7 @@ class StartupMixin(metaclass=SanicMeta):
                     worker_state,
                     primary.config.INSPECTOR_HOST,
                     primary.config.INSPECTOR_PORT,
+                    primary.config.INSPECTOR_API_KEY,
                     primary.config.INSPECTOR_TLS_KEY,
                     primary.config.INSPECTOR_TLS_CERT,
                 )

@@ -9,7 +9,7 @@ from multiprocessing.connection import Connection
 from os import environ
 from pathlib import Path
 from textwrap import indent
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Mapping, Optional, Union
 from urllib.error import URLError
 from urllib.request import Request as URequest
 from urllib.request import urlopen
@@ -34,7 +34,7 @@ class Inspector:
         self,
         publisher: Connection,
         app_info: Dict[str, Any],
-        worker_state: Dict[str, Any],
+        worker_state: Mapping[str, Any],
         host: str,
         port: int,
         api_key: str,

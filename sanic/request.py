@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import email.utils
+import unicodedata
 import uuid
 
 from collections import defaultdict
@@ -1084,6 +1085,16 @@ def parse_multipart_form(body, boundary):
                         form_parameters["filename*"]
                     )
                     file_name = unquote(value, encoding=encoding)
+
+                # Normalize to NFC (Apple MacOS/iOS send NFD)
+                # Notes:
+                # - No effect for Windows, Linux or Android clients which
+                #   already send NFC
+                # - Python open() is tricky (creates files in NFC no matter
+                #   which form you use)
+                if file_name is not None:
+                    file_name = unicodedata.normalize("NFC", file_name)
+
             elif form_header_field == "content-type":
                 content_type = form_header_value
                 content_charset = form_parameters.get("charset", "utf-8")

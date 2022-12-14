@@ -55,17 +55,20 @@ class Inspector:
                 else:
                     action = conn.recv(64)
                     if action == b"reload":
-                        conn.send(b"\n")
                         self.reload()
                     elif action == b"shutdown":
-                        conn.send(b"\n")
                         self.shutdown()
+                    elif action.startswith(b"scale"):
+                        num_workers = int(action.split(b"=", 1)[-1])
+                        logger.info("Scaling to %s", num_workers)
+                        self.scale(num_workers)
                     else:
                         data = dumps(self.state_to_json())
                         conn.send(data.encode())
-                        conn.close()
+                    conn.send(b"\n")
+                    conn.close()
         finally:
-            logger.debug("Inspector closing")
+            logger.info("Inspector closing")
             sock.close()
 
     def stop(self, *_):
@@ -78,6 +81,10 @@ class Inspector:
 
     def reload(self):
         message = "__ALL_PROCESSES__:"
+        self._publisher.send(message)
+
+    def scale(self, num_workers: int):
+        message = f"__SCALE__:{num_workers}"
         self._publisher.send(message)
 
     def shutdown(self):

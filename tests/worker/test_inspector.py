@@ -35,17 +35,6 @@ class FooInspector(Inspector):
 
 
 @pytest.fixture
-def urlopen():
-    urlopen = Mock()
-    urlopen.return_value = urlopen
-    urlopen.__enter__ = Mock(return_value=urlopen)
-    urlopen.__exit__ = Mock()
-    urlopen.read = Mock()
-    with patch("sanic.worker.inspector.urlopen", urlopen):
-        yield urlopen
-
-
-@pytest.fixture
 def publisher():
     publisher = Mock()
     return publisher

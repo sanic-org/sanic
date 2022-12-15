@@ -218,7 +218,8 @@ class SignalRouter(BaseRouter):
             event = ".".join([*parts[:2], "<__trigger__>"])
 
         try:
-            # Attaching __requirements__ and __trigger__ to the handler is deprecated and will be removed in v23.6.
+            # Attaching __requirements__ and __trigger__ to the handler
+            # is deprecated and will be removed in v23.6.
             handler.__requirements__ = condition  # type: ignore
             handler.__trigger__ = trigger  # type: ignore
         except AttributeError:

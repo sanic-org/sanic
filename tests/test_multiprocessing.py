@@ -3,6 +3,7 @@ import multiprocessing
 import pickle
 import random
 import signal
+import sys
 
 from asyncio import sleep
 
@@ -11,6 +12,7 @@ import pytest
 from sanic_testing.testing import HOST, PORT
 
 from sanic import Blueprint, text
+from sanic.compat import use_context
 from sanic.log import logger
 from sanic.server.socket import configure_socket
 
@@ -19,6 +21,10 @@ from sanic.server.socket import configure_socket
     not hasattr(signal, "SIGALRM"),
     reason="SIGALRM is not implemented for this platform, we have to come "
     "up with another timeout strategy to test these",
+)
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
 )
 def test_multiprocessing(app):
     """Tests that the number of children we produce is correct"""
@@ -37,7 +43,8 @@ def test_multiprocessing(app):
 
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(2)
-    app.run(HOST, 4120, workers=num_workers, debug=True)
+    with use_context("fork"):
+        app.run(HOST, 4120, workers=num_workers, debug=True)
 
     assert len(process_list) == num_workers + 1
 
@@ -136,6 +143,10 @@ def test_multiprocessing_legacy_unix(app):
     not hasattr(signal, "SIGALRM"),
     reason="SIGALRM is not implemented for this platform",
 )
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
 def test_multiprocessing_with_blueprint(app):
     # Selects a number at random so we can spot check
     num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
@@ -155,7 +166,8 @@ def test_multiprocessing_with_blueprint(app):
 
     bp = Blueprint("test_text")
     app.blueprint(bp)
-    app.run(HOST, 4121, workers=num_workers, debug=True)
+    with use_context("fork"):
+        app.run(HOST, 4121, workers=num_workers, debug=True)
 
     assert len(process_list) == num_workers + 1
 
@@ -213,6 +225,10 @@ def test_pickle_app_with_static(app, protocol):
     up_p_app.run(single_process=True)
 
 
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
 def test_main_process_event(app, caplog):
     # Selects a number at random so we can spot check
     num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
@@ -235,8 +251,9 @@ def test_main_process_event(app, caplog):
     def main_process_stop2(app, loop):
         logger.info("main_process_stop")
 
-    with caplog.at_level(logging.INFO):
-        app.run(HOST, PORT, workers=num_workers)
+    with use_context("fork"):
+        with caplog.at_level(logging.INFO):
+            app.run(HOST, PORT, workers=num_workers)
 
     assert (
         caplog.record_tuples.count(("sanic.root", 20, "main_process_start"))

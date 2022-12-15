@@ -74,7 +74,9 @@ def test_send_inspect_conn_refused(socket: Mock, sys: Mock, caplog):
 
 
 @patch("sanic.worker.inspector.configure_socket")
-@pytest.mark.parametrize("action", (b"reload", b"shutdown", b"foo"))
+@pytest.mark.parametrize(
+    "action", (b"reload", b"shutdown", b"scale=5", b"foo")
+)
 def test_run_inspector(configure_socket: Mock, action: bytes):
     sock = Mock()
     conn = Mock()
@@ -83,6 +85,7 @@ def test_run_inspector(configure_socket: Mock, action: bytes):
     inspector = Inspector(Mock(), {}, {}, "localhost", 9999)
     inspector.reload = Mock()  # type: ignore
     inspector.shutdown = Mock()  # type: ignore
+    inspector.scale = Mock()  # type: ignore
     inspector.state_to_json = Mock(return_value="foo")  # type: ignore
 
     def accept():
@@ -98,20 +101,26 @@ def test_run_inspector(configure_socket: Mock, action: bytes):
     )
     conn.recv.assert_called_with(64)
 
+    conn.send.assert_called_with(b"\n")
     if action == b"reload":
-        conn.send.assert_called_with(b"\n")
         inspector.reload.assert_called()
         inspector.shutdown.assert_not_called()
+        inspector.scale.assert_not_called()
         inspector.state_to_json.assert_not_called()
     elif action == b"shutdown":
-        conn.send.assert_called_with(b"\n")
         inspector.reload.assert_not_called()
         inspector.shutdown.assert_called()
+        inspector.scale.assert_not_called()
         inspector.state_to_json.assert_not_called()
-    else:
-        conn.send.assert_called_with(b'"foo"')
+    elif action.startswith(b"scale"):
         inspector.reload.assert_not_called()
         inspector.shutdown.assert_not_called()
+        inspector.scale.assert_called_once_with(5)
+        inspector.state_to_json.assert_not_called()
+    else:
+        inspector.reload.assert_not_called()
+        inspector.shutdown.assert_not_called()
+        inspector.scale.assert_not_called()
         inspector.state_to_json.assert_called()
 
 
@@ -165,3 +174,11 @@ def test_shutdown():
     inspector.shutdown()
 
     publisher.send.assert_called_once_with("__TERMINATE__")
+
+
+def test_scale():
+    publisher = Mock()
+    inspector = Inspector(publisher, {}, {}, "", 0)
+    inspector.scale(3)
+
+    publisher.send.assert_called_once_with("__SCALE__:3")

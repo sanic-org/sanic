@@ -1,8 +1,5 @@
 import asyncio
 
-from contextlib import closing
-from socket import socket
-
 import pytest
 
 from sanic import Sanic
@@ -623,6 +620,4 @@ def test_streaming_echo():
         res = await read_chunk()
         assert res == None
 
-    # Use random port for tests
-    with closing(socket()) as sock:
-        app.run(access_log=False)
+    app.run(access_log=False, single_process=True)

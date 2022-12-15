@@ -117,7 +117,13 @@ def test_error_with_path_as_instance_without_simple_arg(caplog):
     ),
 )
 def test_tls_options(cmd: Tuple[str, ...], caplog):
-    command = ["fake.server.app", *cmd, "--port=9999", "--debug"]
+    command = [
+        "fake.server.app",
+        *cmd,
+        "--port=9999",
+        "--debug",
+        "--single-process",
+    ]
     lines = capture(command, caplog)
     assert "Goin' Fast @ https://127.0.0.1:9999" in lines
 

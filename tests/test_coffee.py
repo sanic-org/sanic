@@ -39,7 +39,7 @@ def test_logo_true(app, caplog):
     with patch("sys.stdout.isatty") as isatty:
         isatty.return_value = True
         with caplog.at_level(logging.DEBUG):
-            app.make_coffee()
+            app.make_coffee(single_process=True)
 
     # Only in the regular logo
     assert "    ▄███ █████ ██    " not in caplog.text

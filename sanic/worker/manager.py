@@ -1,5 +1,6 @@
 import os
 
+from contextlib import suppress
 from itertools import count
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
@@ -92,7 +93,6 @@ class WorkerManager:
         self.monitor()
         self.join()
         self.terminate()
-        # self.kill()
 
     def start(self):
         for process in self.processes:
@@ -238,6 +238,11 @@ class WorkerManager:
         raise ServerKilled
 
     def shutdown_signal(self, signal, frame):
+        if self.terminated:
+            logger.info("Shutdown interrupted. Killing.")
+            with suppress(ServerKilled):
+                self.kill()
+
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         self.monitor_publisher.send(None)
         self.shutdown()

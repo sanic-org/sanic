@@ -1,3 +1,5 @@
+import sys
+
 from multiprocessing import Event
 from os import environ, getpid
 from typing import Any, Dict, Type, Union
@@ -6,6 +8,7 @@ from unittest.mock import Mock
 import pytest
 
 from sanic import Sanic
+from sanic.compat import use_context
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.state import WorkerState
 
@@ -28,6 +31,10 @@ def m(monitor_publisher, worker_state):
     del environ["SANIC_WORKER_NAME"]
 
 
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
 def test_has_multiplexer_default(app: Sanic):
     event = Event()
 
@@ -41,7 +48,8 @@ def test_has_multiplexer_default(app: Sanic):
             app.shared_ctx.event.set()
         app.stop()
 
-    app.run()
+    with use_context("fork"):
+        app.run()
 
     assert event.is_set()
 

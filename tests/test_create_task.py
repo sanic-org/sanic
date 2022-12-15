@@ -2,7 +2,6 @@ import asyncio
 import sys
 
 from threading import Event
-from unittest.mock import Mock
 
 import pytest
 
@@ -75,7 +74,7 @@ def test_create_named_task(app):
 
         app.stop()
 
-    app.run()
+    app.run(single_process=True)
 
 
 def test_named_task_called(app):

@@ -6,8 +6,6 @@ import os
 import re
 import sys
 
-from distutils.util import strtobool
-
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
@@ -37,6 +35,25 @@ def open_local(paths, mode="r", encoding="utf8"):
 
     return codecs.open(path, mode, encoding)
 
+def str_to_bool(val: str) -> bool:
+    val = val.lower()
+    if val in {
+        "y",
+        "yes",
+        "yep",
+        "yup",
+        "t",
+        "true",
+        "on",
+        "enable",
+        "enabled",
+        "1",
+    }:
+        return True
+    elif val in {"n", "no", "f", "false", "off", "disable", "disabled", "0"}:
+        return False
+    else:
+        raise ValueError(f"Invalid truth value {val}")
 
 with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
@@ -131,13 +148,13 @@ dev_require = tests_require + [
 
 all_require = list(set(dev_require + docs_require))
 
-if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
+if str_to_bool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
     tests_require.remove(types_ujson)
 
 # 'nt' means windows OS
-if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+if str_to_bool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
 

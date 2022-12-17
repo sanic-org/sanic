@@ -314,10 +314,10 @@ async def test_dispatch_signal_triggers_event_on_bp(app):
     waiter = bp.event("foo.bar.baz")
     assert isawaitable(waiter)
 
-    fut = asyncio.ensure_future(do_wait())
+    fut = do_wait()
     for signal in signal_group:
         signal.ctx.event.set()
-    await fut
+    await asyncio.gather(fut)
 
     assert bp_counter == 1
 

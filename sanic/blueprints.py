@@ -442,7 +442,7 @@ class Blueprint(BaseSanic):
             events.add(signal.ctx.event)
 
         return asyncio.wait(
-            [event.wait() for event in events],
+            [asyncio.create_task(event.wait()) for event in events],
             return_when=asyncio.FIRST_COMPLETED,
             timeout=timeout,
         )

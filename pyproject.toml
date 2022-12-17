@@ -22,5 +22,6 @@ module = [
     "httptools.*",
     "trustme.*",
     "sanic_routing.*",
+    "aioquic.*",
 ]
 ignore_missing_imports = true

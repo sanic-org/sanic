@@ -90,6 +90,7 @@ setup_kwargs = {
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }

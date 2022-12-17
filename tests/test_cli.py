@@ -12,7 +12,7 @@ from sanic_routing import __version__ as __routing_version__
 
 from sanic import __version__
 from sanic.__main__ import main
-from sanic.worker.inspector import InspectorClient
+from sanic.cli.inspector_client import InspectorClient
 
 
 @pytest.fixture(scope="module", autouse=True)

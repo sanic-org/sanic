@@ -13,8 +13,8 @@ from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
 from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
 from sanic.cli.inspector import make_inspector_parser
+from sanic.cli.inspector_client import InspectorClient
 from sanic.log import Colors, error_logger
-from sanic.worker.inspector import InspectorClient
 from sanic.worker.loader import AppLoader
 
 
@@ -85,7 +85,7 @@ Or, a path to a directory to run as a simple HTTP server:
         elif parse_args == ["-v"]:
             parse_args = ["--version"]
 
-        if not legacy_version and not self.inspecting:
+        if not legacy_version:
             parsed, unknown = self.parser.parse_known_args(args=parse_args)
             if unknown and parsed.factory:
                 for arg in unknown:
@@ -149,7 +149,7 @@ Or, a path to a directory to run as a simple HTTP server:
             for arg in unknown:
                 if arg.startswith("--"):
                     key, value = arg.split("=")
-                    setattr(self.args, key.strip("-"), value)
+                    setattr(self.args, key.lstrip("-"), value)
 
         kwargs = {**self.args.__dict__}
         host = kwargs.pop("host")

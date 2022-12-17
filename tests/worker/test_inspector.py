@@ -11,9 +11,10 @@ import pytest
 
 from sanic_testing import TestManager
 
+from sanic.cli.inspector_client import InspectorClient
 from sanic.helpers import Default
 from sanic.log import Colors
-from sanic.worker.inspector import Inspector, InspectorClient
+from sanic.worker.inspector import Inspector
 
 
 DATA = {

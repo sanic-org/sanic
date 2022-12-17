@@ -7,7 +7,7 @@ import pytest
 
 from sanic_routing.exceptions import NotFound
 
-from sanic import Blueprint
+from sanic import Blueprint, Sanic, empty
 from sanic.exceptions import InvalidSignal, SanicException
 
 
@@ -18,6 +18,31 @@ def test_add_signal(app):
     app.add_signal(sync_signal, "foo.bar.baz")
 
     assert len(app.signal_router.routes) == 1
+
+
+def test_add_signal_method_handler(app):
+    counter = 0
+
+    class TestSanic(Sanic):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.add_signal(
+                self.after_routing_signal_handler, "http.routing.after"
+            )
+
+        def after_routing_signal_handler(self, *args, **kwargs):
+            nonlocal counter
+            counter += 1
+
+    app = TestSanic("Test")
+    assert len(app.signal_router.routes) == 1
+
+    @app.route("/")
+    async def handler(_):
+        return empty()
+
+    app.test_client.get("/")
+    assert counter == 1
 
 
 def test_add_signal_decorator(app):

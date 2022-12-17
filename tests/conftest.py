@@ -230,5 +230,5 @@ def urlopen():
     urlopen.__enter__ = Mock(return_value=urlopen)
     urlopen.__exit__ = Mock()
     urlopen.read = Mock()
-    with patch("sanic.worker.inspector.urlopen", urlopen):
+    with patch("sanic.cli.inspector_client.urlopen", urlopen):
         yield urlopen

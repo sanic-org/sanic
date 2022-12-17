@@ -1,11 +1,14 @@
+import sys
+
 from multiprocessing import Event
 from os import environ, getpid
-from typing import Any, Dict
+from typing import Any, Dict, Type, Union
 from unittest.mock import Mock
 
 import pytest
 
 from sanic import Sanic
+from sanic.compat import use_context
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.state import WorkerState
 
@@ -28,6 +31,10 @@ def m(monitor_publisher, worker_state):
     del environ["SANIC_WORKER_NAME"]
 
 
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
 def test_has_multiplexer_default(app: Sanic):
     event = Event()
 
@@ -41,7 +48,8 @@ def test_has_multiplexer_default(app: Sanic):
             app.shared_ctx.event.set()
         app.stop()
 
-    app.run()
+    with use_context("fork"):
+        app.run()
 
     assert event.is_set()
 
@@ -108,6 +116,11 @@ def test_terminate(monitor_publisher: Mock, m: WorkerMultiplexer):
     monitor_publisher.send.assert_called_once_with("__TERMINATE__")
 
 
+def test_scale(monitor_publisher: Mock, m: WorkerMultiplexer):
+    m.scale(99)
+    monitor_publisher.send.assert_called_once_with("__SCALE__:99")
+
+
 def test_properties(
     monitor_publisher: Mock, worker_state: Dict[str, Any], m: WorkerMultiplexer
 ):
@@ -117,3 +130,26 @@ def test_properties(
     assert m.workers == worker_state
     assert m.state == worker_state["Test"]
     assert isinstance(m.state, WorkerState)
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    (
+        ({}, "Test"),
+        ({"name": "foo"}, "foo"),
+        ({"all_workers": True}, "__ALL_PROCESSES__:"),
+        ({"name": "foo", "all_workers": True}, ValueError),
+    ),
+)
+def test_restart_params(
+    monitor_publisher: Mock,
+    m: WorkerMultiplexer,
+    params: Dict[str, Any],
+    expected: Union[str, Type[Exception]],
+):
+    if isinstance(expected, str):
+        m.restart(**params)
+        monitor_publisher.send.assert_called_once_with(expected)
+    else:
+        with pytest.raises(expected):
+            m.restart(**params)

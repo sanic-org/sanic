@@ -3,10 +3,22 @@ import os
 import signal
 import sys
 
-from typing import Awaitable
+from contextlib import contextmanager
+from typing import Awaitable, Union
 
 from multidict import CIMultiDict  # type: ignore
 
+from sanic.helpers import Default
+
+
+if sys.version_info < (3, 8):  # no cov
+    StartMethod = Union[Default, str]
+else:  # no cov
+    from typing import Literal
+
+    StartMethod = Union[
+        Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]
+    ]
 
 OS_IS_WINDOWS = os.name == "nt"
 UVLOOP_INSTALLED = False
@@ -17,6 +29,16 @@ try:
     UVLOOP_INSTALLED = True
 except ImportError:
     pass
+
+
+@contextmanager
+def use_context(method: StartMethod):
+    from sanic import Sanic
+
+    orig = Sanic.start_method
+    Sanic.start_method = method
+    yield
+    Sanic.start_method = orig
 
 
 def enable_windows_color_support():

@@ -40,8 +40,9 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
-from sanic.compat import OS_IS_WINDOWS, is_atty
-from sanic.helpers import Default
+from sanic.compat import OS_IS_WINDOWS, StartMethod, is_atty
+from sanic.exceptions import ServerKilled
+from sanic.helpers import Default, _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
 from sanic.http.tls.context import SanicSSLContext
@@ -87,6 +88,7 @@ class StartupMixin(metaclass=SanicMeta):
     state: ApplicationState
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
+    start_method: StartMethod = _default
 
     def setup_loop(self):
         if not self.asgi:
@@ -691,12 +693,17 @@ class StartupMixin(metaclass=SanicMeta):
         return any(app.state.auto_reload for app in cls._app_registry.values())
 
     @classmethod
-    def _get_context(cls) -> BaseContext:
-        method = (
-            "spawn"
-            if "linux" not in sys.platform or cls.should_auto_reload()
-            else "fork"
+    def _get_startup_method(cls) -> str:
+        return (
+            cls.start_method
+            if not isinstance(cls.start_method, Default)
+            else "spawn"
         )
+
+    @classmethod
+    def _get_context(cls) -> BaseContext:
+        method = cls._get_startup_method()
+        logger.debug("Creating multiprocessing context using '%s'", method)
         return get_context(method)
 
     @classmethod
@@ -740,6 +747,7 @@ class StartupMixin(metaclass=SanicMeta):
         socks = []
         sync_manager = Manager()
         setup_ext(primary)
+        exit_code = 0
         try:
             primary_server_info.settings.pop("main_start", None)
             primary_server_info.settings.pop("main_stop", None)
@@ -849,6 +857,8 @@ class StartupMixin(metaclass=SanicMeta):
             trigger_events(ready, loop, primary)
 
             manager.run()
+        except ServerKilled:
+            exit_code = 1
         except BaseException:
             kwargs = primary_server_info.settings
             error_logger.exception(
@@ -874,6 +884,8 @@ class StartupMixin(metaclass=SanicMeta):
             unix = kwargs.get("unix")
             if unix:
                 remove_unix_socket(unix)
+        if exit_code:
+            os._exit(exit_code)
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:

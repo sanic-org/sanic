@@ -8,11 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from sanic import Sanic
 
-    try:
-        from sanic_ext import Extend  # type: ignore
-    except ImportError:
-        ...
-
 
 def setup_ext(app: Sanic, *, fail: bool = False, **kwargs):
     if not app.config.AUTO_EXTEND:
@@ -33,7 +28,7 @@ def setup_ext(app: Sanic, *, fail: bool = False, **kwargs):
         return
 
     if not getattr(app, "_ext", None):
-        Ext: Extend = getattr(sanic_ext, "Extend")
+        Ext = getattr(sanic_ext, "Extend")
         app._ext = Ext(app, **kwargs)
 
         return app.ext

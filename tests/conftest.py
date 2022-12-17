@@ -8,7 +8,7 @@ import uuid
 
 from contextlib import suppress
 from logging import LogRecord
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 from unittest.mock import MagicMock
 
 import pytest
@@ -54,7 +54,7 @@ TYPE_TO_GENERATOR_MAP = {
     "uuid": lambda: str(uuid.uuid1()),
 }
 
-CACHE = {}
+CACHE: Dict[str, Any] = {}
 
 
 class RouteStringGenerator:
@@ -147,6 +147,7 @@ def app(request):
         for target, method_name in TouchUp._registry:
             CACHE[method_name] = getattr(target, method_name)
     app = Sanic(slugify.sub("-", request.node.name))
+
     yield app
     for target, method_name in TouchUp._registry:
         setattr(target, method_name, CACHE[method_name])

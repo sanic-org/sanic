@@ -10,8 +10,7 @@ import pytest
 import sanic
 
 from sanic import Sanic
-from sanic.log import Colors
-from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
+from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, logger
 from sanic.response import text
 
 
@@ -254,11 +253,11 @@ def test_verbosity(app, caplog, app_verbosity, log_verbosity, exists):
 
 
 def test_colors_enum_format():
-    assert f'{Colors.END}' == Colors.END.value
-    assert f'{Colors.BOLD}' == Colors.BOLD.value
-    assert f'{Colors.BLUE}' == Colors.BLUE.value
-    assert f'{Colors.GREEN}' == Colors.GREEN.value
-    assert f'{Colors.PURPLE}' == Colors.PURPLE.value
-    assert f'{Colors.RED}' == Colors.RED.value
-    assert f'{Colors.SANIC}' == Colors.SANIC.value
-    assert f'{Colors.YELLOW}' == Colors.YELLOW.value
+    assert f"{Colors.END}" == Colors.END.value
+    assert f"{Colors.BOLD}" == Colors.BOLD.value
+    assert f"{Colors.BLUE}" == Colors.BLUE.value
+    assert f"{Colors.GREEN}" == Colors.GREEN.value
+    assert f"{Colors.PURPLE}" == Colors.PURPLE.value
+    assert f"{Colors.RED}" == Colors.RED.value
+    assert f"{Colors.SANIC}" == Colors.SANIC.value
+    assert f"{Colors.YELLOW}" == Colors.YELLOW.value

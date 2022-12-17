@@ -98,16 +98,32 @@ Or, a path to a directory to run as a simple HTTP server:
         except ValueError as e:
             error_logger.exception(f"Failed to run app: {e}")
         else:
-            if self.args.inspect or self.args.inspect_raw or self.args.trigger:
+            if (
+                self.args.inspect
+                or self.args.inspect_raw
+                or self.args.trigger
+                or self.args.scale is not None
+            ):
                 os.environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
             else:
                 for http_version in self.args.http:
                     app.prepare(**kwargs, version=http_version)
 
-            if self.args.inspect or self.args.inspect_raw or self.args.trigger:
-                action = self.args.trigger or (
-                    "raw" if self.args.inspect_raw else "pretty"
-                )
+            if (
+                self.args.inspect
+                or self.args.inspect_raw
+                or self.args.trigger
+                or self.args.scale is not None
+            ):
+                if self.args.scale is not None:
+                    if self.args.scale <= 0:
+                        error_logger.error("There must be at least 1 worker")
+                        sys.exit(1)
+                    action = f"scale={self.args.scale}"
+                else:
+                    action = self.args.trigger or (
+                        "raw" if self.args.inspect_raw else "pretty"
+                    )
                 inspect(
                     app.config.INSPECTOR_HOST,
                     app.config.INSPECTOR_PORT,

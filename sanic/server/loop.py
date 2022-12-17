@@ -1,11 +1,11 @@
 import asyncio
 import sys
 
-from distutils.util import strtobool
 from os import getenv
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.log import error_logger
+from sanic.utils import str_to_bool
 
 
 def try_use_uvloop() -> None:
@@ -35,7 +35,7 @@ def try_use_uvloop() -> None:
         )
         return
 
-    uvloop_install_removed = strtobool(getenv("SANIC_NO_UVLOOP", "no"))
+    uvloop_install_removed = str_to_bool(getenv("SANIC_NO_UVLOOP", "no"))
     if uvloop_install_removed:
         error_logger.info(
             "You are requesting to run Sanic using uvloop, but the "

@@ -61,7 +61,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.helpers import Default
+from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -299,7 +299,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         middleware: Union[MiddlewareType, Middleware],
         attach_to: str = "request",
         *,
-        priority=0,
+        priority: Union[Default, int] = _default,
     ) -> Union[MiddlewareType, Middleware]:
         """
         Register an application level middleware that will be attached
@@ -319,9 +319,18 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         retval = middleware
         location = MiddlewareLocation[attach_to.upper()]
 
+        print(">>>>>", priority)
         if not isinstance(middleware, Middleware):
             middleware = Middleware(
-                middleware, location=location, priority=priority
+                middleware,
+                location=location,
+                priority=priority if isinstance(priority, int) else 0,
+            )
+        elif middleware.priority != priority and isinstance(priority, int):
+            middleware = Middleware(
+                middleware.func,
+                location=middleware.location,
+                priority=priority,
             )
 
         if location is MiddlewareLocation.REQUEST:
@@ -338,7 +347,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         route_names: Iterable[str],
         attach_to: str = "request",
         *,
-        priority=0,
+        priority: Union[Default, int] = _default,
     ):
         """
         Method for attaching middleware to specific routes. This is mainly an
@@ -357,7 +366,15 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         if not isinstance(middleware, Middleware):
             middleware = Middleware(
-                middleware, location=location, priority=priority
+                middleware,
+                location=location,
+                priority=priority if isinstance(priority, int) else 0,
+            )
+        elif middleware.priority != priority and isinstance(priority, int):
+            middleware = Middleware(
+                middleware.func,
+                location=middleware.location,
+                priority=priority,
             )
 
         if location is MiddlewareLocation.REQUEST:

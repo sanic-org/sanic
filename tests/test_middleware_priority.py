@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 
 from sanic import Sanic
-from sanic.middleware import Middleware
+from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.response import json
 
 
@@ -98,16 +98,26 @@ def test_add_convenience_priority(app: Sanic):
     assert app.response_middleware[0].priority == 999  # type: ignore
 
 
-def test_add_convenience_priority(app: Sanic):
+def test_add_conflicting_priority(app: Sanic):
     def foo(*_):
         ...
 
-    app.on_request(foo)
-    assert len(app.request_middleware) == 1
-    assert len(app.response_middleware) == 0
-    app.on_response(foo)
-    assert len(app.request_middleware) == 1
-    assert len(app.response_middleware) == 1
+    middleware = Middleware(foo, MiddlewareLocation.REQUEST, priority=998)
+    app.register_middleware(middleware=middleware, priority=999)
+    assert app.request_middleware[0].priority == 999  # type: ignore
+    middleware.priority == 998
+
+
+def test_add_conflicting_priority_named(app: Sanic):
+    def foo(*_):
+        ...
+
+    middleware = Middleware(foo, MiddlewareLocation.REQUEST, priority=998)
+    app.register_named_middleware(
+        middleware=middleware, route_names=["foo"], priority=999
+    )
+    assert app.named_request_middleware["foo"][0].priority == 999  # type: ignore
+    middleware.priority == 998
 
 
 @pytest.mark.parametrize(

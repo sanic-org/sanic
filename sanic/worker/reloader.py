@@ -17,6 +17,8 @@ from sanic.worker.loader import AppLoader
 
 
 class Reloader:
+    INTERVAL = 1.0  # seconds
+
     def __init__(
         self,
         publisher: Connection,
@@ -25,7 +27,7 @@ class Reloader:
         app_loader: AppLoader,
     ):
         self._publisher = publisher
-        self.interval = interval
+        self.interval = interval or self.INTERVAL
         self.reload_dirs = reload_dirs
         self.run = True
         self.app_loader = app_loader

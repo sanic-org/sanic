@@ -40,6 +40,76 @@ def reset_middleware():
     Middleware.reset_count()
 
 
+def test_add_register_priority(app: Sanic):
+    def foo(*_):
+        ...
+
+    app.register_middleware(foo, priority=999)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 0
+    assert app.request_middleware[0].priority == 999  # type: ignore
+    app.register_middleware(foo, attach_to="response", priority=999)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 1
+    assert app.response_middleware[0].priority == 999  # type: ignore
+
+
+def test_add_register_named_priority(app: Sanic):
+    def foo(*_):
+        ...
+
+    app.register_named_middleware(foo, route_names=["foo"], priority=999)
+    assert len(app.named_request_middleware) == 1
+    assert len(app.named_response_middleware) == 0
+    assert app.named_request_middleware["foo"][0].priority == 999  # type: ignore
+    app.register_named_middleware(
+        foo, attach_to="response", route_names=["foo"], priority=999
+    )
+    assert len(app.named_request_middleware) == 1
+    assert len(app.named_response_middleware) == 1
+    assert app.named_response_middleware["foo"][0].priority == 999  # type: ignore
+
+
+def test_add_decorator_priority(app: Sanic):
+    def foo(*_):
+        ...
+
+    app.middleware(foo, priority=999)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 0
+    assert app.request_middleware[0].priority == 999  # type: ignore
+    app.middleware(foo, attach_to="response", priority=999)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 1
+    assert app.response_middleware[0].priority == 999  # type: ignore
+
+
+def test_add_convenience_priority(app: Sanic):
+    def foo(*_):
+        ...
+
+    app.on_request(foo, priority=999)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 0
+    assert app.request_middleware[0].priority == 999  # type: ignore
+    app.on_response(foo, priority=999)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 1
+    assert app.response_middleware[0].priority == 999  # type: ignore
+
+
+def test_add_convenience_priority(app: Sanic):
+    def foo(*_):
+        ...
+
+    app.on_request(foo)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 0
+    app.on_response(foo)
+    assert len(app.request_middleware) == 1
+    assert len(app.response_middleware) == 1
+
+
 @pytest.mark.parametrize(
     "expected,priorities",
     PRIORITY_TEST_CASES,

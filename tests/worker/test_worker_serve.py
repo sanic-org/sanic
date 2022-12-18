@@ -118,7 +118,7 @@ def test_serve_with_inspector(
     if config:
         Inspector.assert_called_once()
         WorkerManager.manage.assert_called_once_with(
-            "Inspector", inspector, {}, transient=True
+            "Inspector", inspector, {}, transient=False
         )
     else:
         Inspector.assert_not_called()

@@ -88,6 +88,12 @@ def test_run_inspector_reload(publisher, http_client):
     publisher.send.assert_called_once_with("__ALL_PROCESSES__:")
 
 
+def test_run_inspector_reload_zero_downtime(publisher, http_client):
+    _, response = http_client.post("/reload", json={"zero_downtime": True})
+    assert response.status == 200
+    publisher.send.assert_called_once_with("__ALL_PROCESSES__::STARTUP_FIRST")
+
+
 def test_run_inspector_shutdown(publisher, http_client):
     _, response = http_client.post("/shutdown")
     assert response.status == 200

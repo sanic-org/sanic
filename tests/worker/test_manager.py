@@ -6,6 +6,7 @@ import pytest
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
+from sanic.worker.constants import RestartOrder
 from sanic.worker.manager import WorkerManager
 
 
@@ -102,11 +103,17 @@ def test_restart_all():
     )
 
 
-def test_monitor_all():
+@pytest.mark.parametrize("zero_downtime", (False, True))
+def test_monitor_all(zero_downtime):
     p1 = Mock()
     p2 = Mock()
     sub = Mock()
-    sub.recv.side_effect = ["__ALL_PROCESSES__:", ""]
+    incoming = (
+        "__ALL_PROCESSES__::STARTUP_FIRST"
+        if zero_downtime
+        else "__ALL_PROCESSES__:"
+    )
+    sub.recv.side_effect = [incoming, ""]
     context = Mock()
     context.Process.side_effect = [p1, p2]
     manager = WorkerManager(2, fake_serve, {}, context, (Mock(), sub), {})
@@ -114,16 +121,29 @@ def test_monitor_all():
     manager.wait_for_ack = Mock()  # type: ignore
     manager.monitor()
 
+    restart_order = (
+        RestartOrder.STARTUP_FIRST
+        if zero_downtime
+        else RestartOrder.SHUTDOWN_FIRST
+    )
     manager.restart.assert_called_once_with(
-        process_names=None, reloaded_files=""
+        process_names=None,
+        reloaded_files="",
+        restart_order=restart_order,
     )
 
 
-def test_monitor_all_with_files():
+@pytest.mark.parametrize("zero_downtime", (False, True))
+def test_monitor_all_with_files(zero_downtime):
     p1 = Mock()
     p2 = Mock()
     sub = Mock()
-    sub.recv.side_effect = ["__ALL_PROCESSES__:foo,bar", ""]
+    incoming = (
+        "__ALL_PROCESSES__:foo,bar:STARTUP_FIRST"
+        if zero_downtime
+        else "__ALL_PROCESSES__:foo,bar"
+    )
+    sub.recv.side_effect = [incoming, ""]
     context = Mock()
     context.Process.side_effect = [p1, p2]
     manager = WorkerManager(2, fake_serve, {}, context, (Mock(), sub), {})
@@ -131,17 +151,30 @@ def test_monitor_all_with_files():
     manager.wait_for_ack = Mock()  # type: ignore
     manager.monitor()
 
+    restart_order = (
+        RestartOrder.STARTUP_FIRST
+        if zero_downtime
+        else RestartOrder.SHUTDOWN_FIRST
+    )
     manager.restart.assert_called_once_with(
-        process_names=None, reloaded_files="foo,bar"
+        process_names=None,
+        reloaded_files="foo,bar",
+        restart_order=restart_order,
     )
 
 
-def test_monitor_one_process():
+@pytest.mark.parametrize("zero_downtime", (False, True))
+def test_monitor_one_process(zero_downtime):
     p1 = Mock()
     p1.name = "Testing"
     p2 = Mock()
     sub = Mock()
-    sub.recv.side_effect = [f"{p1.name}:foo,bar", ""]
+    incoming = (
+        f"{p1.name}:foo,bar:STARTUP_FIRST"
+        if zero_downtime
+        else f"{p1.name}:foo,bar"
+    )
+    sub.recv.side_effect = [incoming, ""]
     context = Mock()
     context.Process.side_effect = [p1, p2]
     manager = WorkerManager(2, fake_serve, {}, context, (Mock(), sub), {})
@@ -149,8 +182,15 @@ def test_monitor_one_process():
     manager.wait_for_ack = Mock()  # type: ignore
     manager.monitor()
 
+    restart_order = (
+        RestartOrder.STARTUP_FIRST
+        if zero_downtime
+        else RestartOrder.SHUTDOWN_FIRST
+    )
     manager.restart.assert_called_once_with(
-        process_names=[p1.name], reloaded_files="foo,bar"
+        process_names=[p1.name],
+        reloaded_files="foo,bar",
+        restart_order=restart_order,
     )
 
 

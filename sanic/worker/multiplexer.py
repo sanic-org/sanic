@@ -2,6 +2,7 @@ from multiprocessing.connection import Connection
 from os import environ, getpid
 from typing import Any, Dict
 
+from sanic.log import Colors, logger
 from sanic.worker.process import ProcessState
 from sanic.worker.state import WorkerState
 
@@ -16,12 +17,23 @@ class WorkerMultiplexer:
         self._state = WorkerState(worker_state, self.name)
 
     def ack(self):
+        logger.debug(
+            f"{Colors.BLUE}Process ack: {Colors.BOLD}{Colors.SANIC}"
+            f"%s {Colors.BLUE}[%s]{Colors.END}",
+            self.name,
+            self.pid,
+        )
         self._state._state[self.name] = {
             **self._state._state[self.name],
             "state": ProcessState.ACKED.name,
         }
 
-    def restart(self, name: str = "", all_workers: bool = False):
+    def restart(
+        self,
+        name: str = "",
+        all_workers: bool = False,
+        zero_downtime: bool = False,
+    ):
         if name and all_workers:
             raise ValueError(
                 "Ambiguous restart with both a named process and"
@@ -29,6 +41,10 @@ class WorkerMultiplexer:
             )
         if not name:
             name = "__ALL_PROCESSES__:" if all_workers else self.name
+        if not name.endswith(":"):
+            name += ":"
+        if zero_downtime:
+            name += ":STARTUP_FIRST"
         self._monitor_publisher.send(name)
 
     reload = restart  # no cov

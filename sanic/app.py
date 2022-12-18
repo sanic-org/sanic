@@ -1534,6 +1534,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         self.state.is_started = True
 
+    def ack(self):
         if hasattr(self, "multiplexer"):
             self.multiplexer.ack()
 

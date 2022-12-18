@@ -101,8 +101,10 @@ class Inspector:
                 obj[key] = value.isoformat()
         return obj
 
-    def reload(self) -> None:
+    def reload(self, zero_downtime: bool = False) -> None:
         message = "__ALL_PROCESSES__:"
+        if zero_downtime:
+            message += ":STARTUP_FIRST"
         self._publisher.send(message)
 
     def scale(self, replicas) -> str:

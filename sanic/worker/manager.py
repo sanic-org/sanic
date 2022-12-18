@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
 from sanic.log import error_logger, logger
+from sanic.worker.constants import RestartOrder
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
 
 
@@ -20,7 +21,8 @@ else:
 
 
 class WorkerManager:
-    THRESHOLD = 300  # == 30 seconds
+    THRESHOLD = WorkerProcess.THRESHOLD
+    MAIN_IDENT = "Sanic-Main"
 
     def __init__(
         self,
@@ -37,7 +39,7 @@ class WorkerManager:
         self.durable: Dict[str, Worker] = {}
         self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
-        self.worker_state["Sanic-Main"] = {"pid": self.pid}
+        self.worker_state[self.MAIN_IDENT] = {"pid": self.pid}
         self.terminated = False
         self._serve = serve
         self._server_settings = server_settings
@@ -119,10 +121,15 @@ class WorkerManager:
                 process.terminate()
         self.terminated = True
 
-    def restart(self, process_names: Optional[List[str]] = None, **kwargs):
+    def restart(
+        self,
+        process_names: Optional[List[str]] = None,
+        restart_order=RestartOrder.SHUTDOWN_FIRST,
+        **kwargs,
+    ):
         for process in self.transient_processes:
             if not process_names or process.name in process_names:
-                process.restart(**kwargs)
+                process.restart(restart_order=restart_order, **kwargs)
 
     def scale(self, num_worker: int):
         if num_worker <= 0:
@@ -160,7 +167,12 @@ class WorkerManager:
                     elif message == "__TERMINATE__":
                         self.shutdown()
                         break
-                    split_message = message.split(":", 1)
+                    logger.debug(
+                        "Incoming monitor message: %s",
+                        message,
+                        extra={"verbosity": 1},
+                    )
+                    split_message = message.split(":", 2)
                     if message.startswith("__SCALE__"):
                         self.scale(int(split_message[-1]))
                         continue
@@ -173,10 +185,17 @@ class WorkerManager:
                     ]
                     if "__ALL_PROCESSES__" in process_names:
                         process_names = None
+                    order = (
+                        RestartOrder.STARTUP_FIRST
+                        if "STARTUP_FIRST" in split_message
+                        else RestartOrder.SHUTDOWN_FIRST
+                    )
                     self.restart(
                         process_names=process_names,
                         reloaded_files=reloaded_files,
+                        restart_order=order,
                     )
+                self._sync_states()
             except InterruptedError:
                 if not OS_IS_WINDOWS:
                     raise
@@ -263,3 +282,9 @@ class WorkerManager:
             if worker_state.get("server")
         ]
         return all(acked) and len(acked) == self.num_server
+
+    def _sync_states(self):
+        for process in self.processes:
+            state = self.worker_state[process.name].get("state")
+            if state and process.state.name != state:
+                process.set_state(ProcessState[state], True)

@@ -5,10 +5,26 @@ from sanic.cli.base import SanicHelpFormatter, SanicSubParsersAction
 
 
 def _add_shared(parser: ArgumentParser) -> None:
-    parser.add_argument("--host", "-H", default="localhost")
-    parser.add_argument("--port", "-p", default=6457, type=int)
-    parser.add_argument("--secure", "-s", action="store_true")
-    parser.add_argument("--api-key", "-k")
+    parser.add_argument(
+        "--host",
+        "-H",
+        default="localhost",
+        help="Inspector host address [default 127.0.0.1]",
+    )
+    parser.add_argument(
+        "--port",
+        "-p",
+        default=6457,
+        type=int,
+        help="Inspector port [default 6457]",
+    )
+    parser.add_argument(
+        "--secure",
+        "-s",
+        action="store_true",
+        help="Whether to access the Inspector via TLS encryption",
+    )
+    parser.add_argument("--api-key", "-k", help="Inspector authentication key")
     parser.add_argument(
         "--raw",
         action="store_true",
@@ -32,16 +48,24 @@ def make_inspector_parser(parser: ArgumentParser) -> None:
         dest="action",
         description=(
             "Run one of the below subcommands. If you have created a custom "
-            "Inspector instance, then you can run custom commands.\nSee ___ "
+            "Inspector instance, then you can run custom commands. See ___ "
             "for more details."
         ),
         title="Required\n========\n  Subcommands",
         parser_class=InspectorSubParser,
     )
-    subparsers.add_parser(
+    reloader = subparsers.add_parser(
         "reload",
         help="Trigger a reload of the server workers",
         formatter_class=SanicHelpFormatter,
+    )
+    reloader.add_argument(
+        "--zero-downtime",
+        action="store_true",
+        help=(
+            "Whether to wait for the new process to be online before "
+            "terminating the old"
+        ),
     )
     subparsers.add_parser(
         "shutdown",
@@ -53,7 +77,11 @@ def make_inspector_parser(parser: ArgumentParser) -> None:
         help="Scale the number of workers",
         formatter_class=SanicHelpFormatter,
     )
-    scale.add_argument("replicas", type=int)
+    scale.add_argument(
+        "replicas",
+        type=int,
+        help="Number of workers requested",
+    )
 
     custom = subparsers.add_parser(
         "<custom>",

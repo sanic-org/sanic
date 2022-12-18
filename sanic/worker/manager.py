@@ -21,7 +21,7 @@ else:
 
 
 class WorkerManager:
-    THRESHOLD = 300  # == 30 seconds
+    THRESHOLD = WorkerProcess.THRESHOLD
     MAIN_IDENT = "Sanic-Main"
 
     def __init__(
@@ -170,7 +170,7 @@ class WorkerManager:
                     logger.debug(
                         "Incoming monitor message: %s",
                         message,
-                        extra={"verbosity": 0},
+                        extra={"verbosity": 1},
                     )
                     split_message = message.split(":", 2)
                     if message.startswith("__SCALE__"):
@@ -202,12 +202,11 @@ class WorkerManager:
                 break
 
     def wait_for_ack(self):  # no cov
-        threshold = max(self.THRESHOLD, WorkerProcess.THRESHOLD)
         misses = 0
         message = (
             "It seems that one or more of your workers failed to come "
             "online in the allowed time. Sanic is shutting down to avoid a "
-            f"deadlock. The current threshold is {threshold / 10}s. "
+            f"deadlock. The current threshold is {self.THRESHOLD / 10}s. "
             "If this problem persists, please check out the documentation "
             "___."
         )
@@ -217,7 +216,7 @@ class WorkerManager:
                 if monitor_msg != "__TERMINATE_EARLY__":
                     self.monitor_publisher.send(monitor_msg)
                     continue
-                misses = threshold
+                misses = self.THRESHOLD
                 message = (
                     "One of your worker processes terminated before startup "
                     "was completed. Please solve any errors experienced "
@@ -228,7 +227,7 @@ class WorkerManager:
                     "without errors you can switch back to multiprocess mode."
                 )
             misses += 1
-            if misses > threshold:
+            if misses > self.THRESHOLD:
                 error_logger.error(
                     "Not all workers acknowledged a successful startup. "
                     "Shutting down.\n\n" + message

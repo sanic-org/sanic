@@ -33,9 +33,7 @@ def test_terminate(os_mock: Mock):
     context = Mock()
     context.Process.return_value = process
     manager = WorkerManager(1, fake_serve, {}, context, (Mock(), Mock()), {})
-    assert manager.terminated is False
     manager.terminate()
-    assert manager.terminated is True
     os_mock.kill.assert_called_once_with(1234, SIGINT)
 
 
@@ -61,6 +59,24 @@ def test_kill(os_mock: Mock):
     with pytest.raises(ServerKilled):
         manager.kill()
     os_mock.kill.assert_called_once_with(1234, SIGKILL)
+
+
+@patch("sanic.worker.process.os")
+@patch("sanic.worker.manager.os")
+def test_shutdown_signal_send_kill(
+    manager_os_mock: Mock, process_os_mock: Mock
+):
+    process = Mock()
+    process.pid = 1234
+    context = Mock()
+    context.Process.return_value = process
+    manager = WorkerManager(1, fake_serve, {}, context, (Mock(), Mock()), {})
+    assert manager._shutting_down is False
+    manager.shutdown_signal(SIGINT, None)
+    assert manager._shutting_down is True
+    process_os_mock.kill.assert_called_once_with(1234, SIGINT)
+    manager.shutdown_signal(SIGINT, None)
+    manager_os_mock.kill.assert_called_once_with(1234, SIGKILL)
 
 
 def test_restart_all():

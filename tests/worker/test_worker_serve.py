@@ -8,6 +8,7 @@ import pytest
 from sanic.app import Sanic
 from sanic.worker.loader import AppLoader
 from sanic.worker.multiplexer import WorkerMultiplexer
+from sanic.worker.process import Worker, WorkerProcess
 from sanic.worker.serve import worker_serve
 
 
@@ -40,7 +41,9 @@ def test_config_app(mock_app: Mock):
 
 
 def test_bad_process(mock_app: Mock, caplog):
-    environ["SANIC_WORKER_NAME"] = "FOO"
+    environ["SANIC_WORKER_NAME"] = (
+        Worker.WORKER_PREFIX + WorkerProcess.SERVER_LABEL + "-FOO"
+    )
 
     message = "No restart publisher found in worker process"
     with pytest.raises(RuntimeError, match=message):
@@ -58,7 +61,9 @@ def test_bad_process(mock_app: Mock, caplog):
 
 
 def test_has_multiplexer(app: Sanic):
-    environ["SANIC_WORKER_NAME"] = "FOO"
+    environ["SANIC_WORKER_NAME"] = (
+        Worker.WORKER_PREFIX + WorkerProcess.SERVER_LABEL + "-FOO"
+    )
 
     Sanic.register_app(app)
     with patch("sanic.worker.serve._serve_http_1"):
@@ -97,12 +102,13 @@ def test_serve_app_factory(wm: Mock, mock_app):
 
 
 @patch("sanic.mixins.startup.WorkerManager")
-@patch("sanic.mixins.startup.Inspector")
 @pytest.mark.parametrize("config", (True, False))
 def test_serve_with_inspector(
-    Inspector: Mock, WorkerManager: Mock, mock_app: Mock, config: bool
+    WorkerManager: Mock, mock_app: Mock, config: bool
 ):
+    Inspector = Mock()
     mock_app.config.INSPECTOR = config
+    mock_app.inspector_class = Inspector
     inspector = Mock()
     Inspector.return_value = inspector
     WorkerManager.return_value = WorkerManager
@@ -112,7 +118,7 @@ def test_serve_with_inspector(
     if config:
         Inspector.assert_called_once()
         WorkerManager.manage.assert_called_once_with(
-            "Inspector", inspector, {}, transient=False
+            "Inspector", inspector, {}, transient=True
         )
     else:
         Inspector.assert_not_called()

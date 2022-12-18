@@ -46,6 +46,9 @@ DEFAULT_CONFIG = {
     "INSPECTOR": False,
     "INSPECTOR_HOST": "localhost",
     "INSPECTOR_PORT": 6457,
+    "INSPECTOR_TLS_KEY": _default,
+    "INSPECTOR_TLS_CERT": _default,
+    "INSPECTOR_API_KEY": "",
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
     "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
@@ -93,6 +96,9 @@ class Config(dict, metaclass=DescriptorMeta):
     INSPECTOR: bool
     INSPECTOR_HOST: str
     INSPECTOR_PORT: int
+    INSPECTOR_TLS_KEY: Union[Path, str, Default]
+    INSPECTOR_TLS_CERT: Union[Path, str, Default]
+    INSPECTOR_API_KEY: str
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
     LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]

@@ -140,6 +140,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "configure_logging",
         "ctx",
         "error_handler",
+        "inspector_class",
         "go_fast",
         "listeners",
         "multiplexer",
@@ -176,6 +177,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         dumps: Optional[Callable[..., AnyStr]] = None,
         loads: Optional[Callable[..., Any]] = None,
         inspector: bool = False,
+        inspector_class: Optional[Type[Inspector]] = None,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -211,6 +213,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
+        self.inspector_class: Type[Inspector] = inspector_class or Inspector
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}

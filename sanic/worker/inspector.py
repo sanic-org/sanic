@@ -1,23 +1,17 @@
-import sys
+from __future__ import annotations
 
 from datetime import datetime
+from inspect import isawaitable
 from multiprocessing.connection import Connection
-from signal import SIGINT, SIGTERM
-from signal import signal as signal_func
-from socket import AF_INET, SOCK_STREAM, socket, timeout
-from textwrap import indent
-from typing import Any, Dict
+from os import environ
+from pathlib import Path
+from typing import Any, Dict, Mapping, Union
 
-from sanic.application.logo import get_logo
-from sanic.application.motd import MOTDTTY
-from sanic.log import Colors, error_logger, logger
-from sanic.server.socket import configure_socket
-
-
-try:  # no cov
-    from ujson import dumps, loads
-except ModuleNotFoundError:  # no cov
-    from json import dumps, loads  # type: ignore
+from sanic.exceptions import Unauthorized
+from sanic.helpers import Default
+from sanic.log import logger
+from sanic.request import Request
+from sanic.response import json
 
 
 class Inspector:
@@ -25,125 +19,102 @@ class Inspector:
         self,
         publisher: Connection,
         app_info: Dict[str, Any],
-        worker_state: Dict[str, Any],
+        worker_state: Mapping[str, Any],
         host: str,
         port: int,
+        api_key: str,
+        tls_key: Union[Path, str, Default],
+        tls_cert: Union[Path, str, Default],
     ):
         self._publisher = publisher
-        self.run = True
         self.app_info = app_info
         self.worker_state = worker_state
         self.host = host
         self.port = port
+        self.api_key = api_key
+        self.tls_key = tls_key
+        self.tls_cert = tls_cert
 
-    def __call__(self) -> None:
-        sock = configure_socket(
-            {"host": self.host, "port": self.port, "unix": None, "backlog": 1}
+    def __call__(self, run=True, **_) -> Inspector:
+        from sanic import Sanic
+
+        self.app = Sanic("Inspector")
+        self._setup()
+        if run:
+            self.app.run(
+                host=self.host,
+                port=self.port,
+                single_process=True,
+                ssl={"key": self.tls_key, "cert": self.tls_cert}
+                if not isinstance(self.tls_key, Default)
+                and not isinstance(self.tls_cert, Default)
+                else None,
+            )
+        return self
+
+    def _setup(self):
+        self.app.get("/")(self._info)
+        self.app.post("/<action:str>")(self._action)
+        if self.api_key:
+            self.app.on_request(self._authentication)
+        environ["SANIC_IGNORE_PRODUCTION_WARNING"] = "true"
+
+    def _authentication(self, request: Request) -> None:
+        if request.token != self.api_key:
+            raise Unauthorized("Bad API key")
+
+    async def _action(self, request: Request, action: str):
+        logger.info("Incoming inspector action: %s", action)
+        output: Any = None
+        method = getattr(self, action, None)
+        if method:
+            kwargs = {}
+            if request.body:
+                kwargs = request.json
+            output = method(**kwargs)
+            if isawaitable(output):
+                output = await output
+
+        return await self._respond(request, output)
+
+    async def _info(self, request: Request):
+        return await self._respond(request, self._state_to_json())
+
+    async def _respond(self, request: Request, output: Any):
+        name = request.match_info.get("action", "info")
+        return json(
+            {"meta": {"action": name}, "result": output},
+            escape_forward_slashes=False,
         )
-        assert sock
-        signal_func(SIGINT, self.stop)
-        signal_func(SIGTERM, self.stop)
 
-        logger.info(f"Inspector started on: {sock.getsockname()}")
-        sock.settimeout(0.5)
-        try:
-            while self.run:
-                try:
-                    conn, _ = sock.accept()
-                except timeout:
-                    continue
-                else:
-                    action = conn.recv(64)
-                    if action == b"reload":
-                        self.reload()
-                    elif action == b"shutdown":
-                        self.shutdown()
-                    elif action.startswith(b"scale"):
-                        num_workers = int(action.split(b"=", 1)[-1])
-                        logger.info("Scaling to %s", num_workers)
-                        self.scale(num_workers)
-                    else:
-                        data = dumps(self.state_to_json())
-                        conn.send(data.encode())
-                    conn.send(b"\n")
-                    conn.close()
-        finally:
-            logger.info("Inspector closing")
-            sock.close()
-
-    def stop(self, *_):
-        self.run = False
-
-    def state_to_json(self):
+    def _state_to_json(self) -> Dict[str, Any]:
         output = {"info": self.app_info}
-        output["workers"] = self.make_safe(dict(self.worker_state))
+        output["workers"] = self._make_safe(dict(self.worker_state))
         return output
 
-    def reload(self):
-        message = "__ALL_PROCESSES__:"
-        self._publisher.send(message)
-
-    def scale(self, num_workers: int):
-        message = f"__SCALE__:{num_workers}"
-        self._publisher.send(message)
-
-    def shutdown(self):
-        message = "__TERMINATE__"
-        self._publisher.send(message)
-
     @staticmethod
-    def make_safe(obj: Dict[str, Any]) -> Dict[str, Any]:
+    def _make_safe(obj: Dict[str, Any]) -> Dict[str, Any]:
         for key, value in obj.items():
             if isinstance(value, dict):
-                obj[key] = Inspector.make_safe(value)
+                obj[key] = Inspector._make_safe(value)
             elif isinstance(value, datetime):
                 obj[key] = value.isoformat()
         return obj
 
+    def reload(self) -> None:
+        message = "__ALL_PROCESSES__:"
+        self._publisher.send(message)
 
-def inspect(host: str, port: int, action: str):
-    out = sys.stdout.write
-    with socket(AF_INET, SOCK_STREAM) as sock:
-        try:
-            sock.connect((host, port))
-        except ConnectionRefusedError:
-            error_logger.error(
-                f"{Colors.RED}Could not connect to inspector at: "
-                f"{Colors.YELLOW}{(host, port)}{Colors.END}\n"
-                "Either the application is not running, or it did not start "
-                "an inspector instance."
-            )
-            sock.close()
-            sys.exit(1)
-        sock.sendall(action.encode())
-        data = sock.recv(4096)
-    if action == "raw":
-        out(data.decode())
-    elif action == "pretty":
-        loaded = loads(data)
-        display = loaded.pop("info")
-        extra = display.pop("extra", {})
-        display["packages"] = ", ".join(display["packages"])
-        MOTDTTY(get_logo(), f"{host}:{port}", display, extra).display(
-            version=False,
-            action="Inspecting",
-            out=out,
-        )
-        for name, info in loaded["workers"].items():
-            info = "\n".join(
-                f"\t{key}: {Colors.BLUE}{value}{Colors.END}"
-                for key, value in info.items()
-            )
-            out(
-                "\n"
-                + indent(
-                    "\n".join(
-                        [
-                            f"{Colors.BOLD}{Colors.SANIC}{name}{Colors.END}",
-                            info,
-                        ]
-                    ),
-                    "  ",
-                )
-                + "\n"
-            )
+    def scale(self, replicas) -> str:
+        num_workers = 1
+        if replicas:
+            num_workers = int(replicas)
+        log_msg = f"Scaling to {num_workers}"
+        logger.info(log_msg)
+        message = f"__SCALE__:{num_workers}"
+        self._publisher.send(message)
+        return log_msg
+
+    def shutdown(self) -> None:
+        message = "__TERMINATE__"
+        self._publisher.send(message)

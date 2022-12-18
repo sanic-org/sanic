@@ -27,6 +27,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    Mapping,
     Optional,
     Set,
     Tuple,
@@ -58,7 +59,6 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 from sanic.server.socket import configure_socket, remove_unix_socket
-from sanic.worker.inspector import Inspector
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
@@ -126,7 +126,7 @@ class StartupMixin(metaclass=SanicMeta):
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
         reload_dir: Optional[Union[List[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
         motd: bool = True,
@@ -225,7 +225,7 @@ class StartupMixin(metaclass=SanicMeta):
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
         reload_dir: Optional[Union[List[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
         motd: bool = True,
@@ -355,12 +355,12 @@ class StartupMixin(metaclass=SanicMeta):
         debug: bool = False,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
-        protocol: Type[Protocol] = None,
+        protocol: Optional[Type[Protocol]] = None,
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         return_asyncio_server: bool = False,
-        asyncio_server_kwargs: Dict[str, Any] = None,
+        asyncio_server_kwargs: Optional[Dict[str, Any]] = None,
         noisy_exceptions: Optional[bool] = None,
     ) -> Optional[AsyncioServer]:
         """
@@ -481,7 +481,7 @@ class StartupMixin(metaclass=SanicMeta):
         sock: Optional[socket] = None,
         unix: Optional[str] = None,
         workers: int = 1,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
         protocol: Type[Protocol] = HttpProtocol,
         backlog: int = 100,
         register_sys_signals: bool = True,
@@ -769,7 +769,7 @@ class StartupMixin(metaclass=SanicMeta):
             ]
             primary_server_info.settings["run_multiple"] = True
             monitor_sub, monitor_pub = Pipe(True)
-            worker_state: Dict[str, Any] = sync_manager.dict()
+            worker_state: Mapping[str, Any] = sync_manager.dict()
             kwargs: Dict[str, Any] = {
                 **primary_server_info.settings,
                 "monitor_publisher": monitor_pub,
@@ -841,14 +841,17 @@ class StartupMixin(metaclass=SanicMeta):
                     "packages": [sanic_version, *packages],
                     "extra": extra,
                 }
-                inspector = Inspector(
+                inspector = primary.inspector_class(
                     monitor_pub,
                     app_info,
                     worker_state,
                     primary.config.INSPECTOR_HOST,
                     primary.config.INSPECTOR_PORT,
+                    primary.config.INSPECTOR_API_KEY,
+                    primary.config.INSPECTOR_TLS_KEY,
+                    primary.config.INSPECTOR_TLS_CERT,
                 )
-                manager.manage("Inspector", inspector, {}, transient=False)
+                manager.manage("Inspector", inspector, {}, transient=True)
 
             primary._inspector = inspector
             primary._manager = manager

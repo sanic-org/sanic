@@ -9,7 +9,7 @@ import uuid
 from contextlib import suppress
 from logging import LogRecord
 from typing import Any, Dict, List, Tuple
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -221,3 +221,14 @@ def sanic_ext(ext_instance):  # noqa
     yield sanic_ext
     with suppress(KeyError):
         del sys.modules["sanic_ext"]
+
+
+@pytest.fixture
+def urlopen():
+    urlopen = Mock()
+    urlopen.return_value = urlopen
+    urlopen.__enter__ = Mock(return_value=urlopen)
+    urlopen.__exit__ = Mock()
+    urlopen.read = Mock()
+    with patch("sanic.cli.inspector_client.urlopen", urlopen):
+        yield urlopen

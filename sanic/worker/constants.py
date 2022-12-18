@@ -4,7 +4,6 @@ from sanic.compat import UpperStrEnum
 
 
 class RestartOrder(UpperStrEnum):
-
     SHUTDOWN_FIRST = auto()
     STARTUP_FIRST = auto()
 

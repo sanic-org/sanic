@@ -57,7 +57,7 @@ def http_client(inspector):
 
 
 @pytest.mark.parametrize("command", ("info",))
-@patch("sanic.worker.inspector.sys.stdout.write")
+@patch("sanic.cli.inspector_client.sys.stdout.write")
 def test_send_inspect(write, urlopen, command: str):
     urlopen.read.return_value = FULL_SERIALIZED.encode()
     InspectorClient("localhost", 9999, False, False, None).do(command)
@@ -67,7 +67,7 @@ def test_send_inspect(write, urlopen, command: str):
     write.assert_called_with(OUT_SERIALIZED + "\n")
 
 
-@patch("sanic.worker.inspector.sys")
+@patch("sanic.cli.inspector_client.sys")
 def test_send_inspect_conn_refused(sys: Mock, urlopen):
     urlopen.side_effect = URLError("")
     InspectorClient("localhost", 9999, False, False, None).do("info")

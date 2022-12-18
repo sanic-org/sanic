@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from multiprocessing.context import BaseContext
 from signal import SIGINT
 from threading import Thread
+from time import sleep
 from typing import Any, Dict, Set
 
 from sanic.log import Colors, logger
@@ -16,6 +17,7 @@ def get_now():
 
 
 class WorkerProcess:
+    THRESHOLD = 300  # == 30 seconds
     SERVER_LABEL = "Server"
 
     def __init__(self, factory, name, target, kwargs, worker_state):
@@ -74,7 +76,6 @@ class WorkerProcess:
             )
             self.set_state(ProcessState.TERMINATED, force=True)
             try:
-                # self._current_process.terminate()
                 os.kill(self.pid, SIGINT)
                 del self.worker_state[self.name]
             except (KeyError, AttributeError, ProcessLookupError):
@@ -160,9 +161,15 @@ class WorkerProcess:
             self.name,
             self._old_process.pid,
         )
-        # TODO: Add a timeout?
+        misses = 0
         while self.state is not ProcessState.ACKED:
-            ...
+            sleep(0.1)
+            misses += 1
+            if misses > self.THRESHOLD:
+                raise TimeoutError(
+                    f"Worker {self.name} failed to come ack within "
+                    f"{self.THRESHOLD / 10} seconds"
+                )
         else:
             logger.debug(
                 f"{Colors.BLUE}Process acked. Terminating: "
@@ -196,9 +203,9 @@ class Worker:
 
     def create_process(self) -> WorkerProcess:
         process = WorkerProcess(
-            # Need to ignore this typing error - The problemis the
+            # Need to ignore this typing error - The problem is the
             # BaseContext itself has no Process. But, all of its
-            # implementations do. We can safely ignoore as it is a typing
+            # implementations do. We can safely ignore as it is a typing
             # issue in the standard lib.
             factory=self.context.Process,  # type: ignore
             name=f"{self.WORKER_PREFIX}{self.ident}-{len(self.processes)}",

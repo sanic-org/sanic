@@ -202,11 +202,12 @@ class WorkerManager:
                 break
 
     def wait_for_ack(self):  # no cov
+        threshold = max(self.THRESHOLD, WorkerProcess.THRESHOLD)
         misses = 0
         message = (
             "It seems that one or more of your workers failed to come "
             "online in the allowed time. Sanic is shutting down to avoid a "
-            f"deadlock. The current threshold is {self.THRESHOLD / 10}s. "
+            f"deadlock. The current threshold is {threshold / 10}s. "
             "If this problem persists, please check out the documentation "
             "___."
         )
@@ -216,7 +217,7 @@ class WorkerManager:
                 if monitor_msg != "__TERMINATE_EARLY__":
                     self.monitor_publisher.send(monitor_msg)
                     continue
-                misses = self.THRESHOLD
+                misses = threshold
                 message = (
                     "One of your worker processes terminated before startup "
                     "was completed. Please solve any errors experienced "
@@ -227,7 +228,7 @@ class WorkerManager:
                     "without errors you can switch back to multiprocess mode."
                 )
             misses += 1
-            if misses > self.THRESHOLD:
+            if misses > threshold:
                 error_logger.error(
                     "Not all workers acknowledged a successful startup. "
                     "Shutting down.\n\n" + message

@@ -5,6 +5,7 @@ import threading
 from asyncio import Event
 from logging import DEBUG
 from pathlib import Path
+from time import sleep
 from unittest.mock import Mock
 
 import pytest
@@ -96,7 +97,6 @@ def test_iter_files():
     ),
 )
 def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
-
     current_process = Mock()
     worker_process = WorkerProcess(
         lambda **_: current_process,
@@ -126,6 +126,32 @@ def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
     assert debug == expected
     current_process.start.assert_called_once()
     current_process.terminate.assert_called_once()
+    monkeypatch.setattr(threading.Thread, "start", orig)
+
+
+def test_reload_delayed(monkeypatch):
+    WorkerProcess.THRESHOLD = 1
+
+    current_process = Mock()
+    worker_process = WorkerProcess(
+        lambda **_: current_process,
+        "Test",
+        lambda **_: ...,
+        {},
+        {},
+    )
+
+    def start(self):
+        sleep(0.2)
+        self._target()
+
+    orig = threading.Thread.start
+    monkeypatch.setattr(threading.Thread, "start", start)
+
+    message = "Worker Test failed to come ack within 0.1 seconds"
+    with pytest.raises(TimeoutError, match=message):
+        worker_process.restart(restart_order=RestartOrder.STARTUP_FIRST)
+
     monkeypatch.setattr(threading.Thread, "start", orig)
 
 

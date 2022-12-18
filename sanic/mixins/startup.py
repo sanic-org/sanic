@@ -825,7 +825,7 @@ class StartupMixin(metaclass=SanicMeta):
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                     *(app.state.reload_dirs for app in apps)
                 )
-                reloader = Reloader(monitor_pub, 1.0, reload_dirs, app_loader)
+                reloader = Reloader(monitor_pub, 0, reload_dirs, app_loader)
                 manager.manage("Reloader", reloader, {}, transient=False)
 
             inspector = None

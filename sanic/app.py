@@ -319,7 +319,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         retval = middleware
         location = MiddlewareLocation[attach_to.upper()]
 
-        print(">>>>>", priority)
         if not isinstance(middleware, Middleware):
             middleware = Middleware(
                 middleware,

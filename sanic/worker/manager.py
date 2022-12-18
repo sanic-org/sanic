@@ -38,7 +38,7 @@ class WorkerManager:
         self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
         self.worker_state["Sanic-Main"] = {"pid": self.pid}
-        self.terminated = False
+        self._shutting_down = False
         self._serve = serve
         self._server_settings = server_settings
         self._server_count = count()
@@ -114,10 +114,9 @@ class WorkerManager:
             self.join()
 
     def terminate(self):
-        if not self.terminated:
+        if not self._shutting_down:
             for process in self.processes:
                 process.terminate()
-        self.terminated = True
 
     def restart(self, process_names: Optional[List[str]] = None, **kwargs):
         for process in self.transient_processes:
@@ -238,7 +237,7 @@ class WorkerManager:
         raise ServerKilled
 
     def shutdown_signal(self, signal, frame):
-        if self.terminated:
+        if self._shutting_down:
             logger.info("Shutdown interrupted. Killing.")
             with suppress(ServerKilled):
                 self.kill()
@@ -251,6 +250,7 @@ class WorkerManager:
         for process in self.processes:
             if process.is_alive():
                 process.terminate()
+        self._shutting_down = True
 
     @property
     def pid(self):

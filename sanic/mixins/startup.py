@@ -825,7 +825,7 @@ class StartupMixin(metaclass=SanicMeta):
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                     *(app.state.reload_dirs for app in apps)
                 )
-                reloader = Reloader(monitor_pub, 1.0, reload_dirs, app_loader)
+                reloader = Reloader(monitor_pub, 0, reload_dirs, app_loader)
                 manager.manage("Reloader", reloader, {}, transient=False)
 
             inspector = None
@@ -851,7 +851,7 @@ class StartupMixin(metaclass=SanicMeta):
                     primary.config.INSPECTOR_TLS_KEY,
                     primary.config.INSPECTOR_TLS_CERT,
                 )
-                manager.manage("Inspector", inspector, {}, transient=True)
+                manager.manage("Inspector", inspector, {}, transient=False)
 
             primary._inspector = inspector
             primary._manager = manager

@@ -321,7 +321,8 @@ def test_inspector_inspect(urlopen, caplog, capsys):
 @pytest.mark.parametrize(
     "command,params",
     (
-        (["reload"], {}),
+        (["reload"], {"zero_downtime": False}),
+        (["reload", "--zero-downtime"], {"zero_downtime": True}),
         (["shutdown"], {}),
         (["scale", "9"], {"replicas": 9}),
         (["foo", "--bar=something"], {"bar": "something"}),

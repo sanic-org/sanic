@@ -229,6 +229,7 @@ def _serve_http_1(
 
     loop.run_until_complete(app._startup())
     loop.run_until_complete(app._server_event("init", "before"))
+    app.ack()
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -306,6 +307,7 @@ def _serve_http_3(
     server = AsyncioServer(app, loop, coro, [])
     loop.run_until_complete(server.startup())
     loop.run_until_complete(server.before_start())
+    app.ack()
     loop.run_until_complete(server)
     _setup_system_signals(app, run_multiple, register_sys_signals, loop)
     loop.run_until_complete(server.after_start())

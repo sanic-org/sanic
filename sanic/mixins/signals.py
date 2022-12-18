@@ -20,7 +20,7 @@ class SignalMixin(metaclass=SanicMeta):
         event: Union[str, Enum],
         *,
         apply: bool = True,
-        condition: Dict[str, Any] = None,
+        condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
     ) -> Callable[[SignalHandler], SignalHandler]:
         """
@@ -64,7 +64,7 @@ class SignalMixin(metaclass=SanicMeta):
         self,
         handler: Optional[Callable[..., Any]],
         event: str,
-        condition: Dict[str, Any] = None,
+        condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
     ):
         if not handler:

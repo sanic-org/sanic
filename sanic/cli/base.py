@@ -20,7 +20,7 @@ class SanicHelpFormatter(RawTextHelpFormatter):
         if not usage:
             usage = SUPPRESS
             # Add one linebreak, but not two
-            self.add_text("\x1b[1A'")
+            self.add_text("\x1b[1A")
         super().add_usage(usage, actions, groups, prefix)
 
 

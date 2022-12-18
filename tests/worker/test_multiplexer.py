@@ -98,17 +98,17 @@ def test_ack(worker_state: Dict[str, Any], m: WorkerMultiplexer):
 
 def test_restart_self(monitor_publisher: Mock, m: WorkerMultiplexer):
     m.restart()
-    monitor_publisher.send.assert_called_once_with("Test")
+    monitor_publisher.send.assert_called_once_with("Test:")
 
 
 def test_restart_foo(monitor_publisher: Mock, m: WorkerMultiplexer):
     m.restart("foo")
-    monitor_publisher.send.assert_called_once_with("foo")
+    monitor_publisher.send.assert_called_once_with("foo:")
 
 
 def test_reload_alias(monitor_publisher: Mock, m: WorkerMultiplexer):
     m.reload()
-    monitor_publisher.send.assert_called_once_with("Test")
+    monitor_publisher.send.assert_called_once_with("Test:")
 
 
 def test_terminate(monitor_publisher: Mock, m: WorkerMultiplexer):
@@ -135,10 +135,20 @@ def test_properties(
 @pytest.mark.parametrize(
     "params,expected",
     (
-        ({}, "Test"),
-        ({"name": "foo"}, "foo"),
+        ({}, "Test:"),
+        ({"name": "foo"}, "foo:"),
         ({"all_workers": True}, "__ALL_PROCESSES__:"),
+        ({"zero_downtime": True}, "Test::STARTUP_FIRST"),
         ({"name": "foo", "all_workers": True}, ValueError),
+        ({"name": "foo", "zero_downtime": True}, "foo::STARTUP_FIRST"),
+        (
+            {"all_workers": True, "zero_downtime": True},
+            "__ALL_PROCESSES__::STARTUP_FIRST",
+        ),
+        (
+            {"name": "foo", "all_workers": True, "zero_downtime": True},
+            ValueError,
+        ),
     ),
 )
 def test_restart_params(

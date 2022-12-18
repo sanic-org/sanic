@@ -21,7 +21,12 @@ class WorkerMultiplexer:
             "state": ProcessState.ACKED.name,
         }
 
-    def restart(self, name: str = "", all_workers: bool = False):
+    def restart(
+        self,
+        name: str = "",
+        all_workers: bool = False,
+        zero_downtime: bool = False,
+    ):
         if name and all_workers:
             raise ValueError(
                 "Ambiguous restart with both a named process and"
@@ -29,6 +34,10 @@ class WorkerMultiplexer:
             )
         if not name:
             name = "__ALL_PROCESSES__:" if all_workers else self.name
+        if not name.endswith(":"):
+            name += ":"
+        if zero_downtime:
+            name += ":STARTUP_FIRST"
         self._monitor_publisher.send(name)
 
     reload = restart  # no cov

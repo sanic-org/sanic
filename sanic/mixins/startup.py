@@ -851,7 +851,7 @@ class StartupMixin(metaclass=SanicMeta):
                     primary.config.INSPECTOR_TLS_KEY,
                     primary.config.INSPECTOR_TLS_CERT,
                 )
-                manager.manage("Inspector", inspector, {}, transient=True)
+                manager.manage("Inspector", inspector, {}, transient=False)
 
             primary._inspector = inspector
             primary._manager = manager

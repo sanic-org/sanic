@@ -200,7 +200,7 @@ def _serve_http_1(
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
     )
-    if OS_IS_WINDOWS:
+    if OS_IS_WINDOWS and sock:
         pid = os.getpid()
         sock = sock.share(pid)
         sock = socket.fromshare(sock)

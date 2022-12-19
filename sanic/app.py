@@ -61,7 +61,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.helpers import Default
+from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -69,6 +69,7 @@ from sanic.log import (
     error_logger,
     logger,
 )
+from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
 from sanic.models.futures import (
@@ -294,8 +295,12 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         return listener
 
     def register_middleware(
-        self, middleware: MiddlewareType, attach_to: str = "request"
-    ) -> MiddlewareType:
+        self,
+        middleware: Union[MiddlewareType, Middleware],
+        attach_to: str = "request",
+        *,
+        priority: Union[Default, int] = _default,
+    ) -> Union[MiddlewareType, Middleware]:
         """
         Register an application level middleware that will be attached
         to all the API URLs registered under this application.
@@ -311,19 +316,37 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             **response** - Invoke before the response is returned back
         :return: decorated method
         """
-        if attach_to == "request":
+        retval = middleware
+        location = MiddlewareLocation[attach_to.upper()]
+
+        if not isinstance(middleware, Middleware):
+            middleware = Middleware(
+                middleware,
+                location=location,
+                priority=priority if isinstance(priority, int) else 0,
+            )
+        elif middleware.priority != priority and isinstance(priority, int):
+            middleware = Middleware(
+                middleware.func,
+                location=middleware.location,
+                priority=priority,
+            )
+
+        if location is MiddlewareLocation.REQUEST:
             if middleware not in self.request_middleware:
                 self.request_middleware.append(middleware)
-        if attach_to == "response":
+        if location is MiddlewareLocation.RESPONSE:
             if middleware not in self.response_middleware:
                 self.response_middleware.appendleft(middleware)
-        return middleware
+        return retval
 
     def register_named_middleware(
         self,
         middleware: MiddlewareType,
         route_names: Iterable[str],
         attach_to: str = "request",
+        *,
+        priority: Union[Default, int] = _default,
     ):
         """
         Method for attaching middleware to specific routes. This is mainly an
@@ -337,19 +360,35 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             defaults to "request"
         :type attach_to: str, optional
         """
-        if attach_to == "request":
+        retval = middleware
+        location = MiddlewareLocation[attach_to.upper()]
+
+        if not isinstance(middleware, Middleware):
+            middleware = Middleware(
+                middleware,
+                location=location,
+                priority=priority if isinstance(priority, int) else 0,
+            )
+        elif middleware.priority != priority and isinstance(priority, int):
+            middleware = Middleware(
+                middleware.func,
+                location=middleware.location,
+                priority=priority,
+            )
+
+        if location is MiddlewareLocation.REQUEST:
             for _rn in route_names:
                 if _rn not in self.named_request_middleware:
                     self.named_request_middleware[_rn] = deque()
                 if middleware not in self.named_request_middleware[_rn]:
                     self.named_request_middleware[_rn].append(middleware)
-        if attach_to == "response":
+        if location is MiddlewareLocation.RESPONSE:
             for _rn in route_names:
                 if _rn not in self.named_response_middleware:
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
-        return middleware
+        return retval
 
     def _apply_exception_handler(
         self,

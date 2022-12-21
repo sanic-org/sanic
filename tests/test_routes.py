@@ -803,6 +803,21 @@ def test_static_add_route(app, strict_slashes):
     assert response.text == "OK2"
 
 
+@pytest.mark.parametrize("unquote", [True, False, None])
+def test_unquote_add_route(app, unquote):
+    async def handler1(_, foo):
+        return text(foo)
+
+    app.add_route(handler1, "/<foo>", unquote=unquote)
+    value = "啊" if unquote else r"%E5%95%8A"
+
+    _, response = app.test_client.get("/啊")
+    assert response.text == value
+
+    _, response = app.test_client.get(r"/%E5%95%8A")
+    assert response.text == value
+
+
 def test_dynamic_add_route(app):
 
     results = []

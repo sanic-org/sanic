@@ -218,6 +218,7 @@ class RouteMixin(metaclass=SanicMeta):
         stream: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
+        unquote: bool = False,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """A helper method to register class instance or
@@ -264,6 +265,7 @@ class RouteMixin(metaclass=SanicMeta):
             name=name,
             version_prefix=version_prefix,
             error_format=error_format,
+            unquote=unquote,
             **ctx_kwargs,
         )(handler)
         return handler

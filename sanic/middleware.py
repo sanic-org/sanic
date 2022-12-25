@@ -32,6 +32,9 @@ class Middleware:
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
+    def __hash__(self) -> int:
+        return hash(self.func)
+
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("

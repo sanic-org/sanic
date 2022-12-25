@@ -9,8 +9,10 @@ from typing import (
     Union,
 )
 
+from sanic.exceptions import InvalidUsage
 
-ASIMessage = MutableMapping[str, Any]
+
+ASGIMessage = MutableMapping[str, Any]
 
 
 class WebSocketConnection:
@@ -25,8 +27,8 @@ class WebSocketConnection:
 
     def __init__(
         self,
-        send: Callable[[ASIMessage], Awaitable[None]],
-        receive: Callable[[], Awaitable[ASIMessage]],
+        send: Callable[[ASGIMessage], Awaitable[None]],
+        receive: Callable[[], Awaitable[ASGIMessage]],
         subprotocols: Optional[List[str]] = None,
     ) -> None:
         self._send = send
@@ -47,7 +49,13 @@ class WebSocketConnection:
         message = await self._receive()
 
         if message["type"] == "websocket.receive":
-            return message["text"]
+            try:
+                return message["text"]
+            except KeyError:
+                try:
+                    return message["bytes"].decode()
+                except KeyError:
+                    raise InvalidUsage("Bad ASGI message received")
         elif message["type"] == "websocket.disconnect":
             pass
 

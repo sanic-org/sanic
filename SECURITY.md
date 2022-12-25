@@ -7,14 +7,15 @@ Sanic releases long term support release once a year in December. LTS releases r
 
 | Version | LTS           | Supported               |
 | ------- | ------------- | ----------------------- |
-| 22.9    |               | :white_check_mark:      |
+| 22.12   | until 2024-12 | :white_check_mark:      |
+| 22.9    |               | :x:                     |
 | 22.6    |               | :x:                     |
 | 22.3    |               | :x:                     |
-| 21.12   | until 2023-12 | :white_check_mark:      |
+| 21.12   | until 2023-12 | :ballot_box_with_check: |
 | 21.9    |               | :x:                     |
 | 21.6    |               | :x:                     |
 | 21.3    |               | :x:                     |
-| 20.12   | until 2022-12 | :ballot_box_with_check: |
+| 20.12   |               | :x:                     |
 | 20.9    |               | :x:                     |
 | 20.6    |               | :x:                     |
 | 20.3    |               | :x:                     |

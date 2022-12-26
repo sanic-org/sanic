@@ -148,8 +148,17 @@ Or, a path to a directory to run as a simple HTTP server:
         if unknown:
             for arg in unknown:
                 if arg.startswith("--"):
-                    key, value = arg.split("=")
-                    setattr(self.args, key.lstrip("-"), value)
+                    try:
+                        key, value = arg.split("=")
+                        key = key.lstrip("-")
+                    except ValueError:
+                        value = False if arg.startswith("--no-") else True
+                        key = (
+                            arg.replace("--no-", "")
+                            .lstrip("-")
+                            .replace("-", "_")
+                        )
+                    setattr(self.args, key, value)
 
         kwargs = {**self.args.__dict__}
         host = kwargs.pop("host")

@@ -326,6 +326,8 @@ def test_inspector_inspect(urlopen, caplog, capsys):
         (["shutdown"], {}),
         (["scale", "9"], {"replicas": 9}),
         (["foo", "--bar=something"], {"bar": "something"}),
+        (["foo", "--bar"], {"bar": True}),
+        (["foo", "--no-bar"], {"bar": False}),
         (["foo", "positional"], {"args": ["positional"]}),
         (
             ["foo", "positional", "--bar=something"],

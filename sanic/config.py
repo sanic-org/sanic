@@ -126,7 +126,9 @@ class Config(dict, metaclass=DescriptorMeta):
 
     def __init__(
         self,
-        defaults: Dict[str, Union[str, bool, int, float, None]] = None,
+        defaults: Optional[
+            Dict[str, Union[str, bool, int, float, None]]
+        ] = None,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
         *,

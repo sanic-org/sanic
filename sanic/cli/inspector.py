@@ -47,11 +47,16 @@ def make_inspector_parser(parser: ArgumentParser) -> None:
         action=SanicSubParsersAction,
         dest="action",
         description=(
-            "Run one of the below subcommands. If you have created a custom "
-            "Inspector instance, then you can run custom commands. See ___ "
+            "Run one or none of the below subcommands. Using inspect without "
+            "a subcommand will fetch general information about the state "
+            "of the application instance.\n\n"
+            "Or, you can optionally follow inspect with a subcommand. "
+            "If you have created a custom "
+            "Inspector instance, then you can run custom commands. See "
+            "https://sanic.dev/en/guide/deployment/inspector.html"
             "for more details."
         ),
-        title="Required\n========\n  Subcommands",
+        title="  Subcommands",
         parser_class=InspectorSubParser,
     )
     reloader = subparsers.add_parser(

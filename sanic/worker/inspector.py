@@ -71,7 +71,8 @@ class Inspector:
             kwargs = {}
             if request.body:
                 kwargs = request.json
-            output = method(**kwargs)
+            args = kwargs.pop("args", ())
+            output = method(*args, **kwargs)
             if isawaitable(output):
                 output = await output
 

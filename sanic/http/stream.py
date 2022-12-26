@@ -19,7 +19,7 @@ class Stream:
     request_max_size: Union[int, float]
 
     __touchup__: Tuple[str, ...] = tuple()
-    __slots__ = ()
+    __slots__ = ("request_max_size",)
 
     def respond(
         self, response: BaseHTTPResponse

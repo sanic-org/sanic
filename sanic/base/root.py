@@ -1,6 +1,6 @@
 import re
 
-from typing import Any
+from typing import Any, Optional
 
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import SanicException
@@ -24,7 +24,9 @@ class BaseSanic(
 ):
     __slots__ = ("name",)
 
-    def __init__(self, name: str = None, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, name: Optional[str] = None, *args: Any, **kwargs: Any
+    ) -> None:
         class_name = self.__class__.__name__
 
         if name is None:

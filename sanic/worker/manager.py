@@ -207,7 +207,7 @@ class WorkerManager:
             "online in the allowed time. Sanic is shutting down to avoid a "
             f"deadlock. The current threshold is {self.THRESHOLD / 10}s. "
             "If this problem persists, please check out the documentation "
-            "___."
+            "https://sanic.dev/en/guide/deployment/manager.html#worker-ack."
         )
         while not self._all_workers_ack():
             if self.monitor_subscriber.poll(0.1):

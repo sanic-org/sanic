@@ -164,7 +164,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
     def __init__(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         config: Optional[Config] = None,
         ctx: Optional[Any] = None,
         router: Optional[Router] = None,

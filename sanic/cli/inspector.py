@@ -48,7 +48,8 @@ def make_inspector_parser(parser: ArgumentParser) -> None:
         dest="action",
         description=(
             "Run one of the below subcommands. If you have created a custom "
-            "Inspector instance, then you can run custom commands. See ___ "
+            "Inspector instance, then you can run custom commands. See "
+            "https://sanic.dev/en/guide/deployment/inspector.html "
             "for more details."
         ),
         title="Required\n========\n  Subcommands",

@@ -53,7 +53,7 @@ def make_inspector_parser(parser: ArgumentParser) -> None:
             "Or, you can optionally follow inspect with a subcommand. "
             "If you have created a custom "
             "Inspector instance, then you can run custom commands. See "
-            "https://sanic.dev/en/guide/deployment/inspector.html"
+            "https://sanic.dev/en/guide/deployment/inspector.html "
             "for more details."
         ),
         title="  Subcommands",

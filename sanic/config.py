@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 
+from abc import ABCMeta
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
@@ -75,7 +76,7 @@ DEFAULT_CONFIG = {
 }
 
 
-class DescriptorMeta(type):
+class DescriptorMeta(ABCMeta):
     def __init__(cls, *_):
         cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}
 

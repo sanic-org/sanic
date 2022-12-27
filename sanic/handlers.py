@@ -36,14 +36,6 @@ class ErrorHandler:
         self.debug = False
         self.base = base
 
-    @classmethod
-    def finalize(cls, *args, **kwargs):
-        deprecation(
-            "ErrorHandler.finalize is deprecated and no longer needed. "
-            "Please remove update your code to remove it. ",
-            22.12,
-        )
-
     def _full_lookup(self, exception, route_name: Optional[str] = None):
         return self.lookup(exception, route_name)
 

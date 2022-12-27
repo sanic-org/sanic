@@ -71,7 +71,6 @@ class Http(Stream, metaclass=TouchUpMeta):
         "request_body",
         "request_bytes",
         "request_bytes_left",
-        "request_max_size",
         "response",
         "response_func",
         "response_size",

@@ -61,7 +61,7 @@ Or, a path to a directory to run as a simple HTTP server:
         self.inspecting = False
 
     def attach(self):
-        if sys.argv[1] == "inspect":
+        if len(sys.argv) > 1 and sys.argv[1] == "inspect":
             self.inspecting = True
             self.parser.description = get_logo(True)
             make_inspector_parser(self.parser)
@@ -137,7 +137,9 @@ Or, a path to a directory to run as a simple HTTP server:
         sys.stdout.write(
             f"\n{Colors.BOLD}{Colors.YELLOW}WARNING:{Colors.END} "
             "You are using the legacy CLI command that will be removed in "
-            f"{Colors.RED}v23.3{Colors.END}. See ___ or checkout the new "
+            f"{Colors.RED}v23.3{Colors.END}. See "
+            "https://sanic.dev/en/guide/release-notes/v22.12.html"
+            "#deprecations-and-removals or checkout the new "
             "style commands:\n\n\t"
             f"{Colors.YELLOW}sanic inspect --help{Colors.END}\n"
         )

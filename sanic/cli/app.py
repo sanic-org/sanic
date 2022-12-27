@@ -61,7 +61,7 @@ Or, a path to a directory to run as a simple HTTP server:
         self.inspecting = False
 
     def attach(self):
-        if sys.argv[1] == "inspect":
+        if len(sys.argv) > 1 and sys.argv[1] == "inspect":
             self.inspecting = True
             self.parser.description = get_logo(True)
             make_inspector_parser(self.parser)

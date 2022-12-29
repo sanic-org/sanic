@@ -1352,7 +1352,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         details: https://asgi.readthedocs.io/en/latest
         """
         self.asgi = True
-        if scope["type"] == "lifespan":
+        if scope["type"] == "lifespan" and not self.state.is_started:
             self.motd("")
         self._asgi_app = await ASGIApp.create(self, scope, receive, send)
         asgi_app = self._asgi_app

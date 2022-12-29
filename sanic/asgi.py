@@ -94,9 +94,7 @@ class Lifespan:
                 )
             else:
                 await send({"type": "lifespan.startup.complete"})
-
-        message = await receive()
-        if message["type"] == "lifespan.shutdown":
+        elif message["type"] == "lifespan.shutdown":
             try:
                 await self.shutdown()
             except Exception as e:
@@ -122,7 +120,11 @@ class ASGIApp:
 
     @classmethod
     async def create(
-        cls, sanic_app, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
+        cls,
+        sanic_app: Sanic,
+        scope: ASGIScope,
+        receive: ASGIReceive,
+        send: ASGISend,
     ) -> "ASGIApp":
         instance = cls()
         instance.sanic_app = sanic_app
@@ -130,6 +132,7 @@ class ASGIApp:
         instance.transport.loop = sanic_app.loop
         instance.stage = Stage.IDLE
         instance.response = None
+        instance.sanic_app.state.is_started = True
         setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
         headers = Header(
@@ -174,7 +177,7 @@ class ASGIApp:
                 instance.transport,
                 sanic_app,
             )
-            instance.request.stream = instance
+            instance.request.stream = instance  # type: ignore
             instance.request_body = True
             instance.request.conn_info = ConnInfo(instance.transport)
 
@@ -244,6 +247,8 @@ class ASGIApp:
         """
         Handle the incoming request.
         """
+        if not hasattr(self, "request"):
+            return
         try:
             self.stage = Stage.HANDLER
             await self.sanic_app.handle_request(self.request)

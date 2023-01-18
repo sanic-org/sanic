@@ -357,9 +357,9 @@ async def test_websocket_bytes_receive(send, receive, message_stack):
     message_stack.append(msg)
 
     ws = WebSocketConnection(send, receive)
-    bytes = await ws.receive()
+    data = await ws.receive()
 
-    assert bytes == msg["bytes"]
+    assert data == msg["bytes"]
 
 @pytest.mark.asyncio
 async def test_websocket_accept_with_no_subprotocols(

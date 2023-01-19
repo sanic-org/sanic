@@ -405,7 +405,6 @@ CONTENT_TYPE_BY_RENDERERS = {
 }
 
 RESPONSE_MAPPING = {
-    "empty": "html",
     "json": "json",
     "text": "text",
     "raw": "text",

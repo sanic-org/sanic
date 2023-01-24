@@ -349,7 +349,6 @@ async def file_stream(
 class AutoIndex:
     INDEX_STYLE = """
         html { font-family: sans-serif }
-        h2 { color: #888; }
         ul { padding: 0; list-style: none; }
         li {
             display: flex; justify-content: space-between;
@@ -361,10 +360,9 @@ class AutoIndex:
     """
     OUTPUT_HTML = (
         "<!DOCTYPE html><html lang=en>"
-        "<meta charset=UTF-8><title>{title} - {location}</title>\n"
+        "<meta charset=UTF-8><title>{title}</title>\n"
         "<style>{style}</style>\n"
         "<h1>{title}</h1>\n"
-        "<h2>{location}</h2>\n"
         "{body}"
     )
     FILE_WRAPPER_HTML = "<ul>{first_line}{files}</ul>"
@@ -396,7 +394,6 @@ class AutoIndex:
             self.OUTPUT_HTML.format(
                 title="📁 File browser",
                 style=self.INDEX_STYLE,
-                location=self.directory.absolute(),
                 body=self._list_files(),
             )
         )

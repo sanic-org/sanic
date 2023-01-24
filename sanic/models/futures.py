@@ -56,6 +56,8 @@ class FutureStatic(NamedTuple):
     strict_slashes: Optional[bool]
     content_type: Optional[bool]
     resource_type: Optional[str]
+    autoindex: bool
+    index_name: str
 
 
 class FutureSignal(NamedTuple):

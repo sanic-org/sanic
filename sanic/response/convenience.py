@@ -3,10 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from email.utils import formatdate, parsedate_to_datetime
 from mimetypes import guess_type
+from operator import itemgetter
 from os import path
-from pathlib import PurePath
+from pathlib import Path, PurePath
+from stat import S_ISDIR
 from time import time
-from typing import Any, AnyStr, Callable, Dict, Optional, Union
+from typing import Any, AnyStr, Callable, Dict, Optional, Tuple, Union
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
@@ -164,6 +166,8 @@ async def file(
     max_age: Optional[Union[float, int]] = None,
     no_store: Optional[bool] = None,
     _range: Optional[Range] = None,
+    autoindex: bool = False,
+    index_name: str = "",
 ) -> HTTPResponse:
     """Return a response object with file data.
     :param status: HTTP response code. Won't enforce the passed in
@@ -226,16 +230,25 @@ async def file(
 
     filename = filename or path.split(location)[-1]
 
-    async with await open_async(location, mode="rb") as f:
-        if _range:
-            await f.seek(_range.start)
-            out_stream = await f.read(_range.size)
-            headers[
-                "Content-Range"
-            ] = f"bytes {_range.start}-{_range.end}/{_range.total}"
-            status = 206
-        else:
-            out_stream = await f.read()
+    try:
+        async with await open_async(location, mode="rb") as f:
+            if _range:
+                await f.seek(_range.start)
+                out_stream = await f.read(_range.size)
+                headers[
+                    "Content-Range"
+                ] = f"bytes {_range.start}-{_range.end}/{_range.total}"
+                status = 206
+            else:
+                out_stream = await f.read()
+    except IsADirectoryError:
+        if autoindex or index_name:
+            maybe_response = await AutoIndex(
+                Path(location), autoindex, index_name
+            ).handle()
+            if maybe_response:
+                return maybe_response
+        raise
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     return HTTPResponse(
@@ -331,3 +344,85 @@ async def file_stream(
         headers=headers,
         content_type=mime_type,
     )
+
+
+class AutoIndex:
+    INDEX_STYLE = """
+        html { font-family: sans-serif }
+        h2 { color: #888; }
+        ul { padding: 0; list-style: none; }
+        li {
+            display: flex; justify-content: space-between;
+            font-family: monospace;
+        }
+        li > span { padding: 0.1rem 0.6rem; }
+        li > span:first-child { flex: 4; }
+        li > span:last-child { flex: 1; }
+    """
+    OUTPUT_HTML = (
+        "<!DOCTYPE html><html lang=en>"
+        "<meta charset=UTF-8><title>{title} - {location}</title>\n"
+        "<style>{style}</style>\n"
+        "<h1>{title}</h1>\n"
+        "<h2>{location}</h2>\n"
+        "{body}"
+    )
+    FILE_WRAPPER_HTML = "<ul>{first_line}{files}</ul>"
+    FILE_LINE_HTML = (
+        "<li>"
+        "<span>{icon} <a href={file_name}>{file_name}</a></span>"
+        "<span>{file_access}</span>"
+        "<span>{file_size}</span>"
+        "</li>"
+    )
+
+    def __init__(
+        self, directory: Path, autoindex: bool, index_name: str
+    ) -> None:
+        self.directory = directory
+        self.autoindex = autoindex
+        self.index_name = index_name
+
+    async def handle(self):
+        index_file = self.directory / self.index_name
+        if self.autoindex and (not index_file.exists() or not self.index_name):
+            return await self.index()
+
+        if self.index_name:
+            return await file(index_file)
+
+    async def index(self):
+        return html(
+            self.OUTPUT_HTML.format(
+                title="📁 File browser",
+                style=self.INDEX_STYLE,
+                location=self.directory.absolute(),
+                body=self._list_files(),
+            )
+        )
+
+    def _list_files(self) -> str:
+        prepared = [self._prepare_file(f) for f in self.directory.iterdir()]
+        files = "".join(itemgetter(2)(p) for p in sorted(prepared))
+        return self.FILE_WRAPPER_HTML.format(
+            files=files,
+            first_line=self.FILE_LINE_HTML.format(
+                icon="📁", file_name="..", file_access="", file_size=""
+            ),
+        )
+
+    def _prepare_file(self, path: Path) -> Tuple[int, str, str]:
+        stat = path.stat()
+        modified = datetime.fromtimestamp(stat.st_mtime)
+        is_dir = S_ISDIR(stat.st_mode)
+        icon = "📁" if is_dir else "📄"
+        file_name = path.name
+        if is_dir:
+            file_name += "/"
+        display = self.FILE_LINE_HTML.format(
+            icon=icon,
+            file_name=file_name,
+            file_access=modified.isoformat(),
+            file_size=stat.st_size,
+        )
+        return is_dir * -1, file_name, display

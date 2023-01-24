@@ -702,6 +702,8 @@ class RouteMixin(metaclass=SanicMeta):
         content_type: Optional[bool] = None,
         apply: bool = True,
         resource_type: Optional[str] = None,
+        autoindex: bool = False,
+        index_name: str = "",
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -752,6 +754,8 @@ class RouteMixin(metaclass=SanicMeta):
             strict_slashes,
             content_type,
             resource_type,
+            autoindex,
+            index_name,
         )
         self._future_statics.add(static)
 
@@ -825,6 +829,8 @@ class RouteMixin(metaclass=SanicMeta):
         request,
         content_type=None,
         __file_uri__=None,
+        autoindex=False,
+        index_name="",
     ):
         not_found = FileNotFound(
             "File not found",
@@ -897,7 +903,13 @@ class RouteMixin(metaclass=SanicMeta):
                         return await file_stream(
                             file_path, headers=headers, _range=_range
                         )
-                return await file(file_path, headers=headers, _range=_range)
+                return await file(
+                    file_path,
+                    headers=headers,
+                    _range=_range,
+                    autoindex=autoindex,
+                    index_name=index_name,
+                )
         except RangeNotSatisfiable:
             raise
         except FileNotFoundError:
@@ -992,6 +1004,8 @@ class RouteMixin(metaclass=SanicMeta):
                 static.use_content_range,
                 static.stream_large_files,
                 content_type=static.content_type,
+                autoindex=static.autoindex,
+                index_name=static.index_name,
             )
         )
 

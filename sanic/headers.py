@@ -105,27 +105,27 @@ class Accept(str):
             return NotImplemented
 
     @parse_arg_as_accept
-    def __lt__(self, other: Union[str, Accept]):
+    def __lt__(self, other: AcceptLike):
         return self._compare(other, lambda s, o: s < o)
 
     @parse_arg_as_accept
-    def __le__(self, other: Union[str, Accept]):
+    def __le__(self, other: AcceptLike):
         return self._compare(other, lambda s, o: s <= o)
 
     @parse_arg_as_accept
-    def __eq__(self, other: Union[str, Accept]):  # type: ignore
+    def __eq__(self, other: AcceptLike):  # type: ignore
         return self._compare(other, lambda s, o: s == o)
 
     @parse_arg_as_accept
-    def __ge__(self, other: Union[str, Accept]):
+    def __ge__(self, other: AcceptLike):
         return self._compare(other, lambda s, o: s >= o)
 
     @parse_arg_as_accept
-    def __gt__(self, other: Union[str, Accept]):
+    def __gt__(self, other: AcceptLike):
         return self._compare(other, lambda s, o: s > o)
 
     @parse_arg_as_accept
-    def __ne__(self, other: Union[str, Accept]):  # type: ignore
+    def __ne__(self, other: AcceptLike):  # type: ignore
         return self._compare(other, lambda s, o: s != o)
 
     @parse_arg_as_accept
@@ -157,8 +157,16 @@ class Accept(str):
 
         return type_match and subtype_match
 
+    @property
+    def has_wildcard(self) -> bool:
+        return self.type_.is_wildcard or self.subtype.is_wildcard
+
+    @property
+    def is_wildcard(self) -> bool:
+        return self.type_.is_wildcard and self.subtype.is_wildcard
+
     @classmethod
-    def parse(cls, raw: str) -> Accept:
+    def parse(cls, raw: AcceptLike) -> Accept:
         invalid = False
         mtype = raw.strip()
 
@@ -181,13 +189,16 @@ class Accept(str):
         return cls(mtype, MediaType(type_), MediaType(subtype), **params)
 
 
+AcceptLike = Union[str, Accept]
+
+
 class AcceptContainer(list):
     def __contains__(self, o: object) -> bool:
         return any(item.match(o) for item in self)
 
     def match(
         self,
-        o: object,
+        o: AcceptLike,
         *,
         allow_type_wildcard: bool = True,
         allow_subtype_wildcard: bool = True,
@@ -199,6 +210,26 @@ class AcceptContainer(list):
                 allow_subtype_wildcard=allow_subtype_wildcard,
             )
             for item in self
+        )
+
+    def find_first(
+        self,
+        others: List[AcceptLike],
+        default: AcceptLike = "*/*",
+    ) -> Accept:
+        filtered = [
+            accept
+            for accept in self
+            if any(accept.match(other) for other in others)
+        ]
+        if filtered:
+            return filtered[0]
+        return Accept.parse(default)
+
+    @parse_arg_as_accept
+    def match_explicit(self, other: AcceptLike) -> bool:
+        return self.match(
+            other, allow_type_wildcard=False, allow_subtype_wildcard=False
         )
 
 

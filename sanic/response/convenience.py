@@ -8,8 +8,10 @@ from os import path
 from pathlib import Path, PurePath
 from stat import S_ISDIR
 from time import time
-from typing import Any, AnyStr, Callable, Dict, Optional, Tuple, Union
+from typing import Any, AnyStr, Callable, Dict, Iterable, Optional, Union
 from urllib.parse import quote_plus
+
+from html5tagger import Document, E
 
 from sanic.compat import Header, open_async, stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
@@ -347,32 +349,20 @@ async def file_stream(
 
 
 class AutoIndex:
-    INDEX_STYLE = """
-        html { font-family: sans-serif }
-        ul { padding: 0; list-style: none; }
-        li {
-            display: flex; justify-content: space-between;
-            font-family: monospace;
+    STYLE = """
+        html { font-family: sans-serif; }
+        main { padding: 1rem; }
+        table { width: 100%; max-width: 1200px; }
+        td { font-family: monospace; }
+        td:last-child { text-align: right; }
+        span.icon { margin-right: 1rem; }
+        @media (prefers-color-scheme: dark) {
+            html { background: #111; color: #ccc; }
+            a { color: #ccc; }
+            a:visited { color: #777; }
         }
-        li > span { padding: 0.1rem 0.6rem; }
-        li > span:first-child { flex: 4; }
-        li > span:last-child { flex: 1; }
     """
-    OUTPUT_HTML = (
-        "<!DOCTYPE html><html lang=en>"
-        "<meta charset=UTF-8><title>{title}</title>\n"
-        "<style>{style}</style>\n"
-        "<h1>{title}</h1>\n"
-        "{body}"
-    )
-    FILE_WRAPPER_HTML = "<ul>{first_line}{files}</ul>"
-    FILE_LINE_HTML = (
-        "<li>"
-        "<span>{icon} <a href={file_name}>{file_name}</a></span>"
-        "<span>{file_access}</span>"
-        "<span>{file_size}</span>"
-        "</li>"
-    )
+    TITLE = "📁 File browser"
 
     def __init__(
         self, directory: Path, autoindex: bool, index_name: str
@@ -390,25 +380,43 @@ class AutoIndex:
             return await file(index_file)
 
     async def index(self):
-        return html(
-            self.OUTPUT_HTML.format(
-                title="📁 File browser",
-                style=self.INDEX_STYLE,
-                body=self._list_files(),
-            )
+        return html(self.render())
+
+    def render(self) -> str:
+        doc = Document(title=self.TITLE, lang="en")
+        doc.style(self.STYLE)
+        with doc.main:
+            self._headline(doc)
+            self._file_table(doc)
+        return str(doc)
+
+    def _headline(self, doc: Document):
+        doc.h1(self.TITLE)
+
+    def _file_table(self, doc: Document):
+        with doc.table:
+            self._parent(doc)
+            for f in self._iter_files():
+                del f["priority"]
+                self._file_cell(doc, **f)
+
+    def _parent(self, doc: Document):
+        self._file_cell(doc, "📁", "..", "", "")
+
+    def _file_cell(
+        self,
+        doc: Document,
+        icon: str,
+        file_name: str,
+        file_access: str,
+        file_size: str,
+    ):
+        first = E.span(icon, class_="icon").a(file_name, href=file_name)
+        doc.tr.td(first, width="65%").td(file_access).td(
+            file_size, width="15%"
         )
 
-    def _list_files(self) -> str:
-        prepared = [self._prepare_file(f) for f in self.directory.iterdir()]
-        files = "".join(itemgetter(2)(p) for p in sorted(prepared))
-        return self.FILE_WRAPPER_HTML.format(
-            files=files,
-            first_line=self.FILE_LINE_HTML.format(
-                icon="📁", file_name="..", file_access="", file_size=""
-            ),
-        )
-
-    def _prepare_file(self, path: Path) -> Tuple[int, str, str]:
+    def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
         stat = path.stat()
         modified = datetime.fromtimestamp(stat.st_mtime)
         is_dir = S_ISDIR(stat.st_mode)
@@ -416,10 +424,14 @@ class AutoIndex:
         file_name = path.name
         if is_dir:
             file_name += "/"
-        display = self.FILE_LINE_HTML.format(
-            icon=icon,
-            file_name=file_name,
-            file_access=modified.isoformat(),
-            file_size=stat.st_size,
-        )
-        return is_dir * -1, file_name, display
+        return {
+            "priority": is_dir * -1,
+            "file_name": file_name,
+            "icon": icon,
+            "file_access": modified.isoformat(),
+            "file_size": stat.st_size,
+        }
+
+    def _iter_files(self) -> Iterable[Dict[str, Any]]:
+        prepared = [self._prepare_file(f) for f in self.directory.iterdir()]
+        return sorted(prepared, key=itemgetter("priority"))

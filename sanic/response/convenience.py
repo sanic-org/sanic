@@ -354,7 +354,8 @@ class AutoIndex:
         main { padding: 1rem; }
         table { width: 100%; max-width: 1200px; }
         td { font-family: monospace; }
-        td:last-child { text-align: right; }
+        table.autoindex td:first-child { width: 65% }
+        table.autoindex td:last-child { text-align: right; width: 15%; }
         span.icon { margin-right: 1rem; }
         @media (prefers-color-scheme: dark) {
             html { background: #111; color: #ccc; }
@@ -384,17 +385,20 @@ class AutoIndex:
 
     def render(self) -> str:
         doc = Document(title=self.TITLE, lang="en")
-        doc.style(self.STYLE)
+        self._head(doc)
         with doc.main:
             self._headline(doc)
             self._file_table(doc)
         return str(doc)
 
+    def _head(self, doc: Document):
+        doc.head.title(self.TITLE).style(self.STYLE)
+
     def _headline(self, doc: Document):
         doc.h1(self.TITLE)
 
     def _file_table(self, doc: Document):
-        with doc.table:
+        with doc.table(class_="autoindex"):
             self._parent(doc)
             for f in self._iter_files():
                 del f["priority"]
@@ -412,9 +416,7 @@ class AutoIndex:
         file_size: str,
     ):
         first = E.span(icon, class_="icon").a(file_name, href=file_name)
-        doc.tr.td(first, width="65%").td(file_access).td(
-            file_size, width="15%"
-        )
+        doc.tr.td(first).td(file_access).td(file_size)
 
     def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
         stat = path.stat()

@@ -3,20 +3,18 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from email.utils import formatdate, parsedate_to_datetime
 from mimetypes import guess_type
-from operator import itemgetter
 from os import path
 from pathlib import Path, PurePath
-from stat import S_ISDIR
 from time import time
-from typing import Any, AnyStr, Callable, Dict, Iterable, Optional, Union, cast
+from typing import Any, AnyStr, Callable, Dict, Optional, Union
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
+from sanic.exceptions import SanicIsADirectoryError
 from sanic.helpers import Default, _default
 from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
-from sanic.pages.autoindex_page import AutoIndexPage, FileInfo
 
 from .types import HTTPResponse, JSONResponse, ResponseStream
 
@@ -242,14 +240,13 @@ async def file(
                 status = 206
             else:
                 out_stream = await f.read()
-    except IsADirectoryError:
-        if autoindex or index_name:
-            maybe_response = await AutoIndex(
-                Path(location), autoindex, index_name
-            ).handle()
-            if maybe_response:
-                return maybe_response
-        raise
+    except IsADirectoryError as e:
+        exc = SanicIsADirectoryError(str(e))
+        exc.location = Path(location)
+        exc.autoindex = autoindex
+        exc.index_name = index_name
+
+        raise exc
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     return HTTPResponse(
@@ -345,46 +342,3 @@ async def file_stream(
         headers=headers,
         content_type=mime_type,
     )
-
-
-class AutoIndex:
-    def __init__(
-        self, directory: Path, autoindex: bool, index_name: str
-    ) -> None:
-        self.directory = directory
-        self.autoindex = autoindex
-        self.index_name = index_name
-
-    async def handle(self):
-        index_file = self.directory / self.index_name
-        if self.autoindex and (not index_file.exists() or not self.index_name):
-            return await self.index()
-
-        if self.index_name:
-            return await file(index_file)
-
-    async def index(self):
-        page = AutoIndexPage(self._iter_files())
-        return html(page.render())
-
-    def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
-        stat = path.stat()
-        modified = datetime.fromtimestamp(stat.st_mtime)
-        is_dir = S_ISDIR(stat.st_mode)
-        icon = "📁" if is_dir else "📄"
-        file_name = path.name
-        if is_dir:
-            file_name += "/"
-        return {
-            "priority": is_dir * -1,
-            "file_name": file_name,
-            "icon": icon,
-            "file_access": modified.isoformat(),
-            "file_size": stat.st_size,
-        }
-
-    def _iter_files(self) -> Iterable[FileInfo]:
-        prepared = [self._prepare_file(f) for f in self.directory.iterdir()]
-        for item in sorted(prepared, key=itemgetter("priority")):
-            del item["priority"]
-            yield cast(FileInfo, item)

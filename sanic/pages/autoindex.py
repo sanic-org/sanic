@@ -16,9 +16,11 @@ class FileInfo(TypedDict):
 class AutoIndex(BasePage):
     EXTRA_STYLE = dedent(
         """
-        table.autoindex td:first-child { width: 65% }
+        table.autoindex tr { display: flex; }
+        table.autoindex td { margin: 0 0.5rem; }
+        table.autoindex td:first-child { flex: 1; }
         table.autoindex td:nth-child(2) { text-align: right; }
-        table.autoindex td:last-child {  width: 215px; text-align: right; }
+        table.autoindex td:last-child {  text-align: right; }
         """
     )
     TITLE = "📁 File browser"

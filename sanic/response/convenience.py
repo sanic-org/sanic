@@ -8,16 +8,15 @@ from os import path
 from pathlib import Path, PurePath
 from stat import S_ISDIR
 from time import time
-from typing import Any, AnyStr, Callable, Dict, Iterable, Optional, Union
+from typing import Any, AnyStr, Callable, Dict, Iterable, Optional, Union, cast
 from urllib.parse import quote_plus
-
-from html5tagger import Document, E
 
 from sanic.compat import Header, open_async, stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.helpers import Default, _default
 from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
+from sanic.pages.autoindex_page import AutoIndexPage, FileInfo
 
 from .types import HTTPResponse, JSONResponse, ResponseStream
 
@@ -349,22 +348,6 @@ async def file_stream(
 
 
 class AutoIndex:
-    STYLE = """
-        html { font-family: sans-serif; }
-        main { padding: 1rem; }
-        table { width: 100%; max-width: 1200px; }
-        td { font-family: monospace; }
-        table.autoindex td:first-child { width: 65% }
-        table.autoindex td:last-child { text-align: right; width: 15%; }
-        span.icon { margin-right: 1rem; }
-        @media (prefers-color-scheme: dark) {
-            html { background: #111; color: #ccc; }
-            a { color: #ccc; }
-            a:visited { color: #777; }
-        }
-    """
-    TITLE = "📁 File browser"
-
     def __init__(
         self, directory: Path, autoindex: bool, index_name: str
     ) -> None:
@@ -381,42 +364,8 @@ class AutoIndex:
             return await file(index_file)
 
     async def index(self):
-        return html(self.render())
-
-    def render(self) -> str:
-        doc = Document(title=self.TITLE, lang="en")
-        self._head(doc)
-        with doc.main:
-            self._headline(doc)
-            self._file_table(doc)
-        return str(doc)
-
-    def _head(self, doc: Document):
-        doc.head.title(self.TITLE).style(self.STYLE)
-
-    def _headline(self, doc: Document):
-        doc.h1(self.TITLE)
-
-    def _file_table(self, doc: Document):
-        with doc.table(class_="autoindex"):
-            self._parent(doc)
-            for f in self._iter_files():
-                del f["priority"]
-                self._file_cell(doc, **f)
-
-    def _parent(self, doc: Document):
-        self._file_cell(doc, "📁", "..", "", "")
-
-    def _file_cell(
-        self,
-        doc: Document,
-        icon: str,
-        file_name: str,
-        file_access: str,
-        file_size: str,
-    ):
-        first = E.span(icon, class_="icon").a(file_name, href=file_name)
-        doc.tr.td(first).td(file_access).td(file_size)
+        page = AutoIndexPage(self._iter_files())
+        return html(page.render())
 
     def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
         stat = path.stat()
@@ -434,6 +383,8 @@ class AutoIndex:
             "file_size": stat.st_size,
         }
 
-    def _iter_files(self) -> Iterable[Dict[str, Any]]:
+    def _iter_files(self) -> Iterable[FileInfo]:
         prepared = [self._prepare_file(f) for f in self.directory.iterdir()]
-        return sorted(prepared, key=itemgetter("priority"))
+        for item in sorted(prepared, key=itemgetter("priority")):
+            del item["priority"]
+            yield cast(FileInfo, item)

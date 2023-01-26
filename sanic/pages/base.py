@@ -27,7 +27,7 @@ class BasePage(ABC):
 
     @property
     def style(self) -> str:
-        return f"{self.BASE_STYLE}\n{self.EXTRA_STYLE}"
+        return self.BASE_STYLE + self.EXTRA_STYLE
 
     def render(self) -> str:
         self._head()

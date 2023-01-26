@@ -58,7 +58,7 @@ class DirectoryHandler:
     @classmethod
     def default_handler(
         cls, request: Request, exception: SanicIsADirectoryError
-    ) -> Optional[Union[HTTPResponse, Coroutine[Any, Any, HTTPResponse]]]:
+    ) -> Optional[Coroutine[Any, Any, HTTPResponse]]:
         if exception.autoindex or exception.index_name:
             maybe_response = DirectoryHandler(
                 exception.location, exception.autoindex, exception.index_name

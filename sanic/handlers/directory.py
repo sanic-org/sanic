@@ -51,7 +51,7 @@ class DirectoryHandler:
 
     def _iter_files(self) -> Iterable[FileInfo]:
         prepared = [self._prepare_file(f) for f in self.directory.iterdir()]
-        for item in sorted(prepared, key=itemgetter("priority")):
+        for item in sorted(prepared, key=itemgetter("priority", "file_name")):
             del item["priority"]
             yield cast(FileInfo, item)
 

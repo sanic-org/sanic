@@ -24,6 +24,7 @@ class AutoIndex(BasePage):
         table.autoindex td:first-child { flex: 1; }
         table.autoindex td:nth-child(2) { text-align: right; }
         table.autoindex td:last-child {  text-align: right; }
+        span.icon { margin-right: 1rem; }
         """
     )
     TITLE = "File browser"

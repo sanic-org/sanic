@@ -23,7 +23,7 @@ from traceback import extract_tb
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.response import html, json, text
-from sanic.pages.base import ErrorPage
+from sanic.pages.error import ErrorPage
 
 dumps: t.Callable[..., str]
 try:
@@ -160,7 +160,13 @@ class HTMLRenderer(BaseRenderer):
     )
 
     def _page(self, full: bool) -> HTTPResponse:
-        page = ErrorPage(super().title, super().text, sys.exc_info()[1], full=full)
+        page = ErrorPage(
+            title=super().title,
+            text=super().text,
+            request=self.request,
+            exc=self.exception,
+            full=full,
+        )
         return html(page.render(), status=self.status, headers=self.headers)
 
     def full(self) -> HTTPResponse:

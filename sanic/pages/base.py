@@ -16,12 +16,15 @@ class BasePage(ABC):
             display: flex; align-items: center; justify-content: space-between;
             background: #555; color: #e1e1e1;
         }
+        main { padding-bottom: 3rem; }
+        h2 { margin: 2rem 0 1rem 0; }
         a:visited { color: inherit; }
         a { text-decoration: none; color: #88f; }
         a:hover, a:focus { text-decoration: underline; outline: none; }
         #logo { height: 2.5rem; }
-        table { width: 100%; max-width: 1200px; }
-        span.icon { margin-right: 1rem; }
+        .smalltext { font-size: 1rem; }
+        .nobr { white-space: nowrap; }
+        table { width: 100%; max-width: 1200px; word-break: break-all; }
         @media (prefers-color-scheme: dark) {
             html { background: #111; color: #ccc; }
         }
@@ -50,24 +53,3 @@ class BasePage(ABC):
     @abstractmethod
     def _body(self) -> None:
         ...
-
-
-class ErrorPage(BasePage):
-    TITLE = "Error while handling your request"
-
-    def __init__(self, title: str, text: str, exc: Exception, full: bool) -> None:
-        super().__init__()
-        self.title = title
-        self.text = text
-        self.exc = exc
-        self.full = full
-
-    def _body(self) -> None:
-        with self.doc.main:
-            self.doc.h1(f"⚠️ {self.title}")
-            if self.full and self.exc:
-                from niceback import html_traceback
-                self.doc(html_traceback(self.exc))
-            else:
-                self.doc.p(self.text)
-

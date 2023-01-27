@@ -15,11 +15,12 @@ from sanic.response.types import HTTPResponse
 
 class DirectoryHandler:
     def __init__(
-        self, directory: Path, autoindex: bool, index_name: str
+        self, directory: Path, autoindex: bool, index_name: str, url: str
     ) -> None:
         self.directory = directory
         self.autoindex = autoindex
         self.index_name = index_name
+        self.url = url
 
     def handle(self):
         index_file = self.directory / self.index_name
@@ -30,7 +31,7 @@ class DirectoryHandler:
             return file(index_file)
 
     def index(self):
-        page = AutoIndex(self._iter_files())
+        page = AutoIndex(self._iter_files(), self.url)
         return html(page.render())
 
     def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
@@ -61,7 +62,7 @@ class DirectoryHandler:
     ) -> Optional[Coroutine[Any, Any, HTTPResponse]]:
         if exception.autoindex or exception.index_name:
             maybe_response = DirectoryHandler(
-                exception.location, exception.autoindex, exception.index_name
+                exception.location, exception.autoindex, exception.index_name, request.path
             ).handle()
             if maybe_response:
                 return maybe_response

@@ -35,7 +35,7 @@ class DirectoryHandler:
 
     def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
         stat = path.stat()
-        modified = datetime.fromtimestamp(stat.st_mtime)
+        modified = datetime.fromtimestamp(stat.st_mtime).isoformat()[:19].replace("T", " ")
         is_dir = S_ISDIR(stat.st_mode)
         icon = "📁" if is_dir else "📄"
         file_name = path.name
@@ -45,7 +45,7 @@ class DirectoryHandler:
             "priority": is_dir * -1,
             "file_name": file_name,
             "icon": icon,
-            "file_access": modified.isoformat(),
+            "file_access": modified,
             "file_size": stat.st_size,
         }
 

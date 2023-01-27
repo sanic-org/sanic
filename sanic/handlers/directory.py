@@ -9,7 +9,7 @@ from typing import Any, Coroutine, Dict, Iterable, Optional, Union, cast
 from sanic.exceptions import SanicIsADirectoryError
 from sanic.pages.autoindex import AutoIndex, FileInfo
 from sanic.request import Request
-from sanic.response import file, html
+from sanic.response import file, html, redirect
 from sanic.response.types import HTTPResponse
 
 
@@ -31,6 +31,10 @@ class DirectoryHandler:
             return file(index_file)
 
     def index(self):
+        # Remove empty path elements, append slash
+        if "//" in self.url or not self.url.endswith("/"):
+            return redirect("/" + "".join([f"{p}/" for p in self.url.split("/") if p]))
+        # Render file browser
         page = AutoIndex(self._iter_files(), self.url)
         return html(page.render())
 

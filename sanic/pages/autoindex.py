@@ -37,7 +37,11 @@ class AutoIndex(BasePage):
     def _body(self) -> None:
         with self.doc.main:
             self._headline()
-            self._file_table(self.files)
+            files = list(self.files)
+            if files:
+                self._file_table(files)
+            else:
+                self.doc.p("The folder is empty.")
 
     def _headline(self):
         # Implement a heading with the current path, combined with breadcrumb links

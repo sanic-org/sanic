@@ -26,7 +26,7 @@ class AutoIndex(BasePage):
         table.autoindex td:last-child {  text-align: right; }
         """
     )
-    TITLE = "📁 File browser"
+    TITLE = "File browser"
 
     def __init__(self, files: Iterable[FileInfo], url: str) -> None:
         super().__init__()

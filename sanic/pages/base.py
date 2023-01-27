@@ -31,7 +31,7 @@ class BasePage(ABC):
     TITLE = "Unknown"
 
     def __init__(self) -> None:
-        self.doc = Document(title=self.TITLE, lang="en")
+        self.doc = Document(self.TITLE, lang="en")
 
     @property
     def style(self) -> str:

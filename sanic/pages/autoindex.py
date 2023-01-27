@@ -53,12 +53,8 @@ class AutoIndex(BasePage):
 
     def _file_table(self, files: Iterable[FileInfo]):
         with self.doc.table(class_="autoindex"):
-            self._parent()
             for f in files:
                 self._file_row(**f)
-
-    def _parent(self):
-        self._file_row("📁", "..", "", "")
 
     def _file_row(
         self,

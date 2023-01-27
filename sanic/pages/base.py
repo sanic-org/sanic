@@ -16,14 +16,14 @@ class BasePage(ABC):
             display: flex; align-items: center; justify-content: space-between;
             background: #555; color: #e1e1e1;
         }
+        a:visited { color: inherit; }
+        a { text-decoration: none; color: #88f; }
+        a:hover, a:focus { text-decoration: underline; outline: none; }
         #logo { height: 2.5rem; }
         table { width: 100%; max-width: 1200px; }
-        td { font-family: monospace; }
         span.icon { margin-right: 1rem; }
         @media (prefers-color-scheme: dark) {
             html { background: #111; color: #ccc; }
-            a { color: #ccc; }
-            a:visited { color: #777; }
         }
         """
     )

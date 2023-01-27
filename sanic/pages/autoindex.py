@@ -17,9 +17,8 @@ class AutoIndex(BasePage):
     EXTRA_STYLE = dedent(
         """
         #breadcrumbs .path-0 a::before { content: "🏠"; }
-        a { text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        #breadcrumbs span:has(> a:hover) * { color: #ff0d68; text-shadow: 0 0 0.3rem; }
+        #breadcrumbs span:has(> a:hover, > a:focus) * { color: #ff0d68; text-shadow: 0 0 1rem; }
+        main a { color: inherit; font-weight: bold; }
         table.autoindex tr { display: flex; }
         table.autoindex td { margin: 0 0.5rem; }
         table.autoindex td:first-child { flex: 1; }

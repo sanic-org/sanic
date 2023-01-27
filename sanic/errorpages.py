@@ -23,7 +23,7 @@ from traceback import extract_tb
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.response import html, json, text
-
+from sanic.pages.base import ErrorPage
 
 dumps: t.Callable[..., str]
 try:
@@ -159,36 +159,15 @@ class HTMLRenderer(BaseRenderer):
         "{body}"
     )
 
+    def _page(self, full: bool) -> HTTPResponse:
+        page = ErrorPage(super().title, super().text, sys.exc_info()[1], full=full)
+        return html(page.render(), status=self.status, headers=self.headers)
+
     def full(self) -> HTTPResponse:
-        return html(
-            self.OUTPUT_HTML.format(
-                title=self.title,
-                text=self.text,
-                style=self.TRACEBACK_STYLE,
-                body=self._generate_body(full=True),
-            ),
-            status=self.status,
-        )
+        return self._page(full=True)
 
     def minimal(self) -> HTTPResponse:
-        return html(
-            self.OUTPUT_HTML.format(
-                title=self.title,
-                text=self.text,
-                style=self.TRACEBACK_STYLE,
-                body=self._generate_body(full=False),
-            ),
-            status=self.status,
-            headers=self.headers,
-        )
-
-    @property
-    def text(self):
-        return escape(super().text)
-
-    @property
-    def title(self):
-        return escape(f"⚠️ {super().title}")
+        return self._page(full=False)
 
     def _generate_body(self, *, full):
         lines = []

@@ -50,3 +50,24 @@ class BasePage(ABC):
     @abstractmethod
     def _body(self) -> None:
         ...
+
+
+class ErrorPage(BasePage):
+    TITLE = "Error while handling your request"
+
+    def __init__(self, title: str, text: str, exc: Exception, full: bool) -> None:
+        super().__init__()
+        self.title = title
+        self.text = text
+        self.exc = exc
+        self.full = full
+
+    def _body(self) -> None:
+        with self.doc.main:
+            self.doc.h1(f"⚠️ {self.title}")
+            if self.full and self.exc:
+                from niceback import html_traceback
+                self.doc(html_traceback(self.exc))
+            else:
+                self.doc.p(self.text)
+

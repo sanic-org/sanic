@@ -19,8 +19,7 @@ class AutoIndex(BasePage):
         #breadcrumbs .path-0 a::before { content: "🏠"; }
         a { text-decoration: none; }
         a:hover { text-decoration: underline; }
-        #breadcrumbs span { display: inline-block; }
-        #breadcrumbs span:has(> a:hover) * { color: #ff0d61; text-shadow: 0 0 0.3rem; }
+        #breadcrumbs span:has(> a:hover) * { color: #ff0d68; text-shadow: 0 0 0.3rem; }
         table.autoindex tr { display: flex; }
         table.autoindex td { margin: 0 0.5rem; }
         table.autoindex td:first-child { flex: 1; }

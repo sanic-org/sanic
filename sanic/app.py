@@ -61,6 +61,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
+from sanic.handlers.directory import DirectoryHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import (
@@ -140,6 +141,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "config",
         "configure_logging",
         "ctx",
+        "directory_handler",
         "error_handler",
         "inspector_class",
         "go_fast",
@@ -169,6 +171,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         ctx: Optional[Any] = None,
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
+        directory_handler: Optional[DirectoryHandler] = None,
         error_handler: Optional[ErrorHandler] = None,
         env_prefix: Optional[str] = SANIC_PREFIX,
         request_class: Optional[Type[Request]] = None,
@@ -213,6 +216,9 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.blueprints: Dict[str, Blueprint] = {}
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
+        self.directory_handler: DirectoryHandler = (
+            directory_handler or DirectoryHandler(self.debug)
+        )
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.inspector_class: Type[Inspector] = inspector_class or Inspector
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
@@ -1572,6 +1578,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 TouchUp.run(self)
 
         self.state.is_started = True
+        self.directory_handler.debug = self.debug
 
     def ack(self):
         if hasattr(self, "multiplexer"):

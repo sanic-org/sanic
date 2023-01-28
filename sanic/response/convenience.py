@@ -10,7 +10,7 @@ from typing import Any, AnyStr, Callable, Dict, Optional, Union
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
-from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, DEFAULT_INDEX
 from sanic.exceptions import SanicIsADirectoryError
 from sanic.helpers import Default, _default
 from sanic.log import logger
@@ -166,7 +166,7 @@ async def file(
     no_store: Optional[bool] = None,
     _range: Optional[Range] = None,
     autoindex: bool = False,
-    index_name: str = "",
+    index_name: Union[str, Default] = _default,
 ) -> HTTPResponse:
     """Return a response object with file data.
     :param status: HTTP response code. Won't enforce the passed in
@@ -241,6 +241,8 @@ async def file(
             else:
                 out_stream = await f.read()
     except IsADirectoryError as e:
+        if isinstance(index_name, Default):
+            index_name = DEFAULT_INDEX
         exc = SanicIsADirectoryError(str(e))
         exc.location = Path(location)
         exc.autoindex = autoindex

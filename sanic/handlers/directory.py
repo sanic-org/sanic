@@ -14,33 +14,36 @@ from sanic.response.types import HTTPResponse
 
 
 class DirectoryHandler:
-    def __init__(
+    def __init__(self, debug: bool) -> None:
+        self.debug = debug
+
+    def handle(
         self, directory: Path, autoindex: bool, index_name: str, url: str
-    ) -> None:
-        self.directory = directory
-        self.autoindex = autoindex
-        self.index_name = index_name
-        self.url = url
+    ):
+        index_file = directory / index_name
+        if autoindex and (not index_file.exists() or not index_name):
+            return self.index(directory, url)
 
-    def handle(self):
-        index_file = self.directory / self.index_name
-        if self.autoindex and (not index_file.exists() or not self.index_name):
-            return self.index()
-
-        if self.index_name:
+        if index_name:
             return file(index_file)
 
-    def index(self):
+    def index(self, directory: Path, url: str):
         # Remove empty path elements, append slash
-        if "//" in self.url or not self.url.endswith("/"):
-            return redirect("/" + "".join([f"{p}/" for p in self.url.split("/") if p]))
+        if "//" in url or not url.endswith("/"):
+            return redirect(
+                "/" + "".join([f"{p}/" for p in url.split("/") if p])
+            )
         # Render file browser
-        page = AutoIndex(self._iter_files(), self.url)
+        page = AutoIndex(self._iter_files(directory), url, self.debug)
         return html(page.render())
 
     def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
         stat = path.stat()
-        modified = datetime.fromtimestamp(stat.st_mtime).isoformat()[:19].replace("T", " ")
+        modified = (
+            datetime.fromtimestamp(stat.st_mtime)
+            .isoformat()[:19]
+            .replace("T", " ")
+        )
         is_dir = S_ISDIR(stat.st_mode)
         icon = "📁" if is_dir else "📄"
         file_name = path.name
@@ -54,8 +57,8 @@ class DirectoryHandler:
             "file_size": stat.st_size,
         }
 
-    def _iter_files(self) -> Iterable[FileInfo]:
-        prepared = [self._prepare_file(f) for f in self.directory.iterdir()]
+    def _iter_files(self, directory: Path) -> Iterable[FileInfo]:
+        prepared = [self._prepare_file(f) for f in directory.iterdir()]
         for item in sorted(prepared, key=itemgetter("priority", "file_name")):
             del item["priority"]
             yield cast(FileInfo, item)
@@ -65,9 +68,12 @@ class DirectoryHandler:
         cls, request: Request, exception: SanicIsADirectoryError
     ) -> Optional[Coroutine[Any, Any, HTTPResponse]]:
         if exception.autoindex or exception.index_name:
-            maybe_response = DirectoryHandler(
-                exception.location, exception.autoindex, exception.index_name, request.path
-            ).handle()
+            maybe_response = request.app.directory_handler.handle(
+                exception.location,
+                exception.autoindex,
+                exception.index_name,
+                request.path,
+            )
             if maybe_response:
                 return maybe_response
         return None

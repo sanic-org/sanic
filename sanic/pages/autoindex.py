@@ -17,7 +17,9 @@ class AutoIndex(BasePage):
     EXTRA_STYLE = dedent(
         """
         #breadcrumbs .path-0 a::before { content: "🏠"; }
-        #breadcrumbs span:has(> a:hover, > a:focus) * { color: #ff0d68; text-shadow: 0 0 1rem; }
+        #breadcrumbs span:has(> a:hover, > a:focus) * {
+            color: #ff0d68; text-shadow: 0 0 1rem;
+        }
         main a { color: inherit; font-weight: bold; }
         table.autoindex tr { display: flex; }
         table.autoindex td { margin: 0 0.5rem; }
@@ -29,8 +31,10 @@ class AutoIndex(BasePage):
     )
     TITLE = "File browser"
 
-    def __init__(self, files: Iterable[FileInfo], url: str) -> None:
-        super().__init__()
+    def __init__(
+        self, files: Iterable[FileInfo], url: str, debug: bool
+    ) -> None:
+        super().__init__(debug)
         self.files = files
         self.url = url
 
@@ -44,7 +48,8 @@ class AutoIndex(BasePage):
                 self.doc.p("The folder is empty.")
 
     def _headline(self):
-        # Implement a heading with the current path, combined with breadcrumb links
+        """Implement a heading with the current path, combined with
+        breadcrumb links"""
         with self.doc.h1(id="breadcrumbs"):
             p = self.url.split("/")[:-1]
             for i in reversed(range(len(p))):

@@ -25,7 +25,11 @@ from sanic_routing.route import Route
 
 from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
-from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
+from sanic.constants import (
+    DEFAULT_HTTP_CONTENT_TYPE,
+    DEFAULT_INDEX,
+    HTTP_METHODS,
+)
 from sanic.errorpages import RESPONSE_MAPPING
 from sanic.exceptions import (
     FileNotFound,
@@ -34,6 +38,7 @@ from sanic.exceptions import (
     SanicIsADirectoryError,
 )
 from sanic.handlers import ContentRangeHandler
+from sanic.helpers import Default, _default
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
@@ -708,7 +713,7 @@ class RouteMixin(metaclass=SanicMeta):
         apply: bool = True,
         resource_type: Optional[str] = None,
         autoindex: bool = False,
-        index_name: str = "",
+        index_name: Union[str, Default] = _default,
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -746,6 +751,9 @@ class RouteMixin(metaclass=SanicMeta):
             raise ValueError(
                 f"Static route must be a valid path, not {file_or_directory}"
             )
+
+        if isinstance(index_name, Default):
+            index_name = DEFAULT_INDEX
 
         static = FutureStatic(
             uri,

@@ -22,6 +22,7 @@ class BasePage(ABC):
         #logo { height: 2.75rem; padding: 0.25rem 0; }
         table { width: 100%; max-width: 1200px; }
         span.icon { margin-right: 1rem; }
+        html { background: #eee; color: #000; }
         @media (prefers-color-scheme: dark) {
             html { background: #111; color: #ccc; }
         }

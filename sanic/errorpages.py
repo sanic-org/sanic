@@ -406,15 +406,9 @@ CONTENT_TYPE_BY_RENDERERS = {
 # Handler source code is checked for which response types it returns
 # If it returns (exactly) one of these, it will be used as render_format
 RESPONSE_MAPPING = {
-    "empty": "html",
     "json": "json",
     "text": "text",
-    "raw": "text",
     "html": "html",
-    "file": "html",
-    "file_stream": "text",
-    "stream": "text",
-    "redirect": "html",
     "text/plain": "text",
     "text/html": "html",
     "application/json": "json",

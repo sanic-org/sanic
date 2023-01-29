@@ -455,7 +455,8 @@ def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> 
     #
     # Arguments:
     # - fallback is auto/json/html/text (app.config.FALLBACK_ERROR_FORMAT)
-    # - base is always TextRenderer
+    # - base is always TextRenderer unless set via
+    #   Sanic(error_handler=ErrorRenderer(SomeOtherRenderer))
 
     # Use the Accept header preference to choose one of the renderers
     mediatype, accept_q = req.accept.choose(*RENDERERS_BY_CONTENT_TYPE)

@@ -114,7 +114,7 @@ class MediaType:
 
 class AcceptList(list):
     """A list of media types, as used in the Accept header.
-    
+
     The Accept header entries are listed in order of preference, starting
     with the most preferred. This class is a list of `MediaType` objects,
     that encapsulate also the q value or any other parameters.
@@ -149,7 +149,7 @@ class AcceptList(list):
 
     def choose(self, *media_types: List[str], omit_wildcard=True) -> str:
         """Choose a most suitable media type based on the Accept header.
-        
+
         This is the recommended way to choose a response format based on the
         Accept header. The q values and the order of the Accept header are
         respected, and if due to wildcards multiple arguments match the same
@@ -179,8 +179,8 @@ def parse_accept(accept: str) -> AcceptList:
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
     """
     try:
-        accept_list = [MediaType._parse(mtype) for mtype in accept.split(",")]
-        return AcceptList(sorted(accept_list, key=lambda mtype: -mtype.q))
+        a = [MediaType._parse(mtype) for mtype in accept.split(",") if mtype]
+        return AcceptList(sorted(a, key=lambda mtype: -mtype.q))
     except ValueError:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
 

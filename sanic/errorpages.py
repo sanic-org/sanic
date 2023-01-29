@@ -444,53 +444,45 @@ def exception_response(
     return renderer(request, exception, debug).render()
 
 
-def _guess_renderer(request: Request, fallback: str, base: t.Type[BaseRenderer]) -> t.Type[BaseRenderer]:
-    # base/fallback is app.config.FALLBACK_ERROR_FORMAT
-    render_format = fallback
-    if not request:
-        return base
+def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> t.Type[BaseRenderer]:
+    # Renderer selection order:
+    # 1. Accept header (ignoring */* or types with q=0)
+    # 2. Route error_format
+    # 3. FALLBACK if set by app
+    # 4. Content-type for JSON
+    #
+    # If none of the above match or are in conflict with accept header,
+    # then the base renderer is returned.
+    #
+    # Arguments:
+    # - fallback is auto/json/html/text (app.config.FALLBACK_ERROR_FORMAT)
+    # - base is always TextRenderer
 
-    # Try the format from the route via RESPONSE_MAPPING
-    if request.route:
+    # Use the Accept header preference to choose one of the renderers
+    mediatype, accept_q = req.accept.choose(*RENDERERS_BY_CONTENT_TYPE)
+    if accept_q:
+        return RENDERERS_BY_CONTENT_TYPE[mediatype]
+
+    # No clear preference, so employ fuzzy logic to find render_format
+    render_format = fallback
+
+    # Check the route for what the handler returns (magic)
+    # Note: this is done despite having a non-auto fallback
+    if req.route:
         try:
-            if request.route.extra.error_format:
-                render_format = request.route.extra.error_format
+            if req.route.extra.error_format:
+                render_format = req.route.extra.error_format
         except AttributeError:
             pass
 
-    # Do we need to look at the request itself?
+    # If still not known, check for JSON content-type
     if render_format == "auto":
-        # Use the Accept header to choose one
-        mediatype, accept_q = request.accept.choose(*RENDERERS_BY_CONTENT_TYPE)
-        if accept_q:
-            return RENDERERS_BY_CONTENT_TYPE[mediatype]
-        
-        # Otherwise, try JSON content type or request body
-        if not accept_q and "*/*" in request.accept and _check_json_content(request):
-            return JSONRenderer
-        
-        return base
+        mediatype = req.headers.getone("content-type", "").split(";", 1)[0]
+        if mediatype == "application/json":
+            render_format = "json"
 
-    # Use the format from the route if it doesn't contradict the Accept header
+    # Use render_format if found and acceptable, otherwise fallback to base
     renderer = RENDERERS_BY_CONFIG.get(render_format, base)
     type_ = CONTENT_TYPE_BY_RENDERERS[renderer]  # type: ignore
-    acceptable = not request.accept or request.accept.match(type_)
+    acceptable = not req.accept or req.accept.match(type_)
     return renderer if acceptable else base
-
-
-def _check_json_content(request: Request) -> bool:
-    content_type = request.headers.getone("content-type", "").split(";")[0]
-    if content_type == "application/json":
-        return True
-    # Look to see if there was a JSON body
-    # When in this situation, the request is probably coming
-    # from curl, an API client like Postman or Insomnia, or a
-    # package like requests or httpx
-    try:
-        # Give them the benefit of the doubt if they did:
-        # $ curl localhost:8000 -d '{"foo": "bar"}'
-        # And provide them with JSONRenderer
-        if request.json: return True
-    except BadRequest:
-        pass
-    return False

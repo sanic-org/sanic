@@ -35,149 +35,72 @@ _host_re = re.compile(
 
 def parse_arg_as_accept(f):
     def func(self, other, *args, **kwargs):
-        if not isinstance(other, Accept) and other:
-            other = Accept.parse(other)
+        if not isinstance(other, MediaType) and other:
+            other = MediaType._parse(other)
         return f(self, other, *args, **kwargs)
 
     return func
 
 
-class MediaType(str):
-    def __new__(cls, value: str):
-        return str.__new__(cls, value)
-
-    def __init__(self, value: str) -> None:
-        self.value = value
-        self.is_wildcard = self.check_if_wildcard(value)
-
-    def __eq__(self, other):
-        if self.is_wildcard:
-            return True
-
-        if self.match(other):
-            return True
-
-        other_is_wildcard = (
-            other.is_wildcard
-            if isinstance(other, MediaType)
-            else self.check_if_wildcard(other)
-        )
-
-        return other_is_wildcard
-
-    def match(self, other):
-        other_value = other.value if isinstance(other, MediaType) else other
-        return self.value == other_value
-
-    @staticmethod
-    def check_if_wildcard(value):
-        return value == "*"
-
-
-class Accept(str):
-    def __new__(cls, value: str, *args, **kwargs):
-        return str.__new__(cls, value)
-
+class MediaType:
+    """A media type, as used in the Accept header."""
     def __init__(
         self,
-        value: str,
-        type_: MediaType,
-        subtype: MediaType,
-        *,
-        q: str = "1.0",
-        **kwargs: str,
+        type_: str,
+        subtype: str,
+        **params: str,
     ):
-        qvalue = float(q)
-        if qvalue > 1 or qvalue < 0:
-            raise InvalidHeader(
-                f"Accept header qvalue must be between 0 and 1, not: {qvalue}"
-            )
-        self.value = value
         self.type_ = type_
         self.subtype = subtype
-        self.qvalue = qvalue
-        self.params = kwargs
+        self.q = float(params.get("q", "1.0"))
+        self.params = params
+        self.str = f"{type_}/{subtype}"
 
-    def _compare(self, other, method):
-        try:
-            return method(self.qvalue, other.qvalue)
-        except (AttributeError, TypeError):
-            return NotImplemented
+    def __repr__(self):
+        return self.str + "".join(f";{k}={v}" for k, v in self.params.items())
 
-    @parse_arg_as_accept
-    def __lt__(self, other: AcceptLike):
-        return self._compare(other, lambda s, o: s < o)
+    def __eq__(self, media_type: str):
+        """Check if the type and subtype match exactly."""
+        return self.str == media_type
 
-    @parse_arg_as_accept
-    def __le__(self, other: AcceptLike):
-        return self._compare(other, lambda s, o: s <= o)
-
-    @parse_arg_as_accept
-    def __eq__(self, other: AcceptLike):  # type: ignore
-        return self._compare(other, lambda s, o: s == o)
-
-    @parse_arg_as_accept
-    def __ge__(self, other: AcceptLike):
-        return self._compare(other, lambda s, o: s >= o)
-
-    @parse_arg_as_accept
-    def __gt__(self, other: AcceptLike):
-        return self._compare(other, lambda s, o: s > o)
-
-    @parse_arg_as_accept
-    def __ne__(self, other: AcceptLike):  # type: ignore
-        return self._compare(other, lambda s, o: s != o)
-
-    @parse_arg_as_accept
     def match(
         self,
-        other,
-        *,
-        allow_type_wildcard: bool = True,
-        allow_subtype_wildcard: bool = True,
-    ) -> bool:
-        type_match = (
-            self.type_ == other.type_
-            if allow_type_wildcard
-            else (
-                self.type_.match(other.type_)
-                and not self.type_.is_wildcard
-                and not other.type_.is_wildcard
-            )
-        )
-        subtype_match = (
-            self.subtype == other.subtype
-            if allow_subtype_wildcard
-            else (
-                self.subtype.match(other.subtype)
-                and not self.subtype.is_wildcard
-                and not other.subtype.is_wildcard
-            )
-        )
+        media_type: str,
+    ) -> Optional[MediaType]:
+        """Check if this media type matches the given media type.
 
-        return type_match and subtype_match
+        Wildcards are supported both ways on both type and subtype.
+
+        Note:  Use the `==` operator instead to check for literal matches
+        without expanding wildcards.
+
+        @param media_type: A type/subtype string to match.
+        @return `self` if the media types are compatible, else `None`
+        """
+        mt = MediaType._parse(media_type)
+        return self if (
+            # Subtype match
+            (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
+            # Type match
+            and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
+        ) else None
 
     @property
     def has_wildcard(self) -> bool:
-        return self.type_.is_wildcard or self.subtype.is_wildcard
+        """Return True if this media type has a wildcard in it."""
+        return "*" in (self.subtype, self.type_)
 
     @property
     def is_wildcard(self) -> bool:
-        return self.type_.is_wildcard and self.subtype.is_wildcard
+        """Return True if this is the wildcard `*/*`"""
+        return self.type_ == "*" and self.subtype == "*"
 
     @classmethod
-    def parse(cls, raw: AcceptLike) -> Accept:
-        invalid = False
+    def _parse(cls, raw: AcceptLike) -> MediaType:
         mtype = raw.strip()
 
-        try:
-            media, *raw_params = mtype.split(";")
-            type_, subtype = media.split("/")
-        except ValueError:
-            invalid = True
-
-        if invalid or not type_ or not subtype:
-            raise InvalidHeader(f"Header contains invalid Accept value: {raw}")
+        media, *raw_params = mtype.split(";")
+        type_, subtype = media.split("/", 1)
 
         params = dict(
             [
@@ -186,51 +109,81 @@ class Accept(str):
             ]
         )
 
-        return cls(mtype, MediaType(type_), MediaType(subtype), **params)
+        return cls(type_.lstrip(), subtype.rstrip(), **params)
 
 
-AcceptLike = Union[str, Accept]
+class AcceptList(list):
+    """A list of media types, as used in the Accept header.
+    
+    The Accept header entries are listed in order of preference, starting
+    with the most preferred. This class is a list of `MediaType` objects,
+    that encapsulate also the q value or any other parameters.
+
+    Three separate methods are provided for searching the list, for
+    different use cases. The first two match wildcards with anything,
+    while `in` and other operators handle wildcards as literal values.
+
+    -  `choose` for choosing one of its arguments to use in response.
+    -  'match' for the best MediaType of the accept header, or None.
+    -   operator 'in' for checking explicit matches (wildcards as is).
+    """
+
+    def match(self, *media_types: List[str]) -> Optional[MediaType]:
+        """Find a media type accepted by the client.
+
+        This method can be used to find which of the media types requested by
+        the client is most preferred while matching any of the arguments.
+
+        Wildcards are supported. Most clients include */* as the last item in
+        their Accept header, so this method will always return a match unless
+        a custom header is used, but it may return a more specific match if
+        the client has requested any suitable types explicitly.
+
+        @param media_types: Any type/subtype strings to find.
+        @return A matching `MediaType` or `None` if nothing matches.
+        """
+        for accepted in self:
+            if any(accepted.match(mt) for mt in media_types):
+                return accepted
 
 
-class AcceptContainer(list):
-    def __contains__(self, o: object) -> bool:
-        return any(item.match(o) for item in self)
+    def choose(self, *media_types: List[str], omit_wildcard=True) -> str:
+        """Choose a most suitable media type based on the Accept header.
+        
+        This is the recommended way to choose a response format based on the
+        Accept header. The q values and the order of the Accept header are
+        respected, and if due to wildcards multiple arguments match the same
+        accept header entry, the first one matching is returned.
 
-    def match(
-        self,
-        o: AcceptLike,
-        *,
-        allow_type_wildcard: bool = True,
-        allow_subtype_wildcard: bool = True,
-    ) -> bool:
-        return any(
-            item.match(
-                o,
-                allow_type_wildcard=allow_type_wildcard,
-                allow_subtype_wildcard=allow_subtype_wildcard,
-            )
-            for item in self
-        )
+        Should none of the arguments be acceptable, the first argument is
+        returned with the q value of 0.0 (i.e. the lowest possible).
 
-    def find_first(
-        self,
-        others: List[AcceptLike],
-        default: AcceptLike = "*/*",
-    ) -> Accept:
-        filtered = [
-            accept
-            for accept in self
-            if any(accept.match(other) for other in others)
-        ]
-        if filtered:
-            return filtered[0]
-        return Accept.parse(default)
+        @param media_types: Any type/subtype strings to find.
+        @param omit_wildcard: Ignore full wildcard */* in the Accept header.
+        @return A tuple of one of the arguments and the q value of the match.
+        """
+        # Find the preferred MediaType if any match
+        for accepted in self:
+            if omit_wildcard and accepted.is_wildcard:
+                continue
+            for mt in media_types:
+                if accepted.match(mt):
+                    return mt, accepted.q
+        # Fall back to the first argument
+        return media_types[0], 0.0
 
-    @parse_arg_as_accept
-    def match_explicit(self, other: AcceptLike) -> bool:
-        return self.match(
-            other, allow_type_wildcard=False, allow_subtype_wildcard=False
-        )
+
+def parse_accept(accept: str) -> AcceptList:
+    """Parse an Accept header and order the acceptable media types in
+    accorsing to RFC 7231, s. 5.3.2
+    https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
+    """
+    try:
+        accept_list = [MediaType._parse(mtype) for mtype in accept.split(",")]
+        return AcceptList(sorted(accept_list, key=lambda mtype: -mtype.q))
+    except ValueError:
+        raise InvalidHeader(f"Invalid header value in Accept: {accept}")
+
 
 
 def parse_content_header(value: str) -> Tuple[str, Options]:
@@ -397,34 +350,6 @@ def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
         ret += b"%b: %b\r\n" % h
     ret += b"\r\n"
     return ret
-
-
-def _sort_accept_value(accept: Accept):
-    return (
-        accept.qvalue,
-        len(accept.params),
-        accept.subtype != "*",
-        accept.type_ != "*",
-    )
-
-
-def parse_accept(accept: str) -> AcceptContainer:
-    """Parse an Accept header and order the acceptable media types in
-    accorsing to RFC 7231, s. 5.3.2
-    https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
-    """
-    media_types = accept.split(",")
-    accept_list: List[Accept] = []
-
-    for mtype in media_types:
-        if not mtype:
-            continue
-
-        accept_list.append(Accept.parse(mtype))
-
-    return AcceptContainer(
-        sorted(accept_list, key=_sort_accept_value, reverse=True)
-    )
 
 
 def parse_credentials(

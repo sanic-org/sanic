@@ -407,12 +407,7 @@ CONTENT_TYPE_BY_RENDERERS = {
 RESPONSE_MAPPING = {
     "json": "json",
     "text": "text",
-    "raw": "text",
     "html": "html",
-    "file": "html",
-    "file_stream": "text",
-    "stream": "text",
-    "redirect": "html",
     "text/plain": "text",
     "text/html": "html",
     "application/json": "json",

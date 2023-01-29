@@ -21,7 +21,6 @@ from traceback import extract_tb
 
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
-from sanic.log import deprecation
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
 
@@ -404,12 +403,17 @@ RENDERERS_BY_CONTENT_TYPE = {
 CONTENT_TYPE_BY_RENDERERS = {
     v: k for k, v in RENDERERS_BY_CONTENT_TYPE.items()
 }
-# Handler source code is checked for which response types it returns
-# If it returns (exactly) one of these, it will be used as render_format
+
 RESPONSE_MAPPING = {
+    "empty": "html",
     "json": "json",
     "text": "text",
+    "raw": "text",
     "html": "html",
+    "file": "html",
+    "file_stream": "text",
+    "stream": "text",
+    "redirect": "html",
     "text/plain": "text",
     "text/html": "html",
     "application/json": "json",
@@ -432,73 +436,98 @@ def exception_response(
     """
     Render a response for the default FALLBACK exception handler.
     """
+    content_type = None
+
     if not renderer:
-        renderer = _guess_renderer(request, fallback, base)
+        # Make sure we have something set
+        renderer = base
+        render_format = fallback
+
+        if request:
+            # If there is a request, try and get the format
+            # from the route
+            if request.route:
+                try:
+                    if request.route.extra.error_format:
+                        render_format = request.route.extra.error_format
+                except AttributeError:
+                    ...
+
+            content_type = request.headers.getone("content-type", "").split(
+                ";"
+            )[0]
+
+            acceptable = request.accept
+
+            # If the format is auto still, make a guess
+            if render_format == "auto":
+                # First, if there is an Accept header, check if text/html
+                # is the first option
+                # According to MDN Web Docs, all major browsers use text/html
+                # as the primary value in Accept (with the exception of IE 8,
+                # and, well, if you are supporting IE 8, then you have bigger
+                # problems to concern yourself with than what default exception
+                # renderer is used)
+                # Source:
+                # https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation/List_of_default_Accept_values
+
+                if acceptable and acceptable[0].match(
+                    "text/html",
+                    allow_type_wildcard=False,
+                    allow_subtype_wildcard=False,
+                ):
+                    renderer = HTMLRenderer
+
+                # Second, if there is an Accept header, check if
+                # application/json is an option, or if the content-type
+                # is application/json
+                elif (
+                    acceptable
+                    and acceptable.match(
+                        "application/json",
+                        allow_type_wildcard=False,
+                        allow_subtype_wildcard=False,
+                    )
+                    or content_type == "application/json"
+                ):
+                    renderer = JSONRenderer
+
+                # Third, if there is no Accept header, assume we want text.
+                # The likely use case here is a raw socket.
+                elif not acceptable:
+                    renderer = TextRenderer
+                else:
+                    # Fourth, look to see if there was a JSON body
+                    # When in this situation, the request is probably coming
+                    # from curl, an API client like Postman or Insomnia, or a
+                    # package like requests or httpx
+                    try:
+                        # Give them the benefit of the doubt if they did:
+                        # $ curl localhost:8000 -d '{"foo": "bar"}'
+                        # And provide them with JSONRenderer
+                        renderer = JSONRenderer if request.json else base
+                    except BadRequest:
+                        renderer = base
+            else:
+                renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
+
+            # Lastly, if there is an Accept header, make sure
+            # our choice is okay
+            if acceptable:
+                type_ = CONTENT_TYPE_BY_RENDERERS.get(renderer)  # type: ignore
+                if type_ and type_ not in acceptable:
+                    # If the renderer selected is not in the Accept header
+                    # look through what is in the Accept header, and select
+                    # the first option that matches. Otherwise, just drop back
+                    # to the original default
+                    for accept in acceptable:
+                        mtype = f"{accept.type_}/{accept.subtype}"
+                        maybe = RENDERERS_BY_CONTENT_TYPE.get(mtype)
+                        if maybe:
+                            renderer = maybe
+                            break
+                    else:
+                        renderer = base
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()
-
-def _acceptable(req, mediatype):
-    # Check if the given type/subtype is an acceptable response
-    # TODO: Consider defaulting req.accept to */*:q=0 when there is no
-    #       accept header at all, to allow simply using match().
-    return not req.accept or req.accept.match(mediatype)
-
-def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> t.Type[BaseRenderer]:
-    # Renderer selection order:
-    # 1. Accept header (ignoring */* or types with q=0)
-    # 2. Route error_format
-    # 3. FALLBACK if set by app
-    # 4. Content-type for JSON
-    #
-    # If none of the above match or are in conflict with accept header,
-    # then the base renderer is returned.
-    #
-    # Arguments:
-    # - fallback is auto/json/html/text (app.config.FALLBACK_ERROR_FORMAT)
-    # - base is always TextRenderer unless set via
-    #   Sanic(error_handler=ErrorRenderer(SomeOtherRenderer))
-
-    # Use the Accept header preference to choose one of the renderers
-    mediatype, accept_q = req.accept.choose(*RENDERERS_BY_CONTENT_TYPE)
-    if accept_q:
-        return RENDERERS_BY_CONTENT_TYPE[mediatype]
-
-    # No clear preference, so employ fuzzy logic to find render_format
-    render_format = fallback
-
-    # Check the route for what the handler returns (magic)
-    # Note: this is done despite having a non-auto fallback
-    if req.route:
-        try:
-            if req.route.extra.error_format:
-                render_format = req.route.extra.error_format
-        except AttributeError:
-            pass
-
-    # If still not known, check for JSON content-type
-    if render_format == "auto":
-        mediatype = req.headers.getone("content-type", "").split(";", 1)[0]
-        if mediatype == "application/json":
-            render_format = "json"
-
-    # Check for JSON body content (DEPRECATED, backwards compatibility)
-    if render_format == "auto" and _acceptable(req, "application/json"):
-        try:
-            if req.json:
-                render_format = "json"
-                deprecation(
-                    "Response type was determined by the JSON content of "
-                    "the request. This behavior is deprecated and will be "
-                    "removed in v24.3. Please specify the format either by\n"
-                    "  FALLBACK_ERROR_FORMAT = 'json', or by adding header\n"
-                    "  accept: application/json to your requests.",
-                    24.3,
-                )
-        except Exception:
-            pass
-
-    # Use render_format if found and acceptable, otherwise fallback to base
-    renderer = RENDERERS_BY_CONFIG.get(render_format, base)
-    mediatype = CONTENT_TYPE_BY_RENDERERS[renderer]  # type: ignore
-    return renderer if _acceptable(req, mediatype) else base

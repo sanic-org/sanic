@@ -404,8 +404,7 @@ RENDERERS_BY_CONTENT_TYPE = {
 CONTENT_TYPE_BY_RENDERERS = {
     v: k for k, v in RENDERERS_BY_CONTENT_TYPE.items()
 }
-# Handler source code is checked for which response types it returns
-# If it returns (exactly) one of these, it will be used as render_format
+
 RESPONSE_MAPPING = {
     "empty": "html",
     "json": "json",

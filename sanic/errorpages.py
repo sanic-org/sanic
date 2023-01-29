@@ -437,6 +437,11 @@ def exception_response(
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()
 
+def _acceptable(req, mediatype):
+    # Check if the given type/subtype is an acceptable response
+    # TODO: Consider defaulting req.accept to */*:q=0 when there is no
+    #       accept header at all, to allow simply using match().
+    return not req.accept or req.accept.match(mediatype)
 
 def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> t.Type[BaseRenderer]:
     # Renderer selection order:
@@ -477,6 +482,5 @@ def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> 
 
     # Use render_format if found and acceptable, otherwise fallback to base
     renderer = RENDERERS_BY_CONFIG.get(render_format, base)
-    type_ = CONTENT_TYPE_BY_RENDERERS[renderer]  # type: ignore
-    acceptable = not req.accept or req.accept.match(type_)
-    return renderer if acceptable else base
+    mediatype = CONTENT_TYPE_BY_RENDERERS[renderer]  # type: ignore
+    return renderer if _acceptable(req, mediatype) else base

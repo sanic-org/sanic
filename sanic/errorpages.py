@@ -21,6 +21,7 @@ from traceback import extract_tb
 
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
+from sanic.log import deprecation
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
 
@@ -480,6 +481,22 @@ def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> 
         mediatype = req.headers.getone("content-type", "").split(";", 1)[0]
         if mediatype == "application/json":
             render_format = "json"
+
+    # Check for JSON body content (DEPRECATED, backwards compatibility)
+    if render_format == "auto" and _acceptable(req, "application/json"):
+        try:
+            if req.json:
+                render_format = "json"
+                deprecation(
+                    "Response type was determined by the JSON content of "
+                    "the request. This behavior is deprecated and will be "
+                    "removed in v24.3. Please specify the format either by\n"
+                    "  FALLBACK_ERROR_FORMAT = 'json', or by adding header\n"
+                    "  accept: application/json to your requests.",
+                    24.3,
+                )
+        except Exception:
+            pass
 
     # Use render_format if found and acceptable, otherwise fallback to base
     renderer = RENDERERS_BY_CONFIG.get(render_format, base)

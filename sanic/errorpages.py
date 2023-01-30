@@ -389,11 +389,6 @@ def escape(text):
     return f"{text}".replace("&", "&amp;").replace("<", "&lt;")
 
 
-RENDERERS_BY_CONFIG = {
-    "html": HTMLRenderer,
-    "json": JSONRenderer,
-    "text": TextRenderer,
-}
 MIME_BY_CONFIG = {
     "text": "text/plain",
     "json": "application/json",
@@ -405,9 +400,6 @@ RENDERERS_BY_CONTENT_TYPE = {
     "application/json": JSONRenderer,
     "multipart/form-data": HTMLRenderer,
     "text/html": HTMLRenderer,
-}
-CONTENT_TYPE_BY_RENDERERS = {
-    v: k for k, v in RENDERERS_BY_CONTENT_TYPE.items()
 }
 
 RESPONSE_MAPPING = {
@@ -427,7 +419,7 @@ RESPONSE_MAPPING = {
 
 
 def check_error_format(format):
-    if format not in RENDERERS_BY_CONFIG and format != "auto":
+    if format not in MIME_BY_CONFIG and format != "auto":
         raise SanicException(f"Unknown format: {format}")
 
 

@@ -66,6 +66,8 @@ class MediaType:
     def match(
         self,
         media_type: str,
+        allow_type_wildcard=True,
+        allow_subtype_wildcard=True,
     ) -> Optional[MediaType]:
         """Check if this media type matches the given media type.
 
@@ -83,6 +85,8 @@ class MediaType:
             (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
             # Type match
             and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
+            and (allow_type_wildcard or self.type_ != "*" and mt.type_ != "*")
+            and (allow_subtype_wildcard or self.subtype != "*" and mt.subtype != "*")
         ) else None
 
     @property
@@ -96,11 +100,13 @@ class MediaType:
         return self.type_ == "*" and self.subtype == "*"
 
     @classmethod
-    def _parse(cls, raw: AcceptLike) -> MediaType:
+    def _parse(cls, raw: str) -> MediaType:
         mtype = raw.strip()
 
         media, *raw_params = mtype.split(";")
         type_, subtype = media.split("/", 1)
+        if not type_ or not subtype:
+            raise ValueError(f"Invalid media type: {mtype}")
 
         params = dict(
             [

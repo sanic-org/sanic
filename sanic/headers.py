@@ -112,6 +112,18 @@ class MediaType:
         return cls(type_.lstrip(), subtype.rstrip(), **params)
 
 
+class Matched(str):
+    """A matching result of a MIME string against a MediaType."""
+    def __new__(cls, mime: str, m: Optional[MediaType]):
+        return super().__new__(cls, mime)
+
+    def __init__(self, mime: str, m: Optional[MediaType]):
+        self.m = m
+
+    def __repr__(self):
+        return f"<{self} matched {self.m}>" if self else "<no match>"
+
+
 class AcceptList(list):
     """A list of media types, as used in the Accept header.
 
@@ -119,58 +131,40 @@ class AcceptList(list):
     with the most preferred. This class is a list of `MediaType` objects,
     that encapsulate also the q value or any other parameters.
 
-    Three separate methods are provided for searching the list, for
-    different use cases. The first two match wildcards with anything,
-    while `in` and other operators handle wildcards as literal values.
-
-    -  `choose` for choosing one of its arguments to use in response.
-    -  'match' for the best MediaType of the accept header, or None.
-    -   operator 'in' for checking explicit matches (wildcards as is).
+    Two separate methods are provided for searching the list:
+    - 'match' for finding the most preferred match (wildcards supported)
+    -  operator 'in' for checking explicit matches (wildcards as literals)
     """
 
-    def match(self, *media_types: List[str]) -> Optional[MediaType]:
+    def match(self, *mimes: List[str]) -> Matched:
         """Find a media type accepted by the client.
 
         This method can be used to find which of the media types requested by
-        the client is most preferred while matching any of the arguments.
+        the client is most preferred against the ones given as arguments.
 
-        Wildcards are supported. Most clients include */* as the last item in
-        their Accept header, so this method will always return a match unless
-        a custom header is used, but it may return a more specific match if
-        the client has requested any suitable types explicitly.
+        The ordering of preference is set by:
+        1. The q values on the Accept header, and those being equal,
+        2. The order of the arguments (first is most preferred), and
+        3. The first matching entry on the Accept header.
 
-        @param media_types: Any type/subtype strings to find.
-        @return A matching `MediaType` or `None` if nothing matches.
+        Wildcards are matched both ways. A match is usually found, as the
+        Accept headers typically include `*/*`, in particular if the header
+        is missing, is not manually set, or if the client is a browser.
+
+        Note: the returned object behaves as a string of the mime argument
+        that matched, and is empty/falsy if no match was found. The matched
+        header entry `MediaType` or `None` is available as the `m` attribute.
+
+        @param mimes: Any MIME types to search for in order of preference.
+        @return A match object with the mime string and the MediaType object.
         """
-        for accepted in self:
-            if any(accepted.match(mt) for mt in media_types):
-                return accepted
-
-
-    def choose(self, *media_types: List[str], omit_wildcard=True) -> str:
-        """Choose a most suitable media type based on the Accept header.
-
-        This is the recommended way to choose a response format based on the
-        Accept header. The q values and the order of the Accept header are
-        respected, and if due to wildcards multiple arguments match the same
-        accept header entry, the first one matching is returned.
-
-        Should none of the arguments be acceptable, the first argument is
-        returned with the q value of 0.0 (i.e. the lowest possible).
-
-        @param media_types: Any type/subtype strings to find.
-        @param omit_wildcard: Ignore full wildcard */* in the Accept header.
-        @return A tuple of one of the arguments and the q value of the match.
-        """
-        # Find the preferred MediaType if any match
-        for accepted in self:
-            if omit_wildcard and accepted.is_wildcard:
-                continue
-            for mt in media_types:
-                if accepted.match(mt):
-                    return mt, accepted.q
-        # Fall back to the first argument
-        return media_types[0], 0.0
+        l = sorted([
+            (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
+            for j, acc in enumerate(self)
+            for i, mime in enumerate(mimes)
+            if acc.match(mime)
+        ])
+        return Matched(*(l[0][3:] if l else ("", None)))
 
 
 def parse_accept(accept: str) -> AcceptList:

@@ -21,7 +21,7 @@ from traceback import extract_tb
 
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
-from sanic.log import deprecation
+from sanic.log import deprecation, logger
 from sanic.request import Request
 from sanic.response import HTTPResponse, html, json, text
 
@@ -394,7 +394,12 @@ RENDERERS_BY_CONFIG = {
     "json": JSONRenderer,
     "text": TextRenderer,
 }
-
+MIME_BY_CONFIG = {
+    "text": "text/plain",
+    "json": "application/json",
+    "html": "text/html",
+}
+CONFIG_BY_MIME = {v: k for k, v in MIME_BY_CONFIG.items()}
 RENDERERS_BY_CONTENT_TYPE = {
     "text/plain": TextRenderer,
     "application/json": JSONRenderer,
@@ -438,60 +443,48 @@ def exception_response(
     Render a response for the default FALLBACK exception handler.
     """
     if not renderer:
-        renderer = _guess_renderer(request, fallback, base)
+        renderer = base
+        mt = guess_mime(request, fallback)
+        renderer = RENDERERS_BY_CONTENT_TYPE.get(mt, base)
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()
 
-def _acceptable(req, mediatype):
-    # Check if the given type/subtype is an acceptable response
-    # TODO: Consider defaulting req.accept to */*:q=0 when there is no
-    #       accept header at all, to allow simply using match().
-    return not req.accept or req.accept.match(mediatype)
 
-def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> t.Type[BaseRenderer]:
-    # Renderer selection order:
-    # 1. Accept header (ignoring */* or types with q=0)
-    # 2. Route error_format
-    # 3. FALLBACK if set by app
-    # 4. Content-type for JSON
-    #
-    # If none of the above match or are in conflict with accept header,
-    # then the base renderer is returned.
-    #
-    # Arguments:
-    # - fallback is auto/json/html/text (app.config.FALLBACK_ERROR_FORMAT)
-    # - base is always TextRenderer unless set via
-    #   Sanic(error_handler=ErrorRenderer(SomeOtherRenderer))
+def guess_mime(req: Request, fallback: str) -> str:
+    # Attempt to find a suitable MIME format for the response. A format is
+    # first determined by the route error_format. If that is not found,
+    # JSON detection is attempted by the content-type header and by the
+    # request body.
 
-    # Use the Accept header preference to choose one of the renderers
-    mediatype, accept_q = req.accept.choose(*RENDERERS_BY_CONTENT_TYPE)
-    if accept_q:
-        return RENDERERS_BY_CONTENT_TYPE[mediatype]
+    # Additionally, the configured fallback format is considered, and
+    # finally, any remaining supported formats are included.
 
-    # No clear preference, so employ fuzzy logic to find render_format
-    render_format = fallback
+    # req.accept.match(list of all formats) is used for selection, using
+    # the order of the list as well as the accept header q values for
+    # priority.
 
-    # Check the route for what the handler returns (magic)
-    # Note: this is done despite having a non-auto fallback
-    if req.route:
-        try:
-            if req.route.extra.error_format:
-                render_format = req.route.extra.error_format
-        except AttributeError:
-            pass
+    # Insertion-ordered map of formats["html"] = "source of that suggestion"
+    formats = {}
+
+    # Route error_format (by magic from handler code if auto, the default)
+    try:
+        if req.route.extra.error_format:
+            formats[req.route.extra.error_format] = req.route.name
+    except AttributeError:
+        pass
 
     # If still not known, check for JSON content-type
-    if render_format == "auto":
+    if not formats:
         mediatype = req.headers.getone("content-type", "").split(";", 1)[0]
         if mediatype == "application/json":
-            render_format = "json"
+            formats["json"] = "content-type"
 
     # Check for JSON body content (DEPRECATED, backwards compatibility)
-    if render_format == "auto" and _acceptable(req, "application/json"):
+    if not formats and req.accept.match("application/json"):
         try:
             if req.json:
-                render_format = "json"
+                formats["json"] = "request.json"
                 deprecation(
                     "Response type was determined by the JSON content of "
                     "the request. This behavior is deprecated and will be "
@@ -503,7 +496,15 @@ def _guess_renderer(req: Request, fallback: str, base: t.Type[BaseRenderer]) -> 
         except Exception:
             pass
 
-    # Use render_format if found and acceptable, otherwise fallback to base
-    renderer = RENDERERS_BY_CONFIG.get(render_format, base)
-    mediatype = CONTENT_TYPE_BY_RENDERERS[renderer]  # type: ignore
-    return renderer if _acceptable(req, mediatype) else base
+    # Add fallbacks to formats (not overriding existing), and do the matching
+    formats.setdefault(fallback, "FALLBACK_ERROR_FORMAT")
+    formats.update({k: "any" for k in MIME_BY_CONFIG if k not in formats})
+    types = [MIME_BY_CONFIG[k] for k in formats if k in MIME_BY_CONFIG]
+    m = req.accept.match(*types)
+    if m:
+        format = CONFIG_BY_MIME[m]
+        source = formats[format]
+        logger.debug(f"The client accepts {m.m}, using '{format}' from {source} ")
+    else:
+        logger.debug(f"No format found, the client accepts {req.accept} ")
+    return m

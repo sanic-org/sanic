@@ -454,27 +454,19 @@ def exception_response(
 
 
 def guess_mime(req: Request, fallback: str) -> str:
-    # Attempt to find a suitable MIME format for the response. A format is
-    # first determined by the route error_format. If that is not found,
-    # JSON detection is attempted by the content-type header and by the
-    # request body.
-
-    # Additionally, the configured fallback format is considered, and
-    # finally, any remaining supported formats are included.
-
-    # req.accept.match(list of all formats) is used for selection, using
-    # the order of the list as well as the accept header q values for
-    # priority.
-
+    # Attempt to find a suitable MIME format for the response.
     # Insertion-ordered map of formats["html"] = "source of that suggestion"
     formats = {}
 
     # Route error_format (by magic from handler code if auto, the default)
     try:
-        if req.route.extra.error_format:
+        if req.route.extra.error_format in MIME_BY_CONFIG:
             formats[req.route.extra.error_format] = req.route.name
     except AttributeError:
         pass
+
+    if not formats and fallback in MIME_BY_CONFIG:
+        formats[fallback] = "FALLBACK_ERROR_FORMAT"
 
     # If still not known, check for JSON content-type
     if not formats:
@@ -498,11 +490,13 @@ def guess_mime(req: Request, fallback: str) -> str:
         except Exception:
             pass
 
-    # Add fallbacks to formats (not overriding existing), and do the matching
-    formats.setdefault(fallback, "FALLBACK_ERROR_FORMAT")
-    formats.update({k: "any" for k in MIME_BY_CONFIG if k not in formats})
-    types = [MIME_BY_CONFIG[k] for k in formats if k in MIME_BY_CONFIG]
-    m = req.accept.match(*types)
+    # Any other supported formats
+    for k in MIME_BY_CONFIG:
+        if k not in formats:
+            formats[k] = "any"
+
+    mimes = [MIME_BY_CONFIG[k] for k in formats]
+    m = req.accept.match(*mimes)
     if m:
         format = CONFIG_BY_MIME[m]
         source = formats[format]

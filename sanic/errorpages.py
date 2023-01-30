@@ -442,6 +442,8 @@ def exception_response(
     """
     Render a response for the default FALLBACK exception handler.
     """
+    content_type = None
+
     if not renderer:
         renderer = base
         mt = guess_mime(request, fallback)

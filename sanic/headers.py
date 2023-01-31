@@ -33,15 +33,6 @@ _host_re = re.compile(
 # For more information, consult ../tests/test_requests.py
 
 
-def parse_arg_as_accept(f):
-    def func(self, other, *args, **kwargs):
-        if not isinstance(other, MediaType) and other:
-            other = MediaType._parse(other)
-        return f(self, other, *args, **kwargs)
-
-    return func
-
-
 class MediaType:
     """A media type, as used in the Accept header."""
 

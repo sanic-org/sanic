@@ -81,6 +81,7 @@ class MediaType:
         @return `self` if the media types are compatible, else `None`
         """
         mt = MediaType._parse(media_type)
+        wctype, wcsub = allow_type_wildcard, allow_subtype_wildcard
         return (
             self
             if (
@@ -88,16 +89,9 @@ class MediaType:
                 (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
                 # Type match
                 and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
-                and (
-                    allow_type_wildcard
-                    or self.type_ != "*"
-                    and mt.type_ != "*"
-                )
-                and (
-                    allow_subtype_wildcard
-                    or self.subtype != "*"
-                    and mt.subtype != "*"
-                )
+                # Allow disabling wildcard matches
+                and (wctype or "*" not in (self.type_, mt.type_))
+                and (wcsub or "*" not in (self.subtype, mt.subtype))
             )
             else None
         )

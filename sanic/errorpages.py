@@ -475,7 +475,8 @@ def guess_mime(req: Request, fallback: str) -> str:
                     "Response type was determined by the JSON content of "
                     "the request. This behavior is deprecated and will be "
                     "removed in v24.3. Please specify the format either by\n"
-                    "  FALLBACK_ERROR_FORMAT = 'json', or by adding header\n"
+                    f'  error_format="json" on route {req.route.name}, by\n'
+                    '  FALLBACK_ERROR_FORMAT = "json", or by adding header\n'
                     "  accept: application/json to your requests.",
                     24.3,
                 )

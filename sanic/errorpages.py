@@ -447,41 +447,45 @@ def guess_mime(req: Request, fallback: str) -> str:
     # Attempt to find a suitable MIME format for the response.
     # Insertion-ordered map of formats["html"] = "source of that suggestion"
     formats = {}
-
+    name = ""
     # Route error_format (by magic from handler code if auto, the default)
     try:
-        if req.route.extra.error_format in MIME_BY_CONFIG:
-            formats[req.route.extra.error_format] = req.route.name
+        if req.route:
+            name = req.route.name
+            f = req.route.extra.error_format
+            if f in MIME_BY_CONFIG:
+                formats[f] = name
     except AttributeError:
         pass
 
     if not formats and fallback in MIME_BY_CONFIG:
         formats[fallback] = "FALLBACK_ERROR_FORMAT"
 
-    # If still not known, check for JSON accept or content-type
+    # If still not known, check for the request for clues of JSON
     JSON = "application/json"
-    if not formats:
-        if JSON in req.accept or (
-            req.headers.getone("content-type", "").split(";", 1)[0] == JSON
-        ):
-            formats["json"] = "content-type"
-
-    # Check for JSON body content (DEPRECATED, backwards compatibility)
     if not formats and req.accept.match(JSON):
-        try:
-            if req.json:
+        if JSON in req.accept:  # Literally, not wildcard
+            formats["json"] = "request.accept"
+        elif req.headers.getone("content-type", "").split(";", 1)[0] == JSON:
+            formats["json"] = "content-type"
+        # DEPRECATION: Remove this block in 24.3
+        else:
+            c = None
+            try:
+                c = req.json
+            except BadRequest:
+                pass
+            if c:
                 formats["json"] = "request.json"
                 deprecation(
                     "Response type was determined by the JSON content of "
                     "the request. This behavior is deprecated and will be "
                     "removed in v24.3. Please specify the format either by\n"
-                    f'  error_format="json" on route {req.route.name}, by\n'
+                    f'  error_format="json" on route {name}, by\n'
                     '  FALLBACK_ERROR_FORMAT = "json", or by adding header\n'
                     "  accept: application/json to your requests.",
                     24.3,
                 )
-        except BadRequest:
-            pass
 
     # Any other supported formats
     for k in MIME_BY_CONFIG:

@@ -51,9 +51,9 @@ class MediaType:
     def __repr__(self):
         return self.str + "".join(f";{k}={v}" for k, v in self.params.items())
 
-    def __eq__(self, media_type: str):
+    def __eq__(self, mime: object):
         """Check if the type and subtype match exactly."""
-        return self.str == media_type
+        return self.str == mime
 
     def match(
         self,
@@ -141,7 +141,7 @@ class AcceptList(list):
     -  operator 'in' for checking explicit matches (wildcards as literals)
     """
 
-    def match(self, *mimes: List[str]) -> Matched:
+    def match(self, *mimes: str) -> Matched:
         """Find a media type accepted by the client.
 
         This method can be used to find which of the media types requested by
@@ -164,17 +164,15 @@ class AcceptList(list):
         @return A match object with the mime string and the MediaType object.
         """
         a = sorted(
-            [
-                (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
-                for j, acc in enumerate(self)
-                for i, mime in enumerate(mimes)
-                if acc.match(mime)
-            ]
+            (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
+            for j, acc in enumerate(self)
+            for i, mime in enumerate(mimes)
+            if acc.match(mime)
         )
-        return Matched(*(a[0][3:] if a else ("", None)))
+        return Matched(*(a[0][3:5] if a else ("", None)))
 
 
-def parse_accept(accept: str) -> AcceptList:
+def parse_accept(accept: Optional[str]) -> AcceptList:
     """Parse an Accept header and order the acceptable media types in
     accorsing to RFC 7231, s. 5.3.2
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2

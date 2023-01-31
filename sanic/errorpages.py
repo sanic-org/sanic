@@ -460,14 +460,16 @@ def guess_mime(req: Request, fallback: str) -> str:
     if not formats and fallback in MIME_BY_CONFIG:
         formats[fallback] = "FALLBACK_ERROR_FORMAT"
 
-    # If still not known, check for JSON content-type
+    # If still not known, check for JSON accept or content-type
+    JSON = "application/json"
     if not formats:
-        mediatype = req.headers.getone("content-type", "").split(";", 1)[0]
-        if mediatype == "application/json":
+        if JSON in req.accept or (
+            req.headers.getone("content-type", "").split(";", 1)[0] == JSON
+        ):
             formats["json"] = "content-type"
 
     # Check for JSON body content (DEPRECATED, backwards compatibility)
-    if not formats and req.accept.match("application/json"):
+    if not formats and req.accept.match(JSON):
         try:
             if req.json:
                 formats["json"] = "request.json"

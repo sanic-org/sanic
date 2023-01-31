@@ -19,7 +19,7 @@ import typing as t
 from functools import partial
 from traceback import extract_tb
 
-from sanic.exceptions import BadRequest, SanicException
+from sanic.exceptions import SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.log import deprecation, logger
 from sanic.request import Request
@@ -434,8 +434,6 @@ def exception_response(
     """
     Render a response for the default FALLBACK exception handler.
     """
-    content_type = None
-
     if not renderer:
         renderer = base
         mt = guess_mime(request, fallback)
@@ -494,7 +492,9 @@ def guess_mime(req: Request, fallback: str) -> str:
     if m:
         format = CONFIG_BY_MIME[m]
         source = formats[format]
-        logger.debug(f"The client accepts {m.m}, using '{format}' from {source} ")
+        logger.debug(
+            f"The client accepts {m.m}, using '{format}' from {source}"
+        )
     else:
-        logger.debug(f"No format found, the client accepts {req.accept} ")
+        logger.debug(f"No format found, the client accepts {req.accept}")
     return m

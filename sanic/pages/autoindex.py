@@ -24,7 +24,7 @@ class AutoIndex(BasePage):  # no cov
         #breadcrumbs .path-0 a::before {{ content: "🏠"; }}
         #breadcrumbs > span > a {{ color: {BasePage.ACCENT}; }}
         main a {{ color: inherit; font-weight: bold; }}
-        table.autoindex {{ width: 100%; }}
+        table.autoindex {{ width: 100%; font-family: monospace; }}
         table.autoindex tr {{ display: flex; }}
         table.autoindex tr:hover {{ background-color: #ddd; }}
         table.autoindex td {{ margin: 0 0.5rem; }}

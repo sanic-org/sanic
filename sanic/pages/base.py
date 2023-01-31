@@ -11,7 +11,7 @@ class BasePage(ABC):  # no cov
     ACCENT = "#ff0d68"
     BASE_STYLE = dedent(
         """
-        html { font: 16px monospace; background: #eee; color: #111; }
+        html { font: 16px sans-serif; background: #eee; color: #111; }
         body { margin: 0; font-size: 1.25rem; }
         body > * { padding: 1rem 2vw; }
         @media (max-width:  1200px) {

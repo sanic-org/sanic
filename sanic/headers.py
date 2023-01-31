@@ -189,7 +189,9 @@ def parse_accept(accept: str) -> AcceptList:
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
     """
     if not accept:
-        return AcceptList()
+        if accept == "":
+            return AcceptList()  # Empty header, accept nothing
+        accept = "*/*"  # No header means that all types are accepted
     try:
         a = [MediaType._parse(mtype) for mtype in accept.split(",")]
         return AcceptList(sorted(a, key=lambda mtype: -mtype.q))

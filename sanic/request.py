@@ -510,8 +510,7 @@ class Request:
         :rtype: AcceptList
         """
         if self.parsed_accept is None:
-            accept_header = self.headers.getone("accept", "*/*")
-            self.parsed_accept = parse_accept(accept_header)
+            self.parsed_accept = parse_accept(self.headers.get("accept"))
         return self.parsed_accept
 
     @property

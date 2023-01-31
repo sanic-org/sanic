@@ -8,9 +8,10 @@ from sanic.application.logo import SVG_LOGO
 
 
 class BasePage(ABC):  # no cov
+    ACCENT = "#ff0d68"
     BASE_STYLE = dedent(
         """
-        html { font: 16px monospace; }
+        html { font: 16px monospace; background: #eee; color: #111; }
         body { margin: 0; font-size: 1.25rem; }
         body > * { padding: 1rem 2vw; }
         @media (max-width:  1200px) {
@@ -30,7 +31,6 @@ class BasePage(ABC):  # no cov
         a:hover, a:focus { text-decoration: underline; outline: none; }
         #logo { height: 2.75rem; padding: 0.25rem 0; }
         span.icon { margin-right: 1rem; }
-        html { background: #eee; color: #000; }
         @media (prefers-color-scheme: dark) {
             html { background: #111; color: #ccc; }
         }

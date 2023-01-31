@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple, Type
 
 from sanic.errorpages import BaseRenderer, TextRenderer, exception_response
-from sanic.exceptions import SanicIsADirectoryError
-from sanic.handlers.directory import DirectoryHandler
 from sanic.log import deprecation, error_logger
 from sanic.models.handler_types import RouteHandler
 from sanic.response import text
@@ -22,19 +20,13 @@ class ErrorHandler:
     realtime alerting system.
     """
 
-    DEFAULT_HANDLERS = {
-        (SanicIsADirectoryError, None): DirectoryHandler.default_handler
-    }
-
     def __init__(
         self,
         base: Type[BaseRenderer] = TextRenderer,
     ):
         self.cached_handlers: Dict[
             Tuple[Type[BaseException], Optional[str]], Optional[RouteHandler]
-        ] = {
-            **self.DEFAULT_HANDLERS  # type: ignore
-        }
+        ] = {}
         self.debug = False
         self.base = base
 

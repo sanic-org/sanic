@@ -2,7 +2,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.config import Config
-from sanic.errorpages import HTMLRenderer, exception_response
+from sanic.errorpages import HTMLRenderer, TextRenderer, exception_response
 from sanic.exceptions import NotFound, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
@@ -28,14 +28,14 @@ def fake_request(app):
 @pytest.mark.parametrize(
     "fallback,content_type, exception, status",
     (
-        (None, "text/html; charset=utf-8", Exception, 500),
+        (None, "text/plain; charset=utf-8", Exception, 500),
         ("html", "text/html; charset=utf-8", Exception, 500),
-        ("auto", "text/html; charset=utf-8", Exception, 500),
+        ("auto", "text/plain; charset=utf-8", Exception, 500),
         ("text", "text/plain; charset=utf-8", Exception, 500),
         ("json", "application/json", Exception, 500),
-        (None, "text/html; charset=utf-8", NotFound, 404),
+        (None, "text/plain; charset=utf-8", NotFound, 404),
         ("html", "text/html; charset=utf-8", NotFound, 404),
-        ("auto", "text/html; charset=utf-8", NotFound, 404),
+        ("auto", "text/plain; charset=utf-8", NotFound, 404),
         ("text", "text/plain; charset=utf-8", NotFound, 404),
         ("json", "application/json", NotFound, 404),
     ),
@@ -43,6 +43,10 @@ def fake_request(app):
 def test_should_return_html_valid_setting(
     fake_request, fallback, content_type, exception, status
 ):
+    # Note: if fallback is None or "auto", prior to PR #2668 base was returned
+    # and after that a text response is given because it matches */*. Changed
+    # base to TextRenderer in this test, like it is in Sanic itself, so the
+    # test passes with either version but still covers everything that it did.
     if fallback:
         fake_request.app.config.FALLBACK_ERROR_FORMAT = fallback
 
@@ -53,7 +57,7 @@ def test_should_return_html_valid_setting(
             fake_request,
             e,
             True,
-            base=HTMLRenderer,
+            base=TextRenderer,
             fallback=fake_request.app.config.FALLBACK_ERROR_FORMAT,
         )
 
@@ -259,15 +263,17 @@ def test_fallback_with_content_type_mismatch_accept(app):
     "accept,content_type,expected",
     (
         (None, None, "text/plain; charset=utf-8"),
-        ("foo/bar", None, "text/html; charset=utf-8"),
+        ("foo/bar", None, "text/plain; charset=utf-8"),
         ("application/json", None, "application/json"),
         ("application/json,text/plain", None, "application/json"),
         ("text/plain,application/json", None, "application/json"),
         ("text/plain,foo/bar", None, "text/plain; charset=utf-8"),
-        # Following test is valid after v22.3
-        # ("text/plain,text/html", None, "text/plain; charset=utf-8"),
-        ("*/*", "foo/bar", "text/html; charset=utf-8"),
+        ("text/plain,text/html", None, "text/plain; charset=utf-8"),
+        ("*/*", "foo/bar", "text/plain; charset=utf-8"),
         ("*/*", "application/json", "application/json"),
+        # App wants text/plain but accept has equal entries for it
+        ("text/*,*/plain", None, "text/plain; charset=utf-8"),
+
     ),
 )
 def test_combinations_for_auto(fake_request, accept, content_type, expected):
@@ -286,7 +292,7 @@ def test_combinations_for_auto(fake_request, accept, content_type, expected):
             fake_request,
             e,
             True,
-            base=HTMLRenderer,
+            base=TextRenderer,
             fallback="auto",
         )
 

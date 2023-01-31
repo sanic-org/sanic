@@ -13,22 +13,34 @@ class FileInfo(TypedDict):
     file_size: str
 
 
-class AutoIndex(BasePage):
+class AutoIndex(BasePage):  # no cov
     EXTRA_STYLE = dedent(
         """
+        #breadcrumbs a { text-decoration: none; }
         #breadcrumbs .path-0 a::before { content: "🏠"; }
         #breadcrumbs span:has(> a:hover, > a:focus) * {
             color: #ff0d68; text-shadow: 0 0 1rem;
         }
         main a { color: inherit; font-weight: bold; }
+        table.autoindex { width: 100%; }
         table.autoindex tr { display: flex; }
+        table.autoindex tr:hover { background-color: #eee; }
         table.autoindex td { margin: 0 0.5rem; }
         table.autoindex td:first-child { flex: 1; }
         table.autoindex td:nth-child(2) { text-align: right; }
         table.autoindex td:last-child {  text-align: right; }
+        @media (min-width:  915px) {
+            table.autoindex { font-size: 1.75vw; }
+        }
+        @media (min-width:  1600px) {
+            table.autoindex { font-size: 1.75rem; }
+        }
+        @media (prefers-color-scheme: dark) {
+            table.autoindex tr:hover { background-color: #222; }
+        }
         """
     )
-    TITLE = "File browser"
+    TITLE = "File Browser"
 
     def __init__(
         self, files: Iterable[FileInfo], url: str, debug: bool
@@ -59,7 +71,7 @@ class AutoIndex(BasePage):
                 self.doc.__exit__(None, None, None)
 
     def _file_table(self, files: Iterable[FileInfo]):
-        with self.doc.table(class_="autoindex"):
+        with self.doc.table(class_="autoindex container"):
             for f in files:
                 self._file_row(**f)
 

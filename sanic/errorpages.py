@@ -19,7 +19,7 @@ import typing as t
 from functools import partial
 from traceback import extract_tb
 
-from sanic.exceptions import SanicException
+from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.log import deprecation, logger
 from sanic.request import Request
@@ -479,7 +479,7 @@ def guess_mime(req: Request, fallback: str) -> str:
                     "  accept: application/json to your requests.",
                     24.3,
                 )
-        except Exception:
+        except BadRequest:
             pass
 
     # Any other supported formats

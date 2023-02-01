@@ -410,6 +410,7 @@ RESPONSE_MAPPING = {
     "json": "json",
     "text": "text",
     "html": "html",
+    "JSONResponse": "json",
     "text/plain": "text",
     "text/html": "html",
     "application/json": "json",

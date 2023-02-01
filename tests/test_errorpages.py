@@ -1,12 +1,14 @@
+import logging
+
 import pytest
 
 from sanic import Sanic
 from sanic.config import Config
-from sanic.errorpages import HTMLRenderer, TextRenderer, exception_response
+from sanic.errorpages import HTMLRenderer, TextRenderer, guess_mime, exception_response
 from sanic.exceptions import NotFound, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
-from sanic.response import HTTPResponse, html, json, text
+from sanic.response import HTTPResponse, empty, html, json, text
 
 
 @pytest.fixture
@@ -16,6 +18,45 @@ def app():
     @app.route("/error", methods=["GET", "POST"])
     def err(request):
         raise Exception("something went wrong")
+
+    @app.get("/forced_json/<fail>", error_format="json")
+    def manual_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return html("")  # Should be ignored
+
+    @app.get("/empty/<fail>")
+    def empty_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return empty()
+
+    @app.get("/json/<fail>")
+    def json_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        # After 23.3 route format should become json, older versions think it
+        # is mixed due to empty mapping to html, and don't find any format.
+        return json({"foo": "bar"}) if fail == "json" else empty()
+
+    @app.get("/html/<fail>")
+    def html_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return html("<h1>foo</h1>")
+
+    @app.get("/text/<fail>")
+    def text_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return text("foo")
+
+    @app.get("/mixed/<param>")
+    def mixed_fail(request, param):
+        if param not in ("json", "html"):
+            raise Exception
+        return json({}) if param == "json" else html("")
+
 
     return app
 
@@ -382,3 +423,43 @@ def test_config_fallback_bad_value(app):
     message = "Unknown format: fake"
     with pytest.raises(SanicException, match=message):
         app.config.FALLBACK_ERROR_FORMAT = "fake"
+
+
+@pytest.mark.parametrize(
+    "route_format,fallback,accept,expected",
+    (
+        ("json", "html", "*/*", "The client accepts */*, using 'json' from fakeroute"),
+        ("json", "html", "text/*,*/plain;q=0.9", "The client accepts text/*, using 'text' from any"),
+        ("", "html", "text/*,*/plain", "The client accepts text/*, using 'html' from FALLBACK_ERROR_FORMAT"),
+        ("", "json", "text/*,*/*", "The client accepts */*, using 'json' from FALLBACK_ERROR_FORMAT"),
+        ("", "auto", "*/*,application/json;q=0.5", "The client accepts */*, using 'json' from request.accept"),
+        ("", "auto", "text/html,text/plain", "The client accepts text/plain, using 'text' from any"),
+        ("", "auto", "text/html,text/plain;q=0.9", "The client accepts text/html, using 'html' from any"),
+        ("html", "json", "application/xml", "No format found, the client accepts [application/xml]"),
+        ("", "", "*/*", "The client accepts */*, using 'text' from any"),
+        # DEPRECATED: remove in 24.3
+        ("", "", "*/*", "The client accepts */*, using 'json' from request.json"),
+    ),
+)
+def test_guess_mime_logging(caplog, fake_request, route_format, fallback, accept, expected):
+    class FakeObject:
+        pass
+    fake_request.route = FakeObject()
+    fake_request.route.name = "fakeroute"
+    fake_request.route.extra = FakeObject()
+    fake_request.route.extra.error_format = route_format
+    if accept is None:
+        del fake_request.headers["accept"]
+    else:
+        fake_request.headers["accept"] = accept
+
+    # Fake JSON content (DEPRECATED: remove in 24.3)
+    if "request.json" in expected:
+        fake_request.parsed_json = {"foo": "bar"}
+
+    with caplog.at_level(logging.DEBUG, logger="sanic.root"):
+        guess_mime(fake_request, fallback)
+
+    logmsg, = [r.message for r in caplog.records if r.funcName == "guess_mime"]
+
+    assert logmsg == expected

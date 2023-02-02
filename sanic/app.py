@@ -57,6 +57,7 @@ from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
     BadRequest,
     SanicException,
+    SanicIsADirectoryError,
     ServerError,
     URLBuildError,
 )
@@ -1578,6 +1579,10 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 TouchUp.run(self)
 
         self.state.is_started = True
+
+        self.exception(SanicIsADirectoryError)(
+            DirectoryHandler.default_handler
+        )
         self.directory_handler.debug = self.debug
 
     def ack(self):

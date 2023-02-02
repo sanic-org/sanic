@@ -13,23 +13,36 @@ class FileInfo(TypedDict):
     file_size: str
 
 
-class AutoIndex(BasePage):
+class AutoIndex(BasePage):  # no cov
     EXTRA_STYLE = dedent(
-        """
-        #breadcrumbs .path-0 a::before { content: "🏠"; }
-        #breadcrumbs span:has(> a:hover, > a:focus) * {
-            color: #ff0d68; text-shadow: 0 0 1rem;
-        }
-        main a { color: inherit; font-weight: bold; }
-        table.autoindex tr { display: flex; }
-        table.autoindex td { margin: 0 0.5rem; }
-        table.autoindex td:first-child { flex: 1; }
-        table.autoindex td:nth-child(2) { text-align: right; }
-        table.autoindex td:last-child {  text-align: right; }
-        span.icon { margin-right: 1rem; }
+        f"""
+        #breadcrumbs a:hover {{ text-decoration: underline; }}
+        #breadcrumbs .path-0 a {{ text-decoration: none; }}
+        #breadcrumbs span::after {{
+            content: "/"; text-decoration: none; padding: 0 0.25em;
+        }}
+        #breadcrumbs .path-0 a::before {{ content: "🏠"; }}
+        #breadcrumbs > span > a {{ color: {BasePage.ACCENT}; }}
+        main a {{ color: inherit; font-weight: bold; }}
+        table.autoindex {{ width: 100%; font-family: monospace; }}
+        table.autoindex tr {{ display: flex; }}
+        table.autoindex tr:hover {{ background-color: #ddd; }}
+        table.autoindex td {{ margin: 0 0.5rem; }}
+        table.autoindex td:first-child {{ flex: 1; }}
+        table.autoindex td:nth-child(2) {{ text-align: right; }}
+        table.autoindex td:last-child {{  text-align: right; }}
+        @media (min-width:  915px) {{
+            table.autoindex {{ font-size: 1.75vw; }}
+        }}
+        @media (min-width:  1600px) {{
+            table.autoindex {{ font-size: 1.75rem; }}
+        }}
+        @media (prefers-color-scheme: dark) {{
+            table.autoindex tr:hover {{ background-color: #222; }}
+        }}
         """
     )
-    TITLE = "File browser"
+    TITLE = "File Browser"
 
     def __init__(
         self, files: Iterable[FileInfo], url: str, debug: bool
@@ -56,11 +69,11 @@ class AutoIndex(BasePage):
                 self.doc.span(class_=f"path-{i}").__enter__()
             for i, part in enumerate(p):
                 path = "/".join(p[: i + 1]) + "/"
-                self.doc.a(f"{part}/", href=path)
+                self.doc.a(part, href=path)
                 self.doc.__exit__(None, None, None)
 
     def _file_table(self, files: Iterable[FileInfo]):
-        with self.doc.table(class_="autoindex"):
+        with self.doc.table(class_="autoindex container"):
             for f in files:
                 self._file_row(**f)
 

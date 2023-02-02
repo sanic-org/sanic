@@ -304,9 +304,6 @@ class Blueprint(BaseSanic):
 
         # Routes
         for future in self._future_routes:
-            # attach the blueprint name to the handler so that it can be
-            # prefixed properly in the router
-            future.handler.__blueprintname__ = self.name
             # Prepend the blueprint URI prefix if available
             uri = self._setup_uri(future.uri, url_prefix)
 

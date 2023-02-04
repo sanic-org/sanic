@@ -1,14 +1,5 @@
 from pathlib import PurePath
-from typing import (
-    Dict,
-    Iterable,
-    List,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from sanic.models.handler_types import (
     ErrorMiddlewareType,

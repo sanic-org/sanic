@@ -28,17 +28,13 @@ from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
-from sanic.exceptions import (
-    FileNotFound,
-    HeaderNotFound,
-    RangeNotSatisfiable,
-    SanicIsADirectoryError,
-)
+from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.response import HTTPResponse, file, file_stream, validate_file
+from sanic.response.types import BrowserResponse
 from sanic.types import HashableDict
 
 
@@ -915,12 +911,8 @@ class RouteMixin(metaclass=SanicMeta):
                             file_path, headers=headers, _range=_range
                         )
                 return await file(file_path, headers=headers, _range=_range)
-        except IsADirectoryError as e:
-            exc = SanicIsADirectoryError(str(e))
-            exc.location = Path(file_path)
-            exc.autoindex = autoindex
-            exc.index = index
-            raise exc
+        except IsADirectoryError:
+            return BrowserResponse(Path(file_path), autoindex, index)
         except RangeNotSatisfiable:
             raise
         except FileNotFoundError:

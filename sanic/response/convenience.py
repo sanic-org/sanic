@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 from email.utils import formatdate, parsedate_to_datetime
 from mimetypes import guess_type
 from os import path
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from time import time
-from typing import Any, AnyStr, Callable, Dict, Optional, Union
+from typing import Any, AnyStr, Callable, Dict, Optional, Sequence, Union
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
@@ -15,7 +15,7 @@ from sanic.helpers import Default, _default
 from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
 
-from .types import HTTPResponse, JSONResponse, ResponseStream
+from .types import BrowserResponse, HTTPResponse, JSONResponse, ResponseStream
 
 
 def empty(
@@ -331,3 +331,10 @@ async def file_stream(
         headers=headers,
         content_type=mime_type,
     )
+
+
+def file_browser(
+    location: Union[str, PurePath],
+    index: Optional[Union[str, Sequence[str]]] = None,
+) -> BrowserResponse:
+    return BrowserResponse(Path(location), True, index)

@@ -4,29 +4,19 @@ from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
 from stat import S_ISDIR
-from typing import (
-    Any,
-    Coroutine,
-    Dict,
-    Iterable,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from typing import Dict, Iterable, Sequence, Union, cast
 
-from sanic.exceptions import SanicIsADirectoryError
+from sanic.exceptions import NotFound
 from sanic.pages.autoindex import AutoIndex, FileInfo
 from sanic.request import Request
 from sanic.response import file, html, redirect
-from sanic.response.types import HTTPResponse
 
 
 class DirectoryHandler:
     def __init__(self, debug: bool) -> None:
         self.debug = debug
 
-    def handle(
+    async def handle(
         self,
         request: Request,
         directory: Path,
@@ -37,10 +27,12 @@ class DirectoryHandler:
         for file_name in index:
             index_file = directory / file_name
             if index_file.is_file():
-                return file(index_file)
+                return await file(index_file)
 
         if autoindex:
             return self.index(directory, url)
+
+        raise NotFound(f"{str(directory)} is not found")
 
     def index(self, directory: Path, url: str):
         # Remove empty path elements, append slash
@@ -77,17 +69,3 @@ class DirectoryHandler:
         for item in sorted(prepared, key=itemgetter("priority", "file_name")):
             del item["priority"]
             yield cast(FileInfo, item)
-
-    @classmethod
-    def default_handler(
-        cls, request: Request, exception: SanicIsADirectoryError
-    ) -> Optional[Coroutine[Any, Any, HTTPResponse]]:
-        if exception.autoindex or exception.index:
-            return request.app.directory_handler.handle(
-                request,
-                exception.location,
-                exception.autoindex,
-                exception.index,
-                request.path,
-            )
-        return None

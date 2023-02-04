@@ -57,7 +57,6 @@ from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
     BadRequest,
     SanicException,
-    SanicIsADirectoryError,
     ServerError,
     URLBuildError,
 )
@@ -87,6 +86,7 @@ from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
+from sanic.response.types import BrowserResponse
 from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
@@ -897,6 +897,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             Union[
                 BaseHTTPResponse,
                 Coroutine[Any, Any, Optional[BaseHTTPResponse]],
+                BrowserResponse,
+                ResponseStream,
             ]
         ] = None
         run_middleware = True
@@ -1007,7 +1009,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
-                resp = await response(request)  # type: ignore
+                resp = await response(request)
                 await self.dispatch(
                     "http.lifecycle.response",
                     inline=True,
@@ -1016,7 +1018,26 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                         "response": resp,
                     },
                 )
-                await response.eof()  # type: ignore
+                await response.eof()
+            elif isinstance(response, BrowserResponse):
+                resp = await request.respond(
+                    await self.directory_handler.handle(
+                        request,
+                        response.location,
+                        response.autoindex,
+                        response.index,
+                        request.path,
+                    )
+                )
+                await self.dispatch(
+                    "http.lifecycle.response",
+                    inline=True,
+                    context={
+                        "request": request,
+                        "response": resp,
+                    },
+                )
+                await resp.send(end_stream=True)
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
@@ -1579,11 +1600,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 TouchUp.run(self)
 
         self.state.is_started = True
-
-        self.exception(SanicIsADirectoryError)(
-            DirectoryHandler.default_handler
-        )
-        self.directory_handler.debug = self.debug
 
     def ack(self):
         if hasattr(self, "multiplexer"):

@@ -1,4 +1,3 @@
-from textwrap import dedent
 from typing import Iterable, TypedDict
 
 from html5tagger import E
@@ -14,34 +13,6 @@ class FileInfo(TypedDict):
 
 
 class AutoIndex(BasePage):  # no cov
-    EXTRA_STYLE = dedent(
-        f"""
-        #breadcrumbs a:hover {{ text-decoration: underline; }}
-        #breadcrumbs .path-0 a {{ text-decoration: none; }}
-        #breadcrumbs span::after {{
-            content: "/"; text-decoration: none; padding: 0 0.25em;
-        }}
-        #breadcrumbs .path-0 a::before {{ content: "🏠"; }}
-        #breadcrumbs > span > a {{ color: {BasePage.ACCENT}; }}
-        main a {{ color: inherit; font-weight: bold; }}
-        table.autoindex {{ width: 100%; font-family: monospace; }}
-        table.autoindex tr {{ display: flex; }}
-        table.autoindex tr:hover {{ background-color: #ddd; }}
-        table.autoindex td {{ margin: 0 0.5rem; }}
-        table.autoindex td:first-child {{ flex: 1; }}
-        table.autoindex td:nth-child(2) {{ text-align: right; }}
-        table.autoindex td:last-child {{  text-align: right; }}
-        @media (min-width:  915px) {{
-            table.autoindex {{ font-size: 1.75vw; }}
-        }}
-        @media (min-width:  1600px) {{
-            table.autoindex {{ font-size: 1.75rem; }}
-        }}
-        @media (prefers-color-scheme: dark) {{
-            table.autoindex tr:hover {{ background-color: #222; }}
-        }}
-        """
-    )
     TITLE = "File Browser"
 
     def __init__(

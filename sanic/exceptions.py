@@ -1,6 +1,6 @@
 from asyncio import CancelledError
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
 from sanic.helpers import STATUS_CODES
 
@@ -276,4 +276,4 @@ class SanicIsADirectoryError(SanicException):
     quiet = True
     location: Path
     autoindex: bool
-    index_name: str
+    index: Sequence[str]

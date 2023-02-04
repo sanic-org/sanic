@@ -1,5 +1,14 @@
 from pathlib import PurePath
-from typing import Dict, Iterable, List, NamedTuple, Optional, Union
+from typing import (
+    Dict,
+    Iterable,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from sanic.models.handler_types import (
     ErrorMiddlewareType,
@@ -57,7 +66,7 @@ class FutureStatic(NamedTuple):
     content_type: Optional[bool]
     resource_type: Optional[str]
     autoindex: bool
-    index_name: str
+    index: Tuple[str, ...]  # type: ignore
 
 
 class FutureSignal(NamedTuple):

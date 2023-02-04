@@ -14,6 +14,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -25,11 +26,7 @@ from sanic_routing.route import Route
 
 from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
-from sanic.constants import (
-    DEFAULT_HTTP_CONTENT_TYPE,
-    DEFAULT_INDEX,
-    HTTP_METHODS,
-)
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, HTTP_METHODS
 from sanic.errorpages import RESPONSE_MAPPING
 from sanic.exceptions import (
     FileNotFound,
@@ -38,7 +35,6 @@ from sanic.exceptions import (
     SanicIsADirectoryError,
 )
 from sanic.handlers import ContentRangeHandler
-from sanic.helpers import Default, _default
 from sanic.log import error_logger
 from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
@@ -713,7 +709,7 @@ class RouteMixin(metaclass=SanicMeta):
         apply: bool = True,
         resource_type: Optional[str] = None,
         autoindex: bool = False,
-        index_name: Union[str, Default] = _default,
+        index: Optional[Union[str, Sequence[str]]] = None,
     ):
         """
         Register a root to serve files from. The input can either be a
@@ -752,8 +748,10 @@ class RouteMixin(metaclass=SanicMeta):
                 f"Static route must be a valid path, not {file_or_directory}"
             )
 
-        if isinstance(index_name, Default):
-            index_name = DEFAULT_INDEX
+        if index is None:
+            index = []
+        elif isinstance(index, str):
+            index = [index]
 
         static = FutureStatic(
             uri,
@@ -768,7 +766,7 @@ class RouteMixin(metaclass=SanicMeta):
             content_type,
             resource_type,
             autoindex,
-            index_name,
+            tuple(index),
         )
         self._future_statics.add(static)
 
@@ -843,7 +841,7 @@ class RouteMixin(metaclass=SanicMeta):
         content_type=None,
         __file_uri__=None,
         autoindex=False,
-        index_name="",
+        index=None,
     ):
         not_found = FileNotFound(
             "File not found",
@@ -916,14 +914,14 @@ class RouteMixin(metaclass=SanicMeta):
                         return await file_stream(
                             file_path, headers=headers, _range=_range
                         )
-                return await file(
-                    file_path,
-                    headers=headers,
-                    _range=_range,
-                    autoindex=autoindex,
-                    index_name=index_name,
-                )
-        except (RangeNotSatisfiable, SanicIsADirectoryError):
+                return await file(file_path, headers=headers, _range=_range)
+        except IsADirectoryError as e:
+            exc = SanicIsADirectoryError(str(e))
+            exc.location = Path(file_path)
+            exc.autoindex = autoindex
+            exc.index = index
+            raise exc
+        except RangeNotSatisfiable:
             raise
         except FileNotFoundError:
             raise not_found
@@ -1018,7 +1016,7 @@ class RouteMixin(metaclass=SanicMeta):
                 static.stream_large_files,
                 content_type=static.content_type,
                 autoindex=static.autoindex,
-                index_name=static.index_name,
+                index=static.index,
             )
         )
 

@@ -4,7 +4,16 @@ from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
 from stat import S_ISDIR
-from typing import Any, Coroutine, Dict, Iterable, Optional, Union, cast
+from typing import (
+    Any,
+    Coroutine,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Union,
+    cast,
+)
 
 from sanic.exceptions import SanicIsADirectoryError
 from sanic.pages.autoindex import AutoIndex, FileInfo
@@ -18,14 +27,20 @@ class DirectoryHandler:
         self.debug = debug
 
     def handle(
-        self, directory: Path, autoindex: bool, index_name: str, url: str
+        self,
+        request: Request,
+        directory: Path,
+        autoindex: bool,
+        index: Sequence[str],
+        url: str,
     ):
-        index_file = directory / index_name
-        if autoindex and (not index_file.exists() or not index_name):
-            return self.index(directory, url)
+        for file_name in index:
+            index_file = directory / file_name
+            if index_file.is_file():
+                return file(index_file)
 
-        if index_name:
-            return file(index_file)
+        if autoindex:
+            return self.index(directory, url)
 
     def index(self, directory: Path, url: str):
         # Remove empty path elements, append slash
@@ -67,13 +82,12 @@ class DirectoryHandler:
     def default_handler(
         cls, request: Request, exception: SanicIsADirectoryError
     ) -> Optional[Coroutine[Any, Any, HTTPResponse]]:
-        if exception.autoindex or exception.index_name:
-            maybe_response = request.app.directory_handler.handle(
+        if exception.autoindex or exception.index:
+            return request.app.directory_handler.handle(
+                request,
                 exception.location,
                 exception.autoindex,
-                exception.index_name,
+                exception.index,
                 request.path,
             )
-            if maybe_response:
-                return maybe_response
         return None

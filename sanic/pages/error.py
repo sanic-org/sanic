@@ -1,13 +1,15 @@
 from .base import BasePage
 from sanic.request import Request
-
+from contextlib import suppress
 from html5tagger import E
-from niceback import html_traceback, inspector
+from tracerite import html_traceback, inspector
+import tracerite.html
 
 # Avoid showing the request in the traceback variable inspectors
 inspector.blacklist_types += Request,
 
 class ErrorPage(BasePage):
+    EXTRA_STYLE = tracerite.html.style + "summary { color: #888; }"
     def __init__(self, title: str, text: str, request: Request, exc: Exception, full: bool) -> None:
         super().__init__()
         # Internal server errors come with the text of the exception, which we don't want to show to the user.
@@ -21,10 +23,24 @@ class ErrorPage(BasePage):
         self.exc = exc
         self.full = full
 
+    def _head(self) -> None:
+        self.doc._script(tracerite.html.javascript)
+        super()._head()
+
     def _body(self) -> None:
+        debug = self.request.app.debug
         with self.doc.main:
             self.doc.h1(f"⚠️ {self.title}").p(self.text)
-            if not self.request.app.debug:
+            context = getattr(self.exc, "context", None) or {}
+            if debug:
+                context.update(getattr(self.exc, "extra", None) or {})
+            # Show context and extra details if available on the exception
+            if context:
+                # Printing values may easily cause a new exception, so suppress it
+                with self.doc.table(id="exception-context"), suppress(Exception):
+                    for k, v in context.items():
+                        self.doc.tr.td(k).td(v)
+            if not debug:
                 return
             # Show additional details in debug mode, open by default for 500 errors
             with self.doc.details(open=self.full, class_="smalltext"):
@@ -32,7 +48,7 @@ class ErrorPage(BasePage):
                 if self.exc:
                     self.doc.h2(f"Exception in {self.request.route.name}:")
                     # skip_outmost=1 to hide Sanic.handle_request
-                    self.doc(html_traceback(self.exc, skip_outmost=1))
+                    self.doc(html_traceback(self.exc, skip_outmost=1, include_js_css=False))
 
                 self.doc.h2(f"{self.request.method} {self.request.path}")
                 with self.doc.table(id="request-headers"):

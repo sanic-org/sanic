@@ -28,11 +28,12 @@ class BasePage(ABC, metaclass=CSS):  # no cov
         self.doc.style(HTML(self.style))
         with self.doc.header:
             with self.doc.div(class_="container"):
-                if self.debug:
-                    self.doc(HTML(SVG_LOGO))
+                self.doc(HTML(SVG_LOGO))
                 self.doc.div(self.TITLE, id="hdrtext")
                 if self.debug:
                     self.doc.div(f"Version {VERSION}", id="hdrver")
+                else:
+                    self.doc.div("")
 
     @abstractmethod
     def _body(self) -> None:

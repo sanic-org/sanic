@@ -333,8 +333,11 @@ async def file_stream(
     )
 
 
-def file_browser(
+async def file_browser(
     location: Union[str, PurePath],
     index: Optional[Union[str, Sequence[str]]] = None,
-) -> BrowserResponse:
-    return BrowserResponse(Path(location), True, index)
+) -> Union[BrowserResponse, HTTPResponse]:
+    path = Path(location)
+    if path.is_file():
+        return await file(path)
+    return BrowserResponse(path, True, index)

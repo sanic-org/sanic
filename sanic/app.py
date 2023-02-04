@@ -1020,8 +1020,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 )
                 await response.eof()
             elif isinstance(response, BrowserResponse):
+                directory_handler = (
+                    response.directory_handler or self.directory_handler
+                )
                 resp = await request.respond(
-                    await self.directory_handler.handle(
+                    await directory_handler.handle(
                         request,
                         response.location,
                         response.autoindex,
@@ -1600,6 +1603,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 TouchUp.run(self)
 
         self.state.is_started = True
+        self.directory_handler.debug = self.debug
 
     def ack(self):
         if hasattr(self, "multiplexer"):

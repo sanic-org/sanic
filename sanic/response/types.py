@@ -31,6 +31,7 @@ from sanic.http import Http
 
 if TYPE_CHECKING:
     from sanic.asgi import ASGIApp
+    from sanic.handlers.directory import DirectoryHandler
     from sanic.http.http3 import HTTPReceiver
     from sanic.request import Request
 else:
@@ -456,7 +457,13 @@ class ResponseStream:
 
 
 class BrowserResponse:
-    __slots__ = ("location", "index", "autoindex", "headers")
+    __slots__ = (
+        "location",
+        "index",
+        "autoindex",
+        "headers",
+        "directory_handler",
+    )
 
     def __init__(
         self,
@@ -464,6 +471,7 @@ class BrowserResponse:
         autoindex: bool,
         index: Optional[Sequence[str]] = None,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
+        directory_handler: Optional[DirectoryHandler] = None,
     ):
         if index is None:
             index = []
@@ -473,3 +481,4 @@ class BrowserResponse:
         self.location = location
         self.index = index
         self.autoindex = autoindex
+        self.directory_handler = directory_handler

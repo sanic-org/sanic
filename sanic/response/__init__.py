@@ -1,6 +1,7 @@
 from .convenience import (
     empty,
     file,
+    file_browser,
     file_stream,
     html,
     json,
@@ -32,5 +33,6 @@ __all__ = (
     "file",
     "redirect",
     "file_stream",
+    "file_browser",
     "json_dumps",
 )

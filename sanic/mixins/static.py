@@ -312,7 +312,7 @@ class StaticHandleMixin(metaclass=SanicMeta):
                             file_path, headers=headers, _range=_range
                         )
                 return await file(file_path, headers=headers, _range=_range)
-        except IsADirectoryError:
+        except (IsADirectoryError, PermissionError):
             return await directory_handler.handle(request, request.path)
         except RangeNotSatisfiable:
             raise

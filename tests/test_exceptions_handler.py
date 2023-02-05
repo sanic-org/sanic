@@ -214,7 +214,7 @@ def test_error_handler_noisy_log(
     exception_handler_app: Sanic, monkeypatch: MonkeyPatch
 ):
     err_logger = Mock()
-    monkeypatch.setattr(handlers, "error_logger", err_logger)
+    monkeypatch.setattr(handlers.error, "error_logger", err_logger)
 
     exception_handler_app.config["NOISY_EXCEPTIONS"] = False
     exception_handler_app.test_client.get("/1")

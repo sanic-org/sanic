@@ -30,25 +30,30 @@ class DirectoryHandler:
         self.directory_index = tuple(directory_index)
 
     async def handle(self, request: Request, path: str):
+        current = path.strip("/")[len(self.base) :].strip("/")  # noqa: E203
         for file_name in self.directory_index:
-            index_file = self.directory / file_name
+            index_file = self.directory / current / file_name
             if index_file.is_file():
                 return await file(index_file)
 
         if self.directory_view:
-            return self.index(path, request.app.debug)
+            return self._index(
+                self.directory / current, path, request.app.debug
+            )
 
-        raise NotFound(f"{self.directory.as_posix()} is not found")
+        if self.directory_index:
+            raise NotFound("File not found")
 
-    def index(self, path: str, debug: bool):
+        raise IsADirectoryError(f"{self.directory.as_posix()} is a directory")
+
+    def _index(self, location: Path, path: str, debug: bool):
         # Remove empty path elements, append slash
         if "//" in path or not path.endswith("/"):
             return redirect(
                 "/" + "".join([f"{p}/" for p in path.split("/") if p])
             )
+
         # Render file browser
-        current = path.strip("/")[len(self.base) :]  # noqa: E203
-        location = self.directory / current.strip("/")
         page = DirectoryPage(self._iter_files(location), path, debug)
         return html(page.render())
 

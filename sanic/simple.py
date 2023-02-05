@@ -12,7 +12,11 @@ def create_simple_server(directory: Path):
 
     app = Sanic("SimpleServer")
     app.static(
-        "/", directory, name="main", autoindex=True, index_name="index.html"
+        "/",
+        directory,
+        name="main",
+        directory_view=True,
+        directory_index="index.html",
     )
 
     return app

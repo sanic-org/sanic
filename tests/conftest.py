@@ -1,5 +1,7 @@
 import asyncio
+import inspect
 import logging
+import os
 import random
 import re
 import string
@@ -232,3 +234,12 @@ def urlopen():
     urlopen.read = Mock()
     with patch("sanic.cli.inspector_client.urlopen", urlopen):
         yield urlopen
+
+
+@pytest.fixture(scope="module")
+def static_file_directory():
+    """The static directory to serve"""
+    current_file = inspect.getfile(inspect.currentframe())
+    current_directory = os.path.dirname(os.path.abspath(current_file))
+    static_directory = os.path.join(current_directory, "static")
+    return static_directory

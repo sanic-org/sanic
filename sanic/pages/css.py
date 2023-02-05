@@ -10,11 +10,11 @@ def _extract_style(maybe_style: Optional[str], name: str) -> str:
     if maybe_style is not None:
         maybe_path = Path(maybe_style)
         if maybe_path.exists():
-            return maybe_path.read_text()
+            return maybe_path.read_text(encoding="UTF-8")
         return maybe_style
     maybe_path = CURRENT_DIR / "styles" / f"{name}.css"
     if maybe_path.exists():
-        return maybe_path.read_text()
+        return maybe_path.read_text(encoding="UTF-8")
     return ""
 
 

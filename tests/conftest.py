@@ -60,7 +60,6 @@ CACHE: Dict[str, Any] = {}
 
 
 class RouteStringGenerator:
-
     ROUTE_COUNT_PER_DEPTH = 100
     HTTP_METHODS = HTTP_METHODS
     ROUTE_PARAM_TYPES = ["str", "int", "float", "alpha", "uuid"]

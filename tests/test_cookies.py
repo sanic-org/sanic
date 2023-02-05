@@ -148,7 +148,6 @@ def test_cookie_set_unknown_property():
 
 
 def test_cookie_set_same_key(app):
-
     cookies = {"test": "wait"}
 
     @app.get("/")

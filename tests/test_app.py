@@ -132,7 +132,6 @@ def test_app_loop_not_running(app: Sanic):
 
 
 def test_app_run_raise_type_error(app: Sanic):
-
     with pytest.raises(TypeError) as excinfo:
         app.run(loop="loop")
 
@@ -145,7 +144,6 @@ def test_app_run_raise_type_error(app: Sanic):
 
 
 def test_app_route_raise_value_error(app: Sanic):
-
     with pytest.raises(ValueError) as excinfo:
 
         @app.route("/test")
@@ -227,7 +225,6 @@ def test_app_websocket_parameters(websocket_protocol_mock, app: Sanic):
 
 
 def test_handle_request_with_nested_exception(app: Sanic, monkeypatch):
-
     err_msg = "Mock Exception"
 
     def mock_error_handler_response(*args, **kwargs):
@@ -247,7 +244,6 @@ def test_handle_request_with_nested_exception(app: Sanic, monkeypatch):
 
 
 def test_handle_request_with_nested_exception_debug(app: Sanic, monkeypatch):
-
     err_msg = "Mock Exception"
 
     def mock_error_handler_response(*args, **kwargs):

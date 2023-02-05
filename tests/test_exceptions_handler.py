@@ -62,7 +62,6 @@ def exception_handler_app():
 
     @exception_handler_app.route("/8", error_format="html")
     def handler_8(request):
-
         raise ErrorWithRequestCtx("OK")
 
     @exception_handler_app.exception(ErrorWithRequestCtx, NotFound)

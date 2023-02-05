@@ -4,7 +4,6 @@ from sanic.compat import UpperStrEnum
 
 
 class HTTPMethod(UpperStrEnum):
-
     GET = auto()
     POST = auto()
     PUT = auto()
@@ -15,7 +14,6 @@ class HTTPMethod(UpperStrEnum):
 
 
 class LocalCertCreator(UpperStrEnum):
-
     AUTO = auto()
     TRUSTME = auto()
     MKCERT = auto()

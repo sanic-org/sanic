@@ -426,7 +426,6 @@ def test_static_stream_large_file(
     "file_name", ["test.file", "decode me.txt", "python.png"]
 )
 def test_use_modified_since(app, static_file_directory, file_name):
-
     file_stat = os.stat(get_file_path(static_file_directory, file_name))
     modified_since = strftime(
         "%a, %d %b %Y %H:%M:%S GMT", gmtime(file_stat.st_mtime)

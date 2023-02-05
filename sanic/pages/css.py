@@ -25,6 +25,7 @@ class CSS(ABCMeta):
         Page = super().__new__(cls, name, bases, attrs)
         # Use a locally defined STYLE or the one from styles directory
         Page.STYLE = _extract_style(attrs.get("STYLE_FILE"), name)
+        Page.STYLE += attrs.get("STYLE_APPEND", "")
         # Combine with all ancestor styles
         Page.CSS = "".join(
             Class.STYLE

@@ -1,3 +1,4 @@
+/** BasePage **/
 html {
     font: 16px sans-serif;
     background: #eee;
@@ -13,13 +14,14 @@ body>* {
     padding: 1rem 2vw;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
     body>* {
         padding: 0.5rem 1.5vw;
     }
 
-    body {
-        font-size: 1rem;
+    html {
+        /* Scale everything by rem of 6px-16px by viewport width */
+        font-size: calc(6px + 10 * 100vw / 1000);
     }
 }
 

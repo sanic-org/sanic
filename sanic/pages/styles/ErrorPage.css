@@ -1,15 +1,13 @@
-/* ErrorPage */
+/** ErrorPage **/
 summary { color: #888; }
 
-
-/* TraceRite CSS: read from tracerite.html.style: */
+/** TraceRite **/
 :root {
   --tracerite-var: #8af;
   --tracerite-type: #5c8;
   --tracerite-val: #8af;
   --tracerite-tab: #aaaa;
 }
-/* CSS reset */
 .tracerite,
 .tracerite * {
   margin: 0;
@@ -17,6 +15,7 @@ summary { color: #888; }
   outline: none;
   box-sizing: border-box;
   overflow: hidden;
+  font: inherit;
 }
 .tracerite h3 {
   margin: 0;

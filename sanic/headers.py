@@ -54,18 +54,22 @@ class MediaType:
         self.subtype = subtype
         self.q = float(params.get("q", "1.0"))
         self.params = params
-        self.str = f"{type_}/{subtype}"
+        self.mime = f"{type_}/{subtype}"
 
     def __repr__(self):
-        return self.str + "".join(f";{k}={v}" for k, v in self.params.items())
+        return self.mime + "".join(f";{k}={v}" for k, v in self.params.items())
 
-    def __eq__(self, media_type: str):
-        """Check if the type and subtype match exactly."""
-        return self.str == media_type
+    def __eq__(self, other):
+        """Check for mime (str or MediaType) identical type/subtype."""
+        if isinstance(other, str):
+            return self.mime == other
+        if isinstance(other, MediaType):
+            return self.mime == other.mime
+        return NotImplemented
 
     def match(
         self,
-        media_type: str,
+        mime: str,
         allow_type_wildcard=True,
         allow_subtype_wildcard=True,
     ) -> Optional[MediaType]:
@@ -79,12 +83,13 @@ class MediaType:
         @param media_type: A type/subtype string to match.
         @return `self` if the media types are compatible, else `None`
         """
-        mt = MediaType._parse(media_type)
+        mt = MediaType._parse(mime)
         return self if (
             # Subtype match
             (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
             # Type match
             and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
+            # Allow disabling wildcards (backwards compatibility with tests)
             and (allow_type_wildcard or self.type_ != "*" and mt.type_ != "*")
             and (allow_subtype_wildcard or self.subtype != "*" and mt.subtype != "*")
         ) else None
@@ -100,8 +105,8 @@ class MediaType:
         return self.type_ == "*" and self.subtype == "*"
 
     @classmethod
-    def _parse(cls, raw: str) -> MediaType:
-        mtype = raw.strip()
+    def _parse(cls, mime_with_params: str) -> MediaType:
+        mtype = mime_with_params.strip()
 
         media, *raw_params = mtype.split(";")
         type_, subtype = media.split("/", 1)

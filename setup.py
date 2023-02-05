@@ -111,6 +111,7 @@ requirements = [
     "aiofiles>=0.6.0",
     "websockets>=10.0",
     "multidict>=5.0,<7.0",
+    "git+https://github.com/sanic-org/html5tagger.git",
 ]
 
 tests_require = [

@@ -1,13 +1,14 @@
-#breadcrumbs a:hover {
+#breadcrumbs>a {
+    padding: 0 0.25em;
+}
+
+#breadcrumbs>a:hover {
     text-decoration: underline;
 }
 
-#breadcrumbs .path-0 a {
+#breadcrumbs>a:first-child::before {
+    content: "🏠";
     text-decoration: none;
-}
-
-#breadcrumbs a {
-    padding: 0 0.25em;
 }
 
 #breadcrumbs>a:last-child {

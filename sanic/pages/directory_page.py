@@ -38,8 +38,6 @@ class DirectoryPage(BasePage):  # no cov
             p = self.url.split("/")[:-1]
 
             for i, part in enumerate(p):
-                if i == 0:
-                    part = "🏠"
                 path = "/".join(p[: i + 1]) + "/"
                 self.doc.a(part, href=path)("/")
 

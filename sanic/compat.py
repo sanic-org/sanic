@@ -5,7 +5,7 @@ import sys
 
 from contextlib import contextmanager
 from enum import Enum
-from typing import Awaitable, Union
+from typing import Awaitable, Dict, Union
 
 from multidict import CIMultiDict  # type: ignore
 
@@ -14,8 +14,9 @@ from sanic.helpers import Default
 
 if sys.version_info < (3, 8):  # no cov
     StartMethod = Union[Default, str]
+    TypedDict = Dict
 else:  # no cov
-    from typing import Literal
+    from typing import Literal, TypedDict  # type: ignore  # noqa
 
     StartMethod = Union[
         Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]

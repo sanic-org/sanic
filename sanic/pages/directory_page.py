@@ -1,6 +1,8 @@
-from typing import Iterable, TypedDict
+from typing import Iterable
 
 from html5tagger import E
+
+from sanic.compat import TypedDict
 
 from .base import BasePage
 

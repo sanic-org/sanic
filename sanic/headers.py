@@ -73,7 +73,7 @@ class MediaType:
         allow_type_wildcard=True,
         allow_subtype_wildcard=True,
     ) -> Optional[MediaType]:
-        """Check if this media type matches the given media type.
+        """Check if this media type matches the given mime type/subtype.
 
         Wildcards are supported both ways on both type and subtype.
 
@@ -147,7 +147,7 @@ class AcceptList(list):
     -  operator 'in' for checking explicit matches (wildcards as literals)
     """
 
-    def match(self, *mimes: List[str]) -> Matched:
+    def match(self, *mimes: str) -> Matched:
         """Find a media type accepted by the client.
 
         This method can be used to find which of the media types requested by

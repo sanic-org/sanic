@@ -111,7 +111,7 @@ requirements = [
     "aiofiles>=0.6.0",
     "websockets>=10.0",
     "multidict>=5.0,<7.0",
-    "html5tagger>=1.2.0",
+    "html5tagger>=1.2.1",
 ]
 
 tests_require = [

@@ -1,6 +1,6 @@
 import sys
 
-from typing import Iterable, NewType
+from typing import Dict, Iterable
 
 from html5tagger import E
 
@@ -8,7 +8,7 @@ from .base import BasePage
 
 
 if sys.version_info < (3, 8):  # no cov
-    FileInfo = NewType("FileInfo")
+    FileInfo = Dict
 
 else:
     from typing import TypedDict

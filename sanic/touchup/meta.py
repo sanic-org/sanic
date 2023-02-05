@@ -11,7 +11,6 @@ class TouchUpMeta(SanicMeta):
         methods = attrs.get("__touchup__")
         attrs["__touched__"] = False
         if methods:
-
             for method in methods:
                 if method not in attrs:
                     raise SanicException(

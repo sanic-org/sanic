@@ -1,6 +1,7 @@
-from pathlib import PurePath
+from pathlib import Path
 from typing import Dict, Iterable, List, NamedTuple, Optional, Union
 
+from sanic.handlers.directory import DirectoryHandler
 from sanic.models.handler_types import (
     ErrorMiddlewareType,
     ListenerType,
@@ -46,16 +47,17 @@ class FutureException(NamedTuple):
 
 class FutureStatic(NamedTuple):
     uri: str
-    file_or_directory: Union[str, bytes, PurePath]
+    file_or_directory: Path
     pattern: str
     use_modified_since: bool
     use_content_range: bool
-    stream_large_files: bool
+    stream_large_files: Union[bool, int]
     name: str
     host: Optional[str]
     strict_slashes: Optional[bool]
-    content_type: Optional[bool]
+    content_type: Optional[str]
     resource_type: Optional[str]
+    directory_handler: DirectoryHandler
 
 
 class FutureSignal(NamedTuple):

@@ -35,6 +35,7 @@ def open_local(paths, mode="r", encoding="utf8"):
 
     return codecs.open(path, mode, encoding)
 
+
 def str_to_bool(val: str) -> bool:
     val = val.lower()
     if val in {
@@ -54,6 +55,7 @@ def str_to_bool(val: str) -> bool:
         return False
     else:
         raise ValueError(f"Invalid truth value {val}")
+
 
 with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
@@ -79,7 +81,7 @@ setup_kwargs = {
     ),
     "long_description": long_description,
     "packages": find_packages(exclude=("tests", "tests.*")),
-    "package_data": {"sanic": ["py.typed"]},
+    "package_data": {"sanic": ["py.typed", "pages/styles/*"]},
     "platforms": "any",
     "python_requires": ">=3.7",
     "classifiers": [
@@ -109,6 +111,7 @@ requirements = [
     "aiofiles>=0.6.0",
     "websockets>=10.0",
     "multidict>=5.0,<7.0",
+    "html5tagger>=1.2.1",
 ]
 
 tests_require = [

@@ -176,7 +176,6 @@ def handler(request: Request):
 
 async def client(app: Sanic, loop: AbstractEventLoop):
     try:
-
         transport = httpx.AsyncHTTPTransport(uds=SOCKPATH)
         async with httpx.AsyncClient(transport=transport) as client:
             r = await client.get("http://myhost.invalid/")

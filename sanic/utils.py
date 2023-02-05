@@ -75,7 +75,6 @@ def load_module_from_file_location(
         location = location.decode(encoding)
 
     if isinstance(location, Path) or "/" in location or "$" in location:
-
         if not isinstance(location, Path):
             # A) Check if location contains any environment variables
             #    in format ${some_env_var}.

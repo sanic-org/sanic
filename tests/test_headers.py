@@ -339,7 +339,7 @@ def test_accept_misc():
     # Matching nothing special case
     m = a.match()
     assert m == ""
-    assert m.m == None
+    assert m.m is None
     # No header means anything
     a = headers.parse_accept(None)
     assert a == ["*/*"]

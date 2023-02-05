@@ -88,8 +88,8 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
         if directory_handler and (directory_view or directory_index):
             raise ValueError(
                 "When explicitly setting directory_handler, you must not "
-                "set either directory_view or index. Instead, pass these "
-                "arguments to your DirectoryHandler."
+                "set either directory_view or directory_index. Instead, pass "
+                "these arguments to your DirectoryHandler."
             )
 
         if not directory_handler:

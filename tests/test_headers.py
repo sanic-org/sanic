@@ -328,7 +328,7 @@ def test_accept_misc():
     m = a.match("foo/bar", "text/*", "text/plain")
     assert repr(m) == "<text/* matched */plain;param=123>"
     assert m == "text/*"
-    assert m.m.str == "*/plain"
+    assert m.m.mime == "*/plain"
     assert m.m.type_ == "*"
     assert m.m.subtype == "plain"
     assert m.m.q == 1.0

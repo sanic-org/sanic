@@ -46,22 +46,26 @@ class MediaType:
         self.subtype = subtype
         self.q = float(params.get("q", "1.0"))
         self.params = params
-        self.str = f"{type_}/{subtype}"
+        self.mime = f"{type_}/{subtype}"
 
     def __repr__(self):
-        return self.str + "".join(f";{k}={v}" for k, v in self.params.items())
+        return self.mime + "".join(f";{k}={v}" for k, v in self.params.items())
 
-    def __eq__(self, mime: object):
-        """Check if the type and subtype match exactly."""
-        return self.str == mime
+    def __eq__(self, other):
+        """Check for mime (str or MediaType) identical type/subtype."""
+        if isinstance(other, str):
+            return self.mime == other
+        if isinstance(other, MediaType):
+            return self.mime == other.mime
+        return NotImplemented
 
     def match(
         self,
-        media_type: str,
+        mime: str,
         allow_type_wildcard=True,
         allow_subtype_wildcard=True,
     ) -> Optional[MediaType]:
-        """Check if this media type matches the given media type.
+        """Check if this media type matches the given mime type/subtype.
 
         Wildcards are supported both ways on both type and subtype.
 
@@ -71,7 +75,7 @@ class MediaType:
         @param media_type: A type/subtype string to match.
         @return `self` if the media types are compatible, else `None`
         """
-        mt = MediaType._parse(media_type)
+        mt = MediaType._parse(mime)
         wctype, wcsub = allow_type_wildcard, allow_subtype_wildcard
         return (
             self
@@ -80,7 +84,7 @@ class MediaType:
                 (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
                 # Type match
                 and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
-                # Allow disabling wildcard matches
+                # Allow disabling wildcard matches (backwards compatibility with tests)
                 and (wctype or "*" not in (self.type_, mt.type_))
                 and (wcsub or "*" not in (self.subtype, mt.subtype))
             )
@@ -98,11 +102,11 @@ class MediaType:
         return self.type_ == "*" and self.subtype == "*"
 
     @classmethod
-    def _parse(cls, raw: str) -> MediaType:
-        mtype = raw.strip()
+    def _parse(cls, mime_with_params: str) -> MediaType:
+        mtype = mime_with_params.strip()
 
-        media, *raw_params = mtype.split(";")
-        type_, subtype = media.split("/", 1)
+        mime, *raw_params = mtype.split(";")
+        type_, subtype = mime.split("/", 1)
         if not type_ or not subtype:
             raise ValueError(f"Invalid media type: {mtype}")
 

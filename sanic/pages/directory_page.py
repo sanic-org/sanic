@@ -39,7 +39,8 @@ class DirectoryPage(BasePage):  # no cov
 
             for i, part in enumerate(p):
                 path = "/".join(p[: i + 1]) + "/"
-                self.doc.a(part, href=path)("/")
+                with self.doc.a(href=path):
+                    self.doc.span(part, class_="dir").span("/", class_="sep")
 
     def _file_table(self, files: Iterable[FileInfo]):
         with self.doc.table(class_="autoindex container"):

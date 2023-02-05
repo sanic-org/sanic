@@ -28,6 +28,7 @@ main a {
 table.autoindex {
     width: 100%;
     font-family: monospace;
+    font-size: 1.25rem;
 }
 
 table.autoindex tr {
@@ -54,11 +55,6 @@ table.autoindex td:last-child {
     text-align: right;
 }
 
-@media (min-width: 1143px) {
-    table.autoindex {
-        font-size: 1.25rem;
-    }
-}
 
 @media (prefers-color-scheme: dark) {
     table.autoindex tr:hover {

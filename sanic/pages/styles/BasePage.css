@@ -32,12 +32,15 @@ header {
     background: #111;
     color: #e1e1e1;
     border-bottom: 1px solid #272727;
+    text-align: center;
 }
 
-header .container {
+footer {
+    text-align: center;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    font-size: 0.8rem;
+    margin-top: 2rem;
 }
 
 h1 {
@@ -60,8 +63,8 @@ a:focus {
 }
 
 #logo {
-    height: 2.75rem;
-    padding: 0.25rem 0;
+    height: 1.75rem;
+    padding: 0 0.25rem;
 }
 
 span.icon {

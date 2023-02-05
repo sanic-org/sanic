@@ -61,7 +61,6 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.handlers.directory import DirectoryHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import (
@@ -73,6 +72,7 @@ from sanic.log import (
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
+from sanic.mixins.static import StaticHandleMixin
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -80,13 +80,11 @@ from sanic.models.futures import (
     FutureRegistry,
     FutureRoute,
     FutureSignal,
-    FutureStatic,
 )
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
-from sanic.response.types import BrowserResponse
 from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
 from sanic.signals import Signal, SignalRouter
@@ -108,7 +106,7 @@ if OS_IS_WINDOWS:  # no cov
     enable_windows_color_support()
 
 
-class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
+class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     """
     The main application instance
     """
@@ -142,7 +140,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "config",
         "configure_logging",
         "ctx",
-        "directory_handler",
         "error_handler",
         "inspector_class",
         "go_fast",
@@ -172,7 +169,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         ctx: Optional[Any] = None,
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
-        directory_handler: Optional[DirectoryHandler] = None,
         error_handler: Optional[ErrorHandler] = None,
         env_prefix: Optional[str] = SANIC_PREFIX,
         request_class: Optional[Type[Request]] = None,
@@ -217,9 +213,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.blueprints: Dict[str, Blueprint] = {}
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
-        self.directory_handler: DirectoryHandler = (
-            directory_handler or DirectoryHandler(self.debug)
-        )
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.inspector_class: Type[Inspector] = inspector_class or Inspector
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
@@ -447,9 +440,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             r.ctx.__dict__.update(ctx)
 
         return routes
-
-    def _apply_static(self, static: FutureStatic) -> Route:
-        return self._register_static(static)
 
     def _apply_middleware(
         self,
@@ -897,7 +887,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             Union[
                 BaseHTTPResponse,
                 Coroutine[Any, Any, Optional[BaseHTTPResponse]],
-                BrowserResponse,
                 ResponseStream,
             ]
         ] = None
@@ -1019,28 +1008,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                     },
                 )
                 await response.eof()
-            elif isinstance(response, BrowserResponse):
-                directory_handler = (
-                    response.directory_handler or self.directory_handler
-                )
-                resp = await request.respond(
-                    await directory_handler.handle(
-                        request,
-                        response.location,
-                        response.autoindex,
-                        response.index,
-                        request.path,
-                    )
-                )
-                await self.dispatch(
-                    "http.lifecycle.response",
-                    inline=True,
-                    context={
-                        "request": request,
-                        "response": resp,
-                    },
-                )
-                await resp.send(end_stream=True)
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
@@ -1603,7 +1570,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 TouchUp.run(self)
 
         self.state.is_started = True
-        self.directory_handler.debug = self.debug
 
     def ack(self):
         if hasattr(self, "multiplexer"):

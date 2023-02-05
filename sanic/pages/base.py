@@ -22,19 +22,25 @@ class BasePage(ABC, metaclass=CSS):  # no cov
     def render(self) -> str:
         self._head()
         self._body()
+        self._foot()
         return str(self.doc)
 
     def _head(self) -> None:
         self.doc.style(HTML(self.style))
         with self.doc.header:
-            with self.doc.div(class_="container"):
-                self.doc(HTML(SVG_LOGO))
-                self.doc.div(self.TITLE, id="hdrtext")
-                if self.debug:
-                    self.doc.div(f"Version {VERSION}", id="hdrver")
-                else:
-                    self.doc.div("")
+            self.doc.div(self.TITLE)
+
+    def _foot(self) -> None:
+        with self.doc.footer:
+            self.doc.div("powered by")
+            with self.doc.div:
+                self._sanic_logo()
+            if self.debug:
+                self.doc.div(f"Version {VERSION}")
 
     @abstractmethod
     def _body(self) -> None:
         ...
+
+    def _sanic_logo(self) -> None:
+        self.doc.a(HTML(SVG_LOGO), href="https://sanic.dev", target="_blank")

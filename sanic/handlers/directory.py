@@ -4,44 +4,52 @@ from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
 from stat import S_ISDIR
-from typing import Dict, Iterable, Sequence, Union, cast
+from typing import Dict, Iterable, Optional, Sequence, Union, cast
 
 from sanic.exceptions import NotFound
-from sanic.pages.autoindex import AutoIndex, FileInfo
+from sanic.pages.directory_page import DirectoryPage, FileInfo
 from sanic.request import Request
 from sanic.response import file, html, redirect
 
 
 class DirectoryHandler:
-    def __init__(self, debug: bool) -> None:
-        self.debug = debug
-
-    async def handle(
+    def __init__(
         self,
-        request: Request,
+        uri: str,
         directory: Path,
-        autoindex: bool,
-        index: Sequence[str],
-        url: str,
-    ):
-        for file_name in index:
-            index_file = directory / file_name
+        directory_view: bool = False,
+        directory_index: Optional[Union[str, Sequence[str]]] = None,
+    ) -> None:
+        if isinstance(directory_index, str):
+            directory_index = [directory_index]
+        elif directory_index is None:
+            directory_index = []
+        self.base = uri.strip("/")
+        self.directory = directory
+        self.directory_view = directory_view
+        self.directory_index = tuple(directory_index)
+
+    async def handle(self, request: Request, path: str):
+        for file_name in self.directory_index:
+            index_file = self.directory / file_name
             if index_file.is_file():
                 return await file(index_file)
 
-        if autoindex:
-            return self.index(directory, url)
+        if self.directory_view:
+            return self.index(path, request.app.debug)
 
-        raise NotFound(f"{str(directory)} is not found")
+        raise NotFound(f"{self.directory.as_posix()} is not found")
 
-    def index(self, directory: Path, url: str):
+    def index(self, path: str, debug: bool):
         # Remove empty path elements, append slash
-        if "//" in url or not url.endswith("/"):
+        if "//" in path or not path.endswith("/"):
             return redirect(
-                "/" + "".join([f"{p}/" for p in url.split("/") if p])
+                "/" + "".join([f"{p}/" for p in path.split("/") if p])
             )
         # Render file browser
-        page = AutoIndex(self._iter_files(directory), url, self.debug)
+        current = path.strip("/")[len(self.base) :]  # noqa: E203
+        location = self.directory / current.strip("/")
+        page = DirectoryPage(self._iter_files(location), path, debug)
         return html(page.render())
 
     def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
@@ -64,8 +72,8 @@ class DirectoryHandler:
             "file_size": stat.st_size,
         }
 
-    def _iter_files(self, directory: Path) -> Iterable[FileInfo]:
-        prepared = [self._prepare_file(f) for f in directory.iterdir()]
+    def _iter_files(self, location: Path) -> Iterable[FileInfo]:
+        prepared = [self._prepare_file(f) for f in location.iterdir()]
         for item in sorted(prepared, key=itemgetter("priority", "file_name")):
             del item["priority"]
             yield cast(FileInfo, item)

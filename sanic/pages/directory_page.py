@@ -12,8 +12,8 @@ class FileInfo(TypedDict):
     file_size: str
 
 
-class AutoIndex(BasePage):  # no cov
-    TITLE = "File Browser"
+class DirectoryPage(BasePage):  # no cov
+    TITLE = "Directory Viewer"
 
     def __init__(
         self, files: Iterable[FileInfo], url: str, debug: bool

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from functools import partial
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -11,7 +10,6 @@ from typing import (
     Dict,
     Iterator,
     Optional,
-    Sequence,
     Tuple,
     TypeVar,
     Union,
@@ -31,7 +29,6 @@ from sanic.http import Http
 
 if TYPE_CHECKING:
     from sanic.asgi import ASGIApp
-    from sanic.handlers.directory import DirectoryHandler
     from sanic.http.http3 import HTTPReceiver
     from sanic.request import Request
 else:
@@ -454,31 +451,3 @@ class ResponseStream:
 
     def __await__(self):
         return self.stream().__await__()
-
-
-class BrowserResponse:
-    __slots__ = (
-        "location",
-        "index",
-        "autoindex",
-        "headers",
-        "directory_handler",
-    )
-
-    def __init__(
-        self,
-        location: Path,
-        autoindex: bool,
-        index: Optional[Sequence[str]] = None,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
-        directory_handler: Optional[DirectoryHandler] = None,
-    ):
-        if index is None:
-            index = []
-        elif isinstance(index, str):
-            index = [index]
-        self.headers = headers or Header()
-        self.location = location
-        self.index = index
-        self.autoindex = autoindex
-        self.directory_handler = directory_handler

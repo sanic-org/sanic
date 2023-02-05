@@ -44,6 +44,7 @@ def parse_arg_as_accept(f):
 
 class MediaType:
     """A media type, as used in the Accept header."""
+
     def __init__(
         self,
         type_: str,
@@ -84,15 +85,27 @@ class MediaType:
         @return `self` if the media types are compatible, else `None`
         """
         mt = MediaType._parse(mime)
-        return self if (
-            # Subtype match
-            (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
-            # Type match
-            and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
-            # Allow disabling wildcards (backwards compatibility with tests)
-            and (allow_type_wildcard or self.type_ != "*" and mt.type_ != "*")
-            and (allow_subtype_wildcard or self.subtype != "*" and mt.subtype != "*")
-        ) else None
+        return (
+            self
+            if (
+                # Subtype match
+                (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
+                # Type match
+                and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
+                # Allow disabling wildcards (backwards compatibility with tests)
+                and (
+                    allow_type_wildcard
+                    or self.type_ != "*"
+                    and mt.type_ != "*"
+                )
+                and (
+                    allow_subtype_wildcard
+                    or self.subtype != "*"
+                    and mt.subtype != "*"
+                )
+            )
+            else None
+        )
 
     @property
     def has_wildcard(self) -> bool:
@@ -125,6 +138,7 @@ class MediaType:
 
 class Matched(str):
     """A matching result of a MIME string against a MediaType."""
+
     def __new__(cls, mime: str, m: Optional[MediaType]):
         return super().__new__(cls, mime)
 
@@ -169,12 +183,14 @@ class AcceptList(list):
         @param mimes: Any MIME types to search for in order of preference.
         @return A match object with the mime string and the MediaType object.
         """
-        l = sorted([
-            (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
-            for j, acc in enumerate(self)
-            for i, mime in enumerate(mimes)
-            if acc.match(mime)
-        ])
+        l = sorted(
+            [
+                (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
+                for j, acc in enumerate(self)
+                for i, mime in enumerate(mimes)
+                if acc.match(mime)
+            ]
+        )
         return Matched(*(l[0][3:] if l else ("", None)))
 
 
@@ -190,7 +206,6 @@ def parse_accept(accept: str) -> AcceptList:
         return AcceptList(sorted(a, key=lambda mtype: -mtype.q))
     except ValueError:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
-
 
 
 def parse_content_header(value: str) -> Tuple[str, Options]:

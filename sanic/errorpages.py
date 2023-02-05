@@ -12,6 +12,7 @@ Setting ``app.config.FALLBACK_ERROR_FORMAT = "auto"`` will enable a switch that
 will attempt to provide an appropriate response format based upon the
 request type.
 """
+from __future__ import annotations
 
 import sys
 import typing as t
@@ -21,8 +22,7 @@ from traceback import extract_tb
 
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
-from sanic.request import Request
-from sanic.response import HTTPResponse, html, json, text
+from sanic.response import html, json, text
 
 
 dumps: t.Callable[..., str]
@@ -33,6 +33,8 @@ try:
 except ImportError:  # noqa
     from json import dumps
 
+if t.TYPE_CHECKING:
+    from sanic import HTTPResponse, Request
 
 DEFAULT_FORMAT = "auto"
 FALLBACK_TEXT = (
@@ -404,16 +406,13 @@ CONTENT_TYPE_BY_RENDERERS = {
     v: k for k, v in RENDERERS_BY_CONTENT_TYPE.items()
 }
 
+# Handler source code is checked for which response types it returns with the
+# route error_format="auto" (default) to determine which format to use.
 RESPONSE_MAPPING = {
-    "empty": "html",
     "json": "json",
     "text": "text",
-    "raw": "text",
     "html": "html",
-    "file": "html",
-    "file_stream": "text",
-    "stream": "text",
-    "redirect": "html",
+    "JSONResponse": "json",
     "text/plain": "text",
     "text/html": "html",
     "application/json": "json",

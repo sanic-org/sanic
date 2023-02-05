@@ -45,7 +45,7 @@ class WebSocketConnection:
 
         await self._send(message)
 
-    async def recv(self, *args, **kwargs) -> Optional[str]:
+    async def recv(self, *args, **kwargs) -> Optional[Union[str, bytes]]:
         message = await self._receive()
 
         if message["type"] == "websocket.receive":
@@ -53,7 +53,7 @@ class WebSocketConnection:
                 return message["text"]
             except KeyError:
                 try:
-                    return message["bytes"].decode()
+                    return message["bytes"]
                 except KeyError:
                     raise InvalidUsage("Bad ASGI message received")
         elif message["type"] == "websocket.disconnect":

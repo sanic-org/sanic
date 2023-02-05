@@ -36,12 +36,12 @@ class DirectoryPage(BasePage):  # no cov
         breadcrumb links"""
         with self.doc.h1(id="breadcrumbs"):
             p = self.url.split("/")[:-1]
-            for i in reversed(range(len(p))):
-                self.doc.span(class_=f"path-{i}").__enter__()
+
             for i, part in enumerate(p):
+                if i == 0:
+                    part = "🏠"
                 path = "/".join(p[: i + 1]) + "/"
-                self.doc.a(part, href=path)
-                self.doc.__exit__(None, None, None)
+                self.doc.a(part, href=path)("/")
 
     def _file_table(self, files: Iterable[FileInfo]):
         with self.doc.table(class_="autoindex container"):

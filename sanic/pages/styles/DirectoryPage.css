@@ -6,17 +6,11 @@
     text-decoration: none;
 }
 
-#breadcrumbs span::after {
-    content: "/";
-    text-decoration: none;
+#breadcrumbs a {
     padding: 0 0.25em;
 }
 
-#breadcrumbs .path-0 a::before {
-    content: "🏠";
-}
-
-#breadcrumbs>span>a {
+#breadcrumbs>a:last-child {
     color: #ff0d68;
 }
 

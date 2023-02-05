@@ -27,8 +27,8 @@ def test_static_directory_view(app: Sanic, static_file_directory: str):
     assert "<title>Directory Viewer</title>" in response.text
 
 
-def test_static_directory_index_single(app: Sanic, static_file_directory: str):
-    app.static("/static", static_file_directory, directory_index="test.html")
+def test_static_index_single(app: Sanic, static_file_directory: str):
+    app.static("/static", static_file_directory, index="test.html")
 
     _, response = app.test_client.get("/static/")
     assert response.status == 200
@@ -38,22 +38,18 @@ def test_static_directory_index_single(app: Sanic, static_file_directory: str):
     assert response.headers["Content-Type"] == "text/html"
 
 
-def test_static_directory_index_single_not_found(
-    app: Sanic, static_file_directory: str
-):
-    app.static("/static", static_file_directory, directory_index="index.html")
+def test_static_index_single_not_found(app: Sanic, static_file_directory: str):
+    app.static("/static", static_file_directory, index="index.html")
 
     _, response = app.test_client.get("/static/")
     assert response.status == 404
 
 
-def test_static_directory_index_multiple(
-    app: Sanic, static_file_directory: str
-):
+def test_static_index_multiple(app: Sanic, static_file_directory: str):
     app.static(
         "/static",
         static_file_directory,
-        directory_index=["index.html", "test.html"],
+        index=["index.html", "test.html"],
     )
 
     _, response = app.test_client.get("/static/")
@@ -64,14 +60,14 @@ def test_static_directory_index_multiple(
     assert response.headers["Content-Type"] == "text/html"
 
 
-def test_static_directory_view_and_directory_index(
+def test_static_directory_view_and_index(
     app: Sanic, static_file_directory: str
 ):
     app.static(
         "/static",
         static_file_directory,
         directory_view=True,
-        directory_index="foo.txt",
+        index="foo.txt",
     )
 
     _, response = app.test_client.get("/static/nested/")
@@ -92,7 +88,7 @@ def test_static_directory_handler(app: Sanic, static_file_directory: str):
         "/static",
         Path(static_file_directory),
         directory_view=True,
-        directory_index="foo.txt",
+        index="foo.txt",
     )
     app.static("/static", static_file_directory, directory_handler=dh)
 
@@ -114,16 +110,14 @@ def test_static_directory_handler_fails(app: Sanic):
         "/static",
         Path(""),
         directory_view=True,
-        directory_index="foo.txt",
+        index="foo.txt",
     )
     message = (
         "When explicitly setting directory_handler, you cannot "
-        "set either directory_view or directory_index. Instead, pass "
+        "set either directory_view or index. Instead, pass "
         "these arguments to your DirectoryHandler instance."
     )
     with pytest.raises(ValueError, match=message):
         app.static("/static", "", directory_handler=dh, directory_view=True)
     with pytest.raises(ValueError, match=message):
-        app.static(
-            "/static", "", directory_handler=dh, directory_index="index.html"
-        )
+        app.static("/static", "", directory_handler=dh, index="index.html")

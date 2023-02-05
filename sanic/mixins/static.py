@@ -42,8 +42,8 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
         content_type: Optional[str] = None,
         apply: bool = True,
         resource_type: Optional[str] = None,
+        index: Optional[Union[str, Sequence[str]]] = None,
         directory_view: bool = False,
-        directory_index: Optional[Union[str, Sequence[str]]] = None,
         directory_handler: Optional[DirectoryHandler] = None,
     ):
         """
@@ -92,10 +92,10 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
             file_or_directory = cast(str, file_or_directory.decode())
         file_or_directory = Path(file_or_directory)
 
-        if directory_handler and (directory_view or directory_index):
+        if directory_handler and (directory_view or index):
             raise ValueError(
                 "When explicitly setting directory_handler, you cannot "
-                "set either directory_view or directory_index. Instead, pass "
+                "set either directory_view or index. Instead, pass "
                 "these arguments to your DirectoryHandler instance."
             )
 
@@ -104,7 +104,7 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
                 uri=uri,
                 directory=file_or_directory,
                 directory_view=directory_view,
-                directory_index=directory_index,
+                index=index,
             )
 
         static = FutureStatic(

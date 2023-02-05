@@ -18,20 +18,20 @@ class DirectoryHandler:
         uri: str,
         directory: Path,
         directory_view: bool = False,
-        directory_index: Optional[Union[str, Sequence[str]]] = None,
+        index: Optional[Union[str, Sequence[str]]] = None,
     ) -> None:
-        if isinstance(directory_index, str):
-            directory_index = [directory_index]
-        elif directory_index is None:
-            directory_index = []
+        if isinstance(index, str):
+            index = [index]
+        elif index is None:
+            index = []
         self.base = uri.strip("/")
         self.directory = directory
         self.directory_view = directory_view
-        self.directory_index = tuple(directory_index)
+        self.index = tuple(index)
 
     async def handle(self, request: Request, path: str):
         current = path.strip("/")[len(self.base) :].strip("/")  # noqa: E203
-        for file_name in self.directory_index:
+        for file_name in self.index:
             index_file = self.directory / current / file_name
             if index_file.is_file():
                 return await file(index_file)
@@ -41,7 +41,7 @@ class DirectoryHandler:
                 self.directory / current, path, request.app.debug
             )
 
-        if self.directory_index:
+        if self.index:
             raise NotFound("File not found")
 
         raise IsADirectoryError(f"{self.directory.as_posix()} is a directory")

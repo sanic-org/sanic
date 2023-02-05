@@ -43,4 +43,9 @@ class BasePage(ABC, metaclass=CSS):  # no cov
         ...
 
     def _sanic_logo(self) -> None:
-        self.doc.a(HTML(SVG_LOGO), href="https://sanic.dev", target="_blank")
+        self.doc.a(
+            HTML(SVG_LOGO),
+            href="https://sanic.dev",
+            target="_blank",
+            referrerpolicy="no-referrer",
+        )

@@ -654,7 +654,6 @@ def test_sanic_ssl_context_create():
     reason="This test requires fork context",
 )
 def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
-
     ssl_dict = {"cert": localhost_cert, "key": localhost_key}
     event = Event()
 

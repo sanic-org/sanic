@@ -62,7 +62,6 @@ def exception_handler_app():
 
     @exception_handler_app.route("/8", error_format="html")
     def handler_8(request):
-
         raise ErrorWithRequestCtx("OK")
 
     @exception_handler_app.exception(ErrorWithRequestCtx, NotFound)
@@ -214,7 +213,7 @@ def test_error_handler_noisy_log(
     exception_handler_app: Sanic, monkeypatch: MonkeyPatch
 ):
     err_logger = Mock()
-    monkeypatch.setattr(handlers, "error_logger", err_logger)
+    monkeypatch.setattr(handlers.error, "error_logger", err_logger)
 
     exception_handler_app.config["NOISY_EXCEPTIONS"] = False
     exception_handler_app.test_client.get("/1")

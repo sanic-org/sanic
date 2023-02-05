@@ -23,5 +23,6 @@ module = [
     "trustme.*",
     "sanic_routing.*",
     "aioquic.*",
+    "html5tagger.*",
 ]
 ignore_missing_imports = true

@@ -23,7 +23,7 @@ class CSS(ABCMeta):
 
     def __new__(cls, name, bases, attrs):
         Page = super().__new__(cls, name, bases, attrs)
-        # Use a locally defined STYLE or the one from css module
+        # Use a locally defined STYLE or the one from styles directory
         s = _extract_style(attrs.get("STYLE"), name)
         Page.STYLE = f"\n/* {name} */\n{s.strip()}\n" if s else ""
         # Combine with all ancestor styles

@@ -112,6 +112,7 @@ requirements = [
     "websockets>=10.0",
     "multidict>=5.0,<7.0",
     "html5tagger>=1.2.1",
+    "tracerite>=0.4.3.dev14",
 ]
 
 tests_require = [

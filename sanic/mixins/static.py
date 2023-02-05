@@ -69,6 +69,17 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
         :param strict_slashes: Instruct :class:`Sanic` to check if the request
             URLs need to terminate with a */*
         :param content_type: user defined content type for header
+        :param apply: If true, will register the route immediately
+        :param resource_type: Explicitly declare a resource to be a "
+            file" or a "dir"
+        :param index: When exposing against a directory, index is the name that
+            will be served as the default file. When multiple files names are
+            passed, then they will be tried in order.
+        :param directory_view: Whether to fallback to showing the directory
+            viewer when exposing a directory
+        :param directory_handler: An instance of :class:`DirectoryHandler`
+            that can be used for explicitly controlling and subclassing the
+            behavior of the default directory handler
         :return: routes registered on the router
         :rtype: List[sanic.router.Route]
         """
@@ -141,27 +152,6 @@ class StaticHandleMixin(metaclass=SanicMeta):
         """
         Register a static directory handler with Sanic by adding a route to the
         router and registering a handler.
-
-        :param app: Sanic
-        :param file_or_directory: File or directory path to serve from
-        :type file_or_directory: Union[str,bytes,Path]
-        :param uri: URL to serve from
-        :type uri: str
-        :param pattern: regular expression used to match files in the URL
-        :param use_modified_since: If true, send file modified time, and return
-                                not modified if the browser's matches the
-                                server's
-        :param use_content_range: If true, process header for range requests
-                                and sends the file part that is requested
-        :param stream_large_files: If true, use the file_stream() handler
-                                rather than the file() handler to send the file
-                                If this is an integer, this represents the
-                                threshold size to switch to file_stream()
-        :param name: user defined name used for url_for
-        :type name: str
-        :param content_type: user defined content type for header
-        :return: registered static routes
-        :rtype: List[sanic.router.Route]
         """
 
         if isinstance(static.file_or_directory, bytes):

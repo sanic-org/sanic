@@ -1,17 +1,23 @@
-from typing import Iterable
+import sys
+
+from typing import Iterable, NewType
 
 from html5tagger import E
-
-from sanic.compat import TypedDict
 
 from .base import BasePage
 
 
-class FileInfo(TypedDict):
-    icon: str
-    file_name: str
-    file_access: str
-    file_size: str
+if sys.version_info < (3, 8):  # no cov
+    FileInfo = NewType("FileInfo")
+
+else:
+    from typing import TypedDict
+
+    class FileInfo(TypedDict):
+        icon: str
+        file_name: str
+        file_access: str
+        file_size: str
 
 
 class DirectoryPage(BasePage):  # no cov

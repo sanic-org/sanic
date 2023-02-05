@@ -406,16 +406,13 @@ CONTENT_TYPE_BY_RENDERERS = {
     v: k for k, v in RENDERERS_BY_CONTENT_TYPE.items()
 }
 
+# Handler source code is checked for which response types it returns with the
+# route error_format="auto" (default) to determine which format to use.
 RESPONSE_MAPPING = {
-    "empty": "html",
     "json": "json",
     "text": "text",
-    "raw": "text",
     "html": "html",
-    "file": "html",
-    "file_stream": "text",
-    "stream": "text",
-    "redirect": "html",
+    "JSONResponse": "json",
     "text/plain": "text",
     "text/html": "html",
     "application/json": "json",

@@ -316,7 +316,7 @@ def test_browser_headers(header, expected):
     assert request.accept == mimes
     for a, m, q in zip(request.accept, mimes, qs):
         assert a == m
-        assert a.str == m
+        assert a.mime == m
         assert a.q == q
 
 

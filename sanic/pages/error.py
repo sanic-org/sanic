@@ -9,7 +9,7 @@ import tracerite.html
 inspector.blacklist_types += Request,
 
 class ErrorPage(BasePage):
-    EXTRA_STYLE = tracerite.html.style + "summary { color: #888; }"
+    STYLE_APPEND = tracerite.html.style
     def __init__(self, title: str, text: str, request: Request, exc: Exception, full: bool) -> None:
         super().__init__()
         # Internal server errors come with the text of the exception, which we don't want to show to the user.

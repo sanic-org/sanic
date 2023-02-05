@@ -2,7 +2,6 @@ from pathlib import Path
 
 from sanic import Sanic
 from sanic.exceptions import SanicException
-from sanic.response import redirect
 
 
 def create_simple_server(directory: Path):
@@ -12,10 +11,8 @@ def create_simple_server(directory: Path):
         )
 
     app = Sanic("SimpleServer")
-    app.static("/", directory, name="main")
-
-    @app.get("/")
-    def index(_):
-        return redirect(app.url_for("main", filename="index.html"))
+    app.static(
+        "/", directory, name="main", directory_view=True, index="index.html"
+    )
 
     return app

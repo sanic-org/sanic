@@ -36,6 +36,7 @@ def test_app_loop_running(app: Sanic):
     assert response.text == "pass"
 
 
+@pytest.mark.asyncio
 def test_create_asyncio_server(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(return_asyncio_server=True)
@@ -44,6 +45,7 @@ def test_create_asyncio_server(app: Sanic):
     assert srv.is_serving() is True
 
 
+@pytest.mark.asyncio
 def test_asyncio_server_no_start_serving(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
@@ -55,6 +57,7 @@ def test_asyncio_server_no_start_serving(app: Sanic):
     assert srv.is_serving() is False
 
 
+@pytest.mark.asyncio
 def test_asyncio_server_start_serving(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
@@ -72,6 +75,7 @@ def test_asyncio_server_start_serving(app: Sanic):
     # Looks like we can't easily test `serve_forever()`
 
 
+@pytest.mark.asyncio
 def test_create_server_main(app: Sanic, caplog):
     app.listener("main_process_start")(lambda *_: ...)
     loop = asyncio.get_event_loop()
@@ -86,6 +90,7 @@ def test_create_server_main(app: Sanic, caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.asyncio
 def test_create_server_no_startup(app: Sanic):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
@@ -101,6 +106,7 @@ def test_create_server_no_startup(app: Sanic):
         loop.run_until_complete(srv.start_serving())
 
 
+@pytest.mark.asyncio
 def test_create_server_main_convenience(app: Sanic, caplog):
     app.main_process_start(lambda *_: ...)
     loop = asyncio.get_event_loop()
@@ -126,7 +132,6 @@ def test_app_loop_not_running(app: Sanic):
 
 
 def test_app_run_raise_type_error(app: Sanic):
-
     with pytest.raises(TypeError) as excinfo:
         app.run(loop="loop")
 
@@ -139,7 +144,6 @@ def test_app_run_raise_type_error(app: Sanic):
 
 
 def test_app_route_raise_value_error(app: Sanic):
-
     with pytest.raises(ValueError) as excinfo:
 
         @app.route("/test")
@@ -221,7 +225,6 @@ def test_app_websocket_parameters(websocket_protocol_mock, app: Sanic):
 
 
 def test_handle_request_with_nested_exception(app: Sanic, monkeypatch):
-
     err_msg = "Mock Exception"
 
     def mock_error_handler_response(*args, **kwargs):
@@ -241,7 +244,6 @@ def test_handle_request_with_nested_exception(app: Sanic, monkeypatch):
 
 
 def test_handle_request_with_nested_exception_debug(app: Sanic, monkeypatch):
-
     err_msg = "Mock Exception"
 
     def mock_error_handler_response(*args, **kwargs):
@@ -470,6 +472,7 @@ def test_uvloop_config(app: Sanic, monkeypatch, use):
         try_use_uvloop.assert_not_called()
 
 
+@pytest.mark.asyncio
 def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
     apps = (Sanic("default-uvloop"), Sanic("no-uvloop"), Sanic("yes-uvloop"))
 
@@ -506,6 +509,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
     assert counter[(logging.WARNING, message)] == modified
 
 
+@pytest.mark.asyncio
 def test_multiple_uvloop_configs_display_warning(caplog):
     Sanic._uvloop_setting = None  # Reset the setting (changed in prev tests)
 

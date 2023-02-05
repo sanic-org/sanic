@@ -72,6 +72,7 @@ from sanic.log import (
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
+from sanic.mixins.static import StaticHandleMixin
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -79,7 +80,6 @@ from sanic.models.futures import (
     FutureRegistry,
     FutureRoute,
     FutureSignal,
-    FutureStatic,
 )
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
@@ -106,7 +106,7 @@ if OS_IS_WINDOWS:  # no cov
     enable_windows_color_support()
 
 
-class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
+class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     """
     The main application instance
     """
@@ -440,9 +440,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             r.ctx.__dict__.update(ctx)
 
         return routes
-
-    def _apply_static(self, static: FutureStatic) -> Route:
-        return self._register_static(static)
 
     def _apply_middleware(
         self,
@@ -890,11 +887,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             Union[
                 BaseHTTPResponse,
                 Coroutine[Any, Any, Optional[BaseHTTPResponse]],
+                ResponseStream,
             ]
         ] = None
         run_middleware = True
         try:
-
             await self.dispatch(
                 "http.routing.before",
                 inline=True,
@@ -926,7 +923,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 and request.stream.request_body
                 and not route.extra.ignore_body
             ):
-
                 if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
@@ -1000,7 +996,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
-                resp = await response(request)  # type: ignore
+                resp = await response(request)
                 await self.dispatch(
                     "http.lifecycle.response",
                     inline=True,
@@ -1009,7 +1005,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                         "response": resp,
                     },
                 )
-                await response.eof()  # type: ignore
+                await response.eof()
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(

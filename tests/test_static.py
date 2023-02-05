@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 import sys
@@ -11,15 +10,6 @@ import pytest
 
 from sanic import Sanic, text
 from sanic.exceptions import FileNotFound
-
-
-@pytest.fixture(scope="module")
-def static_file_directory():
-    """The static directory to serve"""
-    current_file = inspect.getfile(inspect.currentframe())
-    current_directory = os.path.dirname(os.path.abspath(current_file))
-    static_directory = os.path.join(current_directory, "static")
-    return static_directory
 
 
 @pytest.fixture(scope="module")
@@ -118,7 +108,12 @@ def test_static_file_pathlib(app, static_file_directory, file_name):
 def test_static_file_bytes(app, static_file_directory, file_name):
     bsep = os.path.sep.encode("utf-8")
     file_path = static_file_directory.encode("utf-8") + bsep + file_name
-    app.static("/testing.file", file_path)
+    message = (
+        "Serving a static directory with a bytes "
+        "string is deprecated and will be removed in v22.9."
+    )
+    with pytest.warns(DeprecationWarning, match=message):
+        app.static("/testing.file", file_path)
     request, response = app.test_client.get("/testing.file")
     assert response.status == 200
 
@@ -431,7 +426,6 @@ def test_static_stream_large_file(
     "file_name", ["test.file", "decode me.txt", "python.png"]
 )
 def test_use_modified_since(app, static_file_directory, file_name):
-
     file_stat = os.stat(get_file_path(static_file_directory, file_name))
     modified_since = strftime(
         "%a, %d %b %Y %H:%M:%S GMT", gmtime(file_stat.st_mtime)

@@ -4,14 +4,13 @@ from datetime import datetime, timezone
 from email.utils import formatdate, parsedate_to_datetime
 from mimetypes import guess_type
 from os import path
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from time import time
 from typing import Any, AnyStr, Callable, Dict, Optional, Union
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
-from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE, DEFAULT_INDEX
-from sanic.exceptions import SanicIsADirectoryError
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.helpers import Default, _default
 from sanic.log import logger
 from sanic.models.protocol_types import HTMLProtocol, Range
@@ -165,8 +164,6 @@ async def file(
     max_age: Optional[Union[float, int]] = None,
     no_store: Optional[bool] = None,
     _range: Optional[Range] = None,
-    autoindex: bool = False,
-    index_name: Union[str, Default] = _default,
 ) -> HTTPResponse:
     """Return a response object with file data.
     :param status: HTTP response code. Won't enforce the passed in
@@ -229,26 +226,16 @@ async def file(
 
     filename = filename or path.split(location)[-1]
 
-    try:
-        async with await open_async(location, mode="rb") as f:
-            if _range:
-                await f.seek(_range.start)
-                out_stream = await f.read(_range.size)
-                headers[
-                    "Content-Range"
-                ] = f"bytes {_range.start}-{_range.end}/{_range.total}"
-                status = 206
-            else:
-                out_stream = await f.read()
-    except IsADirectoryError as e:
-        if isinstance(index_name, Default):
-            index_name = DEFAULT_INDEX
-        exc = SanicIsADirectoryError(str(e))
-        exc.location = Path(location)
-        exc.autoindex = autoindex
-        exc.index_name = index_name
-
-        raise exc
+    async with await open_async(location, mode="rb") as f:
+        if _range:
+            await f.seek(_range.start)
+            out_stream = await f.read(_range.size)
+            headers[
+                "Content-Range"
+            ] = f"bytes {_range.start}-{_range.end}/{_range.total}"
+            status = 206
+        else:
+            out_stream = await f.read()
 
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     return HTTPResponse(

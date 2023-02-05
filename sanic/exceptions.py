@@ -1,5 +1,4 @@
 from asyncio import CancelledError
-from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from sanic.helpers import STATUS_CODES
@@ -270,10 +269,3 @@ class InvalidSignal(SanicException):
 class WebsocketClosed(SanicException):
     quiet = True
     message = "Client has closed the websocket connection"
-
-
-class SanicIsADirectoryError(SanicException):
-    quiet = True
-    location: Path
-    autoindex: bool
-    index_name: str

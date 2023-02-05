@@ -4,7 +4,6 @@ from sanic.compat import UpperStrEnum
 
 
 class HTTPMethod(UpperStrEnum):
-
     GET = auto()
     POST = auto()
     PUT = auto()
@@ -15,7 +14,6 @@ class HTTPMethod(UpperStrEnum):
 
 
 class LocalCertCreator(UpperStrEnum):
-
     AUTO = auto()
     TRUSTME = auto()
     MKCERT = auto()
@@ -34,4 +32,3 @@ CACHEABLE_HTTP_METHODS = (HTTPMethod.GET, HTTPMethod.HEAD)
 DEFAULT_HTTP_CONTENT_TYPE = "application/octet-stream"
 DEFAULT_LOCAL_TLS_KEY = "key.pem"
 DEFAULT_LOCAL_TLS_CERT = "cert.pem"
-DEFAULT_INDEX = "index.html"

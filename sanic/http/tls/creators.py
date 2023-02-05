@@ -126,7 +126,6 @@ class CertCreator(ABC):
         local_tls_key,
         local_tls_cert,
     ) -> CertCreator:
-
         creator: Optional[CertCreator] = None
 
         cert_creator_options: Tuple[

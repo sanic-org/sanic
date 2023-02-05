@@ -93,6 +93,7 @@ def test_dont_register_system_signals(app):
 @pytest.mark.skipif(os.name == "nt", reason="windows cannot SIGINT processes")
 def test_windows_workaround():
     """Test Windows workaround (on any other OS)"""
+
     # At least some code coverage, even though this test doesn't work on
     # Windows...
     class MockApp:

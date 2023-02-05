@@ -1109,7 +1109,6 @@ class StartupMixin(metaclass=SanicMeta):
         app: StartupMixin,
         server_info: ApplicationServerInfo,
     ) -> None:  # no cov
-
         try:
             # We should never get to this point without a server
             # This is primarily to keep mypy happy

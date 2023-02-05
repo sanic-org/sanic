@@ -146,7 +146,6 @@ class Request:
         head: bytes = b"",
         stream_id: int = 0,
     ):
-
         self.raw_url = url_bytes
         try:
             self._parsed_url = parse_url(url_bytes)

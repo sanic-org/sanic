@@ -78,16 +78,19 @@ span.icon {
     margin-right: 1rem;
 }
 
-#logo {
+#logo-simple {
     height: 1.75rem;
     padding: 0 0.25rem;
-    filter: drop-shadow(.03rem .03rem .05rem #000);
 }
+
 
 @media (prefers-color-scheme: dark) {
     html {
         background: #111;
         color: #ccc;
     }
-    #logo { filter: none }
+
+    #logo-simple path:last-child {
+        fill: #e1e1e1;
+    }
 }

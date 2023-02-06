@@ -4,9 +4,11 @@ summary {
 }
 
 .tracerite {
-    --color-var: var(--sanic-blue);
-    --color-val: var(--sanic-green);
-    --color-type: var(--sanic-purple);
+    --tracerite-var: var(--sanic-blue);
+    --tracerite-val: var(--sanic-green);
+    --tracerite-type: var(--sanic-purple);
+    --tracerite-exception: var(--sanic);
+    --tracerite-highlight: var(--sanic-yellow);
 }
 
 .key-value-table {

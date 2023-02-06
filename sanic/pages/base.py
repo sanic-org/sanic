@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from html5tagger import HTML, Document
 
 from sanic import __version__ as VERSION
-from sanic.application.logo import SVG_LOGO
+from sanic.application.logo import SVG_LOGO_SIMPLE, SVG_LOGO_SIMPLE_WHITE
 from sanic.pages.css import CSS
 
 
@@ -44,7 +44,8 @@ class BasePage(ABC, metaclass=CSS):  # no cov
 
     def _sanic_logo(self) -> None:
         self.doc.a(
-            HTML(SVG_LOGO),
+            HTML(SVG_LOGO_SIMPLE),
+            HTML(SVG_LOGO_SIMPLE_WHITE),
             href="https://sanic.dev",
             target="_blank",
             referrerpolicy="no-referrer",

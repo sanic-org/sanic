@@ -1,4 +1,3 @@
-
 /** BasePage **/
 html {
     font: 16px sans-serif;
@@ -9,6 +8,7 @@ html {
 body {
     margin: 0;
     font-size: 1.25rem;
+    --accent: #ff0d68;
 }
 
 body>* {

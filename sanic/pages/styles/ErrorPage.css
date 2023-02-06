@@ -1,2 +1,52 @@
 /** ErrorPage **/
-summary { color: #888; }
+summary {
+    color: #888;
+}
+
+.tracerite {
+    /* --color-var: var(--accent);
+    --color-val: #ff0; */
+    --color-type: var(--accent);
+}
+
+.key-value-table {
+    margin: 2rem 0;
+    border-collapse: collapse;
+}
+
+.key-value-table caption {
+    caption-side: top;
+    text-align: left;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding-bottom: 0.5rem;
+}
+
+.key-value-table td {
+    font-size: 1rem;
+    font-family: monospace;
+    border: 1px solid #888;
+    padding: 0.25rem;
+}
+
+.key-value-table .key {
+    color: var(--accent)
+}
+
+mark {
+    position: relative;
+}
+
+mark[data-symbol="💣"]::before {
+    content: "Exception raised";
+    display: none;
+    position: absolute;
+    top: -1.25em;
+    right: 0;
+    padding: 0.25em;
+    background-color: var(--accent);
+}
+
+mark[data-symbol="💣"]:hover::before {
+    display: block;
+}

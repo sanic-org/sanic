@@ -1,2 +1,22 @@
 /** ErrorPage **/
-summary { color: #888; }
+summary {
+    color: #888;
+}
+
+.tracerite {
+    --color-var: var(--sanic-blue);
+    --color-val: var(--sanic-green);
+    --color-type: var(--sanic-purple);
+}
+
+.key-value-table {
+    margin: 2rem 0;
+}
+
+.key-value-table caption {
+    caption-side: top;
+    text-align: left;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding-bottom: 0.5rem;
+}

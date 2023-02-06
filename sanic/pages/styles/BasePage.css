@@ -1,4 +1,3 @@
-
 /** BasePage **/
 html {
     font: 16px sans-serif;
@@ -9,6 +8,11 @@ html {
 body {
     margin: 0;
     font-size: 1.25rem;
+    --sanic: #ff0d68;
+    --sanic-blue: #0092FF;
+    --sanic-yellow: #FFE900;
+    --sanic-purple: #833FE3;
+    --sanic-green: #16DB93;
 }
 
 body>* {

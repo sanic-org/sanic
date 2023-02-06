@@ -30,7 +30,7 @@ class ErrorPage(BasePage):
         # FIXME: This needs to be done some place else but I am not digging into that now.
         if "Internal Server Error" in title:
             text = "The application encountered an unexpected error and could not continue."
-        self.TITLE = E(f"App {request.app.name} cannot handle your request")
+        self.TITLE = E.strong(request.app.name)(" cannot handle your request")
         self.title = title
         self.text = text
         self.request = request
@@ -53,7 +53,7 @@ class ErrorPage(BasePage):
             context = getattr(self.exc, "context", None)
             if context:
                 self._key_value_table(
-                    "Exception context", "exception-context", context
+                    "Issue context", "exception-context", context
                 )
 
             if not debug:
@@ -89,13 +89,13 @@ class ErrorPage(BasePage):
     def _key_value_table(
         self, title: str, table_id: str, data: Mapping[str, Any]
     ) -> None:
-        with self.doc.table(id=table_id, class_="key-value-table"):
+        with self.doc.table(id=table_id, class_="key-value-table smalltext"):
             self.doc.caption(title)
             for key, value in data.items():
                 try:
                     self.doc.tr.td(key, class_="nobr key").td(value)
                 # Printing values may cause a new exception, so suppress it
                 except Exception:
-                    self.doc.tr.td(key, class_="nobr key").td(
-                        E.em("Unable to display value")
+                    self.doc.tr.td(key, class_="nobr key").td.em(
+                        "Unable to display value"
                     )

@@ -73,13 +73,15 @@ a:focus {
     outline: none;
 }
 
-#logo {
-    height: 1.75rem;
-    padding: 0 0.25rem;
-}
 
 span.icon {
     margin-right: 1rem;
+}
+
+#logo {
+    height: 1.75rem;
+    padding: 0 0.25rem;
+    filter: drop-shadow(.03rem .03rem .05rem #000);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -87,4 +89,5 @@ span.icon {
         background: #111;
         color: #ccc;
     }
+    #logo { filter: none }
 }

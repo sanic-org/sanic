@@ -29,7 +29,9 @@ body>* {
         font-size: calc(6px + 10 * 100vw / 1000);
     }
 }
-
+main {
+    min-height: 70vh;  /* Make sure the footer is closer to bottom */
+}
 .smalltext {
     font-size: 1.0rem;
 }

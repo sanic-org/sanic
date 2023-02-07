@@ -8,11 +8,11 @@ from sanic.pages.css import CSS
 
 
 class BasePage(ABC, metaclass=CSS):  # no cov
-    TITLE = "Unknown"
+    TITLE = "Sanic"
     CSS: str
 
     def __init__(self, debug: bool = True) -> None:
-        self.doc = Document(self.TITLE, lang="en")
+        self.doc = None
         self.debug = debug
 
     @property
@@ -20,6 +20,7 @@ class BasePage(ABC, metaclass=CSS):  # no cov
         return self.CSS
 
     def render(self) -> str:
+        self.doc = Document(self.TITLE, lang="en")
         self._head()
         self._body()
         self._foot()

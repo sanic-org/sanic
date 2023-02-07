@@ -26,11 +26,17 @@ class ErrorPage(BasePage):
         full: bool,
     ) -> None:
         super().__init__()
-        # Internal server errors come with the text of the exception, which we don't want to show to the user.
-        # FIXME: This needs to be done some place else but I am not digging into that now.
+        # Internal server errors come with the text of the exception,
+        # which we don't want to show to the user.
+        # FIXME: Needs to be done in a better way, elsewhere
         if "Internal Server Error" in title:
-            text = "The application encountered an unexpected error and could not continue."
-        self.TITLE = E.strong(request.app.name)(" cannot handle your request")
+            text = "The application encountered an unexpected error and could not continue."  # noqa: E501
+        name = request.app.name.replace("_", " ").strip()
+        if name.islower():
+            name = name.title()
+        self.TITLE = E("Application ").strong(name)(
+            " cannot handle your request"
+        )
         self.title = title
         self.text = text
         self.request = request

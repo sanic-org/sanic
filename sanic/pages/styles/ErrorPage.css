@@ -1,5 +1,6 @@
 /** ErrorPage **/
 summary {
+    margin-top: 3em;
     color: #888;
 }
 
@@ -15,7 +16,7 @@ dl.key-value-table {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 5fr;
-    grid-gap: 0.5rem;
+    grid-gap: .3em;
     white-space: pre-wrap;
 }
 dl.key-value-table * {

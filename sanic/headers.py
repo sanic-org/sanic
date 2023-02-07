@@ -52,7 +52,9 @@ class MediaType:
         return self.mime + "".join(f";{k}={v}" for k, v in self.params.items())
 
     def __eq__(self, other):
-        """Check for mime (str or MediaType) identical type/subtype."""
+        """Check for mime (str or MediaType) identical type/subtype.
+
+        Parameters such as q are not considered."""
         if isinstance(other, str):
             return self.mime == other
         if isinstance(other, MediaType):
@@ -61,7 +63,7 @@ class MediaType:
 
     def match(
         self,
-        mime: str,
+        mime_with_params: str,
         allow_type_wildcard=True,
         allow_subtype_wildcard=True,
     ) -> Optional[MediaType]:
@@ -69,19 +71,24 @@ class MediaType:
 
         Wildcards are supported both ways on both type and subtype.
 
+        If mime contains a semicolon, optionally followed by parameters,
+        the parameters of the two media types must match exactly.
+
         Note:  Use the `==` operator instead to check for literal matches
         without expanding wildcards.
 
         @param media_type: A type/subtype string to match.
         @return `self` if the media types are compatible, else `None`
         """
-        mt = MediaType._parse(mime)
+        mt = MediaType._parse(mime_with_params)
+        params_ok = True if ";" not in mime_with_params else self.params == mt.params
         wctype, wcsub = allow_type_wildcard, allow_subtype_wildcard
         return (
             self
             if (
+                params_ok
                 # Subtype match
-                (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
+                and (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
                 # Type match
                 and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
                 # Allow disabling wildcard matches (backwards compatibility with tests)
@@ -174,6 +181,10 @@ class AcceptList(list):
             if acc.match(mime)
         )
         return Matched(*(a[0][3:5] if a else ("", None)))
+
+    def __str__(self):
+        """Format as Accept header value (parsed, not original)."""
+        return ", ".join(str(m) for m in self)
 
 
 def parse_accept(accept: Optional[str]) -> AcceptList:

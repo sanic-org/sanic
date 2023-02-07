@@ -150,33 +150,55 @@ def test_request_accept():
     async def get(request):
         return response.empty()
 
+    header_value = "text/*, text/plain, text/plain;format=flowed, */*"
     request, _ = app.test_client.get(
         "/",
         headers={
-            "Accept": "text/*, text/plain, text/plain;format=flowed, */*"
+            "Accept": header_value
         },
     )
+    assert str(request.accept) == header_value
     assert request.accept == [
-        "text/plain;format=flowed",
+        "text/*",
+        "text/plain",
+        "text/plain",  # Note: equality only compares MIME type/subtype
+        "*/*",
+    ]
+    match = request.accept.match(
+        "*/*;format=flowed",
         "text/plain",
         "text/*",
         "*/*",
-    ]
+    )
+    assert match == "*/*;format=flowed"
+    assert match.m.mime == "text/plain"
+    assert match.m.params == {"format": "flowed"}
 
+    header_value = "text/plain; q=0.5,   text/html, text/x-dvi; q=0.8, text/x-c"
     request, _ = app.test_client.get(
         "/",
         headers={
-            "Accept": (
-                "text/plain; q=0.5, text/html, text/x-dvi; q=0.8, text/x-c"
-            )
+            "Accept": header_value
         },
     )
+    assert str(request.accept) == "text/html, text/x-c, text/x-dvi;q=0.8, text/plain;q=0.5"
     assert request.accept == [
         "text/html",
         "text/x-c",
-        "text/x-dvi; q=0.8",
-        "text/plain; q=0.5",
+        "text/x-dvi",
+        "text/plain",
     ]
+    match = request.accept.match(
+        "application/json",
+        "text/plain",               # Has lower q in accept header
+        "text/html;format=flowed",  # Params mismatch
+        "text/*",                   # Matches
+        "*/*",
+    )
+    assert match == "text/*"
+    assert match.m.mime == "text/html"
+    assert match.m.q == 1.0
+    assert not match.m.params
 
 
 def test_bad_url_parse():

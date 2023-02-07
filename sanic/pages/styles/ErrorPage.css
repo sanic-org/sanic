@@ -1,7 +1,8 @@
 /** ErrorPage **/
 summary {
     margin-top: 3em;
-    color: #888;
+    color: var(--sanic-blue);
+    cursor: pointer;
 }
 
 .tracerite {
@@ -11,9 +12,17 @@ summary {
     --tracerite-exception: var(--sanic);
     --tracerite-highlight: var(--sanic-yellow);
 }
-
+h1 {
+    margin-left: -1.5rem;  /* Emoji partially in the left margin */
+}
+h2 {
+    margin: 1em 0 0.2em 0;
+    font-size: 1.25rem;
+    color: #888;
+}
 dl.key-value-table {
     width: 100%;
+    margin: 0;
     display: grid;
     grid-template-columns: 1fr 5fr;
     grid-gap: .3em;
@@ -23,7 +32,7 @@ dl.key-value-table * {
     margin: 0;
 }
 dl.key-value-table dt {
-    color: gray;
+    color: #888;
     word-break: break-word;
 }
 dl.key-value-table dd {

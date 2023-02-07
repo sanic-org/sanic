@@ -13,6 +13,9 @@ body {
     --sanic-yellow: #FFE900;
     --sanic-purple: #833FE3;
     --sanic-green: #16DB93;
+    scrollbar-gutter: stable;
+    overflow: scroll;
+    overflow-x: hidden;
 }
 
 body>* {
@@ -58,10 +61,6 @@ footer {
 
 h1 {
     text-align: left;
-}
-
-h2 {
-    margin: 1em 0 0.5em 0;
 }
 
 a:visited {

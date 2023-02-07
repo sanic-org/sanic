@@ -11,14 +11,20 @@ summary {
     --tracerite-highlight: var(--sanic-yellow);
 }
 
-.key-value-table {
-    margin: 2rem 0;
+dl.key-value-table {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 5fr;
+    grid-gap: 0.5rem;
+    white-space: pre-wrap;
 }
-
-.key-value-table caption {
-    caption-side: top;
-    text-align: left;
-    font-size: 1.25rem;
-    font-weight: 700;
-    padding-bottom: 0.5rem;
+dl.key-value-table * {
+    margin: 0;
+}
+dl.key-value-table dt {
+    color: gray;
+    word-break: break-word;
+}
+dl.key-value-table dd {
+    word-break: break-all;  /* Better breaking for cookies header and such */
 }

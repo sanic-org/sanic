@@ -58,6 +58,10 @@ h1 {
     text-align: left;
 }
 
+h2 {
+    margin: 1em 0 0.5em 0;
+}
+
 a:visited {
     color: inherit;
 }

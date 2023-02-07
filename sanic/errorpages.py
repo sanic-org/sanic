@@ -500,5 +500,5 @@ def guess_mime(req: Request, fallback: str) -> str:
             f"The client accepts {m.header}, using '{format}' from {source}"
         )
     else:
-        logger.debug(f"No format found, the client accepts {req.accept}")
+        logger.debug(f"No format found, the client accepts {req.accept!r}")
     return m

@@ -56,8 +56,12 @@ class MediaType:
 
         Parameters such as q are not considered."""
         if isinstance(other, str):
+            # Give a friendly reminder if str contains parameters
+            if ";" in other:
+                raise ValueError("Use match() to compare with parameters")
             return self.mime == other
         if isinstance(other, MediaType):
+            # Ignore parameters silently with MediaType objects
             return self.mime == other.mime
         return NotImplemented
 

@@ -348,3 +348,18 @@ def test_accept_misc():
     a = headers.parse_accept("")
     assert a == []
     assert not a.match("foo/bar")
+
+
+def test_mediatype_matching():
+    # Matching MediaType with parameters
+    mt = headers.parse_accept("foo/bar;param=123")[0]
+    assert mt.match("foo/bar")
+    assert mt.match("foo/bar;param=123")
+    assert not mt.match("foo/bar;param=456")
+    assert not mt.match("foo/bar;q=1.0")  # Implicit q is not added
+    assert mt == "foo/bar"
+    with pytest.raises(ValueError) as exc_info:
+        mt == "foo/bar;param=123"
+    assert str(exc_info.value) == "Use match() to compare with parameters"
+    # Allow the above with MediaType
+    assert mt == headers.MediaType._parse("foo/bar;param=different")

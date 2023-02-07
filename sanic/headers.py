@@ -81,12 +81,12 @@ class MediaType:
         @return `self` if the media types are compatible, else `None`
         """
         mt = MediaType._parse(mime_with_params)
-        params_ok = True if ";" not in mime_with_params else self.params == mt.params
         wctype, wcsub = allow_type_wildcard, allow_subtype_wildcard
         return (
             self
             if (
-                params_ok
+                # All parameters given in the other media type must match
+                all(self.params.get(k) == v for k, v in mt.params.items())
                 # Subtype match
                 and (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
                 # Type match
@@ -128,16 +128,16 @@ class MediaType:
 
 
 class Matched(str):
-    """A matching result of a MIME string against a MediaType."""
+    """A matching result of a MIME string against a header."""
 
-    def __new__(cls, mime: str, m: Optional[MediaType]):
+    def __new__(cls, mime: str, header: Optional[MediaType]):
         return super().__new__(cls, mime)
 
-    def __init__(self, mime: str, m: Optional[MediaType]):
-        self.m = m
+    def __init__(self, mime: str, header: Optional[MediaType]):
+        self.header = header
 
     def __repr__(self):
-        return f"<{self} matched {self.m}>" if self else "<no match>"
+        return f"<{self} matched {self.header}>" if self else "<no match>"
 
 
 class AcceptList(list):

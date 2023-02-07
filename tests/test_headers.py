@@ -328,18 +328,18 @@ def test_accept_misc():
     m = a.match("foo/bar", "text/*", "text/plain")
     assert repr(m) == "<text/* matched */plain;param=123>"
     assert m == "text/*"
-    assert m.m.mime == "*/plain"
-    assert m.m.type_ == "*"
-    assert m.m.subtype == "plain"
-    assert m.m.q == 1.0
-    assert m.m.params == dict(param="123")
+    assert m.header.mime == "*/plain"
+    assert m.header.type_ == "*"
+    assert m.header.subtype == "plain"
+    assert m.header.q == 1.0
+    assert m.header.params == dict(param="123")
     # Matches the highest q value
     m = a.match("foo/bar")
     assert repr(m) == "<foo/bar matched foo/bar;q=0.5>"
     # Matching nothing special case
     m = a.match()
     assert m == ""
-    assert m.m is None
+    assert m.header is None
     # No header means anything
     a = headers.parse_accept(None)
     assert a == ["*/*"]

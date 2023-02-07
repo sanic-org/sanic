@@ -171,8 +171,8 @@ def test_request_accept():
         "*/*",
     )
     assert match == "*/*;format=flowed"
-    assert match.m.mime == "text/plain"
-    assert match.m.params == {"format": "flowed"}
+    assert match.header.mime == "text/plain"
+    assert match.header.params == {"format": "flowed"}
 
     header_value = "text/plain; q=0.5,   text/html, text/x-dvi; q=0.8, text/x-c"
     request, _ = app.test_client.get(
@@ -196,9 +196,9 @@ def test_request_accept():
         "*/*",
     )
     assert match == "text/*"
-    assert match.m.mime == "text/html"
-    assert match.m.q == 1.0
-    assert not match.m.params
+    assert match.header.mime == "text/html"
+    assert match.header.q == 1.0
+    assert not match.header.params
 
 
 def test_bad_url_parse():

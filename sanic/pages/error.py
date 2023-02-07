@@ -73,12 +73,7 @@ class ErrorPage(BasePage):
                 )
                 if self.exc:
                     self.doc.h2(f"Exception in {route_name}:")
-                    # skip_outmost=1 to hide Sanic.handle_request
-                    self.doc(
-                        html_traceback(
-                            self.exc, skip_outmost=1, include_js_css=False
-                        )
-                    )
+                    self.doc(html_traceback(self.exc, include_js_css=False))
 
                 self._key_value_table(
                     f"{self.request.method} {self.request.path}",
@@ -92,10 +87,9 @@ class ErrorPage(BasePage):
         with self.doc.table(id=table_id, class_="key-value-table smalltext"):
             self.doc.caption(title)
             for key, value in data.items():
+                # Reading values may cause a new exception, so suppress it
                 try:
-                    self.doc.tr.td(key, class_="nobr key").td(value)
-                # Printing values may cause a new exception, so suppress it
+                    value = str(value)
                 except Exception:
-                    self.doc.tr.td(key, class_="nobr key").td.em(
-                        "Unable to display value"
-                    )
+                    value = E.em("Unable to display value")
+                self.doc.tr.td.span(key, class_="nobr key").td(value)

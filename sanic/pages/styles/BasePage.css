@@ -3,6 +3,8 @@ html {
     font: 16px sans-serif;
     background: #eee;
     color: #111;
+    scrollbar-gutter: stable;
+    overflow: hidden auto;
 }
 
 body {
@@ -13,9 +15,6 @@ body {
     --sanic-yellow: #FFE900;
     --sanic-purple: #833FE3;
     --sanic-green: #16DB93;
-    scrollbar-gutter: stable;
-    overflow: scroll;
-    overflow-x: hidden;
 }
 
 body>* {

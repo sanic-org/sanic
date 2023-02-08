@@ -23,6 +23,7 @@ summary {
     --tracerite-type: var(--sanic-purple);
     --tracerite-exception: var(--sanic);
     --tracerite-highlight: var(--sanic-yellow);
+    --tracerite-tab: var(--sanic-tab);
 }
 
 .tracerite > h3 {

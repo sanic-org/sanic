@@ -16,6 +16,7 @@ body {
     --sanic-yellow: #FFE900;
     --sanic-purple: #7e22ce;
     --sanic-green: #4d7c0f;
+    --sanic-tab: #ffffff;
 }
 
 body>* {
@@ -98,6 +99,7 @@ span.icon {
         --sanic-yellow: #ffde41;
         --sanic-purple: #b19bf8;
         --sanic-green: #37d971;
+        --sanic-tab: #e8e3e3;
     }
 
     html {

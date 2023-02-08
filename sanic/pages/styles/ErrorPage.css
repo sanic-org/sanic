@@ -24,6 +24,11 @@ summary {
     --tracerite-exception: var(--sanic);
     --tracerite-highlight: var(--sanic-yellow);
 }
+
+.tracerite > h3 {
+    margin: 0.5rem 0 !important;
+}
+
 h1 {
     /*margin-left: -1.5rem;  !* Emoji partially in the left margin *!*/
 }

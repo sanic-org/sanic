@@ -25,7 +25,7 @@ summary {
     --tracerite-highlight: var(--sanic-yellow);
 }
 h1 {
-    margin-left: -1.5rem;  /* Emoji partially in the left margin */
+    /*margin-left: -1.5rem;  !* Emoji partially in the left margin *!*/
 }
 h2 {
     margin: 1em 0 0.2em 0;

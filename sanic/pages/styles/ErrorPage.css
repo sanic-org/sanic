@@ -3,7 +3,7 @@
     max-width: 30em;
     margin: 5em auto 5em auto;
     text-align: justify;
-    text-justify: both;
+    /*text-justify: both;*/
 }
 #enduser a {
     color: var(--sanic-blue);

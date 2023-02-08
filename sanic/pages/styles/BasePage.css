@@ -1,7 +1,7 @@
 /** BasePage **/
 html {
     font: 16px sans-serif;
-    background: #eee;
+    background: #f1f5f9;
     color: #111;
     scrollbar-gutter: stable;
     overflow: hidden auto;
@@ -11,10 +11,10 @@ body {
     margin: 0;
     font-size: 1.25rem;
     --sanic: #ff0d68;
-    --sanic-blue: #0092FF;
+    --sanic-blue: #0369a1;
     --sanic-yellow: #FFE900;
-    --sanic-purple: #833FE3;
-    --sanic-green: #16DB93;
+    --sanic-purple: #a21caf;
+    --sanic-green: #166534;
 }
 
 body>* {

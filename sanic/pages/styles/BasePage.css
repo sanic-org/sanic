@@ -6,10 +6,11 @@
     --sanic-yellow: #ffde41;
     --sanic-purple: #7e22ce;
     --sanic-green: #4d7c0f;
-    --sanic-background: #e2e8f0;
+    --sanic-background: #f1f5f9;
     --sanic-text: #1f2937;
-    --sanic-tab-background: #f8fafc;
+    --sanic-tab-background: #fff;
     --sanic-tab-text: #0f172a;
+    --sanic-tab-shadow: #adadad;
     --sanic-highlight-background: var(--sanic-yellow);
     --sanic-highlight-text: var(--sanic-text);
 }
@@ -25,6 +26,7 @@
         --sanic-text: #f1f5f9;
         --sanic-tab-background: #383d4d;
         --sanic-tab-text: #cbd5e1;
+        --sanic-tab-shadow: #000;
         --sanic-highlight-background: var(--sanic-yellow);
         --sanic-highlight-text: #1f2937;
     }

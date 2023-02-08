@@ -34,6 +34,7 @@ body>* {
 }
 main {
     min-height: 70vh;  /* Make sure the footer is closer to bottom */
+    padding: 1rem 2.5rem; /* Generous padding for readability */
 }
 .smalltext {
     font-size: 1.0rem;

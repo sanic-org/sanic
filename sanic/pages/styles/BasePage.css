@@ -10,11 +10,12 @@ html {
 body {
     margin: 0;
     font-size: 1.25rem;
+    line-height: 125%;
     --sanic: #ff0d68;
     --sanic-blue: #0369a1;
     --sanic-yellow: #FFE900;
-    --sanic-purple: #a21caf;
-    --sanic-green: #166534;
+    --sanic-purple: #7e22ce;
+    --sanic-green: #4d7c0f;
 }
 
 body>* {
@@ -95,7 +96,7 @@ span.icon {
         --sanic-blue: #38bdf8;
         --sanic-yellow: #FFE900;
         --sanic-purple: #a78bfa;
-        --sanic-green: #4ade80;
+        --sanic-green: #22c55e;
     }
 
     html {
@@ -106,4 +107,10 @@ span.icon {
     #logo-simple path:last-child {
         fill: #e1e1e1;
     }
+}
+
+/* tracerite specific */
+
+.traceback-labels {
+    font-size: 1.0rem;
 }

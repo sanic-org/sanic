@@ -95,9 +95,9 @@ span.icon {
     body {
         --sanic: #ef4444;
         --sanic-blue: #38bdf8;
-        --sanic-yellow: #FFE900;
-        --sanic-purple: #a78bfa;
-        --sanic-green: #22c55e;
+        --sanic-yellow: #ffde41;
+        --sanic-purple: #b19bf8;
+        --sanic-green: #37d971;
     }
 
     html {

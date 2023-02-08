@@ -23,12 +23,31 @@ summary {
     --tracerite-type: var(--sanic-purple);
     --tracerite-exception: var(--sanic);
     --tracerite-highlight: var(--sanic-yellow);
-    --tracerite-tab: var(--sanic-tab);
+    --tracerite-tab: var(--sanic-tab-background);
+    --tracerite-tab-text: var(--sanic-tab-text);
 }
 
 .tracerite > h3 {
     margin: 0.5rem 0 !important;
 }
+
+.tracerite .traceback-labels button {
+    font-size: 0.8rem !important;
+    line-height: 120% !important;
+    background: var(--tracerite-tab) !important;
+    color: var(--tracerite-tab-text) !important;
+    transition: 0.3s;
+}
+
+.tracerite .traceback-labels button:hover {
+    filter: brightness(120%);
+}
+
+.tracerite .traceback-details mark span {
+    background: var(--sanic-highlight-background);
+    color: var(--sanic-highlight-text);
+}
+
 
 h1 {
     /*margin-left: -1.5rem;  !* Emoji partially in the left margin *!*/
@@ -36,7 +55,7 @@ h1 {
 h2 {
     margin: 1em 0 0.2em 0;
     font-size: 1.25rem;
-    color: #888;
+    color: var(--sanic-text);
 }
 dl.key-value-table {
     width: 100%;

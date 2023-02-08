@@ -3,12 +3,15 @@
 :root {
     --sanic: #ff0d68;
     --sanic-blue: #0369a1;
-    --sanic-yellow: #FFE900;
+    --sanic-yellow: #ffde41;
     --sanic-purple: #7e22ce;
     --sanic-green: #4d7c0f;
-    --sanic-tab: #ffffff;
-    --sanic-background: #f1f5f9;
-    --sanic-text: #0f172a;
+    --sanic-background: #e2e8f0;
+    --sanic-text: #1f2937;
+    --sanic-tab-background: #f8fafc;
+    --sanic-tab-text: #0f172a;
+    --sanic-highlight-background: var(--sanic-yellow);
+    --sanic-highlight-text: var(--sanic-text);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,9 +21,12 @@
         --sanic-yellow: #ffde41;
         --sanic-purple: #b19bf8;
         --sanic-green: #37d971;
-        --sanic-tab: #e8e3e3;
         --sanic-background: #2b2f3b;
-        --sanic-text: #ccc;
+        --sanic-text: #f1f5f9;
+        --sanic-tab-background: #383d4d;
+        --sanic-tab-text: #cbd5e1;
+        --sanic-highlight-background: var(--sanic-yellow);
+        --sanic-highlight-text: #1f2937;
     }
 }
 

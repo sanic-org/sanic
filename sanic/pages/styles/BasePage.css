@@ -89,8 +89,17 @@ span.icon {
 
 
 @media (prefers-color-scheme: dark) {
+
+    body {
+        --sanic: #ef4444;
+        --sanic-blue: #38bdf8;
+        --sanic-yellow: #FFE900;
+        --sanic-purple: #a78bfa;
+        --sanic-green: #4ade80;
+    }
+
     html {
-        background: #111;
+        background: #2b2f3b;
         color: #ccc;
     }
 

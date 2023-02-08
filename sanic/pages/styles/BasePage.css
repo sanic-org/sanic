@@ -1,8 +1,33 @@
 /** BasePage **/
+
+:root {
+    --sanic: #ff0d68;
+    --sanic-blue: #0369a1;
+    --sanic-yellow: #FFE900;
+    --sanic-purple: #7e22ce;
+    --sanic-green: #4d7c0f;
+    --sanic-tab: #ffffff;
+    --sanic-background: #f1f5f9;
+    --sanic-text: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --sanic: #ef4444;
+        --sanic-blue: #38bdf8;
+        --sanic-yellow: #ffde41;
+        --sanic-purple: #b19bf8;
+        --sanic-green: #37d971;
+        --sanic-tab: #e8e3e3;
+        --sanic-background: #2b2f3b;
+        --sanic-text: #ccc;
+    }
+}
+
 html {
     font: 16px sans-serif;
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--sanic-background);
+    color: var(--sanic-text);
     scrollbar-gutter: stable;
     overflow: hidden auto;
 }
@@ -11,20 +36,14 @@ body {
     margin: 0;
     font-size: 1.25rem;
     line-height: 125%;
-    --sanic: #ff0d68;
-    --sanic-blue: #0369a1;
-    --sanic-yellow: #FFE900;
-    --sanic-purple: #7e22ce;
-    --sanic-green: #4d7c0f;
-    --sanic-tab: #ffffff;
 }
 
-body>* {
+body > * {
     padding: 1rem 2vw;
 }
 
 @media (max-width: 1000px) {
-    body>* {
+    body > * {
         padding: 0.5rem 1.5vw;
     }
 
@@ -33,10 +52,12 @@ body>* {
         font-size: calc(6px + 10 * 100vw / 1000);
     }
 }
+
 main {
-    min-height: 70vh;  /* Make sure the footer is closer to bottom */
+    min-height: 70vh; /* Make sure the footer is closer to bottom */
     padding: 1rem 2.5rem; /* Generous padding for readability */
 }
+
 .smalltext {
     font-size: 1.0rem;
 }
@@ -92,21 +113,6 @@ span.icon {
 
 
 @media (prefers-color-scheme: dark) {
-
-    body {
-        --sanic: #ef4444;
-        --sanic-blue: #38bdf8;
-        --sanic-yellow: #ffde41;
-        --sanic-purple: #b19bf8;
-        --sanic-green: #37d971;
-        --sanic-tab: #e8e3e3;
-    }
-
-    html {
-        background: #2b2f3b;
-        color: #ccc;
-    }
-
     #logo-simple path:last-child {
         fill: #e1e1e1;
     }

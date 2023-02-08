@@ -1,4 +1,16 @@
 /** ErrorPage **/
+#enduser {
+    max-width: 30em;
+    margin: 5em auto 5em auto;
+    text-align: justify;
+    text-justify: both;
+}
+#enduser a {
+    color: var(--sanic-blue);
+}
+#enduser p:last-child {
+    text-align: right;
+}
 summary {
     margin-top: 3em;
     color: var(--sanic-blue);

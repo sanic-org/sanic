@@ -13,6 +13,8 @@ from .base import BasePage
 # Avoid showing the request in the traceback variable inspectors
 inspector.blacklist_types += (Request,)
 
+ENDUSER_TEXT = """We're sorry, but it looks like something went wrong. Please try refreshing the page or navigating back to the homepage. If the issue persists, our technical team is working to resolve it as soon as possible. We apologize for the inconvenience and appreciate your patience."""  # noqa: E501
+
 
 class ErrorPage(BasePage):
     STYLE_APPEND = tracerite.html.style
@@ -63,6 +65,8 @@ class ErrorPage(BasePage):
                 )
 
             if not debug:
+                with self.doc.div(id="enduser"):
+                    self.doc.p(ENDUSER_TEXT).p.a("Front Page", href="/")
                 return
             # Show additional details in debug mode,
             # open by default for 500 errors
@@ -71,7 +75,7 @@ class ErrorPage(BasePage):
                 extra = getattr(self.exc, "extra", None)
                 if extra:
                     self._key_value_table(
-                        "Exception extra data", "exception-extra", extra
+                        "Issue extra data", "exception-extra", extra
                     )
 
                 self.doc.summary(

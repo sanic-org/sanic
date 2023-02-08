@@ -108,9 +108,3 @@ span.icon {
         fill: #e1e1e1;
     }
 }
-
-/* tracerite specific */
-
-.traceback-labels {
-    font-size: 1.0rem;
-}

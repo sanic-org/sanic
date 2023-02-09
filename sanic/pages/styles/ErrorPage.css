@@ -51,8 +51,8 @@ summary {
 }
 
 .tracerite .traceback-details mark span {
-    background: var(--sanic-highlight-background);
-    color: var(--sanic-highlight-text);
+    background: var(--sanic-highlight-background) !important;
+    color: var(--sanic-highlight-text) !important;
 }
 
 header {

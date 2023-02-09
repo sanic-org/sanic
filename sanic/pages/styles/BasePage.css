@@ -125,13 +125,14 @@ span.icon {
     }
 }
 
-pre, code {
+#sanic pre, #sanic code {
     font-family: "Fira Code",
     "Source Code Pro",
     Menlo,
+    Meslo,
     Monaco,
     Consolas,
     Lucida Console,
-    monospace !important;
-    font-size: 0.8rem !important;
+    monospace;
+    font-size: 0.8rem;
 }

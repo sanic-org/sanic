@@ -20,7 +20,7 @@ class BasePage(ABC, metaclass=CSS):  # no cov
         return self.CSS
 
     def render(self) -> str:
-        self.doc = Document(self.TITLE, lang="en")
+        self.doc = Document(self.TITLE, lang="en", id="sanic")
         self._head()
         self._body()
         self._foot()

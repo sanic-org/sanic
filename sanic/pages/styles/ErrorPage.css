@@ -34,11 +34,11 @@ summary {
     margin: 0.5rem 0 !important;
 }
 
-.tracerite .traceback-labels button {
-    font-size: 0.8rem !important;
-    line-height: 120% !important;
-    background: var(--tracerite-tab) !important;
-    color: var(--tracerite-tab-text) !important;
+#sanic .tracerite .traceback-labels button {
+    font-size: 0.8rem;
+    line-height: 120%;
+    background: var(--tracerite-tab);
+    color: var(--tracerite-tab-text);
     transition: 0.3s;
     cursor: pointer;
 }
@@ -50,9 +50,9 @@ summary {
     filter: contrast(150%) brightness(120%) drop-shadow(0 -0 2px var(--sanic-tab-shadow));
 }
 
-.tracerite .traceback-details mark span {
-    background: var(--sanic-highlight-background) !important;
-    color: var(--sanic-highlight-text) !important;
+#sanic .tracerite .traceback-details mark span {
+    background: var(--sanic-highlight-background);
+    color: var(--sanic-highlight-text);
 }
 
 header {

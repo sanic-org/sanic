@@ -23,9 +23,10 @@
         --sanic-yellow: #ffde41;
         --sanic-purple: #cc99cd;
         --sanic-green: #7ec699;
-        --sanic-background: #2d2d2d;
+        --sanic-background: hsl(0, 0%, 10%);
+        /*--sanic-background: #2d2d2d;*/
         /*--sanic-background: #111;*/
-        --sanic-text: #e7e7e7;
+        --sanic-text: rgba(255, 255, 255, 0.9);
         --sanic-tab-background: #484848;
         --sanic-tab-text: #e1e1e1;
         --sanic-tab-shadow: #000;
@@ -127,4 +128,15 @@ span.icon {
     #logo-simple path:last-child {
         fill: #e1e1e1;
     }
+}
+
+pre, code {
+    font-family: "Fira Code",
+    "Source Code Pro",
+    Menlo,
+    Monaco,
+    Consolas,
+    Lucida Console,
+    monospace !important;
+    font-size: 0.8rem !important;
 }

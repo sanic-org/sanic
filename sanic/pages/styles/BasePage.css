@@ -17,7 +17,7 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --sanic: #ef4444;
+        --sanic: #ff0d68;
         --sanic-blue: #38bdf8;
         --sanic-yellow: #ffde41;
         --sanic-purple: #b19bf8;

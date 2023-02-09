@@ -55,6 +55,9 @@ summary {
     color: var(--sanic-highlight-text);
 }
 
+header {
+    background: var(--sanic-header-background);
+}
 
 h1 {
     /*margin-left: -1.5rem;  !* Emoji partially in the left margin *!*/

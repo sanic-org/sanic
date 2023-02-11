@@ -66,6 +66,14 @@ from sanic.worker.reloader import Reloader
 from sanic.worker.serve import worker_serve
 
 
+if sys.platform == "win32":
+    from socket import MSG_PEEK
+    MSG_IS_CONNECTED = MSG_PEEK
+else:
+    from socket import MSG_DONTWAIT
+    MSG_IS_CONNECTED = MSG_DONTWAIT
+
+
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.application.state import ApplicationState
@@ -707,6 +715,19 @@ class StartupMixin(metaclass=SanicMeta):
         return get_context(method)
 
     @classmethod
+    def is_socket_connected(cls, sock: socket) -> bool:
+        try:
+            data = sock.recv(16, MSG_IS_CONNECTED)
+            if len(data) != 0:
+                return True
+        except BlockingIOError:
+            return True
+        except ConnectionResetError:
+            return False
+        finally:
+            return False
+
+    @classmethod
     def serve(
         cls,
         primary: Optional[Sanic] = None,
@@ -877,7 +898,8 @@ class StartupMixin(metaclass=SanicMeta):
 
             sync_manager.shutdown()
             for sock in socks:
-                sock.shutdown(SHUT_RDWR)
+                if cls.is_socket_connected(sock):
+                    sock.shutdown(SHUT_RDWR)
                 sock.close()
             socks = []
             trigger_events(main_stop, loop, primary)

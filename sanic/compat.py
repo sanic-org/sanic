@@ -2,6 +2,7 @@ import asyncio
 import os
 import signal
 import sys
+import platform
 
 from contextlib import contextmanager
 from enum import Enum
@@ -22,6 +23,7 @@ else:  # no cov
     ]
 
 OS_IS_WINDOWS = os.name == "nt"
+PYPY_IMPLEMENTATION = platform.python_implementation() == "PyPy"
 UVLOOP_INSTALLED = False
 
 try:
@@ -73,6 +75,11 @@ def enable_windows_color_support():
     kernel.SetConsoleMode(kernel.GetStdHandle(-11), 7)
 
 
+def patch_os() -> None:
+    module = sys.modules["os"]
+    module.readlink = os.path.realpath
+
+
 class Header(CIMultiDict):
     """
     Container used for both request and response headers. It is a subclass of
@@ -106,6 +113,9 @@ if use_trio:  # pragma: no cover
     open_async = trio.open_file
     CancelledErrors = tuple([asyncio.CancelledError, trio.Cancelled])
 else:
+    if PYPY_IMPLEMENTATION:
+        patch_os()
+
     from aiofiles import open as aio_open  # type: ignore
     from aiofiles.os import stat as stat_async  # type: ignore  # noqa: F401
 

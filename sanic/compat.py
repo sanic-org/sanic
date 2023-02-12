@@ -127,7 +127,7 @@ if use_trio:  # pragma: no cover
     CancelledErrors = tuple([asyncio.CancelledError, trio.Cancelled])
 else:
     if PYPY_IMPLEMENTATION:
-        pypy_patch_os()
+        pypy_os_module_patch()
 
     from aiofiles import open as aio_open  # type: ignore
     from aiofiles.os import stat as stat_async  # type: ignore  # noqa: F401

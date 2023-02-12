@@ -76,17 +76,16 @@ def enable_windows_color_support():
     kernel.SetConsoleMode(kernel.GetStdHandle(-11), 7)
 
 
-def pypy_patch_os() -> None:
+def pypy_os_module_patch() -> None:
     """
-    PyPy os module doesn't have the `readlink` function which break aiofiles.
-
-    This monkeypatch replace the `os.readlink` with `os.path.realpath`,
-    Both have the same functionality.
+    The PyPy os module is missing the 'readlink' function, which causes issues with
+    aiofiles. This workaround replaces the missing 'readlink' function with 
+    'os.path.realpath', which serves the same purpose.
     """
     if hasattr(os, "readlink"):
         error_logger.warning(
-            "PyPy: Skip patching the os module "
-            "it seems they added the readlink function"
+            "PyPy: Skipping patching of the os module as it appears the "
+            "'readlink' function has been added."
         )
         return
 

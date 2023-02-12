@@ -85,8 +85,8 @@ def pypy_patch_os() -> None:
     """
     if hasattr(os, "readlink"):
         error_logger.warning(
-            "PyPy: Skip patching os module "
-            "it seems os module added the readlink function"
+            "PyPy: Skip patching the os module "
+            "it seems they added the readlink function"
         )
         return
 

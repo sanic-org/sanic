@@ -11,6 +11,7 @@ from typing import Awaitable, Union
 from multidict import CIMultiDict  # type: ignore
 
 from sanic.helpers import Default
+from sanic.log import error_logger
 
 
 if sys.version_info < (3, 8):  # no cov
@@ -75,7 +76,20 @@ def enable_windows_color_support():
     kernel.SetConsoleMode(kernel.GetStdHandle(-11), 7)
 
 
-def patch_os() -> None:
+def pypy_patch_os() -> None:
+    """
+    PyPy os module doesn't have the `readlink` function which break aiofiles.
+
+    This monkeypatch replace the `os.readlink` with `os.path.realpath`,
+    Both have the same functionality.
+    """
+    if hasattr(os, "readlink"):
+        error_logger.warning(
+            "PyPy: Skip patching os module "
+            "it seems os module added the readlink function"
+        )
+        return
+
     module = sys.modules["os"]
     module.readlink = os.path.realpath
 
@@ -114,7 +128,7 @@ if use_trio:  # pragma: no cover
     CancelledErrors = tuple([asyncio.CancelledError, trio.Cancelled])
 else:
     if PYPY_IMPLEMENTATION:
-        patch_os()
+        pypy_patch_os()
 
     from aiofiles import open as aio_open  # type: ignore
     from aiofiles.os import stat as stat_async  # type: ignore  # noqa: F401

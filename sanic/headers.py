@@ -68,8 +68,6 @@ class MediaType:
     def match(
         self,
         mime_with_params: str,
-        allow_type_wildcard=True,
-        allow_subtype_wildcard=True,
     ) -> Optional[MediaType]:
         """Check if this media type matches the given mime type/subtype.
 
@@ -85,7 +83,6 @@ class MediaType:
         @return `self` if the media types are compatible, else `None`
         """
         mt = MediaType._parse(mime_with_params)
-        wctype, wcsub = allow_type_wildcard, allow_subtype_wildcard
         return (
             self
             if (
@@ -95,9 +92,6 @@ class MediaType:
                 and (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
                 # Type match
                 and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
-                # Allow disabling wildcard matches (backwards compatibility with tests)
-                and (wctype or "*" not in (self.type_, mt.type_))
-                and (wcsub or "*" not in (self.subtype, mt.subtype))
             )
             else None
         )

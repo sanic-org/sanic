@@ -237,49 +237,23 @@ def test_wildcard_accept_set_ok():
 
 
 @pytest.mark.parametrize(
-    "value,other,outcome,allow_type,allow_subtype",
+    "value,other,outcome",
     (
-        # ALLOW BOTH
-        ("foo/bar", "foo/bar", True, True, True),
-        ("foo/bar", "foo/*", True, True, True),
-        ("foo/bar", "*/*", True, True, True),
-        ("foo/*", "foo/bar", True, True, True),
-        ("foo/*", "foo/*", True, True, True),
-        ("foo/*", "*/*", True, True, True),
-        ("*/*", "foo/bar", True, True, True),
-        ("*/*", "foo/*", True, True, True),
-        ("*/*", "*/*", True, True, True),
-        # ALLOW TYPE
-        ("foo/bar", "foo/bar", True, True, False),
-        ("foo/bar", "foo/*", False, True, False),
-        ("foo/bar", "*/*", False, True, False),
-        ("foo/*", "foo/bar", False, True, False),
-        ("foo/*", "foo/*", False, True, False),
-        ("foo/*", "*/*", False, True, False),
-        ("*/*", "foo/bar", False, True, False),
-        ("*/*", "foo/*", False, True, False),
-        ("*/*", "*/*", False, True, False),
-        # ALLOW SUBTYPE
-        ("foo/bar", "foo/bar", True, False, True),
-        ("foo/bar", "foo/*", True, False, True),
-        ("foo/bar", "*/*", False, False, True),
-        ("foo/*", "foo/bar", True, False, True),
-        ("foo/*", "foo/*", True, False, True),
-        ("foo/*", "*/*", False, False, True),
-        ("*/*", "foo/bar", False, False, True),
-        ("*/*", "foo/*", False, False, True),
-        ("*/*", "*/*", False, False, True),
+        ("foo/bar", "foo/bar", True),
+        ("foo/bar", "foo/*", True),
+        ("foo/bar", "*/*", True),
+        ("foo/*", "foo/bar", True),
+        ("foo/*", "foo/*", True),
+        ("foo/*", "*/*", True),
+        ("*/*", "foo/bar", True),
+        ("*/*", "foo/*", True),
+        ("*/*", "*/*", True),
+        ("foo/bar", "foo/foo", False),
+        ("foo/bar", "bar/bar", False),
     ),
 )
-def test_accept_matching(value, other, outcome, allow_type, allow_subtype):
-    assert (
-        bool(headers.MediaType._parse(value).match(
-            other,
-            allow_type_wildcard=allow_type,
-            allow_subtype_wildcard=allow_subtype,
-        ))
-        is outcome
-    )
+def test_mediatype_wildcard_matching(value, other, outcome):
+    assert bool(headers.MediaType._parse(value).match(other)) is outcome
 
 
 @pytest.mark.parametrize("value", ("foo/bar", "foo/*"))

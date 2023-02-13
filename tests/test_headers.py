@@ -302,19 +302,27 @@ def test_browser_headers(header, expected):
 def test_accept_misc():
     header = "foo/bar;q=0.0, */plain;param=123, text/plain, text/*, foo/bar;q=0.5"
     a = headers.parse_accept(header)
+    assert repr(a) == "[*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0]"  # noqa: E501
+    assert str(a) == "*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0"  # noqa: E501
     # q=1 types don't match foo/bar but match the two others,
     # text/* comes first and matches */plain because it comes first in the header
     m = a.match("foo/bar", "text/*", "text/plain")
     assert repr(m) == "<text/* matched */plain;param=123>"
     assert m == "text/*"
+    assert m.mime == "text/*"
     assert m.header.mime == "*/plain"
     assert m.header.type_ == "*"
     assert m.header.subtype == "plain"
     assert m.header.q == 1.0
     assert m.header.params == dict(param="123")
+    # Matches object against another Matched object (by mime and header)
+    assert m == a.match("text/*")
+    # Against unsupported type falls back to object id matching
+    assert m != 123
     # Matches the highest q value
     m = a.match("foo/bar")
     assert repr(m) == "<foo/bar matched foo/bar;q=0.5>"
+    assert m == "foo/bar"
     # Matching nothing special case
     m = a.match()
     assert m == ""
@@ -342,3 +350,7 @@ def test_mediatype_matching():
     assert str(exc_info.value) == "Use match() to compare with parameters"
     # Allow the above with MediaType
     assert mt == headers.MediaType._parse("foo/bar;param=different")
+    assert not mt != headers.MediaType._parse("foo/bar;param=different")
+    # NotImplemented falls back to object id comparison
+    assert not mt == 123
+    assert mt != 123

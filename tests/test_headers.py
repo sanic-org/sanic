@@ -224,19 +224,15 @@ def test_empty_accept():
 
 def test_wildcard_accept_set_ok():
     accept = headers.parse_accept("*/*")[0]
-    assert accept.is_wildcard
     assert accept.has_wildcard
 
     accept = headers.parse_accept("foo/*")[0]
-    assert not accept.is_wildcard
     assert accept.has_wildcard
 
     accept = headers.parse_accept("*/bar")[0]
-    assert not accept.is_wildcard
     assert accept.has_wildcard
 
     accept = headers.parse_accept("foo/bar")[0]
-    assert not accept.is_wildcard
     assert not accept.has_wildcard
 
 

@@ -107,11 +107,6 @@ class MediaType:
         """Return True if this media type has a wildcard in it."""
         return "*" in (self.subtype, self.type_)
 
-    @property
-    def is_wildcard(self) -> bool:
-        """Return True if this is the wildcard `*/*`"""
-        return self.type_ == "*" and self.subtype == "*"
-
     @classmethod
     def _parse(cls, mime_with_params: str) -> MediaType:
         mtype = mime_with_params.strip()
@@ -131,17 +126,28 @@ class MediaType:
         return cls(type_.lstrip(), subtype.rstrip(), **params)
 
 
-class Matched(str):
+class Matched:
     """A matching result of a MIME string against a header."""
 
-    def __new__(cls, mime: str, header: Optional[MediaType]):
-        return super().__new__(cls, mime)
-
     def __init__(self, mime: str, header: Optional[MediaType]):
+        self.mime = mime
         self.header = header
 
     def __repr__(self):
         return f"<{self} matched {self.header}>" if self else "<no match>"
+
+    def __str__(self):
+        return self.mime
+
+    def __bool__(self):
+        return self.header is not None
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.mime == other
+        if isinstance(other, Matched):
+            return self.mime == other.mime and self.header == other.header
+        return NotImplemented
 
 
 class AcceptList(list):

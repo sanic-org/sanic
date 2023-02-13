@@ -256,6 +256,15 @@ def test_mediatype_wildcard_matching(value, other, outcome):
     assert bool(headers.MediaType._parse(value).match(other)) is outcome
 
 
+def test_not_accept_wildcard():
+    accept = headers.parse_accept("*/*, foo/*, */bar, foo/bar;q=0.1")
+    assert not accept.match("text/html", "foo/foo", "bar/bar", accept_wildcards=False)
+    # Should ignore wildcards in accept but still matches them from mimes
+    m = accept.match("text/plain", "*/*", accept_wildcards=False)
+    assert m == "*/*"
+    assert m.header == "foo/bar"
+
+
 @pytest.mark.parametrize("value", ("foo/bar", "foo/*"))
 def test_value_not_in_accept(value):
     acceptable = headers.parse_accept(value)

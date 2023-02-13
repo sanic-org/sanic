@@ -156,7 +156,7 @@ class AcceptList(list):
     -  operator 'in' for checking explicit matches (wildcards as literals)
     """
 
-    def match(self, *mimes: str) -> Matched:
+    def match(self, *mimes: str, accept_wildcards=True) -> Matched:
         """Find a media type accepted by the client.
 
         This method can be used to find which of the media types requested by
@@ -176,11 +176,13 @@ class AcceptList(list):
         header entry `MediaType` or `None` is available as the `m` attribute.
 
         @param mimes: Any MIME types to search for in order of preference.
+        @param accept_wildcards: Match Accept entries with wildcards in them.
         @return A match object with the mime string and the MediaType object.
         """
         a = sorted(
             (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
             for j, acc in enumerate(self)
+            if accept_wildcards or not acc.has_wildcard
             for i, mime in enumerate(mimes)
             if acc.match(mime)
         )

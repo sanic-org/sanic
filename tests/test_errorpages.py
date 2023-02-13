@@ -433,6 +433,7 @@ def test_config_fallback_bad_value(app):
         ("", "html", "text/*,*/plain", "The client accepts text/*, using 'html' from FALLBACK_ERROR_FORMAT"),
         ("", "json", "text/*,*/*", "The client accepts */*, using 'json' from FALLBACK_ERROR_FORMAT"),
         ("", "auto", "*/*,application/json;q=0.5", "The client accepts */*, using 'json' from request.accept"),
+        ("", "auto", "*/*", "The client accepts */*, using 'json' from request.content-type"),
         ("", "auto", "text/html,text/plain", "The client accepts text/plain, using 'text' from any"),
         ("", "auto", "text/html,text/plain;q=0.9", "The client accepts text/html, using 'html' from any"),
         ("html", "json", "application/xml", "No format found, the client accepts [application/xml]"),
@@ -452,6 +453,10 @@ def test_guess_mime_logging(caplog, fake_request, route_format, fallback, accept
         del fake_request.headers["accept"]
     else:
         fake_request.headers["accept"] = accept
+
+    # Fake JSON content-type
+    if "request.content-type" in expected:
+        fake_request.headers["content-type"] = "application/json"
 
     # Fake JSON content (DEPRECATED: remove in 24.3)
     if "request.json" in expected:

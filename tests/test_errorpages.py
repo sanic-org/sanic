@@ -454,7 +454,6 @@ def test_guess_mime_logging(caplog, fake_request, route_format, fallback, accept
     else:
         fake_request.headers["accept"] = accept
 
-    # Fake JSON content-type
     if "request.content-type" in expected:
         fake_request.headers["content-type"] = "application/json"
 

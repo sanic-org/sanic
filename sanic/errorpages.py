@@ -448,14 +448,11 @@ def guess_mime(req: Request, fallback: str) -> str:
     formats = {}
     name = ""
     # Route error_format (by magic from handler code if auto, the default)
-    try:
-        if req.route:
-            name = req.route.name
-            f = req.route.extra.error_format
-            if f in MIME_BY_CONFIG:
-                formats[f] = name
-    except AttributeError:
-        pass
+    if req.route:
+        name = req.route.name
+        f = req.route.extra.error_format
+        if f in MIME_BY_CONFIG:
+            formats[f] = name
 
     if not formats and fallback in MIME_BY_CONFIG:
         formats[fallback] = "FALLBACK_ERROR_FORMAT"

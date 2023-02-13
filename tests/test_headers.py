@@ -263,6 +263,7 @@ def test_not_accept_wildcard():
     m = accept.match("text/plain", "*/*", accept_wildcards=False)
     assert m == "*/*"
     assert m.header == "foo/bar"
+    assert not accept.match("text/html", "foo/foo", "bar/bar", accept_wildcards=False)
 
 
 @pytest.mark.parametrize("value", ("foo/bar", "foo/*"))

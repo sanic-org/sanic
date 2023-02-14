@@ -877,7 +877,10 @@ class StartupMixin(metaclass=SanicMeta):
 
             sync_manager.shutdown()
             for sock in socks:
-                sock.shutdown(SHUT_RDWR)
+                try:
+                    sock.shutdown(SHUT_RDWR)
+                except OSError:
+                    ...
                 sock.close()
             socks = []
             trigger_events(main_stop, loop, primary)

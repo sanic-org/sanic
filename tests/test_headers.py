@@ -1,4 +1,3 @@
-from typing import Type
 from unittest.mock import Mock
 
 import pytest
@@ -383,7 +382,10 @@ def test_browser_headers_specific(header, expected):
     (
         "text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8",
         "application/xml;q=0.9, */*;q=0.8, text/html, application/xhtml+xml",
-        "foo/bar;q=0.9, */*;q=0.8, text/html=0.8, text/plain, application/xhtml+xml",
+        (
+            "foo/bar;q=0.9, */*;q=0.8, text/html=0.8, "
+            "text/plain, application/xhtml+xml"
+        ),
     ),
 )
 def test_accept_ordering(raw):
@@ -416,16 +418,17 @@ def test_accept_misc():
         "foo/bar;q=0.0, */plain;param=123, text/plain, text/*, foo/bar;q=0.5"
     )
     a = headers.parse_accept(header)
-    assert (
-        repr(a)
-        == "[*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0]"
+    assert repr(a) == (
+        "[*/plain;param=123, text/plain, text/*,"
+        "foo/bar;q=0.5, foo/bar;q=0.0]"
     )  # noqa: E501
-    assert (
-        str(a)
-        == "*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0"
+    assert str(a) == (
+        "*/plain;param=123, text/plain, text/*, "
+        "foo/bar;q=0.5, foo/bar;q=0.0"
     )  # noqa: E501
     # q=1 types don't match foo/bar but match the two others,
-    # text/* comes first and matches */plain because it comes first in the header
+    # text/* comes first and matches */plain because it
+    # comes first in the header
     m = a.match("foo/bar", "text/*", "text/plain")
     assert repr(m) == "<text/* matched */plain;param=123>"
     assert m == "text/*"

@@ -105,6 +105,7 @@ class Blueprint(BaseSanic):
         "version",
         "version_prefix",
         "websocket_routes",
+        "wrappers",
     )
 
     def __init__(

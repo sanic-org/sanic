@@ -14,6 +14,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
 
     def __init__(self, *args, **kwargs) -> None:
         self._future_middleware: List[FutureMiddleware] = []
+        self.wrappers = []
 
     def _apply_middleware(self, middleware: FutureMiddleware):
         raise NotImplementedError  # noqa
@@ -140,3 +141,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
                 reverse=True,
             )[::-1]
         )
+
+    def wrap(self, handler):
+        self.wrappers.append(handler)
+        return handler

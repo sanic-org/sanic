@@ -267,11 +267,11 @@ class StartupMixin(metaclass=SanicMeta):
         if single_process and legacy:
             raise RuntimeError("Cannot run single process and legacy mode")
 
-        if register_sys_signals is False and not (single_process or legacy):
-            raise RuntimeError(
-                "Cannot run Sanic.serve with register_sys_signals=False. "
-                "Use either Sanic.serve_single or Sanic.serve_legacy."
-            )
+        # if register_sys_signals is False and not (single_process or legacy):
+        #     raise RuntimeError(
+        #         "Cannot run Sanic.serve with register_sys_signals=False. "
+        #         "Use either Sanic.serve_single or Sanic.serve_legacy."
+        #     )
 
         if motd_display:
             self.config.MOTD_DISPLAY.update(motd_display)

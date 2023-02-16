@@ -2,10 +2,10 @@
 
 :root {
     --sanic: #ff0d68;
-    --sanic-blue: #0369a1;
-    --sanic-yellow: #ffde41;
-    --sanic-purple: #7e22ce;
-    --sanic-green: #4d7c0f;
+    --sanic-blue: #0092FF;
+    --sanic-yellow: #FFE900;
+    --sanic-purple: #833FE3;
+    --sanic-green: #37ae6f;
     --sanic-background: #f1f5f9;
     --sanic-text: #1f2937;
     --sanic-tab-background: #fff;
@@ -18,13 +18,9 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --sanic: #ff0d68;
-        --sanic-blue: #f08d49;
-        --sanic-yellow: #ffde41;
-        --sanic-purple: #cc99cd;
-        --sanic-green: #7ec699;
-        --sanic-background: #2d2d2d;
-        /*--sanic-background: #111;*/
+        --sanic-purple: #D246DE;
+        --sanic-green: #16DB93;
+        --sanic-background: #111;
         --sanic-text: #e7e7e7;
         --sanic-tab-background: #484848;
         --sanic-tab-text: #e1e1e1;
@@ -49,12 +45,12 @@ body {
     line-height: 125%;
 }
 
-body > * {
+body>* {
     padding: 1rem 2vw;
 }
 
 @media (max-width: 1000px) {
-    body > * {
+    body>* {
         padding: 0.5rem 1.5vw;
     }
 
@@ -65,8 +61,10 @@ body > * {
 }
 
 main {
-    min-height: 70vh; /* Make sure the footer is closer to bottom */
-    padding: 1rem 2.5rem; /* Generous padding for readability */
+    min-height: 70vh;
+    /* Make sure the footer is closer to bottom */
+    padding: 1rem 2.5rem;
+    /* Generous padding for readability */
 }
 
 .smalltext {

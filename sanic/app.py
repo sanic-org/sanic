@@ -157,6 +157,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "strict_slashes",
         "websocket_enabled",
         "websocket_tasks",
+        "wrappers",
     )
 
     _app_registry: Dict[str, "Sanic"] = {}

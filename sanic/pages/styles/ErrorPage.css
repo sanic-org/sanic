@@ -22,15 +22,15 @@ summary {
 
 .tracerite {
     --tracerite-var: var(--sanic-blue);
-    --tracerite-val: var(--sanic-green);
-    --tracerite-type: var(--sanic-purple);
+    --tracerite-val: var(--sanic-text);
+    --tracerite-type: var(--sanic-green);
     --tracerite-exception: var(--sanic);
     --tracerite-highlight: var(--sanic-yellow);
     --tracerite-tab: var(--sanic-tab-background);
     --tracerite-tab-text: var(--sanic-tab-text);
 }
 
-.tracerite > h3 {
+.tracerite>h3 {
     margin: 0.5rem 0 !important;
 }
 
@@ -46,6 +46,7 @@ summary {
 .tracerite .traceback-labels {
     padding-top: 5px;
 }
+
 .tracerite .traceback-labels button:hover {
     filter: contrast(150%) brightness(120%) drop-shadow(0 -0 2px var(--sanic-tab-shadow));
 }
@@ -88,5 +89,17 @@ dl.key-value-table dt {
 }
 
 dl.key-value-table dd {
-    word-break: break-all; /* Better breaking for cookies header and such */
+    word-break: break-all;
+    /* Better breaking for cookies header and such */
+}
+
+.tracerite .codeline {
+    font-family:
+        "Fira Code",
+        "Source Code Pro",
+        Menlo,
+        Monaco,
+        Consolas,
+        Lucida Console,
+        monospace;
 }

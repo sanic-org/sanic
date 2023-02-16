@@ -419,7 +419,7 @@ def test_accept_misc():
     )
     a = headers.parse_accept(header)
     assert repr(a) == (
-        "[*/plain;param=123, text/plain, text/*,"
+        "[*/plain;param=123, text/plain, text/*, "
         "foo/bar;q=0.5, foo/bar;q=0.0]"
     )  # noqa: E501
     assert str(a) == (

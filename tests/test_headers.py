@@ -277,12 +277,6 @@ def test_media_type_matching():
     )
     assert headers.MediaType("foo", "bar").match("foo/bar")
 
-    # assert not headers.MediaType("foo").match(headers.MediaType("*"))
-    # assert not headers.MediaType("foo").match("*")
-
-    # assert not headers.MediaType("foo").match(headers.MediaType("bar"))
-    # assert not headers.MediaType("foo").match("bar")
-
 
 @pytest.mark.parametrize(
     "value,other,outcome",

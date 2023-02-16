@@ -506,7 +506,6 @@ def exception_response(
             else:
                 renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
 
-            print(acceptable, renderer)
             # Lastly, if there is an Accept header, make sure
             # our choice is okay
             if acceptable:

@@ -99,8 +99,9 @@ class MediaType:
         return (
             self
             if (
+                mt
                 # All parameters given in the other media type must match
-                all(self.params.get(k) == v for k, v in mt.params.items())
+                and all(self.params.get(k) == v for k, v in mt.params.items())
                 # Subtype match
                 and self.subtype.eq(mt.subtype)
                 # Type match
@@ -229,7 +230,7 @@ class Accept:
             return self.header == other.header, other
 
         raise TypeError(
-            "Comparism not supported between unequal "
+            "Comparison not supported between unequal "
             f"mime types of '{self.mime}' and '{other}'"
         )
 

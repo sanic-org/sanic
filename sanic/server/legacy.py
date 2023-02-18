@@ -94,7 +94,6 @@ def watchdog(sleep_interval, reload_dirs):
 
     try:
         while True:
-
             changed = set()
             for filename in itertools.chain(
                 _iter_module_files(),

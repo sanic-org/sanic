@@ -6,8 +6,6 @@ import os
 import re
 import sys
 
-from distutils.util import strtobool
-
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
@@ -38,6 +36,27 @@ def open_local(paths, mode="r", encoding="utf8"):
     return codecs.open(path, mode, encoding)
 
 
+def str_to_bool(val: str) -> bool:
+    val = val.lower()
+    if val in {
+        "y",
+        "yes",
+        "yep",
+        "yup",
+        "t",
+        "true",
+        "on",
+        "enable",
+        "enabled",
+        "1",
+    }:
+        return True
+    elif val in {"n", "no", "f", "false", "off", "disable", "disabled", "0"}:
+        return False
+    else:
+        raise ValueError(f"Invalid truth value {val}")
+
+
 with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
         version = re.findall(
@@ -62,7 +81,7 @@ setup_kwargs = {
     ),
     "long_description": long_description,
     "packages": find_packages(exclude=("tests", "tests.*")),
-    "package_data": {"sanic": ["py.typed"]},
+    "package_data": {"sanic": ["py.typed", "pages/styles/*"]},
     "platforms": "any",
     "python_requires": ">=3.7",
     "classifiers": [
@@ -73,6 +92,7 @@ setup_kwargs = {
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }
@@ -91,6 +111,7 @@ requirements = [
     "aiofiles>=0.6.0",
     "websockets>=10.0",
     "multidict>=5.0,<7.0",
+    "html5tagger>=1.2.1",
 ]
 
 tests_require = [
@@ -131,13 +152,13 @@ dev_require = tests_require + [
 
 all_require = list(set(dev_require + docs_require))
 
-if strtobool(os.environ.get("SANIC_NO_UJSON", "no")):
+if str_to_bool(os.environ.get("SANIC_NO_UJSON", "no")):
     print("Installing without uJSON")
     requirements.remove(ujson)
     tests_require.remove(types_ujson)
 
 # 'nt' means windows OS
-if strtobool(os.environ.get("SANIC_NO_UVLOOP", "no")):
+if str_to_bool(os.environ.get("SANIC_NO_UVLOOP", "no")):
     print("Installing without uvLoop")
     requirements.remove(uvloop)
 

@@ -514,7 +514,6 @@ def test_file_stream_head_response(
 def test_file_stream_response_range(
     app: Sanic, file_name, static_file_directory, size, start, end
 ):
-
     Range = namedtuple("Range", ["size", "start", "end", "total"])
     total = len(get_file_content(static_file_directory, file_name))
     range = Range(size=size, start=start, end=end, total=total)

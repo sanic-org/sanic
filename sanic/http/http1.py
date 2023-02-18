@@ -16,6 +16,7 @@ from sanic.exceptions import (
     PayloadTooLarge,
     RequestCancelled,
     ServerError,
+    ServiceUnavailable,
 )
 from sanic.headers import format_http1_response
 from sanic.helpers import has_message_body
@@ -70,7 +71,6 @@ class Http(Stream, metaclass=TouchUpMeta):
         "request_body",
         "request_bytes",
         "request_bytes_left",
-        "request_max_size",
         "response",
         "response_func",
         "response_size",
@@ -428,8 +428,11 @@ class Http(Stream, metaclass=TouchUpMeta):
             if self.request is None:
                 self.create_empty_request()
 
+            request_middleware = not isinstance(exception, ServiceUnavailable)
             try:
-                await app.handle_exception(self.request, exception)
+                await app.handle_exception(
+                    self.request, exception, request_middleware
+                )
             except Exception as e:
                 await app.handle_exception(self.request, e, False)
 

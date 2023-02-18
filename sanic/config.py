@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 
+from abc import ABCMeta
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
@@ -46,6 +47,9 @@ DEFAULT_CONFIG = {
     "INSPECTOR": False,
     "INSPECTOR_HOST": "localhost",
     "INSPECTOR_PORT": 6457,
+    "INSPECTOR_TLS_KEY": _default,
+    "INSPECTOR_TLS_CERT": _default,
+    "INSPECTOR_API_KEY": "",
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
     "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
@@ -72,7 +76,7 @@ DEFAULT_CONFIG = {
 }
 
 
-class DescriptorMeta(type):
+class DescriptorMeta(ABCMeta):
     def __init__(cls, *_):
         cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}
 
@@ -93,6 +97,9 @@ class Config(dict, metaclass=DescriptorMeta):
     INSPECTOR: bool
     INSPECTOR_HOST: str
     INSPECTOR_PORT: int
+    INSPECTOR_TLS_KEY: Union[Path, str, Default]
+    INSPECTOR_TLS_CERT: Union[Path, str, Default]
+    INSPECTOR_API_KEY: str
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
     LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]
@@ -120,7 +127,9 @@ class Config(dict, metaclass=DescriptorMeta):
 
     def __init__(
         self,
-        defaults: Dict[str, Union[str, bool, int, float, None]] = None,
+        defaults: Optional[
+            Dict[str, Union[str, bool, int, float, None]]
+        ] = None,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
         *,

@@ -1,5 +1,7 @@
 import asyncio
+import inspect
 import logging
+import os
 import random
 import re
 import string
@@ -8,8 +10,8 @@ import uuid
 
 from contextlib import suppress
 from logging import LogRecord
-from typing import List, Tuple
-from unittest.mock import MagicMock
+from typing import Any, Dict, List, Tuple
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -54,11 +56,10 @@ TYPE_TO_GENERATOR_MAP = {
     "uuid": lambda: str(uuid.uuid1()),
 }
 
-CACHE = {}
+CACHE: Dict[str, Any] = {}
 
 
 class RouteStringGenerator:
-
     ROUTE_COUNT_PER_DEPTH = 100
     HTTP_METHODS = HTTP_METHODS
     ROUTE_PARAM_TYPES = ["str", "int", "float", "alpha", "uuid"]
@@ -147,6 +148,7 @@ def app(request):
         for target, method_name in TouchUp._registry:
             CACHE[method_name] = getattr(target, method_name)
     app = Sanic(slugify.sub("-", request.node.name))
+
     yield app
     for target, method_name in TouchUp._registry:
         setattr(target, method_name, CACHE[method_name])
@@ -220,3 +222,23 @@ def sanic_ext(ext_instance):  # noqa
     yield sanic_ext
     with suppress(KeyError):
         del sys.modules["sanic_ext"]
+
+
+@pytest.fixture
+def urlopen():
+    urlopen = Mock()
+    urlopen.return_value = urlopen
+    urlopen.__enter__ = Mock(return_value=urlopen)
+    urlopen.__exit__ = Mock()
+    urlopen.read = Mock()
+    with patch("sanic.cli.inspector_client.urlopen", urlopen):
+        yield urlopen
+
+
+@pytest.fixture(scope="module")
+def static_file_directory():
+    """The static directory to serve"""
+    current_file = inspect.getfile(inspect.currentframe())
+    current_directory = os.path.dirname(os.path.abspath(current_file))
+    static_directory = os.path.join(current_directory, "static")
+    return static_directory

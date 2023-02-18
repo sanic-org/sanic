@@ -61,7 +61,7 @@ from sanic.exceptions import (
     URLBuildError,
 )
 from sanic.handlers import ErrorHandler
-from sanic.helpers import Default
+from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import (
     LOGGING_CONFIG_DEFAULTS,
@@ -69,8 +69,10 @@ from sanic.log import (
     error_logger,
     logger,
 )
+from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
+from sanic.mixins.static import StaticHandleMixin
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -78,7 +80,6 @@ from sanic.models.futures import (
     FutureRegistry,
     FutureRoute,
     FutureSignal,
-    FutureStatic,
 )
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
@@ -105,7 +106,7 @@ if OS_IS_WINDOWS:  # no cov
     enable_windows_color_support()
 
 
-class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
+class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     """
     The main application instance
     """
@@ -140,6 +141,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "configure_logging",
         "ctx",
         "error_handler",
+        "inspector_class",
         "go_fast",
         "listeners",
         "multiplexer",
@@ -162,7 +164,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
     def __init__(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         config: Optional[Config] = None,
         ctx: Optional[Any] = None,
         router: Optional[Router] = None,
@@ -176,6 +178,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         dumps: Optional[Callable[..., AnyStr]] = None,
         loads: Optional[Callable[..., Any]] = None,
         inspector: bool = False,
+        inspector_class: Optional[Type[Inspector]] = None,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -211,6 +214,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
+        self.inspector_class: Type[Inspector] = inspector_class or Inspector
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[MiddlewareType]] = {}
         self.named_response_middleware: Dict[str, Deque[MiddlewareType]] = {}
@@ -291,8 +295,12 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         return listener
 
     def register_middleware(
-        self, middleware: MiddlewareType, attach_to: str = "request"
-    ) -> MiddlewareType:
+        self,
+        middleware: Union[MiddlewareType, Middleware],
+        attach_to: str = "request",
+        *,
+        priority: Union[Default, int] = _default,
+    ) -> Union[MiddlewareType, Middleware]:
         """
         Register an application level middleware that will be attached
         to all the API URLs registered under this application.
@@ -308,19 +316,37 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             **response** - Invoke before the response is returned back
         :return: decorated method
         """
-        if attach_to == "request":
+        retval = middleware
+        location = MiddlewareLocation[attach_to.upper()]
+
+        if not isinstance(middleware, Middleware):
+            middleware = Middleware(
+                middleware,
+                location=location,
+                priority=priority if isinstance(priority, int) else 0,
+            )
+        elif middleware.priority != priority and isinstance(priority, int):
+            middleware = Middleware(
+                middleware.func,
+                location=middleware.location,
+                priority=priority,
+            )
+
+        if location is MiddlewareLocation.REQUEST:
             if middleware not in self.request_middleware:
                 self.request_middleware.append(middleware)
-        if attach_to == "response":
+        if location is MiddlewareLocation.RESPONSE:
             if middleware not in self.response_middleware:
                 self.response_middleware.appendleft(middleware)
-        return middleware
+        return retval
 
     def register_named_middleware(
         self,
         middleware: MiddlewareType,
         route_names: Iterable[str],
         attach_to: str = "request",
+        *,
+        priority: Union[Default, int] = _default,
     ):
         """
         Method for attaching middleware to specific routes. This is mainly an
@@ -334,19 +360,35 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             defaults to "request"
         :type attach_to: str, optional
         """
-        if attach_to == "request":
+        retval = middleware
+        location = MiddlewareLocation[attach_to.upper()]
+
+        if not isinstance(middleware, Middleware):
+            middleware = Middleware(
+                middleware,
+                location=location,
+                priority=priority if isinstance(priority, int) else 0,
+            )
+        elif middleware.priority != priority and isinstance(priority, int):
+            middleware = Middleware(
+                middleware.func,
+                location=middleware.location,
+                priority=priority,
+            )
+
+        if location is MiddlewareLocation.REQUEST:
             for _rn in route_names:
                 if _rn not in self.named_request_middleware:
                     self.named_request_middleware[_rn] = deque()
                 if middleware not in self.named_request_middleware[_rn]:
                     self.named_request_middleware[_rn].append(middleware)
-        if attach_to == "response":
+        if location is MiddlewareLocation.RESPONSE:
             for _rn in route_names:
                 if _rn not in self.named_response_middleware:
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
                     self.named_response_middleware[_rn].appendleft(middleware)
-        return middleware
+        return retval
 
     def _apply_exception_handler(
         self,
@@ -398,9 +440,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             r.ctx.__dict__.update(ctx)
 
         return routes
-
-    def _apply_static(self, static: FutureStatic) -> Route:
-        return self._register_static(static)
 
     def _apply_middleware(
         self,
@@ -848,11 +887,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             Union[
                 BaseHTTPResponse,
                 Coroutine[Any, Any, Optional[BaseHTTPResponse]],
+                ResponseStream,
             ]
         ] = None
         run_middleware = True
         try:
-
             await self.dispatch(
                 "http.routing.before",
                 inline=True,
@@ -884,7 +923,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 and request.stream.request_body
                 and not route.extra.ignore_body
             ):
-
                 if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
@@ -958,7 +996,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
-                resp = await response(request)  # type: ignore
+                resp = await response(request)
                 await self.dispatch(
                     "http.lifecycle.response",
                     inline=True,
@@ -967,7 +1005,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                         "response": resp,
                     },
                 )
-                await response.eof()  # type: ignore
+                await response.eof()
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
@@ -1531,6 +1569,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         self.state.is_started = True
 
+    def ack(self):
         if hasattr(self, "multiplexer"):
             self.multiplexer.ack()
 

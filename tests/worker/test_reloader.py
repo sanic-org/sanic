@@ -1,13 +1,19 @@
+import re
 import signal
+import threading
 
 from asyncio import Event
+from logging import DEBUG
 from pathlib import Path
+from time import sleep
 from unittest.mock import Mock
 
 import pytest
 
 from sanic.app import Sanic
+from sanic.worker.constants import ProcessState, RestartOrder
 from sanic.worker.loader import AppLoader
+from sanic.worker.process import WorkerProcess
 from sanic.worker.reloader import Reloader
 
 
@@ -65,6 +71,88 @@ def test_iter_files():
     len_total_files = len(list(reloader.files()))
     assert len_static_files > 0
     assert len_total_files == len_python_files + len_static_files
+
+
+@pytest.mark.parametrize(
+    "order,expected",
+    (
+        (
+            RestartOrder.SHUTDOWN_FIRST,
+            [
+                "Restarting a process",
+                "Begin restart termination",
+                "Starting a process",
+            ],
+        ),
+        (
+            RestartOrder.STARTUP_FIRST,
+            [
+                "Restarting a process",
+                "Starting a process",
+                "Begin restart termination",
+                "Waiting for process to be acked",
+                "Process acked. Terminating",
+            ],
+        ),
+    ),
+)
+def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
+    current_process = Mock()
+    worker_process = WorkerProcess(
+        lambda **_: current_process,
+        "Test",
+        lambda **_: ...,
+        {},
+        {},
+    )
+
+    def start(self):
+        worker_process.set_state(ProcessState.ACKED)
+        self._target()
+
+    orig = threading.Thread.start
+    monkeypatch.setattr(threading.Thread, "start", start)
+
+    with caplog.at_level(DEBUG):
+        worker_process.restart(restart_order=order)
+
+    ansi = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+    def clean(msg: str):
+        msg, _ = ansi.sub("", msg).split(":", 1)
+        return msg
+
+    debug = [clean(record[2]) for record in caplog.record_tuples]
+    assert debug == expected
+    current_process.start.assert_called_once()
+    current_process.terminate.assert_called_once()
+    monkeypatch.setattr(threading.Thread, "start", orig)
+
+
+def test_reload_delayed(monkeypatch):
+    WorkerProcess.THRESHOLD = 1
+
+    current_process = Mock()
+    worker_process = WorkerProcess(
+        lambda **_: current_process,
+        "Test",
+        lambda **_: ...,
+        {},
+        {},
+    )
+
+    def start(self):
+        sleep(0.2)
+        self._target()
+
+    orig = threading.Thread.start
+    monkeypatch.setattr(threading.Thread, "start", start)
+
+    message = "Worker Test failed to come ack within 0.1 seconds"
+    with pytest.raises(TimeoutError, match=message):
+        worker_process.restart(restart_order=RestartOrder.STARTUP_FIRST)
+
+    monkeypatch.setattr(threading.Thread, "start", orig)
 
 
 def test_reloader_triggers_start_stop_listeners(

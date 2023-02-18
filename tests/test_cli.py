@@ -4,6 +4,7 @@ import sys
 
 from pathlib import Path
 from typing import List, Optional, Tuple
+from unittest.mock import patch
 
 import pytest
 
@@ -11,6 +12,7 @@ from sanic_routing import __version__ as __routing_version__
 
 from sanic import __version__
 from sanic.__main__ import main
+from sanic.cli.inspector_client import InspectorClient
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -117,7 +119,13 @@ def test_error_with_path_as_instance_without_simple_arg(caplog):
     ),
 )
 def test_tls_options(cmd: Tuple[str, ...], caplog):
-    command = ["fake.server.app", *cmd, "--port=9999", "--debug"]
+    command = [
+        "fake.server.app",
+        *cmd,
+        "--port=9999",
+        "--debug",
+        "--single-process",
+    ]
     lines = capture(command, caplog)
     assert "Goin' Fast @ https://127.0.0.1:9999" in lines
 
@@ -286,3 +294,50 @@ def test_noisy_exceptions(cmd: str, expected: bool, caplog):
     info = read_app_info(lines)
 
     assert info["noisy_exceptions"] is expected
+
+
+def test_inspector_inspect(urlopen, caplog, capsys):
+    urlopen.read.return_value = json.dumps(
+        {
+            "result": {
+                "info": {
+                    "packages": ["foo"],
+                },
+                "extra": {
+                    "more": "data",
+                },
+                "workers": {"Worker-Name": {"some": "state"}},
+            }
+        }
+    ).encode()
+    with patch("sys.argv", ["sanic", "inspect"]):
+        capture(["inspect"], caplog)
+    captured = capsys.readouterr()
+    assert "Inspecting @ http://localhost:6457" in captured.out
+    assert "Worker-Name" in captured.out
+    assert captured.err == ""
+
+
+@pytest.mark.parametrize(
+    "command,params",
+    (
+        (["reload"], {"zero_downtime": False}),
+        (["reload", "--zero-downtime"], {"zero_downtime": True}),
+        (["shutdown"], {}),
+        (["scale", "9"], {"replicas": 9}),
+        (["foo", "--bar=something"], {"bar": "something"}),
+        (["foo", "--bar"], {"bar": True}),
+        (["foo", "--no-bar"], {"bar": False}),
+        (["foo", "positional"], {"args": ["positional"]}),
+        (
+            ["foo", "positional", "--bar=something"],
+            {"args": ["positional"], "bar": "something"},
+        ),
+    ),
+)
+def test_inspector_command(command, params):
+    with patch.object(InspectorClient, "request") as client:
+        with patch("sys.argv", ["sanic", "inspect", *command]):
+            main()
+
+    client.assert_called_once_with(command[0], **params)

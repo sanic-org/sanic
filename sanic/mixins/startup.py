@@ -19,7 +19,7 @@ from importlib import import_module
 from multiprocessing import Manager, Pipe, get_context
 from multiprocessing.context import BaseContext
 from pathlib import Path
-from socket import socket
+from socket import SHUT_RDWR, socket
 from ssl import SSLContext
 from typing import (
     TYPE_CHECKING,
@@ -27,6 +27,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    Mapping,
     Optional,
     Set,
     Tuple,
@@ -40,8 +41,9 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
-from sanic.compat import OS_IS_WINDOWS, is_atty
-from sanic.helpers import Default
+from sanic.compat import OS_IS_WINDOWS, StartMethod, is_atty
+from sanic.exceptions import ServerKilled
+from sanic.helpers import Default, _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
 from sanic.http.tls.context import SanicSSLContext
@@ -57,7 +59,6 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve, serve_multiple, serve_single
 from sanic.server.socket import configure_socket, remove_unix_socket
-from sanic.worker.inspector import Inspector
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
@@ -87,6 +88,7 @@ class StartupMixin(metaclass=SanicMeta):
     state: ApplicationState
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
+    start_method: StartMethod = _default
 
     def setup_loop(self):
         if not self.asgi:
@@ -124,7 +126,7 @@ class StartupMixin(metaclass=SanicMeta):
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
         reload_dir: Optional[Union[List[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
         motd: bool = True,
@@ -223,7 +225,7 @@ class StartupMixin(metaclass=SanicMeta):
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
         reload_dir: Optional[Union[List[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
         motd: bool = True,
@@ -353,12 +355,12 @@ class StartupMixin(metaclass=SanicMeta):
         debug: bool = False,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
-        protocol: Type[Protocol] = None,
+        protocol: Optional[Type[Protocol]] = None,
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         return_asyncio_server: bool = False,
-        asyncio_server_kwargs: Dict[str, Any] = None,
+        asyncio_server_kwargs: Optional[Dict[str, Any]] = None,
         noisy_exceptions: Optional[bool] = None,
     ) -> Optional[AsyncioServer]:
         """
@@ -479,7 +481,7 @@ class StartupMixin(metaclass=SanicMeta):
         sock: Optional[socket] = None,
         unix: Optional[str] = None,
         workers: int = 1,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
         protocol: Type[Protocol] = HttpProtocol,
         backlog: int = 100,
         register_sys_signals: bool = True,
@@ -691,12 +693,17 @@ class StartupMixin(metaclass=SanicMeta):
         return any(app.state.auto_reload for app in cls._app_registry.values())
 
     @classmethod
-    def _get_context(cls) -> BaseContext:
-        method = (
-            "spawn"
-            if "linux" not in sys.platform or cls.should_auto_reload()
-            else "fork"
+    def _get_startup_method(cls) -> str:
+        return (
+            cls.start_method
+            if not isinstance(cls.start_method, Default)
+            else "spawn"
         )
+
+    @classmethod
+    def _get_context(cls) -> BaseContext:
+        method = cls._get_startup_method()
+        logger.debug("Creating multiprocessing context using '%s'", method)
         return get_context(method)
 
     @classmethod
@@ -740,6 +747,7 @@ class StartupMixin(metaclass=SanicMeta):
         socks = []
         sync_manager = Manager()
         setup_ext(primary)
+        exit_code = 0
         try:
             primary_server_info.settings.pop("main_start", None)
             primary_server_info.settings.pop("main_stop", None)
@@ -761,7 +769,7 @@ class StartupMixin(metaclass=SanicMeta):
             ]
             primary_server_info.settings["run_multiple"] = True
             monitor_sub, monitor_pub = Pipe(True)
-            worker_state: Dict[str, Any] = sync_manager.dict()
+            worker_state: Mapping[str, Any] = sync_manager.dict()
             kwargs: Dict[str, Any] = {
                 **primary_server_info.settings,
                 "monitor_publisher": monitor_pub,
@@ -817,7 +825,7 @@ class StartupMixin(metaclass=SanicMeta):
                 reload_dirs: Set[Path] = primary.state.reload_dirs.union(
                     *(app.state.reload_dirs for app in apps)
                 )
-                reloader = Reloader(monitor_pub, 1.0, reload_dirs, app_loader)
+                reloader = Reloader(monitor_pub, 0, reload_dirs, app_loader)
                 manager.manage("Reloader", reloader, {}, transient=False)
 
             inspector = None
@@ -833,12 +841,15 @@ class StartupMixin(metaclass=SanicMeta):
                     "packages": [sanic_version, *packages],
                     "extra": extra,
                 }
-                inspector = Inspector(
+                inspector = primary.inspector_class(
                     monitor_pub,
                     app_info,
                     worker_state,
                     primary.config.INSPECTOR_HOST,
                     primary.config.INSPECTOR_PORT,
+                    primary.config.INSPECTOR_API_KEY,
+                    primary.config.INSPECTOR_TLS_KEY,
+                    primary.config.INSPECTOR_TLS_CERT,
                 )
                 manager.manage("Inspector", inspector, {}, transient=False)
 
@@ -849,6 +860,8 @@ class StartupMixin(metaclass=SanicMeta):
             trigger_events(ready, loop, primary)
 
             manager.run()
+        except ServerKilled:
+            exit_code = 1
         except BaseException:
             kwargs = primary_server_info.settings
             error_logger.exception(
@@ -864,6 +877,10 @@ class StartupMixin(metaclass=SanicMeta):
 
             sync_manager.shutdown()
             for sock in socks:
+                try:
+                    sock.shutdown(SHUT_RDWR)
+                except OSError:
+                    ...
                 sock.close()
             socks = []
             trigger_events(main_stop, loop, primary)
@@ -873,6 +890,8 @@ class StartupMixin(metaclass=SanicMeta):
             unix = kwargs.get("unix")
             if unix:
                 remove_unix_socket(unix)
+        if exit_code:
+            os._exit(exit_code)
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:
@@ -1093,7 +1112,6 @@ class StartupMixin(metaclass=SanicMeta):
         app: StartupMixin,
         server_info: ApplicationServerInfo,
     ) -> None:  # no cov
-
         try:
             # We should never get to this point without a server
             # This is primarily to keep mypy happy

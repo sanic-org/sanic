@@ -1,6 +1,6 @@
 import re
 
-from typing import Any
+from typing import Any, Optional
 
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import SanicException
@@ -9,6 +9,7 @@ from sanic.mixins.listeners import ListenerMixin
 from sanic.mixins.middleware import MiddlewareMixin
 from sanic.mixins.routes import RouteMixin
 from sanic.mixins.signals import SignalMixin
+from sanic.mixins.static import StaticMixin
 
 
 VALID_NAME = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_\-]*$")
@@ -16,6 +17,7 @@ VALID_NAME = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_\-]*$")
 
 class BaseSanic(
     RouteMixin,
+    StaticMixin,
     MiddlewareMixin,
     ListenerMixin,
     ExceptionMixin,
@@ -24,7 +26,9 @@ class BaseSanic(
 ):
     __slots__ = ("name",)
 
-    def __init__(self, name: str = None, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, name: Optional[str] = None, *args: Any, **kwargs: Any
+    ) -> None:
         class_name = self.__class__.__name__
 
         if name is None:

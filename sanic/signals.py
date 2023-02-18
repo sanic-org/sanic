@@ -154,9 +154,7 @@ class SignalRouter(BaseRouter):
         try:
             for signal in signals:
                 params.pop("__trigger__", None)
-                requirements = getattr(
-                    signal.handler, "__requirements__", None
-                )
+                requirements = signal.extra.requirements
                 if (
                     (condition is None and signal.ctx.exclusive is False)
                     or (condition is None and not requirements)
@@ -219,8 +217,13 @@ class SignalRouter(BaseRouter):
         if not trigger:
             event = ".".join([*parts[:2], "<__trigger__>"])
 
-        handler.__requirements__ = condition  # type: ignore
-        handler.__trigger__ = trigger  # type: ignore
+        try:
+            # Attaching __requirements__ and __trigger__ to the handler
+            # is deprecated and will be removed in v23.6.
+            handler.__requirements__ = condition  # type: ignore
+            handler.__trigger__ = trigger  # type: ignore
+        except AttributeError:
+            pass
 
         signal = super().add(
             event,
@@ -232,6 +235,7 @@ class SignalRouter(BaseRouter):
         signal.ctx.exclusive = exclusive
         signal.ctx.trigger = trigger
         signal.ctx.definition = event_definition
+        signal.extra.requirements = condition
 
         return cast(Signal, signal)
 

@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - {python-version: "3.8", tox-env: "docs"}
+          - {python-version: "3.10", tox-env: "docs"}
       fail-fast: false
 
 

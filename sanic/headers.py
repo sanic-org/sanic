@@ -231,7 +231,7 @@ class AcceptList(list):
         @return A match object with the mime string and the MediaType object.
         """
         a = sorted(
-            (acc.q, i, j, mime, acc)
+            (-acc.q, i, j, mime, acc)
             for j, acc in enumerate(self)
             if accept_wildcards or not acc.has_wildcard
             for i, mime in enumerate(mimes)

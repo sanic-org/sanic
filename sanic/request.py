@@ -47,7 +47,7 @@ from sanic.constants import (
 )
 from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
-    AcceptContainer,
+    AcceptList,
     Options,
     parse_accept,
     parse_content_header,
@@ -167,7 +167,7 @@ class Request:
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
-        self.parsed_accept: Optional[AcceptContainer] = None
+        self.parsed_accept: Optional[AcceptList] = None
         self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
         self.parsed_form: Optional[RequestParameters] = None
@@ -499,10 +499,10 @@ class Request:
         return self.parsed_json
 
     @property
-    def accept(self) -> AcceptContainer:
+    def accept(self) -> AcceptList:
         """
         :return: The ``Accept`` header parsed
-        :rtype: AcceptContainer
+        :rtype: AcceptList
         """
         if self.parsed_accept is None:
             accept_header = self.headers.getone("accept", "")

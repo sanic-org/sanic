@@ -249,7 +249,7 @@ def test_wildcard_accept_set_ok():
 
 
 def test_accept_parsed_against_str():
-    accept = headers.Accept.parse("foo/bar")
+    accept = headers.Matched.parse("foo/bar")
     assert accept > "foo/bar; q=0.1"
 
 
@@ -265,27 +265,27 @@ def test_media_type_matching():
     (
         # ALLOW BOTH
         ("foo/bar", "foo/bar", True),
-        ("foo/bar", headers.Accept.parse("foo/bar"), True),
+        ("foo/bar", headers.Matched.parse("foo/bar"), True),
         ("foo/bar", "foo/*", True),
-        ("foo/bar", headers.Accept.parse("foo/*"), True),
+        ("foo/bar", headers.Matched.parse("foo/*"), True),
         ("foo/bar", "*/*", True),
-        ("foo/bar", headers.Accept.parse("*/*"), True),
+        ("foo/bar", headers.Matched.parse("*/*"), True),
         ("foo/*", "foo/bar", True),
-        ("foo/*", headers.Accept.parse("foo/bar"), True),
+        ("foo/*", headers.Matched.parse("foo/bar"), True),
         ("foo/*", "foo/*", True),
-        ("foo/*", headers.Accept.parse("foo/*"), True),
+        ("foo/*", headers.Matched.parse("foo/*"), True),
         ("foo/*", "*/*", True),
-        ("foo/*", headers.Accept.parse("*/*"), True),
+        ("foo/*", headers.Matched.parse("*/*"), True),
         ("*/*", "foo/bar", True),
-        ("*/*", headers.Accept.parse("foo/bar"), True),
+        ("*/*", headers.Matched.parse("foo/bar"), True),
         ("*/*", "foo/*", True),
-        ("*/*", headers.Accept.parse("foo/*"), True),
+        ("*/*", headers.Matched.parse("foo/*"), True),
         ("*/*", "*/*", True),
-        ("*/*", headers.Accept.parse("*/*"), True),
+        ("*/*", headers.Matched.parse("*/*"), True),
     ),
 )
 def test_accept_matching(value, other, outcome):
-    assert bool(headers.Accept.parse(value).match(other)) is outcome
+    assert bool(headers.Matched.parse(value).match(other)) is outcome
 
 
 @pytest.mark.parametrize("value", ("foo/bar", "foo/*", "*/*"))

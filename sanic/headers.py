@@ -7,7 +7,6 @@ from urllib.parse import unquote
 
 from sanic.exceptions import InvalidHeader
 from sanic.helpers import STATUS_CODES
-from sanic.log import deprecation
 
 
 # TODO:
@@ -49,10 +48,10 @@ class MediaType:
         self.params = params
         self.mime = f"{type_}/{subtype}"
         self.key = (
-            self.q,
-            len(self.params),
-            self.subtype != "*",
-            self.type != "*",
+            -1 * self.q,
+            -1 * len(self.params),
+            self.subtype == "*",
+            self.type == "*",
         )
 
     def __repr__(self):
@@ -135,7 +134,7 @@ class MediaType:
         return cls(type_.lstrip(), subtype.rstrip(), **params)
 
 
-class Accept:
+class Matched:
     """A matching result of a MIME string against a header."""
 
     def __init__(self, mime: str, header: Optional[MediaType]):
@@ -160,72 +159,20 @@ class Accept:
         return bool(
             comp
             and (
-                (
-                    self.header
-                    and other_accept.header
-                    and self.header.q == other_accept.header.q
-                )
+                (self.header and other_accept.header)
                 or (not self.header and not other_accept.header)
             )
         )
 
-    def __ne__(self, other: Any) -> bool:
-        try:
-            comp, other_accept = self._compare(other)
-        except TypeError:
-            return True
-        return not (
-            comp
-            and self.header
-            and other_accept.header
-            and self.header.q == other_accept.header.q
-        )
-
-    def __lt__(self, other: Any) -> bool:
-        comp, other_accept = self._compare(other)
-        return bool(
-            comp
-            and self.header
-            and other_accept.header
-            and self.header.q < other_accept.header.q
-        )
-
-    def __le__(self, other: Any) -> bool:
-        comp, other_accept = self._compare(other)
-        return bool(
-            comp
-            and self.header
-            and other_accept.header
-            and self.header.q <= other_accept.header.q
-        )
-
-    def __ge__(self, other: Any) -> bool:
-        comp, other_accept = self._compare(other)
-        return bool(
-            comp
-            and self.header
-            and other_accept.header
-            and self.header.q >= other_accept.header.q
-        )
-
-    def __gt__(self, other: Any) -> bool:
-        comp, other_accept = self._compare(other)
-        return bool(
-            comp
-            and self.header
-            and other_accept.header
-            and self.header.q > other_accept.header.q
-        )
-
-    def _compare(self, other) -> Tuple[bool, Accept]:
+    def _compare(self, other) -> Tuple[bool, Matched]:
         if isinstance(other, str):
             # return self.mime == other, Accept.parse(other)
-            parsed = Accept.parse(other)
+            parsed = Matched.parse(other)
             if self.mime == other:
                 return True, parsed
             other = parsed
 
-        if isinstance(other, Accept):
+        if isinstance(other, Matched):
             return self.header == other.header, other
 
         raise TypeError(
@@ -233,8 +180,8 @@ class Accept:
             f"mime types of '{self.mime}' and '{other}'"
         )
 
-    def match(self, other: Union[str, Accept]) -> Optional[Accept]:
-        accept = Accept.parse(other) if isinstance(other, str) else other
+    def match(self, other: Union[str, Matched]) -> Optional[Matched]:
+        accept = Matched.parse(other) if isinstance(other, str) else other
         if not self.header or not accept.header:
             return None
         if self.header.match(accept.header):
@@ -242,7 +189,7 @@ class Accept:
         return None
 
     @classmethod
-    def parse(cls, raw: str) -> Accept:
+    def parse(cls, raw: str) -> Matched:
         media_type = MediaType._parse(raw)
         return cls(raw, media_type)
 
@@ -259,14 +206,15 @@ class AcceptList(list):
     -  operator 'in' for checking explicit matches (wildcards as literals)
     """
 
-    def match(self, *mimes: str, accept_wildcards=True) -> Accept:
+    def match(self, *mimes: str, accept_wildcards=True) -> Matched:
         """Find a media type accepted by the client.
 
         This method can be used to find which of the media types requested by
         the client is most preferred against the ones given as arguments.
 
         The ordering of preference is set by:
-        1. The q values on the Accept header, and those being equal,
+        1. The order set by RFC 7231, s. 5.3.2, giving a higher priority
+            to q values and more specific type definitions,
         2. The order of the arguments (first is most preferred), and
         3. The first matching entry on the Accept header.
 
@@ -283,41 +231,22 @@ class AcceptList(list):
         @return A match object with the mime string and the MediaType object.
         """
         a = sorted(
-            (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
+            (acc.q, i, j, mime, acc)
             for j, acc in enumerate(self)
             if accept_wildcards or not acc.has_wildcard
             for i, mime in enumerate(mimes)
             if acc.match(mime)
         )
-        return Accept(*(a[0][3:5] if a else ("", None)))
+        return Matched(*(a[0][-2:] if a else ("", None)))
 
     def __str__(self):
         """Format as Accept header value (parsed, not original)."""
         return ", ".join(str(m) for m in self)
 
 
-class AcceptContainer(AcceptList):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        deprecation(
-            "The AcceptContainer has been renamed AcceptList. Please update "
-            "your code before v23.9 when AcceptContainer will be removed.",
-            23.9,
-        )
-
-
-def _sort_accept_value(accept: MediaType):
-    return (
-        accept.q,
-        len(accept.params),
-        accept.subtype != "*",
-        accept.type != "*",
-    )
-
-
 def parse_accept(accept: Optional[str]) -> AcceptList:
     """Parse an Accept header and order the acceptable media types in
-    accorsing to RFC 7231, s. 5.3.2
+    according to RFC 7231, s. 5.3.2
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
     """
     if not accept:
@@ -332,7 +261,7 @@ def parse_accept(accept: Optional[str]) -> AcceptList:
         ]
         if not a:
             raise ValueError
-        return AcceptList(sorted(a, key=lambda x: x.key, reverse=True))
+        return AcceptList(sorted(a, key=lambda x: x.key))
     except ValueError:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
 

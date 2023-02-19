@@ -516,7 +516,7 @@ def exception_response(
                     # the first option that matches. Otherwise, just drop back
                     # to the original default
                     for accept in acceptable:
-                        mtype = f"{accept.type_}/{accept.subtype}"
+                        mtype = f"{accept.type}/{accept.subtype}"
                         maybe = RENDERERS_BY_CONTENT_TYPE.get(mtype)
                         if maybe:
                             renderer = maybe

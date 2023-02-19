@@ -207,7 +207,7 @@ def test_request_line(app):
 )
 def test_parse_accept_ordered_okay(raw, expected_subtype):
     ordered = headers.parse_accept(raw)
-    assert ordered[0].type_ == "show"
+    assert ordered[0].type == "show"
     assert ordered[0].subtype == expected_subtype
 
 
@@ -233,42 +233,24 @@ def test_empty_accept():
 
 def test_wildcard_accept_set_ok():
     accept = headers.parse_accept("*/*")[0]
-    assert accept.type_.is_wildcard
-    assert accept.subtype.is_wildcard
+    assert accept.type == "*"
+    assert accept.subtype == "*"
     assert accept.has_wildcard
 
     accept = headers.parse_accept("foo/*")[0]
-    assert not accept.type_.is_wildcard
-    assert accept.subtype.is_wildcard
+    assert accept.type == "foo"
+    assert accept.subtype == "*"
     assert accept.has_wildcard
 
     accept = headers.parse_accept("foo/bar")[0]
-    assert not accept.type_.is_wildcard
-    assert not accept.subtype.is_wildcard
+    assert accept.type == "foo"
+    assert accept.subtype == "bar"
     assert not accept.has_wildcard
 
 
 def test_accept_parsed_against_str():
     accept = headers.Accept.parse("foo/bar")
     assert accept > "foo/bar; q=0.1"
-
-
-def test_media_type_equality():
-    assert (
-        headers.MediaTypePart("foo") == headers.MediaTypePart("foo") == "foo"
-    )
-    assert headers.MediaTypePart("foo") != headers.MediaTypePart("*") == "*"
-    assert headers.MediaTypePart("foo") != headers.MediaTypePart("bar")
-    assert headers.MediaTypePart("foo") != "bar"
-
-
-def test_media_type_eq():
-    assert headers.MediaTypePart("foo").eq(headers.MediaTypePart("foo"))
-    assert headers.MediaTypePart("foo").eq("foo")
-    assert headers.MediaTypePart("foo").eq(headers.MediaTypePart("*"))
-    assert headers.MediaTypePart("foo").eq("*")
-    assert not headers.MediaTypePart("foo").eq(headers.MediaTypePart("bar"))
-    assert not headers.MediaTypePart("foo").eq("bar")
 
 
 def test_media_type_matching():
@@ -385,7 +367,7 @@ def test_browser_headers_specific(header, expected):
 def test_accept_ordering(raw):
     """Should sort by q but also be stable."""
     accept = headers.parse_accept(raw)
-    assert accept[0].type_ == "text"
+    assert accept[0].type == "text"
     raw1 = ", ".join(str(a) for a in accept)
     accept = headers.parse_accept(raw1)
     raw2 = ", ".join(str(a) for a in accept)
@@ -428,7 +410,7 @@ def test_accept_misc():
     assert m == "text/*"
     assert m.mime == "text/*"
     assert m.header.mime == "*/plain"
-    assert m.header.type_ == "*"
+    assert m.header.type == "*"
     assert m.header.subtype == "plain"
     assert m.header.q == 1.0
     assert m.header.params == dict(param="123")

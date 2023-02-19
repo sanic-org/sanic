@@ -34,19 +34,6 @@ _host_re = re.compile(
 # For more information, consult ../tests/test_requests.py
 
 
-class MediaTypePart(str):
-    @property
-    def is_wildcard(self) -> bool:
-        return str.__eq__(self, "*")
-
-    def eq(self, other: Any) -> bool:
-        return (
-            self == other
-            or self.is_wildcard
-            or MediaTypePart(other).is_wildcard
-        )
-
-
 class MediaType:
     """A media type, as used in the Accept header."""
 
@@ -56,11 +43,17 @@ class MediaType:
         subtype: str,
         **params: str,
     ):
-        self.type_ = MediaTypePart(type_)
-        self.subtype = MediaTypePart(subtype)
+        self.type = type_
+        self.subtype = subtype
         self.q = float(params.get("q", "1.0"))
         self.params = params
         self.mime = f"{type_}/{subtype}"
+        self.key = (
+            self.q,
+            len(self.params),
+            self.subtype != "*",
+            self.type != "*",
+        )
 
     def __repr__(self):
         return self.mime + "".join(f";{k}={v}" for k, v in self.params.items())
@@ -103,9 +96,15 @@ class MediaType:
                 # All parameters given in the other media type must match
                 and all(self.params.get(k) == v for k, v in mt.params.items())
                 # Subtype match
-                and self.subtype.eq(mt.subtype)
+                and (
+                    self.subtype == mt.subtype
+                    or self.subtype == "*"
+                    or mt.subtype == "*"
+                )
                 # Type match
-                and self.type_.eq(mt.type_)
+                and (
+                    self.type == mt.type or self.type == "*" or mt.type == "*"
+                )
             )
             else None
         )
@@ -113,7 +112,7 @@ class MediaType:
     @property
     def has_wildcard(self) -> bool:
         """Return True if this media type has a wildcard in it."""
-        return any(part.is_wildcard for part in (self.subtype, self.type_))
+        return any(part == "*" for part in (self.subtype, self.type))
 
     @classmethod
     def _parse(cls, mime_with_params: str) -> Optional[MediaType]:
@@ -312,7 +311,7 @@ def _sort_accept_value(accept: MediaType):
         accept.q,
         len(accept.params),
         accept.subtype != "*",
-        accept.type_ != "*",
+        accept.type != "*",
     )
 
 
@@ -333,7 +332,7 @@ def parse_accept(accept: Optional[str]) -> AcceptList:
         ]
         if not a:
             raise ValueError
-        return AcceptList(sorted(a, key=_sort_accept_value, reverse=True))
+        return AcceptList(sorted(a, key=lambda x: x.key, reverse=True))
     except ValueError:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
 

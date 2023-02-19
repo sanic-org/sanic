@@ -250,7 +250,7 @@ def test_wildcard_accept_set_ok():
 
 def test_accept_parsed_against_str():
     accept = headers.Matched.parse("foo/bar")
-    assert accept > "foo/bar; q=0.1"
+    assert accept == "foo/bar; q=0.1"
 
 
 def test_media_type_matching():
@@ -421,7 +421,7 @@ def test_accept_misc():
     # Matches the highest q value
     m = a.match("foo/bar")
     assert repr(m) == "<foo/bar matched foo/bar;q=0.5>"
-    assert m != "foo/bar"
+    assert m == "foo/bar"
     assert m == "foo/bar;q=0.5"
     # Matching nothing special case
     m = a.match()

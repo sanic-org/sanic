@@ -166,7 +166,6 @@ class Matched:
 
     def _compare(self, other) -> Tuple[bool, Matched]:
         if isinstance(other, str):
-            # return self.mime == other, Accept.parse(other)
             parsed = Matched.parse(other)
             if self.mime == other:
                 return True, parsed

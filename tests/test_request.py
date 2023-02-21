@@ -150,22 +150,15 @@ def test_request_accept():
     async def get(request):
         return response.empty()
 
-    header_value = "text/*, text/plain, text/plain;format=flowed, */*"
+    header_value = "text/plain;format=flowed, text/plain, text/*, */*"
     request, _ = app.test_client.get(
         "/",
-        headers={
-            "Accept": header_value
-        },
+        headers={"Accept": header_value},
     )
     assert str(request.accept) == header_value
-    assert request.accept == [
-        "text/*",
-        "text/plain",
-        "text/plain",  # Note: equality only compares MIME type/subtype
-        "*/*",
-    ]
     match = request.accept.match(
         "*/*;format=flowed",
+        "text/plain;format=flowed",
         "text/plain",
         "text/*",
         "*/*",
@@ -174,25 +167,24 @@ def test_request_accept():
     assert match.header.mime == "text/plain"
     assert match.header.params == {"format": "flowed"}
 
-    header_value = "text/plain; q=0.5,   text/html, text/x-dvi; q=0.8, text/x-c"
+    header_value = (
+        "text/plain; q=0.5,   text/html, text/x-dvi; q=0.8, text/x-c"
+    )
     request, _ = app.test_client.get(
         "/",
-        headers={
-            "Accept": header_value
-        },
+        headers={"Accept": header_value},
     )
-    assert str(request.accept) == "text/html, text/x-c, text/x-dvi;q=0.8, text/plain;q=0.5"
-    assert request.accept == [
+    assert [str(i) for i in request.accept] == [
         "text/html",
         "text/x-c",
-        "text/x-dvi",
-        "text/plain",
+        "text/x-dvi;q=0.8",
+        "text/plain;q=0.5",
     ]
     match = request.accept.match(
         "application/json",
-        "text/plain",               # Has lower q in accept header
+        "text/plain",  # Has lower q in accept header
         "text/html;format=flowed",  # Params mismatch
-        "text/*",                   # Matches
+        "text/*",  # Matches
         "*/*",
     )
     assert match == "text/*"

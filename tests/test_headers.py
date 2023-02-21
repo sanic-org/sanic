@@ -50,7 +50,10 @@ def raised_ceiling():
             # cgi.parse_header:
             # ('form-data', {'name': 'files', 'filename': 'fo"o;bar\\'})
             # werkzeug.parse_options_header:
-            # ('form-data', {'name': 'files', 'filename': '"fo\\"o', 'bar\\"': None})
+            # (
+            #     "form-data",
+            #     {"name": "files", "filename": '"fo\\"o', 'bar\\"': None},
+            # ),
         ),
         # <input type=file name="foo&quot;;bar\"> with Unicode filename!
         (
@@ -185,22 +188,27 @@ def test_request_line(app):
 
     assert request.request_line == b"GET / HTTP/1.1"
 
+
 @pytest.mark.parametrize(
-    "raw",
+    "raw,expected_subtype",
     (
-        "text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8",
-        "application/xml;q=0.9, */*;q=0.8, text/html, application/xhtml+xml",
-        "foo/bar;q=0.9, */*;q=0.8, text/html=0.8, text/plain, application/xhtml+xml",
-    )
+        ("show/first, show/second", "first"),
+        ("show/*, show/first", "first"),
+        ("*/*, show/first", "first"),
+        ("*/*, show/*", "*"),
+        ("other/*; q=0.1, show/*; q=0.2", "*"),
+        ("show/first; q=0.5, show/second; q=0.5", "first"),
+        ("show/first; foo=bar, show/second; foo=bar", "first"),
+        ("show/second, show/first; foo=bar", "first"),
+        ("show/second; q=0.5, show/first; foo=bar; q=0.5", "first"),
+        ("show/second; q=0.5, show/first; q=1.0", "first"),
+        ("show/first, show/second; q=1.0", "second"),
+    ),
 )
-def test_accept_ordering(raw):
-    """Should sort by q but also be stable."""
-    accept = headers.parse_accept(raw)
-    assert accept[0].type_ == "text"
-    raw1 =  ", ".join(str(a) for a in accept)
-    accept = headers.parse_accept(raw1)
-    raw2 =  ", ".join(str(a) for a in accept)
-    assert raw1 == raw2
+def test_parse_accept_ordered_okay(raw, expected_subtype):
+    ordered = headers.parse_accept(raw)
+    assert ordered[0].type == "show"
+    assert ordered[0].subtype == expected_subtype
 
 
 @pytest.mark.parametrize(
@@ -209,6 +217,7 @@ def test_accept_ordering(raw):
         "missing",
         "missing/",
         "/missing",
+        "/",
     ),
 )
 def test_bad_accept(raw):
@@ -224,53 +233,97 @@ def test_empty_accept():
 
 def test_wildcard_accept_set_ok():
     accept = headers.parse_accept("*/*")[0]
+    assert accept.type == "*"
+    assert accept.subtype == "*"
     assert accept.has_wildcard
 
     accept = headers.parse_accept("foo/*")[0]
-    assert accept.has_wildcard
-
-    accept = headers.parse_accept("*/bar")[0]
+    assert accept.type == "foo"
+    assert accept.subtype == "*"
     assert accept.has_wildcard
 
     accept = headers.parse_accept("foo/bar")[0]
+    assert accept.type == "foo"
+    assert accept.subtype == "bar"
     assert not accept.has_wildcard
+
+
+def test_accept_parsed_against_str():
+    accept = headers.Matched.parse("foo/bar")
+    assert accept == "foo/bar; q=0.1"
+
+
+def test_media_type_matching():
+    assert headers.MediaType("foo", "bar").match(
+        headers.MediaType("foo", "bar")
+    )
+    assert headers.MediaType("foo", "bar").match("foo/bar")
 
 
 @pytest.mark.parametrize(
     "value,other,outcome",
     (
+        # ALLOW BOTH
         ("foo/bar", "foo/bar", True),
+        ("foo/bar", headers.Matched.parse("foo/bar"), True),
         ("foo/bar", "foo/*", True),
+        ("foo/bar", headers.Matched.parse("foo/*"), True),
         ("foo/bar", "*/*", True),
+        ("foo/bar", headers.Matched.parse("*/*"), True),
         ("foo/*", "foo/bar", True),
+        ("foo/*", headers.Matched.parse("foo/bar"), True),
         ("foo/*", "foo/*", True),
+        ("foo/*", headers.Matched.parse("foo/*"), True),
         ("foo/*", "*/*", True),
+        ("foo/*", headers.Matched.parse("*/*"), True),
         ("*/*", "foo/bar", True),
+        ("*/*", headers.Matched.parse("foo/bar"), True),
         ("*/*", "foo/*", True),
+        ("*/*", headers.Matched.parse("foo/*"), True),
         ("*/*", "*/*", True),
-        ("foo/bar", "foo/foo", False),
-        ("foo/bar", "bar/bar", False),
+        ("*/*", headers.Matched.parse("*/*"), True),
     ),
 )
-def test_mediatype_wildcard_matching(value, other, outcome):
-    assert bool(headers.MediaType._parse(value).match(other)) is outcome
+def test_accept_matching(value, other, outcome):
+    assert bool(headers.Matched.parse(value).match(other)) is outcome
 
 
-def test_not_accept_wildcard():
-    accept = headers.parse_accept("*/*, foo/*, */bar, foo/bar;q=0.1")
-    assert not accept.match("text/html", "foo/foo", "bar/bar", accept_wildcards=False)
-    # Should ignore wildcards in accept but still matches them from mimes
-    m = accept.match("text/plain", "*/*", accept_wildcards=False)
-    assert m == "*/*"
-    assert m.header == "foo/bar"
-    assert not accept.match("text/html", "foo/foo", "bar/bar", accept_wildcards=False)
+@pytest.mark.parametrize("value", ("foo/bar", "foo/*", "*/*"))
+def test_value_in_accept(value):
+    acceptable = headers.parse_accept(value)
+    assert acceptable.match("foo/bar")
+    assert acceptable.match("foo/*")
+    assert acceptable.match("*/*")
 
 
 @pytest.mark.parametrize("value", ("foo/bar", "foo/*"))
 def test_value_not_in_accept(value):
     acceptable = headers.parse_accept(value)
+    assert not acceptable.match("no/match")
+    assert not acceptable.match("no/*")
     assert "*/*" not in acceptable
     assert "*/bar" not in acceptable
+
+
+@pytest.mark.parametrize(
+    "header,expected",
+    (
+        (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",  # noqa: E501
+            [
+                "text/html",
+                "application/xhtml+xml",
+                "image/avif",
+                "image/webp",
+                "application/xml;q=0.9",
+                "*/*;q=0.8",
+            ],
+        ),
+    ),
+)
+def test_browser_headers_general(header, expected):
+    request = Request(b"/", {"accept": header}, "1.1", "GET", None, None)
+    assert [str(item) for item in request.accept] == expected
 
 
 @pytest.mark.parametrize(
@@ -289,7 +342,7 @@ def test_value_not_in_accept(value):
         ),
     ),
 )
-def test_browser_headers(header, expected):
+def test_browser_headers_specific(header, expected):
     mimes = [e[0] for e in expected]
     qs = [e[1] for e in expected]
     request = Request(b"/", {"accept": header}, "1.1", "GET", None, None)
@@ -300,19 +353,64 @@ def test_browser_headers(header, expected):
         assert a.q == q
 
 
+@pytest.mark.parametrize(
+    "raw",
+    (
+        "text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8",
+        "application/xml;q=0.9, */*;q=0.8, text/html, application/xhtml+xml",
+        (
+            "foo/bar;q=0.9, */*;q=0.8, text/html=0.8, "
+            "text/plain, application/xhtml+xml"
+        ),
+    ),
+)
+def test_accept_ordering(raw):
+    """Should sort by q but also be stable."""
+    accept = headers.parse_accept(raw)
+    assert accept[0].type == "text"
+    raw1 = ", ".join(str(a) for a in accept)
+    accept = headers.parse_accept(raw1)
+    raw2 = ", ".join(str(a) for a in accept)
+    assert raw1 == raw2
+
+
+def test_not_accept_wildcard():
+    accept = headers.parse_accept("*/*, foo/*, */bar, foo/bar;q=0.1")
+    assert not accept.match(
+        "text/html", "foo/foo", "bar/bar", accept_wildcards=False
+    )
+    # Should ignore wildcards in accept but still matches them from mimes
+    m = accept.match("text/plain", "*/*", accept_wildcards=False)
+    assert m.mime == "*/*"
+    assert m.match("*/*")
+    assert m.header == "foo/bar"
+    assert not accept.match(
+        "text/html", "foo/foo", "bar/bar", accept_wildcards=False
+    )
+
+
 def test_accept_misc():
-    header = "foo/bar;q=0.0, */plain;param=123, text/plain, text/*, foo/bar;q=0.5"
+    header = (
+        "foo/bar;q=0.0, */plain;param=123, text/plain, text/*, foo/bar;q=0.5"
+    )
     a = headers.parse_accept(header)
-    assert repr(a) == "[*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0]"  # noqa: E501
-    assert str(a) == "*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0"  # noqa: E501
+    assert repr(a) == (
+        "[*/plain;param=123, text/plain, text/*, "
+        "foo/bar;q=0.5, foo/bar;q=0.0]"
+    )  # noqa: E501
+    assert str(a) == (
+        "*/plain;param=123, text/plain, text/*, "
+        "foo/bar;q=0.5, foo/bar;q=0.0"
+    )  # noqa: E501
     # q=1 types don't match foo/bar but match the two others,
-    # text/* comes first and matches */plain because it comes first in the header
+    # text/* comes first and matches */plain because it
+    # comes first in the header
     m = a.match("foo/bar", "text/*", "text/plain")
     assert repr(m) == "<text/* matched */plain;param=123>"
     assert m == "text/*"
     assert m.mime == "text/*"
     assert m.header.mime == "*/plain"
-    assert m.header.type_ == "*"
+    assert m.header.type == "*"
     assert m.header.subtype == "plain"
     assert m.header.q == 1.0
     assert m.header.params == dict(param="123")
@@ -324,6 +422,7 @@ def test_accept_misc():
     m = a.match("foo/bar")
     assert repr(m) == "<foo/bar matched foo/bar;q=0.5>"
     assert m == "foo/bar"
+    assert m == "foo/bar;q=0.5"
     # Matching nothing special case
     m = a.match()
     assert m == ""
@@ -336,22 +435,3 @@ def test_accept_misc():
     a = headers.parse_accept("")
     assert a == []
     assert not a.match("foo/bar")
-
-
-def test_mediatype_matching():
-    # Matching MediaType with parameters
-    mt = headers.parse_accept("foo/bar;param=123")[0]
-    assert mt.match("foo/bar")
-    assert mt.match("foo/bar;param=123")
-    assert not mt.match("foo/bar;param=456")
-    assert not mt.match("foo/bar;q=1.0")  # Implicit q is not added
-    assert mt == "foo/bar"
-    with pytest.raises(ValueError) as exc_info:
-        mt == "foo/bar;param=123"
-    assert str(exc_info.value) == "Use match() to compare with parameters"
-    # Allow the above with MediaType
-    assert mt == headers.MediaType._parse("foo/bar;param=different")
-    assert not mt != headers.MediaType._parse("foo/bar;param=different")
-    # NotImplemented falls back to object id comparison
-    assert not mt == 123
-    assert mt != 123

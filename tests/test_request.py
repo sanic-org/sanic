@@ -155,9 +155,7 @@ def test_request_accept():
         "/",
         headers={"Accept": header_value},
     )
-    assert str(request.accept) == header_value
-    match = request.accept.match(
-        "*/*;format=flowed",
+    assert [str(i) for i in request.accept] == [
         "text/plain;format=flowed",
         "text/plain",
         "text/*",

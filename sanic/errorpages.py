@@ -436,8 +436,89 @@ def exception_response(
     """
     if not renderer:
         renderer = base
-        mt = guess_mime(request, fallback)
-        renderer = RENDERERS_BY_CONTENT_TYPE.get(mt, base)
+        render_format = fallback
+
+        if request:
+            # If there is a request, try and get the format
+            # from the route
+            if request.route:
+                try:
+                    if request.route.extra.error_format:
+                        render_format = request.route.extra.error_format
+                except AttributeError:
+                    ...
+
+            content_type = request.headers.getone("content-type", "").split(
+                ";"
+            )[0]
+
+            acceptable = request.accept
+
+            # If the format is auto still, make a guess
+            if render_format == "auto":
+                # First, if there is an Accept header, check if text/html
+                # is the first option
+                # According to MDN Web Docs, all major browsers use text/html
+                # as the primary value in Accept (with the exception of IE 8,
+                # and, well, if you are supporting IE 8, then you have bigger
+                # problems to concern yourself with than what default exception
+                # renderer is used)
+                # Source:
+                # https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation/List_of_default_Accept_values
+
+                if acceptable and acceptable.match(
+                    "text/html", accept_wildcards=False
+                ):
+                    renderer = HTMLRenderer
+
+                # Second, if there is an Accept header, check if
+                # application/json is an option, or if the content-type
+                # is application/json
+                elif (
+                    acceptable
+                    and acceptable.match(
+                        "application/json", accept_wildcards=False
+                    )
+                    or content_type == "application/json"
+                ):
+                    renderer = JSONRenderer
+
+                # Third, if there is no Accept header, assume we want text.
+                # The likely use case here is a raw socket.
+                elif not acceptable:
+                    renderer = TextRenderer
+                else:
+                    # Fourth, look to see if there was a JSON body
+                    # When in this situation, the request is probably coming
+                    # from curl, an API client like Postman or Insomnia, or a
+                    # package like requests or httpx
+                    try:
+                        # Give them the benefit of the doubt if they did:
+                        # $ curl localhost:8000 -d '{"foo": "bar"}'
+                        # And provide them with JSONRenderer
+                        renderer = JSONRenderer if request.json else base
+                    except BadRequest:
+                        renderer = base
+            else:
+                renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
+
+            # Lastly, if there is an Accept header, make sure
+            # our choice is okay
+            if acceptable:
+                type_ = CONTENT_TYPE_BY_RENDERERS.get(renderer)  # type: ignore
+                if type_ and not acceptable.match(type_):
+                    # If the renderer selected is not in the Accept header
+                    # look through what is in the Accept header, and select
+                    # the first option that matches. Otherwise, just drop back
+                    # to the original default
+                    for accept in acceptable:
+                        mtype = f"{accept.type}/{accept.subtype}"
+                        maybe = RENDERERS_BY_CONTENT_TYPE.get(mtype)
+                        if maybe:
+                            renderer = maybe
+                            break
+                    else:
+                        renderer = base
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()

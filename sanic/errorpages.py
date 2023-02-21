@@ -462,7 +462,7 @@ def guess_mime(req: Request, fallback: str) -> str:
     if not formats and req.accept.match(JSON):
         if JSON in req.accept:  # Literally, not wildcard
             formats["json"] = "request.accept"
-        elif req.headers.getone("content-type", "").split(";", 1)[0] == JSON:
+        elif JSON in req.headers.getone("content-type", ""):
             formats["json"] = "content-type"
         # DEPRECATION: Remove this block in 24.3
         else:

@@ -470,10 +470,8 @@ def exception_response(
                 # Source:
                 # https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation/List_of_default_Accept_values
 
-                if acceptable and acceptable[0].match(
-                    "text/html",
-                    allow_type_wildcard=False,
-                    allow_subtype_wildcard=False,
+                if acceptable and acceptable.match(
+                    "text/html", accept_wildcards=False
                 ):
                     renderer = HTMLRenderer
 
@@ -483,9 +481,7 @@ def exception_response(
                 elif (
                     acceptable
                     and acceptable.match(
-                        "application/json",
-                        allow_type_wildcard=False,
-                        allow_subtype_wildcard=False,
+                        "application/json", accept_wildcards=False
                     )
                     or content_type == "application/json"
                 ):
@@ -514,13 +510,13 @@ def exception_response(
             # our choice is okay
             if acceptable:
                 type_ = CONTENT_TYPE_BY_RENDERERS.get(renderer)  # type: ignore
-                if type_ and type_ not in acceptable:
+                if type_ and not acceptable.match(type_):
                     # If the renderer selected is not in the Accept header
                     # look through what is in the Accept header, and select
                     # the first option that matches. Otherwise, just drop back
                     # to the original default
                     for accept in acceptable:
-                        mtype = f"{accept.type_}/{accept.subtype}"
+                        mtype = f"{accept.type}/{accept.subtype}"
                         maybe = RENDERERS_BY_CONTENT_TYPE.get(mtype)
                         if maybe:
                             renderer = maybe

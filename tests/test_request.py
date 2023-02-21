@@ -156,7 +156,7 @@ def test_request_accept():
             "Accept": "text/*, text/plain, text/plain;format=flowed, */*"
         },
     )
-    assert request.accept == [
+    assert [str(i) for i in request.accept] == [
         "text/plain;format=flowed",
         "text/plain",
         "text/*",
@@ -171,11 +171,11 @@ def test_request_accept():
             )
         },
     )
-    assert request.accept == [
+    assert [str(i) for i in request.accept] == [
         "text/html",
         "text/x-c",
-        "text/x-dvi; q=0.8",
-        "text/plain; q=0.5",
+        "text/x-dvi;q=0.8",
+        "text/plain;q=0.5",
     ]
 
 

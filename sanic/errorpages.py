@@ -43,6 +43,7 @@ FALLBACK_TEXT = (
     "cannot complete your request."
 )
 FALLBACK_STATUS = 500
+JSON = "application/json"
 
 
 class BaseRenderer:
@@ -458,7 +459,6 @@ def guess_mime(req: Request, fallback: str) -> str:
         formats[fallback] = "FALLBACK_ERROR_FORMAT"
 
     # If still not known, check for the request for clues of JSON
-    JSON = "application/json"
     if not formats and req.accept.match(JSON):
         if JSON in req.accept:  # Literally, not wildcard
             formats["json"] = "request.accept"

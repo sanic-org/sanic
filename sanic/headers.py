@@ -42,18 +42,23 @@ class MediaType:
         subtype: str,
         **params: str,
     ):
-        self.type_ = type_
+        self.type = type_
         self.subtype = subtype
         self.q = float(params.get("q", "1.0"))
         self.params = params
         self.mime = f"{type_}/{subtype}"
+        self.key = (
+            -1 * self.q,
+            -1 * len(self.params),
+            self.subtype == "*",
+            self.type == "*",
+        )
 
     def __repr__(self):
         return self.mime + "".join(f";{k}={v}" for k, v in self.params.items())
 
     def __eq__(self, other):
         """Check for mime (str or MediaType) identical type/subtype.
-
         Parameters such as q are not considered."""
         if isinstance(other, str):
             # Give a friendly reminder if str contains parameters
@@ -67,31 +72,38 @@ class MediaType:
 
     def match(
         self,
-        mime_with_params: str,
+        mime_with_params: Union[str, MediaType],
     ) -> Optional[MediaType]:
         """Check if this media type matches the given mime type/subtype.
-
         Wildcards are supported both ways on both type and subtype.
-
         If mime contains a semicolon, optionally followed by parameters,
         the parameters of the two media types must match exactly.
-
         Note:  Use the `==` operator instead to check for literal matches
         without expanding wildcards.
-
         @param media_type: A type/subtype string to match.
         @return `self` if the media types are compatible, else `None`
         """
-        mt = MediaType._parse(mime_with_params)
+        mt = (
+            MediaType._parse(mime_with_params)
+            if isinstance(mime_with_params, str)
+            else mime_with_params
+        )
         return (
             self
             if (
+                mt
                 # All parameters given in the other media type must match
-                all(self.params.get(k) == v for k, v in mt.params.items())
+                and all(self.params.get(k) == v for k, v in mt.params.items())
                 # Subtype match
-                and (self.subtype in (mt.subtype, "*") or mt.subtype == "*")
+                and (
+                    self.subtype == mt.subtype
+                    or self.subtype == "*"
+                    or mt.subtype == "*"
+                )
                 # Type match
-                and (self.type_ in (mt.type_, "*") or mt.type_ == "*")
+                and (
+                    self.type == mt.type or self.type == "*" or mt.type == "*"
+                )
             )
             else None
         )
@@ -99,11 +111,13 @@ class MediaType:
     @property
     def has_wildcard(self) -> bool:
         """Return True if this media type has a wildcard in it."""
-        return "*" in (self.subtype, self.type_)
+        return any(part == "*" for part in (self.subtype, self.type))
 
     @classmethod
-    def _parse(cls, mime_with_params: str) -> MediaType:
+    def _parse(cls, mime_with_params: str) -> Optional[MediaType]:
         mtype = mime_with_params.strip()
+        if "/" not in mime_with_params:
+            return None
 
         mime, *raw_params = mtype.split(";")
         type_, subtype = mime.split("/", 1)
@@ -136,12 +150,48 @@ class Matched:
     def __bool__(self):
         return self.header is not None
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
+        try:
+            comp, other_accept = self._compare(other)
+        except TypeError:
+            return False
+
+        return bool(
+            comp
+            and (
+                (self.header and other_accept.header)
+                or (not self.header and not other_accept.header)
+            )
+        )
+
+    def _compare(self, other) -> Tuple[bool, Matched]:
         if isinstance(other, str):
-            return self.mime == other
+            # return self.mime == other, Accept.parse(other)
+            parsed = Matched.parse(other)
+            if self.mime == other:
+                return True, parsed
+            other = parsed
+
         if isinstance(other, Matched):
-            return self.mime == other.mime and self.header == other.header
-        return NotImplemented
+            return self.header == other.header, other
+
+        raise TypeError(
+            "Comparison not supported between unequal "
+            f"mime types of '{self.mime}' and '{other}'"
+        )
+
+    def match(self, other: Union[str, Matched]) -> Optional[Matched]:
+        accept = Matched.parse(other) if isinstance(other, str) else other
+        if not self.header or not accept.header:
+            return None
+        if self.header.match(accept.header):
+            return accept
+        return None
+
+    @classmethod
+    def parse(cls, raw: str) -> Matched:
+        media_type = MediaType._parse(raw)
+        return cls(raw, media_type)
 
 
 class AcceptList(list):
@@ -163,7 +213,8 @@ class AcceptList(list):
         the client is most preferred against the ones given as arguments.
 
         The ordering of preference is set by:
-        1. The q values on the Accept header, and those being equal,
+        1. The order set by RFC 7231, s. 5.3.2, giving a higher priority
+            to q values and more specific type definitions,
         2. The order of the arguments (first is most preferred), and
         3. The first matching entry on the Accept header.
 
@@ -180,13 +231,13 @@ class AcceptList(list):
         @return A match object with the mime string and the MediaType object.
         """
         a = sorted(
-            (-acc.q, i, j, mime, acc)  # Sort by -q, i, j
+            (-acc.q, i, j, mime, acc)
             for j, acc in enumerate(self)
             if accept_wildcards or not acc.has_wildcard
             for i, mime in enumerate(mimes)
             if acc.match(mime)
         )
-        return Matched(*(a[0][3:5] if a else ("", None)))
+        return Matched(*(a[0][-2:] if a else ("", None)))
 
     def __str__(self):
         """Format as Accept header value (parsed, not original)."""
@@ -195,7 +246,7 @@ class AcceptList(list):
 
 def parse_accept(accept: Optional[str]) -> AcceptList:
     """Parse an Accept header and order the acceptable media types in
-    accorsing to RFC 7231, s. 5.3.2
+    according to RFC 7231, s. 5.3.2
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
     """
     if not accept:
@@ -203,8 +254,14 @@ def parse_accept(accept: Optional[str]) -> AcceptList:
             return AcceptList()  # Empty header, accept nothing
         accept = "*/*"  # No header means that all types are accepted
     try:
-        a = [MediaType._parse(mtype) for mtype in accept.split(",")]
-        return AcceptList(sorted(a, key=lambda mtype: -mtype.q))
+        a = [
+            mt
+            for mt in [MediaType._parse(mtype) for mtype in accept.split(",")]
+            if mt
+        ]
+        if not a:
+            raise ValueError
+        return AcceptList(sorted(a, key=lambda x: x.key))
     except ValueError:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
 

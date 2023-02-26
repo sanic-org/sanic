@@ -446,6 +446,7 @@ def test_accept_misc():
     (
         ({"foo": "bar"}, "bar"),
         ((("foo", "bar"), ("foo", "baz")), "bar,baz"),
+        ({}, ""),
     ),
 )
 def test_field_simple_accessor(headers, expected):

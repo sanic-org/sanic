@@ -429,7 +429,8 @@ def test_config_fallback_bad_value(app):
     "route_format,fallback,accept,expected",
     (
         ("json", "html", "*/*", "The client accepts */*, using 'json' from fakeroute"),
-        ("json", "html", "text/*,*/plain;q=0.9", "The client accepts text/*, using 'text' from any"),
+        ("json", "auto", "text/html,*/*;q=0.8", "The client accepts text/html, using 'html' from any"),
+        ("json", "json", "text/html,*/*;q=0.8", "The client accepts */*;q=0.8, using 'json' from fakeroute"),
         ("", "html", "text/*,*/plain", "The client accepts text/*, using 'html' from FALLBACK_ERROR_FORMAT"),
         ("", "json", "text/*,*/*", "The client accepts */*, using 'json' from FALLBACK_ERROR_FORMAT"),
         ("", "auto", "*/*,application/json;q=0.5", "The client accepts */*, using 'json' from request.accept"),
@@ -437,7 +438,8 @@ def test_config_fallback_bad_value(app):
         ("", "auto", "text/html,text/plain", "The client accepts text/plain, using 'text' from any"),
         ("", "auto", "text/html,text/plain;q=0.9", "The client accepts text/html, using 'html' from any"),
         ("html", "json", "application/xml", "No format found, the client accepts [application/xml]"),
-        ("", "", "*/*", "The client accepts */*, using 'text' from any"),
+        ("", "auto", "*/*", "The client accepts */*, using 'text' from any"),
+        ("", "", "*/*", "No format found, the client accepts [*/*]"),
         # DEPRECATED: remove in 24.3
         ("", "", "*/*", "The client accepts */*, using 'json' from request.json"),
     ),

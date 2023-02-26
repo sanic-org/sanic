@@ -148,7 +148,7 @@ async def validate_file(
         last_modified = datetime.fromtimestamp(
             float(last_modified), tz=timezone.utc
         ).replace(microsecond=0)
-    if last_modified <= if_modified_since:
+    if last_modified.timestamp() <= if_modified_since.timestamp():
         return HTTPResponse(status=304)
 
 

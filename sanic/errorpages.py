@@ -483,9 +483,10 @@ def guess_mime(req: Request, fallback: str) -> str:
                 )
 
     # Any other supported formats
-    for k in MIME_BY_CONFIG:
-        if k not in formats:
-            formats[k] = "any"
+    if fallback == "auto":
+        for k in MIME_BY_CONFIG:
+            if k not in formats:
+                formats[k] = "any"
 
     mimes = [MIME_BY_CONFIG[k] for k in formats]
     m = req.accept.match(*mimes)

@@ -500,13 +500,16 @@ class Request:
 
     @property
     def accept(self) -> AcceptList:
-        """
+        """Accepted response content types.
+
+        A convenience handler for easier RFC-compliant matching of MIME types,
+        parsed as a list that can match wildcards and includes */* by default.
+
         :return: The ``Accept`` header parsed
         :rtype: AcceptList
         """
         if self.parsed_accept is None:
-            accept_header = self.headers.getone("accept", "")
-            self.parsed_accept = parse_accept(accept_header)
+            self.parsed_accept = parse_accept(self.headers.get("accept"))
         return self.parsed_accept
 
     @property

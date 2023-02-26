@@ -4,7 +4,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.config import Config
-from sanic.errorpages import HTMLRenderer, TextRenderer, guess_mime, exception_response
+from sanic.errorpages import TextRenderer, guess_mime, exception_response
 from sanic.exceptions import NotFound, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.request import Request

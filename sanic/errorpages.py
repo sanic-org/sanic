@@ -458,7 +458,7 @@ def guess_mime(req: Request, fallback: str) -> str:
         formats[fallback] = "FALLBACK_ERROR_FORMAT"
 
     # If still not known, check for the request for clues of JSON
-    if not formats and req.accept.match(JSON):
+    if not formats and fallback == "auto" and req.accept.match(JSON):
         if JSON in req.accept:  # Literally, not wildcard
             formats["json"] = "request.accept"
         elif JSON in req.headers.getone("content-type", ""):

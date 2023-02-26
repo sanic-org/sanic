@@ -441,7 +441,7 @@ def test_config_fallback_bad_value(app):
         ("", "auto", "*/*", "The client accepts */*, using 'text' from any"),
         ("", "", "*/*", "No format found, the client accepts [*/*]"),
         # DEPRECATED: remove in 24.3
-        ("", "", "*/*", "The client accepts */*, using 'json' from request.json"),
+        ("", "auto", "*/*", "The client accepts */*, using 'json' from request.json"),
     ),
 )
 def test_guess_mime_logging(caplog, fake_request, route_format, fallback, accept, expected):

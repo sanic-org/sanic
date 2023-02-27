@@ -89,6 +89,8 @@ class Header(CIMultiDict):
     """
 
     def __getattr__(self, key: str) -> str:
+        if key.startswith("_"):
+            return self.__getattribute__(key)
         key = key.rstrip("_").replace("_", "-")
         return ",".join(self.getall(key, default=[]))
 

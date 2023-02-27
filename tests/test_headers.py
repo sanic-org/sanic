@@ -466,6 +466,13 @@ def test_field_hyphenated_accessor(headers, expected):
     assert request.headers.foo_bar == request.headers.foo_bar_ == expected
 
 
+def test_bad_accessor():
+    request = make_request({})
+    msg = "'Header' object has no attribute '_foo'"
+    with pytest.raises(AttributeError, match=msg):
+        request.headers._foo
+
+
 def test_multiple_fields_accessor(app: Sanic):
     @app.get("")
     async def handler(request: Request):

@@ -2,10 +2,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from sanic import headers, text
+from sanic import Sanic, headers, json, text
 from sanic.exceptions import InvalidHeader, PayloadTooLarge
 from sanic.http import Http
 from sanic.request import Request
+
+
+def make_request(headers) -> Request:
+    return Request(b"/", headers, "1.1", "GET", None, None)
 
 
 @pytest.fixture
@@ -435,3 +439,46 @@ def test_accept_misc():
     a = headers.parse_accept("")
     assert a == []
     assert not a.match("foo/bar")
+
+
+@pytest.mark.parametrize(
+    "headers,expected",
+    (
+        ({"foo": "bar"}, "bar"),
+        ((("foo", "bar"), ("foo", "baz")), "bar,baz"),
+        ({}, ""),
+    ),
+)
+def test_field_simple_accessor(headers, expected):
+    request = make_request(headers)
+    assert request.headers.foo == request.headers.foo_ == expected
+
+
+@pytest.mark.parametrize(
+    "headers,expected",
+    (
+        ({"foo-bar": "bar"}, "bar"),
+        ((("foo-bar", "bar"), ("foo-bar", "baz")), "bar,baz"),
+    ),
+)
+def test_field_hyphenated_accessor(headers, expected):
+    request = make_request(headers)
+    assert request.headers.foo_bar == request.headers.foo_bar_ == expected
+
+
+def test_bad_accessor():
+    request = make_request({})
+    msg = "'Header' object has no attribute '_foo'"
+    with pytest.raises(AttributeError, match=msg):
+        request.headers._foo
+
+
+def test_multiple_fields_accessor(app: Sanic):
+    @app.get("")
+    async def handler(request: Request):
+        return json({"field": request.headers.example_field})
+
+    _, response = app.test_client.get(
+        "/", headers=(("Example-Field", "Foo, Bar"), ("Example-Field", "Baz"))
+    )
+    assert response.json["field"] == "Foo, Bar,Baz"

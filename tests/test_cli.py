@@ -1,13 +1,11 @@
 import json
 import os
 import sys
-
 from pathlib import Path
 from typing import List, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
-
 from sanic_routing import __version__ as __routing_version__
 
 from sanic import __version__
@@ -60,14 +58,17 @@ def test_server_run(
     assert "Goin' Fast @ http://127.0.0.1:8000" in lines
 
 
-def test_server_run_factory_with_args(caplog):
-    command = [
-        "fake.server.create_app_with_args",
-        "--factory",
-    ]
+@pytest.mark.parametrize(
+    "command",
+    (
+        ["fake.server.create_app_with_args", "--factory"],
+        ["fake.server.create_app_with_args"],
+    ),
+)
+def test_server_run_factory_with_args(caplog, command):
     lines = capture(command, caplog)
 
-    assert "module=fake.server.create_app_with_args" in lines
+    assert "target=fake.server.create_app_with_args" in lines
 
 
 def test_server_run_factory_with_args_arbitrary(caplog):
@@ -79,25 +80,6 @@ def test_server_run_factory_with_args_arbitrary(caplog):
     lines = capture(command, caplog)
 
     assert "foo=bar" in lines
-
-
-def test_error_with_function_as_instance_without_factory_arg(caplog):
-    command = ["fake.server.create_app"]
-    lines = capture(command, caplog)
-    assert (
-        "Failed to run app: Module is not a Sanic app, it is a function\n  "
-        "If this callable returns a Sanic instance try: \n"
-        "sanic fake.server.create_app --factory"
-    ) in lines
-
-
-def test_error_with_path_as_instance_without_simple_arg(caplog):
-    command = ["./fake/"]
-    lines = capture(command, caplog)
-    assert (
-        "Failed to run app: App not found.\n   Please use --simple if you "
-        "are passing a directory to sanic.\n   eg. sanic ./fake/ --simple"
-    ) in lines
 
 
 @pytest.mark.parametrize(

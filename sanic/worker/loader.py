@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import os
 import sys
-
 from importlib import import_module
+from inspect import isfunction
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union, cast
 
 from sanic.http.tls.context import process_to_context
 from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
-
 
 if TYPE_CHECKING:
     from sanic import Sanic as SanicApp
@@ -54,21 +53,13 @@ class AppLoader:
             from sanic.app import Sanic
             from sanic.simple import create_simple_server
 
-            if self.as_simple:
-                path = Path(self.module_input)
-                app = create_simple_server(path)
+            maybe_path = Path(self.module_input)
+            if self.as_simple or maybe_path.is_dir():
+                app = create_simple_server(maybe_path)
             else:
-                if self.module_name == "" and os.path.isdir(self.module_input):
-                    raise ValueError(
-                        "App not found.\n"
-                        "   Please use --simple if you are passing a "
-                        "directory to sanic.\n"
-                        f"   eg. sanic {self.module_input} --simple"
-                    )
-
                 module = import_module(self.module_name)
                 app = getattr(module, self.app_name, None)
-                if self.as_factory:
+                if self.as_factory or isfunction(app):
                     try:
                         app = app(self.args)
                     except TypeError:
@@ -79,20 +70,11 @@ class AppLoader:
                 if (
                     not isinstance(app, Sanic)
                     and self.args
-                    and hasattr(self.args, "module")
+                    and hasattr(self.args, "target")
                 ):
-                    if callable(app):
-                        solution = f"sanic {self.args.module} --factory"
-                        raise ValueError(
-                            "Module is not a Sanic app, it is a "
-                            f"{app_type_name}\n"
-                            "  If this callable returns a "
-                            f"Sanic instance try: \n{solution}"
-                        )
-
                     raise ValueError(
                         f"Module is not a Sanic app, it is a {app_type_name}\n"
-                        f"  Perhaps you meant {self.args.module}:app?"
+                        f"  Perhaps you meant {self.args.target}:app?"
                     )
         return app
 

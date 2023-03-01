@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 import sys
-
 from argparse import Namespace
 from functools import partial
 from textwrap import indent
@@ -30,11 +29,11 @@ app is a Sanic() instance:
 
 Or, a path to a callable that returns a Sanic() instance:
 
-    $ sanic path.to.factory:create_app --factory
+    $ sanic path.to.factory:create_app
 
 Or, a path to a directory to run as a simple HTTP server:
 
-    $ sanic ./path/to/static --simple
+    $ sanic ./path/to/static
 """,
         prefix=" ",
     )
@@ -95,7 +94,7 @@ Or, a path to a directory to run as a simple HTTP server:
         self.args = self.parser.parse_args(args=parse_args)
         self._precheck()
         app_loader = AppLoader(
-            self.args.module, self.args.factory, self.args.simple, self.args
+            self.args.target, self.args.factory, self.args.simple, self.args
         )
 
         if self.args.inspect or self.args.inspect_raw or self.args.trigger:
@@ -120,9 +119,9 @@ Or, a path to a directory to run as a simple HTTP server:
 
     def _inspector_legacy(self, app_loader: AppLoader):
         host = port = None
-        module = cast(str, self.args.module)
-        if ":" in module:
-            maybe_host, maybe_port = module.rsplit(":", 1)
+        target = cast(str, self.args.target)
+        if ":" in target:
+            maybe_host, maybe_port = target.rsplit(":", 1)
             if maybe_port.isnumeric():
                 host, port = maybe_host, int(maybe_port)
         if not host:

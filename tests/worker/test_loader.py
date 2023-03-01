@@ -1,4 +1,5 @@
 import sys
+
 from os import getcwd
 from pathlib import Path
 from types import SimpleNamespace
@@ -8,6 +9,7 @@ import pytest
 
 from sanic.app import Sanic
 from sanic.worker.loader import AppLoader, CertLoader
+
 
 STATIC = Path.cwd() / "tests" / "static"
 

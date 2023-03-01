@@ -1,12 +1,14 @@
+import logging
+
 import pytest
 
 from sanic import Sanic
 from sanic.config import Config
-from sanic.errorpages import HTMLRenderer, exception_response
+from sanic.errorpages import TextRenderer, guess_mime, exception_response
 from sanic.exceptions import NotFound, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
-from sanic.response import HTTPResponse, html, json, text
+from sanic.response import HTTPResponse, empty, html, json, text
 
 
 @pytest.fixture
@@ -16,6 +18,45 @@ def app():
     @app.route("/error", methods=["GET", "POST"])
     def err(request):
         raise Exception("something went wrong")
+
+    @app.get("/forced_json/<fail>", error_format="json")
+    def manual_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return html("")  # Should be ignored
+
+    @app.get("/empty/<fail>")
+    def empty_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return empty()
+
+    @app.get("/json/<fail>")
+    def json_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        # After 23.3 route format should become json, older versions think it
+        # is mixed due to empty mapping to html, and don't find any format.
+        return json({"foo": "bar"}) if fail == "json" else empty()
+
+    @app.get("/html/<fail>")
+    def html_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return html("<h1>foo</h1>")
+
+    @app.get("/text/<fail>")
+    def text_fail(request, fail):
+        if fail == "fail":
+            raise Exception
+        return text("foo")
+
+    @app.get("/mixed/<param>")
+    def mixed_fail(request, param):
+        if param not in ("json", "html"):
+            raise Exception
+        return json({}) if param == "json" else html("")
+
 
     return app
 
@@ -28,14 +69,14 @@ def fake_request(app):
 @pytest.mark.parametrize(
     "fallback,content_type, exception, status",
     (
-        (None, "text/html; charset=utf-8", Exception, 500),
+        (None, "text/plain; charset=utf-8", Exception, 500),
         ("html", "text/html; charset=utf-8", Exception, 500),
-        ("auto", "text/html; charset=utf-8", Exception, 500),
+        ("auto", "text/plain; charset=utf-8", Exception, 500),
         ("text", "text/plain; charset=utf-8", Exception, 500),
         ("json", "application/json", Exception, 500),
-        (None, "text/html; charset=utf-8", NotFound, 404),
+        (None, "text/plain; charset=utf-8", NotFound, 404),
         ("html", "text/html; charset=utf-8", NotFound, 404),
-        ("auto", "text/html; charset=utf-8", NotFound, 404),
+        ("auto", "text/plain; charset=utf-8", NotFound, 404),
         ("text", "text/plain; charset=utf-8", NotFound, 404),
         ("json", "application/json", NotFound, 404),
     ),
@@ -43,6 +84,10 @@ def fake_request(app):
 def test_should_return_html_valid_setting(
     fake_request, fallback, content_type, exception, status
 ):
+    # Note: if fallback is None or "auto", prior to PR #2668 base was returned
+    # and after that a text response is given because it matches */*. Changed
+    # base to TextRenderer in this test, like it is in Sanic itself, so the
+    # test passes with either version but still covers everything that it did.
     if fallback:
         fake_request.app.config.FALLBACK_ERROR_FORMAT = fallback
 
@@ -53,7 +98,7 @@ def test_should_return_html_valid_setting(
             fake_request,
             e,
             True,
-            base=HTMLRenderer,
+            base=TextRenderer,
             fallback=fake_request.app.config.FALLBACK_ERROR_FORMAT,
         )
 
@@ -259,15 +304,17 @@ def test_fallback_with_content_type_mismatch_accept(app):
     "accept,content_type,expected",
     (
         (None, None, "text/plain; charset=utf-8"),
-        ("foo/bar", None, "text/html; charset=utf-8"),
+        ("foo/bar", None, "text/plain; charset=utf-8"),
         ("application/json", None, "application/json"),
         ("application/json,text/plain", None, "application/json"),
         ("text/plain,application/json", None, "application/json"),
         ("text/plain,foo/bar", None, "text/plain; charset=utf-8"),
-        # Following test is valid after v22.3
-        # ("text/plain,text/html", None, "text/plain; charset=utf-8"),
-        ("*/*", "foo/bar", "text/html; charset=utf-8"),
+        ("text/plain,text/html", None, "text/plain; charset=utf-8"),
+        ("*/*", "foo/bar", "text/plain; charset=utf-8"),
         ("*/*", "application/json", "application/json"),
+        # App wants text/plain but accept has equal entries for it
+        ("text/*,*/plain", None, "text/plain; charset=utf-8"),
+
     ),
 )
 def test_combinations_for_auto(fake_request, accept, content_type, expected):
@@ -286,7 +333,7 @@ def test_combinations_for_auto(fake_request, accept, content_type, expected):
             fake_request,
             e,
             True,
-            base=HTMLRenderer,
+            base=TextRenderer,
             fallback="auto",
         )
 
@@ -376,3 +423,49 @@ def test_config_fallback_bad_value(app):
     message = "Unknown format: fake"
     with pytest.raises(SanicException, match=message):
         app.config.FALLBACK_ERROR_FORMAT = "fake"
+
+
+@pytest.mark.parametrize(
+    "route_format,fallback,accept,expected",
+    (
+        ("json", "html", "*/*", "The client accepts */*, using 'json' from fakeroute"),
+        ("json", "auto", "text/html,*/*;q=0.8", "The client accepts text/html, using 'html' from any"),
+        ("json", "json", "text/html,*/*;q=0.8", "The client accepts */*;q=0.8, using 'json' from fakeroute"),
+        ("", "html", "text/*,*/plain", "The client accepts text/*, using 'html' from FALLBACK_ERROR_FORMAT"),
+        ("", "json", "text/*,*/*", "The client accepts */*, using 'json' from FALLBACK_ERROR_FORMAT"),
+        ("", "auto", "*/*,application/json;q=0.5", "The client accepts */*, using 'json' from request.accept"),
+        ("", "auto", "*/*", "The client accepts */*, using 'json' from content-type"),
+        ("", "auto", "text/html,text/plain", "The client accepts text/plain, using 'text' from any"),
+        ("", "auto", "text/html,text/plain;q=0.9", "The client accepts text/html, using 'html' from any"),
+        ("html", "json", "application/xml", "No format found, the client accepts [application/xml]"),
+        ("", "auto", "*/*", "The client accepts */*, using 'text' from any"),
+        ("", "", "*/*", "No format found, the client accepts [*/*]"),
+        # DEPRECATED: remove in 24.3
+        ("", "auto", "*/*", "The client accepts */*, using 'json' from request.json"),
+    ),
+)
+def test_guess_mime_logging(caplog, fake_request, route_format, fallback, accept, expected):
+    class FakeObject:
+        pass
+    fake_request.route = FakeObject()
+    fake_request.route.name = "fakeroute"
+    fake_request.route.extra = FakeObject()
+    fake_request.route.extra.error_format = route_format
+    if accept is None:
+        del fake_request.headers["accept"]
+    else:
+        fake_request.headers["accept"] = accept
+
+    if "content-type" in expected:
+        fake_request.headers["content-type"] = "application/json"
+
+    # Fake JSON content (DEPRECATED: remove in 24.3)
+    if "request.json" in expected:
+        fake_request.parsed_json = {"foo": "bar"}
+
+    with caplog.at_level(logging.DEBUG, logger="sanic.root"):
+        guess_mime(fake_request, fallback)
+
+    logmsg, = [r.message for r in caplog.records if r.funcName == "guess_mime"]
+
+    assert logmsg == expected

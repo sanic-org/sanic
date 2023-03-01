@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
-
+from contextlib import suppress
 from importlib import import_module
 from inspect import isfunction
 from pathlib import Path
@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union, cast
 
 from sanic.http.tls.context import process_to_context
 from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
-
 
 if TYPE_CHECKING:
     from sanic import Sanic as SanicApp
@@ -74,10 +73,16 @@ class AppLoader:
                     and self.args
                     and hasattr(self.args, "target")
                 ):
-                    raise ValueError(
-                        f"Module is not a Sanic app, it is a {app_type_name}\n"
-                        f"  Perhaps you meant {self.args.target}:app?"
-                    )
+                    with suppress(ModuleNotFoundError):
+                        maybe_module = import_module(self.module_input)
+                        app = getattr(maybe_module, "app", None)
+                    if not app:
+                        message = (
+                            "Module is not a Sanic app, "
+                            f"it is a {app_type_name}\n"
+                            f"  Perhaps you meant {self.args.target}:app?"
+                        )
+                        raise ValueError(message)
         return app
 
 

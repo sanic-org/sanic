@@ -1,13 +1,11 @@
 import json
 import os
 import sys
-
 from pathlib import Path
 from typing import List, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
-
 from sanic_routing import __version__ as __routing_version__
 
 from sanic import __version__
@@ -43,8 +41,10 @@ def read_app_info(lines: List[str]):
     "appname,extra",
     (
         ("fake.server.app", None),
+        ("fake.server", None),
         ("fake.server:create_app", "--factory"),
         ("fake.server.create_app()", None),
+        ("fake.server.create_app", None),
     ),
 )
 def test_server_run(

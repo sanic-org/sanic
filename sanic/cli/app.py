@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 import sys
-
 from argparse import Namespace
 from functools import partial
 from textwrap import indent
@@ -24,9 +23,14 @@ class SanicCLI:
 {get_logo(True)}
 
 To start running a Sanic application, provide a path to the module, where
-app is a Sanic() instance:
+app is a Sanic() instance in the global scope:
 
     $ sanic path.to.server:app
+
+If the Sanic instance variable is called 'app', you can leave off the last
+part, and only provide a path to the module where the instance is:
+
+    $ sanic path.to.server
 
 Or, a path to a callable that returns a Sanic() instance:
 

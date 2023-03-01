@@ -1,8 +1,40 @@
 /** BasePage **/
+
+:root {
+    --sanic: #ff0d68;
+    --sanic-blue: #0092FF;
+    --sanic-yellow: #FFE900;
+    --sanic-purple: #833FE3;
+    --sanic-green: #37ae6f;
+    --sanic-background: #f1f5f9;
+    --sanic-text: #1f2937;
+    --sanic-tab-background: #fff;
+    --sanic-tab-text: #0f172a;
+    --sanic-tab-shadow: #adadad;
+    --sanic-highlight-background: var(--sanic-yellow);
+    --sanic-highlight-text: var(--sanic-text);
+    --sanic-header-background: #000;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --sanic-purple: #D246DE;
+        --sanic-green: #16DB93;
+        --sanic-background: #111;
+        --sanic-text: #e7e7e7;
+        --sanic-tab-background: #484848;
+        --sanic-tab-text: #e1e1e1;
+        --sanic-tab-shadow: #000;
+        --sanic-highlight-background: var(--sanic-yellow);
+        --sanic-highlight-text: #000;
+        --sanic-header-background: #000;
+    }
+}
+
 html {
     font: 16px sans-serif;
-    background: #eee;
-    color: #111;
+    background: var(--sanic-background);
+    color: var(--sanic-text);
     scrollbar-gutter: stable;
     overflow: hidden auto;
 }
@@ -10,19 +42,15 @@ html {
 body {
     margin: 0;
     font-size: 1.25rem;
-    --sanic: #ff0d68;
-    --sanic-blue: #0092FF;
-    --sanic-yellow: #FFE900;
-    --sanic-purple: #833FE3;
-    --sanic-green: #16DB93;
+    line-height: 125%;
 }
 
-body>* {
+body > * {
     padding: 1rem 2vw;
 }
 
 @media (max-width: 1000px) {
-    body>* {
+    body > * {
         padding: 0.5rem 1.5vw;
     }
 
@@ -31,9 +59,12 @@ body>* {
         font-size: calc(6px + 10 * 100vw / 1000);
     }
 }
+
 main {
-    min-height: 70vh;  /* Make sure the footer is closer to bottom */
+    min-height: 70vh; /* Make sure the footer is closer to bottom */
+    padding: 1rem 2.5rem; /* Generous padding for readability */
 }
+
 .smalltext {
     font-size: 1.0rem;
 }
@@ -89,12 +120,19 @@ span.icon {
 
 
 @media (prefers-color-scheme: dark) {
-    html {
-        background: #111;
-        color: #ccc;
-    }
-
     #logo-simple path:last-child {
         fill: #e1e1e1;
     }
+}
+
+#sanic pre, #sanic code {
+    font-family: "Fira Code",
+    "Source Code Pro",
+    Menlo,
+    Meslo,
+    Monaco,
+    Consolas,
+    Lucida Console,
+    monospace;
+    font-size: 0.8rem;
 }

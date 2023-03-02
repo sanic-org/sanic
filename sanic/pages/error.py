@@ -1,14 +1,11 @@
 from typing import Any, Mapping
 
 import tracerite.html
-
 from html5tagger import E
+from sanic.request import Request
 from tracerite import html_traceback, inspector
 
-from sanic.request import Request
-
 from .base import BasePage
-
 
 # Avoid showing the request in the traceback variable inspectors
 inspector.blacklist_types += (Request,)
@@ -52,7 +49,9 @@ class ErrorPage(BasePage):
     def _body(self) -> None:
         debug = self.request.app.debug
         try:
-            route_name = self.request.route.name
+            route_name = (
+                self.request.route.name if self.request.route else "<Unknown>"
+            )
         except AttributeError:
             route_name = "[route not found]"
         with self.doc.main:
@@ -94,12 +93,15 @@ class ErrorPage(BasePage):
     def _key_value_table(
         self, title: str, table_id: str, data: Mapping[str, Any]
     ) -> None:
-        self.doc.h2(title)
-        with self.doc.dl(id=table_id, class_="key-value-table smalltext"):
-            for key, value in data.items():
-                # Reading values may cause a new exception, so suppress it
-                try:
-                    value = str(value)
-                except Exception:
-                    value = E.em("Unable to display value")
-                self.doc.dt.span(key, class_="nobr key").span(": ").dd(value)
+        with self.doc.div(class_="key-value-display"):
+            self.doc.h2(title)
+            with self.doc.dl(id=table_id, class_="key-value-table smalltext"):
+                for key, value in data.items():
+                    # Reading values may cause a new exception, so suppress it
+                    try:
+                        value = str(value)
+                    except Exception:
+                        value = E.em("Unable to display value")
+                    self.doc.dt.span(key, class_="nobr key").span(": ").dd(
+                        value
+                    )

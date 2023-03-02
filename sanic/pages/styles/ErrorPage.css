@@ -16,21 +16,21 @@
 
 summary {
     margin-top: 3em;
-    color: var(--sanic-blue);
+    color: var(--sanic-text-lighter);
     cursor: pointer;
 }
 
 .tracerite {
-    --tracerite-var: var(--sanic-blue);
-    --tracerite-val: var(--sanic-green);
-    --tracerite-type: var(--sanic-purple);
+    --tracerite-var: var(--sanic-tracerite-var);
+    --tracerite-val: var(--sanic-tracerite-val);
+    --tracerite-type: var(--sanic-tracerite-type);
     --tracerite-exception: var(--sanic);
     --tracerite-highlight: var(--sanic-yellow);
     --tracerite-tab: var(--sanic-tab-background);
     --tracerite-tab-text: var(--sanic-tab-text);
 }
 
-.tracerite > h3 {
+.tracerite>h3 {
     margin: 0.5rem 0 !important;
 }
 
@@ -46,8 +46,13 @@ summary {
 .tracerite .traceback-labels {
     padding-top: 5px;
 }
+
 .tracerite .traceback-labels button:hover {
     filter: contrast(150%) brightness(120%) drop-shadow(0 -0 2px var(--sanic-tab-shadow));
+}
+
+#sanic .tracerite .tracerite-tooltip::before {
+    bottom: 1.75em;
 }
 
 #sanic .tracerite .traceback-details mark span {
@@ -59,14 +64,20 @@ header {
     background: var(--sanic-header-background);
 }
 
-h1 {
-    /*margin-left: -1.5rem;  !* Emoji partially in the left margin *!*/
+h2 {
+    font-size: 1.3rem;
+    color: var(--sanic-text);
 }
 
-h2 {
-    margin: 1em 0 0.2em 0;
-    font-size: 1.25rem;
-    color: var(--sanic-text);
+.key-value-display {
+    background-color: var(--sanic-block-background);
+    color: var(--sanic-block-text);
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+
+.key-value-display h2 {
+    margin-bottom: 0.2em;
 }
 
 dl.key-value-table {
@@ -83,10 +94,11 @@ dl.key-value-table * {
 }
 
 dl.key-value-table dt {
-    color: #888;
+    color: var(--sanic-block-alt-text);
     word-break: break-word;
 }
 
 dl.key-value-table dd {
-    word-break: break-all; /* Better breaking for cookies header and such */
+    word-break: break-all;
+    /* Better breaking for cookies header and such */
 }

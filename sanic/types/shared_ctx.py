@@ -35,10 +35,13 @@ class SharedContext(SimpleNamespace):
             module = value.__module__
         except AttributeError:
             module = ""
-        if not any(
-            module.startswith(prefix)
-            for prefix in ("multiprocessing", "ctypes")
-        ) and not type(value) is bytes:
+        if (
+            not any(
+                module.startswith(prefix)
+                for prefix in ("multiprocessing", "ctypes")
+            )
+            and not type(value) is bytes
+        ):
             error_logger.warning(
                 f"{Colors.YELLOW}Unsafe object {Colors.PURPLE}{name} "
                 f"{Colors.YELLOW}with type {Colors.PURPLE}{type(value)} "

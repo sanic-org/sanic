@@ -40,7 +40,7 @@ class SharedContext(SimpleNamespace):
                 module.startswith(prefix)
                 for prefix in ("multiprocessing", "ctypes")
             )
-            and not type(value) is bytes
+            and not isinstance(value, bytes)
         ):
             error_logger.warning(
                 f"{Colors.YELLOW}Unsafe object {Colors.PURPLE}{name} "

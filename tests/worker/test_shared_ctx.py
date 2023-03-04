@@ -76,7 +76,7 @@ def test_no_bytes_warning(item: bytes, caplog):
         ctx.item = bytes(item, "utf-8")
 
     assert ctx.is_locked is False
-    assert type(ctx.item) is bytes
+    assert isinstance(ctx.item, bytes)
     assert "Unsafe object" not in caplog.text
 
 
@@ -88,7 +88,7 @@ def test_bytes_warning(item: bytes, caplog):
         ctx.item = item
 
     assert ctx.is_locked is False
-    assert type(ctx.item) is not bytes
+    assert isinstance(ctx.item, bytes)
     assert "Unsafe object" in caplog.text
 
 

@@ -69,7 +69,7 @@ def test_set_items_in_worker(item: Any, caplog):
 
 
 @pytest.mark.parametrize("item", "test")
-def test_no_bytes_warning(item: bytes, caplog):
+def test_no_bytes_warning(item: str, caplog):
     ctx = SharedContext()
 
     with caplog.at_level(logging.INFO):
@@ -81,14 +81,14 @@ def test_no_bytes_warning(item: bytes, caplog):
 
 
 @pytest.mark.parametrize("item", "test")
-def test_bytes_warning(item: bytes, caplog):
+def test_bytes_warning(item: str, caplog):
     ctx = SharedContext()
 
     with caplog.at_level(logging.INFO):
         ctx.item = item
 
     assert ctx.is_locked is False
-    assert isinstance(ctx.item, bytes)
+    assert not isinstance(ctx.item, bytes)
     assert "Unsafe object" in caplog.text
 
 

@@ -67,6 +67,35 @@ def test_set_items_in_worker(item: Any, caplog):
     assert ctx.is_locked is False
     assert len(caplog.record_tuples) == 0
 
+@pytest.mark.parametrize(
+    "item",
+    u"test"
+)
+def test_no_bytes_warning(item: bytes, caplog):
+    ctx = SharedContext()
+
+    with caplog.at_level(logging.INFO):
+        ctx.item = bytes(item, "utf-8")
+
+    assert ctx.is_locked is False
+    assert type(ctx.item) is bytes
+    assert "Unsafe object" not in caplog.text
+
+@pytest.mark.parametrize(
+    "item",
+    u"test"
+)
+def test_bytes_warning(item: bytes, caplog):
+    ctx = SharedContext()
+
+    with caplog.at_level(logging.INFO):
+        ctx.item = item
+
+    assert ctx.is_locked is False
+    assert type(ctx.item) is not bytes
+    assert "Unsafe object" in caplog.text
+
+
 
 def test_lock():
     ctx = SharedContext()

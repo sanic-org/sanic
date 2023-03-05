@@ -1,11 +1,27 @@
+from __future__ import annotations
+
 import re
 import string
-
+import sys
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional, Union
 
+if sys.version_info < (3, 8):  # no cov
+    SameSite = str
+else:  # no cov
+    from typing import Literal
+
+    SameSite = Union[
+        Literal["Strict"],
+        Literal["Lax"],
+        Literal["None"],
+        Literal["strict"],
+        Literal["lax"],
+        Literal["none"],
+    ]
 
 DEFAULT_MAX_AGE = 0
+SAMESITE_VALUES = ("strict", "lax", "none")
 
 # ------------------------------------------------------------ #
 #  SimpleCookie
@@ -77,7 +93,86 @@ class CookieJar(dict):
                 if cookie.key != key:
                     self.headers.add(cookie_header, cookie)
             del self.cookie_headers[key]
+            del self[key]
             return super().__delitem__(key)
+
+    def add(
+        self,
+        key: str,
+        value: str,
+        *,
+        path: Optional[str] = None,
+        expires: Optional[datetime] = None,
+        comment: Optional[str] = None,
+        domain: Optional[str] = None,
+        max_age: Optional[int] = None,
+        secure: Optional[bool] = None,
+        httponly: Optional[bool] = None,
+        samesite: Optional[SameSite] = None,
+    ) -> Cookie:
+        """
+        Add a cookie to the response
+
+        :param key: Key of the cookie
+        :type key: str
+        :param value: Value of the cookie
+        :type value: str
+        :param path: Path of the cookie, defaults to None
+        :type path: Optional[str], optional
+        :param expires: When the cookie expires; if set to None browsers
+            should set it as a session cookie, defaults to None
+        :type expires: Optional[datetime], optional
+        :param comment: A cookie comment, defaults to None
+        :type comment: Optional[str], optional
+        :param domain: Domain of the cookie, defaults to None
+        :type domain: Optional[str], optional
+        :param max_age: Max age of the cookie in seconds; if set to 0 a
+            browser should delete it, defaults to None
+        :type max_age: Optional[int], optional
+        :param secure: Whether to set it as a secure cookie, defaults to None
+        :type secure: Optional[bool], optional
+        :param httponly: Whether to set it as HTTP only, defaults to None
+        :type httponly: Optional[bool], optional
+        :param samesite: How to set the samesite property, should be
+            strict, lax or none, defaults to None
+        :type samesite: Optional[SameSite], optional
+        :return: The instance of the created cookie
+        :rtype: Cookie
+        """
+        self[key] = value
+        cookie = self[key]
+        if path is not None:
+            cookie["path"] = path
+        if expires is not None:
+            cookie["expires"] = expires
+        if comment is not None:
+            cookie["comment"] = comment
+        if domain is not None:
+            cookie["domain"] = domain
+        if max_age is not None:
+            cookie["max-age"] = max_age
+        if secure is not None:
+            cookie["secure"] = secure
+        if httponly is not None:
+            cookie["httponly"] = httponly
+        if samesite is not None:
+            cookie["samesite"] = samesite
+        return cookie
+
+    def delete(self, key: str) -> None:
+        """
+        Delete a cookie from the response
+
+        This will effectively set it as Max-Age: 0, which a browser should
+        interpret it to mean: "delete the cookie".
+
+        Since it is a browser/client implementation, your results may vary
+        depending upon which client is being used.
+
+        :param key: The key to be deleted
+        :type key: str
+        """
+        del self[key]
 
 
 class Cookie(dict):
@@ -109,14 +204,17 @@ class Cookie(dict):
         if key not in self._keys:
             raise KeyError("Unknown cookie property")
         if value is not False:
-            if key.lower() == "max-age":
-                if not str(value).isdigit():
-                    raise ValueError("Cookie max-age must be an integer")
-            elif key.lower() == "expires":
-                if not isinstance(value, datetime):
+            if key.lower() == "max-age" and not str(value).isdigit():
+                raise ValueError("Cookie max-age must be an integer")
+            elif key.lower() == "expires" and not isinstance(value, datetime):
+                raise TypeError("Cookie 'expires' property must be a datetime")
+            elif key.lower() == "samesite":
+                if value.lower() not in SAMESITE_VALUES:
                     raise TypeError(
-                        "Cookie 'expires' property must be a datetime"
+                        "Cookie 'samesite' property must "
+                        f"be one of: {','.join(SAMESITE_VALUES)}"
                     )
+                value = value.title()
             return super().__setitem__(key, value)
 
     def encode(self, encoding):
@@ -154,3 +252,99 @@ class Cookie(dict):
                 output.append("%s=%s" % (self._keys[key], value))
 
         return "; ".join(output)
+
+    @property
+    def path(self) -> Optional[str]:
+        return self.get("path")
+
+    @path.setter
+    def path(self, value: str) -> None:
+        self["path"] = value
+
+    @path.deleter
+    def path(self) -> None:
+        del self["path"]
+
+    @property
+    def expires(self) -> Optional[datetime]:
+        return self.get("expires")
+
+    @expires.setter
+    def expires(self, value: datetime) -> None:
+        self["expires"] = value
+
+    @expires.deleter
+    def expires(self) -> None:
+        del self["expires"]
+
+    @property
+    def comment(self) -> Optional[str]:
+        return self.get("comment")
+
+    @comment.setter
+    def comment(self, value: str) -> None:
+        self["comment"] = value
+
+    @comment.deleter
+    def comment(self) -> None:
+        del self["comment"]
+
+    @property
+    def domain(self) -> Optional[str]:
+        return self.get("domain")
+
+    @domain.setter
+    def domain(self, value: str) -> None:
+        self["domain"] = value
+
+    @domain.deleter
+    def domain(self) -> None:
+        del self["domain"]
+
+    @property
+    def max_age(self) -> Optional[int]:
+        return self.get("max-age")
+
+    @max_age.setter
+    def max_age(self, value: int) -> None:
+        self["max-age"] = value
+
+    @max_age.deleter
+    def max_age(self) -> None:
+        del self["max-age"]
+
+    @property
+    def secure(self) -> Optional[bool]:
+        return self.get("secure")
+
+    @secure.setter
+    def secure(self, value: bool) -> None:
+        self["secure"] = value
+
+    @secure.deleter
+    def secure(self) -> None:
+        del self["secure"]
+
+    @property
+    def httponly(self) -> Optional[bool]:
+        return self.get("httponly")
+
+    @httponly.setter
+    def httponly(self, value: bool) -> None:
+        self["httponly"] = value
+
+    @httponly.deleter
+    def httponly(self) -> None:
+        del self["httponly"]
+
+    @property
+    def samesite(self) -> Optional[SameSite]:
+        return self.get("samesite")
+
+    @samesite.setter
+    def samesite(self, value: SameSite) -> None:
+        self["samesite"] = value
+
+    @samesite.deleter
+    def samesite(self) -> None:
+        del self["samesite"]

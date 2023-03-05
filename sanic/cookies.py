@@ -93,7 +93,6 @@ class CookieJar(dict):
                 if cookie.key != key:
                     self.headers.add(cookie_header, cookie)
             del self.cookie_headers[key]
-            del self[key]
             return super().__delitem__(key)
 
     def add(

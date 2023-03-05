@@ -32,6 +32,7 @@ from typing import (
     Deque,
     Dict,
     Iterable,
+    Iterator,
     List,
     Optional,
     Set,
@@ -1512,7 +1513,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
 
     @contextmanager
-    def amend(self) -> None:
+    def amend(self) -> Iterator[None]:
         """
         If the application has started, this function allows changes
         to be made to the route. This should ideally ONLY ever be used inside

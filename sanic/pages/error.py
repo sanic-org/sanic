@@ -51,7 +51,7 @@ class ErrorPage(BasePage):
     def _body(self) -> None:
         debug = self.request.app.debug
         try:
-            route_name = self.request.route.name
+            route_name = self.request.route.name  # type: ignore
         except AttributeError:
             route_name = "[route not found]"
         with self.doc.main:

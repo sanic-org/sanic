@@ -162,7 +162,7 @@ class HTMLRenderer(BaseRenderer):
         "{body}"
     )
 
-    def _page(self, full: bool) -> HTTPResponse:
+    def _page(self) -> HTTPResponse:
         page = ErrorPage(
             title=super().title,
             text=super().text,
@@ -172,10 +172,10 @@ class HTMLRenderer(BaseRenderer):
         return html(page.render(), status=self.status, headers=self.headers)
 
     def full(self) -> HTTPResponse:
-        return self._page(full=True)
+        return self._page()
 
     def minimal(self) -> HTTPResponse:
-        return self._page(full=False)
+        return self._page()
 
     def _generate_body(self, *, full):
         lines = []

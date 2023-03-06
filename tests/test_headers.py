@@ -49,32 +49,17 @@ def raised_ceiling():
             ("attachment", {"filename": "strange;name", "size": "123"}),
         ),
         (
-            'form-data; name="files"; filename="fo\\"o;bar\\"',
-            ("form-data", {"name": "files", "filename": 'fo"o;bar\\'})
-            # cgi.parse_header:
-            # ('form-data', {'name': 'files', 'filename': 'fo"o;bar\\'})
-            # werkzeug.parse_options_header:
-            # (
-            #     "form-data",
-            #     {"name": "files", "filename": '"fo\\"o', 'bar\\"': None},
-            # ),
+            'form-data; name="foo"; value="%22\\%0D%0A"',
+            ("form-data", {"name": "foo", "value": '\"\\\n'})
         ),
         # <input type=file name="foo&quot;;bar\"> with Unicode filename!
         (
-            # Chrome:
+            # Chrome, Firefox:
             # Content-Disposition: form-data; name="foo%22;bar\"; filename="😀"
             'form-data; name="foo%22;bar\\"; filename="😀"',
             ("form-data", {"name": 'foo";bar\\', "filename": "😀"})
             # cgi: ('form-data', {'name': 'foo%22;bar"; filename="😀'})
-            # werkzeug: ('form-data', {'name': 'foo%22;bar"; filename='})
-        ),
-        (
-            # Firefox:
-            # Content-Disposition: form-data; name="foo\";bar\"; filename="😀"
-            'form-data; name="foo\\";bar\\"; filename="😀"',
-            ("form-data", {"name": 'foo";bar\\', "filename": "😀"})
-            # cgi: ('form-data', {'name': 'foo";bar"; filename="😀'})
-            # werkzeug: ('form-data', {'name': 'foo";bar"; filename='})
+            # werkzeug (pre 2.3.0): ('form-data', {'name': 'foo%22;bar"; filename='})
         ),
     ],
 )

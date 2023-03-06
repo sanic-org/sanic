@@ -99,6 +99,6 @@ dl.key-value-table dt {
 }
 
 dl.key-value-table dd {
-    word-break: break-all;
     /* Better breaking for cookies header and such */
+    word-break: break-all;
 }

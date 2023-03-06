@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from html5tagger import HTML, Builder, Document, E
+from html5tagger import HTML, Builder, Document
 from sanic import __version__ as VERSION
 from sanic.application.logo import SVG_LOGO_SIMPLE
 from sanic.pages.css import CSS
@@ -36,28 +36,24 @@ class BasePage(ABC, metaclass=CSS):  # no cov
             with self.doc.div:
                 self._sanic_logo()
             if self.debug:
-                pages = (
-                    ("Docs", "https://sanic.dev"),
-                    ("Help", "https://sanic.dev"),
-                    ("GitHub", "https://sanic.dev"),
-                    ("Discord", "https://sanic.dev"),
-                )
-                inner = [
-                    items
-                    for idx, (title, href) in enumerate(pages)
-                    for items in [
-                        "" if idx == 0 else " | ",
-                        E.a(
+                self.doc.div(f"Version {VERSION}")
+                with self.doc.div:
+                    for idx, (title, href) in enumerate(
+                        (
+                            ("Docs", "https://sanic.dev"),
+                            ("Help", "https://sanic.dev/en/help.html"),
+                            ("GitHub", "https://github.com/sanic-org/sanic"),
+                        )
+                    ):
+                        if idx > 0:
+                            self.doc(" | ")
+                        self.doc.a(
                             title,
                             href=href,
                             target="_blank",
                             referrerpolicy="no-referrer",
-                        ),
-                    ]
-                ]
-                self.doc.div(f"Version {VERSION}").div(*inner).div(
-                    "DEBUG mode"
-                )
+                        )
+                self.doc.div("DEBUG mode")
 
     @abstractmethod
     def _body(self) -> None:

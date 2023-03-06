@@ -3,8 +3,8 @@
 :root {
     --sanic: #ff0d68;
     --sanic-yellow: #FFE900;
-    --sanic-background: #fff;
-    --sanic-text: #000;
+    --sanic-background: #efeced;
+    --sanic-text: #121010;
     --sanic-text-lighter: #756169;
     --sanic-link: #ff0d68;
     --sanic-block-background: #f7f4f6;
@@ -69,10 +69,10 @@ body>* {
 }
 
 main {
-    min-height: 70vh;
     /* Make sure the footer is closer to bottom */
-    padding: 1rem 2.5rem;
+    min-height: 70vh;
     /* Generous padding for readability */
+    padding: 1rem 2.5rem;
 }
 
 .smalltext {

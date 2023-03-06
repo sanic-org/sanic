@@ -39,10 +39,9 @@ if t.TYPE_CHECKING:
     from sanic import HTTPResponse, Request
 
 DEFAULT_FORMAT = "auto"
-FALLBACK_TEXT = (
-    "The server encountered an internal error and "
-    "cannot complete your request."
-)
+FALLBACK_TEXT = """\
+The application encountered an unexpected error and could not continue.\
+"""
 FALLBACK_STATUS = 500
 JSON = "application/json"
 
@@ -120,6 +119,7 @@ class HTMLRenderer(BaseRenderer):
 
     def full(self) -> HTTPResponse:
         page = ErrorPage(
+            debug=self.debug,
             title=super().title,
             text=super().text,
             request=self.request,

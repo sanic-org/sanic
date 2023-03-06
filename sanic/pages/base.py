@@ -9,6 +9,7 @@ from sanic.pages.css import CSS
 
 class BasePage(ABC, metaclass=CSS):  # no cov
     TITLE = "Sanic"
+    HEADING = None
     CSS: str
 
     def __init__(self, debug: bool = True) -> None:
@@ -29,7 +30,7 @@ class BasePage(ABC, metaclass=CSS):  # no cov
     def _head(self) -> None:
         self.doc.style(HTML(self.style))
         with self.doc.header:
-            self.doc.div(self.TITLE)
+            self.doc.div(self.HEADING or self.TITLE)
 
     def _foot(self) -> None:
         with self.doc.footer:

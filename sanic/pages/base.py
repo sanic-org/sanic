@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from html5tagger import HTML, Builder, Document
+
 from sanic import __version__ as VERSION
 from sanic.application.logo import SVG_LOGO_SIMPLE
 from sanic.pages.css import CSS

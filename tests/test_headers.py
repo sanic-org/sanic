@@ -50,7 +50,7 @@ def raised_ceiling():
         ),
         (
             'form-data; name="foo"; value="%22\\%0D%0A"',
-            ("form-data", {"name": "foo", "value": '\"\\\n'})
+            ("form-data", {"name": "foo", "value": '"\\\n'}),
         ),
         # <input type=file name="foo&quot;;bar\"> with Unicode filename!
         (

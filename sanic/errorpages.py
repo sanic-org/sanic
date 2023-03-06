@@ -118,7 +118,7 @@ class HTMLRenderer(BaseRenderer):
     The default fallback type.
     """
 
-    def _page(self) -> HTTPResponse:
+    def full(self) -> HTTPResponse:
         page = ErrorPage(
             title=super().title,
             text=super().text,
@@ -127,11 +127,8 @@ class HTMLRenderer(BaseRenderer):
         )
         return html(page.render(), status=self.status, headers=self.headers)
 
-    def full(self) -> HTTPResponse:
-        return self._page()
-
     def minimal(self) -> HTTPResponse:
-        return self._page()
+        return self.full()
 
 
 class TextRenderer(BaseRenderer):

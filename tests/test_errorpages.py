@@ -4,7 +4,7 @@ import pytest
 
 from sanic import Sanic
 from sanic.config import Config
-from sanic.errorpages import TextRenderer, guess_mime, exception_response
+from sanic.errorpages import TextRenderer, exception_response, guess_mime
 from sanic.exceptions import NotFound, SanicException
 from sanic.handlers import ErrorHandler
 from sanic.request import Request
@@ -56,7 +56,6 @@ def app():
         if param not in ("json", "html"):
             raise Exception
         return json({}) if param == "json" else html("")
-
 
     return app
 
@@ -314,7 +313,6 @@ def test_fallback_with_content_type_mismatch_accept(app):
         ("*/*", "application/json", "application/json"),
         # App wants text/plain but accept has equal entries for it
         ("text/*,*/plain", None, "text/plain; charset=utf-8"),
-
     ),
 )
 def test_combinations_for_auto(fake_request, accept, content_type, expected):
@@ -428,25 +426,83 @@ def test_config_fallback_bad_value(app):
 @pytest.mark.parametrize(
     "route_format,fallback,accept,expected",
     (
-        ("json", "html", "*/*", "The client accepts */*, using 'json' from fakeroute"),
-        ("json", "auto", "text/html,*/*;q=0.8", "The client accepts text/html, using 'html' from any"),
-        ("json", "json", "text/html,*/*;q=0.8", "The client accepts */*;q=0.8, using 'json' from fakeroute"),
-        ("", "html", "text/*,*/plain", "The client accepts text/*, using 'html' from FALLBACK_ERROR_FORMAT"),
-        ("", "json", "text/*,*/*", "The client accepts */*, using 'json' from FALLBACK_ERROR_FORMAT"),
-        ("", "auto", "*/*,application/json;q=0.5", "The client accepts */*, using 'json' from request.accept"),
-        ("", "auto", "*/*", "The client accepts */*, using 'json' from content-type"),
-        ("", "auto", "text/html,text/plain", "The client accepts text/plain, using 'text' from any"),
-        ("", "auto", "text/html,text/plain;q=0.9", "The client accepts text/html, using 'html' from any"),
-        ("html", "json", "application/xml", "No format found, the client accepts [application/xml]"),
+        (
+            "json",
+            "html",
+            "*/*",
+            "The client accepts */*, using 'json' from fakeroute",
+        ),
+        (
+            "json",
+            "auto",
+            "text/html,*/*;q=0.8",
+            "The client accepts text/html, using 'html' from any",
+        ),
+        (
+            "json",
+            "json",
+            "text/html,*/*;q=0.8",
+            "The client accepts */*;q=0.8, using 'json' from fakeroute",
+        ),
+        (
+            "",
+            "html",
+            "text/*,*/plain",
+            "The client accepts text/*, using 'html' from FALLBACK_ERROR_FORMAT",
+        ),
+        (
+            "",
+            "json",
+            "text/*,*/*",
+            "The client accepts */*, using 'json' from FALLBACK_ERROR_FORMAT",
+        ),
+        (
+            "",
+            "auto",
+            "*/*,application/json;q=0.5",
+            "The client accepts */*, using 'json' from request.accept",
+        ),
+        (
+            "",
+            "auto",
+            "*/*",
+            "The client accepts */*, using 'json' from content-type",
+        ),
+        (
+            "",
+            "auto",
+            "text/html,text/plain",
+            "The client accepts text/plain, using 'text' from any",
+        ),
+        (
+            "",
+            "auto",
+            "text/html,text/plain;q=0.9",
+            "The client accepts text/html, using 'html' from any",
+        ),
+        (
+            "html",
+            "json",
+            "application/xml",
+            "No format found, the client accepts [application/xml]",
+        ),
         ("", "auto", "*/*", "The client accepts */*, using 'text' from any"),
         ("", "", "*/*", "No format found, the client accepts [*/*]"),
         # DEPRECATED: remove in 24.3
-        ("", "auto", "*/*", "The client accepts */*, using 'json' from request.json"),
+        (
+            "",
+            "auto",
+            "*/*",
+            "The client accepts */*, using 'json' from request.json",
+        ),
     ),
 )
-def test_guess_mime_logging(caplog, fake_request, route_format, fallback, accept, expected):
+def test_guess_mime_logging(
+    caplog, fake_request, route_format, fallback, accept, expected
+):
     class FakeObject:
         pass
+
     fake_request.route = FakeObject()
     fake_request.route.name = "fakeroute"
     fake_request.route.extra = FakeObject()
@@ -466,6 +522,8 @@ def test_guess_mime_logging(caplog, fake_request, route_format, fallback, accept
     with caplog.at_level(logging.DEBUG, logger="sanic.root"):
         guess_mime(fake_request, fallback)
 
-    logmsg, = [r.message for r in caplog.records if r.funcName == "guess_mime"]
+    (logmsg,) = [
+        r.message for r in caplog.records if r.funcName == "guess_mime"
+    ]
 
     assert logmsg == expected

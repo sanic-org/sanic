@@ -123,10 +123,10 @@ def test_html_traceback_output_in_debug_mode(exception_handler_app: Sanic):
     assert "handler_4" in html
     assert "foo = bar" in html
 
-    summary_text = " ".join(soup.select(".summary")[0].text.split())
-    assert (
-        "NameError: name 'bar' is not defined while handling path /4"
-    ) == summary_text
+    summary_text = soup.select("h3")[0].text
+    assert "NameError: name 'bar' is not defined" == summary_text
+    request_text = soup.select("h2")[-1].text
+    assert "GET /4" == request_text
 
 
 def test_inherited_exception_handler(exception_handler_app: Sanic):
@@ -146,11 +146,10 @@ def test_chained_exception_handler(exception_handler_app: Sanic):
     assert "handler_6" in html
     assert "foo = 1 / arg" in html
     assert "ValueError" in html
+    assert "GET /6" in html
 
-    summary_text = " ".join(soup.select(".summary")[0].text.split())
-    assert (
-        "ZeroDivisionError: division by zero while handling path /6/0"
-    ) == summary_text
+    summary_text = soup.select("h3")[0].text
+    assert "ZeroDivisionError: division by zero" == summary_text
 
 
 def test_exception_handler_lookup(exception_handler_app: Sanic):

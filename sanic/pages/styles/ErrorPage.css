@@ -69,11 +69,15 @@ h2 {
     color: var(--sanic-text);
 }
 
+.key-value-display,
+.exception-wrapper {
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+
 .key-value-display {
     background-color: var(--sanic-block-background);
     color: var(--sanic-block-text);
-    padding: 0.5rem;
-    margin-top: 1rem;
 }
 
 .key-value-display h2 {

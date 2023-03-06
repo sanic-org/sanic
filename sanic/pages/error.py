@@ -1,11 +1,9 @@
 from typing import Any, Mapping
 
 import tracerite.html
-
 from html5tagger import E
-from tracerite import html_traceback, inspector
-
 from sanic.request import Request
+from tracerite import html_traceback, inspector
 
 from .base import BasePage
 
@@ -30,7 +28,6 @@ class ErrorPage(BasePage):
         text: str,
         request: Request,
         exc: Exception,
-        debug: bool,
     ) -> None:
         super().__init__(debug)
         name = request.app.name.replace("_", " ").strip()
@@ -80,8 +77,11 @@ class ErrorPage(BasePage):
                     "Details for developers (Sanic debug mode only)"
                 )
                 if self.exc:
-                    self.doc.h2(f"Exception in {route_name}:")
-                    self.doc(html_traceback(self.exc, include_js_css=False))
+                    with self.doc.div(class_="exception-wrapper"):
+                        self.doc.h2(f"Exception in {route_name}:")
+                        self.doc(
+                            html_traceback(self.exc, include_js_css=False)
+                        )
 
                 self._key_value_table(
                     f"{self.request.method} {self.request.path}",

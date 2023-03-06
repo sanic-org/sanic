@@ -80,8 +80,11 @@ class ErrorPage(BasePage):
                     "Details for developers (Sanic debug mode only)"
                 )
                 if self.exc:
-                    self.doc.h2(f"Exception in {route_name}:")
-                    self.doc(html_traceback(self.exc, include_js_css=False))
+                    with self.doc.div(class_="exception-wrapper"):
+                        self.doc.h2(f"Exception in {route_name}:")
+                        self.doc(
+                            html_traceback(self.exc, include_js_css=False)
+                        )
 
                 self._key_value_table(
                     f"{self.request.method} {self.request.path}",
@@ -92,12 +95,15 @@ class ErrorPage(BasePage):
     def _key_value_table(
         self, title: str, table_id: str, data: Mapping[str, Any]
     ) -> None:
-        self.doc.h2(title)
-        with self.doc.dl(id=table_id, class_="key-value-table smalltext"):
-            for key, value in data.items():
-                # Reading values may cause a new exception, so suppress it
-                try:
-                    value = str(value)
-                except Exception:
-                    value = E.em("Unable to display value")
-                self.doc.dt.span(key, class_="nobr key").span(": ").dd(value)
+        with self.doc.div(class_="key-value-display"):
+            self.doc.h2(title)
+            with self.doc.dl(id=table_id, class_="key-value-table smalltext"):
+                for key, value in data.items():
+                    # Reading values may cause a new exception, so suppress it
+                    try:
+                        value = str(value)
+                    except Exception:
+                        value = E.em("Unable to display value")
+                    self.doc.dt.span(key, class_="nobr key").span(": ").dd(
+                        value
+                    )

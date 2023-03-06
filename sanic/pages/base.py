@@ -11,9 +11,9 @@ class BasePage(ABC, metaclass=CSS):  # no cov
     TITLE = "Sanic"
     HEADING = None
     CSS: str
+    doc: Builder
 
     def __init__(self, debug: bool = True) -> None:
-        self.doc: Builder = None
         self.debug = debug
 
     @property
@@ -39,6 +39,23 @@ class BasePage(ABC, metaclass=CSS):  # no cov
                 self._sanic_logo()
             if self.debug:
                 self.doc.div(f"Version {VERSION}")
+                with self.doc.div:
+                    for idx, (title, href) in enumerate(
+                        (
+                            ("Docs", "https://sanic.dev"),
+                            ("Help", "https://sanic.dev/en/help.html"),
+                            ("GitHub", "https://github.com/sanic-org/sanic"),
+                        )
+                    ):
+                        if idx > 0:
+                            self.doc(" | ")
+                        self.doc.a(
+                            title,
+                            href=href,
+                            target="_blank",
+                            referrerpolicy="no-referrer",
+                        )
+                self.doc.div("DEBUG mode")
 
     @abstractmethod
     def _body(self) -> None:

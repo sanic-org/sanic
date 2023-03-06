@@ -2,32 +2,40 @@
 
 :root {
     --sanic: #ff0d68;
-    --sanic-blue: #0092FF;
     --sanic-yellow: #FFE900;
-    --sanic-purple: #833FE3;
-    --sanic-green: #37ae6f;
-    --sanic-background: #f1f5f9;
-    --sanic-text: #1f2937;
-    --sanic-tab-background: #fff;
-    --sanic-tab-text: #0f172a;
-    --sanic-tab-shadow: #adadad;
+    --sanic-background: #efeced;
+    --sanic-text: #121010;
+    --sanic-text-lighter: #756169;
+    --sanic-link: #ff0d68;
+    --sanic-block-background: #f7f4f6;
+    --sanic-block-text: #000;
+    --sanic-block-alt-text: #6b6468;
+    --sanic-header-background: #272325;
+    --sanic-header-border: #fff;
+    --sanic-header-text: #fff;
     --sanic-highlight-background: var(--sanic-yellow);
     --sanic-highlight-text: var(--sanic-text);
-    --sanic-header-background: #000;
+    --sanic-tab-background: #f7f4f6;
+    --sanic-tab-shadow: #f7f6f6;
+    --sanic-tab-text: #222021;
+    --sanic-tracerite-var: var(--sanic-text);
+    --sanic-tracerite-val: #ff0d68;
+    --sanic-tracerite-type: #6d6a6b;
 }
+
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --sanic-purple: #D246DE;
-        --sanic-green: #16DB93;
-        --sanic-background: #111;
-        --sanic-text: #e7e7e7;
-        --sanic-tab-background: #484848;
-        --sanic-tab-text: #e1e1e1;
-        --sanic-tab-shadow: #000;
-        --sanic-highlight-background: var(--sanic-yellow);
-        --sanic-highlight-text: #000;
-        --sanic-header-background: #000;
+        --sanic-text: #f7f4f6;
+        --sanic-background: #121010;
+        --sanic-block-background: #0f0d0e;
+        --sanic-block-text: #f7f4f6;
+        --sanic-header-background: #030203;
+        --sanic-header-border: #000;
+        --sanic-highlight-text: var(--sanic-background);
+        --sanic-tab-background: #292728;
+        --sanic-tab-shadow: #0f0d0e;
+        --sanic-tab-text: #aea7ab;
     }
 }
 
@@ -45,12 +53,12 @@ body {
     line-height: 125%;
 }
 
-body > * {
+body>* {
     padding: 1rem 2vw;
 }
 
 @media (max-width: 1000px) {
-    body > * {
+    body>* {
         padding: 0.5rem 1.5vw;
     }
 
@@ -61,8 +69,10 @@ body > * {
 }
 
 main {
-    min-height: 70vh; /* Make sure the footer is closer to bottom */
-    padding: 1rem 2.5rem; /* Generous padding for readability */
+    /* Make sure the footer is closer to bottom */
+    min-height: 70vh;
+    /* Generous padding for readability */
+    padding: 1rem 2.5rem;
 }
 
 .smalltext {
@@ -75,9 +85,9 @@ main {
 }
 
 header {
-    background: #111;
-    color: #e1e1e1;
-    border-bottom: 1px solid #272727;
+    background: var(--sanic-header-background);
+    color: var(--sanic-header-text);
+    border-bottom: 1px solid var(--sanic-header-border);
     text-align: center;
 }
 
@@ -86,20 +96,17 @@ footer {
     display: flex;
     flex-direction: column;
     font-size: 0.8rem;
-    margin-top: 2rem;
+    margin: 2rem;
+    line-height: 1.5em;
 }
 
 h1 {
     text-align: left;
 }
 
-a:visited {
-    color: inherit;
-}
-
 a {
     text-decoration: none;
-    color: #88f;
+    color: var(--sanic-link);
 }
 
 a:hover,
@@ -125,14 +132,15 @@ span.icon {
     }
 }
 
-#sanic pre, #sanic code {
+#sanic pre,
+#sanic code {
     font-family: "Fira Code",
-    "Source Code Pro",
-    Menlo,
-    Meslo,
-    Monaco,
-    Consolas,
-    Lucida Console,
-    monospace;
+        "Source Code Pro",
+        Menlo,
+        Meslo,
+        Monaco,
+        Consolas,
+        Lucida Console,
+        monospace;
     font-size: 0.8rem;
 }

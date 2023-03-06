@@ -22,8 +22,8 @@ from traceback import extract_tb
 
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
-from sanic.pages.error import ErrorPage
 from sanic.log import deprecation, logger
+from sanic.pages.error import ErrorPage
 from sanic.response import html, json, text
 
 

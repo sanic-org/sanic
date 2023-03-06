@@ -1,9 +1,9 @@
 from typing import Any, Mapping
 
-import tracerite.html
+import tracerite.html  # type: ignore
 
 from html5tagger import E
-from tracerite import html_traceback, inspector
+from tracerite import html_traceback, inspector  # type: ignore
 
 from sanic.request import Request
 

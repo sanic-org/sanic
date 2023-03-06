@@ -1,16 +1,23 @@
 from typing import Any, Mapping
 
-import tracerite.html  # type: ignore
+import tracerite.html
+
 from html5tagger import E
+from tracerite import html_traceback, inspector
+
 from sanic.request import Request
-from tracerite import html_traceback, inspector  # type: ignore
 
 from .base import BasePage
 
 # Avoid showing the request in the traceback variable inspectors
 inspector.blacklist_types += (Request,)
 
-ENDUSER_TEXT = """We're sorry, but it looks like something went wrong. Please try refreshing the page or navigating back to the homepage. If the issue persists, our technical team is working to resolve it as soon as possible. We apologize for the inconvenience and appreciate your patience."""  # noqa: E501
+ENDUSER_TEXT = """\
+We're sorry, but it looks like something went wrong. Please try refreshing \
+the page or navigating back to the homepage. If the issue persists, our \
+technical team is working to resolve it as soon as possible. We apologize \
+for the inconvenience and appreciate your patience.\
+"""
 
 
 class ErrorPage(BasePage):
@@ -18,6 +25,7 @@ class ErrorPage(BasePage):
 
     def __init__(
         self,
+        debug: bool,
         title: str,
         text: str,
         request: Request,
@@ -25,15 +33,11 @@ class ErrorPage(BasePage):
         debug: bool,
     ) -> None:
         super().__init__(debug)
-        # Internal server errors come with the text of the exception,
-        # which we don't want to show to the user.
-        # FIXME: Needs to be done in a better way, elsewhere
-        if "Internal Server Error" in title:
-            text = "The application encountered an unexpected error and could not continue."  # noqa: E501
         name = request.app.name.replace("_", " ").strip()
         if name.islower():
             name = name.title()
-        self.TITLE = E("Application ").strong(name)(
+        self.TITLE = f"Application {name} cannot handle your request"
+        self.HEADING = E("Application ").strong(name)(
             " cannot handle your request"
         )
         self.title = title
@@ -48,12 +52,7 @@ class ErrorPage(BasePage):
 
     def _body(self) -> None:
         debug = self.request.app.debug
-        try:
-            route_name = (
-                self.request.route.name if self.request.route else "<Unknown>"
-            )
-        except AttributeError:
-            route_name = "[route not found]"
+        route_name = self.request.name or "[route not found]"
         with self.doc.main:
             self.doc.h1(f"⚠️ {self.title}").p(self.text)
             # Show context details if available on the exception

@@ -25,7 +25,6 @@ class ErrorPage(BasePage):
         text: str,
         request: Request,
         exc: Exception,
-        full: bool,
     ) -> None:
         super().__init__()
         # Internal server errors come with the text of the exception,
@@ -43,7 +42,7 @@ class ErrorPage(BasePage):
         self.text = text
         self.request = request
         self.exc = exc
-        self.full = full
+        self.details_open = not getattr(exc, "quiet", False)
 
     def _head(self) -> None:
         self.doc._script(tracerite.html.javascript)
@@ -70,7 +69,7 @@ class ErrorPage(BasePage):
                 return
             # Show additional details in debug mode,
             # open by default for 500 errors
-            with self.doc.details(open=self.full, class_="smalltext"):
+            with self.doc.details(open=self.details_open, class_="smalltext"):
                 # Show extra details if available on the exception
                 extra = getattr(self.exc, "extra", None)
                 if extra:

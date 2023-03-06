@@ -168,7 +168,6 @@ class HTMLRenderer(BaseRenderer):
             text=super().text,
             request=self.request,
             exc=self.exception,
-            full=full,
         )
         return html(page.render(), status=self.status, headers=self.headers)
 

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from html5tagger import HTML, Document, E
+from html5tagger import HTML, Builder, Document, E
 from sanic import __version__ as VERSION
 from sanic.application.logo import SVG_LOGO_SIMPLE
 from sanic.pages.css import CSS
@@ -9,6 +9,7 @@ from sanic.pages.css import CSS
 class BasePage(ABC, metaclass=CSS):  # no cov
     TITLE = "Sanic"
     CSS: str
+    doc: Builder
 
     def __init__(self, debug: bool = True) -> None:
         self.debug = debug

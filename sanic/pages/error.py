@@ -1,9 +1,9 @@
 from typing import Any, Mapping
 
-import tracerite.html
+import tracerite.html  # type: ignore
 from html5tagger import E
 from sanic.request import Request
-from tracerite import html_traceback, inspector
+from tracerite import html_traceback, inspector  # type: ignore
 
 from .base import BasePage
 
@@ -22,9 +22,9 @@ class ErrorPage(BasePage):
         text: str,
         request: Request,
         exc: Exception,
-        full: bool,
+        debug: bool,
     ) -> None:
-        super().__init__()
+        super().__init__(debug)
         # Internal server errors come with the text of the exception,
         # which we don't want to show to the user.
         # FIXME: Needs to be done in a better way, elsewhere
@@ -40,7 +40,7 @@ class ErrorPage(BasePage):
         self.text = text
         self.request = request
         self.exc = exc
-        self.full = full
+        self.details_open = not getattr(exc, "quiet", False)
 
     def _head(self) -> None:
         self.doc._script(tracerite.html.javascript)
@@ -69,7 +69,7 @@ class ErrorPage(BasePage):
                 return
             # Show additional details in debug mode,
             # open by default for 500 errors
-            with self.doc.details(open=self.full, class_="smalltext"):
+            with self.doc.details(open=self.details_open, class_="smalltext"):
                 # Show extra details if available on the exception
                 extra = getattr(self.exc, "extra", None)
                 if extra:

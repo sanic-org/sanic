@@ -85,9 +85,29 @@ class MethodNotAllowed(SanicException):
     status_code = 405
     quiet = True
 
-    def __init__(self, message, method, allowed_methods, **kwargs):
-        super().__init__(message, **kwargs)
+    def __init__(
+        self,
+        message,
+        method,
+        allowed_methods,
+        *,
+        status_code: Optional[int] = None,
+        quiet: Optional[bool] = None,
+        context: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(
+            message,
+            status_code=status_code,
+            quiet=quiet,
+            context=context,
+            extra=extra,
+            headers=headers,
+        )
         self.headers = {"Allow": ", ".join(allowed_methods)}
+        self.method = method
+        self.allowed_methods = allowed_methods
 
 
 MethodNotSupported = MethodNotAllowed
@@ -126,8 +146,26 @@ class FileNotFound(NotFound):
     **Status**: 404 Not Found
     """
 
-    def __init__(self, message, path, relative_url, **kwargs):
-        super().__init__(message, **kwargs)
+    def __init__(
+        self,
+        message,
+        path,
+        relative_url,
+        *,
+        status_code: Optional[int] = None,
+        quiet: Optional[bool] = None,
+        context: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(
+            message,
+            status_code=status_code,
+            quiet=quiet,
+            context=context,
+            extra=extra,
+            headers=headers,
+        )
         self.path = path
         self.relative_url = relative_url
 
@@ -174,8 +212,25 @@ class RangeNotSatisfiable(SanicException):
     status_code = 416
     quiet = True
 
-    def __init__(self, message, content_range, **kwargs):
-        super().__init__(message, **kwargs)
+    def __init__(
+        self,
+        message,
+        content_range,
+        *,
+        status_code: Optional[int] = None,
+        quiet: Optional[bool] = None,
+        context: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(
+            message,
+            status_code=status_code,
+            quiet=quiet,
+            context=context,
+            extra=extra,
+            headers=headers,
+        )
         self.headers = {"Content-Range": f"bytes */{content_range.total}"}
 
 
@@ -212,9 +267,25 @@ class InvalidRangeType(RangeNotSatisfiable):
     quiet = True
 
 
-class PyFileError(Exception):
-    def __init__(self, file, **kwargs):
-        super().__init__("could not execute config file %s" % file, **kwargs)
+class PyFileError(SanicException):
+    def __init__(
+        self,
+        file,
+        *,
+        status_code: Optional[int] = None,
+        quiet: Optional[bool] = None,
+        context: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(
+            "could not execute config file %s" % file,
+            status_code=status_code,
+            quiet=quiet,
+            context=context,
+            extra=extra,
+            headers=headers,
+        )
 
 
 class Unauthorized(SanicException):
@@ -255,12 +326,32 @@ class Unauthorized(SanicException):
     status_code = 401
     quiet = True
 
-    def __init__(self, message, status_code=None, scheme=None, **kwargs):
-        super().__init__(message, status_code, **kwargs)
+    def __init__(
+        self,
+        message,
+        scheme=None,
+        challenges=None,
+        *,
+        status_code: Optional[int] = None,
+        quiet: Optional[bool] = None,
+        context: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(
+            message,
+            status_code=status_code,
+            quiet=quiet,
+            context=context,
+            extra=extra,
+            headers=headers,
+        )
 
         # if auth-scheme is specified, set "WWW-Authenticate" header
         if scheme is not None:
-            values = ['{!s}="{!s}"'.format(k, v) for k, v in kwargs.items()]
+            values = [
+                '{!s}="{!s}"'.format(k, v) for k, v in challenges.items()
+            ]
             challenge = ", ".join(values)
 
             self.headers = {

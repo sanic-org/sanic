@@ -313,8 +313,8 @@ Version 21.3.0
     `#2074 <https://github.com/sanic-org/sanic/pull/2074>`_
     Performance adjustments in ``handle_request_``
 
-Version 20.12.3 🔷
-------------------
+Version 20.12.3
+---------------
 
 `Current LTS version`
 
@@ -350,8 +350,8 @@ Version 19.12.5
     `#2027 <https://github.com/sanic-org/sanic/pull/2027>`_
     Remove old chardet requirement, add in hard multidict requirement
 
-Version 20.12.0 🔹
------------------
+Version 20.12.0
+---------------
 
 **Features**
 

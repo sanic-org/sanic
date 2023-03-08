@@ -8,12 +8,18 @@ import uvicorn
 
 from sanic import Sanic
 from sanic.application.state import Mode
-from sanic.asgi import MockTransport
+from sanic.asgi import ASGIApp, MockTransport
 from sanic.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection
 from sanic.signals import RESERVED_NAMESPACES
+
+
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from tests.asyncmock import AsyncMock  # type: ignore
 
 
 @pytest.fixture
@@ -336,7 +342,7 @@ async def test_websocket_send(send, receive, message_stack):
 
 
 @pytest.mark.asyncio
-async def test_websocket_receive(send, receive, message_stack):
+async def test_websocket_text_receive(send, receive, message_stack):
     msg = {"text": "hello", "type": "websocket.receive"}
     message_stack.append(msg)
 
@@ -344,6 +350,17 @@ async def test_websocket_receive(send, receive, message_stack):
     text = await ws.receive()
 
     assert text == msg["text"]
+
+
+@pytest.mark.asyncio
+async def test_websocket_bytes_receive(send, receive, message_stack):
+    msg = {"bytes": b"hello", "type": "websocket.receive"}
+    message_stack.append(msg)
+
+    ws = WebSocketConnection(send, receive)
+    data = await ws.receive()
+
+    assert data == msg["bytes"]
 
 
 @pytest.mark.asyncio
@@ -531,6 +548,8 @@ async def test_signals_triggered(app):
         "http.lifecycle.handle",
         "http.routing.before",
         "http.routing.after",
+        "http.handler.before",
+        "http.handler.after",
         "http.lifecycle.response",
         # "http.lifecycle.send",
         # "http.lifecycle.complete",
@@ -556,3 +575,39 @@ async def test_asgi_serve_location(app):
 
     _, response = await app.asgi_client.get("/")
     assert response.text == "http://<ASGI>"
+
+
+@pytest.mark.asyncio
+async def test_error_on_lifespan_exception_start(app, caplog):
+    @app.before_server_start
+    async def before_server_start(_):
+        1 / 0
+
+    recv = AsyncMock(return_value={"type": "lifespan.startup"})
+    send = AsyncMock()
+    app.asgi = True
+
+    with caplog.at_level(logging.ERROR):
+        await ASGIApp.create(app, {"type": "lifespan"}, recv, send)
+
+    send.assert_awaited_once_with(
+        {"type": "lifespan.startup.failed", "message": "division by zero"}
+    )
+
+
+@pytest.mark.asyncio
+async def test_error_on_lifespan_exception_stop(app: Sanic):
+    @app.before_server_stop
+    async def before_server_stop(_):
+        1 / 0
+
+    recv = AsyncMock(return_value={"type": "lifespan.shutdown"})
+    send = AsyncMock()
+    app.asgi = True
+    await app._startup()
+
+    await ASGIApp.create(app, {"type": "lifespan"}, recv, send)
+
+    send.assert_awaited_once_with(
+        {"type": "lifespan.shutdown.failed", "message": "division by zero"}
+    )

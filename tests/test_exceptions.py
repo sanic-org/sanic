@@ -23,11 +23,11 @@ from sanic.exceptions import (
 from sanic.response import text
 
 
-def dl_to_dict(soup, css_class):
+def dl_to_dict(soup, dl_id):
     keys, values = [], []
-    for dl in soup.find_all("dl", {"class": css_class}):
+    for dl in soup.find_all("dl", {"id": dl_id}):
         for dt in dl.find_all("dt"):
-            keys.append(dt.text.strip())
+            keys.append(dt.text.split(":", 1)[0])
         for dd in dl.find_all("dd"):
             values.append(dd.text.strip())
     return dict(zip(keys, values))
@@ -194,10 +194,7 @@ def test_handled_unhandled_exception(exception_app):
     assert "Internal Server Error" in soup.h1.text
 
     message = " ".join(soup.p.text.split())
-    assert message == (
-        "The server encountered an internal error and "
-        "cannot complete your request."
-    )
+    assert "The application encountered an unexpected error" in message
 
 
 def test_exception_in_exception_handler(exception_app):
@@ -299,7 +296,7 @@ def test_contextual_exception_context(debug):
 
     _, response = app.test_client.post("/coffee/html", debug=debug)
     soup = BeautifulSoup(response.body, "html.parser")
-    dl = dl_to_dict(soup, "context")
+    dl = dl_to_dict(soup, "exception-context")
     assert response.status == 418
     assert "Sorry, I cannot brew coffee" in soup.find("p").text
     assert dl == {"foo": "bar"}
@@ -340,7 +337,7 @@ def test_contextual_exception_extra(debug):
 
     _, response = app.test_client.post("/coffee/html", debug=debug)
     soup = BeautifulSoup(response.body, "html.parser")
-    dl = dl_to_dict(soup, "extra")
+    dl = dl_to_dict(soup, "exception-extra")
     assert response.status == 418
     assert "Found bar" in soup.find("p").text
     if debug:

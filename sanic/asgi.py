@@ -7,9 +7,9 @@ from urllib.parse import quote
 
 from sanic.compat import Header
 from sanic.exceptions import ServerError
-from sanic.helpers import _default
+from sanic.helpers import Default
 from sanic.http import Stage
-from sanic.log import logger
+from sanic.log import error_logger, logger
 from sanic.models.asgi import ASGIReceive, ASGIScope, ASGISend, MockTransport
 from sanic.request import Request
 from sanic.response import BaseHTTPResponse
@@ -61,7 +61,7 @@ class Lifespan:
         await self.asgi_app.sanic_app._server_event("init", "before")
         await self.asgi_app.sanic_app._server_event("init", "after")
 
-        if self.asgi_app.sanic_app.config.USE_UVLOOP is not _default:
+        if not isinstance(self.asgi_app.sanic_app.config.USE_UVLOOP, Default):
             warnings.warn(
                 "You have set the USE_UVLOOP configuration option, but Sanic "
                 "cannot control the event loop when running in ASGI mode."
@@ -85,13 +85,27 @@ class Lifespan:
     ) -> None:
         message = await receive()
         if message["type"] == "lifespan.startup":
-            await self.startup()
-            await send({"type": "lifespan.startup.complete"})
+            try:
+                await self.startup()
+            except Exception as e:
+                error_logger.exception(e)
+                await send(
+                    {"type": "lifespan.startup.failed", "message": str(e)}
+                )
+            else:
+                await send({"type": "lifespan.startup.complete"})
 
         message = await receive()
         if message["type"] == "lifespan.shutdown":
-            await self.shutdown()
-            await send({"type": "lifespan.shutdown.complete"})
+            try:
+                await self.shutdown()
+            except Exception as e:
+                error_logger.exception(e)
+                await send(
+                    {"type": "lifespan.shutdown.failed", "message": str(e)}
+                )
+            else:
+                await send({"type": "lifespan.shutdown.complete"})
 
 
 class ASGIApp:
@@ -234,4 +248,7 @@ class ASGIApp:
             self.stage = Stage.HANDLER
             await self.sanic_app.handle_request(self.request)
         except Exception as e:
-            await self.sanic_app.handle_exception(self.request, e)
+            try:
+                await self.sanic_app.handle_exception(self.request, e)
+            except Exception as exc:
+                await self.sanic_app.handle_exception(self.request, exc, False)

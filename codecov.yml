@@ -15,10 +15,10 @@ codecov:
 ignore:
   - "sanic/__main__.py"
   - "sanic/compat.py"
-  - "sanic/reloader_helpers.py"
   - "sanic/simple.py"
   - "sanic/utils.py"
-  - "sanic/cli"
+  - "sanic/cli/"
+  - "sanic/pages/"
   - ".github/"
   - "changelogs/"
   - "docker/"

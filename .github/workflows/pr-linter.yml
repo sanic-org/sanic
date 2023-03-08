@@ -16,7 +16,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         config:
-          - { python-version: 3.8, tox-env: lint}
+          - { python-version: "3.10", tox-env: lint}
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2

@@ -2,10 +2,21 @@ import logging
 import sys
 
 from enum import Enum
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 from warnings import warn
 
 from sanic.compat import is_atty
+
+
+# Python 3.11 changed the way Enum formatting works for mixed-in types.
+if sys.version_info < (3, 11, 0):
+
+    class StrEnum(str, Enum):
+        pass
+
+else:
+    if not TYPE_CHECKING:
+        from enum import StrEnum
 
 
 LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
@@ -24,6 +35,12 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
             "handlers": ["access_console"],
             "propagate": True,
             "qualname": "sanic.access",
+        },
+        "sanic.server": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": True,
+            "qualname": "sanic.server",
         },
     },
     handlers={
@@ -62,12 +79,13 @@ Defult logging configuration
 """
 
 
-class Colors(str, Enum):  # no cov
+class Colors(StrEnum):  # no cov
     END = "\033[0m"
-    BLUE = "\033[01;34m"
-    GREEN = "\033[01;32m"
-    PURPLE = "\033[01;35m"
-    RED = "\033[01;31m"
+    BOLD = "\033[1m"
+    BLUE = "\033[34m"
+    GREEN = "\033[32m"
+    PURPLE = "\033[35m"
+    RED = "\033[31m"
     SANIC = "\033[38;2;255;13;104m"
     YELLOW = "\033[01;33m"
 
@@ -99,6 +117,12 @@ access_logger = logging.getLogger("sanic.access")  # no cov
 Logger used by Sanic for access logging
 """
 access_logger.addFilter(_verbosity_filter)
+
+server_logger = logging.getLogger("sanic.server")  # no cov
+"""
+Logger used by Sanic for server related messages
+"""
+logger.addFilter(_verbosity_filter)
 
 
 def deprecation(message: str, version: float):  # no cov

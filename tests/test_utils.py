@@ -38,7 +38,6 @@ def test_load_module_from_file_location_with_non_existing_env_variable():
         LoadFileException,
         match="The following environment variables are not set: MuuMilk",
     ):
-
         load_module_from_file_location("${MuuMilk}")
 
 

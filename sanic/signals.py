@@ -30,6 +30,8 @@ class Event(Enum):
     HTTP_LIFECYCLE_RESPONSE = "http.lifecycle.response"
     HTTP_ROUTING_AFTER = "http.routing.after"
     HTTP_ROUTING_BEFORE = "http.routing.before"
+    HTTP_HANDLER_AFTER = "http.handler.after"
+    HTTP_HANDLER_BEFORE = "http.handler.before"
     HTTP_LIFECYCLE_SEND = "http.lifecycle.send"
     HTTP_MIDDLEWARE_AFTER = "http.middleware.after"
     HTTP_MIDDLEWARE_BEFORE = "http.middleware.before"
@@ -53,6 +55,8 @@ RESERVED_NAMESPACES = {
         Event.HTTP_LIFECYCLE_RESPONSE.value,
         Event.HTTP_ROUTING_AFTER.value,
         Event.HTTP_ROUTING_BEFORE.value,
+        Event.HTTP_HANDLER_AFTER.value,
+        Event.HTTP_HANDLER_BEFORE.value,
         Event.HTTP_LIFECYCLE_SEND.value,
         Event.HTTP_MIDDLEWARE_AFTER.value,
         Event.HTTP_MIDDLEWARE_BEFORE.value,
@@ -150,13 +154,11 @@ class SignalRouter(BaseRouter):
         try:
             for signal in signals:
                 params.pop("__trigger__", None)
+                requirements = signal.extra.requirements
                 if (
                     (condition is None and signal.ctx.exclusive is False)
-                    or (
-                        condition is None
-                        and not signal.handler.__requirements__
-                    )
-                    or (condition == signal.handler.__requirements__)
+                    or (condition is None and not requirements)
+                    or (condition == requirements)
                 ) and (signal.ctx.trigger or event == signal.ctx.definition):
                     maybe_coroutine = signal.handler(**params)
                     if isawaitable(maybe_coroutine):
@@ -187,7 +189,7 @@ class SignalRouter(BaseRouter):
             fail_not_found=fail_not_found and inline,
             reverse=reverse,
         )
-        logger.debug(f"Dispatching signal: {event}")
+        logger.debug(f"Dispatching signal: {event}", extra={"verbosity": 1})
 
         if inline:
             return await dispatch
@@ -215,8 +217,13 @@ class SignalRouter(BaseRouter):
         if not trigger:
             event = ".".join([*parts[:2], "<__trigger__>"])
 
-        handler.__requirements__ = condition  # type: ignore
-        handler.__trigger__ = trigger  # type: ignore
+        try:
+            # Attaching __requirements__ and __trigger__ to the handler
+            # is deprecated and will be removed in v23.6.
+            handler.__requirements__ = condition  # type: ignore
+            handler.__trigger__ = trigger  # type: ignore
+        except AttributeError:
+            pass
 
         signal = super().add(
             event,
@@ -228,6 +235,7 @@ class SignalRouter(BaseRouter):
         signal.ctx.exclusive = exclusive
         signal.ctx.trigger = trigger
         signal.ctx.definition = event_definition
+        signal.extra.requirements = condition
 
         return cast(Signal, signal)
 

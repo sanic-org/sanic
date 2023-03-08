@@ -722,7 +722,6 @@ def test_add_webscoket_route_with_version(app):
 
 
 def test_route_duplicate(app):
-
     with pytest.raises(RouteExists):
 
         @app.route("/test")
@@ -803,8 +802,22 @@ def test_static_add_route(app, strict_slashes):
     assert response.text == "OK2"
 
 
-def test_dynamic_add_route(app):
+@pytest.mark.parametrize("unquote", [True, False, None])
+def test_unquote_add_route(app, unquote):
+    async def handler1(_, foo):
+        return text(foo)
 
+    app.add_route(handler1, "/<foo>", unquote=unquote)
+    value = "啊" if unquote else r"%E5%95%8A"
+
+    _, response = app.test_client.get("/啊")
+    assert response.text == value
+
+    _, response = app.test_client.get(r"/%E5%95%8A")
+    assert response.text == value
+
+
+def test_dynamic_add_route(app):
     results = []
 
     async def handler(request, name):
@@ -819,7 +832,6 @@ def test_dynamic_add_route(app):
 
 
 def test_dynamic_add_route_string(app):
-
     results = []
 
     async def handler(request, name):
@@ -923,7 +935,6 @@ def test_dynamic_add_route_unhashable(app):
 
 
 def test_add_route_duplicate(app):
-
     with pytest.raises(RouteExists):
 
         async def handler1(request):
@@ -1105,7 +1116,6 @@ def test_route_raise_ParameterNameConflicts(app):
 
 
 def test_route_invalid_host(app):
-
     host = 321
     with pytest.raises(ValueError) as excinfo:
 

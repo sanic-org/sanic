@@ -17,6 +17,10 @@ def no_skip():
     yield
     Sanic._app_registry = {}
     Sanic.should_auto_reload = should_auto_reload
+    try:
+        del os.environ["SANIC_MOTD_OUTPUT"]
+    except KeyError:
+        ...
 
 
 def get_primary(app: Sanic) -> ApplicationServerInfo:
@@ -55,17 +59,21 @@ def test_reload_dir(app: Sanic, dirs, caplog):
         assert ("sanic.root", logging.WARNING, message) in caplog.record_tuples
 
 
-def test_fast(app: Sanic, run_multi):
-    app.prepare(fast=True)
+def test_fast(app: Sanic, caplog):
+    @app.after_server_start
+    async def stop(app, _):
+        app.stop()
+
     try:
         workers = len(os.sched_getaffinity(0))
     except AttributeError:
         workers = os.cpu_count() or 1
 
+    with caplog.at_level(logging.INFO):
+        app.prepare(fast=True)
+
     assert app.state.fast
     assert app.state.workers == workers
 
-    logs = run_multi(app, logging.INFO)
-
-    messages = [m[2] for m in logs]
+    messages = [m[2] for m in caplog.record_tuples]
     assert f"mode: production, goin' fast w/ {workers} workers" in messages

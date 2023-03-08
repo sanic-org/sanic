@@ -14,6 +14,7 @@ from sanic.exceptions import (
     BadRequest,
     ExpectationFailed,
     PayloadTooLarge,
+    RequestCancelled,
     ServerError,
     ServiceUnavailable,
 )
@@ -70,7 +71,6 @@ class Http(Stream, metaclass=TouchUpMeta):
         "request_body",
         "request_bytes",
         "request_bytes_left",
-        "request_max_size",
         "response",
         "response_func",
         "response_size",
@@ -132,7 +132,7 @@ class Http(Stream, metaclass=TouchUpMeta):
 
                 if self.stage is Stage.RESPONSE:
                     await self.response.send(end_stream=True)
-            except CancelledError:
+            except CancelledError as exc:
                 # Write an appropriate response before exiting
                 if not self.protocol.transport:
                     logger.info(
@@ -140,7 +140,11 @@ class Http(Stream, metaclass=TouchUpMeta):
                         "stopped. Transport is closed."
                     )
                     return
-                e = self.exception or ServiceUnavailable("Cancelled")
+                e = (
+                    RequestCancelled()
+                    if self.protocol.conn_info.lost
+                    else (self.exception or exc)
+                )
                 self.exception = None
                 self.keep_alive = False
                 await self.error_response(e)
@@ -424,7 +428,13 @@ class Http(Stream, metaclass=TouchUpMeta):
             if self.request is None:
                 self.create_empty_request()
 
-            await app.handle_exception(self.request, exception)
+            request_middleware = not isinstance(exception, ServiceUnavailable)
+            try:
+                await app.handle_exception(
+                    self.request, exception, request_middleware
+                )
+            except Exception as e:
+                await app.handle_exception(self.request, e, False)
 
     def create_empty_request(self) -> None:
         """

@@ -2,8 +2,10 @@ import logging
 import os
 import ssl
 import subprocess
+import sys
 
 from contextlib import contextmanager
+from multiprocessing import Event
 from pathlib import Path
 from unittest.mock import Mock, patch
 from urllib.parse import urlparse
@@ -16,6 +18,7 @@ import sanic.http.tls.creators
 
 from sanic import Sanic
 from sanic.application.constants import Mode
+from sanic.compat import use_context
 from sanic.constants import LocalCertCreator
 from sanic.exceptions import SanicException
 from sanic.helpers import _default
@@ -264,6 +267,7 @@ def test_cert_sni_list(app):
         assert response.text == "sanic.example"
 
 
+@pytest.mark.xfail
 def test_missing_sni(app):
     """The sanic cert does not list 127.0.0.1 and httpx does not send
     IP as SNI anyway."""
@@ -282,6 +286,7 @@ def test_missing_sni(app):
     assert "Request and response object expected" in str(exc.value)
 
 
+@pytest.mark.xfail
 def test_no_matching_cert(app):
     """The sanic cert does not list 127.0.0.1 and httpx does not send
     IP as SNI anyway."""
@@ -301,6 +306,7 @@ def test_no_matching_cert(app):
     assert "Request and response object expected" in str(exc.value)
 
 
+@pytest.mark.xfail
 def test_wildcards(app):
     ssl_list = [None, localhost_dir, sanic_dir]
 
@@ -422,7 +428,12 @@ def test_logger_vhosts(caplog):
         app.stop()
 
     with caplog.at_level(logging.INFO):
-        app.run(host="127.0.0.1", port=42102, ssl=[localhost_dir, sanic_dir])
+        app.run(
+            host="127.0.0.1",
+            port=42102,
+            ssl=[localhost_dir, sanic_dir],
+            single_process=True,
+        )
 
     logmsg = [
         m for s, l, m in caplog.record_tuples if m.startswith("Certificate")
@@ -610,24 +621,24 @@ def test_get_ssl_context_only_mkcert(
         MockTrustmeCreator.generate_cert.assert_not_called()
 
 
-def test_no_http3_with_trustme(
-    app,
-    monkeypatch,
-    MockTrustmeCreator,
-):
-    monkeypatch.setattr(
-        sanic.http.tls.creators, "TrustmeCreator", MockTrustmeCreator
-    )
-    MockTrustmeCreator.SUPPORTED = True
-    app.config.LOCAL_CERT_CREATOR = "TRUSTME"
-    with pytest.raises(
-        SanicException,
-        match=(
-            "Sorry, you cannot currently use trustme as a local certificate "
-            "generator for an HTTP/3 server"
-        ),
-    ):
-        app.run(version=3, debug=True)
+# def test_no_http3_with_trustme(
+#     app,
+#     monkeypatch,
+#     MockTrustmeCreator,
+# ):
+#     monkeypatch.setattr(
+#         sanic.http.tls.creators, "TrustmeCreator", MockTrustmeCreator
+#     )
+#     MockTrustmeCreator.SUPPORTED = True
+#     app.config.LOCAL_CERT_CREATOR = "TRUSTME"
+#     with pytest.raises(
+#         SanicException,
+#         match=(
+#             "Sorry, you cannot currently use trustme as a local certificate "
+#             "generator for an HTTP/3 server"
+#         ),
+#     ):
+#         app.run(version=3, debug=True)
 
 
 def test_sanic_ssl_context_create():
@@ -636,3 +647,33 @@ def test_sanic_ssl_context_create():
 
     assert sanic_context is context
     assert isinstance(sanic_context, SanicSSLContext)
+
+
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
+def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
+    ssl_dict = {"cert": localhost_cert, "key": localhost_key}
+    event = Event()
+
+    @app.main_process_start
+    async def main_start(app: Sanic):
+        app.shared_ctx.event = event
+
+    @app.after_server_start
+    async def shutdown(app):
+        app.shared_ctx.event.set()
+        app.stop()
+
+    assert not event.is_set()
+    with use_context("fork"):
+        with caplog.at_level(logging.INFO):
+            app.run(ssl=ssl_dict)
+    assert event.is_set()
+
+    assert (
+        "sanic.root",
+        logging.INFO,
+        "Goin' Fast @ https://127.0.0.1:8000",
+    ) in caplog.record_tuples

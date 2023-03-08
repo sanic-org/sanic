@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import email.utils
+import unicodedata
 import uuid
 
 from collections import defaultdict
@@ -46,7 +47,7 @@ from sanic.constants import (
 )
 from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
-    AcceptContainer,
+    AcceptList,
     Options,
     parse_accept,
     parse_content_header,
@@ -56,7 +57,7 @@ from sanic.headers import (
     parse_xforwarded,
 )
 from sanic.http import Stage
-from sanic.log import error_logger, logger
+from sanic.log import deprecation, error_logger, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
@@ -103,6 +104,8 @@ class Request:
         "_port",
         "_protocol",
         "_remote_addr",
+        "_request_middleware_started",
+        "_response_middleware_started",
         "_scheme",
         "_socket",
         "_stream_id",
@@ -126,7 +129,6 @@ class Request:
         "parsed_token",
         "raw_url",
         "responded",
-        "request_middleware_started",
         "route",
         "stream",
         "transport",
@@ -144,7 +146,6 @@ class Request:
         head: bytes = b"",
         stream_id: int = 0,
     ):
-
         self.raw_url = url_bytes
         try:
             self._parsed_url = parse_url(url_bytes)
@@ -166,7 +167,7 @@ class Request:
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
-        self.parsed_accept: Optional[AcceptContainer] = None
+        self.parsed_accept: Optional[AcceptList] = None
         self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
         self.parsed_form: Optional[RequestParameters] = None
@@ -178,7 +179,8 @@ class Request:
         self.parsed_not_grouped_args: DefaultDict[
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
-        self.request_middleware_started = False
+        self._request_middleware_started = False
+        self._response_middleware_started = False
         self.responded: bool = False
         self.route: Optional[Route] = None
         self.stream: Optional[Stream] = None
@@ -218,6 +220,16 @@ class Request:
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
+
+    @property
+    def request_middleware_started(self):
+        deprecation(
+            "Request.request_middleware_started has been deprecated and will"
+            "be removed. You should set a flag on the request context using"
+            "either middleware or signals if you need this feature.",
+            23.3,
+        )
+        return self._request_middleware_started
 
     @property
     def stream_id(self):
@@ -324,9 +336,14 @@ class Request:
                 response = await response  # type: ignore
         # Run response middleware
         try:
-            response = await self.app._run_response_middleware(
-                self, response, request_name=self.name
-            )
+            middleware = (
+                self.route and self.route.extra.response_middleware
+            ) or self.app.response_middleware
+            if middleware and not self._response_middleware_started:
+                self._response_middleware_started = True
+                response = await self.app._run_response_middleware(
+                    self, response, middleware
+                )
         except CancelledErrors:
             raise
         except Exception:
@@ -482,14 +499,17 @@ class Request:
         return self.parsed_json
 
     @property
-    def accept(self) -> AcceptContainer:
-        """
+    def accept(self) -> AcceptList:
+        """Accepted response content types.
+
+        A convenience handler for easier RFC-compliant matching of MIME types,
+        parsed as a list that can match wildcards and includes */* by default.
+
         :return: The ``Accept`` header parsed
-        :rtype: AcceptContainer
+        :rtype: AcceptList
         """
         if self.parsed_accept is None:
-            accept_header = self.headers.getone("accept", "")
-            self.parsed_accept = parse_accept(accept_header)
+            self.parsed_accept = parse_accept(self.headers.get("accept"))
         return self.parsed_accept
 
     @property
@@ -1067,6 +1087,16 @@ def parse_multipart_form(body, boundary):
                         form_parameters["filename*"]
                     )
                     file_name = unquote(value, encoding=encoding)
+
+                # Normalize to NFC (Apple MacOS/iOS send NFD)
+                # Notes:
+                # - No effect for Windows, Linux or Android clients which
+                #   already send NFC
+                # - Python open() is tricky (creates files in NFC no matter
+                #   which form you use)
+                if file_name is not None:
+                    file_name = unicodedata.normalize("NFC", file_name)
+
             elif form_header_field == "content-type":
                 content_type = form_header_value
                 content_charset = form_parameters.get("charset", "utf-8")

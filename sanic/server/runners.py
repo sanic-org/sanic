@@ -27,7 +27,7 @@ from signal import signal as signal_func
 from sanic.application.ext import setup_ext
 from sanic.compat import OS_IS_WINDOWS, ctrlc_workaround_for_windows
 from sanic.http.http3 import SessionTicketStore, get_config
-from sanic.log import error_logger, logger
+from sanic.log import error_logger, server_logger
 from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
 from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
@@ -129,7 +129,7 @@ def _setup_system_signals(
     run_multiple: bool,
     register_sys_signals: bool,
     loop: asyncio.AbstractEventLoop,
-) -> None:
+) -> None:  # no cov
     # Ignore SIGINT when run_multiple
     if run_multiple:
         signal_func(SIGINT, SIG_IGN)
@@ -141,18 +141,20 @@ def _setup_system_signals(
             ctrlc_workaround_for_windows(app)
         else:
             for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
-                loop.add_signal_handler(_signal, app.stop)
+                loop.add_signal_handler(
+                    _signal, partial(app.stop, terminate=False)
+                )
 
 
 def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
     pid = os.getpid()
     try:
-        logger.info("Starting worker [%s]", pid)
+        server_logger.info("Starting worker [%s]", pid)
         loop.run_forever()
     except KeyboardInterrupt:
         pass
     finally:
-        logger.info("Stopping worker [%s]", pid)
+        server_logger.info("Stopping worker [%s]", pid)
 
         loop.run_until_complete(before_stop())
 
@@ -161,6 +163,7 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
 
         loop.run_until_complete(after_stop())
         remove_unix_socket(unix)
+        loop.close()
 
 
 def _serve_http_1(
@@ -197,8 +200,12 @@ def _serve_http_1(
     asyncio_server_kwargs = (
         asyncio_server_kwargs if asyncio_server_kwargs else {}
     )
+    if OS_IS_WINDOWS and sock:
+        pid = os.getpid()
+        sock = sock.share(pid)
+        sock = socket.fromshare(sock)
     # UNIX sockets are always bound by us (to preserve semantics between modes)
-    if unix:
+    elif unix:
         sock = bind_unix_socket(unix, backlog=backlog)
     server_coroutine = loop.create_server(
         server,
@@ -222,6 +229,7 @@ def _serve_http_1(
 
     loop.run_until_complete(app._startup())
     loop.run_until_complete(app._server_event("init", "before"))
+    app.ack()
 
     try:
         http_server = loop.run_until_complete(server_coroutine)
@@ -299,6 +307,7 @@ def _serve_http_3(
     server = AsyncioServer(app, loop, coro, [])
     loop.run_until_complete(server.startup())
     loop.run_until_complete(server.before_start())
+    app.ack()
     loop.run_until_complete(server)
     _setup_system_signals(app, run_multiple, register_sys_signals, loop)
     loop.run_until_complete(server.after_start())
@@ -365,7 +374,9 @@ def serve_multiple(server_settings, workers):
     processes = []
 
     def sig_handler(signal, frame):
-        logger.info("Received signal %s. Shutting down.", Signals(signal).name)
+        server_logger.info(
+            "Received signal %s. Shutting down.", Signals(signal).name
+        )
         for process in processes:
             os.kill(process.pid, SIGTERM)
 

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from sanic.exceptions import RequestCancelled
+
 
 if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import asyncio
 
-from asyncio import CancelledError
 from asyncio.transports import Transport
 from time import monotonic as current_time
 
@@ -69,7 +70,7 @@ class SanicProtocol(asyncio.Protocol):
         """
         await self._can_write.wait()
         if self.transport.is_closing():
-            raise CancelledError
+            raise RequestCancelled
         self.transport.write(data)
         self._time = current_time()
 
@@ -120,6 +121,7 @@ class SanicProtocol(asyncio.Protocol):
         try:
             self.connections.discard(self)
             self.resume_writing()
+            self.conn_info.lost = True
             if self._task:
                 self._task.cancel()
         except BaseException:

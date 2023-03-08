@@ -72,7 +72,8 @@ def get_ssl_context(
             "without passing a TLS certificate. If you are developing "
             "locally, please enable DEVELOPMENT mode and Sanic will "
             "generate a localhost TLS certificate. For more information "
-            "please see: ___."
+            "please see: https://sanic.dev/en/guide/deployment/development."
+            "html#automatic-tls-certificate."
         )
 
     creator = CertCreator.select(
@@ -125,7 +126,6 @@ class CertCreator(ABC):
         local_tls_key,
         local_tls_cert,
     ) -> CertCreator:
-
         creator: Optional[CertCreator] = None
 
         cert_creator_options: Tuple[
@@ -151,7 +151,8 @@ class CertCreator(ABC):
             raise SanicException(
                 "Sanic could not find package to create a TLS certificate. "
                 "You must have either mkcert or trustme installed. See "
-                "_____ for more details."
+                "https://sanic.dev/en/guide/deployment/development.html"
+                "#automatic-tls-certificate for more details."
             )
 
         return creator
@@ -203,7 +204,8 @@ class MkcertCreator(CertCreator):
                 "to proceed. Installation instructions can be found here: "
                 "https://github.com/FiloSottile/mkcert.\n"
                 "Find out more information about your options here: "
-                "_____"
+                "https://sanic.dev/en/guide/deployment/development.html#"
+                "automatic-tls-certificate"
             ) from e
 
     def generate_cert(self, localhost: str) -> ssl.SSLContext:
@@ -240,7 +242,12 @@ class MkcertCreator(CertCreator):
                         self.cert_path.unlink()
                     self.tmpdir.rmdir()
 
-        return CertSimple(self.cert_path, self.key_path)
+        context = CertSimple(self.cert_path, self.key_path)
+        context.sanic["creator"] = "mkcert"
+        context.sanic["localhost"] = localhost
+        SanicSSLContext.create_from_ssl_context(context)
+
+        return context
 
 
 class TrustmeCreator(CertCreator):
@@ -255,24 +262,28 @@ class TrustmeCreator(CertCreator):
                 "to proceed. Installation instructions can be found here: "
                 "https://github.com/python-trio/trustme.\n"
                 "Find out more information about your options here: "
-                "_____"
+                "https://sanic.dev/en/guide/deployment/development.html#"
+                "automatic-tls-certificate"
             )
 
     def generate_cert(self, localhost: str) -> ssl.SSLContext:
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        sanic_context = SanicSSLContext.create_from_ssl_context(context)
-        sanic_context.sanic = {
+        context = SanicSSLContext.create_from_ssl_context(
+            ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        )
+        context.sanic = {
             "cert": self.cert_path.absolute(),
             "key": self.key_path.absolute(),
         }
         ca = trustme.CA()
         server_cert = ca.issue_cert(localhost)
-        server_cert.configure_cert(sanic_context)
+        server_cert.configure_cert(context)
         ca.configure_trust(context)
 
         ca.cert_pem.write_to_path(str(self.cert_path.absolute()))
         server_cert.private_key_and_cert_chain_pem.write_to_path(
             str(self.key_path.absolute())
         )
+        context.sanic["creator"] = "trustme"
+        context.sanic["localhost"] = localhost
 
         return context

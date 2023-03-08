@@ -1,30 +1,55 @@
 from __future__ import annotations
 
+import sys
+
+from abc import ABCMeta
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Union
+from warnings import filterwarnings
 
 from sanic.constants import LocalCertCreator
 from sanic.errorpages import DEFAULT_FORMAT, check_error_format
 from sanic.helpers import Default, _default
 from sanic.http import Http
-from sanic.log import deprecation, error_logger
+from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+
+    FilterWarningType = Union[
+        Literal["default"],
+        Literal["error"],
+        Literal["ignore"],
+        Literal["always"],
+        Literal["module"],
+        Literal["once"],
+    ]
+else:
+    FilterWarningType = str
 
 SANIC_PREFIX = "SANIC_"
 
 
 DEFAULT_CONFIG = {
     "_FALLBACK_ERROR_FORMAT": _default,
-    "ACCESS_LOG": True,
+    "ACCESS_LOG": False,
     "AUTO_EXTEND": True,
     "AUTO_RELOAD": False,
     "EVENT_AUTOREGISTER": False,
+    "DEPRECATION_FILTER": "once",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
+    "INSPECTOR": False,
+    "INSPECTOR_HOST": "localhost",
+    "INSPECTOR_PORT": 6457,
+    "INSPECTOR_TLS_KEY": _default,
+    "INSPECTOR_TLS_CERT": _default,
+    "INSPECTOR_API_KEY": "",
     "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
     "KEEP_ALIVE": True,
     "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
@@ -50,12 +75,8 @@ DEFAULT_CONFIG = {
     "WEBSOCKET_PING_TIMEOUT": 20,
 }
 
-# These values will be removed from the Config object in v22.6 and moved
-# to the application state
-DEPRECATED_CONFIG = ("SERVER_RUNNING", "RELOADER_PROCESS", "RELOADED_FILES")
 
-
-class DescriptorMeta(type):
+class DescriptorMeta(ABCMeta):
     def __init__(cls, *_):
         cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}
 
@@ -69,9 +90,16 @@ class Config(dict, metaclass=DescriptorMeta):
     AUTO_EXTEND: bool
     AUTO_RELOAD: bool
     EVENT_AUTOREGISTER: bool
+    DEPRECATION_FILTER: FilterWarningType
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
+    INSPECTOR: bool
+    INSPECTOR_HOST: str
+    INSPECTOR_PORT: int
+    INSPECTOR_TLS_KEY: Union[Path, str, Default]
+    INSPECTOR_TLS_CERT: Union[Path, str, Default]
+    INSPECTOR_API_KEY: str
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
     LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]
@@ -99,7 +127,9 @@ class Config(dict, metaclass=DescriptorMeta):
 
     def __init__(
         self,
-        defaults: Dict[str, Union[str, bool, int, float, None]] = None,
+        defaults: Optional[
+            Dict[str, Union[str, bool, int, float, None]]
+        ] = None,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
         *,
@@ -107,6 +137,7 @@ class Config(dict, metaclass=DescriptorMeta):
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
+        self._configure_warnings()
 
         self._converters = [str, str_to_bool, float, int]
 
@@ -172,10 +203,12 @@ class Config(dict, metaclass=DescriptorMeta):
             self.LOCAL_CERT_CREATOR = LocalCertCreator[
                 self.LOCAL_CERT_CREATOR.upper()
             ]
+        elif attr == "DEPRECATION_FILTER":
+            self._configure_warnings()
 
     @property
     def FALLBACK_ERROR_FORMAT(self) -> str:
-        if self._FALLBACK_ERROR_FORMAT is _default:
+        if isinstance(self._FALLBACK_ERROR_FORMAT, Default):
             return DEFAULT_FORMAT
         return self._FALLBACK_ERROR_FORMAT
 
@@ -183,7 +216,7 @@ class Config(dict, metaclass=DescriptorMeta):
     def FALLBACK_ERROR_FORMAT(self, value):
         self._check_error_format(value)
         if (
-            self._FALLBACK_ERROR_FORMAT is not _default
+            not isinstance(self._FALLBACK_ERROR_FORMAT, Default)
             and value != self._FALLBACK_ERROR_FORMAT
         ):
             error_logger.warning(
@@ -199,6 +232,13 @@ class Config(dict, metaclass=DescriptorMeta):
             self.REQUEST_MAX_SIZE,
         )
 
+    def _configure_warnings(self):
+        filterwarnings(
+            self.DEPRECATION_FILTER,
+            category=DeprecationWarning,
+            module=r"sanic.*",
+        )
+
     def _check_error_format(self, format: Optional[str] = None):
         check_error_format(format or self.FALLBACK_ERROR_FORMAT)
 
@@ -206,7 +246,9 @@ class Config(dict, metaclass=DescriptorMeta):
         """
         Looks for prefixed environment variables and applies them to the
         configuration if present. This is called automatically when Sanic
-        starts up to load environment variables into config.
+        starts up to load environment variables into config. Environment
+        variables should start with the defined prefix and should only
+        contain uppercase letters.
 
         It will automatically hydrate the following types:
 
@@ -232,12 +274,9 @@ class Config(dict, metaclass=DescriptorMeta):
         `See user guide re: config
         <https://sanicframework.org/guide/deployment/configuration.html>`__
         """
-        lower_case_var_found = False
         for key, value in environ.items():
-            if not key.startswith(prefix):
+            if not key.startswith(prefix) or not key.isupper():
                 continue
-            if not key.isupper():
-                lower_case_var_found = True
 
             _, config_key = key.split(prefix, 1)
 
@@ -247,12 +286,6 @@ class Config(dict, metaclass=DescriptorMeta):
                     break
                 except ValueError:
                     pass
-        if lower_case_var_found:
-            deprecation(
-                "Lowercase environment variables will not be "
-                "loaded into Sanic config beginning in v22.9.",
-                22.9,
-            )
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
         """

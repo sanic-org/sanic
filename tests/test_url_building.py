@@ -83,7 +83,6 @@ def test_simple_url_for_getting_with_more_params(app, args, url):
 
 
 def test_url_for_with_server_name(app):
-
     server_name = f"{test_host}:{test_port}"
     app.config.update({"SERVER_NAME": server_name})
     path = "/myurl"

@@ -24,8 +24,8 @@ class CSS(ABCMeta):
     def __new__(cls, name, bases, attrs):
         Page = super().__new__(cls, name, bases, attrs)
         # Use a locally defined STYLE or the one from styles directory
-        s = _extract_style(attrs.get("STYLE"), name)
-        Page.STYLE = f"\n/* {name} */\n{s.strip()}\n" if s else ""
+        Page.STYLE = _extract_style(attrs.get("STYLE_FILE"), name)
+        Page.STYLE += attrs.get("STYLE_APPEND", "")
         # Combine with all ancestor styles
         Page.CSS = "".join(
             Class.STYLE

@@ -23,6 +23,7 @@ from traceback import extract_tb
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
 from sanic.log import deprecation, logger
+from sanic.pages.error import ErrorPage
 from sanic.response import html, json, text
 
 
@@ -38,10 +39,9 @@ if t.TYPE_CHECKING:
     from sanic import HTTPResponse, Request
 
 DEFAULT_FORMAT = "auto"
-FALLBACK_TEXT = (
-    "The server encountered an internal error and "
-    "cannot complete your request."
-)
+FALLBACK_TEXT = """\
+The application encountered an unexpected error and could not continue.\
+"""
 FALLBACK_STATUS = 500
 JSON = "application/json"
 
@@ -117,134 +117,18 @@ class HTMLRenderer(BaseRenderer):
     The default fallback type.
     """
 
-    TRACEBACK_STYLE = """
-        html { font-family: sans-serif }
-        h2 { color: #888; }
-        .tb-wrapper p, dl, dd { margin: 0 }
-        .frame-border { margin: 1rem }
-        .frame-line > *, dt, dd { padding: 0.3rem 0.6rem }
-        .frame-line, dl { margin-bottom: 0.3rem }
-        .frame-code, dd { font-size: 16px; padding-left: 4ch }
-        .tb-wrapper, dl { border: 1px solid #eee }
-        .tb-header,.obj-header {
-            background: #eee; padding: 0.3rem; font-weight: bold
-        }
-        .frame-descriptor, dt { background: #e2eafb; font-size: 14px }
-    """
-    TRACEBACK_WRAPPER_HTML = (
-        "<div class=tb-header>{exc_name}: {exc_value}</div>"
-        "<div class=tb-wrapper>{frame_html}</div>"
-    )
-    TRACEBACK_BORDER = (
-        "<div class=frame-border>"
-        "The above exception was the direct cause of the following exception:"
-        "</div>"
-    )
-    TRACEBACK_LINE_HTML = (
-        "<div class=frame-line>"
-        "<p class=frame-descriptor>"
-        "File {0.filename}, line <i>{0.lineno}</i>, "
-        "in <code><b>{0.name}</b></code>"
-        "<p class=frame-code><code>{0.line}</code>"
-        "</div>"
-    )
-    OBJECT_WRAPPER_HTML = (
-        "<div class=obj-header>{title}</div>"
-        "<dl class={obj_type}>{display_html}</dl>"
-    )
-    OBJECT_DISPLAY_HTML = "<dt>{key}</dt><dd><code>{value}</code></dd>"
-    OUTPUT_HTML = (
-        "<!DOCTYPE html><html lang=en>"
-        "<meta charset=UTF-8><title>{title}</title>\n"
-        "<style>{style}</style>\n"
-        "<h1>{title}</h1><p>{text}\n"
-        "{body}"
-    )
-
     def full(self) -> HTTPResponse:
-        return html(
-            self.OUTPUT_HTML.format(
-                title=self.title,
-                text=self.text,
-                style=self.TRACEBACK_STYLE,
-                body=self._generate_body(full=True),
-            ),
-            status=self.status,
+        page = ErrorPage(
+            debug=self.debug,
+            title=super().title,
+            text=super().text,
+            request=self.request,
+            exc=self.exception,
         )
+        return html(page.render(), status=self.status, headers=self.headers)
 
     def minimal(self) -> HTTPResponse:
-        return html(
-            self.OUTPUT_HTML.format(
-                title=self.title,
-                text=self.text,
-                style=self.TRACEBACK_STYLE,
-                body=self._generate_body(full=False),
-            ),
-            status=self.status,
-            headers=self.headers,
-        )
-
-    @property
-    def text(self):
-        return escape(super().text)
-
-    @property
-    def title(self):
-        return escape(f"⚠️ {super().title}")
-
-    def _generate_body(self, *, full):
-        lines = []
-        if full:
-            _, exc_value, __ = sys.exc_info()
-            exceptions = []
-            while exc_value:
-                exceptions.append(self._format_exc(exc_value))
-                exc_value = exc_value.__cause__
-
-            traceback_html = self.TRACEBACK_BORDER.join(reversed(exceptions))
-            appname = escape(self.request.app.name)
-            name = escape(self.exception.__class__.__name__)
-            value = escape(self.exception)
-            path = escape(self.request.path)
-            lines += [
-                f"<h2>Traceback of {appname} " "(most recent call last):</h2>",
-                f"{traceback_html}",
-                "<div class=summary><p>",
-                f"<b>{name}: {value}</b> "
-                f"while handling path <code>{path}</code>",
-                "</div>",
-            ]
-
-        for attr, display in (("context", True), ("extra", bool(full))):
-            info = getattr(self.exception, attr, None)
-            if info and display:
-                lines.append(self._generate_object_display(info, attr))
-
-        return "\n".join(lines)
-
-    def _generate_object_display(
-        self, obj: t.Dict[str, t.Any], descriptor: str
-    ) -> str:
-        display = "".join(
-            self.OBJECT_DISPLAY_HTML.format(key=key, value=value)
-            for key, value in obj.items()
-        )
-        return self.OBJECT_WRAPPER_HTML.format(
-            title=descriptor.title(),
-            display_html=display,
-            obj_type=descriptor.lower(),
-        )
-
-    def _format_exc(self, exc):
-        frames = extract_tb(exc.__traceback__)
-        frame_html = "".join(
-            self.TRACEBACK_LINE_HTML.format(frame) for frame in frames
-        )
-        return self.TRACEBACK_WRAPPER_HTML.format(
-            exc_name=escape(exc.__class__.__name__),
-            exc_value=escape(exc),
-            frame_html=frame_html,
-        )
+        return self.full()
 
 
 class TextRenderer(BaseRenderer):

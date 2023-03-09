@@ -143,14 +143,9 @@ class ASGIApp:
         if scope["type"] == "lifespan":
             await instance.lifespan(scope, receive, send)
         else:
-            path = (
-                scope["path"][1:]
-                if scope["path"].startswith("/")
-                else scope["path"]
-            )
-            url = "/".join([scope.get("root_path", ""), quote(path)])
-            url_bytes = url.encode("latin-1")
-            url_bytes += b"?" + scope["query_string"]
+            url_bytes, query = scope["raw_path"], scope["query_string"]
+            if query:
+                url_bytes = b"%b?%b" % (url_bytes, query)
 
             if scope["type"] == "http":
                 version = scope["http_version"]

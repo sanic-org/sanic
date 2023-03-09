@@ -12,6 +12,7 @@ from asyncio import CancelledError, sleep
 from sanic.compat import Header
 from sanic.exceptions import (
     BadRequest,
+    BadURL,
     ExpectationFailed,
     PayloadTooLarge,
     RequestCancelled,
@@ -240,9 +241,14 @@ class Http(Stream, metaclass=TouchUpMeta):
             headers_instance.getone("upgrade", "").lower() == "websocket"
         )
 
+        try:
+            url_bytes = self.url.encode("ASCII")
+        except UnicodeEncodeError:
+            raise BadURL("URL may only contain US-ASCII characters.")
+
         # Prepare a Request object
         request = self.protocol.request_class(
-            url_bytes=self.url.encode(),
+            url_bytes=url_bytes,
             headers=headers_instance,
             head=bytes(head),
             version=protocol[5:],
@@ -443,9 +449,14 @@ class Http(Stream, metaclass=TouchUpMeta):
         bogus response for error handling use.
         """
 
+        # Reformat any URL already received with \xHH escapes for better logging
+        url_bytes = self.url.encode(errors="surrogateescape").decode(
+            "ASCII", errors="backslashreplace"
+        )
+
         # FIXME: Avoid this by refactoring error handling and response code
         self.request = self.protocol.request_class(
-            url_bytes=self.url.encode() if self.url else b"*",
+            url_bytes=url_bytes or b"*",
             headers=Header({}),
             version="1.1",
             method="NONE",

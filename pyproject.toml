@@ -24,5 +24,6 @@ module = [
     "sanic_routing.*",
     "aioquic.*",
     "html5tagger.*",
+    "tracerite.*",
 ]
 ignore_missing_imports = true

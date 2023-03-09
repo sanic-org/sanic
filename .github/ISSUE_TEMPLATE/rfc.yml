@@ -7,6 +7,7 @@ body:
     attributes:
       label: Link to code
       description: If available, share a [comparison](https://github.com/sanic-org/sanic/compare) from a POC branch to main
+      placeholder: https://github.com/sanic-org/sanic/compare/main...some-new-branch
     validations:
       required: false
   - type: textarea

@@ -350,7 +350,6 @@ def test_app_registry_retrieval_from_multiple():
 def test_get_app_does_not_exist():
     with pytest.raises(
         SanicException,
-
         match=(
             "Sanic app name 'does-not-exist' not found.\n"
             "App instantiation must occur outside "

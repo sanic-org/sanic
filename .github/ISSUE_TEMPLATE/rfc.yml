@@ -29,5 +29,5 @@ body:
     attributes:
       label: Is this a breaking change?
       options:
-        - label: Yes
+        - label: "Yes"
           required: false

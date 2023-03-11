@@ -134,7 +134,7 @@ class ASGIApp:
 
         headers = Header(
             [
-                (key.decode(), value.decode())
+                (key.decode("ASCII"), value.decode(errors="surrogateescape"))
                 for key, value in scope.get("headers", [])
             ]
         )

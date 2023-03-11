@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 from urllib.parse import quote
 
 from sanic.compat import Header
-from sanic.exceptions import ServerError
+from sanic.exceptions import BadRequest, ServerError
 from sanic.helpers import Default
 from sanic.http import Stage
 from sanic.log import error_logger, logger
@@ -132,12 +132,18 @@ class ASGIApp:
         instance.response = None
         setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
-        headers = Header(
-            [
-                (key.decode("ASCII"), value.decode(errors="surrogateescape"))
-                for key, value in scope.get("headers", [])
-            ]
-        )
+        try:
+            headers = Header(
+                [
+                    (
+                        key.decode("ASCII"),
+                        value.decode(errors="surrogateescape"),
+                    )
+                    for key, value in scope.get("headers", [])
+                ]
+            )
+        except UnicodeDecodeError:
+            raise BadRequest("Header names can only contain US-ASCII characters")
         instance.lifespan = Lifespan(instance)
 
         if scope["type"] == "lifespan":

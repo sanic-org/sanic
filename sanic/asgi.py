@@ -143,7 +143,9 @@ class ASGIApp:
                 ]
             )
         except UnicodeDecodeError:
-            raise BadRequest("Header names can only contain US-ASCII characters")
+            raise BadRequest(
+                "Header names can only contain US-ASCII characters"
+            )
         instance.lifespan = Lifespan(instance)
 
         if scope["type"] == "lifespan":

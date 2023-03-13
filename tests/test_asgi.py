@@ -7,7 +7,7 @@ import pytest
 import uvicorn
 
 from httpx import Headers
-from pytest import CaptureFixture, MonkeyPatch
+from pytest import MonkeyPatch
 
 from sanic import Sanic
 from sanic.application.state import Mode

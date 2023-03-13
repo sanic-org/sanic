@@ -6,6 +6,9 @@ from collections import deque, namedtuple
 import pytest
 import uvicorn
 
+from httpx import Headers
+from pytest import CaptureFixture, MonkeyPatch
+
 from sanic import Sanic
 from sanic.application.state import Mode
 from sanic.asgi import ASGIApp, MockTransport
@@ -611,3 +614,26 @@ async def test_error_on_lifespan_exception_stop(app: Sanic):
     send.assert_awaited_once_with(
         {"type": "lifespan.shutdown.failed", "message": "division by zero"}
     )
+
+
+@pytest.mark.asyncio
+async def test_asgi_headers_decoding(app: Sanic, monkeypatch: MonkeyPatch):
+    @app.get("/")
+    def handler(request: Request):
+        return text("")
+
+    headers_init = Headers.__init__
+
+    def mocked_headers_init(self, *args, **kwargs):
+        if "encoding" in kwargs:
+            kwargs.pop("encoding")
+        headers_init(self, encoding="utf-8", *args, **kwargs)
+
+    monkeypatch.setattr(Headers, "__init__", mocked_headers_init)
+
+    message = "Header names can only contain US-ASCII characters"
+    with pytest.raises(BadRequest, match=message):
+        _, response = await app.asgi_client.get("/", headers={"😂": "😅"})
+
+    _, response = await app.asgi_client.get("/", headers={"Test-Header": "😅"})
+    assert response.status_code == 200

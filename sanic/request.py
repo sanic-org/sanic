@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 from contextvars import ContextVar
 from inspect import isawaitable
 from typing import (
@@ -33,7 +31,6 @@ import unicodedata
 import uuid
 
 from collections import defaultdict
-from http import cookies as http_cookies
 from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
@@ -47,6 +44,7 @@ from sanic.constants import (
     IDEMPOTENT_HTTP_METHODS,
     SAFE_HTTP_METHODS,
 )
+from sanic.cookies import parse_cookie
 from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
     AcceptList,
@@ -68,10 +66,6 @@ try:
     from ujson import loads as json_loads  # type: ignore
 except ImportError:
     from json import loads as json_loads  # type: ignore
-
-_COOKIE_NAME_RESERVED_CHARS = re.compile(
-    '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'
-)
 
 
 class RequestParameters(dict):
@@ -762,7 +756,7 @@ class Request:
 
         if self.parsed_cookies is None:
             cookie = self.headers.getone("cookie", "")
-            self.parsed_cookies = parse_cookie(cookie)
+            self.parsed_cookies = CookieRequestParameters(parse_cookie(cookie))
         return self.parsed_cookies
 
     @property
@@ -1139,43 +1133,3 @@ def parse_multipart_form(body, boundary):
             )
 
     return RequestParameters(fields), RequestParameters(files)
-
-
-def parse_cookie(raw: str) -> RequestParameters:
-    """
-    Implementation adopted from Falcon v3.1.1
-    It more properly parses cookie values and is more performant
-    than using the stdlib SimpleCookie.load method.
-
-    See also:
-      https://tools.ietf.org/html/rfc6265#section-5.4
-      https://tools.ietf.org/html/rfc6265#section-4.1.1_summary_
-
-    :param raw: The raw cookie header valye
-    :type raw: str
-    :return: The parsed cookie values
-    :rtype: RequestParameters
-    """
-
-    cookies: Dict[str, List] = {}
-
-    for token in raw.split(";"):
-        name, __, value = token.partition("=")
-        name = name.strip()
-        value = value.strip()
-
-        if not name:
-            continue
-
-        if _COOKIE_NAME_RESERVED_CHARS.search(name):
-            continue
-
-        if len(value) > 2 and value[0] == '"' and value[-1] == '"':
-            value = http_cookies._unquote(value)
-
-        if name in cookies:
-            cookies[name].append(value)
-        else:
-            cookies[name] = [value]
-
-    return CookieRequestParameters(cookies)

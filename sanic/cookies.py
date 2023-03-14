@@ -5,6 +5,7 @@ import string
 import sys
 
 from datetime import datetime
+from http import cookies as http_cookies
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 from sanic.exceptions import ServerError
@@ -36,10 +37,11 @@ else:  # no cov
 
 DEFAULT_MAX_AGE = 0
 SAMESITE_VALUES = ("strict", "lax", "none")
-
-
-_LegalChars = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
-_Translator = {ch: f"\\{ch:03o}" for ch in bytes(range(32)) + b'";\\\x7F'}
+COOKIE_NAME_RESERVED_CHARS = re.compile(
+    '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'
+)
+LEVAL_CHARS = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
+TRANSLATOR = {ch: f"\\{ch:03o}" for ch in bytes(range(32)) + b'";\\\x7F'}
 
 
 def _quote(str):
@@ -51,10 +53,35 @@ def _quote(str):
     if str is None or _is_legal_key(str):
         return str
     else:
-        return '"' + str.translate(_Translator) + '"'
+        return '"' + str.translate(TRANSLATOR) + '"'
 
 
-_is_legal_key = re.compile("[%s]+" % re.escape(_LegalChars)).fullmatch
+_is_legal_key = re.compile("[%s]+" % re.escape(LEVAL_CHARS)).fullmatch
+
+
+def parse_cookie(raw: str):
+    cookies: Dict[str, List] = {}
+
+    for token in raw.split(";"):
+        name, __, value = token.partition("=")
+        name = name.strip()
+        value = value.strip()
+
+        if not name:
+            continue
+
+        if COOKIE_NAME_RESERVED_CHARS.search(name):
+            continue
+
+        if len(value) > 2 and value[0] == '"' and value[-1] == '"':
+            value = http_cookies._unquote(value)
+
+        if name in cookies:
+            cookies[name].append(value)
+        else:
+            cookies[name] = [value]
+
+    return cookies
 
 
 # In v23.9, we should remove this as being a subclass of dict

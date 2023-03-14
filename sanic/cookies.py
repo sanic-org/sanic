@@ -139,10 +139,10 @@ class CookieJar(dict):
 
     def get(self, *args, **kwargs):
         deprecation(
-            "Accessing cookies from the CookieJar using get is deprecated. "
-            "You should instead use the cookies.get_cookie method. "
-            "To learn more, please see: ___.",
-            0,
+            "Accessing cookies from the CookieJar using get is deprecated "
+            "and will be removed in v23.9. You should instead use the "
+            "cookies.get_cookie method. To learn more, please see: ___.",
+            23.9,
         )
         return super().get(*args, **kwargs)
 

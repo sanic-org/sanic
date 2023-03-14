@@ -3,14 +3,12 @@ from __future__ import annotations
 import re
 import string
 import sys
-
 from datetime import datetime
 from http import cookies as http_cookies
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
-
 
 if TYPE_CHECKING:
     from sanic.compat import Header
@@ -40,8 +38,12 @@ SAMESITE_VALUES = ("strict", "lax", "none")
 COOKIE_NAME_RESERVED_CHARS = re.compile(
     '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'
 )
-LEVAL_CHARS = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
-TRANSLATOR = {ch: f"\\{ch:03o}" for ch in bytes(range(32)) + b'";\\\x7F'}
+LEGAL_CHARS = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
+UNESCAPED_CHARS = LEGAL_CHARS + " ()/<=>?@[]{}"
+TRANSLATOR = {
+    n: "\\%03o" % n for n in set(range(256)) - set(map(ord, UNESCAPED_CHARS))
+}
+TRANSLATOR.update({ord('"'): '\\"', ord("\\"): "\\\\"})
 
 
 def _quote(str):
@@ -56,7 +58,7 @@ def _quote(str):
         return '"' + str.translate(TRANSLATOR) + '"'
 
 
-_is_legal_key = re.compile("[%s]+" % re.escape(LEVAL_CHARS)).fullmatch
+_is_legal_key = re.compile("[%s]+" % re.escape(LEGAL_CHARS)).fullmatch
 
 
 def parse_cookie(raw: str):

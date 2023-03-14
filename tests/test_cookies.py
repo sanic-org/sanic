@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
+from unittest.mock import Mock
 
 import pytest
 
-from sanic import Sanic
-from sanic.cookies import Cookie
+from sanic import Request, Sanic
+from sanic.compat import Header
+from sanic.cookies import Cookie, CookieJar
 from sanic.response import text
 
 
@@ -254,3 +256,118 @@ def test_cookie_expires_illegal_instance_type(expires):
     with pytest.raises(expected_exception=TypeError) as e:
         c["expires"] = expires
         assert e.message == "Cookie 'expires' property must be a datetime"
+
+
+def test_request_with_duplicate_cookie_key():
+    headers = Header({"Cookie": "foo=one;foo=two"})
+    request = Request(b"/", headers, "1.1", "GET", Mock(), Mock())
+
+    assert request.cookies["foo"] == "one"
+    assert request.cookies.get("foo") == "one"
+    assert request.cookies.getlist("foo") == ["one", "two"]
+    assert request.cookies.get("bar") is None
+
+
+def test_cookie_jar_cookies():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie("foo", "one")
+    jar.add_cookie("foo", "two", domain="example.com")
+
+    assert len(jar.cookies) == 2
+    assert len(headers) == 2
+
+
+def test_cookie_jar_has_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie("foo", "one")
+    jar.add_cookie("foo", "two", domain="example.com")
+
+    assert jar.has_cookie("foo")
+    assert jar.has_cookie("foo", domain="example.com")
+    assert not jar.has_cookie("foo", path="/unknown")
+    assert not jar.has_cookie("bar")
+
+
+def test_cookie_jar_get_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    cookie1 = jar.add_cookie("foo", "one")
+    cookie2 = jar.add_cookie("foo", "two", domain="example.com")
+
+    assert jar.get_cookie("foo") is cookie1
+    assert jar.get_cookie("foo", domain="example.com") is cookie2
+    assert jar.get_cookie("foo", path="/unknown") is None
+    assert jar.get_cookie("bar") is None
+
+
+def test_cookie_jar_add_cookie_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie("foo", "one")
+    jar.add_cookie(
+        "foo",
+        "two",
+        domain="example.com",
+        path="/something",
+        secure=True,
+        max_age=999,
+        httponly=True,
+        samesite="strict",
+    )
+    jar.add_cookie("foo", "three", secure_prefix=True)
+    jar.add_cookie("foo", "four", host_prefix=True)
+    jar.add_cookie("foo", "five", host_prefix=True, partitioned=True)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b"foo=one; Path=/; SameSite=Lax; Secure",
+        b"foo=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
+        b"__Secure-foo=three; Path=/; SameSite=Lax; Secure",
+        b"__Host-foo=four; Path=/; SameSite=Lax; Secure",
+        b"__Host-foo=five; Path=/; SameSite=Lax; Secure; Partitioned",
+    ]
+
+
+def test_cookie_jar_old_school_cookie_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar["foo"] = "one"
+    jar["bar"] = "two"
+    jar["bar"]["domain"] = "example.com"
+    jar["bar"]["path"] = "/something"
+    jar["bar"]["secure"] = True
+    jar["bar"]["max-age"] = 999
+    jar["bar"]["httponly"] = True
+    jar["bar"]["samesite"] = "strict"
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b"foo=one; Path=/",
+        b"bar=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
+    ]
+
+
+def test_cookie_jar_delete_cookie_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.delete_cookie("foo")
+    jar.delete_cookie("foo", domain="example.com")
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b'foo=""; Path=/; Max-Age=0; Secure',
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0; Secure',
+    ]
+
+
+def test_cookie_jar_old_school_delete_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    del jar["foo"]
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b'foo=""; Path=/; Max-Age=0; Secure',
+    ]

@@ -875,6 +875,8 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         :param request: HTTP Request object
         :return: Nothing
         """
+        __tracebackhide__ = True
+
         await self.dispatch(
             "http.lifecycle.handle",
             inline=True,

@@ -168,8 +168,8 @@ class CookieJar(dict):
     def cookie_headers(self) -> Dict[str, str]:
         deprecation(
             "The CookieJar.coookie_headers property has been deprecated "
-            "and will be removed in version 23.9. Check the CookieJar object "
-            "itself for keys.",
+            "and will be removed in version 23.9. If you need to check if a "
+            "particular cookie key has been set, use CookieJar.has_cookie.",
             23.9,
         )
         return {key: self.header_key for key in self}
@@ -189,6 +189,18 @@ class CookieJar(dict):
             ):
                 return cookie
         return None
+
+    def has_cookie(
+        self, key: str, path: str = "/", domain: Optional[str] = None
+    ) -> bool:
+        for cookie in self.cookies:
+            if (
+                cookie.key == key
+                and cookie.path == path
+                and cookie.domain == domain
+            ):
+                return True
+        return False
 
     # When using secure_prefix=True
     @overload

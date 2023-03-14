@@ -1,10 +1,12 @@
 import logging
 import sys
+
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict
 from warnings import warn
 
 from sanic.compat import is_atty
+
 
 # Python 3.11 changed the way Enum formatting works for mixed-in types.
 if sys.version_info < (3, 11, 0):

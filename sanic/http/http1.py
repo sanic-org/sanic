@@ -449,7 +449,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         bogus response for error handling use.
         """
 
-        # Reformat any URL already received with \xHH escapes for better logging
+        # Reformat any URL already received with \xHH escapes for better logs
         url_bytes = self.url.encode(errors="surrogateescape").decode(
             "ASCII", errors="backslashreplace"
         )

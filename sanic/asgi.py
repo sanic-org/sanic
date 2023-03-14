@@ -3,7 +3,6 @@ from __future__ import annotations
 import warnings
 
 from typing import TYPE_CHECKING, Optional
-from urllib.parse import quote
 
 from sanic.compat import Header
 from sanic.exceptions import ServerError

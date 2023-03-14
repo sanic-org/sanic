@@ -12,6 +12,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from sanic_routing.route import Route
@@ -747,6 +748,11 @@ class Request:
     default values.
     """
 
+    def get_cookies(self) -> RequestParameters:
+        cookie = self.headers.getone("cookie", "")
+        self.parsed_cookies = CookieRequestParameters(parse_cookie(cookie))
+        return self.parsed_cookies
+
     @property
     def cookies(self) -> RequestParameters:
         """
@@ -755,9 +761,8 @@ class Request:
         """
 
         if self.parsed_cookies is None:
-            cookie = self.headers.getone("cookie", "")
-            self.parsed_cookies = CookieRequestParameters(parse_cookie(cookie))
-        return self.parsed_cookies
+            self.get_cookies()
+        return cast(CookieRequestParameters, self.parsed_cookies)
 
     @property
     def content_type(self) -> str:

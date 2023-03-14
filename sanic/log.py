@@ -1,12 +1,10 @@
 import logging
 import sys
-
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict
 from warnings import warn
 
 from sanic.compat import is_atty
-
 
 # Python 3.11 changed the way Enum formatting works for mixed-in types.
 if sys.version_info < (3, 11, 0):
@@ -126,6 +124,15 @@ logger.addFilter(_verbosity_filter)
 
 
 def deprecation(message: str, version: float):  # no cov
+    """
+    Add a deprecation notice
+
+    :param message: The message of the notice
+    :type message: str
+    :param version: The version when the feature will be removed. If it is
+      not being removed, then set version=0.
+    :type version: float
+    """
     version_display = f" v{version}" if version else ""
     version_info = f"[DEPRECATION{version_display}] "
     if is_atty():

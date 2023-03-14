@@ -503,7 +503,7 @@ class Cookie(dict):
     # in v23.9 when this is no longer a dict
     def _set_value(self, key: str, value: Any) -> None:
         if key not in self._keys:
-            raise KeyError("Unknown cookie property")
+            raise KeyError("Unknown cookie property: %s=%s" % (key, value))
 
         if value is not None:
             if key.lower() == "max-age" and not str(value).isdigit():

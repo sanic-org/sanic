@@ -461,7 +461,7 @@ class Cookie(dict):
         deprecation(
             "Setting values on a Cookie object as a dict has been deprecated. "
             "This feature will be removed in v23.9. You should instead set "
-            f"values on cookies as object properties: cookie.{key}. ",
+            f"values on cookies as object properties: cookie.{key}=... ",
             23.9,
         )
         self._set_value(key, value)

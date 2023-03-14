@@ -3,13 +3,11 @@ from __future__ import annotations
 import re
 import string
 import sys
-
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
-
 
 if TYPE_CHECKING:
     from sanic.compat import Header
@@ -85,6 +83,12 @@ class CookieJar(dict):
             self[key].value = value
 
     def __delitem__(self, key):
+        deprecation(
+            "Deleting cookie values using the dict pattern has been "
+            "deprecated. You should instead use the cookies.delete_cookie "
+            "method. To learn more, please see: ___.",
+            0,
+        )
         if key in self:
             super().__delitem__(key)
         self.delete_cookie(key)

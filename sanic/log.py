@@ -126,7 +126,8 @@ logger.addFilter(_verbosity_filter)
 
 
 def deprecation(message: str, version: float):  # no cov
-    version_info = f"[DEPRECATION v{version}] "
+    version_display = f" v{version}" if version else ""
+    version_info = f"[DEPRECATION{version_display}] "
     if is_atty():
         version_info = f"{Colors.RED}{version_info}"
         message = f"{Colors.YELLOW}{message}{Colors.END}"

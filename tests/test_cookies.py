@@ -111,21 +111,23 @@ def test_cookie_options(app):
 
 
 def test_cookie_deletion(app):
+    cookie_jar = None
+
     @app.route("/")
     def handler(request):
+        nonlocal cookie_jar
         response = text("OK")
-        del response.cookies["i_want_to_die"]
-        response.cookies["i_never_existed"] = "testing"
-        del response.cookies["i_never_existed"]
+        del response.cookies["one"]
+        response.cookies["two"] = "testing"
+        del response.cookies["two"]
+        cookie_jar = response.cookies
         return response
 
-    request, response = app.test_client.get("/")
-    response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get("Set-Cookie", {}))
+    _, response = app.test_client.get("/")
 
-    assert int(response_cookies["i_want_to_die"]["max-age"]) == 0
-    with pytest.raises(KeyError):
-        response.cookies["i_never_existed"]
+    assert cookie_jar.get_cookie("one").max_age == 0
+    assert cookie_jar.get_cookie("two").max_age == 0
+    assert len(response.cookies) == 0
 
 
 def test_cookie_reserved_cookie():

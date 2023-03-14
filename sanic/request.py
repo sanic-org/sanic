@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from contextvars import ContextVar
 from inspect import isawaitable
 from typing import (
@@ -31,7 +33,7 @@ import unicodedata
 import uuid
 
 from collections import defaultdict
-from http.cookies import SimpleCookie
+from http import cookies as http_cookies
 from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, unquote, urlunparse
 
@@ -67,6 +69,10 @@ try:
 except ImportError:
     from json import loads as json_loads  # type: ignore
 
+_COOKIE_NAME_RESERVED_CHARS = re.compile(
+    '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'
+)
+
 
 class RequestParameters(dict):
     """
@@ -85,6 +91,21 @@ class RequestParameters(dict):
         Return the entire list
         """
         return super().get(name, default)
+
+
+class CookieRequestParameters(RequestParameters):
+    def __getitem__(self, key: str) -> Optional[str]:
+        deprecation(
+            f"You are accessing cookie key '{key}', which is currently in "
+            "compat mode returning a single cookie value. Starting in v23.9 "
+            "accessing a cookie value like this will return a list of values. "
+            "To avoid this behavior and continue accessing a single value, "
+            f"please upgrade from request.cookies['{key}'] to "
+            f"request.cookies.get('{key}'). See more details: ___.",
+            23.9,
+        )
+        value = super().__getitem__(key)
+        return value[0]
 
 
 class Request:
@@ -120,6 +141,7 @@ class Request:
         "method",
         "parsed_accept",
         "parsed_args",
+        "parsed_cookies",
         "parsed_credentials",
         "parsed_files",
         "parsed_form",
@@ -166,25 +188,25 @@ class Request:
         self.body = b""
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
-        self.parsed_forwarded: Optional[Options] = None
         self.parsed_accept: Optional[AcceptList] = None
-        self.parsed_credentials: Optional[Credentials] = None
-        self.parsed_json = None
-        self.parsed_form: Optional[RequestParameters] = None
-        self.parsed_files: Optional[RequestParameters] = None
-        self.parsed_token: Optional[str] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters
         ] = defaultdict(RequestParameters)
+        self.parsed_cookies: Optional[RequestParameters] = None
+        self.parsed_credentials: Optional[Credentials] = None
+        self.parsed_files: Optional[RequestParameters] = None
+        self.parsed_form: Optional[RequestParameters] = None
+        self.parsed_forwarded: Optional[Options] = None
+        self.parsed_json = None
         self.parsed_not_grouped_args: DefaultDict[
             Tuple[bool, bool, str, str], List[Tuple[str, str]]
         ] = defaultdict(list)
+        self.parsed_token: Optional[str] = None
         self._request_middleware_started = False
         self._response_middleware_started = False
         self.responded: bool = False
         self.route: Optional[Route] = None
         self.stream: Optional[Stream] = None
-        self._cookies: Optional[Dict[str, str]] = None
         self._match_info: Dict[str, Any] = {}
         self._protocol = None
 
@@ -732,23 +754,16 @@ class Request:
     """
 
     @property
-    def cookies(self) -> Dict[str, str]:
+    def cookies(self) -> RequestParameters:
         """
         :return: Incoming cookies on the request
         :rtype: Dict[str, str]
         """
 
-        if self._cookies is None:
-            cookie = self.headers.getone("cookie", None)
-            if cookie is not None:
-                cookies: SimpleCookie = SimpleCookie()
-                cookies.load(cookie)
-                self._cookies = {
-                    name: cookie.value for name, cookie in cookies.items()
-                }
-            else:
-                self._cookies = {}
-        return self._cookies
+        if self.parsed_cookies is None:
+            cookie = self.headers.getone("cookie", "")
+            self.parsed_cookies = parse_cookie(cookie)
+        return self.parsed_cookies
 
     @property
     def content_type(self) -> str:
@@ -1051,8 +1066,8 @@ def parse_multipart_form(body, boundary):
     :param boundary: bytes multipart boundary
     :return: fields (RequestParameters), files (RequestParameters)
     """
-    files = RequestParameters()
-    fields = RequestParameters()
+    files = {}
+    fields = {}
 
     form_parts = body.split(boundary)
     for form_part in form_parts[1:-1]:
@@ -1123,4 +1138,44 @@ def parse_multipart_form(body, boundary):
                 "in the Content-Disposition header"
             )
 
-    return fields, files
+    return RequestParameters(fields), RequestParameters(files)
+
+
+def parse_cookie(raw: str) -> RequestParameters:
+    """
+    Implementation adopted from Falcon v3.1.1
+    It more properly parses cookie values and is more performant
+    than using the stdlib SimpleCookie.load method.
+
+    See also:
+      https://tools.ietf.org/html/rfc6265#section-5.4
+      https://tools.ietf.org/html/rfc6265#section-4.1.1_summary_
+
+    :param raw: The raw cookie header valye
+    :type raw: str
+    :return: The parsed cookie values
+    :rtype: RequestParameters
+    """
+
+    cookies: Dict[str, List] = {}
+
+    for token in raw.split(";"):
+        name, __, value = token.partition("=")
+        name = name.strip()
+        value = value.strip()
+
+        if not name:
+            continue
+
+        if _COOKIE_NAME_RESERVED_CHARS.search(name):
+            continue
+
+        if len(value) > 2 and value[0] == '"' and value[-1] == '"':
+            value = http_cookies._unquote(value)
+
+        if name in cookies:
+            cookies[name].append(value)
+        else:
+            cookies[name] = [value]
+
+    return CookieRequestParameters(cookies)

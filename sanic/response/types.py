@@ -407,6 +407,8 @@ class ResponseStream:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
+        if not isinstance(headers, Header):
+            headers = Header(headers)
         self.streaming_fn = streaming_fn
         self.status = status
         self.headers = headers or Header()

@@ -3,14 +3,28 @@ from __future__ import annotations
 import re
 import string
 import sys
+
 from datetime import datetime
-from typing import Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
+
+from sanic.exceptions import ServerError
+from sanic.log import deprecation
+
+
+if TYPE_CHECKING:
+    from sanic.compat import Header
 
 if sys.version_info < (3, 8):  # no cov
     SameSite = str
+    LiteralRootPath = str
+    LiteralTrue = bool
+    LiteralFalse = bool
 else:  # no cov
     from typing import Literal
 
+    LiteralRootPath = Literal["/"]
+    LiteralTrue = Literal[True]
+    LiteralFalse = Literal[False]
     SameSite = Union[
         Literal["Strict"],
         Literal["Lax"],
@@ -23,19 +37,9 @@ else:  # no cov
 DEFAULT_MAX_AGE = 0
 SAMESITE_VALUES = ("strict", "lax", "none")
 
-# ------------------------------------------------------------ #
-#  SimpleCookie
-# ------------------------------------------------------------ #
-
-# Straight up copied this section of dark magic from SimpleCookie
 
 _LegalChars = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
-_UnescapedChars = _LegalChars + " ()/<=>?@[]{}"
-
-_Translator = {
-    n: "\\%03o" % n for n in set(range(256)) - set(map(ord, _UnescapedChars))
-}
-_Translator.update({ord('"'): '\\"', ord("\\"): "\\\\"})
+_Translator = {ch: f"\\{ch:03o}" for ch in bytes(range(32)) + b'";\\\x7F'}
 
 
 def _quote(str):
@@ -52,11 +56,8 @@ def _quote(str):
 
 _is_legal_key = re.compile("[%s]+" % re.escape(_LegalChars)).fullmatch
 
-# ------------------------------------------------------------ #
-#  Custom SimpleCookie
-# ------------------------------------------------------------ #
 
-
+# In v23.9, we should remove this as being a subclass of dict
 class CookieJar(dict):
     """
     CookieJar dynamically writes headers as cookies are added and removed
@@ -64,53 +65,188 @@ class CookieJar(dict):
     MultiHeader class to provide a unique key that encodes to Set-Cookie.
     """
 
-    def __init__(self, headers):
+    HEADER_KEY = "Set-Cookie"
+
+    def __init__(self, headers: Header):
         super().__init__()
-        self.headers: Dict[str, str] = headers
-        self.cookie_headers: Dict[str, str] = {}
-        self.header_key: str = "Set-Cookie"
+        self.headers = headers
 
     def __setitem__(self, key, value):
         # If this cookie doesn't exist, add it to the header keys
-        if not self.cookie_headers.get(key):
-            cookie = Cookie(key, value)
-            cookie["path"] = "/"
-            self.cookie_headers[key] = self.header_key
-            self.headers.add(self.header_key, cookie)
-            return super().__setitem__(key, cookie)
+        deprecation(
+            "Setting cookie values using the dict pattern has been "
+            "deprecated. You should instead use the cookies.add_cookie "
+            "method. To learn more, please see: ___.",
+            0,
+        )
+        if key not in self:
+            self.add_cookie(key, value, secure=False, samesite=None)
         else:
             self[key].value = value
 
     def __delitem__(self, key):
-        if key not in self.cookie_headers:
-            self[key] = ""
-            self[key]["max-age"] = 0
-        else:
-            cookie_header = self.cookie_headers[key]
-            # remove it from header
-            cookies = self.headers.popall(cookie_header)
-            for cookie in cookies:
-                if cookie.key != key:
-                    self.headers.add(cookie_header, cookie)
-            del self.cookie_headers[key]
-            return super().__delitem__(key)
+        if key in self:
+            super().__delitem__(key)
+        self.delete_cookie(key)
 
-    def add(
+    def __len__(self):
+        return len(self.cookies)
+
+    def __getitem__(self, key: str) -> Cookie:
+        deprecation(
+            "Accessing cookies from the CookieJar by dict key is deprecated. "
+            "You should instead use the cookies.get_cookie method. "
+            "To learn more, please see: ___.",
+            0,
+        )
+        return super().__getitem__(key)
+
+    def __iter__(self):
+        deprecation(
+            "Iterating over the CookieJar has been deprecated and will be "
+            "removed in v23.9. To learn more, please see: ___.",
+            23.9,
+        )
+        return super().__iter__()
+
+    def keys(self):
+        deprecation(
+            "Accessing CookieJar.keys() has been deprecated and will be "
+            "removed in v23.9. To learn more, please see: ___.",
+            23.9,
+        )
+        return super().keys()
+
+    def values(self):
+        deprecation(
+            "Accessing CookieJar.values() has been deprecated and will be "
+            "removed in v23.9. To learn more, please see: ___.",
+            23.9,
+        )
+        return super().values()
+
+    def items(self):
+        deprecation(
+            "Accessing CookieJar.items() has been deprecated and will be "
+            "removed in v23.9. To learn more, please see: ___.",
+            23.9,
+        )
+        return super().items()
+
+    def get(self, *args, **kwargs):
+        deprecation(
+            "Accessing cookies from the CookieJar using get is deprecated. "
+            "You should instead use the cookies.get_cookie method. "
+            "To learn more, please see: ___.",
+            0,
+        )
+        return super().get(*args, **kwargs)
+
+    def pop(self, key, *args, **kwargs):
+        deprecation(
+            "Using CookieJar.pop() has been deprecated and will be "
+            "removed in v23.9. To learn more, please see: ___.",
+            23.9,
+        )
+        self.delete(key)
+        return super().pop(key, *args, **kwargs)
+
+    @property
+    def header_key(self):
+        deprecation(
+            "The CookieJar.header_key property has been deprecated and will "
+            "be removed in version 23.9. Use CookieJar.HEADER_KEY. ",
+            23.9,
+        )
+        return CookieJar.HEADER_KEY
+
+    @property
+    def cookie_headers(self) -> Dict[str, str]:
+        deprecation(
+            "The CookieJar.coookie_headers property has been deprecated "
+            "and will be removed in version 23.9. Check the CookieJar object "
+            "itself for keys.",
+            23.9,
+        )
+        return {key: self.header_key for key in self}
+
+    @property
+    def cookies(self) -> List[Cookie]:
+        return self.headers.getall(self.HEADER_KEY)
+
+    def get_cookie(
+        self, key: str, path: str = "/", domain: Optional[str] = None
+    ) -> Optional[Cookie]:
+        for cookie in self.cookies:
+            if (
+                cookie.key == key
+                and cookie.path == path
+                and cookie.domain == domain
+            ):
+                return cookie
+        return None
+
+    # When using secure_prefix=True
+    @overload
+    def add_cookie(
         self,
         key: str,
         value: str,
         *,
-        path: Optional[str] = None,
-        expires: Optional[datetime] = None,
-        comment: Optional[str] = None,
+        path: str = "/",
         domain: Optional[str] = None,
+        secure: LiteralTrue = True,
         max_age: Optional[int] = None,
-        secure: Optional[bool] = None,
-        httponly: Optional[bool] = None,
-        samesite: Optional[SameSite] = None,
+        expires: Optional[datetime] = None,
+        httponly: bool = False,
+        samesite: Optional[SameSite] = "Lax",
+        partitioned: bool = False,
+        comment: Optional[str] = None,
+        host_prefix: LiteralFalse = False,
+        secure_prefix: LiteralTrue = True,
+    ) -> Cookie:
+        ...
+
+    # When using host_prefix=True
+    @overload
+    def add_cookie(
+        self,
+        key: str,
+        value: str,
+        *,
+        path: LiteralRootPath = "/",
+        domain: None = None,
+        secure: LiteralTrue = True,
+        max_age: Optional[int] = None,
+        expires: Optional[datetime] = None,
+        httponly: bool = False,
+        samesite: Optional[SameSite] = "Lax",
+        partitioned: bool = False,
+        comment: Optional[str] = None,
+        host_prefix: LiteralTrue = True,
+        secure_prefix: LiteralFalse = False,
+    ) -> Cookie:
+        ...
+
+    def add_cookie(
+        self,
+        key: str,
+        value: str,
+        *,
+        path: str = "/",
+        domain: Optional[str] = None,
+        secure: bool = True,
+        max_age: Optional[int] = None,
+        expires: Optional[datetime] = None,
+        httponly: bool = False,
+        samesite: Optional[SameSite] = "Lax",
+        partitioned: bool = False,
+        comment: Optional[str] = None,
+        host_prefix: bool = False,
+        secure_prefix: bool = False,
     ) -> Cookie:
         """
-        Add a cookie to the response
+        Add a cookie to the CookieJar
 
         :param key: Key of the cookie
         :type key: str
@@ -118,49 +254,66 @@ class CookieJar(dict):
         :type value: str
         :param path: Path of the cookie, defaults to None
         :type path: Optional[str], optional
-        :param expires: When the cookie expires; if set to None browsers
-            should set it as a session cookie, defaults to None
-        :type expires: Optional[datetime], optional
-        :param comment: A cookie comment, defaults to None
-        :type comment: Optional[str], optional
         :param domain: Domain of the cookie, defaults to None
         :type domain: Optional[str], optional
+        :param secure: Whether to set it as a secure cookie, defaults to True
+        :type secure: bool
         :param max_age: Max age of the cookie in seconds; if set to 0 a
             browser should delete it, defaults to None
         :type max_age: Optional[int], optional
-        :param secure: Whether to set it as a secure cookie, defaults to None
-        :type secure: Optional[bool], optional
-        :param httponly: Whether to set it as HTTP only, defaults to None
-        :type httponly: Optional[bool], optional
+        :param expires: When the cookie expires; if set to None browsers
+            should set it as a session cookie, defaults to None
+        :type expires: Optional[datetime], optional
+        :param httponly: Whether to set it as HTTP only, defaults to False
+        :type httponly: bool
         :param samesite: How to set the samesite property, should be
-            strict, lax or none, defaults to None
+            strict, lax or none (case insensitive), defaults to Lax
         :type samesite: Optional[SameSite], optional
+        :param partitioned: Whether to set it as partitioned, defaults to False
+        :type partitioned: bool
+        :param comment: A cookie comment, defaults to None
+        :type comment: Optional[str], optional
+        :param host_prefix: Whether to add __Host- as a prefix to the key.
+            This requires that path="/", domain=None, and secure=True,
+            defaults to False
+        :type host_prefix: bool
+        :param secure_prefix: Whether to add __Secure- as a prefix to the key.
+            This requires that secure=True, defaults to False
+        :type secure_prefix: bool
         :return: The instance of the created cookie
         :rtype: Cookie
         """
-        self[key] = value
-        cookie = self[key]
-        if path is not None:
-            cookie["path"] = path
-        if expires is not None:
-            cookie["expires"] = expires
-        if comment is not None:
-            cookie["comment"] = comment
-        if domain is not None:
-            cookie["domain"] = domain
-        if max_age is not None:
-            cookie["max-age"] = max_age
-        if secure is not None:
-            cookie["secure"] = secure
-        if httponly is not None:
-            cookie["httponly"] = httponly
-        if samesite is not None:
-            cookie["samesite"] = samesite
+        cookie = Cookie(
+            key,
+            value,
+            path=path,
+            expires=expires,
+            comment=comment,
+            domain=domain,
+            max_age=max_age,
+            secure=secure,
+            httponly=httponly,
+            samesite=samesite,
+            partitioned=partitioned,
+            host_prefix=host_prefix,
+            secure_prefix=secure_prefix,
+        )
+        self.headers.add(self.HEADER_KEY, cookie)
+
+        # This should be removed in v23.9
+        super().__setitem__(key, cookie)
+
         return cookie
 
-    def delete(self, key: str) -> None:
+    def delete_cookie(
+        self,
+        key: str,
+        *,
+        path: str = "/",
+        domain: Optional[str] = None,
+    ) -> None:
         """
-        Delete a cookie from the response
+        Delete a cookie
 
         This will effectively set it as Max-Age: 0, which a browser should
         interpret it to mean: "delete the cookie".
@@ -171,38 +324,139 @@ class CookieJar(dict):
         :param key: The key to be deleted
         :type key: str
         """
-        del self[key]
+        # remove it from header
+        cookies: List[Cookie] = self.headers.popall(self.HEADER_KEY, [])
+        for cookie in cookies:
+            if (
+                cookie.key != key
+                or cookie.path != path
+                or cookie.domain != domain
+            ):
+                self.headers.add(self.HEADER_KEY, cookie)
+
+        # This should be removed in v23.9
+        try:
+            super().__delitem__(key)
+        except KeyError:
+            ...
+
+        self.add_cookie(
+            key=key,
+            value="",
+            path=path,
+            domain=domain,
+            max_age=0,
+            samesite=None,
+        )
 
 
+# In v23.9, we should remove this as being a subclass of dict
+# Instead, it should be an object with __slots__
+# All of the current property accessors should be removed in favor
+# of actual slotted properties.
 class Cookie(dict):
-    """A stripped down version of Morsel from SimpleCookie #gottagofast"""
+    """A stripped down version of Morsel from SimpleCookie"""
+
+    HOST_PREFIX = "__Host-"
+    SECURE_PREFIX = "__Secure-"
 
     _keys = {
-        "expires": "expires",
         "path": "Path",
         "comment": "Comment",
         "domain": "Domain",
         "max-age": "Max-Age",
+        "expires": "expires",
+        "samesite": "SameSite",
+        "version": "Version",
         "secure": "Secure",
         "httponly": "HttpOnly",
-        "version": "Version",
-        "samesite": "SameSite",
+        "partitioned": "Partitioned",
     }
-    _flags = {"secure", "httponly"}
+    _flags = {"secure", "httponly", "partitioned"}
 
-    def __init__(self, key, value):
+    def __init__(
+        self,
+        key: str,
+        value: str,
+        *,
+        path: str = "/",
+        domain: Optional[str] = None,
+        secure: bool = False,
+        max_age: Optional[int] = None,
+        expires: Optional[datetime] = None,
+        httponly: bool = False,
+        samesite: Optional[SameSite] = None,
+        partitioned: bool = False,
+        comment: Optional[str] = None,
+        host_prefix: bool = False,
+        secure_prefix: bool = False,
+    ):
         if key in self._keys:
             raise KeyError("Cookie name is a reserved word")
         if not _is_legal_key(key):
             raise KeyError("Cookie key contains illegal characters")
+        if host_prefix and secure_prefix:
+            raise ServerError(
+                "Both host_prefix and secure_prefix were requested. "
+                "A cookie should have only one prefix."
+            )
+        elif host_prefix:
+            if not secure:
+                raise ServerError(
+                    "Cannot set host_prefix on a cookie without secure=True"
+                )
+            if path != "/":
+                raise ServerError(
+                    "Cannot set host_prefix on a cookie unless path='/'"
+                )
+            if domain:
+                raise ServerError(
+                    "Cannot set host_prefix on a cookie with a defined domain"
+                )
+            key = self.HOST_PREFIX + key
+        elif secure_prefix:
+            if not secure:
+                raise ServerError(
+                    "Cannot set secure_prefix on a cookie without secure=True"
+                )
+            key = self.SECURE_PREFIX + key
+        if partitioned and not host_prefix:
+            # This is technically possible, but it is not advisable so we will
+            # take a stand and say "don't shoot yourself in the foot"
+            raise ServerError(
+                "Cannot create a partitioned cookie without "
+                "also setting host_prefix=True"
+            )
+
         self.key = key
         self.value = value
         super().__init__()
+        self._set_value("path", path)
+        self._set_value("expires", expires)
+        self._set_value("comment", comment)
+        self._set_value("domain", domain)
+        self._set_value("max-age", max_age)
+        self._set_value("secure", secure)
+        self._set_value("httponly", httponly)
+        self._set_value("samesite", samesite)
+        self._set_value("partitioned", partitioned)
 
     def __setitem__(self, key, value):
+        deprecation(
+            "Setting values on a Cookie object as a dict has been deprecated. "
+            "This feature will be removed in v23.9. You should instead set "
+            f"values on cookies as object properties: cookie.{key}. ",
+            23.9,
+        )
+        self._set_value(key, value)
+
+    # This is a temporary method for backwards compat and should be removed
+    # in v23.9 when this is no longer a dict
+    def _set_value(self, key: str, value: Any) -> None:
         if key not in self._keys:
             raise KeyError("Unknown cookie property")
-        if value is not False:
+
+        if value is not None:
             if key.lower() == "max-age" and not str(value).isdigit():
                 raise ValueError("Cookie max-age must be an integer")
             elif key.lower() == "expires" and not isinstance(value, datetime):
@@ -214,7 +468,8 @@ class Cookie(dict):
                         f"be one of: {','.join(SAMESITE_VALUES)}"
                     )
                 value = value.title()
-            return super().__setitem__(key, value)
+
+        super().__setitem__(key, value)
 
     def encode(self, encoding):
         """
@@ -234,35 +489,38 @@ class Cookie(dict):
     def __str__(self):
         """Format as a Set-Cookie header value."""
         output = ["%s=%s" % (self.key, _quote(self.value))]
-        for key, value in self.items():
-            if key == "max-age":
-                try:
-                    output.append("%s=%d" % (self._keys[key], value))
-                except TypeError:
+        key_index = list(self._keys)
+        for key, value in sorted(
+            self.items(), key=lambda x: key_index.index(x[0])
+        ):
+            if value is not None and value is not False:
+                if key == "max-age":
+                    try:
+                        output.append("%s=%d" % (self._keys[key], value))
+                    except TypeError:
+                        output.append("%s=%s" % (self._keys[key], value))
+                elif key == "expires":
+                    output.append(
+                        "%s=%s"
+                        % (
+                            self._keys[key],
+                            value.strftime("%a, %d-%b-%Y %T GMT"),
+                        )
+                    )
+                elif key in self._flags:
+                    output.append(self._keys[key])
+                else:
                     output.append("%s=%s" % (self._keys[key], value))
-            elif key == "expires":
-                output.append(
-                    "%s=%s"
-                    % (self._keys[key], value.strftime("%a, %d-%b-%Y %T GMT"))
-                )
-            elif key in self._flags and self[key]:
-                output.append(self._keys[key])
-            else:
-                output.append("%s=%s" % (self._keys[key], value))
 
         return "; ".join(output)
 
     @property
-    def path(self) -> Optional[str]:
-        return self.get("path")
+    def path(self) -> str:
+        return self["path"]
 
     @path.setter
     def path(self, value: str) -> None:
-        self["path"] = value
-
-    @path.deleter
-    def path(self) -> None:
-        del self["path"]
+        self._set_value("path", value)
 
     @property
     def expires(self) -> Optional[datetime]:
@@ -270,11 +528,7 @@ class Cookie(dict):
 
     @expires.setter
     def expires(self, value: datetime) -> None:
-        self["expires"] = value
-
-    @expires.deleter
-    def expires(self) -> None:
-        del self["expires"]
+        self._set_value("expires", value)
 
     @property
     def comment(self) -> Optional[str]:
@@ -282,11 +536,7 @@ class Cookie(dict):
 
     @comment.setter
     def comment(self, value: str) -> None:
-        self["comment"] = value
-
-    @comment.deleter
-    def comment(self) -> None:
-        del self["comment"]
+        self._set_value("comment", value)
 
     @property
     def domain(self) -> Optional[str]:
@@ -294,11 +544,7 @@ class Cookie(dict):
 
     @domain.setter
     def domain(self, value: str) -> None:
-        self["domain"] = value
-
-    @domain.deleter
-    def domain(self) -> None:
-        del self["domain"]
+        self._set_value("domain", value)
 
     @property
     def max_age(self) -> Optional[int]:
@@ -306,11 +552,7 @@ class Cookie(dict):
 
     @max_age.setter
     def max_age(self, value: int) -> None:
-        self["max-age"] = value
-
-    @max_age.deleter
-    def max_age(self) -> None:
-        del self["max-age"]
+        self._set_value("max-age", value)
 
     @property
     def secure(self) -> Optional[bool]:
@@ -318,11 +560,7 @@ class Cookie(dict):
 
     @secure.setter
     def secure(self, value: bool) -> None:
-        self["secure"] = value
-
-    @secure.deleter
-    def secure(self) -> None:
-        del self["secure"]
+        self._set_value("secure", value)
 
     @property
     def httponly(self) -> Optional[bool]:
@@ -330,11 +568,7 @@ class Cookie(dict):
 
     @httponly.setter
     def httponly(self, value: bool) -> None:
-        self["httponly"] = value
-
-    @httponly.deleter
-    def httponly(self) -> None:
-        del self["httponly"]
+        self._set_value("httponly", value)
 
     @property
     def samesite(self) -> Optional[SameSite]:
@@ -342,8 +576,4 @@ class Cookie(dict):
 
     @samesite.setter
     def samesite(self, value: SameSite) -> None:
-        self["samesite"] = value
-
-    @samesite.deleter
-    def samesite(self) -> None:
-        del self["samesite"]
+        self._set_value("samesite", value)

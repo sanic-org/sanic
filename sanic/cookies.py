@@ -571,16 +571,16 @@ class Cookie(dict):
         self._set_value("max-age", value)
 
     @property
-    def secure(self) -> Optional[bool]:
-        return self.get("secure")
+    def secure(self) -> bool:
+        return self.get("secure", False)
 
     @secure.setter
     def secure(self, value: bool) -> None:
         self._set_value("secure", value)
 
     @property
-    def httponly(self) -> Optional[bool]:
-        return self.get("httponly")
+    def httponly(self) -> bool:
+        return self.get("httponly", False)
 
     @httponly.setter
     def httponly(self, value: bool) -> None:
@@ -593,3 +593,11 @@ class Cookie(dict):
     @samesite.setter
     def samesite(self, value: SameSite) -> None:
         self._set_value("samesite", value)
+
+    @property
+    def partitioned(self) -> bool:
+        return self.get("partitioned", False)
+
+    @partitioned.setter
+    def partitioned(self, value: bool) -> None:
+        self._set_value("partitioned", value)

@@ -5,7 +5,7 @@ from itertools import count
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from typing import Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
@@ -54,9 +54,36 @@ class WorkerManager:
         signal_func(SIGINT, self.shutdown_signal)
         signal_func(SIGTERM, self.shutdown_signal)
 
-    def manage(self, ident, func, kwargs, transient=False) -> Worker:
+    def manage(
+        self,
+        ident: str,
+        func: Callable[..., Any],
+        kwargs: Dict[str, Any],
+        transient: bool = False,
+        workers: int = 1,
+    ) -> Worker:
+        """
+        Instruct Sanic to manage a custom process.
+
+        :param ident: A name for the worker process
+        :type ident: str
+        :param func: The function to call in the background process
+        :type func: Callable[..., Any]
+        :param kwargs: Arguments to pass to the function
+        :type kwargs: Dict[str, Any]
+        :param transient: Whether to mark the process as transient. If True
+            then the Worker Manager will restart the process along
+            with any global restart (ex: auto-reload), defaults to False
+        :type transient: bool, optional
+        :param workers: The number of worker processes to run, defaults to 1
+        :type workers: int, optional
+        :return: The Worker instance
+        :rtype: Worker
+        """
         container = self.transient if transient else self.durable
-        worker = Worker(ident, func, kwargs, self.context, self.worker_state)
+        worker = Worker(
+            ident, func, kwargs, self.context, self.worker_state, workers
+        )
         container[worker.ident] = worker
         return worker
 

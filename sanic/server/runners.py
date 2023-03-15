@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
@@ -10,6 +11,7 @@ from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context
 from sanic.server.events import trigger_events
 
+
 if TYPE_CHECKING:
     from sanic.app import Sanic
 
@@ -17,6 +19,7 @@ import asyncio
 import multiprocessing
 import os
 import socket
+
 from functools import partial
 from signal import SIG_IGN, SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
@@ -33,6 +36,7 @@ from sanic.server.socket import (
     bind_unix_socket,
     remove_unix_socket,
 )
+
 
 try:
     from aioquic.asyncio import serve as quic_serve

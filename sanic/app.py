@@ -5,6 +5,7 @@ import logging
 import logging.config
 import re
 import sys
+
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -92,6 +93,7 @@ from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.manager import WorkerManager
+
 
 if TYPE_CHECKING:
     try:
@@ -1533,16 +1535,16 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             yield
         else:
             do_router = self.router.finalized
-            do_signal_router = self.router.finalized
+            do_signal_router = self.signal_router.finalized
             if do_router:
                 self.router.reset()
             if do_signal_router:
                 self.signal_router.reset()
             yield
-            if do_router:
-                self.finalize()
             if do_signal_router:
                 self.signalize(self.config.TOUCHUP)
+            if do_router:
+                self.finalize()
 
     def finalize(self):
         try:

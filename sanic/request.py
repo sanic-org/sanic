@@ -47,7 +47,7 @@ from sanic.constants import (
 )
 from sanic.exceptions import BadRequest, BadURL, ServerError
 from sanic.headers import (
-    AcceptContainer,
+    AcceptList,
     Options,
     parse_accept,
     parse_content_header,
@@ -146,7 +146,6 @@ class Request:
         head: bytes = b"",
         stream_id: int = 0,
     ):
-
         self.raw_url = url_bytes
         try:
             self._parsed_url = parse_url(url_bytes)
@@ -168,7 +167,7 @@ class Request:
         self.conn_info: Optional[ConnInfo] = None
         self.ctx = SimpleNamespace()
         self.parsed_forwarded: Optional[Options] = None
-        self.parsed_accept: Optional[AcceptContainer] = None
+        self.parsed_accept: Optional[AcceptList] = None
         self.parsed_credentials: Optional[Credentials] = None
         self.parsed_json = None
         self.parsed_form: Optional[RequestParameters] = None
@@ -500,14 +499,17 @@ class Request:
         return self.parsed_json
 
     @property
-    def accept(self) -> AcceptContainer:
-        """
+    def accept(self) -> AcceptList:
+        """Accepted response content types.
+
+        A convenience handler for easier RFC-compliant matching of MIME types,
+        parsed as a list that can match wildcards and includes */* by default.
+
         :return: The ``Accept`` header parsed
-        :rtype: AcceptContainer
+        :rtype: AcceptList
         """
         if self.parsed_accept is None:
-            accept_header = self.headers.getone("accept", "")
-            self.parsed_accept = parse_accept(accept_header)
+            self.parsed_accept = parse_accept(self.headers.get("accept"))
         return self.parsed_accept
 
     @property

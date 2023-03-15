@@ -686,7 +686,6 @@ class WebsocketImplProtocol:
         :raises TypeError: for unsupported inputs
         """
         async with self.conn_mutex:
-
             if self.ws_proto.state in (CLOSED, CLOSING):
                 raise WebsocketClosed(
                     "Cannot write to websocket interface after it is closed."

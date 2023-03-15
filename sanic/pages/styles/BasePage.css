@@ -1,0 +1,146 @@
+/** BasePage **/
+
+:root {
+    --sanic: #ff0d68;
+    --sanic-yellow: #FFE900;
+    --sanic-background: #efeced;
+    --sanic-text: #121010;
+    --sanic-text-lighter: #756169;
+    --sanic-link: #ff0d68;
+    --sanic-block-background: #f7f4f6;
+    --sanic-block-text: #000;
+    --sanic-block-alt-text: #6b6468;
+    --sanic-header-background: #272325;
+    --sanic-header-border: #fff;
+    --sanic-header-text: #fff;
+    --sanic-highlight-background: var(--sanic-yellow);
+    --sanic-highlight-text: var(--sanic-text);
+    --sanic-tab-background: #f7f4f6;
+    --sanic-tab-shadow: #f7f6f6;
+    --sanic-tab-text: #222021;
+    --sanic-tracerite-var: var(--sanic-text);
+    --sanic-tracerite-val: #ff0d68;
+    --sanic-tracerite-type: #6d6a6b;
+}
+
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --sanic-text: #f7f4f6;
+        --sanic-background: #121010;
+        --sanic-block-background: #0f0d0e;
+        --sanic-block-text: #f7f4f6;
+        --sanic-header-background: #030203;
+        --sanic-header-border: #000;
+        --sanic-highlight-text: var(--sanic-background);
+        --sanic-tab-background: #292728;
+        --sanic-tab-shadow: #0f0d0e;
+        --sanic-tab-text: #aea7ab;
+    }
+}
+
+html {
+    font: 16px sans-serif;
+    background: var(--sanic-background);
+    color: var(--sanic-text);
+    scrollbar-gutter: stable;
+    overflow: hidden auto;
+}
+
+body {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 125%;
+}
+
+body>* {
+    padding: 1rem 2vw;
+}
+
+@media (max-width: 1000px) {
+    body>* {
+        padding: 0.5rem 1.5vw;
+    }
+
+    html {
+        /* Scale everything by rem of 6px-16px by viewport width */
+        font-size: calc(6px + 10 * 100vw / 1000);
+    }
+}
+
+main {
+    /* Make sure the footer is closer to bottom */
+    min-height: 70vh;
+    /* Generous padding for readability */
+    padding: 1rem 2.5rem;
+}
+
+.smalltext {
+    font-size: 1.0rem;
+}
+
+.container {
+    min-width: 600px;
+    max-width: 1600px;
+}
+
+header {
+    background: var(--sanic-header-background);
+    color: var(--sanic-header-text);
+    border-bottom: 1px solid var(--sanic-header-border);
+    text-align: center;
+}
+
+footer {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8rem;
+    margin: 2rem;
+    line-height: 1.5em;
+}
+
+h1 {
+    text-align: left;
+}
+
+a {
+    text-decoration: none;
+    color: var(--sanic-link);
+}
+
+a:hover,
+a:focus {
+    text-decoration: underline;
+    outline: none;
+}
+
+
+span.icon {
+    margin-right: 1rem;
+}
+
+#logo-simple {
+    height: 1.75rem;
+    padding: 0 0.25rem;
+}
+
+
+@media (prefers-color-scheme: dark) {
+    #logo-simple path:last-child {
+        fill: #e1e1e1;
+    }
+}
+
+#sanic pre,
+#sanic code {
+    font-family: "Fira Code",
+        "Source Code Pro",
+        Menlo,
+        Meslo,
+        Monaco,
+        Consolas,
+        Lucida Console,
+        monospace;
+    font-size: 0.8rem;
+}

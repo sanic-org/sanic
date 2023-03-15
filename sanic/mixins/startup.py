@@ -877,7 +877,10 @@ class StartupMixin(metaclass=SanicMeta):
 
             sync_manager.shutdown()
             for sock in socks:
-                sock.shutdown(SHUT_RDWR)
+                try:
+                    sock.shutdown(SHUT_RDWR)
+                except OSError:
+                    ...
                 sock.close()
             socks = []
             trigger_events(main_stop, loop, primary)
@@ -1109,7 +1112,6 @@ class StartupMixin(metaclass=SanicMeta):
         app: StartupMixin,
         server_info: ApplicationServerInfo,
     ) -> None:  # no cov
-
         try:
             # We should never get to this point without a server
             # This is primarily to keep mypy happy

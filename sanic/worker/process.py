@@ -192,14 +192,17 @@ class Worker:
         server_settings,
         context: BaseContext,
         worker_state: Dict[str, Any],
+        num: int = 1,
     ):
         self.ident = ident
+        self.num = num
         self.context = context
         self.serve = serve
         self.server_settings = server_settings
         self.worker_state = worker_state
         self.processes: Set[WorkerProcess] = set()
-        self.create_process()
+        for _ in range(num):
+            self.create_process()
 
     def create_process(self) -> WorkerProcess:
         process = WorkerProcess(

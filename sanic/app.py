@@ -5,6 +5,7 @@ import logging
 import logging.config
 import re
 import sys
+
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -92,6 +93,7 @@ from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.manager import WorkerManager
+
 
 if TYPE_CHECKING:
     try:

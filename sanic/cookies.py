@@ -3,14 +3,11 @@ from __future__ import annotations
 import re
 import string
 import sys
-
 from datetime import datetime
-from http import cookies as http_cookies
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
-
 
 if TYPE_CHECKING:
     from sanic.compat import Header
@@ -46,6 +43,8 @@ TRANSLATOR = {
     n: "\\%03o" % n for n in set(range(256)) - set(map(ord, UNESCAPED_CHARS))
 }
 TRANSLATOR.update({ord('"'): '\\"', ord("\\"): "\\\\"})
+OCTAL_PATTERN = re.compile(r"\\[0-3][0-7][0-7]")
+QUOTE_PATTERN = re.compile(r"[\\].")
 
 
 def _quote(str):
@@ -58,6 +57,40 @@ def _quote(str):
         return str
     else:
         return '"' + str.translate(TRANSLATOR) + '"'
+
+
+def _unquote(str):
+    if str is None or len(str) < 2:
+        return str
+    if str[0] != '"' or str[-1] != '"':
+        return str
+
+    str = str[1:-1]
+
+    i = 0
+    n = len(str)
+    res = []
+    while 0 <= i < n:
+        o_match = OCTAL_PATTERN.search(str, i)
+        q_match = QUOTE_PATTERN.search(str, i)
+        if not o_match and not q_match:
+            res.append(str[i:])
+            break
+        # else:
+        j = k = -1
+        if o_match:
+            j = o_match.start(0)
+        if q_match:
+            k = q_match.start(0)
+        if q_match and (not o_match or k < j):
+            res.append(str[i:k])
+            res.append(str[k + 1])
+            i = k + 2
+        else:
+            res.append(str[i:j])
+            res.append(chr(int(str[j + 1 : j + 4], 8)))
+            i = j + 4
+    return "".join(res)
 
 
 _is_legal_key = re.compile("[%s]+" % re.escape(LEGAL_CHARS)).fullmatch
@@ -78,7 +111,7 @@ def parse_cookie(raw: str):
             continue
 
         if len(value) > 2 and value[0] == '"' and value[-1] == '"':
-            value = http_cookies._unquote(value)
+            value = _unquote(value)
 
         if name in cookies:
             cookies[name].append(value)

@@ -7,6 +7,7 @@ import pytest
 from sanic import Request, Sanic
 from sanic.compat import Header
 from sanic.cookies import Cookie, CookieJar
+from sanic.exceptions import ServerError
 from sanic.response import text
 
 
@@ -371,3 +372,54 @@ def test_cookie_jar_old_school_delete_encode():
     assert encoded == [
         b'foo=""; Path=/; Max-Age=0; Secure',
     ]
+
+
+def test_bad_cookie_prarms():
+    headers = Header()
+    jar = CookieJar(headers)
+
+    with pytest.raises(
+        ServerError,
+        match=(
+            "Both host_prefix and secure_prefix were requested. "
+            "A cookie should have only one prefix."
+        ),
+    ):
+        jar.add_cookie("foo", "bar", host_prefix=True, secure_prefix=True)
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set host_prefix on a cookie without secure=True",
+    ):
+        jar.add_cookie("foo", "bar", host_prefix=True, secure=False)
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set host_prefix on a cookie unless path='/'",
+    ):
+        jar.add_cookie(
+            "foo", "bar", host_prefix=True, secure=True, path="/foo"
+        )
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set host_prefix on a cookie with a defined domain",
+    ):
+        jar.add_cookie(
+            "foo", "bar", host_prefix=True, secure=True, domain="foo.bar"
+        )
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set secure_prefix on a cookie without secure=True",
+    ):
+        jar.add_cookie("foo", "bar", secure_prefix=True, secure=False)
+
+    with pytest.raises(
+        ServerError,
+        match=(
+            "Cannot create a partitioned cookie without "
+            "also setting host_prefix=True"
+        ),
+    ):
+        jar.add_cookie("foo", "bar", partitioned=True)

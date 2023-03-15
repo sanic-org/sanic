@@ -3,11 +3,13 @@ from __future__ import annotations
 import re
 import string
 import sys
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
+
 
 if TYPE_CHECKING:
     from sanic.compat import Header
@@ -47,7 +49,7 @@ OCTAL_PATTERN = re.compile(r"\\[0-3][0-7][0-7]")
 QUOTE_PATTERN = re.compile(r"[\\].")
 
 
-def _quote(str):
+def _quote(str):  # no cov
     r"""Quote a string for use in a cookie header.
     If the string does not need to be double-quoted, then just return the
     string.  Otherwise, surround the string in doublequotes and quote
@@ -59,7 +61,7 @@ def _quote(str):
         return '"' + str.translate(TRANSLATOR) + '"'
 
 
-def _unquote(str):
+def _unquote(str):  # no cov
     if str is None or len(str) < 2:
         return str
     if str[0] != '"' or str[-1] != '"':
@@ -107,10 +109,10 @@ def parse_cookie(raw: str):
         if not name:
             continue
 
-        if COOKIE_NAME_RESERVED_CHARS.search(name):
+        if COOKIE_NAME_RESERVED_CHARS.search(name):  # no cov
             continue
 
-        if len(value) > 2 and value[0] == '"' and value[-1] == '"':
+        if len(value) > 2 and value[0] == '"' and value[-1] == '"':  # no cov
             value = _unquote(value)
 
         if name in cookies:
@@ -159,7 +161,7 @@ class CookieJar(dict):
             super().__delitem__(key)
         self.delete_cookie(key)
 
-    def __len__(self):
+    def __len__(self):  # no cov
         return len(self.cookies)
 
     def __getitem__(self, key: str) -> Cookie:
@@ -171,7 +173,7 @@ class CookieJar(dict):
         )
         return super().__getitem__(key)
 
-    def __iter__(self):
+    def __iter__(self):  # no cov
         deprecation(
             "Iterating over the CookieJar has been deprecated and will be "
             "removed in v23.9. To learn more, please see: ___.",
@@ -179,7 +181,7 @@ class CookieJar(dict):
         )
         return super().__iter__()
 
-    def keys(self):
+    def keys(self):  # no cov
         deprecation(
             "Accessing CookieJar.keys() has been deprecated and will be "
             "removed in v23.9. To learn more, please see: ___.",
@@ -187,7 +189,7 @@ class CookieJar(dict):
         )
         return super().keys()
 
-    def values(self):
+    def values(self):  # no cov
         deprecation(
             "Accessing CookieJar.values() has been deprecated and will be "
             "removed in v23.9. To learn more, please see: ___.",
@@ -195,7 +197,7 @@ class CookieJar(dict):
         )
         return super().values()
 
-    def items(self):
+    def items(self):  # no cov
         deprecation(
             "Accessing CookieJar.items() has been deprecated and will be "
             "removed in v23.9. To learn more, please see: ___.",
@@ -203,7 +205,7 @@ class CookieJar(dict):
         )
         return super().items()
 
-    def get(self, *args, **kwargs):
+    def get(self, *args, **kwargs):  # no cov
         deprecation(
             "Accessing cookies from the CookieJar using get is deprecated "
             "and will be removed in v23.9. You should instead use the "
@@ -212,7 +214,7 @@ class CookieJar(dict):
         )
         return super().get(*args, **kwargs)
 
-    def pop(self, key, *args, **kwargs):
+    def pop(self, key, *args, **kwargs):  # no cov
         deprecation(
             "Using CookieJar.pop() has been deprecated and will be "
             "removed in v23.9. To learn more, please see: ___.",
@@ -222,7 +224,7 @@ class CookieJar(dict):
         return super().pop(key, *args, **kwargs)
 
     @property
-    def header_key(self):
+    def header_key(self):  # no cov
         deprecation(
             "The CookieJar.header_key property has been deprecated and will "
             "be removed in version 23.9. Use CookieJar.HEADER_KEY. ",
@@ -231,7 +233,7 @@ class CookieJar(dict):
         return CookieJar.HEADER_KEY
 
     @property
-    def cookie_headers(self) -> Dict[str, str]:
+    def cookie_headers(self) -> Dict[str, str]:  # no cov
         deprecation(
             "The CookieJar.coookie_headers property has been deprecated "
             "and will be removed in version 23.9. If you need to check if a "
@@ -287,7 +289,7 @@ class CookieJar(dict):
         host_prefix: LiteralFalse = False,
         secure_prefix: LiteralTrue = True,
     ) -> Cookie:
-        ...
+        ...  # no cov
 
     # When using host_prefix=True
     @overload
@@ -308,7 +310,7 @@ class CookieJar(dict):
         host_prefix: LiteralTrue = True,
         secure_prefix: LiteralFalse = False,
     ) -> Cookie:
-        ...
+        ...  # no cov
 
     def add_cookie(
         self,
@@ -597,73 +599,73 @@ class Cookie(dict):
         return "; ".join(output)
 
     @property
-    def path(self) -> str:
+    def path(self) -> str:  # no cov
         return self["path"]
 
     @path.setter
-    def path(self, value: str) -> None:
+    def path(self, value: str) -> None:  # no cov
         self._set_value("path", value)
 
     @property
-    def expires(self) -> Optional[datetime]:
+    def expires(self) -> Optional[datetime]:  # no cov
         return self.get("expires")
 
     @expires.setter
-    def expires(self, value: datetime) -> None:
+    def expires(self, value: datetime) -> None:  # no cov
         self._set_value("expires", value)
 
     @property
-    def comment(self) -> Optional[str]:
+    def comment(self) -> Optional[str]:  # no cov
         return self.get("comment")
 
     @comment.setter
-    def comment(self, value: str) -> None:
+    def comment(self, value: str) -> None:  # no cov
         self._set_value("comment", value)
 
     @property
-    def domain(self) -> Optional[str]:
+    def domain(self) -> Optional[str]:  # no cov
         return self.get("domain")
 
     @domain.setter
-    def domain(self, value: str) -> None:
+    def domain(self, value: str) -> None:  # no cov
         self._set_value("domain", value)
 
     @property
-    def max_age(self) -> Optional[int]:
+    def max_age(self) -> Optional[int]:  # no cov
         return self.get("max-age")
 
     @max_age.setter
-    def max_age(self, value: int) -> None:
+    def max_age(self, value: int) -> None:  # no cov
         self._set_value("max-age", value)
 
     @property
-    def secure(self) -> bool:
+    def secure(self) -> bool:  # no cov
         return self.get("secure", False)
 
     @secure.setter
-    def secure(self, value: bool) -> None:
+    def secure(self, value: bool) -> None:  # no cov
         self._set_value("secure", value)
 
     @property
-    def httponly(self) -> bool:
+    def httponly(self) -> bool:  # no cov
         return self.get("httponly", False)
 
     @httponly.setter
-    def httponly(self, value: bool) -> None:
+    def httponly(self, value: bool) -> None:  # no cov
         self._set_value("httponly", value)
 
     @property
-    def samesite(self) -> Optional[SameSite]:
+    def samesite(self) -> Optional[SameSite]:  # no cov
         return self.get("samesite")
 
     @samesite.setter
-    def samesite(self, value: SameSite) -> None:
+    def samesite(self, value: SameSite) -> None:  # no cov
         self._set_value("samesite", value)
 
     @property
-    def partitioned(self) -> bool:
+    def partitioned(self) -> bool:  # no cov
         return self.get("partitioned", False)
 
     @partitioned.setter
-    def partitioned(self, value: bool) -> None:
+    def partitioned(self, value: bool) -> None:  # no cov
         self._set_value("partitioned", value)

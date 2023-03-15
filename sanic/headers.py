@@ -19,7 +19,6 @@ OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys
 
 _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
 _param = re.compile(rf";\s*{_token}=(?:{_token}|{_quoted})", re.ASCII)
-_firefox_quote_escape = re.compile(r'\\"(?!; |\s*$)')
 _ipv6 = "(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
 _ipv6_re = re.compile(_ipv6)
 _host_re = re.compile(
@@ -268,19 +267,23 @@ def parse_accept(accept: Optional[str]) -> AcceptList:
 def parse_content_header(value: str) -> Tuple[str, Options]:
     """Parse content-type and content-disposition header values.
 
-    E.g. 'form-data; name=upload; filename=\"file.txt\"' to
+    E.g. `form-data; name=upload; filename="file.txt"` to
     ('form-data', {'name': 'upload', 'filename': 'file.txt'})
 
     Mostly identical to cgi.parse_header and werkzeug.parse_options_header
-    but runs faster and handles special characters better. Unescapes quotes.
+    but runs faster and handles special characters better.
+
+    Unescapes %22 to `"` and %0D%0A to `\n` in field values.
     """
-    value = _firefox_quote_escape.sub("%22", value)
     pos = value.find(";")
     if pos == -1:
         options: Dict[str, Union[int, str]] = {}
     else:
         options = {
-            m.group(1).lower(): m.group(2) or m.group(3).replace("%22", '"')
+            m.group(1)
+            .lower(): (m.group(2) or m.group(3))
+            .replace("%22", '"')
+            .replace("%0D%0A", "\n")
             for m in _param.finditer(value[pos:])
         }
         value = value[:pos]

@@ -5,7 +5,6 @@ import logging
 import logging.config
 import re
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -93,7 +92,6 @@ from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.manager import WorkerManager
-
 
 if TYPE_CHECKING:
     try:
@@ -1523,15 +1521,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     def amend(self) -> Iterator[None]:
         """
         If the application has started, this function allows changes
-        to be made to the route. This should ideally ONLY ever be used inside
-        one of the event listeners:
-
-
-        @app.before_server_start
-        async def dynamic_router_changes(app: Sanic) -> None:
-            with app.amend():
-                app.add_route(...)
-                app.register_middleware(...)
+        to be made to add routes, middleware, and signals.
         """
         if not self.state.is_started:
             yield

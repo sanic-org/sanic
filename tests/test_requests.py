@@ -1813,8 +1813,8 @@ def test_request_cookies(app):
 
     request, response = app.test_client.get("/", cookies=cookies)
 
-    assert request.cookies == cookies
-    assert request.cookies == cookies  # For request._cookies
+    assert len(request.cookies) == len(cookies)
+    assert request.cookies["test"] == cookies["test"]
 
 
 @pytest.mark.asyncio
@@ -1827,8 +1827,8 @@ async def test_request_cookies_asgi(app):
 
     request, response = await app.asgi_client.get("/", cookies=cookies)
 
-    assert request.cookies == cookies
-    assert request.cookies == cookies  # For request._cookies
+    assert len(request.cookies) == len(cookies)
+    assert request.cookies["test"] == cookies["test"]
 
 
 def test_request_cookies_without_cookies(app):

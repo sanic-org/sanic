@@ -429,7 +429,8 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         ctx = params.pop("route_context")
 
-        routes = self.router.add(**params)
+        with self.amend():
+            routes = self.router.add(**params)
         if isinstance(routes, Route):
             routes = [routes]
 
@@ -445,17 +446,19 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         middleware: FutureMiddleware,
         route_names: Optional[List[str]] = None,
     ):
-        if route_names:
-            return self.register_named_middleware(
-                middleware.middleware, route_names, middleware.attach_to
-            )
-        else:
-            return self.register_middleware(
-                middleware.middleware, middleware.attach_to
-            )
+        with self.amend():
+            if route_names:
+                return self.register_named_middleware(
+                    middleware.middleware, route_names, middleware.attach_to
+                )
+            else:
+                return self.register_middleware(
+                    middleware.middleware, middleware.attach_to
+                )
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
-        return self.signal_router.add(*signal)
+        with self.amend():
+            return self.signal_router.add(*signal)
 
     def dispatch(
         self,
@@ -1527,13 +1530,13 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 app.register_middleware(...)
         """
         if not self.state.is_started:
-            return
-
-        self.router.reset()
-        self.signal_router.reset()
-        yield
-        self.finalize()
-        self.signalize(self.config.TOUCHUP)
+            yield
+        else:
+            self.router.reset()
+            self.signal_router.reset()
+            yield
+            self.finalize()
+            self.signalize(self.config.TOUCHUP)
 
     def finalize(self):
         try:

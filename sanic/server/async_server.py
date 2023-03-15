@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-
 from typing import TYPE_CHECKING
 
 from sanic.exceptions import SanicException
-
 
 if TYPE_CHECKING:
     from sanic import Sanic
@@ -44,7 +42,8 @@ class AsyncioServer:
         """
         Trigger "before_server_start" events
         """
-        return self._server_event("init", "before")
+        with self.app.amend():
+            return self._server_event("init", "before")
 
     def after_start(self):
         """

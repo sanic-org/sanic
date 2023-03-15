@@ -431,13 +431,13 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         with self.amend():
             routes = self.router.add(**params)
-        if isinstance(routes, Route):
-            routes = [routes]
+            if isinstance(routes, Route):
+                routes = [routes]
 
-        for r in routes:
-            r.extra.websocket = websocket
-            r.extra.static = params.get("static", False)
-            r.ctx.__dict__.update(ctx)
+            for r in routes:
+                r.extra.websocket = websocket
+                r.extra.static = params.get("static", False)
+                r.ctx.__dict__.update(ctx)
 
         return routes
 
@@ -1532,11 +1532,17 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         if not self.state.is_started:
             yield
         else:
-            self.router.reset()
-            self.signal_router.reset()
+            do_router = self.router.finalized
+            do_signal_router = self.router.finalized
+            if do_router:
+                self.router.reset()
+            if do_signal_router:
+                self.signal_router.reset()
             yield
-            self.finalize()
-            self.signalize(self.config.TOUCHUP)
+            if do_router:
+                self.finalize()
+            if do_signal_router:
+                self.signalize(self.config.TOUCHUP)
 
     def finalize(self):
         try:

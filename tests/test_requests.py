@@ -1,12 +1,10 @@
 import base64
 import logging
-
 from json import dumps as json_dumps
 from json import loads as json_loads
 from urllib.parse import urlparse
 
 import pytest
-
 from sanic_testing.testing import (
     ASGI_BASE_URL,
     ASGI_PORT,
@@ -16,8 +14,9 @@ from sanic_testing.testing import (
 )
 
 from sanic import Blueprint, Sanic
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
+from sanic.request import RequestParameters
 from sanic.response import html, json, text
 
 

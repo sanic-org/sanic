@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import Mock
 from uuid import UUID, uuid4
 
@@ -5,7 +6,7 @@ import pytest
 
 from sanic import Sanic, response
 from sanic.exceptions import BadURL, SanicException
-from sanic.request import Request, uuid
+from sanic.request import Request
 from sanic.server import HttpProtocol
 
 

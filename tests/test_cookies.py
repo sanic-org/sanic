@@ -7,6 +7,7 @@ import pytest
 from sanic import Request, Sanic
 from sanic.compat import Header
 from sanic.cookies import Cookie, CookieJar
+from sanic.cookies.request import CookieRequestParameters
 from sanic.exceptions import ServerError
 from sanic.response import text
 from sanic.response.convenience import json
@@ -491,3 +492,9 @@ def test_cookie_accessors(app: Sanic):
             "four": "",
         },
     }
+
+
+def test_cookie_accessor_hyphens():
+    cookies = CookieRequestParameters({"session-token": ["abc123"]})
+
+    assert cookies.get("session-token") == cookies.session_token

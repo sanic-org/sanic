@@ -45,12 +45,9 @@ class SanicException(Exception):
 
         super().__init__(message)
 
-        if status_code is not None:
-            self.status_code = status_code
-
-        # quiet=None/False/True with None meaning choose by status
-        if quiet or quiet is None and status_code not in (None, 500):
-            self.quiet = True
+        self.status_code = status_code
+        self.quiet = quiet
+        self.headers = headers
 
 
 class NotFound(SanicException):
@@ -107,7 +104,10 @@ class MethodNotAllowed(SanicException):
             headers=headers,
         )
         if allowed_methods:
-            self.headers = {"Allow": ", ".join(allowed_methods)}
+            self.headers = {
+                **self.headers,
+                "Allow": ", ".join(allowed_methods),
+            }
         self.method = method
         self.allowed_methods = allowed_methods
 
@@ -238,7 +238,10 @@ class RangeNotSatisfiable(SanicException):
             headers=headers,
         )
         if content_range:
-            self.headers = {"Content-Range": f"bytes */{content_range.total}"}
+            self.headers = {
+                **self.headers,
+                "Content-Range": f"bytes */{content_range.total}",
+            }
 
 
 ContentRangeError = RangeNotSatisfiable
@@ -362,7 +365,8 @@ class Unauthorized(SanicException):
             challenge = ", ".join(values)
 
             self.headers = {
-                "WWW-Authenticate": f"{scheme} {challenge}".rstrip()
+                **self.headers,
+                "WWW-Authenticate": f"{scheme} {challenge}".rstrip(),
             }
 
 

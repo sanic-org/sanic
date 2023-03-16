@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+
 from bs4 import BeautifulSoup
 
 from sanic import Sanic
@@ -328,7 +329,6 @@ def test_contextual_exception_extra(debug):
 
     _, response = app.test_client.post("/coffee/json", debug=debug)
     assert response.status == 418
-    raise Exception(response.json)
     assert response.json["message"] == "Found bar"
     if debug:
         assert response.json["extra"] == {"foo": "bar"}

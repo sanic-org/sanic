@@ -29,7 +29,7 @@ def proxy(request, path):
         path=path,
         _server=https.config.SERVER_NAME,
         _external=True,
-        _scheme="http",
+        _scheme="https",
     )
     return response.redirect(url)
 

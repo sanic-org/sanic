@@ -1,5 +1,6 @@
 import asyncio
 import logging
+
 from collections import deque, namedtuple
 from unittest.mock import call
 
@@ -14,6 +15,7 @@ from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection
 from sanic.signals import RESERVED_NAMESPACES
+
 
 try:
     from unittest.mock import AsyncMock

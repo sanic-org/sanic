@@ -66,12 +66,9 @@ def test_input_is_factory():
 def test_input_is_module():
     ns = SimpleNamespace(target="foo")
     loader = AppLoader("tests.fake.server", args=ns)
-    message = (
-        "Module is not a Sanic app, it is a module\n  "
-        "Perhaps you meant foo:app?"
-    )
-    with pytest.raises(ValueError, match=message):
-        loader.load()
+
+    app = loader.load()
+    assert isinstance(app, Sanic)
 
 
 @pytest.mark.parametrize("creator", ("mkcert", "trustme"))

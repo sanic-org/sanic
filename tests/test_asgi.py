@@ -116,10 +116,6 @@ def test_listeners_triggered(caplog):
         stop_message,
     ) not in caplog.record_tuples
 
-    all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
-    for task in all_tasks:
-        task.cancel()
-
     assert before_server_start
     assert after_server_start
     assert before_server_stop
@@ -218,10 +214,6 @@ def test_listeners_triggered_async(app, caplog):
         stop_message,
     ) not in caplog.record_tuples
 
-    all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
-    for task in all_tasks:
-        task.cancel()
-
     assert before_server_start
     assert after_server_start
     assert before_server_stop
@@ -271,10 +263,6 @@ def test_non_default_uvloop_config_raises_warning(app):
 
     with pytest.warns(UserWarning) as records:
         server.run()
-
-    all_tasks = asyncio.all_tasks(asyncio.get_event_loop())
-    for task in all_tasks:
-        task.cancel()
 
     msg = ""
     for record in records:

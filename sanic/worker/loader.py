@@ -16,6 +16,8 @@ from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
 if TYPE_CHECKING:
     from sanic import Sanic as SanicApp
 
+DEFAULT_APP_NAME = "app"
+
 
 class AppLoader:
     def __init__(
@@ -37,7 +39,9 @@ class AppLoader:
 
         if module_input:
             delimiter = ":" if ":" in module_input else "."
-            if module_input.count(delimiter):
+            if module_input.count(
+                delimiter
+            ) and not module_input.upper().startswith("C:\\"):
                 module_name, app_name = module_input.rsplit(delimiter, 1)
                 self.module_name = module_name
                 self.app_name = app_name
@@ -57,11 +61,27 @@ class AppLoader:
             from sanic.simple import create_simple_server
 
             maybe_path = Path(self.module_input)
-            if self.as_simple or maybe_path.is_dir():
+            if self.as_simple or (
+                maybe_path.is_dir() and os.sep in self.module_input
+            ):
                 app = create_simple_server(maybe_path)
             else:
+                implied_app_name = False
+                if not self.module_name and not self.app_name:
+                    self.module_name = self.module_input
+                    self.app_name = DEFAULT_APP_NAME
+                    implied_app_name = True
                 module = import_module(self.module_name)
                 app = getattr(module, self.app_name, None)
+                if not app and implied_app_name:
+                    raise ValueError(
+                        "Looks like you only supplied a module name. Sanic "
+                        "tried to locate an application instance named "
+                        f"{self.module_name}:app, but was unable to locate "
+                        "an application instance. Please provide a path "
+                        "to a global instance of Sanic(), or a callable that "
+                        "will return a Sanic() application instance."
+                    )
                 if self.as_factory or isfunction(app):
                     try:
                         app = app(self.args)

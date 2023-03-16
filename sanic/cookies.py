@@ -3,12 +3,14 @@ from __future__ import annotations
 import re
 import string
 import sys
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
 from sanic.request.parameters import RequestParameters
+
 
 if TYPE_CHECKING:
     from sanic.compat import Header

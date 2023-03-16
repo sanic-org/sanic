@@ -1,10 +1,12 @@
 import base64
 import logging
+
 from json import dumps as json_dumps
 from json import loads as json_loads
 from urllib.parse import urlparse
 
 import pytest
+
 from sanic_testing.testing import (
     ASGI_BASE_URL,
     ASGI_PORT,

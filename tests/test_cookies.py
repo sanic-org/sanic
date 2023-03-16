@@ -9,6 +9,7 @@ from sanic.compat import Header
 from sanic.cookies import Cookie, CookieJar
 from sanic.exceptions import ServerError
 from sanic.response import text
+from sanic.response.convenience import json
 
 
 # ------------------------------------------------------------ #
@@ -423,3 +424,70 @@ def test_bad_cookie_prarms():
         ),
     ):
         jar.add_cookie("foo", "bar", partitioned=True)
+
+
+def test_cookie_accessors(app: Sanic):
+    @app.get("/")
+    async def handler(request: Request):
+        return json(
+            {
+                "getitem": {
+                    "one": request.cookies["one"],
+                    "two": request.cookies["two"],
+                    "three": request.cookies["three"],
+                },
+                "get": {
+                    "one": request.cookies.get("one", "fallback"),
+                    "two": request.cookies.get("two", "fallback"),
+                    "three": request.cookies.get("three", "fallback"),
+                    "four": request.cookies.get("four", "fallback"),
+                },
+                "getlist": {
+                    "one": request.cookies.getlist("one", "fallback"),
+                    "two": request.cookies.getlist("two", "fallback"),
+                    "three": request.cookies.getlist("three", "fallback"),
+                    "four": request.cookies.getlist("four", ["fallback"]),
+                },
+                "getattr": {
+                    "one": request.cookies.one,
+                    "two": request.cookies.two,
+                    "three": request.cookies.three,
+                    "four": request.cookies.four,
+                },
+            }
+        )
+
+    _, response = app.test_client.get(
+        "/",
+        cookies={
+            "__Host-one": "1",
+            "__Secure-two": "2",
+            "three": "3",
+        },
+    )
+
+    assert response.json == {
+        "getitem": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+        },
+        "get": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "fallback",
+        },
+        "getlist": {
+            "one": ["1"],
+            "two": ["2"],
+            "three": ["3"],
+            "four": ["fallback"],
+        },
+        "getattr": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "",
+        },
+    }

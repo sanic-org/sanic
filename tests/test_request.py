@@ -1,4 +1,5 @@
 import uuid
+
 from unittest.mock import Mock
 from uuid import UUID, uuid4
 

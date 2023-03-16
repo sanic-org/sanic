@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
-from sanic.request.parameters import RequestParameters
 
 if TYPE_CHECKING:
     from sanic.compat import Header
@@ -35,17 +34,13 @@ else:  # no cov
 
 DEFAULT_MAX_AGE = 0
 SAMESITE_VALUES = ("strict", "lax", "none")
-COOKIE_NAME_RESERVED_CHARS = re.compile(
-    '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'
-)
+
 LEGAL_CHARS = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
 UNESCAPED_CHARS = LEGAL_CHARS + " ()/<=>?@[]{}"
 TRANSLATOR = {
     n: "\\%03o" % n for n in set(range(256)) - set(map(ord, UNESCAPED_CHARS))
 }
 TRANSLATOR.update({ord('"'): '\\"', ord("\\"): "\\\\"})
-OCTAL_PATTERN = re.compile(r"\\[0-3][0-7][0-7]")
-QUOTE_PATTERN = re.compile(r"[\\].")
 
 
 def _quote(str):  # no cov
@@ -60,66 +55,7 @@ def _quote(str):  # no cov
         return f'"{str.translate(TRANSLATOR)}"'
 
 
-def _unquote(str):  # no cov
-    if str is None or len(str) < 2:
-        return str
-    if str[0] != '"' or str[-1] != '"':
-        return str
-
-    str = str[1:-1]
-
-    i = 0
-    n = len(str)
-    res = []
-    while 0 <= i < n:
-        o_match = OCTAL_PATTERN.search(str, i)
-        q_match = QUOTE_PATTERN.search(str, i)
-        if not o_match and not q_match:
-            res.append(str[i:])
-            break
-        # else:
-        j = k = -1
-        if o_match:
-            j = o_match.start(0)
-        if q_match:
-            k = q_match.start(0)
-        if q_match and (not o_match or k < j):
-            res.append(str[i:k])
-            res.append(str[k + 1])
-            i = k + 2
-        else:
-            res.append(str[i:j])
-            res.append(chr(int(str[j + 1 : j + 4], 8)))  # noqa: E203
-            i = j + 4
-    return "".join(res)
-
-
 _is_legal_key = re.compile("[%s]+" % re.escape(LEGAL_CHARS)).fullmatch
-
-
-def parse_cookie(raw: str):
-    cookies: Dict[str, List] = {}
-
-    for token in raw.split(";"):
-        name, __, value = token.partition("=")
-        name = name.strip()
-        value = value.strip()
-
-        if not name:
-            continue
-
-        if COOKIE_NAME_RESERVED_CHARS.search(name):  # no cov
-            continue
-
-        if len(value) > 2 and value[0] == '"' and value[-1] == '"':  # no cov
-            value = _unquote(value)
-
-        if name in cookies:
-            cookies[name].append(value)
-        else:
-            cookies[name] = [value]
-
-    return cookies
 
 
 # In v24.3, we should remove this as being a subclass of dict
@@ -680,36 +616,3 @@ class Cookie(dict):
     @partitioned.setter
     def partitioned(self, value: bool) -> None:  # no cov
         self._set_value("partitioned", value)
-
-    @classmethod
-    def build_cookie_key(
-        cls,
-        key: str,
-        host_prefix: bool = False,
-        secure_prefix: bool = False,
-    ) -> str:
-        if host_prefix and secure_prefix:
-            raise ServerError(
-                "Invalid cookie lookup. A cookie may not have both a "
-                "host prefix and secure prefix"
-            )
-        elif host_prefix:
-            key = cls.HOST_PREFIX + key
-        elif secure_prefix:
-            key = cls.SECURE_PREFIX + key
-        return key
-
-
-class CookieRequestParameters(RequestParameters):
-    def __getitem__(self, key: str) -> Optional[str]:
-        deprecation(
-            f"You are accessing cookie key '{key}', which is currently in "
-            "compat mode returning a single cookie value. Starting in v24.3 "
-            "accessing a cookie value like this will return a list of values. "
-            "To avoid this behavior and continue accessing a single value, "
-            f"please upgrade from request.cookies['{key}'] to "
-            f"request.cookies.get('{key}'). See more details: ___.",
-            24.3,
-        )
-        value = super().__getitem__(key)
-        return value[0]

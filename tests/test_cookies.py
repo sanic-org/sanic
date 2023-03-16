@@ -443,9 +443,9 @@ def test_cookie_accessors(app: Sanic):
                     "four": request.cookies.get("four", "fallback"),
                 },
                 "getlist": {
-                    "one": request.cookies.getlist("one", "fallback"),
-                    "two": request.cookies.getlist("two", "fallback"),
-                    "three": request.cookies.getlist("three", "fallback"),
+                    "one": request.cookies.getlist("one", ["fallback"]),
+                    "two": request.cookies.getlist("two", ["fallback"]),
+                    "three": request.cookies.getlist("three", ["fallback"]),
                     "four": request.cookies.getlist("four", ["fallback"]),
                 },
                 "getattr": {

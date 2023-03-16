@@ -1,5 +1,6 @@
-from asyncio import CancelledError
-from typing import Any, Dict, Optional, Union
+from asyncio import CancelledError, Protocol
+from os import PathLike
+from typing import Any, Dict, Optional, Sequence, Union
 
 from sanic.helpers import STATUS_CODES
 
@@ -21,8 +22,8 @@ class SanicException(Exception):
     def __init__(
         self,
         message: Optional[Union[str, bytes]] = None,
-        *,
         status_code: Optional[int] = None,
+        *,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
@@ -88,10 +89,10 @@ class MethodNotAllowed(SanicException):
     def __init__(
         self,
         message,
-        method,
-        allowed_methods,
-        *,
         status_code: Optional[int] = None,
+        method: str = "",
+        allowed_methods: Optional[Sequence[str]] = None,
+        *,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
@@ -105,7 +106,8 @@ class MethodNotAllowed(SanicException):
             extra=extra,
             headers=headers,
         )
-        self.headers = {"Allow": ", ".join(allowed_methods)}
+        if allowed_methods:
+            self.headers = {"Allow": ", ".join(allowed_methods)}
         self.method = method
         self.allowed_methods = allowed_methods
 
@@ -149,10 +151,10 @@ class FileNotFound(NotFound):
     def __init__(
         self,
         message,
-        path,
-        relative_url,
-        *,
         status_code: Optional[int] = None,
+        path: Optional[PathLike] = None,
+        relative_url: Optional[str] = None,
+        *,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
@@ -204,6 +206,10 @@ class InvalidHeader(BadRequest):
     """
 
 
+class ContentRange(Protocol):
+    total: int
+
+
 class RangeNotSatisfiable(SanicException):
     """
     **Status**: 416 Range Not Satisfiable
@@ -215,9 +221,9 @@ class RangeNotSatisfiable(SanicException):
     def __init__(
         self,
         message,
-        content_range,
-        *,
         status_code: Optional[int] = None,
+        content_range: Optional[ContentRange] = None,
+        *,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
@@ -231,7 +237,8 @@ class RangeNotSatisfiable(SanicException):
             extra=extra,
             headers=headers,
         )
-        self.headers = {"Content-Range": f"bytes */{content_range.total}"}
+        if content_range:
+            self.headers = {"Content-Range": f"bytes */{content_range.total}"}
 
 
 ContentRangeError = RangeNotSatisfiable
@@ -271,8 +278,8 @@ class PyFileError(SanicException):
     def __init__(
         self,
         file,
-        *,
         status_code: Optional[int] = None,
+        *,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
@@ -329,14 +336,14 @@ class Unauthorized(SanicException):
     def __init__(
         self,
         message,
-        scheme=None,
-        challenges=None,
-        *,
         status_code: Optional[int] = None,
+        scheme=None,
+        *,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
+        **challenges,
     ):
         super().__init__(
             message,

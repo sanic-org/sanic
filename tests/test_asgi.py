@@ -2,13 +2,14 @@ import asyncio
 import logging
 
 from collections import deque, namedtuple
+from unittest.mock import call
 
 import pytest
 import uvicorn
 
 from sanic import Sanic
 from sanic.application.state import Mode
-from sanic.asgi import ASGIApp, MockTransport
+from sanic.asgi import ASGIApp, Lifespan, MockTransport
 from sanic.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text
@@ -571,15 +572,28 @@ async def test_error_on_lifespan_exception_start(app, caplog):
     async def before_server_start(_):
         1 / 0
 
-    recv = AsyncMock(return_value={"type": "lifespan.startup"})
+    recv = AsyncMock(
+        side_effect=[
+            {"type": "lifespan.startup"},
+            {"type": "lifespan.shutdown"},
+        ]
+    )
     send = AsyncMock()
     app.asgi = True
 
+    lifespan = Lifespan(app, {"type": "lifespan"}, recv, send)
     with caplog.at_level(logging.ERROR):
-        await ASGIApp.create(app, {"type": "lifespan"}, recv, send)
+        await lifespan()
 
-    send.assert_awaited_once_with(
-        {"type": "lifespan.startup.failed", "message": "division by zero"}
+    send.assert_has_calls(
+        [
+            call(
+                {
+                    "type": "lifespan.startup.failed",
+                    "message": "division by zero",
+                }
+            )
+        ]
     )
 
 
@@ -589,13 +603,26 @@ async def test_error_on_lifespan_exception_stop(app: Sanic):
     async def before_server_stop(_):
         1 / 0
 
-    recv = AsyncMock(return_value={"type": "lifespan.shutdown"})
+    recv = AsyncMock(
+        side_effect=[
+            {"type": "lifespan.startup"},
+            {"type": "lifespan.shutdown"},
+        ]
+    )
     send = AsyncMock()
     app.asgi = True
     await app._startup()
 
-    await ASGIApp.create(app, {"type": "lifespan"}, recv, send)
+    lifespan = Lifespan(app, {"type": "lifespan"}, recv, send)
+    await lifespan()
 
-    send.assert_awaited_once_with(
-        {"type": "lifespan.shutdown.failed", "message": "division by zero"}
+    send.assert_has_calls(
+        [
+            call(
+                {
+                    "type": "lifespan.shutdown.failed",
+                    "message": "division by zero",
+                }
+            )
+        ]
     )

@@ -48,7 +48,7 @@ from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
 from sanic.application.state import ApplicationState, ServerStage
-from sanic.asgi import ASGIApp
+from sanic.asgi import ASGIApp, Lifespan
 from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
@@ -119,6 +119,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     )
     __slots__ = (
         "_asgi_app",
+        "_asgi_lifespan",
         "_asgi_client",
         "_blueprint_order",
         "_delayed_tasks",
@@ -198,6 +199,8 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             self.config.INSPECTOR = inspector
 
         # Then we can do the rest
+        self._asgi_app: Optional[ASGIApp] = None
+        self._asgi_lifespan: Optional[Lifespan] = None
         self._asgi_client: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
@@ -1349,12 +1352,14 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         three arguments: scope, receive, send. See the ASGI reference for more
         details: https://asgi.readthedocs.io/en/latest
         """
-        self.asgi = True
         if scope["type"] == "lifespan":
+            self.asgi = True
             self.motd("")
-        self._asgi_app = await ASGIApp.create(self, scope, receive, send)
-        asgi_app = self._asgi_app
-        await asgi_app()
+            self._asgi_lifespan = Lifespan(self, scope, receive, send)
+            await self._asgi_lifespan()
+        else:
+            self._asgi_app = await ASGIApp.create(self, scope, receive, send)
+            await self._asgi_app()
 
     _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
 

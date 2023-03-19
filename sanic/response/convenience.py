@@ -149,8 +149,6 @@ async def validate_file(
             float(last_modified), tz=timezone.utc
         ).replace(microsecond=0)
 
-    print("lm", last_modified.utcoffset())
-    print("ims", if_modified_since.utcoffset())
     if (
         last_modified.utcoffset() is None
         and if_modified_since.utcoffset() is not None

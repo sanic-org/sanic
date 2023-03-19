@@ -132,15 +132,20 @@ class ASGIApp:
         instance.sanic_app.state.is_started = True
         setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
-        headers = Header(
-            [
-                (
-                    key.decode("ASCII"),
-                    value.decode(errors="surrogateescape"),
-                )
-                for key, value in scope.get("headers", [])
-            ]
-        )
+        try:
+            headers = Header(
+                [
+                    (
+                        key.decode("ASCII"),
+                        value.decode(errors="surrogateescape"),
+                    )
+                    for key, value in scope.get("headers", [])
+                ]
+            )
+        except UnicodeDecodeError:
+            raise BadRequest(
+                "Header names can only contain US-ASCII characters"
+            )
         path = (
             scope["path"][1:]
             if scope["path"].startswith("/")

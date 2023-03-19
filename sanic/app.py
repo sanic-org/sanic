@@ -1559,11 +1559,13 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         }
         if duplicates:
             names = ", ".join(duplicates)
-            deprecation(
-                f"Duplicate route names detected: {names}. In the future, "
-                "Sanic will enforce uniqueness in route naming.",
-                23.3,
+            message = (
+                f"Duplicate route names detected: {names}. You should rename "
+                "one or more of them explicitly by using the `name` param, ",
+                "or changing the implicit name derived from the class and "
+                "function name.",
             )
+            raise ServerError(message)
 
         Sanic._check_uvloop_conflict()
 

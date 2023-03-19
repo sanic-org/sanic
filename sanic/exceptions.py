@@ -600,7 +600,7 @@ class Unauthorized(HTTPException):
                            realm="Restricted Area")
 
     :param message: The message to be sent to the client. If ``None``
-    then the HTTP status 'Bad Request' will be sent, defaults to None
+        then the HTTP status 'Bad Request' will be sent, defaults to None
     :type message: Optional[Union[str, bytes]], optional
     :param scheme: Name of the authentication scheme to be used.
     :type scheme: Optional[str], optional

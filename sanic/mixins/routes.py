@@ -546,7 +546,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         strict_slashes: Optional[bool] = None,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
-        ignore_body: bool = True,
+        ignore_body: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,

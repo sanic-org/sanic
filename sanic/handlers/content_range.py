@@ -75,4 +75,4 @@ class ContentRangeHandler:
         }
 
     def __bool__(self):
-        return self.size > 0
+        return hasattr(self, "size") and self.size > 0

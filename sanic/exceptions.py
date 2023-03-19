@@ -59,9 +59,9 @@ class SanicException(Exception):
     :type headers: Optional[Dict[str, Any]], optional
     """
 
-    status_code: int
-    quiet: Optional[bool]
-    headers: Dict[str, str]
+    status_code: int = 500
+    quiet: Optional[bool] = False
+    headers: Dict[str, str] = {}
     message: str = ""
 
     def __init__(
@@ -474,7 +474,7 @@ class RangeNotSatisfiable(HTTPException):
             extra=extra,
             headers=headers,
         )
-        if content_range:
+        if content_range is not None:
             self.headers = {
                 **self.headers,
                 "Content-Range": f"bytes */{content_range.total}",

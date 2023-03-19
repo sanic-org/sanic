@@ -16,7 +16,7 @@ from asyncio import (
 )
 from asyncio.futures import Future
 from collections import defaultdict, deque
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from functools import partial
 from inspect import isawaitable
 from os import environ
@@ -33,6 +33,7 @@ from typing import (
     Deque,
     Dict,
     Iterable,
+    Iterator,
     List,
     Optional,
     Set,
@@ -433,14 +434,15 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         ctx = params.pop("route_context")
 
-        routes = self.router.add(**params)
-        if isinstance(routes, Route):
-            routes = [routes]
+        with self.amend():
+            routes = self.router.add(**params)
+            if isinstance(routes, Route):
+                routes = [routes]
 
-        for r in routes:
-            r.extra.websocket = websocket
-            r.extra.static = params.get("static", False)
-            r.ctx.__dict__.update(ctx)
+            for r in routes:
+                r.extra.websocket = websocket
+                r.extra.static = params.get("static", False)
+                r.ctx.__dict__.update(ctx)
 
         return routes
 
@@ -449,17 +451,19 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         middleware: FutureMiddleware,
         route_names: Optional[List[str]] = None,
     ):
-        if route_names:
-            return self.register_named_middleware(
-                middleware.middleware, route_names, middleware.attach_to
-            )
-        else:
-            return self.register_middleware(
-                middleware.middleware, middleware.attach_to
-            )
+        with self.amend():
+            if route_names:
+                return self.register_named_middleware(
+                    middleware.middleware, route_names, middleware.attach_to
+                )
+            else:
+                return self.register_middleware(
+                    middleware.middleware, middleware.attach_to
+                )
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
-        return self.signal_router.add(*signal)
+        with self.amend():
+            return self.signal_router.add(*signal)
 
     def dispatch(
         self,
@@ -1519,6 +1523,27 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
     # Lifecycle
     # -------------------------------------------------------------------- #
+
+    @contextmanager
+    def amend(self) -> Iterator[None]:
+        """
+        If the application has started, this function allows changes
+        to be made to add routes, middleware, and signals.
+        """
+        if not self.state.is_started:
+            yield
+        else:
+            do_router = self.router.finalized
+            do_signal_router = self.signal_router.finalized
+            if do_router:
+                self.router.reset()
+            if do_signal_router:
+                self.signal_router.reset()
+            yield
+            if do_signal_router:
+                self.signalize(self.config.TOUCHUP)
+            if do_router:
+                self.finalize()
 
     def finalize(self):
         try:

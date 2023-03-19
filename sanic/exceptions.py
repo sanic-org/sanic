@@ -50,7 +50,26 @@ class SanicException(Exception):
         self.headers = headers
 
 
-class NotFound(SanicException):
+class HTTPException(SanicException):
+    def __init__(
+        self,
+        message: Optional[Union[str, bytes]] = None,
+        *,
+        quiet: Optional[bool] = None,
+        context: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            message,
+            quiet=quiet,
+            context=context,
+            extra=extra,
+            headers=headers,
+        )
+
+
+class NotFound(HTTPException):
     """
     **Status**: 404 Not Found
     """
@@ -59,7 +78,7 @@ class NotFound(SanicException):
     quiet = True
 
 
-class BadRequest(SanicException):
+class BadRequest(HTTPException):
     """
     **Status**: 400 Bad Request
     """
@@ -69,13 +88,10 @@ class BadRequest(SanicException):
 
 
 InvalidUsage = BadRequest
+BadURL = BadRequest
 
 
-class BadURL(BadRequest):
-    ...
-
-
-class MethodNotAllowed(SanicException):
+class MethodNotAllowed(HTTPException):
     """
     **Status**: 405 Method Not Allowed
     """
@@ -86,7 +102,6 @@ class MethodNotAllowed(SanicException):
     def __init__(
         self,
         message,
-        status_code: Optional[int] = None,
         method: str = "",
         allowed_methods: Optional[Sequence[str]] = None,
         *,
@@ -97,7 +112,6 @@ class MethodNotAllowed(SanicException):
     ):
         super().__init__(
             message,
-            status_code=status_code,
             quiet=quiet,
             context=context,
             extra=extra,
@@ -115,7 +129,7 @@ class MethodNotAllowed(SanicException):
 MethodNotSupported = MethodNotAllowed
 
 
-class ServerError(SanicException):
+class ServerError(HTTPException):
     """
     **Status**: 500 Internal Server Error
     """
@@ -123,7 +137,7 @@ class ServerError(SanicException):
     status_code = 500
 
 
-class ServiceUnavailable(SanicException):
+class ServiceUnavailable(HTTPException):
     """
     **Status**: 503 Service Unavailable
 
@@ -135,7 +149,7 @@ class ServiceUnavailable(SanicException):
     quiet = True
 
 
-class URLBuildError(ServerError):
+class URLBuildError(HTTPException):
     """
     **Status**: 500 Internal Server Error
     """
@@ -151,7 +165,6 @@ class FileNotFound(NotFound):
     def __init__(
         self,
         message,
-        status_code: Optional[int] = None,
         path: Optional[PathLike] = None,
         relative_url: Optional[str] = None,
         *,
@@ -162,7 +175,6 @@ class FileNotFound(NotFound):
     ):
         super().__init__(
             message,
-            status_code=status_code,
             quiet=quiet,
             context=context,
             extra=extra,
@@ -172,7 +184,7 @@ class FileNotFound(NotFound):
         self.relative_url = relative_url
 
 
-class RequestTimeout(SanicException):
+class RequestTimeout(HTTPException):
     """The Web server (running the Web site) thinks that there has been too
     long an interval of time between 1) the establishment of an IP
     connection (socket) between the client and the server and
@@ -185,7 +197,7 @@ class RequestTimeout(SanicException):
     quiet = True
 
 
-class PayloadTooLarge(SanicException):
+class PayloadTooLarge(HTTPException):
     """
     **Status**: 413 Payload Too Large
     """
@@ -210,7 +222,7 @@ class ContentRange(Protocol):
     total: int
 
 
-class RangeNotSatisfiable(SanicException):
+class RangeNotSatisfiable(HTTPException):
     """
     **Status**: 416 Range Not Satisfiable
     """
@@ -221,7 +233,6 @@ class RangeNotSatisfiable(SanicException):
     def __init__(
         self,
         message,
-        status_code: Optional[int] = None,
         content_range: Optional[ContentRange] = None,
         *,
         quiet: Optional[bool] = None,
@@ -231,7 +242,6 @@ class RangeNotSatisfiable(SanicException):
     ):
         super().__init__(
             message,
-            status_code=status_code,
             quiet=quiet,
             context=context,
             extra=extra,
@@ -247,7 +257,7 @@ class RangeNotSatisfiable(SanicException):
 ContentRangeError = RangeNotSatisfiable
 
 
-class ExpectationFailed(SanicException):
+class ExpectationFailed(HTTPException):
     """
     **Status**: 417 Expectation Failed
     """
@@ -259,7 +269,7 @@ class ExpectationFailed(SanicException):
 HeaderExpectationFailed = ExpectationFailed
 
 
-class Forbidden(SanicException):
+class Forbidden(HTTPException):
     """
     **Status**: 403 Forbidden
     """
@@ -298,7 +308,7 @@ class PyFileError(SanicException):
         )
 
 
-class Unauthorized(SanicException):
+class Unauthorized(HTTPException):
     """
     **Status**: 401 Unauthorized
 

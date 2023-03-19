@@ -22,13 +22,15 @@ if TYPE_CHECKING:
 
 
 class Lifespan:
-    def __init__(self, asgi_app: ASGIApp) -> None:
-        self.asgi_app = asgi_app
+    def __init__(
+        self, sanic_app, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
+    ) -> None:
+        self.sanic_app = sanic_app
+        self.scope = scope
+        self.receive = receive
+        self.send = send
 
-        if (
-            "server.init.before"
-            in self.asgi_app.sanic_app.signal_router.name_index
-        ):
+        if "server.init.before" in self.sanic_app.signal_router.name_index:
             logger.debug(
                 'You have set a listener for "before_server_start" '
                 "in ASGI mode. "
@@ -36,10 +38,7 @@ class Lifespan:
                 "the ASGI server is started.",
                 extra={"verbosity": 1},
             )
-        if (
-            "server.shutdown.after"
-            in self.asgi_app.sanic_app.signal_router.name_index
-        ):
+        if "server.shutdown.after" in self.sanic_app.signal_router.name_index:
             logger.debug(
                 'You have set a listener for "after_server_stop" '
                 "in ASGI mode. "
@@ -57,11 +56,11 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         startup event.
         """
-        await self.asgi_app.sanic_app._startup()
-        await self.asgi_app.sanic_app._server_event("init", "before")
-        await self.asgi_app.sanic_app._server_event("init", "after")
+        await self.sanic_app._startup()
+        await self.sanic_app._server_event("init", "before")
+        await self.sanic_app._server_event("init", "after")
 
-        if not isinstance(self.asgi_app.sanic_app.config.USE_UVLOOP, Default):
+        if not isinstance(self.sanic_app.config.USE_UVLOOP, Default):
             warnings.warn(
                 "You have set the USE_UVLOOP configuration option, but Sanic "
                 "cannot control the event loop when running in ASGI mode."
@@ -77,35 +76,33 @@ class Lifespan:
         in sequence since the ASGI lifespan protocol only supports a single
         shutdown event.
         """
-        await self.asgi_app.sanic_app._server_event("shutdown", "before")
-        await self.asgi_app.sanic_app._server_event("shutdown", "after")
+        await self.sanic_app._server_event("shutdown", "before")
+        await self.sanic_app._server_event("shutdown", "after")
 
-    async def __call__(
-        self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
-    ) -> None:
-        message = await receive()
-        if message["type"] == "lifespan.startup":
-            try:
-                await self.startup()
-            except Exception as e:
-                error_logger.exception(e)
-                await send(
-                    {"type": "lifespan.startup.failed", "message": str(e)}
-                )
-            else:
-                await send({"type": "lifespan.startup.complete"})
-
-        message = await receive()
-        if message["type"] == "lifespan.shutdown":
-            try:
-                await self.shutdown()
-            except Exception as e:
-                error_logger.exception(e)
-                await send(
-                    {"type": "lifespan.shutdown.failed", "message": str(e)}
-                )
-            else:
-                await send({"type": "lifespan.shutdown.complete"})
+    async def __call__(self) -> None:
+        while True:
+            message = await self.receive()
+            if message["type"] == "lifespan.startup":
+                try:
+                    await self.startup()
+                except Exception as e:
+                    error_logger.exception(e)
+                    await self.send(
+                        {"type": "lifespan.startup.failed", "message": str(e)}
+                    )
+                else:
+                    await self.send({"type": "lifespan.startup.complete"})
+            elif message["type"] == "lifespan.shutdown":
+                try:
+                    await self.shutdown()
+                except Exception as e:
+                    error_logger.exception(e)
+                    await self.send(
+                        {"type": "lifespan.shutdown.failed", "message": str(e)}
+                    )
+                else:
+                    await self.send({"type": "lifespan.shutdown.complete"})
+                return
 
 
 class ASGIApp:
@@ -117,19 +114,22 @@ class ASGIApp:
     stage: Stage
     response: Optional[BaseHTTPResponse]
 
-    def __init__(self) -> None:
-        self.ws = None
-
     @classmethod
     async def create(
-        cls, sanic_app, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
-    ) -> "ASGIApp":
+        cls,
+        sanic_app: Sanic,
+        scope: ASGIScope,
+        receive: ASGIReceive,
+        send: ASGISend,
+    ) -> ASGIApp:
         instance = cls()
+        instance.ws = None
         instance.sanic_app = sanic_app
         instance.transport = MockTransport(scope, receive, send)
         instance.transport.loop = sanic_app.loop
         instance.stage = Stage.IDLE
         instance.response = None
+        instance.sanic_app.state.is_started = True
         setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
         headers = Header(
@@ -138,52 +138,47 @@ class ASGIApp:
                 for key, value in scope.get("headers", [])
             ]
         )
-        instance.lifespan = Lifespan(instance)
+        path = (
+            scope["path"][1:]
+            if scope["path"].startswith("/")
+            else scope["path"]
+        )
+        url = "/".join([scope.get("root_path", ""), quote(path)])
+        url_bytes = url.encode("latin-1")
+        url_bytes += b"?" + scope["query_string"]
 
-        if scope["type"] == "lifespan":
-            await instance.lifespan(scope, receive, send)
+        if scope["type"] == "http":
+            version = scope["http_version"]
+            method = scope["method"]
+        elif scope["type"] == "websocket":
+            version = "1.1"
+            method = "GET"
+
+            instance.ws = instance.transport.create_websocket_connection(
+                send, receive
+            )
         else:
-            path = (
-                scope["path"][1:]
-                if scope["path"].startswith("/")
-                else scope["path"]
-            )
-            url = "/".join([scope.get("root_path", ""), quote(path)])
-            url_bytes = url.encode("latin-1")
-            url_bytes += b"?" + scope["query_string"]
+            raise ServerError("Received unknown ASGI scope")
 
-            if scope["type"] == "http":
-                version = scope["http_version"]
-                method = scope["method"]
-            elif scope["type"] == "websocket":
-                version = "1.1"
-                method = "GET"
+        request_class = sanic_app.request_class or Request
+        instance.request = request_class(
+            url_bytes,
+            headers,
+            version,
+            method,
+            instance.transport,
+            sanic_app,
+        )
+        instance.request.stream = instance  # type: ignore
+        instance.request_body = True
+        instance.request.conn_info = ConnInfo(instance.transport)
 
-                instance.ws = instance.transport.create_websocket_connection(
-                    send, receive
-                )
-            else:
-                raise ServerError("Received unknown ASGI scope")
-
-            request_class = sanic_app.request_class or Request
-            instance.request = request_class(
-                url_bytes,
-                headers,
-                version,
-                method,
-                instance.transport,
-                sanic_app,
-            )
-            instance.request.stream = instance
-            instance.request_body = True
-            instance.request.conn_info = ConnInfo(instance.transport)
-
-            await sanic_app.dispatch(
-                "http.lifecycle.request",
-                inline=True,
-                context={"request": instance.request},
-                fail_not_found=False,
-            )
+        await instance.sanic_app.dispatch(
+            "http.lifecycle.request",
+            inline=True,
+            context={"request": instance.request},
+            fail_not_found=False,
+        )
 
         return instance
 

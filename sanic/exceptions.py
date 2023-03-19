@@ -101,7 +101,7 @@ class MethodNotAllowed(HTTPException):
 
     def __init__(
         self,
-        message,
+        message: Optional[Union[str, bytes]] = None,
         method: str = "",
         allowed_methods: Optional[Sequence[str]] = None,
         *,
@@ -164,7 +164,7 @@ class FileNotFound(NotFound):
 
     def __init__(
         self,
-        message,
+        message: Optional[Union[str, bytes]] = None,
         path: Optional[PathLike] = None,
         relative_url: Optional[str] = None,
         *,
@@ -232,7 +232,7 @@ class RangeNotSatisfiable(HTTPException):
 
     def __init__(
         self,
-        message,
+        message: Optional[Union[str, bytes]] = None,
         content_range: Optional[ContentRange] = None,
         *,
         quiet: Optional[bool] = None,
@@ -349,7 +349,6 @@ class Unauthorized(HTTPException):
     def __init__(
         self,
         message,
-        status_code: Optional[int] = None,
         scheme=None,
         *,
         quiet: Optional[bool] = None,
@@ -360,7 +359,6 @@ class Unauthorized(HTTPException):
     ):
         super().__init__(
             message,
-            status_code=status_code,
             quiet=quiet,
             context=context,
             extra=extra,

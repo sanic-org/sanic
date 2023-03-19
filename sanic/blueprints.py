@@ -93,6 +93,7 @@ class Blueprint(BaseSanic):
         "_future_listeners",
         "_future_exceptions",
         "_future_signals",
+        "allow_route_overwrite",
         "ctx",
         "exceptions",
         "host",
@@ -115,9 +116,11 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
+        allow_route_overwrite: bool = False,
     ):
         super().__init__(name=name)
         self.reset()
+        self.allow_route_overwrite = allow_route_overwrite
         self.ctx = SimpleNamespace()
         self.host = host
         self.strict_slashes = strict_slashes
@@ -167,6 +170,7 @@ class Blueprint(BaseSanic):
 
     def reset(self):
         self._apps: Set[Sanic] = set()
+        self.allow_route_overwrite = False
         self.exceptions: List[RouteHandler] = []
         self.listeners: Dict[str, List[ListenerType[Any]]] = {}
         self.middlewares: List[MiddlewareType] = []
@@ -180,6 +184,7 @@ class Blueprint(BaseSanic):
         url_prefix: Optional[Union[str, Default]] = _default,
         version: Optional[Union[int, str, float, Default]] = _default,
         version_prefix: Union[str, Default] = _default,
+        allow_route_overwrite: bool = _default,
         strict_slashes: Optional[Union[bool, Default]] = _default,
         with_registration: bool = True,
         with_ctx: bool = False,
@@ -222,6 +227,8 @@ class Blueprint(BaseSanic):
             new_bp.strict_slashes = strict_slashes
         if not isinstance(version_prefix, Default):
             new_bp.version_prefix = version_prefix
+        if not isinstance(allow_route_overwrite, Default):
+            new_bp.allow_route_overwrite = allow_route_overwrite
 
         for key, value in attrs_backup.items():
             setattr(self, key, value)
@@ -277,7 +284,7 @@ class Blueprint(BaseSanic):
             bps.append(bp)
         return bps
 
-    def register(self, app, options):
+    def register(self, app: Sanic, options: Dict[str, Any]):
         """
         Register the blueprint to the sanic app.
 
@@ -351,7 +358,9 @@ class Blueprint(BaseSanic):
                 continue
 
             registered.add(apply_route)
-            route = app._apply_route(apply_route)
+            route = app._apply_route(
+                apply_route, overwrite=self.allow_route_overwrite
+            )
             operation = (
                 routes.extend if isinstance(route, list) else routes.append
             )

@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from sanic_testing.testing import HOST, PORT
+from sanic_testing.testing import HOST, PORT, SanicTestClient
 
 import sanic.http.tls.creators
 
@@ -29,16 +29,24 @@ from sanic.http.tls.creators import (
     get_ssl_context,
 )
 from sanic.response import text
+from sanic.worker.loader import CertLoader
 
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 localhost_dir = os.path.join(current_dir, "certs/localhost")
+password_dir = os.path.join(current_dir, "certs/password")
 sanic_dir = os.path.join(current_dir, "certs/sanic.example")
 invalid_dir = os.path.join(current_dir, "certs/invalid.nonexist")
 localhost_cert = os.path.join(localhost_dir, "fullchain.pem")
 localhost_key = os.path.join(localhost_dir, "privkey.pem")
 sanic_cert = os.path.join(sanic_dir, "fullchain.pem")
 sanic_key = os.path.join(sanic_dir, "privkey.pem")
+password_dict = {
+    "cert": os.path.join(password_dir, "fullchain.pem"),
+    "key": os.path.join(password_dir, "privkey.pem"),
+    "password": "password",
+    "names": ["localhost"],
+}
 
 
 @pytest.fixture
@@ -420,6 +428,29 @@ def test_no_certs_on_list(app):
     assert "No certificates" in str(excinfo.value)
 
 
+def test_custom_cert_loader():
+    class MyCertLoader(CertLoader):
+        def load(self, app: Sanic):
+            self._ssl_data = {
+                "key": localhost_key,
+                "cert": localhost_cert,
+            }
+            return super().load(app)
+
+    app = Sanic("custom", certloader_class=MyCertLoader)
+
+    @app.get("/test")
+    async def handler(request):
+        return text("ssl test")
+
+    client = SanicTestClient(app, port=44556)
+
+    request, response = client.get("https://localhost:44556/test")
+    assert request.scheme == "https"
+    assert response.status_code == 200
+    assert response.text == "ssl test"
+
+
 def test_logger_vhosts(caplog):
     app = Sanic(name="test_logger_vhosts")
 
@@ -670,6 +701,37 @@ def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
     with use_context("fork"):
         with caplog.at_level(logging.INFO):
             app.run(ssl=ssl_dict)
+    assert event.is_set()
+
+    assert (
+        "sanic.root",
+        logging.INFO,
+        "Goin' Fast @ https://127.0.0.1:8000",
+    ) in caplog.record_tuples
+
+
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"),
+    reason="This test requires fork context",
+)
+def test_ssl_in_multiprocess_mode_password(
+    app: Sanic, caplog: pytest.LogCaptureFixture
+):
+    event = Event()
+
+    @app.main_process_start
+    async def main_start(app: Sanic):
+        app.shared_ctx.event = event
+
+    @app.after_server_start
+    async def shutdown(app):
+        app.shared_ctx.event.set()
+        app.stop()
+
+    assert not event.is_set()
+    with use_context("fork"):
+        with caplog.at_level(logging.INFO):
+            app.run(ssl=password_dict)
     assert event.is_set()
 
     assert (

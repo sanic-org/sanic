@@ -434,7 +434,9 @@ class Http(Stream, metaclass=TouchUpMeta):
             if self.request is None:
                 self.create_empty_request()
 
-            request_middleware = not isinstance(exception, ServiceUnavailable)
+            request_middleware = not isinstance(
+                exception, (ServiceUnavailable, RequestCancelled)
+            )
             try:
                 await app.handle_exception(
                     self.request, exception, request_middleware

@@ -1,4 +1,4 @@
-from sanic import Blueprint, Sanic
+from sanic import Blueprint, Request, Sanic
 from sanic.response import text
 
 
@@ -66,3 +66,29 @@ def test_bp_copy(app: Sanic):
 
     _, response = app.test_client.get("/version6/page")
     assert "Hello world!" in response.text
+
+
+def test_bp_copy_with_route_overwriting(app: Sanic):
+    bpv1 = Blueprint("bp_v1", version=1)
+
+    @bpv1.route("/")
+    async def handler(request: Request):
+        return text("v1")
+
+    app.blueprint(bpv1)
+
+    bpv2 = bpv1.copy("bp_v2", version=2)
+
+    @bpv2.route("/")
+    async def handler(request: Request):
+        return text("v2")
+
+    app.blueprint(bpv2)
+
+    response = app.test_client.get("/v1")
+    assert response.status == 200
+    assert response.text == "v1"
+
+    response = app.test_client.get("/v2")
+    assert response.status == 200
+    assert response.text == "v1"

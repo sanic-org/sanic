@@ -514,6 +514,11 @@ class Cookie(dict):
         :return: Cookie encoded in a codec of choosing.
         :except: UnicodeEncodeError
         """
+        deprecation(
+            "Direct encoding of a Cookie object has been deprecated and will "
+            "be removed in v24.3.",
+            24.3,
+        )
         return str(self).encode(encoding)
 
     def __str__(self):

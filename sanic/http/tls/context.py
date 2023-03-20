@@ -159,7 +159,7 @@ class CertSimple(SanicSSLContext):
         # try common aliases, rename to cert/key
         certfile = kw["cert"] = kw.pop("certificate", None) or cert
         keyfile = kw["key"] = kw.pop("keyfile", None) or key
-        password = kw.pop("password", None)
+        password = kw.get("password", None)
         if not certfile or not keyfile:
             raise ValueError("SSL dict needs filenames for cert and key.")
         subject = {}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+
 from importlib import import_module
 from pathlib import Path
 from ssl import SSLContext
@@ -9,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union, cast
 
 from sanic.http.tls.context import process_to_context
 from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
+
 
 if TYPE_CHECKING:
     from sanic import Sanic as SanicApp

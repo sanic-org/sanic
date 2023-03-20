@@ -5,6 +5,7 @@ import sys
 
 from importlib import import_module
 from pathlib import Path
+from ssl import SSLContext
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union, cast
 
 from sanic.http.tls.context import process_to_context
@@ -103,13 +104,18 @@ class CertLoader:
         "trustme": TrustmeCreator,
     }
 
-    def __init__(self, ssl_data: Dict[str, Union[str, os.PathLike]]):
+    def __init__(
+        self,
+        ssl_data: Optional[
+            Union[SSLContext, Dict[str, Union[str, os.PathLike]]]
+        ],
+    ):
         self._ssl_data = ssl_data
 
         creator_name = cast(str, ssl_data.get("creator"))
 
         self._creator_class = self._creators.get(creator_name)
-        if not creator_name:
+        if not creator_name or not ssl_data or not isinstance(ssl_data, dict):
             return
 
         if not self._creator_class:

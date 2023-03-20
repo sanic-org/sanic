@@ -12,7 +12,6 @@ from sanic.exceptions import ServerError
 from sanic.response import text
 from sanic.response.convenience import json
 
-
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #
@@ -261,8 +260,9 @@ def test_cookie_expires_illegal_instance_type(expires):
         assert e.message == "Cookie 'expires' property must be a datetime"
 
 
-def test_request_with_duplicate_cookie_key():
-    headers = Header({"Cookie": "foo=one;foo=two"})
+@pytest.mark.parametrize("value", ("foo=one; foo=two", "foo=one;foo=two"))
+def test_request_with_duplicate_cookie_key(value):
+    headers = Header({"Cookie": value})
     request = Request(b"/", headers, "1.1", "GET", Mock(), Mock())
 
     assert request.cookies["foo"] == "one"

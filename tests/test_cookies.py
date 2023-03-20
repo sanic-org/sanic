@@ -12,6 +12,7 @@ from sanic.exceptions import ServerError
 from sanic.response import text
 from sanic.response.convenience import json
 
+
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #

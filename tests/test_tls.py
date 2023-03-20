@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from sanic_testing.testing import HOST, PORT
+from sanic_testing.testing import HOST, PORT, SanicTestClient
 
 import sanic.http.tls.creators
 
@@ -29,6 +29,7 @@ from sanic.http.tls.creators import (
     get_ssl_context,
 )
 from sanic.response import text
+from sanic.worker.loader import CertLoader
 
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -425,6 +426,29 @@ def test_no_certs_on_list(app):
         app.test_client.get("/test", server_kwargs={"ssl": ssl_list})
 
     assert "No certificates" in str(excinfo.value)
+
+
+def test_custom_cert_loader():
+    class MyCertLoader(CertLoader):
+        def load(self, app: Sanic):
+            self._ssl_data = {
+                "key": localhost_key,
+                "cert": localhost_cert,
+            }
+            return super().load(app)
+
+    app = Sanic("custom", certloader_class=MyCertLoader)
+
+    @app.get("/test")
+    async def handler(request):
+        return text("ssl test")
+
+    client = SanicTestClient(app, port=44556)
+
+    request, response = client.get("https://localhost:44556/test")
+    assert request.scheme == "https"
+    assert response.status_code == 200
+    assert response.text == "ssl test"
 
 
 def test_logger_vhosts(caplog):

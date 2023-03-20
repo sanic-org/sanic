@@ -40,9 +40,11 @@ class AppLoader:
 
         if module_input:
             delimiter = ":" if ":" in module_input else "."
-            if module_input.count(
-                delimiter
-            ) and not module_input.upper().startswith("C:\\"):
+            if (
+                delimiter in module_input
+                and "\\" not in module_input
+                and "/" not in module_input
+            ):
                 module_name, app_name = module_input.rsplit(delimiter, 1)
                 self.module_name = module_name
                 self.app_name = app_name

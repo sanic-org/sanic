@@ -5,7 +5,7 @@ import string
 import sys
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
@@ -16,15 +16,9 @@ if TYPE_CHECKING:
 
 if sys.version_info < (3, 8):  # no cov
     SameSite = str
-    LiteralRootPath = str
-    LiteralTrue = bool
-    LiteralFalse = bool
 else:  # no cov
     from typing import Literal
 
-    LiteralRootPath = Literal["/"]
-    LiteralTrue = Literal[True]
-    LiteralFalse = Literal[False]
     SameSite = Union[
         Literal["Strict"],
         Literal["Lax"],
@@ -213,48 +207,6 @@ class CookieJar(dict):
             ):
                 return True
         return False
-
-    # When using secure_prefix=True
-    @overload
-    def add_cookie(
-        self,
-        key: str,
-        value: str,
-        *,
-        path: str = "/",
-        domain: Optional[str] = None,
-        secure: LiteralTrue = True,
-        max_age: Optional[int] = None,
-        expires: Optional[datetime] = None,
-        httponly: bool = False,
-        samesite: Optional[SameSite] = "Lax",
-        partitioned: bool = False,
-        comment: Optional[str] = None,
-        host_prefix: LiteralFalse = False,
-        secure_prefix: LiteralTrue = True,
-    ) -> Cookie:
-        ...  # no cov
-
-    # When using host_prefix=True
-    @overload
-    def add_cookie(
-        self,
-        key: str,
-        value: str,
-        *,
-        path: LiteralRootPath = "/",
-        domain: None = None,
-        secure: LiteralTrue = True,
-        max_age: Optional[int] = None,
-        expires: Optional[datetime] = None,
-        httponly: bool = False,
-        samesite: Optional[SameSite] = "Lax",
-        partitioned: bool = False,
-        comment: Optional[str] = None,
-        host_prefix: LiteralTrue = True,
-        secure_prefix: LiteralFalse = False,
-    ) -> Cookie:
-        ...  # no cov
 
     def add_cookie(
         self,
@@ -480,11 +432,11 @@ class Cookie(dict):
                 "samesite": None,
             }
         )
-        if expires:
+        if expires is not None:
             self._set_value("expires", expires)
-        if max_age:
+        if max_age is not None:
             self._set_value("max-age", max_age)
-        if samesite:
+        if samesite is not None:
             self._set_value("samesite", samesite)
 
     def __setitem__(self, key, value):

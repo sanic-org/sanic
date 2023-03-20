@@ -377,6 +377,8 @@ class CookieJar(dict):
             domain=domain,
             max_age=0,
             samesite=None,
+            host_prefix=host_prefix,
+            secure_prefix=secure_prefix,
         )
 
 

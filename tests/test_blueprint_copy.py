@@ -77,7 +77,7 @@ def test_bp_copy_with_route_overwriting(app: Sanic):
 
     app.blueprint(bpv1)
 
-    bpv2 = bpv1.copy("bp_v2", version=2)
+    bpv2 = bpv1.copy("bp_v2", version=2, allow_route_overwrite=True)
 
     @bpv2.route("/")
     async def handler(request: Request):
@@ -85,10 +85,10 @@ def test_bp_copy_with_route_overwriting(app: Sanic):
 
     app.blueprint(bpv2)
 
-    response = app.test_client.get("/v1")
+    _, response = app.test_client.get("/v1")
     assert response.status == 200
     assert response.text == "v1"
 
-    response = app.test_client.get("/v2")
+    _, response = app.test_client.get("/v2")
     assert response.status == 200
-    assert response.text == "v1"
+    assert response.text == "v2"

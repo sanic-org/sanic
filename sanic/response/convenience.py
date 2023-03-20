@@ -148,7 +148,26 @@ async def validate_file(
         last_modified = datetime.fromtimestamp(
             float(last_modified), tz=timezone.utc
         ).replace(microsecond=0)
-    if last_modified <= if_modified_since:
+
+    if (
+        last_modified.utcoffset() is None
+        and if_modified_since.utcoffset() is not None
+    ):
+        logger.warning(
+            "Cannot compare tz-aware and tz-naive datetimes. To avoid "
+            "this conflict Sanic is converting last_modified to UTC."
+        )
+        last_modified.replace(tzinfo=timezone.utc)
+    elif (
+        last_modified.utcoffset() is not None
+        and if_modified_since.utcoffset() is None
+    ):
+        logger.warning(
+            "Cannot compare tz-aware and tz-naive datetimes. To avoid "
+            "this conflict Sanic is converting if_modified_since to UTC."
+        )
+        if_modified_since.replace(tzinfo=timezone.utc)
+    if last_modified.timestamp() <= if_modified_since.timestamp():
         return HTTPResponse(status=304)
 
 

@@ -461,15 +461,29 @@ class Cookie(dict):
         self.key = key
         self.value = value
         super().__init__()
-        self._set_value("path", path)
-        self._set_value("expires", expires)
-        self._set_value("comment", comment)
-        self._set_value("domain", domain)
-        self._set_value("max-age", max_age)
-        self._set_value("secure", secure)
-        self._set_value("httponly", httponly)
-        self._set_value("samesite", samesite)
-        self._set_value("partitioned", partitioned)
+
+        # This is a temporary solution while this object is a dict. We update
+        # all of the values in bulk, except for the values that have
+        # key-specific validation in _set_value
+        self.update(
+            {
+                "path": path,
+                "comment": comment,
+                "domain": domain,
+                "secure": secure,
+                "httponly": httponly,
+                "partitioned": partitioned,
+                "expires": None,
+                "max-age": None,
+                "samesite": None,
+            }
+        )
+        if expires:
+            self._set_value("expires", expires)
+        if max_age:
+            self._set_value("max-age", max_age)
+        if samesite:
+            self._set_value("samesite", samesite)
 
     def __setitem__(self, key, value):
         deprecation(

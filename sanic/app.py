@@ -92,6 +92,7 @@ from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
+from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
 
 
@@ -139,6 +140,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "_test_client",
         "_test_manager",
         "blueprints",
+        "certloader_class",
         "config",
         "configure_logging",
         "ctx",
@@ -181,6 +183,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         loads: Optional[Callable[..., Any]] = None,
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
+        certloader_class: Optional[Type[CertLoader]] = None,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -215,6 +218,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.asgi = False
         self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
+        self.certloader_class: Type[CertLoader] = (
+            certloader_class or CertLoader
+        )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()

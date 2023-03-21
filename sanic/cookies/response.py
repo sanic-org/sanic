@@ -184,7 +184,7 @@ class CookieJar(dict):
     ) -> Optional[Cookie]:
         for cookie in self.cookies:
             if (
-                cookie.key == key
+                cookie.key == Cookie.make_key(key, host_prefix, secure_prefix)
                 and cookie.path == path
                 and cookie.domain == domain
             ):
@@ -201,7 +201,7 @@ class CookieJar(dict):
     ) -> bool:
         for cookie in self.cookies:
             if (
-                cookie.key == key
+                cookie.key == Cookie.make_key(key, host_prefix, secure_prefix)
                 and cookie.path == path
                 and cookie.domain == domain
             ):
@@ -305,12 +305,23 @@ class CookieJar(dict):
 
         :param key: The key to be deleted
         :type key: str
+        :param path: Path of the cookie, defaults to None
+        :type path: Optional[str], optional
+        :param domain: Domain of the cookie, defaults to None
+        :type domain: Optional[str], optional
+        :param host_prefix: Whether to add __Host- as a prefix to the key.
+            This requires that path="/", domain=None, and secure=True,
+            defaults to False
+        :type host_prefix: bool
+        :param secure_prefix: Whether to add __Secure- as a prefix to the key.
+            This requires that secure=True, defaults to False
+        :type secure_prefix: bool
         """
         # remove it from header
         cookies: List[Cookie] = self.headers.popall(self.HEADER_KEY, [])
         for cookie in cookies:
             if (
-                cookie.key != key
+                cookie.key != Cookie.make_key(key, host_prefix, secure_prefix)
                 or cookie.path != path
                 or cookie.domain != domain
             ):
@@ -379,12 +390,7 @@ class Cookie(dict):
             raise KeyError("Cookie name is a reserved word")
         if not _is_legal_key(key):
             raise KeyError("Cookie key contains illegal characters")
-        if host_prefix and secure_prefix:
-            raise ServerError(
-                "Both host_prefix and secure_prefix were requested. "
-                "A cookie should have only one prefix."
-            )
-        elif host_prefix:
+        if host_prefix:
             if not secure:
                 raise ServerError(
                     "Cannot set host_prefix on a cookie without secure=True"
@@ -397,13 +403,10 @@ class Cookie(dict):
                 raise ServerError(
                     "Cannot set host_prefix on a cookie with a defined domain"
                 )
-            key = self.HOST_PREFIX + key
-        elif secure_prefix:
-            if not secure:
-                raise ServerError(
-                    "Cannot set secure_prefix on a cookie without secure=True"
-                )
-            key = self.SECURE_PREFIX + key
+        elif secure_prefix and not secure:
+            raise ServerError(
+                "Cannot set secure_prefix on a cookie without secure=True"
+            )
         if partitioned and not host_prefix:
             # This is technically possible, but it is not advisable so we will
             # take a stand and say "don't shoot yourself in the foot"
@@ -412,7 +415,7 @@ class Cookie(dict):
                 "also setting host_prefix=True"
             )
 
-        self.key = key
+        self.key = self.make_key(key, host_prefix, secure_prefix)
         self.value = value
         super().__init__()
 
@@ -588,3 +591,18 @@ class Cookie(dict):
     @partitioned.setter
     def partitioned(self, value: bool) -> None:  # no cov
         self._set_value("partitioned", value)
+
+    @classmethod
+    def make_key(
+        cls, key: str, host_prefix: bool = False, secure_prefix: bool = False
+    ) -> str:
+        if host_prefix and secure_prefix:
+            raise ServerError(
+                "Both host_prefix and secure_prefix were requested. "
+                "A cookie should have only one prefix."
+            )
+        elif host_prefix:
+            key = cls.HOST_PREFIX + key
+        elif secure_prefix:
+            key = cls.SECURE_PREFIX + key
+        return key

@@ -24,17 +24,22 @@ class SanicCLI:
 {get_logo(True)}
 
 To start running a Sanic application, provide a path to the module, where
-app is a Sanic() instance:
+app is a Sanic() instance in the global scope:
 
     $ sanic path.to.server:app
 
+If the Sanic instance variable is called 'app', you can leave off the last
+part, and only provide a path to the module where the instance is:
+
+    $ sanic path.to.server
+
 Or, a path to a callable that returns a Sanic() instance:
 
-    $ sanic path.to.factory:create_app --factory
+    $ sanic path.to.factory:create_app
 
 Or, a path to a directory to run as a simple HTTP server:
 
-    $ sanic ./path/to/static --simple
+    $ sanic ./path/to/static
 """,
         prefix=" ",
     )
@@ -95,7 +100,7 @@ Or, a path to a directory to run as a simple HTTP server:
         self.args = self.parser.parse_args(args=parse_args)
         self._precheck()
         app_loader = AppLoader(
-            self.args.module, self.args.factory, self.args.simple, self.args
+            self.args.target, self.args.factory, self.args.simple, self.args
         )
 
         if self.args.inspect or self.args.inspect_raw or self.args.trigger:
@@ -120,9 +125,9 @@ Or, a path to a directory to run as a simple HTTP server:
 
     def _inspector_legacy(self, app_loader: AppLoader):
         host = port = None
-        module = cast(str, self.args.module)
-        if ":" in module:
-            maybe_host, maybe_port = module.rsplit(":", 1)
+        target = cast(str, self.args.target)
+        if ":" in target:
+            maybe_host, maybe_port = target.rsplit(":", 1)
             if maybe_port.isnumeric():
                 host, port = maybe_host, int(maybe_port)
         if not host:

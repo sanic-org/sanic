@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import partial
 from typing import (
     TYPE_CHECKING,
@@ -17,6 +18,7 @@ from typing import (
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar
+from sanic.cookies.response import Cookie, SameSite
 from sanic.exceptions import SanicException, ServerError
 from sanic.helpers import (
     Default,
@@ -156,6 +158,117 @@ class BaseHTTPResponse:
         await self.stream.send(
             data,  # type: ignore
             end_stream=end_stream or False,
+        )
+
+    def add_cookie(
+        self,
+        key: str,
+        value: str,
+        *,
+        path: str = "/",
+        domain: Optional[str] = None,
+        secure: bool = True,
+        max_age: Optional[int] = None,
+        expires: Optional[datetime] = None,
+        httponly: bool = False,
+        samesite: Optional[SameSite] = "Lax",
+        partitioned: bool = False,
+        comment: Optional[str] = None,
+        host_prefix: bool = False,
+        secure_prefix: bool = False,
+    ) -> Cookie:
+        """
+        Add a cookie to the CookieJar
+
+        :param key: Key of the cookie
+        :type key: str
+        :param value: Value of the cookie
+        :type value: str
+        :param path: Path of the cookie, defaults to None
+        :type path: Optional[str], optional
+        :param domain: Domain of the cookie, defaults to None
+        :type domain: Optional[str], optional
+        :param secure: Whether to set it as a secure cookie, defaults to True
+        :type secure: bool
+        :param max_age: Max age of the cookie in seconds; if set to 0 a
+            browser should delete it, defaults to None
+        :type max_age: Optional[int], optional
+        :param expires: When the cookie expires; if set to None browsers
+            should set it as a session cookie, defaults to None
+        :type expires: Optional[datetime], optional
+        :param httponly: Whether to set it as HTTP only, defaults to False
+        :type httponly: bool
+        :param samesite: How to set the samesite property, should be
+            strict, lax or none (case insensitive), defaults to Lax
+        :type samesite: Optional[SameSite], optional
+        :param partitioned: Whether to set it as partitioned, defaults to False
+        :type partitioned: bool
+        :param comment: A cookie comment, defaults to None
+        :type comment: Optional[str], optional
+        :param host_prefix: Whether to add __Host- as a prefix to the key.
+            This requires that path="/", domain=None, and secure=True,
+            defaults to False
+        :type host_prefix: bool
+        :param secure_prefix: Whether to add __Secure- as a prefix to the key.
+            This requires that secure=True, defaults to False
+        :type secure_prefix: bool
+        :return: The instance of the created cookie
+        :rtype: Cookie
+        """
+        return self.cookies.add_cookie(
+            key=key,
+            value=value,
+            path=path,
+            domain=domain,
+            secure=secure,
+            max_age=max_age,
+            expires=expires,
+            httponly=httponly,
+            samesite=samesite,
+            partitioned=partitioned,
+            comment=comment,
+            host_prefix=host_prefix,
+            secure_prefix=secure_prefix,
+        )
+
+    def delete_cookie(
+        self,
+        key: str,
+        *,
+        path: str = "/",
+        domain: Optional[str] = None,
+        host_prefix: bool = False,
+        secure_prefix: bool = False,
+    ) -> None:
+        """
+        Delete a cookie
+
+        This will effectively set it as Max-Age: 0, which a browser should
+        interpret it to mean: "delete the cookie".
+
+        Since it is a browser/client implementation, your results may vary
+        depending upon which client is being used.
+
+        :param key: The key to be deleted
+        :type key: str
+        :param path: Path of the cookie, defaults to None
+        :type path: Optional[str], optional
+        :param domain: Domain of the cookie, defaults to None
+        :type domain: Optional[str], optional
+        :param host_prefix: Whether to add __Host- as a prefix to the key.
+            This requires that path="/", domain=None, and secure=True,
+            defaults to False
+        :type host_prefix: bool
+        :param secure_prefix: Whether to add __Secure- as a prefix to the key.
+            This requires that secure=True, defaults to False
+        :type secure_prefix: bool
+        """
+        self.cookies.delete_cookie(
+            key=key,
+            path=path,
+            domain=domain,
+            host_prefix=host_prefix,
+            secure_prefix=secure_prefix,
         )
 
 
@@ -407,6 +520,8 @@ class ResponseStream:
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
+        if not isinstance(headers, Header):
+            headers = Header(headers)
         self.streaming_fn = streaming_fn
         self.status = status
         self.headers = headers or Header()

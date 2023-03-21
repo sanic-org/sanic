@@ -65,7 +65,8 @@ class AppLoader:
 
             maybe_path = Path(self.module_input)
             if self.as_simple or (
-                maybe_path.is_dir() and os.sep in self.module_input
+                maybe_path.is_dir()
+                and ("\\" in self.module_input or "/" in self.module_input)
             ):
                 app = create_simple_server(maybe_path)
             else:

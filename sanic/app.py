@@ -5,7 +5,6 @@ import logging
 import logging.config
 import re
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -16,7 +15,7 @@ from asyncio import (
 )
 from asyncio.futures import Future
 from collections import defaultdict, deque
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from functools import partial
 from inspect import isawaitable
 from os import environ
@@ -33,6 +32,7 @@ from typing import (
     Deque,
     Dict,
     Iterable,
+    Iterator,
     List,
     Optional,
     Set,
@@ -63,12 +63,7 @@ from sanic.exceptions import (
 from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
-from sanic.log import (
-    LOGGING_CONFIG_DEFAULTS,
-    deprecation,
-    error_logger,
-    logger,
-)
+from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
@@ -91,8 +86,8 @@ from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
+from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
-
 
 if TYPE_CHECKING:
     try:
@@ -138,6 +133,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "_test_client",
         "_test_manager",
         "blueprints",
+        "certloader_class",
         "config",
         "configure_logging",
         "ctx",
@@ -180,6 +176,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         loads: Optional[Callable[..., Any]] = None,
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
+        certloader_class: Optional[Type[CertLoader]] = None,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -214,6 +211,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.asgi = False
         self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
+        self.certloader_class: Type[CertLoader] = (
+            certloader_class or CertLoader
+        )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
@@ -433,14 +433,15 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         ctx = params.pop("route_context")
 
-        routes = self.router.add(**params)
-        if isinstance(routes, Route):
-            routes = [routes]
+        with self.amend():
+            routes = self.router.add(**params)
+            if isinstance(routes, Route):
+                routes = [routes]
 
-        for r in routes:
-            r.extra.websocket = websocket
-            r.extra.static = params.get("static", False)
-            r.ctx.__dict__.update(ctx)
+            for r in routes:
+                r.extra.websocket = websocket
+                r.extra.static = params.get("static", False)
+                r.ctx.__dict__.update(ctx)
 
         return routes
 
@@ -449,17 +450,19 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         middleware: FutureMiddleware,
         route_names: Optional[List[str]] = None,
     ):
-        if route_names:
-            return self.register_named_middleware(
-                middleware.middleware, route_names, middleware.attach_to
-            )
-        else:
-            return self.register_middleware(
-                middleware.middleware, middleware.attach_to
-            )
+        with self.amend():
+            if route_names:
+                return self.register_named_middleware(
+                    middleware.middleware, route_names, middleware.attach_to
+                )
+            else:
+                return self.register_middleware(
+                    middleware.middleware, middleware.attach_to
+                )
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
-        return self.signal_router.add(*signal)
+        with self.amend():
+            return self.signal_router.add(*signal)
 
     def dispatch(
         self,
@@ -1519,6 +1522,27 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # -------------------------------------------------------------------- #
     # Lifecycle
     # -------------------------------------------------------------------- #
+
+    @contextmanager
+    def amend(self) -> Iterator[None]:
+        """
+        If the application has started, this function allows changes
+        to be made to add routes, middleware, and signals.
+        """
+        if not self.state.is_started:
+            yield
+        else:
+            do_router = self.router.finalized
+            do_signal_router = self.signal_router.finalized
+            if do_router:
+                self.router.reset()
+            if do_signal_router:
+                self.signal_router.reset()
+            yield
+            if do_signal_router:
+                self.signalize(self.config.TOUCHUP)
+            if do_router:
+                self.finalize()
 
     def finalize(self):
         try:

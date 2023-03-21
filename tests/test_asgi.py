@@ -7,6 +7,9 @@ from unittest.mock import call
 import pytest
 import uvicorn
 
+from httpx import Headers
+from pytest import MonkeyPatch
+
 from sanic import Sanic
 from sanic.application.state import Mode
 from sanic.asgi import ASGIApp, Lifespan, MockTransport
@@ -626,3 +629,40 @@ async def test_error_on_lifespan_exception_stop(app: Sanic):
             )
         ]
     )
+
+
+@pytest.mark.asyncio
+async def test_asgi_headers_decoding(app: Sanic, monkeypatch: MonkeyPatch):
+    @app.get("/")
+    def handler(request: Request):
+        return text("")
+
+    headers_init = Headers.__init__
+
+    def mocked_headers_init(self, *args, **kwargs):
+        if "encoding" in kwargs:
+            kwargs.pop("encoding")
+        headers_init(self, encoding="utf-8", *args, **kwargs)
+
+    monkeypatch.setattr(Headers, "__init__", mocked_headers_init)
+
+    message = "Header names can only contain US-ASCII characters"
+    with pytest.raises(BadRequest, match=message):
+        _, response = await app.asgi_client.get("/", headers={"😂": "😅"})
+
+    _, response = await app.asgi_client.get("/", headers={"Test-Header": "😅"})
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_asgi_url_decoding(app):
+    @app.get("/dir/<name>", unquote=True)
+    def _request(request: Request, name):
+        return text(name)
+
+    # 2F should not become a path separator (unquoted later)
+    _, response = await app.asgi_client.get("/dir/some%2Fpath")
+    assert response.text == "some/path"
+
+    _, response = await app.asgi_client.get("/dir/some%F0%9F%98%80path")
+    assert response.text == "some😀path"

@@ -57,11 +57,15 @@ class GeneralGroup(Group):
         )
 
         self.container.add_argument(
-            "module",
+            "target",
             help=(
-                "Path to your Sanic app. Example: path.to.server:app\n"
-                "If running a Simple Server, path to directory to serve. "
-                "Example: ./\n"
+                "Path to your Sanic app instance.\n"
+                "\tExample: path.to.server:app\n"
+                "If running a Simple Server, path to directory to serve.\n"
+                "\tExample: ./\n"
+                "Additionally, this can be a path to a factory function\n"
+                "that returns a Sanic app instance.\n"
+                "\tExample: path.to.server:create_app\n"
             ),
         )
 

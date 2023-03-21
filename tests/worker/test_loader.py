@@ -52,34 +52,23 @@ def test_cwd_in_path():
 
 def test_input_is_dir():
     loader = AppLoader(str(STATIC))
-    message = (
-        "App not found.\n   Please use --simple if you are passing a "
-        f"directory to sanic.\n   eg. sanic {str(STATIC)} --simple"
-    )
-    with pytest.raises(ValueError, match=message):
-        loader.load()
+    app = loader.load()
+    assert isinstance(app, Sanic)
 
 
 def test_input_is_factory():
-    ns = SimpleNamespace(module="foo")
+    ns = SimpleNamespace(target="foo")
     loader = AppLoader("tests.fake.server:create_app", args=ns)
-    message = (
-        "Module is not a Sanic app, it is a function\n  If this callable "
-        "returns a Sanic instance try: \nsanic foo --factory"
-    )
-    with pytest.raises(ValueError, match=message):
-        loader.load()
+    app = loader.load()
+    assert isinstance(app, Sanic)
 
 
 def test_input_is_module():
-    ns = SimpleNamespace(module="foo")
+    ns = SimpleNamespace(target="foo")
     loader = AppLoader("tests.fake.server", args=ns)
-    message = (
-        "Module is not a Sanic app, it is a module\n  "
-        "Perhaps you meant foo:app?"
-    )
-    with pytest.raises(ValueError, match=message):
-        loader.load()
+
+    app = loader.load()
+    assert isinstance(app, Sanic)
 
 
 @pytest.mark.parametrize("creator", ("mkcert", "trustme"))

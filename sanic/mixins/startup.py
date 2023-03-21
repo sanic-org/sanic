@@ -802,7 +802,7 @@ class StartupMixin(metaclass=SanicMeta):
             ssl = kwargs.get("ssl")
 
             if isinstance(ssl, SanicSSLContext):
-                kwargs["ssl"] = kwargs["ssl"].sanic
+                kwargs["ssl"] = ssl.sanic
 
             manager = WorkerManager(
                 primary.state.workers,

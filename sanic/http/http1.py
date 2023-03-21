@@ -453,9 +453,9 @@ class Http(Stream, metaclass=TouchUpMeta):
 
         # Reformat any URL already received with \xHH escapes for better logs
         url_bytes = (
-            self.url.encode(errors="surrogateescape").decode(
-                "ASCII", errors="backslashreplace"
-            ).encode("ASCII")
+            self.url.encode(errors="surrogateescape")
+            .decode("ASCII", errors="backslashreplace")
+            .encode("ASCII")
             if self.url
             else b"*"
         )

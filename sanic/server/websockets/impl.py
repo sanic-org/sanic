@@ -99,15 +99,6 @@ class WebsocketImplProtocol:
     def subprotocol(self):
         return self.ws_proto.subprotocol
 
-    @property
-    def connection(self):
-        deprecation(
-            "The connection property has been deprecated and will be removed. "
-            "Please use the ws_proto property instead going forward.",
-            22.6,
-        )
-        return self.ws_proto
-
     def pause_frames(self):
         if not self.can_pause:
             return False

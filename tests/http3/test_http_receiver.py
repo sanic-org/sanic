@@ -297,10 +297,7 @@ def test_request_conn_info(app):
 def test_request_header_encoding(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
-    with pytest.raises(
-        BadRequest,
-        matches="Header names may only contain US-ASCII characters.",
-    ):
+    with pytest.raises(BadRequest) as exc_info:
         http3.http_event_received(
             HeadersReceived(
                 [
@@ -314,14 +311,17 @@ def test_request_header_encoding(app):
                 False,
             )
         )
+    assert exc_info.value.status_code == 400
+    assert (
+        str(exc_info.value)
+        == "Header names may only contain US-ASCII characters."
+    )
 
 
 def test_request_url_encoding(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
-    with pytest.raises(
-        BadRequest, matches="URL may only contain US-ASCII characters."
-    ):
+    with pytest.raises(BadRequest) as exc_info:
         http3.http_event_received(
             HeadersReceived(
                 [
@@ -335,3 +335,5 @@ def test_request_url_encoding(app):
                 False,
             )
         )
+    assert exc_info.value.status_code == 400
+    assert str(exc_info.value) == "URL may only contain US-ASCII characters."

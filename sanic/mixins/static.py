@@ -3,7 +3,7 @@ from functools import partial, wraps
 from mimetypes import guess_type
 from os import PathLike, path
 from pathlib import Path, PurePath
-from typing import Optional, Sequence, Set, Union, cast
+from typing import Optional, Sequence, Set, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route
@@ -14,7 +14,7 @@ from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.handlers.directory import DirectoryHandler
-from sanic.log import deprecation, error_logger
+from sanic.log import error_logger
 from sanic.mixins.base import BaseMixin
 from sanic.models.futures import FutureStatic
 from sanic.request import Request
@@ -31,7 +31,7 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
     def static(
         self,
         uri: str,
-        file_or_directory: Union[PathLike, str, bytes],
+        file_or_directory: Union[PathLike, str],
         pattern: str = r"/?.+",
         use_modified_since: bool = True,
         use_content_range: bool = False,
@@ -94,14 +94,12 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
                 f"Static route must be a valid path, not {file_or_directory}"
             )
 
-        if isinstance(file_or_directory, bytes):
-            deprecation(
-                "Serving a static directory with a bytes string is "
-                "deprecated and will be removed in v22.9.",
-                22.9,
+        try:
+            file_or_directory = Path(file_or_directory)
+        except TypeError:
+            raise TypeError(
+                "Static file or directory must be a path-like object or string"
             )
-            file_or_directory = cast(str, file_or_directory.decode())
-        file_or_directory = Path(file_or_directory)
 
         if directory_handler and (directory_view or index):
             raise ValueError(

@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple, Type
 
 from sanic.errorpages import BaseRenderer, TextRenderer, exception_response
 from sanic.exceptions import ServerError
-from sanic.log import deprecation, error_logger
+from sanic.log import error_logger
 from sanic.models.handler_types import RouteHandler
 from sanic.response import text
 

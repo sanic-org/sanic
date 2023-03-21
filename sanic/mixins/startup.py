@@ -47,7 +47,7 @@ from sanic.helpers import Default, _default
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
 from sanic.http.tls.context import SanicSSLContext
-from sanic.log import Colors, deprecation, error_logger, logger
+from sanic.log import Colors, error_logger, logger
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
@@ -56,7 +56,7 @@ from sanic.server.events import trigger_events
 from sanic.server.loop import try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
-from sanic.server.runners import serve, serve_multiple, serve_single
+from sanic.server.runners import serve
 from sanic.server.socket import configure_socket, remove_unix_socket
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager

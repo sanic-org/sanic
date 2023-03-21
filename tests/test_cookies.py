@@ -499,3 +499,22 @@ def test_cookie_accessor_hyphens():
     cookies = CookieRequestParameters({"session-token": ["abc123"]})
 
     assert cookies.get("session-token") == cookies.session_token
+
+
+def test_cookie_passthru(app):
+    cookie_jar = None
+
+    @app.route("/")
+    def handler(request):
+        nonlocal cookie_jar
+        response = text("OK")
+        response.add_cookie("one", "1", host_prefix=True)
+        response.delete_cookie("two", secure_prefix=True)
+        cookie_jar = response.cookies
+        return response
+
+    _, response = app.test_client.get("/")
+
+    assert cookie_jar.get_cookie("two", secure_prefix=True).max_age == 0
+    assert len(response.cookies) == 1
+    assert response.cookies["__Host-one"] == "1"

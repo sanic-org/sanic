@@ -455,7 +455,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         url_bytes = (
             self.url.encode(errors="surrogateescape").decode(
                 "ASCII", errors="backslashreplace"
-            )
+            ).encode("ASCII")
             if self.url
             else b"*"
         )

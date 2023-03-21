@@ -133,7 +133,8 @@ class Request:
         try:
             self._parsed_url = parse_url(url_bytes)
         except HttpParserInvalidURLError:
-            raise BadURL(f"Bad URL: {url_bytes.decode()}")
+            url = url_bytes.decode(errors="backslashreplace")
+            raise BadURL(f"Bad URL: {url}")
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
         self._stream_id = stream_id

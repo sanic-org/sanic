@@ -98,3 +98,17 @@ def test_transfer_chunked(client):
     data = stdjson.loads(body)
 
     assert data == ["foo", "bar"]
+
+
+def test_url_encoding(client):
+    client.send(
+        """
+        GET /invalid\xA0url HTTP/1.1
+
+        """
+    )
+    response = client.recv()
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+
+    assert b"400 Bad Request" in headers
+    assert b"URL may only contain US-ASCII characters." in body

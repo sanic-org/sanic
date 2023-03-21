@@ -452,13 +452,17 @@ class Http(Stream, metaclass=TouchUpMeta):
         """
 
         # Reformat any URL already received with \xHH escapes for better logs
-        url_bytes = self.url.encode(errors="surrogateescape").decode(
-            "ASCII", errors="backslashreplace"
+        url_bytes = (
+            self.url.encode(errors="surrogateescape").decode(
+                "ASCII", errors="backslashreplace"
+            )
+            if self.url
+            else b"*"
         )
 
         # FIXME: Avoid this by refactoring error handling and response code
         self.request = self.protocol.request_class(
-            url_bytes=url_bytes or b"*",
+            url_bytes=url_bytes,
             headers=Header({}),
             version="1.1",
             method="NONE",

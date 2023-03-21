@@ -1,11 +1,16 @@
 from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
+from unittest.mock import Mock
 
 import pytest
 
-from sanic import Sanic
-from sanic.cookies import Cookie
+from sanic import Request, Sanic
+from sanic.compat import Header
+from sanic.cookies import Cookie, CookieJar
+from sanic.cookies.request import CookieRequestParameters
+from sanic.exceptions import ServerError
 from sanic.response import text
+from sanic.response.convenience import json
 
 
 # ------------------------------------------------------------ #
@@ -111,21 +116,23 @@ def test_cookie_options(app):
 
 
 def test_cookie_deletion(app):
+    cookie_jar = None
+
     @app.route("/")
     def handler(request):
+        nonlocal cookie_jar
         response = text("OK")
-        del response.cookies["i_want_to_die"]
-        response.cookies["i_never_existed"] = "testing"
-        del response.cookies["i_never_existed"]
+        del response.cookies["one"]
+        response.cookies["two"] = "testing"
+        del response.cookies["two"]
+        cookie_jar = response.cookies
         return response
 
-    request, response = app.test_client.get("/")
-    response_cookies = SimpleCookie()
-    response_cookies.load(response.headers.get("Set-Cookie", {}))
+    _, response = app.test_client.get("/")
 
-    assert int(response_cookies["i_want_to_die"]["max-age"]) == 0
-    with pytest.raises(KeyError):
-        response.cookies["i_never_existed"]
+    assert cookie_jar.get_cookie("one").max_age == 0
+    assert cookie_jar.get_cookie("two").max_age == 0
+    assert len(response.cookies) == 0
 
 
 def test_cookie_reserved_cookie():
@@ -252,3 +259,262 @@ def test_cookie_expires_illegal_instance_type(expires):
     with pytest.raises(expected_exception=TypeError) as e:
         c["expires"] = expires
         assert e.message == "Cookie 'expires' property must be a datetime"
+
+
+@pytest.mark.parametrize("value", ("foo=one; foo=two", "foo=one;foo=two"))
+def test_request_with_duplicate_cookie_key(value):
+    headers = Header({"Cookie": value})
+    request = Request(b"/", headers, "1.1", "GET", Mock(), Mock())
+
+    assert request.cookies["foo"] == "one"
+    assert request.cookies.get("foo") == "one"
+    assert request.cookies.getlist("foo") == ["one", "two"]
+    assert request.cookies.get("bar") is None
+
+
+def test_cookie_jar_cookies():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie("foo", "one")
+    jar.add_cookie("foo", "two", domain="example.com")
+
+    assert len(jar.cookies) == 2
+    assert len(headers) == 2
+
+
+def test_cookie_jar_has_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie("foo", "one")
+    jar.add_cookie("foo", "two", domain="example.com")
+
+    assert jar.has_cookie("foo")
+    assert jar.has_cookie("foo", domain="example.com")
+    assert not jar.has_cookie("foo", path="/unknown")
+    assert not jar.has_cookie("bar")
+
+
+def test_cookie_jar_get_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    cookie1 = jar.add_cookie("foo", "one")
+    cookie2 = jar.add_cookie("foo", "two", domain="example.com")
+
+    assert jar.get_cookie("foo") is cookie1
+    assert jar.get_cookie("foo", domain="example.com") is cookie2
+    assert jar.get_cookie("foo", path="/unknown") is None
+    assert jar.get_cookie("bar") is None
+
+
+def test_cookie_jar_add_cookie_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie("foo", "one")
+    jar.add_cookie(
+        "foo",
+        "two",
+        domain="example.com",
+        path="/something",
+        secure=True,
+        max_age=999,
+        httponly=True,
+        samesite="strict",
+    )
+    jar.add_cookie("foo", "three", secure_prefix=True)
+    jar.add_cookie("foo", "four", host_prefix=True)
+    jar.add_cookie("foo", "five", host_prefix=True, partitioned=True)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b"foo=one; Path=/; SameSite=Lax; Secure",
+        b"foo=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
+        b"__Secure-foo=three; Path=/; SameSite=Lax; Secure",
+        b"__Host-foo=four; Path=/; SameSite=Lax; Secure",
+        b"__Host-foo=five; Path=/; SameSite=Lax; Secure; Partitioned",
+    ]
+
+
+def test_cookie_jar_old_school_cookie_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar["foo"] = "one"
+    jar["bar"] = "two"
+    jar["bar"]["domain"] = "example.com"
+    jar["bar"]["path"] = "/something"
+    jar["bar"]["secure"] = True
+    jar["bar"]["max-age"] = 999
+    jar["bar"]["httponly"] = True
+    jar["bar"]["samesite"] = "strict"
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b"foo=one; Path=/",
+        b"bar=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
+    ]
+
+
+def test_cookie_jar_delete_cookie_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.delete_cookie("foo")
+    jar.delete_cookie("foo", domain="example.com")
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b'foo=""; Path=/; Max-Age=0; Secure',
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0; Secure',
+    ]
+
+
+def test_cookie_jar_old_school_delete_encode():
+    headers = Header()
+    jar = CookieJar(headers)
+    del jar["foo"]
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b'foo=""; Path=/; Max-Age=0; Secure',
+    ]
+
+
+def test_bad_cookie_prarms():
+    headers = Header()
+    jar = CookieJar(headers)
+
+    with pytest.raises(
+        ServerError,
+        match=(
+            "Both host_prefix and secure_prefix were requested. "
+            "A cookie should have only one prefix."
+        ),
+    ):
+        jar.add_cookie("foo", "bar", host_prefix=True, secure_prefix=True)
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set host_prefix on a cookie without secure=True",
+    ):
+        jar.add_cookie("foo", "bar", host_prefix=True, secure=False)
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set host_prefix on a cookie unless path='/'",
+    ):
+        jar.add_cookie(
+            "foo", "bar", host_prefix=True, secure=True, path="/foo"
+        )
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set host_prefix on a cookie with a defined domain",
+    ):
+        jar.add_cookie(
+            "foo", "bar", host_prefix=True, secure=True, domain="foo.bar"
+        )
+
+    with pytest.raises(
+        ServerError,
+        match="Cannot set secure_prefix on a cookie without secure=True",
+    ):
+        jar.add_cookie("foo", "bar", secure_prefix=True, secure=False)
+
+    with pytest.raises(
+        ServerError,
+        match=(
+            "Cannot create a partitioned cookie without "
+            "also setting host_prefix=True"
+        ),
+    ):
+        jar.add_cookie("foo", "bar", partitioned=True)
+
+
+def test_cookie_accessors(app: Sanic):
+    @app.get("/")
+    async def handler(request: Request):
+        return json(
+            {
+                "getitem": {
+                    "one": request.cookies["one"],
+                    "two": request.cookies["two"],
+                    "three": request.cookies["three"],
+                },
+                "get": {
+                    "one": request.cookies.get("one", "fallback"),
+                    "two": request.cookies.get("two", "fallback"),
+                    "three": request.cookies.get("three", "fallback"),
+                    "four": request.cookies.get("four", "fallback"),
+                },
+                "getlist": {
+                    "one": request.cookies.getlist("one", ["fallback"]),
+                    "two": request.cookies.getlist("two", ["fallback"]),
+                    "three": request.cookies.getlist("three", ["fallback"]),
+                    "four": request.cookies.getlist("four", ["fallback"]),
+                },
+                "getattr": {
+                    "one": request.cookies.one,
+                    "two": request.cookies.two,
+                    "three": request.cookies.three,
+                    "four": request.cookies.four,
+                },
+            }
+        )
+
+    _, response = app.test_client.get(
+        "/",
+        cookies={
+            "__Host-one": "1",
+            "__Secure-two": "2",
+            "three": "3",
+        },
+    )
+
+    assert response.json == {
+        "getitem": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+        },
+        "get": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "fallback",
+        },
+        "getlist": {
+            "one": ["1"],
+            "two": ["2"],
+            "three": ["3"],
+            "four": ["fallback"],
+        },
+        "getattr": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "",
+        },
+    }
+
+
+def test_cookie_accessor_hyphens():
+    cookies = CookieRequestParameters({"session-token": ["abc123"]})
+
+    assert cookies.get("session-token") == cookies.session_token
+
+
+def test_cookie_passthru(app):
+    cookie_jar = None
+
+    @app.route("/")
+    def handler(request):
+        nonlocal cookie_jar
+        response = text("OK")
+        response.add_cookie("one", "1", host_prefix=True)
+        response.delete_cookie("two", secure_prefix=True)
+        cookie_jar = response.cookies
+        return response
+
+    _, response = app.test_client.get("/")
+
+    assert cookie_jar.get_cookie("two", secure_prefix=True).max_age == 0
+    assert len(response.cookies) == 1
+    assert response.cookies["__Host-one"] == "1"

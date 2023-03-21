@@ -12,7 +12,6 @@ from asyncio import CancelledError, sleep
 from sanic.compat import Header
 from sanic.exceptions import (
     BadRequest,
-    BadURL,
     ExpectationFailed,
     PayloadTooLarge,
     RequestCancelled,
@@ -244,7 +243,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         try:
             url_bytes = self.url.encode("ASCII")
         except UnicodeEncodeError:
-            raise BadURL("URL may only contain US-ASCII characters.")
+            raise BadRequest("URL may only contain US-ASCII characters.")
 
         # Prepare a Request object
         request = self.protocol.request_class(

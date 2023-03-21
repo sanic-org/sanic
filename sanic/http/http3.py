@@ -19,7 +19,7 @@ from typing import (
 from sanic.compat import Header
 from sanic.constants import LocalCertCreator
 from sanic.exceptions import (
-    BadURL,
+    BadRequest,
     PayloadTooLarge,
     SanicException,
     ServerError,
@@ -338,12 +338,15 @@ class Http3:
         return self.receivers[stream_id]
 
     def _make_request(self, event: HeadersReceived) -> Request:
-        headers = Header(
-            (
-                (k.decode("ASCII"), v.decode(errors="surrogateescape"))
-                for k, v in event.headers
+        try:
+            headers = Header(
+                (
+                    (k.decode("ASCII"), v.decode(errors="surrogateescape"))
+                    for k, v in event.headers
+                )
             )
-        )
+        except UnicodeDecodeError:
+            raise BadRequest("Header names may only contain US-ASCII characters.")
         method = headers[":method"]
         path = headers[":path"]
         scheme = headers.pop(":scheme", "")
@@ -355,7 +358,7 @@ class Http3:
         try:
             url_bytes = path.encode("ASCII")
         except UnicodeEncodeError:
-            raise BadURL("URL may only contain US-ASCII characters.")
+            raise BadRequest("URL may only contain US-ASCII characters.")
 
         transport = HTTP3Transport(self.protocol)
         request = self.protocol.request_class(

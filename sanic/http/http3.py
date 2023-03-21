@@ -346,7 +346,9 @@ class Http3:
                 )
             )
         except UnicodeDecodeError:
-            raise BadRequest("Header names may only contain US-ASCII characters.")
+            raise BadRequest(
+                "Header names may only contain US-ASCII characters."
+            )
         method = headers[":method"]
         path = headers[":path"]
         scheme = headers.pop(":scheme", "")

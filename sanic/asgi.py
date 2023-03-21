@@ -161,6 +161,9 @@ class ASGIApp:
 
         url_bytes, query = scope["raw_path"], scope["query_string"]
         if query:
+            # httpx ASGI client sends query string as part of raw_path
+            url_bytes = url_bytes.split(b"?", 1)[0]
+            # All servers send them separately
             url_bytes = b"%b?%b" % (url_bytes, query)
 
         request_class = sanic_app.request_class or Request

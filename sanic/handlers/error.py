@@ -5,7 +5,9 @@ from typing import Dict, List, Optional, Tuple, Type
 from sanic.errorpages import BaseRenderer, TextRenderer, exception_response
 from sanic.log import deprecation, error_logger
 from sanic.models.handler_types import RouteHandler
+from sanic.request.types import Request
 from sanic.response import text
+from sanic.response.types import HTTPResponse
 
 
 class ErrorHandler:
@@ -152,7 +154,7 @@ class ErrorHandler:
                 return text("An error occurred while handling an error", 500)
         return response
 
-    def default(self, request, exception):
+    def default(self, request: Request, exception: Exception) -> HTTPResponse:
         """
         Provide a default behavior for the objects of :class:`ErrorHandler`.
         If a developer chooses to extent the :class:`ErrorHandler` they can

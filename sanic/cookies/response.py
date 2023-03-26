@@ -3,13 +3,11 @@ from __future__ import annotations
 import re
 import string
 import sys
-
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
-
 
 if TYPE_CHECKING:
     from sanic.compat import Header
@@ -70,7 +68,8 @@ class CookieJar(dict):
         deprecation(
             "Setting cookie values using the dict pattern has been "
             "deprecated. You should instead use the cookies.add_cookie "
-            "method. To learn more, please see: ___.",
+            "method. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             0,
         )
         if key not in self:
@@ -82,7 +81,8 @@ class CookieJar(dict):
         deprecation(
             "Deleting cookie values using the dict pattern has been "
             "deprecated. You should instead use the cookies.delete_cookie "
-            "method. To learn more, please see: ___.",
+            "method. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             0,
         )
         if key in self:
@@ -96,7 +96,8 @@ class CookieJar(dict):
         deprecation(
             "Accessing cookies from the CookieJar by dict key is deprecated. "
             "You should instead use the cookies.get_cookie method. "
-            "To learn more, please see: ___.",
+            "To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             0,
         )
         return super().__getitem__(key)
@@ -104,7 +105,8 @@ class CookieJar(dict):
     def __iter__(self):  # no cov
         deprecation(
             "Iterating over the CookieJar has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: ___.",
+            "removed in v24.3. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             24.3,
         )
         return super().__iter__()
@@ -112,7 +114,8 @@ class CookieJar(dict):
     def keys(self):  # no cov
         deprecation(
             "Accessing CookieJar.keys() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: ___.",
+            "removed in v24.3. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             24.3,
         )
         return super().keys()
@@ -120,7 +123,8 @@ class CookieJar(dict):
     def values(self):  # no cov
         deprecation(
             "Accessing CookieJar.values() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: ___.",
+            "removed in v24.3. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             24.3,
         )
         return super().values()
@@ -128,7 +132,8 @@ class CookieJar(dict):
     def items(self):  # no cov
         deprecation(
             "Accessing CookieJar.items() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: ___.",
+            "removed in v24.3. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             24.3,
         )
         return super().items()
@@ -137,7 +142,8 @@ class CookieJar(dict):
         deprecation(
             "Accessing cookies from the CookieJar using get is deprecated "
             "and will be removed in v24.3. You should instead use the "
-            "cookies.get_cookie method. To learn more, please see: ___.",
+            "cookies.get_cookie method. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             24.3,
         )
         return super().get(*args, **kwargs)
@@ -145,7 +151,8 @@ class CookieJar(dict):
     def pop(self, key, *args, **kwargs):  # no cov
         deprecation(
             "Using CookieJar.pop() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: ___.",
+            "removed in v24.3. To learn more, please see: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
             24.3,
         )
         self.delete(key)

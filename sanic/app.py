@@ -5,7 +5,6 @@ import logging
 import logging.config
 import re
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -89,7 +88,6 @@ from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
-
 
 if TYPE_CHECKING:
     try:
@@ -1589,7 +1587,8 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 f"Duplicate route names detected: {names}. You should rename "
                 "one or more of them explicitly by using the `name` param, "
                 "or changing the implicit name derived from the class and "
-                "function name. For more details, please see ___."
+                "function name. For more details, please see "
+                "https://sanic.dev/en/guide/release-notes/v23.3.html#duplicated-route-names-are-no-longer-allowed"  # noqa
             )
             raise ServerError(message)
 

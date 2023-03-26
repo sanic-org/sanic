@@ -312,6 +312,10 @@ class WorkerManager:
 
     def _sync_states(self):
         for process in self.processes:
-            state = self.worker_state[process.name].get("state")
+            try:
+                state = self.worker_state[process.name].get("state")
+            except KeyError:
+                process.set_state(ProcessState.TERMINATED, True)
+                continue
             if state and process.state.name != state:
                 process.set_state(ProcessState[state], True)

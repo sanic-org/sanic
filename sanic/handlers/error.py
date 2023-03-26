@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple, Type
 
 from sanic.errorpages import BaseRenderer, TextRenderer, exception_response
-from sanic.log import deprecation, error_logger
+from sanic.exceptions import ServerError
+from sanic.log import error_logger
 from sanic.models.handler_types import RouteHandler
 from sanic.response import text
 
@@ -43,16 +44,11 @@ class ErrorHandler:
             if name is None:
                 name = "__ALL_ROUTES__"
 
-            error_logger.warning(
+            message = (
                 f"Duplicate exception handler definition on: route={name} "
                 f"and exception={exc}"
             )
-            deprecation(
-                "A duplicate exception handler definition was discovered. "
-                "This may cause unintended consequences. A warning has been "
-                "issued now, but it will not be allowed starting in v23.3.",
-                23.3,
-            )
+            raise ServerError(message)
         self.cached_handlers[key] = handler
 
     def add(self, exception, handler, route_names: Optional[List[str]] = None):

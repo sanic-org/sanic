@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import sys
@@ -6,7 +5,7 @@ import sys
 from argparse import Namespace
 from functools import partial
 from textwrap import indent
-from typing import List, Union, cast
+from typing import List, Union
 
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
@@ -14,7 +13,7 @@ from sanic.cli.arguments import Group
 from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
 from sanic.cli.inspector import make_inspector_parser
 from sanic.cli.inspector_client import InspectorClient
-from sanic.log import Colors, error_logger
+from sanic.log import error_logger
 from sanic.worker.loader import AppLoader
 
 
@@ -103,10 +102,6 @@ Or, a path to a directory to run as a simple HTTP server:
             self.args.target, self.args.factory, self.args.simple, self.args
         )
 
-        if self.args.inspect or self.args.inspect_raw or self.args.trigger:
-            self._inspector_legacy(app_loader)
-            return
-
         try:
             app = self._get_app(app_loader)
             kwargs = self._build_run_kwargs()
@@ -117,37 +112,9 @@ Or, a path to a directory to run as a simple HTTP server:
                 app.prepare(**kwargs, version=http_version)
             if self.args.single:
                 serve = Sanic.serve_single
-            elif self.args.legacy:
-                serve = Sanic.serve_legacy
             else:
                 serve = partial(Sanic.serve, app_loader=app_loader)
             serve(app)
-
-    def _inspector_legacy(self, app_loader: AppLoader):
-        host = port = None
-        target = cast(str, self.args.target)
-        if ":" in target:
-            maybe_host, maybe_port = target.rsplit(":", 1)
-            if maybe_port.isnumeric():
-                host, port = maybe_host, int(maybe_port)
-        if not host:
-            app = self._get_app(app_loader)
-            host, port = app.config.INSPECTOR_HOST, app.config.INSPECTOR_PORT
-
-        action = self.args.trigger or "info"
-
-        InspectorClient(
-            str(host), int(port or 6457), False, self.args.inspect_raw, ""
-        ).do(action)
-        sys.stdout.write(
-            f"\n{Colors.BOLD}{Colors.YELLOW}WARNING:{Colors.END} "
-            "You are using the legacy CLI command that will be removed in "
-            f"{Colors.RED}v23.3{Colors.END}. See "
-            "https://sanic.dev/en/guide/release-notes/v22.12.html"
-            "#deprecations-and-removals or checkout the new "
-            "style commands:\n\n\t"
-            f"{Colors.YELLOW}sanic inspect --help{Colors.END}\n"
-        )
 
     def _inspector(self):
         args = sys.argv[2:]
@@ -202,8 +169,6 @@ Or, a path to a directory to run as a simple HTTP server:
             )
             error_logger.error(message)
             sys.exit(1)
-        if self.args.inspect or self.args.inspect_raw:
-            logging.disable(logging.CRITICAL)
 
     def _get_app(self, app_loader: AppLoader):
         try:
@@ -251,7 +216,6 @@ Or, a path to a directory to run as a simple HTTP server:
             "workers": self.args.workers,
             "auto_tls": self.args.auto_tls,
             "single_process": self.args.single,
-            "legacy": self.args.legacy,
         }
 
         for maybe_arg in ("auto_reload", "dev"):

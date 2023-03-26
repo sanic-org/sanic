@@ -55,7 +55,7 @@ from sanic.headers import (
     parse_xforwarded,
 )
 from sanic.http import Stage
-from sanic.log import deprecation, error_logger
+from sanic.log import error_logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
@@ -204,16 +204,6 @@ class Request:
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
-
-    @property
-    def request_middleware_started(self):
-        deprecation(
-            "Request.request_middleware_started has been deprecated and will"
-            "be removed. You should set a flag on the request context using"
-            "either middleware or signals if you need this feature.",
-            23.3,
-        )
-        return self._request_middleware_started
 
     @property
     def stream_id(self):

@@ -285,9 +285,15 @@ def test_contextual_exception_context(debug):
     def fail():
         raise TeapotError(context={"foo": "bar"})
 
-    app.post("/coffee/json", error_format="json")(lambda _: fail())
-    app.post("/coffee/html", error_format="html")(lambda _: fail())
-    app.post("/coffee/text", error_format="text")(lambda _: fail())
+    app.post("/coffee/json", error_format="json", name="json")(
+        lambda _: fail()
+    )
+    app.post("/coffee/html", error_format="html", name="html")(
+        lambda _: fail()
+    )
+    app.post("/coffee/text", error_format="text", name="text")(
+        lambda _: fail()
+    )
 
     _, response = app.test_client.post("/coffee/json", debug=debug)
     assert response.status == 418
@@ -323,9 +329,15 @@ def test_contextual_exception_extra(debug):
     def fail():
         raise TeapotError(extra={"foo": "bar"})
 
-    app.post("/coffee/json", error_format="json")(lambda _: fail())
-    app.post("/coffee/html", error_format="html")(lambda _: fail())
-    app.post("/coffee/text", error_format="text")(lambda _: fail())
+    app.post("/coffee/json", error_format="json", name="json")(
+        lambda _: fail()
+    )
+    app.post("/coffee/html", error_format="html", name="html")(
+        lambda _: fail()
+    )
+    app.post("/coffee/text", error_format="text", name="text")(
+        lambda _: fail()
+    )
 
     _, response = app.test_client.post("/coffee/json", debug=debug)
     assert response.status == 418

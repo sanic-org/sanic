@@ -266,20 +266,17 @@ def test_exception_handler_response_was_sent(
     assert "Error" in response.text
 
 
-def test_warn_on_duplicate(
-    app: Sanic, caplog: LogCaptureFixture, recwarn: WarningsRecorder
-):
+def test_errir_on_duplicate(app: Sanic):
     @app.exception(ServerError)
     async def exception_handler_1(request, exception):
         ...
 
-    @app.exception(ServerError)
-    async def exception_handler_2(request, exception):
-        ...
-
-    assert len(caplog.records) == 1
-    assert len(recwarn) == 1
-    assert caplog.records[0].message == (
+    message = (
         "Duplicate exception handler definition on: route=__ALL_ROUTES__ and "
         "exception=<class 'sanic.exceptions.ServerError'>"
     )
+    with pytest.raises(ServerError, match=message):
+
+        @app.exception(ServerError)
+        async def exception_handler_2(request, exception):
+            ...

@@ -64,12 +64,7 @@ from sanic.exceptions import (
 from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
-from sanic.log import (
-    LOGGING_CONFIG_DEFAULTS,
-    deprecation,
-    error_logger,
-    logger,
-)
+from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
@@ -1584,17 +1579,19 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.signalize(self.config.TOUCHUP)
         self.finalize()
 
-        route_names = [route.name for route in self.router.routes]
+        route_names = [route.extra.ident for route in self.router.routes]
         duplicates = {
             name for name in route_names if route_names.count(name) > 1
         }
         if duplicates:
             names = ", ".join(duplicates)
-            deprecation(
-                f"Duplicate route names detected: {names}. In the future, "
-                "Sanic will enforce uniqueness in route naming.",
-                23.3,
+            message = (
+                f"Duplicate route names detected: {names}. You should rename "
+                "one or more of them explicitly by using the `name` param, "
+                "or changing the implicit name derived from the class and "
+                "function name. For more details, please see ___."
             )
+            raise ServerError(message)
 
         Sanic._check_uvloop_conflict()
 

@@ -93,6 +93,7 @@ class Blueprint(BaseSanic):
         "_future_listeners",
         "_future_exceptions",
         "_future_signals",
+        "copied_from",
         "ctx",
         "exceptions",
         "host",
@@ -118,6 +119,7 @@ class Blueprint(BaseSanic):
     ):
         super().__init__(name=name)
         self.reset()
+        self.copied_from = ""
         self.ctx = SimpleNamespace()
         self.host = host
         self.strict_slashes = strict_slashes
@@ -213,6 +215,7 @@ class Blueprint(BaseSanic):
         self.reset()
         new_bp = deepcopy(self)
         new_bp.name = name
+        new_bp.copied_from = self.name
 
         if not isinstance(url_prefix, Default):
             new_bp.url_prefix = url_prefix
@@ -352,6 +355,16 @@ class Blueprint(BaseSanic):
 
             registered.add(apply_route)
             route = app._apply_route(apply_route)
+
+            # If it is a copied BP, then make sure all of the names of routes
+            # matchup with the new BP name
+            if self.copied_from:
+                for r in route:
+                    r.name = r.name.replace(self.copied_from, self.name)
+                    r.extra.ident = r.extra.ident.replace(
+                        self.copied_from, self.name
+                    )
+
             operation = (
                 routes.extend if isinstance(route, list) else routes.append
             )

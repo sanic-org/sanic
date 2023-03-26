@@ -116,7 +116,7 @@ requirements = [
 ]
 
 tests_require = [
-    "sanic-testing@git+https://github.com/sanic-org/sanic-testing.git@main#egg=sanic-testing>=22.12.0",
+    "sanic-testing>=23.3.0",
     "pytest==7.1.*",
     "coverage",
     "beautifulsoup4",

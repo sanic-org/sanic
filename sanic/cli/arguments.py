@@ -93,32 +93,6 @@ class ApplicationGroup(Group):
                 "a directory\n(module arg should be a path)"
             ),
         )
-        group.add_argument(
-            "--inspect",
-            dest="inspect",
-            action="store_true",
-            help=("Inspect the state of a running instance, human readable"),
-        )
-        group.add_argument(
-            "--inspect-raw",
-            dest="inspect_raw",
-            action="store_true",
-            help=("Inspect the state of a running instance, JSON output"),
-        )
-        group.add_argument(
-            "--trigger-reload",
-            dest="trigger",
-            action="store_const",
-            const="reload",
-            help=("Trigger worker processes to reload"),
-        )
-        group.add_argument(
-            "--trigger-shutdown",
-            dest="trigger",
-            action="store_const",
-            const="shutdown",
-            help=("Trigger all processes to shutdown"),
-        )
 
 
 class HTTPVersionGroup(Group):
@@ -246,11 +220,6 @@ class WorkerGroup(Group):
             dest="single",
             action="store_true",
             help="Do not use multiprocessing, run server in a single process",
-        )
-        self.container.add_argument(
-            "--legacy",
-            action="store_true",
-            help="Use the legacy server manager",
         )
         self.add_bool_arguments(
             "--access-logs",

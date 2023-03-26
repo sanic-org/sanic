@@ -66,8 +66,8 @@ def test_no_register_system_signals_fails(app):
     app.listener("after_server_stop")(after)
 
     message = (
-        "Cannot run Sanic.serve with register_sys_signals=False. Use "
-        "either Sanic.serve_single or Sanic.serve_legacy."
+        r"Cannot run Sanic\.serve with register_sys_signals=False\. Use "
+        r"Sanic.serve_single\."
     )
     with pytest.raises(RuntimeError, match=message):
         app.prepare(HOST, PORT, register_sys_signals=False)

@@ -248,9 +248,9 @@ def test_fallback_with_content_type_mismatch_accept(app):
 
     app.router.reset()
 
-    @app.route("/alt1")
-    @app.route("/alt2", error_format="text")
-    @app.route("/alt3", error_format="html")
+    @app.route("/alt1", name="alt1")
+    @app.route("/alt2", error_format="text", name="alt2")
+    @app.route("/alt3", error_format="html", name="alt3")
     def handler(_):
         raise Exception("problem here")
         # Yes, we know this return value is unreachable. This is on purpose.

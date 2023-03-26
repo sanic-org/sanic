@@ -1579,7 +1579,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.signalize(self.config.TOUCHUP)
         self.finalize()
 
-        route_names = [route.name for route in self.router.routes]
+        route_names = [route.extra.ident for route in self.router.routes]
         duplicates = {
             name for name in route_names if route_names.count(name) > 1
         }
@@ -1587,9 +1587,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             names = ", ".join(duplicates)
             message = (
                 f"Duplicate route names detected: {names}. You should rename "
-                "one or more of them explicitly by using the `name` param, ",
+                "one or more of them explicitly by using the `name` param, "
                 "or changing the implicit name derived from the class and "
-                "function name.",
+                "function name. For more details, please see ___."
             )
             raise ServerError(message)
 

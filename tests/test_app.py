@@ -448,7 +448,7 @@ def test_custom_context():
 
 @pytest.mark.parametrize("use", (False, True))
 def test_uvloop_config(app: Sanic, monkeypatch, use):
-    @app.get("/test")
+    @app.get("/test", name="test")
     def handler(request):
         return text("ok")
 
@@ -569,21 +569,6 @@ def test_cannot_run_single_process_and_workers_or_auto_reload(
     )
     with pytest.raises(RuntimeError, match=message):
         app.run(single_process=True, **extra)
-
-
-def test_cannot_run_single_process_and_legacy(app: Sanic):
-    message = "Cannot run single process and legacy mode"
-    with pytest.raises(RuntimeError, match=message):
-        app.run(single_process=True, legacy=True)
-
-
-def test_cannot_run_without_sys_signals_with_workers(app: Sanic):
-    message = (
-        "Cannot run Sanic.serve with register_sys_signals=False. "
-        "Use either Sanic.serve_single or Sanic.serve_legacy."
-    )
-    with pytest.raises(RuntimeError, match=message):
-        app.run(register_sys_signals=False, single_process=False, legacy=False)
 
 
 def test_default_configure_logging():

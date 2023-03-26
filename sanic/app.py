@@ -1589,7 +1589,8 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 f"Duplicate route names detected: {names}. You should rename "
                 "one or more of them explicitly by using the `name` param, "
                 "or changing the implicit name derived from the class and "
-                "function name. For more details, please see ___."
+                "function name. For more details, please see "
+                "https://sanic.dev/en/guide/release-notes/v23.3.html#duplicated-route-names-are-no-longer-allowed"  # noqa
             )
             raise ServerError(message)
 

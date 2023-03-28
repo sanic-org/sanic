@@ -250,6 +250,7 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
+        name_prefix: Optional[str] = "",
     ) -> BlueprintGroup:
         """
         Create a list of blueprints, optionally grouping them under a
@@ -275,6 +276,7 @@ class Blueprint(BaseSanic):
             version=version,
             strict_slashes=strict_slashes,
             version_prefix=version_prefix,
+            name_prefix=name_prefix,
         )
         for bp in chain(blueprints):
             bps.append(bp)
@@ -295,6 +297,7 @@ class Blueprint(BaseSanic):
         opt_version = options.get("version", None)
         opt_strict_slashes = options.get("strict_slashes", None)
         opt_version_prefix = options.get("version_prefix", self.version_prefix)
+        opt_name_prefix = options.get("name_prefix", None)
         error_format = options.get(
             "error_format", app.config.FALLBACK_ERROR_FORMAT
         )
@@ -326,7 +329,10 @@ class Blueprint(BaseSanic):
                 future.strict_slashes, opt_strict_slashes, self.strict_slashes
             )
 
-            name = app._generate_name(future.name)
+            name = future.name
+            if opt_name_prefix:
+                name = f"{opt_name_prefix}_{future.name}"
+            name = app._generate_name(name)
             host = future.host or self.host
             if isinstance(host, list):
                 host = tuple(host)

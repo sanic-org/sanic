@@ -550,6 +550,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                             )
                         else:
                             params["version_prefix"] = blueprint.version_prefix
+                    name_prefix = getattr(blueprint, "name_prefix", None)
+                    if name_prefix and "name_prefix" not in params:
+                        params["name_prefix"] = name_prefix
                 self.blueprint(item, **params)
             return
         if blueprint.name in self.blueprints:

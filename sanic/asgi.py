@@ -3,7 +3,6 @@ from __future__ import annotations
 import warnings
 
 from typing import TYPE_CHECKING, Optional
-from urllib.parse import quote
 
 from sanic.compat import Header
 from sanic.exceptions import BadRequest, ServerError
@@ -146,14 +145,6 @@ class ASGIApp:
             raise BadRequest(
                 "Header names can only contain US-ASCII characters"
             )
-        path = (
-            scope["path"][1:]
-            if scope["path"].startswith("/")
-            else scope["path"]
-        )
-        url = "/".join([scope.get("root_path", ""), quote(path)])
-        url_bytes = url.encode("latin-1")
-        url_bytes += b"?" + scope["query_string"]
 
         if scope["type"] == "http":
             version = scope["http_version"]
@@ -167,6 +158,13 @@ class ASGIApp:
             )
         else:
             raise ServerError("Received unknown ASGI scope")
+
+        url_bytes, query = scope["raw_path"], scope["query_string"]
+        if query:
+            # httpx ASGI client sends query string as part of raw_path
+            url_bytes = url_bytes.split(b"?", 1)[0]
+            # All servers send them separately
+            url_bytes = b"%b?%b" % (url_bytes, query)
 
         request_class = sanic_app.request_class or Request
         instance.request = request_class(

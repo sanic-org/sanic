@@ -316,8 +316,6 @@ Version 21.3.0
 Version 20.12.3
 ---------------
 
-`Current LTS version`
-
 **Bugfixes**
 
   *

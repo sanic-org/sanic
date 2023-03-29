@@ -67,6 +67,14 @@ def test_bp_copy(app: Sanic):
     _, response = app.test_client.get("/version6/page")
     assert "Hello world!" in response.text
 
+    route_names = [route.name for route in app.router.routes]
+    assert "test_bp_copy.test_bp1.handle_request" in route_names
+    assert "test_bp_copy.test_bp2.handle_request" in route_names
+    assert "test_bp_copy.test_bp3.handle_request" in route_names
+    assert "test_bp_copy.test_bp4.handle_request" in route_names
+    assert "test_bp_copy.test_bp5.handle_request" in route_names
+    assert "test_bp_copy.test_bp6.handle_request" in route_names
+
 
 def test_bp_copy_with_route_overwriting(app: Sanic):
     bpv1 = Blueprint("bp_v1", version=1)

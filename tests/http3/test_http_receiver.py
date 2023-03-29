@@ -11,7 +11,7 @@ from aioquic.quic.events import ProtocolNegotiated
 from sanic import Request, Sanic
 from sanic.compat import Header
 from sanic.config import DEFAULT_CONFIG
-from sanic.exceptions import PayloadTooLarge
+from sanic.exceptions import BadRequest, PayloadTooLarge
 from sanic.http.constants import Stage
 from sanic.http.http3 import Http3, HTTPReceiver
 from sanic.models.server_types import ConnInfo
@@ -292,3 +292,48 @@ def test_request_conn_info(app):
     receiver = http3.get_receiver_by_stream_id(1)
 
     assert isinstance(receiver.request.conn_info, ConnInfo)
+
+
+def test_request_header_encoding(app):
+    protocol = generate_protocol(app)
+    http3 = Http3(protocol, protocol.transmit)
+    with pytest.raises(BadRequest) as exc_info:
+        http3.http_event_received(
+            HeadersReceived(
+                [
+                    (b":method", b"GET"),
+                    (b":path", b"/location"),
+                    (b":scheme", b"https"),
+                    (b":authority", b"localhost:8443"),
+                    ("foo\u00A0".encode(), b"bar"),
+                ],
+                1,
+                False,
+            )
+        )
+    assert exc_info.value.status_code == 400
+    assert (
+        str(exc_info.value)
+        == "Header names may only contain US-ASCII characters."
+    )
+
+
+def test_request_url_encoding(app):
+    protocol = generate_protocol(app)
+    http3 = Http3(protocol, protocol.transmit)
+    with pytest.raises(BadRequest) as exc_info:
+        http3.http_event_received(
+            HeadersReceived(
+                [
+                    (b":method", b"GET"),
+                    (b":path", b"/location\xA0"),
+                    (b":scheme", b"https"),
+                    (b":authority", b"localhost:8443"),
+                    (b"foo", b"bar"),
+                ],
+                1,
+                False,
+            )
+        )
+    assert exc_info.value.status_code == 400
+    assert str(exc_info.value) == "URL may only contain US-ASCII characters."

@@ -349,8 +349,8 @@ async def test_multiple_nested_bp_group():
     bp1 = Blueprint("bp1", url_prefix="/bp1")
     bp2 = Blueprint("bp2", url_prefix="/bp2")
 
-    bp1.add_route(lambda _: ..., "/", name="bp1")
-    bp2.add_route(lambda _: ..., "/", name="bp2")
+    bp1.add_route(lambda _: ..., "/", name="route1")
+    bp2.add_route(lambda _: ..., "/", name="route2")
 
     group_a = Blueprint.group(
         bp1, bp2, url_prefix="/group-a", name_prefix="group-a"
@@ -371,4 +371,11 @@ async def test_multiple_nested_bp_group():
         "group-a/bp2",
         "group-b/bp1",
         "group-b/bp2",
+    ]
+    names = [route.name for route in app.router.routes]
+    assert names == [
+        "PropTest.group-a_bp1.route1",
+        "PropTest.group-a_bp2.route2",
+        "PropTest.group-b_bp1.route1",
+        "PropTest.group-b_bp2.route2",
     ]

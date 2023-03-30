@@ -2,9 +2,9 @@ import asyncio
 
 import pytest
 
-from sanic import Sanic
+from sanic import Sanic, Request
 from sanic.blueprints import Blueprint
-from sanic.response import json, text
+from sanic.response import json, text, ResponseStream
 from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
 
@@ -621,3 +621,17 @@ def test_streaming_echo():
         assert res == None
 
     app.run(access_log=False, single_process=True)
+
+
+def test_response_stream_with_default_headers(app: Sanic):
+    async def sample_streaming_fn(response_):
+        await response_.write("foo")
+
+    @app.route("/")
+    async def test(request: Request):
+        return ResponseStream(sample_streaming_fn, content_type="text/csv")
+
+    _, response = app.test_client.get("/")
+    assert response.text == "foo"
+    assert response.headers["Transfer-Encoding"] == "chunked"
+    assert response.headers["Content-Type"] == "text/csv"

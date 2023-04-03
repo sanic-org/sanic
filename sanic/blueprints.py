@@ -364,7 +364,6 @@ class Blueprint(BaseSanic):
             route = app._apply_route(
                 apply_route, overwrite=self.allow_route_overwrite
             )
-            route = app._apply_route(apply_route)
 
             # If it is a copied BP, then make sure all of the names of routes
             # matchup with the new BP name

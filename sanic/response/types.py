@@ -345,7 +345,7 @@ class JSONResponse(HTTPResponse):
         body: Optional[Any] = None,
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
-        content_type: Optional[str] = None,
+        content_type: str = "application/json",
         dumps: Optional[Callable[..., str]] = None,
         **kwargs: Any,
     ):

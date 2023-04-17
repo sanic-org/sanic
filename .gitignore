@@ -20,5 +20,6 @@ build/*
 dist/*
 pip-wheel-metadata/
 .pytest_cache/*
-*venv/*
+.venv/*
+venv/*
 .vscode/*

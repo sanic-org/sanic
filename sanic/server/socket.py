@@ -55,7 +55,7 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
         pass
     # Create new socket with a random temporary name
     tmp_path = f"{path}.{secrets.token_urlsafe()}"
-    sock = socket.socket(socket.AF_IPX)
+    sock = socket.socket(socket.AF_UNIX) # type: ignore
     try:
         # Critical section begins (filename races)
         sock.bind(tmp_path)
@@ -84,7 +84,7 @@ def remove_unix_socket(path: Optional[str]) -> None:
     try:
         if stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
             # Is it actually dead (doesn't belong to a new server instance)?
-            with socket.socket(socket.AF_IPX) as testsock:
+            with socket.socket(socket.AF_UNIX) as testsock:  # type: ignore
                 try:
                     testsock.connect(path)
                 except ConnectionRefusedError:

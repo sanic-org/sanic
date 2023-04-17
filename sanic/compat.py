@@ -101,8 +101,8 @@ def pypy_windows_set_console_cp_patch() -> None:
     """
     from ctypes import windll
 
-    code = windll.kernel32.GetConsoleOutputCP()
-    if code != "65001":
+    code: int = windll.kernel32.GetConsoleOutputCP()
+    if code != 65001:
         windll.kernel32.SetConsoleCP(65001)
         windll.kernel32.SetConsoleOutputCP(65001)
 

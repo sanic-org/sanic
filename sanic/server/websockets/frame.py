@@ -1,7 +1,7 @@
 import asyncio
 import codecs
 
-from typing import TYPE_CHECKING, AsyncIterator, List, Literal, Optional
+from typing import TYPE_CHECKING, AsyncIterator, List, Optional
 
 from websockets.frames import Frame, Opcode
 from websockets.typing import Data

@@ -93,6 +93,20 @@ def pypy_os_module_patch() -> None:
     module.readlink = os.path.realpath
 
 
+def pypy_windows_set_console_cp_patch() -> None:
+    """
+    A patch function for PyPy on Windows that sets the console code page to UTF-8 encoding
+    to allow for proper handling of non-ASCII characters. This function uses ctypes to
+    call the Windows API functions SetConsoleCP and SetConsoleOutputCP to set the code page.
+    """
+    from ctypes import windll
+
+    code = windll.kernel32.GetConsoleOutputCP()
+    if code != "65001":
+        windll.kernel32.SetConsoleCP(65001)
+        windll.kernel32.SetConsoleOutputCP(65001)
+
+
 class Header(CIMultiDict):
     """
     Container used for both request and response headers. It is a subclass of
@@ -134,6 +148,9 @@ if use_trio:  # pragma: no cover
 else:
     if PYPY_IMPLEMENTATION:
         pypy_os_module_patch()
+
+        if OS_IS_WINDOWS:
+            pypy_windows_set_console_cp_patch()
 
     from aiofiles import open as aio_open  # type: ignore
     from aiofiles.os import stat as stat_async  # type: ignore  # noqa: F401

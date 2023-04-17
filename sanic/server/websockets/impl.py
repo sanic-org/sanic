@@ -29,7 +29,7 @@ except ImportError:  # websockets >= 11.0
 
 from websockets.typing import Data
 
-from sanic.log import deprecation, error_logger, logger
+from sanic.log import error_logger, logger
 from sanic.server.protocols.base_protocol import SanicProtocol
 
 from ...exceptions import ServerError, WebsocketClosed
@@ -98,15 +98,6 @@ class WebsocketImplProtocol:
     @property
     def subprotocol(self):
         return self.ws_proto.subprotocol
-
-    @property
-    def connection(self):
-        deprecation(
-            "The connection property has been deprecated and will be removed. "
-            "Please use the ws_proto property instead going forward.",
-            22.6,
-        )
-        return self.ws_proto
 
     def pause_frames(self):
         if not self.can_pause:

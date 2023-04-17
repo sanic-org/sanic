@@ -10,7 +10,7 @@ except ImportError:  # websockets >= 11.0
 
 from websockets.typing import Subprotocol
 
-from sanic.exceptions import ServerError
+from sanic.exceptions import SanicException
 from sanic.log import logger
 from sanic.server import HttpProtocol
 
@@ -123,7 +123,7 @@ class WebSocketProtocol(HttpProtocol):
                 "Failed to open a WebSocket connection.\n"
                 "See server log for more information.\n"
             )
-            raise ServerError(msg, status_code=500)
+            raise SanicException(msg, status_code=500)
         if 100 <= resp.status_code <= 299:
             first_line = (
                 f"HTTP/1.1 {resp.status_code} {resp.reason_phrase}\r\n"
@@ -138,7 +138,7 @@ class WebSocketProtocol(HttpProtocol):
                 rbody += b"\r\n\r\n"
             await super().send(rbody)
         else:
-            raise ServerError(resp.body, resp.status_code)
+            raise SanicException(resp.body, resp.status_code)
         self.websocket = WebsocketImplProtocol(
             ws_proto,
             ping_interval=self.websocket_ping_interval,

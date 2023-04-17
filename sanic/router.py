@@ -39,13 +39,15 @@ class Router(BaseRouter):
                 extra={"host": host} if host else None,
             )
         except RoutingNotFound as e:
-            raise NotFound("Requested URL {} not found".format(e.path))
+            raise NotFound(f"Requested URL {e.path} not found") from None
         except NoMethod as e:
             raise MethodNotAllowed(
-                "Method {} not allowed for URL {}".format(method, path),
+                f"Method {method} not allowed for URL {path}",
                 method=method,
-                allowed_methods=e.allowed_methods,
-            )
+                allowed_methods=tuple(e.allowed_methods)
+                if e.allowed_methods
+                else None,
+            ) from None
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def get(  # type: ignore
@@ -61,6 +63,7 @@ class Router(BaseRouter):
             correct response
         :rtype: Tuple[ Route, RouteHandler, Dict[str, Any]]
         """
+        __tracebackhide__ = True
         return self._get(path, method, host)
 
     def add(  # type: ignore
@@ -132,7 +135,16 @@ class Router(BaseRouter):
             if host:
                 params.update({"requirements": {"host": host}})
 
+            ident = name
+            if len(hosts) > 1:
+                ident = (
+                    f"{name}_{host.replace('.', '_')}"
+                    if name
+                    else "__unnamed__"
+                )
+
             route = super().add(**params)  # type: ignore
+            route.extra.ident = ident
             route.extra.ignore_body = ignore_body
             route.extra.stream = stream
             route.extra.hosts = hosts

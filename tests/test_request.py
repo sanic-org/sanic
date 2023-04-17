@@ -1,3 +1,5 @@
+import uuid
+
 from unittest.mock import Mock
 from uuid import UUID, uuid4
 
@@ -5,7 +7,7 @@ import pytest
 
 from sanic import Sanic, response
 from sanic.exceptions import BadURL, SanicException
-from sanic.request import Request, uuid
+from sanic.request import Request
 from sanic.server import HttpProtocol
 
 
@@ -150,33 +152,47 @@ def test_request_accept():
     async def get(request):
         return response.empty()
 
+    header_value = "text/plain;format=flowed, text/plain, text/*, */*"
     request, _ = app.test_client.get(
         "/",
-        headers={
-            "Accept": "text/*, text/plain, text/plain;format=flowed, */*"
-        },
+        headers={"Accept": header_value},
     )
-    assert request.accept == [
+    assert str(request.accept) == header_value
+    match = request.accept.match(
+        "*/*;format=flowed",
         "text/plain;format=flowed",
         "text/plain",
         "text/*",
         "*/*",
-    ]
+    )
+    assert match == "*/*;format=flowed"
+    assert match.header.mime == "text/plain"
+    assert match.header.params == {"format": "flowed"}
 
+    header_value = (
+        "text/plain; q=0.5,   text/html, text/x-dvi; q=0.8, text/x-c"
+    )
     request, _ = app.test_client.get(
         "/",
-        headers={
-            "Accept": (
-                "text/plain; q=0.5, text/html, text/x-dvi; q=0.8, text/x-c"
-            )
-        },
+        headers={"Accept": header_value},
     )
-    assert request.accept == [
+    assert [str(i) for i in request.accept] == [
         "text/html",
         "text/x-c",
-        "text/x-dvi; q=0.8",
-        "text/plain; q=0.5",
+        "text/x-dvi;q=0.8",
+        "text/plain;q=0.5",
     ]
+    match = request.accept.match(
+        "application/json",
+        "text/plain",  # Has lower q in accept header
+        "text/html;format=flowed",  # Params mismatch
+        "text/*",  # Matches
+        "*/*",
+    )
+    assert match == "text/*"
+    assert match.header.mime == "text/html"
+    assert match.header.q == 1.0
+    assert not match.header.params
 
 
 def test_bad_url_parse():

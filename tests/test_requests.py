@@ -16,8 +16,9 @@ from sanic_testing.testing import (
 )
 
 from sanic import Blueprint, Sanic
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import ServerError
-from sanic.request import DEFAULT_HTTP_CONTENT_TYPE, RequestParameters
+from sanic.request import RequestParameters
 from sanic.response import html, json, text
 
 
@@ -104,11 +105,11 @@ def test_html(app):
         return html("<h1>Hello</h1>")
 
     @app.route("/foo")
-    async def handler(request):
+    async def handler_foo(request):
         return html(Foo())
 
     @app.route("/bar")
-    async def handler(request):
+    async def handler_bar(request):
         return html(Bar())
 
     request, response = app.test_client.get("/")
@@ -1813,8 +1814,8 @@ def test_request_cookies(app):
 
     request, response = app.test_client.get("/", cookies=cookies)
 
-    assert request.cookies == cookies
-    assert request.cookies == cookies  # For request._cookies
+    assert len(request.cookies) == len(cookies)
+    assert request.cookies["test"] == cookies["test"]
 
 
 @pytest.mark.asyncio
@@ -1827,8 +1828,8 @@ async def test_request_cookies_asgi(app):
 
     request, response = await app.asgi_client.get("/", cookies=cookies)
 
-    assert request.cookies == cookies
-    assert request.cookies == cookies  # For request._cookies
+    assert len(request.cookies) == len(cookies)
+    assert request.cookies["test"] == cookies["test"]
 
 
 def test_request_cookies_without_cookies(app):
@@ -2198,10 +2199,25 @@ def test_safe_method_with_body(app):
     assert response.body == b"OK"
 
 
-def test_conflicting_body_methods_overload(app):
+@pytest.mark.asyncio
+async def test_conflicting_body_methods_overload_error(app: Sanic):
     @app.put("/")
     @app.put("/p/")
     @app.put("/p/<foo>")
+    async def put(request, foo=None):
+        ...
+
+    with pytest.raises(
+        ServerError,
+        match="Duplicate route names detected: test_conflicting_body_methods_overload_error\.put.*",
+    ):
+        await app._startup()
+
+
+def test_conflicting_body_methods_overload(app: Sanic):
+    @app.put("/", name="one")
+    @app.put("/p/", name="two")
+    @app.put("/p/<foo>", name="three")
     async def put(request, foo=None):
         return json(
             {"name": request.route.name, "body": str(request.body), "foo": foo}
@@ -2219,21 +2235,21 @@ def test_conflicting_body_methods_overload(app):
     _, response = app.test_client.put("/", json=payload)
     assert response.status == 200
     assert response.json == {
-        "name": "test_conflicting_body_methods_overload.put",
+        "name": "test_conflicting_body_methods_overload.one",
         "foo": None,
         "body": data,
     }
     _, response = app.test_client.put("/p", json=payload)
     assert response.status == 200
     assert response.json == {
-        "name": "test_conflicting_body_methods_overload.put",
+        "name": "test_conflicting_body_methods_overload.two",
         "foo": None,
         "body": data,
     }
     _, response = app.test_client.put("/p/test", json=payload)
     assert response.status == 200
     assert response.json == {
-        "name": "test_conflicting_body_methods_overload.put",
+        "name": "test_conflicting_body_methods_overload.three",
         "foo": "test",
         "body": data,
     }
@@ -2246,9 +2262,26 @@ def test_conflicting_body_methods_overload(app):
     }
 
 
-def test_handler_overload(app):
+@pytest.mark.asyncio
+async def test_handler_overload_error(app: Sanic):
     @app.get("/long/sub/route/param_a/<param_a:str>/param_b/<param_b:str>")
     @app.post("/long/sub/route/")
+    def handler(request, **kwargs):
+        ...
+
+    with pytest.raises(
+        ServerError,
+        match="Duplicate route names detected: test_handler_overload_error\.handler.*",
+    ):
+        await app._startup()
+
+
+def test_handler_overload(app: Sanic):
+    @app.get(
+        "/long/sub/route/param_a/<param_a:str>/param_b/<param_b:str>",
+        name="one",
+    )
+    @app.post("/long/sub/route/", name="two")
     def handler(request, **kwargs):
         return json(kwargs)
 

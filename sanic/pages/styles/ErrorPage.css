@@ -1,0 +1,108 @@
+/** ErrorPage **/
+#enduser {
+    max-width: 30em;
+    margin: 5em auto 5em auto;
+    text-align: justify;
+    /*text-justify: both;*/
+}
+
+#enduser a {
+    color: var(--sanic-blue);
+}
+
+#enduser p:last-child {
+    text-align: right;
+}
+
+summary {
+    margin-top: 3em;
+    color: var(--sanic-text-lighter);
+    cursor: pointer;
+}
+
+.tracerite {
+    --tracerite-var: var(--sanic-tracerite-var);
+    --tracerite-val: var(--sanic-tracerite-val);
+    --tracerite-type: var(--sanic-tracerite-type);
+    --tracerite-exception: var(--sanic);
+    --tracerite-highlight: var(--sanic-yellow);
+    --tracerite-tab: var(--sanic-tab-background);
+    --tracerite-tab-text: var(--sanic-tab-text);
+}
+
+.tracerite>h3 {
+    margin: 0.5rem 0 !important;
+}
+
+#sanic .tracerite .traceback-labels button {
+    font-size: 0.8rem;
+    line-height: 120%;
+    background: var(--tracerite-tab);
+    color: var(--tracerite-tab-text);
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.tracerite .traceback-labels {
+    padding-top: 5px;
+}
+
+.tracerite .traceback-labels button:hover {
+    filter: contrast(150%) brightness(120%) drop-shadow(0 -0 2px var(--sanic-tab-shadow));
+}
+
+#sanic .tracerite .tracerite-tooltip::before {
+    bottom: 1.75em;
+}
+
+#sanic .tracerite .traceback-details mark span {
+    background: var(--sanic-highlight-background);
+    color: var(--sanic-highlight-text);
+}
+
+header {
+    background: var(--sanic-header-background);
+}
+
+h2 {
+    font-size: 1.3rem;
+    color: var(--sanic-text);
+}
+
+.key-value-display,
+.exception-wrapper {
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+
+.key-value-display {
+    background-color: var(--sanic-block-background);
+    color: var(--sanic-block-text);
+}
+
+.key-value-display h2 {
+    margin-bottom: 0.2em;
+}
+
+dl.key-value-table {
+    width: 100%;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 5fr;
+    grid-gap: .3em;
+    white-space: pre-wrap;
+}
+
+dl.key-value-table * {
+    margin: 0;
+}
+
+dl.key-value-table dt {
+    color: var(--sanic-block-alt-text);
+    word-break: break-word;
+}
+
+dl.key-value-table dd {
+    /* Better breaking for cookies header and such */
+    word-break: break-all;
+}

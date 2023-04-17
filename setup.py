@@ -112,10 +112,11 @@ requirements = [
     "websockets>=10.0",
     "multidict>=5.0,<7.0",
     "html5tagger>=1.2.1",
+    "tracerite>=1.0.0",
 ]
 
 tests_require = [
-    "sanic-testing>=22.9.0",
+    "sanic-testing>=23.3.0",
     "pytest==7.1.*",
     "coverage",
     "beautifulsoup4",

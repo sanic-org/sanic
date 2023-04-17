@@ -3,7 +3,7 @@ import sys
 
 from os import environ
 
-from sanic.compat import is_atty
+from sanic.helpers import is_atty
 
 
 BASE_LOGO = """

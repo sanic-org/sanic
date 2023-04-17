@@ -166,7 +166,3 @@ def ctrlc_workaround_for_windows(app):
     die = False
     signal.signal(signal.SIGINT, ctrlc_handler)
     app.add_task(stay_active)
-
-
-def is_atty() -> bool:
-    return bool(sys.stdout and sys.stdout.isatty())

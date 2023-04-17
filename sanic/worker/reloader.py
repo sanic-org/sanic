@@ -5,12 +5,12 @@ import sys
 
 from asyncio import new_event_loop
 from itertools import chain
-from multiprocessing.connection import Connection
+from multiprocessing.connection import Connection, PipeConnection
 from pathlib import Path
 from signal import SIGINT, SIGTERM
 from signal import signal as signal_func
 from time import sleep
-from typing import Dict, Set
+from typing import Dict, Set, Union
 
 from sanic.server.events import trigger_events
 from sanic.worker.loader import AppLoader
@@ -21,7 +21,7 @@ class Reloader:
 
     def __init__(
         self,
-        publisher: Connection,
+        publisher: Union[Connection, PipeConnection],
         interval: float,
         reload_dirs: Set[Path],
         app_loader: AppLoader,

@@ -308,7 +308,7 @@ class StartupMixin(metaclass=SanicMeta):
         if fast:
             self.state.fast = True
             try:
-                workers = len(os.sched_getaffinity(0))
+                workers = len(os.sched_getaffinity(0)) # type: ignore
             except AttributeError:  # no cov
                 workers = os.cpu_count() or 1
 

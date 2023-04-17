@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from inspect import isawaitable
-from multiprocessing.connection import Connection
+from multiprocessing.connection import Connection, PipeConnection
 from os import environ
 from pathlib import Path
 from typing import Any, Dict, Mapping, Union
@@ -17,7 +17,7 @@ from sanic.response import json
 class Inspector:
     def __init__(
         self,
-        publisher: Connection,
+        publisher: Union[Connection, PipeConnection],
         app_info: Dict[str, Any],
         worker_state: Mapping[str, Any],
         host: str,

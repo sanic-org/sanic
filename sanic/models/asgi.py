@@ -27,9 +27,9 @@ class MockProtocol:  # no cov
             self._not_paused.set()
             self._complete = asyncio.Event()
         else:
-            self._not_paused = asyncio.Event(loop=loop)
+            self._not_paused = asyncio.Event(loop=loop) # type: ignore
             self._not_paused.set()
-            self._complete = asyncio.Event(loop=loop)
+            self._complete = asyncio.Event(loop=loop) # type: ignore
 
     def pause_writing(self) -> None:
         self._not_paused.clear()

@@ -1,7 +1,7 @@
 import asyncio
 import codecs
 
-from typing import TYPE_CHECKING, AsyncIterator, List, Optional
+from typing import TYPE_CHECKING, AsyncIterator, List, Literal, Optional
 
 from websockets.frames import Frame, Opcode
 from websockets.typing import Data
@@ -112,6 +112,7 @@ class WebsocketFrameAssembler:
             # If the message_complete event isn't set yet, release the lock to
             # allow put() to run and eventually set it.
             # Locking with get_in_progress ensures only one task can get here.
+            completed: bool
             if timeout is None:
                 completed = await self.message_complete.wait()
             elif timeout <= 0:

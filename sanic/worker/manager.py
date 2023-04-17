@@ -15,7 +15,7 @@ from sanic.worker.process import ProcessState, Worker, WorkerProcess
 
 
 if not OS_IS_WINDOWS:
-    from signal import SIGKILL
+    from signal import SIGKILL # type: ignore
 else:
     SIGKILL = SIGINT
 

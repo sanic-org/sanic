@@ -59,7 +59,7 @@ class SanicException(Exception):
     :type headers: Optional[Dict[str, Any]], optional
     """
 
-    status_code: Union[int, Any, None] = 500
+    status_code: Optional[Union[int, Any]] = 500
     quiet: Optional[bool] = False
     headers: Dict[str, str] = {}
     message: str = ""

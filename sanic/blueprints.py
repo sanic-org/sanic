@@ -186,7 +186,7 @@ class Blueprint(BaseSanic):
         url_prefix: Optional[Union[str, Default]] = _default,
         version: Optional[Union[int, str, float, Default]] = _default,
         version_prefix: Union[str, Default] = _default,
-        allow_route_overwrite: bool = _default,
+        allow_route_overwrite: Union[bool, Default] = _default,
         strict_slashes: Optional[Union[bool, Default]] = _default,
         with_registration: bool = True,
         with_ctx: bool = False,

@@ -1112,3 +1112,21 @@ def test_remove_double_slashes_defined_on_register(app: Sanic):
     app.router.finalize()
 
     assert app.router.routes[0].path == "foo/"
+
+
+def test_bp_allow_override(app: Sanic):
+    bp = Blueprint("test_text", allow_route_overwrite=True)
+
+    @bp.route("/")
+    def handler1(request):
+        return text("Hello")
+
+    @bp.route("/")
+    def handler2(request):
+        return text("Overwritten Hello")
+
+    app.blueprint(bp)
+    _, response = app.test_client.get("/")
+
+    assert response.status == 200
+    assert response.text == "Overwritten Hello"

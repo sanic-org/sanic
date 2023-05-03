@@ -81,6 +81,7 @@ class Router(BaseRouter):
         static: bool = False,
         version_prefix: str = "/v",
         error_format: Optional[str] = None,
+        overwrite: bool = False,
     ) -> Union[Route, List[Route]]:
         """
         Add a handler to the router
@@ -122,6 +123,7 @@ class Router(BaseRouter):
             name=name,
             strict=strict_slashes,
             unquote=unquote,
+            overwrite=overwrite,
         )
 
         if isinstance(host, str):
@@ -150,6 +152,7 @@ class Router(BaseRouter):
             route.extra.hosts = hosts
             route.extra.static = static
             route.extra.error_format = error_format
+            route.extra.overwrite = overwrite
 
             if error_format:
                 check_error_format(route.extra.error_format)

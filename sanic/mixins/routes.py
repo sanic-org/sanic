@@ -97,6 +97,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         if not methods and not websocket:
             methods = frozenset({"GET"})
 
+        overwrite = ctx_kwargs.pop("overwrite", False)
         route_context = self._build_route_context(ctx_kwargs)
 
         def decorator(handler):
@@ -113,6 +114,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
             nonlocal static
             nonlocal version_prefix
             nonlocal error_format
+            nonlocal overwrite
 
             if isinstance(handler, tuple):
                 # if a handler fn is already wrapped in a route, the handler
@@ -158,6 +160,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 version_prefix,
                 error_format,
                 route_context,
+                overwrite
             )
 
             self._future_routes.add(route)

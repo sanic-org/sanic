@@ -28,6 +28,7 @@ class FutureRoute(NamedTuple):
     version_prefix: str
     error_format: Optional[str]
     route_context: HashableDict
+    overwrite: bool = False
 
 
 class FutureListener(NamedTuple):

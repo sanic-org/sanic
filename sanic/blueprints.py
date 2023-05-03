@@ -305,6 +305,16 @@ class Blueprint(BaseSanic):
         listeners = defaultdict(list)
         registered = set()
 
+        # Get routes by (uri, overwirting)
+        _overwritten_routes = {(_future.uri, _future.overwrite): _future
+                               for _future in self._future_routes}
+        for _key, _future in _overwritten_routes.items():
+            if _future.overwrite:
+                # Find same route if overwritten, remove it from "route set"
+                _other_same_route = _overwritten_routes.get((_future.uri, False))
+                if _other_same_route:
+                    self._future_routes.remove(_other_same_route)
+
         # Routes
         for future in self._future_routes:
             # Prepend the blueprint URI prefix if available
@@ -348,6 +358,7 @@ class Blueprint(BaseSanic):
                 version_prefix,
                 error_format,
                 future.route_context,
+                future.overwrite,   # 补充overwrite参数
             )
 
             if (self, apply_route) in app._future_registry:

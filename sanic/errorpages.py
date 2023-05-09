@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import sys
 import typing as t
-
 from functools import partial
 from traceback import extract_tb
 
@@ -25,7 +24,6 @@ from sanic.helpers import STATUS_CODES
 from sanic.log import deprecation, logger
 from sanic.pages.error import ErrorPage
 from sanic.response import html, json, text
-
 
 dumps: t.Callable[..., str]
 try:
@@ -92,8 +90,14 @@ class BaseRenderer:
             self.full
             if self.debug and not getattr(self.exception, "quiet", False)
             else self.minimal
-        )
-        return output()
+        )()
+        # In v23.6, we should remove setting the status and headers on
+        # the response object and instead set ONLY here. It will be a
+        # breaking change, and therefore require proper communication.
+        # We should ONLY be setting those values here.
+        output.status = self.status
+        output.headers.update(self.headers)
+        return output
 
     def minimal(self) -> HTTPResponse:  # noqa
         """

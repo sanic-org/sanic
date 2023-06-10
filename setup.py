@@ -104,7 +104,7 @@ tests_require = [
     ujson,
     "pytest-sanic",
     "pytest-sugar",
-    "pytest-benchmark",
+    "pytest-benchmark==3.4.1",
     "pytest-dependency",
 ]
 

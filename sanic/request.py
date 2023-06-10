@@ -76,6 +76,7 @@ class StreamBuffer:
 
 class Request:
     """Properties of an HTTP request such as URL, headers, etc."""
+    _loads = json_loads
 
     __slots__ = (
         "__weakref__",

@@ -36,6 +36,8 @@ from sanic.static import register as static_register
 from sanic.testing import SanicASGITestClient, SanicTestClient
 from sanic.views import CompositionView
 from sanic.websocket import ConnectionClosed, WebSocketProtocol
+from sanic.response import BaseHTTPResponse
+from sanic.request import Request
 
 
 class Sanic:
@@ -53,6 +55,8 @@ class Sanic:
         log_config=None,
         configure_logging=True,
         register=None,
+        dumps=None,
+        loads=None,
     ):
 
         # Get name from previous stack frame
@@ -108,6 +112,11 @@ class Sanic:
 
         if self.config.REGISTER:
             self.__class__.register_app(self)
+
+        if dumps:
+            BaseHTTPResponse._dumps = dumps
+        if loads:
+            Request._loads = loads
 
     @property
     def loop(self):

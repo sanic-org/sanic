@@ -23,6 +23,8 @@ class BaseHTTPResponse:
     def __init__(self):
         self.asgi = False
 
+    _dumps = json_dumps
+
     def _encode_body(self, data):
         if data is None:
             return b""
@@ -190,7 +192,7 @@ def json(
     status=200,
     headers=None,
     content_type="application/json",
-    dumps=json_dumps,
+    dumps=None,
     **kwargs,
 ):
     """
@@ -201,8 +203,12 @@ def json(
     :param headers: Custom Headers.
     :param kwargs: Remaining arguments that are passed to the json encoder.
     """
+    if dumps:
+        _dumps = dumps
+    else:
+        _dumps = BaseHTTPResponse._dumps
     return HTTPResponse(
-        dumps(body, **kwargs),
+        _dumps(body, **kwargs),
         headers=headers,
         status=status,
         content_type=content_type,

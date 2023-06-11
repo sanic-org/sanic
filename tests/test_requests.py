@@ -1917,15 +1917,26 @@ def test_server_name_and_url_for(app):
         return text("ok")
 
     app.config.SERVER_NAME = "my-server"  # This means default port
-    assert app.url_for("handler", _external=True) == "http://my-server/foo"
+    path = "/foo"
+    url = f"http://my-server{path}"
+    assert app.url_for("handler", _external=True) == url
     request, response = app.test_client.get("/foo")
-    assert request.url_for("handler") == f"http://my-server/foo"
+    assert request.url_for("handler") == url
+    assert request.scheme == "http"
+    assert request.path == path
+    assert request.url == url
 
     app.config.SERVER_NAME = "https://my-server/path"
     request, response = app.test_client.get("/foo")
-    url = f"https://my-server/path/foo"
+    path = "/path/foo"
+    url = f"https://my-server{path}"
     assert app.url_for("handler", _external=True) == url
     assert request.url_for("handler") == url
+    assert request.scheme == "https"
+    # These two currently fail, because SERVER_NAME’s path is not
+    # taken into account.
+    # assert request.path == path
+    # assert request.url == url
 
 
 def test_url_for_with_forwarded_request(app):

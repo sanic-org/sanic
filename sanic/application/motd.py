@@ -4,7 +4,7 @@ from textwrap import indent, wrap
 from typing import Dict, Optional
 
 from sanic import __version__
-from sanic.compat import is_atty
+from sanic.helpers import is_atty
 from sanic.log import logger
 
 

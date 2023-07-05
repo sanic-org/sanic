@@ -41,9 +41,9 @@ from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
-from sanic.compat import OS_IS_WINDOWS, StartMethod, is_atty
+from sanic.compat import OS_IS_WINDOWS, StartMethod
 from sanic.exceptions import ServerKilled
-from sanic.helpers import Default, _default
+from sanic.helpers import Default, _default, is_atty
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
 from sanic.http.tls.context import SanicSSLContext

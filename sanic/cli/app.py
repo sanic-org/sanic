@@ -180,6 +180,10 @@ Or, a path to a directory to run as a simple HTTP server:
                     "  Example File: project/sanic_server.py -> app\n"
                     "  Example Module: project.sanic_server.app"
                 )
+                error_logger.error(
+                    "\nThe error below might have caused the above one:\n"
+                    f"{e.msg}"
+                )
                 sys.exit(1)
             else:
                 raise e

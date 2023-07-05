@@ -181,8 +181,8 @@ Or, a path to a directory to run as a simple HTTP server:
                     "  Example Module: project.sanic_server.app"
                 )
                 error_logger.error(
-                    '\nThe error below might have caused the above one:\n'
-                    f'{e.msg}'
+                    "\nThe error below might have caused the above one:\n"
+                    f"{e.msg}"
                 )
                 sys.exit(1)
             else:

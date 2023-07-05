@@ -1,8 +1,8 @@
 import asyncio
 import os
+import platform
 import signal
 import sys
-import platform
 
 from contextlib import contextmanager
 from enum import Enum
@@ -79,7 +79,7 @@ def enable_windows_color_support():
 def pypy_os_module_patch() -> None:
     """
     The PyPy os module is missing the 'readlink' function, which causes issues with
-    aiofiles. This workaround replaces the missing 'readlink' function with 
+    aiofiles. This workaround replaces the missing 'readlink' function with
     'os.path.realpath', which serves the same purpose.
     """
     if hasattr(os, "readlink"):

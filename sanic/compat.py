@@ -90,7 +90,7 @@ def pypy_os_module_patch() -> None:
         return
 
     module = sys.modules["os"]
-    module.readlink = os.path.realpath
+    module.readlink = os.path.realpath  # type: ignore
 
 
 def pypy_windows_set_console_cp_patch() -> None:
@@ -99,7 +99,7 @@ def pypy_windows_set_console_cp_patch() -> None:
     to allow for proper handling of non-ASCII characters. This function uses ctypes to
     call the Windows API functions SetConsoleCP and SetConsoleOutputCP to set the code page.
     """
-    from ctypes import windll
+    from ctypes import windll  # type: ignore
 
     code: int = windll.kernel32.GetConsoleOutputCP()
     if code != 65001:

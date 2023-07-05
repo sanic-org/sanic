@@ -78,9 +78,9 @@ def enable_windows_color_support():
 
 def pypy_os_module_patch() -> None:
     """
-    The PyPy os module is missing the 'readlink' function, which causes issues with
-    aiofiles. This workaround replaces the missing 'readlink' function with
-    'os.path.realpath', which serves the same purpose.
+    The PyPy os module is missing the 'readlink' function, which causes issues 
+    withaiofiles. This workaround replaces the missing 'readlink' function 
+    with 'os.path.realpath', which serves the same purpose.
     """
     if hasattr(os, "readlink"):
         error_logger.warning(
@@ -95,9 +95,10 @@ def pypy_os_module_patch() -> None:
 
 def pypy_windows_set_console_cp_patch() -> None:
     """
-    A patch function for PyPy on Windows that sets the console code page to UTF-8 encoding
-    to allow for proper handling of non-ASCII characters. This function uses ctypes to
-    call the Windows API functions SetConsoleCP and SetConsoleOutputCP to set the code page.
+    A patch function for PyPy on Windows that sets the console code page to 
+    UTF-8 encodingto allow for proper handling of non-ASCII characters. This 
+    function uses ctypes to call the Windows API functions SetConsoleCP and 
+    SetConsoleOutputCP to set the code page.
     """
     from ctypes import windll  # type: ignore
 
@@ -120,7 +121,7 @@ class Header(CIMultiDict):
     <https://multidict.readthedocs.io/en/stable/multidict.html#multidict>`_
     for more details about how to use the object. In general, it should work
     very similar to a regular dictionary.
-    """
+    """  # noqa: E501
 
     def __getattr__(self, key: str) -> str:
         if key.startswith("_"):

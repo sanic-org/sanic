@@ -1,5 +1,7 @@
 """Defines basics of HTTP standard."""
 
+import sys
+
 from importlib import import_module
 from inspect import ismodule
 from typing import Dict
@@ -155,6 +157,10 @@ def import_string(module_name, package=None):
     if ismodule(obj):
         return obj
     return obj()
+
+
+def is_atty() -> bool:
+    return bool(sys.stdout and sys.stdout.isatty())
 
 
 class Default:

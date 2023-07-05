@@ -78,8 +78,8 @@ def enable_windows_color_support():
 
 def pypy_os_module_patch() -> None:
     """
-    The PyPy os module is missing the 'readlink' function, which causes issues 
-    withaiofiles. This workaround replaces the missing 'readlink' function 
+    The PyPy os module is missing the 'readlink' function, which causes issues
+    withaiofiles. This workaround replaces the missing 'readlink' function
     with 'os.path.realpath', which serves the same purpose.
     """
     if hasattr(os, "readlink"):
@@ -95,9 +95,9 @@ def pypy_os_module_patch() -> None:
 
 def pypy_windows_set_console_cp_patch() -> None:
     """
-    A patch function for PyPy on Windows that sets the console code page to 
-    UTF-8 encodingto allow for proper handling of non-ASCII characters. This 
-    function uses ctypes to call the Windows API functions SetConsoleCP and 
+    A patch function for PyPy on Windows that sets the console code page to
+    UTF-8 encodingto allow for proper handling of non-ASCII characters. This
+    function uses ctypes to call the Windows API functions SetConsoleCP and
     SetConsoleOutputCP to set the code page.
     """
     from ctypes import windll  # type: ignore

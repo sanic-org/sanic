@@ -80,6 +80,7 @@ class Router(BaseRouter):
         unquote: bool = False,
         static: bool = False,
         version_prefix: str = "/v",
+        overwrite: bool = False,
         error_format: Optional[str] = None,
     ) -> Union[Route, List[Route]]:
         """
@@ -122,6 +123,7 @@ class Router(BaseRouter):
             name=name,
             strict=strict_slashes,
             unquote=unquote,
+            overwrite=overwrite,
         )
 
         if isinstance(host, str):

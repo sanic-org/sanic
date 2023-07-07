@@ -159,7 +159,11 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 error_format,
                 route_context,
             )
-
+            overwrite = getattr(self, "_allow_route_overwrite", False)
+            if overwrite:
+                self._future_routes = set(
+                    filter(lambda x: x.uri != uri, self._future_routes)
+                )
             self._future_routes.add(route)
 
             args = list(signature(handler).parameters.keys())
@@ -182,7 +186,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 handler.is_stream = stream
 
             if apply:
-                self._apply_route(route)
+                self._apply_route(route, overwrite=overwrite)
 
             if static:
                 return route, handler

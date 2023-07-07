@@ -93,7 +93,7 @@ class Blueprint(BaseSanic):
         "_future_listeners",
         "_future_exceptions",
         "_future_signals",
-        "allow_route_overwrite",
+        "_allow_route_overwrite",
         "copied_from",
         "ctx",
         "exceptions",
@@ -117,11 +117,10 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
-        allow_route_overwrite: bool = False,
     ):
         super().__init__(name=name)
         self.reset()
-        self.allow_route_overwrite = allow_route_overwrite
+        self._allow_route_overwrite = False
         self.copied_from = ""
         self.ctx = SimpleNamespace()
         self.host = host
@@ -172,7 +171,7 @@ class Blueprint(BaseSanic):
 
     def reset(self):
         self._apps: Set[Sanic] = set()
-        self.allow_route_overwrite = False
+        self._allow_route_overwrite = False
         self.exceptions: List[RouteHandler] = []
         self.listeners: Dict[str, List[ListenerType[Any]]] = {}
         self.middlewares: List[MiddlewareType] = []
@@ -231,7 +230,7 @@ class Blueprint(BaseSanic):
         if not isinstance(version_prefix, Default):
             new_bp.version_prefix = version_prefix
         if not isinstance(allow_route_overwrite, Default):
-            new_bp.allow_route_overwrite = allow_route_overwrite
+            new_bp._allow_route_overwrite = allow_route_overwrite
 
         for key, value in attrs_backup.items():
             setattr(self, key, value)
@@ -362,7 +361,7 @@ class Blueprint(BaseSanic):
 
             registered.add(apply_route)
             route = app._apply_route(
-                apply_route, overwrite=self.allow_route_overwrite
+                apply_route, overwrite=self._allow_route_overwrite
             )
 
             # If it is a copied BP, then make sure all of the names of routes

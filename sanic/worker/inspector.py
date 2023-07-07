@@ -83,10 +83,7 @@ class Inspector:
 
     async def _respond(self, request: Request, output: Any):
         name = request.match_info.get("action", "info")
-        return json(
-            {"meta": {"action": name}, "result": output},
-            escape_forward_slashes=False,
-        )
+        return json({"meta": {"action": name}, "result": output})
 
     def _state_to_json(self) -> Dict[str, Any]:
         output = {"info": self.app_info}

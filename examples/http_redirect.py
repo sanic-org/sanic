@@ -69,5 +69,5 @@ async def runner(app: Sanic, app_server: AsyncioServer):
         app.is_running = False
         app.is_stopping = True
 
-
-https.run(port=HTTPS_PORT, debug=True)
+if __name__ == "__main__":
+    https.run(port=HTTPS_PORT, debug=True)

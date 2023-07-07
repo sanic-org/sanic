@@ -20,4 +20,5 @@ def timeout(request, exception):
     return response.text("RequestTimeout from error_handler.", 408)
 
 
-app.run(host="0.0.0.0", port=8000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)

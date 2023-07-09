@@ -71,6 +71,5 @@ jobs:
         run: pip install tox
 
       - name: Run unit tests
-        run: >
-          (tox -e ${{ matrix.config.tox-env }}) ||
-          { echo "::notice::Tests failed, but exiting with success"; exit 0; }
+        run: |
+          tox -e ${{ matrix.config.tox-env }} || { echo "::warning::Tests failed, but exiting with success"; exit 0; }

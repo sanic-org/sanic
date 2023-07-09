@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import platform
 import sys
+
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -68,6 +69,7 @@ from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
 from sanic.worker.serve import worker_serve
+
 
 if TYPE_CHECKING:
     from sanic import Sanic

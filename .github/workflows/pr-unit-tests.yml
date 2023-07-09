@@ -72,5 +72,8 @@ jobs:
 
       - name: Run unit tests
         run: |
-          set +e
-          (tox -e ${{ matrix.config.tox-env }}) || { echo "::warning::Tests failed, but exiting with success"; exit 0; }
+          ret=0
+          tox -e ${{ matrix.config.tox-env }} || ret=$?
+          if [ $ret != 0 ]; then
+            echo "::warning::Unit tests failed, but exiting with success code"
+          fi

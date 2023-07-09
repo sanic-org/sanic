@@ -1,4 +1,8 @@
-from sanic import Blueprint, Sanic
+import pytest
+
+from sanic_routing.exceptions import RouteExists
+
+from sanic import Blueprint, Request, Sanic
 from sanic.response import text
 
 
@@ -74,3 +78,76 @@ def test_bp_copy(app: Sanic):
     assert "test_bp_copy.test_bp4.handle_request" in route_names
     assert "test_bp_copy.test_bp5.handle_request" in route_names
     assert "test_bp_copy.test_bp6.handle_request" in route_names
+
+
+def test_bp_copy_without_route_overwriting(app: Sanic):
+    bpv1 = Blueprint("bp_v1", version=1, url_prefix="my_api")
+
+    @bpv1.route("/")
+    async def handler(request: Request):
+        return text("v1")
+
+    app.blueprint(bpv1)
+
+    bpv2 = bpv1.copy("bp_v2", version=2, allow_route_overwrite=False)
+    bpv3 = bpv1.copy(
+        "bp_v3",
+        version=3,
+        allow_route_overwrite=False,
+        with_registration=False,
+    )
+
+    with pytest.raises(RouteExists, match="Route already registered*"):
+
+        @bpv2.route("/")
+        async def handler(request: Request):
+            return text("v2")
+
+        app.blueprint(bpv2)
+
+    with pytest.raises(RouteExists, match="Route already registered*"):
+
+        @bpv3.route("/")
+        async def handler(request: Request):
+            return text("v3")
+
+        app.blueprint(bpv3)
+
+
+def test_bp_copy_with_route_overwriting(app: Sanic):
+    bpv1 = Blueprint("bp_v1", version=1, url_prefix="my_api")
+
+    @bpv1.route("/")
+    async def handler(request: Request):
+        return text("v1")
+
+    app.blueprint(bpv1)
+
+    bpv2 = bpv1.copy("bp_v2", version=2, allow_route_overwrite=True)
+    bpv3 = bpv1.copy(
+        "bp_v3", version=3, allow_route_overwrite=True, with_registration=False
+    )
+
+    @bpv2.route("/")
+    async def handler(request: Request):
+        return text("v2")
+
+    app.blueprint(bpv2)
+
+    @bpv3.route("/")
+    async def handler(request: Request):
+        return text("v3")
+
+    app.blueprint(bpv3)
+
+    _, response = app.test_client.get("/v1/my_api")
+    assert response.status == 200
+    assert response.text == "v1"
+
+    _, response = app.test_client.get("/v2/my_api")
+    assert response.status == 200
+    assert response.text == "v2"
+
+    _, response = app.test_client.get("/v3/my_api")
+    assert response.status == 200
+    assert response.text == "v3"

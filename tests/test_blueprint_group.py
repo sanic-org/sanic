@@ -1,3 +1,5 @@
+import pytest
+
 from pytest import raises
 
 from sanic.app import Sanic
@@ -340,3 +342,40 @@ def test_nested_bp_group_properties():
 
     routes = [route.path for route in app.router.routes]
     assert routes == ["three/one/four"]
+
+
+@pytest.mark.asyncio
+async def test_multiple_nested_bp_group():
+    bp1 = Blueprint("bp1", url_prefix="/bp1")
+    bp2 = Blueprint("bp2", url_prefix="/bp2")
+
+    bp1.add_route(lambda _: ..., "/", name="route1")
+    bp2.add_route(lambda _: ..., "/", name="route2")
+
+    group_a = Blueprint.group(
+        bp1, bp2, url_prefix="/group-a", name_prefix="group-a"
+    )
+    group_b = Blueprint.group(
+        bp1, bp2, url_prefix="/group-b", name_prefix="group-b"
+    )
+
+    app = Sanic("PropTest")
+    app.blueprint(group_a)
+    app.blueprint(group_b)
+
+    await app._startup()
+
+    routes = [route.path for route in app.router.routes]
+    assert routes == [
+        "group-a/bp1",
+        "group-a/bp2",
+        "group-b/bp1",
+        "group-b/bp2",
+    ]
+    names = [route.name for route in app.router.routes]
+    assert names == [
+        "PropTest.group-a_bp1.route1",
+        "PropTest.group-a_bp2.route2",
+        "PropTest.group-b_bp1.route1",
+        "PropTest.group-b_bp2.route2",
+    ]

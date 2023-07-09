@@ -16,7 +16,13 @@ from asyncio import (
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
-from multiprocessing import Manager, Pipe, get_context
+from multiprocessing import (
+    Manager,
+    Pipe,
+    get_context,
+    get_start_method,
+    set_start_method,
+)
 from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import SHUT_RDWR, socket
@@ -25,6 +31,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Dict,
     List,
     Mapping,
@@ -81,13 +88,17 @@ else:  # no cov
 
 
 class StartupMixin(metaclass=SanicMeta):
-    _app_registry: Dict[str, Sanic]
+    _app_registry: ClassVar[Dict[str, Sanic]]
+
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
-    start_method: StartMethod = _default
+
+    test_mode: ClassVar[bool]
+    start_method: ClassVar[StartMethod] = _default
+    START_METHOD_SET: ClassVar[bool] = False
 
     def setup_loop(self):
         if not self.asgi:
@@ -692,10 +703,25 @@ class StartupMixin(metaclass=SanicMeta):
         )
 
     @classmethod
+    def _set_startup_method(cls) -> None:
+        if cls.START_METHOD_SET and not cls.test_mode:
+            return
+
+        method = cls._get_startup_method()
+        set_start_method(method, force=cls.test_mode)
+        cls.START_METHOD_SET = True
+
+    @classmethod
     def _get_context(cls) -> BaseContext:
         method = cls._get_startup_method()
         logger.debug("Creating multiprocessing context using '%s'", method)
-        return get_context(method)
+        actual = get_start_method()
+        if method != actual:
+            raise RuntimeError(
+                f"Start method '{method}' was requested, but '{actual}' "
+                "was actually set."
+            )
+        return get_context()
 
     @classmethod
     def serve(
@@ -705,6 +731,7 @@ class StartupMixin(metaclass=SanicMeta):
         app_loader: Optional[AppLoader] = None,
         factory: Optional[Callable[[], Sanic]] = None,
     ) -> None:
+        cls._set_startup_method()
         os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())
         if factory:

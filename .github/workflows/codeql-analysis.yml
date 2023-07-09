@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - current-release
       - "*LTS"
   pull_request:
     branches:
       - main
+      - current-release
       - "*LTS"
     types: [opened, synchronize, reopened, ready_for_review]
   schedule:

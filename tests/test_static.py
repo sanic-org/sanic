@@ -103,6 +103,31 @@ def test_static_file_pathlib(app, static_file_directory, file_name):
 
 @pytest.mark.parametrize(
     "file_name",
+    [
+        "test.file",
+        "decode me.txt",
+        "python.png",
+        "symlink",
+        "hard_link",
+    ],
+)
+def test_static_file_pathlib_relative_path_traversal(
+    app, static_file_directory, file_name
+):
+    """Get the current working directory and check if it ends with "sanic" """
+    cwd = Path.cwd()
+    if not str(cwd).endswith("sanic"):
+        pytest.skip("Current working directory does not end with 'sanic'")
+
+    file_path = "./tests/static/../static/"
+    app.static("/", file_path)
+    _, response = app.test_client.get(f"/{file_name}")
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
     [b"test.file", b"decode me.txt", b"python.png"],
 )
 def test_static_file_bytes(app, static_file_directory, file_name):

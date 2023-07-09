@@ -17,6 +17,7 @@ from sanic.response import text
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
 PORT = 42001  # test_keep_alive_timeout_reuse doesn't work with random port
+MAX_LOOPS = 15
 port_counter = count()
 
 
@@ -69,6 +70,7 @@ def test_keep_alive_timeout_reuse():
     """If the server keep-alive timeout and client keep-alive timeout are
     both longer than the delay, the client _and_ server will successfully
     reuse the existing connection."""
+    loops = 0
     while True:
         port = get_port()
         loop = asyncio.new_event_loop()
@@ -91,6 +93,9 @@ def test_keep_alive_timeout_reuse():
                 assert response.text == "OK"
                 assert request.protocol.state["requests_count"] == 2
         except OSError:
+            loops += 1
+            if loops > MAX_LOOPS:
+                raise
             continue
         else:
             break
@@ -105,6 +110,7 @@ def test_keep_alive_timeout_reuse():
 def test_keep_alive_client_timeout():
     """If the server keep-alive timeout is longer than the client
     keep-alive timeout, client will try to create a new connection here."""
+    loops = 0
     while True:
         try:
             port = get_port()
@@ -127,6 +133,9 @@ def test_keep_alive_client_timeout():
                 request, response = client.get("/1", timeout=1)
                 assert request.protocol.state["requests_count"] == 1
         except OSError:
+            loops += 1
+            if loops > MAX_LOOPS:
+                raise
             continue
         else:
             break
@@ -141,6 +150,7 @@ def test_keep_alive_server_timeout():
     keep-alive timeout, the client will either a 'Connection reset' error
     _or_ a new connection. Depending on how the event-loop handles the
     broken server connection."""
+    loops = 0
     while True:
         try:
             port = get_port()
@@ -164,6 +174,9 @@ def test_keep_alive_server_timeout():
 
                 assert request.protocol.state["requests_count"] == 1
         except OSError:
+            loops += 1
+            if loops > MAX_LOOPS:
+                raise
             continue
         else:
             break
@@ -174,6 +187,7 @@ def test_keep_alive_server_timeout():
     reason="Not testable with current client",
 )
 def test_keep_alive_connection_context():
+    loops = 0
     while True:
         try:
             port = get_port()
@@ -198,6 +212,9 @@ def test_keep_alive_connection_context():
                 )
                 assert request2.protocol.state["requests_count"] == 2
         except OSError:
+            loops += 1
+            if loops > MAX_LOOPS:
+                raise
             continue
         else:
             break

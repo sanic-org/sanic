@@ -2,6 +2,7 @@ import logging
 
 import pytest
 
+import sanic
 from sanic import Sanic
 from sanic.config import Config
 from sanic.errorpages import TextRenderer, exception_response, guess_mime
@@ -198,6 +199,27 @@ def test_route_error_response_from_explicit_format(app):
         raise Exception("oops")
         return json({"message": "Never gonna see this"})
 
+    _, response = app.test_client.get("/text")
+    assert response.content_type == "application/json"
+
+    _, response = app.test_client.get("/json")
+    assert response.content_type == "text/plain; charset=utf-8"
+
+
+def test_blueprint_error_response_from_explicit_format(app):
+    bp = sanic.Blueprint("MyBlueprint")
+
+    @bp.get("/text", error_format="json")
+    def text_response(request):
+        raise Exception("oops")
+        return text("Never gonna see this")
+
+    @bp.get("/json", error_format="text")
+    def json_response(request):
+        raise Exception("oops")
+        return json({"message": "Never gonna see this"})
+
+    app.blueprint(bp)
     _, response = app.test_client.get("/text")
     assert response.content_type == "application/json"
 

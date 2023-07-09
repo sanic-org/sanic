@@ -3,12 +3,14 @@ on:
   push:
     branches:
       - main
+      - current-release
       - "*LTS"
     tags:
       - "!*" # Do not execute on tags
   pull_request:
     branches:
       - main
+      - current-release
       - "*LTS"
 jobs:
   test:

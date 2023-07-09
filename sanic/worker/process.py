@@ -1,5 +1,4 @@
 import os
-
 from datetime import datetime, timezone
 from multiprocessing.context import BaseContext
 from signal import SIGINT
@@ -20,13 +19,22 @@ class WorkerProcess:
     THRESHOLD = 300  # == 30 seconds
     SERVER_LABEL = "Server"
 
-    def __init__(self, factory, name, target, kwargs, worker_state):
+    def __init__(
+        self,
+        factory,
+        name,
+        target,
+        kwargs,
+        worker_state,
+        restartable: bool = False,
+    ):
         self.state = ProcessState.IDLE
         self.factory = factory
         self.name = name
         self.target = target
         self.kwargs = kwargs
         self.worker_state = worker_state
+        self.restartable = restartable
         if self.name not in self.worker_state:
             self.worker_state[self.name] = {
                 "server": self.SERVER_LABEL in self.name
@@ -132,6 +140,10 @@ class WorkerProcess:
     def pid(self):
         return self._current_process.pid
 
+    @property
+    def exitcode(self):
+        return self._current_process.exitcode
+
     def _terminate_now(self):
         logger.debug(
             f"{Colors.BLUE}Begin restart termination: "
@@ -193,6 +205,8 @@ class Worker:
         context: BaseContext,
         worker_state: Dict[str, Any],
         num: int = 1,
+        restartable: bool = False,
+        tracked: bool = True,
     ):
         self.ident = ident
         self.num = num
@@ -201,6 +215,8 @@ class Worker:
         self.server_settings = server_settings
         self.worker_state = worker_state
         self.processes: Set[WorkerProcess] = set()
+        self.restartable = restartable
+        self.tracked = tracked
         for _ in range(num):
             self.create_process()
 
@@ -215,6 +231,10 @@ class Worker:
             target=self.serve,
             kwargs={**self.server_settings},
             worker_state=self.worker_state,
+            restartable=self.restartable,
         )
         self.processes.add(process)
         return process
+
+    def has_alive_processes(self) -> bool:
+        return any(process.is_alive() for process in self.processes)

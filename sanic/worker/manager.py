@@ -1,11 +1,11 @@
 import os
-
 from contextlib import suppress
-from itertools import count
+from enum import IntEnum, auto
+from itertools import chain, count
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
@@ -13,11 +13,15 @@ from sanic.log import error_logger, logger
 from sanic.worker.constants import RestartOrder
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
 
-
 if not OS_IS_WINDOWS:
     from signal import SIGKILL
 else:
     SIGKILL = SIGINT
+
+
+class MonitorCycle(IntEnum):
+    BREAK = auto()
+    CONTINUE = auto()
 
 
 class WorkerManager:
@@ -60,6 +64,8 @@ class WorkerManager:
         func: Callable[..., Any],
         kwargs: Dict[str, Any],
         transient: bool = False,
+        restartable: Optional[bool] = None,
+        tracked: bool = True,
         workers: int = 1,
     ) -> Worker:
         """
@@ -75,14 +81,35 @@ class WorkerManager:
             then the Worker Manager will restart the process along
             with any global restart (ex: auto-reload), defaults to False
         :type transient: bool, optional
+        :param restartable: Whether to mark the process as restartable. If
+            True then the Worker Manager will be able to restart the process
+            if prompted. If transient=True, this property will be implied
+            to be True, defaults to None
+        :type restartable: Optional[bool], optional
+        :param tracked: Whether to track the process after completion,
+            defaults to True
         :param workers: The number of worker processes to run, defaults to 1
         :type workers: int, optional
         :return: The Worker instance
         :rtype: Worker
         """
+        if ident in self.transient or ident in self.durable:
+            raise ValueError(f"Worker {ident} already exists")
+        restartable = restartable if restartable is not None else transient
+        if transient and not restartable:
+            raise ValueError(
+                "Cannot create a transient worker that is not restartable"
+            )
         container = self.transient if transient else self.durable
         worker = Worker(
-            ident, func, kwargs, self.context, self.worker_state, workers
+            ident,
+            func,
+            kwargs,
+            self.context,
+            self.worker_state,
+            workers,
+            restartable,
+            tracked,
         )
         container[worker.ident] = worker
         return worker
@@ -94,6 +121,7 @@ class WorkerManager:
             self._serve,
             self._server_settings,
             transient=True,
+            restartable=True,
         )
 
     def shutdown_server(self, ident: Optional[str] = None) -> None:
@@ -153,9 +181,32 @@ class WorkerManager:
         restart_order=RestartOrder.SHUTDOWN_FIRST,
         **kwargs,
     ):
+        restarted = set()
         for process in self.transient_processes:
-            if not process_names or process.name in process_names:
+            if process.restartable and (
+                not process_names or process.name in process_names
+            ):
                 process.restart(restart_order=restart_order, **kwargs)
+                restarted.add(process.name)
+        if process_names:
+            for process in self.durable_processes:
+                if process.restartable and process.name in process_names:
+                    if process.state not in (
+                        ProcessState.COMPLETED,
+                        ProcessState.FAILED,
+                    ):
+                        error_logger.error(
+                            f"Cannot restart process {process.name} because "
+                            "it is not in a final state. Current state is: "
+                            f"{process.state.name}."
+                        )
+                        continue
+                    process.restart(restart_order=restart_order, **kwargs)
+                    restarted.add(process.name)
+        if process_names and not restarted:
+            error_logger.error(
+                f"Failed to restart processes: {', '.join(process_names)}"
+            )
 
     def scale(self, num_worker: int):
         if num_worker <= 0:
@@ -183,45 +234,13 @@ class WorkerManager:
         self.wait_for_ack()
         while True:
             try:
-                if self.monitor_subscriber.poll(0.1):
-                    message = self.monitor_subscriber.recv()
-                    logger.debug(
-                        f"Monitor message: {message}", extra={"verbosity": 2}
-                    )
-                    if not message:
-                        break
-                    elif message == "__TERMINATE__":
-                        self.shutdown()
-                        break
-                    logger.debug(
-                        "Incoming monitor message: %s",
-                        message,
-                        extra={"verbosity": 1},
-                    )
-                    split_message = message.split(":", 2)
-                    if message.startswith("__SCALE__"):
-                        self.scale(int(split_message[-1]))
-                        continue
-                    processes = split_message[0]
-                    reloaded_files = (
-                        split_message[1] if len(split_message) > 1 else None
-                    )
-                    process_names = [
-                        name.strip() for name in processes.split(",")
-                    ]
-                    if "__ALL_PROCESSES__" in process_names:
-                        process_names = None
-                    order = (
-                        RestartOrder.STARTUP_FIRST
-                        if "STARTUP_FIRST" in split_message
-                        else RestartOrder.SHUTDOWN_FIRST
-                    )
-                    self.restart(
-                        process_names=process_names,
-                        reloaded_files=reloaded_files,
-                        restart_order=order,
-                    )
+                cycle = self._poll_monitor()
+                if cycle is MonitorCycle.BREAK:
+                    break
+                elif cycle is MonitorCycle.CONTINUE:
+                    continue
                 self._sync_states()
+                self._cleanup_non_tracked_workers()
             except InterruptedError:
                 if not OS_IS_WINDOWS:
                     raise
@@ -265,6 +284,10 @@ class WorkerManager:
         return list(self.transient.values()) + list(self.durable.values())
 
     @property
+    def all_workers(self) -> Iterable[Tuple[str, Worker]]:
+        return chain(self.transient.items(), self.durable.items())
+
+    @property
     def processes(self):
         for worker in self.workers:
             for process in worker.processes:
@@ -273,6 +296,12 @@ class WorkerManager:
     @property
     def transient_processes(self):
         for worker in self.transient.values():
+            for process in worker.processes:
+                yield process
+
+    @property
+    def durable_processes(self):
+        for worker in self.durable.values():
             for process in worker.processes:
                 yield process
 
@@ -298,6 +327,25 @@ class WorkerManager:
                 process.terminate()
         self._shutting_down = True
 
+    def remove_worker(self, worker: Worker) -> None:
+        if worker.tracked:
+            error_logger.error(
+                f"Worker {worker.ident} is tracked and cannot be removed."
+            )
+            return
+        if worker.has_alive_processes():
+            error_logger.error(
+                f"Worker {worker.ident} has alive processes and cannot be "
+                "removed."
+            )
+            return
+        self.transient.pop(worker.ident, None)
+        self.durable.pop(worker.ident, None)
+        for process in worker.processes:
+            self.worker_state.pop(process.name, None)
+        logger.info("Removed worker %s", worker.ident)
+        del worker
+
     @property
     def pid(self):
         return os.getpid()
@@ -317,5 +365,97 @@ class WorkerManager:
             except KeyError:
                 process.set_state(ProcessState.TERMINATED, True)
                 continue
+            if not process.is_alive():
+                state = "FAILED" if process.exitcode else "COMPLETED"
             if state and process.state.name != state:
                 process.set_state(ProcessState[state], True)
+
+    def _cleanup_non_tracked_workers(self) -> None:
+        to_remove = [
+            worker
+            for worker in self.workers
+            if not worker.tracked and not worker.has_alive_processes()
+        ]
+
+        for worker in to_remove:
+            self.remove_worker(worker)
+
+    def _poll_monitor(self) -> Optional[MonitorCycle]:
+        if self.monitor_subscriber.poll(0.1):
+            message = self.monitor_subscriber.recv()
+            logger.debug(f"Monitor message: {message}", extra={"verbosity": 2})
+            if not message:
+                return MonitorCycle.BREAK
+            elif message == "__TERMINATE__":
+                self._handle_terminate()
+                return MonitorCycle.BREAK
+            elif isinstance(message, tuple) and len(message) == 7:
+                self._handle_manage(*message)
+                return MonitorCycle.CONTINUE
+            elif not isinstance(message, str):
+                error_logger.error(
+                    "Monitor received an invalid message: %s", message
+                )
+                return MonitorCycle.CONTINUE
+            return self._handle_message(message)
+        return None
+
+    def _handle_terminate(self) -> None:
+        self.shutdown()
+
+    def _handle_message(self, message: str) -> Optional[MonitorCycle]:
+        logger.debug(
+            "Incoming monitor message: %s",
+            message,
+            extra={"verbosity": 1},
+        )
+        split_message = message.split(":", 2)
+        if message.startswith("__SCALE__"):
+            self.scale(int(split_message[-1]))
+            return MonitorCycle.CONTINUE
+
+        processes = split_message[0]
+        reloaded_files = split_message[1] if len(split_message) > 1 else None
+        process_names: Optional[List[str]] = [
+            name.strip() for name in processes.split(",")
+        ]
+        if process_names and "__ALL_PROCESSES__" in process_names:
+            process_names = None
+        order = (
+            RestartOrder.STARTUP_FIRST
+            if "STARTUP_FIRST" in split_message
+            else RestartOrder.SHUTDOWN_FIRST
+        )
+        self.restart(
+            process_names=process_names,
+            reloaded_files=reloaded_files,
+            restart_order=order,
+        )
+
+        return None
+
+    def _handle_manage(
+        self,
+        ident: str,
+        func: Callable[..., Any],
+        kwargs: Dict[str, Any],
+        transient: bool,
+        restartable: Optional[bool],
+        tracked: bool,
+        workers: int,
+    ) -> None:
+        try:
+            worker = self.manage(
+                ident,
+                func,
+                kwargs,
+                transient=transient,
+                restartable=restartable,
+                tracked=tracked,
+                workers=workers,
+            )
+        except Exception:
+            error_logger.exception("Failed to manage worker %s", ident)
+        else:
+            for process in worker.processes:
+                process.start()

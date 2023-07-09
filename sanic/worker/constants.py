@@ -16,3 +16,5 @@ class ProcessState(IntEnum):
     ACKED = auto()
     JOINED = auto()
     TERMINATED = auto()
+    FAILED = auto()
+    COMPLETED = auto()

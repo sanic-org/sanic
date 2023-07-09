@@ -5,7 +5,6 @@ import logging
 import logging.config
 import re
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -55,12 +54,7 @@ from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
-from sanic.exceptions import (
-    BadRequest,
-    SanicException,
-    ServerError,
-    URLBuildError,
-)
+from sanic.exceptions import BadRequest, SanicException, ServerError, URLBuildError
 from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
@@ -89,7 +83,6 @@ from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
-
 
 if TYPE_CHECKING:
     try:
@@ -1676,7 +1669,10 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     def inspector(self):
         if environ.get("SANIC_WORKER_PROCESS") or not self._inspector:
             raise SanicException(
-                "Can only access the inspector from the main process"
+                "Can only access the inspector from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._inspector
 
@@ -1684,6 +1680,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     def manager(self):
         if environ.get("SANIC_WORKER_PROCESS") or not self._manager:
             raise SanicException(
-                "Can only access the manager from the main process"
+                "Can only access the manager from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._manager

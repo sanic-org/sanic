@@ -1,6 +1,6 @@
 from multiprocessing.connection import Connection
 from os import environ, getpid
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 from sanic.log import Colors, logger
 from sanic.worker.process import ProcessState
@@ -27,6 +27,27 @@ class WorkerMultiplexer:
             **self._state._state[self.name],
             "state": ProcessState.ACKED.name,
         }
+
+    def manage(
+        self,
+        ident: str,
+        func: Callable[..., Any],
+        kwargs: Dict[str, Any],
+        transient: bool = False,
+        restartable: Optional[bool] = None,
+        tracked: bool = False,
+        workers: int = 1,
+    ) -> None:
+        bundle = (
+            ident,
+            func,
+            kwargs,
+            transient,
+            restartable,
+            tracked,
+            workers,
+        )
+        self._monitor_publisher.send(bundle)
 
     def restart(
         self,

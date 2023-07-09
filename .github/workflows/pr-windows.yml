@@ -20,7 +20,6 @@ jobs:
           - { python-version: 3.9, tox-env: py39-no-ext }
           - { python-version: "3.10", tox-env: py310-no-ext }
           - { python-version: "3.11", tox-env: py310-no-ext }
-          - { python-version: pypy-3.10, tox-env: pypy310-no-ext }
 
     steps:
       - name: Checkout Repository

@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import sys
 import typing as t
-
 from functools import partial
 from traceback import extract_tb
 
@@ -25,7 +24,6 @@ from sanic.helpers import STATUS_CODES
 from sanic.log import deprecation, logger
 from sanic.pages.error import ErrorPage
 from sanic.response import html, json, text
-
 
 dumps: t.Callable[..., str]
 try:
@@ -92,8 +90,10 @@ class BaseRenderer:
             self.full
             if self.debug and not getattr(self.exception, "quiet", False)
             else self.minimal
-        )
-        return output()
+        )()
+        output.status = self.status
+        output.headers.update(self.headers)
+        return output
 
     def minimal(self) -> HTTPResponse:  # noqa
         """
@@ -125,7 +125,7 @@ class HTMLRenderer(BaseRenderer):
             request=self.request,
             exc=self.exception,
         )
-        return html(page.render(), status=self.status, headers=self.headers)
+        return html(page.render())
 
     def minimal(self) -> HTTPResponse:
         return self.full()
@@ -146,8 +146,7 @@ class TextRenderer(BaseRenderer):
                 text=self.text,
                 bar=("=" * len(self.title)),
                 body=self._generate_body(full=True),
-            ),
-            status=self.status,
+            )
         )
 
     def minimal(self) -> HTTPResponse:
@@ -157,9 +156,7 @@ class TextRenderer(BaseRenderer):
                 text=self.text,
                 bar=("=" * len(self.title)),
                 body=self._generate_body(full=False),
-            ),
-            status=self.status,
-            headers=self.headers,
+            )
         )
 
     @property
@@ -218,11 +215,11 @@ class JSONRenderer(BaseRenderer):
 
     def full(self) -> HTTPResponse:
         output = self._generate_output(full=True)
-        return json(output, status=self.status, dumps=self.dumps)
+        return json(output, dumps=self.dumps)
 
     def minimal(self) -> HTTPResponse:
         output = self._generate_output(full=False)
-        return json(output, status=self.status, dumps=self.dumps)
+        return json(output, dumps=self.dumps)
 
     def _generate_output(self, *, full):
         output = {

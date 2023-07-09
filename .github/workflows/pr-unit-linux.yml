@@ -1,4 +1,4 @@
-name: Run Unit Tests (Linux)
+name: Run unit tests (Linux)
 
 on:
   pull_request:
@@ -10,11 +10,11 @@ on:
 
 jobs:
   run_unit_tests:
-    name: Run Unit Tests on Python ${{ matrix.config.python-version }}
+    name: Run unit tests on Python ${{ matrix.config.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
-      # fail-fast: true
+      fail-fast: true
       matrix:
         config:
           - { python-version: "3.7", tox-env: py37 }
@@ -29,7 +29,7 @@ jobs:
           - { python-version: "3.11", tox-env: py311-no-ext }
 
     steps:
-      - name: Checkout the repository
+      - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Setup Python ${{ matrix.config.python-version }}

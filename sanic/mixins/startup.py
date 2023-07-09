@@ -93,6 +93,7 @@ class StartupMixin(metaclass=SanicMeta):
     state: ApplicationState
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
+    test_mode: bool
     start_method: StartMethod = _default
 
     START_METHOD_SET = False
@@ -711,13 +712,15 @@ class StartupMixin(metaclass=SanicMeta):
     @classmethod
     def _get_context(cls) -> BaseContext:
         method = cls._get_startup_method()
+        logger.debug("Creating multiprocessing context using '%s'", method)
+        if cls.test_mode:
+            return get_context(method)
         actual = get_start_method()
         if method != actual:
             raise RuntimeError(
-                f"Start method '{method}' was requested, but '{actual}' was "
-                "actually set."
+                f"Start method '{method}' was requested, but '{actual}' "
+                "was actually set."
             )
-        logger.debug("Creating multiprocessing context using '%s'", method)
         return get_context()
 
     @classmethod
@@ -728,7 +731,8 @@ class StartupMixin(metaclass=SanicMeta):
         app_loader: Optional[AppLoader] = None,
         factory: Optional[Callable[[], Sanic]] = None,
     ) -> None:
-        cls._set_startup_method()
+        if not cls.test_mode:
+            cls._set_startup_method()
         os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())
         if factory:

@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import platform
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -16,7 +15,7 @@ from asyncio import (
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
-from multiprocessing import Manager, Pipe, get_context
+from multiprocessing import Manager, Pipe, get_context, set_start_method
 from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import SHUT_RDWR, socket
@@ -64,7 +63,6 @@ from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
 from sanic.worker.serve import worker_serve
 
-
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.application.state import ApplicationState
@@ -88,6 +86,8 @@ class StartupMixin(metaclass=SanicMeta):
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
     start_method: StartMethod = _default
+
+    START_METHOD_SET = False
 
     def setup_loop(self):
         if not self.asgi:
@@ -692,10 +692,18 @@ class StartupMixin(metaclass=SanicMeta):
         )
 
     @classmethod
+    def _set_startup_method(cls) -> None:
+        if cls.START_METHOD_SET:
+            return
+        method = cls._get_startup_method()
+        set_start_method(method, force=True)
+        cls.START_METHOD_SET = True
+
+    @classmethod
     def _get_context(cls) -> BaseContext:
         method = cls._get_startup_method()
         logger.debug("Creating multiprocessing context using '%s'", method)
-        return get_context(method)
+        return get_context()
 
     @classmethod
     def serve(
@@ -705,6 +713,7 @@ class StartupMixin(metaclass=SanicMeta):
         app_loader: Optional[AppLoader] = None,
         factory: Optional[Callable[[], Sanic]] = None,
     ) -> None:
+        cls._set_startup_method()
         os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())
         if factory:

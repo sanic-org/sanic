@@ -319,6 +319,10 @@ class Blueprint(BaseSanic):
             # Prepend the blueprint URI prefix if available
             uri = self._setup_uri(future.uri, url_prefix)
 
+            route_error_format = (
+                future.error_format if future.error_format else error_format
+            )
+
             version_prefix = self.version_prefix
             for prefix in (
                 future.version_prefix,
@@ -358,7 +362,7 @@ class Blueprint(BaseSanic):
                 future.unquote,
                 future.static,
                 version_prefix,
-                error_format,
+                route_error_format,
                 future.route_context,
             )
 

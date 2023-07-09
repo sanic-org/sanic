@@ -72,9 +72,9 @@ jobs:
 
       - name: Run unit tests
         run: |
-        tox -e ${{ matrix.config.tox-env }}
-        if ($LASTEXITCODE -ne 0) {
-            # Command exit code is not zero
-            Write-Host "::warning::Unit tests failed, but exiting with success code"
-            exit 0
-        }
+          tox -e ${{ matrix.config.tox-env }}
+          if ($LASTEXITCODE -ne 0) {
+              # Command exit code is not zero
+              Write-Host "::warning::Unit tests failed, but exiting with success code"
+              exit 0
+          }

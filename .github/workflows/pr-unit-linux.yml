@@ -14,7 +14,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      # fail-fast: true
       matrix:
         config:
           - { python-version: "3.7", tox-env: py37 }

@@ -1,4 +1,4 @@
-name: PR Unit Tests (Linux)
+name: Run Unit Tests (Linux)
 
 on:
   pull_request:
@@ -10,6 +10,7 @@ on:
 
 jobs:
   run_unit_tests:
+    name: Run Unit Tests on Python ${{ matrix.config.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
@@ -54,12 +55,14 @@ jobs:
                       $command
                   )
                   retval=$?
-                  attempt=$(( $attempt + 1 ))
                   if [[ $retval -ne 0 ]]; then
-                      sleep 5
+                      echo "::notice::Attempt $attempt failed with exit code $retval"
+                      sleep 10
                   fi
+                  attempt=$(( $attempt + 1 ))
               done
               if [[ $retval -ne 0 ]] && [[ $attempt -gt $max_attempts ]]; then
+                  echo "::error::Tests failed after $max_attempts attempts"
                   exit $retval
               fi
           }

@@ -29,6 +29,7 @@ from typing import (
     AnyStr,
     Awaitable,
     Callable,
+    ClassVar,
     Coroutine,
     Deque,
     Dict,
@@ -158,8 +159,8 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "websocket_tasks",
     )
 
-    _app_registry: Dict[str, "Sanic"] = {}
-    test_mode = False
+    _app_registry: ClassVar[Dict[str, "Sanic"]] = {}
+    test_mode: ClassVar[bool] = False
 
     def __init__(
         self,

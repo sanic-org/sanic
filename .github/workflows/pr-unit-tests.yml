@@ -10,7 +10,7 @@ on:
 
 jobs:
   run_linux_unit_tests:
-    name: "[Linux] Run unit tests on Python ${{ matrix.config.python-version }}"
+    name: "Linux - ${{ matrix.config.tox-env }}"
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
@@ -39,10 +39,14 @@ jobs:
         run: pip install tox
 
       - name: Run unit tests
-        run: tox -e ${{ matrix.config.tox-env }}
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: tox -e ${{ matrix.config.tox-env }}
 
   run_windows_unit_tests:
-    name: "[Windows] Run unit tests on Python ${{ matrix.config.python-version }}"
+    name: "Windows - ${{ matrix.config.tox-env }}"
     if: github.event.pull_request.draft == false
     runs-on: windows-latest
     strategy:

@@ -1227,18 +1227,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     ) -> Task:
         if not isinstance(task, Future):
             prepped = cls._prep_task(task, app, loop)
-            if sys.version_info < (3, 8):  # no cov
-                task = loop.create_task(prepped)
-                if name:
-                    error_logger.warning(
-                        "Cannot set a name for a task when using Python 3.7. "
-                        "Your task will be created without a name."
-                    )
-                task.get_name = lambda: name
-            else:
-                task = loop.create_task(prepped, name=name)
+            task = loop.create_task(prepped, name=name)
 
-        if name and register and sys.version_info > (3, 7):
+        if name and register:
             app._task_registry[name] = task
 
         return task

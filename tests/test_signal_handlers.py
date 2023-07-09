@@ -1,12 +1,14 @@
 import asyncio
 import os
 import signal
+
 from queue import Queue
 from types import SimpleNamespace
 from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
+
 from sanic_testing.testing import HOST, PORT
 
 from sanic import Sanic

@@ -774,6 +774,10 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         """
         response = None
         await self.dispatch(
+            "server.lifecycle.exception",
+            context={"exception": exception},
+        )
+        await self.dispatch(
             "http.lifecycle.exception",
             inline=True,
             context={"request": request, "exception": exception},

@@ -31,6 +31,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Dict,
     List,
     Mapping,
@@ -87,16 +88,17 @@ else:  # no cov
 
 
 class StartupMixin(metaclass=SanicMeta):
-    _app_registry: Dict[str, Sanic]
+    _app_registry: ClassVar[Dict[str, Sanic]]
+
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
-    test_mode: bool
-    start_method: StartMethod = _default
 
-    START_METHOD_SET = False
+    test_mode: ClassVar[bool]
+    start_method: ClassVar[StartMethod] = _default
+    START_METHOD_SET: ClassVar[bool] = False
 
     def setup_loop(self):
         if not self.asgi:

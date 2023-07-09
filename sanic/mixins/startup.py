@@ -15,7 +15,13 @@ from asyncio import (
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
-from multiprocessing import Manager, Pipe, get_context, set_start_method
+from multiprocessing import (
+    Manager,
+    Pipe,
+    get_context,
+    get_start_method,
+    set_start_method,
+)
 from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import SHUT_RDWR, socket
@@ -702,6 +708,12 @@ class StartupMixin(metaclass=SanicMeta):
     @classmethod
     def _get_context(cls) -> BaseContext:
         method = cls._get_startup_method()
+        actual = get_start_method()
+        if method != actual:
+            raise RuntimeError(
+                f"Start method '{method}' was requested, but '{actual}' was "
+                "actually set."
+            )
         logger.debug("Creating multiprocessing context using '%s'", method)
         return get_context()
 

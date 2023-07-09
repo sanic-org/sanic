@@ -39,8 +39,4 @@ jobs:
         run: pip install tox
 
       - name: Run unit tests
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          command: tox -e ${{ matrix.config.tox-env }}
+        run: tox -e ${{ matrix.config.tox-env }}

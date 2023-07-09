@@ -3,6 +3,7 @@ import logging
 import pytest
 
 import sanic
+
 from sanic import Sanic
 from sanic.config import Config
 from sanic.errorpages import TextRenderer, exception_response, guess_mime

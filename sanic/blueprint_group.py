@@ -65,6 +65,7 @@ class BlueprintGroup(MutableSequence):
         "_version",
         "_strict_slashes",
         "_version_prefix",
+        "_name_prefix",
     )
 
     def __init__(
@@ -73,6 +74,7 @@ class BlueprintGroup(MutableSequence):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
+        name_prefix: Optional[str] = "",
     ):
         """
         Create a new Blueprint Group
@@ -87,6 +89,7 @@ class BlueprintGroup(MutableSequence):
         self._version = version
         self._version_prefix = version_prefix
         self._strict_slashes = strict_slashes
+        self._name_prefix = name_prefix
 
     @property
     def url_prefix(self) -> Optional[Union[int, str, float]]:
@@ -133,6 +136,15 @@ class BlueprintGroup(MutableSequence):
         :return: str
         """
         return self._version_prefix
+
+    @property
+    def name_prefix(self) -> Optional[str]:
+        """
+        Name prefix for the blueprint group
+
+        :return: str
+        """
+        return self._name_prefix
 
     def __iter__(self):
         """

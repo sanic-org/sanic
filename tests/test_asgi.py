@@ -652,3 +652,17 @@ async def test_asgi_headers_decoding(app: Sanic, monkeypatch: MonkeyPatch):
 
     _, response = await app.asgi_client.get("/", headers={"Test-Header": "😅"})
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_asgi_url_decoding(app):
+    @app.get("/dir/<name>", unquote=True)
+    def _request(request: Request, name):
+        return text(name)
+
+    # 2F should not become a path separator (unquoted later)
+    _, response = await app.asgi_client.get("/dir/some%2Fpath")
+    assert response.text == "some/path"
+
+    _, response = await app.asgi_client.get("/dir/some%F0%9F%98%80path")
+    assert response.text == "some😀path"

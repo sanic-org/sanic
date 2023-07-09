@@ -81,7 +81,8 @@ class CookieRequestParameters(RequestParameters):
             "accessing a cookie value like this will return a list of values. "
             "To avoid this behavior and continue accessing a single value, "
             f"please upgrade from request.cookies['{key}'] to "
-            f"request.cookies.get('{key}'). See more details: ___.",
+            f"request.cookies.get('{key}'). See more details: "
+            "https://sanic.dev/en/guide/release-notes/v23.3.html#request-cookies",  # noqa
             24.3,
         )
         try:

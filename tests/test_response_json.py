@@ -213,3 +213,12 @@ def test_pop_list(json_app: Sanic):
 
     _, resp = json_app.test_client.get("/json-pop")
     assert resp.body == json_dumps(["b"]).encode()
+
+
+def test_json_response_class_sets_proper_content_type(json_app: Sanic):
+    @json_app.get("/json-class")
+    async def handler(request: Request):
+        return JSONResponse(JSON_BODY)
+
+    _, resp = json_app.test_client.get("/json-class")
+    assert resp.headers["content-type"] == "application/json"

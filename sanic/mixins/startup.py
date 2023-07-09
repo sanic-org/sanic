@@ -701,8 +701,9 @@ class StartupMixin(metaclass=SanicMeta):
     def _set_startup_method(cls) -> None:
         if cls.START_METHOD_SET:
             return
+
         method = cls._get_startup_method()
-        set_start_method(method, force=True)
+        set_start_method(method)
         cls.START_METHOD_SET = True
 
     @classmethod

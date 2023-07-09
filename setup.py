@@ -83,12 +83,11 @@ setup_kwargs = {
     "packages": find_packages(exclude=("tests", "tests.*")),
     "package_data": {"sanic": ["py.typed", "pages/styles/*"]},
     "platforms": "any",
-    "python_requires": ">=3.7",
+    "python_requires": ">=3.8",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

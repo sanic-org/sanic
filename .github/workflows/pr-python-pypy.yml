@@ -5,11 +5,11 @@ on:
       tox-env:
         description: "Tox Env to run on the PyPy Infra"
         required: false
-        default: "pypy37"
+        default: "pypy310"
       pypy-version:
         description: "Version of PyPy to use"
         required: false
-        default: "pypy-3.7"
+        default: "pypy-3.10"
 jobs:
   testPyPy:
     name: ut-${{ matrix.config.tox-env }}-${{ matrix.os }}

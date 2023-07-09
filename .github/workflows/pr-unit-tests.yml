@@ -74,6 +74,7 @@ jobs:
         run: |
           ret=0
           tox -e ${{ matrix.config.tox-env }} || ret=$?
-          if [[ $ret != 0 ]]; then
+
+          if [[ "$ret" != "0" ]]; then
             echo "::warning::Unit tests failed, but exiting with success code"
           fi

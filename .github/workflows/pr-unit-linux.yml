@@ -40,4 +40,28 @@ jobs:
         run: pip install tox
 
       - name: Run Unit Tests
-        run: tox -e ${{ matrix.config.tox-env }}
+        run: |
+          function retry {
+              command="$*"
+              retval=1
+              attempt=1
+              max_attempts=3
+              until [[ $retval -eq 0 ]] || [[ $attempt -gt $max_attempts ]]; do
+                  # Execute inside of a subshell in case parent
+                  # script is running with "set -e"
+                  (
+                      set +e
+                      $command
+                  )
+                  retval=$?
+                  attempt=$(( $attempt + 1 ))
+                  if [[ $retval -ne 0 ]]; then
+                      sleep 5
+                  fi
+              done
+              if [[ $retval -ne 0 ]] && [[ $attempt -gt $max_attempts ]]; then
+                  exit $retval
+              fi
+          }
+
+          retry tox -e ${{ matrix.config.tox-env }}

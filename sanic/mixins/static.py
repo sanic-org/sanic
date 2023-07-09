@@ -95,7 +95,7 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
             )
 
         try:
-            file_or_directory = Path(file_or_directory)
+            file_or_directory = Path(file_or_directory).resolve()
         except TypeError:
             raise TypeError(
                 "Static file or directory must be a path-like object or string"

@@ -527,3 +527,26 @@ def test_guess_mime_logging(
     ]
 
     assert logmsg == expected
+
+
+@pytest.mark.parametrize(
+    "format,expected",
+    (
+        ("html", "text/html; charset=utf-8"),
+        ("text", "text/plain; charset=utf-8"),
+        ("json", "application/json"),
+    ),
+)
+def test_exception_header_on_renderers(app: Sanic, format, expected):
+    app.config.FALLBACK_ERROR_FORMAT = format
+
+    @app.get("/test")
+    def test(request):
+        raise SanicException(
+            "test", status_code=400, headers={"exception": "test"}
+        )
+
+    _, response = app.test_client.get("/test")
+    assert response.status == 400
+    assert response.headers.get("exception") == "test"
+    assert response.content_type == expected

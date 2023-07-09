@@ -3,11 +3,12 @@ from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
 
 import sanic
 
-from sanic.request import Request
+from sanic import request
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
 
 Sanic = TypeVar("Sanic", bound="sanic.Sanic")
+Request = TypeVar("Request", bound="request.Request")
 
 MiddlewareResponse = Union[
     Optional[HTTPResponse], Coroutine[Any, Any, Optional[HTTPResponse]]

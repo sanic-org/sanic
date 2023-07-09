@@ -417,8 +417,11 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     def _apply_listener(self, listener: FutureListener):
         return self.register_listener(listener.listener, listener.event)
 
-    def _apply_route(self, route: FutureRoute) -> List[Route]:
+    def _apply_route(
+        self, route: FutureRoute, overwrite: bool = False
+    ) -> List[Route]:
         params = route._asdict()
+        params["overwrite"] = overwrite
         websocket = params.pop("websocket", False)
         subprotocols = params.pop("subprotocols", None)
 
@@ -550,6 +553,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                             )
                         else:
                             params["version_prefix"] = blueprint.version_prefix
+                    name_prefix = getattr(blueprint, "name_prefix", None)
+                    if name_prefix and "name_prefix" not in params:
+                        params["name_prefix"] = name_prefix
                 self.blueprint(item, **params)
             return
         if blueprint.name in self.blueprints:

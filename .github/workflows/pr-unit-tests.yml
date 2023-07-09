@@ -1,4 +1,4 @@
-name: Run unit tests (Linux)
+name: Run unit tests
 
 on:
   pull_request:
@@ -9,8 +9,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
-  run_unit_tests:
-    name: Run unit tests on Python ${{ matrix.config.python-version }}
+  run_linux_unit_tests:
+    name: "[Linux] Run unit tests on Python ${{ matrix.config.python-version }}"
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
@@ -25,6 +25,34 @@ jobs:
           - { python-version: "3.10", tox-env: py310-no-ext }
           - { python-version: "3.11", tox-env: py311 }
           - { python-version: "3.11", tox-env: py311-no-ext }
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python ${{ matrix.config.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.config.python-version }}
+
+      - name: Install tox
+        run: pip install tox
+
+      - name: Run unit tests
+        run: tox -e ${{ matrix.config.tox-env }}
+
+  run_windows_unit_tests:
+    name: "[Windows] Run unit tests on Python ${{ matrix.config.python-version }}"
+    if: github.event.pull_request.draft == false
+    runs-on: windows-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        config:
+          - { python-version: "3.8", tox-env: py38-no-ext }
+          - { python-version: "3.9", tox-env: py39-no-ext }
+          - { python-version: "3.10", tox-env: py310-no-ext }
+          - { python-version: "3.11", tox-env: py310-no-ext }
 
     steps:
       - name: Checkout repository

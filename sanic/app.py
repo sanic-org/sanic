@@ -894,7 +894,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         ] = None
         run_middleware = True
         try:
-
             await self.dispatch(
                 "http.routing.before",
                 inline=True,
@@ -926,7 +925,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 and request.stream.request_body
                 and not route.extra.ignore_body
             ):
-
                 if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
